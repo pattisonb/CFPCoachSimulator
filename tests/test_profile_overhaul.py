@@ -2,8 +2,9 @@
 1280 and 400 px, light and dark. One view of a recruit in three places: the board's pane, the Prospect Profile popup and
 the Scouting Center. Checks:
 - The board's header: five budget meters (Scouting Points among them) and Auto-Recruit; the list card and the pane line up.
-- The pane's hero: name, stars, Pos | Height | Weight, Hometown · #rank; Nat. Rank, Pos. Rank (with the position), Class;
-  Your Chance; Recruit ▾ and the watch star on the tab row. Tabs Overview · Scouting · Profile · History.
+- The pane's hero: name, stars, Pos · Archetype | Height | Weight, Hometown · Class of 2027; Nat. Rank and Pos. Rank (with the
+  position) in one strip; Your Chance (no bar before an offer); Recruit ▾ and the watch star on the tab row. Tabs Overview ·
+  Scouting · Profile · History.
 - The position is the game's display everywhere (a recruit listed EDGE who plays DT reads DT in the hero, the verdict
   and the comp).
 - Overview: Recruiting Battle and Recruit Snapshot side by side, the Scout's Summary across; Scouting: the report and
@@ -178,8 +179,16 @@ def desktop(browser, base, sid, ids, profile, scheme, errs) -> None:
     assert pub["name"] in hero and pub["height_display"] in hero and pub["weight_display"] in hero and f"#{pub['national_rank']}" in hero, hero
     assert page.inner_text(".go-pane .pv-hero .pv-pos") == pub["display_pos"] != pub["position"], "the hero shows his game position"
     stats = page.eval_on_selector_all(".go-pane .pv-stat", "els => els.map(e => [e.dataset.stat, e.querySelector('.pv-stat-v').textContent, (e.querySelector('.pv-stat-s') || {}).textContent || ''])")
-    assert stats == [["nat", f"#{pub['national_rank']}", ""], ["pos", f"#{pub['pos_rank']}", pub["display_pos"]], ["class", str(pub["class_of"]), ""]], stats
+    assert stats == [["nat", f"#{pub['national_rank']}", ""], ["pos", f"#{pub['pos_rank']}", pub["display_pos"]]], stats
+    assert page.query_selector(".go-pane .pv-strip .pv-stat[data-stat=nat]") and page.query_selector(".go-pane .pv-strip .pv-stat[data-stat=pos]"), "the stats sit in one strip"
+    assert page.inner_text(".go-pane .pv-hero .pv-arch") == pub["archetype"], "the archetype follows his position"
+    assert page.inner_text(".go-pane .pv-hero .pv-place") == f"{pub['hometown']['city']}, {pub['hometown']['state']} · Class of {pub['class_of']}", page.inner_text(".go-pane .pv-hero .pv-place")
+    assert page.inner_text(".go-pane .pv-hero").count(f"#{pub['national_rank']}") == 1, "his national rank once in the header"
     assert page.text_content(".go-pane .pv-badge .pv-kick") == "Your Chance"
+    # no offer: Your Chance says so without an empty bar; the strip and the badge sit on the identity's row at 1280
+    assert not page.query_selector(".go-pane .pv-badge .pv-thin"), "no bar before there is a chance to measure"
+    side = page.evaluate("() => { const a = document.querySelector('.go-pane .pv-who').getBoundingClientRect(), b = document.querySelector('.go-pane .pv-right').getBoundingClientRect(); return [a.right, b.left, a.bottom, b.top]; }")
+    assert side[1] >= side[0] and side[3] < side[2], f"one row at 1280: identity left, the strip and the badge right {where}: {side}"
     assert page.query_selector(".go-pane .pv-tabrow #rc-recruit") and page.query_selector(".go-pane .pv-tabrow .pv-star"), "Recruit ▾ and the star sit on the tab row"
     assert page.eval_on_selector_all(".go-pane .go-subtabs button", "els => els.map(e => e.textContent)") == ["Overview", "Scouting", "Profile", "History"]
     # Overview: battle and snapshot side by side, the summary across
@@ -228,6 +237,18 @@ def desktop(browser, base, sid, ids, profile, scheme, errs) -> None:
     tab(page, ".go-pane", "history")
     check_layout(page, ".go-pane", f"(History) {where}", [["timeline", "notes"], ["interest"]])
     assert page.inner_text(".go-pane [data-key=notes] .pv-notes").strip()
+    # a long timeline scrolls inside its card, and beside Recruiting Notes the card is only as tall as the notes need
+    # (never under 220 px), so Recent Interest Changes stays near (the player's ask)
+    tl = page.evaluate("""() => { const u = document.querySelector('.go-pane .pv-timeline'); if (!u) return null;
+      for (let i = 0; i < 40; i++) u.append(u.firstElementChild.cloneNode(true));
+      const card = u.closest('.pv-card'), notes = document.querySelector('.go-pane [data-key=notes]');
+      const cs = getComputedStyle(u); return { oy: cs.overflowY, h: u.getBoundingClientRect().height, sh: u.scrollHeight, tab: u.tabIndex,
+        card: card.getBoundingClientRect().height, notes: notes.getBoundingClientRect().height }; }""")
+    if tl:
+        assert tl["oy"] == "auto" and tl["sh"] > tl["h"] and tl["tab"] == 0, f"the timeline scrolls in its card: {tl}"
+        assert abs(tl["card"] - tl["notes"]) <= 1 and tl["card"] >= 220, f"the timeline card is as tall as the notes card: {tl}"
+        tab(page, ".go-pane", "overview")
+        tab(page, ".go-pane", "history")
     no_bad_text(page, ".go-pane", where)
     no_sideways(page, where, ".go-pane")
     # the pane narrowed: the cards stack, still aligned

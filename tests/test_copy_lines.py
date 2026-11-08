@@ -22,7 +22,7 @@ def test_injury_after_with() -> None:
 
 
 def test_topic_case_in_his_reply() -> None:
-    for phrase in scenes.PHRASES.values():
+    for phrase in list(scenes.PHRASES.values()) + list(scenes.SAID_HONEST.values()):
         for line in scenes.PRESENT_LINES["hit"]:
             text = line.format(topic=phrase, Topic=phrase[0].upper() + phrase[1:])
             assert text[0].isupper(), text
@@ -33,9 +33,9 @@ def test_topic_case_in_his_reply() -> None:
 
 def test_fcs_stand_in_by_region_in_scenes() -> None:
     """His small talk names your opener as the schedule does: a fictional FCS stand-in by its region
-    ("FCS Gulf Coast"), never its made-up school name (the player saw "Port Rennick St.")."""
-    games = {"a": {"home": "rice", "away": "port-rennick-state", "week": 1, "played": False},
-             "b": {"home": "port-rennick-state", "away": "rice", "week": 0, "played": True, "home_score": 3, "away_score": 31}}
+    ("FCS Gulf Coast"), never a school name."""
+    games = {"a": {"home": "rice", "away": "fcs-gulf-coast", "week": 1, "played": False},
+             "b": {"home": "fcs-gulf-coast", "away": "rice", "week": 0, "played": True, "home_score": 3, "away_score": 31}}
     state = {"games": games}
     assert scenes.next_game(state, "rice", 1)["opponent"] == "FCS Gulf Coast"
     assert scenes.last_game(state, "rice", 1)["opponent"] == "FCS Gulf Coast"

@@ -41,6 +41,7 @@ from typing import Callable, Iterator, Optional
 from sim import awards
 from teamdata import ratings as ratings_v2
 from sim import coaches
+from sim import fcs_names
 from sim import bowls
 from sim import polls
 from coach_career import recruiting
@@ -50,7 +51,7 @@ TEAMS_FILE = ROOT / "data" / "engine_teams.json"
 SCHEDULES_FILE = ROOT / "data" / "schedules.json"
 FCS_MAP_FILE = ROOT / "data" / "fcs_map.json"
 HISTORY_POLLS = ROOT / "data" / "history" / "polls.json"
-SEASONS_DIR = ROOT / "data" / "seasons"
+SEASONS_DIR = Path(os.environ.get("CFP_SEASONS_DIR") or ROOT / "data" / "seasons")   # CFP_SEASONS_DIR: tests/run_all.py gives its tests a folder of their own
 
 LAST_REGULAR_WEEK = 14   # Aug 29 through Nov 28, 2026: fourteen Saturdays, so every team has a bye or two
 CCG_WEEK = 15            # Dec 4-5
@@ -88,11 +89,9 @@ def week_of_date(date_iso: Optional[str]) -> Optional[int]:
     return max(1, (local - SEASON_EPOCH).days // 7 + 1)
 
 
-REGION_TEAM = {
-    "New England": "kestrel-bay", "Mid-Atlantic": "alder-ridge-state", "Southeast": "calder-springs",
-    "Gulf Coast": "port-rennick-state", "Great Lakes": "wendt-lake-tech", "Plains": "red-prairie-state",
-    "Mountain West": "talus-peak", "Pacific Northwest": "cedar-sound",
-}
+# the FCS stand-ins: one per region, each named only for its region ("FCS Southeast")
+REGION_TEAM = {r: "fcs-" + r.lower().replace(" ", "-") for r in (
+    "New England", "Mid-Atlantic", "Southeast", "Gulf Coast", "Great Lakes", "Plains", "Mountain West", "Pacific Northwest")}
 STATE_REGION = {
     **{s: "New England" for s in ("ME", "NH", "VT", "MA", "RI", "CT")},
     **{s: "Mid-Atlantic" for s in ("NY", "NJ", "PA", "DE", "MD", "DC", "VA", "WV")},
@@ -140,7 +139,7 @@ def load_teams() -> dict:
     global _teams_cache
     if not _teams_cache:
         data = json.loads(_league_path.read_text(encoding="utf-8"))
-        _teams_cache = data["teams"]
+        _teams_cache = stand_in_names(data["teams"])
         _teams_meta.clear()
         _teams_meta.update(attribute_scale=data.get("attribute_scale") or {}, spread_scale=data.get("spread_scale") or 1.5)
     return _teams_cache
@@ -165,8 +164,11 @@ def use_league(path: Optional[Path]) -> None:
 
 
 def activate(state: dict) -> None:
-    """Make `state`'s league the one in play (a career past its first season plays its own)."""
+    """Make `state`'s league the one in play (a career past its first season, or one from a league
+    file, plays its own), with its recruiting models."""
     from coach_career import league
+    from coach_career import recruiting
+    recruiting.use_league_models((state.get("league") or {}).get("recruiting_models") or {})
     use_league(league.ensure_built(state))
 
 
@@ -227,7 +229,28 @@ def _house_scale() -> dict:
         p4 = p4_vals.get(gk) or vals
         k_hi, k_lo = slopes.get(gk[0], (1.5, 1.5))
         _scale_cache[gk] = (st.median(p4), k_hi, k_lo)
+    # the returner scale is one scale for every position (a linebacker's own would put any return
+    # rating above the linebackers' 1 at 99): the league's designated returners are its 50 mark
+    rets = [v for slug, t in teams.items() if not t["fictional"]
+            for p in t["offense"] + t["defense"] if p.get("slug") in (t.get("kick_returner"), t.get("punt_returner"))
+            for v in [p.get("return_rating")] if isinstance(v, (int, float))]
+    if len(rets) > 1:
+        sd = st.pstdev(rets)
+        k_hi = max(0.5, min(4.0, 15 / sd if sd > 1.0 else 2.0))
+        _scale_cache[("KR", "return_rating")] = (st.median(rets), k_hi, k_hi * BELOW)
     return _scale_cache
+
+
+RETURN_POSITIONS_OUT = ("K", "P", "OL", "DL", "QB")   # never returners, as the engine's best_returner has it
+
+
+def return_value(p: dict) -> int:
+    """A player's return rating in engine units: the roster's, else what the engine falls back to
+    (speed and elusiveness, roster.return_skill)."""
+    v = p.get("return_rating")
+    if isinstance(v, (int, float)):
+        return int(v)
+    return int(round(((p.get("speed") or 50) + ((p.get("attributes") or {}).get("elusiveness") or p.get("elusiveness") or 50)) / 2))
 
 
 def house_value(pos: str, key: str, v: float) -> int:
@@ -245,7 +268,8 @@ def house_to_engine(pos: str, key: str, ours: float) -> int:
 
 
 def display_rating(p: dict, key: str, value: Optional[float] = None) -> int:
-    return house_value(p["position"], key, p.get(key) if value is None else value)
+    pos = "KR" if key == "return_rating" else p["position"]      # the return rating is on the returners' scale, whoever he is
+    return house_value(pos, key, p.get(key) if value is None else value)
 
 
 def engine_rating(p: dict, key: str, ours: float) -> int:
@@ -322,6 +346,17 @@ def fcs_label(slug: str) -> str:
     real school it replaces."""
     region = TEAM_REGION.get(slug)
     return f"FCS {region}" if region else "FCS"
+
+
+def stand_in_names(teams: dict) -> dict:
+    """`teams` with every FCS stand-in named only for its region, whatever its file says: name and
+    school "FCS Southeast", abbreviation "FCS", no mascot, no town. Every page that shows a team's
+    name reads these, so a stand-in can never show anything but its label."""
+    for slug, t in teams.items():
+        if t.get("fictional"):
+            t.update(name=fcs_label(slug), school=fcs_label(slug), abbreviation="FCS", mascot="")
+            t.pop("city", None)
+    return teams
 
 
 def team_display(slug: str, teams: dict) -> str:
@@ -520,13 +555,17 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
 
 def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, fill_open_dates: bool = True,
                coach: Optional[dict] = None, career: bool = False, year: int = 2026,
-               schedule: Optional[dict] = None) -> dict:
+               schedule: Optional[dict] = None, league: Optional[dict] = None, career_id: Optional[str] = None,
+               real_polls: bool = True) -> dict:
     """A new season from the 2026 schedule, or from `schedule` (a generated later year's games,
     sim/schedule_gen.py, keyed by event id). `fill_open_dates` adds a game for teams whose
     schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
     `career`: a Coach Career (career.py), which starts from week 1. `year`: a career's later
     season (the active league's rosters, offseason.py), which gets no real polls; without a
-    generated `schedule` it replays the 2026 games with home and away swapped every other year."""
+    generated `schedule` it replays the 2026 games with home and away swapped every other year.
+    `league`: a career from a league file (league_file.check's, already in play through use_league),
+    stored with id `career_id` before the career starts. `real_polls=False`: the preseason poll comes
+    from the ratings (_rating_poll), not the real 2026 AP poll (a league whose shape the file changed)."""
     if career and mode != "full":
         raise ValueError("Coach Career starts from week 1")
     teams = load_teams()
@@ -588,7 +627,12 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
         "form": form_teams, "player_form": form_players,
         "rng_state": rng.randrange(1 << 30), "year": year,
     }
-    real_polls = _real_polls_2026(teams) if year == 2026 else {}
+    if league is not None:
+        state["league"] = league
+        if career_id:
+            state["id"] = career_id
+    use_real = real_polls and year == 2026
+    real_polls = _real_polls_2026(teams) if use_real else {}
     real = real_polls if mode == "remaining" else {}
     preseason = real_polls.get(0) or _rating_poll(teams)
     ap_params, _ = polls.load_params()
@@ -598,7 +642,7 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     pre_full = polls.rank(state["scores"], {}, tiers, ap_params, n=25 + AP_OTHERS)
     pre_others = [t for t in pre_full if t not in set(preseason[:25])][:AP_OTHERS]
     pre_votes = _ap_votes(state, preseason[:25] + pre_others, tiers, ap_params, 0)
-    real_pre = _real_ap_votes_2026(0, teams) if year == 2026 else None
+    real_pre = _real_ap_votes_2026(0, teams) if use_real else None
     if real_pre and real_pre[0][:25] == preseason[:25]:
         preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
     # week=0: the preseason poll shows 0-0 even in "remaining" mode, where games are already played
@@ -688,8 +732,15 @@ def _opponents(state: dict) -> dict[str, list[dict]]:
     return out
 
 
-def division_of(conference: str, slug: str) -> Optional[str]:
-    for name, members in DIVISIONS.get(conference, {}).items():
+def divisions(state: dict) -> dict:
+    """The conferences that play divisions in this state's league: the built-in ones with a league
+    file's over them (league_file.divisions); a conference mapped to {} plays without."""
+    out = {**DIVISIONS, **(((state or {}).get("league") or {}).get("divisions") or {})}
+    return {c: d for c, d in out.items() if d}
+
+
+def division_of(conference: str, slug: str, divs: Optional[dict] = None) -> Optional[str]:
+    for name, members in (DIVISIONS if divs is None else divs).get(conference, {}).items():
         if slug in members:
             return name
     return None
@@ -841,17 +892,18 @@ def standings(state: dict) -> dict[str, list[dict]]:
     opp = _opponents(state)
     rank_pos = _ranking_positions(state)
     form = _team_form(state, teams)
+    divs = divisions(state)
     table: dict[str, list[dict]] = {}
     for slug, t in teams.items():
         if t["fictional"]:
             continue
-        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug), **rec[slug], **form[slug]}
+        r = {"slug": slug, "name": t["name"], "division": division_of(t["conference"], slug, divs), **rec[slug], **form[slug]}
         table.setdefault(t["conference"], []).append(r)
 
     for conf, rows in table.items():
-        if conf in DIVISIONS:
+        if conf in divs:
             ordered = []
-            for div in DIVISIONS[conf]:
+            for div in divs[conf]:
                 group = _order_rows([r for r in rows if r["division"] == div], rows, opp, rank_pos)
                 for i, r in enumerate(group, 1):
                     r["conf_rank"] = i
@@ -1403,13 +1455,14 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
 
 def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
     table = standings(state)
+    divs = divisions(state)
     out = []
     for conf, rows in table.items():
         if conf in polls.INDEPENDENT or len(rows) < 4:
             continue
-        if conf in DIVISIONS:
+        if conf in divs:
             # division winners; the better record (conference, then overall, then margin) is the higher seed
-            winners = [next(r for r in rows if r["division"] == div and r["conf_rank"] == 1) for div in DIVISIONS[conf]]
+            winners = [next(r for r in rows if r["division"] == div and r["conf_rank"] == 1) for div in divs[conf]]
             winners.sort(key=lambda r: (-(r["conf_wins"] / max(1, r["conf_wins"] + r["conf_losses"])),
                                         -(r["wins"] / max(1, r["wins"] + r["losses"])), -(r["points_for"] - r["points_against"])))
             a, b = winners[0], winners[1]
@@ -1421,7 +1474,7 @@ def _ccg_matchups(state: dict, teams: dict) -> list[dict]:
                     "home": a["slug"], "away": b["slug"], "home_display": a["name"], "away_display": b["name"],
                     "conference_game": False, "played": False, "home_score": None, "away_score": None, "overtime": 0,
                     "real": False, "kind": "ccg", "conference": conf, "title": f"{conf} Championship", "site": site,
-                    "divisions": [a.get("division"), b.get("division")] if conf in DIVISIONS else None})
+                    "divisions": [a.get("division"), b.get("division")] if conf in divs else None})
     return out
 
 
@@ -1886,13 +1939,16 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
     ss = (state.get("season_stats") or {}).get(slug, {}).get("players", {})
     injured = (state.get("injuries") or {}).get(slug, {})
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")
+    dev = development_reads(state, slug)
     pos = "KR" if role in ("KR", "PR") else ROLE_POSITION.get(role, role)
     current = depth_order(state, slug, role)
     columns = DEPTH_COLUMNS.get(role, [])
     moves = position_changes(state, slug)
     rows = []
     for p in team["offense"] + team["defense"]:
-        rating = (house_value(p["position"], "return_rating", int(p.get("return_rating") or 0)) if pos == "KR"
+        if pos == "KR" and p["position"] in RETURN_POSITIONS_OUT and p["slug"] not in current:
+            continue                                  # linemen, quarterbacks and kickers never return (the engine agrees)
+        rating = (house_value("KR", "return_rating", return_value(p)) if pos == "KR"
                   else shown_overall(p) if same_group(pos, p["position"]) else house_value(pos, "overall", overall_at(p, pos)))
         rec = ss.get(f"{p['name']}|{p['position']}")
         st = rec["stats"] if rec else {}
@@ -1902,7 +1958,7 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
                      "rating": rating, "natural": shown_overall(p), "starter": bool(p.get("in_game")),
                      "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
                      "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else "",
-                     "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
+                     **dev.get(p["slug"], {}), "archetype": p.get("archetype"),
                      "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
                      "attrs": {k: (p.get("attributes") or {}).get(k) for k in columns},
                      "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"]} if (inj := injured.get(f"{p['name']}|{p['position']}")) else None,
@@ -1975,6 +2031,7 @@ def _depth_card(state: dict, slug: str):
     injured = (state.get("injuries") or {}).get(slug, {})
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")   # your roster: redshirt in place
     moves = position_changes(state, slug)
+    dev = development_reads(state, slug)                     # your roster: coachability and potential
 
     def card(p: dict, role: str) -> dict:
         inj = injured.get(f"{p['name']}|{p['position']}")
@@ -1986,7 +2043,7 @@ def _depth_card(state: dict, slug: str):
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
-                "dev_trait": p.get("dev_trait"), "archetype": p.get("archetype"),
+                **dev.get(p.get("slug"), {}), "archetype": p.get("archetype"),
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
@@ -2270,12 +2327,45 @@ def save_box(state: dict, event_id: str, game: dict) -> None:
 
 def load_box(state: dict, event_id: str) -> Optional[dict]:
     box = state.get("my_boxes", {}).get(event_id)
-    if box is not None:
-        return box
-    path = box_dir(state) / f"{event_id}.json"
-    if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return None
+    if box is None:
+        path = box_dir(state) / f"{event_id}.json"
+        if not path.exists():
+            return None
+        box = json.loads(fcs_names.rewrite_text(path.read_text(encoding="utf-8")))   # a box saved before the rename
+    return box_names(box)
+
+
+def box_names(box: dict) -> dict:
+    """A box score with each side's name as every page shows it: an FCS stand-in as its region
+    label (team_display), in the header, the line score, the injuries and the scoring plays."""
+    teams = load_teams()
+    for side in ("home", "away"):
+        slug = box.get(f"{side}_slug")
+        t = box.get(side)
+        if not isinstance(t, dict) or not (teams.get(slug) or {}).get("fictional"):
+            continue
+        shown = team_display(slug, teams)
+        if t.get("name") != shown:
+            t["name"] = shown
+            for s in box.get("scoring_plays") or []:
+                if s.get("team") == side:
+                    s["team_name"] = shown
+    return box
+
+
+def _rename_stand_ins_files(season_id: str) -> None:
+    """A season saved before the FCS stand-ins were renamed: its box scores and its cached
+    leagues get today's slugs and names too (fcs_names), once."""
+    from coach_career import league
+    files = list((SEASONS_DIR / season_id / "boxes").glob("*.json")) + list(league.CACHE_DIR.glob(f"{season_id}-*.json"))
+    for f in files:
+        try:
+            text = f.read_text(encoding="utf-8")
+            new = fcs_names.rewrite_text(text)
+            if new is not text:
+                f.write_text(new, encoding="utf-8")
+        except (OSError, ValueError):
+            continue
 
 
 def has_box(state: dict, g: dict) -> bool:
@@ -2289,14 +2379,45 @@ def save_season(state: dict) -> Path:
     SEASONS_DIR.mkdir(parents=True, exist_ok=True)
     path = SEASONS_DIR / f"{state['id']}.json"
     path.write_text(json.dumps(state), encoding="utf-8")
+    _note_current(path)
     return path
+
+
+# season file -> (its mtime_ns, size) when it was last known to hold today's FCS names: written here from
+# a loaded (so renamed) season, or scanned by load_season. A file seen unchanged since is not scanned again,
+# so switching between saved seasons does not re-run the rename's regex over megabytes of save each time.
+_names_current: dict[Path, tuple[int, int]] = {}
+
+
+def _file_key(path: Path) -> Optional[tuple[int, int]]:
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    return st.st_mtime_ns, st.st_size
+
+
+def _note_current(path: Path) -> None:
+    key = _file_key(path)
+    if key is not None:
+        _names_current[path] = key
 
 
 def load_season(season_id: str) -> Optional[dict]:
     path = SEASONS_DIR / f"{season_id}.json"
     if not path.exists():
         return None
-    state = json.loads(path.read_text(encoding="utf-8"))
+    seen = _names_current.get(path)
+    if seen is not None and seen == _file_key(path):
+        renamed = path.read_text(encoding="utf-8")
+    else:
+        text = path.read_text(encoding="utf-8")
+        renamed = fcs_names.rewrite_text(text)
+        if renamed is not text:               # saved before the FCS stand-ins were named for their regions
+            path.write_text(renamed, encoding="utf-8")
+            _rename_stand_ins_files(season_id)
+        _note_current(path)
+    state = json.loads(renamed)
     # seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
     for g in state["games"].values():
         for side in ("home", "away"):
@@ -2312,6 +2433,10 @@ def load_season(season_id: str) -> Optional[dict]:
     if state.get("recruiting"):
         recruiting.upgrade_asks(state)     # careers saved before prospects had NIL asks
         recruiting.upgrade_generational(state)   # careers saved before generational prospects
+        recruiting.heal_contacts(state)    # careers saved with a call left open, or portal contact marks that never cleared
+    if state.get("career"):
+        from coach_career import coach_names
+        coach_names.distinct(state)        # careers saved with one coach in two jobs or two coaches under one name
     return state
 
 
@@ -2859,12 +2984,37 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
     return out
 
 
+def _file_rivalries(state: dict, slug: str, teams: dict) -> list[tuple[frozenset, dict]]:
+    """The rivalries a league file lists for a team it adds (league.team_meta's "rivals"; the file may also list the
+    new team among a game team's rivals): no trophy and no series before this season. A pair of the game's own
+    teams is never one, even when the file edits either of them (league_fill gives an edited team a "meta" too):
+    their rivalries stay the game's. None for the built-in league."""
+    from coach_career import league
+    lgd = state.get("league") or {}
+    own = {s for s, t in (lgd.get("teams") or {}).items() if t.get("meta") is not None}
+    if not own:
+        return []
+    base = set(league.base_slugs())
+    opps = set(league.team_meta(lgd, slug).get("rivals") or []) if slug in own else set()
+    opps |= {s for s in own if slug in (league.team_meta(lgd, s).get("rivals") or [])}
+    out = []
+    for opp in sorted(opps):
+        pair = frozenset((slug, opp))
+        if pair <= base:                     # two of the game's teams: the game's rivalries file decides
+            continue
+        if opp == slug or opp not in teams or teams[opp].get("fictional") or pair in load_rivalries():
+            continue
+        a, b = sorted(pair, key=lambda x: teams[x]["name"])
+        out.append((pair, {"name": f"{teams[a]['name']} vs. {teams[b]['name']}", "teams": [a, b], "series": {}}))
+    return out
+
+
 def rivalries_view(state: dict, slug: str) -> dict:
     """Your rivals this season: the trophy, the series today and this season's meeting."""
     check_fbs(slug)
     teams = load_teams()
     out = []
-    for pair, riv in load_rivalries().items():
+    for pair, riv in list(load_rivalries().items()) + _file_rivalries(state, slug, teams):
         if not isinstance(pair, frozenset) or slug not in pair:
             continue
         opp = next(t for t in pair if t != slug)
@@ -3078,6 +3228,14 @@ def _coach_line(state: dict, team: dict) -> dict:
     """Who is coaching your team this season, for the season page header: your created coach
     (the Your coach page) or the team's own head coach, and who runs each side."""
     coach = state.get("coach")
+    # a career's coordinators are its staff's (coach_names: the data's head coach doubling as OC is his own man there)
+    names = {s["role"]: s["name"] for s in ((state.get("career") or {}).get("staff") or []) if s.get("role") in ("OC", "DC")}
+    if names:
+        cs = {**(team.get("coaches") or {})}
+        for role, key in (("OC", "offensive_coordinator"), ("DC", "defensive_coordinator")):
+            if role in names and cs.get(key):
+                cs[key] = {**cs[key], "name": names[role]}
+        team = {**team, "coaches": cs}
     if coach:
         return {**{k: coach.get(k) for k in ("id", "first_name", "last_name", "archetype", "offense_scheme",
                                               "defense_scheme", "calls_offense", "calls_defense", "look")},
@@ -3121,6 +3279,7 @@ def summary(state: dict) -> dict:
         "injury_count": sum(len(state["injuries"][k]) for k in fbs_only(teams) & state.get("injuries", {}).keys()),
         "my_awards": awards.my_awards(state, state["awards"]) if state.get("awards") else [],
         "career": state.get("career"),
+        "league": ((state.get("league") or {}).get("source") or {}).get("name"),   # a career from a league file
     }
 
 
@@ -3224,7 +3383,8 @@ def _game_line(g: dict, teams: dict, state: Optional[dict] = None) -> dict:
             "site": g.get("site"), "played": g["played"],
             "home": g["home"], "away": g["away"], "home_name": g.get("home_display") or teams[g["home"]]["name"],
             "away_name": g.get("away_display") or teams[g["away"]]["name"], "home_score": g["home_score"], "away_score": g["away_score"],
-            "overtime": g.get("overtime", 0), "winner": _winner(g) if g["played"] else None}
+            "overtime": g.get("overtime", 0), "winner": _winner(g) if g["played"] else None,
+            "home_seed": g.get("home_seed"), "away_seed": g.get("away_seed"), "bowl": g.get("bowl")}
 
 
 def _player_leaders(boxes: list[dict], me: str) -> dict:
@@ -3379,7 +3539,8 @@ def season_review(state: dict) -> dict:
         line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
                 "opponent_name": team_display(opp, teams), "opponent_rank": orank, "opponent_record": _record_str(orec) if orec else None,
                 "venue": _venue(g, home), "won": won, "points_for": pf, "points_against": pa,
-                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g)}
+                "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g),
+                "conference_game": bool(g.get("conference_game"))}
         lines.append(line)
         (wins if won else losses).append(line)
         cur = cur + 1 if won else 0
@@ -3410,8 +3571,14 @@ def season_review(state: dict) -> dict:
     boxes += [b for g in state["games"].values() if g.get("real") and g["played"] and me in (g["home"], g["away"])
               and g["event_id"] not in state["my_boxes"] for b in [load_box(state, g["event_id"])] if b]
     surprises, disappointments = _surprises(state, teams, ap)
+    if title_game:
+        title_game = {**title_game, "home_record": _record_str(all_rec[title_game["home"]]), "away_record": _record_str(all_rec[title_game["away"]])}
+    non_conf = [l for l in lines if l["kind"] == "regular" and not l["conference_game"]]
+    regular_wins = sum(1 for l in lines if l["kind"] == "regular" and l["won"])
+    from sim.grade import season_grade
     return {
-        "done": state["done"], "current_week": state["current_week"],
+        "done": state["done"], "current_week": state["current_week"], "year": season_year(state),
+        "grade": season_grade(state) if state["done"] else None,
         "national_leaders": _national_leaders(state), "surprises": surprises, "disappointments": disappointments,
         "champion": state.get("champion"), "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "title_game": title_game, "rounds": rounds, "champions": champions,
@@ -3424,8 +3591,34 @@ def season_review(state: dict) -> dict:
             "points_per_game": round(sum(l["points_for"] for l in lines) / n, 1), "allowed_per_game": round(sum(l["points_against"] for l in lines) / n, 1),
             "best_win": best_win, "worst_loss": worst_loss, "biggest_win": biggest_win, "closest_loss": closest_loss,
             "longest_streak": best_streak, "postseason": postseason, "leaders": _player_leaders(boxes, me),
+            "non_conf_wins": sum(1 for l in non_conf if l["won"]), "non_conf_losses": sum(1 for l in non_conf if not l["won"]),
+            "wins_short": max(0, BOWL_WINS - regular_wins) if finish == "No bowl" else 0,
+            "team_stats": _team_stat_ranks(state, me),
         },
     }
+
+
+BOWL_WINS = 6     # the wins a bowl trip takes
+
+
+def _team_stat_ranks(state: dict, me: str) -> Optional[dict]:
+    """Your total offense, total defense and turnover margin with their national ranks (yards a
+    game and takeaways less giveaways, among every FBS team that has played a simulated game),
+    or None when the season kept no league-wide stats."""
+    if not state.get("season_stats"):
+        return None
+    rows = team_stats_view(state)["teams"]
+    mine = next((r for r in rows if r["team"] == me), None)
+    if not mine:
+        return None
+
+    def rank(key, value, best_high=True):
+        return sum(1 for r in rows if (r[key] > value if best_high else r[key] < value)) + 1
+
+    margin = {r["team"]: r["takeaways"] - r["turnovers"] for r in rows}
+    return {"total_offense": {"value": round(mine["ypg"], 1), "rank": rank("ypg", mine["ypg"]), "of": len(rows)},
+            "total_defense": {"value": round(mine["opp_ypg"], 1), "rank": rank("opp_ypg", mine["opp_ypg"], best_high=False), "of": len(rows)},
+            "turnover_margin": {"value": margin[me], "rank": sum(1 for v in margin.values() if v > margin[me]) + 1, "of": len(rows)}}
 
 
 # ----- player profiles --------------------------------------------------------------------
@@ -3763,6 +3956,32 @@ def team_data(state: dict, slug: str) -> dict:
     return with_edits(load_teams()[slug], team_edits(state, slug))
 
 
+def development_reads(state: dict, slug: str) -> dict[str, dict]:
+    """player slug -> {"coachability": his level (recruits.COACHABILITY's words), "coach_level": 1
+    (Coach's Dream) to 6 (Set in His Ways), "potential_word": the word for his projected overall at
+    his potential (the scouting report's Potential headline words)} for your own roster only: the coach knows his
+    players; anyone else's (a future portal entrant among them) stays hidden. From the career's league
+    once it has one, else the real 2026 players' seeded values (league.base_development)."""
+    if not slug or slug != state.get("team"):
+        return {}
+    from coach_career import league as lg, recruits
+    from teamdata import game_scale
+    levels = [name for name, _, _ in recruits.COACHABILITY]
+    lgd = state.get("league") or {}
+    roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
+    if roster:
+        attrs = lgd.get("attrs") or game_scale.keys()
+        pairs = {c["id"]: (c.get("c"), game_scale.overall(lg.potential(c, attrs), c["pos"])) for c in roster}
+    else:
+        pairs = lg.base_development()
+    out = {}
+    for p in load_teams()[slug]["offense"] + load_teams()[slug]["defense"]:
+        c, pot = pairs.get(p.get("slug"), (None, 0))
+        if c in levels:
+            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": recruiting.word(pot)} if pot else {})}
+    return out
+
+
 def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict:
     """Store god-mode changes to one player. Ratings are whole numbers 0-99; the class, the
     development trait and the size must be real values. Names and positions stay as they
@@ -4055,7 +4274,8 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
         "injured": injured, "overall": shown_overall(p, base_p), "stars": recruit_stars(base_p), "ratings": ratings,
-        "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES), "dev_traits": list(DEV_TRAITS),
+        "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES),
+        **development_reads(state, team).get(p.get("slug"), {}),
         "key_ratings": key_ratings,
         # ratings v2: the position's attributes, the measurables, play style and traits
         "attributes": [{"key": k, "label": ratings_v2.ATTRIBUTES[k][0], "group": ratings_v2.ATTRIBUTES[k][1],

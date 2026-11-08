@@ -9,7 +9,7 @@
    - Right, the Player Intelligence Report on the selected prospect: portrait, name, position, hometown, national
      rank, stars and a status pill; Potential, Team Need and Report boxes; the sub-tabs Ratings (your staff's grade
      words as bars, never numbers the scouting does not reveal), Overview (the profile's summary) and Scouting (his
-     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 10, 15 or 5) and Add to / Remove from Board,
+     looks, flags, a coordinator's word, this and last week's reads); Send Scout (its cost in scouting points: 5 close to home or in the portal, 10 in a scout's area, 15 elsewhere; half that when half a look finishes his report) and Add to / Remove from Board,
      both patched in place with a toast; View Full Profile opens the profile modal.
    - Bottom, Scouting Operations: a bar that opens the staff rows (area dropdown, contract, narrowed bar, coverage).
    - All Reports (a modal, token "reports" or "reports:last_week|flags"): This Week · Last Week · Flags by scout.
@@ -284,6 +284,8 @@
       desk.pid = pid;
       syncRoute();
       for (const li of list.children) { const on = li.dataset.pid === pid; li.classList.toggle("selected", on); const b = li.querySelector(".sc-row-btn"); if (b) b.setAttribute("aria-pressed", String(on)); }
+      const picked = list.querySelector(".sc-row.selected");
+      if (picked && !window.matchMedia("(max-width: 899px)").matches) ui().keepInView(picked);   // an address's prospect shows in the list's own scroll
       intel.__show(pid, st.rows.find((r) => r.pid === pid) || null);
     }
     function drawRow(r) {
@@ -313,7 +315,7 @@
     // the selection: the address's prospect, else the first row
     queueMicrotask(() => select(desk.pid || (st.rows[0] && st.rows[0].pid) || null));
     return el("section", { class: "go-card sc-panel sc-db", "aria-label": "Prospect Database" }, [
-      el("div", { class: "sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h" }, ["Prospect Database ", ui().tip("Every prospect in the class: filter and sort the whole list.", "Prospect Database")])]), count]),
+      el("div", { class: "card-bar sc-panel-head" }, [el("div", {}, [el("h2", { class: "sc-h" }, ["Prospect Database ", ui().tip("Every prospect in the class: filter and sort the whole list.", "Prospect Database")])]), count]),
       search,
       el("div", { class: "sc-toolbar" }, [chips, el("div", { class: "sc-tools" }, [pos, sort])]),
       wrap, empty,
@@ -377,7 +379,8 @@
     panel.__show = async (pid, row) => {
       if (!pid) { ui().morph(body, el("div", {}, [el("p", { class: "muted sc-intel-empty", text: "Nobody here yet: clear the search or a filter." })])); return; }
       const mine = ++sel.seq;
-      if (sel.pid !== pid) sel.look = null;
+      const other = sel.pid !== pid;
+      if (other) sel.look = null;
       sel.pid = pid;
       panel.setAttribute("aria-busy", "true");
       let pr;
@@ -395,18 +398,19 @@
       sel.row = row || (await rowFor(pid, pr));
       if (mine !== sel.seq) return;
       paintIntel();
+      if (other) panel.scrollTop = 0;   // a wide screen: the report scrolls in its column, and another prospect opens at his top
     };
     panel.__row = (row) => { if (sel.pid === row.pid) { sel.row = row; if (sel.pr) paintIntel(); } };
     panel.__focus = () => { if (window.matchMedia("(max-width: 899px)").matches) panel.scrollIntoView({ block: "start" }); };
     // the selected prospect, drawn with the board's pieces (window.Recruiting.parts, web/profileview.js): the hero with
     // Nat. Rank, Pos. Rank, Team Need and his Potential (with how sure the read is), the tabs Report · Looks · Profile and,
     // on the tab row, Send Scout, View Full Profile and the board star
-    const CERTAINTY = { Low: "Settled Read", Medium: "Read Could Move", High: "Early Read" };
+    const CERTAINTY = { Low: "Confident", Medium: "Could Change", High: "Early Look" };
     const POT_TONE = { "All-American": "good", Elite: "good", Strong: "good", Solid: "warn", Fair: "warn", Weak: "bad" };
     function paintIntel() {
       const { row: r, pr } = sel, p = pr.public;
       const P = R().parts, me = s.team;
-      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, hometown: p.hometown, national_rank: p.national_rank,
+      const b = pr.row || { id: r.pid, name: p.name, stars: p.stars, position: p.position, display_pos: p.display_pos, archetype: p.archetype, class_of: p.class_of, hometown: p.hometown, national_rank: p.national_rank,
         pos_rank: p.pos_rank, height_display: p.height_display, weight_display: p.weight_display, looks: pr.looks, traits: pr.traits, priorities_known: p.priorities_known, list: [] };
       const looks = Math.min(REPORT_LOOKS, r.looks || 0), complete = looks >= REPORT_LOOKS;
       const sp = complete ? ["Fully Scouted", "good"] : looks > 0 ? [`${fmtLooks(looks)} of ${REPORT_LOOKS} Looks`, "warn"] : ["Unscouted", "muted"];
@@ -474,6 +478,7 @@
       const look = res.look || null;
       if (look && look.after && look.after.potential) r.potential = look.after.potential;
       if (look && "likes" in look) r.likes = look.likes;
+      document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid: r.pid, looks: res.looks != null ? res.looks : r.looks, potential: res.potential || r.potential || null } }));
       cur.st.left = res.hours_left;
       cur.st.points = Math.max(0, cur.st.points - (r.cost || 0));      // the trip's cost (the desk's `cost`); the next load reads the week's truth
       sel.look = look;
@@ -550,7 +555,7 @@
       el("span", { class: "muted small sc-ops-tag", text: "Staff assignments, regions and coverage" })]);
     const opsTip = ui().tip("Each scout takes a look at every prospect in his area each week: half a look, up to two. Pick the area each one covers.", "Scouting Operations");
     const manage = el("button", { type: "button", id: "sc-manage", class: "go-btn sc-manage", text: desk.ops ? "Hide Staff" : "Manage Staff", "aria-controls": "sc-ops-body" });
-    const bar = el("section", { class: `go-card sc-ops${desk.ops ? " open" : ""}`, "aria-label": "Scouting Operations" }, [el("div", { class: "sc-ops-head" }, [toggle, opsTip, summary, manage]), body]);
+    const bar = el("section", { class: `go-card sc-ops${desk.ops ? " open" : ""}`, "aria-label": "Scouting Operations" }, [el("div", { class: "card-bar sc-ops-head" }, [toggle, opsTip, summary, manage]), body]);
     const setOpen = (open) => {
       desk.ops = open;
       body.hidden = !open;

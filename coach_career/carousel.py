@@ -161,7 +161,7 @@ def generated(rng: random.Random, lgd: dict, role: str, slug: str, year: int, li
     model = rng.choice([t["coaches"][role] for t in lgd["teams"].values() if t["coaches"].get(role)])
     base = json.loads(json.dumps(like or model))
     ratings = {k: int(max(30, min(95, v + rng.gauss(level - 2, 6)))) for k, v in model["ratings"].items()}
-    base.update(name=recruits._name(rng, set()), ratings=ratings, since=year, coach_id=f"{slug}:{role}:{year}",
+    base.update(name=recruits._name(rng, _taken_names(lgd)), ratings=ratings, since=year, coach_id=f"{slug}:{role}:{year}",
                 previous_job=rng.choice(("NFL assistant", "Coordinator at an FCS program", "Assistant head coach",
                                          "Position coach", "Head coach at a lower level")),
                 ratings_generated=True, age_at=[year, rng.randint(34, 55)])
@@ -171,6 +171,8 @@ def generated(rng: random.Random, lgd: dict, role: str, slug: str, year: int, li
 # ----- the coaching market ----------------------------------------------------------------------
 
 def _taken_names(lgd: dict) -> set[str]:
+    """Every name in use (lowercase, as recruits._name checks): the league's coaches, yours among
+    them, and the market's. Every generated coach is drawn against it (coach_names)."""
     names = {c["name"].lower() for t in lgd["teams"].values() for c in t["coaches"].values() if c and c.get("name")}
     names |= {c["name"].lower() for c in (lgd.get("market") or {}).get("coaches", [])}
     return names
@@ -253,6 +255,11 @@ def market_refresh(state: dict) -> None:
         why = rng.choice(WHY_GENERATED["head_coach" if "head_coach" in roles else "coordinator"])
         mk["coaches"].append(_entry(coach, main, None, why, year, roles, rng))
     mk["year"] = year
+
+
+def _seasons(n: int) -> str:
+    """"1 season", "2 seasons"."""
+    return f"{n} season" if n == 1 else f"{n} seasons"
 
 
 def market_add(state: dict, coach: dict, role: str, team: Optional[str], why: str, year: int,
@@ -455,7 +462,7 @@ def run(state: dict) -> dict:
                     your_declined.setdefault(role, None)
                     continue
                 changes.append({"team": slug, "role": role, "old": c["name"], "reason": "moved on"})
-                market_add(state, c, role, slug, f"Left {_name(slug)} after {year - (c.get('since') or year)} seasons to look for a bigger job", year)
+                market_add(state, c, role, slug, f"Left {_name(slug)} after {_seasons(year - (c.get('since') or year))} to look for a bigger job", year)
                 open_coords.append((slug, role, "moved on"))
     your_poached, your_poached_why = [], {}
     for slug, role, reason in sorted(open_coords, key=lambda x: -attract(state, x[0])):

@@ -174,9 +174,20 @@ def check_layout(page, base, sid, theme) -> None:
     page.emulate_media(color_scheme=theme)
     page.set_viewport_size({"width": 1280, "height": 900})
     open_office(page, base, sid)
-    assert columns(page) == 2, "two columns at 1280"
-    side = page.evaluate("() => [document.querySelector('#tab-office .ofc-main').getBoundingClientRect().top, document.querySelector('#tab-office .ofc-side').getBoundingClientRect().top]")
-    assert abs(side[0] - side[1]) < 2, side
+    assert columns(page) == 3, "three columns at 1280: Next Game two wide beside Program Pulse"
+    # the rows line up: Next Game beside Program Pulse, This Week's Plan beside Recruiting Pulse, then News, the conference and Top Targets as one row
+    rows = page.evaluate("() => ['.ofc-hero', '.ofc-pulse', '.ofc-row', '.ofc-recruit', '.ofc-news', '.ofc-conf', '.ofc-targets'].map(s => { const e = document.querySelector('#tab-office ' + s); return e ? Math.round(e.getBoundingClientRect().top) : null; })")
+    assert rows[0] == rows[1] and rows[2] == rows[3] and rows[4] == rows[5] == rows[6], rows
+    bars = page.evaluate("""() => [...document.querySelectorAll('#tab-office .go-card')].map(c => { const b = c.querySelector(':scope > .card-bar'); if (!b) return [c.className, null];
+        const cs = getComputedStyle(b), r = b.getBoundingClientRect(), cr = c.getBoundingClientRect();
+        return [c.className, Math.round(r.top - cr.top), Math.round(r.left - cr.left), cs.textTransform, cs.color, getComputedStyle(c).borderRadius]; })""")
+    for b in bars:   # every card's header is its bar, flush with the card's top (inside its 1 px border), uppercase in the ink; square corners
+        assert b[1] is not None, f"a card without a bar: {b[0]}"
+        assert b[1] == 1 and b[2] == 1 and b[3] == "uppercase" and b[5] == "0px", b
+    ink = page.evaluate("() => getComputedStyle(document.querySelector('#tab-office .ofc-pulse > .card-bar')).color")
+    assert all(b[4] == ink for b in bars), "every bar's title reads in the one ink color"
+    assert page.evaluate("() => getComputedStyle(document.querySelector('#tab-office .ofc-pulse > .card-bar')).backgroundColor") != page.evaluate("() => getComputedStyle(document.querySelector('#tab-office .ofc-pulse')).backgroundColor"), "the bar is the team's color on the card"
+
     clean(page)
     kickers_title_case(page)
     no_sideways(page)

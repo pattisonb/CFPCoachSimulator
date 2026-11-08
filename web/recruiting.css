@@ -4,15 +4,15 @@
 
 /* ----- the stage row: tabs with counts, the search and the sort ----- */
 .go-stagebar { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
-.go-stages { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.go-stages button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border);
+.go-stages { display: flex; flex-wrap: wrap; gap: var(--gap-inline, 8px); min-width: 0; }
+.go-stages button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border: 1px solid var(--border);
   background: transparent; color: var(--text); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; }
-.go-stages button b { font-size: 12px; line-height: 18px; min-width: 18px; padding: 0 6px; border-radius: 999px; text-align: center; background: var(--panel-2); color: var(--muted); }
+.go-stages button b { font-size: 12px; line-height: 18px; min-width: 18px; padding: 0 6px; text-align: center; background: var(--panel-2); color: var(--muted); }
 .go-stages button:hover { border-color: var(--muted); }
 .go-stages button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-stages button[aria-pressed="true"] b { background: color-mix(in srgb, var(--bg) 22%, transparent); color: var(--bg); }
 .go-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-#rc-search { min-height: 40px; min-width: 220px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
+#rc-search { min-height: 40px; min-width: 220px; padding: 0 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 14px; }
 #rc-search:focus { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
 .go-tools .go-sel { min-height: 40px; }
 
@@ -33,12 +33,11 @@
 .go-list-foot .go-link { min-height: 36px; }
 
 /* a row: the dot, the avatar, the name and one line, the word of standing; nothing else */
-.go-row-recruit { display: grid; grid-template-columns: 10px 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 12px 8px 8px;
-  border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.go-row-recruit { display: grid; grid-template-columns: 10px 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 12px 8px 8px; border: 1px solid transparent; background: transparent; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .go-row-recruit:hover { background: var(--panel-2); border-color: var(--border); }
 .go-row-recruit[aria-pressed="true"] { background: var(--panel); border-color: var(--go-primary, var(--accent)); }
 .go-row-recruit:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
-.go-row-dot { width: 8px; height: 8px; border-radius: 50%; justify-self: center; background: transparent; }
+.go-row-dot { width: 8px; height: 8px; justify-self: center; background: transparent; }
 .go-row-dot.up { background: var(--good); }
 .go-row-dot.down { background: var(--bad); }
 .go-row-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
@@ -60,9 +59,9 @@
 /* the pane's column gap already spaces the tag row: no extra margin above or below it */
 .go-pane > .go-tags { margin-block: 0; }
 .go-pane-id { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.go-pane-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }    /* his status chip, and "OC likes him" when a coordinator vouches for him */
+.go-pane-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-inline, 8px); }    /* his status chip, and "OC likes him" when a coordinator vouches for him */
 .go-pane-name { font-size: 18px; line-height: 1.2; text-align: left; overflow-wrap: anywhere; }
-.go-pane .go-chip { min-height: 0; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); font-size: 11px; font-weight: 700;
+.go-pane .go-chip { min-height: 0; padding: 3px 10px; border: 1px solid var(--border); background: var(--panel-2); font-size: 11px; font-weight: 700;
   letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; cursor: default; margin-top: 2px; }
 .go-pane .go-chip.good { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
 .go-pane .go-chip.warn { color: var(--go-warn-text); border-color: color-mix(in srgb, var(--go-warn) 45%, var(--border)); }
@@ -72,7 +71,7 @@
 .go-pane-back { flex: none; min-width: 44px; min-height: 44px; padding: 0 12px; }
 
 /* the inline step: Message, Offer…, Raise NIL… (scoped to the pane: the Office's week steps share the class name) */
-.go-pane .go-step { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px dashed var(--go-primary, var(--accent)); cursor: default; }
+.go-pane .go-step { --card-gap: 10px; display: flex; flex-direction: column; align-items: stretch; gap: var(--card-gap); background: var(--panel-2); border: 1px dashed var(--go-primary, var(--accent)); cursor: default; }
 .go-pane .go-step label { display: flex; flex-direction: column; gap: 4px; }
 .go-pane .go-step .go-sel, .go-pane .go-step .go-nil { width: 100%; max-width: 420px; min-height: 40px; }
 .go-pane .go-step .go-nil { max-width: 140px; }
@@ -85,14 +84,16 @@
 .go-strip .go-stat-val { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
 
 /* the sub-tabs */
-.go-subtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+/* the strip never scrolls: no box a pixel short of its tabs, so no stray scrollbar (classic scrollbars show one
+   for a 1 px overflow); a narrow column wraps a tab to a second line instead */
+.go-subtabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); overflow: visible; }   /* the line is a shadow under the tabs, so the underline covers it without hanging past the box */
 /* the pane scrolls inside itself (it sticks beside a long board): the sub-tab strip pins to the top of that scroll
    box so a long profile never scrolls it away, and never shrinks (an overflow-x box may otherwise give way in the
    pane's column). On the desktop pane it pins over the card's top padding (top: minus that padding), flush under
    the border, so nothing shows through above it; on a phone the sheet's head is pinned too: the strip sits under
    it (--go-head-h) */
 .go-pane .go-subtabs { position: sticky; top: -20px; z-index: 2; background: var(--panel); flex: none; }
-.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none;
+.go-subtabs button { flex: none; min-height: 40px; padding: 0 12px; border: none; border-bottom: 2px solid transparent; background: none;
   color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .go-subtabs button:hover { color: var(--text); }
 .go-subtabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--go-primary, var(--accent)); }
@@ -130,9 +131,9 @@
 .go-race-pill.unoffered { background: transparent; border-width: 2px; padding: 0 7px; }
 
 /* ----- the Recruit menu: a popover under the button; a bottom sheet on a phone ----- */
-.go-menu { position: fixed; z-index: 70; min-width: 270px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow-y: auto; padding: 6px; border-radius: 14px;
+.go-menu { position: fixed; z-index: 70; min-width: 270px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow-y: auto; padding: 6px;
   background: var(--panel); border: 1px solid var(--border); box-shadow: 0 14px 44px var(--shadow, rgba(0, 0, 0, 0.45)); display: flex; flex-direction: column; gap: 8px; }
-.go-menu-item { display: flex; flex-direction: column; align-items: stretch; gap: 1px; width: 100%; min-height: 40px; padding: 7px 12px; border-radius: 10px; border: none;
+.go-menu-item { display: flex; flex-direction: column; align-items: stretch; gap: 1px; width: 100%; min-height: 40px; padding: 7px 12px; border: none;
   background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .go-menu-item:hover:not([aria-disabled="true"]), .go-menu-item:focus-visible { background: var(--panel-2); outline: none; }
 .go-menu-item:focus-visible { box-shadow: inset 0 0 0 2px var(--go-primary, var(--accent)); }
@@ -141,8 +142,9 @@
 .go-menu-main { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .go-menu-main b { font-size: 15px; }
 .go-menu-why { font-size: 12px; color: var(--muted); }
+.go-menu-item.go-menu-back b { color: var(--muted); font-weight: 600; }      /* the Official Visit picker's Back row */
 .go-menu-backdrop { position: fixed; inset: 0; z-index: 69; background: rgba(5, 8, 18, 0.45); }
-.go-menu.sheet { left: 0; right: 0; bottom: 0; top: auto; max-width: none; max-height: 82vh; border-radius: 16px 16px 0 0; border-width: 1px 0 0;
+.go-menu.sheet { left: 0; right: 0; bottom: 0; top: auto; max-width: none; max-height: 82vh; border-width: 1px 0 0;
   padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
 .go-menu.sheet .go-menu-item { min-height: 48px; }
 
@@ -150,11 +152,12 @@
 @media (max-width: 759px) {
   .go-board { grid-template-columns: minmax(0, 1fr); }
   .go-stagebar { flex-direction: column; align-items: stretch; }
-  .go-stages { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+  .go-stages { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-width: 100%; padding-bottom: 2px; scrollbar-width: none; }   /* sideways by finger, never a scrollbar */
+  .go-stages::-webkit-scrollbar { display: none; }
   .go-tools { width: 100%; }
   .go-tools #rc-search { flex: 1 1 160px; min-width: 0; }
   .go-row-recruit { min-height: 60px; }
-  .go-pane.sheet { position: fixed; inset: 0; top: 0; bottom: 0; z-index: 8; width: auto; height: 100dvh; max-height: none; margin: 0; border-radius: 0; border-width: 0;
+  .go-pane.sheet { position: fixed; inset: 0; top: 0; bottom: 0; z-index: 8; width: auto; height: 100dvh; max-height: none; margin: 0; border-width: 0;
     box-shadow: none; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
   .go-pane.sheet .go-pane-head { position: sticky; top: -12px; z-index: 1; margin: -12px -14px 0; padding: 10px 14px; background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .go-pane.sheet .go-subtabs { top: calc(var(--go-head-h, 0px) - 12px); }
@@ -189,7 +192,7 @@
 .go-scene-tail:empty { display: none; }
 /* your opening: the topics as chips with your program's case, three at a time (the pane's small chips are status; these are buttons) */
 .go-present-chips { gap: 8px; }
-.go-scene .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 700; border-radius: 999px; background: var(--panel-2); }
+.go-scene .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 700; background: var(--panel-2); }
 .go-scene .go-present-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-present-chip.on .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
 .go-present-count { align-self: center; }
@@ -201,7 +204,8 @@
 /* the call or visit's own window (recruiting.js openSceneWindow, the shared modal with .modal-scene): a conversation's
    width on a desktop, the whole screen on a phone; the window is the frame, so the scene drops its own card */
 .modal.modal-scene .modal-panel { width: min(680px, 100%); }
-.modal-scene .go-scene { padding: 0; border: 0; background: none; border-radius: 0; }
+.modal-scene .go-scene { padding: 0; border: 0; background: none; }
+.modal-scene .go-scene > .card-bar { margin: 0; }
 .modal-scene .go-scene:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 4px; }
 .modal-scene .go-scene .go-turn.him, .modal-scene .go-scene .go-pitch { background: var(--panel-2); }
 .modal-scene .go-scene .go-turn.you { background: color-mix(in srgb, var(--text) 8%, var(--panel)); }
@@ -211,7 +215,7 @@
 }
 
 /* his question in a scene: his line quoted, three answers while it waits, his reply once you answered */
-.go-question { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--go-primary, var(--accent)); background: var(--panel-2); }
+.go-question { --card-gap: 8px; display: flex; flex-direction: column; gap: var(--card-gap); border: 1px dashed var(--go-primary, var(--accent)); background: var(--panel-2); }
 .go-question p { margin: 0; }
 .go-question-line { line-height: 1.4; }
 .go-question-line q { font-style: italic; }
@@ -232,7 +236,8 @@
 
 /* The footprint map's zoom (us-map.js zoomer, recruiting.js mapCard): the region row, the dot labels, the cursor */
 .go-map-regions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
-@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; } }   /* a phone: one row that scrolls */
+@media (max-width: 759px) { .go-map-regions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; scrollbar-width: none; }
+  .go-map-regions::-webkit-scrollbar { display: none; } }   /* a phone: one row that scrolls by finger, never a scrollbar */
 .go-map-regions .go-btn { flex: none; white-space: nowrap; }
 .go-map-regions .go-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-map svg.us-map { touch-action: pan-x pan-y; aspect-ratio: 975 / 610; }                   /* one finger scrolls the page, two pinch the map */
@@ -250,7 +255,6 @@
 
 /* ----- motion: an action patches the board in place and shows what changed (styles.css owns the pulse,
    the fades, the busy spinner and the toast stack; these are the board's own) ----- */
-.go-changed.go-standing-word, .go-changed.go-chip, .go-changed.go-tag, .go-changed b { border-radius: 6px; }
 /* another recruit's pane cross-fades in (120 ms) */
 .go-pane { transition: opacity 120ms ease; }
 .go-pane.go-pane-in { opacity: 0; }
@@ -285,7 +289,7 @@
 @media (min-width: 900px) { .go-profile .rc-eval { columns: 2; column-gap: 24px; } }
 .go-profile .go-scouted { align-items: center; gap: 0 4px; padding: 3px 10px; }
 .go-profile .go-scouted .go-info-wrap { margin: 0 -6px 0 -10px; }
-.go-gchip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 5px; border-radius: 8px; white-space: nowrap; }
+.go-gchip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 5px; white-space: nowrap; }
 .go-gchip:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 @media (max-width: 700px) { .go-gchip { min-height: 44px; } }
 .go-profile .go-no-schools { margin: 2px 0; }
@@ -312,7 +316,7 @@
 .go-list-col .go-tools { width: 100%; }
 .go-list-col #rc-search { flex: 1 1 140px; min-width: 0; }
 /* a row's standing word is a chip in its tone */
-.go-row-recruit .go-standing-word { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; letter-spacing: 0.03em; }
+.go-row-recruit .go-standing-word { border: 1px solid var(--border); padding: 2px 10px; letter-spacing: 0.03em; }
 .go-row-recruit .go-standing-word.good { border-color: var(--good); }
 .go-row-recruit .go-standing-word.warn { border-color: var(--go-warn, var(--accent)); }
 .go-row-recruit .go-standing-word.bad { border-color: var(--bad); }
@@ -333,3 +337,42 @@
   .go-pane.sheet .pv-tabrow { top: -12px; }
   .go-pane.sheet .pv-acts .pv-star { flex: none; }
 }
+
+/* ----- the board fits the screen (docs/HOW_IT_WORKS.md "Board scrolling") ----- */
+/* list and pane side by side: the tab is at least the screen under the tab bar (--board-top and --board-below,
+   measured by season.js boardFit) and its two scrollers add nothing to its height (contain: size), so the page itself
+   never scrolls. The header's budgets stay put. The list scrolls in its card under the stage tabs and the search, with
+   Your Footprint's toggle as the card's foot; the pane scrolls in its own column, top to bottom, under its pinned tab
+   row. Each scroller is contained, so a wheel at its end never moves the page or the other column. A window too short
+   for the list's head and a few rows (the *-min values) grows the tab instead and the page scrolls the rest. Your
+   Footprint Map, opened, spans the width under the board and the page scrolls to it (the scrollers then hand the wheel
+   on at their ends, so nothing sticks). A phone (under 760 px): the page scrolls and the pane is the full-screen sheet. */
+:root { --board-list-min: 132px; --board-pane-min: 300px; --board-open-h: max(460px, calc(100dvh - var(--sticky-top, 0px) - 32px)); }
+@media (min-width: 760px) {
+  #tab-recruiting:not([hidden]):has(> .go-board) { display: grid; grid-template-columns: minmax(300px, 350px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto; grid-template-areas: "head head" "list pane" "map pane"; gap: 14px var(--pv-gap); padding-bottom: 12px;
+    min-height: calc(100vh - var(--board-top, 0px) - var(--board-below, 16px)); min-height: calc(100dvh - var(--board-top, 0px) - var(--board-below, 16px)); }
+  #tab-recruiting > .go-board { display: contents; }
+  #tab-recruiting > .go-board-head { grid-area: head; margin: 0; }
+  #tab-recruiting .go-list-col { grid-area: list; min-height: 0; }
+  /* the list: its rows scroll, the stage tabs, the search and the sort above them stay; a little room on every side so
+     a focus ring or the selected row's border is never clipped, and room under the last row */
+  #tab-recruiting .go-list-recruits { flex: 1 1 0; contain: size; min-height: var(--board-list-min); overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none;
+    margin: 0 -12px 0 -4px; padding: 3px 4px 12px; scrollbar-width: thin; }
+  #tab-recruiting .go-list-recruits > * { flex: none; }
+  /* Your Footprint, closed: the list card's foot (one toggle the card's width), so the pane runs to the bottom */
+  #tab-recruiting > .go-map { grid-area: map; margin: 0; }
+  #tab-recruiting > .go-map.closed { margin-top: -14px; }
+  #tab-recruiting:has(> .go-map.closed) .go-list-col { border-bottom: 0; padding-bottom: 12px; }
+  #tab-recruiting > .go-map.closed .go-map-head > .go-display { display: none; }
+  #tab-recruiting > .go-map.closed .go-map-toggle { flex: 1 1 auto; margin: 0; }
+  /* the pane: its own column's height, scrolling inside itself (no longer sticky beside a long page) */
+  #tab-recruiting .go-pane { grid-area: pane; position: relative; top: auto; max-height: none; contain: size; min-height: var(--board-pane-min);
+    overflow-y: auto; overscroll-behavior: contain; padding-bottom: 24px; }
+  /* the map opened: the board keeps one screen and the map spans the width under it; the page scrolls, and the two
+     scrollers hand the wheel to it at their ends */
+  #tab-recruiting:not([hidden]):has(> .go-map:not(.closed)) { grid-template-rows: auto var(--board-open-h) auto; grid-template-areas: "head head" "list pane" "map map"; }
+  #tab-recruiting:has(> .go-map:not(.closed)) :is(.go-list-recruits, .go-pane) { overscroll-behavior: auto; }
+}
+/* the scene's bar: his avatar beside the line ("On the Phone · his name") */
+.card-bar .go-scene-who { display: flex; align-items: center; gap: 10px; min-width: 0; }

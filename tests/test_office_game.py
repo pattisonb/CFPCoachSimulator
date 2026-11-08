@@ -89,6 +89,22 @@ def check_bye(page, base, sid) -> None:
     assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
 
 
+def check_no_game(page, base, sid) -> None:
+    """Championship Week for a team not in a title game: the hero's kicker names the week and its date, never
+    "Invalid Date" (the week's dates are a {start, end, main} record, not a date)."""
+    open_tab(page, base, sid, "office", "#tab-office .ofc-hero")
+    s = call(base, f"/api/season/{sid}")
+    hero = page.text_content("#tab-office .go-game-next .ofc-hero-head .go-kicker")
+    assert "No Game This Week" in page.text_content("#tab-office .go-game-next"), hero
+    w = str(s["current_week"] + 1)
+    assert "Invalid" not in hero and (s["week_labels"].get(w) or f"Week {w}") in hero, hero
+    main = ((s.get("week_dates") or {}).get(w) or {}).get("main")
+    assert main, w
+    from datetime import date
+    d = date.fromisoformat(main)
+    assert d.strftime("%b") in hero and str(d.day) in hero, (hero, main)
+
+
 def sim_week(page, base, sid) -> None:
     page.wait_for_selector("#tab-office .go-play [data-play=advance]:not([disabled])", timeout=60_000)
     page.click("#tab-office .go-play [data-play=advance]")
@@ -96,6 +112,55 @@ def sim_week(page, base, sid) -> None:
     page.wait_for_function("() => !document.body.classList.contains('simming')", timeout=600_000)
     page.wait_for_selector("#tab-office .go-game-last .go-leaders li", timeout=120_000)
     time.sleep(1.0)
+
+
+def check_gameday(page, base, sid) -> None:
+    """Game Day alone (the week not advanced): the hero leads with your result and still shows the next game;
+    it never calls a week you just played a bye."""
+    page.wait_for_selector("#tab-office .go-play [data-play=gameday]:not([disabled])", timeout=60_000)
+    page.click("#tab-office .go-play [data-play=gameday]")
+    page.wait_for_selector("#gd-skip", timeout=600_000)          # the game plays drive by drive: skip to the final
+    page.click("#gd-skip")
+    page.wait_for_selector(".modal:not([hidden]) .modal-close", timeout=60_000)   # the box score opens on the final
+    page.click(".modal:not([hidden]) .modal-close")
+    page.wait_for_selector("#tab-office .go-game-last .go-leaders li", timeout=120_000)
+    time.sleep(1.0)
+    s = call(base, f"/api/season/{sid}")
+    this = next(x for x in s["schedule"] if x["opponent"] and x["week"] == s["current_week"] + 1)
+    nxt = next(x for x in s["schedule"] if x["opponent"] and not x["played"])
+    assert this["played"] and not nxt["played"], (this, nxt)
+    k = page.text_content("#tab-office .go-game-next .go-kicker")
+    want = f"{'Won' if this['won'] else 'Lost'} {this['points_for']}–{this['points_against']} This Week · Next Game · "
+    assert k.startswith(want) and "Bye" not in k and (s["week_labels"].get(str(nxt["week"])) or f"Week {nxt['week']}") in k, (k, want)
+    assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
+    assert page.query_selector("#tab-office .go-play [data-play=advance]:not([disabled])"), "Advance is next"
+
+
+def check_week_strip(page, base, sid) -> None:
+    """The week strip (Pre, W1 ... Title) is for the screens that show a picked week; Standings, Stats, Awards,
+    Season Recap and Bowls show the season as it stands and leave it out."""
+    open_tab(page, base, sid, "standings", "#tab-standings table")
+    assert page.eval_on_selector("#week-strip", "e => e.offsetParent === null"), "no week strip on Standings"
+    page.click("#tab-league")                              # the league tabs live behind League ▾
+    page.click(".go-menu .go-menu-item:has(b:text-is('Rankings'))")
+    page.wait_for_selector("#tab-rankings:not([hidden])")
+    assert page.eval_on_selector("#week-strip", "e => e.offsetParent !== null"), "the week strip on Rankings"
+
+
+def check_selected(page, base, sid) -> None:
+    """Championship Week played: the bracket is built and the bowls are picked, so the Office can already name your
+    next game. The Bracket and Bowls tabs open with it (never a bowl in the Office with no Bowls tab to see)."""
+    open_tab(page, base, sid, "office", "#tab-office .ofc-hero")
+    s = call(base, f"/api/season/{sid}")
+    assert s["bracket"] and s["bowls"], "the bracket and the bowls are set once Championship Week is played"
+    hid = page.evaluate("() => ['bracket', 'bowls'].map(t => document.querySelector(`#season-tabs button[data-tab=${t}]`).hidden)")
+    assert hid == [False, False], f"Bracket and Bowls tabs hidden after Championship Week: {hid}"
+    nxt = next((x for x in s["schedule"] if x["opponent"] and not x["played"]), None)
+    if nxt:   # your bowl or playoff game is in the Office; the Bowls tab has the real lineup, not a projection
+        assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
+    open_tab(page, base, sid, "bowls", "#tab-bowls h3")
+    assert "Projected" not in page.text_content("#tab-bowls h3"), page.text_content("#tab-bowls h3")
+    clean(page)
 
 
 def check_played(page, base, sid) -> None:
@@ -146,7 +211,7 @@ def check_programs(page, base, sid) -> None:
     open_tab(page, base, sid, "programs", "#tab-programs .go-programs tbody tr")
     assert page.is_visible("#tab-programs .go-program .go-program-bars"), "Your Program's bars"
     assert page.is_visible("#tab-programs .go-programs"), "every program, open"
-    assert page.inner_text("#season-tabs button[data-tab=programs]") .strip().lower() == "programs"
+    assert page.text_content("#season-tabs button[data-tab=programs]").strip().lower() == "programs"   # the League menu's entry
     assert page.query_selector("#tab-programs .go-programs tr.mine"), "your row is marked"
     assert page.query_selector("#tab-programs .go-job"), "the AD's goal sits with the program"
     page.reload()
@@ -218,6 +283,16 @@ def pick_team(season):
     return season.new_season(play, "full", seed=5, career=True), season.new_season(bye, "full", seed=6, career=True)
 
 
+def pick_done(season):
+    """A career at Championship Week whose team is not in a title game (no game of its own this week)."""
+    for slug in ("rice", "kent-state", "akron", "umass", "kennesaw-state"):
+        st = season.new_season(slug, "full", seed=7, career=True)
+        season.advance_to(st, season.CCG_WEEK - 1)
+        if not any(g["week"] == season.CCG_WEEK and slug in (g["home"], g["away"]) for g in st["games"].values()):
+            return st
+    raise AssertionError("every probe team made its conference title game")
+
+
 if __name__ == "__main__":
     try:
         from playwright.sync_api import sync_playwright
@@ -229,6 +304,11 @@ if __name__ == "__main__":
     assert play and bye, "a team with a week-1 game and one with a week-1 bye"
     season.save_season(play)
     season.save_season(bye)
+    done = pick_done(season)
+    season.save_season(done)
+    selected = season.new_season("rice", "full", seed=7, career=True)   # Championship Week played: the field is set
+    season.advance_to(selected, season.CCG_WEEK)
+    season.save_season(selected)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
     server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
@@ -252,9 +332,13 @@ if __name__ == "__main__":
             page.on("dialog", lambda d: d.dismiss())
             check_upcoming(page, base, play["id"])
             check_bye(page, base, bye["id"])
+            check_week_strip(page, base, bye["id"])
+            check_no_game(page, base, done["id"])
+            check_selected(page, base, selected["id"])
             check_roster(page, base, play["id"])
             check_tip(page, base, play["id"])
             open_tab(page, base, play["id"], "office", "#tab-office .ofc-hero")
+            check_gameday(page, base, play["id"])
             sim_week(page, base, play["id"])
             check_played(page, base, play["id"])
             check_phone(page, base, play["id"])
@@ -264,7 +348,7 @@ if __name__ == "__main__":
         print("office game ok: Next Game before, Last Game beside the plan under the Next Game hero after a sim (quarters, leaders, Full Box Score), a bye's next "
               "opponent, the standing line, the Programs tab (and a reload), the Scouting ⓘ on a phone, the roster's OVR")
     finally:
-        for sid in (play["id"], bye["id"]):
+        for sid in (play["id"], bye["id"], done["id"], selected["id"]):
             try:
                 call(base, f"/api/season/{sid}", method="DELETE")
             except Exception:  # noqa: BLE001

@@ -17,6 +17,8 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
+from sim import fcs_names
+
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 COACHES_DIR = ROOT / "data" / "coaches"
 
@@ -229,13 +231,13 @@ def load(coach_id: str) -> Optional[dict]:
         p = _path(coach_id)
     except ValueError:
         return None
-    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+    return json.loads(fcs_names.rewrite_text(p.read_text(encoding="utf-8"))) if p.exists() else None
 
 
 def list_all() -> list[dict]:
     if not COACHES_DIR.exists():
         return []
-    out = [json.loads(p.read_text(encoding="utf-8")) for p in COACHES_DIR.glob("*.json")]
+    out = [json.loads(fcs_names.rewrite_text(p.read_text(encoding="utf-8"))) for p in COACHES_DIR.glob("*.json")]
     return sorted(out, key=lambda c: c.get("updated_at", ""), reverse=True)
 
 

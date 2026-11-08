@@ -12284,8 +12284,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "kestrel-bay:head_coach",
-  "team_slug": "kestrel-bay",
+  "coach_id": "fcs-new-england:head_coach",
+  "team_slug": "fcs-new-england",
   "name": "Marcus Caudill",
   "since": 2024,
   "fictional": true,
@@ -12314,8 +12314,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "kestrel-bay:offensive_coordinator",
-  "team_slug": "kestrel-bay",
+  "coach_id": "fcs-new-england:offensive_coordinator",
+  "team_slug": "fcs-new-england",
   "name": "Dwayne Ashby",
   "since": 2020,
   "fictional": true,
@@ -12342,8 +12342,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "kestrel-bay:defensive_coordinator",
-  "team_slug": "kestrel-bay",
+  "coach_id": "fcs-new-england:defensive_coordinator",
+  "team_slug": "fcs-new-england",
   "name": "Dale Tillman",
   "since": 2023,
   "fictional": true,
@@ -12369,8 +12369,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "alder-ridge-state:head_coach",
-  "team_slug": "alder-ridge-state",
+  "coach_id": "fcs-mid-atlantic:head_coach",
+  "team_slug": "fcs-mid-atlantic",
   "name": "Marcus Mabe",
   "since": 2025,
   "fictional": true,
@@ -12399,8 +12399,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "alder-ridge-state:offensive_coordinator",
-  "team_slug": "alder-ridge-state",
+  "coach_id": "fcs-mid-atlantic:offensive_coordinator",
+  "team_slug": "fcs-mid-atlantic",
   "name": "Mark Kincaid",
   "since": 2025,
   "fictional": true,
@@ -12427,8 +12427,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "alder-ridge-state:defensive_coordinator",
-  "team_slug": "alder-ridge-state",
+  "coach_id": "fcs-mid-atlantic:defensive_coordinator",
+  "team_slug": "fcs-mid-atlantic",
   "name": "Doug Strickland",
   "since": 2021,
   "fictional": true,
@@ -12454,8 +12454,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "calder-springs:head_coach",
-  "team_slug": "calder-springs",
+  "coach_id": "fcs-southeast:head_coach",
+  "team_slug": "fcs-southeast",
   "name": "Mike Caudill",
   "since": 2026,
   "fictional": true,
@@ -12484,8 +12484,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "calder-springs:offensive_coordinator",
-  "team_slug": "calder-springs",
+  "coach_id": "fcs-southeast:offensive_coordinator",
+  "team_slug": "fcs-southeast",
   "name": "Doug Ferrante",
   "since": 2026,
   "fictional": true,
@@ -12512,8 +12512,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "calder-springs:defensive_coordinator",
-  "team_slug": "calder-springs",
+  "coach_id": "fcs-southeast:defensive_coordinator",
+  "team_slug": "fcs-southeast",
   "name": "Wes Dorsey",
   "since": 2025,
   "fictional": true,
@@ -12539,8 +12539,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "port-rennick-state:head_coach",
-  "team_slug": "port-rennick-state",
+  "coach_id": "fcs-gulf-coast:head_coach",
+  "team_slug": "fcs-gulf-coast",
   "name": "Kevin Westbrook",
   "since": 2020,
   "fictional": true,
@@ -12569,8 +12569,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "port-rennick-state:offensive_coordinator",
-  "team_slug": "port-rennick-state",
+  "coach_id": "fcs-gulf-coast:offensive_coordinator",
+  "team_slug": "fcs-gulf-coast",
   "name": "Wes Dorsey",
   "since": 2025,
   "fictional": true,
@@ -12597,8 +12597,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "port-rennick-state:defensive_coordinator",
-  "team_slug": "port-rennick-state",
+  "coach_id": "fcs-gulf-coast:defensive_coordinator",
+  "team_slug": "fcs-gulf-coast",
   "name": "Greg Westbrook",
   "since": 2019,
   "fictional": true,
@@ -12624,8 +12624,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "wendt-lake-tech:head_coach",
-  "team_slug": "wendt-lake-tech",
+  "coach_id": "fcs-great-lakes:head_coach",
+  "team_slug": "fcs-great-lakes",
   "name": "Brian Westbrook",
   "since": 2022,
   "fictional": true,
@@ -12654,8 +12654,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "wendt-lake-tech:offensive_coordinator",
-  "team_slug": "wendt-lake-tech",
+  "coach_id": "fcs-great-lakes:offensive_coordinator",
+  "team_slug": "fcs-great-lakes",
   "name": "Brian Strickland",
   "since": 2018,
   "fictional": true,
@@ -12682,8 +12682,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "wendt-lake-tech:defensive_coordinator",
-  "team_slug": "wendt-lake-tech",
+  "coach_id": "fcs-great-lakes:defensive_coordinator",
+  "team_slug": "fcs-great-lakes",
   "name": "Phil Westbrook",
   "since": 2026,
   "fictional": true,
@@ -12709,8 +12709,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "red-prairie-state:head_coach",
-  "team_slug": "red-prairie-state",
+  "coach_id": "fcs-plains:head_coach",
+  "team_slug": "fcs-plains",
   "name": "Lance Kincaid",
   "since": 2020,
   "fictional": true,
@@ -12739,8 +12739,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "red-prairie-state:offensive_coordinator",
-  "team_slug": "red-prairie-state",
+  "coach_id": "fcs-plains:offensive_coordinator",
+  "team_slug": "fcs-plains",
   "name": "Brian Rourke",
   "since": 2025,
   "fictional": true,
@@ -12767,8 +12767,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "red-prairie-state:defensive_coordinator",
-  "team_slug": "red-prairie-state",
+  "coach_id": "fcs-plains:defensive_coordinator",
+  "team_slug": "fcs-plains",
   "name": "Trent Dorsey",
   "since": 2018,
   "fictional": true,
@@ -12794,8 +12794,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "talus-peak:head_coach",
-  "team_slug": "talus-peak",
+  "coach_id": "fcs-mountain-west:head_coach",
+  "team_slug": "fcs-mountain-west",
   "name": "Rick Vasquez",
   "since": 2021,
   "fictional": true,
@@ -12824,8 +12824,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "talus-peak:offensive_coordinator",
-  "team_slug": "talus-peak",
+  "coach_id": "fcs-mountain-west:offensive_coordinator",
+  "team_slug": "fcs-mountain-west",
   "name": "Bill Ashby",
   "since": 2024,
   "fictional": true,
@@ -12852,8 +12852,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "talus-peak:defensive_coordinator",
-  "team_slug": "talus-peak",
+  "coach_id": "fcs-mountain-west:defensive_coordinator",
+  "team_slug": "fcs-mountain-west",
   "name": "Wes Lindgren",
   "since": 2024,
   "fictional": true,
@@ -12879,8 +12879,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "cedar-sound:head_coach",
-  "team_slug": "cedar-sound",
+  "coach_id": "fcs-pacific-northwest:head_coach",
+  "team_slug": "fcs-pacific-northwest",
   "name": "Mark Westbrook",
   "since": 2022,
   "fictional": true,
@@ -12909,8 +12909,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "cedar-sound:offensive_coordinator",
-  "team_slug": "cedar-sound",
+  "coach_id": "fcs-pacific-northwest:offensive_coordinator",
+  "team_slug": "fcs-pacific-northwest",
   "name": "Mike Brandt",
   "since": 2025,
   "fictional": true,
@@ -12937,8 +12937,8 @@
   "ratings_generated": true
  },
  {
-  "coach_id": "cedar-sound:defensive_coordinator",
-  "team_slug": "cedar-sound",
+  "coach_id": "fcs-pacific-northwest:defensive_coordinator",
+  "team_slug": "fcs-pacific-northwest",
   "name": "Dwayne Brandt",
   "since": 2023,
   "fictional": true,

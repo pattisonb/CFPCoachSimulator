@@ -86,7 +86,12 @@ pull request gets a preview deployment with its own link. `game.zip`, `version.j
 The old GitHub Pages address still builds the same `dist/` on every push to `main`
 (`.github/workflows/pages.yml`) and shows a strip pointing to the new site, because careers
 are saved in the browser per address: a player opens theirs there, uses Download Career, and
-Load Career on the new site.
+Load Career on the new site. It also serves as a preview of any branch when Vercel's free plan
+runs out of preview deployments: in the repository's Actions, run the Pages workflow with a
+branch name to build that branch, or set the repository variable `PAGES_BRANCH` (Settings,
+Secrets and variables, Actions, Variables) to pin the site to a branch until it is cleared, so
+the merges that redeploy `main` in between do not put `main` back. The build writes
+`dist/preview.json` (branch, commit, build time) and the strip says which branch the copy is.
 
 The data refresh tools (`tools/fetch_*.py`, `tools/forward_test.py`, the realism and
 calibration tools) stay on the owner's computer; what they write under `data/` is
@@ -138,7 +143,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/calibrate.py` | Per-team stat benchmarks against FBS 2025 averages (`league` mode uses the real rosters) |
 | `tools/fetch_linescores.py`, `tools/calibrate_late.py` | Quarter scores 2014-2025 and the late-game comparison (close games, comebacks, overtime) |
 | `tools/fetch_boxscores.py` | Downloads every played game's player box score into `data/boxscores/` |
-| `tools/derive_tendencies.py` | Each team's real 2026 pass rate, pace and usage shares, used by `teamdata/build_teams.py` |
+| `data/observed_tendencies.json`, `data/real_adjustments.json` | Each team's real 2026 pass rate, pace and usage shares, and the depth-chart and usage nudges from the real box scores; committed, read by `teamdata/build_teams.py` (the tools that derived them are gone) |
 | `tools/calibrate_players.py` | Compares sim player lines and usage shares with the real box scores |
 | `tools/forward_test.py` | Freezes the sim's picks for the next week of real games, then scores them once played |
 | `data/predictions/` | The frozen weekly picks (`weekNN.json`) and their score reports (`weekNN_score.*`) |
@@ -151,11 +156,12 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `coach_career/carousel.py` | The coaching carousel: AD goals, firings, hires, the coaching market |
 | `coach_career/programs.py` | Program ratings: every program's living rating (prestige, winning, NIL, market, conference, coach), its tier and the AD's goal |
 | `tools/build_program_history.py`, `tools/build_program_market.py`, `tools/check_programs.py` | The starting values (thirty seasons of results; real crowds and TV) in `data/program_history.json` and `data/program_market.json`; the drift check |
+| `tools/fetch_drafts.py` | Downloads the 2016-2025 NFL drafts from Wikipedia's player-selection tables into `data/nfl_drafts.json` |
+| `data/nfl_drafts.json` | Every program's draft picks by year, round and position group: the source of the Pro Pipeline grade |
 | `tools/check_carousel.py` | Plays quick offseasons and counts the carousel's churn against real years |
 | `web/recruiting.js`, `web/scouting.js`, `web/careersave.js` | The Recruiting, Prospects and Scouting tabs; Download career and Load career (`.ccsave` files) |
 | `tools/check_recruiting.py` | Plays career seasons and holds their recruiting to the real classes |
 | `tools/clean_data.py` | Clears the generated data that piles up under `data/` (orphan league files, box scores without a season, long-run output) and the site build (`dist/`, `data/base_*.json`); dry run by default |
-| `tools/export_ratings.py` | Every real player's ratings and potential on the game's scale as one JSON file (`data/player_ratings.json`, generated) |
 
 ## API
 
@@ -210,7 +216,9 @@ personnel on offense, nickel on defense); the rest of the 85-man roster rotates 
 **Returners are roles, not roster slots.** The designated kick and punt returners return
 kicks whether or not they start. If a team has no designated returner, the engine picks
 the best return rating: 35% EA kick-return skill, 20% speed, 15% acceleration, 15%
-elusiveness, 10% vision, 5% ball security. Return yardage and return-touchdown odds use
+elusiveness, 10% vision, 5% ball security. On the page every player's returner rating sits on one
+scale, whatever his position (the league's designated returners are its 50 mark), and the
+KR and PR lists leave out linemen, quarterbacks and kickers. Return yardage and return-touchdown odds use
 the same rating.
 
 **Punts** (`_attempt_punt` in `engine/drive_functions.py`, constants `PUNT_*` in
@@ -855,7 +863,10 @@ years he already is, and cut into the six shares exactly. Every Elite player is 
 Star players are Film Junkies (the furthest ahead 17% Coach's Dreams); Impact players 81% Quick
 Study, 11% Steady Grinder, 8% Film Junkie; Normal players 55% Steady Grinder, 30% Slow to Click,
 15% Set in His Ways. Potential: each attribute's career gain times the share of his career left,
-divided by what an average player realizes in that time, times a level from his stars (8,300
+divided by what an average player realizes in that time (or what he realizes at his own pace,
+when he learns faster: a Coach's Dream junior is not given room for twice his position's real
+career gain, which made the real top juniors gain 15-20 points in a career's first offseason),
+times a level from his stars (8,300
 players' stars ship in the model), his trait (Elite 1.35 to Normal 0.9) and 2% per point ahead.
 A fifth-year player has no room. One offseason over the whole league raises overall by 4.3
 (first-year players), 4.2, 3.8 and 3.3 (seniors), against real year-to-year steps of 2.2 to 5.8.
@@ -884,9 +895,13 @@ actions have earned with him.
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
 the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
 range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
-tells you one priority for sure and his number), an official visit invite 10 (at your next home
-game; a win sells, a 21-point loss hurts, a big stadium helps, and the weekend tells you all
-three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
+tells you one priority for sure and his number), an official visit invite 10 (on a home weekend
+you pick: the Recruit menu's Official Visit opens a list of your regular-season home games still
+to play, "Wk 6 · vs #4 USC", the first weekend he has free marked; a weekend he already visits
+another school is grayed with that school's name, one official visit a weekend and one per school,
+no rebooking; the API's `week` on the act, which Auto-recruit and the AI schools never pass, so
+they take his first free weekend as before; a win sells, a 21-point loss hurts, a big stadium
+helps, and the weekend tells you all three of his priorities), a scouting trip 5 (one look by your best evaluator, any week, allowed
 while his report is short of complete; a prospect with a complete report shows his grades in one
 line on his card and at the top of his profile) and an offer nothing.
 **A commitment in words.** A committed recruit's profile (`prospects.flip_view`, the profile's
@@ -935,13 +950,27 @@ pitch picker shows it as strong, fair or weak): playing time from where he would
 your record and poll, prestige, proximity, coach, academics, and NIL as your offer against his
 ask. A pitch on one of his priorities counts 1x to 4x by that strength (1 + 3 x strength); under
 25% it backfires (he isn't buying it: minus half the action's worth); any other topic counts
-0.3x to 0.7x. **Stages:** cold until a contact, in touch, his top group (his top eight schools by
+0.3x to 0.7x.
+
+**Path to the League** is a pitch topic like the rest (spec
+`docs/superpowers/specs/2026-11-06-pro-pipeline-design.md`). Your strength on it at a school is that
+school's Pro Pipeline grade at his position group (OL the mean of OT and IOL, DL of EDGE and DL,
+kickers and punters the overall grade, an athlete the group of his engine position), as a pull `_logistic(1.2 × (grade − 50) / 25)`. About one
+recruit in ten has it first (`PRIORITY_ODDS` pro 0.10; the portal 0.05, top transfers 0.08), and
+dads, trainers and high school coaches carry it as deciders. The lines claim a pipeline only when
+the strength is at `CLAIM_FROM`; below it they give the honest lead, which says "be the first" only where the school has no pick at his group in ten drafts (`pro_any`) and "we've sent some" where it has. A kicker or punter's strength reads the overall grade, so the lines about his own spot wait for his own group's grade (`pro_spot`) and the rest speak of the program.
+
+**Stages:** cold until a contact, in touch, his top group (his top eight schools by
 interest, your offer in hand), visited, committed. An official visit needs his top group; an
 offer before any contact counts half. AI boards start warm (the staff has evaluated and spoken to
 everyone on them, one priority known) and pitch the strongest priority they know. Each contact
 from a school is worth a little less than the last, and a
 prospect takes one message and one call a week from a school (more contact is not more interest:
-the rest of your hours go to other prospects). **Pestering costs you:** after three contacts while
+the rest of your hours go to other prospects). The week is the one a contact lands in
+(`recruiting.contact_week`): yours count toward the next step, Auto-recruit's made during a step
+count toward that step, so your staff never use up the week you are about to play; in the portal
+the portal's own week counts (the season's week stands still there). A call or visit left open
+closes at the step, and the next week's call is yours again. **Pestering costs you:** after three contacts while
 he is not considering you (you outside his top three, or under 60% of his leader's interest, among
 the schools that have worked or offered him; an offer does not change that, an official visit or his
 commitment does), each further message, call or in-home visit counts against you (1.5 times the
@@ -1196,12 +1225,15 @@ first three weeks (`COMMIT_FREEZE_WEEKS`), so there is time to scout and build a
 the class moves. A school's weekly hours are a multiple of 5.
 
 **The screens** (`web/recruiting.js`; the Office is `web/office.js` and `web/office.css`). A career
-opens on the **Office**, two columns (one below 900 px). On the left: the **Next Game** hero (the
-week and date, the game's name or rivalry, a Home Game / Away Game / Neutral Site chip, both teams
+opens on the **Office**, one grid of three columns whose rows line up (one column below 900 px): **Next Game**
+two columns wide beside Program Pulse, This Week's Plan (with Last Game) beside Recruiting Pulse, What Changed across,
+then Program News, Around the Conference and Top Targets as one row. The **Next Game** hero's bar is its kicker line (the
+week and date, with the Home Game / Away Game / Neutral Site chip in it), then the game's name or rivalry, both teams
 with marks, ranks, mascots and records; for this week's game the **Win Chance**, the game preview's
 simulated win probability shown between 1% and 99%, and the projected score; then the play card
-with **Game Day** first while your game is unplayed). On a bye it says "Bye This Week" and names
-the next opponent; a week with no game left says so; once the season is over it is the Season
+with **Game Day** first while your game is unplayed). Once Game Day is played and the week not yet
+advanced, the kicker leads with your result ("Won 83–0 This Week · Next Game · Week 5"). On a bye it
+says "Bye This Week" and names the next opponent; a week with no game left says so; once the season is over it is the Season
 Complete card with **On to the Offseason**. Under it **Last Game** (W or L and the final, Pass
 Yds, Rush Yds, TFL and Sacks for your side, the score by quarter, the game's top passer, rusher,
 receiver and defender, and **Full Box Score**, the box-score modal with its `box:` token) beside
@@ -1215,11 +1247,11 @@ your place). On the right: **Program Pulse** (record, the conference standing li
 SEC · 3-0 SEC", the Standings tab's place, the last game, the AD's goal and mood), **Recruiting
 Pulse** (commitments of spots, Recruiting Hours, NIL Points, Scouting Points, Spots Filled, class
 rank) and **Top Targets** (your hottest targets with their standing word; Board → opens
-Recruiting). The tab bar is two rows: the
+Recruiting). The tab bar is one row of the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
-Schedule, Depth Chart) and a League row that follows the calendar (Standings, Rankings, Stats
-and, in a career, **Programs** all year; Awards from week 4; Classes, Bracket and Bowls from selection week; Summary when the
-season is done). A plain season keeps every League tab. The Depth Chart button opens its own
+Schedule, Depth Chart) with a **League ▾** menu at its right end that follows the calendar (Standings, Rankings, Stats
+and, in a career, **Programs** all year; Awards from week 4; Classes from selection week; Bracket and Bowls as soon as Championship Week is played (the field is set then, so the Office can name your bowl or playoff game); Season Recap
+all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
 screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a
 time (List view), a Players box of portraits, the Redshirts board and Availability; its moves,
@@ -1252,11 +1284,27 @@ he asks about a named player on that call (the starter ahead of him, or another 
 offered), the scene shows his line with three answers (straight, a promise, a sidestep; each button a Title Case
 label, Tell Him Straight, Make Him a Promise or Sidestep It, over the line you say) and
 locks the pitch until you pick one; his reply comes back in place (no toast) and History keeps
-the answer (`Told him straight about …`, `Promised him the job over …`). The pane, the Prospect Profile popup and the
+the answer (`Told him straight about …`, `Promised him the job over …`). A Package Deal asks about his
+mate instead whenever his or his family's package line is said (a first call, a call once you know
+his story, every in-home visit; `scenes.package_about`, the mate a prospect in the class not yet
+signed): the question's three answers ride on it (`answers`, by whether you have offered the mate).
+Not offered: **Tell Him Straight** ("I can't promise Khalil a spot today. I'll look at him.", nothing
+either way), **Promise Him an Offer** ("Khalil gets an offer this week. You have my word.": a
+`package` promise on his contact, kept the week step the mate holds your offer within
+`PACKAGE_PROMISE_WEEKS` (2) of it for `PACKAGE_KEPT` (2) points and a `promise_kept` line, "Khalil got
+his offer. You kept your word, Coach.", broken after that without it: he cools `COOL_WEEKS`, or a
+commit's firmness drops `PROMISE_RIVAL`, with a `promise_broken` event), **Sidestep It**. Already
+offered: the family's or his line says so instead of demanding it ("You offered Khalil too. That means
+a lot in this house.", `persona.STORY_LINES_OFFERED`), and **Already Offered Him** ("I offered Khalil
+already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED` (1). History words
+them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
+broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
-avatar, name, stars, Pos | Height | Weight with the position as the game shows it, `display_pos`: an EDGE who plays DT
-reads DT everywhere; Hometown · #rank; Nat. Rank, Pos. Rank, Class; a Your Chance badge in the ladder's words with a
-bar), a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
+avatar, name, stars, Pos · Archetype | Height | Weight with the position as the game shows it, `display_pos`: an EDGE
+who plays DT reads DT everywhere, and his archetype after it, "DT · Run Stopper"; Hometown · Class of 2027 (the portal:
+From School); Nat. Rank and Pos. Rank in one bordered strip (the portal adds Class), so no number shows twice; a Your
+Chance badge in the ladder's words, its bar only once there is a chance to measure, an offer or his commitment elsewhere),
+a tab row (Overview, Scouting, Profile, History, with Recruit ▾ and the ☆ watch star on its right; it stays pinned
 at the top of the pane while the cards scroll) and cards in a two-column grid (one column on a narrow pane; a card alone
 on its row spans it; one gap token, `--pv-gap`, across and down; cards in a row stretch to one height).
 **Overview**: the Recruiting Battle (his list as ranked rows, your school marked; a committed recruit's other schools
@@ -1308,10 +1356,13 @@ Scouting Center, master and detail, built from the player's mockup in the site's
 - **The Player Intelligence Report** (right; under the database on a phone): the selected prospect,
   the first row until you pick one, drawn with the board's pieces (`window.Recruiting.parts`): the hero (a status chip:
   Fully Scouted, "1.5 of 3 Looks", Unscouted; Nat. Rank, Pos. Rank, Team Need in a word; a Potential badge with how sure
-  the read is: Settled Read, Read Could Move, Early Read), then the tabs **Report** (the Scouting Report and the
+  the read is: Confident, Could Change, Early Look), then the tabs **Report** (the Scouting Report and the
   Attributes card), **Looks** (Looks & Uncertainty with the flags, a coordinator's "Likes Him", this and last week's
   report lines on him and All Reports) and **Profile** (the traits and background cards). On the tab row: **Send Scout
-  · 10 Pts** (its row's `cost`: 10, 15 or 5; "· Finishes His Report" when one look is left; disabled with the reason
+  · 10 Pts** (its row's `cost`, `recruiting.look_cost` from `LOOK_COST`: 5 for a prospect close to home, in your school's
+  state or within `HOME_MILES` (150) of your campus after any Family Move, 10 in an area a staff scout covers, 15 away from
+  your scouts, 5 for a portal entrant; half the tier, rounded up to a multiple of 5 (5, 5, 10), when less than a full look
+  finishes his report, at 2.5 of 3 looks after a half-look area week; "· Finishes His Report" when one look is left; disabled with the reason
   under the row: "Not enough scouting points left this week.", or "His report is complete: 3 of 3 looks"), **View Full
   Profile** (the popup) and **Add to Board** / **Remove From Board** (the board's own confirm when that pulls a standing
   offer). The address keeps `ssub` (report, looks, profile); an old address's ratings or overview opens Report and
@@ -1355,9 +1406,13 @@ mockup in the site's theme tokens, flat (no gradient; the board button is the pa
   Board"), Position, Stars, State, Status and Sort, then the table: #, the avatar, name and hometown (and his find
   badges), Pos (the game's position, `display_pos`), Ht, Wt, Stars, Status ("Uncommitted", "Verbal: School", "Hard
   Commit: School", "Signed: School"; the school's name is `season.team_display`, so an FCS stand-in never shows),
-  Interest in You (High, Medium or Low), Potential (your staff's read, "Strong" or "Elite – All-American", or
-  "Unscouted"; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page.
-  As the card narrows the columns give way (Ht and Wt, then Potential, then Status; `fitTable` measures, so a wide
+  Interest in You (High, Medium or Low, graded against prospects of his star rating), Scouted (the Scouting Center's words: "Not Yet", "1 of 3 Looks", "Fully
+  Scouted"), Potential (your staff's read after his looks, "Strong" or "Elite – All-American", or "Not Read" before a
+  look; never the truth) and **+ Board** / **✓ On Board**. A row opens the Prospect Profile. 50 to a page. A scouting
+  trip sent from anywhere (the profile's Send a Scout, the board's Recruit menu, the Scouting Center) lands on his row in
+  place: the recruit action answers with his `looks` and his `potential` range, the page raises `cfp:scouted`, and an
+  open list morphs his Scouted and Potential cells (and bumps Your Footprint's Evaluated on a first look), no reload.
+  As the card narrows the columns give way (Ht and Wt, then Scouted and Potential, then Status; `fitTable` measures, so a wide
   font or a long school name never pushes the table past its card); on a phone a row is the name, the interest
   and the board button. On a desktop the list scrolls inside its card and the side column sets the row's height.
 - **The side column**: **Your Footprint** (the game's map, `us-map.js`: your scouts' areas and your board as dots; a
@@ -1380,16 +1435,23 @@ chance as a range that narrows as signing day nears (plus or minus 25 points at 
 week 8, 4 from week 13), labeled Early Read, Taking Shape or Solid Read. Class rank weighs each
 class's best commitments most (each counts 0.85 times the one before).
 
-**Interested in you** (a Prospects filter and sort): the 15% of the class your school appeals
-to most right now (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
-academics and what you have done), most interested first; every row shows High, Medium or Low.
+**Interested in you** (a Prospects filter and sort): the prospects graded High right now, most
+interested first (his interest in you: distance, playing time, prestige, winning, NIL, the coach,
+academics and what you have done); every row shows High, Medium or Low. A prospect is graded against
+the prospects of his own star rating you can see (`prospects.your_interest`, `INTEREST_LEVELS`: the top
+15% of his star band is High, the next 35% Medium, the rest Low), not against the whole class: interest
+in any one school rises with a prospect's stars, so grading the class as one made the pages the player
+reads first, the top of the national ranking, mostly High. High means he likes you more than most
+recruits of his caliber do.
 
 **Classes**: every FBS school's class ranked nationally (as class rank: best commitments count
 most), each opening to its recruits; the Office points to it after the early signing period
 and national signing day.
 
 **Auto-recruit** works from your board (your picks first) and puts everyone it recruits on it. It is off, this week (your staff spend your hours through the next advance, then
-it turns itself off) or all season.
+it turns itself off) or all season. An offer you make or whose NIL you raise by hand is yours
+(`recruiting.manual_offers`): Auto-recruit never pulls it or changes its NIL; a signing elsewhere
+still ends it.
 
 **Saves.** Every action and every week writes the season file (the state, with your own games'
 box scores in it), and the browser worker writes it to IndexedDB right after the call (see
@@ -1447,8 +1509,18 @@ roster's make-up by group is the real 2026 mean (QB 4, RB 6, WR 11, TE 6, OL 15,
 (FRRS ... SRRS). A player who did not start may take his redshirt once: 78% of freshmen off
 the top of the depth chart, 35% of sophomores, 25% of juniors (half that for the next man up).
 Seniors leave; a senior with his redshirt unused who barely played stays a fifth year 60% of the
-time. The NFL draft has 257 picks, 97% from FBS, ranked by a draft score: the card overall
-times a position scale, plus a position value, plus noise (4 points). The scale and value are
+time. The NFL draft has 257 picks, 97% from FBS, ranked by a draft score. A prospect's grade is
+his card overall against this year's best draft-eligible players at his position (a z-score on
+the mean and spread of the top 8% there, at least 12: `draft_grades`), a quarter of it against the
+best at every position (`DRAFT_ABS_SHARE`: a 99 is a 99); his score is his position group's value
+per point of grade (`DRAFT_VALUE`: quarterbacks steepest, then receivers, tackles, edges and
+linebackers; backs flattest; kickers and punters 0.5) times it, plus the group's step
+(`DRAFT_SHIFT`), plus noise (0.25), less 0.12 for each player at his group ahead of him on the
+board, up to six (`DRAFT_RUN`: thirty-two teams' needs spread a round). Graded within the year's pool, a position whose overalls run high or drift up
+over a career cannot take the round over: the old score, a value per raw overall point (5.0 for a
+quarterback, 3.9 for a receiver, 2.1 for a tackle), fitted to the first offseason, gave a played
+career's second offseason 24 to 28 quarterbacks and receivers in round one
+(tests/test_draft_positions.py). The value and step are
 fitted by `tools/calibrate_draft.py` to the real 2021-2025 drafts (`data/draft_targets.json`,
 counted by position bucket): round one has about 3.4 QB, 1.2 RB, 5.0 WR, 1.0 TE, 5.4 OT, 1.8
 IOL, 5.0 EDGE, 2.4 DL, 2.0 LB, 3.8 CB and 0.8 S a year; the whole draft 11 QB, 22 RB, 32 WR, 15
@@ -1472,8 +1544,11 @@ a losing year; a Group of 5 player with a card overall of 50 or more (a Power 4 
 segments, each with its driver, and one draw against the sum: the segment it lands in is why he
 goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card, so the reason is
 the real cause, not a guess after the fact. The first segment is the role chance above (his
-class and role, a losing year, a Group of 5 standout moving up, a broken promise, a keep last
-year). The second is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+class and role, a losing year, a Group of 5 standout moving up, a keep last year). A player
+promised a starting role (`promised`, from Keep Them Home or carried by a signed recruit or portal
+signee you told the job was his) who did not start adds a `promised` segment worth the rest of
+`PROMISE_BROKEN` (3) times the role chance; when the draw lands there his Keep Them Home card and
+the portal recap read "Was promised a starting role and did not get it". The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
@@ -1507,7 +1582,9 @@ his ask, about 70% for a real starting role, 92% at most; a draft entrant projec
 round stays at most 8%, one rated 95 or better after a decent season 2% whatever you offer (his
 card says so), a day-three projection about 20% plus what the NIL buys). A player you
 keep carries `kept` (his portal chance the next year is 0.7 times) and a promise `promised` (3
-times if the snaps do not come). The leavers join the portal class or the draft as they would
+times if the snaps do not come; a recruit or portal entrant you promised the job on a call or
+visit carries the same `promised` onto your roster when he signs, `_sign_classes` and
+`_close_portal`, judged by the role he really played that season). The leavers join the portal class or the draft as they would
 have, and then the draft runs; Departures lists who stayed ("Stayed: You Kept Him Home") beside
 who left, and the week 1 portal screen lists the answers. A save from the older order (Departures
 first, the draft already run) is migrated when it loads (`migrate`): at Departures it goes back to
@@ -1572,7 +1649,17 @@ roster, spread 0.15, `TEAM_YEAR_SD`; both mean-preserving, so the league's pace 
 but teams have good and bad years and programs' paths part),
 times a pace by seasons in college (0.45, 0.7, 1.35, 1.35, then 1.0: real players gain little in
 their first offseasons and most in their third and fourth; a real 2026 player's seasons come from
-his class, and a transfer keeps his). A real 2026 underclassman's room to potential is 1.2 times
+his class, and a transfer keeps his; a freshman or sophomore who played a starter's season, at
+least half his team's games with his production rated against the average starter, learns at a full
+year's pace instead, `STARTER_YEAR` 1.0, and Who Improved says "Started as a freshman"), divided above an overall of 55 by 1 plus a tenth of the points
+over it (`DEV_TOP`, `DEV_TOP_SPAN`: the last points come slowest, so a 75 grows at a third of the
+pace; without it a career's 2027 seniors had about 125 players rated 85+ where the real 2026
+seniors had 25, at every position, and the draft's first round filled with them;
+tests/test_progression_realism.py), and never more than half his room in one offseason
+(`DEV_YEAR_CAP`: the factors on his pace, his year, his program, his staff, his production, his
+position and his third year, compound to 2-4 for a few players a year, a rate past 1, and a
+real junior rated 49 with a 1,300-point room became a 99 in one offseason; a career's first
+senior class had 10-12 linebackers rated 85+ where the real seniors have 2). A real 2026 underclassman's room to potential is 1.2 times
 his seeded one (it ran short of a generated player's at the same class, and the Group of 5 dipped
 as those players became its upperclassmen). A generated player's room
 to potential is scaled by position group (`game_scale.ROOM`: 1.0 for backs to 1.63 for safeties),
@@ -1650,7 +1737,7 @@ six seasons gave 25 head coaching changes a year (15 fired, 5 retired, 5 hired a
 the NFL; real FBS years run 25-30) and 63 coordinator changes (real: 60-80).
 
 **Program ratings** (`coach_career/programs.py`, spec `docs/superpowers/specs/2026-10-26-program-ratings-design.md`).
-Every program in a career's league carries a living rating, six metrics on 0-100 kept in
+Every program in a career's league carries a living rating, seven metrics on 0-100 kept in
 `lgd["teams"][slug]["program"]` and moved every offseason by `programs.update` (run by the carousel):
 
 | metric | what | moves |
@@ -1661,19 +1748,29 @@ Every program in a career's league carries a living rating, six metrics on 0-100
 | market | crowds and TV | a fixed base (below) plus a live part that steps at most 3 a year toward 0.3 × (winning − its real 2023-25 winning), capped at ±8 where the building is full (base 85+) and ±18 elsewhere; a new head coach's first year adds 1.5 |
 | conference | the conference's strength | the mean engine rating of its members, on the 2026 scale, anchored to its start (half of any change counts) |
 | coach | the head coach's appeal | his overall plus 3 a year of tenure up to five, minus 5 |
+| pro | the Pro Pipeline: the last ten NFL drafts, each pick weighted by round (round 1 counts 4, round 2 counts 3, round 3 counts 2, later rounds 1), the newest five years counted double, on a fixed scale so the best program is 100 and the median about 40; a grade per position group is made the same way, over the programs with a pick in that group | every offseason the career's draft becomes the year's line and the oldest year drops; ten empty years take a factory to 0 |
 
-The rating is 0.35 prestige + 0.20 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
-coach; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 7,
-13, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
+The rating is 0.30 prestige + 0.15 winning + 0.15 NIL + 0.10 market + 0.10 conference + 0.10
+coach + 0.10 pro; tiers are 1 at 76 and up (blue blood), 2 at 65, 3 at 50, 4 at 35, 5 below (at the start 9,
+11, 34, 25 and 59 programs). **History** (`tools/build_program_history.py`, from the coaching
 records in `data/recruiting/coaches.json`: every FBS head coach's seasons since 1995 with wins,
 games and the final AP rank) is the recency-weighted mean season score 1995-2025 (half-life 12
 years), blended 65/35 with the recruiting baseline (class strength 2005-2026) and scaled so the
-best program is 100 and the median 39: Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
+best program is 100 and the median 39 (the history column; the starting rating itself runs on the mix above): Alabama 100, Ohio State 98, Georgia 93, Oklahoma 82,
 Oregon 80, Texas 80, LSU 79, Clemson and Michigan 78. The starting top 25 by rating holds 21 of a
-reasonable 2026 top 25 (Indiana, Missouri, Nebraska and South Carolina in for Utah, Wisconsin,
+reasonable 2026 top 25 (Missouri, Nebraska, South Carolina and TCU in for Utah, Wisconsin,
 Oklahoma State and Kansas State). Ten straight 12-0 seasons lift a mid Power 4 program about 20
 rating points (tier 3 to tier 1, prestige +11, market +14, NIL to the cap); ten 2-10 seasons at
 Alabama take about 17 (tier 1 to 2, prestige 97 to 76): a decade moves a program about a tier.
+
+**Pro Pipeline** (`coach_career/programs.py`, spec `docs/superpowers/specs/2026-11-06-pro-pipeline-design.md`).
+The starting draft lines are the 2016-2025 NFL drafts, which `tools/fetch_drafts.py` reads from
+Wikipedia's player-selection tables into `data/nfl_drafts.json` (each program's picks by year, round
+and position group) and `tools/build_program_history.py` turns into the `pro` and `pro_groups`
+values in `data/program_history.json`: Alabama 100, Georgia 94, Ohio State 94, Michigan 86, LSU 85,
+Penn State 79, the median about 40. The Programs tab shows the grade as a bar and, under the bars, a chip
+for every position group, best first (a group with no picks reads Weak); the Every Program table has a Pro Pipeline
+column.
 
 **What reads it.** The AD's goal follows the tier (1: the playoff; 2: nine wins; 3: eight; 4: seven and a
 bowl; 5: a bowl; a Group of 5 program rated 42 or more: its conference) and his
@@ -1685,8 +1782,11 @@ candidates and generated coaches are drawn against the rating on the baseline's 
 fitted so the ratings line up with the recruiting baseline). Recruiting's prestige pull reads
 0.6 × prestige + 0.4 × rating and the NIL pull the NIL tier; the portal's prestige and the
 program's share of development read the rating. The League's **Programs** tab shows your
-program's card (the six metrics as bars read in words: elite 80 and up, strong 65, solid 50, fair
-35, weak below; the standing as a tag; the AD's goal) and, open under it, every program in a table
+program's card (a Recap card whose bar carries the kicker with the standing as a tag at its right; a hero row
+with the team's pill, its name and conference and three headline readings, Prestige, Market and Pro Pipeline;
+under it two columns, School Grades with the seven metrics as bars read in words: Elite 90, Excellent 80, Strong 70,
+Good 60, Solid 50, Fair 40, Thin 30, Weak below, and Position Pro Potential with a chip per draft group, best first,
+the strong ones in green; the AD's goal in the footer) and, open under it, the Every Program card, a table
 of the same words (it left the Office in round 3 to give the game the room). `tools/check_programs.py`
 checks the starting top 25 and, over a run, that the top 25 keeps at least 18 of its starting
 members; `tools/long_run.py` prints the same each season.
@@ -1820,24 +1920,40 @@ chip**: the team mark, the school, then small "#7 · 3-1 · Week 5" (the rank on
 once the committee ranks; "Offseason" once the games are done, "Final" for an older plain season).
 Its title carries the longer line the banner used to show (the next game, the sim date, the
 champion). A sim's statuses patch it week by week (`liveHead`), so the record ticks up while it
-runs. The week strip keeps its own panel on the season's screens (Schedule, Standings, Rankings
-and the rest); the career screens leave it out, and a one-week sim's bar shows there.
+runs. The week strip keeps its own panel on the screens that show a picked week (Games, Schedule,
+Rankings, Bracket); the career screens and the screens that show the season as it stands (Standings,
+Stats, Awards, Season Recap, Bowls) leave it out, and a one-week sim's bar still shows there.
 
-**The tab row never scrolls: More ▾** (`season.js` `layoutTabs`, `openTabMore`). The tabs show left to
-right until the row is full; the ones that do not fit go behind a **More ▾** button at the row's end (it
+**The League menu: League ▾** (`season.js` `openTabLeague`, `labelLeague`). The career tabs (Office or
+Offseason, Recruiting, Prospects, Scouting, Schedule, Depth Chart) are the row; the league tabs (Standings, Rankings,
+Stats, Programs, Classes, Bracket, Bowls, Awards, Season Recap, `button.league`) are never in it. One **League ▾**
+button at the row's right end (`#tab-league`, `aria-haspopup="menu"`, `aria-expanded`) opens them as the same
+`.go-menu` dropdown as ☰ Menu (a bottom sheet on a phone), listing the league tabs the calendar currently shows
+(`tabsForTheCalendar`) in the bar's order, the open one marked `aria-current`. While a league tab is open the
+button reads **League: Standings ▾**, carries `.active` and `aria-label="League: Standings"`, so the open tab is always
+visible in the bar. The league tabs' `button[data-tab]` elements stay in the DOM, hidden (`.tab-in-menu`,
+`display: none`), so `selectTab`, deep links (`?tab=standings`), `tabsForTheCalendar` and the `.active` bookkeeping
+work unchanged; picking an item runs the same `tabPick` as a click. Escape and an outside click close the menu
+and the focus returns to the button, as every `.go-menu` does. The League button always keeps its slot: `layoutTabs`
+counts its width before the career tabs, so it never overflows and is never clipped.
+
+**The tab row never scrolls: More ▾** (`season.js` `layoutTabs`, `openTabMore`). The career tabs show left to
+right until the row is full; the ones that do not fit go behind a **More ▾** button after them (it
 exists only while something overflows, `aria-haspopup="menu"`, and opens the same dropdown as ☰ Menu through
 `openMenu`). The open tab always keeps a slot: when it would overflow it takes the last visible slot and the tab
-it displaces goes into More (a guard labels the button "More: Awards ▾" if the open tab were ever behind it).
+it displaces goes into More (a guard labels the button "More: Scouting ▾" if the open tab were ever behind it).
 Picking a tab from More runs the same `tabPick` as clicking it, so the address and the depth chart behave
 alike. The tab buttons stay in the DOM; an overflowed one only carries `.tab-ovf` (`display: none`), and
 the row is `overflow: hidden`, so it cannot scroll at any width. **No flash:** the measuring is synchronous.
-`layoutTabs` takes `.tab-ovf` off, reads the widths, puts the final classes on, all in one task before the
-browser paints, so no intermediate row is ever drawn and nothing fades or pulses. It runs from a
-`ResizeObserver` on the row (window, chip text), a `MutationObserver` on the tabs' `hidden` attributes (career
-mode, the offseason, Bracket/Bowls/Awards/Summary appearing) and from `selectTab` (the active tab). On a phone
-the row drops to its own line under ☰ Menu and the chip when they leave it less than 14rem. Tests that click a
-tab use `tab_click` (`tests/test_career_e2e.py`), which goes through More when the tab is overflowed.
-`tests/test_tab_overflow.py` checks it at 1280, 1024, 768 and 400.
+`layoutTabs` takes `.tab-ovf` off, reads the widths (League ▾ and, if needed, More ▾ included), puts the final
+classes on, all in one task before the browser paints, so no intermediate row is ever drawn and nothing fades or
+pulses. It runs from a `ResizeObserver` on the row (window, chip text), a `MutationObserver` on the tabs' `hidden`
+attributes (career mode, the offseason, Bracket/Bowls/Awards/Summary appearing), from `selectTab` (the active tab)
+and when a font finishes loading (`document.fonts` `loadingdone`: the tab font lands after the tabs show, and the
+widths it changes do not resize the row). On a phone the row drops to its own line under ☰ Menu and the chip when
+they leave it less than 14rem. Tests that click a tab use `tab_click` (`tests/test_career_e2e.py`), which goes
+through League ▾ for a league tab and through More ▾ when a career tab is overflowed. `tests/test_tab_overflow.py`
+checks both at 1280, 1024, 768 and 400.
 
 **The top bar is hidden while a season is open.** **☰ Menu** at the right end of the tab bar (first
 on a phone, before the chip) is a dropdown: ⚙ Settings (waits while a sim runs), Download Career (a
@@ -1882,14 +1998,137 @@ your program's history. The tab opens on it at Keep Them Home; its Advance opens
 groups ("+ N More" opens a long one) and the players you kept, Around the League and The First Round, and keeps the
 redshirt and position-change card. Keep Them Home shows each leaver's roles now and next year, why
 he wants out, and Meet, Promise a Start, Offer NIL and Let Him Go, each with a hint from the rules.
-A portal week wraps the recruiting board (drawn by `recruiting.js`, untouched) with the Portal
-Overview, Keep Them Home's answers and your moves. Development has the portal's +/− and tabs for
+A portal week shows the Portal Overview, Keep Them Home's answers, your moves, who got away and
+Your Portal Board: a compact card (the count on your board, your offers out of the week's allowance,
+your open spots, the top six entrants by your chance with the board's own standing word, "Nobody on
+your board yet" when it is empty) with Recruit on the Board →, which opens the Recruiting tab, where
+the board itself is drawn (`recruiting.js`, untouched; the card reads `portal.board` on the
+offseason view, `coach_career/offseason.py` `portal_board`). Development has the portal's +/− and tabs for
 Redshirts, Position Changes, Who Improved and Your Transfers beside the top improvements. The Recap
 lists the key results and the road ahead (the schedule, the next class, the AD's goal for the
 coming season). Cards in a row share one height, one 16 px gap runs across and down, and at 760 px
 and under every row stacks. `tests/test_offseason_redesign.py` walks every stage at 1280 and 400,
 light and dark. **Sim to Next Season** runs every step on Auto. Your program's history (record,
 final AP rank, titles, class rank, players drafted) grows a row a year.
+
+## Coach Career: a league from a file (`coach_career/league_file.py`, `coach_career/league_fill.py`)
+
+Design: docs/superpowers/specs/2026-11-05-league-file-design.md.
+
+**The format.** One JSON file, `"format": "cfp-league/1"`, with a `name`, an optional `year` (2026),
+`remove` (slugs), `conferences` (`id`, `name`, `level` FBS, `games`) and `teams`. The built-in league
+exports losslessly in it (`league_file.export_document`, about 22 MB); the FCS stand-ins and their
+conference are never written and cannot be named, removed or reused (`league.base_meta`'s
+`fictional` flag says which they are). A new team needs `slug`, `name` and `conference`; a built-in
+team only its `slug`, and every field it leaves out keeps the built-in value (a `roster` replaces
+the whole roster; `coaches` merge role by role). A player needs `name`, `pos` and `class`.
+`league_file.parse` and `validate` turn every problem into a sentence naming the team and the player
+("Rice, player 14 (Jay Smith): position 'WRR' is not a position; use QB, RB, …"), at most `MAX_ERRORS`
+and then "And N more." (`check` also gives `errors_total`, the full count the page's head shows). Every
+key the export writes is checked for its type, range or the game's own words: the team's `home_field`
+(`HOME_FIELD_RANGE`), `stadium`, `style` (a built-in slug), `formation` (known roles, 11 on offense and
+on defense), `colors`, the `offense`/`defense` scheme words; each coach's name, `rating`, `ratings`,
+`tendencies`, scheme words, `since`, flags and text; each player's `jersey`, `archetype`, `dev`,
+`coachability`, `abilities` (names and tiers the game knows), `hometown` (`MAX_HOMETOWN`), `years`
+(`YEARS_RANGE`) and `target_share` (`TARGET_SHARE_MIN` to the engine's `TARGET_MULT_MAX`). `strength`
+applies only to a roster the file gives: a built-in team that keeps its real roster is never nudged, so
+strength there is an error. A new conference may not take a built-in conference's name (any case) or
+another new one's: its name is its engine name, which must be its own. A built-in conference listed
+without `games` keeps its own.
+
+**Merging** (`league_file.merge`) is by slug: a team in the file replaces the built-in one, a new
+slug adds one, a team left out is unchanged and `remove` drops one. A team equal to its export is
+not "changed". The merge reports `added`, `changed`, `removed`, `conferences`, `structural` (a team
+added or removed, or a conference's members or games changed) and `builtin`. A built-in conference
+keeps its engine name when the file renames it: only its display name changes
+(`lgd["conference_names"]`, engine name to display name), so a rename alone is a change but not
+structural.
+
+**Collapse.** An import that changes nothing (`builtin`) is the built-in league: the career starts
+exactly as a New Career with no file does, with no `league` in its state, the real 2026 rosters,
+schedule and polls, and the golden digest cannot move.
+
+**Filling** (`league_fill.to_league`), team by team in slug order, each from its own stream
+`random.Random(f"league-{seed}-{slug}")`: the strength target (the file's `strength` word or number,
+`STRENGTH_GRADE` places a word among the FBS teams, otherwise the conference's built-in mean, a new
+conference the FBS median); given `overall` and `ratings` kept exactly; every other player generated
+from the recruits' position templates by depth slot (`SLOT_STEP`), class (`CLASS_STEP`), stars
+(`STAR_STEP`) and `PLAYER_SD`; an empty roster filled to 85 by `offseason.TARGET`, a short group
+topped up to `offseason.FLOOR` (added classes by `CLASS_MIX`, older first by `CLASS_LEAD`); then one
+common nudge of the generated players (bisection over `NUDGE_RANGE`, `NUDGE_STEPS`, to within
+`NUDGE_CLOSE`) lands the team on its target. Potential room follows `ROOM_BY_CLASS`. A new team's
+coaches come from the coach market's generator, its colors default to `NEUTRAL_COLORS`, its stadium
+to `NEW_STADIUM_CAPACITY`, its recruiting tier to `NEW_TEAM_TIER`, and its program (prestige,
+history) from the file's `prestige` or its conference's mean, with winning, NIL and conference
+strength its conference's medians (the game's defaults, `programs.BASE_DEFAULT`, for a conference of
+new teams) and a new program's market. Filling takes about 0.2 s a team.
+
+**Check and Start Career.** `league_file.check(blob, seed)` parses, validates, merges and fills, then
+builds the engine's teams (`league.build`, the same build later seasons use) and season one's games;
+it returns the errors, or the career league, its engine teams, the games and the summary (teams
+added, changed and removed, players generated, one sentence each; for a league that is not the built-in
+one, "Teams the file leaves alone play without the real 2026 depth charts and adjustments.", and a line
+for each listed conference with no teams, which is left out). Anything the fill or the build still throws
+is one sentence (the team's, `league_fill.TeamBuildError`, when it is one team's) with the traceback in
+the server's log, never a 500. At the end of every check it lets go of the built-in copies it read
+(`league_file.release_caches`: the export's team docs and rosters, the fill's base league), so a checked
+file holds about 37 MB until Start (157 MB before) and 8 MB once it is gone. `POST /api/league/check` takes
+the file's bytes (`?seed=` optional) and holds the career league (not its engine teams) as the pending
+league under the SHA-256 of the bytes (`"builtin"` for a collapsed import); its answer lists the league's
+FBS teams for the picker, a renamed conference by its new name. `POST /api/season` with that key builds the
+engine teams again (`league.build` of the pending league: the same bytes the check built, about 6 s) and
+writes them as the career's
+2026 league file (`data/leagues/<career id>-2026.json`), puts it in play with the league's recruiting
+models, and starts the season with the league in its state. Only one league is pending at a time;
+a stale key is refused ("That league file is no longer loaded; import it again."), and a failed
+check leaves none. The checked league is final: its fill seed is fixed at Check, and Start's `seed`
+is the season's own and never refills it. A Start that fails (in the season or its save) removes its
+league file and save and puts the built-in league back; the pending league stays for another try.
+`league.ensure_built` rebuilds a missing first-season file of an imported league the way Start wrote
+it (no team by overall), byte for byte (the browser keeps no `data/leagues`).
+
+**The New Career screen** (`web/leaguefile.js`, the League panel in `#season-empty`). "League: Built-in" by
+default; "Import League File…" opens a .json picker. A file over `MAX_LEAGUE_BYTES` (64 MB) is refused from
+`file.size` before it is read, with Python's sentence as a toast; otherwise its bytes go to
+`/api/league/check` (the dev server passes that path's body on as bytes whatever its Content-Type). The check
+runs in the worker (or the dev server), so the page stays live: the select is busy, Export waits, and
+`#league-result` shows "Checking <file>: …" with a running clock. Errors come back as a list of sentences and
+the select stays on the built-in league; a league that checks shows four stat chips (Teams Added, Teams
+Changed, Teams Removed, Players Generated), the summary lines (a long one folds its team lines behind Show All)
+and Start Career, and the select gains "League: <name>". All of it is `ui.morph` patches. `window.LeagueFile`
+(`key()`, `teams()`, `onChange`, `onStart`, `reset`) is how `season.js` hears it: `#pick-team` is reconciled
+to the import's FBS teams in place (keyed by slug), their cards go into `teamsBySlug` while no season is open
+(a switch of league prunes the cards to that league's teams; the stand-ins' stay), Start Career is the existing
+Who Coaches? step, and `newSeason` posts `league: LeagueFile.key()` and resets the panel once the league is used.
+With an import loaded, Who Coaches? has no Create a New Coach link (Your Coach is another page, and the import lives
+only in this one): a sentence says to create the coach first. A check that fails outright (no answer) puts the
+panel back on the built-in league. The picker's overall for an imported league is its engine build's
+(`league.build`, no real 2026 adjustments, the build every career plays from its first offseason on), so a team the
+file leaves alone can read a point or two off its built-in card. Opening a season whose summary names a `league` first merges
+`/api/season/{id}/teams` into `teamsBySlug` (a built-in career puts the built-in cards back). Export League
+fetches the relative `league.json` (written by `tools/build_site.py` beside the page; the dev server makes it)
+and downloads it as `league.json`.
+
+**The season-one schedule.** When the merge is structural, 2026 is generated by the schedule
+generator from the merged conferences (`league_file.schedule_rules`: each conference's `games`,
+listed rivalries as protected pairs or annual series, divisions from `league_file.divisions`) with
+`random.Random(f"league-schedule-{seed}")` and an empty history (`schedule_gen.empty_history`); the
+preseason poll comes from team ratings, not the real AP poll. A generator failure is an import error,
+"The 2026 schedule could not be built for this league: …", with teams by name and any FCS stand-in as
+"an FCS opponent". Otherwise (a team edited, a conference renamed) the real 2026 schedule and the real
+preseason poll are kept.
+
+**The save.** The filled league is the career's `state["league"]` from season one: the structure
+`coach_career/league.py` keeps from the first offseason on, plus `source` (the file's format and
+name, which `league.is_imported` reads and the season summary shows as `league`),
+`recruiting_models`, `schedule_rules`, `divisions`, `conference_names` and, when 2026 was generated,
+`schedule_history` (2027 is scheduled from it). `league.ensure_built` rebuilds the 2026 file from it
+when missing, and `offseason.next_season` carries it on like any career league; program history, AD
+goals, recruiting (distance from the team's location), the coach market and NIL budgets all read it.
+
+**Seeds.** The fill seed is the one asked for, or one read from the file's bytes
+(`league_fill.league_seed`); the same file and seed always give the same league and the same 2026
+schedule. The season's own seed is the career's, as always.
 
 ## Player stat lines against real box scores
 
@@ -2093,7 +2332,7 @@ with the gaps and quirks in the NCAA feed (fixed after the overnight review, wee
   1.11 fumbles and 0.52 lost a team-game.
 - **Games against FCS schools.** The season plays them against the fictional stand-in for
   the school's region (`data/fcs_map.json`), so the NCAA name (UNI) never matches the
-  season's opponent (Red Prairie St.). `_ncaa_index` files a game where one side is an FBS
+  season's opponent (FCS Plains). `_ncaa_index` files a game where one side is an FBS
   team and the other matches no team under (the FBS team, `FCS`), and `_real_games` takes
   it for a stand-in game when the dates are within 2 days (`FCS_DATE_DAYS`; season dates
   are UTC). The FCS school's team box goes to the stand-in's side: its team line (yards,
@@ -2132,14 +2371,29 @@ week strip lets you look back at any week. Tabs:
 - **My Schedule**, **Standings**: every conference, ordered by conference winning
   percentage with the conferences' tiebreak ladder (below). After championship week the
   champion carries a crown and the title-game loser a silver medal; hover a rank to see
-  which tiebreak placed a team.
+  which tiebreak placed a team. Standings, Stats and Programs wear the Season Recap's look
+  (`web/league.css` on top of `recap.css`: `.rcp-card` cards on the panel, each with its bar in
+  your team's color carrying the title with the kicker beside it and the controls at its right, the tables kept as
+  `table.stats`). Standings is a head card that is only its bar (the title, the week, the conference chips), then one
+  card per conference with its name as its bar's title, yours first as "Your Conference";
+  All lays them two across above 1000 px and one below.
 - **AP Poll**: the poll released after the selected week, with each team's move.
 - **CFP Rankings**: the committee's ranking after weeks 9 through 13 and the final one
   after championship week, the 2026 release calendar (Nov 3, 10, 17, 24, Dec 1, Dec 6).
 - **Bracket**: a projected bracket as soon as the first committee ranking exists (current
   conference leaders as projected champions), then the real bracket on selection day and
   the playoff results as the rounds are played.
-- **Summary**: the season in review (or the season so far): the national champion and
+- **Season Recap** (`web/recap.js`, `web/recap.css`, the `summary` tab and route key): the season in review once
+  the title game is played (the game lands the player on it; the Office stays a tap away), or the season so far
+  before that. A header card with the record and the **Season Grade** (`sim/grade.py` `season_grade`: a letter A+
+  to F read off the wins against the AD's goal, the conference title, how far the playoff run went, the bowl and
+  the final AP rank, with a one-sentence verdict per band: champion, playoff, met, bowl, missed, losing, fired; a
+  champion alone gets the A+; no randomness, nothing written), then Start the Offseason, Back to the Office, Awards
+  and Schedule. Two columns: the national champion and title game (its box score opens), the four playoff rounds in a Playoff card of their own,
+  the Heisman, your leaders, the conference champions and the final rankings on the left; Your Season (points,
+  the conference, non-conference, postseason and final rank, total offense, total defense and the turnover margin
+  with their national ranks), the highlights, the rivalries, the biggest surprise and disappointment and the
+  national leaders on the right. The review API carries: the national champion and
   title game, every playoff round, each conference's champion and title-game score, the
   final CFP ranking and AP poll, then your team's record, conference finish, postseason
   result, scoring, longest win streak, best win, worst loss, biggest win and closest loss,
@@ -2166,6 +2420,16 @@ Davis, Villanova, Tarleton State and others), +3 for good ones, -7 for weak ones
 the lower SWAC and MEAC), 0 for the rest. One stand-in per region used to play every school alike:
 replaying the 122 real 2026 FBS-FCS games, the FCS side won 2.5% (real 4.9%); with the tiers it wins
 4.2% (strong programs 12%, good 7%, weak under 1%) and FBS teams win by 36 on average (real 37). No injuries.
+
+The stand-ins are named only for their regions, at the source: slug `fcs-<region>` (`fcs-mid-atlantic`),
+name, short name and school "FCS Mid-Atlantic", abbreviation "FCS", no mascot and no town
+(`cfb_sim_data/teams/fcs-*.json`). `season.load_teams` and the API's team list enforce that whatever
+a file says (`season.stand_in_names`), the box score view names a stand-in's side by its label
+(`season.box_names`, and `CFP.boxNames` on the page), and the team pill's title is `CFP.teamName`.
+They once had made-up school names, towns, mascots and stadiums; a save from then (its state, its box
+scores, a downloaded .ccsave, a cached league, a coach file) is rewritten to today's slugs and labels
+when it is read (`sim/fcs_names.py`, which keeps the old strings rot13-encoded).
+`tests/test_no_standin_names.py` checks that no tracked file holds any of them.
 
 Ties in the standings follow the procedure the Power Four (and most Group of Five)
 conferences publish for seeding their title games, in this order: head-to-head (the
@@ -2238,7 +2502,12 @@ worker processes), so a week there takes longer than under the dev server on a d
 The This week card simulates your next game 20 times. Those sims run in parallel on the
 worker pool when there is one (about 1 second instead of 4 on a desktop) and are
 cached for the week; a second request for the same game waits for the first instead of simulating
-it again. The Awards tab's live race is cached until more games are played (or god mode
+it again. The Awards tab opens on an **Overview** (`renderAwards`): the Heisman hero with four finalists, the
+national award cards (what each award is for waits behind the ⓘ beside its name in the card's bar; Offense,
+Defense, Special Teams and Player of the Year chips patch the grid in place with `reconcile`), the coach awards, your team's honors with a podium (honors, awards won, players and coaches), the
+consensus All-America team by unit and your conference's awards; the older views (My Team, Heisman, National,
+Coaches, All-America, Conference) stay as chips and in the `aview` route key. During the season the same layout is
+the live race ("Leader" instead of "Winner"). The live race is cached until more games are played (or god mode
 edits a player), and the award pools list each position group's eligible players once
 instead of scanning the whole league for every award (2.5 seconds to 1 on first load).
 If a progress check collides with the sim thread changing the season, it answers with
@@ -2256,6 +2525,50 @@ whichever contrasts more. The page background is washed in the primary at the to
 and panel headings and the active tab take the accent. Michigan is maize on dark and navy on light, Penn State is
 navy on light and white on dark, Oregon is green on light and yellow on dark, and so on;
 the accent is re-picked when the theme toggle flips.
+
+### Cards and bars (`web/styles.css` ".card-bar")
+
+Every card with a header wears the player's Season Recap mockup: a solid bar in the team's primary color, flush with
+the card's top and sides, the title in it as 12 px bold uppercase letter-spaced type in the color's ink (`--go-primary`
+and `--go-primary-ink` in a career, the team theme's primary in a plain season, the accent before a team is picked).
+The page code puts one class, `card-bar`, on each card's header element and the one rule set in `styles.css` does the
+rest: whatever heading sits in it (a kicker, an `h2`, a `.rcp-h1`, a `.pv-kick`) reads as the bar's title, a secondary
+line beside it (the League look's kicker, a date, a note) reads lighter without caps, and every control in the bar
+(the Board → link, a tag like the program tier, an ⓘ, the view chips, the Home Game pill, a button) takes the ink.
+A card about another team sets `--card-bar-bg` and `--card-bar-ink` (`CFP.teamVars(slug)` gives both as `--rcp-team`
+and `--rcp-team-ink`: the recap's National Champion, an award's winner); the recap's gold, good and bad variants and his
+reaction's tones are the same two variables, so the old edge lines (`.rcp-card.edge`, the Office hero's top border) are
+gone. A card that is only its bar (Standings' head card, a folded Transfer Portal Recap, the closed Footprint map) ends
+with it. Cards share one padding (`--card-pad`: 20 px, 14 on a phone; nested cards such as the pane's, a scene or his
+question 14) that the bar reads to bleed to the edges, and a card laid out with a flex gap says so in `--card-gap` so
+the bar keeps 16 px to the body; rows of cards are CSS grids with explicit rows that line up across columns (the Office,
+the offseason's rows), each card as tall as its content, the list cards filling their row (the offseason's pairs share a
+height, so an answer that shortens one card never pulls the page out from under the player). Corners are square
+everywhere in the career UI: no card, bar, button, pill, tag, chip, input, select, table, modal, menu or panel has a
+radius (`--radius: 0`, every page stylesheet lost its `border-radius` lines); circles (avatars, the step marks, the
+star dots) stay circles, and the big team tiles keep 4 px. The depth chart screen keeps its own square, ink-headed
+look. `tests/test_office_redesign.py`, `tests/test_recap_awards.py`, `tests/test_spacing.py` and
+`tests/test_offseason_redesign.py` check the bars, the alignment, the padding and the 36 px (44 on a phone) controls
+in a bar.
+
+**Spacing** (`styles.css` "the spacing pass"): four tokens applied by rules, not one-offs. `--gap-inline` (8 px) sits
+between inline siblings: every row of chips, tags, pills, badges or buttons, and an inline tag after a word (the YOU
+tag, a rank badge, a position after a name) keeps it as a left margin. `--gap-label` (10 px) sits between a label and
+its value on one line; a value under its label sits 4 px below it (every stat tile, the pane's snapshot, the recap's
+numbers). `--gap-block` (12 px) is the gap between a card's stacked blocks (the bar keeps its 16 px to the body). List
+and table rows keep `--row-pad` (6 px) above and below (the Prospects table keeps 4 px sides so its ten columns fit at
+1280). Nothing inside a bar sits closer than `--bar-inset` (12 px) to the bar's edge; a bar's title and its ⓘ or
+control are 10 px apart. `tests/test_spacing.py` is the gate.
+
+### The browser tab (`web/season.js`, `tabIdle`, `tabSim`, `tabDone`)
+
+An open career names the tab after the dynasty ("Ohio State Dynasty"). While a sim runs the title
+leads with the progress and your record ("42% · 4-1 · Wk 6 · Ohio State Dynasty") and the favicon
+wears a progress ring in your primary color (the page's own icon drawn on a canvas with the ring
+over it, the `link rel="icon"` hrefs swapped to the PNG), so a tab in the background still says where
+the sim is. When it ends the title reads "Done · 9-3 · …" with a full green ring ("Sim Failed" and
+red on an error) and stays that way while the tab is hidden; a moment after you come back the name
+and the real favicon return. `tests/test_tab_status.py` drives a week and checks each state.
 
 ### Smooth actions (`web/ui.js`)
 
@@ -2289,6 +2602,33 @@ Under
 `tests/test_smoothness.py` measures all of it through the real page (a MutationObserver counts
 removals of anything holding the watched element; the scroll must stay within 2 px), and the UX
 sweep does the same for every board action.
+
+### Board scrolling
+
+The Recruiting board and the Scouting Center share one scroll model. With the list and the pane side by
+side (760 px and up for the board, 900 px and up for the Scouting Center) the tab is at least the screen
+under the tab bar and the page itself does not scroll: `season.js` `boardFit` measures where the open tab
+starts (`--board-top`) and the room under it (`--board-below`), and the CSS (`recruiting.css`,
+`scouting.css`, "fits the screen") makes the tab a grid that fills that height. The list scrolls inside its
+card under the stage tabs (or chips), the search and the sort; the pane scrolls inside its own column under
+its pinned tab row. Both scrollers use `contain: size` (they add nothing to the tab's height) and
+`overscroll-behavior: contain` (a wheel at their end never moves the page or the other column). A window
+too short for the list's head and a few rows grows the tab instead. The closed Your Footprint bar is the
+list card's foot and Scouting Operations' bar sits under the report; opened, either spans the width under
+the board, the page scrolls to it and the two scrollers hand the wheel on at their ends. The Recruiting
+Timeline keeps its own cap but uses `overscroll-behavior: auto`, so at its end the wheel moves the pane.
+`ui.keepInView` scrolls a row's own scroll box (never the page): the selected row stays in view after a
+patch, after the arrow keys and on an address that names him. On a phone the page is the only scroller
+(the Recruiting pane is its full-screen sheet). `tests/test_board_scroll.py` checks all of it.
+
+Nothing jumps when content changes size. No tab row or chip row ever scrolls (a 1 px overflow draws classic
+scrollbars): the sub-tab strip wraps, and a phone's sideways stage and region rows hide their bar. A tab switch
+(`ui.js` `holdTabRow`, one capture listener for every `.go-subtabs` tab) keeps its tab row where it was: the
+next body fills at least the room under the row (`--tab-hold`), and a row pinned at the top of its scroll box
+opens the new tab at its top. Modals open at a fixed top (`--modal-top`) and grow down, never recentering; a
+tabbed or loading one (the Prospect Profile popup) keeps one height (`--modal-tall`) and scrolls its body, with
+its tab row pinned; a phone shows them full screen. A patch from the player's own action (`morph` with
+`pulse`) and an Office card filling in ease to their new height (`ui.glide`, 180 ms, instant under reduced motion).
 
 ### Deep links (`web/route.js`)
 
@@ -2620,7 +2960,9 @@ the box score. The Games and My Schedule tabs show each playoff game's bowl name
 
 ### Team and player stats all season
 
-Two more tabs, **Team Stats** and **Player Stats**, work at any point in the season. Full
+Two more tabs, **Team Stats** and **Player Stats**, work at any point in the season, under one
+Stats card (the view chips in its head, the conference, team and category filters under them,
+then the table, `web/index.html` and `renderStats`). Full
 box scores are kept only for your own games, so for every simulated game the workers send
 back a compact line per team (team totals, situational counts, plays, possession, and
 each player's stat line) that is summed into the season as it goes. Team Stats is a
@@ -2734,7 +3076,7 @@ setting off and that moods, form and the boosts move with results when it is on.
 
 ⚙ Settings in ☰ Menu (and the depth chart's sidebar) opens the season's settings. God mode
 lets you edit every player and every depth chart: any player card gets an Edit button
-(ratings 0-99, jersey, class, height, weight and development trait; names and positions
+(ratings 0-99, jersey, class, height and weight; names and positions
 stay, since the season's stats are keyed on them) and every team's depth chart becomes
 editable, not just yours. Edits are saved with the season (`player_edits` in the state)
 and used by every game from the next sim on; an edited rating is marked on the card.
@@ -2929,7 +3271,9 @@ to 74.0%, Brier 0.182 both; real-versus-sim wins correlation 0.62 to 0.66;
 `calibrate_season.py 30` 74.5%, MAE 12.4, slope 1.02).
 
 Weekly refresh, in order: `python tools/fetch_results.py`, `python tools/fetch_boxscores.py`,
-`python tools/derive_tendencies.py`, `python -m teamdata.build_teams`, then the three calibration scripts.
+`python -m teamdata.build_teams`, then the three calibration scripts (`tools/derive_tendencies.py`
+and `tools/tune_from_real.py`, which wrote `data/observed_tendencies.json` and
+`data/real_adjustments.json` from the box scores, are gone; those files are committed as tuned).
 footballdb.com (season team stat tables, past seasons) is reachable from Python as well
 and is a good cross-check for the team-level numbers; NCAA.com stays the primary source.
 

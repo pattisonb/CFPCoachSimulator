@@ -201,7 +201,7 @@ def test_step_failure_drops_the_half_played_week():
         st = api.step()
     finally:
         season.advance = real
-    assert st["status"] == "error" and st["error"] == "the sim broke" and st["stage"] is None, st
+    assert st["status"] == "error" and st["error"] == "the sim broke (broken, test_api_dispatch.py:%d)" % (broken.__code__.co_firstlineno + 2) and st["stage"] is None, st   # the toast says where
     assert st["current_week"] == 0 and st["done"] == 0
     assert api.loaded_state()["current_week"] == 0 and api.job()["status"] == "error"
     assert api.step() is None and not api.running()
@@ -247,7 +247,8 @@ EXPECTED = {("GET", "/api/season/{season_id}/week/{week}"), ("GET", "/api/season
             ("POST", "/api/season/{season_id}/depth/{slug}"), ("GET", "/api/season/{season_id}/depth/{slug}/position/{role}"),
             ("GET", "/api/season/{season_id}/depth/{slug}/formations"), ("GET", "/api/season/{season_id}/depth/{slug}/roster"),
             ("GET", "/api/season/{season_id}/injuries"), ("GET", "/api/season/{season_id}/awards"),
-            ("GET", "/api/season/{season_id}/player")}
+            ("GET", "/api/season/{season_id}/player"),
+            ("POST", "/api/league/check"), ("POST", "/api/season"), ("GET", "/api/season/{season_id}/teams")}   # a career from a league file
 
 
 def test_every_career_route_registered():

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from test_career_e2e import call, free_port, launch   # noqa: E402
+from test_career_e2e import call, free_port, launch, tab_click   # noqa: E402
 
 WIN = ".modal.modal-scene:not([hidden])"
 SHOTS = os.environ.get("SCENE_SHOTS")
@@ -42,7 +42,8 @@ def wait_server(base: str) -> None:
 
 
 def make_career():
-    """A career at week two with hours to spend and three fresh prospects on the board."""
+    """A career at week two with hours to spend and five fresh prospects on the board: three for the
+    call, and a Package Deal pair (the fourth's mate is the fifth, not offered) for the visit."""
     from coach_career import recruiting
     from sim import season
     me = "smu"
@@ -51,8 +52,11 @@ def make_career():
     rc = st["recruiting"]
     rc["hours"][me] = 200
     pids = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
-            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q)][:3]
+            and not rc["status"][q]["committed"] and not recruiting.would_pester(st, me, q)][:5]
     rc["board"] = list(pids)
+    for a, b, lead in ((pids[3], pids[4], True), (pids[4], pids[3], False)):
+        rc["prospects"][a]["persona"] = {"personality": "cocky", "decider": "mom" if lead else "self", "decider_topic": "proximity" if lead else None,
+                                         "story": "package", "story_data": {"mate": b, "lead": lead}, "commit_style": "hat"}
     season.save_season(st)
     return st["id"], pids, {q: rc["prospects"][q]["name"] for q in pids}
 
@@ -64,7 +68,7 @@ def modal_tokens(page) -> list:
 def open_board(page, base, sid) -> None:
     page.goto(f"{base}/index.html?id={sid}")
     page.wait_for_selector("#season:visible")
-    page.click("#season-tabs button[data-tab=recruiting]")
+    tab_click(page, "recruiting")   # through More ▾ on a phone
     page.wait_for_selector(".go-row-recruit", timeout=120_000)
     time.sleep(0.8)
 
@@ -79,6 +83,14 @@ def start_call(page) -> None:
     page.click(".go-pane #rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
     page.click(".go-menu .go-menu-item[data-action=call]")
+    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-present-chip", timeout=30_000)
+    time.sleep(0.4)
+
+
+def start_visit(page) -> None:
+    page.click(".go-pane #rc-recruit")
+    page.wait_for_selector(".go-menu[role=menu]")
+    page.click(".go-menu .go-menu-item[data-action=hc_visit]")
     page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-present-chip", timeout=30_000)
     time.sleep(0.4)
 
@@ -206,6 +218,47 @@ def desktop(browser, base, sid, pids, names, errs) -> None:
     ctx.close()
 
 
+def package_visit(browser, base, sid, pids, names, errs) -> None:
+    """A Package Deal's in-home visit: his mother brings his mate up, and after your opening the window asks about
+    him with the three buttons in the package's words (his mate not offered): Tell Him Straight, Promise Him an Offer,
+    Sidestep It, each over the line naming his mate; the promise's reply comes back in place and History words it."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 900}, device_scale_factor=2, color_scheme="dark")
+    page = ctx.new_page()
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    pid, mate = pids[3], names[pids[4]]
+    open_board(page, base, sid)
+    pick_row(page, pid)
+    start_visit(page)
+    assert page.inner_text(f"{WIN} .modal-title").strip() == f"In-Home Visit · {names[pid]}"
+    convo = page.inner_text(f"{WIN} .go-convo")
+    assert mate in convo or mate.split()[0] in convo, ("his mate comes up in the room", convo)
+    present_three(page)
+    page.wait_for_selector(f"{WIN} .go-answer", timeout=10_000)
+    labels = page.eval_on_selector_all(f"{WIN} .go-answer .go-answer-label", "els => els.map(e => e.textContent.trim())")
+    assert labels == ["Tell Him Straight", "Promise Him an Offer", "Sidestep It"], labels
+    lines = page.eval_on_selector_all(f"{WIN} .go-answer .go-answer-line", "els => els.map(e => e.textContent.trim())")
+    assert lines[0] == f"I can't promise {mate} a spot today. I'll look at him." and lines[1] == f"{mate} gets an offer this week. You have my word.", lines
+    assert mate in page.inner_text(f"{WIN} .go-question-line"), "his question names his mate"
+    heights = page.eval_on_selector_all(f"{WIN} .go-answer", "els => els.map(e => e.getBoundingClientRect().height)")
+    assert all(h >= 44 for h in heights), heights
+    shot(page, "1280-package")
+    page.click(f"{WIN} .go-answer[data-answer=promise]")
+    page.wait_for_selector(f"{WIN} .go-question-reply", timeout=30_000)
+    time.sleep(0.3)
+    assert page.inner_text(f"{WIN} .go-question-reply").strip() == "Then we'll be watching for it."
+    assert not page.query_selector(f"{WIN} .go-answer"), "the answers leave once you answered"
+    pitch(page)
+    page.click(f"{WIN} .go-scene-close")
+    page.wait_for_selector(WIN, state="hidden", timeout=10_000)
+    time.sleep(0.6)
+    page.click(".go-pane .go-subtabs button[data-sub=history]")
+    page.wait_for_selector(".go-pane .go-history-rows", timeout=10_000)
+    time.sleep(0.4)
+    lines = page.eval_on_selector_all(".go-pane .go-history-rows li", "els => els.map(e => e.dataset.line)")
+    assert any(f"Promised an offer to {mate}" in t for t in lines), lines
+    ctx.close()
+
+
 def phone(browser, base, sid, pids, names, errs) -> None:
     ctx = browser.new_context(viewport={"width": 400, "height": 860}, device_scale_factor=2, color_scheme="dark", has_touch=True)
     page = ctx.new_page()
@@ -269,9 +322,11 @@ if __name__ == "__main__":
                 raise SystemExit(0)
             desktop(browser, base, sid, pids, names, errs)
             phone(browser, base, sid, pids, names, errs)
+            package_visit(browser, base, sid, pids, names, errs)
             browser.close()
         assert not errs, errs
-        print("scene window ok: the call opens in its own dialog, plays through, Done ends it for good, Finish and a refresh reopen an unfinished one, 1280 and 400")
+        print("scene window ok: the call opens in its own dialog, plays through, Done ends it for good, Finish and a refresh reopen an unfinished one, "
+              "a Package Deal's visit asks about his mate with its own three answers, 1280 and 400")
     finally:
         try:
             call(base, f"/api/season/{sid}", method="DELETE")

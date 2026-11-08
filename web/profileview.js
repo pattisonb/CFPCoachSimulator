@@ -22,7 +22,7 @@
   }
   // a card: its kicker (Title Case), an optional ⓘ and a right-hand note, then its body. opts.wide spans the grid's row.
   function card(kicker, body, opts = {}) {
-    const head = el("div", { class: "pv-card-head" }, [el("h3", { class: "pv-kick", text: kicker }), opts.sub ? el("span", { class: "muted small pv-kick-sub", text: opts.sub }) : null,
+    const head = el("div", { class: "card-bar pv-card-head" }, [el("h3", { class: "pv-kick", text: kicker }), opts.sub ? el("span", { class: "muted small pv-kick-sub", text: opts.sub }) : null,
       opts.tip ? window.CFP.ui.tip(opts.tip, kicker) : null, opts.right ? el("span", { class: "pv-card-right" }, [].concat(opts.right)) : null]);
     return el("section", { class: `pv-card ${opts.wide ? "pv-wide" : ""} ${opts.cls || ""}`.trim(), "data-key": opts.key || kicker, "aria-label": kicker }, [head, ...[].concat(body)]);
   }
@@ -34,12 +34,16 @@
     return el("div", { class: `pv-grid ${cls || ""}`.trim() }, list);
   }
 
-  // the header: avatar, a tag chip, the name (a node: the pane's name button), stars, Pos | Height | Weight, Hometown · #rank;
-  // on the right the stat columns and a badge (Your Chance or Potential) with an optional bar
+  // the header: avatar, a tag chip, the name (a node: the pane's name button), stars, Pos · Archetype | Height | Weight,
+  // Hometown · Class of 2027; on the right the stats in one bordered strip (kicker / value / sub, with inner dividers) and
+  // a badge (Your Chance or Potential) with a bar only when there is a chance to show (fill null: no bar)
   function hero(d) {
-    const line = [d.pos ? el("b", { class: "pv-pos", text: d.pos }) : null, d.height ? el("span", { text: d.height }) : null, d.weight ? el("span", { text: d.weight }) : null].filter(Boolean);
+    const posLine = d.pos ? el("span", { class: "pv-posline" }, [el("b", { class: "pv-pos", text: d.pos }),
+      d.arch ? el("span", { class: "pv-sep", "aria-hidden": "true", text: "·" }) : null, d.arch ? el("span", { class: "pv-arch", text: d.arch }) : null]) : null;
+    const line = [posLine, d.height ? el("span", { text: d.height }) : null, d.weight ? el("span", { text: d.weight }) : null].filter(Boolean);
     const stats = (d.stats || []).filter(Boolean).map((x) => el("div", { class: "pv-stat", "data-stat": x.key || x.label }, [
       el("div", { class: "pv-kick", text: x.label }), el("div", { class: `pv-stat-v ${x.tone || ""}`, text: x.value }), x.sub ? el("div", { class: "pv-stat-s muted", text: x.sub }) : null]));
+    const strip = stats.length ? el("div", { class: "pv-strip", role: "group", "aria-label": "Rankings" }, stats) : null;
     const b = d.badge;
     const badge = b ? el("div", { class: `pv-badge ${b.tone || ""}`, "data-key": "badge" }, [el("div", { class: "pv-kick", text: b.kicker }), el("div", { class: "pv-badge-v", text: b.value }),
       b.sub ? el("div", { class: "pv-badge-s", text: b.sub }) : null,
@@ -49,7 +53,7 @@
         d.tag || null, d.nameNode, el("div", { class: "pv-line" }, [d.stars ? el("span", { class: "go-stars", text: d.stars, "aria-label": d.starsLabel || null }) : null,
           ...line.flatMap((n, i) => (i ? [el("span", { class: "pv-sep", "aria-hidden": "true", text: "|" }), n] : [n]))]),
         d.place ? el("div", { class: "muted pv-place", text: d.place }) : null])]),
-      el("div", { class: "pv-right" }, [...stats, badge])]);
+      el("div", { class: "pv-right" }, [strip, badge])]);
   }
 
   // one bar: the read's range as a light band, its midpoint as the fill, in the read's tone
@@ -109,7 +113,7 @@
         pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${u} uncertainty` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: u || "Not Scouted" })]);
     }));
     return card("Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
-      tip: "Each look narrows a read: three pips is a settled read (Low uncertainty), one a wide one (High)." });
+      tip: "Each look narrows a read: three pips is a confident read (Low uncertainty), one a wide one (High)." });
   }
 
   // the traits, from whatever the traits view carries: Who Decides with what that person Cares About, Personality, His Story,

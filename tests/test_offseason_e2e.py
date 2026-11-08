@@ -116,20 +116,32 @@ if __name__ == "__main__":
             assert "LEAVING YOUR PROGRAM" in page.inner_text("#tab-offseason")
             page.click("text=Advance to Transfer Portal (Week 1)")
             page.wait_for_selector("text=WEEK 1 OF 4", timeout=120_000)
-            assert not page.query_selector(".off-board .go-row-recruit"), "the portal opens with an empty board"
+            # the portal page carries your board in brief (the board itself is the Recruiting tab's): empty at the open
+            assert not page.query_selector(".off-board"), "the board is no longer embedded in the offseason page"
+            assert "Nobody on your board yet" in page.inner_text("#tab-offseason .off-your-board")
+            assert "YOUR PORTAL BOARD" in page.inner_text("#tab-offseason .off-your-board").upper()
             # you pick an entrant from the pool (the best one not leaving your own program) and recruit him on the board
             pool = call(base, f"/api/season/{sid}/prospects?limit=20")["rows"]
             pick = next(r for r in pool if r.get("from") != "georgia" and not r.get("committed"))
             call(base, f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
             page.reload(); page.wait_for_selector("#season:visible")
-            page.wait_for_selector(".off-board .go-row-recruit", timeout=60_000)    # the portal is recruited on the board
+            page.wait_for_selector(f"#tab-offseason .off-your-board li[data-key='{pick['id']}']", timeout=60_000)   # his row in the card
             assert "WEEK 1 OF 4" in page.inner_text("#tab-offseason")
-            page.click(".off-board .go-row-recruit >> nth=0")                         # he opens in the pane beside the list
-            page.click(".off-board .go-pane #rc-recruit")                             # the Recruit menu: Offer… opens the step in the pane
+            card_text = page.inner_text("#tab-offseason .off-your-board")
+            assert pick["name"] in card_text and "NOT OFFERED" in card_text.upper(), card_text   # the chip is set in small caps
+            page.click("#tab-offseason .off-your-board button:has-text('Recruit on the Board')")   # opens the Recruiting tab on the portal board
+            page.wait_for_selector("#tab-recruiting .go-row-recruit", timeout=60_000)             # the portal is recruited on the board there
+            assert not page.is_visible("#tab-offseason"), "the button leaves the offseason page for the Recruiting tab"
+            page.click("#tab-recruiting .go-row-recruit >> nth=0")                                 # he opens in the pane beside the list
+            page.click("#tab-recruiting .go-pane #rc-recruit")                                     # the Recruit menu: Offer… opens the step in the pane
             page.click(".go-menu .go-menu-item[data-action=offer]")
-            page.wait_for_selector(".off-board .go-pane .go-step #rc-nil", timeout=30_000)   # the pitch and the NIL his ask suggests
-            page.click(".off-board .go-pane .go-step button.go-step-go")
-            page.wait_for_selector(".off-board .go-pane .go-tag:has-text('Offered')", timeout=30_000)
+            page.wait_for_selector("#tab-recruiting .go-pane .go-step #rc-nil", timeout=30_000)   # the pitch and the NIL his ask suggests
+            page.click("#tab-recruiting .go-pane .go-step button.go-step-go")
+            page.wait_for_selector("#tab-recruiting .go-pane .go-tag:has-text('Offered')", timeout=30_000)
+            page.click("#season-tabs button[data-tab=offseason]")                                  # back to the week: the card says he is offered
+            page.wait_for_selector("text=WEEK 1 OF 4", timeout=60_000)
+            page.wait_for_function("(id) => /Favorite|In It|Long Shot/.test((document.querySelector(`#tab-offseason .off-your-board li[data-key='${id}']`) || {}).textContent || '')", arg=pick["id"], timeout=30_000)
+            assert "1 / " in page.inner_text("#tab-offseason .off-your-board"), "Offers Out counts the offer"
             for w in (1, 2, 3):
                 page.click(f"text=Advance to Transfer Portal (Week {w + 1})")
                 page.wait_for_selector(f"text=WEEK {w + 1} OF 4", timeout=120_000)

@@ -2,3 +2,5 @@
 # Column headers where the lowercase word is the convention.
 vs Top 25
 vs .500+
+# The Official Visit picker's rows ("Wk 6 · vs #4 USC"): the schedule's "vs" before an opponent.
+Wk X · vs

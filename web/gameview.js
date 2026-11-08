@@ -24,18 +24,61 @@ window.CFP = (function () {
   const SBOX_IDS = { scoreRow: "#sbox-score-row", quarters: "#sbox-quarters", meta: "#sbox-meta", scoring: "#sbox-scoring", team: "#sbox-team", home: "#sbox-home", away: "#sbox-away", drives: "#sbox-drives" };
 
   // A small square in the team's colors: primary and secondary split on a diagonal,
-  // the accent color as the border. Teams without an accent get a theme-aware ring.
+  // the accent color as the border. Teams without an accent get a theme-aware ring, and a
+  // white or black accent that would vanish into the page (white on the light theme, black
+  // on the dark one) is drawn in the theme's ink instead, so the pill still reads as three colors.
+  const ACCENT_LIGHT = 0.85, ACCENT_DARK = 0.03;   // relative luminance: above reads as white, below as black
+  function luminance(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    if (!m) return null;
+    const lin = (i) => { const c = parseInt(m[1].slice(i, i + 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+  }
+  // the ink that reads on a color: black on a light one, white on a dark one (the bars of cards about another team)
+  function inkFor(hex) {
+    const l = luminance(hex);
+    return l == null || l < 0.18 ? "#ffffff" : "#1a1200";
+  }
+  // a card about one team: its primary as --rcp-team with the ink that reads on it (styles.css .card-bar, recap.css)
+  function teamVars(slug) {
+    const t = teamsBySlug[slug];
+    const c = t && t.colors && t.colors.primary;
+    return c ? `--rcp-team:${c};--rcp-team-ink:${inkFor(c)}` : "";
+  }
+  function accentClass(c3) {
+    const l = luminance(c3);
+    return l == null ? "" : l > ACCENT_LIGHT ? " accent-light" : l < ACCENT_DARK ? " accent-dark" : "";
+  }
   function teamPill(slug) {
     const t = teamsBySlug[slug];
     const col = (t && t.colors) || {};
     const c1 = col.primary || "#888", c2 = col.secondary || c1, c3 = col.accent;
     const node = document.createElement("span");
-    node.className = `pill-inline team-pill${c3 ? "" : " no-accent"}`;
+    node.className = `pill-inline team-pill${c3 ? accentClass(c3) : " no-accent"}`;
     node.style.setProperty("--c1", c1);
     node.style.setProperty("--c2", c2);
     if (c3) node.style.setProperty("--c3", c3);
-    node.title = t ? t.name : "";
+    node.title = teamName(slug);
     return node;
+  }
+
+  // A team's name as every page shows it: /api/teams names an FCS stand-in only by its region
+  // ("FCS Mid-Atlantic"), so a name read from here never shows anything else.
+  function teamName(slug, fallback) {
+    const t = teamsBySlug[slug];
+    return (t && t.name) || fallback || "";
+  }
+
+  // A box score with an FCS stand-in's side named by its label everywhere it shows: the header,
+  // the line score, the kickoff line, the injuries, the scoring plays and its players tab.
+  function boxNames(g) {
+    for (const side of ["home", "away"]) {
+      const t = teamsBySlug[g && g[`${side}_slug`]];
+      if (!t || !t.fictional || !g[side]) continue;
+      g[side].name = t.name;
+      for (const s of g.scoring_plays || []) if (s.team === side) s.team_name = t.name;
+    }
+    return g;
   }
 
   // ----- theme (dark / light) -------------------------------------------------
@@ -74,6 +117,7 @@ window.CFP = (function () {
   }
 
   function renderScoreboard(g, ids = GAME_IDS) {
+    boxNames(g);
     const row = $(ids.scoreRow);
     row.innerHTML = "";
     // the home side reads bar, name, score; the away side is its mirror: score, name, bar
@@ -405,6 +449,6 @@ window.CFP = (function () {
   }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
   syncTree(document.body);
 
-  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
+  return { $, el, teamsBySlug, GAME_IDS, SBOX_IDS, teamColor, teamPill, inkFor, teamVars, teamName, boxNames, applyTheme, renderScoreboard, renderScoring, renderTeamStats,
            renderPlayers, renderDrives, label, quarterName, kindLabel, resultLabel, fieldPos, fmtTime };
 })();

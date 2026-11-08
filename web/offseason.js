@@ -8,8 +8,9 @@
      the Overview ("hub"): the hero, your numbers, the AD's meeting, the takeaway and your history. The
        tab opens on it at Departures; Back from any stage returns to it; its primary button opens the
        stage the offseason is on (no call to the server).
-     the stage's own page: Departures, Keep Them Home, the portal weeks (the recruiting board, drawn by
-       recruiting.js, wrapped), Development, Staff, and the Recap at Ready (no Overview, no Back).
+     the stage's own page: Departures, Keep Them Home, the portal weeks (the rules, your moves, who got away and
+       a compact Your Portal Board card; the board itself is the Recruiting tab's, drawn by recruiting.js),
+       Development, Staff, and the Recap at Ready (no Overview, no Back).
    Which page shows (view.page) and Development's tab (view.devTab) are in the address (opage, odev). */
 (function () {
   "use strict";
@@ -19,6 +20,7 @@
   const KIND_ORDER = ["draft", "undrafted", "graduated", "portal", "quit", "stayed"];
   const SHOWN = 6;                 // rows a long list shows before "+ N More"
   const FIRST_SHOWN = 8;           // first-round picks shown before "+ N More"
+  const BOARD_SHOWN = 6;           // entrants the portal week's Your Portal Board card lists
   const view = { position: "", status: "available", posPick: "", recapOpen: false,
                  page: "stage", pageFor: null, want: null, devTab: "redshirts", more: {}, closed: {} };
   const ui = window.CFP.ui;
@@ -79,7 +81,7 @@
       sub ? el("div", { class: "muted small", text: sub }) : null]);
   }
   const card = (cls, key, kids) => el("section", { class: `go-card ${cls || ""}`, "data-key": key }, kids);
-  const kicker = (text, extra) => el("div", { class: "go-kicker" }, [text, extra || null]);
+  const kicker = (text, extra) => el("div", { class: "card-bar" }, [el("div", { class: "go-kicker" }, [text, extra || null])]);   // a card's header: its bar (styles.css .card-bar)
   // a row of cards: two equal columns ("g2") or two to one ("g21"); a lone card (or an odd last one) spans the row
   function row(kind, key, items) {
     const kids = items.filter(Boolean);
@@ -235,8 +237,7 @@
       development: "Advance to Staff Changes", staff: "Finish the Offseason", ready: `Start the ${v.year} Season` }[v.stage];
   }
 
-  // the stage drawn into root; patching: drawn off screen to patch the live one (the portal board
-  // keeps itself: recruiting.js draws it once)
+  // the stage drawn into root; patching: drawn off screen to patch the live one
   function draw(s, v, root, patching) {     // root: the live box, or a detached one to patch from (handlers use BOX)
     drawn = { sid: s.id, stage: v.stage };
     last = { s, v };
@@ -293,18 +294,18 @@
   const HERO = {
     retention: (v) => `Keep key players home, see who left and fill your roster from the portal for ${v.year}.`,
     departures: () => "Your answers are in and the draft is done. See who left, who was picked and who you kept.",
-    portal: (v) => `Week ${v.portal.week} of ${v.portal.weeks}: recruit transfers on your board. Entrants with offers decide at the week's end.`,
+    portal: (v) => `Week ${v.portal.week} of ${v.portal.weeks}: recruit transfers on your board on the Recruiting tab. Entrants with offers decide at the week's end.`,
     portal_old: () => "Offer transfers from the portal table. Entrants with offers pick a school when the round ends.",
     development: () => "The portal is closed. See who improved, check the redshirts and move players between positions.",
     staff: () => "Fill the jobs on your staff, hire from the coaching market and see the carousel around the league.",
   };
   function drawHub(s, v, page) {
     const kind = v.stage.startsWith("portal_w") ? "portal" : v.stage === "portal_1" || v.stage === "portal_2" ? "portal_old" : v.stage;
-    const hero = card("off-hero", "hero", [el("div", { class: "go-kicker off-hero-kick", text: "Offseason" }),
+    const hero = card("off-hero", "hero", [kicker("Offseason"),
       el("div", { class: "off-hero-title", text: isFirst(v) ? "Ready for the Offseason" : `Up Next: ${LONG[v.stage]}` }),
       el("p", { class: "off-hero-line", text: (HERO[kind] || HERO.staff)(v) })]);
     const deciding = v.retention && !v.retention.results && v.retention.players.length ? v.retention.players.length : 0;
-    const numbers = card("off-numbers-card", "numbers", [el("div", { class: "off-numbers" }, [
+    const numbers = card("off-numbers-card", "numbers", [kicker("By the Numbers"), el("div", { class: "off-numbers" }, [
       stat("Roster", `${v.roster} / ${v.roster_limit || 85}`, deciding ? `${deciding} deciding whether to stay` : null), stat("Class Signed", String(v.signed)),
       stat("Open Spots", String(v.open_spots)), stat("Portal Placed", `${v.portal.signed} of ${v.portal.entrants}`)])]);
     page.append(row("g2", "hub-top", [hero, numbers]));
@@ -380,7 +381,7 @@
   function holdTab(box) {
     const cover = el("section", { class: "go-card off-busy", role: "status", "data-key": "busy" }, [
       el("span", { class: "off-busy-spin", "aria-hidden": "true" }),
-      el("div", {}, [el("div", { class: "go-kicker", text: "Working Through the Offseason" }),
+      el("div", {}, [el("div", { class: "go-kicker off-busy-kick", text: "Working Through the Offseason" }),
         el("p", { class: "muted small", text: "This takes a moment; everything waits until it is done." })])]);
     const under = [...box.children];
     for (const n of under) n.inert = true;
@@ -514,8 +515,8 @@
       const rows = all.filter((d) => d.kind === kind).sort((a, b) => (a.pick || 999) - (b.pick || 999) || b.overall - a.overall);
       if (!rows.length) continue;
       const shown = cut(`kind-${kind}`, rows);
-      const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { class: "off-mark-col", "aria-label": "Gone" }), el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
-        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [el("td", { class: "off-mark", text: d.kind === "stayed" ? "↺" : "✓" }),
+      const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
+        el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [
           el("td", {}, [el("b", { text: d.name }), d.kind === "draft" ? el("span", { class: "go-tag good off-pick", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · Early" : ""}` }) : null]),
           el("td", { class: "num", text: d.pos }), el("td", { class: "num", text: String(d.overall) })])))]);
       const det = el("details", { class: "off-group", "data-key": `kind-${kind}`, ...(view.closed[kind] ? {} : { open: "" }) }, [
@@ -552,7 +553,7 @@
     const r = v.retention;
     const retain = (ev, pid, action, said, nil) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/retain`, staged({ pid, action, nil: nil || 0 })), said,
       { fail: (err) => H.toast(`Could not do that: ${H.errText(err)}`, 4000) });
-    const strip = card("off-keep-strip", "keep-head", [el("div", { class: "off-strip3" }, [stat("Players Want Out", String(r.players.length)),
+    const strip = card("off-keep-strip", "keep-head", [kicker("Keep Them Home"), el("div", { class: "off-strip3" }, [stat("Players Want Out", String(r.players.length)),
       stat("Next Year's NIL", `${r.left} / ${r.budget}`), stat("NIL Committed", String(r.spent))]),
       el("p", { class: "muted small off-rules" }, [`${r.players.length} of your players with eligibility left mean to leave: transfers and early draft entrants. Meet each one to hear what it would take. `,
         "A promised starting role only counts if your depth chart would really start him; NIL comes out of next year's budget, so it is money you will not have for recruits or the portal. ",
@@ -597,7 +598,7 @@
     if (r.players.length) page.append(cards);
   }
 
-  // ----- the transfer portal, week by week: the rules, the answers from Keep Them Home, your moves, and the board
+  // ----- the transfer portal, week by week: the rules, the answers from Keep Them Home, your moves, and your board in brief
   function movesCard(s, moves) {
     return card("off-moves", "moves", [kicker("Your Moves"), el("ul", { class: "off-lines" }, moves.map((m) => el("li", { "data-key": `${m.id}-${m.to}` }, [
       icon("swap"), el("b", { text: m.name }), el("span", { class: "muted", text: `${m.pos} · ${m.overall} OVR` }),
@@ -622,11 +623,32 @@
     const moves = p.moves_mine || [];
     const away = p.away || [];
     const awayCard = away.length ? card("off-away", "away", [kicker(`Who Got Away · ${away.length}`), awayList(away)]) : null;
-    const board = el("div", { class: "off-board", "data-key": "board", "data-keep": "" });     // the board draws and patches itself (recruiting.js)
-    const items = [overview, answers, moves.length ? movesCard(s, moves) : null, awayCard].filter(Boolean);
+    const items = [overview, boardCard(s, v), answers, moves.length ? movesCard(s, moves) : null, awayCard].filter(Boolean);
     if (items.length % 2 === 1) items[items.length - 1].classList.add("off-span");
-    page.append(el("div", { class: "off-row off-g2 off-portal", "data-key": "portal" }, [...items, board]));
-    if (!patching) window.Recruiting.board(s, board, H);
+    page.append(el("div", { class: "off-row off-g2 off-portal", "data-key": "portal" }, items));
+  }
+  // Your Portal Board: a compact card in place of the board itself (that is the Recruiting tab's): the count, your
+  // offers out of the week's allowance, your open spots, the top entrants by your chance with the board's own standing
+  // word (recruiting.js's ladder, so the chip agrees with the tab), and the button that opens the tab
+  function boardCard(s, v) {
+    const p = v.portal;
+    const bd = p.board || { count: 0, rows: [] };
+    const R = window.CFP.recruiting;
+    const offers = (p.offers || []).length;
+    const top = bd.rows.slice().sort(R.byChance(s.team)).slice(0, BOARD_SHOWN);
+    const go = el("button", { type: "button", class: "go-btn primary off-board-go", text: "Recruit on the Board →" });
+    ui.on(go, "click", () => H.onChange("recruiting"));
+    return card("off-your-board", "board", [kicker("Your Portal Board"),
+      el("div", { class: "off-strip3" }, [stat("On Your Board", String(bd.count)), stat("Offers Out", `${offers} / ${offers + p.offers_left}`), stat("Open Spots", String(v.open_spots))]),
+      top.length ? el("ul", { class: "off-lines off-board-lines" }, top.map((b) => {
+        const sd = R.standingOf(b, s.team);
+        const word = sd.odds === "No Room" ? "No Room" : sd.word;
+        return el("li", { "data-key": b.id }, [avatar(b.id, "sm"), el("div", { class: "off-board-who" }, [el("b", { text: b.name }),
+          el("div", { class: "muted small", text: `${b.pos} · ${b.overall} OVR${b.signed_week ? ` · Signed Week ${b.signed_week}` : ""}` })]),
+          el("span", { class: `go-tag ${sd.tone}`, text: word, ...(sd.odds === "No Room" && b.no_room ? { title: b.no_room.tip } : {}) })]);
+      })) : el("p", { class: "muted", text: "Nobody on your board yet. Pick entrants on the Prospects tab, then recruit them on the Recruiting tab." }),
+      bd.count > top.length ? el("p", { class: "muted small", text: `And ${bd.count - top.length} more on the Recruiting tab.` }) : null,
+      el("div", { class: "off-board-foot" }, [go])]);
   }
 
   // a recruit of yours who went elsewhere, in a sentence: "Zach Lutmer signed with Georgia. You had no roster spot left for him."
@@ -697,7 +719,7 @@
   // at Staff and Ready: one line that opens on click (a patch keeps whether the player opened it: view.recapOpen)
   function recapFolded(v) {
     const rec = v.portal_recap;
-    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "off-recap-sum" }, [el("span", { class: "go-kicker", text: "Transfer Portal Recap" }),
+    const det = el("details", { class: "go-card off-recap", "data-key": "recap", ...(view.recapOpen ? { open: "" } : {}) }, [el("summary", { class: "card-bar off-recap-sum" }, [el("span", { class: "go-kicker", text: "Transfer Portal Recap" }),
       el("span", { class: "muted", text: `Portal: +${rec.signed.length} / −${rec.lost.length} · details` })]), el("p", { class: "off-recap-line", text: recapLine(rec) }), recapLists(rec)]);
     ui.on(det, "toggle", (ev) => { view.recapOpen = ev.currentTarget.open; });
     return det;
@@ -715,7 +737,7 @@
     const r = v.report || { mine: [], transfers: [], walk_ons: 0 };
     const rs = v.redshirts;
     const picked = rs ? rs.players.filter((p) => p.redshirt).length : 0;
-    const stats = card("off-dev-stats", "dev-stats", [el("div", { class: "off-strip3" }, [stat("Roster Size", `${v.roster} / ${v.roster_limit || 85}`),
+    const stats = card("off-dev-stats", "dev-stats", [kicker("Your Roster"), el("div", { class: "off-strip3" }, [stat("Roster Size", `${v.roster} / ${v.roster_limit || 85}`),
       stat("Redshirts", rs ? `${picked} / ${rs.players.length}` : "0"), stat("Position Changes", String((v.position_changes || []).length))])]);
     const rec = v.portal_recap;
     const recap = rec ? card("off-recap", "recap", [kicker("Transfer Portal Recap"), el("div", { class: "off-plusminus" }, [
@@ -738,14 +760,14 @@
       el("tbody", {}, cut("rs", rs.players, 10).map((p) => el("tr", { "data-key": p.id }, [el("td", {}, [el("b", { text: p.name })]), el("td", { class: "num", text: p.pos }), el("td", { class: "num", text: String(p.overall) }),
         el("td", { class: "num", text: `${p.games} / ${p.team_games}` }), el("td", {}, [el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: decision(p) })])])))])])
       : el("p", { class: "muted", text: "Nobody on your roster could take a redshirt this year." });
-    const improved = [el("div", { class: "go-kicker" }, ["Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")]),
+    const improved = [kicker("Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")),
       el("p", { class: "muted", text: `${r.walk_ons} walk-ons and lower-level transfers joined around the league to fill out rosters.` }),
       el("div", { class: "go-kicker muted off-sub", text: `The Top ${r.mine.length}` }), el("ul", { class: "off-list off-dev-list" }, r.mine.map(devRow))];
-    const transfers = [el("div", { class: "go-kicker", text: `Your Transfers · ${(r.transfers || []).length}` }),
+    const transfers = [kicker(`Your Transfers · ${(r.transfers || []).length}`),
       (r.transfers || []).length ? el("ul", { class: "off-list off-dev-list" }, r.transfers.map(devRow)) : el("p", { class: "muted", text: "No transfers joined your roster." }),
       rec ? recapLists(rec) : null];
     const panels = card("off-panel", "dev-panel", [
-      panel("redshirts", "", [el("div", { class: "go-kicker", text: "Redshirts" }), rsPanel, rs ? more("rs", rs.players.length - 10) : null]),
+      panel("redshirts", "", [kicker("Redshirts"), rsPanel, rs ? more("rs", rs.players.length - 10) : null]),
       panel("positions", "off-roster", positionMoves(s, v, patching)),
       panel("improved", "", improved),
       panel("transfers", "", transfers)]);
@@ -867,13 +889,16 @@
     if ((st.market || []).length) {
       const t = el("table", { class: "off-table" }, [el("thead", {}, [el("tr", {}, ["Coach", "Would Take", "Rating", "Why He Is Available", "Last Job"].map((h) => el("th", { text: h })))])]);
       const body = el("tbody");
+      // a role is a label (Title Case): "head coach" → "Head Coach", "defensive coordinator at Texas" → "Defensive Coordinator at Texas"
+      const roleCase = (t) => String(t || "").replace(/\b(head coach|offensive coordinator|defensive coordinator)\b/g, (r) => r.replace(/\b\w/g, (c) => c.toUpperCase()));
+      const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
       for (const m of st.market) {
-        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.join(", ") }), el("td", { class: "num", text: String(m.rating) }),
-          el("td", { text: `${m.why}${m.sits_out ? " · sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? m.previous_job : "—" })]));
+        body.append(el("tr", {}, [el("td", { text: `${m.name}, ${m.age}` }), el("td", { text: m.roles.map(roleCase).join(", ") }), el("td", { class: "num", text: String(m.rating) }),
+          el("td", { text: `${cap(m.why)}${m.sits_out ? " · Sitting out this cycle" : ""}` }), el("td", { text: m.previous_job && m.previous_job !== m.why ? cap(roleCase(m.previous_job)) : "—" })]));
       }
       t.append(body);
-      page.append(card("off-market", "market", [el("div", { class: "go-kicker" }, [`Coaches for Hire · The Top ${st.market.length} `,
-        ui.tip("The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it.", "Coaches for Hire")]),
+      page.append(card("off-market", "market", [kicker(`Coaches for Hire · The Top ${st.market.length} `,
+        ui.tip("The coaching market: fired and let-go coaches, head coaches from the FCS and lower divisions, NFL assistants and position coaches. Open a job on your staff to hire from it.", "Coaches for Hire")),
       el("div", { class: "off-scroll" }, [t])]));
     }
   }

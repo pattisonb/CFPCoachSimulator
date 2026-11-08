@@ -1,15 +1,23 @@
 """A Coach Career's own league, from its second season on
-(docs/superpowers/specs/2026-10-23-career-offseason-design.md, section 2).
+(docs/superpowers/specs/2026-10-23-career-offseason-design.md, section 2), or from its first when
+the career started from a league file (docs/superpowers/specs/2026-11-05-league-file-design.md).
 
-The first season of a career plays the real 2026 rosters (data/engine_teams.json). At its first
-offseason the career takes a copy of every FBS roster into `state["league"]`, and from then on
+The first season of a career plays the real 2026 rosters (data/engine_teams.json), unless it was
+started from a league file: then `state["league"]` holds the merged, filled league from the start
+(league_fill.to_league; is_imported), built the way later seasons are (real=False, so its unchanged
+teams play without the real-2026-only adjustments), with a team's own identity in "meta"
+(team_meta), the file's depth chart as "depth" for season one only (offseason.start drops it), and
+new or moved teams' recruiting models in "recruiting_models" (recruiting.use_league_models).
+Otherwise at its first offseason the career takes a copy of every FBS roster into `state["league"]`, and from then on
 players leave, transfer, sign and develop there. Each season the league is turned back into the
 source format (cfb_sim_data/teams/*.json) and built by the same pipeline as the real data
 (build_teams.build), cached per career and year in data/leagues/ and rebuilt from the state
 whenever the cache is missing (a save loaded on another machine).
 
     state["league"] = {"year": 2027, "attrs": [the game's 54 skills], "scale": "ours",
-                       "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "style": slug}}}
+                       "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "style": slug,
+                                        "meta": {...} (a league file's team), "depth": {role: [player id]} (season one)}},
+                       "source": {...}, "recruiting_models": {slug: {...}}}     (the last two: a league file's)
 
 A player, compact, on our scale only (game_scale.py: 1-99, 50 the middle Power 4 starter at the
 position; his overall is our formula on these):
@@ -95,11 +103,29 @@ def base_meta(slug: str) -> dict:
     return _meta_of(base_team(slug))
 
 
+def team_meta(lgd: Optional[dict], slug: str) -> dict:
+    """A league team's identity: its own "meta" when the league carries one (a team from a league
+    file the game does not know), otherwise the base team's (base_meta)."""
+    meta = ((lgd or {}).get("teams") or {}).get(slug, {}).get("meta")
+    return meta if meta is not None else base_meta(slug)
+
+
 @lru_cache(maxsize=1)
 def base_slugs() -> tuple[str, ...]:
     if BASE_META_FILE.exists():
         return tuple(sorted(_meta_file(str(BASE_META_FILE))))
     return _source_slugs()
+
+
+def league_slugs(lgd: dict) -> tuple[str, ...]:
+    """Every team a league plays: its own teams and the FCS stand-ins (fictional base teams, which
+    always play their base rosters). For the built-in league exactly base_slugs()."""
+    return tuple(sorted(set(lgd["teams"]) | {s for s in base_slugs() if base_meta(s)["fictional"]}))
+
+
+def is_imported(lgd: Optional[dict]) -> bool:
+    """A career league made from a league file (league_fill.to_league sets its "source")."""
+    return bool((lgd or {}).get("source"))
 
 
 def _meta_of(t: dict) -> dict:
@@ -130,6 +156,19 @@ def write_base_files() -> None:
 @lru_cache(maxsize=1)
 def _potentials() -> dict:
     return json.loads(recruits.POTENTIAL_FILE.read_text(encoding="utf-8")) if recruits.POTENTIAL_FILE.exists() else {}
+
+
+@lru_cache(maxsize=1)
+def base_development() -> dict[str, tuple[str, int]]:
+    """slug -> (coachability, projected overall at his potential) for every real 2026 player, from
+    BASE_LEAGUE_FILE (the first season has no league of its own yet), read once. Without the file,
+    the seeded coachability alone (no projection: 0)."""
+    if BASE_LEAGUE_FILE.exists():
+        lgd = json.loads(BASE_LEAGUE_FILE.read_text(encoding="utf-8"))
+        attrs = lgd["attrs"]
+        return {c["id"]: (c.get("c") or "Steady Grinder", game_scale.overall(potential(c, attrs), c["pos"]))
+                for t in lgd["teams"].values() for c in t["roster"]}
+    return {s: (v["coachability"], 0) for s, v in _potentials().items() if v.get("coachability")}
 
 
 def height_in(h) -> Optional[int]:
@@ -262,18 +301,31 @@ def _role_players(by_pos: dict, role: str, taken: set, n: int) -> list[dict]:
     return picks[:n]
 
 
-def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1, by_overall: bool = False) -> tuple[dict, dict]:
+def lineup(roster: list[dict], shape: dict, year: int = FIRST_YEAR + 1, by_overall: bool = False,
+           preferred: Optional[dict] = None) -> tuple[dict, dict]:
     """(starters, depth chart) in the source format: each role's best (the linebacker spots
     from SAM, MIKE and WILL together), borrowing a neighboring position when a role runs short;
     kick and punt returners by return ability. A CPU staff picks by the coaches' eye (overall,
     experience and a fixed draw of what the numbers miss); `by_overall` (your own team: you are
-    the eye, and move players on the Depth Chart) orders every role by overall, ties by name."""
+    the eye, and move players on the Depth Chart) orders every role by overall, ties by name.
+    `preferred` ({role: [player slugs]}, a league file's depth chart): those players lead their
+    role, in that order, and the rest follow as before."""
     by_pos: dict[str, list] = {}
     for p in roster:            # the coaches' eye: overall plus a little of what the numbers miss, fixed for the year
         p["_depth"] = p["ovr"] if by_overall else (p["ovr"] + DEPTH_EXPERIENCE * EXPERIENCE.get(p.get("class"), 0)
                                                    + random.Random(f"depth-{p['slug']}-{year}").gauss(0, DEPTH_EYE.get(_EYE_GROUP.get(p["position"], "K"), 3.0)))
     for p in sorted(roster, key=lambda q: (-q["_depth"], q["name"])):
         by_pos.setdefault(p["position"], []).append(p)
+    if preferred:
+        by_slug = {p["slug"]: p for p in roster}
+        for role, slugs in preferred.items():
+            lead = [by_slug[s] for s in dict.fromkeys(slugs or []) if s in by_slug]
+            if not lead:
+                continue
+            ids = {id(p) for p in lead}
+            for pos in by_pos:
+                by_pos[pos] = [p for p in by_pos[pos] if id(p) not in ids]
+            by_pos[role] = lead + by_pos.get(role, [])
     depth = {role: [p["slug"] for p in by_pos.get(role, [])] for role in
              ("QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "LEDG", "DT", "REDG", "SAM", "MIKE", "WILL", "CB", "FS", "SS", "K", "P")}
     starters, taken = {}, set()
@@ -325,10 +377,10 @@ def team_ratings(roster: list[dict], starters: dict) -> dict:
 def source_team(league: dict, slug: str, by_overall: bool = False) -> dict:
     """One league team in the source format: the base team's identity, the league's roster,
     coaches and a lineup picked from the roster (`by_overall`: every role by overall, your team)."""
-    base = base_meta(slug)
+    base = team_meta(league, slug)
     entry = league["teams"][slug]
     roster = [expand(c, league["attrs"], base) for c in entry["roster"]]
-    starters, depth = lineup(roster, entry["formation"], league["year"], by_overall)
+    starters, depth = lineup(roster, entry["formation"], league["year"], by_overall, preferred=entry.get("depth"))
     on_field = {s for role in ("WR", "TE") for s in starters["offense"].get(role, [])}
     mean = st.mean([p["ovr"] for p in roster if p["slug"] in on_field] or [50])
     for p in roster:            # what the coaches see in a receiver they also throw him the ball for (real 2026 usage's spread),
@@ -346,7 +398,7 @@ def source_team(league: dict, slug: str, by_overall: bool = False) -> dict:
 
 
 def source_teams(league: dict, me: Optional[str] = None) -> list[dict]:
-    return [source_team(league, s, by_overall=(s == me)) if s in league["teams"] else base_team(s) for s in base_slugs()]
+    return [source_team(league, s, by_overall=(s == me)) if s in league["teams"] else base_team(s) for s in league_slugs(league)]
 
 
 def build(league: dict, me: Optional[str] = None) -> dict:
@@ -363,17 +415,21 @@ def path(career_id: str, year: int) -> Path:
 
 def ensure_built(state: dict) -> Optional[Path]:
     """The teams file a career's current season plays (None: the real 2026 one), built if missing.
+    A career from a league file (is_imported) plays its own league from season one.
     In the offseason the league already holds next year's rosters; a missing file for the season
     just played is then rebuilt from them (only a save moved to another machine gets there)."""
     lg = state.get("league")
     year = state.get("year") or FIRST_YEAR
-    if not lg or year <= FIRST_YEAR:
+    if not lg or (year <= FIRST_YEAR and not is_imported(lg)):
         return None
     out = path(state["id"], year)
     if not out.exists():
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(f".{os.getpid()}.tmp")
-        tmp.write_text(json.dumps(build(lg, state.get("team"))), encoding="utf-8")
+        # an imported league's first season is the file app/api.py wrote at Start (league_file.check's
+        # build, no team by overall); later seasons put your team's depth by overall (league.lineup)
+        me = None if year <= FIRST_YEAR else state.get("team")
+        tmp.write_text(json.dumps(build(lg, me)), encoding="utf-8")
         os.replace(tmp, out)
     return out
 

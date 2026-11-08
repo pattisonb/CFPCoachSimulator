@@ -11,6 +11,8 @@ import zlib
 from datetime import datetime, timezone
 from typing import Optional
 
+from sim import fcs_names
+
 FIRST_YEAR = 2026
 MAX_UNPACKED = 200 * 1024 * 1024     # an uploaded save, unpacked (a full season of box scores is well under this)
 MAX_BOXES = 2000                     # box scores in one save (a season has about 900)
@@ -47,7 +49,7 @@ def export_save(state: dict, boxes: bool = True) -> bytes:
     """The career as one gzip file: the season state and every saved box score (`boxes=False`:
     the state alone, your own games' box scores included, for the browser's weekly copy)."""
     from sim import season
-    files = {p.name: p.read_text(encoding="utf-8") for p in sorted(season.box_dir(state).glob("*.json"))} \
+    files = {p.name: fcs_names.rewrite_text(p.read_text(encoding="utf-8")) for p in sorted(season.box_dir(state).glob("*.json"))} \
         if boxes and season.box_dir(state).exists() else {}
     return gzip.compress(json.dumps({"state": state, "boxes": files}, separators=(",", ":")).encode("utf-8"), compresslevel=6)
 
@@ -60,7 +62,7 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
         raw = unpack.decompress(blob, MAX_UNPACKED)
         if unpack.unconsumed_tail:
             raise ValueError("too large")
-        data = json.loads(raw.decode("utf-8"))
+        data = json.loads(fcs_names.rewrite_text(raw.decode("utf-8")))   # a save from before the FCS stand-ins' rename
         state = data["state"]
     except (OSError, ValueError, KeyError, TypeError, zlib.error) as exc:
         raise ValueError("not a Coach Career save") from exc
@@ -69,7 +71,9 @@ def read_save(blob: bytes) -> tuple[dict, dict]:
     boxes = data.get("boxes") or {}
     if not isinstance(boxes, dict) or len(boxes) > MAX_BOXES:
         raise ValueError("not a Coach Career save")
-    return state, {n: t for n, t in boxes.items() if isinstance(t, str) and BOX_NAME.fullmatch(n)}
+    from coach_career import coach_names
+    coach_names.distinct(state)          # a save with one coach in two jobs or two coaches under one name heals
+    return state, {n: fcs_names.rewrite_text(t) for n, t in boxes.items() if isinstance(t, str) and BOX_NAME.fullmatch(n)}
 
 
 def _looks_like_career(state) -> bool:
@@ -79,9 +83,16 @@ def _looks_like_career(state) -> bool:
         return False
     c = state.get("career")
     return (isinstance(c, dict) and {"year", "settings", "saved_week", "saved_at"} <= set(c)
-            and state.get("mode") == "full" and state.get("team") in season.load_teams()
+            and state.get("mode") == "full" and (state.get("team") in _own_teams(state) or state.get("team") in season.load_teams())
             and isinstance(state.get("games"), dict) and isinstance(state.get("recruiting"), dict)
             and isinstance(state.get("current_week"), int))
+
+
+def _own_teams(state: dict) -> dict:
+    """The teams of a save's own league (a career from a league file plays teams the built-in league lacks)."""
+    lgd = state.get("league")
+    teams = lgd.get("teams") if isinstance(lgd, dict) else None
+    return teams if isinstance(teams, dict) else {}
 
 
 def write_save(state: dict, boxes: dict) -> None:

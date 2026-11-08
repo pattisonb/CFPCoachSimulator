@@ -1,5 +1,5 @@
 // US map: Albers USA projection (lower 48 + Alaska and Hawaii insets, 975 x 610) and an SVG renderer.
-// The projection matches tools/make_us_map.py, which drew the outlines in us-states.js.
+// The projection matches the one that drew the outlines in us-states.js.
 (function () {
   const K = 1070;
   const SVGNS = "http://www.w3.org/2000/svg";

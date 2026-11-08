@@ -227,7 +227,9 @@ def develop(p: dict, rng: random.Random, coach_factor: float = 1.0) -> None:
 def as_roster_player(p: dict, team: dict, slug: str, jersey: Optional[str] = None) -> dict:
     """A signed recruit in the source roster format (cfb_sim_data/teams/*.json), so he joins a
     roster and build_teams.map_player reads him like a real player. Potential and
-    coachability ride along; the development trait is left for the code that replaces it."""
+    coachability ride along. The EA development trait is a placeholder ("Normal"): only the real
+    players' trait means anything (it seeds their potential once, TRAIT_ROOM), and the game shows
+    coachability instead (season.development_reads)."""
     return {
         "slug": slug, "name": p["name"], "position": p["ea_position"], "class": "FR", "class_year": "Freshman",
         "height": f"{p['height'] // 12}'{p['height'] % 12}\"", "weight_lbs": p["weight"], "jersey": jersey,
@@ -291,6 +293,9 @@ def seed_real_players(players: list[dict]) -> dict[str, dict]:
         rng = random.Random(f"real-{p['slug']}")
         left = max(0, CAREER_YEARS - y)
         realized = sum(share * (1 - (1 - rate) ** left) for _, rate, share in COACHABILITY) if left else 1.0
+        # ... and a quick learner realizes his room faster than the mix: his room is what he realizes at
+        # his own pace, so a Coach's Dream junior does not gain twice his position's real career gain
+        realized = max(realized, 1 - (1 - RATE[level_name]) ** left) if left else 1.0
         level = math.exp(rng.gauss(-POTENTIAL_SD ** 2 / 2, POTENTIAL_SD))
         level *= STAR_ROOM.get(s, UNKNOWN_STAR_ROOM) * TRAIT_ROOM.get(p.get("dev_trait"), 1.0) * math.exp(AHEAD_ROOM * ahead)
         level = max(LEVEL_RANGE[0], min(LEVEL_RANGE[1], level))

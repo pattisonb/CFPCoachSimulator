@@ -9,10 +9,13 @@ A scene is `turns`: [{who: "you" | "him" | "note", text}] in order (an in-home v
 than himself adds one {who: "family", label: the decider's label, text}); `lines` (his turns' texts) stays
 one release for the page's old readers. Lines are in his voice (or yours), present tense, short, no
 numbers (an in-home visit's ask is in words). They take {name}, {first}, {town}, {state}, {school},
-{position}, {role} ("start", "compete" or "wait"), {record} (the school's won-lost in words), {coach}
+{position} ({positions} its plural in words), {role} ("start", "compete" or "wait"), {record} (the school's won-lost in words; {rec} the same
+to go inside a sentence, {conf} its conference record), {coach}
 (your last name), {opponent} and {result} ("beat" / "lost to": your last game, or the opener before
 one), {leader} (the school leading his list, "" when none or you) and {week_word}. Lines fit a high
-schooler and a transfer alike; two-sided cues take {a} and {b}, two topics' phrases."""
+schooler and a transfer alike; two-sided cues take {a} and {b}, two topics' phrases. A line that claims
+something about the school (NEEDS) is said only while it is true (`facts`, `truth`): this season's record,
+the last game, the conference record, the rank, the program's recent winning and its strengths decide."""
 from __future__ import annotations
 
 import os
@@ -29,7 +32,7 @@ QUESTION_RATE = float(os.environ.get("CFP_QUESTION_RATE", "0.6"))
 # the topics as he would say them, for two-sided cues
 PHRASES = {"proximity": "staying close to home", "playing_time": "getting on the field early",
            "prestige": "a big-name program", "winning": "winning right away", "nil": "the NIL side of it",
-           "coach": "the coaches I'd play for", "academics": "getting a real degree"}
+           "coach": "the coaches I'd play for", "academics": "getting a real degree", "pro": "getting to the league"}
 
 LINES: dict[str, dict[str, list[str]]] = {
     "proximity": {
@@ -130,6 +133,20 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "My mom's going to ask about the academics. I don't know what to tell her.",
                   "Yeah. I was hoping for a stronger school."],
     },
+    "pro": {
+        "cue": ["Honestly, Coach? I'm trying to play on Sundays. Who gets {positions} there?",
+                "My trainer keeps a list of who puts guys in the league. I look at it.",
+                "I want to get drafted. That's the whole plan."],
+        "hit": ["You put {positions} in the league. That's what I'm chasing.",
+                "Sundays. That's the dream, Coach, and you've got the receipts.",
+                "First-rounders at my spot? Say less."],
+        "polite": ["Cool. The league's a long way off, though.",
+                   "Yeah, I know what you've got. Not my biggest thing.",
+                   "That's nice. I just want to play ball first."],
+        "quiet": ["...Who was the last {position} you got drafted, Coach?",
+                  "My trainer says nobody gets drafted from there. I don't know.",
+                  "I'll have to look that up."],
+    },
     "_two_sided": {
         "cue": ["Honestly, Coach? It's {a} or {b}. I go back and forth.",
                 "My dad says {a}. My coach says {b}. I don't know yet.",
@@ -144,7 +161,8 @@ TIRED = ["He is polite but short. He is not weighing you right now, and the call
 
 # his question about a named player (docs/superpowers/specs/2026-10-29-recruit-questions-design.md,
 # section 2): the player ahead of him on your roster ({ahead}, {ahead_cls} his class in words, {position}
-# the recruit's position), or another recruit you offered at his position ({other})
+# that player's roster position: a recruit listed as an athlete asks about your WR, never your "ATH"),
+# or another recruit you offered at his position ({other})
 QUESTION_LINES = {
     "roster": ["Is {ahead} still your {position} next year? I'm not coming to sit behind him.",
                "{ahead} is a {ahead_cls}. That's two more years of him. Where does that leave me?",
@@ -152,6 +170,13 @@ QUESTION_LINES = {
     "recruit": ["You offered {other} too. Which one of us do you actually want?",
                 "I saw {other} post your offer. You telling him the same thing you're telling me?",
                 "If {other} commits first, is there still a spot for me?"],
+    # the Package Deal, once his or his family's line brought his mate up ({mate}): the mate without your offer, or holding it
+    "package": ["So what about {mate}, Coach? Is there a spot for him?",
+                "{mate} hasn't heard from you. Is he getting an offer?",
+                "Where does {mate} stand with you? I need to know before I decide."],
+    "package_offered": ["{mate} showed me your offer. We're both in this together, right?",
+                        "You offered {mate}. Is that spot his for real?",
+                        "{mate} has your offer. Just tell me you mean it for both of us."],
 }
 ANSWERS = ("straight", "promise", "deflect")
 # your reply buttons: a Title Case label (what the button says) over your line, by the question's kind
@@ -165,11 +190,26 @@ ANSWER_COPY = {
                 "promise": "You're the one I want.",
                 "deflect": "Let's talk about what you'd bring."},
 }
-# what he says back: a promise he believes ("promise") or one he has heard before ("hollow")
+# the Package Deal's answers (scenes.question kind "package"): the label and your line by answer, the mate without
+# your offer or holding it ("straight" differs: you have offered him, or you will look at him); {mate} his name
+PACKAGE_ANSWERS = {
+    False: {"straight": ("Tell Him Straight", "I can't promise {mate} a spot today. I'll look at him."),
+            "promise": ("Promise Him an Offer", "{mate} gets an offer this week. You have my word."),
+            "deflect": ("Sidestep It", "Let's talk about what you'd bring.")},
+    True: {"straight": ("Already Offered Him", "I offered {mate} already. Two spots, both yours."),
+           "promise": ("Promise Him an Offer", "{mate}'s offer stands. He signs with you, no questions."),
+           "deflect": ("Sidestep It", "Let's talk about what you'd bring.")},
+}
+# what he says back: a promise he believes ("promise") or one he has heard before ("hollow"); the Package Deal's
+# straight answer once his mate holds your offer ("package_offered"), and his promise, which waits on the offer ("package")
 REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
                "promise": "That's what I needed to hear, Coach.",
                "hollow": "I've heard that one before.",
-               "deflect": "...Okay."}
+               "deflect": "...Okay.",
+               "package_offered": "That's all we needed to hear, Coach.",
+               "package": "Then we'll be watching for it."}
+# the Package Deal promise kept (recruiting._promises): his History's line, {mate} his mate
+PROMISE_KEPT_LINE = "{mate} got his offer. You kept your word, Coach."
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
                "JR": "junior", "JRRS": "redshirt junior", "SR": "senior", "SRRS": "redshirt senior"}
 
@@ -241,7 +281,224 @@ LEAD_LINES = {"proximity": "You'd be close, {first}. Your folks could make every
               "winning": "We're built to win now, and we are not slowing down.",
               "nil": "The collective takes care of our guys. That's real, and it's yours.",
               "coach": "I'm not going anywhere. You'd play for me every year you're here.",
-              "academics": "The degree here means something. Your mom will like that part."}
+              "academics": "The degree here means something. Your mom will like that part.",
+              "pro": "We put {positions} in the league, {first}. Scouts know the way here."}
+LEAD_PRO_PROGRAM = "We put guys in the league, {first}. Scouts know the way here."   # pro holds but not at his spot (a kicker or punter)
+
+# ----- what is true (the lines that claim something agree with the game's facts) ---------------------------
+CLAIM_FROM = 0.6          # *tune* a topic's strength from which your lines claim it outright (the page's Strong); under it they speak honestly
+HISTORY_WINNING = 50.0    # *tune* the program's winning metric (programs.py: the last three seasons) from which "we win here every year" is true
+
+# your lead-with on a topic you cannot claim (`truth` False): honest, or aspirational, never a claim
+LEAD_HONEST = {"proximity": "It's a trip from {town}, I know. We'll make your folks feel at home every time they come.",
+               "playing_time": "Nobody gets handed a job here, {first}. You'd get a fair shot to compete at {position}.",
+               "prestige": "We're not the biggest name out there yet. Come help us make it one.",
+               "nil": "The collective is still growing, but it takes care of our guys.",
+               "coach": "I know what people are saying. I'm here to build this, and I want you in it.",
+               "academics": "You'll get your degree here. We make sure our guys finish.",
+               "pro": "I won't tell you we've sent a lot of guys to Sundays. Come be the first one everybody remembers."}
+LEAD_HONEST_PRO_SOME = "We've sent some, {first}. You could be the next one."   # under the claim line, with a pick at his group in ten years
+# your Winning Now lead by the season's form (`facts`): this season's record, the last game, the conference record and
+# the program's recent history decide which is true; "hot" and "pre_up" are LEAD_LINES["winning"] (or the ranked line)
+LEAD_WINNING = {"ranked": "We're ranked, we're winning, and we are not slowing down.",
+                "winning": "We're {rec} and winning this year. One bad Saturday doesn't change who we are.",
+                "even": "We're {rec}, right in the middle of it. Guys like you are how we tip it to winning now.",
+                "even_conf": "We're {rec}, but we're {conf} in conference play. We're building to win now.",
+                "losing": "We're not where we want to be this year, but we're building something to win now.",
+                "losing_conf": "We're not where we want to be this year, but we're {conf} in the conference. We're building to win now.",
+                "losing_history": "We're not where we want to be this year, but we've won here before, and we're building to win now.",
+                "pre_down": "Last year wasn't us. We're building something to win now."}
+# his reaction to a Winning Now lead that landed (hit) when the record does not back it: skeptical, not sold
+WIN_DOUBT = {"even": ["{record}. You're right there, Coach. Show me the rest of the year.",
+                      "Even's not winning, Coach. But I hear you."],
+             "losing": ["You're {rec}, Coach. Winning now? I'll believe it when I see it.",
+                        "{record}, Coach. Everybody says next year. Show me."],
+             "losing_history": ["I know you guys won before. But {rec}? I'll believe it when I see it."],
+             "pre_down": ["You guys had a rough one last year, Coach. Show me it's different."]}
+# his reaction on a topic you cannot claim that still landed (hit): interested, in words that claim nothing false
+HONEST_HIT = {"proximity": ["It's a drive, but my folks could make some games. That helps.",
+                            "Not next door, but not the other side of the country either. Okay."],
+              "playing_time": ["Compete for it? Okay. I'm not scared of that.",
+                               "A fair shot is all I'm asking for, Coach."],
+              "prestige": ["{school} isn't the biggest name, but I like where it's going.",
+                           "Help build it? Yeah. I could see that."],
+              "nil": ["It's not the biggest number, but it helps back home.",
+                      "Okay. That's a start, Coach."],
+              "academics": ["A degree's a degree, Coach. My mom will still want to hear that.",
+                            "Good. I want something for after football."],
+              "pro": ["Be the first? Okay. I like that, Coach.",
+                      "Nobody's done it from there yet. Maybe that's me."],
+              "pro_some": ["Some have made it from here. I could be next.",
+                           "You've sent a few? Then I could be one of them."]}   # `pro` when nothing was drafted at his group in ten years, `pro_some` when something was
+# your opening's three things on a topic you cannot claim, as you say them (PHRASES are his words and your claims)
+SAID_HONEST = {"proximity": "a home away from home", "playing_time": "a fair shot to compete",
+               "prestige": "a program you can help build", "winning": "building a winner", "academics": "getting your degree", "pro": "a path to Sundays"}
+# the claim each line makes (by its template): the `truth` key that must hold ("!key": must not; a tuple: all of them); any line not
+# listed claims nothing. A line whose claim is false gives way to one in its pool that holds, else the honest one.
+NEEDS = {
+    "That's what I want to hear. My folks could make every home game.": "proximity",
+    "Home on a weekend? That matters, Coach. It really does.": "proximity",
+    "{town} to {school} isn't far at all. I like that a lot.": "proximity",
+    "Being close is nice, I guess. My folks will travel.": "proximity",
+    "Yeah, the drive's easy. That's cool.": "proximity",
+    "A real shot at the field next year? I'm all in on that.": "playing_time",
+    "That depth chart looks good to me, Coach. Real good.": "playing_time",
+    "Snaps next year. That's what I needed to hear.": "playing_time",
+    "Yeah, the depth chart's cool. Not my biggest thing.": "playing_time",
+    "{school}. Man. That name means something.": "prestige",
+    "That's the brand, Coach. Everybody knows {school}.": "prestige",
+    "Yeah. When you say {school}, people listen.": "prestige",
+    "Sure, {school} is a big deal. That's cool.": "prestige",
+    "You guys win. I notice that, Coach.": "winning",
+    "That's the thing. {school} wins. I want in.": "winning",
+    "Playing for a title every year? Yes sir.": ("winning", "history"),
+    "Yeah, you've been good. That's cool.": "winning",
+    "{record}... I want to play for a winner, Coach.": "!winning",
+    "...You guys have had some rough years.": "!history",
+    "That's real money for my family, Coach. Thank you.": "nil",
+    "My dad is going to like hearing that.": "nil",
+    "Okay. That takes care of a lot back home.": "nil",
+    "That's a real school, Coach. That counts for a lot.": "academics",
+    "My mom is going to love that. The degree matters.": "academics",
+    "You put {positions} in the league. That's what I'm chasing.": ("pro", "pro_spot"),
+    "Sundays. That's the dream, Coach, and you've got the receipts.": "pro",
+    "First-rounders at my spot? Say less.": ("pro", "pro_spot"),
+}
+
+
+def facts(state: dict, slug: str, week: int | None = None) -> dict:
+    """What the game knows about the school, for the lines that claim something: this season's record
+    (w, l) and conference record (cw, cl), the last game (`last_won`, None before one) and the streak
+    (wins positive, losses negative), the poll rank (None unranked), last season's record (`last`), whether
+    the program has been winning for years (`history`), and the season's `form` in one word: before a game
+    "pre_up" or "pre_down" (last season), then "hot" (a winning record and the last game won), "winning",
+    "even" or "losing"."""
+    from sim import season
+    from coach_career import programs
+    week = state["current_week"] if week is None else week
+    rec = season._records(state).get(slug) or {}
+    w, l, cw, cl = rec.get("wins", 0), rec.get("losses", 0), rec.get("conf_wins", 0), rec.get("conf_losses", 0)
+    results = []
+    for g in sorted(state["games"].values(), key=lambda g: g["week"]):
+        if g.get("played") and g["week"] <= week and slug in (g["home"], g["away"]):
+            mine, theirs = (g["home_score"], g["away_score"]) if g["home"] == slug else (g["away_score"], g["home_score"])
+            results.append(mine > theirs)
+    streak = 0
+    for won in reversed(results):
+        if streak and (won != (streak > 0)):
+            break
+        streak += 1 if won else -1
+    polls = state.get("polls") or {}
+    out_weeks = [int(k) for k, v in polls.items() if str(k).lstrip("-").isdigit() and int(k) <= week and (v.get("ap") or v.get("cfp") or v.get("cfp_full"))]
+    rank = season.rank_map(state, max(out_weeks)).get(slug) if out_weeks else None
+    ls = recruiting._team_model(slug).get("last_season") or {}
+    last = (ls.get("wins", 0), ls.get("losses", 0))
+    history = float(programs.get(state, slug).get("winning", 0.0)) >= HISTORY_WINNING
+    if not w + l:
+        form = "pre_up" if last[0] > last[1] else "pre_down"
+    elif w > l:
+        form = "hot" if results and results[-1] else "winning"
+    else:
+        form = "even" if w == l else "losing"
+    return {"w": w, "l": l, "cw": cw, "cl": cl, "last_won": results[-1] if results else None, "streak": streak,
+            "rank": rank, "last": last, "history": history, "form": form}
+
+
+def truth(state: dict, slug: str, pid: str, week: int | None = None) -> dict:
+    """Which topics your lines may claim to him: a strength of CLAIM_FROM or better (proximity, playing
+    time, prestige, NIL, academics, Pro Pipeline); Winning Now by the season's form (`facts`), "history" by the
+    program's last three seasons; The Head Coach unless the talk is that your job is not safe (his Hot
+    Seat twist about you). `form` and `facts` ride along."""
+    fx = facts(state, slug, week)
+    st_ = recruiting.strengths(state, slug, pid)
+    out = {t: st_[t] >= CLAIM_FROM for t in ("proximity", "playing_time", "prestige", "nil", "academics", "pro")}
+    out.update(pro_truth(state, slug, pid, out["pro"]))
+    tw = persona._twist(state, pid)
+    out.update(winning=fx["form"] in ("hot", "winning", "pre_up"), history=fx["history"],
+               coach=not (tw and tw["k"] == "hot_seat" and tw.get("s") == slug), form=fx["form"], facts=fx)
+    return out
+
+
+def pro_truth(state: dict, slug: str, pid: str, pro: bool) -> dict:
+    """The Pro Pipeline facts a line may need: `pro_any`, the school has a pick at his group in its ten drafts (a kicker, a
+    punter or any group without draft keys: any pick at all); `pro_spot`, the claim holds at his own spot (the strength for
+    most; a kicker or punter, his own group's grade at CLAIM_FROM, since his strength reads the overall grade)."""
+    from coach_career import programs
+    p = state["recruiting"]["prospects"][pid]
+    pr = programs.get(state, slug)
+    group = recruiting._group(p["ea_position"])
+    keys = programs.GROUP_DRAFT.get(group)
+    lines = pr.get("drafts") or []
+    any_ = any(g in keys and pts > 0 for _, _, gs in lines for g, pts in gs.items()) if keys else any(pts > 0 for _, pts, _ in lines)
+    spot = pro if group not in ("K", "P") else (pr.get("pro_groups") or {}).get(group, 0) >= 100 * CLAIM_FROM
+    return {"pro_any": any_, "pro_spot": bool(spot)}
+
+
+def _holds(line: str, tr: dict) -> bool:
+    """Whether a line's claims (NEEDS: one truth key, or several that must all hold) are true."""
+    need = NEEDS.get(line)
+    if not need:
+        return True
+    return all(not tr[k[1:]] if k.startswith("!") else bool(tr[k]) for k in ((need,) if isinstance(need, str) else need))
+
+
+def _win_key(tr: dict) -> str | None:
+    """The honest Winning Now key for the season's form (None: the confident lines are true)."""
+    fx = tr["facts"]
+    form = tr["form"]
+    if form in ("hot", "pre_up"):
+        return None
+    if form == "winning":
+        return "winning"
+    if form == "even":
+        return "even_conf" if fx["cw"] > fx["cl"] else "even"
+    if form == "losing":
+        return "losing_conf" if fx["cw"] > fx["cl"] else "losing_history" if tr["history"] else "losing"
+    return "pre_down"
+
+
+def lead_line(tr: dict, pitch: str) -> str:
+    """Your lead-with as a template, true to the facts: the confident line when the topic holds, else its
+    honest one; Winning Now by the season's form (a ranked team on a roll says so)."""
+    if pitch == "winning":
+        key = _win_key(tr)
+        if key is None:
+            return LEAD_WINNING["ranked"] if tr["form"] == "hot" and tr["facts"]["rank"] else LEAD_LINES["winning"]
+        return LEAD_WINNING[key]
+    if pitch == "pro":
+        return (LEAD_LINES["pro"] if tr.get("pro_spot", True) else LEAD_PRO_PROGRAM) if tr["pro"] else LEAD_HONEST_PRO_SOME if tr.get("pro_any") else LEAD_HONEST["pro"]
+    return LEAD_LINES[pitch] if tr[pitch] else LEAD_HONEST[pitch]
+
+
+def said_phrase(tr: dict, topic: str) -> str:
+    """A topic in your opening's three things: its phrase when you can claim it, else the honest one."""
+    if topic in SAID_HONEST and not tr[topic]:
+        return SAID_HONEST[topic]
+    return PHRASES[topic]
+
+
+def true_line(tr: dict, topic: str, kind: str, line: str, sid: str) -> tuple[str, bool]:
+    """His line for `topic` and `kind` (a template drawn as before), or, when its claim is false, one that
+    holds: a hit gets the honest hit (Winning Now: the skeptical one for the record), anything else another
+    line of its pool that holds. Its own seeded draw (`truth-{sid}`), so no other stream moves. Returns the
+    template and whether it was replaced."""
+    if _holds(line, tr):
+        return line, False
+    rng = random.Random(f"truth-{sid}-{topic}-{kind}")
+    if kind == "hit":
+        if topic == "winning":
+            key = _win_key(tr)
+            if key in (None, "winning"):                          # the record wins: only "every year" can be false
+                pool = [x for x in LINES["winning"]["hit"] if _holds(x, tr)]
+            else:
+                pool = WIN_DOUBT.get(key) or WIN_DOUBT[key.split("_")[0]]
+        elif topic == "pro" and tr.get("pro"):                    # the claim holds for the program, not at his spot: a line that holds
+            pool = [x for x in LINES["pro"]["hit"] if _holds(x, tr)]
+        else:
+            pool = HONEST_HIT.get("pro_some" if topic == "pro" and tr.get("pro_any") else topic) or []
+    else:
+        pool = [x for x in LINES[topic][kind] if _holds(x, tr)]
+    return (rng.choice(pool), True) if pool else (line, False)
 # he has a question (recruit questions): this turn introduces it
 QUESTION_INTRO = "Can I ask you something?"
 
@@ -319,9 +576,11 @@ STYLE_LINES: dict[str, list[str]] = {
 }
 
 # every table of lines (tests format each line with FIELDS)
-TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
-          "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "FAMILY": FAMILY, "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
-FIELDS = ("name", "first", "town", "state", "school", "position", "role", "record", "coach", "opponent", "result", "leader",
+TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES,
+          "STORY_LINES_OFFERED": persona.STORY_LINES_OFFERED, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
+          "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "LEAD_HONEST": LEAD_HONEST, "LEAD_WINNING": LEAD_WINNING,
+          "WIN_DOUBT": WIN_DOUBT, "HONEST_HIT": HONEST_HIT, "FAMILY": FAMILY, "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
+FIELDS = ("name", "first", "town", "state", "school", "position", "positions", "role", "record", "rec", "conf", "coach", "opponent", "result", "leader",
           "week_word", "a", "b", "x", "y", "z", "topic", "Topic", "legacy", "mate", "rival", "foe", "moved")
 
 _ONES = ("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
@@ -356,6 +615,14 @@ def _record(state: dict, slug: str) -> str:
     if not w + l:
         return "No record yet"
     return f"{words(w)} and {words(l)}".capitalize()
+
+
+def _conf(state: dict, slug: str) -> str:
+    """The school's conference record this season in words ("two and one"); "no conference games yet" before one."""
+    from sim import season
+    rec = season._records(state).get(slug) or {}
+    w, l = rec.get("conf_wins", 0), rec.get("conf_losses", 0)
+    return f"{words(w)} and {words(l)}" if w + l else "no conference games yet"
 
 
 def coach_name(state: dict, slug: str) -> str:
@@ -406,14 +673,20 @@ def leader_of(state: dict, slug: str, pid: str) -> str:
     return (season.load_teams().get(lead) or {}).get("name", lead)
 
 
+PLURAL = {"QB": "quarterbacks", "RB": "backs", "WR": "receivers", "TE": "tight ends", "OT": "tackles", "IOL": "interior linemen", "EDGE": "edge rushers",
+          "DL": "defensive linemen", "LB": "linebackers", "CB": "corners", "S": "safeties", "K": "kickers", "P": "punters", "ATH": "athletes"}
+
+
 def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     from sim import season
     team = season.load_teams().get(slug) or {}
     week = state["current_week"] if week is None else week
     game, nxt = last_game(state, slug, week), next_game(state, slug, week)
+    record = _record(state, slug)
     return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"] or p["hometown"]["state"],   # a transfer has no town on file
-            "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"],
-            "role": _role(state, slug, p["id"]), "record": _record(state, slug), "coach": coach_name(state, slug),
+            "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"], "positions": PLURAL.get(p["position"], "players"),
+            "role": _role(state, slug, p["id"]), "record": record, "rec": record[:1].lower() + record[1:], "conf": _conf(state, slug),
+            "coach": coach_name(state, slug),
             "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",
             "leader": leader_of(state, slug, p["id"]), "week_word": words(week), **persona.story_fields(state, p["id"]),
             **persona.twist_fields(state, p["id"])}
@@ -528,10 +801,12 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     else:
         said = _persona_line(state, pid, sid, "visit_open" if action == "hc_visit" else "open", f,
                              pool=("visit_open" if action == "hc_visit" else "open", "small_talk")) or context
+    story = None                                                      # his story's line, when it is said (a Package Deal's brings his question)
     if action == "call" and not tired and not (game and game["week"] >= week - 1):    # his story, once you know it (a Package Deal's first call: always)
         first = not ((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls")
-        said = (twist_line(state, slug, pid, sid, f) or persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
-                or style_line(state, slug, pid, sid, f) or said)      # what happened to him first, then his story, then how he means to commit
+        news = twist_line(state, slug, pid, sid, f)
+        story = None if news else persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
+        said = news or story or style_line(state, slug, pid, sid, f) or said      # what happened to him first, then his story, then how he means to commit
     turns.append(_turn("him", said))
     if action == "hc_visit":                                          # in his living room what happened to him always comes up
         news = twist_line(state, slug, pid, sid, f, always=True)
@@ -539,19 +814,20 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
             turns.append(_turn("him", news))
     told = None                                                       # his story at a visit: the decider brings it up, or he does
     if action == "hc_visit" and d["decider"] != "self":               # the one who decides speaks
-        fam = persona.story_line(state, slug, pid, sid, "family", f, action) \
-            or random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
+        story = persona.story_line(state, slug, pid, sid, "family", f, action)
+        fam = story or random.Random(f"persona-line-{sid}-family").choice(persona.DECIDER_LINES[d["decider"]]).format(**f)
         told = fam
         turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
         persona.learn(state, slug, pid, "decider")                    # the family is in the room: you see who decides
     elif action == "hc_visit":
-        told = persona.story_line(state, slug, pid, sid, "him", f, action)
+        told = story = persona.story_line(state, slug, pid, sid, "him", f, action)
         if told:
             turns.append(_turn("him", told))
     if action == "hc_visit" and persona.story(state, pid)[0] and told:
         persona.learn(state, slug, pid, "story")                      # it came up in his living room: now you know
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
-          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired}
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired,
+          "package": package_about(state, slug, pid) if story else None}      # his mate was brought up: the question after your opening
     _lines(sc)
     return sc
 
@@ -592,7 +868,8 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     week = sc["week"]
     rng = random.Random(f"present-{rc['seed']}-{slug}-{pid}-{week}")
     f = _fields(state, slug, p, week)
-    x, y, z = (PHRASES[t] for t in topics)
+    tr = truth(state, slug, pid, week)
+    x, y, z = (said_phrase(tr, t) for t in topics)                  # a strength you lack is said honestly
     sc["turns"].append(_turn("you", rng.choice(PRESENT_SAID).format(x=x, y=y, z=z, **f)))
     tells_ = tells(state, slug, pid, sc["action"])
     c = cue(state, slug, pid, week, f, tells_)                     # its own draw: asked first so the reaction never repeats it
@@ -601,12 +878,12 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     elif hits:
         st_ = recruiting.strengths(state, slug, pid)
         best = max(hits, key=lambda t: st_[t])
-        phrase = PHRASES[best]
+        phrase = said_phrase(tr, best)                              # he echoes what you said
         kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase, Topic=phrase[0].upper() + phrase[1:], **f)
         mine = _persona_line(state, pid, sc["id"], "hit", f, always=not tells_)     # a call that tells nothing names no topic
         text = mine or text
     elif back:
-        kind, text = "quiet", rng.choice(LINES[back[0]]["quiet"]).format(**f)
+        kind, text = "quiet", true_line(tr, back[0], "quiet", rng.choice(LINES[back[0]]["quiet"]), f"{sc['id']}-present")[0].format(**f)
         text = _persona_line(state, pid, sc["id"], "quiet", f, always=not tells_) or text
     else:
         kind, text = "polite", rng.choice(PRESENT_LINES["polite"]).format(**f)
@@ -619,10 +896,8 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     sc["turns"].append(_turn("him", c["text"]))
     sc["cue"] = c
     if sc["action"] == "hc_visit":
-        n = sc["ask"].get("exact", 0)
-        sc["turns"].append(_turn("note", f"His dad asks what the collective can do: {words(n)} points." if n
-                                 else "His dad says the money isn't the point."))
-    sc["question"] = question(state, slug, pid, week)
+        sc["turns"].append(_turn("note", ask_note(state, slug, pid, sc["ask"])))
+    sc["question"] = question(state, slug, pid, week, sc.get("package"))
     if sc["question"]:
         sc["turns"].append(_turn("him", QUESTION_INTRO))
     sc["presented"] = list(topics)
@@ -631,13 +906,58 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     return kind
 
 
-def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
+def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
+    """The visit's note on his family's NIL ask, in the game's NIL words and numerals: the ask the profile's
+    His Ask shows (the number after a visit, the middle of the range before) and where you stand: the NIL
+    you have left (and what your offer already holds on him), or that the ask is more than you can put up."""
+    n = ask.get("exact")
+    if n is None and ask.get("hi"):
+        n = recruiting._five((ask["lo"] + ask["hi"]) / 2)
+    if not n:
+        return "His dad says the money isn't the point."
+    rec = state["recruiting"]["nil"].get(slug)
+    left = (recruiting.nil_left(state, slug) if rec                 # read only: never opens the school's NIL record here
+            else recruiting.portal_budget(state, slug) if recruiting.is_portal(state) else recruiting.nil_budget(state, slug))
+    held = ((rec or {}).get("held") or {}).get(pid, 0)
+    room = left + held                                            # an offer to him can hold up to this (recruiting.act)
+    about = "" if ask.get("exact") is not None else "about "
+    if n > room:
+        return f"His dad wants {about}{n} in NIL, more than you have left ({room})."
+    if held:
+        return f"His dad wants to know about NIL: they're looking for {about}{n}. Your offer holds {held}, and you have {left} NIL left."
+    return f"His dad wants to know about NIL: they're looking for {about}{n}. You have {left} NIL left."
+
+
+def package_about(state: dict, slug: str, pid: str) -> dict | None:
+    """A Package Deal's mate as the scene keeps him for the question: {pid, name, offered} when he is a
+    prospect in the class still to be had (not signed), else None."""
+    rc = state["recruiting"]
+    m = persona.mate(state, pid)
+    if not m or m not in rc["prospects"] or (rc["status"].get(m) or {}).get("signed"):
+        return None
+    return {"pid": m, "name": rc["prospects"][m]["name"], "offered": m in rc["offers"].get(slug, [])}
+
+
+def package_answers(about: dict) -> dict:
+    """The Package Deal question's three answers, filled: {answer: {label, text}}."""
+    table = PACKAGE_ANSWERS[bool(about.get("offered"))]
+    return {k: {"label": label, "text": text.format(mate=about["name"])} for k, (label, text) in table.items()}
+
+
+def question(state: dict, slug: str, pid: str, week: int, package: dict | None = None) -> dict | None:
     """His question about a named player, QUESTION_RATE of the time when playing time is one of his
     priorities (its own RNG: no other draw moves): the best returning player at his group on your
     roster rated at least as high ("roster"), else the highest-ranked other recruit you offered at
-    his group who is uncommitted or yours ("recruit"); neither, no question."""
+    his group who is uncommitted or yours ("recruit"); neither, no question. A scene where his
+    Package Deal came up (`package`, scenes.package_about) asks about his mate instead ("package":
+    always, its own draw for the line; the answers ride on the question, by whether you offered him)."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
+    if package:
+        about = {**package, "offered": package["pid"] in rc["offers"].get(slug, [])}   # as it stands when he asks
+        rng = random.Random(f"question-package-{rc['seed']}-{slug}-{pid}-{week}")
+        text = rng.choice(QUESTION_LINES["package_offered" if about["offered"] else "package"]).format(mate=about["name"])
+        return {"kind": "package", "text": text, "answer": None, "reply": None, "about": about, "answers": package_answers(about)}
     if "playing_time" not in p["priorities"]:
         return None
     rng = random.Random(f"question-{rc['seed']}-{slug}-{pid}-{week}")
@@ -646,7 +966,7 @@ def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
     ahead = recruiting.ahead_of(state, slug, pid)
     if ahead:
         text = rng.choice(QUESTION_LINES["roster"]).format(ahead=ahead["name"], ahead_cls=CLASS_WORDS.get(ahead["cls"], "veteran"),
-                                                           position=p["position"])
+                                                           position=ahead["position"])
         return {"kind": "roster", "text": text, "answer": None, "reply": None,
                 "about": {"id": ahead["slug"], "name": ahead["name"], "position": ahead["position"], "cls": ahead["cls"],
                           "ovr": ahead["ovr"], "last_year": ahead["last_year"]}}
@@ -660,7 +980,14 @@ def question(state: dict, slug: str, pid: str, week: int) -> dict | None:
 
 
 def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, truthful: bool | None) -> str:
-    """What he says back to your answer (a hollow promise gets its own line)."""
+    """What he says back to your answer (a hollow promise gets its own line; the Package Deal's promise
+    waits on the offer, and its straight answer once his mate holds your offer has its own)."""
+    if question.get("kind") == "package":
+        if answer == "promise":
+            return REPLY_LINES["package"]
+        if answer == "straight" and question["about"].get("offered"):
+            return REPLY_LINES["package_offered"]
+        return REPLY_LINES[answer]
     if answer == "promise" and not truthful:
         return REPLY_LINES["hollow"]
     return REPLY_LINES[answer]
@@ -674,16 +1001,20 @@ def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict,
     pitch that was none of his gets a line that names nothing). `you` is your line, for the conversation."""
     rng = random.Random(f"react-{state['recruiting']['seed']}-{slug}-{pid}-{state['current_week']}-{action}")
     f = _fields(state, slug, p)
-    you = LEAD_LINES[pitch].format(**f)
+    tr = truth(state, slug, p["id"])
+    you = lead_line(tr, pitch).format(**f)                          # your line, true to the record and the program
     if tired:
         return {"kind": "tired", "text": rng.choice(TIRED).format(**f), "you": you}
     if persona.counts_as_priority(state, pid, pitch):
         kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
     else:
         kind = "polite"
-    text = rng.choice(LINES[pitch][kind]).format(**f)
     sid = f"{action}-{p['id']}-{state['current_week']}"          # the scene's id: its personality line, keyed apart from every other draw
-    if kind in ("hit", "quiet"):
+    line, fixed = true_line(tr, pitch, kind, rng.choice(LINES[pitch][kind]), sid)     # a claim the facts do not back gives way
+    text = line.format(**f)
+    if fixed and tells and pitch == "winning" and kind == "hit":
+        pass                                                      # his doubt about the record stands: his personality's line would hide it
+    elif kind in ("hit", "quiet"):
         text = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react") or text
     elif not tells:                                               # the topic's polite line would say it is none of his
         text = _no_tell_line(state, p["id"], f"{sid}-react", f)

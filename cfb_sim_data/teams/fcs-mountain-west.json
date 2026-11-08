@@ -1,16 +1,14 @@
 {
- "slug": "talus-peak",
- "school_name": "Talus Peak University",
- "short_name": "Talus Peak",
- "abbreviation": "TPU",
- "mascot": "Miners",
- "city": "Talus Peak",
+ "slug": "fcs-mountain-west",
+ "school_name": "FCS Mountain West",
+ "short_name": "FCS Mountain West",
+ "abbreviation": "FCS",
  "state": "CO",
  "region": "Mountain West",
- "conference": "Eight Rivers Football Conference",
+ "conference": "FCS",
  "subdivision": "FCS",
  "stadium": {
-  "name": "Switchback Stadium",
+  "name": "FCS Mountain West Stadium",
   "capacity": 12600,
   "surface": "turf"
  },
@@ -29,7 +27,7 @@
   }
  },
  "rivals": [
-  "cedar-sound"
+  "fcs-pacific-northwest"
  ],
  "fictional": true,
  "program": {
@@ -58,8 +56,8 @@
  },
  "coaches": {
   "head_coach": {
-   "coach_id": "talus-peak:head_coach",
-   "team_slug": "talus-peak",
+   "coach_id": "fcs-mountain-west:head_coach",
+   "team_slug": "fcs-mountain-west",
    "name": "Rick Vasquez",
    "since": 2021,
    "fictional": true,
@@ -88,8 +86,8 @@
    "ratings_generated": true
   },
   "offensive_coordinator": {
-   "coach_id": "talus-peak:offensive_coordinator",
-   "team_slug": "talus-peak",
+   "coach_id": "fcs-mountain-west:offensive_coordinator",
+   "team_slug": "fcs-mountain-west",
    "name": "Bill Ashby",
    "since": 2024,
    "fictional": true,
@@ -116,8 +114,8 @@
    "ratings_generated": true
   },
   "defensive_coordinator": {
-   "coach_id": "talus-peak:defensive_coordinator",
-   "team_slug": "talus-peak",
+   "coach_id": "fcs-mountain-west:defensive_coordinator",
+   "team_slug": "fcs-mountain-west",
    "name": "Wes Lindgren",
    "since": 2024,
    "fictional": true,
@@ -146,216 +144,216 @@
  "starters": {
   "offense": {
    "QB": [
-    "riley-rhodes-talus-peak"
+    "riley-rhodes-fcs-mountain-west"
    ],
    "HB": [
-    "santiago-cantrell-talus-peak"
+    "santiago-cantrell-fcs-mountain-west"
    ],
    "WR": [
-    "brandon-carmody-talus-peak",
-    "aiden-akins-talus-peak",
-    "quentin-waddell-talus-peak"
+    "brandon-carmody-fcs-mountain-west",
+    "aiden-akins-fcs-mountain-west",
+    "quentin-waddell-fcs-mountain-west"
    ],
    "TE": [
-    "noah-scruggs-talus-peak"
+    "noah-scruggs-fcs-mountain-west"
    ],
    "LT": [
-    "alec-harlan-talus-peak"
+    "alec-harlan-fcs-mountain-west"
    ],
    "LG": [
-    "alec-gentry-talus-peak"
+    "alec-gentry-fcs-mountain-west"
    ],
    "C": [
-    "langston-quarles-talus-peak"
+    "langston-quarles-fcs-mountain-west"
    ],
    "RG": [
-    "wade-lowery-talus-peak"
+    "wade-lowery-fcs-mountain-west"
    ],
    "RT": [
-    "rhett-kimbrough-talus-peak"
+    "rhett-kimbrough-fcs-mountain-west"
    ]
   },
   "defense": {
    "LEDG": [
-    "joaquin-goins-talus-peak"
+    "joaquin-goins-fcs-mountain-west"
    ],
    "REDG": [
-    "darius-holcomb-talus-peak"
+    "darius-holcomb-fcs-mountain-west"
    ],
    "DT": [
-    "tate-gentry-talus-peak",
-    "owen-harlan-talus-peak"
+    "tate-gentry-fcs-mountain-west",
+    "owen-harlan-fcs-mountain-west"
    ],
    "LB": [
-    "grady-barlow-talus-peak",
-    "josiah-forsythe-talus-peak"
+    "grady-barlow-fcs-mountain-west",
+    "josiah-forsythe-fcs-mountain-west"
    ],
    "CB": [
-    "emmanuel-toliver-talus-peak",
-    "bo-paddock-talus-peak",
-    "brennan-hollins-talus-peak"
+    "emmanuel-toliver-fcs-mountain-west",
+    "bo-paddock-fcs-mountain-west",
+    "brennan-hollins-fcs-mountain-west"
    ],
    "FS": [
-    "zion-jessup-talus-peak"
+    "zion-jessup-fcs-mountain-west"
    ],
    "SS": [
-    "gabriel-acosta-talus-peak"
+    "gabriel-acosta-fcs-mountain-west"
    ]
   },
   "special_teams": {
    "K": [
-    "santiago-haskins-talus-peak"
+    "santiago-haskins-fcs-mountain-west"
    ],
    "P": [
-    "ryder-dubois-talus-peak"
+    "ryder-dubois-fcs-mountain-west"
    ],
    "KR": [
-    "aiden-akins-talus-peak"
+    "aiden-akins-fcs-mountain-west"
    ],
    "PR": [
-    "ethan-dade-talus-peak"
+    "ethan-dade-fcs-mountain-west"
    ]
   }
  },
  "depth_chart": {
   "QB": [
-   "riley-rhodes-talus-peak",
-   "nate-huddleston-talus-peak",
-   "dylan-nakamura-talus-peak",
-   "silas-talley-talus-peak"
+   "riley-rhodes-fcs-mountain-west",
+   "nate-huddleston-fcs-mountain-west",
+   "dylan-nakamura-fcs-mountain-west",
+   "silas-talley-fcs-mountain-west"
   ],
   "HB": [
-   "santiago-cantrell-talus-peak",
-   "callum-fontenot-talus-peak",
-   "trace-haddix-talus-peak",
-   "joaquin-gaither-talus-peak",
-   "tyrese-benoit-talus-peak",
-   "ryder-keeling-talus-peak",
-   "brody-barlow-talus-peak",
-   "rowan-sheffield-talus-peak"
+   "santiago-cantrell-fcs-mountain-west",
+   "callum-fontenot-fcs-mountain-west",
+   "trace-haddix-fcs-mountain-west",
+   "joaquin-gaither-fcs-mountain-west",
+   "tyrese-benoit-fcs-mountain-west",
+   "ryder-keeling-fcs-mountain-west",
+   "brody-barlow-fcs-mountain-west",
+   "rowan-sheffield-fcs-mountain-west"
   ],
   "FB": [],
   "WR": [
-   "brandon-carmody-talus-peak",
-   "aiden-akins-talus-peak",
-   "quentin-waddell-talus-peak",
-   "elijah-montoya-talus-peak",
-   "griffin-cantrell-talus-peak",
-   "lamar-bonner-talus-peak",
-   "cedric-mcalister-talus-peak",
-   "zane-sizemore-talus-peak",
-   "grant-baptiste-talus-peak",
-   "nico-trammell-talus-peak"
+   "brandon-carmody-fcs-mountain-west",
+   "aiden-akins-fcs-mountain-west",
+   "quentin-waddell-fcs-mountain-west",
+   "elijah-montoya-fcs-mountain-west",
+   "griffin-cantrell-fcs-mountain-west",
+   "lamar-bonner-fcs-mountain-west",
+   "cedric-mcalister-fcs-mountain-west",
+   "zane-sizemore-fcs-mountain-west",
+   "grant-baptiste-fcs-mountain-west",
+   "nico-trammell-fcs-mountain-west"
   ],
   "TE": [
-   "noah-scruggs-talus-peak",
-   "aiden-haddix-talus-peak",
-   "dominic-dubois-talus-peak",
-   "brody-dorsett-talus-peak",
-   "hunter-merriweather-talus-peak",
-   "keon-dunlap-talus-peak"
+   "noah-scruggs-fcs-mountain-west",
+   "aiden-haddix-fcs-mountain-west",
+   "dominic-dubois-fcs-mountain-west",
+   "brody-dorsett-fcs-mountain-west",
+   "hunter-merriweather-fcs-mountain-west",
+   "keon-dunlap-fcs-mountain-west"
   ],
   "LT": [
-   "alec-harlan-talus-peak",
-   "devon-rhodes-talus-peak",
-   "nash-nettles-talus-peak",
-   "alec-wilder-talus-peak"
+   "alec-harlan-fcs-mountain-west",
+   "devon-rhodes-fcs-mountain-west",
+   "nash-nettles-fcs-mountain-west",
+   "alec-wilder-fcs-mountain-west"
   ],
   "LG": [
-   "alec-gentry-talus-peak",
-   "jace-baptiste-talus-peak",
-   "kaden-northcutt-talus-peak",
-   "blake-keeling-talus-peak",
-   "dante-barlow-talus-peak"
+   "alec-gentry-fcs-mountain-west",
+   "jace-baptiste-fcs-mountain-west",
+   "kaden-northcutt-fcs-mountain-west",
+   "blake-keeling-fcs-mountain-west",
+   "dante-barlow-fcs-mountain-west"
   ],
   "C": [
-   "langston-quarles-talus-peak",
-   "jabari-bowden-talus-peak"
+   "langston-quarles-fcs-mountain-west",
+   "jabari-bowden-fcs-mountain-west"
   ],
   "RG": [
-   "wade-lowery-talus-peak",
-   "ashton-fitch-talus-peak",
-   "omari-sewell-talus-peak"
+   "wade-lowery-fcs-mountain-west",
+   "ashton-fitch-fcs-mountain-west",
+   "omari-sewell-fcs-mountain-west"
   ],
   "RT": [
-   "rhett-kimbrough-talus-peak",
-   "nate-ransom-talus-peak",
-   "warren-stroud-talus-peak"
+   "rhett-kimbrough-fcs-mountain-west",
+   "nate-ransom-fcs-mountain-west",
+   "warren-stroud-fcs-mountain-west"
   ],
   "LEDG": [
-   "joaquin-goins-talus-peak",
-   "nash-forsythe-talus-peak",
-   "logan-rhodes-talus-peak",
-   "abdul-hatcher-talus-peak"
+   "joaquin-goins-fcs-mountain-west",
+   "nash-forsythe-fcs-mountain-west",
+   "logan-rhodes-fcs-mountain-west",
+   "abdul-hatcher-fcs-mountain-west"
   ],
   "DT": [
-   "tate-gentry-talus-peak",
-   "owen-harlan-talus-peak",
-   "bo-rhodes-talus-peak",
-   "eli-esparza-talus-peak",
-   "terrance-yancey-talus-peak",
-   "omari-ingram-talus-peak"
+   "tate-gentry-fcs-mountain-west",
+   "owen-harlan-fcs-mountain-west",
+   "bo-rhodes-fcs-mountain-west",
+   "eli-esparza-fcs-mountain-west",
+   "terrance-yancey-fcs-mountain-west",
+   "omari-ingram-fcs-mountain-west"
   ],
   "REDG": [
-   "darius-holcomb-talus-peak",
-   "micah-trammell-talus-peak",
-   "darius-hollins-talus-peak",
-   "micah-navarro-talus-peak"
+   "darius-holcomb-fcs-mountain-west",
+   "micah-trammell-fcs-mountain-west",
+   "darius-hollins-fcs-mountain-west",
+   "micah-navarro-fcs-mountain-west"
   ],
   "SAM": [],
   "MIKE": [
-   "grady-barlow-talus-peak",
-   "josiah-forsythe-talus-peak",
-   "blake-northcutt-talus-peak",
-   "julian-rowland-talus-peak"
+   "grady-barlow-fcs-mountain-west",
+   "josiah-forsythe-fcs-mountain-west",
+   "blake-northcutt-fcs-mountain-west",
+   "julian-rowland-fcs-mountain-west"
   ],
   "WILL": [
-   "devon-winfield-talus-peak",
-   "christian-thibodeaux-talus-peak",
-   "isaiah-talley-talus-peak"
+   "devon-winfield-fcs-mountain-west",
+   "christian-thibodeaux-fcs-mountain-west",
+   "isaiah-talley-fcs-mountain-west"
   ],
   "CB": [
-   "emmanuel-toliver-talus-peak",
-   "bo-paddock-talus-peak",
-   "brennan-hollins-talus-peak",
-   "justice-garrity-talus-peak",
-   "owen-bainbridge-talus-peak",
-   "rowan-pruitt-talus-peak",
-   "abdul-fenwick-talus-peak",
-   "garrett-dunlap-talus-peak"
+   "emmanuel-toliver-fcs-mountain-west",
+   "bo-paddock-fcs-mountain-west",
+   "brennan-hollins-fcs-mountain-west",
+   "justice-garrity-fcs-mountain-west",
+   "owen-bainbridge-fcs-mountain-west",
+   "rowan-pruitt-fcs-mountain-west",
+   "abdul-fenwick-fcs-mountain-west",
+   "garrett-dunlap-fcs-mountain-west"
   ],
   "FS": [
-   "zion-jessup-talus-peak",
-   "dawson-rowland-talus-peak",
-   "amari-redmond-talus-peak",
-   "jamal-acosta-talus-peak",
-   "ethan-dade-talus-peak"
+   "zion-jessup-fcs-mountain-west",
+   "dawson-rowland-fcs-mountain-west",
+   "amari-redmond-fcs-mountain-west",
+   "jamal-acosta-fcs-mountain-west",
+   "ethan-dade-fcs-mountain-west"
   ],
   "SS": [
-   "gabriel-acosta-talus-peak",
-   "camden-glover-talus-peak",
-   "silas-ingram-talus-peak"
+   "gabriel-acosta-fcs-mountain-west",
+   "camden-glover-fcs-mountain-west",
+   "silas-ingram-fcs-mountain-west"
   ],
   "K": [
-   "santiago-haskins-talus-peak",
-   "bo-shipley-talus-peak"
+   "santiago-haskins-fcs-mountain-west",
+   "bo-shipley-fcs-mountain-west"
   ],
   "P": [
-   "ryder-dubois-talus-peak"
+   "ryder-dubois-fcs-mountain-west"
   ]
  },
  "roster_size": 85,
  "roster": [
   {
-   "slug": "riley-rhodes-talus-peak",
+   "slug": "riley-rhodes-fcs-mountain-west",
    "position": "QB",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Riley Rhodes",
    "position_name": "Quarterback",
    "jersey": "14",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "6'2\"",
    "weight_lbs": 200,
@@ -627,15 +625,15 @@
    "fictional": true
   },
   {
-   "slug": "nate-huddleston-talus-peak",
+   "slug": "nate-huddleston-fcs-mountain-west",
    "position": "QB",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Nate Huddleston",
    "position_name": "Quarterback",
    "jersey": "12",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 211,
@@ -907,15 +905,15 @@
    "fictional": true
   },
   {
-   "slug": "dylan-nakamura-talus-peak",
+   "slug": "dylan-nakamura-fcs-mountain-west",
    "position": "QB",
    "class": "JRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Dylan Nakamura",
    "position_name": "Quarterback",
    "jersey": "9",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior (RS)",
    "height": "6'5\"",
    "weight_lbs": 227,
@@ -1192,15 +1190,15 @@
    "fictional": true
   },
   {
-   "slug": "silas-talley-talus-peak",
+   "slug": "silas-talley-fcs-mountain-west",
    "position": "QB",
    "class": "JRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Silas Talley",
    "position_name": "Quarterback",
    "jersey": "10",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 220,
@@ -1454,15 +1452,15 @@
    "fictional": true
   },
   {
-   "slug": "santiago-cantrell-talus-peak",
+   "slug": "santiago-cantrell-fcs-mountain-west",
    "position": "HB",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Santiago Cantrell",
    "position_name": "Halfback",
    "jersey": "20",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 215,
@@ -1722,15 +1720,15 @@
    "fictional": true
   },
   {
-   "slug": "callum-fontenot-talus-peak",
+   "slug": "callum-fontenot-fcs-mountain-west",
    "position": "HB",
    "class": "FRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Callum Fontenot",
    "position_name": "Halfback",
    "jersey": "82",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
    "weight_lbs": 196,
@@ -1982,15 +1980,15 @@
    "fictional": true
   },
   {
-   "slug": "trace-haddix-talus-peak",
+   "slug": "trace-haddix-fcs-mountain-west",
    "position": "HB",
    "class": "SORS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Trace Haddix",
    "position_name": "Halfback",
    "jersey": "22",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore (RS)",
    "height": "5'9\"",
    "weight_lbs": 205,
@@ -2266,15 +2264,15 @@
    "fictional": true
   },
   {
-   "slug": "joaquin-gaither-talus-peak",
+   "slug": "joaquin-gaither-fcs-mountain-west",
    "position": "HB",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Joaquin Gaither",
    "position_name": "Halfback",
    "jersey": "25",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "5'9\"",
    "weight_lbs": 188,
@@ -2531,15 +2529,15 @@
    "fictional": true
   },
   {
-   "slug": "tyrese-benoit-talus-peak",
+   "slug": "tyrese-benoit-fcs-mountain-west",
    "position": "HB",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Tyrese Benoit",
    "position_name": "Halfback",
    "jersey": "81",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "5'9\"",
    "weight_lbs": 190,
@@ -2815,15 +2813,15 @@
    "fictional": true
   },
   {
-   "slug": "ryder-keeling-talus-peak",
+   "slug": "ryder-keeling-fcs-mountain-west",
    "position": "HB",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Ryder Keeling",
    "position_name": "Halfback",
    "jersey": "3",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 214,
@@ -3089,15 +3087,15 @@
    "fictional": true
   },
   {
-   "slug": "brody-barlow-talus-peak",
+   "slug": "brody-barlow-fcs-mountain-west",
    "position": "HB",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Brody Barlow",
    "position_name": "Halfback",
    "jersey": "21",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "5'10\"",
    "weight_lbs": 227,
@@ -3363,15 +3361,15 @@
    "fictional": true
   },
   {
-   "slug": "rowan-sheffield-talus-peak",
+   "slug": "rowan-sheffield-fcs-mountain-west",
    "position": "HB",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Rowan Sheffield",
    "position_name": "Halfback",
    "jersey": "26",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "5'9\"",
    "weight_lbs": 208,
@@ -3656,15 +3654,15 @@
    "fictional": true
   },
   {
-   "slug": "brandon-carmody-talus-peak",
+   "slug": "brandon-carmody-fcs-mountain-west",
    "position": "WR",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Brandon Carmody",
    "position_name": "Wide Receiver",
    "jersey": "18",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 205,
@@ -3900,15 +3898,15 @@
    "fictional": true
   },
   {
-   "slug": "aiden-akins-talus-peak",
+   "slug": "aiden-akins-fcs-mountain-west",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Aiden Akins",
    "position_name": "Wide Receiver",
    "jersey": "7",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 167,
@@ -4183,15 +4181,15 @@
    "fictional": true
   },
   {
-   "slug": "quentin-waddell-talus-peak",
+   "slug": "quentin-waddell-fcs-mountain-west",
    "position": "WR",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Quentin Waddell",
    "position_name": "Wide Receiver",
    "jersey": "4",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 200,
@@ -4481,15 +4479,15 @@
    "fictional": true
   },
   {
-   "slug": "elijah-montoya-talus-peak",
+   "slug": "elijah-montoya-fcs-mountain-west",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Elijah Montoya",
    "position_name": "Wide Receiver",
    "jersey": "13",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 194,
@@ -4779,15 +4777,15 @@
    "fictional": true
   },
   {
-   "slug": "griffin-cantrell-talus-peak",
+   "slug": "griffin-cantrell-fcs-mountain-west",
    "position": "WR",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Griffin Cantrell",
    "position_name": "Wide Receiver",
    "jersey": "88",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "6'2\"",
    "weight_lbs": 182,
@@ -5039,15 +5037,15 @@
    "fictional": true
   },
   {
-   "slug": "lamar-bonner-talus-peak",
+   "slug": "lamar-bonner-fcs-mountain-west",
    "position": "WR",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Lamar Bonner",
    "position_name": "Wide Receiver",
    "jersey": "6",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 200,
@@ -5307,15 +5305,15 @@
    "fictional": true
   },
   {
-   "slug": "cedric-mcalister-talus-peak",
+   "slug": "cedric-mcalister-fcs-mountain-west",
    "position": "WR",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Cedric McAlister",
    "position_name": "Wide Receiver",
    "jersey": "41",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "5'10\"",
    "weight_lbs": 175,
@@ -5606,15 +5604,15 @@
    "fictional": true
   },
   {
-   "slug": "zane-sizemore-talus-peak",
+   "slug": "zane-sizemore-fcs-mountain-west",
    "position": "WR",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Zane Sizemore",
    "position_name": "Wide Receiver",
    "jersey": "43",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "5'10\"",
    "weight_lbs": 190,
@@ -5892,15 +5890,15 @@
    "fictional": true
   },
   {
-   "slug": "grant-baptiste-talus-peak",
+   "slug": "grant-baptiste-fcs-mountain-west",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Grant Baptiste",
    "position_name": "Wide Receiver",
    "jersey": "5",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 210,
@@ -6171,15 +6169,15 @@
    "fictional": true
   },
   {
-   "slug": "nico-trammell-talus-peak",
+   "slug": "nico-trammell-fcs-mountain-west",
    "position": "WR",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Nico Trammell",
    "position_name": "Wide Receiver",
    "jersey": "42",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 180,
@@ -6472,15 +6470,15 @@
    "fictional": true
   },
   {
-   "slug": "noah-scruggs-talus-peak",
+   "slug": "noah-scruggs-fcs-mountain-west",
    "position": "TE",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Noah Scruggs",
    "position_name": "Tight End",
    "jersey": "48",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'7\"",
    "weight_lbs": 235,
@@ -6765,15 +6763,15 @@
    "fictional": true
   },
   {
-   "slug": "aiden-haddix-talus-peak",
+   "slug": "aiden-haddix-fcs-mountain-west",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Aiden Haddix",
    "position_name": "Tight End",
    "jersey": "15",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior (RS)",
    "height": "6'5\"",
    "weight_lbs": 220,
@@ -7073,15 +7071,15 @@
    "fictional": true
   },
   {
-   "slug": "dominic-dubois-talus-peak",
+   "slug": "dominic-dubois-fcs-mountain-west",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Dominic Dubois",
    "position_name": "Tight End",
    "jersey": "8",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior (RS)",
    "height": "6'6\"",
    "weight_lbs": 232,
@@ -7373,15 +7371,15 @@
    "fictional": true
   },
   {
-   "slug": "brody-dorsett-talus-peak",
+   "slug": "brody-dorsett-fcs-mountain-west",
    "position": "TE",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Brody Dorsett",
    "position_name": "Tight End",
    "jersey": "44",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'4\"",
    "weight_lbs": 210,
@@ -7667,15 +7665,15 @@
    "fictional": true
   },
   {
-   "slug": "hunter-merriweather-talus-peak",
+   "slug": "hunter-merriweather-fcs-mountain-west",
    "position": "TE",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Hunter Merriweather",
    "position_name": "Tight End",
    "jersey": "89",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'5\"",
    "weight_lbs": 255,
@@ -7974,15 +7972,15 @@
    "fictional": true
   },
   {
-   "slug": "keon-dunlap-talus-peak",
+   "slug": "keon-dunlap-fcs-mountain-west",
    "position": "TE",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Keon Dunlap",
    "position_name": "Tight End",
    "jersey": "39",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'5\"",
    "weight_lbs": 215,
@@ -8278,15 +8276,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-harlan-talus-peak",
+   "slug": "alec-harlan-fcs-mountain-west",
    "position": "LT",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Alec Harlan",
    "position_name": "Left Tackle",
    "jersey": "66",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "6'5\"",
    "weight_lbs": 300,
@@ -8573,15 +8571,15 @@
    "fictional": true
   },
   {
-   "slug": "devon-rhodes-talus-peak",
+   "slug": "devon-rhodes-fcs-mountain-west",
    "position": "LT",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Devon Rhodes",
    "position_name": "Left Tackle",
    "jersey": "74",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 321,
@@ -8864,15 +8862,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-nettles-talus-peak",
+   "slug": "nash-nettles-fcs-mountain-west",
    "position": "LT",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Nash Nettles",
    "position_name": "Left Tackle",
    "jersey": "55",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'6\"",
    "weight_lbs": 315,
@@ -9152,15 +9150,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-wilder-talus-peak",
+   "slug": "alec-wilder-fcs-mountain-west",
    "position": "LT",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Alec Wilder",
    "position_name": "Left Tackle",
    "jersey": "69",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'6\"",
    "weight_lbs": 285,
@@ -9418,15 +9416,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-gentry-talus-peak",
+   "slug": "alec-gentry-fcs-mountain-west",
    "position": "LG",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Alec Gentry",
    "position_name": "Left Guard",
    "jersey": "52",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "6'5\"",
    "weight_lbs": 330,
@@ -9698,15 +9696,15 @@
    "fictional": true
   },
   {
-   "slug": "jace-baptiste-talus-peak",
+   "slug": "jace-baptiste-fcs-mountain-west",
    "position": "LG",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Jace Baptiste",
    "position_name": "Left Guard",
    "jersey": "58",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 310,
@@ -9961,15 +9959,15 @@
    "fictional": true
   },
   {
-   "slug": "kaden-northcutt-talus-peak",
+   "slug": "kaden-northcutt-fcs-mountain-west",
    "position": "LG",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Kaden Northcutt",
    "position_name": "Left Guard",
    "jersey": "77",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 305,
@@ -10214,15 +10212,15 @@
    "fictional": true
   },
   {
-   "slug": "blake-keeling-talus-peak",
+   "slug": "blake-keeling-fcs-mountain-west",
    "position": "LG",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Blake Keeling",
    "position_name": "Left Guard",
    "jersey": "61",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "6'5\"",
    "weight_lbs": 320,
@@ -10504,15 +10502,15 @@
    "fictional": true
   },
   {
-   "slug": "dante-barlow-talus-peak",
+   "slug": "dante-barlow-fcs-mountain-west",
    "position": "LG",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Dante Barlow",
    "position_name": "Left Guard",
    "jersey": "56",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 305,
@@ -10798,15 +10796,15 @@
    "fictional": true
   },
   {
-   "slug": "langston-quarles-talus-peak",
+   "slug": "langston-quarles-fcs-mountain-west",
    "position": "C",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Langston Quarles",
    "position_name": "Center",
    "jersey": "64",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 281,
@@ -11081,15 +11079,15 @@
    "fictional": true
   },
   {
-   "slug": "jabari-bowden-talus-peak",
+   "slug": "jabari-bowden-fcs-mountain-west",
    "position": "C",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Jabari Bowden",
    "position_name": "Center",
    "jersey": "72",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 295,
@@ -11383,15 +11381,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-lowery-talus-peak",
+   "slug": "wade-lowery-fcs-mountain-west",
    "position": "RG",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Wade Lowery",
    "position_name": "Right Guard",
    "jersey": "62",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 289,
@@ -11658,15 +11656,15 @@
    "fictional": true
   },
   {
-   "slug": "ashton-fitch-talus-peak",
+   "slug": "ashton-fitch-fcs-mountain-west",
    "position": "RG",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Ashton Fitch",
    "position_name": "Right Guard",
    "jersey": "65",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 328,
@@ -11953,15 +11951,15 @@
    "fictional": true
   },
   {
-   "slug": "omari-sewell-talus-peak",
+   "slug": "omari-sewell-fcs-mountain-west",
    "position": "RG",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Omari Sewell",
    "position_name": "Right Guard",
    "jersey": "73",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 315,
@@ -12218,15 +12216,15 @@
    "fictional": true
   },
   {
-   "slug": "rhett-kimbrough-talus-peak",
+   "slug": "rhett-kimbrough-fcs-mountain-west",
    "position": "RT",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Rhett Kimbrough",
    "position_name": "Right Tackle",
    "jersey": "67",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'4\"",
    "weight_lbs": 275,
@@ -12502,15 +12500,15 @@
    "fictional": true
   },
   {
-   "slug": "nate-ransom-talus-peak",
+   "slug": "nate-ransom-fcs-mountain-west",
    "position": "RT",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Nate Ransom",
    "position_name": "Right Tackle",
    "jersey": "50",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 285,
@@ -12751,15 +12749,15 @@
    "fictional": true
   },
   {
-   "slug": "warren-stroud-talus-peak",
+   "slug": "warren-stroud-fcs-mountain-west",
    "position": "RT",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Warren Stroud",
    "position_name": "Right Tackle",
    "jersey": "70",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 285,
@@ -13013,15 +13011,15 @@
    "fictional": true
   },
   {
-   "slug": "joaquin-goins-talus-peak",
+   "slug": "joaquin-goins-fcs-mountain-west",
    "position": "LEDG",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Joaquin Goins",
    "position_name": "Left Edge",
    "jersey": "9",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 255,
@@ -13289,15 +13287,15 @@
    "fictional": true
   },
   {
-   "slug": "nash-forsythe-talus-peak",
+   "slug": "nash-forsythe-fcs-mountain-west",
    "position": "LEDG",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Nash Forsythe",
    "position_name": "Left Edge",
    "jersey": "19",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'6\"",
    "weight_lbs": 240,
@@ -13568,15 +13566,15 @@
    "fictional": true
   },
   {
-   "slug": "logan-rhodes-talus-peak",
+   "slug": "logan-rhodes-fcs-mountain-west",
    "position": "LEDG",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Logan Rhodes",
    "position_name": "Left Edge",
    "jersey": "22",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "6'3\"",
    "weight_lbs": 275,
@@ -13833,15 +13831,15 @@
    "fictional": true
   },
   {
-   "slug": "abdul-hatcher-talus-peak",
+   "slug": "abdul-hatcher-fcs-mountain-west",
    "position": "LEDG",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Abdul Hatcher",
    "position_name": "Left Edge",
    "jersey": "53",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 258,
@@ -14101,15 +14099,15 @@
    "fictional": true
   },
   {
-   "slug": "tate-gentry-talus-peak",
+   "slug": "tate-gentry-fcs-mountain-west",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Tate Gentry",
    "position_name": "Defensive Tackle",
    "jersey": "95",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 312,
@@ -14376,15 +14374,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-harlan-talus-peak",
+   "slug": "owen-harlan-fcs-mountain-west",
    "position": "DT",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Owen Harlan",
    "position_name": "Defensive Tackle",
    "jersey": "90",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 280,
@@ -14655,15 +14653,15 @@
    "fictional": true
   },
   {
-   "slug": "bo-rhodes-talus-peak",
+   "slug": "bo-rhodes-fcs-mountain-west",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Bo Rhodes",
    "position_name": "Defensive Tackle",
    "jersey": "71",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 310,
@@ -14937,15 +14935,15 @@
    "fictional": true
   },
   {
-   "slug": "eli-esparza-talus-peak",
+   "slug": "eli-esparza-fcs-mountain-west",
    "position": "DT",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Eli Esparza",
    "position_name": "Defensive Tackle",
    "jersey": "25",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 280,
@@ -15231,15 +15229,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-yancey-talus-peak",
+   "slug": "terrance-yancey-fcs-mountain-west",
    "position": "DT",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Terrance Yancey",
    "position_name": "Defensive Tackle",
    "jersey": "98",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 269,
@@ -15518,15 +15516,15 @@
    "fictional": true
   },
   {
-   "slug": "omari-ingram-talus-peak",
+   "slug": "omari-ingram-fcs-mountain-west",
    "position": "DT",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Omari Ingram",
    "position_name": "Defensive Tackle",
    "jersey": "92",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 298,
@@ -15804,15 +15802,15 @@
    "fictional": true
   },
   {
-   "slug": "darius-holcomb-talus-peak",
+   "slug": "darius-holcomb-fcs-mountain-west",
    "position": "REDG",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Darius Holcomb",
    "position_name": "Right Edge",
    "jersey": "35",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "6'4\"",
    "weight_lbs": 246,
@@ -16070,15 +16068,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-trammell-talus-peak",
+   "slug": "micah-trammell-fcs-mountain-west",
    "position": "REDG",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Micah Trammell",
    "position_name": "Right Edge",
    "jersey": "57",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 240,
@@ -16365,15 +16363,15 @@
    "fictional": true
   },
   {
-   "slug": "darius-hollins-talus-peak",
+   "slug": "darius-hollins-fcs-mountain-west",
    "position": "REDG",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Darius Hollins",
    "position_name": "Right Edge",
    "jersey": "44",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 280,
@@ -16664,15 +16662,15 @@
    "fictional": true
   },
   {
-   "slug": "micah-navarro-talus-peak",
+   "slug": "micah-navarro-fcs-mountain-west",
    "position": "REDG",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Micah Navarro",
    "position_name": "Right Edge",
    "jersey": "4",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 271,
@@ -16964,15 +16962,15 @@
    "fictional": true
   },
   {
-   "slug": "grady-barlow-talus-peak",
+   "slug": "grady-barlow-fcs-mountain-west",
    "position": "MIKE",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Grady Barlow",
    "position_name": "Mike Linebacker",
    "jersey": "3",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 227,
@@ -17240,15 +17238,15 @@
    "fictional": true
   },
   {
-   "slug": "josiah-forsythe-talus-peak",
+   "slug": "josiah-forsythe-fcs-mountain-west",
    "position": "MIKE",
    "class": "FRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Josiah Forsythe",
    "position_name": "Mike Linebacker",
    "jersey": "36",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
    "weight_lbs": 230,
@@ -17513,15 +17511,15 @@
    "fictional": true
   },
   {
-   "slug": "blake-northcutt-talus-peak",
+   "slug": "blake-northcutt-fcs-mountain-west",
    "position": "MIKE",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Blake Northcutt",
    "position_name": "Mike Linebacker",
    "jersey": "23",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 210,
@@ -17816,15 +17814,15 @@
    "fictional": true
   },
   {
-   "slug": "julian-rowland-talus-peak",
+   "slug": "julian-rowland-fcs-mountain-west",
    "position": "MIKE",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Julian Rowland",
    "position_name": "Mike Linebacker",
    "jersey": "10",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 215,
@@ -18115,15 +18113,15 @@
    "fictional": true
   },
   {
-   "slug": "devon-winfield-talus-peak",
+   "slug": "devon-winfield-fcs-mountain-west",
    "position": "WILL",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Devon Winfield",
    "position_name": "Will Linebacker",
    "jersey": "15",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 225,
@@ -18410,15 +18408,15 @@
    "fictional": true
   },
   {
-   "slug": "christian-thibodeaux-talus-peak",
+   "slug": "christian-thibodeaux-fcs-mountain-west",
    "position": "WILL",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Christian Thibodeaux",
    "position_name": "Will Linebacker",
    "jersey": "14",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 231,
@@ -18677,15 +18675,15 @@
    "fictional": true
   },
   {
-   "slug": "isaiah-talley-talus-peak",
+   "slug": "isaiah-talley-fcs-mountain-west",
    "position": "WILL",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Isaiah Talley",
    "position_name": "Will Linebacker",
    "jersey": "0",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 225,
@@ -18971,15 +18969,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-toliver-talus-peak",
+   "slug": "emmanuel-toliver-fcs-mountain-west",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Emmanuel Toliver",
    "position_name": "Cornerback",
    "jersey": "24",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 175,
@@ -19228,15 +19226,15 @@
    "fictional": true
   },
   {
-   "slug": "bo-paddock-talus-peak",
+   "slug": "bo-paddock-fcs-mountain-west",
    "position": "CB",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Bo Paddock",
    "position_name": "Cornerback",
    "jersey": "16",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'0\"",
    "weight_lbs": 162,
@@ -19490,15 +19488,15 @@
    "fictional": true
   },
   {
-   "slug": "brennan-hollins-talus-peak",
+   "slug": "brennan-hollins-fcs-mountain-west",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Brennan Hollins",
    "position_name": "Cornerback",
    "jersey": "6",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
    "weight_lbs": 180,
@@ -19769,15 +19767,15 @@
    "fictional": true
   },
   {
-   "slug": "justice-garrity-talus-peak",
+   "slug": "justice-garrity-fcs-mountain-west",
    "position": "CB",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Justice Garrity",
    "position_name": "Cornerback",
    "jersey": "12",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "5'10\"",
    "weight_lbs": 168,
@@ -20047,15 +20045,15 @@
    "fictional": true
   },
   {
-   "slug": "owen-bainbridge-talus-peak",
+   "slug": "owen-bainbridge-fcs-mountain-west",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Owen Bainbridge",
    "position_name": "Cornerback",
    "jersey": "2",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
    "weight_lbs": 175,
@@ -20342,15 +20340,15 @@
    "fictional": true
   },
   {
-   "slug": "rowan-pruitt-talus-peak",
+   "slug": "rowan-pruitt-fcs-mountain-west",
    "position": "CB",
    "class": "FR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Rowan Pruitt",
    "position_name": "Cornerback",
    "jersey": "38",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Freshman",
    "height": "5'9\"",
    "weight_lbs": 175,
@@ -20642,15 +20640,15 @@
    "fictional": true
   },
   {
-   "slug": "abdul-fenwick-talus-peak",
+   "slug": "abdul-fenwick-fcs-mountain-west",
    "position": "CB",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Abdul Fenwick",
    "position_name": "Cornerback",
    "jersey": "5",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 177,
@@ -20904,15 +20902,15 @@
    "fictional": true
   },
   {
-   "slug": "garrett-dunlap-talus-peak",
+   "slug": "garrett-dunlap-fcs-mountain-west",
    "position": "CB",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Garrett Dunlap",
    "position_name": "Cornerback",
    "jersey": "13",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "6'0\"",
    "weight_lbs": 184,
@@ -21166,15 +21164,15 @@
    "fictional": true
   },
   {
-   "slug": "zion-jessup-talus-peak",
+   "slug": "zion-jessup-fcs-mountain-west",
    "position": "FS",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Zion Jessup",
    "position_name": "Free Safety",
    "jersey": "33",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "5'8\"",
    "weight_lbs": 180,
@@ -21454,15 +21452,15 @@
    "fictional": true
   },
   {
-   "slug": "dawson-rowland-talus-peak",
+   "slug": "dawson-rowland-fcs-mountain-west",
    "position": "FS",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Dawson Rowland",
    "position_name": "Free Safety",
    "jersey": "8",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 215,
@@ -21743,15 +21741,15 @@
    "fictional": true
   },
   {
-   "slug": "amari-redmond-talus-peak",
+   "slug": "amari-redmond-fcs-mountain-west",
    "position": "FS",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Amari Redmond",
    "position_name": "Free Safety",
    "jersey": "14",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 200,
@@ -22043,15 +22041,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-acosta-talus-peak",
+   "slug": "jamal-acosta-fcs-mountain-west",
    "position": "FS",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Jamal Acosta",
    "position_name": "Free Safety",
    "jersey": "17",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'0\"",
    "weight_lbs": 182,
@@ -22337,15 +22335,15 @@
    "fictional": true
   },
   {
-   "slug": "ethan-dade-talus-peak",
+   "slug": "ethan-dade-fcs-mountain-west",
    "position": "FS",
    "class": "SORS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Ethan Dade",
    "position_name": "Free Safety",
    "jersey": "7",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
    "weight_lbs": 205,
@@ -22649,15 +22647,15 @@
    "fictional": true
   },
   {
-   "slug": "gabriel-acosta-talus-peak",
+   "slug": "gabriel-acosta-fcs-mountain-west",
    "position": "SS",
    "class": "SR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Gabriel Acosta",
    "position_name": "Strong Safety",
    "jersey": "28",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior",
    "height": "5'10\"",
    "weight_lbs": 180,
@@ -22939,15 +22937,15 @@
    "fictional": true
   },
   {
-   "slug": "camden-glover-talus-peak",
+   "slug": "camden-glover-fcs-mountain-west",
    "position": "SS",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Camden Glover",
    "position_name": "Strong Safety",
    "jersey": "1",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 202,
@@ -23244,15 +23242,15 @@
    "fictional": true
   },
   {
-   "slug": "silas-ingram-talus-peak",
+   "slug": "silas-ingram-fcs-mountain-west",
    "position": "SS",
    "class": "SO",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Silas Ingram",
    "position_name": "Strong Safety",
    "jersey": "18",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore",
    "height": "6'1\"",
    "weight_lbs": 202,
@@ -23520,15 +23518,15 @@
    "fictional": true
   },
   {
-   "slug": "santiago-haskins-talus-peak",
+   "slug": "santiago-haskins-fcs-mountain-west",
    "position": "K",
    "class": "SRRS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Santiago Haskins",
    "position_name": "Kicker",
    "jersey": "99",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Senior (RS)",
    "height": "5'8\"",
    "weight_lbs": 218,
@@ -23779,15 +23777,15 @@
    "fictional": true
   },
   {
-   "slug": "bo-shipley-talus-peak",
+   "slug": "bo-shipley-fcs-mountain-west",
    "position": "K",
    "class": "SORS",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Bo Shipley",
    "position_name": "Kicker",
    "jersey": "27",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Sophomore (RS)",
    "height": "5'9\"",
    "weight_lbs": 180,
@@ -24043,15 +24041,15 @@
    "fictional": true
   },
   {
-   "slug": "ryder-dubois-talus-peak",
+   "slug": "ryder-dubois-fcs-mountain-west",
    "position": "P",
    "class": "JR",
-   "team_slug": "talus-peak",
+   "team_slug": "fcs-mountain-west",
    "url": null,
    "name": "Ryder Dubois",
    "position_name": "Punter",
    "jersey": "47",
-   "team": "Talus Peak",
+   "team": "FCS Mountain West",
    "class_year": "Junior",
    "height": "6'1\"",
    "weight_lbs": 202,

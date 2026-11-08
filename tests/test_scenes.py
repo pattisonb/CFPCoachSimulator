@@ -68,9 +68,12 @@ def test_tables() -> None:
             out = line.format(**f)
             assert "{" not in out and "}" not in out, (name, line)
             assert out.strip(), (name, line)
-    qf = {"ahead": "X", "ahead_cls": "X", "position": "X", "other": "X"}
+    qf = {"ahead": "X", "ahead_cls": "X", "position": "X", "other": "X", "mate": "X"}
     for line in walk(scenes.QUESTION_LINES):
         assert "{" not in line.format(**qf), line
+    for table in scenes.PACKAGE_ANSWERS.values():                 # the Package Deal's answers: a Title Case label over a line naming his mate
+        for label, line in table.values():
+            assert "{" not in line.format(mate="X") and label[0].isupper() and line.rstrip().endswith("."), (label, line)
     for line in scenes.LINES["_two_sided"]["cue"]:
         assert line.rstrip().endswith("."), line
         assert "{a}" in line and "{b}" in line and line[:line.index("{a}")].strip(), f"a two-sided cue needs a lead-in before {{a}}: {line}"
@@ -126,15 +129,16 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     rc = st["recruiting"]
     p = rc["prospects"][pid]
     p["persona"] = {"personality": "business", "decider": "self", "decider_topic": None}     # a plain recruit: a Guarded or Shy one names no topic on a call
-    topics = [t for t in recruiting.PITCHES if t not in p["priorities"]][:3]
+    topics = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:3]
     r = act(st, pid, "present", scene=sc["id"], topics=topics)
     sc2 = r["scene"]
     assert sc2 is rc["scenes"][ME][pid] and sc2["presented"] == topics and sc2["present"]["kind"] == "polite" and r["points"] == 0.0 and r["hit"] == []
     kinds = whos(sc2)
     assert kinds[:6] == ["you", "him", "you", "him", "you", "him"], kinds
     said, react, ask, cue = sc2["turns"][2:6]
+    tr = scenes.truth(st, ME, pid)
     for t in topics:
-        assert scenes.PHRASES[t] in said["text"], (t, said)
+        assert scenes.said_phrase(tr, t) in said["text"], (t, said)     # a strength you lack is said honestly (tests/test_scene_truth.py)
     assert react["text"] in scenes.PRESENT_LINES["polite"], react
     assert ask["text"] in {line.format(first=p["name"].split()[0]) for line in scenes.ASK["one"] + scenes.ASK["two"]}, ask
     assert (ask["text"] in {line.format(first=p["name"].split()[0]) for line in scenes.ASK["two"]}) == (len(sc2["cue"]["topics"]) == 2)
@@ -148,7 +152,7 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     assert e["topics"] == topics and e["hit"] == 0 and e["action"] == "call" and e["school"] == ME
     r = act(st, pid, "pitch", pitch=sc2["cue"]["topics"][0], scene=sc["id"])
     re = r["reaction"]
-    assert re["kind"] in ("hit", "polite", "quiet") and re["you"] == scenes.LEAD_LINES[sc2["cue"]["topics"][0]].format(**scenes._fields(st, ME, p))
+    assert re["kind"] in ("hit", "polite", "quiet") and re["you"] == scenes.lead_line(scenes.truth(st, ME, pid), sc2["cue"]["topics"][0]).format(**scenes._fields(st, ME, p))
     assert pid not in rc["scenes"][ME]
 
 
@@ -172,7 +176,7 @@ def test_present_points(st: dict, used: set) -> None:
     pid = cold(st, used, fit("hit"))
     p, s = rc["prospects"][pid], recruiting.strengths(st, ME, pid)
     strong = max((t for t in p["priorities"] if s[t] >= recruiting.BACKFIRE), key=lambda t: s[t])
-    others = [t for t in recruiting.PITCHES if t not in p["priorities"]][:2]
+    others = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:2]
     sc = act(st, pid, "call")["scene"]
     before = recruiting.pending(st, ME, pid)
     r = act(st, pid, "present", scene=sc["id"], topics=[strong] + others)
@@ -181,7 +185,7 @@ def test_present_points(st: dict, used: set) -> None:
     assert abs(recruiting.pending(st, ME, pid) - before - want) < 1e-9
     assert rc["why_week"][pid][ME] == {"call": want}, "the points sit on the scene's action"
     react = r["scene"]["turns"][3]
-    phrase = scenes.PHRASES[strong]
+    phrase = scenes.said_phrase(scenes.truth(st, ME, pid), strong)      # he echoes what you said
     own = {line.format(**scenes._fields(st, ME, p, week)) for line in persona.LINES[persona.of(st, pid)["personality"]]["hit"]}     # or his personality's own line, which names no topic
     assert react["who"] == "him" and (phrase in react["text"] or phrase[0].upper() + phrase[1:] in react["text"] or react["text"] in own), (react, strong)
     assert r["scene"]["present"] == {"kind": "hit", "hit": [strong]}
@@ -192,7 +196,7 @@ def test_present_points(st: dict, used: set) -> None:
     pid = cold(st, used, fit("quiet"))
     p, s = rc["prospects"][pid], recruiting.strengths(st, ME, pid)
     weak = next(t for t in p["priorities"] if s[t] < recruiting.BACKFIRE)
-    others = [t for t in recruiting.PITCHES if t not in p["priorities"]][:2]
+    others = [t for t in recruiting.PITCHES if not persona.counts_as_priority(st, pid, t)][:2]
     sc = act(st, pid, "call")["scene"]
     r = act(st, pid, "present", scene=sc["id"], topics=others[:1] + [weak] + others[1:])
     want = -recruiting.BACKFIRE_COST * recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"]
@@ -230,6 +234,9 @@ def test_repeat_and_visit(st: dict, used: set, talked: str) -> None:
     assert kinds[:7] == ["note", "you", "him", "you", "him", "you", "him"], kinds
     assert sc["turns"][6]["text"] == sc["cue"]["text"]
     assert sc["turns"][7]["who"] == "note" and sc["turns"][7]["text"].startswith("His dad"), sc["turns"][7]
+    note = sc["turns"][7]["text"]                                    # his NIL ask in numerals and the game's NIL words (tests/test_scene_truth.py)
+    if sc["ask"].get("exact"):
+        assert str(sc["ask"]["exact"]) in note and "NIL" in note and "points" not in note and "hundred" not in note, note
     assert "{" not in " ".join(t["text"] for t in sc["turns"])
     # the visit's points land on the visit
     if r["points"]:

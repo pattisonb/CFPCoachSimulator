@@ -10,10 +10,12 @@ from typing import Optional
 
 MARKET = Path(__file__).resolve().parents[1] / "data" / "program_market.json"
 HISTORY = Path(__file__).resolve().parents[1] / "data" / "program_history.json"
-WEIGHTS = {"prestige": 0.35, "winning": 0.20, "nil": 0.15, "market": 0.10, "conference": 0.10, "coach": 0.10}
+WEIGHTS = {"prestige": 0.30, "winning": 0.15, "nil": 0.15, "market": 0.10, "conference": 0.10, "coach": 0.10, "pro": 0.10}
 TIERS = ((76, 1), (65, 2), (50, 3), (35, 4))         # rating floors; below the last is tier 5
+WORD_FLOORS = (("Elite", 90), ("Excellent", 80), ("Strong", 70), ("Good", 60), ("Solid", 50), ("Fair", 40), ("Thin", 30), ("Weak", 0))   # a metric's grade words, by floor *tune*
+PRO_GROUP_ORDER = ("QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P")   # offseason.DRAFT_GROUP's groups, in its order
 TIER_NAMES = {1: "Blue Blood", 2: "Power", 3: "Solid", 4: "Group of 5", 5: "Bottom"}
-BASE_DEFAULT = {"history": 15.0, "prestige": 15.0, "winning": 20.0, "market": 25, "nil": 15.0, "conference": 10.0, "coach": 55.0}
+BASE_DEFAULT = {"history": 15.0, "prestige": 15.0, "winning": 20.0, "market": 25, "nil": 15.0, "conference": 10.0, "coach": 55.0, "pro": 0}
 RANK_BONUS = ((1, 0.8), (5, 0.5), (10, 0.35), (25, 0.35))     # a season's score: win share plus these (cumulative), max 3.0
 PRESTIGE_STEP = 3.0              # prestige moves at most this much a year toward its target *tune*
 PRESTIGE_HISTORY = 0.7           # the target: history's share (the rest a ten-season mean of winning)
@@ -35,6 +37,10 @@ GOALS = {1: ("playoff", 10, "Make the College Football Playoff"), 2: ("wins", 9,
 G5_TITLE_FROM = 42.0             # a Group of 5 program rated this high expects to win its conference
 MARKET_DEFAULT = 25              # a program without three seasons of FBS crowds (new to FBS)
 P4 = {"SEC", "Big Ten", "Big 12", "ACC"}
+PRO_ROUND_POINTS = {1: 4, 2: 3, 3: 2}   # a pick's points by round; every later round is 1 *tune*
+PRO_RECENT_YEARS = 5             # the newest drafts that count extra *tune*
+PRO_RECENT_WEIGHT = 2.0          # a recent draft's weight against an older one's 1 *tune*
+PRO_YEARS = 10                   # drafts kept per program *tune*
 _cache: dict = {}
 
 
@@ -58,7 +64,7 @@ def market_row(slug: str) -> dict:
 
 
 def mix(p: dict) -> float:
-    """The rating: the weighted mix of the six metrics."""
+    """The rating: the weighted mix of the seven metrics."""
     return sum(w * float(p.get(k, 0)) for k, w in WEIGHTS.items())
 
 
@@ -75,12 +81,17 @@ def _history() -> dict:
     return _cache["history"]
 
 
+def empty_drafts(year_before: int) -> list:
+    """Ten draft lines with no picks, the newest being `year_before`'s."""
+    return [[y, 0, {}] for y in range(year_before - PRO_YEARS + 1, year_before + 1)]
+
+
 def base(slug: str) -> dict:
     """A program's starting values (data/program_history.json), a new FBS program's floor when unknown."""
     p = _history()["teams"].get(slug)
     if p:
         return dict(p)
-    p = dict(BASE_DEFAULT, market=market(slug))
+    p = dict(BASE_DEFAULT, market=market(slug), pro_groups={}, drafts=empty_drafts(2025))
     p["rating"] = round(mix(p), 1)
     p["tier"] = tier_of(p["rating"])
     return p
@@ -97,6 +108,60 @@ def scaled(v: float, sc: dict) -> float:
     return 100 * share ** sc.get("k", 1.0)
 
 
+def pick_points(round_: int) -> int:
+    """What a draft pick is worth by its round."""
+    return PRO_ROUND_POINTS.get(round_, 1)
+
+
+def draft_line(year: int, picks: list) -> list:
+    """One draft's line for a program: [year, points, {position group: points}] from (round, group) pairs."""
+    groups: dict = {}
+    for r, g in picks:
+        groups[g] = groups.get(g, 0) + pick_points(r)
+    return [year, sum(groups.values()), groups]
+
+
+def _pro_lines(lines: list, year_now: int):
+    for y, pts, groups in lines[-PRO_YEARS:]:
+        yield (PRO_RECENT_WEIGHT if y > year_now - PRO_RECENT_YEARS else 1.0), pts, groups
+
+
+def pro_score(lines: list, year_now: int) -> float:
+    """The raw Pro Pipeline score: the last ten drafts' points, the newest five counting double."""
+    return sum(w * pts for w, pts, _ in _pro_lines(lines, year_now))
+
+
+def pro_group_scores(lines: list, year_now: int) -> dict:
+    """The raw score per position group, the same weights."""
+    out: dict = {}
+    for w, _, groups in _pro_lines(lines, year_now):
+        for g, pts in groups.items():
+            out[g] = out.get(g, 0) + w * pts
+    return out
+
+
+def pro_recompute(p: dict, year_now: int) -> None:
+    """Set a program's pro and pro_groups (0-100) from its draft lines on the fixed scales."""
+    sc = _history().get("scales", {})
+    lines = p.get("drafts") or []
+    p["pro"] = scaled(pro_score(lines, year_now), sc["pro"]) if lines and "pro" in sc else 0
+    gs = sc.get("pro_group", {})
+    p["pro_groups"] = {g: scaled(v, gs[g]) if g in gs else 0 for g, v in pro_group_scores(lines, year_now).items()}
+
+
+GROUP_DRAFT = {"QB": ("QB",), "RB": ("RB",), "WR": ("WR",), "TE": ("TE",), "OL": ("OT", "IOL"), "DL": ("EDGE", "DL"),
+               "LB": ("LB",), "CB": ("CB",), "S": ("S",)}   # roster group -> the draft groups it reads (K and P read the overall grade; an athlete carries an engine position, so he reads that position's group)
+
+
+def pro_group_grade(p: dict, group: str) -> float:
+    """A program's Pro Pipeline grade at a roster group (the mean of its draft groups; any other group, the overall grade)."""
+    keys = GROUP_DRAFT.get(group)
+    if not keys:
+        return p.get("pro", 0)
+    pg = p.get("pro_groups") or {}
+    return sum(pg.get(k, 0) for k in keys) / len(keys)
+
+
 def season_score(wins: int, games: int, rank=None) -> float:
     """A season's score: win share plus the AP finish (top 25 and top 10 0.35 each, top 5 0.5, number one 0.8)."""
     s = wins / games if games else 0.0
@@ -108,10 +173,25 @@ def season_score(wins: int, games: int, rank=None) -> float:
 def init(lgd: dict) -> None:
     """Every team in a league carries its program (from the base values) the first time it is asked."""
     for slug, t in lgd["teams"].items():
+        if "program" in t and "drafts" not in t["program"]:
+            upgrade(t["program"], slug)
         if "program" not in t:
             p = base(slug)
+            p.setdefault("pro_groups", {})
+            p["drafts"] = [[y, pts, dict(g)] for y, pts, g in p["drafts"]] if p.get("drafts") else empty_drafts(lgd.get("year", 2026) - 1)
             t["program"] = dict(p, market_base=p["market"], nil_base=p["nil"], winning_base=p["winning"], conference_base=p["conference"],
                                 live=0.0, seasons=[], year=lgd.get("year", 2026) - 1)
+
+
+def upgrade(p: dict, slug: str) -> None:
+    """A program from a save made before the Pro Pipeline: it takes the base's ten draft lines, pro and
+    pro_groups (copies), so the real decade is not lost, and its rating and tier follow."""
+    b = base(slug)
+    p["drafts"] = [[y, pts, dict(g)] for y, pts, g in b["drafts"]]
+    p["pro"] = b["pro"]
+    p["pro_groups"] = dict(b.get("pro_groups") or {})
+    p["rating"] = round(mix(p), 1)
+    p["tier"] = tier_of(p["rating"])
 
 
 def get(state: dict, slug: str) -> dict:
@@ -119,7 +199,7 @@ def get(state: dict, slug: str) -> dict:
     lgd = state.get("league") if isinstance(state, dict) else None
     t = (lgd or {}).get("teams", {}).get(slug)
     if t:
-        if "program" not in t:
+        if "program" not in t or "drafts" not in t["program"]:
             init(lgd)
         return t["program"]
     return base(slug)
@@ -146,6 +226,20 @@ def final_ranks(state: dict) -> dict[str, int]:
     return {e["team"]: e["rank"] for e in polls[str(weeks[0])]["ap"]}
 
 
+def draft_picks(state: dict) -> dict:
+    """This offseason's draft by school: team slug -> [(round, position group)] from the departure
+    events that were drafted; a position with no draft group is skipped."""
+    from coach_career import offseason
+    out: dict = {}
+    for ev in ((state.get("offseason") or {}).get("departures") or []):
+        if ev.get("kind") != "draft":
+            continue
+        g = offseason.DRAFT_GROUP.get(ev.get("pos"))
+        if g:
+            out.setdefault(ev["team"], []).append((ev.get("round", 7), g))
+    return out
+
+
 def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, only=None) -> None:
     """The offseason's move of every program's metrics (once a year): the season joins the last
     ten, winning is the last three (3-2-1), prestige and the market's live part step toward their
@@ -159,6 +253,7 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
     wsc = sc.get("winning") or {"lo": 0.0, "hi": 3.0, "k": 1.0}
     csc = sc.get("conference") or {"lo": 40.0, "hi": 70.0, "k": 1.0}
     teams = season.load_teams()
+    picks = draft_picks(state)
     conf_members: dict[str, list[float]] = {}
     for s, t in lgd["teams"].items():
         bt = teams.get(s)
@@ -204,6 +299,9 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         bt = teams.get(s)
         if bt and bt["conference"] in conf_score:
             p["conference"] = round(conf_score[bt["conference"]], 1)
+        p.setdefault("drafts", empty_drafts(year - 2))
+        p["drafts"] = (p["drafts"] + [draft_line(year - 1, picks.get(s, []))])[-PRO_YEARS:]    # a new list: a probe's copy never writes back
+        pro_recompute(p, year - 1)
         p["rating"] = round(mix(p), 1)
         p["tier"] = tier_of(p["rating"])
         p["year"] = year
@@ -222,6 +320,11 @@ def nil_move(team: dict, met: bool, losing: bool) -> None:
     p["tier"] = tier_of(p["rating"])
 
 
+def word_of(v: float) -> str:
+    """The grade word for a 0-100 metric."""
+    return next(w for w, f in WORD_FLOORS if v >= f)
+
+
 def rows(state: dict) -> list[dict]:
     """Every program for the page, by rating: the metrics, the tier and the AD's goal."""
     from sim import season
@@ -234,7 +337,7 @@ def rows(state: dict) -> list[dict]:
         p4 = season._is_p4(s, bt)
         out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
                     "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"])["text"],
-                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history")}})
+                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups")}})
     out.sort(key=lambda r: -r["rating"])
     for i, r in enumerate(out, 1):
         r["rank"] = i

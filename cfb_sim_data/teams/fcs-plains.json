@@ -1,16 +1,14 @@
 {
- "slug": "red-prairie-state",
- "school_name": "Red Prairie State University",
- "short_name": "Red Prairie St.",
- "abbreviation": "RPS",
- "mascot": "Plainsmen",
- "city": "Red Prairie",
+ "slug": "fcs-plains",
+ "school_name": "FCS Plains",
+ "short_name": "FCS Plains",
+ "abbreviation": "FCS",
  "state": "NE",
  "region": "Plains",
- "conference": "Eight Rivers Football Conference",
+ "conference": "FCS",
  "subdivision": "FCS",
  "stadium": {
-  "name": "Windbreak Stadium",
+  "name": "FCS Plains Stadium",
   "capacity": 13500,
   "surface": "grass"
  },
@@ -29,7 +27,7 @@
   }
  },
  "rivals": [
-  "wendt-lake-tech"
+  "fcs-great-lakes"
  ],
  "fictional": true,
  "program": {
@@ -58,8 +56,8 @@
  },
  "coaches": {
   "head_coach": {
-   "coach_id": "red-prairie-state:head_coach",
-   "team_slug": "red-prairie-state",
+   "coach_id": "fcs-plains:head_coach",
+   "team_slug": "fcs-plains",
    "name": "Lance Kincaid",
    "since": 2020,
    "fictional": true,
@@ -88,8 +86,8 @@
    "ratings_generated": true
   },
   "offensive_coordinator": {
-   "coach_id": "red-prairie-state:offensive_coordinator",
-   "team_slug": "red-prairie-state",
+   "coach_id": "fcs-plains:offensive_coordinator",
+   "team_slug": "fcs-plains",
    "name": "Brian Rourke",
    "since": 2025,
    "fictional": true,
@@ -116,8 +114,8 @@
    "ratings_generated": true
   },
   "defensive_coordinator": {
-   "coach_id": "red-prairie-state:defensive_coordinator",
-   "team_slug": "red-prairie-state",
+   "coach_id": "fcs-plains:defensive_coordinator",
+   "team_slug": "fcs-plains",
    "name": "Trent Dorsey",
    "since": 2018,
    "fictional": true,
@@ -146,217 +144,217 @@
  "starters": {
   "offense": {
    "QB": [
-    "eli-dempsey-red-prairie-state"
+    "eli-dempsey-fcs-plains"
    ],
    "HB": [
-    "miles-fitch-red-prairie-state"
+    "miles-fitch-fcs-plains"
    ],
    "WR": [
-    "aaron-cutler-red-prairie-state",
-    "langston-mabry-red-prairie-state",
-    "rico-atwater-red-prairie-state"
+    "aaron-cutler-fcs-plains",
+    "langston-mabry-fcs-plains",
+    "rico-atwater-fcs-plains"
    ],
    "TE": [
-    "kyler-ingram-red-prairie-state"
+    "kyler-ingram-fcs-plains"
    ],
    "LT": [
-    "jett-harlan-red-prairie-state"
+    "jett-harlan-fcs-plains"
    ],
    "LG": [
-    "jett-benoit-red-prairie-state"
+    "jett-benoit-fcs-plains"
    ],
    "C": [
-    "marcus-gentry-red-prairie-state"
+    "marcus-gentry-fcs-plains"
    ],
    "RG": [
-    "evan-fontenot-red-prairie-state"
+    "evan-fontenot-fcs-plains"
    ],
    "RT": [
-    "gabriel-fenwick-red-prairie-state"
+    "gabriel-fenwick-fcs-plains"
    ]
   },
   "defense": {
    "LEDG": [
-    "kareem-harlan-red-prairie-state"
+    "kareem-harlan-fcs-plains"
    ],
    "REDG": [
-    "lucas-holcomb-red-prairie-state"
+    "lucas-holcomb-fcs-plains"
    ],
    "DT": [
-    "alec-lowery-red-prairie-state",
-    "isaiah-harlan-red-prairie-state"
+    "alec-lowery-fcs-plains",
+    "isaiah-harlan-fcs-plains"
    ],
    "LB": [
-    "andre-eason-red-prairie-state",
-    "kyler-calloway-red-prairie-state"
+    "andre-eason-fcs-plains",
+    "kyler-calloway-fcs-plains"
    ],
    "CB": [
-    "gavin-fairley-red-prairie-state",
-    "justice-stallworth-red-prairie-state",
-    "riley-satterfield-red-prairie-state"
+    "gavin-fairley-fcs-plains",
+    "justice-stallworth-fcs-plains",
+    "riley-satterfield-fcs-plains"
    ],
    "FS": [
-    "dominic-calloway-red-prairie-state"
+    "dominic-calloway-fcs-plains"
    ],
    "SS": [
-    "demarcus-delacroix-red-prairie-state"
+    "demarcus-delacroix-fcs-plains"
    ]
   },
   "special_teams": {
    "K": [
-    "brody-montoya-red-prairie-state"
+    "brody-montoya-fcs-plains"
    ],
    "P": [
-    "rashad-bellamy-red-prairie-state"
+    "rashad-bellamy-fcs-plains"
    ],
    "KR": [
-    "logan-sutherland-red-prairie-state"
+    "logan-sutherland-fcs-plains"
    ],
    "PR": [
-    "miles-fitch-red-prairie-state"
+    "miles-fitch-fcs-plains"
    ]
   }
  },
  "depth_chart": {
   "QB": [
-   "eli-dempsey-red-prairie-state",
-   "rhett-sewell-red-prairie-state",
-   "miles-draper-red-prairie-state",
-   "jett-ambrose-red-prairie-state"
+   "eli-dempsey-fcs-plains",
+   "rhett-sewell-fcs-plains",
+   "miles-draper-fcs-plains",
+   "jett-ambrose-fcs-plains"
   ],
   "HB": [
-   "miles-fitch-red-prairie-state",
-   "kai-fitch-red-prairie-state",
-   "travon-keeling-red-prairie-state",
-   "malik-bellamy-red-prairie-state",
-   "wes-keeling-red-prairie-state",
-   "rashad-paddock-red-prairie-state"
+   "miles-fitch-fcs-plains",
+   "kai-fitch-fcs-plains",
+   "travon-keeling-fcs-plains",
+   "malik-bellamy-fcs-plains",
+   "wes-keeling-fcs-plains",
+   "rashad-paddock-fcs-plains"
   ],
   "FB": [],
   "WR": [
-   "aaron-cutler-red-prairie-state",
-   "langston-mabry-red-prairie-state",
-   "rico-atwater-red-prairie-state",
-   "colton-winfield-red-prairie-state",
-   "logan-sutherland-red-prairie-state",
-   "colton-archer-red-prairie-state",
-   "emmanuel-rios-red-prairie-state",
-   "tyrese-keeling-red-prairie-state",
-   "emmanuel-benoit-red-prairie-state",
-   "kaden-montoya-red-prairie-state",
-   "trent-akins-red-prairie-state",
-   "kendall-jarrell-red-prairie-state"
+   "aaron-cutler-fcs-plains",
+   "langston-mabry-fcs-plains",
+   "rico-atwater-fcs-plains",
+   "colton-winfield-fcs-plains",
+   "logan-sutherland-fcs-plains",
+   "colton-archer-fcs-plains",
+   "emmanuel-rios-fcs-plains",
+   "tyrese-keeling-fcs-plains",
+   "emmanuel-benoit-fcs-plains",
+   "kaden-montoya-fcs-plains",
+   "trent-akins-fcs-plains",
+   "kendall-jarrell-fcs-plains"
   ],
   "TE": [
-   "kyler-ingram-red-prairie-state",
-   "adrian-mccrae-red-prairie-state",
-   "lamar-briscoe-red-prairie-state",
-   "lamar-haskins-red-prairie-state"
+   "kyler-ingram-fcs-plains",
+   "adrian-mccrae-fcs-plains",
+   "lamar-briscoe-fcs-plains",
+   "lamar-haskins-fcs-plains"
   ],
   "LT": [
-   "jett-harlan-red-prairie-state",
-   "jamal-halloway-red-prairie-state"
+   "jett-harlan-fcs-plains",
+   "jamal-halloway-fcs-plains"
   ],
   "LG": [
-   "jett-benoit-red-prairie-state",
-   "malachi-huddleston-red-prairie-state",
-   "terrance-goins-red-prairie-state"
+   "jett-benoit-fcs-plains",
+   "malachi-huddleston-fcs-plains",
+   "terrance-goins-fcs-plains"
   ],
   "C": [
-   "marcus-gentry-red-prairie-state",
-   "wade-dempsey-red-prairie-state",
-   "rashad-trammell-red-prairie-state"
+   "marcus-gentry-fcs-plains",
+   "wade-dempsey-fcs-plains",
+   "rashad-trammell-fcs-plains"
   ],
   "RG": [
-   "evan-fontenot-red-prairie-state",
-   "emmanuel-delacroix-red-prairie-state",
-   "bryce-wilder-red-prairie-state",
-   "luca-radford-red-prairie-state"
+   "evan-fontenot-fcs-plains",
+   "emmanuel-delacroix-fcs-plains",
+   "bryce-wilder-fcs-plains",
+   "luca-radford-fcs-plains"
   ],
   "RT": [
-   "gabriel-fenwick-red-prairie-state",
-   "joaquin-castellano-red-prairie-state",
-   "parker-yancey-red-prairie-state"
+   "gabriel-fenwick-fcs-plains",
+   "joaquin-castellano-fcs-plains",
+   "parker-yancey-fcs-plains"
   ],
   "LEDG": [
-   "kareem-harlan-red-prairie-state",
-   "kobe-vance-red-prairie-state",
-   "josiah-satterfield-red-prairie-state",
-   "dawson-waddell-red-prairie-state"
+   "kareem-harlan-fcs-plains",
+   "kobe-vance-fcs-plains",
+   "josiah-satterfield-fcs-plains",
+   "dawson-waddell-fcs-plains"
   ],
   "DT": [
-   "alec-lowery-red-prairie-state",
-   "isaiah-harlan-red-prairie-state",
-   "hayden-nakamura-red-prairie-state",
-   "kenji-baptiste-red-prairie-state",
-   "kobe-ambrose-red-prairie-state"
+   "alec-lowery-fcs-plains",
+   "isaiah-harlan-fcs-plains",
+   "hayden-nakamura-fcs-plains",
+   "kenji-baptiste-fcs-plains",
+   "kobe-ambrose-fcs-plains"
   ],
   "REDG": [
-   "lucas-holcomb-red-prairie-state",
-   "tristan-gentry-red-prairie-state",
-   "camden-archer-red-prairie-state"
+   "lucas-holcomb-fcs-plains",
+   "tristan-gentry-fcs-plains",
+   "camden-archer-fcs-plains"
   ],
   "SAM": [
-   "riley-upshaw-red-prairie-state",
-   "parker-ostrander-red-prairie-state",
-   "alec-dorsett-red-prairie-state"
+   "riley-upshaw-fcs-plains",
+   "parker-ostrander-fcs-plains",
+   "alec-dorsett-fcs-plains"
   ],
   "MIKE": [
-   "andre-eason-red-prairie-state",
-   "theo-navarro-red-prairie-state",
-   "keegan-dalton-red-prairie-state",
-   "desmond-oakes-red-prairie-state",
-   "levi-paddock-red-prairie-state",
-   "deion-haskins-red-prairie-state",
-   "jayden-redmond-red-prairie-state"
+   "andre-eason-fcs-plains",
+   "theo-navarro-fcs-plains",
+   "keegan-dalton-fcs-plains",
+   "desmond-oakes-fcs-plains",
+   "levi-paddock-fcs-plains",
+   "deion-haskins-fcs-plains",
+   "jayden-redmond-fcs-plains"
   ],
   "WILL": [
-   "kyler-calloway-red-prairie-state",
-   "gabriel-hatcher-red-prairie-state",
-   "langston-nettles-red-prairie-state",
-   "bennett-quarles-red-prairie-state",
-   "jordan-draper-red-prairie-state"
+   "kyler-calloway-fcs-plains",
+   "gabriel-hatcher-fcs-plains",
+   "langston-nettles-fcs-plains",
+   "bennett-quarles-fcs-plains",
+   "jordan-draper-fcs-plains"
   ],
   "CB": [
-   "gavin-fairley-red-prairie-state",
-   "justice-stallworth-red-prairie-state",
-   "riley-satterfield-red-prairie-state",
-   "kai-greer-red-prairie-state",
-   "dawson-akins-red-prairie-state",
-   "malik-dorsett-red-prairie-state",
-   "anthony-haskins-red-prairie-state"
+   "gavin-fairley-fcs-plains",
+   "justice-stallworth-fcs-plains",
+   "riley-satterfield-fcs-plains",
+   "kai-greer-fcs-plains",
+   "dawson-akins-fcs-plains",
+   "malik-dorsett-fcs-plains",
+   "anthony-haskins-fcs-plains"
   ],
   "FS": [
-   "dominic-calloway-red-prairie-state",
-   "brandon-wakefield-red-prairie-state",
-   "hayden-brannon-red-prairie-state",
-   "gabriel-cutler-red-prairie-state"
+   "dominic-calloway-fcs-plains",
+   "brandon-wakefield-fcs-plains",
+   "hayden-brannon-fcs-plains",
+   "gabriel-cutler-fcs-plains"
   ],
   "SS": [
-   "demarcus-delacroix-red-prairie-state",
-   "amari-langford-red-prairie-state",
-   "camden-larkin-red-prairie-state"
+   "demarcus-delacroix-fcs-plains",
+   "amari-langford-fcs-plains",
+   "camden-larkin-fcs-plains"
   ],
   "K": [
-   "brody-montoya-red-prairie-state",
-   "grady-dade-red-prairie-state"
+   "brody-montoya-fcs-plains",
+   "grady-dade-fcs-plains"
   ],
   "P": [
-   "rashad-bellamy-red-prairie-state"
+   "rashad-bellamy-fcs-plains"
   ]
  },
  "roster_size": 85,
  "roster": [
   {
-   "slug": "eli-dempsey-red-prairie-state",
+   "slug": "eli-dempsey-fcs-plains",
    "position": "QB",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Eli Dempsey",
    "position_name": "Quarterback",
    "jersey": "8",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
    "weight_lbs": 210,
@@ -636,15 +634,15 @@
    "fictional": true
   },
   {
-   "slug": "rhett-sewell-red-prairie-state",
+   "slug": "rhett-sewell-fcs-plains",
    "position": "QB",
    "class": "FR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Rhett Sewell",
    "position_name": "Quarterback",
    "jersey": "5",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman",
    "height": "6'3\"",
    "weight_lbs": 219,
@@ -919,15 +917,15 @@
    "fictional": true
   },
   {
-   "slug": "miles-draper-red-prairie-state",
+   "slug": "miles-draper-fcs-plains",
    "position": "QB",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Miles Draper",
    "position_name": "Quarterback",
    "jersey": "16",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 222,
@@ -1197,15 +1195,15 @@
    "fictional": true
   },
   {
-   "slug": "jett-ambrose-red-prairie-state",
+   "slug": "jett-ambrose-fcs-plains",
    "position": "QB",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Jett Ambrose",
    "position_name": "Quarterback",
    "jersey": "3",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 190,
@@ -1466,15 +1464,15 @@
    "fictional": true
   },
   {
-   "slug": "miles-fitch-red-prairie-state",
+   "slug": "miles-fitch-fcs-plains",
    "position": "HB",
    "class": "FR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Miles Fitch",
    "position_name": "Halfback",
    "jersey": "37",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman",
    "height": "6'1\"",
    "weight_lbs": 188,
@@ -1729,15 +1727,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-fitch-red-prairie-state",
+   "slug": "kai-fitch-fcs-plains",
    "position": "HB",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kai Fitch",
    "position_name": "Halfback",
    "jersey": "21",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 212,
@@ -2022,15 +2020,15 @@
    "fictional": true
   },
   {
-   "slug": "travon-keeling-red-prairie-state",
+   "slug": "travon-keeling-fcs-plains",
    "position": "HB",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Travon Keeling",
    "position_name": "Halfback",
    "jersey": "6",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
    "weight_lbs": 199,
@@ -2304,15 +2302,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-bellamy-red-prairie-state",
+   "slug": "malik-bellamy-fcs-plains",
    "position": "HB",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Malik Bellamy",
    "position_name": "Halfback",
    "jersey": "22",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "5'7\"",
    "weight_lbs": 175,
@@ -2588,15 +2586,15 @@
    "fictional": true
   },
   {
-   "slug": "wes-keeling-red-prairie-state",
+   "slug": "wes-keeling-fcs-plains",
    "position": "HB",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Wes Keeling",
    "position_name": "Halfback",
    "jersey": "24",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",
    "weight_lbs": 220,
@@ -2861,15 +2859,15 @@
    "fictional": true
   },
   {
-   "slug": "rashad-paddock-red-prairie-state",
+   "slug": "rashad-paddock-fcs-plains",
    "position": "HB",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Rashad Paddock",
    "position_name": "Halfback",
    "jersey": "20",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 220,
@@ -3121,15 +3119,15 @@
    "fictional": true
   },
   {
-   "slug": "aaron-cutler-red-prairie-state",
+   "slug": "aaron-cutler-fcs-plains",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Aaron Cutler",
    "position_name": "Wide Receiver",
    "jersey": "49",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 180,
@@ -3405,15 +3403,15 @@
    "fictional": true
   },
   {
-   "slug": "langston-mabry-red-prairie-state",
+   "slug": "langston-mabry-fcs-plains",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Langston Mabry",
    "position_name": "Wide Receiver",
    "jersey": "18",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
    "weight_lbs": 179,
@@ -3670,15 +3668,15 @@
    "fictional": true
   },
   {
-   "slug": "rico-atwater-red-prairie-state",
+   "slug": "rico-atwater-fcs-plains",
    "position": "WR",
    "class": "FR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Rico Atwater",
    "position_name": "Wide Receiver",
    "jersey": "1",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman",
    "height": "5'9\"",
    "weight_lbs": 195,
@@ -3947,15 +3945,15 @@
    "fictional": true
   },
   {
-   "slug": "colton-winfield-red-prairie-state",
+   "slug": "colton-winfield-fcs-plains",
    "position": "WR",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Colton Winfield",
    "position_name": "Wide Receiver",
    "jersey": "0",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 215,
@@ -4218,15 +4216,15 @@
    "fictional": true
   },
   {
-   "slug": "logan-sutherland-red-prairie-state",
+   "slug": "logan-sutherland-fcs-plains",
    "position": "WR",
    "class": "FR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Logan Sutherland",
    "position_name": "Wide Receiver",
    "jersey": "23",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman",
    "height": "6'0\"",
    "weight_lbs": 185,
@@ -4520,15 +4518,15 @@
    "fictional": true
   },
   {
-   "slug": "colton-archer-red-prairie-state",
+   "slug": "colton-archer-fcs-plains",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Colton Archer",
    "position_name": "Wide Receiver",
    "jersey": "13",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "5'8\"",
    "weight_lbs": 175,
@@ -4809,15 +4807,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-rios-red-prairie-state",
+   "slug": "emmanuel-rios-fcs-plains",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Emmanuel Rios",
    "position_name": "Wide Receiver",
    "jersey": "80",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 200,
@@ -5111,15 +5109,15 @@
    "fictional": true
   },
   {
-   "slug": "tyrese-keeling-red-prairie-state",
+   "slug": "tyrese-keeling-fcs-plains",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Tyrese Keeling",
    "position_name": "Wide Receiver",
    "jersey": "2",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 195,
@@ -5398,15 +5396,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-benoit-red-prairie-state",
+   "slug": "emmanuel-benoit-fcs-plains",
    "position": "WR",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Emmanuel Benoit",
    "position_name": "Wide Receiver",
    "jersey": "17",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
    "weight_lbs": 200,
@@ -5692,15 +5690,15 @@
    "fictional": true
   },
   {
-   "slug": "kaden-montoya-red-prairie-state",
+   "slug": "kaden-montoya-fcs-plains",
    "position": "WR",
    "class": "SO",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kaden Montoya",
    "position_name": "Wide Receiver",
    "jersey": "7",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore",
    "height": "5'11\"",
    "weight_lbs": 171,
@@ -5954,15 +5952,15 @@
    "fictional": true
   },
   {
-   "slug": "trent-akins-red-prairie-state",
+   "slug": "trent-akins-fcs-plains",
    "position": "WR",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Trent Akins",
    "position_name": "Wide Receiver",
    "jersey": "10",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 221,
@@ -6231,15 +6229,15 @@
    "fictional": true
   },
   {
-   "slug": "kendall-jarrell-red-prairie-state",
+   "slug": "kendall-jarrell-fcs-plains",
    "position": "WR",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kendall Jarrell",
    "position_name": "Wide Receiver",
    "jersey": "11",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 188,
@@ -6547,15 +6545,15 @@
    "fictional": true
   },
   {
-   "slug": "kyler-ingram-red-prairie-state",
+   "slug": "kyler-ingram-fcs-plains",
    "position": "TE",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kyler Ingram",
    "position_name": "Tight End",
    "jersey": "44",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 250,
@@ -6831,15 +6829,15 @@
    "fictional": true
   },
   {
-   "slug": "adrian-mccrae-red-prairie-state",
+   "slug": "adrian-mccrae-fcs-plains",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Adrian McCrae",
    "position_name": "Tight End",
    "jersey": "88",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
    "weight_lbs": 205,
@@ -7135,15 +7133,15 @@
    "fictional": true
   },
   {
-   "slug": "lamar-briscoe-red-prairie-state",
+   "slug": "lamar-briscoe-fcs-plains",
    "position": "TE",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Lamar Briscoe",
    "position_name": "Tight End",
    "jersey": "82",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 225,
@@ -7450,15 +7448,15 @@
    "fictional": true
   },
   {
-   "slug": "lamar-haskins-red-prairie-state",
+   "slug": "lamar-haskins-fcs-plains",
    "position": "TE",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Lamar Haskins",
    "position_name": "Tight End",
    "jersey": "83",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 195,
@@ -7752,15 +7750,15 @@
    "fictional": true
   },
   {
-   "slug": "jett-harlan-red-prairie-state",
+   "slug": "jett-harlan-fcs-plains",
    "position": "LT",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Jett Harlan",
    "position_name": "Left Tackle",
    "jersey": "76",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
    "weight_lbs": 320,
@@ -8033,15 +8031,15 @@
    "fictional": true
   },
   {
-   "slug": "jamal-halloway-red-prairie-state",
+   "slug": "jamal-halloway-fcs-plains",
    "position": "LT",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Jamal Halloway",
    "position_name": "Left Tackle",
    "jersey": "63",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'10\"",
    "weight_lbs": 327,
@@ -8303,15 +8301,15 @@
    "fictional": true
   },
   {
-   "slug": "jett-benoit-red-prairie-state",
+   "slug": "jett-benoit-fcs-plains",
    "position": "LG",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Jett Benoit",
    "position_name": "Left Guard",
    "jersey": "72",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 334,
@@ -8574,15 +8572,15 @@
    "fictional": true
   },
   {
-   "slug": "malachi-huddleston-red-prairie-state",
+   "slug": "malachi-huddleston-fcs-plains",
    "position": "LG",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Malachi Huddleston",
    "position_name": "Left Guard",
    "jersey": "77",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
    "weight_lbs": 310,
@@ -8872,15 +8870,15 @@
    "fictional": true
   },
   {
-   "slug": "terrance-goins-red-prairie-state",
+   "slug": "terrance-goins-fcs-plains",
    "position": "LG",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Terrance Goins",
    "position_name": "Left Guard",
    "jersey": "54",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 333,
@@ -9126,15 +9124,15 @@
    "fictional": true
   },
   {
-   "slug": "marcus-gentry-red-prairie-state",
+   "slug": "marcus-gentry-fcs-plains",
    "position": "C",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Marcus Gentry",
    "position_name": "Center",
    "jersey": "78",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 296,
@@ -9414,15 +9412,15 @@
    "fictional": true
   },
   {
-   "slug": "wade-dempsey-red-prairie-state",
+   "slug": "wade-dempsey-fcs-plains",
    "position": "C",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Wade Dempsey",
    "position_name": "Center",
    "jersey": "75",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
    "weight_lbs": 300,
@@ -9695,15 +9693,15 @@
    "fictional": true
   },
   {
-   "slug": "rashad-trammell-red-prairie-state",
+   "slug": "rashad-trammell-fcs-plains",
    "position": "C",
    "class": "SO",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Rashad Trammell",
    "position_name": "Center",
    "jersey": "74",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore",
    "height": "6'4\"",
    "weight_lbs": 305,
@@ -9972,15 +9970,15 @@
    "fictional": true
   },
   {
-   "slug": "evan-fontenot-red-prairie-state",
+   "slug": "evan-fontenot-fcs-plains",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Evan Fontenot",
    "position_name": "Right Guard",
    "jersey": "62",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'5\"",
    "weight_lbs": 315,
@@ -10230,15 +10228,15 @@
    "fictional": true
   },
   {
-   "slug": "emmanuel-delacroix-red-prairie-state",
+   "slug": "emmanuel-delacroix-fcs-plains",
    "position": "RG",
    "class": "FR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Emmanuel Delacroix",
    "position_name": "Right Guard",
    "jersey": "66",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 305,
@@ -10515,15 +10513,15 @@
    "fictional": true
   },
   {
-   "slug": "bryce-wilder-red-prairie-state",
+   "slug": "bryce-wilder-fcs-plains",
    "position": "RG",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Bryce Wilder",
    "position_name": "Right Guard",
    "jersey": "79",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
    "weight_lbs": 308,
@@ -10812,15 +10810,15 @@
    "fictional": true
   },
   {
-   "slug": "luca-radford-red-prairie-state",
+   "slug": "luca-radford-fcs-plains",
    "position": "RG",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Luca Radford",
    "position_name": "Right Guard",
    "jersey": "64",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 285,
@@ -11079,15 +11077,15 @@
    "fictional": true
   },
   {
-   "slug": "gabriel-fenwick-red-prairie-state",
+   "slug": "gabriel-fenwick-fcs-plains",
    "position": "RT",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Gabriel Fenwick",
    "position_name": "Right Tackle",
    "jersey": "68",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
    "weight_lbs": 300,
@@ -11362,15 +11360,15 @@
    "fictional": true
   },
   {
-   "slug": "joaquin-castellano-red-prairie-state",
+   "slug": "joaquin-castellano-fcs-plains",
    "position": "RT",
    "class": "SR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Joaquin Castellano",
    "position_name": "Right Tackle",
    "jersey": "56",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior",
    "height": "6'5\"",
    "weight_lbs": 299,
@@ -11646,15 +11644,15 @@
    "fictional": true
   },
   {
-   "slug": "parker-yancey-red-prairie-state",
+   "slug": "parker-yancey-fcs-plains",
    "position": "RT",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Parker Yancey",
    "position_name": "Right Tackle",
    "jersey": "70",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'4\"",
    "weight_lbs": 265,
@@ -11952,15 +11950,15 @@
    "fictional": true
   },
   {
-   "slug": "kareem-harlan-red-prairie-state",
+   "slug": "kareem-harlan-fcs-plains",
    "position": "LEDG",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kareem Harlan",
    "position_name": "Left Edge",
    "jersey": "99",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 298,
@@ -12239,15 +12237,15 @@
    "fictional": true
   },
   {
-   "slug": "kobe-vance-red-prairie-state",
+   "slug": "kobe-vance-fcs-plains",
    "position": "LEDG",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kobe Vance",
    "position_name": "Left Edge",
    "jersey": "91",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'4\"",
    "weight_lbs": 230,
@@ -12539,15 +12537,15 @@
    "fictional": true
   },
   {
-   "slug": "josiah-satterfield-red-prairie-state",
+   "slug": "josiah-satterfield-fcs-plains",
    "position": "LEDG",
    "class": "FR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Josiah Satterfield",
    "position_name": "Left Edge",
    "jersey": "55",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman",
    "height": "6'4\"",
    "weight_lbs": 256,
@@ -12804,15 +12802,15 @@
    "fictional": true
   },
   {
-   "slug": "dawson-waddell-red-prairie-state",
+   "slug": "dawson-waddell-fcs-plains",
    "position": "LEDG",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Dawson Waddell",
    "position_name": "Left Edge",
    "jersey": "89",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 262,
@@ -13120,15 +13118,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-lowery-red-prairie-state",
+   "slug": "alec-lowery-fcs-plains",
    "position": "DT",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Alec Lowery",
    "position_name": "Defensive Tackle",
    "jersey": "95",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
    "weight_lbs": 382,
@@ -13372,15 +13370,15 @@
    "fictional": true
   },
   {
-   "slug": "isaiah-harlan-red-prairie-state",
+   "slug": "isaiah-harlan-fcs-plains",
    "position": "DT",
    "class": "JR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Isaiah Harlan",
    "position_name": "Defensive Tackle",
    "jersey": "92",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior",
    "height": "6'4\"",
    "weight_lbs": 285,
@@ -13658,15 +13656,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-nakamura-red-prairie-state",
+   "slug": "hayden-nakamura-fcs-plains",
    "position": "DT",
    "class": "SR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Hayden Nakamura",
    "position_name": "Defensive Tackle",
    "jersey": "51",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior",
    "height": "6'3\"",
    "weight_lbs": 270,
@@ -13925,15 +13923,15 @@
    "fictional": true
   },
   {
-   "slug": "kenji-baptiste-red-prairie-state",
+   "slug": "kenji-baptiste-fcs-plains",
    "position": "DT",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kenji Baptiste",
    "position_name": "Defensive Tackle",
    "jersey": "46",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'4\"",
    "weight_lbs": 280,
@@ -14219,15 +14217,15 @@
    "fictional": true
   },
   {
-   "slug": "kobe-ambrose-red-prairie-state",
+   "slug": "kobe-ambrose-fcs-plains",
    "position": "DT",
    "class": "SR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kobe Ambrose",
    "position_name": "Defensive Tackle",
    "jersey": "73",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior",
    "height": "6'2\"",
    "weight_lbs": 300,
@@ -14498,15 +14496,15 @@
    "fictional": true
   },
   {
-   "slug": "lucas-holcomb-red-prairie-state",
+   "slug": "lucas-holcomb-fcs-plains",
    "position": "REDG",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Lucas Holcomb",
    "position_name": "Right Edge",
    "jersey": "47",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
    "weight_lbs": 251,
@@ -14774,15 +14772,15 @@
    "fictional": true
   },
   {
-   "slug": "tristan-gentry-red-prairie-state",
+   "slug": "tristan-gentry-fcs-plains",
    "position": "REDG",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Tristan Gentry",
    "position_name": "Right Edge",
    "jersey": "48",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
    "weight_lbs": 230,
@@ -15057,15 +15055,15 @@
    "fictional": true
   },
   {
-   "slug": "camden-archer-red-prairie-state",
+   "slug": "camden-archer-fcs-plains",
    "position": "REDG",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Camden Archer",
    "position_name": "Right Edge",
    "jersey": "57",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'6\"",
    "weight_lbs": 271,
@@ -15357,15 +15355,15 @@
    "fictional": true
   },
   {
-   "slug": "riley-upshaw-red-prairie-state",
+   "slug": "riley-upshaw-fcs-plains",
    "position": "SAM",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Riley Upshaw",
    "position_name": "Sam Linebacker",
    "jersey": "24",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
    "weight_lbs": 220,
@@ -15651,15 +15649,15 @@
    "fictional": true
   },
   {
-   "slug": "parker-ostrander-red-prairie-state",
+   "slug": "parker-ostrander-fcs-plains",
    "position": "SAM",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Parker Ostrander",
    "position_name": "Sam Linebacker",
    "jersey": "23",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "5'11\"",
    "weight_lbs": 227,
@@ -15926,15 +15924,15 @@
    "fictional": true
   },
   {
-   "slug": "alec-dorsett-red-prairie-state",
+   "slug": "alec-dorsett-fcs-plains",
    "position": "SAM",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Alec Dorsett",
    "position_name": "Sam Linebacker",
    "jersey": "6",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
    "weight_lbs": 224,
@@ -16218,15 +16216,15 @@
    "fictional": true
   },
   {
-   "slug": "andre-eason-red-prairie-state",
+   "slug": "andre-eason-fcs-plains",
    "position": "MIKE",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Andre Eason",
    "position_name": "Mike Linebacker",
    "jersey": "3",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "5'11\"",
    "weight_lbs": 246,
@@ -16493,15 +16491,15 @@
    "fictional": true
   },
   {
-   "slug": "theo-navarro-red-prairie-state",
+   "slug": "theo-navarro-fcs-plains",
    "position": "MIKE",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Theo Navarro",
    "position_name": "Mike Linebacker",
    "jersey": "25",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
    "weight_lbs": 210,
@@ -16771,15 +16769,15 @@
    "fictional": true
   },
   {
-   "slug": "keegan-dalton-red-prairie-state",
+   "slug": "keegan-dalton-fcs-plains",
    "position": "MIKE",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Keegan Dalton",
    "position_name": "Mike Linebacker",
    "jersey": "56",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
    "weight_lbs": 220,
@@ -17045,15 +17043,15 @@
    "fictional": true
   },
   {
-   "slug": "desmond-oakes-red-prairie-state",
+   "slug": "desmond-oakes-fcs-plains",
    "position": "MIKE",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Desmond Oakes",
    "position_name": "Mike Linebacker",
    "jersey": "11",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
    "weight_lbs": 225,
@@ -17306,15 +17304,15 @@
    "fictional": true
   },
   {
-   "slug": "levi-paddock-red-prairie-state",
+   "slug": "levi-paddock-fcs-plains",
    "position": "MIKE",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Levi Paddock",
    "position_name": "Mike Linebacker",
    "jersey": "40",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 205,
@@ -17594,15 +17592,15 @@
    "fictional": true
   },
   {
-   "slug": "deion-haskins-red-prairie-state",
+   "slug": "deion-haskins-fcs-plains",
    "position": "MIKE",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Deion Haskins",
    "position_name": "Mike Linebacker",
    "jersey": "53",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 235,
@@ -17889,15 +17887,15 @@
    "fictional": true
   },
   {
-   "slug": "jayden-redmond-red-prairie-state",
+   "slug": "jayden-redmond-fcs-plains",
    "position": "MIKE",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Jayden Redmond",
    "position_name": "Mike Linebacker",
    "jersey": "19",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
    "weight_lbs": 222,
@@ -18172,15 +18170,15 @@
    "fictional": true
   },
   {
-   "slug": "kyler-calloway-red-prairie-state",
+   "slug": "kyler-calloway-fcs-plains",
    "position": "WILL",
    "class": "FRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kyler Calloway",
    "position_name": "Will Linebacker",
    "jersey": "45",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
    "weight_lbs": 215,
@@ -18444,15 +18442,15 @@
    "fictional": true
   },
   {
-   "slug": "gabriel-hatcher-red-prairie-state",
+   "slug": "gabriel-hatcher-fcs-plains",
    "position": "WILL",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Gabriel Hatcher",
    "position_name": "Will Linebacker",
    "jersey": "97",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 221,
@@ -18728,15 +18726,15 @@
    "fictional": true
   },
   {
-   "slug": "langston-nettles-red-prairie-state",
+   "slug": "langston-nettles-fcs-plains",
    "position": "WILL",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Langston Nettles",
    "position_name": "Will Linebacker",
    "jersey": "16",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 225,
@@ -19002,15 +19000,15 @@
    "fictional": true
   },
   {
-   "slug": "bennett-quarles-red-prairie-state",
+   "slug": "bennett-quarles-fcs-plains",
    "position": "WILL",
    "class": "JR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Bennett Quarles",
    "position_name": "Will Linebacker",
    "jersey": "7",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior",
    "height": "6'3\"",
    "weight_lbs": 215,
@@ -19283,15 +19281,15 @@
    "fictional": true
   },
   {
-   "slug": "jordan-draper-red-prairie-state",
+   "slug": "jordan-draper-fcs-plains",
    "position": "WILL",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Jordan Draper",
    "position_name": "Will Linebacker",
    "jersey": "4",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
    "weight_lbs": 240,
@@ -19547,15 +19545,15 @@
    "fictional": true
   },
   {
-   "slug": "gavin-fairley-red-prairie-state",
+   "slug": "gavin-fairley-fcs-plains",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Gavin Fairley",
    "position_name": "Cornerback",
    "jersey": "5",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "5'9\"",
    "weight_lbs": 170,
@@ -19808,15 +19806,15 @@
    "fictional": true
   },
   {
-   "slug": "justice-stallworth-red-prairie-state",
+   "slug": "justice-stallworth-fcs-plains",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Justice Stallworth",
    "position_name": "Cornerback",
    "jersey": "10",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 183,
@@ -20080,15 +20078,15 @@
    "fictional": true
   },
   {
-   "slug": "riley-satterfield-red-prairie-state",
+   "slug": "riley-satterfield-fcs-plains",
    "position": "CB",
    "class": "SR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Riley Satterfield",
    "position_name": "Cornerback",
    "jersey": "8",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior",
    "height": "5'11\"",
    "weight_lbs": 170,
@@ -20372,15 +20370,15 @@
    "fictional": true
   },
   {
-   "slug": "kai-greer-red-prairie-state",
+   "slug": "kai-greer-fcs-plains",
    "position": "CB",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Kai Greer",
    "position_name": "Cornerback",
    "jersey": "0",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "5'9\"",
    "weight_lbs": 170,
@@ -20633,15 +20631,15 @@
    "fictional": true
   },
   {
-   "slug": "dawson-akins-red-prairie-state",
+   "slug": "dawson-akins-fcs-plains",
    "position": "CB",
    "class": "JR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Dawson Akins",
    "position_name": "Cornerback",
    "jersey": "12",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior",
    "height": "6'0\"",
    "weight_lbs": 198,
@@ -20929,15 +20927,15 @@
    "fictional": true
   },
   {
-   "slug": "malik-dorsett-red-prairie-state",
+   "slug": "malik-dorsett-fcs-plains",
    "position": "CB",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Malik Dorsett",
    "position_name": "Cornerback",
    "jersey": "2",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 215,
@@ -21217,15 +21215,15 @@
    "fictional": true
   },
   {
-   "slug": "anthony-haskins-red-prairie-state",
+   "slug": "anthony-haskins-fcs-plains",
    "position": "CB",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Anthony Haskins",
    "position_name": "Cornerback",
    "jersey": "32",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'0\"",
    "weight_lbs": 185,
@@ -21514,15 +21512,15 @@
    "fictional": true
   },
   {
-   "slug": "dominic-calloway-red-prairie-state",
+   "slug": "dominic-calloway-fcs-plains",
    "position": "FS",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Dominic Calloway",
    "position_name": "Free Safety",
    "jersey": "22",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
    "weight_lbs": 190,
@@ -21805,15 +21803,15 @@
    "fictional": true
   },
   {
-   "slug": "brandon-wakefield-red-prairie-state",
+   "slug": "brandon-wakefield-fcs-plains",
    "position": "FS",
    "class": "SO",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Brandon Wakefield",
    "position_name": "Free Safety",
    "jersey": "39",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore",
    "height": "6'2\"",
    "weight_lbs": 195,
@@ -22099,15 +22097,15 @@
    "fictional": true
   },
   {
-   "slug": "hayden-brannon-red-prairie-state",
+   "slug": "hayden-brannon-fcs-plains",
    "position": "FS",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Hayden Brannon",
    "position_name": "Free Safety",
    "jersey": "27",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
    "weight_lbs": 210,
@@ -22366,15 +22364,15 @@
    "fictional": true
   },
   {
-   "slug": "gabriel-cutler-red-prairie-state",
+   "slug": "gabriel-cutler-fcs-plains",
    "position": "FS",
    "class": "SORS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Gabriel Cutler",
    "position_name": "Free Safety",
    "jersey": "13",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Sophomore (RS)",
    "height": "5'9\"",
    "weight_lbs": 196,
@@ -22628,15 +22626,15 @@
    "fictional": true
   },
   {
-   "slug": "demarcus-delacroix-red-prairie-state",
+   "slug": "demarcus-delacroix-fcs-plains",
    "position": "SS",
    "class": "SR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Demarcus Delacroix",
    "position_name": "Strong Safety",
    "jersey": "21",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior",
    "height": "6'1\"",
    "weight_lbs": 193,
@@ -22919,15 +22917,15 @@
    "fictional": true
   },
   {
-   "slug": "amari-langford-red-prairie-state",
+   "slug": "amari-langford-fcs-plains",
    "position": "SS",
    "class": "JRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Amari Langford",
    "position_name": "Strong Safety",
    "jersey": "31",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
    "weight_lbs": 204,
@@ -23194,15 +23192,15 @@
    "fictional": true
   },
   {
-   "slug": "camden-larkin-red-prairie-state",
+   "slug": "camden-larkin-fcs-plains",
    "position": "SS",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Camden Larkin",
    "position_name": "Strong Safety",
    "jersey": "1",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "5'11\"",
    "weight_lbs": 168,
@@ -23488,15 +23486,15 @@
    "fictional": true
   },
   {
-   "slug": "brody-montoya-red-prairie-state",
+   "slug": "brody-montoya-fcs-plains",
    "position": "K",
    "class": "JR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Brody Montoya",
    "position_name": "Kicker",
    "jersey": "36",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior",
    "height": "5'7\"",
    "weight_lbs": 160,
@@ -23751,15 +23749,15 @@
    "fictional": true
   },
   {
-   "slug": "grady-dade-red-prairie-state",
+   "slug": "grady-dade-fcs-plains",
    "position": "K",
    "class": "JR",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Grady Dade",
    "position_name": "Kicker",
    "jersey": "99",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Junior",
    "height": "5'9\"",
    "weight_lbs": 195,
@@ -24009,15 +24007,15 @@
    "fictional": true
   },
   {
-   "slug": "rashad-bellamy-red-prairie-state",
+   "slug": "rashad-bellamy-fcs-plains",
    "position": "P",
    "class": "SRRS",
-   "team_slug": "red-prairie-state",
+   "team_slug": "fcs-plains",
    "url": null,
    "name": "Rashad Bellamy",
    "position_name": "Punter",
    "jersey": "49",
-   "team": "Red Prairie St.",
+   "team": "FCS Plains",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
    "weight_lbs": 209,
