@@ -62,13 +62,14 @@ def tab_click(page, tab: str) -> None:
     for _ in range(4):
         if page.evaluate(hidden, sel):
             label = page.evaluate("(s) => document.querySelector(s).textContent.trim()", sel)
-            page.click("#tab-more")
             try:
+                page.click("#tab-more", timeout=5_000)
                 page.click(f".go-menu .go-menu-item:has(b:text-is('{label}'))", timeout=5_000)
                 return
             except Exception:
                 # the row re-laid out between the look and the menu (a font arriving, layoutTabs on
-                # fonts loadingdone), so More no longer lists it: close the menu and look again
+                # fonts loadingdone), so More no longer lists it, or every tab now fits and More itself
+                # is hidden: close any menu and look again
                 page.keyboard.press("Escape")
                 time.sleep(0.3)
                 continue
