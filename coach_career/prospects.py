@@ -1018,30 +1018,24 @@ def class_rc(state: dict) -> dict:
 
 
 def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
-    """Every FBS school's class (its commitments, or signees once they sign), ranked as class_rank
-    ranks them: count, stars, its three best recruits; and where the calendar is."""
+    """Every FBS school's class (its commitments, or signees once they sign), ranked by class_table as
+    the viewer sees them: count, stars, its three best recruits; and where the calendar is."""
     from sim import season
     rc = class_rc(state)
     teams = season.load_teams()
-    by_school: dict[str, list] = {}
-    for pid, st in rc["status"].items():
-        school = st["signed"] or st["committed"]
-        if school and school != "FCS" and not (viewer and rc is state["recruiting"] and persona.hidden_from(state, viewer, pid)):
-            by_school.setdefault(school, []).append(pid)        # a Quiet Commit counts only in his school's own view
+    table = class_table(state, viewer)
     rows = []
     for slug in recruiting.fbs_schools(state):
-        pids = sorted(by_school.get(slug, []), key=lambda q: -rc["prospects"][q]["composite"])
-        comps = [rc["prospects"][q]["composite"] for q in pids]
+        t = table[slug]
+        pids = t["pids"]
         stars = {str(n): sum(1 for q in pids if rc["prospects"][q]["stars"] == n) for n in (5, 4, 3, 2)}
         rows.append({"school": slug, "name": teams[slug]["name"], "conference": teams[slug]["conference"],
                      "count": len(pids), "signed": sum(1 for q in pids if rc["status"][q]["signed"]), "stars": stars,
-                     "_points": sum(c * CLASS_DECAY ** i for i, c in enumerate(comps)), "yours": slug == viewer,
+                     "_points": t["points"], "rank": t["rank"], "yours": slug == viewer,
                      "top": [{"id": q, "name": rc["prospects"][q]["name"], "stars": rc["prospects"][q]["stars"],
                               "position": rc["prospects"][q]["position"], "rank": rc["prospects"][q]["rank"],
                               "generational": generational_seen(rc, q, viewer)} for q in pids[:3]]})
     rows.sort(key=lambda r: (-r["_points"], r["name"]))
-    for r in rows:                           # ranked on the exact points, as class_rank ranks them
-        r["rank"] = 1 + sum(1 for o in rows if o["_points"] > r["_points"])
     for r in rows:
         r["points"] = round(r.pop("_points"), 3)
     signed = sum(1 for st in rc["status"].values() if st["signed"])
@@ -1363,15 +1357,29 @@ def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int
     return {"schools": rows, "field": 0.0, "band": band, "certainty": certainty, "committed": school}
 
 
-def class_rank(state: dict, slug: str) -> int:
-    """Where a school's class stands nationally: its commitments' composites, best first, each worth
-    CLASS_DECAY times the one before (the best recruits count most, as in the real rankings)."""
+def class_table(state: dict, viewer: Optional[str] = None) -> dict:
+    """Every FBS school's class as the viewer sees it, the one ranking the Classes tab and class_rank share:
+    {slug: {"pids" best composite first, "points", "rank"}}. Points are the composites, best first, each worth
+    CLASS_DECAY times the one before (the best recruits count most, as in the real rankings); the rank counts
+    the schools with more points. Another school's Quiet Commit is left out of the viewer's table, as the
+    viewer cannot see where he went (viewer None: every commitment counts)."""
     rc = class_rc(state)
+    live = rc is state["recruiting"]                 # the portal weeks rank the signed class: nothing quiet left
     by_school: dict[str, list] = {}
     for pid, st in rc["status"].items():
         school = st["signed"] or st["committed"]
-        if school and school != "FCS":
-            by_school.setdefault(school, []).append(rc["prospects"][pid]["composite"])
-    points = {s: sum(c * CLASS_DECAY ** i for i, c in enumerate(sorted(v, reverse=True))) for s, v in by_school.items()}
-    mine = points.get(slug, 0.0)
-    return 1 + sum(1 for s in recruiting.fbs_schools(state) if points.get(s, 0.0) > mine)
+        if school and school != "FCS" and not (viewer and live and persona.hidden_from(state, viewer, pid)):
+            by_school.setdefault(school, []).append(pid)
+    table = {}
+    for slug in recruiting.fbs_schools(state):
+        pids = sorted(by_school.get(slug, []), key=lambda q: -rc["prospects"][q]["composite"])
+        table[slug] = {"pids": pids, "points": sum(rc["prospects"][q]["composite"] * CLASS_DECAY ** i for i, q in enumerate(pids))}
+    for t in table.values():
+        t["rank"] = 1 + sum(1 for o in table.values() if o["points"] > t["points"])
+    return table
+
+
+def class_rank(state: dict, slug: str, viewer: Optional[str] = None) -> int:
+    """Where a school's class stands nationally as the viewer sees it (by default the school itself, which
+    sees its own Quiet Commits and not another school's): the same rank as its row on the Classes tab."""
+    return class_table(state, viewer or slug)[slug]["rank"]
