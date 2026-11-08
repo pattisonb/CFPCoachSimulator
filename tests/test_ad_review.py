@@ -45,14 +45,18 @@ if __name__ == "__main__":
     assert rv["decided"] and not rv["fired"] and rv["outcome"] and "ultimatum" in rv["outcome"].lower(), rv
     assert st["league"]["teams"]["ohio-state"]["ad"]["ultimatum"] == off["year"] + 1
     assert carousel.status(st)["ultimatum"]
-    # offer a change: your coordinator goes (he joins the market, his job opens at the Staff step)
-    st = fresh(25)
+    # offer a change: your coordinator goes (he joins the market, his job opens at the Staff step). The start is
+    # chosen so the season's verdict lands mid-warning, whatever the season's real results add or take away
+    probe = offseason.start(fresh(50))["review"]["security"] - 50
+    start = (carousel.FIRE_BELOW + offseason.WARNING_BELOW) // 2 - probe
+    st = fresh(start)
     off = offseason.start(st)
     rv = off["review"]
-    assert rv["risk"] == "warning" and not rv["decided"], rv["security"]
+    assert rv["risk"] == "warning" and not rv["decided"], (start, probe, rv["security"])
+    before = rv["security"]
     n = len(carousel.market(st)["coaches"])
     offseason.review_decide(st, "change", staff_id="dc")
-    assert rv["decided"] and not rv["fired"] and rv["security"] > 25, rv
+    assert rv["decided"] and not rv["fired"] and rv["security"] == min(100, before + offseason.CHANGE_GAIN), rv
     assert len(carousel.market(st)["coaches"]) == n + 1
     st["offseason"]["auto"] = True
     while off["stage"] != "staff":
