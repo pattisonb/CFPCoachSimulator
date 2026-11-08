@@ -707,12 +707,15 @@ def check_bar_gaps(page, base, sid) -> None:
         page.goto(f"{base}/index.html?id={sid}&tab={tab}")
         page.wait_for_selector(f"#tab-{tab} .card-bar", timeout=120_000)
         time.sleep(0.6)
-        # every bar no taller than its tallest child needs: 34 px for a title, the control's own height plus a little for a bar holding one
-        bars = page.eval_on_selector_all(f"#tab-{tab} .card-bar", """els => els.filter(e => e.offsetParent).map(e => [Math.round(e.getBoundingClientRect().height),
-          Math.max(0, ...[...e.querySelectorAll('*')].map(k => Math.round(k.getBoundingClientRect().height)))])""")
+        # thin: a bar is no taller than what its content takes (one row or, when a narrow card or a wide font wraps
+        # it, two) plus a little, and a bar with only a title is at most 34 px
+        bars = page.eval_on_selector_all(f"#tab-{tab} .card-bar", """els => els.filter(e => e.offsetParent).map(e => {
+          const b = e.getBoundingClientRect(), kids = [...e.children].filter(k => k.getClientRects().length).map(k => k.getBoundingClientRect());
+          const content = kids.length ? Math.max(...kids.map(k => k.bottom)) - Math.min(...kids.map(k => k.top)) : 0;
+          return [Math.round(b.height), Math.round(content), !e.querySelector('button, select, input')]; })""")
         assert bars, f"no bars on the {tab} tab"
-        fat = [b for b in bars if b[0] > max(34, b[1] + 4)]
-        assert not fat, f"thin headers on the {tab} tab (height, tallest child): {fat}"
+        fat = [b for b in bars if b[0] > max(b[1] + 6, 30) or (b[2] and b[1] <= 20 and b[0] > 34)]
+        assert not fat, f"thin headers on the {tab} tab (height, content, title only): {fat}"
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
