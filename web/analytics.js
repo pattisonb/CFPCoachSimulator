@@ -1,14 +1,14 @@
-/**
- * Vercel Web Analytics integration
- * This file initializes Vercel Analytics for tracking page views and user interactions.
- * 
- * The script will automatically load from Vercel's CDN when deployed to Vercel.
- * After enabling Web Analytics in the Vercel dashboard, a script at /_vercel/insights/script.js
- * is automatically served and will process the queued events.
- */
-
-// Initialize the analytics queue
-// This sets up window.va to queue events until the actual analytics script loads
-window.va = window.va || function () { 
-  (window.vaq = window.vaq || []).push(arguments); 
-};
+/* Vercel Web Analytics: page views on the Vercel site only. window.va queues events until Vercel's script
+   (served by Vercel at _vercel/insights/script.js once Web Analytics is on in the dashboard) loads and sends them.
+   The script loads by a relative address (every URL in the site is relative) and only where Vercel serves it:
+   not on the old GitHub Pages address or the local dev server, which have no such file. */
+(function () {
+  "use strict";
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  const host = location.hostname;
+  if (host === "localhost" || host === "127.0.0.1" || host.endsWith(".github.io") || location.protocol === "file:") return;
+  const s = document.createElement("script");
+  s.defer = true;
+  s.src = "./_vercel/insights/script.js";
+  document.head.appendChild(s);
+})();
