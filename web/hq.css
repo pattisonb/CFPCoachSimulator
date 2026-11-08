@@ -1,0 +1,181 @@
+/* Headquarters (web/hq.js): the header, the widget grid (4 / 2 / 1 columns), edit mode and the catalog drawer.
+   Cards use the shared .go-card and .card-bar; sizes span 1, 2 or 4 columns. */
+.hq { position: relative; }
+.hq-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+.hq-title h2 { margin: 0; font-size: 30px; line-height: 1.1; letter-spacing: 0.02em; text-transform: uppercase; }
+.hq-title p { margin: 4px 0 0; }
+.hq-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.hq-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+.hq-empty[hidden] { display: none; }
+.hq-empty p { margin: 0; font-size: 16px; }
+
+/* masonry: hq.js pack() places each card in the column(s) with the most room, on rows of HQ_ROW px, so the gap
+   under a card is always the grid's gap and short cards stack beside a tall one (the columns follow the width) */
+.hq-grid { --hq-cols: 4; display: grid; grid-template-columns: repeat(var(--hq-cols), minmax(0, 1fr)); grid-auto-rows: 4px; column-gap: 16px; row-gap: 0; align-items: start; }
+/* a card is as tall as its content up to a cap; past the cap its body scrolls, never the page (--hq-card-h, *tune*) */
+.hq { --hq-card-h: 400px; }
+.hq-card { display: flex; flex-direction: column; min-width: 0; grid-column: span 1; max-height: var(--hq-card-h); }
+/* the column count is --hq-cols, which pack() reads: the computed track list also counts a wider layout's leftovers */
+@media (max-width: 1199px) { .hq-grid { --hq-cols: 2; } }
+@media (max-width: 699px) { .hq-grid { --hq-cols: 1; } }
+/* thin headers: the room goes to the content (the shared bar is 42 px; *tune* --card-bar-h here) */
+.hq-card { --card-bar-h: 30px; --card-bar-gap: 0px; }      /* the body's own padding is the room under the bar */
+.hq-bar { gap: 8px 12px; padding-top: 1px; padding-bottom: 1px; font-size: 11px; }
+.hq-card .hq-bar { margin-bottom: 0; }        /* the shared bar pulls its body up under it; here the body's padding sets the room */
+.hq-card .hq-bar .hq-viewall { min-height: 26px; padding: 0 2px; }
+.hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-top: 12px; }
+.hq-bar, .hq-edit { flex: none; }
+.hq-body > :first-child { margin-top: 0; }
+.hq-failed, .hq-wait { margin: 4px 0; }
+
+/* edit mode: the controls show only while Edit Layout is on */
+/* Edit Layout: the controls lie over the whole card on a see-through layer; the card keeps its size and place */
+.hq-edit { display: none; position: absolute; inset: 0; z-index: 3; flex-wrap: wrap; align-content: center; align-items: center; justify-content: center;
+  gap: 8px; padding: 10px; overflow-y: auto; background: color-mix(in srgb, var(--panel) 82%, transparent); backdrop-filter: blur(2px); }
+.hq-editing .hq-edit { display: flex; }
+.hq-edit-title { flex: 1 0 100%; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text); }
+.hq-edit .go-btn { min-height: 44px; padding: 0 12px; font-size: 14px; }
+.hq-edit :is(.hq-earlier, .hq-later, .hq-remove) { min-width: 44px; padding: 0; font-size: 12px; }
+.hq-sizes { display: flex; gap: 6px; }
+.hq-sizes .go-chip { min-height: 44px; min-width: 44px; }
+.hq :is(.hq-sizes, .hq-cats) .go-chip[aria-pressed="true"], .hq-drawer :is(.hq-sizes, .hq-cats) .go-chip[aria-pressed="true"] {
+  background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.hq-drag { min-height: 44px; min-width: 44px; border: 2px dashed var(--border); background: transparent; color: var(--muted); font-size: 20px; cursor: grab; touch-action: none; }
+.hq-editing .hq-card { outline: 2px dashed color-mix(in srgb, var(--muted) 45%, transparent); outline-offset: 3px; }
+/* a drag: the card lifts and follows the pointer; the placeholder holds the spot it will land in */
+.hq-card.hq-dragging { opacity: 0.94; outline: none; cursor: grabbing; box-shadow: 0 14px 36px rgba(0, 0, 0, 0.32); }
+.hq-placeholder { border: 2px dashed var(--muted); background: color-mix(in srgb, var(--muted) 12%, transparent); }
+@media (max-width: 699px), (pointer: coarse) { .hq-drag { display: none; } }
+
+/* the drawer: from the right on a wide screen, a bottom sheet on a phone */
+.hq-drawer { position: fixed; z-index: 60; top: var(--sticky-top, 0px); right: 0; bottom: 0; width: min(440px, 100vw); display: flex; flex-direction: column;
+  background: var(--panel); border-left: 1px solid var(--border); box-shadow: -8px 0 24px rgba(0, 0, 0, 0.25); padding: var(--card-pad); }
+.hq-drawer[hidden] { display: none; }
+.hq-drawer-bar h2 { font-size: inherit; }
+.hq-drawer-tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.hq-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.hq-cats .go-chip { min-height: 44px; }
+.hq-search { min-height: 44px; width: 100%; }
+.hq-entries { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 4px; }
+.hq-entry { border: 1px solid var(--border); padding: 12px; background: var(--panel-2); }
+.hq-entry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hq-entry-title { margin: 0; font-size: 16px; }
+.hq-blurb { margin: 4px 0 10px; font-size: 13px; }
+.hq-preview { pointer-events: none; min-height: 72px; max-height: 220px; overflow: hidden; font-size: 13px; }
+.hq-entry.soon .hq-preview { opacity: 0.55; filter: grayscale(1); }
+.hq-entry-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+@media (max-width: 699px) {
+  .hq-drawer { top: auto; left: 0; width: 100vw; height: min(80vh, 640px); border-left: 0; border-top: 1px solid var(--border); box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25); }
+}
+
+/* shared widget pieces (web/hq-widgets/*.js) */
+.hq-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; }
+.hq-stat { text-align: center; padding: 6px 4px; }
+.hq-stat b { display: block; font-size: 24px; line-height: 1.1; white-space: nowrap; }
+.hq-stat span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.hq-list { list-style: none; margin: 0; padding: 0; }
+.hq-list li { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.hq-list li:last-child { border-bottom: 0; }
+.hq-list .hq-grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hq-list .hq-sub { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.hq-list .go-link { min-height: 32px; text-align: left; }
+.hq-list .go-btn { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.hq-stars { color: var(--go-warn, #d4a017); letter-spacing: 1px; white-space: nowrap; font-size: 12px; }
+.hq-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hq-table th { text-align: left; font-size: 11px; color: var(--muted); font-weight: 700; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.hq-table td { padding: 6px; border-bottom: 1px solid var(--border); }
+.hq-table tr.mine td { font-weight: 700; background: color-mix(in srgb, var(--go-primary, var(--accent)) 16%, transparent); }
+.hq-input { min-height: 44px; padding: 0 12px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; font-size: 15px; }
+.hq-meter + .hq-meter { margin-top: 10px; }
+.hq-empty-line { margin: 4px 0; color: var(--muted); }
+.hq-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.hq-split h4 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.hq-chart { width: 100%; height: 120px; display: block; }
+.hq-chart .line { fill: none; stroke: var(--go-primary, var(--accent)); stroke-width: 2.5; }
+.hq-chart .area { fill: color-mix(in srgb, var(--go-primary, var(--accent)) 18%, transparent); }
+.hq-chart .dot { fill: var(--go-primary, var(--accent)); }
+.hq-chart text { fill: var(--muted); font-size: 10px; }
+.hq-up { color: var(--good); font-weight: 700; } .hq-down { color: var(--bad); font-weight: 700; }
+.hq-search-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.hq-search-row input { flex: 1 1 140px; min-height: 36px; min-width: 0; }
+.hq-search-row .go-btn, .hq-search-row .go-chip { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.hq-search-row .hq-input { font-size: 14px; }
+.hq-donut { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.hq-donut svg { width: 110px; height: 110px; flex: none; }
+
+/* a phone: every control in Headquarters at least 44 px tall (house rule) */
+@media (max-width: 699px), (pointer: coarse) {
+  .hq-list .go-link, .hq-card .hq-bar .hq-viewall, .hq-undo { min-height: 44px; }
+}
+.hq-undo { min-height: 36px; margin-left: 6px; padding: 0 6px; }
+
+/* round 2: tasks and goals */
+.hq-task-done { min-width: 44px; min-height: 44px; padding: 0; font-size: 18px; font-weight: 700; }
+.hq-task-done[aria-checked="true"] { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.hq-task.done .hq-grow { text-decoration: line-through; color: var(--muted); }
+.hq-task-del { min-width: 44px; padding: 0; }
+.hq-suggestions { margin-top: 8px; }
+.hq-goal + .hq-goal { margin-top: 14px; }
+.hq-goal-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.hq-goal-edit { min-height: 32px; }
+.hq-goal-input { width: 100px; }
+.hq-whatif-out { margin-top: 12px; }
+@media (max-width: 699px), (pointer: coarse) { .hq-goal-edit { min-height: 44px; } }
+.hq .go-meter-fill.warn, .hq-drawer .go-meter-fill.warn { background: var(--go-warn, #d4a017); }
+.hq .go-meter-fill.bad, .hq-drawer .go-meter-fill.bad { background: var(--bad); }
+@media (max-width: 699px) { .hq { --hq-card-h: 420px; } }
+.hq-body .hq-table th { position: sticky; top: -12px; z-index: 2; background: var(--panel); }   /* -12: over the body's top padding */
+/* a phone: the compact controls go back to 44 px (house rule) */
+@media (max-width: 699px), (pointer: coarse) {
+  .hq-list .go-btn, .hq-search-row input, .hq-search-row .go-btn, .hq-search-row .go-chip { min-height: 44px; }
+}
+
+/* heights: Auto fits the content up to the cap; a set height is the player's (hq.js applyHeight) */
+.hq-card.hq-set-h { max-height: none; }
+.hq-card { position: relative; }
+.hq-resize { display: none; position: absolute; left: 0; right: 0; bottom: -6px; height: 14px; min-height: 0; padding: 0; border: 0; background: transparent; cursor: ns-resize; z-index: 4; }
+.hq-resize::after { content: ""; position: absolute; left: 50%; top: 4px; width: 48px; height: 5px; margin-left: -24px; border-radius: 3px; background: var(--muted); opacity: 0.7; }
+.hq-editing .hq-resize { display: block; }
+.hq-card.hq-resizing { outline-style: solid; }
+.hq-heights { display: none; gap: 6px; }
+.hq-heights .go-chip { min-height: 44px; }
+@media (max-width: 699px), (pointer: coarse) {
+  .hq-editing .hq-resize { display: none; }
+  .hq-editing .hq-heights { display: flex; }
+}
+/* resizing: the guide line where a card's bottom lines up with a neighbor's */
+.hq-guide { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--go-primary, var(--accent)); z-index: 6; pointer-events: none; }
+.hq-guide[hidden] { display: none; }
+.hq-rep { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.hq-rep .go-link { min-height: 0; }
+@media (max-width: 699px), (pointer: coarse) { .hq-rep .go-link { min-height: 44px; } }
+
+/* Scouted Players: tiles at a glance, a report to step through */
+.hq-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.hq-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 44px; padding: 8px 10px; text-align: left; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text); font: inherit; }
+.hq-tile:hover { border-color: var(--go-primary, var(--accent)); }
+.hq-tile-name { font-weight: 700; font-size: 14px; }
+.hq-tile-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hq-scout-detail { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; overflow-y: auto; overscroll-behavior: contain;
+  padding: 12px var(--card-pad-x, var(--card-pad)) var(--card-pad); background: var(--panel); }
+.hq-editing .hq-scout-detail { display: none; }
+.hq-detail-nav, .hq-detail-head, .hq-detail-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.hq-detail-nav .go-btn, .hq-detail-acts .go-btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.hq-detail-head { margin: 10px 0 4px; flex-wrap: nowrap; white-space: nowrap; min-width: 0; }
+.hq-detail-head .hq-detail-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
+.hq-detail-head > :not(.hq-detail-name) { flex: none; }
+.hq-detail-head .hq-detail-tag { margin-left: 2px; }
+.hq-detail-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; }
+.hq-detail-name { font-size: 18px; }
+.hq-grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 12px; }
+.hq-grade { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border); }
+@media (max-width: 699px), (pointer: coarse) { .hq-detail-nav .go-btn, .hq-detail-acts .go-btn { min-height: 44px; } }
+
+/* Next Year's Depth Chart: a block per group (two or three across when the card is wide) */
+.hq-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px 16px; }
+.hq-group-head { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--go-primary, var(--accent)); }
+.hq-group .hq-list li { padding: 3px 0; }
+.hq-next-class { min-width: 44px; text-align: center; }
+.hq-commit { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
+.hq-full { opacity: 0.7; }

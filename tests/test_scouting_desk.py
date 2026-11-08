@@ -25,7 +25,7 @@ QUEUE_KEYS = {"cost", "pid", "name", "position", "display_pos", "stars", "group"
               "can_send", "why", "state", "likes", "on_board", "flags"}
 GROUP_KEYS = {"scout_id", "scout", "area", "looks", "changed", "items"}
 ITEM_KEYS = {"pid", "name", "position", "stars", "change", "flags", "likes", "on_board", "complete"}   # on_board, complete: read-only, for the tab's digest
-FLAG_KEYS = {"pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes"}
+FLAG_KEYS = {"pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes", "on_board"}
 
 
 def G(sid: str, path: str) -> dict:
