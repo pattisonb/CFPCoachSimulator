@@ -526,7 +526,7 @@
     const badge = opts.badge || { kicker: "Your Chance", value: sd.odds || sd.word, tone: TONES[sd.tone] || "", fill: measured ? sd.fill || 0 : null };
     const stats = opts.stats || [
       portal ? { key: "portal", label: "Portal Rank", value: b.portal_rank ? `#${b.portal_rank}` : "—" } : { key: "nat", label: "Nat. Rank", value: b.national_rank ? `#${b.national_rank}` : "—" },
-      { key: "pos", label: "Pos. Rank", value: b.pos_rank ? `#${b.pos_rank}` : "—", sub: pos },
+      { key: "pos", label: "Pos. Rank", value: b.pos_rank ? `#${b.pos_rank}` : "—" },
       portal ? { key: "class", label: "Class", value: clsWord(b.cls) || "—" } : null];
     const where = portal ? `From ${b.from_name}` : `${place(b.hometown)}${b.class_of ? ` · Class of ${b.class_of}` : ""}`;
     return PV().hero({ avatar: avatar(b.id, "lg"), tag, nameNode: opts.nameNode, back: opts.back, stars: b.stars ? stars(b.stars) : null, starsLabel: b.stars ? `${b.stars} stars` : null,
@@ -1692,7 +1692,7 @@
       let chosen = (scene.cue && scene.cue.topics[0]) || "";
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
       sc.append(el("div", { class: "card-bar go-scene-head" }, [el("div", { class: "go-scene-who" }, [avatar(b.id), el("div", { class: "go-kicker", text: `${visit ? "In His Home" : "On the Phone"} · ${b.name}` })])]));
-      // the turns: yours right in a muted bubble, his left, the room centered in italics; the cue keeps its frame
+      // the turns: yours right in a muted bubble, his left, a note (who decides, his NIL ask, pestering) centered and plain; the cue keeps its frame
       const convo = el("div", { class: "go-scene-lines go-convo", role: "log", "aria-label": `The ${what}` });
       const turnEl = (t) => {
         const cue = !!(scene.cue && t.who === "him" && t.text === scene.cue.text);

@@ -1183,7 +1183,7 @@ body.career-mode { --go-primary: var(--team-primary, var(--accent)); --go-primar
 .go-scene-head { display: flex; align-items: center; gap: 10px; }
 .go-scene-lines { display: flex; flex-direction: column; gap: 6px; }
 .go-scene-line { margin: 0; padding: 7px 10px; background: var(--panel); border: 1px solid var(--border); color: var(--text); line-height: 1.35; }
-.go-scene-line.room { background: none; border-color: transparent; padding: 0 2px; color: var(--muted); font-style: italic; }
+.go-scene-line.room { background: none; border-color: transparent; padding: 0 2px; color: var(--muted); font-weight: 600; font-size: 13px; }
 .go-scene-line.cue { border: 2px solid var(--go-primary, var(--accent)); font-weight: 600; }
 .go-scene .go-pitch { background: var(--panel); }
 .go-hangup { font-weight: 500; color: var(--muted); min-height: 44px; padding: 0 4px; }

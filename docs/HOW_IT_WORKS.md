@@ -1123,7 +1123,7 @@ won a coordinator over (a complete report stays in the database while he is on y
 **Calls and in-home visits are conversations** (`coach_career/scenes.py`). For you, a call or an
 in-home visit without a pitch opens a scene of `turns` (`you`, `him`, `note`). You open ("Hey
 Marcus, Coach Lashlee at SMU. Got a minute?"; the week after a call, "Good talking last week"; a
-visit opens with the room and your thanks in the living room); he answers with small talk that
+visit opens with a plain note on who decides, "His mom has the final say.", and your thanks in the living room); he answers with small talk that
 knows the week: your last game by name and result ("Saw you beat Florida State Saturday."), the
 opener before your first game, his own practice, or the school leading his list when the board
 knows it ("My phone's been going all week. Georgia called twice."); a call that would pester him
@@ -1268,7 +1268,7 @@ NIL points with his ask for an offer. A call or in-home visit plays as a convers
 window** over the board (`openSceneWindow` in `web/recruiting.js`: the shared modal, a dialog with
 `aria-modal`, the focus kept inside, titled "Call · Marcus Bell" or "In-Home Visit · Marcus Bell";
 680 px wide on a desktop, the whole screen at 700 px and under). In it your turns sit right in a
-muted "You:" bubble, his left under his avatar, the room centered in italics; the cue keeps its
+muted "You:" bubble, his left under his avatar, a note (who decides, his NIL ask, a pestering warning) centered in plain muted type, no scenery; the cue keeps its
 frame: after his small talk, YOUR OPENING offers the topics as chips (three at a time, a counter,
 Present disabled until three); Present brings his reaction, your question and his cue in place
 (the window's body scrolls them into view), then WHAT YOU LEAD WITH (the pitch picker, the cue's
@@ -3551,7 +3551,7 @@ pane and in the modal) opens with a Personality row and a Who Decides row, each 
 until the staff learns it; Who Decides adds "Cares About: <Topic>" (the pitch's own Title Case name).
 The pane's tag strip carries the known traits as chips (`trait:personality`, `trait:decider`). Learning
 is by contact: a first call or in-home visit tells the personality (a Guarded recruit only on a visit),
-two looks of his report tell who decides, and a visit with a family decider shows them in the room.
+two looks of his report tell who decides, and a visit's opening note says who decides (one who decides himself included).
 The pane's Profile body is keyed on `traits`, so a learned trait patches that body in place (no full
 redraw, no pulse on a recruit switch). A visit's family turn (`who: "family"`, `label`) plays like his
 own turn with the label as the speaker; a Guarded call or a Shy recruit's first call cues no topic

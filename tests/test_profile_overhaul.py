@@ -2,7 +2,7 @@
 1280 and 400 px, light and dark. One view of a recruit in three places: the board's pane, the Prospect Profile popup and
 the Scouting Center. Checks:
 - The board's header: five budget meters (Scouting Points among them) and Auto-Recruit; the list card and the pane line up.
-- The pane's hero: name, stars, Pos · Archetype | Height | Weight, Hometown · Class of 2027; Nat. Rank and Pos. Rank (with the
+- The pane's hero: name, stars, Pos · Archetype | Height | Weight, Hometown · Class of 2027; Nat. Rank and Pos. Rank (no
   position) in one strip; Your Chance (no bar before an offer); Recruit ▾ and the watch star on the tab row. Tabs Overview ·
   Scouting · Profile · History.
 - The position is the game's display everywhere (a recruit listed EDGE who plays DT reads DT in the hero, the verdict
@@ -179,7 +179,7 @@ def desktop(browser, base, sid, ids, profile, scheme, errs) -> None:
     assert pub["name"] in hero and pub["height_display"] in hero and pub["weight_display"] in hero and f"#{pub['national_rank']}" in hero, hero
     assert page.inner_text(".go-pane .pv-hero .pv-pos") == pub["display_pos"] != pub["position"], "the hero shows his game position"
     stats = page.eval_on_selector_all(".go-pane .pv-stat", "els => els.map(e => [e.dataset.stat, e.querySelector('.pv-stat-v').textContent, (e.querySelector('.pv-stat-s') || {}).textContent || ''])")
-    assert stats == [["nat", f"#{pub['national_rank']}", ""], ["pos", f"#{pub['pos_rank']}", pub["display_pos"]]], stats
+    assert stats == [["nat", f"#{pub['national_rank']}", ""], ["pos", f"#{pub['pos_rank']}", ""]], stats
     assert page.query_selector(".go-pane .pv-strip .pv-stat[data-stat=nat]") and page.query_selector(".go-pane .pv-strip .pv-stat[data-stat=pos]"), "the stats sit in one strip"
     assert page.inner_text(".go-pane .pv-hero .pv-arch") == pub["archetype"], "the archetype follows his position"
     assert page.inner_text(".go-pane .pv-hero .pv-place") == f"{pub['hometown']['city']}, {pub['hometown']['state']} · Class of {pub['class_of']}", page.inner_text(".go-pane .pv-hero .pv-place")

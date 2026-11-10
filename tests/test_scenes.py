@@ -225,7 +225,7 @@ def test_repeat_and_visit(st: dict, used: set, talked: str) -> None:
     sc = act(st, pid, "hc_visit")["scene"]
     assert whos(sc) == ["note", "you", "him"], whos(sc)
     f = scenes._fields(st, ME, p, week)
-    assert sc["turns"][0]["text"] in {line.format(**f) for line in scenes.FAMILY}
+    assert sc["turns"][0]["text"] == scenes.DECIDER_NOTE["self"].format(**f), sc["turns"][0]
     assert sc["turns"][1]["text"] in {line.format(**f) for line in scenes.VISIT_OPEN}
     assert sc["lines"] == [sc["turns"][2]["text"]], "the room is not his line"
     r = act(st, pid, "present", scene=sc["id"], topics=list(recruiting.PITCHES)[:3])
