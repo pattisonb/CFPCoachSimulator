@@ -115,6 +115,8 @@ PROMISE_RIVAL = 20                         # firmness lost when the other recrui
 PACKAGE_OFFERED = 1.0                      # a Package Deal's question (scenes.question "package") when his mate already holds your offer: on top of ANSWER_STRAIGHT *tune*
 PACKAGE_PROMISE_WEEKS = 2                  # you promised his mate an offer: kept when the mate holds it within this many weeks, broken after *tune*
 PACKAGE_KEPT = 2.0                         # what a kept Package Deal promise earns at the week step it is kept *tune*
+NIL_PROMISE_SHARE = 0.8                    # *tune* a money promise (NIL pitched with nothing on the offer) is kept once the offer holds this share of his ask
+NIL_PROMISE_WEEKS = 2                      # *tune* ... within this many week steps, or it breaks
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
@@ -1823,6 +1825,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if pitch not in seen:
                 seen.append(pitch)
         points = _contact_land(state, slug, p, contact, sc["action"], pitch, auto)
+        if pitch == "nil":
+            _money_talk(state, slug, pid, contact, week)
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
@@ -2292,6 +2296,52 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     return 1 - keep
 
 
+def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int) -> None:
+    """You pitched NIL in a call or visit. When NIL is his (a priority or his decider's topic), he has an ask and
+    nothing is held on him yet, he names his number (the contact's ask is exact; a History line says it) and you
+    owe him a money promise: NIL_PROMISE_SHARE of his ask on your offer within NIL_PROMISE_WEEKS (_promises)."""
+    if not persona.counts_as_priority(state, pid, "nil"):
+        return
+    ask = ask_from(state, slug, pid)
+    held = (state["recruiting"]["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
+    if not ask or held:
+        return
+    named = contact.get("asked") is not True
+    contact["asked"] = True
+    if named:
+        _event(state, "learned", pid, slug, line=f"He told you he's looking for {ask} in NIL.")
+    if not any(pr["kind"] == "money" and pr.get("broken") is None and pr.get("kept") is None and pr.get("closed") is None
+               for pr in contact.get("promises") or ()):
+        contact.setdefault("promises", []).append({"kind": "money", "about": {"ask": ask}, "week": week, "broken": None, "kept": None})
+
+
+def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: int) -> None:
+    """A money promise at the week step: kept once the offer holds NIL_PROMISE_SHARE of his ask (PACKAGE_KEPT lands,
+    promise_kept), broken after NIL_PROMISE_WEEKS without it (he cools; promise_broken, why "money"), closed with
+    neither once he is no longer yours to win (committed elsewhere, signed, or your offer pulled)."""
+    from coach_career import scenes
+    rc = state["recruiting"]
+    st_ = rc["status"][pid]
+    if st_["signed"] or (st_["committed"] and st_["committed"] != slug) or pid not in rc["offers"].get(slug, []):
+        pr["closed"] = week
+        return
+    held = (rc["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
+    if held >= NIL_PROMISE_SHARE * pr["about"]["ask"]:
+        pr["kept"] = week
+        rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
+        _event(state, "promise_kept", pid, slug, why="money", line=scenes.MONEY_KEPT_LINE)
+        return
+    if week - pr["week"] < NIL_PROMISE_WEEKS:
+        return
+    if st_["committed"] == slug and not st_.get("hard"):
+        st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
+    elif st_["committed"] != slug:
+        c["cooled_until"] = week + COOL_WEEKS
+        persona.set_cooled_why(state, slug, pid, "promise")
+    pr["broken"] = week
+    _event(state, "promise_broken", pid, slug, why="money", line=scenes.MONEY_BROKEN_LINE)
+
+
 def _promises(state: dict, week: int) -> None:
     """Promises follow him (spec section 4): a recruit told he was the one over another recruit
     (a "recruit" promise) remembers when that recruit commits to the school too, once: committed
@@ -2306,7 +2356,12 @@ def _promises(state: dict, week: int) -> None:
     for pid, by in rc["contacts"].items():
         for slug, c in by.items():
             for pr in c.get("promises") or ():
-                if pr["kind"] not in ("recruit", "package") or pr.get("broken") is not None or pr.get("kept") is not None:
+                if pr.get("broken") is not None or pr.get("kept") is not None or pr.get("closed") is not None:
+                    continue
+                if pr["kind"] == "money":
+                    _money_promise(state, slug, pid, c, pr, week)
+                    continue
+                if pr["kind"] not in ("recruit", "package"):
                     continue
                 st_ = rc["status"][pid]
                 if st_["signed"]:

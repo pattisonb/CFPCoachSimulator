@@ -210,6 +210,9 @@ REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
                "package": "Then we'll be watching for it."}
 # the Package Deal promise kept (recruiting._promises): his History's line, {mate} his mate
 PROMISE_KEPT_LINE = "{mate} got his offer. You kept your word, Coach."
+MONEY_KEPT_LINE = "You put the money on the table. You kept your word, Coach."
+MONEY_BROKEN_LINE = "You talked money and never put it on the table."
+NIL_NOT_HIS = "The money isn't what this is about for me."   # NIL pitched to a recruit who does not care about it
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
                "JR": "junior", "JRRS": "redshirt junior", "SR": "senior", "SRRS": "redshirt senior"}
 
@@ -1009,4 +1012,6 @@ def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict,
         text = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react") or text
     elif not tells:                                               # the topic's polite line would say it is none of his
         text = _no_tell_line(state, p["id"], f"{sid}-react", f)
+    elif pitch == "nil":                                          # money is not what he is about, and he says so
+        text = NIL_NOT_HIS
     return {"kind": kind if tells else "guarded", "text": text, "you": you}
