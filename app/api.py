@@ -1535,15 +1535,18 @@ def season_awards(p: Params) -> dict:
 
 @route("GET", "/api/season/{season_id}/player")
 def season_player(p: Params) -> dict:
-    """One player's page: bio, ratings, season totals, ranks, game log, honors."""
+    """One player's page: bio, ratings, season totals, ranks, game log, honors. With a `slug` the team may be
+    left out (found on any team); in a career's offseason `next` says where he is now (offseason.player_next)."""
     state = _season_state(p.path["season_id"])
-    team = _need(p, "team")
-    _check_team(team)
-    prof = season.player_profile(state, team, name=p.q("name") or None, position=p.q("position") or None,
-                                 slug=p.q("slug") or None)
+    slug = p.q("slug") or None
+    team = p.q("team") or None if slug else _need(p, "team")
+    if team:
+        _check_team(team)
+    prof = season.player_profile(state, team, name=p.q("name") or None, position=p.q("position") or None, slug=slug)
     if prof is None:
         raise ApiError(404, "player not found")
-    return prof
+    from coach_career import offseason
+    return {**prof, "next": offseason.player_next(state, prof["slug"]) if prof.get("slug") else None}
 
 
 @route("GET", "/api/season/{season_id}/stats/leaders")

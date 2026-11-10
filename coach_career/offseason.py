@@ -2486,6 +2486,31 @@ def recruiting_spots(state: dict, slug: str) -> int:
     return recruiting.portal_spots(state, slug)
 
 
+def player_next(state: dict, slug: str) -> Optional[dict]:
+    """Where a player is now, for his player page in a career's offseason: next year's team, position,
+    class and overall from the league (`status` returning / transfer_in / signee), or where he went
+    (`status` the departure's kind: graduated, portal, quit, declared, draft, undrafted; team None).
+    None outside a career offseason, or for a player the offseason does not know."""
+    if not state.get("offseason") or not state.get("league"):
+        return None
+    from sim import season
+    lgd = state["league"]
+    before = next((s for s, t in season.load_teams().items() if any(p.get("slug") == slug for p in t["offense"] + t["defense"])), None)
+    for team, t in lgd["teams"].items():
+        c = next((c for c in t["roster"] if c["id"] == slug), None)
+        if c is not None:
+            status = "returning" if before == team else "transfer_in" if before else "signee"
+            words = season.CLASS_NAMES.get(c["cls"], c["cls"])
+            return {"team": team, "team_name": lg.team_meta(lgd, team)["short_name"], "position": c["pos"], "class": c["cls"],
+                    "class_name": " ".join(w[:1].upper() + w[1:] for w in words.split()), "overall": c["o"], "status": status,
+                    "status_name": {"returning": "Returning", "transfer_in": "Transferred In", "signee": "Signed"}[status]}
+    ev = next((e for e in reversed(state["offseason"].get("departures") or []) if e["id"] == slug), None)
+    if ev is None:
+        return None
+    return {"team": None, "team_name": None, "position": ev.get("pos"), "class": ev.get("cls"), "class_name": None,
+            "overall": ev.get("overall"), "status": ev["kind"], "status_name": KIND_NAMES.get(ev["kind"], "Left the Program")}
+
+
 def recruiting_offer_cap(state: dict, slug: str) -> int:
     from coach_career import recruiting
     return recruiting.offer_cap(state, slug)
