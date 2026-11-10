@@ -1335,7 +1335,7 @@
     const o = { restore: true };
     try {
       if (kind === "box" && arg) return !!(await openBox(arg, o));
-      if (kind === "player") { const [team, name, pos] = arg.split("|"); return !!(team && name && (await openPlayer(team, name, pos || "", o))); }
+      if (kind === "player") { const [team, name, pos, slug] = arg.split("|"); return !!(team && name && (await openPlayer(team, name, pos || "", { ...o, slug }))); }
       if (kind === "resume") {
         const [slug, w] = arg.split("|");
         const wk = Number(w);
@@ -1709,25 +1709,28 @@
   ];
   const DEF_POS = new Set(["DL", "MLB", "ROLB", "LOLB", "OLB", "CB", "S"]);
 
-  function playerAttrs(team, name, position) {
-    return team && name ? { "data-player": `${team}|${name}|${position || ""}`, class: "plink", title: "Open player page" } : {};
+  // slug (optional): finds him even when his name and position have changed (an offseason move); the page's token carries it
+  function playerAttrs(team, name, position, slug) {
+    return team && name ? { "data-player": `${team}|${name}|${position || ""}${slug ? `|${slug}` : ""}`, class: "plink", title: "Open player page" } : {};
   }
 
-  // opts.restore: reopened from the address; a player no longer there is passed over quietly (false)
+  // opts.restore: reopened from the address; a player no longer there is passed over quietly (false). opts.slug: find
+  // him by slug (the name and position may have moved); the token then carries it as a fourth part
   async function openPlayer(team, name, position, opts = {}) {
     const s = state.season;
     if (!s) return false;
-    const key = `${s.id}|${s.current_week}|${team}|${name}|${position}`;
+    const slug = opts.slug || "";
+    const key = `${s.id}|${s.current_week}|${s.offseason_stage || ""}|${team}|${name}|${position}|${slug}`;
     let p = playerState.cache.get(key);
     if (!p) {
-      try { p = await api(`/api/season/${s.id}/player?team=${encodeURIComponent(team)}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position || "")}`); }
+      try { p = await api(`/api/season/${s.id}/player?team=${encodeURIComponent(team)}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position || "")}${slug ? `&slug=${encodeURIComponent(slug)}` : ""}`); }
       catch (err) { if (!opts.restore) toast(`Could not load that player: ${errText(err)}`, 3000); return false; }
       if (!p || !p.name) return false;
       playerState.cache.set(key, p);
     }
     const node = el("div", { class: "player-page" });
     renderPlayer(p, node);
-    openModal(`${p.jersey ? "#" + p.jersey + " " : ""}${p.name}`, node, `player:${team}|${name}|${position || ""}`, opts);
+    openModal(`${p.jersey ? "#" + p.jersey + " " : ""}${p.name}`, node, `player:${team}|${name}|${position || ""}${slug ? `|${slug}` : ""}`, opts);
     return true;
   }
 
@@ -1751,6 +1754,21 @@
   const COACH_TIP = "How fast he grows toward his potential each offseason, from Coach's Dream down to Set in His Ways. A big year or a good developer can raise it.";
   const POT_TIP = "How good he can become: his projected rating at his ceiling, in the scouting report's words.";
 
+  // the offseason's Next Season block: where he is now (offseason.player_next), over last season's page
+  function nextSeasonBlock(p) {
+    const n = p.next;
+    if (!n) return null;
+    const from = n.status === "transfer_in" && p.team && p.team.name ? `Transferred From ${p.team.name}` : null;
+    const line = n.team
+      ? [n.team_name, n.position, n.class_name, n.overall != null ? `${n.overall} Overall` : null, from].filter(Boolean).join(" · ")
+      : n.status_name;
+    return el("div", { class: "player-next", "data-key": "next" }, [
+      el("span", { class: "go-kicker", text: "Next Season" }),
+      el("b", { class: "player-next-line", text: line }),
+      el("span", { class: "muted small-text", text: "Ratings and stats below are from last season." }),
+    ]);
+  }
+
   function renderPlayer(p, box) {
     const s = state.season;
     box.innerHTML = "";
@@ -1764,6 +1782,8 @@
       el("span", { class: "muted small-text", text: `${team.name}${team.rank ? ` · #${team.rank}` : ""} · ${team.record} · ${team.conference}` }),
     ]);
     box.append(bar);
+    const nx = nextSeasonBlock(p);
+    if (nx) box.append(nx);
     const hero = el("div", { class: `player-hero ${team.slug === s.team ? "mine" : ""}` });
     hero.style.setProperty("--p-primary", primary);
     hero.style.setProperty("--p-secondary", col.secondary || primary);
@@ -1978,10 +1998,10 @@
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-player]");
     if (!t || e.target.closest("button")) return;
-    const [team, name, position] = t.dataset.player.split("|");
+    const [team, name, position, slug] = t.dataset.player.split("|");
     e.preventDefault();
     e.stopPropagation();
-    openPlayer(team, name, position);
+    openPlayer(team, name, position, slug ? { slug } : {});
   }, true);
 
   // ----- awards ------------------------------------------------------------

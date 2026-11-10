@@ -668,6 +668,8 @@ button.tiny { padding: 0 6px; font-size: 12px; line-height: 26px; min-height: 28
 .plink { cursor: pointer; }
 .plink:hover { text-decoration: underline; text-decoration-color: var(--accent); }
 .player-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.player-next { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; padding: 8px 10px; border: 1px solid var(--border); background: var(--panel-2); }   /* the offseason's Next Season block */
+.player-next-line { font-weight: 600; }
 .player-hero { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 20px;
   background: var(--panel-2); border: 1px solid var(--border); border-top: 4px solid var(--p-primary); }
 .player-hero.mine { border-color: var(--accent); }

@@ -4233,9 +4233,11 @@ def recruit_stars(p: dict) -> int:
 
 def player_profile(state: dict, team: str, name: Optional[str] = None, position: Optional[str] = None,
                    slug: Optional[str] = None) -> Optional[dict]:
-    """One player's page. `team` None with a `slug`: the first team in the teams file whose roster has him
-    (the offseason's links know a player's slug, not always the team he played for)."""
+    """One player's page. `team` None with a `slug`, or a team he is not on: the first team in the teams file whose
+    roster has him (the offseason's links know a player's slug, not always the team he played for)."""
     teams = load_teams()
+    if slug and team is not None and not any(x.get("slug") == slug for x in (teams.get(team) or {}).get("offense", []) + (teams.get(team) or {}).get("defense", [])):
+        team = None
     if team is None:
         if not slug:
             return None
