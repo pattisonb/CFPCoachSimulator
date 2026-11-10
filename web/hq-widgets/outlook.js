@@ -126,7 +126,7 @@
       const rows = [];
       for (const u of d.depth.units || []) for (const r of u.rows || []) {
         const [a, b] = r.players || [];
-        if (a) rows.push([r.role || r.label, a.name, b ? b.name : "Nobody", battleWord(a.overall, b && b.overall)]);
+        if (a) rows.push([r.role || r.label, k.player(ctx, a.name, a.position, a.slug), b ? k.player(ctx, b.name, b.position, b.slug) : "Nobody", battleWord(a.overall, b && b.overall)]);
       }
       if (!rows.length) return k.empty("No depth chart yet.");
       const shown = rows.slice(0, ctx.size === "L" ? rows.length : 8);
@@ -206,8 +206,8 @@
       const rows = ps.slice(0, k.rowsFor(ctx.size));
       return ctx.size === "L"
         ? k.table(["Player", "Pos", "Class", "Role", "Outlook", "Replacement"], rows.map((p) =>
-          [p.name, p.position, p.class, p.starter ? "Starter" : "Reserve", el("span", { class: "go-tag", text: why(p) }), rep(p)]))
-        : k.table(["Player", "Pos", "Outlook", "Replacement"], rows.map((p) => [p.name, p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)]));
+          [k.player(ctx, p.name, p.position, p.slug), p.position, p.class, p.starter ? "Starter" : "Reserve", el("span", { class: "go-tag", text: why(p) }), rep(p)]))
+        : k.table(["Player", "Pos", "Outlook", "Replacement"], rows.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)]));
     } });
 
   // ----- Roster Loss Projections ---------------------------------------------------------------------------------

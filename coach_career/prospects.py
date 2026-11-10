@@ -647,8 +647,14 @@ def flip_view(state: dict, pid: str, viewer: Optional[str] = None) -> Optional[d
 
 
 def profile(state: dict, pid: str, viewer: str) -> dict:
-    """The Prospect Profile as `viewer` (your school) sees it. Never carries the true grades."""
+    """The Prospect Profile as `viewer` (your school) sees it. Never carries the true grades. During the portal weeks
+    a recruit of the signed high school class (kept aside, class_rc: Headquarters' replacements, the class widgets)
+    opens from that class."""
     rc = state["recruiting"]
+    if pid not in rc["prospects"] and rc.get("portal"):
+        kept = class_rc(state)
+        if kept is not rc and pid in kept["prospects"]:
+            return profile({**state, "recruiting": kept}, pid, viewer)
     p = rc["prospects"].get(pid)
     if p is None or pid not in recruiting.visible(state):
         raise recruiting.RecruitingError(404, "unknown prospect")

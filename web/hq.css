@@ -149,6 +149,10 @@
 .hq-rep { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .hq-rep .go-link { min-height: 0; }
 @media (max-width: 699px), (pointer: coarse) { .hq-rep .go-link { min-height: 44px; } }
+/* a player's name as a link to his player page (k.player): it reads as the name, 44 px tall on a phone */
+.hq-plink { color: inherit; text-decoration: none; }
+.hq-plink:hover, .hq-plink:focus-visible { text-decoration: underline; text-decoration-color: var(--accent); }
+@media (max-width: 699px), (pointer: coarse) { .hq-plink { display: inline-flex; align-items: center; min-height: 44px; } }
 
 /* Scouted Players: tiles at a glance, a report to step through */
 .hq-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }

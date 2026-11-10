@@ -49,7 +49,7 @@
           ...g.commits.map((c) => ({ key: `c-${c.pid}`, cells: [el("span", { class: "go-tag hq-next-class hq-commit", text: c.signed ? "Signed" : "Commit" }),
             k.name(ctx, c.pid, c.name), el("span", { class: "hq-sub", text: c.position }), k.starsShort(c.stars)] })),
           ...g.players.map((p, i) => ({ key: `p-${g.group}-${i}-${p.name}`, cells: [el("span", { class: "go-tag hq-next-class", text: p.class_next }),
-            el("span", { class: "hq-grow", text: p.name }), p.draft ? el("span", { class: "hq-sub", text: `Draft: ${p.draft}` }) : null,
+            k.player(ctx, p.name, p.position, p.slug), p.draft ? el("span", { class: "hq-sub", text: `Draft: ${p.draft}` }) : null,
             el("span", { class: "hq-sub", text: String(p.overall) })] })),
         ]),
       ])));

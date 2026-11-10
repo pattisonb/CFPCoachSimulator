@@ -179,6 +179,36 @@ def check_sweep(page, base, sid, sizes_pick) -> list:
     return ws
 
 
+def check_player_links(page, base, sid) -> None:
+    """A player of yours named in Senior Impact and Retention, the Position Battle Board and Next Year's Depth Chart
+    opens his player page (k.player), 44 px tall on a phone."""
+    layout = [{"id": "c1", "widget": "senior-impact", "size": "L"}, {"id": "c2", "widget": "position-battles", "size": "M"},
+              {"id": "c3", "widget": "next-depth", "size": "L"}]
+    call(base, f"/api/season/{sid}/headquarters", {"cards": layout})
+    for width in (1280, 400):
+        page.set_viewport_size({"width": width, "height": 900})
+        open_hq(page, base, sid)
+        for c in layout:
+            check_card_clean(page, c["widget"])
+            links = page.locator(f"#tab-headquarters .hq-card[data-widget='{c['widget']}'] a.hq-plink").filter(visible=True)
+            if c["widget"] != "senior-impact":
+                assert links.count(), f"{c['widget']}: no player link"
+            if not links.count():
+                continue
+            link = links.first
+            link.scroll_into_view_if_needed()
+            if width < 700:
+                h = link.evaluate("n => n.getBoundingClientRect().height")
+                assert h >= 44, f"{c['widget']}: a player link {h:.0f} px tall on a phone"
+            name = link.inner_text().strip()
+            link.click()
+            page.wait_for_selector(".modal:not([hidden]) .player-page", timeout=60_000)
+            assert name in page.inner_text(".modal:not([hidden]) .modal-title"), name
+            page.click(".modal:not([hidden]) .modal-close")
+            page.wait_for_function("() => !document.querySelector('.modal:not([hidden])')", timeout=10_000)
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
 def check_previews(page) -> None:
     page.click("#tab-headquarters .hq-add-widget")
     page.wait_for_selector(".hq-drawer:not([hidden])")
@@ -868,6 +898,7 @@ if __name__ == "__main__":
             check_sweep(page, base, live, lambda sizes, size: size)
             check_sweep(page, base, live, lambda sizes, size: sizes[-1])
             check_sweep(page, base, sid, lambda sizes, size: sizes[0])      # a new career: nothing on the board yet
+            check_player_links(page, base, live)
             check_previews(page)
             check_actions(page, base, live, sid)
             check_flow(page, base, live)
