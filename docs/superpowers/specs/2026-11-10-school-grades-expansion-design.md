@@ -122,12 +122,15 @@ number and does not move.
 - New randomness gets its own seeded stream. Tunable weights are module-level and marked `*tune*`.
 - Every label is Title Case ("Game Day", "College Town", "Big City").
 
-## Open Calls (the player decides)
+## Decided (November 10)
 
-1. **Split Market into Game Day and Exposure?** Recommended: yes, keep Market as a derived headline.
-2. **Do the new grades change the overall rating** (and so AD goals, tiers and the job market)?
-   Recommended: not in phases 1-2. They are recruiting grades first. Facilities and Stability may join the
-   rating in phase 3 after a long-run check.
-3. ~~Can the player build facilities?~~ **Decided (November 10):** no, not yet. Facilities is fixed from the
-   research; building waits for AD Meetings.
-4. **Phase 1 research scope:** all 136 programs at once, or the Power 4 first?
+1. **Market splits into Game Day and Exposure.** Market stays as a headline reading, 0.6 × Game Day + 0.4 × Exposure,
+   so every program starts on the Market it has now.
+2. **The new grades stay out of the overall rating at first.** They are recruiting grades. Two notes from the player:
+   - **Coaches should care more about player success and personnel** when they weigh a job: the program's player
+     development and Pro Pipeline, its staff and the talent on the roster, not only its rating.
+   - **Tiers, maybe.** Whether Facilities and Stability (or the new grades generally) move a program's tier is
+     decided after a long-run check (`tools/long_run.py`), not in phases 1-2.
+3. ~~Can the player build facilities?~~ No, not yet: Facilities is fixed from the research; building waits for AD
+   Meetings.
+4. **Research all 136 programs in the first pass.**
