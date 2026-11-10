@@ -70,15 +70,15 @@
   // (a go-link button). Anyone else: his player page by slug (`id`), which says where he is now (Next Season); `team`
   // is where the page looks first and may be stale (the server finds the slug on any team).
   const cur = () => (last && last.s) || {};
-  function nameLink(s, id, name, team, pos, entrant) {
+  function nameLink(s, id, name, team, pos, entrant, cls = "") {
     const portal = !!(last && last.v && String(last.v.stage || "").startsWith("portal_w"));
     if (entrant && portal && window.Recruiting && window.Recruiting.openProfile) {
-      const b = el("button", { type: "button", class: "go-link off-name", "data-pid": id, text: name });
+      const b = el("button", { type: "button", class: `go-link off-name ${cls}`.trim(), "data-pid": id, text: name });
       ui.on(b, "click", () => window.Recruiting.openProfile(s, id));
       return b;
     }
-    if (!id || !H || !H.playerAttrs) return el("b", { text: name });
-    return el("a", { href: "#", ...H.playerAttrs(team || s.team, name, pos, id), class: "plink off-name", text: name });
+    if (!id || !H || !H.playerAttrs) return el("b", { ...(cls ? { class: cls } : {}), text: name });
+    return el("a", { href: "#", ...H.playerAttrs(team || s.team, name, pos, id), class: `plink off-name ${cls}`.trim(), text: name });
   }
   function avatar(seed, size) {          // a portrait from the coach sprite system, its look picked from his id (as recruiting.js does)
     let h = 0;
@@ -578,7 +578,7 @@
     for (const e of r.players) {
       const c = el("article", { class: `go-card go-pcard off-leaver ${e.offers.released ? "released" : ""}`, "data-key": e.id });
       c.append(el("div", { class: "off-leaver-top" }, [avatar(e.id), el("div", { class: "off-leaver-id" }, [
-        el("div", { class: "off-leaver-name" }, [nameLink(s, e.id, e.name, s.team, e.pos),
+        el("div", { class: "off-leaver-name" }, [nameLink(s, e.id, e.name, s.team, e.pos, false, "go-name"),
           el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL Draft" : "Transfer Portal" })]),
         el("div", { class: "muted small" }, [`${e.pos} · ${clsWord(e.cls)} Next Year · ${e.overall} OVR `, e.stars ? el("span", { class: "go-stars", text: stars(e.stars) }) : null])]),
         el("dl", { class: "off-roles" }, [el("div", {}, [el("dt", { text: "Now" }), el("dd", { text: e.role_now_name })]),
