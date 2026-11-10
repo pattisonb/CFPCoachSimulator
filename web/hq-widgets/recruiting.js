@@ -183,6 +183,27 @@
       return el("div", { class: "hq-donut" }, [svg, k.list(counts.map(([n, c]) => [el("span", { class: "hq-grow", text: `${n}-Star` }), el("b", { text: String(c) })]))]);
     } });
 
+  // ----- Your Full Class ------------------------------------------------------------------------------------
+  const SAMPLE_MYCLASS = { schools: SAMPLE_CLASSES.schools.map((r, i) => ({ ...r, rank: i + 1 })), class: [
+    P("s6", "Terrell Davis", "RB", 5, { national_rank: 8, signed: "you" }), P("s7", "Lucas Franklin", "CB", 4, { national_rank: 61, committed: "you" }),
+    P("s8", "Andre Coleman", "OT", 4, { national_rank: 97, committed: "you" }), P("s9", "Jalen Brooks", "WR", 3, { national_rank: 340, committed: "you" })] };
+  reg({ id: "full-class", title: "Your Full Class", blurb: "Every recruit committed or signed to you, best first: position, stars, national rank and status.",
+    sizes: ["M", "L"], size: "M", sources: ["myclass"], sample: { myclass: SAMPLE_MYCLASS }, viewAll: "classes",
+    draw: (d, ctx) => {
+      const rows = d.myclass.class || [];
+      const mine = (d.myclass.schools || []).find((r) => r.yours || r.school === sampleMe(ctx));
+      if (!rows.length) return k.empty("No commits yet this cycle.");
+      const head = k.stats([[String(rows.length), "Commits"], [mine && mine.count && mine.rank ? `#${mine.rank}` : "Unranked", "Class Rank"],
+        [String(rows.filter((r) => r.signed).length), "Signed"]]);
+      const status = (r) => el("span", { class: `go-tag${r.signed ? " good" : ""}`, text: r.signed ? "Signed" : "Committed" });
+      const shown = ctx.size === "L" ? rows : rows.slice(0, k.rowsFor(ctx.size));
+      return el("div", {}, [head, ctx.size === "L"
+        ? k.table(["Player", "Pos", "Stars", "Nat. Rank", "Status"], shown.map((r) => [k.name(ctx, r.id, r.name), pos(r), k.stars(r.stars),
+          r.national_rank ? `#${r.national_rank}` : "—", status(r)]))
+        : k.list(shown.map((r) => [k.name(ctx, r.id, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars), status(r)])),
+      rows.length > shown.length ? el("p", { class: "hq-sub", text: `And ${rows.length - shown.length} more: make the card large to see them all.` }) : null]);
+    } });
+
   // ----- Recruiting Rankings -------------------------------------------------------------------------------
   reg({ id: "rankings", title: "Recruiting Rankings", blurb: "The nation's top classes, and where yours stands.",
     sizes: ["M"], size: "M", sources: ["classes"], sample: { classes: SAMPLE_CLASSES }, viewAll: "classes",

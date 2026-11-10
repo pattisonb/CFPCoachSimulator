@@ -209,6 +209,26 @@ def check_player_links(page, base, sid) -> None:
     page.set_viewport_size({"width": 1280, "height": 900})
 
 
+def check_full_class(page, base, sid) -> None:
+    """Your Full Class: every commit and signee of yours, best first, as the class API lists them; a name opens his
+    Prospect Profile."""
+    want = [r["name"] for r in call(base, f"/api/season/{sid}/classes?school={call(base, f'/api/season/{sid}')['team']}")["class"]]
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "full-class", "size": "L"}]})
+    open_hq(page, base, sid)
+    check_card_clean(page, "full-class")
+    card = "#tab-headquarters .hq-card[data-widget='full-class']"
+    names = page.eval_on_selector_all(f"{card} .hq-body .go-link", "els => els.map(e => e.textContent.trim())")
+    if not want:
+        assert "No commits yet" in page.inner_text(card), page.inner_text(card)
+        return
+    assert names == want, (names[:5], want[:5])
+    page.click(f"{card} .hq-body .go-link >> nth=0")
+    page.wait_for_selector(".modal:not([hidden]) .pv-hero", timeout=60_000)
+    assert want[0] in page.inner_text(".modal:not([hidden]) .pv-hero")
+    page.click(".modal:not([hidden]) .modal-close")
+    page.wait_for_function("() => !document.querySelector('.modal:not([hidden])')", timeout=10_000)
+
+
 def check_previews(page) -> None:
     page.click("#tab-headquarters .hq-add-widget")
     page.wait_for_selector(".hq-drawer:not([hidden])")
@@ -899,6 +919,7 @@ if __name__ == "__main__":
             check_sweep(page, base, live, lambda sizes, size: sizes[-1])
             check_sweep(page, base, sid, lambda sizes, size: sizes[0])      # a new career: nothing on the board yet
             check_player_links(page, base, live)
+            check_full_class(page, base, live)
             check_previews(page)
             check_actions(page, base, live, sid)
             check_flow(page, base, live)

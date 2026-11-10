@@ -54,6 +54,7 @@
     if (name === "scouting") return `/api/season/${id}/scouting`;
     if (name === "programs") return `/api/season/${id}/programs`;
     if (name === "classes") return `/api/season/${id}/classes`;
+    if (name === "myclass") return `/api/season/${id}/classes?school=${encodeURIComponent(s.team)}`;   // your class, every recruit
     if (name === "prospects") return `/api/season/${id}/prospects?limit=50`;
     if (name === "scouted") return `/api/season/${id}/scouting?scouted=1&sort=potential&limit=60`;
     if (name === "depth") return `/api/season/${id}/depth/${encodeURIComponent(s.team)}`;
