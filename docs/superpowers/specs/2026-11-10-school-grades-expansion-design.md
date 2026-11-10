@@ -22,7 +22,7 @@ More grades give recruits more ways to want a school, give mid-tier programs a r
 | Grade | What it is | Researched from | Moves |
 |---|---|---|---|
 | **Academics** | Degree value and how football players do in class | U.S. News national rank, NCAA football Graduation Success Rate (GSR), NCAA football APR | Barely. APR drifts a point or two with the roster; a low APR year can dock it |
-| **Facilities** | Stadium, weight room, football building, indoor practice | Football building opening or renovation year, indoor facility, stadium renovation year, athletic capital spending (Knight Commission / USA Today finances for public schools; estimated for private schools and marked as estimates) | Ages a point a year; jumps when a project is built (see Open Calls) |
+| **Facilities** | Stadium, weight room, football building, indoor practice | Football building opening or renovation year, indoor facility, stadium renovation year, athletic capital spending (Knight Commission / USA Today finances for public schools; estimated for private schools and marked as estimates) | Fixed from the research (see "Later: AD Meetings") |
 | **Location** | The town and the life around it | Metro population (Census), climate normals (NOAA: January temperature, sunny days), college-town or big-city setting, cost of living | Fixed |
 | **Stability** | Will the coach and staff still be here | `data/recruiting/coaches.json` head coach tenures since 1995, then the career's own carousel | Live: every coaching change docks it, every year of tenure adds back |
 | **Game Day** | The crowd and the noise | CFBD home attendance (already in `program_market.json`), stadium capacity, so percent full | Live: the crowd half of today's market live part |
@@ -65,8 +65,16 @@ Each new grade is something a recruit can want, the way he wants proximity or NI
    programs, with a source column per number and estimates marked. The new grades show on the Programs tab.
    No recruit reads them yet. A `research_notes/` write-up keeps the sources.
 2. **Recruits want them.** New pitches, deciders, Location tags, the profile. Scenes and History lines.
-3. **The grades move.** Stability and Game Day / Exposure live; Facilities ages and gets built;
-   Academics drifts with APR.
+3. **The grades move.** Stability and Game Day / Exposure live; Academics drifts with APR.
+   Facilities stays fixed.
+
+## Later: AD Meetings (tabled, not in this work)
+
+Anything that costs real-world money stays fixed until there is a system for asking for it. The plan for that
+system: **meetings with your AD** where you request new facilities, equipment, staff budget, NIL money or a new
+stadium. The AD answers with a goal to earn it, and a bigger ask brings a loftier goal (a new stadium might
+require making the playoff). Bigger programs' ADs may set higher bars. Until then Facilities is the researched
+number and does not move.
 
 ## Rules this keeps
 
@@ -80,6 +88,6 @@ Each new grade is something a recruit can want, the way he wants proximity or NI
 2. **Do the new grades change the overall rating** (and so AD goals, tiers and the job market)?
    Recommended: not in phases 1-2. They are recruiting grades first. Facilities and Stability may join the
    rating in phase 3 after a long-run check.
-3. **Can the player build facilities?** Recommended: yes, in the offseason, as a project the AD funds after a
-   year that met the goal, costing NIL budget for a season or two. Otherwise the AD builds on his own.
+3. ~~Can the player build facilities?~~ **Decided (November 10):** no, not yet. Facilities is fixed from the
+   research; building waits for AD Meetings.
 4. **Phase 1 research scope:** all 136 programs at once, or the Power 4 first?
