@@ -502,20 +502,10 @@ def true_line(tr: dict, topic: str, kind: str, line: str, sid: str) -> tuple[str
 # he has a question (recruit questions): this turn introduces it
 QUESTION_INTRO = "Can I ask you something?"
 
-# an in-home visit opens with his family: the room note names the one who decides (a visit shows who decides)
-FAMILY_BY = {"mom": ["His mom has the table set and the good plates out.",
-                     "His mom hugs you at the door and asks if you have eaten."],
-             "dad": ["His dad shakes your hand and doesn't let go for a while.",
-                     "His dad turns the game off the moment you walk in."],
-             "grandma": ["His grandmother wants to know if there's a church near {school}.",
-                         "His grandmother pours you a glass of sweet tea."],
-             "hs_coach": ["His high school coach is already on the couch, arms crossed.",
-                          "His high school coach shakes your hand and says he has heard good things."],
-             "trainer": ["His trainer is at the table with a tablet full of film.",
-                         "His trainer sizes you up from the doorway before he says hello."],
-             "self": ["His little brother asks if you know anybody in the NFL.",
-                      "The whole family is on the couch in {town}. {first} sits closest to the door."]}
-FAMILY = [line for lines in FAMILY_BY.values() for line in lines]       # every note, for the line tests
+# an in-home visit opens with a plain note on who decides (a visit shows who decides): information, no scenery
+DECIDER_NOTE = {"mom": "His mom has the final say.", "dad": "His dad has the final say.",
+                "grandma": "His grandmother has the final say.", "hs_coach": "His high school coach has the final say.",
+                "trainer": "His trainer has the final say.", "self": "{first} makes his own call."}
 
 # his twist in his own words, while it is on (persona.TWISTS): "you" when the twist is about the school he is
 # talking to, "other" when it is about another school ({rival}); a twist about no school has "him". {foe} is
@@ -579,7 +569,7 @@ STYLE_LINES: dict[str, list[str]] = {
 TABLES = {"PERSONA_LINES": persona.LINES, "NO_TOPIC": persona.NO_TOPIC, "DECIDER_LINES": persona.DECIDER_LINES, "STORY_LINES": persona.STORY_LINES,
           "STORY_LINES_OFFERED": persona.STORY_LINES_OFFERED, "LINES": LINES, "TIRED": TIRED, "OPEN": OPEN, "VISIT_OPEN": VISIT_OPEN, "CONTEXT": CONTEXT, "PRESENT_SAID": PRESENT_SAID,
           "PRESENT_LINES": PRESENT_LINES, "ASK": ASK, "LEAD_LINES": LEAD_LINES, "LEAD_HONEST": LEAD_HONEST, "LEAD_WINNING": LEAD_WINNING,
-          "WIN_DOUBT": WIN_DOUBT, "HONEST_HIT": HONEST_HIT, "FAMILY": FAMILY, "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
+          "WIN_DOUBT": WIN_DOUBT, "HONEST_HIT": HONEST_HIT, "DECIDER_NOTE": list(DECIDER_NOTE.values()), "TWIST_LINES": TWIST_LINES, "STYLE_LINES": STYLE_LINES}
 FIELDS = ("name", "first", "town", "state", "school", "position", "positions", "role", "record", "rec", "conf", "coach", "opponent", "result", "leader",
           "week_word", "a", "b", "x", "y", "z", "topic", "Topic", "legacy", "mate", "rival", "foe", "moved")
 
@@ -784,7 +774,7 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     tired = recruiting.would_pester(state, slug, pid)
     turns = []
     if action == "hc_visit":
-        turns.append(_turn("note", rng.choice(FAMILY_BY[persona.of(state, pid)["decider"]]).format(**f)))
+        turns.append(_turn("note", DECIDER_NOTE[persona.of(state, pid)["decider"]].format(**f)))
         turns.append(_turn("you", rng.choice(VISIT_OPEN).format(**f)))
     else:
         prev = last_talk(state, slug, pid, week)
@@ -820,6 +810,7 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
         turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
         persona.learn(state, slug, pid, "decider")                    # the family is in the room: you see who decides
     elif action == "hc_visit":
+        persona.learn(state, slug, pid, "decider")                    # the note said he decides himself
         told = story = persona.story_line(state, slug, pid, sid, "him", f, action)
         if told:
             turns.append(_turn("him", told))

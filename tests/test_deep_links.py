@@ -179,6 +179,16 @@ def check_player_from_stats(page, base, A, errors) -> None:
     page.click(".modal:not([hidden]) .modal-close")
     page.wait_for_selector("#tab-playerstats .view-chips button.active:has-text('Roster')", timeout=60_000)   # the roster under it, as it was
     clean(page, errors)
+    # the slug form of the token: four parts open him, and the slug finds him even when the name and position
+    # are stale (an offseason position change); the old three-part form still opens
+    team, name, pos = page.get_attribute("#tab-playerstats [data-player] >> nth=0", "data-player").split("|")[:3]
+    slug = call(base, f"/api/season/{A}/player?team={team}&name={urllib.parse.quote(name)}&position={pos}")["slug"]
+    for tok in (f"player:{team}|{name}|{pos}|{slug}", f"player:{team}|Somebody Else|XX|{slug}", f"player:{team}|{name}|{pos}"):
+        page.goto(f"{base}/index.html?" + urllib.parse.urlencode([("id", A), ("tab", "stats"), ("modal", tok)]))
+        page.wait_for_selector(".modal:not([hidden]) .player-page", timeout=60_000)
+        assert name in page.inner_text(".modal:not([hidden]) .modal-title"), (tok, page.inner_text(".modal:not([hidden]) .modal-title"))
+        page.click(".modal:not([hidden]) .modal-close")
+    clean(page, errors)
     # the League's Programs tab (a career): its own address, back after a reload
     if page.evaluate("() => !document.querySelector('#season-tabs button[data-tab=programs]').hidden"):
         tab_click(page, "programs")

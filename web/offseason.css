@@ -116,6 +116,9 @@
 .off-roster .off-rs { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
 .off-rs .go-act { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 8px 12px; }
 .off-rs .go-act.on { border-color: var(--accent); }
+.off-rs-item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.off-rs-item .go-act { width: 100%; }
+.off-rs-link { align-self: flex-start; display: inline-flex; align-items: center; min-height: 36px; font-size: 13px; color: var(--muted); text-decoration: none; }
 .off-pos-opts:not(:empty) { display: flex; flex-wrap: wrap; gap: 8px; }
 .off-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 .off-list li { line-height: 1.4; }
@@ -233,6 +236,9 @@ p .off-contract { margin-left: 6px; }
   .off-foot .off-go { margin: 0; }
   .off-foot .off-back { flex: 1 1 100%; }
   .off-more, .off-viewall, .off-page .go-link, .off-group-sum, details.off-recap > summary { min-height: 44px; }
+  .off-page a.off-name { display: inline-flex; align-items: center; min-height: 44px; vertical-align: middle; }   /* a name link: a phone's tap target, one line tall when it wraps */
+  .off-rs-link { min-height: 44px; }
+  .off-page .go-link.off-name { padding: 0; }
   .off-table { font-size: 13px; }
   .off-table th, .off-table td { padding: 6px 6px; }
   .off-strip3 .go-stat-val { font-size: 20px; }
@@ -242,3 +248,8 @@ p .off-contract { margin-left: 6px; }
 }
 .off-away-line { margin: 2px 0 0; white-space: normal; }
 .off-recap-away { margin-top: 6px; }
+
+/* a player's name as a link (nameLink): it reads as the bold name it replaced */
+.off-page a.off-name { color: inherit; font-weight: 700; text-decoration: none; }
+.off-page a.off-name:hover, .off-page a.off-name:focus-visible { text-decoration: underline; text-decoration-color: var(--accent); }
+.off-page .go-link.off-name { font-weight: 700; text-align: left; }
