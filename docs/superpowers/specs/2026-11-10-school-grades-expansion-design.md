@@ -59,6 +59,46 @@ Each new grade is something a recruit can want, the way he wants proximity or NI
 - The Grades Scare keeps its behavior but reads the Academics grade (Strong or better) instead of the list.
 - The Prospect Profile shows his top wants next to your grade on each.
 
+## Who Cares About What (proposed)
+
+**Today** (`recruiting.PRIORITY_ODDS`, `PRIORITY_WEIGHTS`, `persona.DECIDER_TOPICS`): each prospect draws three
+priorities from eight topics, weighted 35% / 25% / 15%; the other five share 25% (5% each). His decider adds a topic
+they care about. Transfers draw from their own tables: playing time first, and four-star-or-better transfers chase
+NIL and a contender.
+
+**Proposed:** thirteen topics (the five new grades join; Academics reads the grade). The top three keep 35 / 25 / 15;
+the other ten share 25% (2.5% each), so a priority still dominates. The odds a topic is one of his priorities:
+
+| Topic | High school | Transfer | Top transfer (4★+) | Today (HS / transfer / top) |
+|---|---|---|---|---|
+| Proximity | 13% | 8% | 5% | 18 / 10 / 6 |
+| Playing Time | 13% | 34% | 16% | 17 / 40 / 18 |
+| Prestige | 10% | 6% | 10% | 14 / 7 / 12 |
+| Winning | 10% | 13% | 20% | 13 / 15 / 22 |
+| NIL | 10% | 18% | 25% | 13 / 20 / 30 |
+| Pro Pipeline | 8% | 5% | 8% | 10 / 5 / 8 |
+| Coach | 7% | 3% | 3% | 10 / 3 / 4 |
+| Academics | 6% | 1% | 1% | 5 / 0 / 0 |
+| Facilities | 6% | 2% | 2% | new |
+| Location | 5% | 2% | 1% | new |
+| Stability | 4% | 4% | 2% | new |
+| Game Day | 4% | 1% | 1% | new |
+| Exposure | 4% | 3% | 6% | new |
+
+**Tilts** multiply those odds before the draw (each ×1.5 unless noted), so the same table makes different kids:
+
+- **Who decides:** Mom adds Stability to her Proximity and Academics; Dad adds Exposure to NIL, Playing Time and Pro;
+  Grandmother keeps Proximity and Coach and adds Academics; the High School Coach adds Stability; the Trainer adds
+  Facilities and Exposure; a kid who decides himself leans Facilities, Game Day and Location.
+- **Personality:** Loves the Attention leans Exposure and Game Day; Cocky Playing Time and Exposure; Shy Proximity and
+  Stability; Guarded Stability and Coach; All Business NIL and Pro Pipeline.
+- **Stars:** a five-star leans NIL, Exposure and Pro Pipeline; a two- or three-star leans Playing Time and Proximity.
+- **Position:** a quarterback leans Coach and Exposure; an offensive lineman Stability and Coach; a skill player
+  Exposure and Game Day.
+
+Saves keep the priorities their prospects already drew; the new tables apply to new classes and portal years.
+`tools/check_recruiting.py` checks the spread over a run (no topic ending up nobody's or everybody's).
+
 ## Phases
 
 1. **Research and data.** `tools/build_program_profile.py` builds `data/program_profile.json` for all 136
