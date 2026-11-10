@@ -17,16 +17,24 @@ pitching NIL to a prospect who cares about it **backfires** (`pitch_points`: und
 
 ## The fix
 
-1. **Until NIL is attached, the grade reads what you could pay.** An offer with nothing held reads your room
-   (`nil_left` plus anything held) against his ask, capped by the program's NIL pull: `min(pull, room / ask)`. A
-   school with the money and the collective reads Strong; one that cannot cover him reads Weak, honestly.
-2. **Once NIL is attached, it reads the deal**, `held / ask`, as today. You put up less than he wants, and it says so.
-3. **Pitching NIL with nothing attached is money talk, not a backfire.** If NIL is one of his priorities (or his
-   decider's topic), he names his number: his ask becomes exact, as the in-home visit's ask note does today, and a
-   History line says so ("He told you he's looking for 40 in NIL."). The pitch scores off what you could pay (rule 1).
-   If he does not care about NIL, he says so ("The money isn't what this is about for me.") and it counts as an
-   off-priority pitch.
-4. **AI schools follow the same rule**, so the race stays fair.
+The player's rule (November 10): a small program that means to spend its whole budget on one five-star should not
+pitch NIL as Weak, but a school that never backs the pitch with money should not get a free Strong either.
+
+1. **Until NIL is attached, the grade reads what you could pay him**: your room (`nil_left` plus anything held on
+   him) against his ask, `min(1, room / ask)`. It does not read the program's NIL tier: a Group of 5 school with
+   the room to cover a five-star reads Strong for him; Ohio State with its budget spent reads Weak.
+2. **Pitching NIL with nothing attached is a promise of money.** If NIL is one of his priorities (or his decider's
+   topic), he names his number (his ask becomes exact, as the in-home visit's ask note does today), the pitch scores
+   off rule 1, and he carries a **money promise**: put NIL on your offer (at least `NIL_PROMISE_SHARE` of his ask,
+   *tune*, about 80%) within `NIL_PROMISE_WEEKS` (*tune*, 2) or the promise breaks: he cools, a History line says
+   why ("You talked money and never put it on the table."), and it counts against Keeps His Word
+   (`2026-11-10-promises-expansion-design.md`). Kept, it lands like a Package Deal promise kept.
+3. **Once NIL is attached, it reads the deal**, `held / ask`, as today.
+4. **If he does not care about NIL**, he says so ("The money isn't what this is about for me.") and it counts as an
+   off-priority pitch, with no promise.
+5. **AI schools read rule 1 too**, so the race stays fair. They carry no money promises (AI schools make no promises).
+
+The honest version of "talk money before you pay it": you can, at full strength, as long as you follow through.
 
 ## Checks
 
