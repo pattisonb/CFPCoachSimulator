@@ -26,67 +26,117 @@ def stage_page(page, base, sid, name) -> None:
     wait_page(page, name)
 
 
-def open_first(page, sel: str, width: int) -> str:
-    """Click the first visible link matching `sel`; return what opened ("player" or "profile")."""
-    link = page.locator(sel).filter(visible=True).first
+def next_text(page) -> str:
+    page.wait_for_selector(".modal:not([hidden]) .player-next", timeout=30_000)
+    text = page.inner_text(".modal:not([hidden]) .player-next")
+    assert "NEXT SEASON" in text.upper() and "null" not in text and "undefined" not in text and "NaN" not in text, text
+    return text
+
+
+def close_modal(page) -> None:
+    page.click(".modal:not([hidden]) .modal-close")
+    page.wait_for_function("() => !document.querySelector('.modal:not([hidden])')", timeout=10_000)
+    time.sleep(0.2)
+
+
+def open_link(page, link, width: int) -> tuple[str, str]:
+    """Click a name link; return what opened ("player" with its Next Season text, or "profile")."""
     link.scroll_into_view_if_needed()
     if width < 760:
         h = link.evaluate("n => n.getBoundingClientRect().height")
-        assert h >= 44, f"a name link {h:.0f} px tall on a phone ({sel})"
+        assert 44 <= h < 80, f"a name link {h:.0f} px tall on a phone"
     link.focus()
     link.click()
     page.wait_for_selector(".modal:not([hidden]) .player-page, .modal:not([hidden]) .pv-hero", timeout=60_000)
     kind = "player" if page.query_selector(".modal:not([hidden]) .player-page") else "profile"
-    if kind == "player":
-        page.wait_for_selector(".modal:not([hidden]) .player-next", timeout=30_000)
-        text = page.inner_text(".modal:not([hidden]) .player-next")
-        assert "Next Season" in text.title() and "null" not in text and "undefined" not in text, text
-    page.click(".modal:not([hidden]) .modal-close")
-    page.wait_for_selector(".modal:not([hidden])", state="detached", timeout=10_000) if page.query_selector(".modal:not([hidden])") is None else None
-    time.sleep(0.3)
-    same = link.evaluate("n => document.activeElement === n || n.contains(document.activeElement)")
-    assert same, "focus goes back to the name when the profile closes"
-    return kind
+    text = next_text(page) if kind == "player" else ""
+    close_modal(page)
+    assert link.evaluate("n => document.activeElement === n"), "focus goes back to the name when the profile closes"
+    return kind, text
+
+
+def first(page, sel: str):
+    loc = page.locator(sel).filter(visible=True)
+    assert loc.count(), f"no visible link: {sel}"
+    return loc.first
+
+
+def both_widths(page, check) -> None:
+    for width in (1280, 400):
+        page.set_viewport_size({"width": width, "height": 900})
+        time.sleep(0.3)
+        check(width)
+    page.set_viewport_size({"width": 1280, "height": 900})
+
+
+def decide_review(base, sid) -> None:
+    v = call(base, f"/api/season/{sid}/offseason")
+    if v.get("review") and not v["review"].get("decided"):
+        call(base, f"/api/season/{sid}/offseason/review", {"action": "nothing", "stage": v["stage"]})
 
 
 def run(base: str, sid: str, browser) -> None:
-    for width in (1280, 400):
-        page = browser.new_page(viewport={"width": width, "height": 900})
-        errors = []
-        page.on("pageerror", lambda e: errors.append(str(e)))
-        v = call(base, f"/api/season/{sid}/offseason")
-        stage = v["stage"]
-        if width == 1280:
-            assert stage == "retention", stage
-        seen = set()
-        for _ in range(12):
-            v = call(base, f"/api/season/{sid}/offseason")
-            stage = v["stage"]
-            name = {"retention": "retention", "departures": "departures", "development": "development", "staff": "staff",
-                    "ready": "ready"}.get(stage, "portal" if stage.startswith("portal_w") else stage)
-            stage_page(page, base, sid, name)
-            if stage.startswith("portal_w") and stage not in seen:
-                rc = call(base, f"/api/season/{sid}/prospects")
-                rows = rc.get("rows") or rc.get("prospects") or []
-                pid = next((r["id"] for r in rows if not r.get("signed")), None)
-                if pid:
-                    call(base, f"/api/season/{sid}/board", {"pid": pid, "on": True})
-                    stage_page(page, base, sid, name)
-                    assert open_first(page, ENTRANT, width) == "profile", "a portal board name opens his Prospect Profile"
-            if page.locator(PLAYER).filter(visible=True).count():
-                assert open_first(page, PLAYER, width) == "player", stage
-                seen.add(stage)
-            if stage == "ready" or width == 400 and len(seen) >= 2:
-                break
-            if width == 1280:
-                if v.get("review") and not v["review"].get("decided"):
-                    call(base, f"/api/season/{sid}/offseason/review", {"action": "nothing", "stage": stage})
-                call(base, f"/api/season/{sid}/offseason/advance", {})
-            else:
-                break
-        assert {"retention", "departures"} <= seen or width == 400, f"names linked at {sorted(seen)}"
-        assert not errors, errors
-        page.close()
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    assert call(base, f"/api/season/{sid}/offseason")["stage"] == "retention"
+    decide_review(base, sid)
+
+    # Keep Them Home: a leaver's card opens his page; then advance in the page (no reload) and open him again from
+    # Departures: the Next Season block is fresh, not the cached Keep Them Home one
+    stage_page(page, base, sid, "retention")
+    both_widths(page, lambda w: open_link(page, first(page, ".off-keep [data-player]"), w))
+    link = first(page, ".off-keep [data-player]")
+    slug = link.get_attribute("data-player").split("|")[3]
+    _, before = open_link(page, link, 1280)
+    click_primary(page)
+    wait_page(page, "departures")
+    again = page.locator(f"#tab-offseason [data-player$='|{slug}']").filter(visible=True)
+    assert again.count(), "the Keep Them Home leaver shows at Departures"
+    _, after = open_link(page, again.first, 1280)
+    assert after != before, f"the Next Season block is fresh after advancing: {before!r} then {after!r}"
+
+    # Departures: the leavers' table, a graduate's departed line, The First Round, and the redshirt toggles' names
+    def departures(width):
+        open_link(page, first(page, ".off-dep-table [data-player]"), width)
+        grad = page.locator("details.off-group").filter(has_text="Graduated").locator("[data-player]").filter(visible=True)
+        if grad.count():
+            _, text = open_link(page, grad.first, width)
+            assert "Graduated" in text, text
+        open_link(page, first(page, ".off-draft [data-player]"), width)
+        toggles = page.locator(".off-rs button.go-act").count()
+        names = page.locator(".off-rs [data-player]").count()
+        assert names == toggles, f"every redshirt toggle's player links ({names} of {toggles})"
+        if toggles:
+            open_link(page, first(page, ".off-rs [data-player]"), width)
+    stage_page(page, base, sid, "departures")
+    both_widths(page, departures)
+
+    # the portal: an entrant on your board opens his Prospect Profile
+    decide_review(base, sid)
+    call(base, f"/api/season/{sid}/offseason/advance", {})
+    assert call(base, f"/api/season/{sid}/offseason")["stage"].startswith("portal_w")
+    rows = call(base, f"/api/season/{sid}/prospects").get("rows") or []
+    pid = next((r["id"] for r in rows if not r.get("signed")), None)
+    assert pid, "an unsigned entrant to put on the board"
+    call(base, f"/api/season/{sid}/board", {"pid": pid, "on": True})
+    stage_page(page, base, sid, "portal")
+    def portal(width):
+        kind, _ = open_link(page, first(page, ENTRANT), width)
+        assert kind == "profile", "a portal board name opens his Prospect Profile"
+    both_widths(page, portal)
+
+    # after the portal: no Prospect Profile buttons are left; Development's names open player pages
+    for _ in range(8):
+        if call(base, f"/api/season/{sid}/offseason")["stage"] == "development":
+            break
+        decide_review(base, sid)
+        call(base, f"/api/season/{sid}/offseason/advance", {})
+    stage_page(page, base, sid, "development")
+    assert not page.locator("#tab-offseason .go-link[data-pid]").count(), "no Prospect Profile link after the portal closes"
+    both_widths(page, lambda w: open_link(page, first(page, PLAYER), w))
+    assert not errors, errors
+    page.close()
 
 
 if __name__ == "__main__":
@@ -121,7 +171,7 @@ if __name__ == "__main__":
                 raise SystemExit(0)
             run(base, sid, browser)
             browser.close()
-        print("offseason links ok: Keep Them Home, Departures, the portal (a board name opens his Prospect Profile), Development and the Recap; 44 px on a phone; focus returns")
+        print("offseason links ok: Keep Them Home, Departures (a graduate, the first round, redshirt toggles), the portal (a board name opens his Prospect Profile), Development (no entrant links left); fresh after an in-page advance; 1280 and 400 (44 px); focus returns")
     finally:
         try:
             call(base, f"/api/season/{sid}", method="DELETE")

@@ -1720,13 +1720,15 @@
     const s = state.season;
     if (!s) return false;
     const slug = opts.slug || "";
-    const key = `${s.id}|${s.current_week}|${s.offseason_stage || ""}|${team}|${name}|${position}|${slug}`;
-    let p = playerState.cache.get(key);
+    // in the offseason nothing is cached: stages, redshirts and position moves change where he is (Next Season)
+    // without a new week, and state.season is not redrawn on an offseason step
+    const key = s.offseason_stage ? null : `${s.id}|${s.current_week}|${team}|${name}|${position}|${slug}`;
+    let p = key ? playerState.cache.get(key) : null;
     if (!p) {
       try { p = await api(`/api/season/${s.id}/player?team=${encodeURIComponent(team)}&name=${encodeURIComponent(name)}&position=${encodeURIComponent(position || "")}${slug ? `&slug=${encodeURIComponent(slug)}` : ""}`); }
       catch (err) { if (!opts.restore) toast(`Could not load that player: ${errText(err)}`, 3000); return false; }
       if (!p || !p.name) return false;
-      playerState.cache.set(key, p);
+      if (key) playerState.cache.set(key, p);
     }
     const node = el("div", { class: "player-page" });
     renderPlayer(p, node);
