@@ -202,7 +202,7 @@ def question_mix(seed: int, team: str = "georgia") -> dict:
         if not q:
             continue
         out["questions"] += 1
-        out[q["kind"]] += 1
+        out[q["kind"]] = out.get(q["kind"], 0) + 1     # a Package Deal question counts beside roster and recruit
         r = recruiting.act(state, team, pid, "answer", scene=sc["id"], answer="promise")
         if q["kind"] == "roster":
             out["promises"] += 1
