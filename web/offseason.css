@@ -233,6 +233,8 @@ p .off-contract { margin-left: 6px; }
   .off-foot .off-go { margin: 0; }
   .off-foot .off-back { flex: 1 1 100%; }
   .off-more, .off-viewall, .off-page .go-link, .off-group-sum, details.off-recap > summary { min-height: 44px; }
+  .off-page a.off-name { display: inline-block; min-height: 44px; line-height: 44px; vertical-align: middle; }   /* a name link: a phone's tap target */
+  .off-page .go-link.off-name { padding: 0; }
   .off-table { font-size: 13px; }
   .off-table th, .off-table td { padding: 6px 6px; }
   .off-strip3 .go-stat-val { font-size: 20px; }
@@ -242,3 +244,8 @@ p .off-contract { margin-left: 6px; }
 }
 .off-away-line { margin: 2px 0 0; white-space: normal; }
 .off-recap-away { margin-top: 6px; }
+
+/* a player's name as a link (nameLink): it reads as the bold name it replaced */
+.off-page a.off-name { color: inherit; font-weight: 700; text-decoration: none; }
+.off-page a.off-name:hover, .off-page a.off-name:focus-visible { text-decoration: underline; text-decoration-color: var(--accent); }
+.off-page .go-link.off-name { font-weight: 700; text-align: left; }

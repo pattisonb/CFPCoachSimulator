@@ -66,6 +66,20 @@
     span.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONS[name]}"/></svg>`;
     return span;
   }
+  // a player's name as a link to his profile. An entrant (`entrant`) while the portal is open: his Prospect Profile
+  // (a go-link button). Anyone else: his player page by slug (`id`), which says where he is now (Next Season); `team`
+  // is where the page looks first and may be stale (the server finds the slug on any team).
+  const cur = () => (last && last.s) || {};
+  function nameLink(s, id, name, team, pos, entrant) {
+    const portal = !!(last && last.v && String(last.v.stage || "").startsWith("portal_w"));
+    if (entrant && portal && window.Recruiting && window.Recruiting.openProfile) {
+      const b = el("button", { type: "button", class: "go-link off-name", "data-pid": id, text: name });
+      ui.on(b, "click", () => window.Recruiting.openProfile(s, id));
+      return b;
+    }
+    if (!id || !H || !H.playerAttrs) return el("b", { text: name });
+    return el("a", { href: "#", ...H.playerAttrs(team || s.team, name, pos, id), class: "plink off-name", text: name });
+  }
   function avatar(seed, size) {          // a portrait from the coach sprite system, its look picked from his id (as recruiting.js does)
     let h = 0;
     for (const c of String(seed)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -517,7 +531,7 @@
       const shown = cut(`kind-${kind}`, rows);
       const table = el("table", { class: "off-table off-dep-table" }, [el("thead", {}, [el("tr", {}, [el("th", { text: "Player" }), el("th", { class: "num", text: "Pos" }), el("th", { class: "num", text: "OVR" })])]),
         el("tbody", {}, shown.map((d) => el("tr", { "data-key": d.id }, [
-          el("td", {}, [el("b", { text: d.name }), d.kind === "draft" ? el("span", { class: "go-tag good off-pick", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · Early" : ""}` }) : null]),
+          el("td", {}, [nameLink(s, d.id, d.name, s.team, d.pos), d.kind === "draft" ? el("span", { class: "go-tag good off-pick", text: `Round ${d.round}, Pick ${d.pick}${d.early ? " · Early" : ""}` }) : null]),
           el("td", { class: "num", text: d.pos }), el("td", { class: "num", text: String(d.overall) })])))]);
       const det = el("details", { class: "off-group", "data-key": `kind-${kind}`, ...(view.closed[kind] ? {} : { open: "" }) }, [
         el("summary", { class: "off-group-sum", text: `${rows[0].kind_name} · ${rows.length}` }), table, more(`kind-${kind}`, rows.length - shown.length)]);
@@ -537,7 +551,7 @@
     const firstShown = cut("first", fr, FIRST_SHOWN);
     const first = card("off-first", "first", [kicker("The First Round"),
       fr.length ? el("ol", { class: "off-draft" }, firstShown.map((d) => el("li", { "data-key": d.id || `p${d.pick}` }, [
-        el("span", { class: "muted off-pick-no", text: `${d.pick}.` }), window.CFP.teamPill(d.team), el("b", { text: d.name }),
+        el("span", { class: "muted off-pick-no", text: `${d.pick}.` }), window.CFP.teamPill(d.team), nameLink(s, d.id, d.name, d.team, d.pos),
         el("span", { class: "muted", text: `${d.pos} · ${d.team_name}${d.early ? " · early" : ""}` })])))
         : el("p", { class: "muted", text: "Nobody was drafted." }),
       more("first", fr.length - firstShown.length)]);
@@ -564,7 +578,7 @@
     for (const e of r.players) {
       const c = el("article", { class: `go-card go-pcard off-leaver ${e.offers.released ? "released" : ""}`, "data-key": e.id });
       c.append(el("div", { class: "off-leaver-top" }, [avatar(e.id), el("div", { class: "off-leaver-id" }, [
-        el("div", { class: "off-leaver-name" }, [el("b", { class: "go-name", text: e.name }),
+        el("div", { class: "off-leaver-name" }, [nameLink(s, e.id, e.name, s.team, e.pos),
           el("span", { class: `go-tag ${e.intent === "draft" ? "warn" : "bad"}`, text: e.intent === "draft" ? "NFL Draft" : "Transfer Portal" })]),
         el("div", { class: "muted small" }, [`${e.pos} · ${clsWord(e.cls)} Next Year · ${e.overall} OVR `, e.stars ? el("span", { class: "go-stars", text: stars(e.stars) }) : null])]),
         el("dl", { class: "off-roles" }, [el("div", {}, [el("dt", { text: "Now" }), el("dd", { text: e.role_now_name })]),
@@ -601,7 +615,7 @@
   // ----- the transfer portal, week by week: the rules, the answers from Keep Them Home, your moves, and your board in brief
   function movesCard(s, moves) {
     return card("off-moves", "moves", [kicker("Your Moves"), el("ul", { class: "off-lines" }, moves.map((m) => el("li", { "data-key": `${m.id}-${m.to}` }, [
-      icon("swap"), el("b", { text: m.name }), el("span", { class: "muted", text: `${m.pos} · ${m.overall} OVR` }),
+      icon("swap"), nameLink(s, m.id, m.name, m.from, m.pos, true), el("span", { class: "muted", text: `${m.pos} · ${m.overall} OVR` }),
       m.to === s.team ? el("span", { class: "go-tag good", text: `Joins You From ${teamName(m.from)}` }) : el("span", { class: "go-tag bad", text: `Left for ${teamName(m.to)}` })])))]);
   }
   function drawPortalWeek(s, v, page, patching) {
@@ -616,7 +630,7 @@
     if (kept.length && p.week === 1) {
       const shown = cut("answers", kept);
       answers = card("off-answers", "answers", [kicker("Keep Them Home · The Answers"), el("ul", { class: "off-lines" }, shown.map((k) => el("li", { "data-key": k.id || k.name }, [
-        icon("swap"), el("b", { text: k.name }), el("span", { class: "muted", text: k.pos }),
+        icon("swap"), nameLink(s, k.id, k.name, s.team, k.pos), el("span", { class: "muted", text: k.pos }),
         k.status === "stayed" ? el("span", { class: "go-tag good", text: `Stays${k.nil ? ` · ${k.nil} NIL` : ""}${k.promise ? " · Promised a Start" : ""}` })
           : el("span", { class: "go-tag bad", text: k.intent === "draft" ? "Off to the Draft" : "Into the Portal" })]))), more("answers", kept.length - shown.length)]);
     }
@@ -643,7 +657,7 @@
       top.length ? el("ul", { class: "off-lines off-board-lines" }, top.map((b) => {
         const sd = R.standingOf(b, s.team);
         const word = sd.odds === "No Room" ? "No Room" : sd.word;
-        return el("li", { "data-key": b.id }, [avatar(b.id, "sm"), el("div", { class: "off-board-who" }, [el("b", { text: b.name }),
+        return el("li", { "data-key": b.id }, [avatar(b.id, "sm"), el("div", { class: "off-board-who" }, [nameLink(s, b.id, b.name, b.from, b.pos, true),
           el("div", { class: "muted small", text: `${b.pos} · ${b.overall} OVR${b.signed_week ? ` · Signed Week ${b.signed_week}` : ""}` })]),
           el("span", { class: `go-tag ${sd.tone}`, text: word, ...(sd.odds === "No Room" && b.no_room ? { title: b.no_room.tip } : {}) })]);
       })) : el("p", { class: "muted", text: "Nobody on your board yet. Pick entrants on the Prospects tab, then recruit them on the Recruiting tab." }),
@@ -659,7 +673,7 @@
   // Who Got Away: the entrants you recruited (your offer, or on your board) who went elsewhere, each with where and why not you
   function awayList(rows) {
     return el("ul", { class: "off-list off-recap-list off-away" }, rows.map((r) => el("li", {}, [r.to ? window.CFP.teamPill(r.to) : null, r.to ? " " : null,
-      el("b", { text: r.name }), el("span", { class: "muted", text: ` ${r.pos} · ${r.overall} OVR${r.week ? ` · Week ${r.week}` : ""}` }),
+      nameLink(cur(), r.id, r.name, r.to || cur().team, r.pos, true), el("span", { class: "muted", text: ` ${r.pos} · ${r.overall} OVR${r.week ? ` · Week ${r.week}` : ""}` }),
       el("div", { class: "small off-away-line", text: r.line })])));
   }
 
@@ -687,7 +701,7 @@
       ui.on(btn, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/portal`, staged({ pid: r.id, on: !r.offered })),
         r.offered ? `Offer to ${r.name} pulled` : `Offer sent to ${r.name}`));
       body.append(el("tr", { class: r.offered ? "offered" : "", "data-key": r.id }, [
-        el("td", {}, [el("b", { text: r.name }), r.stars ? el("span", { class: "muted small", text: ` ${stars(r.stars)}` }) : null]),
+        el("td", {}, [nameLink(s, r.id, r.name, r.from, r.pos, true), r.stars ? el("span", { class: "muted small", text: ` ${stars(r.stars)}` }) : null]),
         el("td", { text: r.pos }), el("td", { text: clsWord(r.cls) }), el("td", { class: "num", text: String(r.overall) }),
         el("td", {}, [window.CFP.teamPill(r.from), ` ${r.from_name}`]), el("td", { text: USAGE[r.last_year] || "" }),
         el("td", {}, [el("span", { class: `go-tag ${r.fit === "Would Start" ? "good" : r.fit === "Next in Line" ? "warn" : "muted"}`, text: r.fit })]),
@@ -702,12 +716,12 @@
   // the transfer portal's who you got and who you lost (and where he went)
   function recapLists(rec) {
     const got = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `Who You Got · ${rec.signed.length}` })]);
-    got.append(rec.signed.length ? el("ul", { class: "off-list off-recap-list" }, rec.signed.map((r) => el("li", { "data-key": r.id }, [window.CFP.teamPill(r.from), " ", el("b", { text: r.name }),
+    got.append(rec.signed.length ? el("ul", { class: "off-list off-recap-list" }, rec.signed.map((r) => el("li", { "data-key": r.id }, [window.CFP.teamPill(r.from), " ", nameLink(cur(), r.id, r.name, r.from, r.pos),
       el("span", { class: "muted", text: ` ${r.pos} · ${clsWord(r.cls)} · ${r.overall} OVR · from ${r.from_name}` }),
       r.walk_on ? el("span", { class: "go-tag muted", text: "Walk-On" }) : null])))
       : el("p", { class: "muted", text: "Nobody came in through the portal." }));
     const lost = el("div", { class: "off-recap-col" }, [el("div", { class: "go-kicker muted off-sub", text: `Who You Lost · ${rec.lost.length}` })]);
-    lost.append(rec.lost.length ? el("ul", { class: "off-list off-recap-list" }, rec.lost.map((r) => el("li", { "data-key": r.id }, [el("b", { text: r.name }),
+    lost.append(rec.lost.length ? el("ul", { class: "off-list off-recap-list" }, rec.lost.map((r) => el("li", { "data-key": r.id }, [nameLink(cur(), r.id, r.name, r.to || cur().team, r.pos),
       el("span", { class: "muted", text: ` ${r.pos} · ${r.overall} OVR → ` }), r.to ? window.CFP.teamPill(r.to) : null, r.to ? " " : null, el("span", { text: r.to_name }),
       r.reason ? el("span", { class: "muted small off-recap-why", text: ` · ${r.reason}` }) : null])))
       : el("p", { class: "muted", text: "Nobody left through the portal." }));
@@ -726,7 +740,7 @@
   }
 
   function devRow(d) {
-    return el("li", { "data-key": d.id }, [el("b", { text: d.name }), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
+    return el("li", { "data-key": d.id }, [nameLink(cur(), d.id, d.name, d.transfer || cur().team, d.pos), el("span", { class: "muted", text: ` ${d.pos} · ${clsWord(d.cls)} · now ${d.overall} OVR ` }),
       el("span", { class: `go-tag ${d.gain > 0 ? "good" : "muted"}`, text: d.gain > 0 ? `+${d.gain}` : "No Change" }),
       d.transfer ? el("span", { class: "go-tag", text: `Transfer · From ${teamAbbr(d.transfer)}` }) : null,
       ...(d.why || []).map((w) => el("span", { class: `go-tag ${/Struggled|Benched/.test(w) ? "bad" : "warn"}`, text: w }))]);
@@ -757,7 +771,7 @@
     })));
     const panel = (k, cls, kids) => el("div", { class: `off-tabpanel ${cls || ""}`, role: "tabpanel", id: `off-panel-${k}`, "aria-labelledby": `off-tab-${k}`, "data-tab": k, "data-key": `panel-${k}`, ...(view.devTab === k ? {} : { hidden: "" }) }, kids);
     const rsPanel = rs && rs.players.length ? el("div", { class: "off-scroll" }, [el("table", { class: "off-table off-rs-table" }, [el("thead", {}, [el("tr", {}, ["Player", "Pos", "OVR", "GP", "Decision"].map((h, i) => el("th", { class: i && i < 4 ? "num" : "", text: h })))]),
-      el("tbody", {}, cut("rs", rs.players, 10).map((p) => el("tr", { "data-key": p.id }, [el("td", {}, [el("b", { text: p.name })]), el("td", { class: "num", text: p.pos }), el("td", { class: "num", text: String(p.overall) }),
+      el("tbody", {}, cut("rs", rs.players, 10).map((p) => el("tr", { "data-key": p.id }, [el("td", {}, [nameLink(s, p.id, p.name, s.team, p.pos)]), el("td", { class: "num", text: p.pos }), el("td", { class: "num", text: String(p.overall) }),
         el("td", { class: "num", text: `${p.games} / ${p.team_games}` }), el("td", {}, [el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: decision(p) })])])))])])
       : el("p", { class: "muted", text: "Nobody on your roster could take a redshirt this year." });
     const improved = [kicker("Who Improved ", ui.tip("Every returning player grows toward his potential at his coachability's pace, faster under good developers and faster still after a big year: production and honors raise a player's ceiling and his pace.", "Who Improved")),
@@ -776,7 +790,7 @@
     ui.on(all, "click", () => pick("improved"));
     const top = card("off-top", "dev-top-list", [kicker("Top Improvements"),
       best.length ? el("ul", { class: "off-top-list" }, best.map((d) => el("li", { "data-key": d.id }, [avatar(d.id, "sm"),
-        el("div", {}, [el("b", { text: d.name }), el("div", { class: "muted small", text: `${d.pos} · ${d.overall} OVR` })]),
+        el("div", {}, [nameLink(s, d.id, d.name, s.team, d.pos), el("div", { class: "muted small", text: `${d.pos} · ${d.overall} OVR` })]),
         el("span", { class: "go-tag good", text: `+${d.gain}` })]))) : el("p", { class: "muted", text: "Nobody on your roster improved this offseason." }),
       r.mine.length ? all : null]);
     page.append(row("g21", "dev-main", [panels, top]));

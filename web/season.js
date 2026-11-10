@@ -1508,7 +1508,7 @@
     m.token = token;
     route.set({ modal: modalTokens() }, { state: { modal: modalStack.length } });
   }
-  const recruitingHelpers = { openBox: (id) => openBox(id), carryLine: (s, card) => officeCarryLine(s, card), api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, closeTop: () => closeModal(), retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
+  const recruitingHelpers = { playerAttrs: (...a) => playerAttrs(...a), openBox: (id) => openBox(id), carryLine: (s, card) => officeCarryLine(s, card), api, long, holding, postJSON, toast, openModal, closeModal: closeAllModals, closeTop: () => closeModal(), retoken, errText, play, playCard, openSeason: reopenSeason, onChange: (tab) => { goTab(tab); window.scrollTo({ top: 0 }); } };
   if (window.Recruiting && window.Recruiting.init) window.Recruiting.init(recruitingHelpers);   // a profile reopened from the address before any career tab drew
   function renderCareerSteps(s) {
     const box = $("#career-steps");

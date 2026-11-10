@@ -2053,7 +2053,12 @@ players home cost and what carries), the portal board's header shows the pool, a
 season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
 **The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Keep Them Home,
-Departures, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. Every
+Departures, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. **Every player's
+name opens his profile** (`nameLink`): a portal entrant (your board, Your Moves, Who Got Away) opens his Prospect
+Profile while the portal is open; anyone else, and every name once the portal closes, opens his player page by
+slug, where a **Next Season** block (`offseason.player_next`) reads where he is now: his team (a transfer under his
+new school), position, class and overall, or where he went (Graduated, Declared for the Draft, Drafted, Transfer
+Portal, Left the Team), over last season's ratings and stats. A name link is 44 px tall on a phone. Every
 page has one frame: the title, a "Stage N of 9" chip and a pill stepper (✓ for a done step, the
 accent for the current one) on top; Back to Offseason on the left and the primary "Advance to …"
 (with Sim to Next Season beside it) at the bottom. In front of each stage sits the **Overview**: a
@@ -2720,7 +2725,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |
 | `screen=depth` | The depth chart over the tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` |
-| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>`, `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab); on the recruiting board `scene:<pid>`, an unfinished call or visit's window (it reopens once the board has drawn, while the board still has that call open; his reaction drops the token, so a finished one never comes back) |
+| `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>[\|<slug>]` (the slug finds him on any team when the name or position moved), `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab); on the recruiting board `scene:<pid>`, an unfinished call or visit's window (it reopens once the board has drawn, while the board still has that call open; his reaction drops the token, so a finished one never comes back) |
 
 A top-level tab, the depth chart and a modal push a history entry (Back closes the modal, leaves
 the depth chart, returns to the tab before); a filter, a sort, a sub-tab, another recruit or a week
