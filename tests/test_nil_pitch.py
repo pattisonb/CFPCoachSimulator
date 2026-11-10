@@ -43,10 +43,8 @@ def test_offer_without_nil_reads_room():
 
 def test_before_offer_reads_room_not_tier():
     st = fresh("tulane")
-    pid = ranked(st)[0]
-    ask = recruiting.ask_from(st, "tulane", pid)
-    if room(st, "tulane", pid) >= ask:
-        assert recruiting.strengths(st, "tulane", pid)["nil"] == 1.0
+    pid = next(q for q in ranked(st)[:200] if 0 < recruiting.ask_from(st, "tulane", q) <= room(st, "tulane", q))
+    assert recruiting.strengths(st, "tulane", pid)["nil"] == 1.0, "a small school that can cover him reads Strong"
     # spend the room elsewhere: the same school, nothing left, reads Weak for him
     rec = recruiting._nil(st, "tulane")
     rec["held"]["__elsewhere__"] = recruiting.nil_left(st, "tulane")
@@ -96,13 +94,13 @@ def test_known_hides_the_ask():
 
 # ----- Task 2: talking money is a promise -----
 
-def cares(st, pid, topic):
-    """Make NIL (or not) one of his priorities for the test."""
+def cares(st, pid, topic, personality="business"):
+    """Make NIL (or not) one of his priorities for the test; an All Business recruit tells you on a call."""
     p = st["recruiting"]["prospects"][pid]
+    p["persona"] = dict(recruiting.persona.of(st, pid), personality=personality)
     rest = [t for t in p["priorities"] if t != "nil"]
     p["priorities"] = (["nil"] + rest)[:3] if topic else [t for t in recruiting.PITCHES if t != "nil"][:3]
-    from coach_career import persona
-    persona.of(st, pid)["decider_topic"] = None
+    p["persona"]["decider_topic"] = None
 
 
 def money_pitch(st, pid):
@@ -187,7 +185,7 @@ def test_non_nil_prospect_says_so():
     cares(st, pid, False)
     r = money_pitch(st, pid)
     assert not promises(st, pid)
-    assert r["reaction"]["text"] == "The money isn't what this is about for me." or r["reaction"]["kind"] == "guarded", r["reaction"]
+    assert r["reaction"]["text"] == "The money isn't what this is about for me.", r["reaction"]
 
 
 def test_zero_ask_no_promise():
@@ -196,6 +194,83 @@ def test_zero_ask_no_promise():
     cares(st, pid, True)
     recruiting.act(st, ME, pid, "offer", pitch="winning")
     money_pitch(st, pid)
+    assert not promises(st, pid)
+
+
+def test_money_promise_opens_with_a_line():
+    st = fresh()
+    pid = nil_target(st, None)
+    money_pitch(st, pid)
+    from coach_career import scenes
+    assert any(e.get("line") == scenes.MONEY_OWED_LINE for e in st["recruiting"]["log"] if e["pid"] == pid), "the player is told he owes it"
+
+
+def test_pitch_before_offer_is_still_owed():
+    st = fresh()
+    pid = next(q for q in ranked(st)[40:100] if recruiting.ask_from(st, ME, q) >= 15)
+    cares(st, pid, True)
+    money_pitch(st, pid)
+    wk = st["current_week"]
+    for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
+        recruiting._promises(st, w)
+    assert promises(st, pid)[0]["broken"] is not None, promises(st, pid)
+
+
+def test_kept_at_his_ask_now():
+    st = fresh()
+    pid = nil_target(st, None)
+    money_pitch(st, pid)
+    pr = promises(st, pid)[0]
+    pr["about"]["ask"] *= 2                       # he asked more when you pitched (you trailed); he wants less now
+    recruiting._nil(st, ME)["held"][pid] = recruiting._five(recruiting.NIL_PROMISE_SHARE * recruiting.ask_from(st, ME, pid) + 2.4)
+    recruiting._promises(st, st["current_week"] + 1)
+    assert promises(st, pid)[0]["kept"] is not None, promises(st, pid)
+
+
+def test_one_step_under_breaks():
+    st = fresh()
+    pid = nil_target(st, None)
+    money_pitch(st, pid)
+    ask = recruiting.ask_from(st, ME, pid)
+    under = max(n for n in range(0, ask + 5, 5) if n < recruiting.NIL_PROMISE_SHARE * ask)   # one NIL step short
+    recruiting._nil(st, ME)["held"][pid] = under
+    wk = st["current_week"]
+    for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
+        recruiting._promises(st, w)
+    assert promises(st, pid)[0]["broken"] is not None, (under, ask, promises(st, pid))
+
+
+def test_money_promise_closed_on_pull_or_sign():
+    for how in ("pull", "sign"):
+        st = fresh()
+        pid = nil_target(st, None)
+        money_pitch(st, pid)
+        if how == "pull":
+            st["recruiting"]["offers"][ME].remove(pid)
+        else:
+            st["recruiting"]["status"][pid]["signed"] = "ohio-state"
+        recruiting._promises(st, st["current_week"] + 1)
+        pr = promises(st, pid)[0]
+        assert pr.get("closed") is not None and pr["broken"] is None, (how, pr)
+
+
+def test_guarded_call_tells_nothing():
+    st = fresh()
+    pid = nil_target(st, None)
+    cares(st, pid, True, personality="guarded")
+    money_pitch(st, pid)
+    assert not promises(st, pid) and "exact" not in recruiting.ask_view(st, ME, pid), "a guarded call gives nothing away"
+
+
+def test_no_money_promise_in_the_portal():
+    st = fresh()
+    pid = nil_target(st, None)
+    c = recruiting._contact(st, ME, pid)
+    st["recruiting"]["portal"] = True
+    try:
+        recruiting._money_talk(st, ME, pid, c, st["current_week"])
+    finally:
+        st["recruiting"].pop("portal")
     assert not promises(st, pid)
 
 
@@ -212,4 +287,11 @@ if __name__ == "__main__":
     test_money_promise_closed_on_commit_elsewhere()
     test_non_nil_prospect_says_so()
     test_zero_ask_no_promise()
+    test_money_promise_opens_with_a_line()
+    test_pitch_before_offer_is_still_owed()
+    test_kept_at_his_ask_now()
+    test_one_step_under_breaks()
+    test_money_promise_closed_on_pull_or_sign()
+    test_guarded_call_tells_nothing()
+    test_no_money_promise_in_the_portal()
     print("nil pitch ok: unattached NIL reads the room against his ask; attached reads the deal; the page reads the ask you know; talking money is a promise, kept, broken or closed")

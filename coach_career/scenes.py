@@ -212,6 +212,7 @@ REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
 PROMISE_KEPT_LINE = "{mate} got his offer. You kept your word, Coach."
 MONEY_KEPT_LINE = "You put the money on the table. You kept your word, Coach."
 MONEY_BROKEN_LINE = "You talked money and never put it on the table."
+MONEY_OWED_LINE = "You talked money: put it on your offer within two weeks."   # the money promise opens: the player is told
 NIL_NOT_HIS = "The money isn't what this is about for me."   # NIL pitched to a recruit who does not care about it
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
                "JR": "junior", "JRRS": "redshirt junior", "SR": "senior", "SRRS": "redshirt senior"}

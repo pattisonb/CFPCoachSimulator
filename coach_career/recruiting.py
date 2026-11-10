@@ -1826,7 +1826,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 seen.append(pitch)
         points = _contact_land(state, slug, p, contact, sc["action"], pitch, auto)
         if pitch == "nil":
-            _money_talk(state, slug, pid, contact, week)
+            _money_talk(state, slug, pid, contact, week, tells=tells, tired=bool(sc.get("tired")))
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
@@ -2296,11 +2296,13 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     return 1 - keep
 
 
-def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int) -> None:
+def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int, tells: bool = True, tired: bool = False) -> None:
     """You pitched NIL in a call or visit. When NIL is his (a priority or his decider's topic), he has an ask and
     nothing is held on him yet, he names his number (the contact's ask is exact; a History line says it) and you
-    owe him a money promise: NIL_PROMISE_SHARE of his ask on your offer within NIL_PROMISE_WEEKS (_promises)."""
-    if not persona.counts_as_priority(state, pid, "nil"):
+    owe him a money promise: NIL_PROMISE_SHARE of his ask on your offer within NIL_PROMISE_WEEKS (_promises), and the
+    History says so. Not on a call that keeps his priorities to himself (`tells` False: he gives nothing away), not on
+    a call that pestered him (`tired`: the pitch fell flat), and not in the portal (its weeks judge no promises)."""
+    if not tells or tired or is_portal(state) or not persona.counts_as_priority(state, pid, "nil"):
         return
     ask = ask_from(state, slug, pid)
     held = (state["recruiting"]["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
@@ -2312,21 +2314,28 @@ def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int) -> N
         _event(state, "learned", pid, slug, line=f"He told you he's looking for {ask} in NIL.")
     if not any(pr["kind"] == "money" and pr.get("broken") is None and pr.get("kept") is None and pr.get("closed") is None
                for pr in contact.get("promises") or ()):
-        contact.setdefault("promises", []).append({"kind": "money", "about": {"ask": ask}, "week": week, "broken": None, "kept": None})
+        from coach_career import scenes
+        contact.setdefault("promises", []).append({"kind": "money", "about": {"ask": ask}, "week": week, "broken": None, "kept": None,
+                                                   "offered": pid in state["recruiting"]["offers"].get(slug, [])})
+        _event(state, "learned", pid, slug, line=scenes.MONEY_OWED_LINE)
 
 
 def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: int) -> None:
     """A money promise at the week step: kept once the offer holds NIL_PROMISE_SHARE of his ask (PACKAGE_KEPT lands,
     promise_kept), broken after NIL_PROMISE_WEEKS without it (he cools; promise_broken, why "money"), closed with
-    neither once he is no longer yours to win (committed elsewhere, signed, or your offer pulled)."""
+    neither once he is no longer yours to win (committed elsewhere, signed, or an offer you made pulled; a pitch before
+    any offer stays owed: the money has to reach an offer). The share reads his ask now when it fell since the pitch."""
     from coach_career import scenes
     rc = state["recruiting"]
     st_ = rc["status"][pid]
-    if st_["signed"] or (st_["committed"] and st_["committed"] != slug) or pid not in rc["offers"].get(slug, []):
+    offered = pid in rc["offers"].get(slug, [])
+    if offered:
+        pr["offered"] = True
+    if st_["signed"] or (st_["committed"] and st_["committed"] != slug) or (pr.get("offered") and not offered):
         pr["closed"] = week
         return
     held = (rc["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
-    if held >= NIL_PROMISE_SHARE * pr["about"]["ask"]:
+    if held and held >= NIL_PROMISE_SHARE * min(pr["about"]["ask"], ask_from(state, slug, pid) or pr["about"]["ask"]):
         pr["kept"] = week
         rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
         _event(state, "promise_kept", pid, slug, why="money", line=scenes.MONEY_KEPT_LINE)
