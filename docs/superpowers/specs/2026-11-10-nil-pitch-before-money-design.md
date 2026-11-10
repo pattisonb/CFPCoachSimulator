@@ -38,8 +38,9 @@ The honest version of "talk money before you pay it": you can, at full strength,
 
 ## Checks
 
-- A test: offer with no NIL, then NIL strength is `min(pull, room / ask)`, not 0; a NIL pitch to a NIL-priority
-  prospect with nothing held does not backfire and makes his ask exact.
+- A test: offer with no NIL, then NIL strength is `min(1, room / ask)`, not 0; a NIL pitch to a NIL-priority
+  prospect with nothing held does not backfire, makes his ask exact and starts a money promise that breaks after
+  `NIL_PROMISE_WEEKS` without NIL on the offer.
 - `tools/check_recruiting.py` before and after: how often a NIL pitch lands and the share of commits by tier
   should move only a little.
 - `tests/test_sim_golden.py` includes a recruiting week. If this changes it, the player approves the new golden
