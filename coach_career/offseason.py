@@ -2500,8 +2500,13 @@ def player_next(state: dict, slug: str) -> Optional[dict]:
         c = next((c for c in t["roster"] if c["id"] == slug), None)
         if c is not None:
             status = "returning" if before == team else "transfer_in" if before else "signee"
-            words = season.CLASS_NAMES.get(c["cls"], c["cls"])
-            return {"team": team, "team_name": lg.team_meta(lgd, team)["short_name"], "position": c["pos"], "class": c["cls"],
+            cls = c["cls"]
+            rs = state["offseason"].get("redshirts") or {}
+            pend = next((r for r in rs.get("players") or () if r["id"] == slug), None) if not rs.get("decided") else None
+            if pend and pend["cls"] == cls:                # the redshirt call lands leaving Departures: the class he will have
+                cls = cls + "RS" if pend["redshirt"] else NEXT_CLASS.get(cls, cls)
+            words = season.CLASS_NAMES.get(cls, cls)
+            return {"team": team, "team_name": lg.team_meta(lgd, team)["short_name"], "position": c["pos"], "class": cls,
                     "class_name": " ".join(w[:1].upper() + w[1:] for w in words.split()), "overall": c["o"], "status": status,
                     "status_name": {"returning": "Returning", "transfer_in": "Transferred In", "signee": "Signed"}[status]}
     ev = next((e for e in reversed(state["offseason"].get("departures") or []) if e["id"] == slug), None)

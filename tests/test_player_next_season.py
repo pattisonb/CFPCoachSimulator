@@ -61,6 +61,16 @@ def test_next_season_transfer(st):
         teams[other]["roster"].insert(0, c)
 
 
+def test_next_season_pending_redshirt(st):
+    """Before the redshirt calls land (they apply leaving Departures), a candidate reads the class he will have."""
+    rs = st["offseason"]["redshirts"]
+    assert not rs["decided"] and rs["players"], rs
+    for r in rs["players"][:6]:
+        want = r["cls"] + "RS" if r["redshirt"] else offseason.NEXT_CLASS.get(r["cls"], r["cls"])
+        n = offseason.player_next(st, r["id"])
+        assert n["class"] == want, (r["name"], r["cls"], r["redshirt"], n["class"])
+
+
 def test_next_season_outside_offseason():
     fresh = season.new_season(ME, "full", seed=5, career=True)
     p = season.load_teams()[ME]["offense"][0]
@@ -81,6 +91,7 @@ if __name__ == "__main__":
     test_next_season_returning(st)
     test_next_season_departed(st)
     test_next_season_transfer(st)
+    test_next_season_pending_redshirt(st)
     test_next_season_outside_offseason()
     test_api_player_by_slug(st)
     print("player next season ok: found by slug on any team; returning, transfer, departed; the API without a team")

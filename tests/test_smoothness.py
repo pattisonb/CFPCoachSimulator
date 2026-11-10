@@ -363,7 +363,7 @@ def portal_case(page, base: str, sid: str) -> None:
     page.wait_for_selector(".off-table tbody button.go-btn.primary", timeout=120_000)
     time.sleep(0.6)
     b = ready(page, ".off-table tbody button.go-btn.primary")
-    name = b.evaluate("b => b.closest('tr').cells[0].querySelector('b').textContent")
+    name = b.evaluate("b => b.closest('tr').cells[0].querySelector('.off-name, b').textContent")
     assert_smooth(page, ".off-scroll", lambda: b.click(), f"Offer sent to {name}", "Offseason: portal offer")
 
 

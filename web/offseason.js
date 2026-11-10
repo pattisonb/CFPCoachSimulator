@@ -455,13 +455,15 @@
     if (!rs.players.length) out.push(el("p", { class: "muted", text: "Nobody on your roster can take a redshirt this year." }));
     const list = el("div", { class: "off-rs", "data-key": "rs" });
     for (const p of rs.players) {
-      const b = el("button", { type: "button", class: `go-act ${p.redshirt ? "on" : ""}`, "aria-pressed": String(p.redshirt), "data-key": p.id, ...(rs.decided ? { disabled: "true" } : {}),
+      const b = el("button", { type: "button", class: `go-act ${p.redshirt ? "on" : ""}`, "aria-pressed": String(p.redshirt), ...(rs.decided ? { disabled: "true" } : {}),
         title: `${p.name}: played ${p.games} of ${p.team_games} games · ${p.use === "starter" ? "a starter" : p.use === "rotation" ? "in the rotation" : "off the depth chart"}` },
         [el("b", { text: p.name }), el("span", { text: `${p.pos} · ${clsWord(p.cls)} · ${p.overall} OVR · ${p.games} of ${p.team_games} games` }),
          el("span", { class: `go-tag ${p.redshirt ? "good" : "muted"}`, text: decision(p) })]);
       if (!rs.decided) ui.on(b, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/redshirt`, staged({ pid: p.id, on: !p.redshirt })),
         p.redshirt ? `Plays on: ${p.name}` : `Redshirt: ${p.name}`));
-      list.append(b);
+      // his name is inside the toggle, so his page gets its own link beside it (never a link inside a button)
+      const page = H && H.playerAttrs ? el("a", { href: "#", ...H.playerAttrs(s.team, p.name, p.pos, p.id), class: "plink off-rs-link", "aria-label": `Open ${p.name}'s player page`, text: "Player Page →" }) : null;
+      list.append(el("div", { class: "off-rs-item", "data-key": p.id }, [b, page]));
     }
     out.push(list);
     return out;
@@ -507,7 +509,7 @@
       const undo = el("button", { type: "button", class: "go-link", text: "Undo" });
       ui.on(undo, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/position`, staged({ pid: m.id, pos: m.from })), `${m.name} moves back to ${m.from}`,
         { after: () => loadOpts(document.querySelector("#tab-offseason .off-pos-opts")) }));
-      return el("li", { "data-key": m.id }, [el("b", { text: m.name }), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
+      return el("li", { "data-key": m.id }, [nameLink(s, m.id, m.name, s.team, m.to), ` ${m.from} → ${m.to} · ${m.overall} OVR `, undo]);
     })));
     return out;
   }
