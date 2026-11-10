@@ -31,10 +31,14 @@ The season's screens mostly link (stats, roster, awards, box scores, the recap, 
 offseason it shows last year's roster and ratings, finds a transfer you signed only under his old team, misses
 Development's gains and can miss a player whose position moved (it matches name and position).
 
-**Fix:** the player page takes a `slug` (the API already accepts it; the front end never sends it), and during
-a career's offseason it reads the player from `state["league"]`, next year's roster, falling back to last
-season's file for a player no longer on any roster (a draftee, a graduate). The token gains a slug form,
-`player:<team>|<slug>`, beside the old one, so old links keep working.
+**Fix (revised while planning, November 10):** rebuilding a single team's engine card from `state["league"]`
+does not work (`teamdata.build_teams.build` fits league-wide steps and fails on one team; the league's attributes
+are a different set from the engine's). So in the offseason the player page stays **last season's page** (his
+ratings, stats, game log, honors: what he did), found by `slug` on any team, and adds a **Next Season** block from
+`state["league"]`: his team now (a transfer under his new school), position, class and overall, or where he went
+(the draft, graduated, the portal). The token gains the slug, `player:<team>|<name>|<pos>|<slug>`; the old three-part
+token keeps working. A signee with no college season opens his Prospect Profile while the class is on file, and
+otherwise shows only the Next Season block.
 
 ## The rule
 
