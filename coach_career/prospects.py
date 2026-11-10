@@ -702,7 +702,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "ratings": signed_ratings(state, p) if status["signed"] == viewer else None,     # signing day shows what you got
         "ask": recruiting.ask_view(state, viewer, pid), "cooled": recruiting.cooled(state, viewer, pid),
         "cooled_why": persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
-        "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid),
+        "stage": recruiting.stage(state, viewer, pid), "strength": recruiting.strengths(state, viewer, pid, known=True),
         "pestering": recruiting.would_pester(state, viewer, pid), "pesters": recruiting.pesters(state, viewer, pid),
     }
 
@@ -810,7 +810,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                cooled_why=persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
-               stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid),
+               stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid, known=True),
                pestering=recruiting.would_pester(state, viewer, pid), pesters=recruiting.pesters(state, viewer, pid),
                stage_move=_stage_move(state, pid, viewer),
                scene=((rc.get("scenes") or {}).get(viewer) or {}).get(pid),

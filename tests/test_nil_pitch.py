@@ -70,6 +70,17 @@ def test_spent_budget_is_weak():
     assert recruiting.strengths(st, ME, pid)["nil"] == 0.0
 
 
+def test_strength_reads_open_nothing():
+    """A strength read (the page's or a school's that never touched him) opens no contact and no NIL record."""
+    st = fresh()
+    rc = st["recruiting"]
+    pid = ranked(st)[90]
+    before = (pid in rc["contacts"] and "tulane" in rc["contacts"][pid], "tulane" in rc["nil"])
+    recruiting.strengths(st, "tulane", pid)
+    recruiting.strengths(st, "tulane", pid, known=True)
+    assert (pid in rc["contacts"] and "tulane" in rc["contacts"][pid], "tulane" in rc["nil"]) == before == (False, False)
+
+
 def test_known_hides_the_ask():
     st = fresh()
     rc = st["recruiting"]
@@ -88,5 +99,6 @@ if __name__ == "__main__":
     test_before_offer_reads_room_not_tier()
     test_attached_reads_the_deal()
     test_spent_budget_is_weak()
+    test_strength_reads_open_nothing()
     test_known_hides_the_ask()
     print("nil pitch ok: unattached NIL reads the room against his ask; attached reads the deal; the page reads the ask you know")

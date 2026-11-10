@@ -488,12 +488,13 @@ def _contact(state: dict, slug: str, pid: str) -> dict:
 _ASKS: dict = {}          # (career, class, week, prospect, school, his ask multiplier) -> his ask from the school this week
 
 
-def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> int:
+def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None, peek: bool = False) -> int:
     """What he wants from `slug`: his ask, raised when a rival's number beat the school's, times
-    ASK_TRAIL per place the school trails on his list (as the week's step left it)."""
+    ASK_TRAIL per place the school trails on his list (as the week's step left it). `peek`: read only,
+    never opening a contact record (a strength read for a school that has not touched him)."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    mult = _contact(state, slug, pid).get("ask_mult", 1.0)
+    mult = (((rc["contacts"].get(pid) or {}).get(slug) or {}) if peek else _contact(state, slug, pid)).get("ask_mult", 1.0)
     base = p["nil_ask"] * mult
     if not base:
         return 0
@@ -509,10 +510,11 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
     return int(round(ask * GENERATIONAL_ASK)) if is_generational(state, pid) else ask
 
 
-def ask_view(state: dict, slug: str, pid: str) -> dict:
-    """His ask from your school as you know it: the number after a call or visit, a range before."""
-    ask = ask_from(state, slug, pid)
-    asked = _contact(state, slug, pid).get("asked")
+def ask_view(state: dict, slug: str, pid: str, peek: bool = False) -> dict:
+    """His ask from your school as you know it: the number after a call or visit, a range before.
+    `peek`: read only, never opening a contact record."""
+    ask = ask_from(state, slug, pid, peek=peek)
+    asked = (((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}) if peek else _contact(state, slug, pid)).get("asked")
     if asked is True:
         return {"exact": ask}
     lo, hi = ASK_NARROW if asked == "range" else ASK_SHOWN
@@ -912,10 +914,27 @@ _FORCED: dict = {}        # tests: (career, school, prospect, topic) -> strength
 _PULLS: dict = {}         # (career, class, prospect, school) -> the school's pulls that hold all season
 
 
-def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
+def nil_room(state: dict, slug: str) -> int:
+    """The NIL the school could still put on an offer, read only (never opens its NIL record): what is left
+    of its budget, or the whole budget (the portal's pool) before the record exists."""
+    rec = state["recruiting"]["nil"].get(slug)
+    if rec is not None:
+        return rec["budget"] - sum(rec["held"].values())
+    return portal_budget(state, slug) if is_portal(state) else nil_budget(state, slug)
+
+
+def known_ask(state: dict, slug: str, pid: str) -> int:
+    """His ask as the player knows it (ask_view): the number once he has said it, else the range's middle."""
+    v = ask_view(state, slug, pid, peek=True)
+    return v["exact"] if "exact" in v else _five((v["lo"] + v["hi"]) / 2)
+
+
+def strengths(state: dict, slug: str, pid: str, known: bool = False) -> dict[str, float]:
     """Your program's strength on each topic for this prospect, 0-1: the school's pull on him
     (playing time from his place on the depth chart, winning, prestige, proximity, coach,
-    academics) with NIL read as your offer against his ask (the program's level before an offer)."""
+    academics) with NIL read against his ask: the NIL held on him once there is some (the deal), and
+    before that what the school could pay him (nil_room plus anything held), never the program's tier.
+    `known`: read his ask as the player knows it (known_ask), so the page's word never leaks the number."""
     mv = state["recruiting"].get("moved")
     key = (state["id"], _ck(state["recruiting"]), pid, slug, bool(mv) and pid in mv)
     static = _PULLS.get(key)
@@ -925,10 +944,9 @@ def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
         static = _PULLS[key] = pull(state, slug, pid, winning=False)
     out = dict(static)
     out["winning"] = min(1.0, _winning(state).get(slug, 0.5))
-    held = state["recruiting"]["nil"].get(slug, {}).get("held", {}).get(pid)
-    if pid in state["recruiting"]["offers"].get(slug, []):
-        ask = ask_from(state, slug, pid)
-        out["nil"] = 1.0 if not ask else min(1.0, (held or 0) / ask)
+    held = state["recruiting"]["nil"].get(slug, {}).get("held", {}).get(pid) or 0
+    ask = known_ask(state, slug, pid) if known else ask_from(state, slug, pid, peek=True)
+    out["nil"] = 1.0 if not ask else min(1.0, (held if held > 0 else nil_room(state, slug)) / ask)
     for (sid, s_, p_, topic), v in _FORCED.items():
         if sid == state["id"] and s_ == slug and p_ == pid:
             out[topic] = v
