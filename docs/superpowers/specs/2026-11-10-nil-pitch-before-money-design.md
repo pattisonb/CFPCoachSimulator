@@ -29,6 +29,15 @@ pitch NIL as Weak, but a school that never backs the pitch with money should not
    *tune*, about 80%) within `NIL_PROMISE_WEEKS` (*tune*, 2) or the promise breaks: he cools, a History line says
    why ("You talked money and never put it on the table."), and it counts against Keeps His Word
    (`2026-11-10-promises-expansion-design.md`). Kept, it lands like a Package Deal promise kept.
+**What you know of his ask before the pitch (today, `recruiting.ask_view`):** a wide range (about ±30%) before any
+contact, a narrower one (about ±15%) after a call, and the exact number on an in-home visit, where his family's note
+states it after your opening and before you pitch. So:
+
+- On a **visit** you already know the number when you choose NIL; rule 2 only adds the promise.
+- On a **call**, pitching NIL is what gets him to name the exact number (the contact's ask becomes exact).
+- The grade the pitch picker shows reads **the ask as you know it** (the middle of the range until he names it),
+  never the hidden number, so a Strong or Fair word does not leak his ask. The pitch itself scores off his real ask.
+
 3. **Once NIL is attached, it reads the deal**, `held / ask`, as today.
 4. **If he does not care about NIL**, he says so ("The money isn't what this is about for me.") and it counts as an
    off-priority pitch, with no promise.
