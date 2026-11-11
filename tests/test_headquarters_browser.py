@@ -932,6 +932,24 @@ def check_next_depth(page, base, sid) -> None:
     assert len(groups) >= 10 and "QB" in groups and "OL" in groups, groups
     classes = page.eval_on_selector_all(f"{card} .hq-group .hq-next-class", "els => els.map(e => e.textContent.trim())")
     assert classes and not any(c in ("FR", "FRRS") for c in classes if c != "Commit"), f"next year nobody returning is a freshman: {set(classes)}"
+    # one row that scrolls sideways (the player's ask), never taller than a group
+    strip = page.eval_on_selector(f"{card} .hq-groups-strip", "e => [getComputedStyle(e).overflowX, e.scrollWidth > e.clientWidth]")
+    assert strip == ["auto", True], strip
+    tops = page.eval_on_selector_all(f"{card} .hq-group", "els => [...new Set(els.map(e => Math.round(e.getBoundingClientRect().top)))]")
+    assert len(tops) == 1, f"the groups sit in one row: {tops}"
+    # pick positions: only those show; All brings back every group; the pick is kept across a redraw
+    vis = lambda: page.eval_on_selector_all(f"{card} .hq-group:not([hidden])", "els => els.map(e => e.dataset.key)")
+    page.click(f"{card} .hq-pos-chip[data-group=QB]")
+    page.click(f"{card} .hq-pos-chip[data-group=OL]")
+    assert vis() == [g for g in groups if g in ("QB", "OL")], vis()
+    assert page.get_attribute(f"{card} .hq-pos-chip[data-group=QB]", "aria-pressed") == "true"
+    assert page.get_attribute(f"{card} .hq-pos-chip[data-group='']", "aria-pressed") == "false"
+    if os.environ.get("HQ_SHOTS"):
+        page.locator(card).screenshot(path=os.environ["HQ_SHOTS"] + "-next-depth.png")
+    open_hq(page, base, sid)
+    assert vis() == [g for g in groups if g in ("QB", "OL")], "the pick is kept"
+    page.click(f"{card} .hq-pos-chip[data-group='']")
+    assert vis() == groups, "All shows every group"
     page.set_viewport_size({"width": 1280, "height": 900})
 
 

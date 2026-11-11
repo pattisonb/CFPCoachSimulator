@@ -29,6 +29,7 @@
 
   // ----- Next Year's Depth Chart: next year's roster by group, a class up, with your commits as they come in ---------
   const el = k.el;
+  const NEXT_KEY = "cfp-hq-next-groups";       // the positions picked to show (this browser's own)
   const SAMPLE_NEXT = { groups: [
     { group: "QB", target: 4, filled: 3, need: 1, players: [{ name: "J. Sanders", position: "QB", class_next: "SR", overall: 88, starter: true },
       { name: "D. Williams", position: "QB", class_next: "SO", overall: 74 }], commits: [{ pid: "s1", name: "Marcus Williams", stars: 5, position: "QB" }] },
@@ -41,7 +42,13 @@
       const groups = (d.hq.next_year || {}).groups || [];
       if (!groups.length) return k.empty("No roster to project yet.");
       const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
-      return el("div", { class: "hq-groups" }, groups.map((g) => el("section", { class: "hq-group", "data-key": g.group }, [
+      // the player's ask: the groups side by side in one row that scrolls sideways, and a pick of which to show (a small
+      // view: QB and WR, say). The pick is this browser's own (NEXT_KEY); picking patches in place, no redraw.
+      let picked = new Set();
+      try { picked = new Set(JSON.parse(localStorage.getItem(NEXT_KEY) || "[]")); } catch (e) { /* a private window: all groups */ }
+      const shown = (g) => !picked.size || picked.has(g);
+      const strip = el("div", { class: "hq-groups hq-groups-strip", role: "region", "aria-label": "Next year's depth chart by position", tabindex: "0" },
+        groups.map((g) => el("section", { class: "hq-group", "data-key": g.group, ...(shown(g.group) ? {} : { hidden: "" }) }, [
         el("div", { class: "hq-group-head" }, [el("b", { text: g.group }),
           el("span", { class: "hq-sub hq-grow", text: `${g.players.length} Returning${g.commits.length ? ` · ${plural(g.commits.length, "Commit")}` : ""}` }),
           el("span", { class: `go-tag${g.need > 0 ? "" : " hq-full"}`, text: g.need > 0 ? `Need ${g.need}` : "Full" })]),
@@ -53,5 +60,28 @@
             el("span", { class: "hq-sub", text: String(p.overall) })] })),
         ]),
       ])));
+      const chips = el("div", { class: "hq-pos-pick", role: "group", "aria-label": "Positions to show" });
+      const sync = () => {
+        for (const c of chips.children) {
+          const on = c.dataset.group === "" ? !picked.size : picked.has(c.dataset.group);
+          c.classList.toggle("on", on); c.setAttribute("aria-pressed", String(on));
+        }
+        for (const sec of strip.children) sec.hidden = !shown(sec.dataset.key);
+        try { localStorage.setItem(NEXT_KEY, JSON.stringify([...picked])); } catch (e) { /* kept for the visit */ }
+        strip.scrollLeft = 0;
+      };
+      for (const g of ["", ...groups.map((x) => x.group)]) {
+        const c = el("button", { type: "button", class: "go-chip hq-pos-chip", "data-group": g, text: g || "All" });
+        c.addEventListener("click", () => {
+          if (!g) picked.clear();
+          else if (picked.has(g)) picked.delete(g);
+          else picked.add(g);
+          if (picked.size === groups.length) picked.clear();          // every group picked is All
+          sync();
+        });
+        chips.append(c);
+      }
+      sync();
+      return el("div", { class: "hq-next" }, [chips, strip]);
     } });
 })();
