@@ -92,8 +92,9 @@ def _results(state: dict) -> dict[str, dict]:
     from sim import season
     recs = season._records(state, include_playoff=True)
     playoff = {g[s] for g in state["games"].values() if g.get("kind") == "playoff" for s in ("home", "away")}
+    hosts = {g["home"] for g in state["games"].values() if g.get("kind") == "playoff" and not g.get("neutral")}   # a first-round game on campus
     champs = set((state.get("champions") or {}).values())
-    return {slug: {"wins": r["wins"], "losses": r["losses"], "conference": slug in champs, "playoff": slug in playoff,
+    return {slug: {"wins": r["wins"], "losses": r["losses"], "conference": slug in champs, "playoff": slug in playoff, "host": slug in hosts,
                    "title": state.get("champion") == slug} for slug, r in recs.items()}
 
 

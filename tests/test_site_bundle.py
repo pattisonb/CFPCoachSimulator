@@ -70,6 +70,7 @@ def test_bundle_plays_a_season_and_its_offseason(tmp_dir):
     exported = json.loads((tmp_dir / "dist" / "league.json").read_text(encoding="utf-8"))
     assert exported["format"] == "cfp-league/1"
     assert "league.json" not in info["files"]
+    assert "data/program_profile.json" in info["files"], "the School Grades' research ships: without it every campus grade reads Not Graded"
     # the New Career screen's League panel ships beside the page, loaded (relative) before season.js, and Export
     # League fetches league.json by a relative URL
     assert (tmp_dir / "dist" / "leaguefile.js").is_file()

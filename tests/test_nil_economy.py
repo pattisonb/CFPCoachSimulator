@@ -32,11 +32,19 @@ if __name__ == "__main__":
     assert recruiting.reward(B, facts(wins=9, losses=3)) == 40                    # nine wins 20%, not 30%
     assert recruiting.reward(B, facts(wins=7, losses=5, conference=True)) == 40   # +10%
     assert recruiting.reward(B, facts(wins=7, losses=5, playoff=True)) == 40      # +10%
-    assert recruiting.reward(B, facts(wins=7, losses=5, title=True)) == 50        # +15%
+    assert recruiting.reward(B, facts(wins=7, losses=5, title=True)) == 60        # +15% is 50: the title's flat 60
     assert recruiting.reward(B, facts(wins=7, losses=5, met=True)) == 40          # +10%
     assert recruiting.reward(B, facts(wins=5, losses=7, met=True)) == 20          # a losing team keeps the lines that apply
     assert recruiting.reward(B, facts(wins=14, losses=1, conference=True, playoff=True, title=True, met=True)) == 100   # 65% capped at 50%
     assert recruiting.reward(135, facts(wins=7, losses=5)) == five(13.5)          # rounded to fives
+    # a playoff run pays a small collective real money: the flat points (40 the playoff, 30 a game hosted, 60 the title) are the least it earns
+    assert recruiting.reward(B, facts(wins=7, losses=5, playoff=True, host=True)) == 70          # a big budget: the shares (60) lose to the flat 70
+    assert recruiting.reward(400, facts(wins=7, losses=5, playoff=True, host=True)) == 120       # 30% of 400: the shares win
+    assert recruiting.reward(60, facts(wins=10, losses=3, conference=True, playoff=True, met=True)) == 40             # 50% of 60 is 30: the playoff's flat 40
+    assert recruiting.reward(60, facts(wins=11, losses=3, conference=True, playoff=True, host=True, met=True)) == 70   # hosting a game: 30 more
+    assert recruiting.reward(60, facts(wins=13, losses=1, conference=True, playoff=True, host=True, title=True, met=True)) == 130
+    assert recruiting.reward(60, facts(wins=10, losses=3, conference=True, met=True)) == 25      # no playoff: the shares alone
+    assert "hosted a playoff game" in recruiting.reward_why(facts(playoff=True, host=True))
     why = recruiting.reward_why(facts(wins=9, losses=3, conference=True, met=True))
     assert len(why) == 3 and all(isinstance(w, str) and w for w in why), why
     assert recruiting.reward_why(facts(wins=5, losses=7)) == []
@@ -63,7 +71,8 @@ if __name__ == "__main__":
             assert k in p, (s, k)
         assert p["floor"] == five(recruiting.PORTAL_FLOOR * base[s]) and p["pool"] >= p["floor"]
         assert p["pool"] == max(p["floor"], p["left"] + p["reward"]) and p["pool"] % 5 == 0 and p["retained"] == 0
-        assert 0 <= p["reward"] <= five(recruiting.REWARD_CAP * base[s])
+        assert 0 <= p["reward"] <= max(five(recruiting.REWARD_CAP * base[s]), sum(recruiting.REWARD_FLAT.values()))
+        assert sf[s].get("host") in (True, False) and (not sf[s]["host"] or sf[s]["playoff"])
     assert pools[loser]["pool"] == pools[loser]["floor"] and pools[loser]["reward"] == 0
     # the review carries the pool's math for your school (the page shows it)
     rv = offseason.view(st)["review"]
@@ -71,6 +80,7 @@ if __name__ == "__main__":
     assert pools[me]["reward"] == recruiting.reward(base[me], facts(wins=rv["record"][0], losses=rv["record"][1],
                                                                         conference=offseason.season_facts(st)[me]["conference"],
                                                                         playoff=offseason.season_facts(st)[me]["playoff"],
+                                                                        host=offseason.season_facts(st)[me]["host"],
                                                                         title=st["champion"] == me, met=rv["met"]))
     # the class budget no longer carries a retention deduction: nil_budget is the tier's number
     assert recruiting.nil_budget(st, me) == max(recruiting.NIL_FLOOR, five(recruiting.NIL_PER_TIER * programs.get(st, me)["nil"]))

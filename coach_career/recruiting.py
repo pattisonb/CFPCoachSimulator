@@ -170,10 +170,11 @@ PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)      # an entrant with offers decides at e
 # the portal runs on this season's money: what a school had left of the year's budget plus a reward
 # for the season (shares of the budget, summed then capped), never less than the collective's
 # portal fund; what it does not spend carries into next year, capped by the program's tier
-REWARD = {"winning": 0.10, "nine_wins": 0.20, "conference": 0.10, "playoff": 0.10, "title": 0.15, "goal": 0.10}
+REWARD = {"winning": 0.10, "nine_wins": 0.20, "conference": 0.10, "playoff": 0.10, "host": 0.10, "title": 0.15, "goal": 0.10}
 REWARD_CAP = 0.50                          # the reward at most this share of the budget
+REWARD_FLAT = {"playoff": 40, "host": 30, "title": 60}   # *tune* NIL points a playoff run is worth at any school: the reward is never less than these lines' sum, so a small collective's windfall is real money
 REWARD_WHY = {"winning": "winning record", "nine_wins": "nine wins", "conference": "conference champion",
-              "playoff": "made the playoff", "title": "national champion", "goal": "AD goal met"}
+              "playoff": "made the playoff", "host": "hosted a playoff game", "title": "national champion", "goal": "AD goal met"}
 PORTAL_FLOOR = 0.30                        # the collective's portal fund: no program enters the portal with less
 CARRY_CAP = {1: 0.15, 2: 0.20, 3: 0.25, 4: 0.30, 5: 0.30}   # the share of next year's budget that may carry over, by program tier
 PORTAL_ASK = (25, 0.6)                     # an entrant's ask: this plus this per overall point over 50, times his position
@@ -1270,13 +1271,13 @@ def nil_budget(state: dict, slug: str) -> int:
 
 def _reward_lines(facts: dict) -> list[str]:
     """The reward lines a season earns: a winning record (nine wins replaces it), the conference
-    title, the playoff, the national title, the AD's goal met."""
+    title, the playoff, a playoff game hosted on campus, the national title, the AD's goal met."""
     lines = []
     if facts.get("wins", 0) >= 9:
         lines.append("nine_wins")
     elif facts.get("wins", 0) > facts.get("losses", 0):
         lines.append("winning")
-    for k in ("conference", "playoff", "title"):
+    for k in ("conference", "playoff", "host", "title"):
         if facts.get(k):
             lines.append(k)
     if facts.get("met"):
@@ -1286,9 +1287,11 @@ def _reward_lines(facts: dict) -> list[str]:
 
 def reward(budget: int, facts: dict) -> int:
     """The NIL the season just played earns for the portal: the lines' shares of the year's budget,
-    summed and capped at REWARD_CAP, in fives. `facts`: wins, losses, conference, playoff, title, met."""
-    share = min(REWARD_CAP, sum(REWARD[k] for k in _reward_lines(facts)))
-    return _five(share * budget)
+    summed and capped at REWARD_CAP, in fives, and never less than the playoff lines' flat points (REWARD_FLAT:
+    a playoff run pays a small collective what it pays anyone). `facts`: wins, losses, conference, playoff, host, title, met."""
+    lines = _reward_lines(facts)
+    share = min(REWARD_CAP, sum(REWARD[k] for k in lines))
+    return max(_five(share * budget), sum(REWARD_FLAT.get(k, 0) for k in lines))
 
 
 def reward_why(facts: dict) -> list[str]:

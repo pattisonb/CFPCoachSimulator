@@ -2151,8 +2151,10 @@ it at 1280 and 400 px.
 `docs/superpowers/specs/2026-10-30-nil-economy-design.md`). The season budget B is the
 collective's tier times three. At signing day what is left of B (`left = B − spent`) plus a reward
 from the season just played (a winning record 10% of B, nine or more wins 20% instead, +10% for a
-conference title, +10% for the playoff, +15% for the national title, +10% for a met AD goal, capped
-at 50%, in fives) makes the portal pool, never less than the collective's portal fund of 30% of B:
+conference title, +10% for the playoff, +10% for a playoff game hosted on campus, +15% for the national
+title, +10% for a met AD goal, capped at 50%, in fives; never less than the playoff lines' flat points,
+`REWARD_FLAT`: 40 for the playoff, 30 for a game hosted, 60 for the title, so a playoff run at a small
+school pays what it pays anyone) makes the portal pool, never less than the collective's portal fund of 30% of B:
 `pool = max(0.3·B, left + reward)`. Keeping players home spends from that pool, and the transfers
 you sign hold the rest. When the portal closes, what is unspent carries into next year's budget up
 to a cap by tier (15% of next year's B for tier 1, 20% for tier 2, 25% for tier 3, 30% for tiers 4
