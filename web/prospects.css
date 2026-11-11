@@ -171,3 +171,11 @@
   .pr-table thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); }
 }
 .pr-top-row .go-avatar.sm { width: 32px; height: 32px; }
+
+/* a sortable column's header (the player's ask): the whole header is the button; ▲ or ▼ marks the sort */
+.pr-table th .pr-sort { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0; border: 0; background: transparent;
+  color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; white-space: nowrap; }
+.pr-table th .pr-sort:hover, .pr-table th.on .pr-sort { color: var(--text); }
+.pr-table th .pr-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pr-sort-mark { font-size: 10px; min-width: 8px; }
+@media (max-width: 760px) { .pr-table th .pr-sort { min-height: 44px; } }
