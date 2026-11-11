@@ -1,0 +1,95 @@
+"""Keeps His Word: your coach's reputation for keeping promises (docs/superpowers/specs/2026-11-10-promises-expansion-
+design.md, section 1). It lives on state["career"]["word"], so it follows you to a new job. Kept promises raise it,
+broken ones cost more, and the broken player's position remembers it on top. Each offseason it drifts back toward
+neutral. Recruits read it when you promise; below FLOOR they do not believe you. Only your coach has one (AI coaches
+make no promises), and it never draws randomness, so the golden sim is untouched. Shown in words, never a number."""
+from __future__ import annotations
+
+from typing import Optional
+
+WORD_START = 70                                   # *tune* where a new coach's word starts (Strong)
+GAIN = {"kept": 3, "money_kept": 2, "package_kept": 2}   # *tune* what a kept promise adds
+COST = {"bent": 2, "broken": 8, "money_broken": 5, "package_broken": 5, "recruit_broken": 5}   # *tune* what a broken one costs
+STAR_COST = 1.5                                   # *tune* a broken promise to a starter-level player or a four-star-plus recruit costs this much more
+GUARDED_COST = 1.5                                # *tune* a Guarded player's broken promise costs this much more
+GROUP_EXTRA = 1.0                                 # *tune* the broken player's position takes the same delta again, times this
+RECOVER = 0.25                                    # *tune* each offseason the overall moves this share back toward WORD_START
+GROUP_DECAY = 0.5                                 # *tune* each offseason a position's extra is multiplied by this
+FLOOR = 35                                        # *tune* below this a recruit does not believe a promise
+PROMISE_MULT = (0.5, 1.5)                         # *tune* a believed promise's points run from this at 0 to this at 100
+CARES_MORE = 1.5                                  # *tune* a Guarded recruit, or one whose decider is playing time, reads the word this much harder
+STAR_OVR = 70                                     # *tune* a house overall this high makes a transfer a star for STAR_COST
+LOG_KEEP = 20                                     # the log keeps this many lines
+
+
+def _year(state: dict) -> int:
+    try:
+        from sim import season
+        return season.season_year(state)
+    except Exception:
+        return int(state.get("season_year") or 0)
+
+
+def _clamp(v: float) -> float:
+    return max(0.0, min(100.0, v))
+
+
+def _seen(state: dict) -> dict:
+    """The book without creating it (reads never write into the save)."""
+    return (state.get("career") or {}).get("word") or {}
+
+
+def book(state: dict) -> dict:
+    """The coach's word, created on first use."""
+    return state.setdefault("career", {}).setdefault("word", {"overall": WORD_START, "by_group": {}, "log": []})
+
+
+def apply(state: dict, kind: str, group: str, name: str, star: bool = False, personality: str = "") -> float:
+    """One kept or broken promise: the overall takes the delta (clamped 0-100), the player's position takes it again on
+    top. Returns the delta."""
+    if kind in GAIN:
+        delta = float(GAIN[kind])
+    elif kind in COST:
+        delta = -float(COST[kind]) * (STAR_COST if star else 1.0) * (GUARDED_COST if personality == "guarded" else 1.0)
+    else:
+        raise ValueError(f"unknown word event {kind!r}")
+    b = book(state)
+    b["overall"] = _clamp(b.get("overall", WORD_START) + delta)
+    if group:
+        g = b.setdefault("by_group", {})
+        g[group] = max(-100.0, min(100.0, g.get(group, 0.0) + delta * GROUP_EXTRA))
+    log = b.setdefault("log", [])
+    log.append({"year": _year(state), "kind": kind, "group": group, "name": name, "delta": round(delta, 2)})
+    del log[:-LOG_KEEP]
+    return delta
+
+
+def reading(state: dict, group: Optional[str] = None) -> float:
+    """The word, 0-100: the overall plus the position's extra when given."""
+    b = _seen(state)
+    v = b.get("overall", WORD_START)
+    if group:
+        v += (b.get("by_group") or {}).get(group, 0.0)
+    return _clamp(v)
+
+
+def recover(state: dict) -> None:
+    """An offseason passes: the overall moves RECOVER of the way back to WORD_START; each position's extra fades."""
+    b = _seen(state)
+    if not b:
+        return
+    b["overall"] = _clamp(b.get("overall", WORD_START) + (WORD_START - b.get("overall", WORD_START)) * RECOVER)
+    b["by_group"] = {g: v * GROUP_DECAY for g, v in (b.get("by_group") or {}).items() if abs(v * GROUP_DECAY) >= 0.5}
+
+
+def word_text(value: float) -> str:
+    from coach_career import programs
+    return next(w for w, f in programs.WORD_FLOORS if value >= f)
+
+
+def last_broken(state: dict, group: str) -> Optional[str]:
+    """The most recent broken promise's player at this position."""
+    for e in reversed(_seen(state).get("log") or ()):
+        if e.get("group") == group and e.get("kind") in COST and e.get("kind") != "bent":
+            return e.get("name")
+    return None
