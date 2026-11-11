@@ -136,8 +136,9 @@
   function clearOdds(b, sd) {
     const st = b.standing || {};
     if (!CLEAR || st.pct == null || !sd.odds) return sd;
-    const pct = (x) => `${Math.round(100 * x)}%`;
-    return { ...sd, odds: `${pct(st.pct)} Chance${st.lo != null && st.hi != null ? ` (${pct(st.lo)}–${pct(st.hi)})` : ""}`, certainty: null };
+    // the nearest ten percent, never 0% or 100% (nothing is certain until he signs): "80% Chance" (the player's ask)
+    const tens = Math.min(90, Math.max(10, Math.round(10 * st.pct) * 10));
+    return { ...sd, odds: `${tens}% Chance`, certainty: null };
   }
   function standingCore(b, me) {
     const st = b.standing || {};

@@ -3890,8 +3890,12 @@ def morale_view(state: dict, slug: str, name: str, position: str) -> dict:
         team_label = "Team in a slump"
     else:
         team_label = ""
-    return {"enabled": on, "form": round(form, 2), "team": round(tm, 2), "factor": round(morale_factor(state, slug, name, position), 3),
-            "label": label, "team_label": team_label}
+    factor = morale_factor(state, slug, name, position)
+    return {"enabled": on, "form": round(form, 2), "team": round(tm, 2), "factor": round(factor, 3),
+            "label": label, "team_label": team_label,
+            # what each does to his play next game, in percent (Clear Mode shows these in place of the words)
+            "form_pct": round(100 * MORALE_PLAYER_EFFECT * form), "team_pct": round(100 * MORALE_TEAM_EFFECT * tm),
+            "total_pct": round(100 * (factor - 1))}
 
 
 def player_edits(state: dict, slug: str) -> dict:

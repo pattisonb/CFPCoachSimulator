@@ -4,6 +4,14 @@
   // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
   // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
   const seasonWeek = (w) => `Week ${w - 1}`;
+  // Clear Mode (the clear-mode branch): morale as what it does to his play, in percent, in place of Hot Streak and the rest
+  const clearMode = () => !!(state.season && state.season.clear_mode);
+  const moralePcts = (m) => {
+    const sg = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;
+    const tone = (n) => (n > 0 ? "good" : n < 0 ? "bad" : "");
+    return [el("span", { class: `tag ${tone(m.form_pct)}`.trim(), text: `Form ${sg(m.form_pct)}`, title: "What his recent games against his season so far add to his ratings next game" }),
+      el("span", { class: `tag ${tone(m.team_pct)}`.trim(), text: `Team Mood ${sg(m.team_pct)}`, title: "What the team's results against expectations add to everyone next game" })];
+  };
   // how far a save has played, for its card and messages: "Preseason", "Through Week 3", a postseason week by its own name
   const throughWeek = (w) => (!w ? "Preseason" : w <= 14 ? `Through ${seasonWeek(w)}` : `Through Week ${w}`);
   const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
@@ -1810,8 +1818,9 @@
             p.injured && !(p.redshirt && p.redshirt.on) ? el("span", { class: "tag bad", text: "Injured" }) : null,
             p.promise ? el("span", { class: `tag ${p.promise === "On Track" ? "good" : p.promise === "Broken" ? "bad" : "warn"}`, title: "You promised him a starting role; how it is landing so far", text: `Promise: ${p.promise}` }) : null,
             p.redshirt && p.redshirt.on ? el("span", { class: "tag", text: "Redshirting", title: "Sitting out the rest of the season; keeps his year" }) : null,
-            p.morale && p.morale.enabled && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
-            p.morale && p.morale.enabled && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
+            ...(p.morale && p.morale.enabled && clearMode() ? moralePcts(p.morale) : []),
+            p.morale && p.morale.enabled && !clearMode() && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
+            p.morale && p.morale.enabled && !clearMode() && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
             // rest-of-season seasons: what the real 2026 box scores say about him against his rating
             p.form ? el("span", { class: `tag ${p.form.shift > 0 ? "good" : "bad"}`, text: `${p.form.shift > 0 ? "📈" : "📉"} Box scores ${p.form.shift > 0 ? "+" : ""}${Math.round(p.form.shift)}`, title: `Real 2026 box scores: ${p.form.note}. The rating shift is informational unless player form is switched on.` }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No Games Yet" }),
@@ -1862,7 +1871,11 @@
       const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
       rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), ratingBar(r.value), el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
-    if (p.morale && p.morale.enabled && (attrs.length ? attrs : p.ratings).some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
+    if (p.morale && p.morale.enabled && clearMode()) {
+      const sg = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;
+      rat.append(el("div", { class: "small-text morale-total", style: "margin-top:6px" }, [el("b", { text: `Next game: ${sg(p.morale.total_pct)}` }),
+        el("span", { class: "muted", text: ` (form ${sg(p.morale.form_pct)}, team ${sg(p.morale.team_pct)})` })]));
+    } else if (p.morale && p.morale.enabled && (attrs.length ? attrs : p.ratings).some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
     grid.append(rat);
