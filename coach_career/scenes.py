@@ -281,6 +281,82 @@ CONTEXT = {
               "Hey. Yeah. Kind of a lot going on, Coach.",
               "Hi Coach. Sure. Make it quick if you can."],
 }
+# the transfer portal (the player's ask): the season is over and he has played college ball, so you open on his
+# portal entry and he talks about his last school ({from_name}), what he did there ({did}) and why he left
+PORTAL_OPEN = ["Hey {first}, Coach {coach} at {school}. Saw your name go in the portal. Got a minute?",
+               "{first}? Coach {coach}, {school}. I watched your tape from {from_name}. You have a minute?",
+               "Hey {first}. Coach {coach} over at {school}. I know your phone's blowing up, so I'll be quick."]
+PORTAL_AGAIN = ["{first}, Coach {coach} again. Where's your head at?",
+                "Hey {first}, Coach {coach}. Checking back in. How's the portal treating you?"]
+PORTAL_VISIT_OPEN = ["Appreciate you sitting down with me, {first}. I've watched a lot of your film from {from_name}.",
+                     "Thanks for making the time, {first}. I know a lot of schools want this meeting.",
+                     "Good to finally meet you, {first}. Let's talk about what's next after {from_name}."]
+# why he left, in his words: his role there (by usage) when nothing else drove it, else the driver
+PORTAL_WHY = {
+    "starter": ["I started {started} games at {from_name} last year, Coach. {did_cap}. I want to play for a winner now.",
+                "Yes sir. {did_cap} at {from_name}. I'm looking for the right fit for my last stretch."],
+    "rotation": ["I played in {games} games at {from_name}, but I was splitting time. I want the job outright.",
+                 "Yes sir. {did_cap} at {from_name}, mostly in a rotation. I know I can do more."],
+    "bench": ["I barely saw the field at {from_name}, Coach. I need somewhere I can actually play.",
+              "Honestly, Coach, I sat most of last year at {from_name}. I'm ready to show what I can do."],
+    "promised": ["They told me the job was mine at {from_name}, Coach. Then they gave it to somebody else.",
+                 "I was promised a starting spot at {from_name}. That didn't happen, so here I am."],
+    "deal": ["I'll be honest, Coach: {from_name} couldn't pay me what I'm worth. The money matters.",
+             "Yes sir. {did_cap} at {from_name}, and they didn't want to pay for it. So I'm listening."],
+    "slipping": ["{from_name} is going the wrong way, Coach. I want to win while I'm still in college.",
+                 "Yes sir. We lost too much at {from_name}. I want to play meaningful games."],
+    "better_coach": ["I need coaching, Coach. I wasn't getting better at {from_name}.",
+                     "Yes sir. I want a staff that develops guys. That wasn't happening at {from_name}."],
+}
+# the one who decides at a transfer's visit (persona.PORTAL_DECIDERS): about his move, not his first time from home
+PORTAL_DECIDER_LINES = {
+    "mom": ["He's been through a lot this year, Coach. I want this next move to be the right one.",
+            "We trusted the last staff, Coach. Tell me why this time is different.",
+            "I just want him somewhere he's happy again. Can you give him that?"],
+    "dad": ["He's done his time, Coach. What's his role on day one?",
+            "Straight answers this time, Coach. We got the sales pitch at {from_name}.",
+            "Don't tell me he'll compete. Tell me where he fits."],
+    "trainer": ["He's got film now, Coach. Let's talk about what that's worth.",
+                "Every school in the portal is calling. What's your number?",
+                "He produced at {from_name}. I need to see how {school} pays for that."],
+}
+# his stat line as words for {did}: the two numbers a fan quotes for his position (recruiting.LINE_KEYS)
+STAT_WORDS = {"pass_yards": "passing yards", "passing_touchdowns": "touchdown passes", "rush_yards": "rushing yards",
+              "rushing_touchdowns": "rushing touchdowns", "receptions": "catches", "receiving_yards": "receiving yards",
+              "receiving_touchdowns": "touchdown catches", "tackles": "tackles", "sacks": "sacks", "tackles_for_loss": "tackles for loss",
+              "interceptions": "interceptions", "passes_defended": "pass breakups", "field_goals_made": "field goals", "punts": "punts",
+              "carries": "carries", "snaps": "snaps"}
+
+
+def portal_fields(state: dict, p: dict) -> dict:
+    """The portal entrant's own fields for his lines: his last school, games and starts, {did} (his numbers in words, or
+    his games when he has none) and why he left (`why`: his driver, else his usage there)."""
+    line = p.get("line") or {}
+    stats = line.get("stats") or {}
+    keys = [k for k in stats if k in STAT_WORDS and k not in ("carries", "snaps", "interceptions_thrown")][:2]
+    games = line.get("games") or 0
+    if keys:
+        did = " and ".join(f"{stats[k]:,} {STAT_WORDS[k]}" for k in keys)
+        did = f"I had {did}"
+    elif games:
+        did = f"I played in {games} games"
+    else:
+        did = "I didn't get many snaps"
+    entry = ((state.get("offseason") or {}).get("portal") or {}).get("players", {}).get(p["id"]) or {}
+    driver = entry.get("driver")
+    why = driver if driver in PORTAL_WHY else (p.get("usage") if p.get("usage") in PORTAL_WHY else "rotation")
+    return {"from_name": p.get("from_name") or "my last school", "games": games, "started": line.get("started") or 0,
+            "did": did, "did_cap": did[:1].upper() + did[1:], "why": why, "has_did": bool(keys)}
+
+
+def portal_line(state: dict, p: dict, sid: str, f: dict) -> str:
+    """Why he left, in his words (its own seeded draw `portal-line-{sid}`): a starter with no starts on record reads as
+    the rotation line; a line that quotes his numbers only when he has numbers."""
+    why = f["why"] if not (f["why"] == "starter" and not f["started"]) else "rotation"
+    pool = [x for x in PORTAL_WHY[why] if f.get("has_did") or "{did" not in x] or PORTAL_WHY[why]   # his numbers only when he has some
+    return random.Random(f"portal-line-{sid}").choice(pool).format(**f)
+
+
 # your opening: the three things you lead your program with, as you say them
 PRESENT_SAID = ["Here's {school} in a nutshell: {x}, {y} and {z}.",
                 "Let me tell you what we're about at {school}: {x}, {y} and {z}.",
@@ -937,6 +1013,8 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     rng = random.Random(f"open-{rc['seed']}-{slug}-{pid}-{week}")
     f = _fields(state, slug, p, week)
     tired = recruiting.would_pester(state, slug, pid)
+    if rc.get("portal") and p.get("portal"):
+        return _open_portal(state, slug, pid, action, week, f, tired)
     turns = []
     if action == "hc_visit":
         turns.append(_turn("note", DECIDER_NOTE[persona.of(state, pid)["decider"]].format(**f)))
@@ -988,6 +1066,41 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
           "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired,
           "package": package_about(state, slug, pid) if story else None}      # his mate was brought up: the question after your opening
+    _lines(sc)
+    return sc
+
+
+def _open_portal(state: dict, slug: str, pid: str, action: str, week: int, f: dict, tired: bool) -> dict:
+    """A transfer's call or head coach visit: you open on his portal entry (no living room, no game last Saturday:
+    the season is over), he says why he left his last school, and at a visit the one who decides speaks. Its own
+    seeded draws (`portal-open-{sid}`, `portal-line-{sid}`); the high school scenes' draws never move."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    f = {**f, **portal_fields(state, p)}
+    sid = f"{action}-{pid}-{week}"                                   # the scene's id, as every scene's (the season's week)
+    pw = f"{sid}-{rc.get('week', 0)}"                                 # the portal's own week varies the draws
+    rng = random.Random(f"portal-open-{rc['seed']}-{pw}")
+    turns = []
+    d = persona.of(state, pid)
+    if action == "hc_visit":
+        turns.append(_turn("note", DECIDER_NOTE[d["decider"]].format(**f)))
+        turns.append(_turn("you", rng.choice(PORTAL_VISIT_OPEN).format(**f)))
+    else:
+        talked = bool(((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls"))
+        turns.append(_turn("you", rng.choice(PORTAL_AGAIN if talked else PORTAL_OPEN).format(**f)))
+    said = random.Random(f"portal-line-{pw}-tired").choice(CONTEXT["tired"]).format(**f) if tired else portal_line(state, p, pw, f)
+    contact = ((rc["contacts"].get(pid) or {}).get(slug) or {})
+    if heard_rival_due(state, slug, pid):
+        said = HEARD_RIVAL
+        contact.pop("heard_rival", None)
+    turns.append(_turn("him", said))
+    if action == "hc_visit":
+        if d["decider"] != "self":
+            fam = random.Random(f"portal-line-{pw}-family").choice(PORTAL_DECIDER_LINES.get(d["decider"]) or persona.DECIDER_LINES[d["decider"]]).format(**f)
+            turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
+        persona.learn(state, slug, pid, "decider")
+    sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired, "package": None}
     _lines(sc)
     return sc
 
