@@ -73,6 +73,16 @@ if __name__ == "__main__":
                 opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", "els => els.map(e => [e.dataset.topic, e.textContent])"))
                 assert "Not His Thing" in opts["nil"] and "Weak Case" in opts["coach"] and "He Lit Up" in opts["winning"] and "No Read" in opts["pro"], opts
                 assert not any(w in opts["prestige"] for w in ("Not His Thing", "Weak Case", "He Lit Up", "No Read")), "never pitched: no mark"
+                # Promise Him the Job's History lines: no "undefined" when nobody was ahead; a strain says what he heard
+                lines = page.evaluate("""() => window.Recruiting.parts.historyLines([
+                  {week: 3, kind: "answer", answer: "promise", job: true, truthful: true, pid: "x", school: "iowa", line: "You told him the job is his."},
+                  {week: 4, kind: "answer", answer: "promise", job: true, truthful: true, crowded: true, about: "Old Guy", pid: "x", school: "iowa"},
+                  {week: 5, kind: "promise_strained", pid: "x", school: "iowa", line: "Coach, I heard you told another kid the same thing."}], "iowa")""")
+                joined = " | ".join(lines)
+                assert "undefined" not in joined and "promise_strained" not in joined, lines
+                assert any("Promised him the job" in l and "did not buy it" not in l for l in lines[:1]) or any(l.endswith("Promised him the job") for l in lines), lines
+                assert any("did not buy it" in l for l in lines), lines
+                assert any("I heard you told another kid the same thing." in l for l in lines), lines
                 text = page.inner_text("body")
                 for bad in ("null", "undefined", "NaN"):
                     assert bad not in text, bad

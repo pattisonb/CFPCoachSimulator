@@ -123,7 +123,7 @@ def test_crowd_and_strain():
         recruiting.JOB_CROWD_DOUBT = saved
     assert abs(r["points"] - worth(st, b, recruiting.JOB_PRIORITY * recruiting.JOB_CROWD)) < 1e-9, r
     ca = st["recruiting"]["contacts"][a][ME]
-    assert recruiting.cooled(st, ME, a) and ca.get("heard_rival") == st["current_week"], ca
+    assert recruiting.cooled(st, ME, a) and ca.get("heard_rival") == recruiting.rival_stamp(st), ca
     assert any(e["kind"] == "promise_strained" and e["pid"] == a and e.get("line") == scenes.HEARD_RIVAL for e in st["recruiting"]["log"])
 
 
@@ -181,6 +181,43 @@ def test_heard_rival_line():
     st["recruiting"]["scenes"][ME].pop(a, None)
     sc3 = open_call(st, a)
     assert all(t["text"] != scenes.HEARD_RIVAL for t in sc3["turns"] if t["who"] == "him"), "said once"
+
+
+def test_no_second_promise_through_his_question():
+    """After a job promise, his question about a named player does not come up again, and answering "promise" to one
+    that is open is refused: one job promise per recruit, both ways."""
+    st = fresh()
+    pid = nobody_ahead(st)[0]
+    setup(st, pid)
+    sc = open_call(st, pid)
+    recruiting.act(st, ME, pid, "promise_job", scene=sc["id"])
+    for w in range(2, 12):
+        st["current_week"] = w
+        assert scenes.question(st, ME, pid, w) is None or scenes.question(st, ME, pid, w).get("kind") not in ("roster", "recruit")
+    st["recruiting"]["scenes"].setdefault(ME, {})[pid] = {"id": "s9", "action": "call", "week": st["current_week"],
+        "question": {"kind": "roster", "text": "x", "about": {"name": "A", "ovr": 0, "last_year": True, "cls": "SR"}, "answer": None, "reply": None}}
+    try:
+        recruiting.act(st, ME, pid, "answer", scene="s9", answer="promise")
+    except recruiting.RecruitingError as e:
+        assert e.code == 409, e
+    else:
+        raise AssertionError("a second roster promise through his question is refused")
+    assert len(roster_promises(st, pid)) == 1
+
+
+def test_heard_rival_in_the_portal():
+    """In the portal the season's week stands still: the heard-rival line reads the portal's own week."""
+    st = fresh()
+    a = nobody_ahead(st)[0]
+    rc = st["recruiting"]
+    c = recruiting._contact(st, ME, a)
+    rc["portal"], rc["week"] = True, 1
+    c["heard_rival"] = recruiting.rival_stamp(st)
+    rc["week"] = 2
+    assert scenes.heard_rival_due(st, ME, a), "a later portal week brings it up"
+    rc["week"] = 1
+    c["heard_rival"] = recruiting.rival_stamp(st)
+    assert not scenes.heard_rival_due(st, ME, a), "not the same week"
 
 
 if __name__ == "__main__":
