@@ -511,6 +511,9 @@
     return wrap;
   }
 
+  // a promised start, judged all season (coach_career/promises.py): On Track, Slipping, Broken
+  const PROMISE_TONE = { "On Track": "good", Slipping: "warn", Broken: "bad" };
+  const promiseChip = (p) => (p.promise ? el("span", { class: `dc-promise ${PROMISE_TONE[p.promise] || ""}`, title: `You promised him a starting role: ${p.promise}`, text: p.promise }) : null);
   // a player card, kept simple: portrait on a plain ground, a rule, his name and one line
   function card(p, opts = {}) {
     const flags = [p.injury ? "OUT" : "", p.redshirt && p.redshirt.on ? "RS" : ""].filter(Boolean);
@@ -524,6 +527,7 @@
           p.jersey ? el("span", { text: `#${p.jersey}` }) : null, el("span", { text: p.position }), el("span", { text: CLASS_LABEL[p.class] || p.class || "" }),
           movedFrom(p, "dc-card-was"),
           flags.length ? el("span", { class: "dc-card-flag", text: flags.join(" · ") }) : null,
+          promiseChip(p),
         ]),
         el("span", { class: `dc-card-ovr ${tier(p.overall)}`, title: `Overall ${p.overall}`, text: String(p.overall) }),
       ]),
@@ -599,6 +603,7 @@
       ...devStats(p),
       p.archetype ? stat("Type", p.archetype) : null,
       p.injury ? stat("Injury", `${p.injury.type}, ${p.injury.weeks_left}w`) : null,
+      p.promise ? stat("Promise", p.promise) : null,
       p.headline ? el("p", { class: "dc-muted dc-rail-copy", text: p.headline }) : null,
     ];
     if (row) {
@@ -689,7 +694,8 @@
         movable ? el("td", { class: "dc-grip", "aria-hidden": "true", title: "Drag to move him", text: "⠿" }) : null,
         el("td", { class: "dc-muted", text: p.in_role ? String(p.spot) : "–" }),
         el("td", { class: "left" }, [el("span", { class: "dc-table-player" }, [face(p, "head", "dc-chip-face"), el("span", { text: p.name }),
-          p.injury ? el("span", { class: "dc-flag bad", text: `OUT ${p.injury.weeks_left}w` }) : null, p.redshirt && p.redshirt.on ? el("span", { class: "dc-flag", text: "RS" }) : null])]),
+          p.injury ? el("span", { class: "dc-flag bad", text: `OUT ${p.injury.weeks_left}w` }) : null, p.redshirt && p.redshirt.on ? el("span", { class: "dc-flag", text: "RS" }) : null,
+          promiseChip(p)])]),
         el("td", {}, [p.position, movedFrom(p, "dc-was dc-row-was")]), el("td", { text: CLASS_LABEL[p.class] || p.class || "" }),
         el("td", { class: `num ${tier(p.rating)}`, text: String(p.rating) }),
         el("td", { class: "ph dc-muted", text: String(p.natural) }),
@@ -771,6 +777,7 @@
       ...devStats(p),
       p.archetype ? stat("Type", p.archetype) : null,
       p.injury ? stat("Injury", `${p.injury.type}, ${p.injury.weeks_left}w`) : null,
+      p.promise ? stat("Promise", p.promise) : null,
       p.headline ? el("p", { class: "dc-muted dc-rail-copy", text: p.headline }) : null,
       pos ? el("div", { class: "dc-panel-acts dc-panel-edit" }, [pos]) : null,
       el("div", { class: "dc-panel-acts" }, [...acts, playerLink(p)]),

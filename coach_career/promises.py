@@ -173,3 +173,42 @@ def bands(state: dict, year: int) -> dict[str, dict]:
         s = score(weeks, c["pos"], kind)
         out[slug] = {"band": band(s, kind), "score": s, "benched_big": benched_big(weeks), "personality": kind}
     return out
+
+
+# ----- during the season: the chip, and the first time he says it is slipping --------------------------------------------
+
+SLIPPING_LINE = "Coach, you told me this was my job."
+NEWS_AFTER = 2             # *tune* weeks that count before a slipping promise is news (one bad week is not a trend)
+
+
+def chips_now(state: dict) -> dict[str, str]:
+    """This season's promised players by slug: the chip for the record so far (On Track, Slipping, Broken)."""
+    from sim import season
+    rec = record(state).get(str(season.season_year(state))) or {}
+    out = {}
+    for slug, c in promised_now(state).items():
+        kind = personality_of(state, slug)
+        word = chip(band(score(rec.get(slug) or [], c["pos"], kind), kind))
+        if word:
+            out[slug] = word
+    return out
+
+
+def news(state: dict) -> list[dict]:
+    """One Program News item per promised player: the first week (NEWS_AFTER weeks counted or more) his promise read
+    Slipping or Broken, in his words."""
+    from sim import season
+    rec = record(state).get(str(season.season_year(state))) or {}
+    items = []
+    for slug, c in promised_now(state).items():
+        kind = personality_of(state, slug)
+        weeks = rec.get(slug) or []
+        for i in range(len(weeks)):
+            seen = weeks[:i + 1]
+            if sum(1 for w in seen if not w["injured"]) < NEWS_AFTER:
+                continue
+            if band(score(seen, c["pos"], kind), kind) in ("bent", "broken"):
+                items.append({"week": seen[-1]["week"], "kind": "promise", "slug": slug, "name": c["n"], "position": c["pos"],
+                              "line": SLIPPING_LINE})
+                break
+    return items

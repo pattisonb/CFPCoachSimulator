@@ -196,6 +196,32 @@ def test_promise_again_and_nil():
         assert pr.nil_mult(kind) == pr.PROMISE_NIL_MULT * mult
 
 
+# ----- Task 4: the chip and the first "Slipping" line -----
+
+def test_now_reads_so_far(st):
+    """The second-season career: the starter promised reads On Track, the bench player Slipping or Broken; the depth
+    chart's card and his player page carry the same word."""
+    from sim import season
+    qb, bench, _ = promise_two(st)
+    if len([w for w in pr.record(st)[str(season.season_year(st))].get(bench, []) if not w["injured"]]) < 2:
+        season.advance(st)
+        season.advance(st)
+    chips = pr.chips_now(st)
+    assert chips.get(qb) == "On Track" and chips.get(bench) in ("Slipping", "Broken"), chips
+    cards = {c["slug"]: c for c in season.depth_roster_view(st, st["team"])["players"]}
+    assert cards[bench]["promise"] == chips[bench] and cards[qb]["promise"] == "On Track"
+    assert season.player_profile(st, st["team"], slug=bench)["promise"] == chips[bench]
+
+
+def test_news_once(st):
+    from sim import season
+    items = [n for n in pr.news(st)]
+    mine = [n for n in items if n["slug"] == promise_two(st)[1]]
+    assert len(mine) == 1 and mine[0]["line"] == pr.SLIPPING_LINE and mine[0]["kind"] == "promise", mine
+    season.advance(st)
+    assert len([n for n in pr.news(st) if n["slug"] == mine[0]["slug"]]) == 1, "said once"
+
+
 if __name__ == "__main__":
     import inspect
     _sys.path.insert(0, str(_Path(__file__).resolve().parent))
