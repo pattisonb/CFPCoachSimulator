@@ -1154,18 +1154,20 @@ def _present_clear(state: dict, slug: str, pid: str, sc: dict, topics: list[str]
     sc["turns"].append(_turn("you", f"You pitched: {names[0]}, {names[1]} and {names[2]}."))
     if tired:
         kind = "tired"
-        sc["turns"].append(_turn("him", "No answer: he is tired of your contact this week."))
+        answer = "No answer: he is tired of your contact this week."
+        sc["turns"].append(_turn("him", answer))
     else:
         kind = "hit" if hits else "polite"
         st_ = recruiting.strengths(state, slug, pid)
-        sc["turns"].append(_turn("him", " · ".join(f"{_TOPIC_NAME.get(t, t)}: {'Yes' if t in hits else 'No'}" for t in topics)))
+        answer = " · ".join(f"{_TOPIC_NAME.get(t, t)}: {'Yes' if t in hits else 'No'}" for t in topics)
+        sc["turns"].append(_turn("him", answer))
         if hits:                                     # your program's grade on each Yes: where you stand on what he wants
             sc["turns"].append(_turn("note", "Your grades on his: " + ", ".join(f"{_TOPIC_NAME.get(t, t)} {int(round(100 * st_[t]))}" for t in hits) + "."))
         seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
         for t in hits:                               # a Yes is one of his priorities, and now you know it
             if t in rc["prospects"][pid]["priorities"] and t not in seen:
                 seen.append(t)
-    sc["cue"] = {"topics": [], "text": ""}
+    sc["cue"] = {"topics": [], "text": answer}     # his answer is the line the conversation turns on (the page marks it)
     if sc["action"] == "hc_visit":
         sc["turns"].append(_turn("note", ask_note(state, slug, pid, sc["ask"])))
     sc["question"] = question(state, slug, pid, sc["week"], sc.get("package"))
