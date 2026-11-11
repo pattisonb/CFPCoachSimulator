@@ -41,8 +41,12 @@ CASES = [
     ({"offered": True, "standing": {"pct": 0.05}, "list": [row("georgia", 1.0, True, 1), row(ME, 0.1, True, 2)]}, "Long Shot", "2nd on his list", "muted", "Long Shot"),
     ({"offered": False, "list": [row("georgia", 1.0, True, 1), row(ME, 0.4, False, 3)]}, "Not Offered", "3rd on his list · not offered", "muted", "Offer to be in it"),
     ({"offered": False, "list": [row("georgia", 1.0, True, 1)]}, "Not Offered", "Not on his list yet", "muted", None),
+    # an offer made this week waits for the week step (the player's ask): no Favorite until he reads it
+    ({"offered": True, "offer_landing": True, "standing": {"pct": 0.6}, "list": [row(ME, 1.0, False, 1), row("georgia", 0.5, True, 2)]}, "Offer Sent", "Leading his list · your offer lands at the week step", "warn", "He Reads It This Week"),
+    ({"offered": True, "offer_landing": True, "list": [row("georgia", 1.0, True, 1), row(ME, 0.95, False, 2)]}, "Offer Sent", "2nd on his list", "warn", "He Reads It This Week"),
+    ({"offered": True, "offer_landing": True, "list": [row("georgia", 1.0, True, 1)]}, "Offer Sent", "Not on his list yet", "warn", "He Reads It This Week"),
 ]
-WORDS = {"Yours", "Lost", "Favorite", "In It", "Long Shot", "Not Offered"}
+WORDS = {"Yours", "Lost", "Favorite", "Offer Sent", "In It", "Long Shot", "Not Offered"}
 TONES = {"good", "warn", "muted", "bad"}
 
 

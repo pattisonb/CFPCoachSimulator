@@ -738,6 +738,8 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (season.team_display(school, teams) if school else None),
         "pro": bool(st.get("pro")),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
+        # your offer is out but he hasn't read it yet: it lands at the week step (contact_week moves past it then)
+        "offer_landing": pid in rc["offers"].get(viewer, []) and (rc.get("offer_landing") or {}).get(pid) == recruiting.contact_week(state),
         "group": recruiting._group_of(p),
         "looks": looks_out(read), "scouted": recruiting.report_complete(read), "likes": staff_likes(state, pid, viewer),
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
