@@ -691,6 +691,9 @@ button.tiny { padding: 0 6px; font-size: 12px; line-height: 26px; min-height: 28
 .rating-row { display: grid; grid-template-columns: 110px 1fr 34px; gap: 8px; align-items: center; padding: 4px 0; font-size: 13px; }
 .rating-label { color: var(--muted); white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
 .rating-bar { height: 8px; background: var(--panel); overflow: hidden; }
+.rating-bar.has-pot { position: relative; cursor: help; }
+.rating-bar .rating-room { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--muted) 30%, transparent); }   /* his ceiling: the unfilled part */
+.rating-bar.has-pot .rating-fill { position: relative; }
 .rating-fill { height: 100%; background: var(--muted); }
 .rating-fill.mid { background: var(--accent); }
 .rating-fill.hi { background: var(--good); }

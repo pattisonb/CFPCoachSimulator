@@ -1862,7 +1862,7 @@
           const boost = a.boost ? el("span", { class: `boost ${a.boost > 0 ? "up" : "down"}`, text: `${a.boost > 0 ? "▲" : "▼"}${Math.abs(a.boost)}` }) : null;
           rat.append(el("div", { class: `rating-row ${editedAttrs.has(a.key) ? "edited" : ""} ${a.boost ? "boosted" : ""}` }, [
             el("span", { class: "rating-label", text: a.label, title: `${a.about}${editedAttrs.has(a.key) ? " (edited in god mode)" : ""}` }),
-            ratingBar(a.value),
+            ratingBar(a.value, a.potential),
             el("b", { class: "rating-num" }, [String(a.value), boost])]));
         }
       }
@@ -1969,12 +1969,15 @@
   }
 
   // A 1-99 rating as a bar: the fill is the value out of 100 (at least a sliver), colored by tier.
-  function ratingBar(value) {
+  // potential (Clear Mode, your own player): his ceiling there as the bar's unfilled part, light gray, its number on hover
+  function ratingBar(value, potential) {
     const pct = Math.max(2, Math.min(100, value));
     let tone = "lo";
     if (value >= 75) tone = "hi";
     else if (value >= 55) tone = "mid";
-    return el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]);
+    const room = potential != null && potential > value ? el("div", { class: "rating-room", style: `left:${pct}%;width:${Math.min(100, potential) - pct}%` }) : null;
+    return el("div", { class: `rating-bar${potential != null ? " has-pot" : ""}`, ...(potential != null ? { title: `Now ${value} · Potential ${potential}` } : {}) },
+      [room, el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]);
   }
 
   // A headline number with its label underneath (and an optional note), for rows of review tiles.

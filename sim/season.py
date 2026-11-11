@@ -3992,6 +3992,44 @@ def team_data(state: dict, slug: str) -> dict:
     return with_edits(load_teams()[slug], team_edits(state, slug))
 
 
+def attribute_ceilings(state: dict, slug: str) -> dict[str, dict[str, int]]:
+    """Clear Mode, your own roster: player slug -> {card attribute: how many points he can still grow there}, his card at
+    his potential (skills + the room each has left, league.potential) against his card now. The coach knows his players;
+    anyone else's stays hidden. {} without a career league or outside Clear Mode."""
+    if not (_clear_on() and slug and slug == state.get("team")):
+        return {}
+    key = (state.get("id"), season_year(state), state.get("current_week"), (state.get("offseason") or {}).get("stage"), slug,
+           len(state.get("player_edits") or {}))
+    if _CEILINGS.get("key") == key:                   # his ratings move only with a week, an offseason stage or an edit
+        return _CEILINGS["out"]
+    out = _attribute_ceilings(state, slug)
+    _CEILINGS.update(key=key, out=out)
+    return out
+
+
+_CEILINGS: dict = {}
+
+
+def _attribute_ceilings(state: dict, slug: str) -> dict[str, dict[str, int]]:
+    from coach_career import league as lg, prospects as pr
+    from teamdata import game_scale
+    lgd = state.get("league") or {}
+    roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
+    if not roster:                                    # the first season: the built-in league's players (league.from_base)
+        lgd = lg.from_base()
+        roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
+    if not roster:
+        return {}
+    attrs = lgd.get("attrs") or game_scale.keys()
+    out = {}
+    for c in roster:
+        who = {"ea_position": c["pos"], "position": c["pos"]}
+        now = pr.card_attributes(dict(zip(attrs, c["r"])), who)
+        top = pr.card_attributes(lg.potential(c, attrs), who)
+        out[c["id"]] = {k: max(0, top[k] - now.get(k, top[k])) for k in top}
+    return out
+
+
 def development_reads(state: dict, slug: str) -> dict[str, dict]:
     """player slug -> {"coachability": his level (recruits.COACHABILITY's words), "coach_level": 1
     (Coach's Dream) to 6 (Set in His Ways), "potential_word": the word for his projected overall at
@@ -4294,6 +4332,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     line = (ss.get("players") or {}).get(f"{name}|{position}")
     stats = dict(line["stats"]) if line else {}
     mf = morale_factor(state, team, name, position)
+    ceil = attribute_ceilings(state, team).get(p.get("slug"), {})      # Clear Mode: his room to grow per attribute
     base_p = next((x for x in teams[team]["offense"] + teams[team]["defense"] if x.get("slug") == p.get("slug")), p)
     ratings = [{"key": k, "label": lbl, "value": display_rating(p, k),
                 "boost": display_rating(p, k, max(1, min(99, round(p[k] * mf)))) - display_rating(p, k)}
@@ -4328,7 +4367,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         # ratings v2: the position's attributes, the measurables, play style and traits
         "attributes": [{"key": k, "label": ratings_v2.ATTRIBUTES[k][0], "group": ratings_v2.ATTRIBUTES[k][1],
                         "about": ratings_v2.ATTRIBUTES[k][2], "value": v,
-                        "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0}
+                        "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0,
+                        # Clear Mode, your own player: his ceiling there (the bar's unfilled part shows it)
+                        **({"potential": min(99, v + ceil[k])} if k in ceil else {})}
                        for k, v in (p.get("attributes") or {}).items() if k in ratings_v2.ATTRIBUTES],
         "height_in": p.get("height_in"), "archetype": p.get("archetype"),
         "traits": [{"key": tr["key"], "name": ratings_v2.TRAIT_INFO.get(tr["key"], (tr["key"], ""))[0],
