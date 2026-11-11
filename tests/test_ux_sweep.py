@@ -1210,7 +1210,7 @@ def test_conversation(page, base) -> None:
         assert page.is_hidden(f"{M} .go-opening-menu") and "0 of 3" in page.inner_text(f"{M} .go-opening-pick"), "the topics sit closed in one pill"
         page.click(f"{M} .go-opening-pick")
         chips = page.query_selector_all(f"{M} .go-opening-menu .go-present-chip")
-        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
+        assert len(chips) == 13 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
         time.sleep(0.3)
         seen = page.evaluate("""(m) => { const menu = document.querySelector(m + ' .go-opening-menu').getBoundingClientRect();
           const port = document.querySelector('.modal-scene .modal-body').getBoundingClientRect();

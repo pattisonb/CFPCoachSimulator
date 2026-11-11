@@ -430,3 +430,7 @@
 .go-lead-chip.on .go-tag, .go-lead-chip.on .go-mark { color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
 .go-lead-chip.cue .go-tag { border-color: var(--go-primary, var(--accent)); border-style: dashed; }
 .go-lead-field { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+
+/* What He Wants (the profile): his known priorities, each with your program's case */
+.go-wants { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.go-want { display: inline-flex; align-items: center; gap: 6px; }

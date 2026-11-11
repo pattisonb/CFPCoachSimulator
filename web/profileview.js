@@ -128,12 +128,18 @@
     // a trait the server says he does not have (has_<x> false, e.g. no commit style) is no row at all
     const keys = Object.keys(tr).filter((k) => !META.test(k) && typeof tr[k] !== "boolean" && !(k === "commit_style" && tr.has_style === false));
     const order = [...TRAIT_ORDER.filter((k) => k === "cares" || keys.includes(k)), ...keys.filter((k) => !TRAIT_ORDER.includes(k))];
-    return order.map((k) => {
+    return order.flatMap((k) => {
       if (k === "cares") {
         const known = tr.decider_topic ? names[tr.decider_topic] || titleCase(tr.decider_topic)
           : tr.decider && (opts.priorities || []).length ? opts.priorities.map((t) => names[t] || titleCase(t)).join(", ") : null;
         const h = known ? null : tr.decider ? "A call tells you what he cares about." : hint.decider || null;
-        return traitRow("cares", "Cares About", known, null, h);
+        const row = traitRow("cares", "Cares About", known, null, h);
+        if (!(opts.priorities || []).length || !opts.caseWord) return row;
+        // his known priorities beside your program's case on each (School Grades Phase 2: what he wants next to your grade)
+        const wants = el("div", { class: "pv-row go-wants-row", "data-trait": "wants" }, [el("span", { class: "pv-row-k go-trait-label", text: "What He Wants" }),
+          el("span", { class: "pv-row-v go-wants" }, opts.priorities.map((t) => { const w = opts.caseWord(t); return el("span", { class: "go-want" }, [
+            el("b", { text: names[t] || titleCase(t) }), w ? el("span", { class: `go-tag ${w === "Strong" ? "good" : w === "Weak" ? "bad" : ""}`, title: `Your program's case on ${(names[t] || t).toLowerCase()}`, text: w }) : null]); }))]);
+        return [row, wants];
       }
       const v = tr[k];
       const val = v == null ? null : typeof v === "string" ? v : v.label || String(v);

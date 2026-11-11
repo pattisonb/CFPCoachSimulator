@@ -27,6 +27,7 @@ if __name__ == "__main__":
     rc["board"].append(pid)
     for topic, reaction in (("nil", "polite"), ("coach", "quiet"), ("winning", "hit"), ("pro", "guarded")):
         rc["log"].append({"week": 1, "kind": "pitch", "pid": pid, "school": "iowa", "action": "call", "pitch": topic, "reaction": reaction})
+    rc["revealed"].setdefault("iowa", {})[pid] = list(rc["prospects"][pid]["priorities"][:2])   # he told you two of his priorities
     season.save_season(st)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
@@ -57,6 +58,11 @@ if __name__ == "__main__":
                 texts = [c[0] for c in card]
                 assert any("Not His Thing" in t for t in texts) and any("Weak Case" in t for t in texts), card
                 assert all(c[1] and c[1].endswith(".") for c in card), "each mark says why, as a sentence"
+                # What He Wants: his known priorities, each with your program's case in a word (School Grades Phase 2)
+                page.click(".go-pane .go-subtabs button[data-sub=profile]")
+                page.wait_for_selector(".go-pane [data-trait=wants]", timeout=30_000)
+                wants = page.eval_on_selector_all(".go-pane [data-trait=wants] .go-want", "els => els.map(e => [e.querySelector('b').textContent, (e.querySelector('.go-tag') || {}).textContent])")
+                assert len(wants) == 2 and all(w[1] in ("Strong", "Fair", "Weak") for w in wants), wants
                 page.click("#rc-recruit")
                 page.click(".go-menu .go-menu-item[data-action=message]")
                 page.wait_for_selector(".go-pane .go-step #rc-pitch")
