@@ -7,7 +7,7 @@ from coach_career import persona, programs, recruiting
 from sim import season
 
 if __name__ == "__main__":
-    assert "pro" in recruiting.PITCHES and recruiting.PITCHES.index("pro") == len(recruiting.PITCHES) - 2
+    assert "pro" in recruiting.PITCHES and recruiting.PITCHES.index("pro") == 6   # after the first seven-topic set; the School Grades topics follow academics
     for table in (recruiting.PRIORITY_ODDS, recruiting.PORTAL_PRIORITY_ODDS, recruiting.PORTAL_TOP_PRIORITY_ODDS):
         assert abs(sum(table.values()) - 1.0) < 1e-9 and table["pro"] > 0, table
     p = {"pro": 40, "pro_groups": {"OT": 80, "IOL": 40, "WR": 95, "EDGE": 70}}
@@ -24,9 +24,9 @@ if __name__ == "__main__":
     assert 0.0 <= recruiting.strengths(st, "army", wr)["pro"] <= 0.1, "no picks in ten years: the floor"
     assert abs(recruiting.strengths(st, "ohio-state", k)["pro"] - recruiting._logistic(recruiting.PRO_PULL_K * (programs.get(st, "ohio-state")["pro"] - 50) / 25)) < 0.01
     share = sum(1 for pr in rc["prospects"].values() if "pro" in pr["priorities"]) / len(rc["prospects"])
-    assert 0.22 <= share <= 0.38, share
+    assert 0.15 <= share <= 0.30, share          # pro is 8% of a first pick across thirteen topics (School Grades Phase 2), tilted up for five-stars and All Business
     first = sum(1 for pr in rc["prospects"].values() if pr["priorities"][0] == "pro") / len(rc["prospects"])
-    assert 0.07 <= first <= 0.13, first
+    assert 0.05 <= first <= 0.11, first          # 8% base odds, diluted a little by the other leans
     from coach_career import scenes
     assert scenes.PHRASES["pro"] == "getting to the league" and scenes.SAID_HONEST["pro"] == "a path to Sundays"
     assert all(k in scenes.LINES["pro"] and len(scenes.LINES["pro"][k]) == 3 for k in ("cue", "hit", "polite", "quiet"))

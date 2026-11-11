@@ -641,7 +641,7 @@ def flip_view(state: dict, pid: str, viewer: Optional[str] = None) -> Optional[d
     o = odds(state, pid, viewer=viewer)
     teams = season.load_teams()
     rivals = sorted((r for r in o["schools"] if r["school"] != st["committed"]), key=lambda r: -r["pct"])
-    total = round(min(1.0, sum(r["pct"] for r in rivals)), 4)
+    total = round(min(1.0, sum(round(r["pct"], 4) for r in rivals)), 4)      # the shares as shown, added: they always sum to the total
     return {"total": total, "word": "Locked In" if st.get("hard") else flip_word(total),
             "rivals": [{"school": r["school"], "name": teams[r["school"]]["name"], "pct": round(r["pct"], 4), "word": flip_word(r["pct"])} for r in rivals]}
 

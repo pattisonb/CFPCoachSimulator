@@ -14,6 +14,7 @@ Values marked *tune* are set by tools/check_recruiting.py against the real class
 """
 from __future__ import annotations
 
+import functools
 import math
 import random
 from functools import lru_cache
@@ -24,10 +25,19 @@ from teamdata import game_scale
 from coach_career import persona, recruits
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
-PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "pro", "academics")
+PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "pro", "academics",
+           "facilities", "location", "stability", "game_day", "exposure")   # School Grades Phase 2: the five campus grades are topics too
+NEUTRAL_PULL = 0.5                         # *tune* a grade topic's pull at a program the research has no row for
+LOCATION_MATCH = 0.15                      # *tune* Location's pull gains this for each tag (setting, climate) that matches his taste ...
+LOCATION_CLASH = 0.05                      # *tune* ... and loses this for each that does not
+ACADEMIC_FROM = 70                         # *tune* an Academics grade this high (Strong) makes a school academic (the Grades Scare)
+PLACE_SETTINGS = {"Big City": 0.30, "Mid-Size City": 0.20, "College Town": 0.35, "Small Town": 0.15}   # *tune* his taste in a setting
+WARM_STATES = set("AL AZ CA FL GA HI LA MS SC TX".split())
+COLD_STATES = set("IA ID IL IN MA ME MI MN MT ND NE NH NY OH PA SD VT WI WY".split())
+HOME_CLIMATE = 0.7                         # *tune* how often he wants the climate he grew up in
 # how often each topic is a prospect's priority (drawn without replacement for his top three) *tune*
-PRIORITY_ODDS = {"proximity": 0.18, "playing_time": 0.17, "prestige": 0.14, "winning": 0.13, "nil": 0.13,
-                 "coach": 0.10, "pro": 0.10, "academics": 0.05}
+PRIORITY_ODDS = {"proximity": 0.13, "playing_time": 0.13, "prestige": 0.10, "winning": 0.10, "nil": 0.10, "pro": 0.08, "coach": 0.07,
+                 "academics": 0.06, "facilities": 0.06, "location": 0.05, "stability": 0.04, "game_day": 0.04, "exposure": 0.04}
 PRIORITY_WEIGHTS = (0.35, 0.25, 0.15)      # his first, second and third priority; the rest share 0.25 *tune*
 OTHER_WEIGHT = 0.25
 PRO_PULL_K = 1.2                           # how steeply a Pro Pipeline grade away from 50 moves the Path to the League pull *tune*
@@ -149,8 +159,10 @@ FLAG_HOLD = 4.0                            # a flag found stays until the read m
 LOOK_LOG_KEEP = 30                         # the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 # the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
 PORTAL_WEEKS = 4
-PORTAL_PRIORITY_ODDS = {"playing_time": 0.40, "nil": 0.20, "winning": 0.15, "proximity": 0.10, "prestige": 0.07, "pro": 0.05, "coach": 0.03}
-PORTAL_TOP_PRIORITY_ODDS = {"nil": 0.30, "winning": 0.22, "playing_time": 0.18, "prestige": 0.12, "pro": 0.08, "proximity": 0.06, "coach": 0.04}
+PORTAL_PRIORITY_ODDS = {"playing_time": 0.34, "nil": 0.18, "winning": 0.13, "proximity": 0.08, "prestige": 0.06, "pro": 0.05, "stability": 0.04,
+                        "coach": 0.03, "exposure": 0.03, "facilities": 0.02, "location": 0.02, "academics": 0.01, "game_day": 0.01}
+PORTAL_TOP_PRIORITY_ODDS = {"nil": 0.25, "winning": 0.20, "playing_time": 0.16, "prestige": 0.10, "pro": 0.08, "exposure": 0.06, "proximity": 0.05,
+                            "coach": 0.03, "facilities": 0.02, "stability": 0.02, "academics": 0.01, "location": 0.01, "game_day": 0.01}
 PORTAL_TOP_TIER = 4                        # an entrant rated a four-star or better draws his priorities from PORTAL_TOP_PRIORITY_ODDS: the best transfers chase NIL and a contender
 PORTAL_NATIONAL = 40                       # the best entrants by portal rank are on every Power 4 board (the whole country chases them)
 PORTAL_STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "OL": 5, "DL": 4, "LB": 3, "CB": 2, "S": 2, "K": 1, "P": 1}   # a group's starters: an entrant better than the last of them is an upgrade, taken past the group's cap
@@ -286,10 +298,37 @@ def _home(p: dict) -> list[float]:
     return [towns[0][2], towns[0][3]] if towns and towns[0][2] is not None else [39.8, -98.6]
 
 
-def _priorities(pid: str, table: Optional[dict] = None) -> list[str]:
+TILT = 1.5                                 # *tune* each lean (who decides, personality, stars, position) multiplies a topic's odds by this
+TILTS = {                                  # the spec's Tilts: what each kind of kid leans toward
+    "decider": {"mom": ("proximity", "academics", "stability"), "dad": ("nil", "playing_time", "pro", "exposure"),
+                "grandma": ("proximity", "coach", "academics"), "hs_coach": ("stability",), "trainer": ("facilities", "exposure"),
+                "self": ("facilities", "game_day", "location")},
+    "personality": {"attention": ("exposure", "game_day"), "cocky": ("playing_time", "exposure"), "shy": ("proximity", "stability"),
+                    "guarded": ("stability", "coach"), "business": ("nil", "pro")},
+    "group": {"QB": ("coach", "exposure"), "OL": ("stability", "coach"), "RB": ("exposure", "game_day"), "WR": ("exposure", "game_day"),
+              "TE": ("exposure", "game_day")},
+}
+
+
+def tilt_for(p: dict, d: dict) -> dict[str, float]:
+    """His leans as multipliers on the priority odds (TILT each; leans on the same topic multiply): who decides, his
+    personality, his stars (a transfer's tier stands in) and his position group."""
+    out: dict = {}
+    def lean(topics):
+        for t in topics:
+            out[t] = out.get(t, 1.0) * TILT
+    lean(TILTS["decider"].get(d.get("decider"), ()))
+    lean(TILTS["personality"].get(d.get("personality"), ()))
+    stars = p.get("stars") or p.get("tier") or 0
+    lean(("nil", "exposure", "pro") if stars >= 5 else ("playing_time", "proximity") if stars in (2, 3) else ())
+    lean(TILTS["group"].get(_group_of(p) if (p.get("group") or p.get("ea_position")) else None, ()))
+    return out
+
+
+def _priorities(pid: str, table: Optional[dict] = None, tilt: Optional[dict] = None) -> list[str]:
     rng = random.Random(f"priorities-{pid}")
     table = table or PRIORITY_ODDS
-    topics, odds = list(table), list(table.values())
+    topics, odds = list(table), [v * (tilt or {}).get(t, 1.0) for t, v in table.items()]
     out = []
     for _ in range(3):
         t = rng.choices(topics, weights=odds)[0]
@@ -308,7 +347,7 @@ def start(state: dict, year: int = 2027) -> None:
     cls = recruits.generate_class(year, seed=state.get("rng_state", 0), taken=taken)
     prospects = {}
     for p in cls:
-        p["priorities"] = _priorities(p["id"])
+        p["priorities"] = _priorities(p["id"], None, tilt_for(p, persona.draw(p["id"], state.get("rng_state", 0))))
         p["home"] = _home(p)
         hideable = p["stars"] == 2 or (p["stars"] == 3 and p["composite"] < HIDDEN_BELOW)
         p["hidden"] = hideable and random.Random(f"hidden-{year}-{state.get('rng_state', 0)}-{p['id']}").random() < HIDDEN_RATE
@@ -330,7 +369,7 @@ def start(state: dict, year: int = 2027) -> None:
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
+        "boards": {}, "seed": state.get("rng_state", 0), "topics_v": 2, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
     state["recruiting"]["generational"] = draw_generational(state["recruiting"])
@@ -908,8 +947,54 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
         "nil": _logistic(1.4 * zn),
         "coach": min(1.0, max(0.0, 0.5 + 1.5 * _coach_edge(state, slug))),
         "pro": _logistic(PRO_PULL_K * (programs.pro_group_grade(pr, group) - 50) / 25),
-        "academics": 0.9 if slug in ACADEMIC else 0.5,
+        **_grade_pulls(state, slug, p),
     }
+
+
+def place_taste(p: dict) -> dict:
+    """Where he'd like to live: a setting and a climate, from his own seeded stream (stored nowhere, so an old save has it
+    too). The climate is the one he grew up in HOME_CLIMATE of the time."""
+    return dict(_taste(p["id"], (p.get("hometown") or {}).get("state")))
+
+
+@functools.lru_cache(maxsize=20000)
+def _taste(pid: str, home: Optional[str]) -> dict:
+    p = {"id": pid, "hometown": {"state": home}}
+    rng = random.Random(f"place-{p['id']}")
+    setting = rng.choices(list(PLACE_SETTINGS), weights=list(PLACE_SETTINGS.values()))[0]
+    home = (p.get("hometown") or {}).get("state")
+    grew = "Warm" if home in WARM_STATES else "Cold" if home in COLD_STATES else "Mild"
+    climate = grew if rng.random() < HOME_CLIMATE else rng.choice(["Warm", "Mild", "Cold"])
+    return {"setting": setting, "climate": climate}
+
+
+def _grade_pulls(state: dict, slug: str, p: dict) -> dict:
+    """The school grades as pulls (programs.grades / 100); Location also reads its tags against his taste. A program with
+    no grades reads NEUTRAL_PULL (Academics: the old ACADEMIC list)."""
+    from coach_career import programs
+    g = programs.grades(slug)
+    if g is None:
+        return {"academics": 0.9 if slug in ACADEMIC else 0.5, **{t: NEUTRAL_PULL for t in ("facilities", "location", "stability", "game_day", "exposure")}}
+    out = {t: g[t] / 100 for t in ("academics", "facilities", "location", "stability", "game_day", "exposure")}
+    tags, taste = programs.tags(slug) or {}, place_taste(p)
+    for k in ("setting", "climate"):
+        if tags.get(k):
+            out["location"] += LOCATION_MATCH if tags[k] == taste[k] else -LOCATION_CLASH
+    out["location"] = max(0.0, min(1.0, out["location"]))
+    return out
+
+
+def academic_schools() -> list[str]:
+    """Every academic school (academic()), sorted: the Grades Scare's list."""
+    from coach_career import programs
+    return sorted({s for s in set(programs.profile_rows()) | set(ACADEMIC) if academic(s)})
+
+
+def academic(slug: str) -> bool:
+    """An academic school (the Grades Scare's): an Academics grade of ACADEMIC_FROM or better; with no grades, the old list."""
+    from coach_career import programs
+    g = programs.grades(slug)
+    return slug in ACADEMIC if g is None else g["academics"] >= ACADEMIC_FROM
 
 
 _FORCED: dict = {}        # tests: (career, school, prospect, topic) -> strength
@@ -2153,7 +2238,7 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
         front, back = persona.board_front(state, slug)
         if front or back:
             board = list(dict.fromkeys([pid for pid in front if live(pid)] + board + [pid for pid in back if live(pid)]))
-        if rc.get("twists") and slug in ACADEMIC:      # a Grades Scare: the academic schools keep him off while it lasts
+        if rc.get("twists") and academic(slug):       # a Grades Scare: the academic schools keep him off while it lasts
             board = [pid for pid in board if not persona.scared_off(state, slug, pid)]
     rc["boards"][slug] = board
     if yours:
@@ -2347,7 +2432,7 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     for _ in range(max(0, weeks_left)):
         if f >= HARD_AT:
             break
-        keep *= 1 - flip_weekly(state, pid, gap, f)
+        keep *= 1 - min(1.0, flip_weekly(state, pid, gap, f))   # as a chance: a big rival lead never takes it over 1 (the odds stay non-negative)
         f = min(100, f + FIRM_TOUCH + FIRM_NIL)
     return 1 - keep
 
@@ -3015,7 +3100,8 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
              "ovr": c["o"], "pot_ovr": game_scale.overall(dict(zip(attrs, potential)), c["pos"]),
              "hidden": False, "group": group}
         p["tier"] = tier_of(p)
-        p["priorities"] = _priorities(pid, PORTAL_TOP_PRIORITY_ODDS if p["tier"] >= PORTAL_TOP_TIER else PORTAL_PRIORITY_ODDS)
+        p["priorities"] = _priorities(pid, PORTAL_TOP_PRIORITY_ODDS if p["tier"] >= PORTAL_TOP_TIER else PORTAL_PRIORITY_ODDS,
+                                      tilt_for(p, persona.draw(pid, seed, portal=True)))
         p["home"] = _home(p)
         p["nil_ask"] = nil_ask(p, year, seed)
         p["_sort"] = c["o"] + rng.gauss(0, PORTAL_RANK_NOISE)
@@ -3027,7 +3113,7 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
             "lists": {pid: {} for pid in prospects},
             "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
             "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-            "boards": {}, "seed": seed, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
+            "boards": {}, "seed": seed, "topics_v": 2, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
             "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {}}
 
 

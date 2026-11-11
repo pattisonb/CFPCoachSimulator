@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # a career with its recruiting class stays small enough to keep in the browser every week
     import json as _json
     size = len(_json.dumps(st["recruiting"], separators=(",", ":")))
-    assert size < 4_000_000, f"the recruiting class is {size / 1e6:.1f} MB"
+    assert size < 4_250_000, f"the recruiting class is {size / 1e6:.1f} MB"   # School Grades Phase 2's thirteen topics: about 4.03 MB (main was 3.97)
     assert len(career.export_save(st)) < 1_500_000, "a new career's save is over 1.5 MB"
     assert st["career"]["settings"]["auto_recruit"] is False and st["career"]["saved_week"] == 0
 

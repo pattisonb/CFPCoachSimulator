@@ -394,6 +394,129 @@ NEEDS = {
 }
 
 
+# ----- School Grades Phase 2: the five campus topics (facilities, location, stability, game day, exposure) ---------
+_G_PHRASES = {"facilities": "the facilities", "location": "where I'd be living", "stability": "a staff that sticks around",
+           "game_day": "the Saturday crowd", "exposure": "being on TV"}
+
+_G_LINES = {
+    "facilities": {
+        "cue": ["Honestly, Coach? I want to see the weight room. Where I train matters.",
+                "I like a nice building. I'm going to live in there for four years.",
+                "My trainer says the facilities tell you what a school thinks of its players."],
+        "hit": ["That building is crazy, Coach. I could live in there.",
+                "That weight room? That's where I want to be.",
+                "Okay, the facilities are real. I see it."],
+        "polite": ["Yeah, nice building. I just need a field and a weight room.",
+                   "That's cool. Facilities don't win games, though.",
+                   "Sure, Coach. Everybody's got a nice locker room now."],
+        "quiet": ["...It looked kind of old when I saw pictures.",
+                  "Other schools showed me their new buildings, Coach.",
+                  "I don't know. I was hoping for something newer."],
+    },
+    "location": {
+        "cue": ["I want to like where I live, too. Not just the stadium.",
+                "Weather matters to me, Coach. I'm being honest.",
+                "Where is it, really? Like, what's there to do?"],
+        "hit": ["I could see myself living there. For real.",
+                "That's my kind of place, Coach.",
+                "Yeah. I'd be happy there off the field too."],
+        "polite": ["The town's fine. I'm there to play.",
+                   "Yeah, sounds nice. Not a big deal for me.",
+                   "Okay. I'll be in the building most of the time anyway."],
+        "quiet": ["...I don't know if I'd like it out there.",
+                  "That's not really my kind of place, Coach.",
+                  "My mom asked what there is to do there. I didn't know."],
+    },
+    "stability": {
+        "cue": ["I want to know the staff will still be there when I'm a senior.",
+                "Coaches leave. I've seen it happen to guys I know.",
+                "My mom keeps asking if you're staying, Coach."],
+        "hit": ["That program doesn't run through coaches. That means something.",
+                "Same staff all four years? That's what I want.",
+                "Okay. I trust that you guys aren't going anywhere."],
+        "polite": ["Sure. Coaches move, though. That's football.",
+                   "I hear you. I'll worry about that later.",
+                   "Okay, Coach. Everybody says they're staying."],
+        "quiet": ["...You've had a lot of coaches come through there.",
+                  "My dad says that staff changes every couple years.",
+                  "I don't know who I'd be playing for in two years."],
+    },
+    "game_day": {
+        "cue": ["I want to play in front of a real crowd. Loud.",
+                "Saturdays, Coach. I want the whole town there.",
+                "I went to a game somewhere and the place was shaking. I want that."],
+        "hit": ["That crowd is loud. I felt it on my visit.",
+                "Running out in front of all those people? I'm in.",
+                "That's a real Saturday, Coach."],
+        "polite": ["Crowds are cool. I just want to play.",
+                   "Yeah, sounds fun. Not my first thing.",
+                   "Sure. I'll play in front of anybody."],
+        "quiet": ["...The stands looked kind of empty on TV.",
+                  "I want a louder place than that, Coach.",
+                  "I don't know. It didn't feel like much of a game day."],
+    },
+    "exposure": {
+        "cue": ["I want to be on TV. People back home want to watch me.",
+                "Big games, national TV. That's how you get seen.",
+                "My trainer says exposure is everything for the draft and NIL."],
+        "hit": ["Prime time every week? Let's go.",
+                "Everybody back home could watch. That's big.",
+                "That's the stage, Coach. I want it."],
+        "polite": ["TV's cool. I just want to play well.",
+                   "Yeah, sure. Film is film.",
+                   "Okay. If I play good, they'll find me."],
+        "quiet": ["...My grandma can't even find your games on TV.",
+                  "Other schools are on national TV every week, Coach.",
+                  "I don't know. Nobody back home watches your games."],
+    },
+}
+
+_G_LEAD_LINES = {"facilities": "Come see the building, {first}. Everything you need to get better is under one roof.",
+              "location": "You'd love living here, {first}. It's a great place to be for four years.",
+              "stability": "This program keeps its coaches, {first}. The people recruiting you are the ones who'd coach you.",
+              "game_day": "Wait until you feel a Saturday here. The place is packed and loud.",
+              "exposure": "We're on TV every week. Everybody back in {town} would see you play."}
+_G_LEAD_HONEST = {"facilities": "We don't have the newest building, but we've got everything you need to get better.",
+               "location": "It's not for everybody, {first}, but our guys end up loving it here.",
+               "stability": "We've had some changes, I won't hide that. I'm here to build this, and I want you in it.",
+               "game_day": "We're still growing the crowd. Come give them a reason to pack it.",
+               "exposure": "We're not on national TV every week yet. Play like I think you will and they'll find you."}
+_G_HONEST_HIT = {"facilities": ["Everything I need? Okay. That's fair, Coach.",
+                             "Not the newest, but I'd get better there. I like that."],
+              "location": ["Guys end up loving it? Okay. I could see that.",
+                           "Not my first pick for a town, but I'd be okay there."],
+              "stability": ["At least you're honest about it, Coach.",
+                            "Okay. If you're staying, that's what matters."],
+              "game_day": ["Give them a reason? I like that, Coach.",
+                           "Okay. I could be the guy who fills it up."],
+              "exposure": ["If I play good, they'll find me. I believe that.",
+                           "Okay. I'll make them put me on TV."]}
+_G_SAID_HONEST = {"facilities": "everything you need to get better", "location": "a place our guys end up loving",
+               "stability": "a staff building something together", "game_day": "a crowd you can help grow",
+               "exposure": "a stage you can earn"}
+# claim lines (by template) -> the truth key
+_G_NEEDS = {"That building is crazy, Coach. I could live in there.": "facilities",
+         "That weight room? That's where I want to be.": "facilities",
+         "Okay, the facilities are real. I see it.": "facilities",
+         "That program doesn't run through coaches. That means something.": "stability",
+         "Same staff all four years? That's what I want.": "stability",
+         "That crowd is loud. I felt it on my visit.": "game_day",
+         "That's a real Saturday, Coach.": "game_day",
+         "Prime time every week? Let's go.": "exposure",
+         "Everybody back home could watch. That's big.": "exposure",
+         "That's the stage, Coach. I want it.": "exposure",
+         "That's my kind of place, Coach.": "location"}
+
+PHRASES.update(_G_PHRASES)
+LINES.update(_G_LINES)
+LEAD_LINES.update(_G_LEAD_LINES)
+LEAD_HONEST.update(_G_LEAD_HONEST)
+HONEST_HIT.update(_G_HONEST_HIT)
+SAID_HONEST.update(_G_SAID_HONEST)
+NEEDS.update(_G_NEEDS)
+GRADE_TOPICS = tuple(_G_PHRASES)              # the campus topics your lines may claim at CLAIM_FROM (truth)
+
+
 def facts(state: dict, slug: str, week: int | None = None) -> dict:
     """What the game knows about the school, for the lines that claim something: this season's record
     (w, l) and conference record (cw, cl), the last game (`last_won`, None before one) and the streak
@@ -439,7 +562,7 @@ def truth(state: dict, slug: str, pid: str, week: int | None = None) -> dict:
     Seat twist about you). `form` and `facts` ride along."""
     fx = facts(state, slug, week)
     st_ = recruiting.strengths(state, slug, pid)
-    out = {t: st_[t] >= CLAIM_FROM for t in ("proximity", "playing_time", "prestige", "nil", "academics", "pro")}
+    out = {t: st_[t] >= CLAIM_FROM for t in ("proximity", "playing_time", "prestige", "nil", "academics", "pro") + GRADE_TOPICS}
     out.update(pro_truth(state, slug, pid, out["pro"]))
     tw = persona._twist(state, pid)
     out.update(winning=fx["form"] in ("hot", "winning", "pre_up"), history=fx["history"],

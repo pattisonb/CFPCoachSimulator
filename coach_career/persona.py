@@ -14,12 +14,15 @@ PERSONALITY_LABEL = {"cocky": "Cocky", "shy": "Shy", "guarded": "Guarded", "atte
 DECIDERS = {"self": 0.30, "mom": 0.20, "dad": 0.15, "grandma": 0.10, "hs_coach": 0.15, "trainer": 0.10}   # who decides, by share *tune*
 DECIDER_LABEL = {"self": "Himself", "mom": "Mom", "dad": "Dad", "grandma": "Grandmother", "hs_coach": "High School Coach", "trainer": "Trainer"}
 PORTAL_DECIDERS = ("self", "mom", "dad", "trainer")   # a transfer's decider: no high school coach or grandmother (their shares renormalized)
-DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
-                  "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}   # what each decider cares about
-_TOPICS_BEFORE_PRO = {d: tuple(t for t in ts if t != "pro") for d, ts in DECIDER_TOPICS.items()}   # the tuples the first draw reads, so a saved class keeps its topics
+_TOPICS_BEFORE_GRADES = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
+                         "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}
+DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics", "stability"), "dad": ("nil", "playing_time", "pro", "exposure"),
+                  "grandma": ("proximity", "coach", "academics"), "hs_coach": ("coach", "playing_time", "winning", "pro", "stability"),
+                  "trainer": ("nil", "pro", "facilities", "exposure")}   # what each decider cares about (School Grades Phase 2 added the campus grades)
+_TOPICS_BEFORE_PRO = {d: tuple(t for t in ts if t != "pro") for d, ts in _TOPICS_BEFORE_GRADES.items()}   # the tuples the first draw reads, so a saved class keeps its topics
 
 
-def draw(pid: str, seed, portal: bool = False) -> dict:
+def draw(pid: str, seed, portal: bool = False, grades: bool = True) -> dict:
     """His personality, decider and the decider's topic (None when he decides himself). A transfer in
     the portal (`portal`) keeps the same personality draw; his decider comes from its own stream and
     only PORTAL_DECIDERS, so the class draw never moves."""
@@ -31,14 +34,20 @@ def draw(pid: str, seed, portal: bool = False) -> dict:
         decider = rng.choices(PORTAL_DECIDERS, weights=[DECIDERS[d] for d in PORTAL_DECIDERS])[0]
     topics = DECIDER_TOPICS[decider]
     topic = rng.choice(_TOPICS_BEFORE_PRO[decider]) if topics else None      # the draw as it was before Pro Pipeline
-    if "pro" in topics and random.Random(f"persona-pro-{seed}-{pid}").random() < 1 / len(topics):
+    old = _TOPICS_BEFORE_GRADES[decider]
+    if "pro" in old and random.Random(f"persona-pro-{seed}-{pid}").random() < 1 / len(old):
         topic = "pro"                                                      # its own stream: Path to the League takes its share
+    new = tuple(t for t in topics if t not in old) if grades else ()      # a class from before the campus topics keeps its old pick
+    if new:                                                                # the campus grades take their share, in their own stream
+        g = random.Random(f"persona-grades-{seed}-{pid}")
+        if g.random() < len(new) / len(topics):
+            topic = g.choice(new)
     return {"personality": personality, "decider": decider, "decider_topic": topic}
 
 
 @lru_cache(maxsize=20000)
-def _drawn(pid: str, seed, portal: bool = False) -> dict:
-    return draw(pid, seed, portal)
+def _drawn(pid: str, seed, portal: bool = False, grades: bool = False) -> dict:
+    return draw(pid, seed, portal, grades)
 
 
 def of(state: dict, pid: str) -> dict:
@@ -46,7 +55,7 @@ def of(state: dict, pid: str) -> dict:
     otherwise his fixed draw (the portal's for a transfer), cached in memory and not written into the state."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0), bool(rc.get("portal")))
+    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0), bool(rc.get("portal")), rc.get("topics_v") == 2)
 
 
 # ----- what the personality and the decider change in recruiting --------------------------------------
@@ -1105,7 +1114,7 @@ def twist_mult(state: dict, slug: str, pid: str, pitch) -> float:
         return HOT_SEAT_PITCH
     if tw["k"] == "grades" and pitch == "academics":
         from coach_career import recruiting
-        return GRADES_PITCH if slug not in recruiting.ACADEMIC else 1.0
+        return GRADES_PITCH if not recruiting.academic(slug) else 1.0
     return 1.0
 
 
@@ -1115,7 +1124,7 @@ def scared_off(state: dict, slug: str, pid: str) -> bool:
     if not tw or tw["k"] != "grades" or slug == state.get("team"):
         return False
     from coach_career import recruiting
-    return slug in recruiting.ACADEMIC
+    return recruiting.academic(slug)
 
 
 def knock_back(state: dict, slug: str, pid: str, action: str) -> None:
@@ -1285,9 +1294,9 @@ def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
         rc.setdefault("moved", {})[pid] = {"state": st_, "city": city, "home": home}
         return {"k": kind, "s": None, "w": 1}, f"His family moved to {city}, {st_}."
     if kind == "grades":                         # the academic AI schools drop him (their offers too) while it lasts
-        if not any(s != me and (s in offered or pid in (rc["boards"].get(s) or ())) for s in recruiting.ACADEMIC):
+        if not any(s != me and (s in offered or pid in (rc["boards"].get(s) or ())) for s in recruiting.academic_schools()):
             return None                          # no academic school is after him: nothing to scare off
-        for s in sorted(recruiting.ACADEMIC):
+        for s in recruiting.academic_schools():
             if s == me:
                 continue
             board = rc["boards"].get(s)

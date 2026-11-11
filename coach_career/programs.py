@@ -416,6 +416,17 @@ def fill_score(crowd, capacity) -> float:
 
 
 def grades(slug: str) -> Optional[dict]:
+    """The six grades (cached: Phase 1's grades are fixed, read from the profile file); None with no profile row."""
+    if slug not in _GRADES:
+        _GRADES[slug] = _grades(slug)
+    g = _GRADES[slug]
+    return dict(g) if g is not None else None
+
+
+_GRADES: dict = {}
+
+
+def _grades(slug: str) -> Optional[dict]:
     """The six grades, 0-100 (0.1), from the profile; None for a program with no profile row (a fictional or new one)."""
     f = profile_rows().get(slug)
     if f is None:
@@ -438,6 +449,17 @@ def grades(slug: str) -> Optional[dict]:
 
 
 def tags(slug: str) -> Optional[dict]:
+    """Location's tags (cached, like grades)."""
+    if slug not in _TAGS:
+        _TAGS[slug] = _tags(slug)
+    t = _TAGS[slug]
+    return dict(t) if t is not None else None
+
+
+_TAGS: dict = {}
+
+
+def _tags(slug: str) -> Optional[dict]:
     """Location's tags: the setting (Big City, Mid-Size City, College Town, Small Town), the climate (Warm, Mild, Cold) and
     the region (South, Midwest, West, Northeast); None for a program with no profile row."""
     f = profile_rows().get(slug)

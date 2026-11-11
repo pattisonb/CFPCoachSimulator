@@ -83,17 +83,24 @@ def second_season():
 
 
 def promise_two(st):
-    """Promise the starting QB and a bench player this season; return their slugs."""
+    """Promise the starting QB and a bench player this season; return their slugs. The same pair test to test (a later
+    test reads the record an earlier one built, and injuries move who is in the game)."""
     from sim import season
     me, year = st["team"], season.season_year(st)
+    if st.get("_test_two"):
+        return st["_test_two"]
     t = season._preview_team(st, me)
     rows = t["offense"] + t["defense"]
-    qb = next(p for p in rows if p["position"] == "QB" and p.get("in_game"))
-    bench = next(p for p in rows if not p.get("in_game") and p["position"] not in ("K", "P"))
     roster = {c["id"]: c for c in st["league"]["teams"][me]["roster"]}
+    starters = [p for p in rows if p.get("in_game")]
+    # the starting QB; while he is hurt, a starter already promised (the same one test to test), else any starter
+    qb = next((p for p in starters if p["position"] == "QB"), None) \
+        or next((p for p in starters if (roster.get(p["slug"]) or {}).get("promised") == year), None) or starters[0]
+    bench = next(p for p in rows if not p.get("in_game") and p["position"] not in ("K", "P"))
     for slug in (qb["slug"], bench["slug"]):
         roster[slug]["promised"] = year
-    return qb["slug"], bench["slug"], bench
+    st["_test_two"] = (qb["slug"], bench["slug"], bench)
+    return st["_test_two"]
 
 
 def test_snapshot_records_each_week(st):

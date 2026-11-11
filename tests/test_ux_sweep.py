@@ -26,7 +26,11 @@ OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
 
 
 def lead(page, scope, topic):
-    """Pick what you lead with from the lead-with pill (opens it if closed)."""
+    """Pick what you lead with from the lead-with pill (opens it if closed). His question waits first (the pill is locked
+    until you answer): answer it straight, as a player must."""
+    if page.query_selector(f"{scope} .go-answer[data-answer=straight]"):
+        page.click(f"{scope} .go-answer[data-answer=straight]")
+        page.wait_for_selector(f"{scope} .go-answer", state="detached", timeout=10_000)
     if page.is_hidden(f"{scope} .go-lead-menu"):
         page.click(f"{scope} .go-lead-pick")
     page.click(f"{scope} .go-lead-menu .go-lead-chip[data-topic='{topic}']")
@@ -170,7 +174,8 @@ def assert_chance_order(page, board: list, me: str) -> None:
 
 
 PITCH = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
-         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League"}
+         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League",
+         "facilities": "Facilities", "location": "Location", "stability": "Stability", "game_day": "Game Day", "exposure": "Exposure"}
 REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet", "tired": "He is tired of this", "guarded": "He gave nothing away"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
@@ -1210,7 +1215,7 @@ def test_conversation(page, base) -> None:
         assert page.is_hidden(f"{M} .go-opening-menu") and "0 of 3" in page.inner_text(f"{M} .go-opening-pick"), "the topics sit closed in one pill"
         page.click(f"{M} .go-opening-pick")
         chips = page.query_selector_all(f"{M} .go-opening-menu .go-present-chip")
-        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
+        assert len(chips) == 13 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
         time.sleep(0.3)
         seen = page.evaluate("""(m) => { const menu = document.querySelector(m + ' .go-opening-menu').getBoundingClientRect();
           const port = document.querySelector('.modal-scene .modal-body').getBoundingClientRect();

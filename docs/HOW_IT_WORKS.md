@@ -881,8 +881,20 @@ plays exactly as before; recruiting never changes how games play (the engine fin
 unchanged).
 
 **The class.** `recruits.generate_class(2027)` (above): 4,092 fictional seniors, nobody
-committed at the start. Each gets three priorities from seven topics (close to home, playing
-time, prestige, winning now, NIL, the coach, academics), drawn with fixed odds.
+committed at the start. Each gets three priorities from thirteen topics (close to home, playing
+time, prestige, winning now, NIL, the coach, Path to the League, academics, and since School Grades Phase 2 facilities,
+location, stability, game day and exposure), drawn from `PRIORITY_ODDS` (the portal's from `PORTAL_PRIORITY_ODDS`, a
+four-star-or-better transfer's from `PORTAL_TOP_PRIORITY_ODDS`). His leans multiply those odds before the draw, `TILT`
+(1.5) each (`tilt_for`):
+
+- Who decides: Mom adds stability to her proximity and academics, Dad exposure, the high school coach stability, the
+  trainer facilities and exposure, and a kid who decides himself leans facilities, game day and location.
+- His personality.
+- His stars: a five-star leans NIL, exposure and pro; a two- or three-star leans playing time and proximity.
+- His position: a quarterback leans coach and exposure, an offensive lineman stability and coach, a skill player
+  exposure and game day.
+
+A save keeps the priorities its prospects already drew. Each topic outside his three counts `OTHER_WEIGHT / 10`.
 
 **What pulls a prospect to a school** (each 0-1): distance from his home (`exp(-miles / 300)`),
 playing time (returning players at his position rated at least as high), prestige and NIL
@@ -1892,7 +1904,18 @@ Location also carries three tags (`programs.tags`):
 - The climate: Warm at 50°F in January, Mild at 35°F, else Cold.
 - The region: South, Midwest, West or Northeast.
 
-The constants are `*tune*` in `coach_career/programs.py`. In Phase 1 nothing reads the grades. The rating, the tiers,
+The constants are `*tune*` in `coach_career/programs.py`. Since Phase 2, recruits read the grades:
+
+- Each new grade is a recruiting pull (`grade / 100`), and Academics reads its grade in place of the old yes/no list.
+- Location's pull gains `LOCATION_MATCH` (0.15) for each tag (setting, climate) that matches his taste and loses
+  `LOCATION_CLASH` (0.05) for each that doesn't. His taste is `place_taste`: a seeded setting, and the climate he grew
+  up in 70% of the time.
+- A program with no grades reads a neutral 0.5.
+- The Grades Scare's academic schools are those with Academics 70 (Strong) or better.
+- The scenes talk about each topic, and a claim line shows only at Strong.
+- His profile's What He Wants row puts each priority he has told you beside your program's case.
+
+The rating, the tiers,
 the AD's goals and the market are unchanged, and Market stays its own reading; Game Day and Exposure are its two
 parts. The Programs tab groups School Grades into **Football** (Prestige, Winning, Coach, Stability, Conference, Pro
 Pipeline) and **Campus** (Academics, Facilities, Location with its tags, Game Day, Exposure, NIL). The Every Program

@@ -8,7 +8,8 @@
   "use strict";
   const { el } = window.CFP;
   const PITCH_NAMES = { proximity: "Close to Home", playing_time: "Playing Time", prestige: "Program Prestige", winning: "Winning Now",
-                        nil: "NIL", coach: "The Head Coach", academics: "Academics", pro: "Path to the League" };
+                        nil: "NIL", coach: "The Head Coach", academics: "Academics", pro: "Path to the League",
+                        facilities: "Facilities", location: "Location", stability: "Stability", game_day: "Game Day", exposure: "Exposure" };
   const GROUP_NAMES = { athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ",
                         potential: "Potential", coachability: "Coachability" };
   const STATUS = [["", "Any Status"], ["interested", "Interested in You"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
@@ -772,7 +773,7 @@
     const notes = {};
     if (storyTip(tr)) notes.story = storyTip(tr);
     if (tr.style_key && STYLE_TIPS[tr.style_key]) notes.commit_style = STYLE_TIPS[tr.style_key];
-    const traits = PV().traitsCard(tr, (p && p.trait_hints) || {}, { pitchNames: PITCH_NAMES, priorities: b.priorities_known, notes, extra: happened ? [happened] : null });
+    const traits = PV().traitsCard(tr, (p && p.trait_hints) || {}, { pitchNames: PITCH_NAMES, priorities: b.priorities_known, caseWord: (t) => caseWord(b, t), notes, extra: happened ? [happened] : null });
     if (!p) return PV().grid([traits, PV().card("Background", [el("p", { class: "muted go-loading", text: "Loading his profile…" })], { key: "background" })]);
     const pub = p.public;
     const looks = Math.min(3, p.looks || 0);
