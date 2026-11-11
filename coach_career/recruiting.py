@@ -821,11 +821,21 @@ def needs_detail(state: dict, slug: str) -> dict[str, dict]:
         st = rc["status"][pid]
         if not st["signed"] and st["committed"] in (None, slug):
             board[_group_of(rc["prospects"][pid])] += 1
+    # in the portal your high school class has signed and sits on next year's roster (so in `back`): `signees` names
+    # them apart, so the page never reads "0 committed" with a class signed
+    signees = {g: 0 for g in offseason.TARGET}
+    last = state.get("recruiting_last") if is_portal(state) else None
+    for pid, st in ((last or {}).get("status") or {}).items():
+        q = (last.get("prospects") or {}).get(pid)
+        if q and st.get("signed") == slug:
+            signees[_group_of(q)] = signees.get(_group_of(q), 0) + 1
     out = {}
     for g, target in offseason.TARGET.items():
         c = commits[g]
-        out[g] = {"target": target, "back": max(0, target - need[g] - c), "commits": c, "firm": min(c, firm[g]), "soft": c - min(c, firm[g]),
-                  "board": board[g], "offers": offers[g], "need": need[g]}
+        back = max(0, target - need[g] - c)
+        out[g] = {"target": target, "back": back, "commits": c, "firm": min(c, firm[g]), "soft": c - min(c, firm[g]),
+                  "board": board[g], "offers": offers[g], "need": need[g],
+                  **({"portal": True, "signees": min(back, signees.get(g, 0))} if last is not None else {})}
     return out
 
 

@@ -2885,7 +2885,7 @@
         el("td", { class: "ph", text: g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral" }),
         el("td", { class: g.played ? (g.won ? "win" : "loss") : "muted", text: g.played ? (g.won ? "W" : "L") : "—" }),
         el("td", { class: "score", text: g.played ? `${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""}` : "" }),
-        el("td", { class: "muted small-text ph", text: g.has_box ? "box score" : g.real ? "real result" : "" }),
+        el("td", { class: "muted small-text ph", text: g.has_box ? "Box Score" : g.real ? "Real Result" : "" }),
       ]);
       if (g.has_box) tr.addEventListener("click", () => openBox(g.event_id));
       table.appendChild(tr);

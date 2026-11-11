@@ -29,7 +29,11 @@ if __name__ == "__main__":
     print("The Game:", before["text"], "->", after["text"], "|", line["headline"])
     sched = season.team_schedule(st, "michigan")
     row = next(x for x in sched if x["opponent"] == "ohio-state")
-    assert row["rivalry"] and row["rivalry"]["series"] == before["text"], row["rivalry"]
+    assert row["rivalry"] and row["rivalry"]["series"] == after["text"], "a played game shows the series with it: " + str(row["rivalry"])
+    # a new rivalry (a custom program's, no series before this season) reads First meeting until it is played
+    fresh = {"teams": ["michigan", "ohio-state"], "name": "M vs. O", "trophy": "", "series": {}}
+    assert season.rivalry_series(st, fresh, before_week=1)["text"] == "First meeting"
+    assert season.rivalry_series(st, fresh)["text"].endswith("leads 1-0"), season.rivalry_series(st, fresh)["text"]
     view = season.rivalries_view(st, "michigan")
     names = [r["name"] for r in view["rivalries"]]
     assert "The Game" in names and "Paul Bunyan Trophy" in [r["trophy"] for r in view["rivalries"]]

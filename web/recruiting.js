@@ -457,7 +457,7 @@
       any = true;
       const short = r.need > 0, covered = mode === "board" || mode === "offers" ? (short && (mode === "board" ? r.board : r.offers) >= r.need) : mode !== "need" && mode !== "left" && !short;
       const b = el("button", { type: "button", class: `go-chip small ${picked === g ? "on" : ""} ${short && !covered ? "short" : "full"}`, "aria-pressed": String(picked === g),
-        text: needText(mode, g, r), title: `${g}: ${r.target} on a healthy roster · ${r.back} coming back · ${r.commits} committed (${r.firm} hard) · ${r.board} on your board · ${r.offers} offers out · ${r.need > 0 ? `${r.need} still to fill` : "covered"}` });
+        text: needText(mode, g, r), title: needTitle(g, r, r.need > 0) });
       b.addEventListener("click", () => onPick(picked === g ? null : g));
       wrap.append(b);
     }
@@ -2053,6 +2053,15 @@
     }
   }
 
+  // a need's hover: in the portal, your signed high school class is on next year's roster, so it is named apart from
+  // the players returning and the commits are transfers (never "0 committed" with a class signed)
+  function needTitle(g, r, short) {
+    const who = r.portal
+      ? `${r.back - (r.signees || 0)} returning · ${r.signees || 0} signed from high school · ${r.commits} transfer commit${r.commits === 1 ? "" : "s"}`
+      : `${r.back} coming back · ${r.commits} committed (${r.firm} hard)`;
+    return `${g}: ${r.target} on a healthy roster · ${who} · ${r.board} on your board · ${r.offers} offers out · ${short ? `${r.need} still to fill` : "covered"}`;
+  }
+
   // ----- Prospects ---------------------------------------------------------------------------------
   // The class as a database (web/prospects.css), built from the player's mockup: the header (Prospects · Class of YYYY, a
   // count line, the class by star level), then the list card (Your Needs chips, the filters, the table) beside a side column
@@ -2255,7 +2264,7 @@
         const short = r.need > 0;
         const b = el("button", { type: "button", class: `go-chip small pr-need ${short ? "short" : "full"} ${f.group === g ? "on" : ""}`, "data-key": g, "aria-pressed": String(f.group === g),
           text: short ? `${g} ${r.need}` : `${g} ✓`, "aria-label": short ? `${g}: ${r.need} still to fill` : `${g}: covered`,
-          title: `${g}: ${r.target} on a healthy roster · ${r.back} coming back · ${r.commits} committed (${r.firm} hard) · ${r.board} on your board · ${r.offers} offers out · ${short ? `${r.need} still to fill` : "covered"}` });
+          title: needTitle(g, r, short) });
         ui().on(b, "click", () => { f.group = f.group === g ? "" : g; view.offset = 0; load(); });
         chips.push(b);
       }
