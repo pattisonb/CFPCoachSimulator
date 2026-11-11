@@ -2971,7 +2971,9 @@ def rivalry_series(state: dict, riv: dict, before_week: Optional[int] = None, te
         lead = b
     else:
         lead = None
-    if lead is None:
+    if lead is None and not wins[a] and not ties:
+        text = "First meeting"                   # a new rivalry (a custom program's) before its first game
+    elif lead is None:
         text = f"Series tied {wins[a]}-{wins[b]}" + (f"-{ties}" if ties else "")
     else:
         other = b if lead == a else a
@@ -3076,7 +3078,7 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
                          "points_for": pf, "points_against": pa,
                          "overtime": g["overtime"], "real": g["real"], "has_box": has_box(state, g),
                          "opponent_record": _record_str(all_rec[opp]), "date": g.get("date"),
-                         "rivalry": game_rivalry(state, g)})
+                         "rivalry": game_rivalry(state, g, after=g["played"])})   # a played game: the series with it
     played_weeks = {g["week"] for g in schedule}
     for w in range(1, LAST_REGULAR_WEEK + 1):
         if w not in played_weeks:
