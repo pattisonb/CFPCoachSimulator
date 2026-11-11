@@ -3467,7 +3467,13 @@ def shown_range(state: dict, pid: str, group: str) -> Optional[list]:
         r = grade_range(state, pid, group)
         return list(r) if r else None
     iv = read_interval(state, pid, group)
-    return [str(int(round(iv[0]))), str(int(round(iv[1])))] if iv else None
+    clamp = lambda x: str(max(1, min(99, int(round(x)))))         # the game's 1-99 scale (a read's points can stray past it)
+    if not iv:
+        return None
+    if iv[0] == iv[1]:                                            # a complete report: a narrow range, never one number
+        half = max(2.0, read_spread(state, pid, group)[1])
+        return [clamp(iv[0] - half), clamp(iv[0] + half)]
+    return [clamp(iv[0]), clamp(iv[1])]
 
 
 def grade_range(state: dict, pid: str, group: str) -> Optional[tuple[str, str]]:

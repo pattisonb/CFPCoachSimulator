@@ -1170,7 +1170,7 @@ def _present_clear(state: dict, slug: str, pid: str, sc: dict, topics: list[str]
         answer = " · ".join(f"{_TOPIC_NAME.get(t, t)}: {'Yes' if t in hits else 'No'}" for t in topics)
         sc["turns"].append(_turn("him", answer))
         if hits:                                     # your program's grade on each Yes: where you stand on what he wants
-            sc["turns"].append(_turn("note", "Your grades on his: " + ", ".join(f"{_TOPIC_NAME.get(t, t)} {int(round(100 * st_[t]))}" for t in hits) + "."))
+            sc["turns"].append(_turn("note", "Your case on his: " + ", ".join(f"{_TOPIC_NAME.get(t, t)} {_case_word(st_[t])}" for t in hits) + "."))
         seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
         for t in hits:                               # a Yes is one of his priorities, and now you know it
             if t in rc["prospects"][pid]["priorities"] and t not in seen:
@@ -1194,11 +1194,15 @@ def _reaction_clear(state: dict, slug: str, pid: str, pitch: str, tired: bool) -
         return {"kind": "tired", "text": "No answer: he is tired of your contact this week.", "you": you}
     if persona.counts_as_priority(state, pid, pitch):
         kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
-        grade = int(round(100 * recruiting.strengths(state, slug, pid)[pitch]))
-        text = f"{name}: Yes, one of his priorities. Your program grades {grade} there."
+        text = f"{name}: Yes, one of his priorities. Your case there: {_case_word(recruiting.strengths(state, slug, pid)[pitch])}."
     else:
         kind, text = "polite", f"{name}: No, not one of his priorities."
     return {"kind": kind, "text": text, "you": you}
+
+
+def _case_word(sv: float) -> str:
+    """Your program's case on a topic in a word, as the page says it (web/recruiting.js caseWord)."""
+    return "Strong" if sv >= 0.6 else "Weak" if sv < 0.25 else "Fair"
 
 
 # the topics' names as the page shows them (web/recruiting.js PITCH_NAMES)

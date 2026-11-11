@@ -813,15 +813,11 @@
     const potTone = (rep && rep.potential_tone) || "good";
     const sendBox = opts.send ? [el("div", { class: "pv-card-acts", "data-key": "send" }, [].concat(opts.send))] : null;
     if (s.clear_mode) {
-      // Clear Mode: Potential and his key ratings as numbers with the staff's confidence; no grade words
+      // Clear Mode: the report as ever (its verdict, strengths and areas to develop), Potential at his position as a range
+      // with the staff's confidence in a word, and Key Ratings (his position's key ratings as ranges) in place of the bars
       const c = p ? p.clear : null, pot = c && c.potential;
-      const right = [PV().pips(looks), el("span", { class: "muted pv-looks", text: `${PV().fmtLooks(looks)} of 3 Looks` })];
-      const body = pot && pot.est != null ? [el("div", { class: "pv-potential good", "data-group": "potential" }, [el("span", { text: "Potential: " }),
-        el("b", { text: PV().ratingText(pot) }), el("span", { class: "muted", text: ` · ${pot.confidence}%`, title: "Your staff's confidence in this read" })])]
-        : [el("p", { class: "pv-verdict muted pv-unscouted", text: "Send a scout to read him." })];
-      if (p && !p.ratings && c && c.complete) body.push(compLine(p, looks));
-      if (sendBox) body.push(...sendBox);
-      const report = PV().card("Scouting Report", body, { tip: scoutTip(looks), right, key: "report", cls: "pv-report" });
+      const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone,
+        ...(pot && pot.est != null ? { potentialLabel: pot.label, potentialText: PV().ratingText(pot), potentialNote: `${pot.confidence} Confidence` } : {}) });
       return [report, PV().clearRatingsCard(c), looksCard(s, b, p, looks, opts)];
     }
     const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone });
@@ -839,7 +835,6 @@
     if (opts.link) extra.push(el("div", { class: "go-scout-foot", "data-key": "foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab",
       onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } })]));
     if (opts.extra) extra.push(...[].concat(opts.extra).filter(Boolean));
-    if (s.clear_mode) return PV().card("Looks", extra, { wide: true, key: "uncertainty", cls: "pv-uncertainty" });   // Clear Mode: the confidence is on each rating
     return PV().uncertaintyCard(p ? p.report : null, extra);
   }
 
@@ -1065,7 +1060,7 @@
   // his ask in a few words: "120", "about 90–150"
   const askWord = (b) => (b.ask ? (b.ask.exact != null ? String(b.ask.exact) : `about ${b.ask.lo}–${b.ask.hi}`) : "");
   // your program's case on a pitch, as a word
-  const caseWord = (b, t) => { const sv = b.strength ? b.strength[t] : null; return sv == null ? "" : CLEAR ? String(Math.round(100 * sv)) : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair"; };
+  const caseWord = (b, t) => { const sv = b.strength ? b.strength[t] : null; return sv == null ? "" : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair"; };   // words in every mode (the player's ask)
   // what he said about each topic you pitched him (recruiting.pitch_marks): a mark on the topic in every picker and on his
   // card, so you don't keep pitching a dud; no mark: you never pitched it to him
   const MARKS = { hit: ["He Lit Up", "hit"], weak: ["Weak Case", "weak"], not_his: ["Not His Thing", "not"], no_read: ["No Read", "none"] };
@@ -2396,10 +2391,10 @@
         el("td", { class: "pr-c-wt", text: r.weight != null ? String(r.weight) : "—" }),
         el("td", { class: "pr-c-stars" }, [r.portal ? el("span", { text: clsWord(r.cls) || "—" }) : el("span", { class: "go-stars", text: stars(r.stars), "aria-label": `${r.stars} stars` })]),
         el("td", { class: "pr-c-status" }, [el("span", { class: `go-tag ${stTone}`, text: stText, title: stText })]),
-        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: CLEAR && r.interest_in_you != null ? String(Math.round(r.interest_in_you)) : (r.interest_level || "Low") })]),
+        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: r.interest_level || "Low" })]),
         el("td", { class: "pr-c-sc" }, [el("span", { class: `pr-sc ${scTone}`, title: r.looks >= 3 ? "His report is complete: 3 of 3 looks" : r.looks > 0 ? `${fmtLooks(r.looks)} of 3 looks: each look narrows your staff's read` : "No look at him yet: send a scout", text: scText })]),
         el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? `Your staff's read of his potential after ${fmtLooks(r.looks)} of 3 looks` : "Your staff has no read on him yet",
-          text: CLEAR ? (r.clear_pot && r.clear_pot.est != null ? `${PV().ratingText(r.clear_pot)} · ${r.clear_pot.confidence}%` : "Not Read") : potText(pot) })]),
+          text: CLEAR ? (r.clear_pot && r.clear_pot.est != null ? PV().ratingText(r.clear_pot) : "Not Read") : potText(pot) })]),
         el("td", { class: "pr-c-act" }, [add])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
       return tr;

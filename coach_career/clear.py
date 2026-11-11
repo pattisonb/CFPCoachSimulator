@@ -1,7 +1,8 @@
 """Clear Mode (the player's experiment, on the clear-mode branch): the game says what it knows in numbers, not words.
 
-- A prospect's scouting shows up to eight of his position's key ratings, each a number (a range while his report is
-  short of complete) with a confidence percentage, instead of grade words over bars.
+- A prospect's scouting shows up to eight of his position's key ratings, each a range that narrows with every look,
+  with the staff's confidence in a word (High, Medium, Low), instead of grade words over bars. Potential reads as a
+  range at his position. The report's verdict, strengths and the uncertainty card stay.
 - Conversations are transactional: each topic you pitch gets a plain Yes (one of his priorities) or No.
 - Once his report is complete you know his priorities, who decides and his personality: no guesswork.
 - Chances, interest, your program's case and the like read as numbers.
@@ -11,12 +12,11 @@ player is shown and when he learns it.
 """
 from __future__ import annotations
 
-import math
 from typing import Optional
 
 CLEAR = True                     # *tune* the branch's switch: Clear Mode on
 
-CONF_SCALE = 20.0                # *tune* confidence = exp(-half / CONF_SCALE): ~50% after one look, ~75% after three good ones
+CONFIDENCE = {"Low": "High", "Medium": "Medium", "High": "Low"}   # a read's uncertainty word -> the confidence word shown
 
 # each position group's key player-card ratings, most important first (up to eight); the card's own labels name them
 KEYS = {
@@ -39,9 +39,10 @@ def on() -> bool:
     return CLEAR
 
 
-def confidence(half: float) -> int:
-    """How sure the staff is of a read, in percent, from its half-width in grade points."""
-    return int(round(100 * math.exp(-max(0.0, half) / CONF_SCALE)))
+def confidence(state: dict, pid: str, group: str) -> str:
+    """How sure the staff is of a read, in a word: High, Medium or Low (the report's uncertainty, turned around)."""
+    from coach_career import prospects as pr
+    return CONFIDENCE.get(pr.uncertainty(state, pid, group) or "High", "Low")
 
 
 def _raw_half(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
@@ -67,7 +68,7 @@ def ratings(state: dict, pid: str) -> Optional[dict]:
     """His key ratings as the staff reads them, or None before any look: {"complete", "rows": [{key, label, est, lo, hi,
     confidence}], "overall": {...}, "potential": {...}}. A rating's estimate is his true card rating moved by the staff's
     error on its group (the same error the grade words carried), so it is no more exact than the old words were, only
-    said plainly; while the report is short of complete it is a range, and complete it is one number."""
+    said plainly. Always a range: it narrows with every look (a complete report's is a few points wide)."""
     from coach_career import prospects as pr, recruiting
     from sim import season
     from teamdata import ratings as rv2
@@ -86,13 +87,16 @@ def ratings(state: dict, pid: str) -> Optional[dict]:
     def row(key: str, label: str, truth: float, group: str) -> dict:
         mh = _raw_half(state, pid, group)
         if mh is None:
-            return {"key": key, "label": label, "est": None, "lo": None, "hi": None, "confidence": 0}
+            return {"key": key, "label": label, "est": None, "lo": None, "hi": None, "confidence": None}
         mean, half = mh
         err = mean - p["truth"][group]
         est = max(1, min(99, int(round(truth + err))))
-        lo, hi = (est, est) if complete else (max(1, int(round(est - half))), min(99, int(round(est + half))))
-        return {"key": key, "label": label, "est": est, "lo": lo, "hi": hi, "confidence": confidence(half)}
+        half = max(2.0, half)                        # never a single number: the read's own width, at least a couple of points
+        lo, hi = max(1, int(round(est - half))), min(99, int(round(est + half)))
+        return {"key": key, "label": label, "est": est, "lo": lo, "hi": hi, "confidence": confidence(state, pid, group)}
 
     rows = [row(k, rv2.ATTRIBUTES[k][0], cards[k], _group_of_key(p, k)) for k in keys]
-    pot = row("potential", "Potential", float(p["pot_ovr"]), "potential")
+    pos_label = pr.display_pos(p["ea_position"])
+    pot = row("potential", f"Potential at {pos_label}", float(p["pot_ovr"]), "potential")   # his projected overall at his position
+    pot["position"] = pos_label
     return {"complete": complete, "looks": recruiting.report_looks(read), "rows": rows, "potential": pot}

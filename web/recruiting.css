@@ -437,3 +437,6 @@
 .pv-clear-v { font-variant-numeric: tabular-nums; font-size: 15px; }
 .pv-clear-c { font-variant-numeric: tabular-nums; text-align: right; }
 .pv-clear-head span:last-child { text-align: right; }
+.pv-clear-c.conf-high { color: var(--good-text); font-weight: 700; }
+.pv-clear-c.conf-medium { color: var(--go-warn-text, #b86e00); font-weight: 700; }
+.pv-clear-c.conf-low { color: var(--bad-text); font-weight: 700; }
