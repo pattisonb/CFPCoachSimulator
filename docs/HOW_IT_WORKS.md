@@ -1656,7 +1656,21 @@ you promise him the job: a believed promise earns `ANSWER_PROMISE` times 0.5 to 
 last promise you broke at his position) or "Coach, I've heard about your promises.". Keep Them Home's promise-again
 chance (0.55) takes the same multiplier, capped at 0.9, and 0.02 under the floor. The Office shows it in a word on the
 **Keeps His Word** card, with the position that has heard the worst ("Quarterbacks have heard: Fair.") and the three
-latest lines ("Broke your word to Jalen Moss (QB)."). The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+latest lines ("Broke your word to Jalen Moss (QB)."). **Promise Him the Job** (`recruiting._promise_job`) works on any call or visit, recruiting or the portal, whether or not
+he asks. It's a roster promise like his question's:
+
+- **What it's worth:** `ANSWER_PROMISE` times Keeps His Word's multiplier, times `JOB_PRIORITY` (1.5) when playing time
+  is one of his priorities or `JOB_NOT_PRIORITY` (0.5) when not, times `JOB_CROWD` (0.6) for each open promise you
+  already hold at his position.
+- **When it fails:** with a crowd, his own draw may hear it as hollow (`JOB_CROWD_DOUBT`, 0.25 each). With a better
+  returning starter ahead of him, it is hollow (the hollow cost, and he cools).
+- **One per recruit.** The window's button hides while his question about a named player waits, since answering it is
+  the promise.
+- **Two promises at one position** are both judged on who actually starts, and the new one strains the earlier ones
+  (`_strain`):
+  - A recruit still deciding cools, and his next call opens with "Coach, I heard you told another kid the same thing."
+  - One committed to you loses firmness (`JOB_STRAIN_FIRM`).
+  - A promised roster player's season score loses `JOB_STRAIN_SCORE` (0.1) for each strain (`promises.add_strain`). The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
