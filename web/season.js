@@ -1,6 +1,9 @@
 /* Season page: play a season week by week with polls, standings, the bracket and the playoff. */
 (function () {
   "use strict";
+  // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
+  // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
+  const seasonWeek = (w) => `Week ${w - 1}`;
   const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
 
   const state = { teams: [], season: null, viewWeek: null, tab: "schedule", poll: "ap", timer: null, standings: null };
@@ -625,7 +628,7 @@
 
   // ----- the browser tab: the dynasty's name, and the sim's progress while you are on another tab -----
   // The title reads "Ohio State Dynasty"; while a sim runs it leads with the progress and your record
-  // ("42% · 4-1 · Wk 6 · Ohio State Dynasty") and the favicon wears a progress ring in your color, so
+  // ("42% · 4-1 · Wk 5 · Ohio State Dynasty", the calendar's week) and the favicon wears a progress ring in your color, so
   // a tab in the background still tells you where the sim is. When it ends the tab says so ("Done · 9-3
   // · …", a full green ring; "Sim Failed" and red on an error) until you come back to it.
   const TAB_BASE = "Coach Career · CFP Coach Simulator";
@@ -681,7 +684,7 @@
     const r = state.liveRecord || s.record || { wins: 0, losses: 0 };
     const pct = Math.min(99, Math.max(0, Math.round((Number(p) || 0) * 100)));
     const wk = Math.min((j.done != null ? j.done : s.current_week) + 1, 20);
-    tabTitle(`${pct}% · ${r.wins}-${r.losses} · Wk ${wk} · ${dynastyTitle(s)}`);
+    tabTitle(`${pct}% · ${r.wins}-${r.losses} · ${wk <= 14 ? `Wk ${wk - 1}` : (s.week_labels[wk] || `Wk ${wk}`)} · ${dynastyTitle(s)}`);
     tabIcon(p, "run");
   }
   function tabDone(ok, record) {
@@ -775,7 +778,7 @@
       state.simShown.add(key);
       const vs = r.venue === "away" ? "at" : "vs";
       const row = el("div", { class: `sim-result new ${r.won ? "win" : "loss"}` }, [
-        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 14 ? postseasonLabel(s, r.week) : `Week ${r.week}` }),
+        el("span", { class: "muted", text: s.week_labels[r.week] && r.week > 14 ? postseasonLabel(s, r.week) : seasonWeek(r.week) }),
         el("span", { class: "wl", text: r.won ? "W" : "L" }),
         el("span", {}, [`${vs} `, teamPill(r.opponent), r.opponent_name, r.title ? el("span", { class: "muted small-text", text: ` · ${r.title}` }) : null]),
         el("span", { class: "score", text: `${r.points_for}–${r.points_against}${r.overtime ? " OT" : ""}` }),
@@ -864,7 +867,7 @@
   }
   function showBubble(item) {
     const s = state.season;
-    const when = item.week > 14 && s ? postseasonLabel(s, item.week) : `Week ${item.week}`;
+    const when = item.week > 14 && s ? postseasonLabel(s, item.week) : seasonWeek(item.week);
     const linked = !!(item.link && item.link.type);
     const b = el(linked ? "button" : "div", { class: `news-bubble news-${item.kind}`, "data-kind": item.kind, ...(linked ? { type: "button" } : {}) }, [
       item.team ? teamPill(item.team) : el("span", { class: "news-icon", "aria-hidden": "true" }),
@@ -1038,14 +1041,14 @@
   function chipWeek(s) {
     if (s.done) return s.career ? (s.offseason_stage ? `Offseason · ${STAGE_NAMES[s.offseason_stage] || "Offseason"}` : "Offseason") : "Final";
     const n = Math.min(s.current_week + 1, 20);
-    return n <= 14 ? `Week ${n}` : postseasonLabel(s, n) || `Week ${n}`;
+    return n <= 14 ? seasonWeek(n) : postseasonLabel(s, n) || `Week ${n}`;
   }
   function chipTitle(s) {
     if (s.done) return `Season complete · national champion: ${s.champion_name}`;
     const myNext = (s.schedule || []).find((g) => g.week === s.current_week + 1 && g.opponent);
     const bits = [];
     if (myNext && !myNext.played) bits.push(`Next: ${myNext.venue === "away" ? "at" : "vs"} ${myNext.opponent_name}${myNext.opponent_rank ? ` (#${myNext.opponent_rank})` : ""}`);
-    bits.push(`${s.week_labels[s.current_week + 1] || "Week " + (s.current_week + 1)} up next`);
+    bits.push(`${s.week_labels[s.current_week + 1] || seasonWeek(s.current_week + 1)} up next`);
     const simDate = simDateText(s);
     if (simDate) bits.push(simDate);
     return bits.join(" · ");
@@ -1056,7 +1059,7 @@
     if (pill.dataset.team !== s.team) { pill.innerHTML = ""; pill.append(teamPill(s.team)); pill.dataset.team = s.team; }
     const r = state.liveRecord || s.record;
     const rank = s.my_rank && s.my_rank.rank ? (s.my_rank.kind === "cfp" ? `CFP #${s.my_rank.rank}` : `#${s.my_rank.rank}`) : "";
-    const line = [rank, `${r.wins}-${r.losses}`, state.simming ? `Week ${Math.min(s.current_week + 1, 20)}` : chipWeek(s)].filter(Boolean).join(" · ");
+    const line = [rank, `${r.wins}-${r.losses}`, state.simming ? (s.week_labels[Math.min(s.current_week + 1, 20)] || seasonWeek(Math.min(s.current_week + 1, 20))) : chipWeek(s)].filter(Boolean).join(" · ");
     const name = t.name || s.team_name;
     if ($("#chip-name").textContent !== name) $("#chip-name").textContent = name;
     if ($("#chip-line").textContent !== line) $("#chip-line").textContent = line;
@@ -1102,7 +1105,7 @@
     for (const w of weeks) {
       const label = weekChipLabel(s, w);
       const next = !s.done && w === s.current_week + 1;
-      const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}`, "aria-label": s.week_labels[w] || (w === 0 ? "Preseason" : `Week ${w}`) });
+      const b = el("button", { type: "button", class: `week-chip ${w === state.viewWeek ? "active" : ""} ${w > s.current_week ? "future" : ""} ${w === s.current_week ? "current" : ""} ${next ? "next" : ""}`, text: label, title: `${s.week_labels[w] || (w === 0 ? "Preseason" : "")} · ${weekDateText(s, w)}`, "aria-label": s.week_labels[w] || (w === 0 ? "Preseason" : seasonWeek(w)) });
       b.addEventListener("click", () => { if (state.simming) return; state.viewWeek = w; renderWeekStrip(); renderTab(); });
       if (state.simming) b.disabled = true;   // the strip only follows the sim while it runs
       strip.appendChild(b);
@@ -1116,7 +1119,7 @@
   // Short week names for the week chips: "Pre", "W5", "CCG", "Sel", "R1", "QF", "SF", "Title"
   function weekChipLabel(s, w) {
     if (w === 0) return "Pre";
-    if (w <= 14) return `W${w}`;
+    if (w <= 14) return `W${w - 1}`;      // Week 0 opens the season (seasonWeek)
     return (s.week_labels[w] || `W${w}`).replace("Championship Week", "CCG").replace("National Championship", "Title").replace("Quarterfinals", "QF").replace("Semifinals", "SF").replace("First Round", "R1").replace("Selection", "Sel");
   }
 
@@ -1152,7 +1155,7 @@
     const s = state.season, w = state.viewWeek;
     const box = $("#week-date");
     box.innerHTML = "";
-    const label = w === 0 ? "Preseason" : (s.week_labels[w] || `Week ${w}`);
+    const label = w === 0 ? "Preseason" : (s.week_labels[w] || seasonWeek(w));
     let status;
     if (s.done && w >= s.current_week) status = "season complete";
     else if (w <= s.current_week) status = w === 0 ? "" : "played";
@@ -1483,7 +1486,7 @@
     const more = el("button", { type: "button", class: "go-btn big2 go-play-more", text: "▾", "aria-label": "Sim to a week", title: "Sim through a week of your choosing", "aria-haspopup": "menu", "aria-expanded": "false" });
     window.CFP.ui.on(more, "click", () => {
       const items = [{ heading: "Sim Through" }];
-      for (let k = s.current_week + 2; k <= 20; k++) items.push({ name: s.week_labels[k] || `Week ${k}`, why: k === 15 ? "Selection day" : k === 20 ? "The title game and national signing day" : "", onPick: () => play("advance_to", k) });
+      for (let k = s.current_week + 2; k <= 20; k++) items.push({ name: s.week_labels[k] || seasonWeek(k), why: k === 15 ? "Selection day" : k === 20 ? "The title game and national signing day" : "", onPick: () => play("advance_to", k) });
       openMenu(more, items, "Sim to a week");
     });
     return [week, game, selection, end, s.current_week + 2 <= 20 ? more : null].filter(Boolean);
@@ -2200,7 +2203,7 @@
     const note = live
       ? `Live race through ${through}: who would win if the voting were held now. Conference awards are given after championship week, the Heisman and national awards in selection week, the postseason awards after the title game.`
       : `Conference awards given after championship week${given >= 15 ? "; Heisman, national awards and All-America teams in selection week" : ""}${given >= 19 ? "; postseason awards after the national championship" : ""}.`;
-    const kick = live ? `${s.year} · Live Race · Through ${s.week_labels[s.current_week] || `Week ${s.current_week}`}` : `${s.year} · Final · ${given >= 15 ? "Given in Selection Week" : "Conference Awards In"}`;
+    const kick = live ? `${s.year} · Live Race · Through ${s.week_labels[s.current_week] || seasonWeek(s.current_week)}` : `${s.year} · Final · ${given >= 15 ? "Given in Selection Week" : "Conference Awards In"}`;
     return el("section", { class: "go-card rcp-card edge gold aw-head", "aria-label": "Awards" }, [awBar(kick),
       el("div", { class: "aw-head-body" }, [el("div", { class: "rcp-head-title" }, [el("h2", { class: "rcp-h1", text: "Awards" })]), el("p", { class: "aw-note", text: note })])]);
   }
@@ -2586,7 +2589,7 @@
     box.innerHTML = "";
     const token = gamesState.token = (gamesState.token || 0) + 1;   // a newer render wins if the weeks change mid-load (Preseason too)
     if (w === 0) { box.append(el("p", { class: "muted", text: "Preseason. Advance a week to play games." })); return; }
-    const label = s.week_labels[w] || `Week ${w}`;
+    const label = s.week_labels[w] || seasonWeek(w);
     box.append(el("p", { class: "muted loading-note", text: `Loading ${label} games…` }));
     let data;
     try { data = await api(`/api/season/${s.id}/week/${w}`); }
@@ -2711,14 +2714,14 @@
       card.append(injBox);
     };
     if (!g) {
-      const wkLabel = data.week ? (s.week_labels[data.week] || `Week ${data.week}`) : "";
+      const wkLabel = data.week ? (s.week_labels[data.week] || seasonWeek(data.week)) : "";
       card.append(el("div", { class: "card-bar review-label", text: data.reason === "bye" ? `Bye This Week${wkLabel ? " · " + wkLabel : ""}` : "This Week" }),
         el("p", { class: "muted", text: data.reason === "done" ? "Season complete." : data.reason === "bye" ? "No game this week." : "No game left on the schedule." }));
       if (data.reason === "bye") injuryReport();
       return;
     }
     const p = data.prediction;
-    const wk = s.week_labels[g.week] || `Week ${g.week}`;
+    const wk = s.week_labels[g.week] || seasonWeek(g.week);
     const dateText = g.date && /^\d{4}-\d{2}-\d{2}/.test(g.date) ? fmtDay(g.date.slice(0, 10), true) : (g.date || ((s.week_dates || {})[g.week] || {}).main ? fmtDay(s.week_dates[g.week].main, true) : "");
     const where = g.venue === "home" ? "Home" : g.venue === "away" ? "Away" : "Neutral site";
     card.append(el("div", { class: "card-bar review-label", text: g.played ? `This Week · ${wk} · Final` : `This Week · ${wk}` }));
@@ -2770,11 +2773,11 @@
   async function openGamesModal() {
     const s = state.season;
     const node = el("div", { class: "games-modal" });
-    const label = state.viewWeek === 0 ? "Preseason" : (s.week_labels[state.viewWeek] || `Week ${state.viewWeek}`);
+    const label = state.viewWeek === 0 ? "Preseason" : (s.week_labels[state.viewWeek] || seasonWeek(state.viewWeek));
     const nav = el("div", { class: "stats-controls" });
     const weeks = [0, ...s.weeks].filter((w) => w <= Math.min(s.done ? s.current_week : s.current_week + 1, 20));
     nav.append(chipRow(weeks.map((w) => [w, weekChipLabel(s, w)]),
-      state.viewWeek, (w) => { state.viewWeek = w; renderWeekStrip(); renderGames(body); $("#modal-title").textContent = `All games · ${w === 0 ? "Preseason" : (s.week_labels[w] || `Week ${w}`)}`; }));
+      state.viewWeek, (w) => { state.viewWeek = w; renderWeekStrip(); renderGames(body); $("#modal-title").textContent = `All games · ${w === 0 ? "Preseason" : (s.week_labels[w] || seasonWeek(w))}`; }));
     const body = el("div");
     node.append(nav, body);
     openModal(`All Games · ${label}`, node);
@@ -2796,10 +2799,10 @@
       const oppName = g.home === s.team ? g.away_display : g.home_display;        // the schedule's own label (an FCS date reads "FCS <region>")
       const venue = g.neutral ? "neutral site" : g.home === s.team ? "home" : "away";
       const row = el("div", { class: "sched-edit-row" }, [
-        el("div", {}, [el("b", { text: `${s.week_labels[g.week] || `Week ${g.week}`}: ${venue === "away" ? "at " : "vs "}${oppName}` }), el("span", { class: "muted small-text", text: ` · ${venue}` })])]);
-      const sel = el("select", { "aria-label": `Trade the Week ${g.week} Game` }, [el("option", { value: "", text: "Trade For…" }),
+        el("div", {}, [el("b", { text: `${s.week_labels[g.week] || seasonWeek(g.week)}: ${venue === "away" ? "at " : "vs "}${oppName}` }), el("span", { class: "muted small-text", text: ` · ${venue}` })])]);
+      const sel = el("select", { "aria-label": `Trade the ${seasonWeek(g.week)} Game` }, [el("option", { value: "", text: "Trade For…" }),
         ...g.options.map((o) => el("option", { value: o.slug, text: `${o.name} · ${o.standing} · ${o.venue === "home" ? "you host" : o.venue === "away" ? "you travel" : "neutral"} · ${o.accepts ? o.why : `no: ${o.why}`}`, ...(o.accepts ? {} : { disabled: "true" }) }))]);
-      const go = el("button", { type: "button", class: "ghost small", text: `Trade the Week ${g.week} Game` });
+      const go = el("button", { type: "button", class: "ghost small", text: `Trade the ${seasonWeek(g.week)} Game` });
       go.addEventListener("click", async () => {
         if (!sel.value) return;
         go.disabled = true;
@@ -2931,7 +2934,7 @@
     const t = (window.CFP.teamsBySlug || {})[s.team] || {};
     return window.CFP.teamVars(s.team);
   }
-  const leagueKicker = (s) => `${s.current_week > 0 ? `Through ${s.week_labels[s.current_week] || "Week " + s.current_week}` : "Preseason"} · ${s.year} Season`;
+  const leagueKicker = (s) => `${s.current_week > 0 ? `Through ${s.week_labels[s.current_week] || seasonWeek(s.current_week)}` : "Preseason"} · ${s.year} Season`;
   const leagueCard = (cls, children, attrs) => el("section", { class: `go-card rcp-card lg-card ${cls || ""}`, ...(attrs || {}) }, children);
   // a card's head is its bar (styles.css .card-bar): the title with the kicker beside it, the controls at its right
   const leagueHead = (kicker, title, controls) => el("div", { class: "card-bar lg-head" }, [
@@ -3334,7 +3337,7 @@
       box.append(el("h3", { text: title }), el("p", { class: "muted", text: note }));
       return;
     }
-    box.append(el("h3", { text: `${title} · ${w === 0 ? "Preseason" : `After ${s.week_labels[w] || "Week " + w}`}` }));
+    box.append(el("h3", { text: `${title} · ${w === 0 ? "Preseason" : `After ${s.week_labels[w] || seasonWeek(w)}`}` }));
     if (kind === "cfp" && w >= 14) box.append(el("p", { class: "muted small-text", text: "Final ranking: this is the one the bracket is built from." }));
     const voted = (kind === "ap" || kind === "coaches") && list.some((e) => e.points != null);
     const table = el("table", { class: "stats" });
@@ -3394,7 +3397,7 @@
     try { data = await api(`/api/season/${s.id}/week/${week}`); } catch (err) { return; }
     // only games between two ranked teams
     const games = data.games.filter((g) => rankOf[g.home] && rankOf[g.away]);
-    const label = s.week_labels[week] || `Week ${week}`;
+    const label = s.week_labels[week] || seasonWeek(week);
     if (!games.length) {
       box.appendChild(el("div", { class: "others-votes" }, [el("b", { text: `Ranked matchups in ${label}: ` }), "none"]));
       return;
@@ -3821,7 +3824,7 @@
     for (const r of data.rivalries) {
       const g = r.game;
       const result = !g ? el("span", { class: "muted", text: "not scheduled" })
-        : !g.played ? el("span", { class: "muted", text: `${s.week_labels[g.week] || "Week " + g.week} · ${g.venue === "away" ? "at" : "vs"} ${r.opponent_name}` })
+        : !g.played ? el("span", { class: "muted", text: `${s.week_labels[g.week] || seasonWeek(g.week)} · ${g.venue === "away" ? "at" : "vs"} ${r.opponent_name}` })
         : el("span", { class: g.won ? "win" : "loss", text: `${g.won ? "W" : "L"} ${g.points_for}–${g.points_against} ${g.venue === "away" ? "at" : "vs"} ${r.opponent_name}` });
       const tr = el("tr", { class: g && g.has_box ? "clickable" : "" }, [
         el("td", { class: "left name" }, [teamPill(r.opponent), r.opponent_name, el("div", { class: "muted small-text", text: r.name })]),
@@ -3840,7 +3843,7 @@
   const resumeState = { sort: "rank", desc: false, cache: {} };
   async function renderResume(box, w) {
     const s = state.season;
-    box.append(el("h3", { text: `Committee Resume · ${w === 0 ? "Preseason" : `Through ${s.week_labels[w] || "Week " + w}`}` }));
+    box.append(el("h3", { text: `Committee Resume · ${w === 0 ? "Preseason" : `Through ${s.week_labels[w] || seasonWeek(w)}`}` }));
     const note = el("p", { class: "muted small-text", text: "Loading…" });
     box.append(note);
     let data = resumeState.cache[`${s.id}|${w}`];

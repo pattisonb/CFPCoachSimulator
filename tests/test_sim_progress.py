@@ -48,7 +48,7 @@ def run() -> None:
         assert final[-1] - final[0] < 0.5 / span, (final[0], final[-1])
         # the stage line names what is happening, in sentence case
         stages = {j["stage"] for _, j in pts if j["stage"]}
-        assert "Playing Week 6 games" in stages and season.RECRUITING_STAGE in stages and season.SAVING_STAGE in stages, stages
+        assert "Playing Week 5 games" in stages and season.RECRUITING_STAGE in stages and season.SAVING_STAGE in stages, stages
         assert not any(st.startswith("Simming") for st in stages), stages
         print(f"sim progress ok: {len(pts)} reports over {wall:.0f} s, largest gap from the clock {dev:.3f}")
     finally:

@@ -135,7 +135,7 @@ if __name__ == "__main__":
             page.wait_for_selector(".go-play")                 # a career opens on the Office
             # a week highlighted on the schedule is not the Office's Advance target: it plays one week
             tab_click(page, "schedule")
-            page.click("#week-strip button.week-chip[aria-label='Week 4']")
+            page.click("#week-strip button.week-chip[aria-label='Week 3']")   # engine week 4: the calendar's Week 3 (Week 0 opens)
             tab_click(page, "office")
             page.wait_for_selector(".go-play")
             page.click(".go-play >> text=/Sim the Week|ADVANCE THE WEEK/")

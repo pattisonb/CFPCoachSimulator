@@ -89,7 +89,7 @@ def check_api(base, sid, ids, games) -> dict:
 def expect_result(text: str, g: dict, school=None, where="") -> None:
     m = RESULT.match(text)
     assert m, f"a result line: {text!r} {where}"
-    assert int(m["week"]) == g["week"] and m["wl"] == ("W" if g["won"] else "L") and int(m["pf"]) == g["points_for"] and int(m["pa"]) == g["points_against"], (text, g, where)
+    assert int(m["week"]) == g["week"] - 1 and m["wl"] == ("W" if g["won"] else "L") and int(m["pf"]) == g["points_for"] and int(m["pa"]) == g["points_against"], (text, g, where)
     assert m["opp"] == g["opponent_name"] and m["vs"] == ("at" if g["venue"] == "away" else "vs") and bool(m["ot"]) == bool(g["overtime"]), (text, g, where)
     assert m["school"] == school, (text, school, where)
     for bad in ("null", "undefined", "NaN"):
@@ -99,7 +99,7 @@ def expect_result(text: str, g: dict, school=None, where="") -> None:
 def expect_sentence(text: str, g: dict, where="") -> None:
     m = SENTENCE.match(text)
     assert m, f"a sentence: {text!r} {where}"
-    assert int(m["week"]) == g["week"] and m["opp"] == g["opponent_name"] and m["vs"] == "vs" and not m["school"], (text, g, where)
+    assert int(m["week"]) == g["week"] - 1 and m["opp"] == g["opponent_name"] and m["vs"] == "vs" and not m["school"], (text, g, where)
 
 
 TIP_JS = """(cell) => { const t = cell.querySelector(':scope > .go-tip-box'); const r = t.getBoundingClientRect(), c = cell.getBoundingClientRect();
@@ -202,7 +202,7 @@ def run(browser, base, sid, ids, api, width, scheme, errs) -> None:
     else:
         open_pane(page, base, sid, ids["b"])
     t = tip_of(page, SNAP, hows[0], f"(unplayed) {where}")
-    assert re.fullmatch(r"Visit Wk \d+", t["label"]) and int(t["label"].split()[-1]) == api["ahead"]["week"], t["label"]
+    assert re.fullmatch(r"Visit Wk \d+", t["label"]) and int(t["label"].split()[-1]) == api["ahead"]["week"] - 1, t["label"]
     expect_sentence(t["text"], api["ahead"], f"(unplayed) {where}")
     shot(page, f"{width}-{scheme}-unplayed")
     no_sideways(page, f"(unplayed) {where}")

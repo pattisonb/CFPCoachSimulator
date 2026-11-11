@@ -1935,7 +1935,7 @@ def _report(state: dict, week: int) -> dict:
                                      **({"line": _pester_line(p["name"], name(e["school"]))} if e["kind"] == "pester" else {}),
                                      **({"reason": lost_reason(e, name)} if e.get("lost") else {}))
                                 for e in events if e["pid"] == pid]})
-    report = {"week": week, "rows": rows}
+    report = {"week": week, "rows": rows, **({"portal": True} if is_portal(state) else {})}   # a portal week is the portal's own
     reports = rc.setdefault("reports", [])
     reports.append(report)
     del reports[:-REPORTS_KEPT]
@@ -2901,7 +2901,7 @@ def _hat(state: dict, pid: str, week: int, finalists: list) -> None:
     names = [persona._school_name(s) for s in finalists]
     said = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}" if len(names) == 2 else f"{', '.join(names[:-1])}, and {names[-1]}"
     _event(state, "hat", pid, None, finalists=finalists, day=day,
-           line=f"He will pick from {said} at a hat ceremony in Week {day}." if len(names) > 1 else f"He will announce at a hat ceremony in Week {day}.")
+           line=f"He will pick from {said} at a hat ceremony in {season.week_label(day)}." if len(names) > 1 else f"He will announce at a hat ceremony in {season.week_label(day)}.")
 
 
 def _pair_ok(state: dict, slug: str, pid: str, offered: dict, room) -> bool:

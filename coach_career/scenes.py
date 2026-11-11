@@ -832,7 +832,7 @@ def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
             "role": _role(state, slug, p["id"]), "record": record, "rec": record[:1].lower() + record[1:], "conf": _conf(state, slug),
             "coach": coach_name(state, slug),
             "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",
-            "leader": leader_of(state, slug, p["id"]), "week_word": words(week), **persona.story_fields(state, p["id"]),
+            "leader": leader_of(state, slug, p["id"]), "week_word": words(max(0, week - 1)),   # the calendar's week (Week 0 opens the season) **persona.story_fields(state, p["id"]),
             **persona.twist_fields(state, p["id"])}
 
 

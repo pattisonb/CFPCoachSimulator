@@ -1548,12 +1548,19 @@ def _bowl_games(state: dict, teams: dict) -> list[dict]:
     return out
 
 
+def week_name(week: int) -> str:
+    """A regular-season week as the real calendar names it (the player's ask): the opening week, a handful of games the
+    Saturday before Labor Day weekend, is Week 0, so engine week N reads Week N-1 (rivalry weekend, engine 14, is Week
+    13). Internal week numbers never change; 0 stays the preseason."""
+    return f"Week {week - 1}"
+
+
 def week_label(week: int) -> str:
     if week == CCG_WEEK:
         return "Championship Week"
     if week == SELECTION_WEEK:
         return "Selection Week"
-    return BOWL_WEEK_LABELS.get(week) or f"Week {week}"
+    return BOWL_WEEK_LABELS.get(week) or week_name(week)
 
 
 def _setup_week(state: dict, week: int, teams: dict, say) -> None:
@@ -3283,7 +3290,7 @@ def summary(state: dict) -> dict:
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "coach": _coach_line(state, teams[state["team"]]),
         "form": (state.get("form") or {}).get(state["team"]),
-        "week_labels": {**{w: f"Week {w}" for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship Week",
+        "week_labels": {**{w: week_name(w) for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship Week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
         "cfp_weeks": sorted(CFP_WEEKS), "bowls": bowl_view(state), "playoff_sites": state.get("playoff_sites"),
