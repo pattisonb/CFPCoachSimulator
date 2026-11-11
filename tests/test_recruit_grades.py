@@ -138,6 +138,53 @@ def test_decider_draw_kept():
     assert any(persona.draw(f"d{i}", 7)["decider_topic"] == "stability" for i in range(400)), "the new topics get their share"
 
 
+# ----- Task 3: the scenes talk about them -----
+
+def test_every_topic_has_lines():
+    from coach_career import scenes
+    for t in recruiting.PITCHES:
+        assert t in scenes.PHRASES and t in scenes.LEAD_LINES and t in scenes.LINES, t
+    for t in NEW:                                     # the older topics keep their own fallbacks; the new five have every table
+        assert t in scenes.LEAD_HONEST and t in scenes.SAID_HONEST and t in scenes.HONEST_HIT, t
+        for kind in ("cue", "hit", "polite", "quiet"):
+            assert len(scenes.LINES[t][kind]) >= 3, (t, kind)
+
+
+def test_new_claims_need_truth():
+    from coach_career import scenes
+    st = fresh()
+    pid = a_pid(st)
+    p = st["recruiting"]["prospects"][pid]
+    p["priorities"] = ["game_day", "nil", "coach"]
+    claims = {k for k, v in scenes.NEEDS.items() if v == "game_day"}
+    assert claims, "game day has claim lines"
+    with recruiting.forced_strength(st, ME, pid, "game_day", 0.45):
+        for w in range(1, 30):
+            st["current_week"] = w
+            r = scenes.reaction(st, ME, pid, "hc_visit", "game_day", p)
+            f = scenes._fields(st, ME, p)
+            assert r["text"] not in {c.format(**f) for c in claims}, r
+    seen = set()
+    with recruiting.forced_strength(st, ME, pid, "game_day", 0.95):
+        for w in range(1, 40):
+            st["current_week"] = w
+            seen.add(scenes.bare_reaction(scenes.reaction(st, ME, pid, "hc_visit", "game_day", p)["text"]))
+    f = scenes._fields(st, ME, p)
+    assert seen & {c.format(**f) for c in claims}, "at real strength a claim can show"
+
+
+def test_no_braces_left():
+    from coach_career import scenes
+    st = fresh()
+    pid = a_pid(st)
+    f = scenes._fields(st, ME, st["recruiting"]["prospects"][pid])
+    for t in NEW:
+        pool = [scenes.LEAD_LINES[t], scenes.LEAD_HONEST[t]] + [x for k in ("cue", "hit", "polite", "quiet") for x in scenes.LINES[t][k]] + scenes.HONEST_HIT[t]
+        for line in pool:
+            out = line.format(**f)
+            assert "{" not in out and "}" not in out, (t, line)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

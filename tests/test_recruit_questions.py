@@ -202,9 +202,10 @@ if __name__ == "__main__":
         assert sc3["question"]["kind"] == "roster" and sc3["question"]["about"]["last_year"] is False
         assert not recruiting.promise_holds(st, ME, pid3, sc3["question"])
         r = answer(sid, pid3, sc3, "promise")
-        assert r["points"] == -recruiting.ANSWER_HOLLOW and r["truthful"] is False
+        hollow = recruiting.ANSWER_HOLLOW * persona.hollow_mult(st, pid3, ME)      # a Cocky recruit's hollow promise costs double
+        assert abs(r["points"] + hollow) < 1e-9 and r["truthful"] is False
         assert r["scene"]["question"]["reply"] == "I've heard that one before." == scenes.REPLY_LINES["hollow"]
-        assert abs(recruiting.pending(st, ME, pid3) + recruiting.ANSWER_HOLLOW) < 1e-9
+        assert abs(recruiting.pending(st, ME, pid3) + hollow) < 1e-9
         c3 = rc["contacts"][pid3][ME]
         assert c3["cooled_until"] == week + 1 and recruiting.cooled(st, ME, pid3)
         assert events(st, pid3, "not_buying"), "a hollow promise: he isn't buying it"
