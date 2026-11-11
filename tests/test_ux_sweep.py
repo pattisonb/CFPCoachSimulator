@@ -31,9 +31,7 @@ def lead(page, scope, topic):
     if page.query_selector(f"{scope} .go-answer[data-answer=straight]"):
         page.click(f"{scope} .go-answer[data-answer=straight]")
         page.wait_for_selector(f"{scope} .go-answer", state="detached", timeout=10_000)
-    if page.is_hidden(f"{scope} .go-lead-menu"):
-        page.click(f"{scope} .go-lead-pick")
-    page.click(f"{scope} .go-lead-menu .go-lead-chip[data-topic='{topic}']")
+    page.click(f"{scope} .go-lead .go-lead-chip[data-topic='{topic}']")
 
 
 LEAD_OPTS = "els => els.map(e => { const name = e.querySelector('b').textContent, tg = e.querySelector('.go-tag'), tag = tg ? tg.textContent : '', m = e.querySelector('.go-mark'); const star = tag.startsWith('★') ? '★ ' : tag.startsWith('☆') ? '☆ ' : ''; return [e.dataset.topic, [star + name, tag.replace(/^[★☆]\\s*/, ''), m ? m.textContent : ''].filter(Boolean).join(' · ')]; })"
@@ -157,7 +155,7 @@ def open_tab(page, base, sid, tab, wait):
 
 # the ladder "Sort: your chance" follows: yours, favorite, not offered while leading his list, in it, long shot,
 # not offered elsewhere on (or off) his list, lost
-LADDER = {"Yours": 0, "Favorite": 1, ("Not Offered", "warn"): 2, "In It": 3, "Long Shot": 4, ("Not Offered", "muted"): 5, "Lost": 6}
+LADDER = {"Yours": 0, "Favorite": 1, ("Not Offered", "warn"): 2, "Offer Sent": 2, "In It": 3, "Long Shot": 4, ("Not Offered", "muted"): 5, "Lost": 6}
 
 
 def ladder_of(sd: dict) -> int:
@@ -354,7 +352,7 @@ def test_recruit_question(page) -> None:
         assert answers == [[k, scenes.ANSWER_LABELS[k], scenes.ANSWER_COPY[q["kind"]][k]] for k in ("straight", "promise", "deflect")], answers
         pitch = ".modal-scene .go-scene .go-scene-acts button:has-text('Pitch')"
         assert page.is_disabled(pitch) and page.get_attribute(pitch, "title") == "Answer him first"
-        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-pick')].every(r => r.disabled)"), "the pitch radios wait on the answer"
+        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-chip')].every(r => r.disabled)"), "the pitch radios wait on the answer"
         h = watch(page, ".modal-scene .go-scene", ".modal-scene .go-scene .go-answer[data-answer=straight]", scrolled=False)
         toasts = page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length")
         page.click(".modal-scene .go-scene .go-answer[data-answer=straight]")
@@ -365,7 +363,7 @@ def test_recruit_question(page) -> None:
         assert "good" in (reply.get_attribute("class") or ""), reply.get_attribute("class")
         smooth(page, h, "Answering his question")
         assert not page.is_disabled(pitch) and not page.get_attribute(pitch, "title") == "Answer him first", "the pitch unlocks"
-        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-pick')].every(r => !r.disabled)")
+        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-chip')].every(r => !r.disabled)")
         assert page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length") == toasts, "the reply is the feedback: no toast"
         # Hang up (the window closes, the call stays open), then Finish: the window comes back, the answered question without its buttons
         page.click(".modal-scene .go-scene button:has-text('Hang Up')")
@@ -1268,7 +1266,7 @@ def test_conversation(page, base) -> None:
         turns = page.eval_on_selector_all(".modal-scene .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
         assert turns[-2][1].startswith("You:") and "go-reaction" in turns[-1][0], turns[-2:]
         assert "counts at the week step" in page.inner_text(".modal-scene .go-scene .go-scene-acts")
-        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-pick')].every(r => r.disabled)"), "what you led with stays on record, locked"
+        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-chip')].every(r => r.disabled)"), "what you led with stays on record, locked"
         assert not page.query_selector(".modal-scene .go-scene button:has-text('Pitch')"), "the buttons gave way"
         settle(page, n)
         assert page.query_selector(".modal-scene .go-scene .go-reaction"), "the finished conversation stays in its window until Done"
@@ -1530,7 +1528,7 @@ if __name__ == "__main__":
             assert page.evaluate("""() => [...document.querySelectorAll('.go-row-recruit')].every(r => r.tagName === 'BUTTON' && r.hasAttribute('aria-pressed')
                 && r.querySelector('.go-standing-word') && !r.querySelector('.go-tag, .go-bar, button, .go-badge'))"""), "a row is a button with one word of standing"
             words = page.eval_on_selector_all(".go-row-recruit .go-standing-word", "els => els.map(e => e.textContent.trim())")
-            assert words and set(words) <= {"Favorite", "In It", "Long Shot", "Yours", "Lost", "Not Offered"}, words
+            assert words and set(words) <= {"Favorite", "Offer Sent", "In It", "Long Shot", "Yours", "Lost", "Not Offered"}, words
             shot(page, "board-1280-dark")
             # a tab filters the list and shows as pressed
             stage, n = next(((c[0], c[1]) for c in counts[1:] if 0 < c[1] < board_n), (None, None))

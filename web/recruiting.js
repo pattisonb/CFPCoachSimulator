@@ -135,11 +135,15 @@
     }
     const rows = (b.list || []).filter((x) => x.bar != null).map((x, i) => ({ ...x, at: x.rank != null ? x.rank : i + 1 }));
     const mine = rows.find((x) => x.you || x.school === me);
-    const offered = !!b.offered;
+    const landing = !!(b.offered && b.offer_landing);   // he reads your offer at the week step: no Favorite before then
+    const offered = !!b.offered && !landing;
     const fill = st.pct != null ? st.pct : 0;
+    const sent = (text) => ({ word: "Offer Sent", text, odds: "He Reads It This Week", tone: "warn", fill: 0 });
+    if (landing && !mine) return sent("Not on his list yet · your offer lands at the week step");
     if (!mine) return offered ? { word: "Long Shot", text: "Outside his top 5", odds: "Long Shot", certainty: st.certainty, tone: "muted", fill, lo: st.lo, hi: st.hi }
       : { word: "Not Offered", text: "Not on his list yet", tone: "muted", fill: 0 };
     const leader = rows.filter((x) => x !== mine).sort((a, c) => a.at - c.at)[0];
+    if (landing) return sent(`${!leader || mine.at < leader.at ? "Leading his list" : `${ordinal(mine.at)} on his list`} · your offer lands at the week step`);
     if (!leader || mine.at < leader.at) {
       if (!offered) return { word: "Not Offered", text: "He would pick you today: he has no offer from you", odds: "Offer him", tone: "warn", fill: 0 };
       const clear = !leader || mine.bar - leader.bar >= 0.25;
@@ -158,7 +162,7 @@
   // first, then national rank
   function ladderRung(sd) {
     if (sd.word === "Not Offered") return sd.tone === "warn" ? 2 : 5;
-    return { Yours: 0, Favorite: 1, "In It": 3, "Long Shot": 4, Lost: 6 }[sd.word] ?? 5;
+    return { Yours: 0, Favorite: 1, "Offer Sent": 2, "In It": 3, "Long Shot": 4, Lost: 6 }[sd.word] ?? 5;
   }
   function byChance(me) {
     const memo = new Map();
@@ -1475,7 +1479,7 @@
       if (action === "message" || action === "offer" || action === "raise_nil") {
         view.step = { pid: b.id, kind: action };
         patchPane(b);
-        const f = box.querySelector(".go-step .go-lead-pick, .go-step input");
+        const f = box.querySelector(".go-step .go-lead-chip.on, .go-step .go-lead-chip, .go-step input");
         if (f) f.focus({ preventScroll: true });
       } else if (action === "off_board") {
         // taking him off pulls your offer too (the engine does it): one misclick should not cost you a recruit
@@ -1837,7 +1841,7 @@
           go.title = PITCH_TIP;
           const jb = sc.querySelector(".go-promise-job");
           if (jb && !(q && q.answer === "promise")) jb.hidden = false;   // answered with a promise: that was the promise
-          for (const r of sc.querySelectorAll(".go-lead-pick")) r.disabled = false;
+          for (const r of sc.querySelectorAll(".go-lead-chip")) r.disabled = false;
         };
         go.addEventListener("click", async () => {
           if (pending()) { H.toast("Answer him first.", 3000); return; }
@@ -1866,7 +1870,7 @@
             last.setAttribute("role", "status");
             last.tabIndex = -1;
             // what you led with stays on record (the pill locked); Pitch and Hang Up give way to Done
-            for (const r of fin.querySelectorAll(".go-lead-pick")) r.disabled = true;
+            for (const r of fin.querySelectorAll(".go-lead-chip")) r.disabled = true;
             const done = el("button", { type: "button", class: "go-btn primary go-scene-close", text: "Done", onclick: () => { if (sceneWin === win) H.closeTop(); } });
             acts.replaceChildren(done, el("span", { class: "muted small go-scene-done", text: "It counts at the week step." }));
             hint.textContent = `The ${what} is over. Closing this window ends it; his History keeps a line.`;
@@ -2034,57 +2038,48 @@
       wrap.append(acts);
       return wrap;
     }
-    // what you lead with, as a pill (the player's ask: the Your Pitch dropdown, one pick): the pill shows your pick; it opens
-    // every topic as a chip with ★ (a known priority) or ☆ (what he brought up: `cueTopics`, titled `cueTip`), your
-    // program's case in a word and the mark of what he said when you pitched it (markTag). Picking closes it. `locked`:
-    // his question waits, the pill is disabled until you answer. The pill carries the pick as `.value` and data-value.
+    // what you lead with, as a strip that scrolls sideways (the player's ask: it never grows the window): one card per
+    // topic, its name over its tags: ★ (a known priority) or ☆ (what he brought up: `cueTopics`, titled `cueTip`), your
+    // program's case in a word and the mark of what he said when you pitched it (markTag). The picked card is outlined.
+    // `locked`: his question waits, the cards are disabled until you answer. The strip carries the pick as `.value` and
+    // data-value.
     function leadPicker(b, opts) {
       const { order = Object.keys(PITCH_NAMES), cueTopics = [], cueTip = "", locked = false, onPick = () => {}, id } = opts;
       let value = opts.current || "";
-      const label = el("b", { class: "go-lead-name" });
-      const pill = el("button", { type: "button", class: "go-lead-pick", ...(id ? { id } : {}), "aria-haspopup": "true", "aria-expanded": "false",
-        "aria-label": `Pitch to ${b.name}` }, [el("span", { text: "Lead With" }), label, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
-      const menu = el("div", { class: "go-lead-menu", role: "radiogroup", "aria-label": `Pitch to ${b.name}`, hidden: "" });
-      const drop = el("div", { class: "go-lead" }, [pill, menu]);
-      const outside = (e) => { if (!drop.contains(e.target)) close(); };
-      function close() {
-        if (menu.hidden) return;
-        menu.hidden = true;
-        pill.setAttribute("aria-expanded", "false");
-        document.removeEventListener("click", outside, true);
-      }
-      function open() {
-        menu.hidden = false;
-        pill.setAttribute("aria-expanded", "true");
-        document.addEventListener("click", outside, true);
-        const on = menu.querySelector('[aria-checked="true"]') || menu.querySelector(".go-lead-chip");
-        if (on) on.focus({ preventScroll: true });
-        menu.scrollIntoView({ block: "nearest" });
-      }
+      const drop = el("div", { class: "go-lead", role: "radiogroup", "aria-label": `Pitch to ${b.name}`, ...(id ? { id } : {}) });
       const set = (t) => {
         value = t;
-        drop.value = pill.value = t;
-        pill.dataset.value = t;
-        label.textContent = t ? PITCH_NAMES[t] : "Pick One";
-        for (const c of menu.children) { const yes = c.dataset.topic === t; c.classList.toggle("on", yes); c.setAttribute("aria-checked", String(yes)); }
+        drop.value = t;
+        drop.dataset.value = t;
+        for (const c of drop.children) { const yes = c.dataset.topic === t; c.classList.toggle("on", yes); c.setAttribute("aria-checked", String(yes)); c.tabIndex = yes || (!t && c === drop.firstElementChild) ? 0 : -1; }
       };
       for (const t of order) {
         const known = b.priorities_known.includes(t), cue = !known && cueTopics.includes(t);
         const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
         const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
         const tag = [known ? "★" : cue ? "☆" : null, word || null].filter(Boolean).join(" ");
-        const chip = el("button", { type: "button", role: "radio", "aria-checked": "false", class: `go-chip go-lead-chip${known ? " known" : ""}${cue ? " cue" : ""}`, "data-topic": t,
-          title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` },
-          [el("b", { text: PITCH_NAMES[t] }), el("span", { class: "go-chip-tags" }, [markTag(b, t),
-            tag ? el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this" } : {}) }) : null])]);
-        chip.addEventListener("click", () => { set(t); onPick(t); close(); pill.focus({ preventScroll: true }); });
-        menu.append(chip);
+        const chip = el("button", { type: "button", role: "radio", "aria-checked": "false", class: `go-lead-chip${known ? " known" : ""}${cue ? " cue" : ""}`, "data-topic": t,
+          title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires." : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}.` },
+          [el("b", { class: "go-lead-topic", text: PITCH_NAMES[t] }), el("span", { class: "go-chip-tags" }, [
+            tag ? el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this." } : {}) }) : null, markTag(b, t)])]);
+        chip.addEventListener("click", () => { set(t); onPick(t); chip.scrollIntoView({ block: "nearest", inline: "nearest" }); });
+        drop.append(chip);
       }
-      ui().on(pill, "click", () => (menu.hidden ? open() : close()));
-      ui().on(drop, "focusout", (e) => { if (e.relatedTarget && !drop.contains(e.relatedTarget)) close(); });
-      ui().on(drop, "keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { e.stopPropagation(); close(); pill.focus({ preventScroll: true }); } });
-      pill.disabled = !!locked;
+      // arrows move the pick along the strip, as a radio group does
+      ui().on(drop, "keydown", (e) => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
+        const cs = [...drop.children], at = Math.max(0, cs.findIndex((c) => c.dataset.topic === value));
+        const next = cs[(at + step + cs.length) % cs.length];
+        if (!next || next.disabled) return;
+        e.preventDefault();
+        next.click();
+        next.focus({ preventScroll: true });
+      });
       set(value);
+      for (const c of drop.children) c.disabled = !!locked;
+      const on = drop.querySelector(".go-lead-chip.on");
+      if (on) requestAnimationFrame(() => { drop.scrollLeft = Math.max(0, on.offsetLeft - drop.offsetLeft - 8); });
       return drop;
     }
   }

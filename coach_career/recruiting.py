@@ -2013,6 +2013,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         offers.append(pid)
         if you:                                    # four weeks holding your offer shows you his commit style
             rc.setdefault("offer_weeks", {})[pid] = week
+            # he reads it at the week step, as he does a call (the player's ask): the board waits on it till then
+            rc.setdefault("offer_landing", {})[pid] = contact_week(state)
         if nil:
             _nil(state, slug)["held"][pid] = nil
         _event(state, "offer", pid, slug, nil=nil)

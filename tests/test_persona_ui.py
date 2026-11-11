@@ -188,9 +188,9 @@ def desktop(browser, base, sid, first, visit, guarded, names, errs) -> None:
     assert chosen >= 5, "the pitch picker lists the topics"
     assert not page.query_selector(f"{WIN} .go-lead-chip.cue"), "a Guarded call stars no topic"
     assert not page.query_selector(".go-pane .go-tag.cue"), "no starred topic"
-    page.click(f"{WIN} .go-lead-pick")                                  # nothing is picked for him: choose any topic
-    page.click(f"{WIN} .go-lead-menu .go-lead-chip:nth-child(2)")
-    topic = page.eval_on_selector(f"{WIN} .go-lead-menu .go-lead-chip:nth-child(2)", "e => e.dataset.topic")
+    # nothing is picked for him: choose any topic on the strip
+    page.click(f"{WIN} .go-lead .go-lead-chip:nth-child(2)")
+    topic = page.eval_on_selector(f"{WIN} .go-lead .go-lead-chip:nth-child(2)", "e => e.dataset.topic")
     re_ = pitch(page)
     # he gave nothing away: the reaction's kind is neutral (no hit or quiet border), the toast and History say so
     assert re_["kind"] == "guarded", re_

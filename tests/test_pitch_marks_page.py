@@ -67,9 +67,9 @@ if __name__ == "__main__":
                 page.click(".go-menu .go-menu-item[data-action=message]")
                 page.wait_for_selector(".go-pane .go-step #rc-pitch")
                 time.sleep(0.3)
-                assert page.evaluate("() => document.activeElement && document.activeElement.classList.contains('go-lead-pick')"), "the step's focus lands on the lead-with pill"
-                assert page.is_hidden(".go-pane .go-step .go-lead-menu"), "the lead-with sits closed in one pill"
-                page.click(".go-pane .go-step .go-lead-pick")
+                assert page.evaluate("() => document.activeElement && document.activeElement.classList.contains('go-lead-chip')"), "the step's focus lands on the lead-with strip"
+                strip = page.eval_on_selector(".go-pane .go-step .go-lead", "e => [e.scrollWidth > e.clientWidth, getComputedStyle(e).overflowX, e.getBoundingClientRect().height]")
+                assert strip[1] == "auto" and strip[2] < 110, f"the lead-with is one row that scrolls sideways: {strip}"
                 opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", "els => els.map(e => [e.dataset.topic, e.textContent])"))
                 assert "Not His Thing" in opts["nil"] and "Weak Case" in opts["coach"] and "He Lit Up" in opts["winning"] and "No Read" in opts["pro"], opts
                 assert not any(w in opts["prestige"] for w in ("Not His Thing", "Weak Case", "He Lit Up", "No Read")), "never pitched: no mark"
