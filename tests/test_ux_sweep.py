@@ -23,6 +23,13 @@ CLASS_CODE = re.compile(r"\b(FR|SO|JR|SR)RS\b")
 OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
 
 
+
+def pick_stage(page, stage: str) -> None:
+    """The board's stages are a dropdown: open the pill, pick the stage."""
+    if page.is_hidden(".go-stage-menu"):
+        page.click(".go-stage-pick")
+    page.click(f".go-stage-menu button[data-stage={stage}]")
+
 def not_clipped(page, selector: str) -> list:
     """Elements whose text is wider than their box (ellipsis or cut off)."""
     return page.evaluate("""(sel) => [...document.querySelectorAll(sel)].filter(e => e.offsetWidth && e.scrollWidth > e.clientWidth + 1)
@@ -737,7 +744,7 @@ def test_look_units_pane(page, base, sid) -> None:
         body = e.read().decode("utf-8", "replace")
         assert e.code == 409 and "his report is complete: 3 of 3 looks" in body, (e.code, body)
     open_tab(page, base, sid, "recruiting", ".go-stages")
-    page.click(".go-stages button[data-stage=all]")
+    pick_stage(page, 'all')
     page.click(f".go-row-recruit[data-pid='{done['id']}']")
     page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n) && document.querySelector('.go-pane .go-strip'); }", arg=done["name"], timeout=15_000)
     assert "3 of 3 Looks" in page.inner_text(".go-pane .go-strip"), page.inner_text(".go-pane .go-strip")
@@ -970,7 +977,7 @@ def test_grade_hover(page, base, sid) -> None:
         page.set_viewport_size({"width": width, "height": height})
         # the board pane's Scouting sub-tab: the report (its Potential headline) and the Attributes bars, their tooltips with his profile
         open_tab(page, base, sid, "recruiting", ".go-stages")
-        page.click(".go-stages button[data-stage=all]")
+        pick_stage(page, 'all')
         page.click(f".go-row-recruit[data-pid='{done['id']}']")
         page.wait_for_function("(n) => { const h = document.querySelector('.go-pane .go-pane-head'); return h && h.innerText.includes(n); }", arg=done["name"], timeout=15_000)
         page.click(".go-pane .go-subtabs button[data-sub=scouting]")
@@ -1486,19 +1493,27 @@ if __name__ == "__main__":
             # a tab filters the list and shows as pressed
             stage, n = next(((c[0], c[1]) for c in counts[1:] if 0 < c[1] < board_n), (None, None))
             if stage:
-                page.click(f".go-stages button[data-stage='{stage}']")
+                assert page.is_hidden(".go-stage-menu"), "the stages sit closed in one pill"
+                page.click(".go-stage-pick")
+                assert page.is_visible(f".go-stage-menu button[data-stage='{stage}']") and page.get_attribute(".go-stage-pick", "aria-expanded") == "true"
+                page.keyboard.press("Escape")
+                assert page.is_hidden(".go-stage-menu"), "Escape closes the stage menu"
+                pick_stage(page, stage)
                 time.sleep(0.4)
+                assert page.is_hidden(".go-stage-menu"), "picking a stage closes the menu"
+                pill = page.inner_text(".go-stage-pick")
+                assert str(n) in pill, (pill, n)
                 assert page.evaluate("() => document.querySelectorAll('.go-row-recruit').length") == n, "the tab filters the list"
                 assert page.get_attribute(f".go-stages button[data-stage='{stage}']", "aria-pressed") == "true"
-                page.click(".go-stages button[data-stage='all']")
+                pick_stage(page, 'all')
                 time.sleep(0.4)
             # a stage tab and the sort keep the focus through the redraw they cause, as the search does
-            page.click(".go-stages button[data-stage='contact']")
+            pick_stage(page, 'contact')
             time.sleep(0.3)
-            assert page.evaluate("() => document.activeElement.dataset.stage") == "contact", "a stage tab keeps the focus after the redraw"
-            page.click(".go-stages button[data-stage='all']")
+            assert page.evaluate("() => document.activeElement.classList.contains('go-stage-pick')"), "the stage pill keeps the focus after the redraw (the menu closed)"
+            pick_stage(page, 'all')
             time.sleep(0.3)
-            assert page.evaluate("() => document.activeElement.dataset.stage") == "all"
+            assert page.evaluate("() => document.activeElement.classList.contains('go-stage-pick')") and "All" in page.inner_text(".go-stage-pick")
             page.focus(".go-tools select.go-sel")
             page.select_option(".go-tools select.go-sel", "rank")
             time.sleep(0.3)
@@ -1788,7 +1803,7 @@ if __name__ == "__main__":
             vb = call(base, f"/api/season/{A}/recruiting")["board"]
             cold = next((b for b in vb if b["stage"] == "cold" and not b["committed"] and not b["signed"]), None)
             if cold and any(b["stage"] == "contact" for b in vb):
-                page.click(".go-stages button[data-stage=contact]")
+                pick_stage(page, 'contact')
                 time.sleep(0.4)
                 assert not page.query_selector(f".go-row-recruit[data-pid='{cold['id']}']"), "the In touch tab hides a cold recruit"
                 page.eval_on_selector(f".go-map .us-dot[data-id='{cold['id']}']", "e => e.dispatchEvent(new MouseEvent('click', { bubbles: true }))")
@@ -2035,7 +2050,7 @@ if __name__ == "__main__":
             assert shown[0] == mine_pid and shown[-1] in (lost_pid, hard_pid, hard_noffer_pid), shown
             assert_chance_order(page, vb, "ohio-state")
             open_tab(page, base, B, "recruiting", ".go-stages")
-            page.click(".go-stages button[data-stage=committed]")
+            pick_stage(page, 'committed')
             time.sleep(0.5)
             words = dict(page.eval_on_selector_all(".go-row-recruit", "els => els.map(e => [e.dataset.pid, e.querySelector('.go-standing-word').textContent.trim()])"))
             assert words[mine_pid] == "Yours" and words[lost_pid] == "Lost" and words[hard_pid] == "Lost" and words[hard_noffer_pid] == "Lost" and words[verbal_pid] in ("In It", "Long Shot"), words
@@ -2415,7 +2430,7 @@ if __name__ == "__main__":
             page.click(".modal-scene .go-scene button:has-text('Hang Up')")
             time.sleep(0.3)
             # Review Focus 2: an action moves him out of the open tab: the row leaves, the counts update, the pane stays on him
-            page.click(".go-stages button[data-stage=cold]")
+            pick_stage(page, 'cold')
             time.sleep(0.5)
             page.click(f".go-row-recruit[data-pid='{cold['id']}']")
             time.sleep(0.6)
@@ -2442,7 +2457,7 @@ if __name__ == "__main__":
             after = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
             assert after["cold"] == before["cold"] - 1 and after["contact"] == before["contact"] + 1, (before, after)
             assert page.get_attribute(".go-stages button[data-stage=cold]", "aria-pressed") == "true"
-            page.click(".go-stages button[data-stage=all]")
+            pick_stage(page, 'all')
             time.sleep(0.4)
             # reduced motion: no pulse, no fade, no cross-fade
             page.emulate_media(reduced_motion="reduce")

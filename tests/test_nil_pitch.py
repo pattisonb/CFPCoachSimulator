@@ -374,6 +374,24 @@ def test_every_kind_can_forgive_at_a_small_school():
     assert recruiting.MONEY_FORGIVE_CHANCE["cocky"] == min(recruiting.MONEY_FORGIVE_CHANCE.values())
 
 
+def test_money_owed_on_the_board_row():
+    """An open money promise rides on his board row (and the pitch's answer): the NIL to put on the offer and the week
+    it is due, so the page can show it plainly. Kept or closed, it is gone."""
+    from coach_career import prospects
+    st = fresh()
+    pid = nil_target(st, None)
+    recruiting.set_board(st, pid, True)
+    r = money_pitch(st, pid)
+    ask = recruiting.ask_from(st, ME, pid)
+    import math
+    need = 5 * math.ceil(recruiting.NIL_PROMISE_SHARE * ask / 5)          # the share of his ask, up to the next NIL step
+    owed = prospects.board_row(st, pid, ME)["money_owed"]
+    assert owed == {"nil": need, "by_week": st["current_week"] + recruiting.NIL_PROMISE_WEEKS} == r["money_owed"], (owed, r.get("money_owed"), ask)
+    recruiting._nil(st, ME)["held"][pid] = need
+    recruiting._promises(st, st["current_week"] + 1)
+    assert prospects.board_row(st, pid, ME)["money_owed"] is None
+
+
 if __name__ == "__main__":
     test_offer_without_nil_reads_room()
     test_before_offer_reads_room_not_tier()
@@ -399,4 +417,5 @@ if __name__ == "__main__":
     test_walking_away_closes_it()
     test_going_quiet_fades_it()
     test_every_kind_can_forgive_at_a_small_school()
+    test_money_owed_on_the_board_row()
     print("nil pitch ok: unattached NIL reads the room against his ask; attached reads the deal; the page reads the ask you know; talking money is a promise, kept, broken or closed")

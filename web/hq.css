@@ -183,3 +183,8 @@
 .hq-next-class { min-width: 44px; text-align: center; }
 .hq-commit { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .hq-full { opacity: 0.7; }
+
+/* Player Impact and Retention: a filter per column, wrapping on a phone */
+.hq-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.hq-filter { flex: 1 1 110px; min-width: 0; min-height: 36px; }
+@media (max-width: 699px), (pointer: coarse) { .hq-filter { min-height: 44px; } }

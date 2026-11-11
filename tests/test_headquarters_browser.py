@@ -229,6 +229,52 @@ def check_full_class(page, base, sid) -> None:
     page.wait_for_function("() => !document.querySelector('.modal:not([hidden])')", timeout=10_000)
 
 
+def check_suggested_tasks(page, base, sid) -> None:
+    """A money promise (a NIL pitch to a recruit who cares about it) shows in Alerts and as the first Suggested task,
+    with the NIL and the week it is due; a recruit who cooled on you gets a task too."""
+    board = call(base, f"/api/season/{sid}/recruiting")
+    owed = None
+    for b in board["board"][:20]:
+        if b.get("committed") or b.get("signed"):
+            continue
+        try:
+            sc = call(base, f"/api/season/{sid}/recruit", {"pid": b["id"], "action": "call"})["scene"]
+            sc = call(base, f"/api/season/{sid}/recruit", {"pid": b["id"], "action": "present", "scene": sc["id"], "topics": ["nil", "winning", "prestige"]})["scene"]
+            if sc.get("question"):
+                call(base, f"/api/season/{sid}/recruit", {"pid": b["id"], "action": "answer", "scene": sc["id"], "answer": "straight"})
+            r = call(base, f"/api/season/{sid}/recruit", {"pid": b["id"], "action": "pitch", "pitch": "nil", "scene": sc["id"]})
+        except Exception:  # noqa: BLE001  (out of hours, a call already this week)
+            continue
+        if r.get("money_owed"):
+            owed = (b["name"], r["money_owed"])
+            break
+    assert owed, "a recruit who cares about NIL to talk money with"
+    name, mo = owed
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "tasks", "size": "L"}, {"id": "c2", "widget": "alerts", "size": "L"}]})
+    open_hq(page, base, sid)
+    check_card_clean(page, "tasks")
+    first = page.inner_text("#tab-headquarters .hq-card[data-widget='tasks'] .hq-task-suggest >> nth=0")
+    assert name in first and f"{mo['nil']} NIL" in first and f"Week {mo['by_week']}" in first, first
+    assert f"{mo['nil']} NIL" in page.inner_text("#tab-headquarters .hq-card[data-widget='alerts']")
+
+
+def check_impact_filters(page, base, sid) -> None:
+    """Player Impact and Retention filters each column in place: Role Starter leaves only starters; Any brings back all."""
+    call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "senior-impact", "size": "L"}]})
+    open_hq(page, base, sid)
+    card = "#tab-headquarters .hq-card[data-widget='senior-impact']"
+    check_card_clean(page, "senior-impact")
+    labels = page.eval_on_selector_all(f"{card} select.hq-filter", "els => els.map(e => e.getAttribute('aria-label'))")
+    assert labels == ["Pos", "Role", "Class", "Outlook", "Replacement"], labels
+    rows = lambda: page.eval_on_selector_all(f"{card} tbody tr", "els => els.map(e => e.cells[3].textContent)")
+    everyone = rows()
+    if "Starter" in everyone and "Reserve" in everyone:
+        page.select_option(f"{card} select[aria-label=Role]", "Starter")
+        assert set(rows()) == {"Starter"}, rows()
+        page.select_option(f"{card} select[aria-label=Role]", "")
+        assert rows() == everyone
+
+
 def check_previews(page) -> None:
     page.click("#tab-headquarters .hq-add-widget")
     page.wait_for_selector(".hq-drawer:not([hidden])")
@@ -920,6 +966,8 @@ if __name__ == "__main__":
             check_sweep(page, base, sid, lambda sizes, size: sizes[0])      # a new career: nothing on the board yet
             check_player_links(page, base, live)
             check_full_class(page, base, live)
+            check_suggested_tasks(page, base, live)
+            check_impact_filters(page, base, live)
             check_previews(page)
             check_actions(page, base, live, sid)
             check_flow(page, base, live)

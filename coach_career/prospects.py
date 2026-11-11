@@ -815,6 +815,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
+               money_owed=recruiting.money_owed(state, viewer, pid),
                cooled_why=persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
                stage=recruiting.stage(state, viewer, pid), strength=recruiting.strengths(state, viewer, pid, known=True),
                pestering=recruiting.would_pester(state, viewer, pid), pesters=recruiting.pesters(state, viewer, pid),

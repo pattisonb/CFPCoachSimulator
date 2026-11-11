@@ -42,8 +42,32 @@
   };
 
   // ----- the alerts (shared by Alerts and Needs Attention, and Recruiting Tasks' suggestions) ------------------
+  // the pitch to lead with when he cooled: the strongest of his known priorities (the board row's strength words)
+  const bestPitch = (b) => {
+    const known = (b.priorities_known || []).filter((t) => b.strength && b.strength[t] != null);
+    known.sort((x, y) => b.strength[y] - b.strength[x]);
+    return known.length ? (window.CFP.recruiting && window.CFP.recruiting.pitchName ? window.CFP.recruiting.pitchName(known[0]) : known[0]) : null;
+  };
   function alertsOf(board, contacts, ctx) {
     const out = [], week = board.week || 0, mine = me(ctx);
+    // first what you owe: a money promise has a deadline
+    for (const b of board.board || []) {
+      const mo = b.money_owed;
+      if (mo) out.push({ kind: "Promise", pid: b.id, name: b.name, text: `You talked money with ${b.name}: put ${mo.nil} NIL on your offer by Week ${mo.by_week}.`,
+        task: `Put ${mo.nil} NIL on ${b.name}'s offer by Week ${mo.by_week}.` });
+    }
+    // then who cooled on you, with what to do about it
+    for (const b of board.board || []) {
+      if (!b.cooled || b.signed || (b.committed && b.committed !== mine)) continue;
+      const pitch = bestPitch(b);
+      const task = b.cooled_why === "lowball" ? `Raise your offer to ${b.name} to what he wants.`
+        : b.cooled_why === "promise" ? `Give ${b.name} a week: he doubts a promise you made.`
+        : pitch ? `Call ${b.name} and lead with ${pitch}.` : `Call ${b.name}.`;
+      out.push({ kind: "Cooled", pid: b.id, name: b.name, text: `${b.name} has cooled on you.`, task });
+    }
+    for (const b of board.board || []) {
+      if (b.pestering) out.push({ kind: "Contact", pid: b.id, name: b.name, text: `${b.name} is tuning you out.`, task: `Leave ${b.name} alone this week.` });
+    }
     for (const b of board.board || []) {
       const school = b.signed || b.committed;
       if (b.offered && school && school !== mine && (b.signed || b.hard))
@@ -71,8 +95,10 @@
     draw: (d, ctx) => {
       const rows = alertsOf(d.board, d.hq.contacts || {}, ctx).slice(0, k.rowsFor(ctx.size));
       if (!rows.length) return k.empty("Nothing needs you right now.");
+      // his name is the link (a label); what is wrong reads after it as a sentence
+      const rest = (a) => (a.name && a.text.startsWith(a.name) ? a.text.slice(a.name.length).trim() : a.text);
       return k.list(rows.map((a, i) => ({ key: `${a.kind}-${a.pid || i}`, cells: [el("span", { class: "go-tag", text: a.kind }),
-        a.pid ? (() => { const b = k.name(ctx, a.pid, a.text); b.title = a.text; return b; })() : el("span", { class: "hq-grow", text: a.text })] })));
+        ...(a.pid ? [(() => { const n = k.name(ctx, a.pid, a.name); n.classList.remove("hq-grow"); return n; })(), el("span", { class: "hq-sub hq-grow", text: rest(a) })] : [el("span", { class: "hq-grow", text: a.text })])] })));
     } });
 
   // ----- Board Health -----------------------------------------------------------------------------------------
@@ -191,6 +217,7 @@
       return el("div", {}, [pick, result]);
     } });
 
+  const impactFilter = { pos: "", role: "", cls: "", outlook: "", rep: "" };   // Player Impact and Retention's filters (this visit)
   // ----- Player Impact and Retention ------------------------------------------------------------------------------
   reg({ id: "senior-impact", title: "Player Impact and Retention", category: "program", blurb: "Your seniors, draft-eligible starters and transfer risks, how likely each is to leave (in the offseason, what really happened), and the recruit who could take his place.",
     sizes: ["M", "L"], size: "M", sources: ["hq"], want: ["outlook"], sample: { hq: { outlook: SAMPLE_OUTLOOK } }, viewAll: "depth",
@@ -207,11 +234,30 @@
       const rep = (p) => (p.replacement
         ? el("span", { class: "hq-rep" }, [k.name(ctx, p.replacement.pid, p.replacement.name), el("span", { class: "go-tag", text: p.replacement.status })])
         : el("span", { class: "hq-sub", text: "Nobody Yet" }));
-      const rows = ps.slice(0, k.rowsFor(ctx.size));
-      return ctx.size === "L"
-        ? k.table(["Player", "Pos", "Class", "Role", "Outlook", "Replacement"], rows.map((p) =>
-          [k.player(ctx, p.name, p.position, p.slug), p.position, p.class, p.starter ? "Starter" : "Reserve", el("span", { class: "go-tag", text: why(p) }), rep(p)]))
-        : k.table(["Player", "Pos", "Outlook", "Replacement"], rows.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)]));
+      // a filter for each column: position, role, class, outlook and replacement (committed, offered, on board, nobody)
+      const role = (p) => (p.starter ? "Starter" : "Reserve");
+      const repWord = (p) => (p.replacement ? p.replacement.status : "Nobody Yet");
+      const cols = [["pos", "Pos", (p) => p.position], ["role", "Role", role], ["cls", "Class", (p) => p.class], ["outlook", "Outlook", why], ["rep", "Replacement", repWord]];
+      const f = impactFilter;
+      const box = el("div", { class: "hq-impact-rows" });
+      const paint = () => {
+        const shown = ps.filter((p) => cols.every(([key, , get]) => !f[key] || get(p) === f[key])).slice(0, k.rowsFor(ctx.size));
+        box.replaceChildren(!shown.length ? k.empty("Nobody matches these filters.") : ctx.size === "L"
+          ? k.table(["Player", "Pos", "Class", "Role", "Outlook", "Replacement"], shown.map((p) =>
+            [k.player(ctx, p.name, p.position, p.slug), p.position, p.class, role(p), el("span", { class: "go-tag", text: why(p) }), rep(p)]))
+          : k.table(["Player", "Pos", "Outlook", "Replacement"], shown.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)])));
+      };
+      const bar = el("div", { class: "hq-filters" }, cols.map(([key, label, get]) => {
+        const vals = [...new Set(ps.map(get))].filter(Boolean).sort();
+        if (f[key] && !vals.includes(f[key])) f[key] = "";
+        const sel = el("select", { class: "hq-input hq-filter", "aria-label": label },
+          [el("option", { value: "", text: `Any ${label}` }), ...vals.map((v) => el("option", { value: v, text: v }))]);
+        sel.value = f[key];
+        on(sel, "change", (e) => { f[key] = e.currentTarget.value; paint(); });
+        return sel;
+      }));
+      paint();
+      return el("div", {}, [bar, box]);
     } });
 
   // ----- Roster Loss Projections ---------------------------------------------------------------------------------
