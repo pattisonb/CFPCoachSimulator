@@ -139,6 +139,37 @@ def test_home_spot():
     assert spot({"slug": "akron", "city": "Cleveland"}) == [41.505, -81.693], "an edit that changes city moves"
 
 
+def test_custom_career_stays_listed():
+    """A career at a new custom program stays in the seasons list (the player's report: it vanished after editing the
+    program). Its card's record came from season._records, built on whatever league was in play, so with the card cache
+    cold (a restart, or another league checked) the card failed and the career was skipped. It also opens and plays."""
+    import json as _json
+    doc = {"format": "cfp-league/1", "name": "t", "year": 2026, "conferences": [],
+           "teams": [{"slug": "alder-tech", "name": "Alder Tech", "conference": "mountain-west", "state": "OR", "level": "FBS"}]}
+    r = api.call("POST", "/api/league/check", _json.dumps(doc).encode())
+    sid = api.call("POST", "/api/season", {"team": "alder-tech", "league": r["key"], "seed": 3})["id"]
+    ids = lambda: [c["id"] for c in api.call("GET", "/api/seasons")["seasons"]]
+    api.call("POST", "/api/season", {"team": "iowa", "seed": 4})
+    doc["teams"][0]["name"] = "Alder Tech Owls"                                   # the program edited and checked again
+    api.call("POST", "/api/league/check", _json.dumps(doc).encode())
+    api._cards.clear()                                                             # a cold card cache (a restart)
+    assert sid in ids(), "the custom career is listed"
+    card = next(c for c in api.call("GET", "/api/seasons")["seasons"] if c["id"] == sid)
+    assert card["team_name"] and card["wins"] == 0 and card["losses"] == 0, card
+    assert api.call("GET", f"/api/season/{sid}")["team"] == "alder-tech", "and it opens"
+
+
+def test_towns_major_first():
+    """The campus map's towns: the state's major cities first (always drawn and named: Boise, not only Meridian), then the
+    recruits' hometowns without repeats; every major city inside its state on the map (checked once, by hand)."""
+    d = api.call("GET", "/api/league/towns/ID")
+    names = [t["name"] for t in d["towns"]]
+    majors = [t["name"] for t in d["towns"] if t["major"]]
+    assert majors[0] == "Boise" and names[:len(majors)] == majors, names[:8]
+    assert len(names) == len({n.casefold() for n in names}), "no town twice"
+    assert api.call("GET", "/api/league/towns/ZZ")["towns"] == []
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
