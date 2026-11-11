@@ -170,7 +170,8 @@ def assert_chance_order(page, board: list, me: str) -> None:
 
 
 PITCH = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
-         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League"}
+         "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League",
+         "facilities": "Facilities", "location": "Location", "stability": "Stability", "game_day": "Game Day", "exposure": "Exposure"}
 REACTION = {"hit": "He lit up", "polite": "Polite", "quiet": "He went quiet", "tired": "He is tired of this", "guarded": "He gave nothing away"}
 GONE = "heard".title()     # the word the cue tag used to print: the page never shows it now
 HISTORY_EMPTY = "Nothing with him yet: no contact, no offer."
