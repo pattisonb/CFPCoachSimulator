@@ -835,7 +835,7 @@
     if (opts.link) extra.push(el("div", { class: "go-scout-foot", "data-key": "foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab",
       onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } })]));
     if (opts.extra) extra.push(...[].concat(opts.extra).filter(Boolean));
-    return PV().uncertaintyCard(p ? p.report : null, extra);
+    return PV().uncertaintyCard(p ? p.report : null, extra, { confidence: !!s.clear_mode });   // Clear Mode: Looks & Confidence
   }
 
   // ----- Profile: his traits (Not Known Yet with how each shows) and the background, with the comp once complete -----

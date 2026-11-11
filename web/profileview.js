@@ -118,15 +118,20 @@
   // Looks & Uncertainty: per attribute a pip meter (three for a sure read, one for a wide one) and Low / Medium / High,
   // flowing in columns across the card; then any extra blocks (This Week's looks, flags, the comp)
   const PIPS_FOR = { Low: 3, Medium: 2, High: 1 };
+  // opts.confidence (Clear Mode): the same card as Looks & Confidence, its words turned around (Low uncertainty is High
+  // confidence), as the Key Ratings say them
+  const CONF_OF = { Low: "High", Medium: "Medium", High: "Low" };
   function uncertaintyCard(report, extra, opts = {}) {
     const by = Object.fromEntries(((report && report.attributes) || []).map((a) => [a.group, a]));
+    const conf = !!opts.confidence;
     const rows = el("div", { class: "pv-unc" }, ATTRS.map(([g, label]) => {
       const u = by[g] && by[g].uncertainty;
+      const w = u ? (conf ? CONF_OF[u] : u) : null;
       return el("div", { class: "pv-unc-row", "data-group": g }, [el("span", { class: "pv-attr-k", text: label }),
-        pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${u} uncertainty` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: u || "Not Scouted" })]);
+        pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${w} ${conf ? "confidence" : "uncertainty"}` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: w || "Not Scouted" })]);
     }));
-    return card("Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
-      tip: "Each look narrows a read: three dots is a confident read (Low uncertainty), one a wide one (High)." });
+    return card(conf ? "Looks & Confidence" : "Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
+      tip: conf ? "Each look narrows a read: three dots is High confidence, one is Low." : "Each look narrows a read: three dots is a confident read (Low uncertainty), one a wide one (High)." });
   }
 
   // the traits, from whatever the traits view carries: Who Decides with what that person Cares About, Personality, His Story,
