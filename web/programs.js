@@ -7,7 +7,7 @@
   const P = window.CFP.programs;
   const ui = () => window.CFP.ui;
   const STATES = "AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split(" ");
-  let list = P.load(), real = {}, conferences = [], open = null, saveTimer = null;
+  let list = P.load(), real = {}, conferences = [], open = null, saveTimer = null, playbooks = { offense: [], defense: [] };
   const toast = (t, ms) => (ui() && ui().toast ? ui().toast(t, ms || 3500) : null);
   const byId = (id) => list.find((p) => p.id === id);
 
@@ -72,6 +72,16 @@
     node.addEventListener("change", () => { p.f[key] = node.value; p.updated = Date.now(); changed(p, key); });
     return node;
   }
+  // rivals: a multi-pick of the game's FBS teams (stored as slugs)
+  function rivalsPick(p) {
+    const own = p.kind === "edit" ? p.base : null;
+    const node = el("select", { multiple: "", size: "6", class: "pg-rivals", "aria-label": "Rivals" },
+      Object.values(real).filter((t) => (t.level || "FBS") === "FBS" && t.slug !== own).map((t) => el("option", { value: t.slug, text: t.short_name || t.name })));
+    const picked = new Set(p.f.rivals || []);
+    for (const o of node.options) o.selected = picked.has(o.value);
+    node.addEventListener("change", () => { p.f.rivals = [...node.selectedOptions].map((o) => o.value); p.updated = Date.now(); changed(p, "rivals"); });
+    return node;
+  }
   function changed(p, key) {
     persist();
     const ed = $("#pg-editor");
@@ -124,8 +134,14 @@
         field("Strength", select(p, "strength", [["", "Conference Average"], ...P.STRENGTHS.map((s) => [s, s])])),
         field("Prestige", input(p, "prestige", { type: "number", min: "0", max: "100", placeholder: "Conference average" }), "0 to 100")]),
       newConf,
-      el("h3", { class: "pg-sec", text: "Head Coach" }),
-      el("div", { class: "pg-row" }, [field("Name", input(p, "coach", { type: "text", maxlength: "40", placeholder: "Generated if blank" }))]),
+      el("h3", { class: "pg-sec", text: "Coaches" }),
+      el("div", { class: "pg-row" }, [field("Head Coach", input(p, "coach", { type: "text", maxlength: "40", placeholder: "Generated if blank" })),
+        field("Offensive Coordinator", input(p, "oc", { type: "text", maxlength: "40", placeholder: "Generated if blank" })),
+        field("Defensive Coordinator", input(p, "dc", { type: "text", maxlength: "40", placeholder: "Generated if blank" }))]),
+      el("div", { class: "pg-row" }, [field("Offense", select(p, "offense", [["", "Conference's Usual"], ...playbooks.offense.map((x) => [x, x])])),
+        field("Defense", select(p, "defense", [["", "Conference's Usual"], ...playbooks.defense.map((x) => [x, x])]))]),
+      el("h3", { class: "pg-sec", text: "Rivals" }),
+      field("Rivals", rivalsPick(p), "Pick any teams; each rivalry is scheduled every year. Ctrl or Cmd-click to pick more than one."),
       el("h3", { class: "pg-sec", text: "Roster" }),
       field("Players", input(p, "roster", { tag: "textarea", rows: "8", placeholder: "Jay Smith, QB, JR\nMax Lee, WR, SO, 74" }),
         "One a line: Name, Position, Class (and an overall if you like). Leave it empty and the game fills 85 players to your strength; players you list are kept and the rest are filled in."),
@@ -139,7 +155,8 @@
     const r = base ? real[base] : null;
     const c = (r && r.colors) || {};
     const f = r ? { name: r.name, short_name: r.short_name, abbreviation: r.abbreviation, mascot: r.mascot, city: r.city, state: r.state,
-      conference: r.conference, primary: (c.primary || {}).hex, secondary: (c.secondary || {}).hex, accent: (c.accent || {}).hex, prestige: r.prestige }
+      conference: r.conference, primary: (c.primary || {}).hex, secondary: (c.secondary || {}).hex, accent: (c.accent || {}).hex, prestige: r.prestige,
+      offense: r.offense, defense: r.defense, rivals: [...(r.rivals || [])] }
       : { conference: "", primary: "#1f4e79", secondary: "#ffffff", accent: "#111111", new_conf_games: "8" };
     if (kind === "edit" && list.some((p) => p.kind === "edit" && p.base === base)) { toast(`You already have an edit of ${r.short_name}.`); return; }
     const p = { id: `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, kind, base: base || null, f, updated: Date.now() };
@@ -172,6 +189,8 @@
         conference: nc ? "__new" : t.conference, new_conf_name: nc ? nc.name : undefined, new_conf_games: nc ? String(nc.games || 8) : undefined,
         primary: (c.primary || {}).hex, secondary: (c.secondary || {}).hex, accent: (c.accent || {}).hex,
         strength: t.strength == null ? "" : String(t.strength), prestige: t.prestige, coach: ((t.coaches || {}).head || {}).name,
+        oc: ((t.coaches || {}).oc || {}).name, dc: ((t.coaches || {}).dc || {}).name, offense: (t.coaches || {}).offense, defense: (t.coaches || {}).defense,
+        rivals: Array.isArray(t.rivals) ? [...t.rivals] : undefined,
         roster: (t.roster || []).map((r) => [r.name, r.pos, r.class, r.overall].filter((x) => x != null && x !== "").join(", ")).join("\n") };
       if (isReal) {
         const r = real[t.slug], rc = r.colors || {};
@@ -201,6 +220,7 @@
       const d = await api("/api/league/programs");
       real = Object.fromEntries(d.teams.map((t) => [t.slug, t]));
       conferences = d.conferences.filter((c) => (c.level || "FBS") === "FBS");
+      playbooks = { offense: [...new Set(d.teams.map((t) => t.offense).filter(Boolean))].sort(), defense: [...new Set(d.teams.map((t) => t.defense).filter(Boolean))].sort() };
       const sel = $("#pg-real");
       sel.append(...d.teams.filter((t) => (t.level || "FBS") === "FBS").map((t) => el("option", { value: t.slug, text: t.short_name || t.name })));
       drawList();

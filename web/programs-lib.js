@@ -61,7 +61,15 @@
     if (Object.keys(cols).length) t.colors = p.kind === "edit" ? { ...bc, ...cols } : cols;
     if (f.strength) t.strength = STRENGTHS.includes(f.strength) ? f.strength : Number(f.strength);
     if (f.prestige !== undefined && f.prestige !== "" && Number(f.prestige) !== base.prestige) t.prestige = Number(f.prestige);
-    if (f.coach) t.coaches = { head: { name: f.coach } };
+    const co = {};
+    if (f.coach) co.head = { name: f.coach };
+    if (f.oc) co.oc = { name: f.oc };
+    if (f.dc) co.dc = { name: f.dc };
+    if (f.offense && f.offense !== base.offense) co.offense = f.offense;
+    if (f.defense && f.defense !== base.defense) co.defense = f.defense;
+    if (Object.keys(co).length) t.coaches = co;
+    const rv = Array.isArray(f.rivals) ? f.rivals.filter(Boolean) : [];
+    if (rv.length && JSON.stringify([...rv].sort()) !== JSON.stringify([...(base.rivals || [])].sort())) t.rivals = rv;
     const r = roster(f.roster);
     if (r.length) t.roster = r;
     if (p.kind === "new") t.level = "FBS";

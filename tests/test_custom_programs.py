@@ -45,6 +45,16 @@ def test_errors_are_sentences():
     assert not r["ok"] and any("big-sky-e" in e and e.endswith(".") for e in r["errors"]), r["errors"]
 
 
+def test_coaches_playbooks_rivals_pass():
+    team = {"slug": "alder-tech", "name": "Alder Tech", "conference": "mountain-west", "rivals": ["boise-state", "air-force"],
+            "coaches": {"head": {"name": "Pat Doe"}, "oc": {"name": "Sam Roe"}, "dc": {"name": "Lee Poe"}, "offense": "Spread RPO", "defense": "4-3"}}
+    r = league_file.check(doc(team), seed=3)
+    assert r["ok"], r.get("errors")
+    t = r["league"]["teams"]["alder-tech"]
+    assert t["coaches"]["head_coach"]["name"] == "Pat Doe" and t["coaches"]["offensive_coordinator"]["name"] == "Sam Roe", t["coaches"].keys()
+    assert set(t["meta"].get("rivals") or []) >= {"boise-state", "air-force"}, t["meta"].get("rivals")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

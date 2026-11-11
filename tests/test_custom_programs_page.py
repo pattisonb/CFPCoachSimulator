@@ -54,6 +54,11 @@ if __name__ == "__main__":
             page.select_option(f"{ed} .pg-field:has-text('State') select", "OR")
             page.select_option(f"{ed} .pg-field:has-text('Conference') select >> nth=0", "mountain-west")
             page.fill(f"{ed} textarea", "Jay Smith, QB, JR\nMax Lee, WR, SO, 74\nAl Cruz, LT, SR")
+            page.fill(f"{ed} .pg-field:has-text('Offensive Coordinator') input", "Sam Roe")
+            page.fill(f"{ed} .pg-field:has-text('Defensive Coordinator') input", "Lee Poe")
+            page.select_option(f"{ed} .pg-field:has-text('Offense') select", "Spread RPO")
+            page.select_option(f"{ed} .pg-field:has-text('Defense') select", "4-3")
+            page.select_option(f"{ed} select.pg-rivals", ["boise-state", "air-force"])
             page.click(f"{ed} button:has-text('Check Program')")
             page.wait_for_selector(f"{ed} .pg-good", timeout=180_000)
             assert "Ready to use" in page.inner_text(f"{ed} .pg-good")
@@ -68,6 +73,9 @@ if __name__ == "__main__":
             d = json.loads(Path(dl.value.path()).read_text())
             assert d["format"] == "cfp-league/1" and len(d["teams"]) == 1 and len(d["teams"][0]["roster"]) == 3, d
             assert d["teams"][0]["conference"] == "mountain-west" and d["teams"][0]["roster"][1]["overall"] == 74
+            co = d["teams"][0]["coaches"]
+            assert co["oc"]["name"] == "Sam Roe" and co["dc"]["name"] == "Lee Poe" and co["offense"] == "Spread RPO" and co["defense"] == "4-3", co
+            assert sorted(d["teams"][0]["rivals"]) == ["air-force", "boise-state"], d["teams"][0].get("rivals")
             # edit a real program
             page.wait_for_function("() => document.querySelectorAll('#pg-real option').length > 100", timeout=120_000)
             page.select_option("#pg-real", "akron")

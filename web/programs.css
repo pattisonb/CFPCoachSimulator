@@ -21,3 +21,4 @@
 .pg-help { margin: 0; }
 @media (max-width: 860px) { .pg-layout { grid-template-columns: minmax(0, 1fr); padding: 12px; } }
 @media (max-width: 760px) { .pg-layout button, .pg-layout select, .pg-layout input:not([type="color"]) { min-height: 44px; } }
+.pg-rivals { width: 100%; min-height: 140px; }
