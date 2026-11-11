@@ -1571,6 +1571,8 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
             seen.append("playing_time")
             revealed.append("playing_time")
     elif answer == "promise":
+        if _open_roster_promise(contact):                   # Promise Him the Job already made it: one per recruit, both ways
+            raise RecruitingError(409, "You already promised him the job.")
         truthful = promise_holds(state, slug, pid, q)
         group = _group_of(p)
         if truthful and slug == state.get("team") and not word.believes(state, group):   # Keeps His Word under the floor: he doesn't believe you
@@ -1675,6 +1677,12 @@ def job_crowd(state: dict, slug: str, group: str, but: str) -> list[dict]:
     return out
 
 
+def rival_stamp(state: dict) -> list:
+    """When he heard you promised his job again: [season week, portal week] (the season's week stands still in the portal)."""
+    rc = state.get("recruiting") or {}
+    return [state.get("current_week") or 0, (rc.get("week") or 0) if rc.get("portal") else 0]
+
+
 def _strain(state: dict, slug: str, crowd: list[dict], week: int) -> None:
     """You promised the job again at his position: each earlier promise hears it. A recruit still deciding cools and will
     bring it up (heard_rival); one committed to you (not a hard commit) loses JOB_STRAIN_FIRM; a promised player's season
@@ -1692,7 +1700,7 @@ def _strain(state: dict, slug: str, crowd: list[dict], week: int) -> None:
             else:
                 c["cooled_until"] = week + COOL_WEEKS
                 persona.set_cooled_why(state, slug, pid, "promise")
-            c["heard_rival"] = week
+            c["heard_rival"] = rival_stamp(state)
             _event(state, "promise_strained", pid, slug, line=scenes.HEARD_RIVAL)
         else:
             year = (state.get("offseason") or {}).get("year") if is_portal(state) else season.season_year(state)
@@ -2532,7 +2540,7 @@ def flip_weekly(state: dict, pid: str, gap: float, firmness: Optional[float] = N
         firmness = st.get("firmness") or FIRM_START
     if firmness >= HARD_AT:
         return 0.0
-    return min(1.0, 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100 * persona.decommit_mult(state, pid))   # a chance, never over 1 (a draw against it moves the same)
+    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100 * persona.decommit_mult(state, pid)
 
 
 def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float:
@@ -2546,7 +2554,7 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     for _ in range(max(0, weeks_left)):
         if f >= HARD_AT:
             break
-        keep *= 1 - flip_weekly(state, pid, gap, f)
+        keep *= 1 - min(1.0, flip_weekly(state, pid, gap, f))   # as a chance: a big rival lead never takes it over 1 (the odds stay non-negative)
         f = min(100, f + FIRM_TOUCH + FIRM_NIL)
     return 1 - keep
 

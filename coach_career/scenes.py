@@ -918,6 +918,17 @@ def style_line(state: dict, slug: str, pid: str, sid: str, f: dict):
     return line.format(**f) if rng.random() < persona.STYLE_CALL_LINE else None
 
 
+def heard_rival_due(state: dict, slug: str, pid: str) -> bool:
+    """He heard you promised his job to someone else (recruiting._strain) in an earlier week (the portal's own week in the
+    portal) and has not said so yet: your school's scene opens with HEARD_RIVAL."""
+    c = ((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {})
+    stamp = c.get("heard_rival")
+    if slug != state.get("team") or stamp is None:
+        return False
+    stamp = list(stamp) if isinstance(stamp, (list, tuple)) else [stamp, 0]
+    return stamp < recruiting.rival_stamp(state)
+
+
 def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict:
     """A call's or in-home visit's scene as it opens: the room (a visit), your opener and his small
     talk. The cue and his question wait on your opening (`present`); his ask is as you know it."""
@@ -952,7 +963,7 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
         story = None if news else persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
         said = news or story or style_line(state, slug, pid, sid, f) or said      # what happened to him first, then his story, then how he means to commit
     contact = ((rc["contacts"].get(pid) or {}).get(slug) or {})
-    if slug == state.get("team") and contact.get("heard_rival") is not None and contact.get("heard_rival") < week:
+    if heard_rival_due(state, slug, pid):
         said = HEARD_RIVAL                                            # he heard you promised his job again: he says so, once
         contact.pop("heard_rival", None)
     turns.append(_turn("him", said))
@@ -1118,6 +1129,8 @@ def question(state: dict, slug: str, pid: str, week: int, package: dict | None =
         return {"kind": "package", "text": text, "answer": None, "reply": None, "about": about, "answers": package_answers(about)}
     if "playing_time" not in p["priorities"]:
         return None
+    if recruiting._open_roster_promise(((rc["contacts"].get(pid) or {}).get(slug)) or {}):
+        return None                                                   # you already promised him the job: nothing to ask
     rng = random.Random(f"question-{rc['seed']}-{slug}-{pid}-{week}")
     if rng.random() >= QUESTION_RATE:
         return None
