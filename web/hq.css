@@ -198,7 +198,7 @@
 .hq-fpill:focus-within { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
 .hq-fpill-k { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .hq-fpill-sel { appearance: none; -webkit-appearance: none; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-weight: 700;
-  padding: 0 14px 0 0; margin: 0 -14px 0 0; min-height: 30px; cursor: pointer; max-width: 16ch; text-overflow: ellipsis; }
+  padding: 0 14px 0 0; margin: 0 -14px 0 0; min-height: 30px; cursor: pointer; max-width: 18ch; text-overflow: ellipsis; field-sizing: content; }   /* as wide as the pick showing, not its longest option */
 .hq-fpill-sel option { color: var(--text); background: var(--panel); font-weight: 400; }
 .hq-fpill-caret { font-size: 9px; pointer-events: none; opacity: 0.7; }
 .hq-fpill.on { background: var(--text); color: var(--bg); border-color: var(--text); }
