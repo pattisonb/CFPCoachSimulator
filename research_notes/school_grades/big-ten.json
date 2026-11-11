@@ -1,0 +1,1550 @@
+{
+ "illinois": {
+  "us_news_rank": {
+   "value": 34,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 79,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/301.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 973,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/301_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Gies Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/Gies_Memorial_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 60670,
+   "source": "https://en.wikipedia.org/wiki/Gies_Memorial_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_renovated": {
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/Gies_Memorial_Stadium",
+   "estimate": false,
+   "note": "Infobox lists renovations 1985, 2008, 2013; expanded 1930."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 236072,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Champaign–Urbana, IL MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 25.7,
+   "source": "https://en.wikipedia.org/wiki/Champaign,_Illinois",
+   "estimate": false,
+   "note": "Champaign 3S station, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 236,000 dominated by the university."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Illinois_Fighting_Illini_head_football_coaches",
+   "estimate": false,
+   "note": "Ron Zook, Tim Beckman, Lovie Smith, Bret Bielema. Bill Cubit (2015) excluded: he started 2015 as interim."
+  },
+  "current_hc_since": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/List_of_Illinois_Fighting_Illini_head_football_coaches",
+   "estimate": false,
+   "note": "Bret Bielema."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "indiana": {
+  "us_news_rank": {
+   "value": 73,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 88,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/306.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 982,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/306_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Indiana_University)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 53524,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Indiana_University)",
+   "estimate": false,
+   "note": "Capacity listed as 2025–present."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Indiana_University)",
+   "estimate": false,
+   "note": "Infobox lists renovations 2003, 2016 and expansions 1969, 2009; capacity changed slightly in 2024 and 2025 without a listed major project."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 161039,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Bloomington, IN MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 28.8,
+   "source": "https://en.wikipedia.org/wiki/Bloomington,_Indiana",
+   "estimate": false,
+   "note": "Bloomington (Indiana University) station, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 161,000 dominated by IU."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Indiana_Hoosiers_head_football_coaches",
+   "estimate": false,
+   "note": "Bill Lynch, Kevin Wilson, Tom Allen, Curt Cignetti."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Indiana_Hoosiers_head_football_coaches",
+   "estimate": false,
+   "note": "Curt Cignetti."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "iowa": {
+  "us_news_rank": {
+   "value": 100,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 76,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/312.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 992,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/312_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Kinnick Stadium",
+   "source": "https://en.wikipedia.org/wiki/Kinnick_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 69250,
+   "source": "https://en.wikipedia.org/wiki/Kinnick_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2018–present."
+  },
+  "stadium_renovated": {
+   "value": 2019,
+   "source": "https://en.wikipedia.org/wiki/Kinnick_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 2006 and 2017–2019 (north end zone); latest year of that project used."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 175419,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Iowa City, IA MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 20.5,
+   "source": "https://en.wikipedia.org/wiki/Iowa_City,_Iowa",
+   "estimate": false,
+   "note": "Iowa City station, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 175,000 dominated by the university."
+  },
+  "head_coaches_since_2010": {
+   "value": 1,
+   "source": "https://en.wikipedia.org/wiki/List_of_Iowa_Hawkeyes_head_football_coaches",
+   "estimate": false,
+   "note": "Kirk Ferentz (since 1999)."
+  },
+  "current_hc_since": {
+   "value": 1999,
+   "source": "https://en.wikipedia.org/wiki/List_of_Iowa_Hawkeyes_head_football_coaches",
+   "estimate": false,
+   "note": "Kirk Ferentz."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "maryland": {
+  "us_news_rank": {
+   "value": 49,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 79,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/392.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 960,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/392_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "SECU Stadium",
+   "source": "https://en.wikipedia.org/wiki/SECU_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 46185,
+   "source": "https://en.wikipedia.org/wiki/SECU_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2025–present (was 51,802 in 2012–2024); Wikipedia cites umterps.com facility page (Sept 2025)."
+  },
+  "stadium_renovated": {
+   "value": 2008,
+   "source": "https://en.wikipedia.org/wiki/SECU_Stadium",
+   "estimate": false,
+   "note": "Infobox lists expansions 1995, 2002, 2008 and no later major project; the 2025 capacity drop is not explained in the article."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 6278542,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Washington–Arlington–Alexandria, DC-VA-MD-WV MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 34.8,
+   "source": "https://en.wikipedia.org/wiki/Template:College_Park,_MD_weatherbox",
+   "estimate": false,
+   "note": "College Park station, 1981–2010 normals (the only College Park box; no 1991–2020 box found)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. College Park is inside the Washington metro (6.3M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/Maryland_Terrapins_football",
+   "estimate": false,
+   "note": "Ralph Friedgen, Randy Edsall, DJ Durkin, Mike Locksley. Interims Locksley (2015) and Matt Canada (2018) excluded."
+  },
+  "current_hc_since": {
+   "value": 2019,
+   "source": "https://en.wikipedia.org/wiki/Maryland_Terrapins_football",
+   "estimate": false,
+   "note": "Mike Locksley (also interim in 2015). The list shows Aazaar Abdul-Rahim as interim in 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "michigan": {
+  "us_news_rank": {
+   "value": 25,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 89,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/418.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 996,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/418_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Michigan Stadium",
+   "source": "https://en.wikipedia.org/wiki/Michigan_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 107601,
+   "source": "https://en.wikipedia.org/wiki/Michigan_Stadium",
+   "estimate": false,
+   "note": "Infobox header says 107,600 (2015–present); the year-by-year list says 107,601. Using the list figure."
+  },
+  "stadium_renovated": {
+   "value": 2010,
+   "source": "https://en.wikipedia.org/wiki/Michigan_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 2010; expanded 1928, 1949, 1956, 1973, 1992, 1998, 2010."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 372258,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Ann Arbor, MI MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 24.0,
+   "source": "https://en.wikipedia.org/wiki/Ann_Arbor,_Michigan",
+   "estimate": false,
+   "note": "Ann Arbor (UMich) station, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 372,000 dominated by the university."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Michigan_Wolverines_head_football_coaches",
+   "estimate": false,
+   "note": "Rich Rodriguez, Brady Hoke, Jim Harbaugh, Sherrone Moore."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Michigan_Wolverines_head_football_coaches",
+   "estimate": false,
+   "note": "Sherrone Moore was the 2025 coach; fired in December 2025, Biff Poggi interim for the bowl, Kyle Whittingham hired December 26, 2025 for 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "michigan-state": {
+  "us_news_rank": {
+   "value": 69,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 76,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/416.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 967,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/416_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Spartan Stadium",
+   "source": "https://en.wikipedia.org/wiki/Spartan_Stadium_(East_Lansing,_Michigan)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 74866,
+   "source": "https://en.wikipedia.org/wiki/Spartan_Stadium_(East_Lansing,_Michigan)",
+   "estimate": false,
+   "note": "Capacity listed as 2022–present."
+  },
+  "stadium_renovated": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/Spartan_Stadium_(East_Lansing,_Michigan)",
+   "estimate": false,
+   "note": "Infobox: renovated 2005, 2014; expanded 2005 (latest expansion)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 473203,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Lansing–East Lansing, MI MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 23.9,
+   "source": "https://en.wikipedia.org/wiki/Template:Lansing,_Michigan_weatherbox",
+   "estimate": false,
+   "note": "Nearest station: Lansing Capital Region International Airport, 1991–2020 normals (East Lansing page has no climate box)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro under 1M; East Lansing is built around MSU (Lansing next door is the state capital)."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/Michigan_State_Spartans_football",
+   "estimate": false,
+   "note": "Mark Dantonio, Mel Tucker, Jonathan Smith. Harlon Barnett (2023 interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/Michigan_State_Spartans_football",
+   "estimate": false,
+   "note": "Jonathan Smith (2024–2025); Pat Fitzgerald is listed as coach from 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "minnesota": {
+  "us_news_rank": {
+   "value": 59,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 87,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/428.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 995,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/428_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Huntington Bank Stadium",
+   "source": "https://en.wikipedia.org/wiki/Huntington_Bank_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 50805,
+   "source": "https://en.wikipedia.org/wiki/Huntington_Bank_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_renovated": {
+   "value": 2009,
+   "source": "https://en.wikipedia.org/wiki/Huntington_Bank_Stadium",
+   "estimate": false,
+   "note": "Opened September 12, 2009; no later renovation or expansion listed."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 3690261,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Minneapolis–St. Paul–Bloomington, MN-WI MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 16.2,
+   "source": "https://en.wikipedia.org/wiki/Minneapolis",
+   "estimate": false,
+   "note": "Minneapolis–Saint Paul International Airport, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of 3.7M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/Minnesota_Golden_Gophers_football",
+   "estimate": false,
+   "note": "Tim Brewster, Jerry Kill, Tracy Claeys (began 2015 as interim, started the 2016 season as head coach), P. J. Fleck. Jeff Horton (2010 interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2017,
+   "source": "https://en.wikipedia.org/wiki/Minnesota_Golden_Gophers_football",
+   "estimate": false,
+   "note": "P. J. Fleck."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "nebraska": {
+  "us_news_rank": {
+   "value": 169,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities. Not in the top-100 table, so only this source."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/463.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 979,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/463_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Lincoln)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 85458,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Lincoln)",
+   "estimate": false,
+   "note": "Capacity listed as 2017–present."
+  },
+  "stadium_renovated": {
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Lincoln)",
+   "estimate": false,
+   "note": "Latest expansion 2013 (East Stadium); a South Stadium renovation is listed as 2026 (planned) and was delayed in 2024."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 340217,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Lincoln, NE MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 25.0,
+   "source": "https://en.wikipedia.org/wiki/Lincoln,_Nebraska",
+   "estimate": false,
+   "note": "Lincoln Airport, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 340,000; state capital but the university and Husker football dominate the city."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Nebraska_Cornhuskers_head_football_coaches",
+   "estimate": false,
+   "note": "Bo Pelini, Mike Riley, Scott Frost, Matt Rhule. Interims Barney Cotton and Mickey Joseph excluded."
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Nebraska_Cornhuskers_head_football_coaches",
+   "estimate": false,
+   "note": "Matt Rhule."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "northwestern": {
+  "us_news_rank": {
+   "value": 9,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 99,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/509.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 993,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/509_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Ryan Field",
+   "source": "https://en.wikipedia.org/wiki/Ryan_Field_(2026)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 35000,
+   "source": "https://en.wikipedia.org/wiki/Ryan_Field_(2026)",
+   "estimate": false,
+   "note": "New Ryan Field opened October 2, 2026; Northwestern played 2024–2025 home games at lakeside Martin Stadium (12,023)."
+  },
+  "stadium_renovated": {
+   "value": 2026,
+   "source": "https://en.wikipedia.org/wiki/Ryan_Field_(2026)",
+   "estimate": false,
+   "note": "New stadium; opened 2026 on the site of the old Ryan Field."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 9449351,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Chicago–Naperville–Elgin, IL-IN MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 25.2,
+   "source": "https://en.wikipedia.org/wiki/Template:Chicago_weatherbox",
+   "estimate": false,
+   "note": "Nearest full station: Chicago O'Hare, 1991–2020 normals (Evanston's page only has precipitation normals; Midway is 26.2)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Evanston is in the Chicago metro (9.4M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_Northwestern_Wildcats_head_football_coaches",
+   "estimate": false,
+   "note": "Pat Fitzgerald, David Braun (interim 2023, made permanent November 2023; started 2024 and 2025 as head coach)."
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Northwestern_Wildcats_head_football_coaches",
+   "estimate": false,
+   "note": "David Braun; his first season (2023) began as interim."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "ohio-state": {
+  "us_news_rank": {
+   "value": 44,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 89,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/518.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 1000,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/518_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Ohio Stadium",
+   "source": "https://en.wikipedia.org/wiki/Ohio_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 102780,
+   "source": "https://en.wikipedia.org/wiki/Ohio_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as since 2019."
+  },
+  "stadium_renovated": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/Ohio_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 2000–01; expanded 1948, 1991, 2001, 2014 (latest)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 2138926,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Columbus, OH MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 29.6,
+   "source": "https://en.wikipedia.org/wiki/Template:Columbus,_Ohio_weatherbox",
+   "estimate": false,
+   "note": "John Glenn Columbus International Airport, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of 2.1M."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Ohio_State_Buckeyes_head_football_coaches",
+   "estimate": false,
+   "note": "Jim Tressel, Urban Meyer, Ryan Day. Luke Fickell (2011 interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2019,
+   "source": "https://en.wikipedia.org/wiki/List_of_Ohio_State_Buckeyes_head_football_coaches",
+   "estimate": false,
+   "note": "Ryan Day (acting coach for three games in 2018)."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "oregon": {
+  "us_news_rank": {
+   "value": 116,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities. Not in the top-100 table, so only this source."
+  },
+  "football_gsr": {
+   "value": 88,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/529.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 958,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/529_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Autzen Stadium",
+   "source": "https://en.wikipedia.org/wiki/Autzen_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 60129,
+   "source": "https://en.wikipedia.org/wiki/Autzen_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2024–present."
+  },
+  "stadium_renovated": {
+   "value": 2002,
+   "source": "https://en.wikipedia.org/wiki/Autzen_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated and expanded 2002."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 382971,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Eugene–Springfield, OR MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 41.4,
+   "source": "https://en.wikipedia.org/wiki/Eugene,_Oregon",
+   "estimate": false,
+   "note": "Eugene Airport, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 383,000 dominated by the university."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Oregon_Ducks_head_football_coaches",
+   "estimate": false,
+   "note": "Chip Kelly, Mark Helfrich, Willie Taggart, Mario Cristobal, Dan Lanning. Bryan McClendon (2021 bowl interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Oregon_Ducks_head_football_coaches",
+   "estimate": false,
+   "note": "Dan Lanning."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "penn-state": {
+  "us_news_rank": {
+   "value": 55,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/539.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 957,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/539_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Beaver Stadium",
+   "source": "https://en.wikipedia.org/wiki/Beaver_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 106304,
+   "source": "https://en.wikipedia.org/wiki/Beaver_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2025–present; a multi-year renovation (2024–2027) is underway, so capacity may change again."
+  },
+  "stadium_renovated": {
+   "value": 2026,
+   "source": "https://en.wikipedia.org/wiki/Beaver_Stadium",
+   "estimate": false,
+   "note": "Infobox renovated entries: 2025 new West stands, 2026 new West upper concourse and LED lights; expansion listed as 2024–2027 (ongoing)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 158172,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "State College, PA MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 27.2,
+   "source": "https://en.wikipedia.org/wiki/State_College,_Pennsylvania",
+   "estimate": false,
+   "note": "State College station, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 158,000 built around Penn State."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Penn_State_Nittany_Lions_head_football_coaches",
+   "estimate": false,
+   "note": "Joe Paterno, Bill O'Brien, James Franklin. Tom Bradley (2011 interim) and Terry Smith (2025 interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/List_of_Penn_State_Nittany_Lions_head_football_coaches",
+   "estimate": false,
+   "note": "James Franklin started 2025 but was fired in October 2025; Terry Smith finished as interim; Matt Campbell is listed from 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "purdue": {
+  "us_news_rank": {
+   "value": 55,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 83,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/559.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 968,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/559_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Ross–Ade Stadium",
+   "source": "https://en.wikipedia.org/wiki/Ross–Ade_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 61441,
+   "source": "https://en.wikipedia.org/wiki/Ross–Ade_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2023–present."
+  },
+  "stadium_renovated": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/Ross–Ade_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 2002, 2023; expanded 2023."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 223716,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Lafayette–West Lafayette, IN MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 24.4,
+   "source": "https://en.wikipedia.org/wiki/West_Lafayette,_Indiana",
+   "estimate": false,
+   "note": "West Lafayette station, 1991–2020 normals (Purdue Airport box on the Lafayette page says 25.8)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 224,000 dominated by Purdue."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Purdue_Boilermakers_head_football_coaches",
+   "estimate": false,
+   "note": "Danny Hope, Darrell Hazell, Jeff Brohm, Ryan Walters, Barry Odom. Interims Gerad Parker and Brian Brohm excluded."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_Purdue_Boilermakers_head_football_coaches",
+   "estimate": false,
+   "note": "Barry Odom."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "rutgers": {
+  "us_news_rank": {
+   "value": 44,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/587.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 982,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/587_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "SHI Stadium",
+   "source": "https://en.wikipedia.org/wiki/SHI_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 52454,
+   "source": "https://en.wikipedia.org/wiki/SHI_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2009–present."
+  },
+  "stadium_renovated": {
+   "value": 2009,
+   "source": "https://en.wikipedia.org/wiki/SHI_Stadium",
+   "estimate": false,
+   "note": "2009 south end zone expansion; no later project listed."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 20081935,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "New York–Newark–Jersey City, NY-NJ MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 31.6,
+   "source": "https://en.wikipedia.org/wiki/New_Brunswick,_New_Jersey",
+   "estimate": false,
+   "note": "Nearest station: New Brunswick, 1991–2020 normals (Piscataway page has no climate box)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Piscataway/New Brunswick is in the New York metro (20.1M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/Rutgers_Scarlet_Knights_football",
+   "estimate": false,
+   "note": "Distinct people: Greg Schiano, Kyle Flood, Chris Ash. Schiano had two stints (2001–2011, 2020–), so it is 4 tenures. Norries Wilson (2015 interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/Rutgers_Scarlet_Knights_football",
+   "estimate": false,
+   "note": "Greg Schiano, second stint."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "ucla": {
+  "us_news_rank": {
+   "value": 20,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 80,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/110.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 961,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/110_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Rose Bowl",
+   "source": "https://en.wikipedia.org/wiki/Rose_Bowl_(stadium)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 81258,
+   "source": "https://en.wikipedia.org/wiki/Rose_Bowl_(stadium)",
+   "estimate": false,
+   "note": "UCLA's home stadium in Pasadena."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Rose_Bowl_(stadium)",
+   "estimate": false,
+   "note": "Major renovation financed in 2010, started January 2011; the article says the renovations were completed in 2016 (main phase was done for the 2013 season). Further pre-2028 Olympics work was announced in December 2024."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 13200998,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Los Angeles–Long Beach–Anaheim, CA MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 56.8,
+   "source": "https://en.wikipedia.org/wiki/Pasadena,_California",
+   "estimate": false,
+   "note": "Pasadena station (home stadium city), 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Pasadena (Rose Bowl) and Westwood are in the Los Angeles metro (13.2M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_UCLA_Bruins_head_football_coaches",
+   "estimate": false,
+   "note": "Rick Neuheisel, Jim Mora, Chip Kelly, DeShaun Foster. Interims Mike Johnson, Jedd Fisch, Tim Skipper excluded."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_UCLA_Bruins_head_football_coaches",
+   "estimate": false,
+   "note": "DeShaun Foster started 2025 but was fired in September 2025; Tim Skipper was interim; Bob Chesney from 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "usc": {
+  "us_news_rank": {
+   "value": 27,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/657.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 978,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/657_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Los Angeles Memorial Coliseum",
+   "source": "https://en.wikipedia.org/wiki/Los_Angeles_Memorial_Coliseum",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 77500,
+   "source": "https://en.wikipedia.org/wiki/Los_Angeles_Memorial_Coliseum",
+   "estimate": false,
+   "note": "Capacity after the 2017–2019 renovation (93,607 before 2018)."
+  },
+  "stadium_renovated": {
+   "value": 2019,
+   "source": "https://en.wikipedia.org/wiki/Los_Angeles_Memorial_Coliseum",
+   "estimate": false,
+   "note": "Infobox renovations: ..., 2011, 2017–2019 (latest)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 13200998,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Los Angeles–Long Beach–Anaheim, CA MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 58.4,
+   "source": "https://en.wikipedia.org/wiki/Template:Los_Angeles_weatherbox",
+   "estimate": false,
+   "note": "Downtown Los Angeles (USC Station), 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of 13.2M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_USC_Trojans_head_football_coaches",
+   "estimate": false,
+   "note": "Lane Kiffin, Steve Sarkisian, Clay Helton (began as interim in 2013 and 2015, started 2016 as head coach), Lincoln Riley. Interims Ed Orgeron and Donte Williams excluded."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_USC_Trojans_head_football_coaches",
+   "estimate": false,
+   "note": "Lincoln Riley."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "washington": {
+  "us_news_rank": {
+   "value": 49,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 93,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/756.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 977,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/756_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Husky Stadium",
+   "source": "https://en.wikipedia.org/wiki/Husky_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 72132,
+   "source": "https://en.wikipedia.org/wiki/Husky_Stadium",
+   "estimate": false,
+   "note": "Infobox current figure (former list shows 70,083 for 2014)."
+  },
+  "stadium_renovated": {
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/Husky_Stadium",
+   "estimate": false,
+   "note": "Rebuilt and reopened August 31, 2013."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 4018762,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Seattle–Tacoma–Bellevue, WA MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 42.8,
+   "source": "https://en.wikipedia.org/wiki/Template:Seattle_weatherbox",
+   "estimate": false,
+   "note": "SeaTac Airport, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of 4.0M."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Washington_Huskies_head_football_coaches",
+   "estimate": false,
+   "note": "Steve Sarkisian, Chris Petersen, Jimmy Lake, Kalen DeBoer, Jedd Fisch."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Washington_Huskies_head_football_coaches",
+   "estimate": false,
+   "note": "Jedd Fisch."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ },
+ "wisconsin": {
+  "us_news_rank": {
+   "value": 34,
+   "source": "https://www.yahoo.com/news/us/articles/18-big-ten-schools-ranked-110028861.html",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released September 22, 2026), National Universities; ties share the number. Cross-checked against the 2027 table at https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/ ."
+  },
+  "football_gsr": {
+   "value": 94,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/796.pdf",
+   "estimate": false,
+   "note": "NCAA GSR 2025 report (2024-25 release, cohort entering 2018), from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 987,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/796_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multiyear APR, 2024-25 report (latest in the NCAA APR search)."
+  },
+  "stadium_name": {
+   "value": "Camp Randall Stadium",
+   "source": "https://en.wikipedia.org/wiki/Camp_Randall_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 76030,
+   "source": "https://en.wikipedia.org/wiki/Camp_Randall_Stadium",
+   "estimate": false,
+   "note": "Capacity listed as 2024–present."
+  },
+  "stadium_renovated": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/Camp_Randall_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 2004 and 2022 (south end zone)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Not yet researched."
+  },
+  "metro_population": {
+   "value": 680796,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Madison, WI MSA, 2020 Census (Census Bureau table on Wikipedia)."
+  },
+  "jan_avg_temp_f": {
+   "value": 19.4,
+   "source": "https://en.wikipedia.org/wiki/Madison,_Wisconsin",
+   "estimate": false,
+   "note": "Dane County Regional Airport, 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment from the metro population. Metro of about 681,000 (under 1M); state capital, but the university dominates the city."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Wisconsin_Badgers_head_football_coaches",
+   "estimate": false,
+   "note": "Bret Bielema, Gary Andersen, Paul Chryst, Luke Fickell. Interims Barry Alvarez (2012 bowl) and Jim Leonhard (2022) excluded."
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Wisconsin_Badgers_head_football_coaches",
+   "estimate": false,
+   "note": "Luke Fickell (hired November 2022, first full season 2023)."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": "",
+   "estimate": false,
+   "note": "Instagram blocks automated reads, so this was skipped."
+  }
+ }
+}
