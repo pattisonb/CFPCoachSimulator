@@ -26,7 +26,11 @@ OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
 
 
 def lead(page, scope, topic):
-    """Pick what you lead with from the lead-with pill (opens it if closed)."""
+    """Pick what you lead with from the lead-with pill (opens it if closed). His question waits first (the pill is locked
+    until you answer): answer it straight, as a player must."""
+    if page.query_selector(f"{scope} .go-answer[data-answer=straight]"):
+        page.click(f"{scope} .go-answer[data-answer=straight]")
+        page.wait_for_selector(f"{scope} .go-answer", state="detached", timeout=10_000)
     if page.is_hidden(f"{scope} .go-lead-menu"):
         page.click(f"{scope} .go-lead-pick")
     page.click(f"{scope} .go-lead-menu .go-lead-chip[data-topic='{topic}']")
