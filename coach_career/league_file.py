@@ -1109,10 +1109,14 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
     except LeagueFileError as e:
         return _failed(e.errors)
     try:
-        errs = problems(doc)
+        names, name_errs = rivalry_names(doc)
+        errs = name_errs + problems(doc)
         if errs:
             return _failed(errs)
-        return _check_merged(doc, blob, seed)
+        out = _check_merged(doc, blob, seed)
+        if out.get("league") is not None and names:
+            out["league"]["rivalries"] = names          # the file's named rivalries: season.rivalry_for reads them for this career
+        return out
     except league_fill.TeamBuildError as e:
         _log.error("league check: building %s failed", e.slug, exc_info=e.__cause__ or e)
         return _failed([f"{e.label}: the game could not build this team from the file; compare it with an exported league file."])
@@ -1121,6 +1125,39 @@ def check(blob: bytes, seed: Optional[int] = None) -> dict:
         return _failed(["The game could not build a league from this file; compare it with an exported league file."])
     finally:
         release_caches()
+
+
+RIVALRY_NAME_MAX = 60       # *tune* the longest rivalry name a file may give
+
+
+def rivalry_names(doc: dict) -> tuple[list[dict], list[str]]:
+    """A rival given as {"slug", "name"} (Custom Programs names its rivalries): the entry becomes its slug in the team's
+    rivals (so the rest of the check reads slugs, as before) and the name is collected as a career rivalry,
+    {"teams": [a, b], "name", "trophy": "", "series": {}}. Returns (named rivalries, errors as sentences)."""
+    out, errs, seen = [], [], set()
+    for t in doc.get("teams") or []:
+        if not isinstance(t, dict) or not isinstance(t.get("rivals"), list):
+            continue
+        label = t.get("name") or t.get("slug") or "A team"
+        slugs = []
+        for r in t["rivals"]:
+            if isinstance(r, dict):
+                slug, name = r.get("slug"), r.get("name")
+                if not isinstance(slug, str) or not slug:
+                    errs.append(f"{label}: a named rivalry needs the rival's slug.")
+                    continue
+                if name is not None and (not isinstance(name, str) or len(name.strip()) > RIVALRY_NAME_MAX):
+                    errs.append(f"{label}: a rivalry name is at most {RIVALRY_NAME_MAX} characters.")
+                    continue
+                slugs.append(slug)
+                pair = tuple(sorted((t.get("slug") or "", slug)))
+                if name and name.strip() and pair not in seen:
+                    seen.add(pair)
+                    out.append({"teams": list(pair), "name": name.strip(), "trophy": "", "series": {}})
+            else:
+                slugs.append(r)
+        t["rivals"] = slugs
+    return out, errs
 
 
 def release_caches() -> None:

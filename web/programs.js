@@ -57,7 +57,7 @@
   }
 
   // ----- the editor -----
-  const field = (lab, input, hint) => el("label", { class: "pg-field" }, [el("span", { class: "pg-label", text: lab }), input, hint ? el("span", { class: "muted small", text: hint }) : null]);
+  const field = (lab, input, hint, key) => el("label", { class: "pg-field", ...(key ? { "data-key": key } : {}) }, [el("span", { class: "pg-label", text: lab }), input, hint ? el("span", { class: "muted small", text: hint }) : null]);
   function input(p, key, attrs) {
     const f = p.f;
     const { tag, ...rest } = attrs || {};
@@ -72,18 +72,111 @@
     node.addEventListener("change", () => { p.f[key] = node.value; p.updated = Date.now(); changed(p, key); });
     return node;
   }
+  // the roster: add players one at a time (name, position, class, an optional overall) or paste a list; both edit the same
+  // lines (p.f.roster, "Name, POS, CLASS[, overall]"), and the list under them shows each player with an x to drop him
+  const CLASSES = ["FR", "SO", "JR", "SR", "FRRS", "SORS", "JRRS", "SRRS"];
+  const CLASS_WORD = { FRRS: "RS FR", SORS: "RS SO", JRRS: "RS JR", SRRS: "RS SR" };
+  function rosterEditor(p) {
+    const text = input(p, "roster", { tag: "textarea", rows: "6", placeholder: "Jay Smith, QB, JR\nMax Lee, WR, SO, 74" });
+    const listBox = el("div", { class: "pg-players", "aria-live": "polite" });
+    const draw = () => {
+      const rows = P.roster(p.f.roster);
+      listBox.replaceChildren(...(rows.length ? rows.map((r, i) => el("div", { class: `pg-player${r.name && P.POS.has(r.pos) && P.CLASSES.has(r.class) ? "" : " bad"}` }, [
+        el("b", { text: r.name || "No Name" }),
+        el("span", { class: "muted small", text: [r.pos, CLASS_WORD[r.class] || r.class, r.overall != null ? `${r.overall} OVR` : null].filter(Boolean).join(" · ") }),
+        el("button", { type: "button", class: "ghost small pg-player-x", "aria-label": `Remove ${r.name || "player"}`, text: "×", onclick: () => {
+          const lines = String(p.f.roster || "").split(/\n+/).map((l) => l.trim()).filter(Boolean);
+          lines.splice(i, 1);
+          setText(lines.join("\n"));
+        } })])) : [el("p", { class: "muted small", text: "No players yet: the game fills 85 to your strength." })]));
+    };
+    const setText = (v) => { p.f.roster = v; text.value = v; p.updated = Date.now(); changed(p, "roster"); draw(); };
+    text.addEventListener("input", draw);       // (changed() runs too: the problems update as you type)
+    const name = el("input", { type: "text", name: "pname", maxlength: "40", placeholder: "Player name", "aria-label": "Player name" });
+    const pos = el("select", { name: "ppos", "aria-label": "Position" }, [...P.POS].map((x) => el("option", { value: x, text: x })));
+    const cls = el("select", { name: "pcls", "aria-label": "Class" }, CLASSES.map((x) => el("option", { value: x, text: CLASS_WORD[x] || x })));
+    const ovr = el("input", { type: "number", name: "povr", min: "40", max: "99", placeholder: "OVR (optional)", "aria-label": "Overall (optional)" });
+    const add = el("button", { type: "button", class: "ghost", text: "Add Player" });
+    const doAdd = () => {
+      const n = name.value.trim();
+      if (!n) { name.focus(); toast("Give the player a name first."); return; }
+      const line = [n.replace(/,/g, " "), pos.value, cls.value, ovr.value ? String(Math.round(Number(ovr.value))) : null].filter(Boolean).join(", ");
+      setText([String(p.f.roster || "").trim(), line].filter(Boolean).join("\n"));
+      name.value = ""; ovr.value = "";
+      name.focus();
+    };
+    add.addEventListener("click", doAdd);
+    name.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doAdd(); } });
+    draw();
+    return el("div", { class: "pg-roster" }, [
+      el("div", { class: "pg-row pg-add" }, [name, pos, cls, ovr, add]),
+      listBox,
+      field("Or Paste a List", text, "One a line: Name, Position, Class (and an overall if you like). Leave the roster empty and the game fills 85 players to your strength; players you list are kept and the rest are filled in.", "roster")]);
+  }
+
   // rivals: a multi-pick of the game's FBS teams (stored as slugs)
+  // rivals: search a team, pick it (a chip with a field for the rivalry's name and an x), up to P.MAX_RIVALS
   function rivalsPick(p) {
     const own = p.kind === "edit" ? p.base : null;
-    const node = el("select", { multiple: "", size: "6", class: "pg-rivals", "aria-label": "Rivals" },
-      Object.values(real).filter((t) => (t.level || "FBS") === "FBS" && t.slug !== own).map((t) => el("option", { value: t.slug, text: t.short_name || t.name })));
-    const picked = new Set(p.f.rivals || []);
-    for (const o of node.options) o.selected = picked.has(o.value);
-    node.addEventListener("change", () => { p.f.rivals = [...node.selectedOptions].map((o) => o.value); p.updated = Date.now(); changed(p, "rivals"); });
-    return node;
+    const pool = () => Object.values(real).filter((t) => (t.level || "FBS") === "FBS" && t.slug !== own && !(p.f.rivals || []).includes(t.slug));
+    const chips = el("div", { class: "pg-rival-chips" });
+    const search = el("input", { type: "search", class: "pg-rival-search", placeholder: "Search a team to add as a rival", "aria-label": "Search a rival" });
+    const hits = el("div", { class: "pg-rival-hits", role: "listbox" });
+    const count = el("span", { class: "muted small pg-rival-count" });
+    const save = () => { p.updated = Date.now(); changed(p, "rivals"); draw(); };
+    function draw() {
+      const rv = p.f.rivals || [];
+      p.f.rivalry_names = p.f.rivalry_names || {};
+      chips.replaceChildren(...rv.map((slug) => {
+        const t = real[slug] || {};
+        const nm = el("input", { type: "text", maxlength: "60", class: "pg-rival-name", placeholder: "Rivalry name (optional)", "aria-label": `Rivalry name with ${t.short_name || slug}` });
+        nm.value = p.f.rivalry_names[slug] || "";
+        nm.addEventListener("input", () => { p.f.rivalry_names[slug] = nm.value; p.updated = Date.now(); persist(); });
+        return el("div", { class: "pg-rival", "data-slug": slug }, [
+          el("b", { text: t.short_name || t.name || slug }), nm,
+          el("button", { type: "button", class: "ghost small pg-rival-x", "aria-label": `Remove ${t.short_name || slug}`, text: "×", onclick: () => {
+            p.f.rivals = rv.filter((x) => x !== slug);
+            delete p.f.rivalry_names[slug];
+            save();
+          } })]);
+      }));
+      const full = rv.length >= P.MAX_RIVALS;
+      search.disabled = full;
+      search.placeholder = full ? `${P.MAX_RIVALS} rivals is the most a schedule always fits` : "Search a team to add as a rival";
+      count.textContent = `${rv.length} of ${P.MAX_RIVALS}`;
+      showHits();
+    }
+    function showHits() {
+      const q = search.value.trim().toLowerCase();
+      if (!q) { hits.replaceChildren(); return; }
+      hits.replaceChildren(...pool().filter((t) => `${t.short_name} ${t.name} ${t.abbreviation}`.toLowerCase().includes(q)).slice(0, 8).map((t) =>
+        el("button", { type: "button", class: "ghost small pg-rival-hit", "data-slug": t.slug, role: "option", text: t.short_name || t.name, onclick: () => {
+          p.f.rivals = [...(p.f.rivals || []), t.slug].slice(0, P.MAX_RIVALS);
+          search.value = "";
+          save();
+          if (!search.disabled) search.focus();
+        } })));
+    }
+    search.addEventListener("input", showHits);
+    draw();
+    return el("div", { class: "pg-rivals-box" }, [el("div", { class: "pg-row" }, [search, count]), hits, chips]);
+  }
+  // the problems the page shows as you type (programs-lib.js problems): each field marked, the list under Check Program,
+  // and Check Program waits until there are none
+  function showProblems(p) {
+    const ed = $("#pg-editor");
+    if (!ed || ed.hidden) return [];
+    const probs = P.problems(p);
+    for (const f of ed.querySelectorAll("[data-key]")) f.classList.toggle("pg-invalid", probs.some((x) => x.key === f.dataset.key));
+    const box = ed.querySelector(".pg-problems");
+    if (box) box.replaceChildren(...probs.map((x) => el("p", { class: "pg-bad", text: x.msg })));
+    const check = ed.querySelector(".pg-check button");
+    if (check) { check.disabled = probs.length > 0; check.title = probs.length ? "Fix the marked fields first" : "Run the game's own check on this program"; }
+    return probs;
   }
   function changed(p, key) {
     persist();
+    showProblems(p);
     const ed = $("#pg-editor");
     if (["primary", "secondary", "accent", "name"].includes(key)) {
       const old = ed.querySelector(".pg-head .pg-pill");
@@ -112,16 +205,16 @@
         : (r.errors || []).map((e) => el("p", { class: "pg-bad", text: e }))));
     });
     const newConf = el("div", { class: "pg-row pg-newconf" }, [
-      field("Conference Name", input(p, "new_conf_name", { type: "text", maxlength: "60" })),
+      field("Conference Name", input(p, "new_conf_name", { type: "text", maxlength: "60" }), null, "new_conf_name"),
       field("Conference Games", select(p, "new_conf_games", [["8", "8"], ["9", "9"]]))]);
     newConf.hidden = f.conference !== "__new";
     ed.replaceChildren(
       el("div", { class: "card-bar section-head pg-head" }, [el("span", { class: "pg-head-who" }, [pill(f), el("b", { text: label(p) })]),
         el("button", { type: "button", class: "ghost small", text: "Close", onclick: () => { open = null; ed.hidden = true; drawList(); } })]),
       el("h3", { class: "pg-sec", text: "Identity" }),
-      el("div", { class: "pg-row" }, [field("Name", input(p, "name", { type: "text", maxlength: "60", placeholder: "Alder Tech" })),
+      el("div", { class: "pg-row" }, [field("Name", input(p, "name", { type: "text", maxlength: "60", placeholder: "Alder Tech" }), null, "name"),
         field("Short Name", input(p, "short_name", { type: "text", maxlength: "30" })),
-        field("Abbreviation", input(p, "abbreviation", { type: "text", maxlength: "4" })),
+        field("Abbreviation", input(p, "abbreviation", { type: "text", maxlength: "4" }), null, "abbreviation"),
         field("Mascot", input(p, "mascot", { type: "text", maxlength: "30" }))]),
       el("div", { class: "pg-row" }, [field("Primary Color", input(p, "primary", { type: "color" })),
         field("Secondary Color", input(p, "secondary", { type: "color" })),
@@ -130,9 +223,9 @@
       el("div", { class: "pg-row" }, [field("City", input(p, "city", { type: "text", maxlength: "40" })),
         field("State", select(p, "state", [["", "Pick a State"], ...STATES.map((s) => [s, s])]))]),
       el("h3", { class: "pg-sec", text: "Program" }),
-      el("div", { class: "pg-row" }, [field("Conference", select(p, "conference", confOpts)),
+      el("div", { class: "pg-row" }, [field("Conference", select(p, "conference", confOpts), null, "conference"),
         field("Strength", select(p, "strength", [["", "Conference Average"], ...P.STRENGTHS.map((s) => [s, s])])),
-        field("Prestige", input(p, "prestige", { type: "number", min: "0", max: "100", placeholder: "Conference average" }), "0 to 100")]),
+        field("Prestige", input(p, "prestige", { type: "number", min: "0", max: "100", placeholder: "Conference average" }), "0 to 100", "prestige")]),
       newConf,
       el("h3", { class: "pg-sec", text: "Coaches" }),
       el("div", { class: "pg-row" }, [field("Head Coach", input(p, "coach", { type: "text", maxlength: "40", placeholder: "Generated if blank" })),
@@ -141,13 +234,14 @@
       el("div", { class: "pg-row" }, [field("Offense", select(p, "offense", [["", "Conference's Usual"], ...playbooks.offense.map((x) => [x, x])])),
         field("Defense", select(p, "defense", [["", "Conference's Usual"], ...playbooks.defense.map((x) => [x, x])]))]),
       el("h3", { class: "pg-sec", text: "Rivals" }),
-      field("Rivals", rivalsPick(p), "Pick any teams; each rivalry is scheduled every year. Ctrl or Cmd-click to pick more than one."),
+      field("Rivals", rivalsPick(p), `Up to ${P.MAX_RIVALS}. Each rivalry is played every year; a rival outside your conference takes one of your non-conference weeks. Name it if you like: the name shows on the game.`, "rivals"),
       el("h3", { class: "pg-sec", text: "Roster" }),
-      field("Players", input(p, "roster", { tag: "textarea", rows: "8", placeholder: "Jay Smith, QB, JR\nMax Lee, WR, SO, 74" }),
-        "One a line: Name, Position, Class (and an overall if you like). Leave it empty and the game fills 85 players to your strength; players you list are kept and the rest are filled in."),
+      rosterEditor(p),
+      el("div", { class: "pg-problems", "aria-live": "polite" }),
       el("div", { class: "pg-row pg-check" }, [check]),
       out);
     ed.hidden = false;
+    showProblems(p);
     drawList();
     ed.scrollIntoView({ block: "start", behavior: "smooth" });
   }
@@ -190,7 +284,8 @@
         primary: (c.primary || {}).hex, secondary: (c.secondary || {}).hex, accent: (c.accent || {}).hex,
         strength: t.strength == null ? "" : String(t.strength), prestige: t.prestige, coach: ((t.coaches || {}).head || {}).name,
         oc: ((t.coaches || {}).oc || {}).name, dc: ((t.coaches || {}).dc || {}).name, offense: (t.coaches || {}).offense, defense: (t.coaches || {}).defense,
-        rivals: Array.isArray(t.rivals) ? [...t.rivals] : undefined,
+        rivals: Array.isArray(t.rivals) ? t.rivals.map((r) => (typeof r === "string" ? r : r && r.slug)).filter(Boolean) : undefined,
+        rivalry_names: Array.isArray(t.rivals) ? Object.fromEntries(t.rivals.filter((r) => r && typeof r === "object" && r.name).map((r) => [r.slug, r.name])) : undefined,
         roster: (t.roster || []).map((r) => [r.name, r.pos, r.class, r.overall].filter((x) => x != null && x !== "").join(", ")).join("\n") };
       if (isReal) {
         const r = real[t.slug], rc = r.colors || {};

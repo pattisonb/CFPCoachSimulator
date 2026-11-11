@@ -55,6 +55,29 @@ def test_coaches_playbooks_rivals_pass():
     assert set(t["meta"].get("rivals") or []) >= {"boise-state", "air-force"}, t["meta"].get("rivals")
 
 
+def test_named_rivalry():
+    """A rival may carry a name: {"slug", "name"}. The career's league keeps it, and the game's rivalry lookup reads it
+    for that career (the Office's game card, the schedule)."""
+    from sim import season
+    team = {"slug": "alder-tech", "name": "Alder Tech", "conference": "mountain-west",
+            "rivals": [{"slug": "boise-state", "name": "Battle for the Bell"}, "air-force"]}
+    r = league_file.check(doc(team), seed=3)
+    assert r["ok"], r.get("errors")
+    named = {tuple(sorted(x["teams"])): x["name"] for x in r["league"].get("rivalries") or []}
+    assert named == {("alder-tech", "boise-state"): "Battle for the Bell"}, named
+    assert set(r["league"]["teams"]["alder-tech"]["meta"]["rivals"]) >= {"boise-state", "air-force"}
+    st = {"league": r["league"]}
+    riv = season.rivalry_for("boise-state", "alder-tech", st)
+    assert riv and riv["name"] == "Battle for the Bell", riv
+    assert season.rivalry_for("ohio-state", "michigan", st)["name"], "the game's own rivalries still read"
+
+
+def test_rivalry_name_errors():
+    team = {"slug": "alder-tech", "name": "Alder Tech", "conference": "mountain-west", "rivals": [{"slug": "boise-state", "name": "x" * 61}]}
+    r = league_file.check(doc(team), seed=3)
+    assert not r["ok"] and any("rivalry name" in e.lower() for e in r["errors"]), r["errors"]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
