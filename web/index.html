@@ -42,8 +42,17 @@
   <div class="moved-banner" id="moved-banner" hidden>
     <p><b>The game has moved to <a href="https://cfp-coach-simulator.vercel.app/">cfp-coach-simulator.vercel.app</a>.</b> Careers are saved per address: to bring one along, open it here, use Download Career, then Load Career on the new site. <span id="preview-stamp"></span></p>
     <a class="moved-go" href="https://cfp-coach-simulator.vercel.app/">Go to the New Site</a>
+    <button type="button" class="moved-x" id="moved-x" aria-label="Dismiss this notice" title="Dismiss">×</button>
   </div>
-  <script>if (/\.github\.io$/.test(location.hostname)) { document.getElementById("moved-banner").hidden = false;
+  <script>if (/\.github\.io$/.test(location.hostname)) {
+    // dismissed once, it stays dismissed in this browser (a private window or blocked storage just shows it again)
+    let gone = false;
+    try { gone = localStorage.getItem("cfp.movedBanner") === "dismissed"; } catch (e) { gone = false; }
+    document.getElementById("moved-banner").hidden = gone;
+    document.getElementById("moved-x").addEventListener("click", () => {
+      document.getElementById("moved-banner").hidden = true;
+      try { localStorage.setItem("cfp.movedBanner", "dismissed"); } catch (e) { /* kept for the visit */ }
+    });
     fetch("./preview.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
       if (p && p.branch) document.getElementById("preview-stamp").textContent = `This copy is a preview of the ${p.branch} branch (${p.commit}, built ${p.built}).`; }).catch(() => {}); }</script>
   <header class="topbar" id="site-topbar">
