@@ -86,6 +86,23 @@ Every promised player wears a **chip** on your roster and depth chart showing wh
 slipping player says so ("Coach, you told me this was my job."), so you can change the depth chart before the
 offseason judges it.
 
+### 5. Unhappy players: what he came for, and whether he is getting it (added November 11)
+
+A player remembers what he cared about as a recruit (his three priorities and his decider's topic) and the promises
+he was made, and the game checks them during the season:
+
+- **Playing time** against his role; **NIL** against what he is paid; **the coach** (the head coach who recruited him
+  still there); **winning**, **prestige** and **proximity** stay as they were when he signed, so they rarely sour.
+- **A broken promise** (section 3) sours him outright.
+- Each unmet one raises his transfer chance at the offseason (a new `portal_odds` segment, "Not what he signed up
+  for", like the `promised` one), so the reason on his Keep Them Home card is the real one.
+- **Player Impact and Retention** (Headquarters) lists unhappy players with what is missing ("Wants More Snaps",
+  "Coach Who Recruited Him Left", "Promise Broken"), so you can act before the offseason.
+
+This needs the recruit's priorities carried onto the roster when he signs (`_sign_classes`, `_close_portal`: the
+league roster rows carry no priorities today) and kept on saves from before (none: they simply have no priorities,
+so nothing sours).
+
 ## Phases
 
 1. **Weekly tracking and the score.** Record starts per week; replace the one-snapshot test with the score, the
