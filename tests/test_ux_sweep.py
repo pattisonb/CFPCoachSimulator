@@ -1273,7 +1273,8 @@ def test_conversation(page, base) -> None:
         assert len(turns) == 3 and "note" in turns[0][0].split() and "you" in turns[1][0].split() and "him" in turns[2][0].split(), turns
         present_three(page)
         turns = page.eval_on_selector_all(".modal-scene .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
-        assert any("His dad" in t for _, t in turns), turns
+        from coach_career import scenes as _scenes          # the NIL note speaks for whoever decides (his dad, his trainer, he himself)
+        assert any(t.startswith(who) and "NIL" in t for _, t in turns for who in _scenes.ASK_WHO.values()), turns
         assert "null" not in page.inner_text(".modal-scene .go-scene") and "{" not in page.inner_text(".modal-scene .go-scene")
         assert not errs, errs
     finally:
