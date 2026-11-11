@@ -1709,3 +1709,11 @@ button, input, select, textarea { }
 [data-moved]::after { margin-left: 4px; font-size: 10px; vertical-align: 1px; }
 [data-moved="up"]::after { content: "▲"; color: var(--good-text, var(--good)); }
 [data-moved="down"]::after { content: "▼"; color: var(--bad-text, var(--bad)); }
+
+/* the New Career screen's Custom Programs (leaguefile.js): your saved programs to tick into a career */
+.league-custom { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.league-custom-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+.league-custom-list { display: flex; flex-direction: column; gap: 6px; }
+.league-custom-row { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.league-note { margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--panel-2); }
+@media (max-width: 760px) { .league-custom-row { min-height: 44px; } }
