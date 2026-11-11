@@ -134,3 +134,16 @@ number and does not move.
 3. ~~Can the player build facilities?~~ No, not yet: Facilities is fixed from the research; building waits for AD
    Meetings.
 4. **Research all 136 programs in the first pass.**
+5. **Market stays exactly as it is (November 11).** Game Day and Exposure show as its two parts; Market is not derived
+   from them (that would move every rating, against call 2).
+6. **The grades that can move with success and failure do, in Phase 3, each with a floor (November 11):**
+
+   | Grade | Moves with | Floor |
+   |---|---|---|
+   | Game Day | Winning fills the stadium, losing empties it: a yearly step toward a target from the last three seasons, like Market's live part | 70% of the researched value |
+   | Exposure | Winning, ranked finishes and playoff runs raise it; losing lets it drift back | 75% of the researched value |
+   | Stability | Each head coaching change drops it; each year a coach stays rebuilds it | 10 |
+   | Academics | A small drift with the team's APR (roster churn) | ±10 around the researched value |
+   | Location | Fixed (geography) | — |
+   | Facilities | Fixed until AD Meetings | — |
+
