@@ -211,7 +211,7 @@ def check_box_and_stack(page, base, A, errors) -> None:
     page.goto(f"{base}/index.html?id={A}")
     page.wait_for_selector("#season:visible")
     tab_click(page, "schedule")
-    page.click("#week-strip button.week-chip[aria-label='Week 2']")
+    page.click("#week-strip button.week-chip[aria-label='Week 1']")   # engine week 2 (Week 0 opens the season)
     wait_url(page, lambda p: p.get("week") == "2", "week=2")
     page.wait_for_selector("#tab-schedule .clickable", timeout=60_000)
     page.click("#tab-schedule .clickable >> nth=0")
@@ -223,7 +223,7 @@ def check_box_and_stack(page, base, A, errors) -> None:
     page.wait_for_selector(".modal:not([hidden]) #sbox-score-row", timeout=60_000)
     assert page.inner_text("#sbox-score-row") == score
     assert tab_on(page, "schedule") and params(page).get("week") == "2"
-    assert page.get_attribute("#week-strip button.week-chip.active", "aria-label") == "Week 2"
+    assert page.get_attribute("#week-strip button.week-chip.active", "aria-label") == "Week 1"
     # a player page over the box score: both in the address, both back after a reload, Back closes the top one
     page.click("#sbox-tabs button[data-btab=home]")
     page.click("#sbox-home [data-player] >> nth=0")

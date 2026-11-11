@@ -300,7 +300,7 @@ def test_pester_tags(page, base) -> None:
         page.click(".go-subtabs button[data-sub=history]")
         time.sleep(0.4)
         hist = page.inner_text(".go-pane .go-sub-body")
-        assert "Week 1 · He tuned out your message" in hist, hist
+        assert "Week 0 · He tuned out your message" in hist, hist     # engine week 1: Week 0 opens the season
         assert not errs, errs
     finally:
         call(base, f"/api/season/{sid}", method="DELETE")
@@ -1317,14 +1317,14 @@ def test_news_bubbles(page, base) -> None:
             .observe(document.body, { childList: true, subtree: true }); }""")
         start = call(base, f"/api/season/{sid}")["current_week"]
         page.click("#tab-office .go-play .go-play-more")
-        page.click(f".go-menu-item:has(b:text-is('Week {start + 3}'))")
+        page.click(f".go-menu-item:has(b:text-is('Week {start + 2}'))")   # engine week start+3: the calendar's Week start+2
         page.wait_for_function("() => document.body.classList.contains('simming')", timeout=30_000)
         page.wait_for_function("() => !document.body.classList.contains('simming')", timeout=300_000)
         stopped_at = page.evaluate("() => performance.now()")
         time.sleep(NEWS_SETTLE_S)
         shown = page.evaluate("() => window.__nb")
         after = [b for b in shown if b["at"] > stopped_at]
-        last = f"Week {start + 3}"
+        last = f"Week {start + 2}"
         assert len(after) <= 2 and all(b["week"] == last for b in after), ("news after the sim stopped", after)
         page.wait_for_function("() => !document.querySelector('.news-bubble')", timeout=60_000)
         # the News switch off: the next week shows none
@@ -1368,7 +1368,7 @@ def test_sim_bar(page, base) -> None:
         page.evaluate("""() => { window.__bar = []; window.__barTimer = setInterval(() => { const ov = document.getElementById('sim-overlay'); if (ov.hidden) return;
             const bar = document.getElementById('sim-bar'); window.__bar.push([bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width,
             document.getElementById('sim-sub').textContent, document.getElementById('sim-stage').textContent]); }, 100); }""")
-        page.click(".go-menu .go-menu-item:has(b:text-is('Week 3'))")
+        page.click(".go-menu .go-menu-item:has(b:text-is('Week 2'))")
         page.wait_for_selector("#sim-overlay:visible", timeout=30_000)
         page.wait_for_selector("#sim-overlay", state="hidden", timeout=300_000)
         samples = page.evaluate("() => { clearInterval(window.__barTimer); return window.__bar; }")
@@ -1380,7 +1380,7 @@ def test_sim_bar(page, base) -> None:
         assert widths[-1] > 0.8, f"the bar ended at {widths[-1]:.2f}"
         assert page.evaluate("() => document.getElementById('sim-bar').style.width") == "100%", "the bar fills when the sim is done"
         stages = {st for _, _, st in samples}
-        assert any(st.startswith("Playing Week 2 games · ") for st in stages), stages
+        assert any(st.startswith("Playing Week 1 games · ") for st in stages), stages
         assert not any("Simming" in st or "null" in st or "undefined" in st for st in stages), stages
     finally:
         call(base, f"/api/season/{sid}", method="DELETE")
@@ -1642,8 +1642,8 @@ if __name__ == "__main__":
               { week: 3, kind: "contact", action: "message", pitch: "playing_time" },
               { week: 2, kind: "offer", school: "georgia" },
             ], "smu")""")
-            assert lines == ["Week 6 · Committed to Georgia", "Week 5 · Offer · 120 NIL", "Week 4 · Call · Program Prestige · He lit up",
-                             "Week 3 · Message · Playing Time", "Week 2 · Offered by Georgia"], lines
+            assert lines == ["Week 5 · Committed to Georgia", "Week 4 · Offer · 120 NIL", "Week 3 · Call · Program Prestige · He lit up",
+                             "Week 2 · Message · Playing Time", "Week 1 · Offered by Georgia"], lines   # engine weeks 6..2: the calendar's 5..1
             page.click(".go-subtabs button[data-sub=overview]")
             # the Recruit menu: nine items, the unavailable ones grayed with the reason as a second line
             page.click("#rc-recruit")
@@ -1767,8 +1767,8 @@ if __name__ == "__main__":
                 time.sleep(0.3)
                 hist = page.inner_text(".go-pane .go-sub-body")
                 wk = season.load_season(A)["current_week"]
-                assert f"Week {wk} · Message · {PITCH[msg_pitch]}" in hist, hist
-                assert f"Week {wk} · Call · {PITCH[hit]} · {REACTION[kind]}" in hist, hist
+                assert f"Week {wk - 1} · Message · {PITCH[msg_pitch]}" in hist, hist
+                assert f"Week {wk - 1} · Call · {PITCH[hit]} · {REACTION[kind]}" in hist, hist
                 page.click(".go-subtabs button[data-sub=overview]")
             assert not page.query_selector("#rc-finish"), "a finished call leaves the head"
             # a second recruit's call: the menu waits, Hang up closes the scene and Finish stays in the head

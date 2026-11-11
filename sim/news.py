@@ -201,7 +201,7 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
             fin = [_name(teams, s) for s in e.get("finalists") or () if s in teams]
             if blue and len(fin) > 1:
                 said = " and ".join(fin) if len(fin) == 2 else f"{', '.join(fin[:-1])} and {fin[-1]}"
-                out.append({"kind": "recruiting", "text": f"{stars} {p['position']} {p['name']} will choose from {said} at a hat ceremony in Week {e['day']}.",
+                out.append({"kind": "recruiting", "text": f"{stars} {p['position']} {p['name']} will choose from {said} at a hat ceremony in {season.week_label(e['day'])}.",
                             "team": None, "teams": tuple(e.get("finalists") or ()), "link": link, "_imp": _BASE["recruiting"] - 4 + p["stars"]})
             continue
         if e["kind"] == "twist":               # a blue blood's late offer or a surprise visit to a blue chip

@@ -39,7 +39,7 @@ def main() -> None:
     assert [r["week"] for r in rows] == homes, (rows, homes)
     assert rows[0]["taken_by"] == "Michigan" and not rows[0]["first"], rows[0]
     assert rows[1]["first"] and all(not r["first"] for r in rows[2:]), rows
-    assert all(r["label"] == f"Week {r['week']}" and r["opponent_name"] and "opponent_rank" in r for r in rows), rows
+    assert all(r["label"] == season.week_label(r["week"]) and r["opponent_name"] and "opponent_rank" in r for r in rows), rows
     assert all(r["taken_by"] is None for r in rows[1:]), rows
     # a chosen later weekend is stored as picked (through `act`, as the page's request goes)
     pid3 = recruiting.prospect_list(st)[2]

@@ -35,6 +35,10 @@ if __name__ == "__main__":
             assert len(set(weeks)) == len(weeks), (year, s, sorted(weeks))
             assert all(1 <= w <= sg.LAST_WEEK or w == sg.ARMY_NAVY_WEEK for w in weeks), (year, s, weeks)
             home_count[s][year] = sum(1 for g in by_team[s] if g["home"] == s and not g["neutral"])
+        # Week 0 (engine week 1): a handful of games, as the real calendar has; the next Saturday is the full opening slate
+        opening = sum(1 for g in games.values() if g["week"] == sg.WEEK0)
+        assert 1 <= opening <= 3 * sg.WEEK0_GAMES, (year, opening)
+        assert sum(1 for g in games.values() if g["week"] == sg.WEEK0 + 1) > 3 * opening, (year, opening)
         # league counts and protected pairs
         for conf, rule in R["conferences"].items():
             members = [s for s in fbs if conf_of[s] == conf]

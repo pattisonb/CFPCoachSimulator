@@ -9,6 +9,9 @@
    openAwards(view), openRankings(), playerAttrs, rivalries(box). Reads GET /api/season/{id}/review. */
 (function () {
   "use strict";
+  // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
+  // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
+  const seasonWeek = (w) => `Week ${w - 1}`;
   const { el } = window.CFP;
   let H = null;
 
@@ -28,7 +31,7 @@
   // the conference's short name where the long one reads badly in a line
   const CONF_SHORT = { "American Athletic Conference": "American", "FBS Independent": "Independents", "FBS Independents": "Independents" };
   const confShort = (c) => CONF_SHORT[c] || c || "";
-  const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || `Week ${w}`;
+  const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || seasonWeek(w);
 
   // ----- the header: the title, the record, the grade and the verdict ----------------------------------------
   function header(s, r) {
@@ -208,7 +211,7 @@
 
   // one sentence on a team's AP path: where it started, its peak, where it ended
   function expl(s, r, x, cls) {
-    const wk = (w) => (w <= 14 ? `Week ${w}` : weekName(s, w).toLowerCase().replace("selection", "selection day"));
+    const wk = (w) => (w <= 14 ? seasonWeek(w) : weekName(s, w).toLowerCase().replace("selection", "selection day"));
     const endWord = r.done ? "finished" : "sits";
     const start = x.preseason_rank ? `Started the season #${x.preseason_rank}` : "Started the season unranked";
     if (x.peak_rank == null) return cls === "surprise" ? `${start} and ${r.done ? "went" : "is"} ${x.record} without the poll noticing.` : `${start} and ${r.done ? "stumbled to" : "is a disappointing"} ${x.record}.`;

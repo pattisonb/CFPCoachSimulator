@@ -6,6 +6,9 @@
    so the screens read in the light and the dark theme. */
 (function () {
   "use strict";
+  // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
+  // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
+  const seasonWeek = (w) => `Week ${w - 1}`;
   const { el } = window.CFP;
   const PITCH_NAMES = { proximity: "Close to Home", playing_time: "Playing Time", prestige: "Program Prestige", winning: "Winning Now",
                         nil: "NIL", coach: "The Head Coach", academics: "Academics", pro: "Path to the League",
@@ -63,7 +66,7 @@
   function reportCard(s, report) {
     if (!report || !report.rows.length) return null;
     const card = el("section", { class: "go-card go-report", "aria-label": "What changed" });
-    card.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: `What Changed · After ${report.week === 0 ? "the Preseason" : `Week ${report.week}`}` })]));
+    card.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: `What Changed · After ${report.week === 0 ? "the Preseason" : report.portal ? `Week ${report.week}` : seasonWeek(report.week)}` })]));
     // the week in a glance: only prospects where something happened to you (your place moved, a
     // decision, an ask), the biggest first, one line each; his list on the card has the rest
     const BIG = new Set(["commit", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "bloomed", "pro", "twist", "hat", "softened", "promise_kept"]);
@@ -215,12 +218,12 @@
       else if (e.kind === "leaning_fcs") bits = ["Leaning toward an FCS program"];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${e.school ? teamName(e.school) : "an FCS program"}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];
-      return { week: e.portal_week ?? e.week, text: bits.filter(Boolean).join(" · "), kind: e.kind === "contact" || e.kind === "pitch" ? e.action || actionOf.get(i) || "pitch" : e.kind };
+      return { week: e.portal_week ?? e.week, portal: e.portal_week != null, text: bits.filter(Boolean).join(" · "), kind: e.kind === "contact" || e.kind === "pitch" ? e.action || actionOf.get(i) || "pitch" : e.kind };
     };
     return evs.map((e, i) => (folded.has(i) ? null : line(e, i))).filter(Boolean);
   }
   // the History as text lines ("Week 4 · Call · Program Prestige · He lit up")
-  function historyLines(events, me) { return historyItems(events, me).map((x) => [`Week ${x.week}`, x.text].filter(Boolean).join(" · ")); }
+  function historyLines(events, me) { return historyItems(events, me).map((x) => [x.portal ? `Week ${x.week}` : seasonWeek(x.week), x.text].filter(Boolean).join(" · ")); }
   // the Office (web/office.js) shares the ladder, the portraits, the week's What Changed card and the event words
   window.CFP.recruiting = { standingOf, byChance, historyLines, avatar, reportCard, eventWord, pitchName: (t) => PITCH_NAMES[t] || t };
 
@@ -261,7 +264,7 @@
     if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else if (!opts.silent) H.toast(`${names[action]} open · finish it from his pane`, 3000); }
     else if (r.reaction) {
       // talking money is a promise: say so plainly, over the reaction's toast
-      if (r.money_owed) H.toast(`You talked money: put ${r.money_owed.nil} NIL on your offer by Week ${r.money_owed.by_week}.`, 6000);
+      if (r.money_owed) H.toast(`You talked money: put ${r.money_owed.nil} NIL on your offer by ${seasonWeek(r.money_owed.by_week)}.`, 6000);
       else if (!opts.silent) H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000);
       if (opts.onReaction) opts.onReaction(r.reaction);
     }
@@ -474,18 +477,18 @@
   // the tab he sits under
   const columnOf = (b) => (b.committed || b.signed ? "committed" : COLUMN_TIPS[b.stage] ? b.stage : "cold");
 
-  // an official visit's pill: "Visit Wk 6" until he goes, then "Visited". It is tied to the visited school's game that
+  // an official visit's pill: "Visit Wk 5" (the calendar's week, seasonWeek) until he goes, then "Visited". It is tied to the visited school's game that
   // week (visit.game, coach_career/prospects.visit_view): hovering, focusing or tapping the pill shows that game, the
   // week and opponent before it is played and its result after, in the game's result line ("Week 6: L 36–41 vs Ohio
   // State", as the Rivalries card and the Office read a result). No game that week (a bye, a portal campus visit): no tip.
-  const visitLabel = (v) => (v.done ? "Visited" : `Visit Wk ${v.week}`);
+  const visitLabel = (v) => (v.done ? "Visited" : `Visit Wk ${v.week - 1}`);   // the calendar's week (seasonWeek)
   function visitTipText(v, school) {
     const g = v && v.game;
     if (!g || g.week == null || !g.opponent_name) return null;
     const vs = g.venue === "away" ? "at" : "vs";
     if (g.played && g.points_for != null && g.points_against != null)
-      return `${school ? `${school}, ` : ""}Week ${g.week}: ${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""} ${vs} ${g.opponent_name}`;
-    return `His official visit${school ? ` to ${school}` : ""} is Week ${g.week}, ${vs} ${g.opponent_name}.`;
+      return `${school ? `${school}, ` : ""}${seasonWeek(g.week)}: ${g.won ? "W" : "L"} ${g.points_for}–${g.points_against}${g.overtime ? " OT" : ""} ${vs} ${g.opponent_name}`;
+    return `His official visit${school ? ` to ${school}` : ""} is ${seasonWeek(g.week)}, ${vs} ${g.opponent_name}.`;
   }
   // the pill, wrapped as a [data-gtip] cell (the grade tooltips' document listeners show it) when there is a game to
   // show; `school` names another school's visit (null: yours)
@@ -538,8 +541,8 @@
     if (b.need != null && !b.signed && b.committed !== me) out.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full",
       title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
     if (b.offered && !b.signed && b.committed !== me) out.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
-    if (b.money_owed) out.append(el("span", { class: "go-tag warn go-money-owed", "data-key": "money-owed", text: `Money Owed · ${b.money_owed.nil} NIL by Week ${b.money_owed.by_week}`,
-      title: `You talked money with him: put at least ${b.money_owed.nil} NIL on your offer by Week ${b.money_owed.by_week}, or he cools on you. Take him off your board to walk away.` }));
+    if (b.money_owed) out.append(el("span", { class: "go-tag warn go-money-owed", "data-key": "money-owed", text: `Money Owed · ${b.money_owed.nil} NIL by ${seasonWeek(b.money_owed.by_week)}`,
+      title: `You talked money with him: put at least ${b.money_owed.nil} NIL on your offer by ${seasonWeek(b.money_owed.by_week)}, or he cools on you. Take him off your board to walk away.` }));
     if (b.cooled) out.append(el("span", { class: "go-tag bad", text: "Cooled", title: COOLED_TITLE[b.cooled_why] || COOLED_TITLE.lowball }));
     if (b.pestering) out.append(el("span", { class: "go-tag bad", text: "Tuning You Out", title: "He is not considering you; more contact pushes him away" }));
     // the portal: he picks only among offering schools with room, so a lead without room is no lead
@@ -830,7 +833,7 @@
   function historyCards(s, b, me) {
     const items = historyItems(b.history || [], me);
     const timeline = items.length ? el("ul", { class: "pv-timeline go-news go-history-rows", "data-key": "timeline", tabindex: "0", "aria-label": "Recruiting Timeline" }, items.map((x, i) => el("li", { class: "pv-tl-row", "data-key": `h-${items.length - i}`, "data-line": `Week ${x.week} · ${x.text}` }, [
-      el("span", { class: "pv-tl-icon", "aria-hidden": "true", text: KIND_ICON[x.kind] || "•" }), el("span", { class: "pv-tl-text" }, [el("b", { class: "pv-tl-week", text: `Week ${x.week}` }), ` · ${x.text}`]),
+      el("span", { class: "pv-tl-icon", "aria-hidden": "true", text: KIND_ICON[x.kind] || "•" }), el("span", { class: "pv-tl-text" }, [el("b", { class: "pv-tl-week", text: x.portal ? `Week ${x.week}` : seasonWeek(x.week) }), ` · ${x.text}`]),
       el("span", { class: "go-tag pv-tl-chip", text: KIND_CHIP[x.kind] || "News" })])))
       : el("p", { class: "muted small", "data-key": "timeline", text: "Nothing with him yet: no contact, no offer." });
     const notes = el("div", { class: "pv-notes", "data-key": "notes" }, notesOf(b, me).map((t) => el("p", { text: t })));
@@ -1002,7 +1005,7 @@
   const ACTION_WORD = { call: "call", hc_visit: "in-home visit", official_visit: "official visit" };
   const markOf = (b, t) => { const m = (b.pitch_marks || {})[t]; return m && MARKS[m.mark] ? m : null; };
   function markWhy(m) {
-    const when = `${m.week ? `Week ${m.week} ` : ""}${ACTION_WORD[m.action] || "call"}`;
+    const when = `${m.week && m.week <= 14 ? `${seasonWeek(m.week)} ` : ""}${ACTION_WORD[m.action] || "call"}`;
     return { hit: `He lit up when you pitched this on your ${when}.`, weak: `He went quiet on this on your ${when}: he cares, and your case is weak.`,
       not_his: `He was polite about this on your ${when}: it is not one of his priorities.`,
       no_read: `You pitched this on your ${when} and got no read on it.` }[m.mark];
@@ -1504,7 +1507,7 @@
     // free one marked, a weekend he has at another school grayed with the reason, and Back at the top
     function visitItems(b) {
       const weeks = b.visit_weeks || [];
-      const rows = weeks.map((w) => ({ action: "visit_week", week: w.week, name: `Wk ${w.week} · vs ${w.opponent_rank ? `#${w.opponent_rank} ` : ""}${w.opponent_name}`,
+      const rows = weeks.map((w) => ({ action: "visit_week", week: w.week, name: `Wk ${w.week - 1} · vs ${w.opponent_rank ? `#${w.opponent_rank} ` : ""}${w.opponent_name}`,
         cost: w.first ? "First Free Weekend" : "", why: w.taken_by ? `He's at ${w.taken_by} that weekend` : null }));
       if (!rows.length) rows.push({ action: "visit_none", name: "No Home Games Left", cost: "", why: "No home game left for a visit" });
       return [{ action: "back", name: "‹ Back", cost: "", why: null, back: true }, ...rows];
