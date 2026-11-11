@@ -265,6 +265,17 @@
       el("span", { class: "ofc-when muted", text: n.week === s.current_week ? "This Week" : weekName(s, n.week) })]))));
     return card;
   }
+  // Keeps His Word: your reputation for keeping promises, in a word (coach_career/word.py); the position that has heard
+  // the worst, if any; the latest kept and broken promises
+  function wordCard(w) {
+    const card = el("section", { class: "go-card ofc-word", "aria-label": "Keeps His Word" },
+      [bar("Keeps His Word", w ? el("span", { class: "ofc-chip", text: w.text }) : null)]);
+    if (!w) { card.append(loading("Loading your word…")); return card; }
+    if (w.weakest) card.append(el("p", { class: "ofc-word-weak", text: `${w.weakest.name} have heard: ${w.weakest.text}.` }));
+    if (w.recent.length) card.append(el("ul", { class: "ofc-feed" }, w.recent.map((t) => el("li", {}, [el("span", { class: "ofc-feed-text", text: t })]))));
+    else card.append(el("p", { class: "muted", text: "No promises judged yet. Recruits and players hear how you keep them." }));
+    return card;
+  }
   function confCard(s, c) {
     const name = c ? confShort(c.name) : confShort(s.conference);
     const card = el("section", { class: "go-card ofc-conf", "aria-label": `Around the ${name}` }, [bar(`Around the ${name}`)]);
@@ -375,8 +386,8 @@
     grid.append(recruit);
     const reportSlot = el("div", { class: "ofc-report-slot" });
     grid.append(reportSlot);
-    let news = newsCard(s, null), conf = confCard(s, null);
-    grid.append(news, conf, targets);
+    let news = newsCard(s, null), conf = confCard(s, null), wordBox = wordCard(null);
+    grid.append(news, conf, targets, wordBox);
 
     // the reads land in place: each card swaps its loading line for the real one
     // (a card that grows or shrinks as it fills eases to its height: the column under it slides, never jumps)
@@ -384,11 +395,13 @@
     H.api(`/api/season/${s.id}/office`).then((o) => {
       news = swap(news, newsCard(s, o.news || []));
       conf = swap(conf, confCard(s, o.conference));
+      wordBox = swap(wordBox, wordCard(o.word || { text: "Strong", weakest: null, recent: [] }));
       const line = pulse.querySelector(".go-standing-line");
       line.textContent = standingText(s, o.conference);
     }).catch((err) => {
       news = swap(news, el("section", { class: "go-card ofc-news" }, [bar("Program News"), el("p", { class: "muted", text: `Could not load the news: ${H.errText(err)}` })]));
       conf.querySelector(".go-loading")?.remove();
+      wordBox.querySelector(".go-loading")?.remove();
     });
     let v;
     try { v = await H.api(`/api/season/${s.id}/recruiting`); }

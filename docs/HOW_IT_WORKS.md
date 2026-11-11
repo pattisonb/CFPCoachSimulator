@@ -1631,7 +1631,20 @@ adds the rest of `PROMISE_BROKEN` (3) times the role chance. When the draw lands
 card and the portal recap read "Was promised a starting role and did not get it". During the season the depth chart
 and his player page show the promise's chip (**On Track**, **Slipping**, **Broken**: the band so far,
 `promises.chips_now`), and the first week it slips (after `NEWS_AFTER` (2) weeks that count) Program News carries his
-line, "Coach, you told me this was my job." The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+line, "Coach, you told me this was my job." Those judged promises also move **Keeps His Word** (`coach_career/word.py`,
+on `state["career"]["word"]`, so it follows your coach to a new job; AI coaches have none): it starts at `WORD_START`
+(70, Strong); a kept promise adds 3, a bent one costs 2 and a broken one 8, half again for a starter-level player or a
+four-star-plus recruit and half again for a Guarded one, and the broken player's position takes the same again on top
+(`GROUP_EXTRA`). Recruiting promises feed it too: a money or Package Deal promise kept adds 2, broken costs 5 (a
+small-school kid who forgives a money promise costs nothing), a broken "you're the one" promise costs 5. Each
+offseason the overall moves a quarter of the way back to 70 and each position's extra halves. A recruit reads it when
+you promise him the job: a believed promise earns `ANSWER_PROMISE` times 0.5 to 1.5 by the reading at his position
+(1.2 at a fresh 70; a Guarded recruit or one whose decider is playing time reads it half again as hard), and under
+`FLOOR` (35) he does not believe you at all: nothing, and his line is "Coach, I heard what happened with {name}." (the
+last promise you broke at his position) or "Coach, I've heard about your promises.". Keep Them Home's promise-again
+chance (0.55) takes the same multiplier, capped at 0.9, and 0.02 under the floor. The Office shows it in a word on the
+**Keeps His Word** card, with the position that has heard the worst ("Quarterbacks have heard: Fair.") and the three
+latest lines ("Broke your word to Jalen Moss (QB)."). The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`

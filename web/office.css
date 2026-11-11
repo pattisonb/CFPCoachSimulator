@@ -133,3 +133,6 @@
   .ofc-target { min-height: 56px; }
   .ofc-feed .go-link { min-height: 0; }
 }
+
+/* Keeps His Word (coach_career/word.py): the word as the bar's chip, the weakest position, the latest lines */
+.ofc-word-weak { margin: 0; font-weight: 700; }

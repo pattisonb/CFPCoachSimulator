@@ -242,6 +242,27 @@ def test_keep_them_home_reads_word():
     assert abs(offseason.stay_chance(e) - promises.PROMISE_AGAIN_STAY) < 1e-9, "no state: the old rule"
 
 
+def test_office_payload():
+    st = bare()
+    v = word.view(st)
+    assert v == {"text": "Strong", "weakest": None, "recent": []}, v
+    word.apply(st, "kept", "WR", "Ty Lane")
+    word.apply(st, "broken", "QB", "Jalen Moss")
+    word.apply(st, "money_broken", "QB", "Cam Ward")
+    v = word.view(st)
+    assert v["text"] == word.word_text(word.reading(st)), v
+    assert v["weakest"] == {"group": "QB", "name": "Quarterbacks", "text": word.word_text(word.reading(st, "QB"))}, v
+    assert v["recent"] == ["Broke your word to Cam Ward (QB).", "Broke your word to Jalen Moss (QB).", "Kept your word to Ty Lane (WR)."], v
+
+
+def test_office_view_carries_word():
+    from coach_career import office
+    from sim import season
+    st = season.new_season("iowa", "full", seed=5, career=True)
+    assert office.office_view(st)["word"]["text"] == "Strong"
+    assert "word" not in st["career"], "the Office reads without writing"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

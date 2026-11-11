@@ -160,3 +160,31 @@ def promise_mult(state: dict, pid: Optional[str], group: Optional[str], personal
 def believes(state: dict, group: Optional[str]) -> bool:
     """Whether a promise is believed at all: the reading at his position at FLOOR or above."""
     return reading(state, group) >= FLOOR
+
+
+# ----- what you see (the Office's Keeps His Word card) -------------------------------------------------------------------
+
+GROUP_NAMES = {"QB": "Quarterbacks", "RB": "Running Backs", "WR": "Receivers", "TE": "Tight Ends", "OL": "Offensive Linemen",
+               "DL": "Defensive Linemen", "LB": "Linebackers", "CB": "Cornerbacks", "S": "Safeties", "K": "Kickers", "P": "Punters"}
+RECENT = 3                                        # the card shows this many of the latest lines
+
+
+def _line(e: dict) -> str:
+    verb = "Kept" if e.get("kind") in GAIN else "Bent" if e.get("kind") == "bent" else "Broke"
+    who = e.get("name") or "a player"
+    return f"{verb} your word to {who} ({e['group']})." if e.get("group") else f"{verb} your word to {who}."
+
+
+def view(state: dict) -> dict:
+    """The word in a word; the position with the lowest reading when its word is below the overall's; the latest lines."""
+    overall = reading(state)
+    text = word_text(overall)
+    weakest = None
+    groups = (_seen(state).get("by_group") or {})
+    if groups:
+        g = min(groups, key=lambda k: (reading(state, k), k))
+        low = reading(state, g)
+        if low < overall and word_text(low) != text:
+            weakest = {"group": g, "name": GROUP_NAMES.get(g, g), "text": word_text(low)}
+    recent = [_line(e) for e in reversed((_seen(state).get("log") or [])[-RECENT:])]
+    return {"text": text, "weakest": weakest, "recent": recent}
