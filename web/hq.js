@@ -82,6 +82,8 @@
     return out;
   }
 
+  const FILTER_PICKS = {};        // the widgets' filter picks, by widget id (this visit)
+
   // ----- a card ---------------------------------------------------------------------------------------
   function ctxFor(w, size, sample) {
     return {
@@ -632,6 +634,38 @@
     // how many rows a list shows at a size
     // how many rows a list holds at a size (the card's body scrolls, so these are generous)
     rowsFor: (size) => ({ S: 20, M: 30, L: 50 }[size] || 20),
+    // filter pills over a widget's rows (the player's ask: a dropdown for each column worth filtering). cols: [[key, label,
+    // get]]; render(rows) draws what is left. A column with one value filters nothing and shows no pill; the picks last the
+    // visit, by widget id. Each pill is a real <select> (the keyboard and a phone's own picker), dressed as a pill.
+    filtered: (id, rows, cols, render, none = "Nobody matches these filters.") => {
+      const f = (FILTER_PICKS[id] = FILTER_PICKS[id] || {});
+      const box = el("div", { class: "hq-filtered" });
+      const val = (get, r) => { const v = get(r); return v == null ? "" : String(v); };
+      // into the box on the page: after an in-place patch (ui.morph) the select on the page runs this handler, but the
+      // page keeps its own nodes, so the handler finds them from the select, not from this draw's closure
+      const paint = (into = box) => {
+        const shown = rows.filter((r) => cols.every(([key, , get]) => !f[key] || val(get, r) === f[key]));
+        into.replaceChildren(shown.length ? render(shown) : kit.empty(none));
+      };
+      const pills = cols.map(([key, label, get]) => {
+        const vals = [...new Set(rows.map((r) => val(get, r)))].filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        if (f[key] && !vals.includes(f[key])) f[key] = "";
+        if (vals.length < 2) return null;
+        const sel = el("select", { class: "hq-fpill-sel", "aria-label": label }, [el("option", { value: "", text: "All" }), ...vals.map((v) => el("option", { value: v, text: v }))]);
+        sel.value = f[key] || "";
+        const pill = el("label", { class: `hq-fpill${f[key] ? " on" : ""}`, "data-filter": key }, [el("span", { class: "hq-fpill-k", text: label }), sel,
+          el("span", { class: "hq-fpill-caret", "aria-hidden": "true", text: "▾" })]);
+        ui().on(sel, "change", (e) => {
+          const s = e.currentTarget, wrap = s.closest(".hq-filtered-wrap");
+          f[key] = s.value;
+          (s.closest(".hq-fpill") || pill).classList.toggle("on", !!f[key]);
+          paint((wrap && wrap.querySelector(":scope > .hq-filtered")) || box);
+        });
+        return pill;
+      }).filter(Boolean);
+      paint();
+      return el("div", { class: "hq-filtered-wrap" }, [pills.length ? el("div", { class: "hq-filters" }, pills) : null, box]);
+    },
   };
 
   window.HQ = {

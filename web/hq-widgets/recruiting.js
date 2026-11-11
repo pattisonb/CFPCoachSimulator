@@ -68,10 +68,12 @@
   reg({ id: "top-targets", title: "Top Targets", blurb: "Your board's best chances, with where you stand with each.",
     sizes: ["M", "L"], size: "M", sources: ["board"], sample: { board: SAMPLE_BOARD }, viewAll: "recruiting",
     draw: (d, ctx) => {
-      const rows = (d.board.targets || []).slice(0, k.rowsFor(ctx.size));
+      const rows = d.board.targets || [];
       if (!rows.length) return k.empty("No targets yet. Add recruits to your board and offer them to see your chances here.");
-      return k.list(rows.map((b) => [k.name(ctx, b.id, b.name), el("span", { class: "hq-sub", text: pos(b) }), k.stars(b.stars),
-        el("span", { class: "go-tag", text: b.sample_word || standingWord(b, ctx) })]));
+      const word = (b) => b.sample_word || standingWord(b, ctx);
+      return k.filtered("top-targets", rows, [["pos", "Pos", pos], ["stars", "Stars", (b) => (b.stars ? `${b.stars} Stars` : "")], ["standing", "Standing", word]], (shown) =>
+        k.list(shown.slice(0, k.rowsFor(ctx.size)).map((b) => [k.name(ctx, b.id, b.name), el("span", { class: "hq-sub", text: pos(b) }), k.stars(b.stars),
+          el("span", { class: "go-tag", text: word(b) })])), "No targets match these filters.");
     } });
 
   // ----- Class Needs ---------------------------------------------------------------------------------------
@@ -195,13 +197,17 @@
       if (!rows.length) return k.empty("No commits yet this cycle.");
       const head = k.stats([[String(rows.length), "Commits"], [mine && mine.count && mine.rank ? `#${mine.rank}` : "Unranked", "Class Rank"],
         [String(rows.filter((r) => r.signed).length), "Signed"]]);
-      const status = (r) => el("span", { class: `go-tag${r.signed ? " good" : ""}`, text: r.signed ? "Signed" : "Committed" });
-      const shown = ctx.size === "L" ? rows : rows.slice(0, k.rowsFor(ctx.size));
-      return el("div", {}, [head, ctx.size === "L"
-        ? k.table(["Player", "Pos", "Stars", "Nat. Rank", "Status"], shown.map((r) => [k.name(ctx, r.id, r.name), pos(r), k.stars(r.stars),
-          r.national_rank ? `#${r.national_rank}` : "—", status(r)]))
-        : k.list(shown.map((r) => [k.name(ctx, r.id, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars), status(r)])),
-      rows.length > shown.length ? el("p", { class: "hq-sub", text: `And ${rows.length - shown.length} more: make the card large to see them all.` }) : null]);
+      const statusWord = (r) => (r.signed ? "Signed" : "Committed");
+      const status = (r) => el("span", { class: `go-tag${r.signed ? " good" : ""}`, text: statusWord(r) });
+      const cols = [["pos", "Pos", pos], ["stars", "Stars", (r) => (r.stars ? `${r.stars} Stars` : "")], ["status", "Status", statusWord]];
+      return el("div", {}, [head, k.filtered("full-class", rows, cols, (all) => {
+        const shown = ctx.size === "L" ? all : all.slice(0, k.rowsFor(ctx.size));
+        return el("div", {}, [ctx.size === "L"
+          ? k.table(["Player", "Pos", "Stars", "Nat. Rank", "Status"], shown.map((r) => [k.name(ctx, r.id, r.name), pos(r), k.stars(r.stars),
+            r.national_rank ? `#${r.national_rank}` : "—", status(r)]))
+          : k.list(shown.map((r) => [k.name(ctx, r.id, r.name), el("span", { class: "hq-sub", text: pos(r) }), k.stars(r.stars), status(r)])),
+          all.length > shown.length ? el("p", { class: "hq-sub", text: `And ${all.length - shown.length} more: make the card large to see them all.` }) : null]);
+      }, "No recruits match these filters.")]);
     } });
 
   // ----- Recruiting Rankings -------------------------------------------------------------------------------

@@ -421,7 +421,7 @@
       const name = el("h2", { class: "sc-big-name pv-name", "data-key": "name", text: p.name });
       const status = el("span", { class: `go-chip pv-tag sc-status ${sp[1]}`, "data-key": "chip", text: sp[0], title: r.on_board ? "On your board" : "Not on your board" });
       const hero = P.heroOf(b, me, { nameNode: name, chip: { text: sp[0], tone: sp[1] },
-        stats: [{ key: "nat", label: "Nat. Rank", value: p.national_rank ? `#${p.national_rank}` : "—" }, { key: "pos", label: "Pos. Rank", value: p.pos_rank ? `#${p.pos_rank}` : "—", sub: p.display_pos },
+        stats: [{ key: "nat", label: "Nat. Rank", value: p.national_rank ? `#${p.national_rank}` : "—" }, { key: "pos", label: "Pos. Rank", value: p.pos_rank ? `#${p.pos_rank}` : "—" },
           { key: "need", label: "Team Need", value: needWord, tone: needWord === "High" ? "good" : needWord === "Medium" ? "warn" : "" }],
         badge: { kicker: "Potential", value: potential ? (potential[0] === potential[1] ? potential[0] : `${potential[0]} – ${potential[1]}`) : "Not Read",
           sub: rep && rep.certainty ? CERTAINTY[rep.certainty] : potential ? null : "Send a Scout", tone: rep && rep.potential_tone ? rep.potential_tone : potential ? POT_TONE[potential[0]] || "" : "" } });

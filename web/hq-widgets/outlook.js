@@ -54,7 +54,7 @@
     for (const b of board.board || []) {
       const mo = b.money_owed;
       if (mo) out.push({ kind: "Promise", pid: b.id, name: b.name, text: `You talked money with ${b.name}: put ${mo.nil} NIL on your offer by Week ${mo.by_week}.`,
-        task: `Put ${mo.nil} NIL on ${b.name}'s offer by Week ${mo.by_week}.` });
+        task: `Put ${mo.nil} NIL on ${b.name}'s offer by Week ${mo.by_week}.`, do: { kind: "nil", pid: b.id, nil: mo.nil } });
     }
     // then who cooled on you, with what to do about it
     for (const b of board.board || []) {
@@ -63,26 +63,27 @@
       const task = b.cooled_why === "lowball" ? `Raise your offer to ${b.name} to what he wants.`
         : b.cooled_why === "promise" ? `Give ${b.name} a week: he doubts a promise you made.`
         : pitch ? `Call ${b.name} and lead with ${pitch}.` : `Call ${b.name}.`;
-      out.push({ kind: "Cooled", pid: b.id, name: b.name, text: `${b.name} has cooled on you.`, task });
+      const kind = b.cooled_why === "lowball" ? "raise" : b.cooled_why === "promise" ? "wait" : "call";
+      out.push({ kind: "Cooled", pid: b.id, name: b.name, text: `${b.name} has cooled on you.`, task, do: { kind, pid: b.id } });
     }
     for (const b of board.board || []) {
-      if (b.pestering) out.push({ kind: "Contact", pid: b.id, name: b.name, text: `${b.name} is tuning you out.`, task: `Leave ${b.name} alone this week.` });
+      if (b.pestering) out.push({ kind: "Contact", pid: b.id, name: b.name, text: `${b.name} is tuning you out.`, task: `Leave ${b.name} alone this week.`, do: { kind: "leave", pid: b.id } });
     }
     for (const b of board.board || []) {
       const school = b.signed || b.committed;
       if (b.offered && school && school !== mine && (b.signed || b.hard))
-        out.push({ kind: "Offer", pid: b.id, name: b.name, text: `${b.name} is locked in elsewhere, and your offer still holds a slot.`, task: `Pull the offer to ${b.name}.` });
+        out.push({ kind: "Offer", pid: b.id, name: b.name, text: `${b.name} is locked in elsewhere, and your offer still holds a slot.`, task: `Pull the offer to ${b.name}.`, do: { kind: "pull", pid: b.id } });
       else if (b.offered && !school) {
         const last = contacts[b.id];
         const gap = last == null ? null : week - last;
         if (last == null || gap >= STALE_WEEKS)
-          out.push({ kind: "Contact", pid: b.id, name: b.name, text: last == null ? `${b.name} hasn't heard from you since your offer.` : `${b.name} hasn't heard from you in ${plural(gap, "week")}.`, task: `Call ${b.name}.` });
+          out.push({ kind: "Contact", pid: b.id, name: b.name, text: last == null ? `${b.name} hasn't heard from you since your offer.` : `${b.name} hasn't heard from you in ${plural(gap, "week")}.`, task: `Call ${b.name}.`, do: { kind: "call", pid: b.id } });
       }
     }
     for (const b of (board.targets || []).slice(0, 5))
-      if (!b.looks) out.push({ kind: "Scout", pid: b.id, name: b.name, text: `${b.name} is a top target with no scouting report.`, task: `Send a scout to ${b.name}.` });
+      if (!b.looks) out.push({ kind: "Scout", pid: b.id, name: b.name, text: `${b.name} is a top target with no scouting report.`, task: `Send a scout to ${b.name}.`, do: { kind: "scout", pid: b.id } });
     for (const [g, n] of Object.entries(board.needs_detail || {}))
-      if (n.need > 0 && !n.board) out.push({ kind: "Need", text: `You need ${n.need} more at ${g}, and nobody at ${g} is on your board.`, task: `Find ${g} prospects for the board.` });
+      if (n.need > 0 && !n.board) out.push({ kind: "Need", text: `You need ${n.need} more at ${g}, and nobody at ${g} is on your board.`, task: `Find ${g} prospects for the board.`, do: { kind: "need", group: g } });
     if (week >= LATE_WEEK && board.offers_left >= UNUSED_OFFERS)
       out.push({ kind: "Offer", text: `You have ${board.offers_left} offers unused with the season half gone.`, task: "Use more of your offers." });
     return out;
@@ -152,11 +153,13 @@
       const rows = [];
       for (const u of d.depth.units || []) for (const r of u.rows || []) {
         const [a, b] = r.players || [];
-        if (a) rows.push([r.role || r.label, k.player(ctx, a.name, a.position, a.slug), b ? k.player(ctx, b.name, b.position, b.slug) : "Nobody", battleWord(a.overall, b && b.overall)]);
+        if (a) rows.push({ unit: u.label || u.unit || "", pos: r.role || r.label, a, b, word: battleWord(a.overall, b && b.overall) });
       }
       if (!rows.length) return k.empty("No depth chart yet.");
-      const shown = rows.slice(0, ctx.size === "L" ? rows.length : 8);
-      return k.table(["Pos", "Starter", "Challenger", "Status"], shown.map((r) => [r[0], r[1], r[2], el("span", { class: "go-tag", text: r[3] })]));
+      return k.filtered("position-battles", rows, [["unit", "Unit", (r) => r.unit], ["status", "Status", (r) => r.word]], (shown) =>
+        k.table(["Pos", "Starter", "Challenger", "Status"], shown.slice(0, ctx.size === "L" ? shown.length : 8).map((r) => [r.pos,
+          k.player(ctx, r.a.name, r.a.position, r.a.slug), r.b ? k.player(ctx, r.b.name, r.b.position, r.b.slug) : "Nobody", el("span", { class: "go-tag", text: r.word })])),
+        "No battles match these filters.");
     } });
 
   // ----- Scholarship Budget ---------------------------------------------------------------------------------------
@@ -217,7 +220,6 @@
       return el("div", {}, [pick, result]);
     } });
 
-  const impactFilter = { pos: "", role: "", cls: "", outlook: "", rep: "" };   // Player Impact and Retention's filters (this visit)
   // ----- Player Impact and Retention ------------------------------------------------------------------------------
   reg({ id: "senior-impact", title: "Player Impact and Retention", category: "program", blurb: "Your seniors, draft-eligible starters and transfer risks, how likely each is to leave (in the offseason, what really happened), and the recruit who could take his place.",
     sizes: ["M", "L"], size: "M", sources: ["hq"], want: ["outlook"], sample: { hq: { outlook: SAMPLE_OUTLOOK } }, viewAll: "depth",
@@ -234,30 +236,17 @@
       const rep = (p) => (p.replacement
         ? el("span", { class: "hq-rep" }, [k.name(ctx, p.replacement.pid, p.replacement.name), el("span", { class: "go-tag", text: p.replacement.status })])
         : el("span", { class: "hq-sub", text: "Nobody Yet" }));
-      // a filter for each column: position, role, class, outlook and replacement (committed, offered, on board, nobody)
+      // a filter pill for each column: position, role, class, outlook and replacement (committed, offered, on board, nobody)
       const role = (p) => (p.starter ? "Starter" : "Reserve");
       const repWord = (p) => (p.replacement ? p.replacement.status : "Nobody Yet");
       const cols = [["pos", "Pos", (p) => p.position], ["role", "Role", role], ["cls", "Class", (p) => p.class], ["outlook", "Outlook", why], ["rep", "Replacement", repWord]];
-      const f = impactFilter;
-      const box = el("div", { class: "hq-impact-rows" });
-      const paint = () => {
-        const shown = ps.filter((p) => cols.every(([key, , get]) => !f[key] || get(p) === f[key])).slice(0, k.rowsFor(ctx.size));
-        box.replaceChildren(!shown.length ? k.empty("Nobody matches these filters.") : ctx.size === "L"
+      return k.filtered("senior-impact", ps, cols, (shown) => {
+        shown = shown.slice(0, k.rowsFor(ctx.size));
+        return ctx.size === "L"
           ? k.table(["Player", "Pos", "Class", "Role", "Outlook", "Replacement"], shown.map((p) =>
             [k.player(ctx, p.name, p.position, p.slug), p.position, p.class, role(p), el("span", { class: "go-tag", text: why(p) }), rep(p)]))
-          : k.table(["Player", "Pos", "Outlook", "Replacement"], shown.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)])));
-      };
-      const bar = el("div", { class: "hq-filters" }, cols.map(([key, label, get]) => {
-        const vals = [...new Set(ps.map(get))].filter(Boolean).sort();
-        if (f[key] && !vals.includes(f[key])) f[key] = "";
-        const sel = el("select", { class: "hq-input hq-filter", "aria-label": label },
-          [el("option", { value: "", text: `Any ${label}` }), ...vals.map((v) => el("option", { value: v, text: v }))]);
-        sel.value = f[key];
-        on(sel, "change", (e) => { f[key] = e.currentTarget.value; paint(); });
-        return sel;
-      }));
-      paint();
-      return el("div", {}, [bar, box]);
+          : k.table(["Player", "Pos", "Outlook", "Replacement"], shown.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)]));
+      });
     } });
 
   // ----- Roster Loss Projections ---------------------------------------------------------------------------------
@@ -288,11 +277,15 @@
       const tasks = (d.hq.tasks || []).map((t) => ({ ...t }));
       const save = (next) => savePlan(ctx, { tasks: next });
       const rows = tasks.map((t) => {
-        const tick = el("button", { type: "button", class: "go-btn hq-task-done", role: "checkbox", "aria-checked": String(t.done), "aria-label": t.text, text: t.done ? "✓" : "" });
-        on(tick, "click", () => save(tasks.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x))));
+        const tick = el("button", { type: "button", class: `go-btn hq-task-done${t.auto ? " auto" : ""}`, role: "checkbox", "aria-checked": String(t.done), "aria-label": t.text,
+          ...(t.auto ? { title: "Done for You" } : {}), text: t.done ? "✓" : "" });
+        // your own tick: an untick of a task the game ticked for you holds (manual), so it is not ticked again
+        on(tick, "click", () => save(tasks.map((x) => (x.id === t.id ? { ...x, done: !x.done, ...(x.done && x.auto ? { manual: true, auto: false } : {}) } : x))));
         const del = el("button", { type: "button", class: "go-btn hq-task-del", "aria-label": `Delete ${t.text}`, title: "Delete", text: "✕" });
         on(del, "click", () => save(tasks.filter((x) => x.id !== t.id)));
-        return el("li", { class: `hq-task${t.done ? " done" : ""}`, "data-key": t.id }, [tick, el("span", { class: "hq-grow", text: t.text }), del]);
+        // a task that no longer applies keeps its place, with why (the server's note)
+        const body = t.note ? el("span", { class: "hq-grow" }, [el("span", { text: t.text }), el("span", { class: "hq-sub hq-task-note", text: ` ${t.note}` })]) : el("span", { class: "hq-grow", text: t.text });
+        return el("li", { class: `hq-task${t.done ? " done" : ""}${t.note ? " moot" : ""}`, "data-key": t.id }, [tick, body, del]);
       });
       const input = el("input", { type: "text", class: "hq-input hq-task-input", placeholder: "Add a Task", "aria-label": "Add a Task", maxlength: "120" });
       const add = el("button", { type: "button", class: "go-btn", text: "Add" });
@@ -300,10 +293,12 @@
       on(add, "click", addNow);
       on(input, "keydown", (e) => { if (e.key === "Enter") addNow(); });
       const have = new Set(tasks.map((t) => t.text));
-      const ideas = alertsOf(d.board, d.hq.contacts || {}, ctx).map((a) => a.task).filter((t) => t && !have.has(t)).slice(0, 3);
-      const sugg = ideas.map((text) => {
+      const ideas = alertsOf(d.board, d.hq.contacts || {}, ctx).filter((a) => a.task && !have.has(a.task)).slice(0, 3);
+      const week = (ctx.season && ctx.season.current_week) || 0;
+      const sugg = ideas.map(({ task: text, do: what }) => {
         const b = el("button", { type: "button", class: "go-btn hq-task-add-suggest", text: "Add" });
-        on(b, "click", () => save([...tasks, { id: nextTaskId(tasks), text, done: false }]));
+        // a suggestion carries what it asks (`do`): the task ticks itself done once you do it (headquarters.tasks)
+        on(b, "click", () => save([...tasks, { id: nextTaskId(tasks), text, done: false, ...(what ? { do: what, since: week } : {}) }]));
         return el("li", { class: "hq-task-suggest", "data-key": `s-${text}` }, [el("span", { class: "go-tag", text: "Suggested" }), el("span", { class: "hq-grow", text }), b]);
       });
       return el("div", {}, [
