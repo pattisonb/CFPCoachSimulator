@@ -2418,7 +2418,7 @@ def flip_weekly(state: dict, pid: str, gap: float, firmness: Optional[float] = N
         firmness = st.get("firmness") or FIRM_START
     if firmness >= HARD_AT:
         return 0.0
-    return min(1.0, 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100 * persona.decommit_mult(state, pid))   # a chance, never over 1 (a draw against it moves the same)
+    return 2 * DECOMMIT_RATE * _logistic(gap / FLIP_MARGIN) * (100 - firmness) / 100 * persona.decommit_mult(state, pid)
 
 
 def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float:
@@ -2432,7 +2432,7 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     for _ in range(max(0, weeks_left)):
         if f >= HARD_AT:
             break
-        keep *= 1 - flip_weekly(state, pid, gap, f)
+        keep *= 1 - min(1.0, flip_weekly(state, pid, gap, f))   # as a chance: a big rival lead never takes it over 1 (the odds stay non-negative)
         f = min(100, f + FIRM_TOUCH + FIRM_NIL)
     return 1 - keep
 

@@ -46,8 +46,13 @@ def run(base, st, qb, bench, row, chips, browser) -> None:
         page.click(".modal:not([hidden]) .modal-close")
         # the depth chart's list: the chip beside his name
         open_tab(page, base, sid, "depth", ".dc-card")
-        found = page.evaluate("() => [...document.querySelectorAll('.dc-promise')].map(e => e.textContent.trim())")
-        assert "On Track" in found, found                   # the field shows the starters: the promised QB's chip (the bench player's is on his page above)
+        # the field shows the starters: each promised player on it carries his chip (the promised starter may be hurt by now;
+        # the bench player's chip is on his page above)
+        shown = page.evaluate("() => Object.fromEntries([...document.querySelectorAll('.dc-card')].filter(c => c.querySelector('.dc-promise')).map(c => [c.dataset.slug, c.querySelector('.dc-promise').textContent.trim()]))")
+        on_field = page.evaluate("(s) => !!document.querySelector(`.dc-card[data-slug='${s}']`)", qb)
+        if on_field:
+            assert shown.get(qb) == chips[qb], (shown, chips)
+        assert all(v in ("On Track", "Slipping", "Broken") for v in shown.values()) and (shown or not on_field), shown
         # the Office: his line in Program News
         page.goto(f"{base}/index.html?id={sid}&tab=office")
         page.wait_for_selector(".ofc-news .ofc-feed", timeout=120_000)
