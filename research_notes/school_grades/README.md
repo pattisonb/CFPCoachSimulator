@@ -44,7 +44,7 @@ These facts come from the game's own data, not this research:
 | Fact | Coverage |
 |---|---|
 | GSR, APR, capacity, metro, coaches | 136 found |
-| U.S. News rank | 133 found (7 unranked, 4 marked estimates) |
+| U.S. News rank | 133 (7 of them unranked); 3 missing, read at the conference median (4 estimates in all) |
 | Stadium renovated | 133 found (3 estimated) |
 | January temperature | 136 (4 estimated from the nearest station) |
 | Football building year | 94 found; 42 left at their conference's median (59 estimates in all, counting the researchers' own) |
