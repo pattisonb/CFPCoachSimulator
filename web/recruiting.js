@@ -1837,22 +1837,56 @@
         const count = el("span", { class: "go-present-count muted small", role: "status", text: `0 of ${MAX_PRESENT}` });
         const go = el("button", { type: "button", class: "go-btn primary go-present", text: "Present", title: `Pick ${MAX_PRESENT} things first` });
         go.disabled = true;
-        const chips = el("div", { class: "go-row wrap go-present-chips", role: "group", "aria-label": "Three things about your program" });
+        // your pitch (the player's ask): one pill opens every topic as a chip (its case in a word); pick up to three, each
+        // shown below with an x before you Present; the third pick closes the menu
+        const pickCount = el("b", { class: "go-opening-count", text: `0 of ${MAX_PRESENT}` });
+        const pick = el("button", { type: "button", class: "go-opening-pick", "aria-haspopup": "true", "aria-expanded": "false" },
+          [el("span", { text: "Your Pitch" }), pickCount, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
+        const chips = el("div", { class: "go-opening-menu go-present-chips", role: "group", "aria-label": "Three things about your program", hidden: "" });
+        const shown = el("div", { class: "go-row wrap go-opening-picked", "aria-live": "polite" });
+        const opener = el("div", { class: "go-opening-drop" }, [pick, chips]);
+        const outside = (e) => { if (!opener.contains(e.target)) closeMenu(); };
+        function closeMenu() {
+          if (chips.hidden) return;
+          chips.hidden = true;
+          pick.setAttribute("aria-expanded", "false");
+          document.removeEventListener("click", outside, true);
+        }
+        function openMenu() {
+          chips.hidden = false;
+          pick.setAttribute("aria-expanded", "true");
+          document.addEventListener("click", outside, true);
+          const first = chips.querySelector('.go-present-chip[aria-pressed="false"]') || chips.querySelector(".go-present-chip");
+          if (first) first.focus({ preventScroll: true });
+        }
+        ui().on(pick, "click", () => (chips.hidden ? openMenu() : closeMenu()));
+        ui().on(opener, "keydown", (e) => { if (e.key === "Escape" && !chips.hidden) { e.stopPropagation(); closeMenu(); pick.focus({ preventScroll: true }); } });
+        const byTopic = {};
+        const sync = () => {
+          for (const [t, chip] of Object.entries(byTopic)) { chip.classList.toggle("on", picked.has(t)); chip.setAttribute("aria-pressed", String(picked.has(t))); }
+          count.textContent = pickCount.textContent = `${picked.size} of ${MAX_PRESENT}`;
+          go.disabled = picked.size !== MAX_PRESENT;
+          go.title = go.disabled ? `Pick ${MAX_PRESENT} things first` : "Tell him what your program is about, then ask him what he is looking for";
+          shown.replaceChildren(...[...picked].map((t) => {
+            const x = el("button", { type: "button", class: "go-picked-x", "aria-label": `Drop ${PITCH_NAMES[t]}`, text: "×" });
+            ui().on(x, "click", () => { picked.delete(t); sync(); });
+            const tag = byTopic[t].querySelector(".go-tag");
+            return el("span", { class: "go-chip on go-picked", "data-topic": t }, [el("b", { text: PITCH_NAMES[t] }), tag ? tag.cloneNode(true) : null, x]);
+          }));
+        };
         for (const t of Object.keys(PITCH_NAMES)) {
           const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
           const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
           const chip = el("button", { type: "button", class: "go-chip go-present-chip", "data-topic": t, "aria-pressed": "false",
             title: word ? `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` : "" },
             [el("b", { text: PITCH_NAMES[t] }), word ? el("span", { class: `go-tag ${tone}`, text: word }) : null]);
+          byTopic[t] = chip;
           chip.addEventListener("click", () => {
             if (picked.has(t)) picked.delete(t);
             else if (picked.size >= MAX_PRESENT) { H.toast(`Three things. Drop one first.`, 3000); return; }
             else picked.add(t);
-            chip.classList.toggle("on", picked.has(t));
-            chip.setAttribute("aria-pressed", String(picked.has(t)));
-            count.textContent = `${picked.size} of ${MAX_PRESENT}`;
-            go.disabled = picked.size !== MAX_PRESENT;
-            go.title = go.disabled ? `Pick ${MAX_PRESENT} things first` : "Tell him what your program is about, then ask him what he is looking for";
+            sync();
+            if (picked.size === MAX_PRESENT) { closeMenu(); go.focus({ preventScroll: true }); }
           });
           chips.append(chip);
         }
@@ -1865,6 +1899,7 @@
           Object.assign(scene, r.scene);               // the same scene object: the board row and the view share it
           chosen = scene.cue.topics[0] || "";
           // the opening leaves, the new turns come in, then his question and the lead-with: all in place
+          closeMenu();
           await ui().fadeOut(wrap);
           const added = addTurns(true);
           drawFinish(true);
@@ -1873,7 +1908,7 @@
         });
         wrap.append(el("div", { class: "go-kicker muted", text: "Your Opening" }),
           el("p", { class: "muted small", text: "Three things you lead your program with. Then you ask him what he is looking for." }),
-          chips,
+          opener, shown,
           el("div", { class: "go-row wrap go-scene-acts" }, [go, count, el("button", { type: "button", class: "go-link go-hangup", text: "Hang Up", onclick: hangUp })]),
           el("p", { class: "muted small", text: HANG_HINT }));
         tail.append(wrap);

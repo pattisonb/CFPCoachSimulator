@@ -1138,7 +1138,7 @@ def close_done(page) -> None:
 def present_three(page, pane: str = ".modal-scene") -> None:
     """A call or visit just opened: the conversation shows your opener and his answer; pick three things and Present,
     which brings his cue in place (the cue and his question follow your opening)."""
-    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-present-chip", timeout=30_000)
+    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-opening-pick", timeout=30_000)
     if page.query_selector(f"{pane} .go-scene .go-scene-line.cue"):
         return
     assert page.eval_on_selector(f"{pane} .go-scene .go-opening .go-present", "e => e.disabled"), "Present waits for three"
@@ -1195,13 +1195,30 @@ def test_conversation(page, base) -> None:
         assert you_right, "your bubble sits right, his left"
         assert not page.query_selector(".modal-scene .go-scene .go-scene-line.cue"), "the cue waits on your opening"
         assert "YOUR OPENING" in page.inner_text(".modal-scene .go-scene") and "WHAT YOU LEAD WITH" not in page.inner_text(".modal-scene .go-scene")
-        chips = page.query_selector_all(".modal-scene .go-scene .go-present-chip")
-        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
-        for c in chips[:3]:
-            c.click()
+        # your pitch is one pill that opens every topic as a chip; up to three, each shown below before Present
+        M = ".modal-scene .go-scene"
+        assert page.is_hidden(f"{M} .go-opening-menu") and "0 of 3" in page.inner_text(f"{M} .go-opening-pick"), "the topics sit closed in one pill"
+        page.click(f"{M} .go-opening-pick")
+        chips = page.query_selector_all(f"{M} .go-opening-menu .go-present-chip")
+        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
+        chips[0].click(); chips[1].click()
+        assert page.is_visible(f"{M} .go-opening-menu"), "the menu stays open while you pick"
+        picked = lambda: page.eval_on_selector_all(f"{M} .go-opening-picked .go-picked", "els => els.map(e => e.dataset.topic)")
+        assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present")
+        chips[2].click()
+        assert page.is_hidden(f"{M} .go-opening-menu"), "the third pick closes the menu"
+        assert len(picked()) == 3 and not page.is_disabled(f"{M} .go-present") and "3 of 3" in page.inner_text(f"{M} .go-opening-pick")
+        page.click(f"{M} .go-opening-pick")
         chips[3].click()
         toasted(page, "Three things. Drop one first.")
-        assert chips[3].get_attribute("aria-pressed") == "false" and page.inner_text(".modal-scene .go-present-count").strip() == "3 of 3"
+        page.keyboard.press("Escape")
+        assert page.is_hidden(f"{M} .go-opening-menu") and chips[3].get_attribute("aria-pressed") == "false"
+        gone = picked()[0]
+        page.click(f"{M} .go-opening-picked .go-picked[data-topic={gone}] .go-picked-x")
+        assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present"), "an x drops a pick"
+        page.click(f"{M} .go-opening-pick")
+        page.click(f"{M} .go-opening-menu .go-present-chip[data-topic={gone}]")
+        assert len(picked()) == 3 and page.inner_text(".modal-scene .go-present-count").strip() == "3 of 3"
         h = watch(page, ".modal-scene .go-scene", ".modal-scene .go-present", scrolled=False)
         page.click(".modal-scene .go-present")
         page.wait_for_selector(".modal-scene .go-scene .go-scene-line.cue", timeout=30_000)
