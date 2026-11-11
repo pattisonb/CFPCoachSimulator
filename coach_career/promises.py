@@ -21,8 +21,14 @@ CHIPS = {"kept": "On Track", "bent": "Slipping", "broken": "Broken"}
 
 
 def record(state: dict) -> dict:
-    """The season-by-season record: str(year) -> slug -> [{"week", "started", "injured", "big"}]."""
+    """The season-by-season record: str(year) -> slug -> [{"week", "started", "injured", "big"}]. Creates it: only the
+    weekly snapshot writes (the reads use `_seen`)."""
     return state.setdefault("promises", {})
+
+
+def _seen(state: dict) -> dict:
+    """The record, read only (a view must not write an empty one into the save)."""
+    return state.get("promises") or {}
 
 
 def _group(position: str) -> str:
@@ -171,7 +177,7 @@ def nil_mult(personality: str) -> float:
 def bands(state: dict, year: int) -> dict[str, dict]:
     """Your players promised for `year` who have a weekly record: slug -> {band, score, benched_big, personality}. A
     promised player with no record (a save from before) is left out: the old all-or-nothing rule reads him."""
-    rec = record(state).get(str(year)) or {}
+    rec = _seen(state).get(str(year)) or {}
     me = state.get("team")
     rows = {c["id"]: c for c in (((state.get("league") or {}).get("teams") or {}).get(me) or {}).get("roster") or ()}
     out = {}
@@ -194,7 +200,7 @@ NEWS_AFTER = 2             # *tune* weeks that count before a slipping promise i
 def chips_now(state: dict) -> dict[str, str]:
     """This season's promised players by slug: the chip for the record so far (On Track, Slipping, Broken)."""
     from sim import season
-    rec = record(state).get(str(season.season_year(state))) or {}
+    rec = _seen(state).get(str(season.season_year(state))) or {}
     out = {}
     for slug, c in promised_now(state).items():
         kind = personality_of(state, slug)
@@ -208,7 +214,7 @@ def news(state: dict) -> list[dict]:
     """One Program News item per promised player: the first week (NEWS_AFTER weeks counted or more) his promise read
     Slipping or Broken, in his words."""
     from sim import season
-    rec = record(state).get(str(season.season_year(state))) or {}
+    rec = _seen(state).get(str(season.season_year(state))) or {}
     items = []
     for slug, c in promised_now(state).items():
         kind = personality_of(state, slug)

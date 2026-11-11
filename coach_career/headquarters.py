@@ -302,8 +302,75 @@ def goals(state: dict) -> list:
     return out
 
 
+KINDS = ("nil", "call", "raise", "wait", "leave", "scout", "pull", "need")   # what a suggested task asks (docs/superpowers/plans/2026-11-11-auto-tasks.md)
+
+
+def _clock(state: dict) -> tuple[int, int]:
+    """(season week, portal week): in the portal the season's week stands still and the portal's own week moves."""
+    rc = state.get("recruiting") or {}
+    return (state.get("current_week") or 0, (rc.get("week") or 0) if rc.get("portal") else 0)
+
+
+def _task_check(state: dict, t: dict) -> tuple[bool, Optional[str]]:
+    """(done, note) for a task added from a suggestion: done once you did what it asks since it was added; a note
+    (not done, kept) when it no longer applies: the recruit committed or signed elsewhere."""
+    from sim import season
+    rc, me = state["recruiting"], state["team"]
+    do = t["do"]
+    since = (t.get("since") or 0, t.get("since_p") or 0)   # (season week, portal week): the season's week stands still in the portal
+    now = _clock(state)
+    kind, pid = do["kind"], do.get("pid")
+    if kind == "need":
+        g = do.get("group")
+        return any(recruiting._group_of(rc["prospects"][q]) == g for q in rc.get("board") or () if q in rc["prospects"]), None
+    p, st_ = rc["prospects"].get(pid), rc["status"].get(pid)
+    if p is None or st_ is None:
+        return False, None
+    # what you did after you added it: the log from its length then (`since_n`; a new recruiting block starts a new log),
+    # else from the week you added it
+    full, start = rc.get("log") or [], t.get("since_n")
+    at = lambda e: ((e.get("week") or 0), (e.get("portal_week") or 0))
+    after = full[start:] if isinstance(start, int) and start <= len(full) else [e for e in full if at(e) >= since]
+    log = [e for e in after if e.get("pid") == pid and e.get("school") == me]
+    contacted = [e for e in log if e["kind"] in ("contact", "pitch", "offer", "raise_nil") and e.get("action") != "scout"]   # a scout trip is no contact with him
+    elsewhere = next((s for s in (st_.get("signed"), st_.get("committed")) if s and s != me), None)
+    if kind == "pull":
+        return pid not in rc["offers"].get(me, []), None
+    if elsewhere:
+        name = "an FCS program" if elsewhere == "FCS" else season.team_display(elsewhere, season.load_teams()) if elsewhere in season.load_teams() else elsewhere
+        verb = "signed with" if st_.get("signed") else "committed to"
+        return False, f"No longer needed: he {verb} {name}."
+    if kind == "nil":
+        return ((rc["nil"].get(me) or {}).get("held", {}).get(pid, 0)) >= int(do.get("nil") or 0), None
+    if kind == "call":
+        return any(e["kind"] == "contact" and e.get("action") in ("call", "hc_visit") for e in log), None
+    if kind == "scout":
+        return any(e["kind"] == "contact" and e.get("action") == "scout" for e in log), None
+    if kind == "raise":
+        return any(e["kind"] in ("offer", "raise_nil") for e in log) or not recruiting.cooled(state, me, pid), None
+    if kind == "wait":
+        return now > since, None
+    if kind == "leave":
+        return now > since and not contacted, None
+    return False, None
+
+
 def tasks(state: dict) -> list:
-    return [dict(t) for t in _hq(state).get("tasks") or []]
+    """Your tasks. One added from a suggestion (`do`) ticks itself done (`auto`) once you did it, unless you unticked it
+    yourself (`manual`); one that no longer applies keeps its place with a `note`. A task never leaves the list here."""
+    out = []
+    for t in _hq(state).get("tasks") or []:
+        if t.get("do") and not t.get("done") and not t.get("manual") and state.get("recruiting"):
+            done, note = _task_check(state, t)
+            if done:
+                t["done"], t["auto"] = True, True
+                t.pop("note", None)
+            elif note:
+                t["note"] = note
+            else:
+                t.pop("note", None)                      # live again (he decommitted): the note goes
+        out.append(dict(t))
+    return out
 
 
 def set_plan(state: dict, body: dict) -> dict:
@@ -316,6 +383,7 @@ def set_plan(state: dict, body: dict) -> dict:
         if not isinstance(ts, list) or len(ts) > MAX_TASKS:
             raise LayoutError(f"Tasks are a list of at most {MAX_TASKS}.")
         seen, new_tasks = set(), []
+        old = {o.get("id"): o for o in _hq(state).get("tasks") or []}
         for t in ts:
             if not isinstance(t, dict) or not (isinstance(t.get("id"), str) and _ID.match(t["id"])) or t["id"] in seen:
                 raise LayoutError("Each task needs its own short lowercase id.")
@@ -324,8 +392,40 @@ def set_plan(state: dict, body: dict) -> dict:
                 raise LayoutError(f"A task's text is 1 to {TASK_TEXT} characters.")
             if not isinstance(t.get("done"), bool):
                 raise LayoutError("A task is done or not.")
+            row = {"id": t["id"], "text": text.strip(), "done": t["done"]}
+            do = t.get("do")
+            if do is not None:
+                if not isinstance(do, dict) or do.get("kind") not in KINDS:
+                    raise LayoutError("A suggested task asks for one of the known things.")
+                if do["kind"] == "need":
+                    if not isinstance(do.get("group"), str) or len(do["group"]) > 20:
+                        raise LayoutError("A position need names its group.")
+                elif not isinstance(do.get("pid"), str) or not do["pid"] or len(do["pid"]) > 80:
+                    raise LayoutError("A suggested task names its recruit.")
+                if "nil" in do and (isinstance(do["nil"], bool) or not isinstance(do["nil"], int) or not 0 <= do["nil"] <= 1000):
+                    raise LayoutError("A NIL amount is a whole number from 0 to 1000.")
+                row["do"] = {k: do[k] for k in ("kind", "pid", "nil", "group") if k in do}
+                since = t.get("since", 0)
+                if isinstance(since, bool) or not isinstance(since, int):
+                    raise LayoutError("A task's week is a whole number.")
+                was = old.get(t["id"]) or {}
+                if was.get("do"):                        # when it was added is the server's, kept from the first save
+                    row.update({k: was[k] for k in ("since", "since_p", "since_n") if k in was})
+                    row.setdefault("since", since)
+                else:
+                    row["since"], row["since_p"] = _clock(state)
+                    row["since_n"] = len((state.get("recruiting") or {}).get("log") or [])
+            for k in ("auto", "manual"):
+                if t.get(k) is True:
+                    row[k] = True
+            if isinstance(t.get("note"), str) and len(t["note"]) > TASK_TEXT:
+                raise LayoutError(f"A task's note is at most {TASK_TEXT} characters.")
+            if row.get("do") and (old.get(t["id"]) or {}).get("note"):
+                row["note"] = old[t["id"]]["note"]       # the note is the server's (tasks() sets and clears it), not the page's
+            if row["done"] is False:
+                row.pop("auto", None)
             seen.add(t["id"])
-            new_tasks.append({"id": t["id"], "text": text.strip(), "done": t["done"]})
+            new_tasks.append(row)
     if "goals" in body:
         gs = body["goals"]
         if not isinstance(gs, dict) or any(k not in GOAL_IDS for k in gs):

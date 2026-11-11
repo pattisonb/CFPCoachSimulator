@@ -1597,7 +1597,10 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 /* the Recruiting and Scouting tabs (and Headquarters, hq.css): thinner bars, the room goes to the content; a bar
    holding a full-size control stays as tall as the control */
 :is(#tab-recruiting, #tab-scouting) { --card-bar-h: 30px; }
-:is(#tab-recruiting, #tab-scouting) .card-bar { padding-top: 1px; padding-bottom: 1px; }   /* *tune* the cards' padding, the bar's height, the room between a bar and its body */
+:is(#tab-recruiting, #tab-scouting) .card-bar { padding-top: 3px; padding-bottom: 3px; }   /* *tune* the cards' padding, the bar's height, the room between a bar and its body */
+/* ... and a chip in those bars keeps its own height (no negative margin): one row stays as slim, and a chip that wraps to
+   its own line (a narrow column, a phone) keeps the bar's padding under it instead of running past the edge */
+:is(#tab-recruiting, #tab-scouting) .card-bar :is(.go-tag, .go-pill, .ofc-chip, .sc-count, .go-badge, .pv-tag) { margin-block: 0; }
 @media (max-width: 720px) { :root { --card-pad: 14px; } }
 button, input, select, textarea { }
 .team-pill.big, .team-pill.xl, .ofc-pill-l, .ofc-pill-m, .review-big .team-pill, .champ-banner .team-pill, .off-hero-mark .team-pill { }
