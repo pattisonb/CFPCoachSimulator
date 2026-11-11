@@ -15,6 +15,13 @@
                         facilities: "Facilities", location: "Location", stability: "Stability", game_day: "Game Day", exposure: "Exposure" };
   const GROUP_NAMES = { athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ",
                         potential: "Potential", coachability: "Coachability" };
+  // the Prospects table's sorts (prospects._sort_key): a column header's key, and the Sort menu's words
+  const PR_SORT_OPTS = [["rank", "National Rank"], ["interest", "Interest in You"], ["name", "Name"], ["pos", "Position"], ["ht", "Height"], ["wt", "Weight"],
+    ["stars", "Stars"], ["status", "Status"], ["sc", "Scouted"], ["pot", "Potential"]];
+  const PR_SORTS = new Set(PR_SORT_OPTS.map(([v]) => v));
+  const SORT_WORD = Object.fromEntries(PR_SORT_OPTS);
+  const DESC_FIRST = new Set(["interest", "ht", "wt", "stars", "sc", "pot"]);   // their first click shows the most first (values descending)
+  const HEAD_SORT = { rank: "rank", who: "name", pos: "pos", ht: "ht", wt: "wt", stars: "stars", status: "status", int: "interest", sc: "sc", pot: "pot" };
   const STATUS = [["", "Any Status"], ["interested", "Interested in You"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
                   ["offered", "Offered by You"], ["board", "On Your Board"]];
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
@@ -872,7 +879,7 @@
     f.stars = ["5", "4", "3", "2"].includes(r.pstars) ? r.pstars : "";
     f.state = STATES.includes(r.pstate) ? r.pstate : "";
     f.status = r.pstatus === "recommended" || STATUS.some(([k]) => k && k === r.pstatus) ? r.pstatus : "";
-    f.sort = r.psort === "interest" ? "interest" : "rank";
+    f.sort = PR_SORTS.has(String(r.psort || "").replace(/^-/, "")) ? r.psort : "rank";
     f.group = /^[A-Z]{1,4}$/.test(r.pgroup || "") ? r.pgroup : "";
     const pg = Number(r.ppage);
     view.offset = Number.isInteger(pg) && pg > 1 ? (pg - 1) * 50 : 0;
@@ -2127,22 +2134,43 @@
       mk("stars", [["", "Any Stars"], ["5", "5 Stars"], ["4", "4 Stars"], ["3", "3 Stars"], ["2", "2 Stars"]], "Stars"),
       mk("state", [["", "Any State"], ...STATES.map((c) => [c, c])], "Home state"),
       mk("status", STATUS, "Status"),
-      mk("sort", [["rank", "Sort: National Rank"], ["interest", "Sort: Interest in You"]], "Sort")]);
+      mk("sort", PR_SORT_OPTS.map(([v, t]) => [v, `Sort: ${t}`]), "Sort")]);
     // the filters' look follows the view (a chip, a state tapped on the map, View All): no redraw
     function syncFilters(withSearch) {
       const rec = f.status === "recommended";
       recBtn.classList.toggle("on", rec);
       recBtn.setAttribute("aria-pressed", String(rec));
-      for (const [k, sel] of Object.entries(sels)) { const want = k === "status" && rec ? "" : f[k]; if (sel.value !== want) sel.value = want; }
+      for (const [k, sel] of Object.entries(sels)) { const want = k === "status" && rec ? "" : k === "sort" ? f.sort.replace(/^-/, "") : f[k]; if (sel.value !== want) sel.value = want; }
+      syncSortHeads();
       if (withSearch && q.value !== f.q) q.value = f.q;      // only View All clears the search box; a pending search is folded in by load()
     }
-    syncFilters();
     const listHead = el("div", { class: "go-row wrap go-list-head pr-list-head" });
     const HEADS = [["rank", "#"], ["who", "Prospect"], ["pos", "Pos"], ["ht", "Ht"], ["wt", "Wt"], ["stars", inPortal ? "Class" : "Stars"],
       ["status", "Status"], ["int", "Interest in You"], ["sc", "Scouted"], ["pot", "Potential"], ["act", "Board"]];
-    const starsHead = el("th", { scope: "col", class: "pr-c-stars", text: inPortal ? "Class" : "Stars" });
-    const thead = el("thead", {}, [el("tr", {}, HEADS.map(([k, t]) => (k === "stars" ? starsHead
-      : el("th", { scope: "col", class: `pr-c-${k}`, text: t, ...(k === "act" ? { "aria-label": "Your Board" } : {}) }))))]);
+    // a column's header sorts by it (the player's ask); again, the other way. The Sort menu follows.
+    const sortHead = (k, t) => {
+      const key = HEAD_SORT[k];
+      if (!key) return el("th", { scope: "col", class: `pr-c-${k}`, text: t, ...(k === "act" ? { "aria-label": "Your Board" } : {}) });
+      const btn = el("button", { type: "button", class: "pr-sort", "data-sort": key, title: `Sort by ${SORT_WORD[key].toLowerCase()}` },
+        [el("span", { text: t }), el("span", { class: "pr-sort-mark", "aria-hidden": "true" })]);
+      btn.addEventListener("click", () => {
+        f.sort = f.sort === key ? `-${key}` : key;
+        view.offset = 0; syncFilters(); load();
+      });
+      return el("th", { scope: "col", class: `pr-c-${k}`, "data-sort": key }, [btn]);
+    };
+    const starsHead = sortHead("stars", inPortal ? "Class" : "Stars");
+    const thead = el("thead", {}, [el("tr", {}, HEADS.map(([k, t]) => (k === "stars" ? starsHead : sortHead(k, t))))]);
+    function syncSortHeads() {
+      const base = f.sort.replace(/^-/, ""), down = DESC_FIRST.has(base) !== f.sort.startsWith("-");
+      for (const th of thead.querySelectorAll("th[data-sort]")) {
+        const on = th.dataset.sort === base;
+        th.setAttribute("aria-sort", on ? (down ? "descending" : "ascending") : "none");
+        th.querySelector(".pr-sort-mark").textContent = on ? (down ? "▼" : "▲") : "";
+        th.classList.toggle("on", on);
+      }
+    }
+    syncFilters();
     const tbody = el("tbody", { class: "rc-list" });
     const table = el("table", { class: "pr-table" }, [thead, tbody]);
     const tableWrap = el("div", { class: "pr-table-wrap" }, [table]);

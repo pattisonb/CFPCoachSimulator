@@ -142,7 +142,7 @@ def check_filters(page, base, sid, errors) -> None:
 
 
 def check_table(page, base, sid, errors) -> None:
-    heads = page.eval_on_selector_all("#tab-prospects .pr-table thead th", "els => els.map(e => e.textContent)")
+    heads = page.eval_on_selector_all("#tab-prospects .pr-table thead th", "els => els.map(e => e.textContent.replace(/[▲▼]/g, ''))")   # the sort mark aside
     assert heads == ["#", "Prospect", "Pos", "Ht", "Wt", "Stars", "Status", "Interest in You", "Scouted", "Potential", "Board"], heads
     rows = api(base, sid)["rows"]
     cells = page.eval_on_selector_all(ROWS, """els => els.map(e => ({id: e.dataset.key, rank: e.querySelector('.pr-c-rank').textContent,
