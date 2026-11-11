@@ -12,6 +12,7 @@ from coach_career import offseason
 from coach_career import persona
 from coach_career import recruiting
 from coach_career import scenes
+from coach_career import word
 from sim import season
 from tests.test_offseason import finished
 
@@ -221,9 +222,10 @@ if __name__ == "__main__":
         assert sc4["question"]["kind"] == "roster" and sc4["question"]["about"]["cls"] in recruiting.LAST_YEAR
         assert recruiting.promise_holds(st, ME, pid4, sc4["question"])
         r = answer(sid, pid4, sc4, "promise")
-        assert r["points"] == recruiting.ANSWER_PROMISE and r["truthful"] is True
+        worth = recruiting.ANSWER_PROMISE * word.promise_mult(st, pid4, recruiting._group_of(rc["prospects"][pid4]))   # Keeps His Word scales it
+        assert abs(r["points"] - worth) < 1e-9 and r["truthful"] is True
         assert r["scene"]["question"]["reply"] == "That's what I needed to hear, Coach." == scenes.REPLY_LINES["promise"]
-        assert abs(recruiting.pending(st, ME, pid4) - recruiting.ANSWER_PROMISE) < 1e-9
+        assert abs(recruiting.pending(st, ME, pid4) - worth) < 1e-9
         c4 = rc["contacts"][pid4][ME]
         assert "cooled_until" not in c4 and c4["promises"][0]["kind"] == "roster" and c4["promises"][0]["broken"] is None
         assert not events(st, pid4, "not_buying")
@@ -261,7 +263,7 @@ if __name__ == "__main__":
             assert q7["text"] in [line.format(other=rc["prospects"][top]["name"]) for line in scenes.QUESTION_LINES["recruit"]]
             r = answer(sid, pid7, sc7, "promise")
             truthful = rc["prospects"][pid7]["ovr"] >= rc["prospects"][top]["ovr"]
-            assert r["truthful"] is truthful and r["points"] == (recruiting.ANSWER_PROMISE if truthful else -recruiting.ANSWER_HOLLOW)
+            assert r["truthful"] is truthful and abs(r["points"] - (recruiting.ANSWER_PROMISE * word.promise_mult(st, pid7, recruiting._group_of(rc["prospects"][pid7])) if truthful else -recruiting.ANSWER_HOLLOW)) < 1e-9
             assert rc["contacts"][pid7][ME]["promises"][0]["kind"] == "recruit"
             # he commits to you, then the other kid does too: he remembers, once
             recruiting._commit(st, pid7, ME)

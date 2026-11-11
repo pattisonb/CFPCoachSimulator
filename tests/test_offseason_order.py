@@ -74,7 +74,7 @@ def order_and_draft() -> None:
     # keep one early entrant (forced: the odds are tested in test_retention) and let the rest go
     keep = entrants[-1]["id"]
     real = offseason.stay_chance
-    offseason.stay_chance = lambda e: 1.0 if e["id"] == keep else 0.0
+    offseason.stay_chance = lambda e, state=None: 1.0 if e["id"] == keep else 0.0
     try:
         offseason.advance(st)
     finally:

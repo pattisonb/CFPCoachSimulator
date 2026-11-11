@@ -134,6 +134,8 @@
   .ofc-feed .go-link { min-height: 0; }
 }
 
+/* Keeps His Word (coach_career/word.py): the word as the bar's chip, the weakest position, the latest lines */
+.ofc-word-weak { margin: 0; font-weight: 700; }
 /* the hero after Game Day: this week's final between the two teams */
 .ofc-final { display: inline-flex; align-items: center; gap: 10px; font-size: 32px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .ofc-final .go-result { font-size: 14px; }

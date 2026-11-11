@@ -1446,8 +1446,10 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     A Package Deal's question ("package", about his mate): straight earns ANSWER_STRAIGHT plus
     PACKAGE_OFFERED when his mate already holds your offer and nothing otherwise (you will look at
     him); a promise earns nothing now and waits on the offer (`_promises`: kept within
-    PACKAGE_PROMISE_WEEKS for PACKAGE_KEPT, broken after)."""
-    from coach_career import scenes
+    PACKAGE_PROMISE_WEEKS for PACKAGE_KEPT, broken after). Your promise is worth ANSWER_PROMISE times Keeps His Word's
+    promise_mult; under its floor he doesn't believe you: nothing, and his line names the last promise you broke at his
+    position."""
+    from coach_career import scenes, word
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1466,7 +1468,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         raise RecruitingError(409, "you already answered")
     contact = _contact(state, slug, pid)
     week = state["current_week"]
-    points, truthful, revealed = 0.0, None, []
+    points, truthful, revealed, doubted = 0.0, None, [], False
     package = q.get("kind") == "package"
     if package:
         offered = q["about"]["pid"] in rc["offers"].get(slug, [])
@@ -1483,8 +1485,11 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
             revealed.append("playing_time")
     elif answer == "promise":
         truthful = promise_holds(state, slug, pid, q)
-        if truthful:
-            points = ANSWER_PROMISE
+        group = _group_of(p)
+        if truthful and slug == state.get("team") and not word.believes(state, group):   # Keeps His Word under the floor: he doesn't believe you
+            doubted = True
+        elif truthful:
+            points = ANSWER_PROMISE * (word.promise_mult(state, pid, group) if slug == state.get("team") else 1.0)
         else:
             points = -ANSWER_HOLLOW * persona.hollow_mult(state, pid, slug)
             contact["cooled_until"] = week + 1
@@ -1492,9 +1497,14 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
             _event(state, "not_buying", pid, slug, topic="playing_time")
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
     q["answer"] = answer
-    q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
+    if doubted:
+        name = word.last_broken(state, _group_of(p))
+        q["reply"] = scenes.WORD_DOUBT.format(name=name) if name else scenes.WORD_DOUBT_ANY
+    else:
+        q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
     _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful,
-           **({"question": "package", "offered": bool(q["about"].get("offered"))} if package else {}))
+           **({"question": "package", "offered": bool(q["about"].get("offered"))} if package else {}),
+           **({"doubted": True} if doubted else {}))
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
@@ -2386,7 +2396,7 @@ def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: in
     it breaks only if you kept after him without an offer, or your offer came up short. The share reads his ask now when
     it fell since the pitch. At a small school (MONEY_FORGIVE_TIER) he may let it go (MONEY_FORGIVE_CHANCE by his
     personality, its own seeded draw); otherwise his line says whether nothing or too little reached the offer."""
-    from coach_career import scenes
+    from coach_career import scenes, word
     rc = state["recruiting"]
     st_ = rc["status"][pid]
     offered = pid in rc["offers"].get(slug, [])
@@ -2401,6 +2411,7 @@ def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: in
         pr["kept"] = week
         rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
         _event(state, "promise_kept", pid, slug, why="money", line=scenes.MONEY_KEPT_LINE)
+        word.recruit_event(state, slug, pid, "money_kept")
         return
     if week - pr["week"] < NIL_PROMISE_WEEKS:
         return
@@ -2422,6 +2433,7 @@ def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: in
         c["cooled_until"] = week + COOL_WEEKS
         persona.set_cooled_why(state, slug, pid, "promise")
     _event(state, "promise_broken", pid, slug, why="money", line=line)
+    word.recruit_event(state, slug, pid, "money_broken")
 
 
 def _promises(state: dict, week: int) -> None:
@@ -2433,7 +2445,7 @@ def _promises(state: dict, week: int) -> None:
     holds the school's offer, within PACKAGE_PROMISE_WEEKS of the promise (PACKAGE_KEPT points land
     on his list, a promise_kept event with his line), and broken the same way as above once that
     many weeks pass without it."""
-    from coach_career import scenes
+    from coach_career import scenes, word
     rc = state["recruiting"]
     for pid, by in rc["contacts"].items():
         for slug, c in by.items():
@@ -2455,6 +2467,7 @@ def _promises(state: dict, week: int) -> None:
                         rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
                         _event(state, "promise_kept", pid, slug, about=pr["about"]["name"], other=mate,
                                line=scenes.PROMISE_KEPT_LINE.format(mate=pr["about"]["name"]))
+                        word.recruit_event(state, slug, pid, "package_kept")
                         continue
                     if week - pr["week"] < PACKAGE_PROMISE_WEEKS:
                         continue
@@ -2471,6 +2484,7 @@ def _promises(state: dict, week: int) -> None:
                     persona.set_cooled_why(state, slug, pid, "promise")
                 pr["broken"] = week
                 _event(state, "promise_broken", pid, slug, about=pr["about"]["name"], other=mate, **({"why": "package"} if pr["kind"] == "package" else {}))
+                word.recruit_event(state, slug, pid, "package_broken" if pr["kind"] == "package" else "recruit_broken")
 
 
 def _firm_up(state: dict, week: int) -> None:

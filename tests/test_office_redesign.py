@@ -168,6 +168,11 @@ def check_cards(page, base, sid) -> None:
     assert page.query_selector("#tab-office .ofc-targets button.go-link:has-text('Board →')")
     for sel in (".ofc-news", ".ofc-conf", ".ofc-plan"):
         assert page.query_selector(f"#tab-office {sel}"), sel
+    # Keeps His Word: your reputation for keeping promises, in a word
+    page.wait_for_selector("#tab-office .ofc-word .card-bar .ofc-chip", timeout=30_000)
+    assert "KEEPS HIS WORD" in page.inner_text("#tab-office .ofc-word .card-bar").upper()
+    from coach_career import programs
+    assert page.inner_text("#tab-office .ofc-word .card-bar .ofc-chip").strip().upper() in {w.upper() for w, _ in programs.WORD_FLOORS}
 
 
 def check_layout(page, base, sid, theme) -> None:

@@ -121,4 +121,5 @@ def conference_view(state: dict) -> dict:
 
 
 def office_view(state: dict) -> dict:
-    return {"news": program_news(state), "conference": conference_view(state)}
+    from coach_career import word
+    return {"news": program_news(state), "conference": conference_view(state), "word": word.view(state)}

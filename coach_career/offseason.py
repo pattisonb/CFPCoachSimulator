@@ -250,6 +250,8 @@ def start(state: dict) -> dict:
     record_seasons(state, lgd)
     usage = _usage()
     draft: dict = {}
+    from coach_career import word
+    word.recover(state, year)                    # Keeps His Word drifts back toward neutral, before this year's promises land
     deps, entrants, pending = _departures(state, lgd, usage, draft=draft)
     signed = _sign_classes(state, lgd)
     state["offseason"] = {"stage": STAGES[0], "year": year, "departures": deps, "draft": draft,
@@ -528,8 +530,8 @@ def _retention_view(state: dict) -> Optional[dict]:
     for e in ret["players"]:
         row = {k: v for k, v in e.items() if k != "ask"}
         row["ask"] = dict(e["ask"]) if e["ask"]["known"] else {"kind": None, "nil": None, "known": False}
-        row["chance"] = round(stay_chance(e), 2) if e["ask"]["known"] else None
-        row["chance_word"] = _chance_word(stay_chance(e)) if (e["met"] or e["offers"].get("nil") or e["offers"].get("promise")) else None
+        row["chance"] = round(stay_chance(e, state), 2) if e["ask"]["known"] else None
+        row["chance_word"] = _chance_word(stay_chance(e, state)) if (e["met"] or e["offers"].get("nil") or e["offers"].get("promise")) else None
         row["role_now_name"], row["role_next_name"] = ROLE_NAMES[e["role_now"]], ROLE_NAMES[e["role_next"]]
         players.append(row)
     return {"players": players, "results": ret.get("results"), "spent": ret.get("spent", 0), "budget": budget,
@@ -543,7 +545,7 @@ def _chance_word(c: float) -> str:
     return "Likely to Stay" if c >= 0.65 else "Could Go Either Way" if c >= 0.4 else "Leaning Out" if c >= 0.2 else "As Good As Gone"
 
 
-def stay_chance(e: dict) -> float:
+def stay_chance(e: dict, state: Optional[dict] = None) -> float:
     """His chance to stay from what you offered against what he wants: NIL at his ask, or a starting
     role he would actually get; a draft entrant projected in the first round is gone whatever you say."""
     ask, offers = e["ask"], e["offers"]
@@ -555,6 +557,11 @@ def stay_chance(e: dict) -> float:
     if e.get("broken_promise"):                  # promised a start and did not get it: one more promise, if it is real, or a lot of money
         from coach_career import promises
         chance = promises.PROMISE_AGAIN_STAY if honored and not e.get("no_third") else 0.02
+        if state is not None and chance > 0.02:      # Keeps His Word: he reads your word at his position, or doesn't believe you
+            from coach_career import word
+            group = GROUP.get(e.get("pos"), e.get("pos"))
+            pers = e.get("personality") or promises.personality_of(state, e["id"])
+            chance = min(0.9, chance * word.promise_mult(state, None, group, personality=pers)) if word.believes(state, group) else 0.02
         return min(0.92, chance + 0.65 * nil_share)
     if e["intent"] == "draft":
         pick = e.get("draft_pick") or 10 ** 6
@@ -622,7 +629,7 @@ def _resolve_retention(state: dict) -> None:
     results, leaving, spent = [], set(), 0
     for e in ret["players"]:
         p = by_id.get(e["id"])
-        chance = 0.0 if auto or e["offers"].get("released") or p is None else stay_chance(e)
+        chance = 0.0 if auto or e["offers"].get("released") or p is None else stay_chance(e, state)
         stayed = rng.random() < chance
         if stayed:
             p["kept"] = year
@@ -873,6 +880,8 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
     from coach_career import promises
     from sim import season as _season
     my_promises = promises.bands(state, _season.season_year(state))   # the season just played: your promises, judged week by week
+    from coach_career import word
+    word.apply_bands(state, _season.season_year(state), my_promises)   # ... and they move Keeps His Word, once a year
     games = _games_played(state)
     # the draft board: seniors and the underclassmen who declare, ranked by draft score (the picks
     # are projections until the draft runs after Keep Them Home)
