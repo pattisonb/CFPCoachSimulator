@@ -1499,6 +1499,31 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
+PITCH_MARK = {"hit": "hit", "quiet": "weak", "polite": "not_his", "guarded": "no_read", "tired": "no_read"}   # his reaction -> the mark the page shows
+
+
+def pitch_marks(state: dict, slug: str, pid: str) -> dict:
+    """What he said about each topic your school pitched him (your History): {topic: {"mark", "week", "action"}}. The mark
+    is "hit" (He Lit Up), "weak" (Weak Case: he cares, your case is weak), "not_his" (Not His Thing: polite, not one of his
+    priorities) or "no_read" (guarded, tired, or one of your opening's three, which reads no single topic). The latest real
+    read wins and a No Read never hides one. A topic you never pitched has no entry."""
+    out: dict = {}
+    for e in state["recruiting"].get("log") or ():
+        if e.get("pid") != pid or e.get("school") != slug:
+            continue
+        if e.get("kind") == "pitch" and e.get("pitch"):
+            seen = [(e["pitch"], PITCH_MARK.get(e.get("reaction"), "no_read"))]
+        elif e.get("kind") == "present":
+            seen = [(t, "no_read") for t in e.get("topics") or ()]
+        else:
+            continue
+        for topic, mark in seen:
+            if mark == "no_read" and topic in out and out[topic]["mark"] != "no_read":
+                continue
+            out[topic] = {"mark": mark, "week": e.get("week"), "action": e.get("action")}
+    return out
+
+
 def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:
     """Your opening on the open scene (scenes.present), no hours: three different topics, scored
     against his true priorities without revealing them. Each that is one of his earns PRESENT_HIT of

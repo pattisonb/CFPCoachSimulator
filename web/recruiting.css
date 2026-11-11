@@ -409,3 +409,15 @@
 .go-picked { display: inline-flex; align-items: center; gap: 8px; padding-right: 2px; }
 .go-picked-x { min-width: 32px; min-height: 32px; padding: 0; border: 0; background: transparent; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
 @media (max-width: 760px) { .go-opening-pick, .go-picked-x { min-height: 44px; } .go-picked-x { min-width: 44px; } .go-opening-menu { min-width: min(320px, calc(100vw - 48px)); } }
+
+/* pitch marks (recruiting.pitch_marks): what he said about a topic you pitched him; no mark, never pitched */
+.go-mark { display: inline-flex; align-items: center; padding: 1px 6px; border: 1px solid currentColor; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; line-height: 16px; }
+.go-mark.hit { color: var(--good-text); }
+.go-mark.weak { color: var(--go-warn-text, #b86e00); }
+.go-mark.not { color: var(--bad-text); }
+.go-mark.none { color: var(--muted); }
+.go-tag.go-mark { text-transform: none; letter-spacing: 0; font-weight: 700; }
+.go-chip-tags { display: inline-flex; align-items: center; gap: 6px; }
+.go-pitch .go-mark { margin-left: 6px; }
+.go-present-chip.on .go-mark { color: inherit; }

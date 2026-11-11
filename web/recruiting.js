@@ -669,6 +669,10 @@
   function tagList(s, b, me) {
     const out = [...(badges(b, me) || { children: [] }).children];
     for (const t of b.priorities_known || []) out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
+    for (const t of Object.keys(PITCH_NAMES)) {
+      const m = markOf(b, t);
+      if (m && (m.mark === "weak" || m.mark === "not_his")) out.push(el("span", { class: `go-tag go-mark ${MARKS[m.mark][1]}`, "data-key": `mark:${t}`, text: `${PITCH_NAMES[t]}: ${MARKS[m.mark][0]}`, title: markWhy(m) }));
+    }
     const cue = cueOf(s, b);
     for (const t of cue.topics) if (!(b.priorities_known || []).includes(t)) out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
     const tr = b.traits || {};
@@ -954,6 +958,30 @@
   const askWord = (b) => (b.ask ? (b.ask.exact != null ? String(b.ask.exact) : `about ${b.ask.lo}–${b.ask.hi}`) : "");
   // your program's case on a pitch, as a word
   const caseWord = (b, t) => { const sv = b.strength ? b.strength[t] : null; return sv == null ? "" : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair"; };
+  // what he said about each topic you pitched him (recruiting.pitch_marks): a mark on the topic in every picker and on his
+  // card, so you don't keep pitching a dud; no mark: you never pitched it to him
+  const MARKS = { hit: ["He Lit Up", "hit"], weak: ["Weak Case", "weak"], not_his: ["Not His Thing", "not"], no_read: ["No Read", "none"] };
+  const MARK_OF = { hit: "hit", quiet: "weak", polite: "not_his", guarded: "no_read", tired: "no_read" };   // his reaction -> the mark
+  const ACTION_WORD = { call: "call", hc_visit: "in-home visit", official_visit: "official visit" };
+  const markOf = (b, t) => { const m = (b.pitch_marks || {})[t]; return m && MARKS[m.mark] ? m : null; };
+  function markWhy(m) {
+    const when = `${m.week ? `Week ${m.week} ` : ""}${ACTION_WORD[m.action] || "call"}`;
+    return { hit: `He lit up when you pitched this on your ${when}.`, weak: `He went quiet on this on your ${when}: he cares, and your case is weak.`,
+      not_his: `He was polite about this on your ${when}: it is not one of his priorities.`,
+      no_read: `You pitched this on your ${when} and got no read on it.` }[m.mark];
+  }
+  function markTag(b, t) {
+    const m = markOf(b, t);
+    return m ? el("span", { class: `go-mark ${MARKS[m.mark][1]}`, text: MARKS[m.mark][0], title: markWhy(m) }) : null;
+  }
+  // he just told you something: the mark lands now, not at the re-fetch (a No Read never hides a real read)
+  function noteMark(b, t, mark, action, week) {
+    if (!b || !t || !mark) return;
+    b.pitch_marks = b.pitch_marks || {};
+    const was = b.pitch_marks[t];
+    if (mark === "no_read" && was && was.mark !== "no_read") return;
+    b.pitch_marks[t] = { mark, week, action };
+  }
 
   // the Recruit menu is one at a time, on the page body (so the pane's scrolling never clips it)
   let menuState = null;
@@ -1683,7 +1711,8 @@
       const order = [...b.priorities_known, ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t))];
       const selEl = el("select", { id: "rc-pitch", class: "go-sel", "aria-label": `Pitch to ${b.name}` }, order.map((t) => {
         const star = b.priorities_known.includes(t) ? "★ " : cued.includes(t) ? "☆ " : "";
-        const parts = [`${star}${PITCH_NAMES[t]}`, caseWord(b, t) || null].filter(Boolean);
+        const m = markOf(b, t);
+        const parts = [`${star}${PITCH_NAMES[t]}`, caseWord(b, t) || null, m ? MARKS[m.mark][0] : null].filter(Boolean);
         return el("option", { value: t, text: parts.join(" · ") });
       }));
       selEl.value = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : b.priorities_known[0] || cued[0] || order[0];
@@ -1790,10 +1819,11 @@
             win.done = true;
             H.retoken(sc, null);         // finished: a refresh never reopens it
             if (re.revealed && !b.priorities_known.includes(re.revealed)) b.priorities_known.push(re.revealed);   // he told you: known now, not at the re-fetch
+            noteMark(b, chosen, MARK_OF[re.kind], scene.action, s.current_week);
             // the board's current row for him (a re-fetch may have replaced b) learns the same, and the pane behind the
             // window shows it at once: the call is over, what he told you is known
             const row = v.board.find((x) => x.id === b.id);
-            if (row && row !== b) { row.scene = null; if (re.revealed && !row.priorities_known.includes(re.revealed)) row.priorities_known.push(re.revealed); }
+            if (row && row !== b) { row.scene = null; if (re.revealed && !row.priorities_known.includes(re.revealed)) row.priorities_known.push(re.revealed); noteMark(row, chosen, MARK_OF[re.kind], scene.action, s.current_week); }
             patchShown(row || b);
             ui().toast(`Pitch: ${PITCH_NAMES[chosen] || chosen} · ${REACTION_WORDS[re.kind] || re.kind}`);
             // the conversation ends in the window: your line and his reaction join it, the buttons give way to Done;
@@ -1882,7 +1912,7 @@
           const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
           const chip = el("button", { type: "button", class: "go-chip go-present-chip", "data-topic": t, "aria-pressed": "false",
             title: word ? `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` : "" },
-            [el("b", { text: PITCH_NAMES[t] }), word ? el("span", { class: `go-tag ${tone}`, text: word }) : null]);
+            [el("b", { text: PITCH_NAMES[t] }), el("span", { class: "go-chip-tags" }, [markTag(b, t), word ? el("span", { class: `go-tag ${tone}`, text: word }) : null])]);
           byTopic[t] = chip;
           chip.addEventListener("click", () => {
             if (picked.has(t)) picked.delete(t);
@@ -1901,6 +1931,7 @@
           if (!(r && r.scene)) { lapsed(); return; }     // a stale call (the week moved on)
           Object.assign(scene, r.scene);               // the same scene object: the board row and the view share it
           chosen = scene.cue.topics[0] || "";
+          for (const t of picked) noteMark(b, t, "no_read", scene.action, s.current_week);   // your opening's three: pitched, no read on any one
           // the opening leaves, the new turns come in, then his question and the lead-with: all in place
           closeMenu();
           await ui().fadeOut(wrap);
@@ -1969,7 +2000,7 @@
         const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
         const tag = [known ? "★" : cue ? "☆" : null, word || null].filter(Boolean).join(" ");
         pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""} ${cue ? "cue" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
-          el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this" } : {}) })])]));
+          el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this" } : {}) }), markTag(b, t)])]));
       }
       return pitches;
     }
