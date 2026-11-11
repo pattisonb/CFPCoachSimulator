@@ -263,7 +263,7 @@ def check_suggested_tasks(page, base, sid) -> None:
     open_hq(page, base, sid)
     check_card_clean(page, "tasks")
     first = page.inner_text("#tab-headquarters .hq-card[data-widget='tasks'] .hq-task-suggest >> nth=0")
-    assert name in first and f"{mo['nil']} NIL" in first and f"Week {mo['by_week']}" in first, first
+    assert name in first and f"{mo['nil']} NIL" in first and f"Week {mo['by_week'] - 1}" in first, first   # the calendar's week (Week 0 opens the season)
     assert f"{mo['nil']} NIL" in page.inner_text("#tab-headquarters .hq-card[data-widget='alerts']")
     # take the suggestion; put the NIL on his offer; the task ticks itself ("Done for You")
     page.click("#tab-headquarters .hq-card[data-widget='tasks'] .hq-task-suggest >> nth=0 >> .hq-task-add-suggest")

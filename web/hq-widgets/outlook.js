@@ -4,6 +4,10 @@
    play. Moods and chances are words; every empty case is a sentence. */
 (function () {
   "use strict";
+  // a regular-season week as the real calendar names it (Week 0 opens the season: engine week N is Week N-1, as
+  // sim/season.py week_name); a postseason week keeps its own label
+  const wkShort = (s, w) => (w >= 1 && w <= 14 ? `Wk ${w - 1}` : ((s && s.week_labels && s.week_labels[w]) || `Wk ${w}`));
+  const wkLong = (w) => (w >= 1 && w <= 14 ? `Week ${w - 1}` : `Week ${w}`);
   const HQ = window.HQ, k = HQ.kit, el = k.el;
   const on = (n, t, f) => window.CFP.ui.on(n, t, f);
   const rec = () => window.CFP.recruiting || {};
@@ -53,8 +57,8 @@
     // first what you owe: a money promise has a deadline
     for (const b of board.board || []) {
       const mo = b.money_owed;
-      if (mo) out.push({ kind: "Promise", pid: b.id, name: b.name, text: `You talked money with ${b.name}: put ${mo.nil} NIL on your offer by Week ${mo.by_week}.`,
-        task: `Put ${mo.nil} NIL on ${b.name}'s offer by Week ${mo.by_week}.`, do: { kind: "nil", pid: b.id, nil: mo.nil } });
+      if (mo) out.push({ kind: "Promise", pid: b.id, name: b.name, text: `You talked money with ${b.name}: put ${mo.nil} NIL on your offer by ${wkLong(mo.by_week)}.`,
+        task: `Put ${mo.nil} NIL on ${b.name}'s offer by ${wkLong(mo.by_week)}.`, do: { kind: "nil", pid: b.id, nil: mo.nil } });
     }
     // then who cooled on you, with what to do about it
     for (const b of board.board || []) {
@@ -189,7 +193,7 @@
       }
       if (!items.length) return k.empty("Nothing left on the calendar this season.");
       return k.list(items.slice(0, k.rowsFor(ctx.size)).map(([w, text, kind], i) => ({ key: `${w}-${i}`, cells: [
-        el("span", { class: "go-tag", text: `Wk ${w}` }), el("span", { class: "hq-grow", text }), el("span", { class: "hq-sub", text: kind })] })));
+        el("span", { class: "go-tag", text: wkShort(s, w) }), el("span", { class: "hq-grow", text }), el("span", { class: "hq-sub", text: kind })] })));
     } });
 
   // ----- What-If ----------------------------------------------------------------------------------------------------
