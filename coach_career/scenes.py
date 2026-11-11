@@ -154,7 +154,7 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
     "_two_sided": {
         "cue": ["Honestly, Coach? It's {a} or {b}. I go back and forth.",
-                "My dad says {a}. My coach says {b}. I don't know yet.",
+                "My dad says {a}. My trainer says {b}. I don't know yet.",
                 "Some days it's {a}, some days it's {b}. Ask me tomorrow and I'll say the other one."],
     },
 }
@@ -281,6 +281,82 @@ CONTEXT = {
               "Hey. Yeah. Kind of a lot going on, Coach.",
               "Hi Coach. Sure. Make it quick if you can."],
 }
+# the transfer portal (the player's ask): the season is over and he has played college ball, so you open on his
+# portal entry and he talks about his last school ({from_name}), what he did there ({did}) and why he left
+PORTAL_OPEN = ["Hey {first}, Coach {coach} at {school}. Saw your name go in the portal. Got a minute?",
+               "{first}? Coach {coach}, {school}. I watched your tape from {from_name}. You have a minute?",
+               "Hey {first}. Coach {coach} over at {school}. I know your phone's blowing up, so I'll be quick."]
+PORTAL_AGAIN = ["{first}, Coach {coach} again. Where's your head at?",
+                "Hey {first}, Coach {coach}. Checking back in. How's the portal treating you?"]
+PORTAL_VISIT_OPEN = ["Appreciate you sitting down with me, {first}. I've watched a lot of your film from {from_name}.",
+                     "Thanks for making the time, {first}. I know a lot of schools want this meeting.",
+                     "Good to finally meet you, {first}. Let's talk about what's next after {from_name}."]
+# why he left, in his words: his role there (by usage) when nothing else drove it, else the driver
+PORTAL_WHY = {
+    "starter": ["I started {started} games at {from_name} last year, Coach. {did_cap}. I want to play for a winner now.",
+                "Yes sir. {did_cap} at {from_name}. I'm looking for the right fit for my last stretch."],
+    "rotation": ["I played in {games} games at {from_name}, but I was splitting time. I want the job outright.",
+                 "Yes sir. {did_cap} at {from_name}, mostly in a rotation. I know I can do more."],
+    "bench": ["I barely saw the field at {from_name}, Coach. I need somewhere I can actually play.",
+              "Honestly, Coach, I sat most of last year at {from_name}. I'm ready to show what I can do."],
+    "promised": ["They told me the job was mine at {from_name}, Coach. Then they gave it to somebody else.",
+                 "I was promised a starting spot at {from_name}. That didn't happen, so here I am."],
+    "deal": ["I'll be honest, Coach: {from_name} couldn't pay me what I'm worth. The money matters.",
+             "Yes sir. {did_cap} at {from_name}, and they didn't want to pay for it. So I'm listening."],
+    "slipping": ["{from_name} is going the wrong way, Coach. I want to win while I'm still in college.",
+                 "Yes sir. We lost too much at {from_name}. I want to play meaningful games."],
+    "better_coach": ["I need coaching, Coach. I wasn't getting better at {from_name}.",
+                     "Yes sir. I want a staff that develops guys. That wasn't happening at {from_name}."],
+}
+# the one who decides at a transfer's visit (persona.PORTAL_DECIDERS): about his move, not his first time from home
+PORTAL_DECIDER_LINES = {
+    "mom": ["He's been through a lot this year, Coach. I want this next move to be the right one.",
+            "We trusted the last staff, Coach. Tell me why this time is different.",
+            "I just want him somewhere he's happy again. Can you give him that?"],
+    "dad": ["He's done his time, Coach. What's his role on day one?",
+            "Straight answers this time, Coach. We got the sales pitch at {from_name}.",
+            "Don't tell me he'll compete. Tell me where he fits."],
+    "trainer": ["He's got film now, Coach. Let's talk about what that's worth.",
+                "Every school in the portal is calling. What's your number?",
+                "He produced at {from_name}. I need to see how {school} pays for that."],
+}
+# his stat line as words for {did}: the two numbers a fan quotes for his position (recruiting.LINE_KEYS)
+STAT_WORDS = {"pass_yards": "passing yards", "passing_touchdowns": "touchdown passes", "rush_yards": "rushing yards",
+              "rushing_touchdowns": "rushing touchdowns", "receptions": "catches", "receiving_yards": "receiving yards",
+              "receiving_touchdowns": "touchdown catches", "tackles": "tackles", "sacks": "sacks", "tackles_for_loss": "tackles for loss",
+              "interceptions": "interceptions", "passes_defended": "pass breakups", "field_goals_made": "field goals", "punts": "punts",
+              "carries": "carries", "snaps": "snaps"}
+
+
+def portal_fields(state: dict, p: dict) -> dict:
+    """The portal entrant's own fields for his lines: his last school, games and starts, {did} (his numbers in words, or
+    his games when he has none) and why he left (`why`: his driver, else his usage there)."""
+    line = p.get("line") or {}
+    stats = line.get("stats") or {}
+    keys = [k for k in stats if k in STAT_WORDS and k not in ("carries", "snaps", "interceptions_thrown")][:2]
+    games = line.get("games") or 0
+    if keys:
+        did = " and ".join(f"{stats[k]:,} {STAT_WORDS[k]}" for k in keys)
+        did = f"I had {did}"
+    elif games:
+        did = f"I played in {games} games"
+    else:
+        did = "I didn't get many snaps"
+    entry = ((state.get("offseason") or {}).get("portal") or {}).get("players", {}).get(p["id"]) or {}
+    driver = entry.get("driver")
+    why = driver if driver in PORTAL_WHY else (p.get("usage") if p.get("usage") in PORTAL_WHY else "rotation")
+    return {"from_name": p.get("from_name") or "my last school", "games": games, "started": line.get("started") or 0,
+            "did": did, "did_cap": did[:1].upper() + did[1:], "why": why, "has_did": bool(keys)}
+
+
+def portal_line(state: dict, p: dict, sid: str, f: dict) -> str:
+    """Why he left, in his words (its own seeded draw `portal-line-{sid}`): a starter with no starts on record reads as
+    the rotation line; a line that quotes his numbers only when he has numbers."""
+    why = f["why"] if not (f["why"] == "starter" and not f["started"]) else "rotation"
+    pool = [x for x in PORTAL_WHY[why] if f.get("has_did") or "{did" not in x] or PORTAL_WHY[why]   # his numbers only when he has some
+    return random.Random(f"portal-line-{sid}").choice(pool).format(**f)
+
+
 # your opening: the three things you lead your program with, as you say them
 PRESENT_SAID = ["Here's {school} in a nutshell: {x}, {y} and {z}.",
                 "Let me tell you what we're about at {school}: {x}, {y} and {z}.",
@@ -821,13 +897,25 @@ PLURAL = {"QB": "quarterbacks", "RB": "backs", "WR": "receivers", "TE": "tight e
           "DL": "defensive linemen", "LB": "linebackers", "CB": "corners", "S": "safeties", "K": "kickers", "P": "punters", "ATH": "athletes"}
 
 
+STATE_NAMES = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado", "CT": "Connecticut",
+               "DE": "Delaware", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+               "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan",
+               "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire",
+               "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+               "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee",
+               "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin",
+               "WY": "Wyoming", "DC": "Washington, D.C."}
+
+
 def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     from sim import season
     team = season.load_teams().get(slug) or {}
     week = state["current_week"] if week is None else week
     game, nxt = last_game(state, slug, week), next_game(state, slug, week)
     record = _record(state, slug)
-    return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"] or p["hometown"]["state"],   # a transfer has no town on file
+    # a transfer has no town on file: his home state by name ("Sunday dinners in Texas", never "in TX")
+    town = p["hometown"]["city"] or STATE_NAMES.get(p["hometown"]["state"], p["hometown"]["state"]) or "home"
+    return {"name": p["name"], "first": p["name"].split()[0], "town": town,
             "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"], "positions": PLURAL.get(p["position"], "players"),
             "role": _role(state, slug, p["id"]), "record": record, "rec": record[:1].lower() + record[1:], "conf": _conf(state, slug),
             "coach": coach_name(state, slug),
@@ -937,6 +1025,8 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     rng = random.Random(f"open-{rc['seed']}-{slug}-{pid}-{week}")
     f = _fields(state, slug, p, week)
     tired = recruiting.would_pester(state, slug, pid)
+    if rc.get("portal") and p.get("portal"):
+        return _open_portal(state, slug, pid, action, week, f, tired)
     turns = []
     if action == "hc_visit":
         turns.append(_turn("note", DECIDER_NOTE[persona.of(state, pid)["decider"]].format(**f)))
@@ -988,6 +1078,41 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
           "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired,
           "package": package_about(state, slug, pid) if story else None}      # his mate was brought up: the question after your opening
+    _lines(sc)
+    return sc
+
+
+def _open_portal(state: dict, slug: str, pid: str, action: str, week: int, f: dict, tired: bool) -> dict:
+    """A transfer's call or head coach visit: you open on his portal entry (no living room, no game last Saturday:
+    the season is over), he says why he left his last school, and at a visit the one who decides speaks. Its own
+    seeded draws (`portal-open-{sid}`, `portal-line-{sid}`); the high school scenes' draws never move."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    f = {**f, **portal_fields(state, p)}
+    sid = f"{action}-{pid}-{week}"                                   # the scene's id, as every scene's (the season's week)
+    pw = f"{sid}-{rc.get('week', 0)}"                                 # the portal's own week varies the draws
+    rng = random.Random(f"portal-open-{rc['seed']}-{pw}")
+    turns = []
+    d = persona.of(state, pid)
+    if action == "hc_visit":
+        turns.append(_turn("note", DECIDER_NOTE[d["decider"]].format(**f)))
+        turns.append(_turn("you", rng.choice(PORTAL_VISIT_OPEN).format(**f)))
+    else:
+        talked = bool(((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls"))
+        turns.append(_turn("you", rng.choice(PORTAL_AGAIN if talked else PORTAL_OPEN).format(**f)))
+    said = random.Random(f"portal-line-{pw}-tired").choice(CONTEXT["tired"]).format(**f) if tired else portal_line(state, p, pw, f)
+    contact = ((rc["contacts"].get(pid) or {}).get(slug) or {})
+    if heard_rival_due(state, slug, pid):
+        said = HEARD_RIVAL
+        contact.pop("heard_rival", None)
+    turns.append(_turn("him", said))
+    if action == "hc_visit":
+        if d["decider"] != "self":
+            fam = random.Random(f"portal-line-{pw}-family").choice(PORTAL_DECIDER_LINES.get(d["decider"]) or persona.DECIDER_LINES[d["decider"]]).format(**f)
+            turns.append({"who": "family", "label": persona.DECIDER_LABEL[d["decider"]], "text": fam})
+        persona.learn(state, slug, pid, "decider")
+    sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired, "package": None}
     _lines(sc)
     return sc
 
@@ -1075,6 +1200,9 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     return kind
 
 
+ASK_WHO = {"mom": "His mom", "dad": "His dad", "grandma": "His grandmother", "hs_coach": "His high school coach", "trainer": "His trainer", "self": "He"}
+
+
 def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     """The visit's note on his family's NIL ask, in the game's NIL words and numerals: the ask the profile's
     His Ask shows (the number after a visit, the middle of the range before) and where you stand: the NIL
@@ -1082,8 +1210,11 @@ def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     n = ask.get("exact")
     if n is None and ask.get("hi"):
         n = recruiting._five((ask["lo"] + ask["hi"]) / 2)
+    d = persona.of(state, pid)["decider"]                         # the one who decides speaks to the money (never "his dad" for a trainer)
+    who = ASK_WHO.get(d, ASK_WHO["dad"])
+    they = "he's" if d == "self" else "they're"
     if not n:
-        return "His dad says the money isn't the point."
+        return f"{who} says the money isn't the point."
     rec = state["recruiting"]["nil"].get(slug)
     left = (recruiting.nil_left(state, slug) if rec                 # read only: never opens the school's NIL record here
             else recruiting.portal_budget(state, slug) if recruiting.is_portal(state) else recruiting.nil_budget(state, slug))
@@ -1091,10 +1222,10 @@ def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     room = left + held                                            # an offer to him can hold up to this (recruiting.act)
     about = "" if ask.get("exact") is not None else "about "
     if n > room:
-        return f"His dad wants {about}{n} in NIL, more than you have left ({room})."
+        return f"{who} wants {about}{n} in NIL, more than you have left ({room})."
     if held:
-        return f"His dad wants to know about NIL: they're looking for {about}{n}. Your offer holds {held}, and you have {left} NIL left."
-    return f"His dad wants to know about NIL: they're looking for {about}{n}. You have {left} NIL left."
+        return f"{who} wants to know about NIL: {they} looking for {about}{n}. Your offer holds {held}, and you have {left} NIL left."
+    return f"{who} wants to know about NIL: {they} looking for {about}{n}. You have {left} NIL left."
 
 
 def package_about(state: dict, slug: str, pid: str) -> dict | None:

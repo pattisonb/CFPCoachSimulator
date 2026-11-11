@@ -192,15 +192,12 @@
 .go-scene-tail:empty { display: none; }
 /* your opening: the topics as chips with your program's case, three at a time (the pane's small chips are status; these are buttons) */
 .go-present-chips { gap: 8px; }
-.go-scene .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 700; background: var(--panel-2); }
-.go-scene .go-present-chip.on, .go-scene .go-picked { background: var(--text); color: var(--bg); border-color: var(--text); }
-.go-present-chip.on .go-tag, .go-picked .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
 .go-present-count { align-self: center; }
 /* what you lead with: two columns on a desktop, so the conversation and the picker fit the pane together */
 .go-scene .go-pitches { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .go-scene .go-pitch { min-width: 0; }
 .go-scene .go-pitch > span { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-@media (max-width: 759px) { .go-turn { max-width: 100%; } .go-scene .go-present-chip { flex: 1 1 45%; justify-content: space-between; min-height: 44px; } .go-scene .go-pitches { grid-template-columns: 1fr; } }   /* a phone: full-width bubbles, one column */
+@media (max-width: 759px) { .go-turn { max-width: 100%; } .go-scene .go-pitches { grid-template-columns: 1fr; } }   /* a phone: full-width bubbles, one column */
 /* the call or visit's own window (recruiting.js openSceneWindow, the shared modal with .modal-scene): a conversation's
    width on a desktop, the whole screen on a phone; the window is the frame, so the scene drops its own card */
 .modal.modal-scene .modal-panel { width: min(680px, 100%); }
@@ -394,22 +391,6 @@
 .go-stage-menu button[aria-pressed="true"] b { background: color-mix(in srgb, var(--bg) 22%, transparent); color: var(--bg); }
 @media (max-width: 760px) { .go-stage-pick, .go-stage-menu button { min-height: 44px; } .go-stages { overflow: visible; } }
 
-/* your pitch (the opening): one pill opens every topic as a chip; picks show below, each with an x */
-.go-opening-drop { position: relative; display: inline-block; }
-.go-opening-pick { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid var(--text);
-  background: var(--text); color: var(--bg); font: inherit; font-weight: 700; cursor: pointer; }
-.go-opening-pick .go-opening-count { font-size: 12px; line-height: 18px; padding: 0 6px; background: color-mix(in srgb, var(--bg) 22%, transparent); }
-.go-opening-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
-  min-width: 260px; max-height: min(60vh, 420px); overflow-y: auto; padding: 8px; background: var(--panel); border: 1px solid var(--border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
-.go-opening-menu[hidden] { display: none; }
-.go-opening-menu .go-present-chip { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; }
-.go-opening-picked { gap: 8px; min-height: 0; margin: 8px 0 4px; }
-.go-opening-picked:empty { display: none; }
-.go-picked { display: inline-flex; align-items: center; gap: 8px; padding-right: 2px; }
-.go-picked-x { min-width: 32px; min-height: 32px; padding: 0; border: 0; background: transparent; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
-@media (max-width: 760px) { .go-opening-pick, .go-picked-x { min-height: 44px; } .go-picked-x { min-width: 44px; } .go-opening-menu { min-width: min(320px, calc(100vw - 48px)); } }
-
 /* pitch marks (recruiting.pitch_marks): what he said about a topic you pitched him; no mark, never pitched */
 .go-mark { display: inline-flex; align-items: center; padding: 1px 6px; border: 1px solid currentColor; font-size: 11px; font-weight: 800;
   letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; line-height: 16px; }
@@ -420,7 +401,6 @@
 .go-tag.go-mark { text-transform: none; letter-spacing: 0; font-weight: 700; }
 .go-chip-tags { display: inline-flex; align-items: center; gap: 6px; }
 .go-pitch .go-mark { margin-left: 6px; }
-.go-present-chip.on .go-mark { color: inherit; }
 
 /* the lead-with strip (leadPicker): one card per topic in a row that scrolls sideways, so it never grows the window */
 .go-lead { display: flex; gap: 8px; width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 8px;
@@ -432,7 +412,7 @@
 .go-lead-chip .go-chip-tags { flex-wrap: nowrap; gap: 6px; min-height: 20px; }
 .go-lead-chip .go-tag { margin: 0; white-space: nowrap; }
 .go-lead-chip:hover:not([disabled]) { border-color: var(--text); }
-.go-lead-chip.on { border-color: var(--text); box-shadow: inset 0 0 0 2px var(--text); background: var(--panel); }
+.go-lead-chip.on, .go-lead-chip[aria-pressed="true"] { border-color: var(--text); box-shadow: inset 0 0 0 2px var(--text); background: var(--panel); }
 .go-lead-chip.cue .go-tag { border-color: var(--go-primary, var(--accent)); border-style: dashed; }
 .go-lead-chip[disabled] { opacity: 0.55; cursor: not-allowed; }
 .go-lead-field { display: flex; flex-direction: column; gap: 4px; align-items: stretch; min-width: 0; max-width: 100%; }

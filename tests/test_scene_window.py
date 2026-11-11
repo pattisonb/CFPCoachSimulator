@@ -83,7 +83,7 @@ def start_call(page) -> None:
     page.click(".go-pane #rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
     page.click(".go-menu .go-menu-item[data-action=call]")
-    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-opening-pick", timeout=30_000)
+    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-opening-strip", timeout=30_000)
     time.sleep(0.4)
 
 
@@ -91,7 +91,7 @@ def start_visit(page) -> None:
     page.click(".go-pane #rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
     page.click(".go-menu .go-menu-item[data-action=hc_visit]")
-    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-opening-pick", timeout=30_000)
+    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-opening-strip", timeout=30_000)
     time.sleep(0.4)
 
 
@@ -291,7 +291,7 @@ def phone(browser, base, sid, pids, names, errs) -> None:
     page.wait_for_selector(".go-pane.sheet #rc-finish", timeout=10_000)
     assert not page.query_selector(".go-scene")
     page.click(".go-pane.sheet #rc-finish")
-    page.wait_for_selector(f"{WIN} .go-opening .go-opening-pick", timeout=30_000)
+    page.wait_for_selector(f"{WIN} .go-opening .go-opening-strip", timeout=30_000)
     present_three(page)
     answer_if_asked(page)
     shot(page, "400-mid")

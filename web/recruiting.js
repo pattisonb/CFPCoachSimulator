@@ -1443,7 +1443,7 @@
       view.scene = b.id;
       view.step = null;
       win.node = sceneView(b, win);
-      H.openModal(`${visit ? "In-Home Visit" : "Call"} · ${b.name}`, win.node, `scene:${b.id}`,
+      H.openModal(`${visit ? (b.portal ? "Head Coach Visit" : "In-Home Visit") : "Call"} · ${b.name}`, win.node, `scene:${b.id}`,
         { restore: !!opts.restore, cls: "modal-scene", onClose: () => sceneClosed(win, b) });
       patchShown(b);
       win.node.focus({ preventScroll: true });
@@ -1789,7 +1789,7 @@
       const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
       let chosen = (scene.cue && scene.cue.topics[0]) || b.priorities_known[0] || "";   // he summed up all three: lead with what he told you first
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
-      sc.append(el("div", { class: "card-bar go-scene-head" }, [el("div", { class: "go-scene-who" }, [avatar(b.id), el("div", { class: "go-kicker", text: `${visit ? "In His Home" : "On the Phone"} · ${b.name}` })])]));
+      sc.append(el("div", { class: "card-bar go-scene-head" }, [el("div", { class: "go-scene-who" }, [avatar(b.id), el("div", { class: "go-kicker", text: `${visit ? (b.portal ? "Face to Face" : "In His Home") : "On the Phone"} · ${b.name}` })])]));
       // the turns: yours right in a muted bubble, his left, a note (who decides, his NIL ask, pestering) centered and plain; the cue keeps its frame
       const convo = el("div", { class: "go-scene-lines go-convo", role: "log", "aria-label": `The ${what}` });
       const turnEl = (t) => {
@@ -1924,59 +1924,29 @@
         const count = el("span", { class: "go-present-count muted small", role: "status", text: `0 of ${MAX_PRESENT}` });
         const go = el("button", { type: "button", class: "go-btn primary go-present", text: "Present", title: `Pick ${MAX_PRESENT} things first` });
         go.disabled = true;
-        // your pitch (the player's ask): one pill opens every topic as a chip (its case in a word); pick up to three, each
-        // shown below with an x before you Present; the third pick closes the menu
-        const pickCount = el("b", { class: "go-opening-count", text: `0 of ${MAX_PRESENT}` });
-        const pick = el("button", { type: "button", class: "go-opening-pick", "aria-haspopup": "true", "aria-expanded": "false" },
-          [el("span", { text: "Your Pitch" }), pickCount, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
-        const chips = el("div", { class: "go-opening-menu go-present-chips", role: "group", "aria-label": "Three things about your program", hidden: "" });
-        const shown = el("div", { class: "go-row wrap go-opening-picked", "aria-live": "polite" });
-        const opener = el("div", { class: "go-opening-drop" }, [pick, chips]);
-        const outside = (e) => { if (!opener.contains(e.target)) closeMenu(); };
-        function closeMenu() {
-          if (chips.hidden) return;
-          chips.hidden = true;
-          pick.setAttribute("aria-expanded", "false");
-          document.removeEventListener("click", outside, true);
-        }
-        function openMenu() {
-          chips.hidden = false;
-          pick.setAttribute("aria-expanded", "true");
-          document.addEventListener("click", outside, true);
-          const first = chips.querySelector('.go-present-chip[aria-pressed="false"]') || chips.querySelector(".go-present-chip");
-          if (first) first.focus({ preventScroll: true });
-          // the opening sits at the foot of the call's window, which scrolls: bring the whole menu into view
-          chips.scrollIntoView({ block: "nearest" });
-        }
-        ui().on(pick, "click", () => (chips.hidden ? openMenu() : closeMenu()));
-        ui().on(opener, "focusout", (e) => { if (e.relatedTarget && !opener.contains(e.relatedTarget)) closeMenu(); });   // tabbed out
-        ui().on(opener, "keydown", (e) => { if (e.key === "Escape" && !chips.hidden) { e.stopPropagation(); closeMenu(); pick.focus({ preventScroll: true }); } });
+        // your pitch (the player's ask): every topic as a card in one row that scrolls sideways, as the lead-with does, so
+        // it never grows the window; pick three (each outlined), then Present
+        const chips = el("div", { class: "go-lead go-opening-strip go-present-chips", role: "group", "aria-label": "Three things about your program" });
         const byTopic = {};
         const sync = () => {
           for (const [t, chip] of Object.entries(byTopic)) { chip.classList.toggle("on", picked.has(t)); chip.setAttribute("aria-pressed", String(picked.has(t))); }
-          count.textContent = pickCount.textContent = `${picked.size} of ${MAX_PRESENT}`;
+          count.textContent = `${picked.size} of ${MAX_PRESENT}`;
           go.disabled = picked.size !== MAX_PRESENT;
           go.title = go.disabled ? `Pick ${MAX_PRESENT} things first` : "Tell him what your program is about, then ask him what he is looking for";
-          shown.replaceChildren(...[...picked].map((t) => {
-            const x = el("button", { type: "button", class: "go-picked-x", "aria-label": `Drop ${PITCH_NAMES[t]}`, text: "×" });
-            ui().on(x, "click", () => { picked.delete(t); sync(); });
-            const tag = byTopic[t].querySelector(".go-tag");
-            return el("span", { class: "go-chip on go-picked", "data-topic": t }, [el("b", { text: PITCH_NAMES[t] }), tag ? tag.cloneNode(true) : null, x]);
-          }));
         };
         for (const t of Object.keys(PITCH_NAMES)) {
           const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
           const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
-          const chip = el("button", { type: "button", class: "go-chip go-present-chip", "data-topic": t, "aria-pressed": "false",
-            title: word ? `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` : "" },
-            [el("b", { text: PITCH_NAMES[t] }), el("span", { class: "go-chip-tags" }, [markTag(b, t), word ? el("span", { class: `go-tag ${tone}`, text: word }) : null])]);
+          const chip = el("button", { type: "button", class: "go-lead-chip go-present-chip", "data-topic": t, "aria-pressed": "false",
+            title: word ? `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}.` : "" },
+            [el("b", { class: "go-lead-topic", text: PITCH_NAMES[t] }), el("span", { class: "go-chip-tags" }, [word ? el("span", { class: `go-tag ${tone}`, text: word }) : null, markTag(b, t)])]);
           byTopic[t] = chip;
           chip.addEventListener("click", () => {
             if (picked.has(t)) picked.delete(t);
             else if (picked.size >= MAX_PRESENT) { H.toast(`Three things. Drop one first.`, 3000); return; }
             else picked.add(t);
             sync();
-            if (picked.size === MAX_PRESENT) { closeMenu(); go.focus({ preventScroll: true }); }
+            if (picked.size === MAX_PRESENT) go.focus({ preventScroll: true });
           });
           chips.append(chip);
         }
@@ -1990,7 +1960,6 @@
           chosen = (scene.cue && scene.cue.topics[0]) || b.priorities_known[0] || "";
           for (const t of picked) noteMark(b, t, "no_read", scene.action, s.current_week);   // your opening's three: pitched, no read on any one
           // the opening leaves, the new turns come in, then his question and the lead-with: all in place
-          closeMenu();
           await ui().fadeOut(wrap);
           const added = addTurns(true);
           drawFinish(true);
@@ -1999,7 +1968,7 @@
         });
         wrap.append(el("div", { class: "go-kicker muted", text: "Your Opening" }),
           el("p", { class: "muted small", text: "Three things you lead your program with. Then you ask him what he is looking for." }),
-          opener, shown,
+          chips,
           el("div", { class: "go-row wrap go-scene-acts" }, [go, count, el("button", { type: "button", class: "go-link go-hangup", text: "Hang Up", onclick: hangUp })]),
           el("p", { class: "muted small", text: HANG_HINT }));
         tail.append(wrap);

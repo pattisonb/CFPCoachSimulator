@@ -1489,6 +1489,7 @@ def _close_portal_rounds(state: dict) -> None:
             team = lgd["teams"][e["signed"]]
             p["j"] = _jersey(team["roster"], p["pos"], rng)
             p["transfer"] = e["from"]
+            p["transfer_year"] = state["offseason"].get("year")      # this offseason's transfer (the picker's Transfers group)
             team["roster"].append(p)
 
 
@@ -1527,6 +1528,7 @@ def _close_portal(state: dict) -> None:
         team = lgd["teams"][school]
         p["j"] = _jersey(team["roster"], p["pos"], rng)
         p["transfer"] = e["from"]
+        p["transfer_year"] = off.get("year")                         # this offseason's transfer (the picker's Transfers group)
         contact = (rc.get("contacts") or {}).get(pid, {}).get(school) or {}
         if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
             from coach_career import persona, promises     # told the job was his in the portal: the same promise a signed recruit carries
@@ -1930,7 +1932,7 @@ def _develop_all(state: dict) -> dict:
             gains.append(g)
             if slug == state["team"]:
                 mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why,
-                             "transfer": p.get("transfer")})
+                             "transfer": p.get("transfer") if _new_transfer(state["offseason"], p, slug) else None})
     mine.sort(key=lambda r: -r["gain"])
     return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts,
             "coachability": moves, "transfers": [r for r in mine if r["transfer"]]}
@@ -2018,6 +2020,7 @@ def _fill_rosters(state: dict) -> dict:
                 c["cls"] = rng.choice(("SO", "SORS") if years == 1 else ("JR", "JRRS"))
                 c["yrs"] = years
                 c["transfer"] = "FCS"
+                c["transfer_year"] = state["offseason"].get("year")
             else:
                 c["walk_on"] = True
             t["roster"].append(c)
@@ -2735,6 +2738,16 @@ def _stayed(off: dict, roster: list[dict]) -> list[dict]:
     return out
 
 
+def _new_transfer(off: dict, c: dict, me: str) -> bool:
+    """Whether a roster player transferred in this offseason (the Transfers group): his stamp says so, or, on a save
+    from before the stamp, this offseason's portal moves bring him to you. Last year's transfer is everyone else."""
+    if not c.get("transfer"):
+        return False
+    if "transfer_year" in c:
+        return c["transfer_year"] == off.get("year")
+    return any(m.get("id") == c["id"] and m.get("to") == me for m in (off.get("portal") or {}).get("moves") or ())
+
+
 def view(state: dict, position: Optional[str] = None, status: Optional[str] = None) -> dict:
     """The Offseason screen: where the offseason stands and what it means for your program."""
     from coach_career import recruiting
@@ -2775,7 +2788,8 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "redshirts": off.get("redshirts"),
         "position_changes": off.get("position_changes") or [],
         "my_roster": sorted(({"id": c["id"], "name": c["n"], "pos": c["pos"], "cls": c["cls"], "overall": house(c["pos"], c["o"]),
-                              "moved_from": c.get("moved_from"), "transfer": c.get("transfer")} for c in lgd["teams"][me]["roster"]),
+                              "moved_from": c.get("moved_from"), "transfer": c.get("transfer") if _new_transfer(off, c, me) else None}
+                             for c in lgd["teams"][me]["roster"]),
                              key=lambda r: (GROUP.get(r["pos"], "Z"), -r["overall"])),
         "roster": len(lgd["teams"][me]["roster"]), "roster_limit": ROSTER_LIMIT,
         "open_spots": recruiting_spots(state, me) if new_portal else open_spots(lgd, me, portal),
