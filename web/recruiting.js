@@ -217,7 +217,7 @@
   // the History as text lines ("Week 4 · Call · Program Prestige · He lit up")
   function historyLines(events, me) { return historyItems(events, me).map((x) => [`Week ${x.week}`, x.text].filter(Boolean).join(" · ")); }
   // the Office (web/office.js) shares the ladder, the portraits, the week's What Changed card and the event words
-  window.CFP.recruiting = { standingOf, byChance, historyLines, avatar, reportCard, eventWord };
+  window.CFP.recruiting = { standingOf, byChance, historyLines, avatar, reportCard, eventWord, pitchName: (t) => PITCH_NAMES[t] || t };
 
   // a topic in a sentence: "playing time", "NIL"
   const topicWord = (t) => (t === "nil" ? "NIL" : (PITCH_NAMES[t] || t).toLowerCase());
@@ -254,7 +254,12 @@
     }
     if (action === "scout") scouted(pid, r);
     if (r.scene) { if (opts.onScene) opts.onScene(r.scene); else if (!opts.silent) H.toast(`${names[action]} open · finish it from his pane`, 3000); }
-    else if (r.reaction) { if (!opts.silent) H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000); if (opts.onReaction) opts.onReaction(r.reaction); }
+    else if (r.reaction) {
+      // talking money is a promise: say so plainly, over the reaction's toast
+      if (r.money_owed) H.toast(`You talked money: put ${r.money_owed.nil} NIL on your offer by Week ${r.money_owed.by_week}.`, 6000);
+      else if (!opts.silent) H.toast((REACTION_TOAST[r.reaction.kind] || REACTION_TOAST.polite)(pitch), 4000);
+      if (opts.onReaction) opts.onReaction(r.reaction);
+    }
     else if (opts.silent) { /* the board says what happened, in its own words */ }
     else if (action === "scout") H.toast("Scouting trip done · his grades are updated", 3000);
     else H.toast(`${names[action]} done · ${r.hours_left} hours left${r.revealed ? ` · he cares about ${PITCH_NAMES[r.revealed].toLowerCase()}` : action === "call" ? " · he kept his cards close" : ""} · it lands at the week step`, 3000);
@@ -496,6 +501,8 @@
     if (b.need != null && !b.signed && b.committed !== me) out.append(el("span", { class: `go-tag ${b.need > 0 ? "good" : "muted"}`, text: b.need > 0 ? `Need ${b.need}` : "Full",
       title: b.need > 0 ? `Your roster needs ${b.need} at his position this class` : "Your roster is covered at his position this class" }));
     if (b.offered && !b.signed && b.committed !== me) out.append(el("span", { class: "go-tag good", text: b.nil ? `Offered · ${b.nil} NIL` : "Offered" }));
+    if (b.money_owed) out.append(el("span", { class: "go-tag warn go-money-owed", "data-key": "money-owed", text: `Money Owed · ${b.money_owed.nil} NIL by Week ${b.money_owed.by_week}`,
+      title: `You talked money with him: put at least ${b.money_owed.nil} NIL on your offer by Week ${b.money_owed.by_week}, or he cools on you. Take him off your board to walk away.` }));
     if (b.cooled) out.append(el("span", { class: "go-tag bad", text: "Cooled", title: COOLED_TITLE[b.cooled_why] || COOLED_TITLE.lowball }));
     if (b.pestering) out.append(el("span", { class: "go-tag bad", text: "Tuning You Out", title: "He is not considering you; more contact pushes him away" }));
     // the portal: he picks only among offering schools with room, so a lead without room is no lead

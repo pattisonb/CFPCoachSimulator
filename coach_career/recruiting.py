@@ -1411,7 +1411,8 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired, tells=tells)
         if slug == state.get("team"):                 # your History: the pitch and how he took it
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
-        return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed}}
+        return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed},
+                "money_owed": money_owed(state, slug, pid) if pitch == "nil" else None}
     opens = slug == state.get("team") and action in SCENES and pitch is None
     revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week)
     if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
@@ -2320,6 +2321,18 @@ def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int, tell
         contact.setdefault("promises", []).append({"kind": "money", "about": {"ask": ask}, "week": week, "broken": None, "kept": None,
                                                    "offered": pid in state["recruiting"]["offers"].get(slug, []), "n": contact.get("n", 0)})
         _event(state, "learned", pid, slug, line=scenes.MONEY_OWED_LINE)
+
+
+def money_owed(state: dict, slug: str, pid: str) -> Optional[dict]:
+    """An open money promise as the page shows it: the NIL to put on your offer (NIL_PROMISE_SHARE of his ask, up to the
+    next NIL step) and the week it is due; None when there is none."""
+    c = (state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}
+    pr = next((x for x in c.get("promises") or () if x["kind"] == "money" and x.get("broken") is None and x.get("kept") is None
+               and x.get("closed") is None), None)
+    if pr is None:
+        return None
+    ask = min(pr["about"]["ask"], ask_from(state, slug, pid, peek=True) or pr["about"]["ask"])
+    return {"nil": 5 * math.ceil(NIL_PROMISE_SHARE * ask / 5), "by_week": pr["week"] + NIL_PROMISE_WEEKS}
 
 
 def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: int) -> None:
