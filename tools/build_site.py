@@ -30,7 +30,7 @@ DATA_FILES = (
     "data/schedules.json", "data/schedule_rules.json", "data/series.json", "data/rivalries.json", "data/bowls.json",
     "data/fcs_map.json", "data/game_scale.json", "data/observed_tendencies.json", "data/manual_ratings.json",
     "data/scheme_overrides.json", "data/poll_params.json", "data/program_history.json", "data/program_market.json",
-    "data/real_adjustments.json", "data/coach_birth_years.json", "data/draft_targets.json",
+    "data/real_adjustments.json", "data/coach_birth_years.json", "data/draft_targets.json", "data/major_cities.json",
     "data/base_league.json", "data/base_meta.json",
     "cfb_sim_data/coaches.json", "cfb_sim_data/teams_index.json", "cfb_sim_data/league.json",
 )
