@@ -131,7 +131,7 @@ def test_guarded_call_cue_has_no_topic():
             assert r["reaction"]["revealed"] is None, r
             assert list((st["recruiting"]["revealed"].get(ME) or {}).get(pid, [])) == before, "the pitch told nothing"
             mine = {l.format(**f) for k in persona.LINES[personality].values() for l in k}
-            assert r["reaction"]["text"] in mine or r["reaction"]["kind"] in ("polite", "tired"), r["reaction"]
+            assert scenes.bare_reaction(r["reaction"]["text"]) in mine or r["reaction"]["kind"] in ("polite", "tired"), r["reaction"]
             for t in texts(sc) + [r["reaction"]["text"]]:
                 assert not any(ph in t for ph in list(scenes.PHRASES.values()) + list(scenes.SAID_HONEST.values())), t
     # a business recruit's cue still names his topic
@@ -188,7 +188,7 @@ def test_visit_lines_have_no_phone_words():
         sc = present(st, pid, sc)
         mine = {l.format(**scenes._fields(st, ME, st["recruiting"]["prospects"][pid])) for t in persona.LINES[k].values() for l in t}
         for t in texts(sc):
-            if t in mine:
+            if scenes.bare_reaction(t) in mine:
                 seen += 1
                 assert not any(w in t.lower() for w in MEDIUM), (k, t)
     assert seen >= 24
