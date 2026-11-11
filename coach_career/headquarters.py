@@ -305,12 +305,20 @@ def goals(state: dict) -> list:
 KINDS = ("nil", "call", "raise", "wait", "leave", "scout", "pull", "need")   # what a suggested task asks (docs/superpowers/plans/2026-11-11-auto-tasks.md)
 
 
+def _clock(state: dict) -> tuple[int, int]:
+    """(season week, portal week): in the portal the season's week stands still and the portal's own week moves."""
+    rc = state.get("recruiting") or {}
+    return (state.get("current_week") or 0, (rc.get("week") or 0) if rc.get("portal") else 0)
+
+
 def _task_check(state: dict, t: dict) -> tuple[bool, Optional[str]]:
     """(done, note) for a task added from a suggestion: done once you did what it asks since it was added; a note
     (not done, kept) when it no longer applies: the recruit committed or signed elsewhere."""
     from sim import season
     rc, me = state["recruiting"], state["team"]
-    do, since = t["do"], t.get("since") or 0
+    do = t["do"]
+    since = (t.get("since") or 0, t.get("since_p") or 0)   # (season week, portal week): the season's week stands still in the portal
+    now = _clock(state)
     kind, pid = do["kind"], do.get("pid")
     if kind == "need":
         g = do.get("group")
@@ -318,8 +326,13 @@ def _task_check(state: dict, t: dict) -> tuple[bool, Optional[str]]:
     p, st_ = rc["prospects"].get(pid), rc["status"].get(pid)
     if p is None or st_ is None:
         return False, None
-    log = [e for e in rc.get("log") or () if e.get("pid") == pid and e.get("school") == me and (e.get("week") or 0) >= since]
-    contacted = [e for e in log if e["kind"] in ("contact", "pitch", "offer", "raise_nil")]
+    # what you did after you added it: the log from its length then (`since_n`; a new recruiting block starts a new log),
+    # else from the week you added it
+    full, start = rc.get("log") or [], t.get("since_n")
+    at = lambda e: ((e.get("week") or 0), (e.get("portal_week") or 0))
+    after = full[start:] if isinstance(start, int) and start <= len(full) else [e for e in full if at(e) >= since]
+    log = [e for e in after if e.get("pid") == pid and e.get("school") == me]
+    contacted = [e for e in log if e["kind"] in ("contact", "pitch", "offer", "raise_nil") and e.get("action") != "scout"]   # a scout trip is no contact with him
     elsewhere = next((s for s in (st_.get("signed"), st_.get("committed")) if s and s != me), None)
     if kind == "pull":
         return pid not in rc["offers"].get(me, []), None
@@ -336,9 +349,9 @@ def _task_check(state: dict, t: dict) -> tuple[bool, Optional[str]]:
     if kind == "raise":
         return any(e["kind"] in ("offer", "raise_nil") for e in log) or not recruiting.cooled(state, me, pid), None
     if kind == "wait":
-        return state["current_week"] > since, None
+        return now > since, None
     if kind == "leave":
-        return state["current_week"] > since and not contacted, None
+        return now > since and not contacted, None
     return False, None
 
 
@@ -354,6 +367,8 @@ def tasks(state: dict) -> list:
                 t.pop("note", None)
             elif note:
                 t["note"] = note
+            else:
+                t.pop("note", None)                      # live again (he decommitted): the note goes
         out.append(dict(t))
     return out
 
@@ -368,6 +383,7 @@ def set_plan(state: dict, body: dict) -> dict:
         if not isinstance(ts, list) or len(ts) > MAX_TASKS:
             raise LayoutError(f"Tasks are a list of at most {MAX_TASKS}.")
         seen, new_tasks = set(), []
+        old = {o.get("id"): o for o in _hq(state).get("tasks") or []}
         for t in ts:
             if not isinstance(t, dict) or not (isinstance(t.get("id"), str) and _ID.match(t["id"])) or t["id"] in seen:
                 raise LayoutError("Each task needs its own short lowercase id.")
@@ -392,12 +408,20 @@ def set_plan(state: dict, body: dict) -> dict:
                 since = t.get("since", 0)
                 if isinstance(since, bool) or not isinstance(since, int):
                     raise LayoutError("A task's week is a whole number.")
-                row["since"] = since
+                was = old.get(t["id"]) or {}
+                if was.get("do"):                        # when it was added is the server's, kept from the first save
+                    row.update({k: was[k] for k in ("since", "since_p", "since_n") if k in was})
+                    row.setdefault("since", since)
+                else:
+                    row["since"], row["since_p"] = _clock(state)
+                    row["since_n"] = len((state.get("recruiting") or {}).get("log") or [])
             for k in ("auto", "manual"):
                 if t.get(k) is True:
                     row[k] = True
-            if isinstance(t.get("note"), str) and len(t["note"]) <= TASK_TEXT:
-                row["note"] = t["note"]
+            if isinstance(t.get("note"), str) and len(t["note"]) > TASK_TEXT:
+                raise LayoutError(f"A task's note is at most {TASK_TEXT} characters.")
+            if row.get("do") and (old.get(t["id"]) or {}).get("note"):
+                row["note"] = old[t["id"]]["note"]       # the note is the server's (tasks() sets and clears it), not the page's
             if row["done"] is False:
                 row.pop("auto", None)
             seen.add(t["id"])

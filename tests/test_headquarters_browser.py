@@ -302,6 +302,20 @@ def check_impact_filters(page, base, sid) -> None:
         assert page.get_attribute(f"{card} .hq-fpill[data-filter=role]", "class").split().count("on") == 1, "a set filter reads dark"
         page.select_option(f"{card} select[aria-label=Role]", "")
         assert rows() == everyone
+        # after an in-place patch (a task saved: the "hq" source refreshes and the card is morphed), the pills still filter
+        call(base, f"/api/season/{sid}/headquarters", {"cards": [{"id": "c1", "widget": "senior-impact", "size": "L"},
+                                                                {"id": "c2", "widget": "tasks", "size": "M"}]})
+        open_hq(page, base, sid)
+        tasks = "#tab-headquarters .hq-card[data-widget='tasks']"
+        page.fill(f"{tasks} .hq-task-input", "Watch film.")
+        page.press(f"{tasks} .hq-task-input", "Enter")
+        page.wait_for_selector(f"{tasks} li.hq-task:has-text('Watch film.')")
+        page.click(f"{tasks} li.hq-task:has-text('Watch film.') .hq-task-done")
+        page.wait_for_function("() => !window.HQ.saving()", timeout=15_000)
+        time.sleep(0.6)
+        page.select_option(f"{card} select[aria-label=Role]", "Starter")
+        assert set(rows()) == {"Starter"}, f"the pills still filter after a patch: {rows()}"
+        page.select_option(f"{card} select[aria-label=Role]", "")
 
 
 def check_previews(page) -> None:
@@ -973,7 +987,7 @@ if __name__ == "__main__":
             live = live_career(base)
             made.append(live)
             if only_review:
-                for f in (check_next_depth, check_scouted, check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
+                for f in (check_impact_filters, check_next_depth, check_scouted, check_bar_gaps, check_resize_snap, check_edit_overlay, check_resize, check_drag_live, check_masonry, check_scrolls, check_search_handlers, check_hq_want, check_drag_steady, check_save_flushed):
                     try:
                         f(page, base, live)
                         print("  pass", f.__name__)

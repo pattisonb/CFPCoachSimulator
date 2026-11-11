@@ -133,6 +133,49 @@ def test_bad_do_refused():
     raise AssertionError("an unknown kind is refused")
 
 
+def test_leave_ignores_earlier_contact_and_scouting():
+    st = fresh()
+    a = open_pids(st, 1)[0]
+    call(st, a)                                          # the contact that made him tune you out, earlier the same week
+    add(st, "t1", "leave", a)
+    recruiting.act(st, ME, a, "scout")                   # a scout trip is not contact with him
+    st["current_week"] += 1
+    assert task(st, "t1")["done"], task(st, "t1")
+
+
+def test_portal_weeks_tick_wait_and_leave():
+    st = fresh()
+    a, b = open_pids(st, 2)
+    rc = st["recruiting"]
+    rc["portal"], rc["week"] = True, 1                   # the portal: the season's week stands still, the portal's moves
+    saved = recruiting.open_spots
+    recruiting.open_spots = lambda *a, **k: 10           # a faked portal has no next-year league to count spots from
+    try:
+        _portal_ticks(st, a, b)
+    finally:
+        recruiting.open_spots = saved
+
+
+def _portal_ticks(st, a, b):
+    rc = st["recruiting"]
+    add(st, "t1", "wait", a)
+    add(st, "t2", "leave", b)
+    assert not task(st, "t1")["done"] and not task(st, "t2")["done"]
+    rc["week"] = 2
+    assert task(st, "t1")["done"] and task(st, "t2")["done"], (task(st, "t1"), task(st, "t2"))
+
+
+def test_moot_note_clears_on_decommit():
+    st = fresh()
+    pid = open_pids(st, 1)[0]
+    add(st, "t1", "call", pid)
+    st["recruiting"]["status"][pid]["committed"] = "ohio-state"
+    assert task(st, "t1").get("note")
+    hq.set_plan(st, {"tasks": [dict(t) for t in hq.tasks(st)]})     # the page saves the list back, note and all
+    st["recruiting"]["status"][pid]["committed"] = None
+    assert not task(st, "t1").get("note"), task(st, "t1")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

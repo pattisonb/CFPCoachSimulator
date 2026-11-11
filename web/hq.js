@@ -641,9 +641,11 @@
       const f = (FILTER_PICKS[id] = FILTER_PICKS[id] || {});
       const box = el("div", { class: "hq-filtered" });
       const val = (get, r) => { const v = get(r); return v == null ? "" : String(v); };
-      const paint = () => {
+      // into the box on the page: after an in-place patch (ui.morph) the select on the page runs this handler, but the
+      // page keeps its own nodes, so the handler finds them from the select, not from this draw's closure
+      const paint = (into = box) => {
         const shown = rows.filter((r) => cols.every(([key, , get]) => !f[key] || val(get, r) === f[key]));
-        box.replaceChildren(shown.length ? render(shown) : kit.empty(none));
+        into.replaceChildren(shown.length ? render(shown) : kit.empty(none));
       };
       const pills = cols.map(([key, label, get]) => {
         const vals = [...new Set(rows.map((r) => val(get, r)))].filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
@@ -653,7 +655,12 @@
         sel.value = f[key] || "";
         const pill = el("label", { class: `hq-fpill${f[key] ? " on" : ""}`, "data-filter": key }, [el("span", { class: "hq-fpill-k", text: label }), sel,
           el("span", { class: "hq-fpill-caret", "aria-hidden": "true", text: "▾" })]);
-        ui().on(sel, "change", (e) => { f[key] = e.currentTarget.value; pill.classList.toggle("on", !!f[key]); paint(); });
+        ui().on(sel, "change", (e) => {
+          const s = e.currentTarget, wrap = s.closest(".hq-filtered-wrap");
+          f[key] = s.value;
+          (s.closest(".hq-fpill") || pill).classList.toggle("on", !!f[key]);
+          paint((wrap && wrap.querySelector(":scope > .hq-filtered")) || box);
+        });
         return pill;
       }).filter(Boolean);
       paint();
