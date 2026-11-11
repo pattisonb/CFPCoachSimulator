@@ -532,8 +532,8 @@ def hc_visit_week(state: dict, slug: str, pid: str) -> Optional[int]:
     rc = state["recruiting"]
     c = (rc.get("contacts", {}).get(pid) or {}).get(slug) or {}
     w = c.get("hc_week")
-    if w is None:
-        return None
+    if w is None or slug != state.get("team"):
+        return w                                    # an AI school's visits log nothing: its mark stands (and no log scan)
     if ((rc.get("scenes") or {}).get(slug) or {}).get(pid):
         return w
     for e in reversed(rc.get("log") or ()):
@@ -541,8 +541,6 @@ def hc_visit_week(state: dict, slug: str, pid: str) -> Optional[int]:
             continue
         if e["kind"] in ("present", "pitch") or (e["kind"] == "contact" and e.get("pitch")):
             return w
-    if slug != state.get("team"):
-        return w                                    # an AI school's visits log nothing: its mark stands
     return None
 
 
