@@ -131,7 +131,7 @@ def win_chance(page) -> tuple:
 
 def plan(page) -> list:
     return page.eval_on_selector_all("#tab-office .ofc-plan .ofc-step",
-                                      "els => els.map(e => [e.querySelector('b').textContent, e.classList.contains('now') ? 'now' : e.classList.contains('done') ? 'done' : ''])")
+                                      "els => els.map(e => [e.querySelector('b').textContent, e.classList.contains('now') ? 'now' : e.classList.contains('done') ? 'done' : e.classList.contains('part') ? 'part' : ''])")
 
 
 def check_cards(page, base, sid) -> None:
