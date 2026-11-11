@@ -1627,6 +1627,9 @@ def play_my_game(state: dict, pool: Optional[Pool] = None, report: Optional[Repo
         return None
     week = state["current_week"] + 1
     _setup_week(state, week, load_teams(), _stage_reporter(report))
+    if state.get("career") and state.get("league"):          # promises: who starts your game, recorded before it is played
+        from coach_career import promises
+        promises.snapshot_week(state, week)
     eid = my_game_id(state, week)
     if eid is None:
         return None
@@ -1646,6 +1649,9 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     teams = load_teams()
     week = state["current_week"] + 1
     _setup_week(state, week, teams, say)
+    if state.get("career") and state.get("league"):          # promises judged all season: who starts this week (coach_career/promises.py)
+        from coach_career import promises
+        promises.snapshot_week(state, week)
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
     _run_games(state, ids, pool, report, stage=f"Playing {week_label(week)} games")
 
@@ -2033,6 +2039,8 @@ def _depth_card(state: dict, slug: str):
     moves = position_changes(state, slug)
     dev = development_reads(state, slug)                     # your roster: coachability and potential
 
+    from coach_career import promises
+    chips = promises.chips_now(state) if state.get("career") and slug == state.get("team") else {}   # a promised start: On Track, Slipping, Broken
     def card(p: dict, role: str) -> dict:
         inj = injured.get(f"{p['name']}|{p['position']}")
         rec = ss.get(f"{p['name']}|{p['position']}")
@@ -2041,6 +2049,7 @@ def _depth_card(state: dict, slug: str):
         if role in ("KR", "PR"):
             group = "RS"
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
+                "promise": chips.get(p.get("slug")),
                 "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
                 **dev.get(p.get("slug"), {}), "archetype": p.get("archetype"),
@@ -4278,8 +4287,10 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     entry = next((c for c in (((state.get("league") or {}).get("teams") or {}).get(team) or {}).get("roster", []) if c.get("id") == p.get("slug")), None)
     for h in (entry or {}).get("hist") or []:
         history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
+    from coach_career import promises
+    promise = promises.chips_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
     return {
-        "history": history, "redshirt": redshirt_status(state, team, p),
+        "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),

@@ -1803,6 +1803,7 @@
           el("div", { class: "player-tags" }, [
             p.starter ? el("span", { class: "tag good", text: "Starter" }) : el("span", { class: "tag", text: p.depth ? `${p.role || p.position} #${p.depth}` : "Reserve" }),
             p.injured && !(p.redshirt && p.redshirt.on) ? el("span", { class: "tag bad", text: "Injured" }) : null,
+            p.promise ? el("span", { class: `tag ${p.promise === "On Track" ? "good" : p.promise === "Broken" ? "bad" : "warn"}`, title: "You promised him a starting role; how it is landing so far", text: `Promise: ${p.promise}` }) : null,
             p.redshirt && p.redshirt.on ? el("span", { class: "tag", text: "Redshirting", title: "Sitting out the rest of the season; keeps his year" }) : null,
             p.morale && p.morale.enabled && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
             p.morale && p.morale.enabled && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,

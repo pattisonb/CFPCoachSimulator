@@ -1616,9 +1616,22 @@ goes, stored on the entrant (`driver`) and on your leaver's Keep Them Home card,
 the real cause, not a guess after the fact. The first segment is the role chance above (his
 class and role, a losing year, a Group of 5 standout moving up, a keep last year). A player
 promised a starting role (`promised`, from Keep Them Home or carried by a signed recruit or portal
-signee you told the job was his) who did not start adds a `promised` segment worth the rest of
-`PROMISE_BROKEN` (3) times the role chance; when the draw lands there his Keep Them Home card and
-the portal recap read "Was promised a starting role and did not get it". The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
+signee you told the job was his) is **judged all season** (`coach_career/promises.py`): before each week's games
+(`promises.snapshot_week`, from `season.advance`) the career records whether he starts, whether he is injured (a
+week he is hurt does not count; a redshirted week does) and whether the game is big (a title game, a bowl, the
+playoff, a rivalry, a ranked opponent). His `score` weighs week i of n by 1 + `LATE_WEIGHT` (2) × i / (n - 1), a big
+game `BIG_WEIGHT` (2) times more (Loves the Attention: twice that again), and takes `BENCH_HIT` (0.15, a QB 1.5
+times, a lineman 0.6, a Cocky player 1.5 times) off when he started and then sat a big game. His personality sets the
+bar (`BANDS`, kept at / broken under: 0.60 / 0.35; Cocky 0.75 / 0.50; Shy 0.50 / 0.25), so the score lands **Kept**
+(his portal chance times `KEPT_STAY`), **Bent** (a `promised` segment of `BENT_MULT` (1.5) − 1 times the role chance)
+or **Broken**: the rest of `promises.LEAVE` by the class he played (a freshman 0.60, a sophomore 0.75, a junior
+0.92, a senior 0.95), 0.03 more after a big-game benching or at quarterback, 0.10 less for a Shy player, never above
+0.97. A promise with no weekly record (a save from before) keeps the old rule: not a starter at the season's end
+adds the rest of `PROMISE_BROKEN` (3) times the role chance. When the draw lands on the promise his Keep Them Home
+card and the portal recap read "Was promised a starting role and did not get it". During the season the depth chart
+and his player page show the promise's chip (**On Track**, **Slipping**, **Broken**: the band so far,
+`promises.chips_now`), and the first week it slips (after `NEWS_AFTER` (2) weeks that count) Program News carries his
+line, "Coach, you told me this was my job." The next is NIL: a starter or rotation player has a market value (`recruiting.market_value`:
 the recruit ask of the star tier his overall reads as, 60 for a five-star-equivalent, 30 a
 four, 8 a three, times his position), and his program's tier pays a starter `NIL_TIER_PAY` (60
 at tier 1, 40, 20, 8, 2 at tier 5); when his market is over that, his chance adds `NIL_PULL`
@@ -1645,7 +1658,11 @@ chart after the departures); and, once you meet him (free), his ask: a starting 
 (`RETAIN_ASK`: 25 plus 0.8 a card-overall point over 50, times his position; 1.5 times that when
 what he really wants is snaps; 2.5 times for a draft entrant, 1.5 more for a top-100 projection).
 A promised starting role counts only if your depth chart would really start him (a hollow
-promise is worth a few points, and he knows); NIL comes off next year's budget, so it is money
+promise is worth a few points, and he knows). A leaver whose promise **broke** gets one more chance: a real starting
+role promised again keeps him `PROMISE_AGAIN_STAY` (0.55) of the time, nothing 0.02, and his NIL ask is
+`PROMISE_NIL_MULT` (2.5) times the usual (All Business 0.8 of that, Cocky 1.3); the one you keep that way carries
+`promised_again`, and if that promise breaks too his card says "He won't believe another promise." and a promise is
+worth nothing to him. NIL comes off next year's budget, so it is money
 your recruits and your portal pool will not have, and the portal pool reads the smaller budget
 at once. When you advance each one stays or goes (`stay_chance`: 10% for nothing, about 75% at
 his ask, about 70% for a real starting role, 92% at most; a draft entrant projected in the first

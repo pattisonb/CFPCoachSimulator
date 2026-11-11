@@ -682,6 +682,7 @@ button.tiny { padding: 0 6px; font-size: 12px; line-height: 26px; min-height: 28
 .tag { font-size: 11px; padding: 3px 8px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
 .tag.good { color: var(--good-text); border-color: var(--good); }
 .tag.bad { color: var(--bad-text); border-color: var(--bad); }
+.tag.warn { color: var(--warn-text, var(--text)); border-color: var(--warn, #c98a1b); }
 .player-ovr { text-align: center; min-width: 84px; padding: 8px 14px; background: var(--panel); border: 1px solid var(--border); }
 .player-ovr-num { font-size: 34px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
 .player-tiles { margin: 12px 0; }
