@@ -1,4 +1,4 @@
-"""Headquarters' Senior Impact and Retention replacement links during the offseason: the replacement is a recruit of
+"""Headquarters' Player Impact and Retention replacement links during the offseason: the replacement is a recruit of
 the signed high school class, which the portal weeks keep aside (prospects.class_rc); his Prospect Profile must
 still open then, not 404 "unknown prospect". And every Headquarters player row carries his slug for his player page."""
 import sys as _sys
@@ -32,10 +32,21 @@ def test_hq_players_carry_slugs(st):
     assert rows and all(p.get("slug") for p in rows), rows[:2]
 
 
+def test_outlook_shows_what_happened(st):
+    """In the offseason each of your players carries where he is now (offseason.player_next as `next`): a graduate
+    reads Graduated, a portal entrant the portal or his new school."""
+    players = headquarters.outlook(st)["players"]
+    assert players and all("next" in p for p in players)
+    kinds = {p["next"]["status"] for p in players if p["next"]}
+    assert "graduated" in kinds, kinds
+
+
 if __name__ == "__main__":
     st = season.new_season("iowa", "full", seed=5, career=True)
     finished(st)
     offseason.start(st)
     test_hq_players_carry_slugs(st)
+    offseason.advance(st)                                  # past Keep Them Home: the departures are known
+    test_outlook_shows_what_happened(st)
     test_replacement_profile_opens_in_the_portal(st)
     print("hq profile links ok: a replacement's Prospect Profile opens in the portal weeks; Headquarters players carry their slugs")

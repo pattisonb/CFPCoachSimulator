@@ -1497,8 +1497,8 @@ fetched. Ready: Class at a Glance, Week's Resources, Top Targets, Class Needs, V
 Recruiting Activity, Commitment Tracker, Hot and Cold Movers, Class Breakdown, Your Full Class (every commit and signee, best first; a name opens his Prospect Profile), Recruiting Rankings, Recruit Search,
 Scouting Queue, Flags, Area Scouts, Program Comparison, and (round 2, `hq-widgets/outlook.js`) Alerts and Needs
 Attention, Board Health, Offer Efficiency, Position Battle Board (source `depth`), Scholarship Budget, Recruiting
-Calendar, What-If, Senior Impact and Retention, Roster Loss Projections, Recruiting Tasks and Recruiting Goals. A player
-of yours named in a widget (Senior Impact, the Position Battle Board, Next Year's Depth Chart) opens his player page
+Calendar, What-If, Player Impact and Retention (in the offseason each player's real outcome, `offseason.player_next`: wants to leave, graduated, drafted, in the portal, transferred), Roster Loss Projections, Recruiting Tasks and Recruiting Goals. A player
+of yours named in a widget (Player Impact and Retention, the Position Battle Board, Next Year's Depth Chart) opens his player page
 (`k.player`); a recruit's name opens his Prospect Profile (`k.name`), during the portal weeks too (the signed class
 kept aside, `prospects.profile`).
 Scouted Players (source `scouted`: the Scouting desk's scouted prospects by potential) shows them as tiles; a tile

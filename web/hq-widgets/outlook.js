@@ -191,14 +191,18 @@
       return el("div", {}, [pick, result]);
     } });
 
-  // ----- Senior Impact and Retention ------------------------------------------------------------------------------
-  reg({ id: "senior-impact", title: "Senior Impact and Retention", category: "program", blurb: "Your seniors and draft-eligible starters, how likely each is to leave, and the recruit who could take his place.",
+  // ----- Player Impact and Retention ------------------------------------------------------------------------------
+  reg({ id: "senior-impact", title: "Player Impact and Retention", category: "program", blurb: "Your seniors, draft-eligible starters and transfer risks, how likely each is to leave (in the offseason, what really happened), and the recruit who could take his place.",
     sizes: ["M", "L"], size: "M", sources: ["hq"], want: ["outlook"], sample: { hq: { outlook: SAMPLE_OUTLOOK } }, viewAll: "depth",
     draw: (d, ctx) => {
-      const ps = ((d.hq.outlook || {}).players || []).filter((p) => p.leaving || p.draft || (p.starter && p.transfer === "High"))
+      // in the offseason a player's real outcome (offseason.player_next) replaces the projection: gone, going or kept
+      const me = ctx.season && ctx.season.team;
+      const gone = (p) => p.next && p.next.status !== "returning" && !(p.next.status === "transfer_in" && p.next.team === me);
+      const ps = ((d.hq.outlook || {}).players || []).filter((p) => gone(p) || (!p.next && (p.leaving || p.draft || (p.starter && p.transfer === "High"))))
         .sort((a, b) => (b.starter - a.starter) || (b.overall - a.overall));
       if (!ps.length) return k.empty("Nobody on your roster looks likely to leave.");
-      const why = (p) => (p.leaving ? "Graduating" : p.draft ? `Draft: ${p.draft}` : "Transfer Risk");
+      const outcome = (n) => (n.status === "transfer_in" ? `Transferred: ${n.team_name}` : n.status === "portal" ? "In the Portal" : n.status_name);
+      const why = (p) => (gone(p) ? outcome(p.next) : p.leaving ? "Graduating" : p.draft ? `Draft: ${p.draft}` : "Transfer Risk");
       // his replacement: the best recruit at his position who is yours (committed, offered, on your board)
       const rep = (p) => (p.replacement
         ? el("span", { class: "hq-rep" }, [k.name(ctx, p.replacement.pid, p.replacement.name), el("span", { class: "go-tag", text: p.replacement.status })])
