@@ -719,7 +719,7 @@ def create_season(p: Params) -> dict:
         if coach is None:
             raise ApiError(404, "unknown coach")
     if mode != "full":
-        raise ApiError(400, "Coach Career starts from week 1")
+        raise ApiError(400, "Coach Career starts from Week 0.")
     _check_not_running()
     if key != "builtin":
         state = _start_from_league(key, team, seed, coach)       # saved
