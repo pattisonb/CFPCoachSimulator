@@ -2059,9 +2059,11 @@ season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your pro
 Departures, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. **Every player's
 name opens his profile** (`nameLink`): a portal entrant (your board, Your Moves, Who Got Away) opens his Prospect
 Profile while the portal is open; anyone else, and every name once the portal closes, opens his player page by
-slug, where a **Next Season** block (`offseason.player_next`) reads where he is now: his team (a transfer under his
-new school), position, class and overall, or where he went (Graduated, Declared for the Draft, Drafted, Transfer
-Portal, Left the Team), over last season's ratings and stats. A name link is 44 px tall on a phone. Every
+slug, where an **Offseason Status** banner (`offseason.player_next`'s `sentence`) says where he is now in one
+sentence ("Returning to Georgia as a senior, 74 overall.", "Wants to leave for the NFL Draft." at Keep Them Home,
+"Transferred from Georgia Tech to Iowa, 67 overall.", "Graduated.", "Drafted in round 2, pick 41.", "In the
+transfer portal.", "Left the team.") over last season's ratings and stats, with "Ratings and stats below are from
+the 2026 season." A name link is 44 px tall on a phone. Every
 page has one frame: the title, a "Stage N of 9" chip and a pill stepper (✓ for a done step, the
 accent for the current one) on top; Back to Offseason on the left and the primary "Advance to …"
 (with Sim to Next Season beside it) at the bottom. In front of each stage sits the **Overview**: a

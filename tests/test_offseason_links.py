@@ -29,7 +29,7 @@ def stage_page(page, base, sid, name) -> None:
 def next_text(page) -> str:
     page.wait_for_selector(".modal:not([hidden]) .player-next", timeout=30_000)
     text = page.inner_text(".modal:not([hidden]) .player-next")
-    assert "NEXT SEASON" in text.upper() and "null" not in text and "undefined" not in text and "NaN" not in text, text
+    assert "OFFSEASON STATUS" in text.upper() and "season." in text and "null" not in text and "undefined" not in text and "NaN" not in text, text
     return text
 
 
