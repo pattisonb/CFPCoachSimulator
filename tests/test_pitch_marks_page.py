@@ -27,7 +27,8 @@ if __name__ == "__main__":
     rc["board"].append(pid)
     for topic, reaction in (("nil", "polite"), ("coach", "quiet"), ("winning", "hit"), ("pro", "guarded")):
         rc["log"].append({"week": 1, "kind": "pitch", "pid": pid, "school": "iowa", "action": "call", "pitch": topic, "reaction": reaction})
-    rc["revealed"].setdefault("iowa", {})[pid] = list(rc["prospects"][pid]["priorities"][:2])   # he told you two of his priorities
+    # he told you two of his priorities, never NIL: he called NIL Not His Thing, which a told priority outranks on his tags
+    rc["revealed"].setdefault("iowa", {})[pid] = [t for t in rc["prospects"][pid]["priorities"] if t != "nil"][:2]
     season.save_season(st)
     port = free_port()
     base = f"http://127.0.0.1:{port}"
@@ -58,6 +59,14 @@ if __name__ == "__main__":
                 texts = [c[0] for c in card]
                 assert any("Not His Thing" in t for t in texts) and any("Weak Case" in t for t in texts), card
                 assert all(c[1] and c[1].endswith(".") for c in card), "each mark says why, as a sentence"
+                # the snapshot's tags in labeled rows; one chip a topic; a topic he ruled out never keeps a hint star
+                labels = page.eval_on_selector_all(".go-pane .pv-snapshot .pv-tag-label", "els => els.map(e => e.textContent)")
+                assert "His Topics" in labels and labels == [x for x in ("Status", "His Topics", "Who He Is") if x in labels], labels
+                topics = page.eval_on_selector_all(".go-pane .pv-snapshot .pv-tag-group[data-key=tags-topics] .go-tag", "els => els.map(e => e.textContent)")
+                names = [t.lstrip("★☆ ").split(" · ")[0] for t in topics]
+                assert len(names) == len(set(names)), f"one chip a topic: {topics}"
+                assert not any(t.startswith("☆") and "Not His Thing" in t for t in topics), topics
+                assert any("Not His Thing" in t for t in topics), topics
                 # What He Wants: his known priorities, each with your program's case in a word (School Grades Phase 2)
                 page.click(".go-pane .go-subtabs button[data-sub=profile]")
                 page.wait_for_selector(".go-pane [data-trait=wants]", timeout=30_000)
