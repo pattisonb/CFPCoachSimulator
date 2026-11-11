@@ -305,6 +305,22 @@
   // market, pro pipeline); then two columns, the seven metrics as bars under School Grades and the draft groups as chips
   // under Position Pro Potential; the AD's goal in a footer (renderPrograms)
   const HEADLINE = [["prestige", "Prestige"], ["market", "Market"], ["pro", "Pro Pipeline"]];
+  // School Grades in two groups (docs/superpowers/plans/2026-11-11-school-grades-phase-1.md): the rating's own measures and
+  // the six from the research (r.grades, fixed for now; null for a program the research has no row for: Not Graded)
+  const GRADE_TIPS = {
+    academics: "U.S. News rank, and the football team's graduation and progress rates.",
+    facilities: "How recently the stadium, the football building and the indoor practice facility were built or renovated.",
+    location: "The size of the metro and the winter weather.",
+    stability: "How few head coaches the program has had since 2010.",
+    game_day: "The home crowd and how full the stadium is.",
+    exposure: "TV audiences and the football team's Instagram following.",
+  };
+  const metricTip = (k) => GRADE_TIPS[k] || ((PROGRAM_METRICS.find(([m]) => m === k) || [])[2] || "");
+  const GRADE_GROUPS = [["Football", [["prestige", "Prestige"], ["winning", "Winning"], ["coach", "Coach"], ["stability", "Stability"], ["conference", "Conference"], ["pro", "Pro Pipeline"]]],
+    ["Campus", [["academics", "Academics"], ["facilities", "Facilities"], ["location", "Location"], ["game_day", "Game Day"], ["exposure", "Exposure"], ["nil", "NIL"]]]];
+  const NEW_GRADES = ["academics", "facilities", "location", "stability", "game_day", "exposure"];
+  // a row's value for a measure: the rating's own on the row, a new grade in r.grades; null when not graded
+  const gradeOf = (r, k) => (NEW_GRADES.includes(k) ? (r.grades ? r.grades[k] : null) : r[k] || 0);
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
@@ -321,10 +337,16 @@
         el("div", { class: "go-program-stats" }, HEADLINE.map(stat))]),
       el("div", { class: "go-program-body" }, [
         el("div", { class: "go-program-col" }, [el("div", { class: "go-kicker muted go-program-h" }, ["School Grades ",
-          ui().tip("The seven measures behind your standing, each in one of eight words: Elite, Excellent, Strong, Good, Solid, Fair, Thin, Weak.", "School Grades")]),
-          el("div", { class: "go-program-bars" }, PROGRAM_METRICS.map(([k, label, tip]) => el("div", { class: "go-program-bar", title: tip }, [
-            el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${Math.max(2, Math.min(100, you[k]))}%` })]),
-            el("span", { class: "go-program-val", text: word(k) })])))]),
+          ui().tip("Your program in twelve measures, each in one of eight words: Elite, Excellent, Strong, Good, Solid, Fair, Thin, Weak. Football's six and NIL move with results; the campus grades come from the record.", "School Grades")]),
+          ...GRADE_GROUPS.map(([title, list]) => el("div", { class: "go-program-group" }, [el("div", { class: "go-program-group-h", text: title }),
+            el("div", { class: "go-program-bars" }, list.map(([k, label]) => {
+              const v = gradeOf(you, k);
+              const tags = k === "location" && you.tags ? [you.tags.setting, you.tags.climate, you.tags.region].filter(Boolean) : [];
+              return el("div", { class: "go-program-bar", "data-metric": k, title: metricTip(k) }, [
+                el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${v == null ? 0 : Math.max(2, Math.min(100, v))}%` })]),
+                el("span", { class: "go-program-val", text: v == null ? "Not Graded" : METRIC_WORDS(v, pv) }),
+                tags.length ? el("span", { class: "go-place-tags" }, tags.map((t) => el("span", { class: "go-tag go-place-tag", text: t }))) : null]);
+            }))]))]),
         el("div", { class: "go-program-col" }, [el("div", { class: "go-kicker muted go-program-h" }, ["Position Pro Potential ",
           ui().tip("Where your program's last ten drafts came from, by draft position, best first; a position it never sent reads Weak.", "Position Pro Potential")]),
           proGroups(pv, you)])]),
@@ -356,18 +378,21 @@
       el("span", { class: "go-kicker muted", text: "Your AD's Goal" }), el("b", { text: ` ${s.job.goal}` }),
       el("span", { class: "go-tag", text: `${s.job.mood}${s.job.ultimatum ? " · Ultimatum Year" : ""}` })]));
     root.append(card, el("section", { class: "go-card rcp-card lg-card go-programs-card", "aria-label": "Every Program" }, [
-      el("div", { class: "card-bar" }, [el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same seven measures, and what its AD expects this season.", "Every Program")])]),
+      el("div", { class: "card-bar" }, [el("div", { class: "go-kicker muted" }, ["Every Program ", ui().tip("Every FBS program's standing on the same measures, and what its AD expects this season.", "Every Program")])]),
       programsTable(pv)]));
     if (H.carryLine) H.carryLine(s, card);
   }
 
   function programsTable(pv) {
-    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, ["Program", "Standing", "Prestige", "Winning", "NIL", "Market", "Conf", "Coach", "Pro Pipeline", "The AD Expects"].map((h) => el("th", { text: h })))])]);
+    const cols = [["prestige", "Prestige"], ["winning", "Winning"], ["nil", "NIL"], ["market", "Market"], ["conference", "Conf"], ["coach", "Coach"], ["pro", "Pro Pipeline"],
+      ["academics", "Academics"], ["facilities", "Facilities"], ["location", "Location"], ["stability", "Stability"], ["game_day", "Game Day"], ["exposure", "Exposure"]];
+    const t = el("table", { class: "stats go-programs" }, [el("thead", {}, [el("tr", {}, [el("th", { text: "Program" }), el("th", { text: "Standing" }),
+      ...cols.map(([k, h]) => el("th", { text: h, title: metricTip(k) })), el("th", { text: "The AD Expects" })])])]);
     const body = el("tbody");
     for (const r of pv.rows) {
       body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [
         el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", {}, [el("span", { class: "go-tag", text: r.tier_name })]),
-        ...["prestige", "winning", "nil", "market", "conference", "coach", "pro"].map((k) => { const w = METRIC_WORDS(r[k] || 0, pv); return el("td", { class: `word ${w.toLowerCase()}`, text: w }); }),
+        ...cols.map(([k]) => { const v = gradeOf(r, k); if (v == null) return el("td", { class: "muted small", text: "Not Graded" }); const w = METRIC_WORDS(v, pv); return el("td", { class: `word ${w.toLowerCase()}`, text: w }); }),
         el("td", { class: "small", text: r.goal })]));
     }
     t.append(body);

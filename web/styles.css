@@ -1696,3 +1696,10 @@ button, input, select, textarea { }
 .card-bar .lg-head-title, .card-bar .rcp-head-title, .card-bar .card-bar-title { gap: 2px 12px; }
 .card-bar > .view-chips, .card-bar > .stats-chips { margin-top: 2px; }
 @media (max-width: 759px) { .card-bar .go-info-wrap button.go-info { margin-top: -11px; margin-bottom: -11px; } }
+/* School Grades in two groups (Football, Campus), each a small heading over its bars; Location's tags under its bar */
+.go-program-group { display: flex; flex-direction: column; gap: 6px; }
+.go-program-group + .go-program-group { margin-top: 12px; }
+.go-program-group-h { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.go-program-bar .go-place-tags { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-left: 100px; }
+@media (max-width: 720px) { .go-program-bar .go-place-tags { padding-left: 0; } }
+.go-program-bar .go-program-val { white-space: nowrap; }

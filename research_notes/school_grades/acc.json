@@ -1,0 +1,1464 @@
+{
+ "boston-college": {
+  "us_news_rank": {
+   "value": 31,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Up from 36 in the 2026 edition; also in the College Kickstart table."
+  },
+  "football_gsr": {
+   "value": 96,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/67.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 990,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/67_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Alumni Stadium",
+   "source": "https://en.wikipedia.org/wiki/Alumni_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 44500,
+   "source": "https://en.wikipedia.org/wiki/Alumni_Stadium",
+   "estimate": false,
+   "note": "Wikipedia infobox: 44,500 (1995-present)."
+  },
+  "stadium_renovated": {
+   "value": 1995,
+   "source": "https://en.wikipedia.org/wiki/Alumni_Stadium",
+   "estimate": false,
+   "note": "Infobox: expanded 1971, 1995; renovated 1995."
+  },
+  "football_building_year": {
+   "value": 2005,
+   "source": "https://bceagles.com/facilities/yawkey-center/3",
+   "estimate": false,
+   "note": "Yawkey Athletics Center (houses football offices, locker room, meeting rooms) opened March 2005 per BC; some sources say 2003. Football locker room renovated for 2015 (partial)."
+  },
+  "indoor_practice": {
+   "value": 2018,
+   "source": "https://bc.edu/bc-web/bcnews/athletics-recreation/department-news/fish-field-house.html",
+   "estimate": false,
+   "note": "Fish Field House, opened July 2018."
+  },
+  "metro_population": {
+   "value": 5034221,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Boston-Cambridge-Newton, MA-NH MSA, Census Bureau July 1, 2025 estimate (2020 Census: 4,941,632), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 29.9,
+   "source": "https://en.wikipedia.org/wiki/Template:Boston,_MA_weatherbox",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Boston Logan International Airport)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Chestnut Hill is in the Boston MSA (5.0M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Boston_College_Eagles_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Spaziani, Addazio, Hafley, O'Brien (Gunnell interim excluded)."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Boston_College_Eagles_head_football_coaches",
+   "estimate": false,
+   "note": "Bill O'Brien, 2024-present (still head coach in 2026)."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/bcfootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "california": {
+  "us_news_rank": {
+   "value": 20,
+   "source": "https://www.collegekickstart.com/blog/item/u-s-news-world-report-posts-2027-college-rankings",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. UC Berkeley; down from 15 in the 2026 edition (also in Poets&Quants)."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/107.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 962,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/107_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "California Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/California_Memorial_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 52428,
+   "source": "https://en.wikipedia.org/wiki/California_Memorial_Stadium",
+   "estimate": false,
+   "note": "Infobox: 52,428 (expandable to 62,467 without tarps) (2024-present)."
+  },
+  "stadium_renovated": {
+   "value": 2012,
+   "source": "https://en.wikipedia.org/wiki/California_Memorial_Stadium",
+   "estimate": false,
+   "note": "Reopened Sept. 1, 2012 after full seismic renovation."
+  },
+  "football_building_year": {
+   "value": 2011,
+   "source": "https://calcrew.com/simpson-high-performance-center",
+   "estimate": false,
+   "note": "Simpson Center for Student-Athlete High Performance (football and Olympic sports); Cal page says established 2011, some project listings say completed 2012. Football-only Paul F. White Wellness Center added inside it Jan. 2024."
+  },
+  "indoor_practice": {
+   "value": "none",
+   "source": "https://calbears.com/sports/2013/4/17/208213293",
+   "estimate": true,
+   "note": "No indoor practice facility found in Cal facility pages or searches; absence inferred, not confirmed by a statement."
+  },
+  "metro_population": {
+   "value": 4630041,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "San Francisco-Oakland-Fremont, CA MSA, Census Bureau July 1, 2025 estimate (2020 Census: 4,749,008), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 51.1,
+   "source": "https://en.wikipedia.org/wiki/Berkeley,_California",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Berkeley station)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Berkeley is in the San Francisco-Oakland MSA (4.6M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_California_Golden_Bears_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Tedford (2002-12), Dykes, Wilcox. Lupoi starts 2026 and is not counted."
+  },
+  "current_hc_since": {
+   "value": 2017,
+   "source": "https://en.wikipedia.org/wiki/List_of_California_Golden_Bears_head_football_coaches",
+   "estimate": false,
+   "note": "Justin Wilcox (2017-2025) coached the 2025 season and was fired in Nov. 2025; Tosh Lupoi is head coach from 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/calfootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "clemson": {
+  "us_news_rank": {
+   "value": 80,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 80 per Yahoo/Greenville News coverage; 75 in the 2026 edition per Poets&Quants."
+  },
+  "football_gsr": {
+   "value": 98,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/147.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 996,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/147_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Clemson)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 81500,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Clemson)",
+   "estimate": false,
+   "note": "Infobox: 81,500 (2007-present)."
+  },
+  "stadium_renovated": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Clemson)",
+   "estimate": false,
+   "note": "Infobox expansions list ends with 2022."
+  },
+  "football_building_year": {
+   "value": 2017,
+   "source": "https://www.hok.com/news/2017-02/clemson-university-opens-state-of-the-art-football-operations-complex-designed-by-hok/",
+   "estimate": false,
+   "note": "Allen N. Reeves Football Complex opened Feb. 1, 2017."
+  },
+  "indoor_practice": {
+   "value": 2013,
+   "source": "https://clemson.world/archive/?p=4721",
+   "estimate": false,
+   "note": "Indoor practice facility (now Poe Indoor Practice Facility) dedicated Jan. 25, 2013; some later sources say 2012."
+  },
+  "metro_population": {
+   "value": 1014101,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Greenville-Anderson-Greer, SC MSA (Clemson is in Pickens County), Census Bureau July 1, 2025 estimate (2020 Census: 928,195), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 42.9,
+   "source": "https://en.wikipedia.org/wiki/Clemson,_South_Carolina",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Clemson University station)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Clemson,_South_Carolina",
+   "estimate": false,
+   "note": "Clemson is a small city dominated by the university; it sits in the Greenville MSA (just over 1M in 2025) but Greenville is ~30 miles away, so judged College Town rather than Big City."
+  },
+  "head_coaches_since_2010": {
+   "value": 1,
+   "source": "https://en.wikipedia.org/wiki/List_of_Clemson_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Dabo Swinney only."
+  },
+  "current_hc_since": {
+   "value": 2009,
+   "source": "https://en.wikipedia.org/wiki/List_of_Clemson_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Swinney took over as interim for the final 7 games of 2008; 2009 is his first full season as permanent head coach. Wikipedia lists 2008-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/clemsonfb returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "duke": {
+  "us_news_rank": {
+   "value": 8,
+   "source": "https://www.collegekickstart.com/blog/item/u-s-news-world-report-posts-2027-college-rankings",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Down from 7 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 94,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/193.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 990,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/193_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Wallace Wade Stadium",
+   "source": "https://en.wikipedia.org/wiki/Wallace_Wade_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 35018,
+   "source": "https://en.wikipedia.org/wiki/Wallace_Wade_Stadium",
+   "estimate": false,
+   "note": "Infobox: 35,018 (2024-present)."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Wallace_Wade_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 2014-2017, expanded 2016."
+  },
+  "football_building_year": {
+   "value": 2002,
+   "source": "https://dukechronicle.com/article/2002/10/officials-dedicate-yoh-center-amid-homecoming-festivities",
+   "estimate": false,
+   "note": "Yoh Football Center opened Aug. 2002. Locker room renovated July 2024 (partial, not a full renovation)."
+  },
+  "indoor_practice": {
+   "value": 2011,
+   "source": "https://www.discoverdurham.com/directory/pascal-field-house-at-duke-university/",
+   "estimate": false,
+   "note": "Pascal Field House opened Aug. 2011."
+  },
+  "metro_population": {
+   "value": 625485,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Durham-Chapel Hill, NC MSA, Census Bureau July 1, 2025 estimate (2020 Census: 588,911), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 41.9,
+   "source": "https://en.wikipedia.org/wiki/Durham,_North_Carolina",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Raleigh-Durham International Airport)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Durham MSA ~625k (Raleigh-Durham CSA is larger); Duke is the dominant institution and employer in a mid-size city. Judgment call between College Town and Big City."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Duke_Blue_Devils_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Cutcliffe, Elko, Diaz."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Duke_Blue_Devils_head_football_coaches",
+   "estimate": false,
+   "note": "Manny Diaz, 2024-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/dukefootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "florida-state": {
+  "us_news_rank": {
+   "value": 59,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 59 (with Pittsburgh); 51 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/234.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 993,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/234_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Doak Campbell Stadium",
+   "source": "https://en.wikipedia.org/wiki/Doak_Campbell_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 67277,
+   "source": "https://en.wikipedia.org/wiki/Doak_Campbell_Stadium",
+   "estimate": false,
+   "note": "Wikipedia: capacity was 82,300 after 2003, then cut to 67,277 by the 2024 renovations."
+  },
+  "stadium_renovated": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/Doak_Campbell_Stadium",
+   "estimate": false,
+   "note": "Renovations completed before the 2025 season."
+  },
+  "football_building_year": {
+   "value": 2025,
+   "source": "https://populous.com/article/florida-state-universitys-dunlap-football-center-gives-seminoles-football-a-new-home-for-training-and-recovery",
+   "estimate": false,
+   "note": "Albert J. and Judith A. Dunlap Football Center (football-only building), opened Oct. 2025 per search summary of project coverage."
+  },
+  "indoor_practice": {
+   "value": 2013,
+   "source": "https://seminoles.com/albert-j-dunlap-athletic-training-facility",
+   "estimate": false,
+   "note": "Indoor training facility unveiled 2013 (groundbreaking Nov. 2012)."
+  },
+  "metro_population": {
+   "value": 397442,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Tallahassee, FL MSA, Census Bureau July 1, 2025 estimate (2020 Census: 384,298), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 52.2,
+   "source": "https://en.wikipedia.org/wiki/Tallahassee,_Florida",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Tallahassee International Airport)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro ~400k; state capital, but FSU (plus FAMU) shapes the city."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Florida_State_Seminoles_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Fisher, Taggart, Norvell (Haggins interim excluded)."
+  },
+  "current_hc_since": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/List_of_Florida_State_Seminoles_head_football_coaches",
+   "estimate": false,
+   "note": "Mike Norvell coached 2020-2025; Wikipedia shows him leaving during 2026, with Rick Stockstill interim as of Nov. 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/fsufootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "georgia-tech": {
+  "us_news_rank": {
+   "value": 29,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 29; up from 32 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 93,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/255.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 977,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/255_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Bobby Dodd Stadium",
+   "source": "https://en.wikipedia.org/wiki/Bobby_Dodd_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 52113,
+   "source": "https://en.wikipedia.org/wiki/Bobby_Dodd_Stadium",
+   "estimate": false,
+   "note": "Infobox: 52,113 (2026-present)."
+  },
+  "stadium_renovated": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/Bobby_Dodd_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 1985, 2003, 2020; last expansion 2003. A 2026 capacity change is listed but no 2026 renovation year."
+  },
+  "football_building_year": {
+   "value": 2026,
+   "source": "https://www.ajc.com/sports/2026/05/georgia-tech-leans-heavily-on-potential-impact-of-new-athletics-center/",
+   "estimate": false,
+   "note": "Thomas A. Fanning Student-Athlete Performance Center opened May 2026, replacing the Edge Center; includes football meeting rooms (178-seat team room). Article does not explicitly say it houses football offices/locker room."
+  },
+  "indoor_practice": {
+   "value": 2011,
+   "source": "https://ramblinwreck.com/sports/genrel/facilities/brock-football-practice-facility",
+   "estimate": false,
+   "note": "John and Mary Brock Indoor Practice Facility opened Aug. 2011."
+  },
+  "metro_population": {
+   "value": 6482182,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Atlanta-Sandy Springs-Roswell, GA MSA, Census Bureau July 1, 2025 estimate (2020 Census: 6,104,803), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 44.8,
+   "source": "https://en.wikipedia.org/wiki/Template:Atlanta_weatherbox",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Hartsfield-Jackson Atlanta International Airport)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Atlanta MSA 6.5M; campus is in Midtown Atlanta."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Georgia_Tech_Yellow_Jackets_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Johnson, Collins, Key."
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Georgia_Tech_Yellow_Jackets_head_football_coaches",
+   "estimate": false,
+   "note": "Brent Key was interim for the last 8 games of 2022; 2023 is his first season as permanent coach. Wikipedia lists 2022-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/gatechfootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "louisville": {
+  "us_news_rank": {
+   "value": 179,
+   "source": "https://local12.com/news/local/new-us-news-rankings-where-cincinnati-area-colleges-landed-xavier-nku-miami-dayton-ohio-state-indiana-mount-josepg-midwest-university-education",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 179 with seven other schools, from a local news report naming Louisville. Not in the top-100 tables used for the others."
+  },
+  "football_gsr": {
+   "value": 95,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/367.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 979,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/367_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "L&N Federal Credit Union Stadium",
+   "source": "https://en.wikipedia.org/wiki/L%26N_Federal_Credit_Union_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 60800,
+   "source": "https://en.wikipedia.org/wiki/L%26N_Federal_Credit_Union_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_renovated": {
+   "value": 2018,
+   "source": "https://en.wikipedia.org/wiki/L%26N_Federal_Credit_Union_Stadium",
+   "estimate": false,
+   "note": "Infobox: expanded 2010, 2018 (north end zone)."
+  },
+  "football_building_year": {
+   "value": 2018,
+   "source": "https://gocards.com/news/2018/3/16/inside-tour-of-the-howard-schnellenberger-football-complex",
+   "estimate": false,
+   "note": "Howard Schnellenberger Football Complex (built 1998) expanded and renovated, completed 2018."
+  },
+  "indoor_practice": {
+   "value": 2005,
+   "source": "https://gocards.com/news/2005/12/1/Cards_Open_Trager_Indoor_Facility",
+   "estimate": false,
+   "note": "Trager Center; first practice Dec. 1, 2005 (one source says 2006)."
+  },
+  "metro_population": {
+   "value": 1402509,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Louisville/Jefferson County, KY-IN MSA, Census Bureau July 1, 2025 estimate (2020 Census: 1,362,180), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 35.7,
+   "source": "https://en.wikipedia.org/wiki/Template:Louisville,_Kentucky_weatherbox",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Louisville Muhammad Ali International Airport)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Louisville MSA 1.4M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Louisville_Cardinals_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Strong, Petrino (second stint), Satterfield, Brohm."
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Louisville_Cardinals_head_football_coaches",
+   "estimate": false,
+   "note": "Jeff Brohm, 2023-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/louisvillefb returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "miami": {
+  "us_news_rank": {
+   "value": 55,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. University of Miami (not Miami University); up from 64 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 91,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/415.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 984,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/415_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Hard Rock Stadium",
+   "source": "https://en.wikipedia.org/wiki/Hard_Rock_Stadium",
+   "estimate": false,
+   "note": "Off-campus NFL stadium in Miami Gardens."
+  },
+  "stadium_capacity": {
+   "value": 64767,
+   "source": "https://en.wikipedia.org/wiki/Hard_Rock_Stadium",
+   "estimate": false,
+   "note": "Infobox football capacity."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Hard_Rock_Stadium",
+   "estimate": false,
+   "note": "$350M+ renovation 2015-2016, done Sept. 2016."
+  },
+  "football_building_year": {
+   "value": 2018,
+   "source": "https://miamihurricanes.com/facilities/carol-soffer-indoor-practice-facility",
+   "estimate": true,
+   "note": "No new standalone football building found. The 2018 Carol Soffer IPF project added new football coaches' offices, reception/recruiting areas and weight room work tied to the Hecht Athletic Center, so 2018 is used. A $100M football operations center was announced in 2023 but was not confirmed open."
+  },
+  "indoor_practice": {
+   "value": 2018,
+   "source": "https://miamihurricanes.com/facilities/carol-soffer-indoor-practice-facility",
+   "estimate": false,
+   "note": "Carol Soffer Indoor Practice Facility, first practice Aug. 2018."
+  },
+  "metro_population": {
+   "value": 6391072,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Miami-Fort Lauderdale-West Palm Beach, FL MSA, Census Bureau July 1, 2025 estimate (2020 Census: 6,138,333), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 68.6,
+   "source": "https://en.wikipedia.org/wiki/Template:Miami_weatherbox",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Miami International Airport, near Coral Gables)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Coral Gables is in the Miami MSA (6.4M)."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Miami_Hurricanes_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Shannon, Golden, Richt, Diaz, Cristobal (interims Stoutland, Scott excluded)."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Miami_Hurricanes_head_football_coaches",
+   "estimate": false,
+   "note": "Mario Cristobal, 2022-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/canesfootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "nc-state": {
+  "us_news_rank": {
+   "value": 73,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Down from 64 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/490.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 988,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/490_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Carter-Finley Stadium",
+   "source": "https://en.wikipedia.org/wiki/Carter%E2%80%93Finley_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 56919,
+   "source": "https://en.wikipedia.org/wiki/Carter%E2%80%93Finley_Stadium",
+   "estimate": false,
+   "note": "Infobox: 56,919 (2021-present)."
+  },
+  "stadium_renovated": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/Carter%E2%80%93Finley_Stadium",
+   "estimate": false,
+   "note": "Infobox: expanded/renovated 2021. Videoboard work before 2023 not counted as major."
+  },
+  "football_building_year": {
+   "value": 2003,
+   "source": "https://facilities.ofa.ncsu.edu/building/wmf/",
+   "estimate": false,
+   "note": "Wendell H. Murphy Football Center completed 2003 (dedicated April 2003; some say ready for 2002). Later work was partial (2016 locker room, 2019 sports medicine, 2023 weight room)."
+  },
+  "indoor_practice": {
+   "value": 2014,
+   "source": "https://gopack.com/news/2014/8/12/NC_State_Athletics_Dedicates_New_Indoor_Practice_Facility",
+   "estimate": false,
+   "note": "Sources conflict. NC State Athletics dedicated the indoor practice facility in Aug. 2014, but the NCSU facilities page says Close-King IPF opened summer 2015 (https://facilities.ofa.ncsu.edu/building/ipf/)."
+  },
+  "metro_population": {
+   "value": 1595720,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Raleigh-Cary, NC MSA, Census Bureau July 1, 2025 estimate (2020 Census: 1,413,982), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 41.9,
+   "source": "https://en.wikipedia.org/wiki/Raleigh,_North_Carolina",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Raleigh-Durham International Airport)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Raleigh MSA 1.6M."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_NC_State_Wolfpack_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Tom O'Brien, Dave Doeren (Bible interim excluded)."
+  },
+  "current_hc_since": {
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/List_of_NC_State_Wolfpack_head_football_coaches",
+   "estimate": false,
+   "note": "Dave Doeren coached 2013-2025; Wikipedia shows him leaving during 2026, with Todd Goebbel interim as of Nov. 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/packfootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "north-carolina": {
+  "us_news_rank": {
+   "value": 27,
+   "source": "https://www.collegekickstart.com/blog/item/u-s-news-world-report-posts-2027-college-rankings",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Down from 26 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 89,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/457.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 986,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/457_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Kenan Stadium",
+   "source": "https://en.wikipedia.org/wiki/Kenan_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 50500,
+   "source": "https://en.wikipedia.org/wiki/Kenan_Stadium",
+   "estimate": false,
+   "note": "Infobox: 50,500 (2018-present)."
+  },
+  "stadium_renovated": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/Kenan_Stadium",
+   "estimate": false,
+   "note": "Infobox renovations end 2020; last expansion 2010-11."
+  },
+  "football_building_year": {
+   "value": 2023,
+   "source": "https://michaelgraves.com/project/kenan-football-center-expansion-and-renovation/",
+   "estimate": false,
+   "note": "Kenan Football Center (built 1997) expansion and renovation, completed 2023; earlier $5M locker/weight room renovation 2019."
+  },
+  "indoor_practice": {
+   "value": 2018,
+   "source": "https://www.unc.edu/discover/doing-the-best-for-the-most/",
+   "estimate": false,
+   "note": "Bill Koman Practice Complex (indoor), opened 2018."
+  },
+  "metro_population": {
+   "value": 625485,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Durham-Chapel Hill, NC MSA, Census Bureau July 1, 2025 estimate (2020 Census: 588,911), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 40.0,
+   "source": "https://en.wikipedia.org/wiki/Chapel_Hill,_North_Carolina",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Chapel Hill station)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Chapel_Hill,_North_Carolina",
+   "estimate": false,
+   "note": "Chapel Hill is a small town dominated by UNC."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_North_Carolina_Tar_Heels_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Butch Davis (2010 season), Fedora, Mack Brown (second stint), Belichick. Withers (2011) and Kitchens (2024) interims excluded."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_North_Carolina_Tar_Heels_head_football_coaches",
+   "estimate": false,
+   "note": "Bill Belichick, 2025-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/uncfootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "pittsburgh": {
+  "us_news_rank": {
+   "value": 59,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 59 (with Florida State); up from 69 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 90,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/545.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 975,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/545_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Acrisure Stadium",
+   "source": "https://en.wikipedia.org/wiki/Acrisure_Stadium",
+   "estimate": false,
+   "note": "NFL stadium, shared with the Steelers."
+  },
+  "stadium_capacity": {
+   "value": 68400,
+   "source": "https://en.wikipedia.org/wiki/Acrisure_Stadium",
+   "estimate": false,
+   "note": "Infobox: 68,400 (2015-present)."
+  },
+  "stadium_renovated": {
+   "value": 2015,
+   "source": "https://en.wikipedia.org/wiki/Acrisure_Stadium",
+   "estimate": false,
+   "note": "Opened 2001; renovated 2007; expanded 2015."
+  },
+  "football_building_year": {
+   "value": 2019,
+   "source": "https://pittsburghpanthers.com/news/2019/6/20/pitt-unveils-aaron-donald-football-performance-center",
+   "estimate": false,
+   "note": "Aaron Donald Football Performance Center (renovated ground floor of the Duratz Athletic Complex at UPMC Rooney Sports Complex) unveiled June 2019. The complex itself opened 2000."
+  },
+  "indoor_practice": {
+   "value": 2000,
+   "source": "https://en.wikipedia.org/wiki/UPMC_Rooney_Sports_Complex",
+   "estimate": false,
+   "note": "Shared indoor practice facility at UPMC Rooney Sports Complex, completed Sept. 5, 2000."
+  },
+  "metro_population": {
+   "value": 2421992,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Pittsburgh, PA MSA, Census Bureau July 1, 2025 estimate (2020 Census: 2,457,000), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 28.8,
+   "source": "https://en.wikipedia.org/wiki/Template:Pittsburgh_weatherbox",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Pittsburgh International Airport)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Pittsburgh MSA 2.4M; urban campus in Oakland."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Pittsburgh_Panthers_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Wannstedt (2010), Graham (2011), Chryst, Narduzzi. Haywood (hired and fired without a game), Bennett, Patterson, Rudolph interims excluded."
+  },
+  "current_hc_since": {
+   "value": 2015,
+   "source": "https://en.wikipedia.org/wiki/List_of_Pittsburgh_Panthers_head_football_coaches",
+   "estimate": false,
+   "note": "Pat Narduzzi, 2015-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/pitt_fb returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "smu": {
+  "us_news_rank": {
+   "value": 85,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Southern Methodist University; up from 88 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 87,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/663.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 954,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/663_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Gerald J. Ford Stadium",
+   "source": "https://en.wikipedia.org/wiki/Gerald_J._Ford_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 33200,
+   "source": "https://en.wikipedia.org/wiki/Gerald_J._Ford_Stadium",
+   "estimate": false,
+   "note": "Infobox value; may predate the 2024 end-zone complex."
+  },
+  "stadium_renovated": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/Gerald_J._Ford_Stadium",
+   "estimate": false,
+   "note": "Garry Weber End Zone Complex enclosing the south end, dedicated Sept. 6, 2024."
+  },
+  "football_building_year": {
+   "value": 2024,
+   "source": "https://smumustangs.com/facilities/garry-weber-end-zone-complex/86",
+   "estimate": false,
+   "note": "Armstrong Football Center inside the Garry Weber End Zone Complex (football offices, locker room, weight room), opened for the 2024 season."
+  },
+  "indoor_practice": {
+   "value": 2019,
+   "source": "https://smudailycampus.com/?p=1052734",
+   "estimate": false,
+   "note": "SMU Indoor Performance Center / Armstrong Fieldhouse, dedicated Sept. 6, 2019."
+  },
+  "metro_population": {
+   "value": 8477157,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Dallas-Fort Worth-Arlington, TX MSA, Census Bureau July 1, 2025 estimate (2020 Census: 7,637,387), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 47.8,
+   "source": "https://en.wikipedia.org/wiki/Template:Dallas_weatherbox",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Dallas Love Field, near the SMU campus; DFW Airport is 46.3)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Dallas-Fort Worth MSA 8.5M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/SMU_Mustangs_football",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. June Jones, Chad Morris, Sonny Dykes, Rhett Lashlee (Tom Mason interim 2014 excluded). Head-coach table on the program page (no separate list page)."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/SMU_Mustangs_football",
+   "estimate": false,
+   "note": "Rhett Lashlee, hired Nov. 2021; first season 2022."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/smufb returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "stanford": {
+  "us_news_rank": {
+   "value": 5,
+   "source": "https://www.collegekickstart.com/blog/item/u-s-news-world-report-posts-2027-college-rankings",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 5; down from 4 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 90,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/674.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 986,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/674_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Stanford Stadium",
+   "source": "https://en.wikipedia.org/wiki/Stanford_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 50424,
+   "source": "https://en.wikipedia.org/wiki/Stanford_Stadium",
+   "estimate": false,
+   "note": "Infobox: 50,424 (2013-present)."
+  },
+  "stadium_renovated": {
+   "value": 2006,
+   "source": "https://en.wikipedia.org/wiki/Stanford_Stadium",
+   "estimate": false,
+   "note": "Old stadium demolished 2005; rebuilt stadium opened Sept. 16, 2006."
+  },
+  "football_building_year": {
+   "value": 2013,
+   "source": "https://gostanford.com/facilities/arrillaga-family-sports-center",
+   "estimate": false,
+   "note": "Football addition to the Arrillaga Family Sports Center (locker room, coaches' offices, meeting rooms) opened 2013."
+  },
+  "indoor_practice": {
+   "value": "none",
+   "source": "https://gostanford.com/facilities/arrillaga-family-sports-center",
+   "estimate": true,
+   "note": "No indoor football practice facility found in Stanford facility pages or searches; absence inferred."
+  },
+  "metro_population": {
+   "value": 1984473,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "San Jose-Sunnyvale-Santa Clara, CA MSA, Census Bureau July 1, 2025 estimate (2020 Census: 2,000,468), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 46.6,
+   "source": "https://en.wikipedia.org/wiki/Stanford,_California",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Stanford station)."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Stanford is in the San Jose MSA (~2.0M), part of the Bay Area."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Stanford_Cardinal_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Harbaugh, Shaw, Taylor. Frank Reich coached all of 2025 as interim (Wikipedia gives him a number). Counting him makes 4."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_Stanford_Cardinal_head_football_coaches",
+   "estimate": false,
+   "note": "Frank Reich, interim head coach for the whole 2025 season. Tavita Pritchard is head coach from 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/stanfordfball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "syracuse": {
+  "us_news_rank": {
+   "value": 72,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Up from 75 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 77,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/688.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 970,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/688_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "JMA Wireless Dome",
+   "source": "https://en.wikipedia.org/wiki/JMA_Wireless_Dome",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 42784,
+   "source": "https://en.wikipedia.org/wiki/JMA_Wireless_Dome",
+   "estimate": false,
+   "note": "Infobox football capacity."
+  },
+  "stadium_renovated": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/JMA_Wireless_Dome",
+   "estimate": false,
+   "note": "New roof 2020; $118M renovation completed 2022."
+  },
+  "football_building_year": {
+   "value": 2025,
+   "source": "https://cuse.com/facilities/football-performance-center/692",
+   "estimate": false,
+   "note": "Football Performance Center at the John A. Lally Athletics Complex opened April 2025 (groundbreaking Sept. 2023)."
+  },
+  "indoor_practice": {
+   "value": 2015,
+   "source": "https://cuse.com/news/2015/1/7/FB_0107154232",
+   "estimate": false,
+   "note": "Ensley Athletic Center, opened Jan. 2015."
+  },
+  "metro_population": {
+   "value": 652273,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Syracuse, NY MSA, Census Bureau July 1, 2025 estimate (2020 Census: 662,057), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 24.1,
+   "source": "https://en.wikipedia.org/wiki/Syracuse,_New_York",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Syracuse Hancock International Airport)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Mid-size metro (~650k); SU is the city's signature institution. Judgment call; not 1M+."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Syracuse_Orange_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Marrone, Shafer, Babers, Fran Brown."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Syracuse_Orange_head_football_coaches",
+   "estimate": false,
+   "note": "Fran Brown, 2024-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/cuse_football returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "virginia": {
+  "us_news_rank": {
+   "value": 26,
+   "source": "https://www.collegekickstart.com/blog/item/u-s-news-world-report-posts-2027-college-rankings",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Same as the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 95,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/746.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 976,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/746_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Scott Stadium",
+   "source": "https://en.wikipedia.org/wiki/Scott_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 61500,
+   "source": "https://en.wikipedia.org/wiki/Scott_Stadium",
+   "estimate": false,
+   "note": "Infobox: 61,500 (2000-present)."
+  },
+  "stadium_renovated": {
+   "value": 2000,
+   "source": "https://en.wikipedia.org/wiki/Scott_Stadium",
+   "estimate": false,
+   "note": "Infobox: expanded 1999-2000."
+  },
+  "football_building_year": {
+   "value": 2024,
+   "source": "https://virginiasports.com/news/2024/06/7/new-day-dawns-for-cavalier-football",
+   "estimate": false,
+   "note": "Football Operations Center grand opening June 6, 2024."
+  },
+  "indoor_practice": {
+   "value": 2013,
+   "source": "https://virginiasports.com/news/2013/03/18/indoor-facility-makes-dazzling-first-impression",
+   "estimate": false,
+   "note": "George Welsh Indoor Practice Facility, opened spring (March) 2013."
+  },
+  "metro_population": {
+   "value": 228597,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Charlottesville, VA MSA, Census Bureau July 1, 2025 estimate (2020 Census: 221,524), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 36.2,
+   "source": "https://en.wikipedia.org/wiki/Charlottesville,_Virginia",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Charlottesville, McCormick Observatory)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Small metro (~229k) dominated by UVA."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Virginia_Cavaliers_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. London, Mendenhall, Elliott."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Virginia_Cavaliers_head_football_coaches",
+   "estimate": false,
+   "note": "Tony Elliott, 2022-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/uvafootball returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "virginia-tech": {
+  "us_news_rank": {
+   "value": 52,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 52 per Daily Voice; 51 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/742.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 980,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/742_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Lane Stadium",
+   "source": "https://en.wikipedia.org/wiki/Lane_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 65632,
+   "source": "https://en.wikipedia.org/wiki/Lane_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_renovated": {
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/Lane_Stadium",
+   "estimate": false,
+   "note": "Infobox: last renovation 2013; last expansion 2004."
+  },
+  "football_building_year": {
+   "value": 2021,
+   "source": "https://hokiesports.com/news/2021/03/9/tech-football-unveils-strength-conditioning-area-new-meeting-rooms",
+   "estimate": false,
+   "note": "The Merryman Center was renovated in stages: Student-Athlete Performance Center (Merryman/Jamerson) total renovation done Dec. 2020, football strength area and meeting rooms finished March 2021."
+  },
+  "indoor_practice": {
+   "value": 2015,
+   "source": "https://hokiesports.com/news/2015/9/7/20150907aaa_12716",
+   "estimate": false,
+   "note": "Indoor Practice Facility, dedicated Sept. 2015."
+  },
+  "metro_population": {
+   "value": 181616,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Blacksburg-Christiansburg-Radford, VA MSA, Census Bureau July 1, 2025 estimate (2020 Census: 181,854), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 31.9,
+   "source": "https://en.wikipedia.org/wiki/Blacksburg,_Virginia",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Blacksburg station)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Blacksburg is a small town dominated by Virginia Tech; MSA ~182k."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Virginia_Tech_Hokies_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Beamer, Fuente, Pry (Price 2021 and Montgomery 2025 interims excluded). Franklin starts 2026."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Virginia_Tech_Hokies_head_football_coaches",
+   "estimate": false,
+   "note": "Brent Pry (2022-2025) started 2025 but was fired in Sept. 2025; Philip Montgomery was interim for the rest of 2025; James Franklin is head coach from 2026. Use 2026 if 'current' means today."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/hokiesfb returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ },
+ "wake-forest": {
+  "us_news_rank": {
+   "value": 34,
+   "source": "https://www.collegekickstart.com/blog/item/u-s-news-world-report-posts-2027-college-rankings",
+   "estimate": false,
+   "note": "U.S. News Best Colleges 2027 edition (released Sept. 2026), National Universities. Tied at 34; up from 51 in the 2026 edition."
+  },
+  "football_gsr": {
+   "value": 99,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/749.pdf",
+   "estimate": false,
+   "note": "NCAA 2025 GSR report (four-class average, freshmen entering 2015-16 through 2018-19), football; read from the NCAA GSR search (web3.ncaa.org/aprsearch/gsrsearch, cohort 2024-2025 = 2018). The 2026 report had not been released as of 2026-11-11."
+  },
+  "football_apr": {
+   "value": 998,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/749_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR, football, multi-year rate reported for 2024-25 (latest in the NCAA APR search, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Allegacy Federal Credit Union Stadium",
+   "source": "https://en.wikipedia.org/wiki/Allegacy_Federal_Credit_Union_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 31500,
+   "source": "https://en.wikipedia.org/wiki/Allegacy_Federal_Credit_Union_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_renovated": {
+   "value": 2011,
+   "source": "https://en.wikipedia.org/wiki/Allegacy_Federal_Credit_Union_Stadium",
+   "estimate": false,
+   "note": "Infobox: renovated 1996, 2005-2008, 2011."
+  },
+  "football_building_year": {
+   "value": 2023,
+   "source": "https://godeacs.com/facilities/mccreary-football-complex/16",
+   "estimate": true,
+   "note": "McCreary Football Complex (60,000 sq ft football ops addition), dedicated Aug. 17. Year inferred: board approval Oct. 2021 plus a 16-month build, and the contractor's gallery photos were uploaded 2023/09. Not confirmed by a dated source."
+  },
+  "indoor_practice": {
+   "value": 2016,
+   "source": "https://godeacs.com/facilities/mccreary-field-house/13",
+   "estimate": false,
+   "note": "McCreary Field House, opened spring 2016."
+  },
+  "metro_population": {
+   "value": 712206,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Winston-Salem, NC MSA, Census Bureau July 1, 2025 estimate (2020 Census: 675,966), 2023 OMB delineation, as tabulated on Wikipedia."
+  },
+  "jan_avg_temp_f": {
+   "value": 39.8,
+   "source": "https://en.wikipedia.org/wiki/Winston-Salem,_North_Carolina",
+   "estimate": false,
+   "note": "NOAA 1991-2020 normal January mean as reproduced in the Wikipedia climate box (Smith Reynolds Airport)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Mid-size metro (~712k) where Wake is a leading institution but does not dominate the city. Judgment call; not 1M+."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Wake_Forest_Demon_Deacons_head_football_coaches",
+   "estimate": false,
+   "note": "Counted non-interim head coaches who started at least one season 2010-2025 from the Wikipedia head-coach list. Grobe, Clawson, Dickert."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_Wake_Forest_Demon_Deacons_head_football_coaches",
+   "estimate": false,
+   "note": "Jake Dickert, 2025-present."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not found. instagram.com/wakefb returned HTTP 429 to a page fetch on 2026-11-11 and the session's web-search budget ran out before a news article quoting a count could be found. Handle (if correct) not verified."
+  }
+ }
+}

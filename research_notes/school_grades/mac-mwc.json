@@ -1,0 +1,1808 @@
+{
+ "akron": {
+  "us_news_rank": {
+   "value": 373,
+   "source": "https://en.wikipedia.org/wiki/University_of_Akron",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 67,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/5.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 919,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/5_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "InfoCision Stadium–Summa Field",
+   "source": "https://en.wikipedia.org/wiki/InfoCision_Stadium–Summa_Field",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 30000,
+   "source": "https://en.wikipedia.org/wiki/InfoCision_Stadium–Summa_Field",
+   "estimate": false,
+   "note": "Wikipedia infobox capacity (cites the school)."
+  },
+  "stadium_renovated": {
+   "value": 2009,
+   "source": "https://en.wikipedia.org/wiki/InfoCision_Stadium–Summa_Field",
+   "estimate": false,
+   "note": "Opened 2009; no later major renovation listed."
+  },
+  "football_building_year": {
+   "value": 2009,
+   "source": "https://gozips.com/facilities/infocision-stadium-summa-field/1",
+   "estimate": true,
+   "note": "No standalone football operations building found. Football's locker room, coaches' rooms and weight room are in the North Endzone Facility built with InfoCision Stadium (opened 2009)."
+  },
+  "indoor_practice": {
+   "value": 2004,
+   "source": "https://gozips.com/facilities/louis-and-freda-stile-athletics-field-house/4",
+   "estimate": false,
+   "note": "Louis and Freda Stile Athletics Field House (built 2004, 155,500 sq ft, 120-yard practice field), shared with other sports."
+  },
+  "metro_population": {
+   "value": 702219,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Akron, OH MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 27.9,
+   "source": "https://en.wikipedia.org/wiki/Akron,_Ohio",
+   "estimate": false,
+   "note": "Akron–Canton Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Akron MSA 702k. Metro is under the 1M Big City line, but this is a mid-size city where the university does not dominate, so neither College Town nor Small Town fits. Labeled Big City as the closest fit; flagged for review."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Akron_Zips_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Rob Ianello, Terry Bowden, Tom Arth, Joe Moorhead. "
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Akron_Zips_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Joe Moorhead. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "ball-state": {
+  "us_news_rank": {
+   "value": 213,
+   "source": "https://en.wikipedia.org/wiki/Ball_State_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/47.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 987,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/47_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Scheumann Stadium",
+   "source": "https://en.wikipedia.org/wiki/Scheumann_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 22500,
+   "source": "https://en.wikipedia.org/wiki/Scheumann_Stadium",
+   "estimate": false,
+   "note": "Infobox: 22,500 (2007–present)."
+  },
+  "stadium_renovated": {
+   "value": 2007,
+   "source": "https://en.wikipedia.org/wiki/Scheumann_Stadium",
+   "estimate": false,
+   "note": "Article: a $13 million renovation was completed in 2007."
+  },
+  "football_building_year": {
+   "value": 2016,
+   "source": "https://ballstatesports.com/news/2016/9/15/211172084",
+   "estimate": false,
+   "note": "Ron and Joan Venderly Football Center (12,633 sq ft, 140-seat team room) broke ground June 2014 and was dedicated September 2016, adjoining the 2001 Fisher Football Training Complex."
+  },
+  "indoor_practice": {
+   "value": 2021,
+   "source": "https://ballstatesports.com/facilities/scheumann-family-indoor-practice-facility/25",
+   "estimate": false,
+   "note": "Scheumann Family Indoor Practice Facility: football held spring camp there April 2021; ribbon cutting Oct 2, 2021 (Ball State Daily)."
+  },
+  "metro_population": {
+   "value": 111903,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Muncie, IN MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 28.6,
+   "source": "https://en.wikipedia.org/wiki/Muncie,_Indiana",
+   "estimate": false,
+   "note": "Muncie (Delaware County Airport), NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Muncie MSA 112k; Ball State is the city's dominant institution."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Ball_State_Cardinals_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Stan Parrish (2008–2010), Pete Lembo, Mike Neu, Mike Uremovich; Colin Johnson (2024 interim) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_Ball_State_Cardinals_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Mike Uremovich. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "bowling-green": {
+  "us_news_rank": {
+   "value": 293,
+   "source": "https://en.wikipedia.org/wiki/Bowling_Green_State_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 75,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/71.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 963,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/71_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Doyt L. Perry Stadium",
+   "source": "https://en.wikipedia.org/wiki/Doyt_Perry_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 24000,
+   "source": "https://en.wikipedia.org/wiki/Doyt_Perry_Stadium",
+   "estimate": false,
+   "note": "Infobox: 24,000 (2007–present)."
+  },
+  "stadium_renovated": {
+   "value": 2007,
+   "source": "https://en.wikipedia.org/wiki/Doyt_Perry_Stadium",
+   "estimate": false,
+   "note": "Article: 2007 upgrade (Sebo Center end-zone facility, seating rework)."
+  },
+  "football_building_year": {
+   "value": 2007,
+   "source": "https://www.bgsu.edu/news/2005/12/ground-broken-for-sebo-athletic-center.html",
+   "estimate": true,
+   "note": "Sebo Athletic Center (north end of Doyt Perry Stadium; training/treatment hub with football space) opened for the 2007–08 year. It serves all sports, so treating it as the football building is a judgment call."
+  },
+  "indoor_practice": {
+   "value": 1992,
+   "source": "https://bgsu.edu/content/dam/BGSU/recreation-and-wellness/documents/timeline.html",
+   "estimate": false,
+   "note": "Perry Field House (127,000 sq ft, 100-yard indoor turf, football practices there in bad weather). BGSU Rec timeline says 'constructed in 1992'; a later list on the same page says 1993."
+  },
+  "metro_population": {
+   "value": 606240,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Toledo, OH MSA, 2020 census (table in the Wikipedia list, Census Bureau data). Bowling Green (Wood County) is part of the Toledo MSA; the city itself is about 30,000 people."
+  },
+  "jan_avg_temp_f": {
+   "value": 25.9,
+   "source": "https://en.wikipedia.org/wiki/Bowling_Green,_Ohio",
+   "estimate": false,
+   "note": "Bowling Green, Ohio, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Bowling Green is a city of about 30,000 dominated by BGSU, inside the Toledo MSA."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/Bowling_Green_Falcons_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Dave Clawson (2009–2013), Dino Babers, Mike Jinks, Scot Loeffler, Eddie George. Eddie George is the current coach per the infobox (2nd year in 2026)."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/Bowling_Green_Falcons_football",
+   "estimate": false,
+   "note": "2025 head coach: Eddie George. Eddie George is the current coach per the infobox (2nd year in 2026)."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "buffalo": {
+  "us_news_rank": {
+   "value": 75,
+   "source": "https://en.wikipedia.org/wiki/University_at_Buffalo",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 90,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/86.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 942,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/86_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Broadview Stadium (formerly UB Stadium)",
+   "source": "https://en.wikipedia.org/wiki/Broadview_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 25013,
+   "source": "https://en.wikipedia.org/wiki/Broadview_Stadium",
+   "estimate": false,
+   "note": "Infobox: 25,013 (2017–present)."
+  },
+  "stadium_renovated": {
+   "value": 1999,
+   "source": "https://en.wikipedia.org/wiki/Broadview_Stadium",
+   "estimate": false,
+   "note": "Last seating expansion 1999 (two rounded bleacher sections). North end-zone stands were demolished in 2017 for an $18M field house, cutting capacity; that reconfiguration is not counted as an expansion."
+  },
+  "football_building_year": {
+   "value": 2024,
+   "source": "https://www.buffalo.edu/news/releases/2024/10/sports-performance-center-advisory.html",
+   "estimate": true,
+   "note": "Brittany Murchie Mulla Sports Performance Center (grand opening Oct 2024), connected to the fieldhouse; it serves all varsity athletes, not football alone. No football-only operations building found."
+  },
+  "indoor_practice": {
+   "value": 2019,
+   "source": "https://www.buffalo.edu/ubnow/stories/2019/08/fieldhouse-opening.html",
+   "estimate": false,
+   "note": "Murchie Family Fieldhouse, $18M, 92,000 sq ft, full indoor football field; officially opened August 2019."
+  },
+  "metro_population": {
+   "value": 1166902,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Buffalo–Cheektowaga, NY MSA, 2020 census (table in the Wikipedia list, Census Bureau data). UB's football campus is in suburban Amherst, NY."
+  },
+  "jan_avg_temp_f": {
+   "value": 25.5,
+   "source": "https://en.wikipedia.org/wiki/Template:Buffalo,_New_York_weatherbox",
+   "estimate": false,
+   "note": "Buffalo Niagara International Airport (next to Amherst), NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Buffalo MSA 1.17M (2020 census)."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/Buffalo_Bulls_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Jeff Quinn, Lance Leipold, Maurice Linguist, Pete Lembo; Alex Wood (2014 interim) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/Buffalo_Bulls_football",
+   "estimate": false,
+   "note": "2025 head coach: Pete Lembo. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "c-michigan": {
+  "us_news_rank": {
+   "value": 283,
+   "source": "https://en.wikipedia.org/wiki/Central_Michigan_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 81,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/129.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 942,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/129_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Kelly/Shorts Stadium",
+   "source": "https://en.wikipedia.org/wiki/Kelly/Shorts_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 35127,
+   "source": "https://en.wikipedia.org/wiki/Kelly/Shorts_Stadium",
+   "estimate": false,
+   "note": "Infobox: 35,127 (2012–present)."
+  },
+  "stadium_renovated": {
+   "value": 1998,
+   "source": "https://en.wikipedia.org/wiki/Kelly/Shorts_Stadium",
+   "estimate": false,
+   "note": "$28M expansion after the 1997 season added 10,000 seats (infobox expanded = 1998)."
+  },
+  "football_building_year": {
+   "value": 2020,
+   "source": "https://cmuchippewas.com/facilities/chippewa-champions-center/37",
+   "estimate": false,
+   "note": "Chippewa Champions Center, a football-focused building at Kelly/Shorts Stadium; CMU lists 'Date Opened: September 2020' (the architect cites a fall 2021 grand opening)."
+  },
+  "indoor_practice": {
+   "value": 1999,
+   "source": "https://cmuchippewas.com/facilities/indoor-facility/51",
+   "estimate": false,
+   "note": "Indoor Athletic Complex opened 1999 per the search summary of CMU facility pages; linked to the Champions Center by a tunnel."
+  },
+  "metro_population": {
+   "value": 64394,
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Mount Pleasant, MI μSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 22.7,
+   "source": "https://en.wikipedia.org/wiki/Mount_Pleasant,_Michigan",
+   "estimate": false,
+   "note": "Mount Pleasant (Central Michigan University station), NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Mount Pleasant μSA 64k; CMU dominates the town."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/Central_Michigan_Chippewas_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Dan Enos, John Bonamego, Jim McElwain, Matt Drinkall. Drinkall is in his 2nd year in 2026 per the infobox, so his first season was 2025."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/Central_Michigan_Chippewas_football",
+   "estimate": false,
+   "note": "2025 head coach: Matt Drinkall. Drinkall is in his 2nd year in 2026 per the infobox, so his first season was 2025."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "e-michigan": {
+  "us_news_rank": {
+   "value": 373,
+   "source": "https://en.wikipedia.org/wiki/Eastern_Michigan_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 86,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/204.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 978,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/204_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Rynearson Stadium",
+   "source": "https://en.wikipedia.org/wiki/Rynearson_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 30200,
+   "source": "https://en.wikipedia.org/wiki/Rynearson_Stadium",
+   "estimate": false,
+   "note": "Article body: 'the stadium has seating for 30,200'. The infobox line '26,188 (2008–present)' matches the attendance record, so the body figure is used."
+  },
+  "stadium_renovated": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/Rynearson_Stadium",
+   "estimate": false,
+   "note": "Infobox renovated = 2024 (track removed as part of 2024 stadium renovations)."
+  },
+  "football_building_year": {
+   "value": 2019,
+   "source": "https://www.michiganpublic.org/sports/2019-08-30/eastern-michigan-opens-new-athletic-facility-still-looking-for-6-million-to-pay-for-it",
+   "estimate": false,
+   "note": "Student-Athlete Performance and Success Center (63,000 sq ft, north end of Rynearson, houses the Phil Incarnati Football Locker Room); ribbon cutting late August 2019."
+  },
+  "indoor_practice": {
+   "value": 2010,
+   "source": "https://emueagles.com/facilities/indoor-practice-facility/37",
+   "estimate": false,
+   "note": "$3.9M air-supported Indoor Practice Facility: inflated Feb 7, 2010, ribbon cutting June 2010."
+  },
+  "metro_population": {
+   "value": 372258,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Ann Arbor, MI MSA, 2020 census (table in the Wikipedia list, Census Bureau data). Ypsilanti is in Washtenaw County (the Ann Arbor MSA), next door to the University of Michigan."
+  },
+  "jan_avg_temp_f": {
+   "value": 24.0,
+   "source": "https://en.wikipedia.org/wiki/Ann_Arbor,_Michigan",
+   "estimate": false,
+   "note": "The Ypsilanti article has no climate box; nearest station is Ann Arbor (University of Michigan, about 8 miles away), NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Ypsilanti (about 20,000) is a college town, but it is next to Ann Arbor, whose metro (372k) the University of Michigan dominates."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_Eastern_Michigan_Eagles_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Ron English (2009–2013), Chris Creighton. Stan Parrish (2013 interim) excluded."
+  },
+  "current_hc_since": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/List_of_Eastern_Michigan_Eagles_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Chris Creighton. Stan Parrish (2013 interim) excluded."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "kent-state": {
+  "us_news_rank": {
+   "value": 232,
+   "source": "https://en.wikipedia.org/wiki/Kent_State_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 86,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/331.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 961,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/331_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Dix Stadium",
+   "source": "https://en.wikipedia.org/wiki/Dix_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 25319,
+   "source": "https://en.wikipedia.org/wiki/Dix_Stadium",
+   "estimate": false,
+   "note": "Infobox: 25,319 (2008–present)."
+  },
+  "stadium_renovated": {
+   "value": 2008,
+   "source": "https://en.wikipedia.org/wiki/Dix_Stadium",
+   "estimate": false,
+   "note": "Infobox renovated = 2008 (two-phase renovation 2007–2008, south bleachers removed, new HD scoreboard)."
+  },
+  "football_building_year": {
+   "value": 2015,
+   "source": "https://kentstatesports.com/news/2015/9/10/FB_0910155322",
+   "estimate": true,
+   "note": "No standalone football operations building found; football is housed in Dix Stadium. The football locker room was renovated and unveiled in September 2015 (a planned north-side coaches' office building could not be confirmed)."
+  },
+  "indoor_practice": {
+   "value": 1990,
+   "source": "https://kentstatesports.com/facilities/kent-state-field-house/17",
+   "estimate": false,
+   "note": "Kent State Field House opened 1990 (2014 addition); football uses it in bad weather."
+  },
+  "metro_population": {
+   "value": 702219,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Akron, OH MSA, 2020 census (table in the Wikipedia list, Census Bureau data). Kent (Portage County) is part of the Akron MSA; the city itself is about 28,000 people."
+  },
+  "jan_avg_temp_f": {
+   "value": 27.9,
+   "source": "https://en.wikipedia.org/wiki/Akron,_Ohio",
+   "estimate": false,
+   "note": "Nearest NOAA first-order station, Akron–Canton Airport (1991–2020). The Kent article's own box gives only a 34°F high and 20°F low (about 27°F mean)."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Kent (about 28,000) is dominated by Kent State, inside the Akron MSA."
+  },
+  "head_coaches_since_2010": {
+   "value": 6,
+   "source": "https://en.wikipedia.org/wiki/Kent_State_Golden_Flashes_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Doug Martin (2004–2010), Darrell Hazell, Paul Haynes, Sean Lewis, Kenni Burns, Mark Carney. Wikipedia lists Carney as 2025–present (5–7). He took over for 2025 after Burns was dismissed in spring 2025, initially with an interim tag (from memory, not confirmed on this page); if his 2025 season is treated as interim the count is 5."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/Kent_State_Golden_Flashes_football",
+   "estimate": false,
+   "note": "2025 head coach: Mark Carney. Wikipedia lists Carney as 2025–present (5–7). He took over for 2025 after Burns was dismissed in spring 2025, initially with an interim tag (from memory, not confirmed on this page); if his 2025 season is treated as interim the count is 5."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "miami-oh": {
+  "us_news_rank": {
+   "value": 133,
+   "source": "https://en.wikipedia.org/wiki/Miami_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 94,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/414.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 952,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/414_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Yager Stadium",
+   "source": "https://en.wikipedia.org/wiki/Yager_Stadium_(Miami_University)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 24286,
+   "source": "https://en.wikipedia.org/wiki/Yager_Stadium_(Miami_University)",
+   "estimate": false,
+   "note": "Article: 'Built in 1983, the stadium has a seating capacity of 24,286.'"
+  },
+  "stadium_renovated": {
+   "value": 2005,
+   "source": "https://en.wikipedia.org/wiki/Yager_Stadium_(Miami_University)",
+   "estimate": false,
+   "note": "Opened 1983; latest substantial upgrades listed are 2004 (lights, videoboards, plaza) and 2005 (new student bleacher sections). No full renovation listed."
+  },
+  "football_building_year": {
+   "value": 2015,
+   "source": "https://miamiredhawks.com/facilities/randy-gunlock-family-athletic-performance-center/3",
+   "estimate": true,
+   "note": "Randy Gunlock Family Athletic Performance Center (football offices, meeting rooms, locker rooms) is an addition to the Dauch center; no separate opening date found, so it is assumed to have opened with it in 2015."
+  },
+  "indoor_practice": {
+   "value": 2015,
+   "source": "https://miamioh.edu/news/campus-news/2015/04/dauch-ribbon-cutting.html",
+   "estimate": false,
+   "note": "David and Anita Dauch Indoor Sports Center: soft opening February 2015, ribbon cutting April 25, 2015."
+  },
+  "metro_population": {
+   "value": 2249797,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Cincinnati, OH-KY-IN MSA, 2020 census (table in the Wikipedia list, Census Bureau data). Oxford (Butler County) is technically in the Cincinnati MSA, but it is a small, isolated college town (about 23,000 people) about 35 miles from downtown Cincinnati."
+  },
+  "jan_avg_temp_f": {
+   "value": 31.4,
+   "source": "https://en.wikipedia.org/wiki/Template:Cincinnati_weatherbox",
+   "estimate": true,
+   "note": "No climate box for Oxford or Hamilton; uses Cincinnati/Northern Kentucky International Airport (about 45 miles away), NOAA 1991–2020. Oxford is likely slightly colder."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Oxford (about 23,000) is a classic college town even though Butler County is in the 2.2M Cincinnati MSA."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Miami_RedHawks_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Michael Haywood (2009–2010), Don Treadwell, Chuck Martin; Lance Guidry and Mike Bath (interims) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/List_of_Miami_RedHawks_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Chuck Martin. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "ohio": {
+  "us_news_rank": {
+   "value": 198,
+   "source": "https://en.wikipedia.org/wiki/Ohio_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/519.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 963,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/519_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Peden Stadium",
+   "source": "https://en.wikipedia.org/wiki/Peden_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 24000,
+   "source": "https://en.wikipedia.org/wiki/Peden_Stadium",
+   "estimate": false,
+   "note": "Infobox capacity 24,000."
+  },
+  "stadium_renovated": {
+   "value": 2018,
+   "source": "https://en.wikipedia.org/wiki/Peden_Stadium",
+   "estimate": false,
+   "note": "Largest renovation was after the 2000 season (infobox renovated = 2001); the Sook Academic Center was completed in the north end zone in 2018, adding standing capacity. 2018 used as the latest major expansion."
+  },
+  "football_building_year": {
+   "value": 2005,
+   "source": "https://en.wikipedia.org/wiki/Peden_Stadium",
+   "estimate": true,
+   "note": "Football operations are inside Peden Stadium. Wikipedia: after the 2004 season a large project renovated/expanded the athletic training facilities, team auditorium, position meeting rooms and recruiting lounge; 2005 is inferred as the completion year."
+  },
+  "indoor_practice": {
+   "value": 2014,
+   "source": "https://ohiobobcats.com/facilities/walter-fieldhouse/1",
+   "estimate": false,
+   "note": "Walter Fieldhouse completed 2014; football first practiced there in spring 2014 (first indoor facility in program history)."
+  },
+  "metro_population": {
+   "value": 62431,
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Athens, OH μSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 29.8,
+   "source": "https://en.wikipedia.org/wiki/Athens,_Ohio",
+   "estimate": false,
+   "note": "Athens, Ohio, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Athens μSA 62k; Ohio University dominates the town."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/Ohio_Bobcats_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Frank Solich (2005–2020), Tim Albin, Brian Smith. Brian Smith coached the 2025 regular season (named permanent coach Dec 2024 after an interim bowl), was put on leave Dec 1, 2025 and fired Dec 17, 2025. John Hauser (interim for the 2025 Frisco Bowl, permanent from Dec 26, 2025) is the 2026 coach; he is not counted because his first full season is 2026."
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/Ohio_Bobcats_football",
+   "estimate": false,
+   "note": "2025 head coach: Brian Smith. Brian Smith coached the 2025 regular season (named permanent coach Dec 2024 after an interim bowl), was put on leave Dec 1, 2025 and fired Dec 17, 2025. John Hauser (interim for the 2025 Frisco Bowl, permanent from Dec 26, 2025) is the 2026 coach; he is not counted because his first full season is 2026."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "toledo": {
+  "us_news_rank": {
+   "value": 293,
+   "source": "https://en.wikipedia.org/wiki/University_of_Toledo",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 96,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/709.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 982,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/709_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Glass Bowl",
+   "source": "https://en.wikipedia.org/wiki/Glass_Bowl",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 26038,
+   "source": "https://en.wikipedia.org/wiki/Glass_Bowl",
+   "estimate": false,
+   "note": "Infobox: 26,038 (2001–present), cites utrockets.com."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Glass_Bowl",
+   "estimate": false,
+   "note": "$3.5 million renovation in 2016 (infobox renovated = 1990, 2016)."
+  },
+  "football_building_year": {
+   "value": 2014,
+   "source": "https://news.utoledo.edu/index.php/08_19_2014/larimer-athletic-complex-dedication-set-for-aug-21",
+   "estimate": false,
+   "note": "Larimer Athletic Complex (football home, built 1990–91) $5.5M renovation completed July 2014, dedicated Aug 21, 2014."
+  },
+  "indoor_practice": {
+   "value": 2010,
+   "source": "https://utrockets.com/news/2010/2/6/Rockets_Officially_Open_Fetterman_Training_Center_in_Ceremony_on_Saturday",
+   "estimate": false,
+   "note": "Fetterman Indoor Training Center (90,400 sq ft) dedicated February 6, 2010."
+  },
+  "metro_population": {
+   "value": 606240,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Toledo, OH MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 27.5,
+   "source": "https://en.wikipedia.org/wiki/Toledo,_Ohio",
+   "estimate": false,
+   "note": "Toledo Express Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Toledo MSA 606k. Metro is under the 1M Big City line, but this is a mid-size city where the university does not dominate, so neither College Town nor Small Town fits. Labeled Big City as the closest fit; flagged for review."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Toledo_Rockets_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Tim Beckman (2009–2011), Matt Campbell, Jason Candle. Candle is listed 2015–2025 (he coached the 2015 bowl game after Campbell left); his first full season was 2016. Robert Weiner (2025 interim) excluded; Mike Jacobs is the 2026 coach."
+  },
+  "current_hc_since": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/List_of_Toledo_Rockets_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Jason Candle. Candle is listed 2015–2025 (he coached the 2015 bowl game after Campbell left); his first full season was 2016. Robert Weiner (2025 interim) excluded; Mike Jacobs is the 2026 coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "umass": {
+  "us_news_rank": {
+   "value": 59,
+   "source": "https://en.wikipedia.org/wiki/University_of_Massachusetts_Amherst",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 74,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/400.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 953,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/400_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Warren McGuirk Alumni Stadium",
+   "source": "https://en.wikipedia.org/wiki/Warren_McGuirk_Alumni_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 17000,
+   "source": "https://en.wikipedia.org/wiki/Warren_McGuirk_Alumni_Stadium",
+   "estimate": false,
+   "note": "Infobox: 17,000 (expandable to 21,430)."
+  },
+  "stadium_renovated": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/Warren_McGuirk_Alumni_Stadium",
+   "estimate": false,
+   "note": "$34.5 million FBS-standard renovation completed for the 2014 season."
+  },
+  "football_building_year": {
+   "value": 2014,
+   "source": "https://umassathletics.com/facilities/martin-jacobson-football-performance-center/4",
+   "estimate": false,
+   "note": "Football Performance Center dedicated Sept 26, 2014 (renamed for Martin Jacobson in 2018; interior upgrades 2020–21)."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": "https://umassathletics.com/news/2018/6/20/football-massachusetts-athletics-announces-5-58-million-gift-by-marty-jacobson",
+   "estimate": false,
+   "note": "Unclear. The 2018 Jacobson gift was tied to a temporary practice bubble at McGuirk Stadium, and a trade-press item reports an indoor training facility was completed, but I could not open either page to confirm the year or that it still stands. Left null rather than guess."
+  },
+  "metro_population": {
+   "value": 162308,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Amherst Town–Northampton, MA MSA, 2020 census (table in the Wikipedia list, Census Bureau data). Hampshire County became its own MSA in the 2023 OMB delineation (part of the Springfield–Amherst Town–Northampton CSA)."
+  },
+  "jan_avg_temp_f": {
+   "value": 23.9,
+   "source": "https://en.wikipedia.org/wiki/Amherst,_Massachusetts",
+   "estimate": false,
+   "note": "Amherst, Massachusetts, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Amherst (Hampshire County MSA 162k) is dominated by UMass and the Five Colleges."
+  },
+  "head_coaches_since_2010": {
+   "value": 6,
+   "source": "https://en.wikipedia.org/wiki/UMass_Minutemen_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Kevin Morris (2009–2011), Charley Molnar, Mark Whipple, Walt Bell, Don Brown, Joe Harasymiak; Alex Miller and Shane Montgomery (interims) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/UMass_Minutemen_football",
+   "estimate": false,
+   "note": "2025 head coach: Joe Harasymiak. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "w-michigan": {
+  "us_news_rank": {
+   "value": 293,
+   "source": "https://en.wikipedia.org/wiki/Western_Michigan_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 82,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/774.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 957,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/774_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Waldo Stadium",
+   "source": "https://en.wikipedia.org/wiki/Waldo_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 30200,
+   "source": "https://en.wikipedia.org/wiki/Waldo_Stadium",
+   "estimate": false,
+   "note": "Infobox: 30,200 (1989–present)."
+  },
+  "stadium_renovated": {
+   "value": 2015,
+   "source": "https://en.wikipedia.org/wiki/Waldo_Stadium",
+   "estimate": false,
+   "note": "Infobox renovated = 1995, 2003, 2013, 2014, 2015 ($5.7M of upgrades 2013–2015). A Stadium Club/pressbox renovation was finished in September 2024 (smaller project)."
+  },
+  "football_building_year": {
+   "value": 2016,
+   "source": "https://wmubroncos.com/facilities/bill-brown-alumni-football-center/14",
+   "estimate": true,
+   "note": "Bill Brown Alumni Football Center opened 1998; renovated 2013–14 (about $3.4M project) and again summer 2016 per a 2018 article; another major remodel was announced Dec 2025. 2016 used as the last completed renovation; sources disagree on 2013 vs 2016."
+  },
+  "indoor_practice": {
+   "value": 2003,
+   "source": "https://wmubroncos.com/facilities/donald-seelye-athletic-center/3",
+   "estimate": false,
+   "note": "Donald J. Seelye Athletic Center (indoor practice field) opened January 13, 2003."
+  },
+  "metro_population": {
+   "value": 261670,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Kalamazoo–Portage, MI MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 24.8,
+   "source": "https://en.wikipedia.org/wiki/Kalamazoo,_Michigan",
+   "estimate": false,
+   "note": "Kalamazoo/Battle Creek International Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Kalamazoo MSA 262k; WMU is the largest institution in a small city, closer to a college town than a big city."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Western_Michigan_Broncos_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Bill Cubit (2005–2012), P. J. Fleck, Tim Lester, Lance Taylor. "
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Western_Michigan_Broncos_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Lance Taylor. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "air-force": {
+  "us_news_rank": {
+   "value": "unranked",
+   "source": "https://www.usnews.com/best-colleges/united-states-air-force-academy-1369",
+   "estimate": false,
+   "note": "U.S. News classifies the Air Force Academy as a National Liberal Arts College, so it is not in the National Universities ranking."
+  },
+  "football_gsr": {
+   "value": 92,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/721.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 992,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/721_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Falcon Stadium",
+   "source": "https://en.wikipedia.org/wiki/Falcon_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 39441,
+   "source": "https://en.wikipedia.org/wiki/Falcon_Stadium",
+   "estimate": false,
+   "note": "Infobox lists 39,441 (2024–present), citing goairforcefalcons.com; the same infobox also still shows 46,692 (2005–present), so the official figure appears to have been revised in 2024."
+  },
+  "stadium_renovated": {
+   "value": 2005,
+   "source": "https://en.wikipedia.org/wiki/Falcon_Stadium",
+   "estimate": false,
+   "note": "Article: expanded 1972 and 1990; the 2005 renovation lowered capacity. Later work (2016 video boards) is minor."
+  },
+  "football_building_year": {
+   "value": 2018,
+   "source": "https://goairforcefalcons.com/news/2018/10/29/falcon-football-fans-have-opportunity-to-join-in-on-football-locker-renovation",
+   "estimate": true,
+   "note": "No standalone football operations building. The home locker room at Falcon Stadium was fully renovated before the 2018 season (over 9,000 sq ft added, new medical, coaches' and media rooms). The 2024 Kucera Legacy Center is a premium-seating/event building, not football operations."
+  },
+  "indoor_practice": {
+   "value": 2011,
+   "source": "https://goairforcefalcons.com/news/2011/7/22/Academy_hosts_Holaday_Athletic_Center_dedication_and_ribbon_cutting_ceremony",
+   "estimate": false,
+   "note": "Holaday Athletic Center (92,000 sq ft, full football field) dedicated July 22, 2011."
+  },
+  "metro_population": {
+   "value": 755105,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Colorado Springs, CO MSA, 2020 census (table in the Wikipedia list, Census Bureau data). The Academy is a federal installation just north of Colorado Springs."
+  },
+  "jan_avg_temp_f": {
+   "value": 31.8,
+   "source": "https://en.wikipedia.org/wiki/Colorado_Springs,_Colorado",
+   "estimate": false,
+   "note": "Colorado Springs Municipal Airport, NOAA 1991–2020 normals. The Academy sits higher (about 7,000+ ft) and is likely a little colder."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Colorado Springs MSA 755k. The Academy is a self-contained base north of the city. Metro is under the 1M Big City line, but this is a mid-size city where the university does not dominate, so neither College Town nor Small Town fits. Labeled Big City as the closest fit; flagged for review."
+  },
+  "head_coaches_since_2010": {
+   "value": 1,
+   "source": "https://en.wikipedia.org/wiki/List_of_Air_Force_Falcons_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Troy Calhoun. Calhoun's 19th season was 2025 per the program page infobox."
+  },
+  "current_hc_since": {
+   "value": 2007,
+   "source": "https://en.wikipedia.org/wiki/List_of_Air_Force_Falcons_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Troy Calhoun. Calhoun's 19th season was 2025 per the program page infobox."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "hawai-i": {
+  "us_news_rank": {
+   "value": 171,
+   "source": "https://en.wikipedia.org/wiki/University_of_Hawaiʻi_at_Mānoa",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 76,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/277.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 942,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/277_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Clarence T. C. Ching Athletics Complex",
+   "source": "https://en.wikipedia.org/wiki/Clarence_T._C._Ching_Athletics_Complex",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 15194,
+   "source": "https://en.wikipedia.org/wiki/Clarence_T._C._Ching_Athletics_Complex",
+   "estimate": false,
+   "note": "Infobox: 15,194 (2023–present). Temporary home since the Aloha Stadium closure; a new stadium is planned."
+  },
+  "stadium_renovated": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/Clarence_T._C._Ching_Athletics_Complex",
+   "estimate": false,
+   "note": "Opened 2015; expanded for football in 2021 and to 15,194 for 2023."
+  },
+  "football_building_year": {
+   "value": 2010,
+   "source": "https://uhwarriorquotes.blogspot.com/2010/04/new-wing-dedicated-for-warrior-football.html",
+   "estimate": true,
+   "note": "No standalone football building. A $1.3M football wing (12 coaches' offices, video and meeting rooms) on the third floor of the athletics complex was dedicated April 29, 2010. Source is a UH football quotes blog reposting the release."
+  },
+  "indoor_practice": {
+   "value": "none",
+   "source": "https://alohastatedaily.com/2025/07/23/hawaii-football-makes-subtle-changes-to-practice-routine-as-fall-camp-begins",
+   "estimate": false,
+   "note": "No indoor practice facility found; football practices outdoors at the Ching Complex. Strength training is at Klum Gym; the Waterhouse Sports Performance Facility was rededicated after renovation Feb 2024."
+  },
+  "metro_population": {
+   "value": 1016508,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Urban Honolulu, HI MSA, 2020 census (table in the Wikipedia list, Census Bureau data). The 2025 estimate is 988,703, just under 1M."
+  },
+  "jan_avg_temp_f": {
+   "value": 73.6,
+   "source": "https://en.wikipedia.org/wiki/Template:Honolulu_weatherbox",
+   "estimate": false,
+   "note": "Honolulu International Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Urban Honolulu MSA 1.02M (2020 census)."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Hawaii_Rainbow_Warriors_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Greg McMackin (2008–2011), Norm Chow, Nick Rolovich, Todd Graham, Timmy Chang; Chris Naeole (2015 interim) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Hawaii_Rainbow_Warriors_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Timmy Chang. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "nevada": {
+  "us_news_rank": {
+   "value": 204,
+   "source": "https://en.wikipedia.org/wiki/University_of_Nevada,_Reno",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 82,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/466.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 952,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/466_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Mackay Stadium",
+   "source": "https://en.wikipedia.org/wiki/Mackay_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 30000,
+   "source": "https://en.wikipedia.org/wiki/Mackay_Stadium",
+   "estimate": false,
+   "note": "Infobox: 30,000 (2024–present)."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://www.unr.edu/nevada-today/news/2016/50-years-of-mackay-stadium",
+   "estimate": false,
+   "note": "An $11.5M renovation approved Dec 2014 began in 2015 and was finished summer 2016 (4,000+ chairback seats, Basin Street Club, suites, scoreboard). A Nevada Sagebrush article mentions further seating fixes after 2016."
+  },
+  "football_building_year": {
+   "value": 1993,
+   "source": "https://nevadawolfpack.com/facilities/cashell-fieldhouse-support-facilities/7",
+   "estimate": false,
+   "note": "Robert Cashell Fieldhouse, the football operations center, began as a locker-room building and was renovated in 1989 and again in 1993 (no later full renovation found)."
+  },
+  "indoor_practice": {
+   "value": 2026,
+   "source": "https://www.fox5vegas.com/2026/10/21/university-nevada-unveils-new-athletics-logos-celebrates-opening-new-field-house/",
+   "estimate": false,
+   "note": "New indoor fieldhouse: ground broken Aug 2025, ribbon cutting Oct 2026, football expected to start practicing inside late Nov 2026. There was no indoor facility through the 2025 season ('long-awaited')."
+  },
+  "metro_population": {
+   "value": 549831,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Reno, NV MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 36.9,
+   "source": "https://en.wikipedia.org/wiki/Reno,_Nevada",
+   "estimate": false,
+   "note": "Reno–Tahoe International Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Reno MSA 550k. Metro is under the 1M Big City line, but this is a mid-size city where the university does not dominate, so neither College Town nor Small Town fits. Labeled Big City as the closest fit; flagged for review."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Nevada_Wolf_Pack_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Chris Ault (2004–2012), Brian Polian, Jay Norvell, Ken Wilson, Jeff Choate; Vai Taua (2021 interim) excluded. Ault's 2004–2012 tenure is from general knowledge; the list page rows parsed here start with Polian."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Nevada_Wolf_Pack_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Jeff Choate. Ault's 2004–2012 tenure is from general knowledge; the list page rows parsed here start with Polian."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "new-mexico": {
+  "us_news_rank": {
+   "value": 242,
+   "source": "https://en.wikipedia.org/wiki/University_of_New_Mexico",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/473.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 968,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/473_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "University Stadium",
+   "source": "https://en.wikipedia.org/wiki/University_Stadium_(Albuquerque)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 39224,
+   "source": "https://en.wikipedia.org/wiki/University_Stadium_(Albuquerque)",
+   "estimate": false,
+   "note": "Infobox: 39,224 (2010–present)."
+  },
+  "stadium_renovated": {
+   "value": 2001,
+   "source": "https://en.wikipedia.org/wiki/University_Stadium_(Albuquerque)",
+   "estimate": false,
+   "note": "Article: expanded in 2001 (north end-zone stands, restrooms, concessions); portable bleachers added in 2004. No later major renovation listed."
+  },
+  "football_building_year": {
+   "value": 2026,
+   "source": "https://golobos.com/news/2026/06/8/lobo-football-announces-completion-of-dollar75-million-tow-diehm-facility-expansion-project",
+   "estimate": false,
+   "note": "$7.5 million Tow Diehm Facility (football operations) expansion completed June 2026. Before that, the New Mexico Mutual Champions Training Center opened April 2023 at the south end of the stadium."
+  },
+  "indoor_practice": {
+   "value": 2007,
+   "source": "https://golobos.com/news/2007/08/31/209058547",
+   "estimate": false,
+   "note": "Indoor practice facility (about $6.4M fabric structure) became operational mid-August 2007; resurfaced 2024."
+  },
+  "metro_population": {
+   "value": 916528,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Albuquerque, NM MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 37.4,
+   "source": "https://en.wikipedia.org/wiki/Albuquerque,_New_Mexico",
+   "estimate": false,
+   "note": "Albuquerque International Sunport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "Albuquerque MSA 917k. Metro is under the 1M Big City line, but this is a mid-size city where the university does not dominate, so neither College Town nor Small Town fits. Labeled Big City as the closest fit; flagged for review."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_New_Mexico_Lobos_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Mike Locksley (2009–2011), Bob Davie, Danny Gonzales, Bronco Mendenhall, Jason Eck; George Barlow (2011 interim) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_New_Mexico_Lobos_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Jason Eck. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "niu": {
+  "us_news_rank": {
+   "value": 301,
+   "source": "https://en.wikipedia.org/wiki/Northern_Illinois_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/503.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 974,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/503_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Huskie Stadium",
+   "source": "https://en.wikipedia.org/wiki/Huskie_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 28211,
+   "source": "https://en.wikipedia.org/wiki/Huskie_Stadium",
+   "estimate": false,
+   "note": "Infobox: 28,211 (2003–present). Some NIU fan-guide snippets list 24,000 (2016–present), so the current official figure is uncertain."
+  },
+  "stadium_renovated": {
+   "value": 2007,
+   "source": "https://en.wikipedia.org/wiki/Huskie_Stadium",
+   "estimate": true,
+   "note": "The Wikipedia infobox lists expansions in 1982, 1995 and 2016, but the article says the 2014 renovation plans had still not happened as of 2026 and I could not confirm what the 2016 work was. The last confirmed major addition is the $14M Yordon Center in the north end zone (opened August 2007)."
+  },
+  "football_building_year": {
+   "value": 2007,
+   "source": "https://125keymoments.niu.edu/private-gifts-create-athletic-facility-renaissance-2007/",
+   "estimate": false,
+   "note": "Jeffrey and Kimberly Yordon Academic and Athletic Performance Center (north end of Huskie Stadium) began operating August 2007."
+  },
+  "indoor_practice": {
+   "value": 2013,
+   "source": "https://125keymoments.niu.edu/private-gifts-create-athletic-facility-renaissance-2007/",
+   "estimate": false,
+   "note": "Chessick Practice Center (about 80,000 sq ft, full 120-yard field) opened August 2013; ground broken April 2012."
+  },
+  "metro_population": {
+   "value": 9449351,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Chicago–Naperville–Elgin, IL-IN MSA, 2020 census (table in the Wikipedia list, Census Bureau data). DeKalb County is part of the Chicago MSA, but DeKalb itself is a college town of about 40,000 roughly 65 miles west of the Loop."
+  },
+  "jan_avg_temp_f": {
+   "value": 20.6,
+   "source": "https://en.wikipedia.org/wiki/DeKalb,_Illinois",
+   "estimate": false,
+   "note": "DeKalb, Illinois, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "DeKalb (about 40,000) is dominated by NIU even though DeKalb County is in the Chicago MSA."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/Northern_Illinois_Huskies_football",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Jerry Kill (2008–2010), Dave Doeren, Rod Carey, Thomas Hammock; Tom Matukewicz (2010 interim) excluded. Hammock is listed 2019–2025; Rob Harley is the 2026 interim coach."
+  },
+  "current_hc_since": {
+   "value": 2019,
+   "source": "https://en.wikipedia.org/wiki/Northern_Illinois_Huskies_football",
+   "estimate": false,
+   "note": "2025 head coach: Thomas Hammock. Hammock is listed 2019–2025; Rob Harley is the 2026 interim coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "san-jose-state": {
+  "us_news_rank": {
+   "value": 137,
+   "source": "https://en.wikipedia.org/wiki/San_Jose_State_University",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 72,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/630.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 944,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/630_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "CEFCU Stadium",
+   "source": "https://en.wikipedia.org/wiki/CEFCU_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 18203,
+   "source": "https://en.wikipedia.org/wiki/CEFCU_Stadium",
+   "estimate": false,
+   "note": "Infobox: 18,203 (2021–present)."
+  },
+  "stadium_renovated": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/CEFCU_Stadium",
+   "estimate": false,
+   "note": "East-side building addition (Spartan Athletics Center, about $70M) completed August 2023."
+  },
+  "football_building_year": {
+   "value": 2023,
+   "source": "https://www.webcor.com/newsroom-about-webcor/webcors-sac-team-delivers-state-of-the-art-facilities-for-sjsus-student-athletes",
+   "estimate": false,
+   "note": "Spartan Athletics Center (now Habbas Law Athletics Center), about $70M, home of football and soccer, east side of CEFCU Stadium; handed over July 2023."
+  },
+  "indoor_practice": {
+   "value": "none",
+   "source": "https://sjsuspartans.com/football-practice-fields",
+   "estimate": false,
+   "note": "No indoor practice facility found; football practices on outdoor fields by CEFCU Stadium."
+  },
+  "metro_population": {
+   "value": 2000468,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "San Jose–Sunnyvale–Santa Clara, CA MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 50.8,
+   "source": "https://en.wikipedia.org/wiki/San_Jose,_California",
+   "estimate": false,
+   "note": "San Jose International Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "San Jose MSA 2.0M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_San_Jose_State_Spartans_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Mike MacIntyre (2010–2012), Ron Caragher, Brent Brennan, Ken Niumatalolo; Kent Baer (2012 interim) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_San_Jose_State_Spartans_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Ken Niumatalolo. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "unlv": {
+  "us_news_rank": {
+   "value": 244,
+   "source": "https://en.wikipedia.org/wiki/University_of_Nevada,_Las_Vegas",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 88,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/465.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 978,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/465_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Allegiant Stadium",
+   "source": "https://en.wikipedia.org/wiki/Allegiant_Stadium",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 65000,
+   "source": "https://en.wikipedia.org/wiki/Allegiant_Stadium",
+   "estimate": false,
+   "note": "Infobox: 65,000 (expandable to 71,835). NFL stadium shared with the Las Vegas Raiders."
+  },
+  "stadium_renovated": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/Allegiant_Stadium",
+   "estimate": false,
+   "note": "Opened 2020; never renovated."
+  },
+  "football_building_year": {
+   "value": 2019,
+   "source": "https://unlvrebels.com/sports/2025/4/28/facilities-unlv-FB-Fertitta-Football-Complex-html.aspx",
+   "estimate": false,
+   "note": "Fertitta Football Complex (73,000 sq ft) opened October 2019 per UNLV Athletics (the Review-Journal says 2020)."
+  },
+  "indoor_practice": {
+   "value": "none",
+   "source": "https://preview.reviewjournal.com/sports/unlv/unlv-football/rebels-get-a-break-from-heat-thanks-to-raiders-photos-2918152",
+   "estimate": false,
+   "note": "No UNLV indoor practice field found; the Fertitta complex has outdoor fields and the team has borrowed the Raiders' indoor field in Henderson during heat waves."
+  },
+  "metro_population": {
+   "value": 2265461,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Las Vegas–Henderson–North Las Vegas, NV MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 49.5,
+   "source": "https://en.wikipedia.org/wiki/Las_Vegas",
+   "estimate": false,
+   "note": "Harry Reid International Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Las Vegas MSA 2.27M."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_UNLV_Rebels_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Bobby Hauck (2010–2014), Tony Sanchez, Marcus Arroyo, Barry Odom, Dan Mullen; Del Alexander (2024 interim) excluded. "
+  },
+  "current_hc_since": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/List_of_UNLV_Rebels_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Dan Mullen. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "utep": {
+  "us_news_rank": {
+   "value": 266,
+   "source": "https://en.wikipedia.org/wiki/University_of_Texas_at_El_Paso",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. Tied. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 73,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/704.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 959,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/704_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "Sun Bowl",
+   "source": "https://en.wikipedia.org/wiki/Sun_Bowl_(stadium)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 45971,
+   "source": "https://en.wikipedia.org/wiki/Sun_Bowl_(stadium)",
+   "estimate": false,
+   "note": "Infobox: 45,971 (current), citing utepminers.com."
+  },
+  "stadium_renovated": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/Sun_Bowl_(stadium)",
+   "estimate": false,
+   "note": "Renovation plans announced April 2018 and 'completed in time for the 2021 season' per the article (infobox renovated = 2006, 2018)."
+  },
+  "football_building_year": {
+   "value": 2002,
+   "source": "https://utepminers.com/sports/2017/6/7/facilities-sports-center-html",
+   "estimate": false,
+   "note": "Larry K. Durham Sports Center (football offices, locker room, weight room) opened August 2002. A $5 million locker room remodel (Cardwell gift) followed in 2024, described as the first major upgrade, but the building was not fully renovated."
+  },
+  "indoor_practice": {
+   "value": "none",
+   "source": "https://utepminers.com/news/2026/3/24/utep-football-to-host-open-practice-at-sac-ii-on-march-28.aspx",
+   "estimate": false,
+   "note": "No UTEP indoor practice facility found; the team practices outdoors or off campus (e.g. SISD Student Activity Complex II). For the 2025 New Mexico Bowl it practiced in UNM's indoor facility."
+  },
+  "metro_population": {
+   "value": 868859,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "El Paso, TX MSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 46.5,
+   "source": "https://en.wikipedia.org/wiki/El_Paso,_Texas",
+   "estimate": false,
+   "note": "El Paso International Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": true,
+   "note": "El Paso MSA 869k. Metro is under the 1M Big City line, but this is a mid-size city where the university does not dominate, so neither College Town nor Small Town fits. Labeled Big City as the closest fit; flagged for review."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_UTEP_Miners_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Mike Price (2004–2012), Sean Kugler, Dana Dimel, Scotty Walden. Price's 2017 interim stint excluded."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_UTEP_Miners_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Scotty Walden. Price's 2017 interim stint excluded."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ },
+ "wyoming": {
+  "us_news_rank": {
+   "value": 220,
+   "source": "https://en.wikipedia.org/wiki/University_of_Wyoming",
+   "estimate": false,
+   "note": "U.S. News Best National Universities, 2026 edition (2025–26, published Sept 23, 2025), from the Wikipedia ranking infobox, which cites usnews.com/best-colleges/rankings/national-universities. usnews.com blocks automated reads; a 2027 edition (Sept 2026) may now exist but was not found in the infobox."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/811.pdf",
+   "estimate": false,
+   "note": "NCAA GSR, 2025 report: four-class average for students entering 2015–2018 (NCAA GSR search database, web3.ncaa.org/aprsearch/gsrsearch)."
+  },
+  "football_apr": {
+   "value": 969,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/811_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA multi-year APR, 2024–25 report (NCAA APR search database, web3.ncaa.org/aprsearch/aprsearch)."
+  },
+  "stadium_name": {
+   "value": "War Memorial Stadium (Jonah Field)",
+   "source": "https://en.wikipedia.org/wiki/War_Memorial_Stadium_(Wyoming)",
+   "estimate": false,
+   "note": ""
+  },
+  "stadium_capacity": {
+   "value": 29181,
+   "source": "https://en.wikipedia.org/wiki/War_Memorial_Stadium_(Wyoming)",
+   "estimate": false,
+   "note": "Infobox capacity 29,181 (after the 2024–25 renovation reduced it)."
+  },
+  "stadium_renovated": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/War_Memorial_Stadium_(Wyoming)",
+   "estimate": false,
+   "note": "Article: two-stage renovation announced fall 2023, stage one spring 2024 and stage two spring 2025; 2025 used as the completion year."
+  },
+  "football_building_year": {
+   "value": 2018,
+   "source": "https://www.dlrgroup.com/work/university-of-wyoming-high-altitude-performance-center/",
+   "estimate": false,
+   "note": "Mick and Susie McMurry High Altitude Performance Center ($44M, 71,000 sq ft, attached to the Rochelle Athletics Center north of the stadium) opened August 2018. It serves all sports but is the main football training building."
+  },
+  "indoor_practice": {
+   "value": 2007,
+   "source": "https://gowyo.com/facilities/?id=2",
+   "estimate": false,
+   "note": "$11 million Indoor Practice Facility; a Wyoming athletics article from August 2007 describes the first practice there (one secondary source says 2012; the 2007 report is the direct one)."
+  },
+  "metro_population": {
+   "value": 37066,
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Laramie, WY μSA, 2020 census (table in the Wikipedia list, Census Bureau data). "
+  },
+  "jan_avg_temp_f": {
+   "value": 21.9,
+   "source": "https://en.wikipedia.org/wiki/Laramie,_Wyoming",
+   "estimate": false,
+   "note": "Laramie Regional Airport, NOAA 1991–2020 normals."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Laramie μSA 37k; the University of Wyoming dominates the town."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Wyoming_Cowboys_head_football_coaches",
+   "estimate": false,
+   "note": "Non-interim head coaches who started a season 2010–2025: Dave Christensen (2009–2013), Craig Bohl, Jay Sawvel. "
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Wyoming_Cowboys_head_football_coaches",
+   "estimate": false,
+   "note": "2025 head coach: Jay Sawvel. "
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Skipped: Instagram blocks automated reads (per coordinator instruction)."
+  }
+ }
+}

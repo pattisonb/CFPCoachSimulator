@@ -1872,6 +1872,32 @@ Penn State 79, the median about 40. The Programs tab shows the grade as a bar an
 for every position group, best first (a group with no picks reads Weak); the Every Program table has a Pro Pipeline
 column.
 
+**School Grades (Phase 1).** Six more grades come from researched facts (`research_notes/school_grades/`, built into
+`data/program_profile.json` by `tools/build_program_profile.py`) and are graded on read by `programs.grades(slug)`. Being
+graded on read, they go into no save, so an old save gets them too:
+
+- **Academics:** 60% the U.S. News rank (a bent log from rank 1 to 400; unranked 25, the academies 85), 25% football
+  GSR, 15% APR.
+- **Facilities:** how recently the stadium (35%), the football building (40%) and the indoor practice facility (25%)
+  were built or renovated. A facility built in 2026 scores 100, less 4 a year, never under 10; no indoor facility
+  scores 10.
+- **Location:** 60% metro size (log) and 40% January warmth.
+- **Stability:** 100 less 15 for each head coach since 2010 after the first, never under 10.
+- **Game Day:** 60% the home crowd and 40% how full the stadium is.
+- **Exposure:** half TV audience and half the football team's Instagram following (both log).
+
+Location also carries three tags (`programs.tags`):
+
+- The setting: Big City at 1M+, Mid-Size City at 500K-1M, else the research's College Town or Small Town.
+- The climate: Warm at 50°F in January, Mild at 35°F, else Cold.
+- The region: South, Midwest, West or Northeast.
+
+The constants are `*tune*` in `coach_career/programs.py`. In Phase 1 nothing reads the grades. The rating, the tiers,
+the AD's goals and the market are unchanged, and Market stays its own reading; Game Day and Exposure are its two
+parts. The Programs tab groups School Grades into **Football** (Prestige, Winning, Coach, Stability, Conference, Pro
+Pipeline) and **Campus** (Academics, Facilities, Location with its tags, Game Day, Exposure, NIL). The Every Program
+table adds the six columns. A program the research has no row for (NDSU, Sacramento State) reads Not Graded.
+
 **What reads it.** The AD's goal follows the tier (1: the playoff; 2: nine wins; 3: eight; 4: seven and a
 bowl; 5: a bowl; a Group of 5 program rated 42 or more: its conference) and his
 patience the tier at the start. A job's attractiveness is the rating plus 5 under a patient AD:
