@@ -35,6 +35,15 @@ def check(page, base, sid, width):
     assert "Pro Pipeline" in heads, heads
     words = page.eval_on_selector_all("#tab-programs .go-programs td.word", "els => els.map(e => e.textContent)")
     assert words and all(w in WORDS for w in words), set(words) - set(WORDS)
+    # School Grades (Phase 1): twelve bars in two groups, Football and Campus, each in its word; Location's tags as chips
+    groups = page.eval_on_selector_all("#tab-programs .go-program-group", "els => els.map(e => [e.querySelector('.go-program-group-h').textContent.trim(), e.querySelectorAll('.go-program-bar').length])")
+    assert groups == [["Football", 6], ["Campus", 6]], groups
+    want = {"Prestige", "Winning", "Coach", "Stability", "Conference", "Pro Pipeline", "Academics", "Facilities", "Location", "Game Day", "Exposure", "NIL"}
+    assert {l for l, _ in labels} == want and all(w in WORDS for _, w in labels), labels
+    tags = page.eval_on_selector_all("#tab-programs .go-program-bar[data-metric=location] .go-place-tag", "els => els.map(e => e.textContent)")
+    assert len(tags) == 3 and all(t[:1].isupper() for t in tags), tags
+    for h in ("Academics", "Facilities", "Location", "Stability", "Game Day", "Exposure"):
+        assert h in heads, (h, heads)
     text = page.inner_text("#tab-programs")
     for bad in ("null", "undefined", "NaN"):
         assert bad not in text, bad
