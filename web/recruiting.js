@@ -129,8 +129,15 @@
   // so the words and the race he draws agree. b.standing's pct/lo/hi only size the bar and the flip odds.
   // In the portal, a school without room is no school for him (b.no_room): the odds say "No Room", whatever his list says.
   function standingOf(b, me) {
-    const sd = standingCore(b, me);
+    const sd = clearOdds(b, standingCore(b, me));
     return b.no_room && !(b.signed || b.committed) ? { ...sd, odds: "No Room", tone: "bad" } : sd;
+  }
+  // Clear Mode: the odds as a percent with its range, in place of Clear Favorite and the certainty words
+  function clearOdds(b, sd) {
+    const st = b.standing || {};
+    if (!CLEAR || st.pct == null || !sd.odds) return sd;
+    const pct = (x) => `${Math.round(100 * x)}%`;
+    return { ...sd, odds: `${pct(st.pct)} Chance${st.lo != null && st.hi != null ? ` (${pct(st.lo)}–${pct(st.hi)})` : ""}`, certainty: null };
   }
   function standingCore(b, me) {
     const st = b.standing || {};
@@ -241,6 +248,19 @@
                            guarded: () => "He gave nothing away" };
   // "guarded": a call that keeps his priority to himself (a Guarded recruit, a Shy one's first call) says nothing of how the pitch landed
   const REACTION_WORDS = { hit: "He lit up", polite: "Polite", quiet: "He went quiet", tired: "He is tired of this", guarded: "He gave nothing away" };
+  // Clear Mode (coach_career/clear.py; the season's clear_mode): numbers and plain Yes or No, never a word that hides a
+  // number. setClear runs whenever a recruiting view draws; the word tables switch to their plain forms once.
+  let CLEAR = false;
+  function setClear(s) {
+    const on = !!(s && s.clear_mode);
+    if (on === CLEAR) return;
+    CLEAR = on;
+    if (!on) return;
+    Object.assign(REACTION_TOAST, { hit: (t) => `${PITCH_NAMES[t] || t}: Yes, one of his priorities`, quiet: (t) => `${PITCH_NAMES[t] || t}: Yes, one of his priorities (your grade there is low)`,
+      polite: () => "No: not one of his priorities", tired: () => "No answer: he is tired of your contact", guarded: () => "No answer" });
+    Object.assign(REACTION_WORDS, { hit: "Yes", polite: "No", quiet: "Yes (Low Grade)", tired: "No Answer", guarded: "No Answer" });
+    MARKS.hit[0] = "Yes"; MARKS.weak[0] = "Yes · Low Grade"; MARKS.not_his[0] = "No"; MARKS.no_read[0] = "No Answer";
+  }
   // your answers to his question about a named player: the button's label, and your line by the question's kind (the same copy as coach_career/scenes.py ANSWER_LABELS and ANSWER_COPY)
   const ANSWERS = ["straight", "promise", "deflect"];
   const HOLLOW_REPLY = "I've heard that one before.";      // his reply to a promise he has heard before (scenes.py REPLY_LINES.hollow)
@@ -690,7 +710,7 @@
         el("span", { class: "pv-pri-v" }, [el("b", { class: "muted", text: PV().NOT_KNOWN }), el("span", { class: "pv-hint muted", text: "A call may reveal it." })])]);
       const sv = b.strength ? b.strength[t] : null, w = caseWord(b, t);
       return el("div", { class: "pv-pri-row", "data-key": `pri-${i}`, ...attr(w, { title: `Your program's case on ${PITCH_NAMES[t] || t}: ${w}` }) }, [el("span", { class: "pv-pri-k", text: PITCH_NAMES[t] || t }),
-        PV().bar(sv == null ? null : { lo: 0, hi: 0, mid: Math.round(100 * Math.max(0, Math.min(1, sv))), tone: w === "Strong" ? "good" : w === "Weak" ? "bad" : "warn", words: [w, w] }),
+        PV().bar(sv == null ? null : { lo: 0, hi: 0, mid: Math.round(100 * Math.max(0, Math.min(1, sv))), tone: sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "warn", words: [w, w] }),
         el("span", { class: "muted small pv-pri-w", text: w || "" })]);
     }));
     const tags = tagList(s, b, me);
@@ -791,7 +811,20 @@
     const rep = p ? p.report : null;
     const tips = (node) => { if (p && p.our_grades && p.grade_details) gradeTips(node, b.id, p.our_grades, p.grade_details); };
     const potTone = (rep && rep.potential_tone) || "good";
-    const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: opts.send ? [el("div", { class: "pv-card-acts", "data-key": "send" }, [].concat(opts.send))] : null, potentialTone: potTone });
+    const sendBox = opts.send ? [el("div", { class: "pv-card-acts", "data-key": "send" }, [].concat(opts.send))] : null;
+    if (s.clear_mode) {
+      // Clear Mode: Potential and his key ratings as numbers with the staff's confidence; no grade words
+      const c = p ? p.clear : null, pot = c && c.potential;
+      const right = [PV().pips(looks), el("span", { class: "muted pv-looks", text: `${PV().fmtLooks(looks)} of 3 Looks` })];
+      const body = pot && pot.est != null ? [el("div", { class: "pv-potential good", "data-group": "potential" }, [el("span", { text: "Potential: " }),
+        el("b", { text: PV().ratingText(pot) }), el("span", { class: "muted", text: ` · ${pot.confidence}%`, title: "Your staff's confidence in this read" })])]
+        : [el("p", { class: "pv-verdict muted pv-unscouted", text: "Send a scout to read him." })];
+      if (p && !p.ratings && c && c.complete) body.push(compLine(p, looks));
+      if (sendBox) body.push(...sendBox);
+      const report = PV().card("Scouting Report", body, { tip: scoutTip(looks), right, key: "report", cls: "pv-report" });
+      return [report, PV().clearRatingsCard(c), looksCard(s, b, p, looks, opts)];
+    }
+    const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone });
     tips(report);
     const attrs = PV().attributesCard(rep, { tips });
     return [report, attrs, looksCard(s, b, p, looks, opts)];
@@ -806,6 +839,7 @@
     if (opts.link) extra.push(el("div", { class: "go-scout-foot", "data-key": "foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab",
       onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } })]));
     if (opts.extra) extra.push(...[].concat(opts.extra).filter(Boolean));
+    if (s.clear_mode) return PV().card("Looks", extra, { wide: true, key: "uncertainty", cls: "pv-uncertainty" });   // Clear Mode: the confidence is on each rating
     return PV().uncertaintyCard(p ? p.report : null, extra);
   }
 
@@ -1031,7 +1065,7 @@
   // his ask in a few words: "120", "about 90–150"
   const askWord = (b) => (b.ask ? (b.ask.exact != null ? String(b.ask.exact) : `about ${b.ask.lo}–${b.ask.hi}`) : "");
   // your program's case on a pitch, as a word
-  const caseWord = (b, t) => { const sv = b.strength ? b.strength[t] : null; return sv == null ? "" : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair"; };
+  const caseWord = (b, t) => { const sv = b.strength ? b.strength[t] : null; return sv == null ? "" : CLEAR ? String(Math.round(100 * sv)) : sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair"; };
   // what he said about each topic you pitched him (recruiting.pitch_marks): a mark on the topic in every picker and on his
   // card, so you don't keep pitching a dud; no mark: you never pitched it to him
   const MARKS = { hit: ["He Lit Up", "hit"], weak: ["Weak Case", "weak"], not_his: ["Not His Thing", "not"], no_read: ["No Read", "none"] };
@@ -1040,6 +1074,8 @@
   const markOf = (b, t) => { const m = (b.pitch_marks || {})[t]; return m && MARKS[m.mark] ? m : null; };
   function markWhy(m) {
     const when = `${m.week && m.week <= 14 ? `${seasonWeek(m.week)} ` : ""}${ACTION_WORD[m.action] || "call"}`;
+    if (CLEAR) return { hit: `Yes on your ${when}: one of his priorities.`, weak: `Yes on your ${when}: one of his priorities, and your grade there is low.`,
+      not_his: `No on your ${when}: not one of his priorities.`, no_read: `No answer on your ${when}.` }[m.mark];
     return { hit: `He lit up when you pitched this on your ${when}.`, weak: `He went quiet on this on your ${when}: he cares, and your case is weak.`,
       not_his: `He was polite about this on your ${when}: it is not one of his priorities.`,
       no_read: `You pitched this on your ${when} and got no read on it.` }[m.mark];
@@ -1081,6 +1117,7 @@
   // the board's latest render, for a call's window reopened from the address: settles once it drew (or failed)
   let drawn = null;
   async function renderRecruiting(s, box) {
+    setClear(s);
     let settled;
     drawn = { sid: s.id, p: new Promise((r) => { settled = r; }) };
     try {
@@ -2128,6 +2165,7 @@
   const boardLabel = (r) => `${r.on_board ? "Remove" : "Add"} ${r.name} ${r.on_board ? "from" : "to"} your board`;
 
   async function renderProspects(s, box) {
+    setClear(s);
     const f = view.filters;
     const me = s.team;
     box.innerHTML = "";
@@ -2358,9 +2396,10 @@
         el("td", { class: "pr-c-wt", text: r.weight != null ? String(r.weight) : "—" }),
         el("td", { class: "pr-c-stars" }, [r.portal ? el("span", { text: clsWord(r.cls) || "—" }) : el("span", { class: "go-stars", text: stars(r.stars), "aria-label": `${r.stars} stars` })]),
         el("td", { class: "pr-c-status" }, [el("span", { class: `go-tag ${stTone}`, text: stText, title: stText })]),
-        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: r.interest_level || "Low" })]),
+        el("td", { class: "pr-c-int" }, [el("span", { class: `go-tag ${INTEREST_TONE[r.interest_level] || ""}`, title: "How much your school appeals to him now, next to other recruits of his star rating", text: CLEAR && r.interest_in_you != null ? String(Math.round(r.interest_in_you)) : (r.interest_level || "Low") })]),
         el("td", { class: "pr-c-sc" }, [el("span", { class: `pr-sc ${scTone}`, title: r.looks >= 3 ? "His report is complete: 3 of 3 looks" : r.looks > 0 ? `${fmtLooks(r.looks)} of 3 looks: each look narrows your staff's read` : "No look at him yet: send a scout", text: scText })]),
-        el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? `Your staff's read of his potential after ${fmtLooks(r.looks)} of 3 looks` : "Your staff has no read on him yet", text: potText(pot) })]),
+        el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? `Your staff's read of his potential after ${fmtLooks(r.looks)} of 3 looks` : "Your staff has no read on him yet",
+          text: CLEAR ? (r.clear_pot && r.clear_pot.est != null ? `${PV().ratingText(r.clear_pot)} · ${r.clear_pot.confidence}%` : "Not Read") : potText(pot) })]),
         el("td", { class: "pr-c-act" }, [add])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
       return tr;
@@ -2646,6 +2685,7 @@
 
   function render(tab, season, helpers) {
     H = helpers;
+    setClear(season);
     const box = document.getElementById(`tab-${tab}`);
     if (tab === "programs") renderPrograms(season, box);
     else if (tab === "recruiting") renderRecruiting(season, box);
@@ -2654,5 +2694,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, parts: { heroOf, scoutCards, looksCard, profileCards, compLine, gradeTips, historyLines }, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, parts: { heroOf, scoutCards, looksCard, profileCards, compLine, gradeTips, historyLines }, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => { setClear(s); return openProfile(s, pid, null, opts || {}); }, reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; setClear(s); renderRecruiting(s, box); }, setClear };
 })();

@@ -949,6 +949,9 @@ def _no_tell_line(state: dict, pid: str, key: str, f: dict, avoid: str | None = 
 def tells(state: dict, slug: str, pid: str, action: str) -> bool:
     """Whether this scene may name one of his priorities: every visit does; a call does unless he keeps
     it to himself (a Guarded recruit, a Shy one's first call)."""
+    from coach_career import clear
+    if clear.on():                                   # Clear Mode: every answer is a plain Yes or No
+        return True
     return action != "call" or persona.call_reveals(state, slug, pid, roll=False)
 
 
@@ -1026,6 +1029,9 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
     rng = random.Random(f"open-{rc['seed']}-{slug}-{pid}-{week}")
     f = _fields(state, slug, p, week)
     tired = recruiting.would_pester(state, slug, pid)
+    from coach_career import clear
+    if clear.on():
+        return _open_clear(state, slug, pid, action, week, f, tired)
     if rc.get("portal") and p.get("portal"):
         return _open_portal(state, slug, pid, action, week, f, tired)
     turns = []
@@ -1118,6 +1124,79 @@ def _open_portal(state: dict, slug: str, pid: str, action: str, week: int, f: di
     return sc
 
 
+# ----- Clear Mode (coach_career/clear.py): transactional scenes. A plain note opens it; your opening gets a Yes (one of
+# his priorities) or No per topic; your lead-with a Yes or No. No small talk, no cue to read between the lines. The
+# points, the question and the visit's NIL note are the same as ever.
+def _open_clear(state: dict, slug: str, pid: str, action: str, week: int, f: dict, tired: bool) -> dict:
+    rc = state["recruiting"]
+    d = persona.of(state, pid)
+    sid = f"{action}-{pid}-{week}"
+    turns = [_turn("note", f"{'In-home visit' if action == 'hc_visit' else 'Call'} with {f['name']}.")]
+    if action == "hc_visit":
+        turns.append(_turn("note", f"Decides: {persona.DECIDER_LABEL[d['decider']]}."))
+        persona.learn(state, slug, pid, "decider")
+    if tired:
+        turns.append(_turn("note", "He is tired of your contact this week: no answers until he has a break."))
+    contact = ((rc["contacts"].get(pid) or {}).get(slug) or {})
+    if heard_rival_due(state, slug, pid):
+        turns.append(_turn("note", "He heard you promised the job to another player at his position."))
+        contact.pop("heard_rival", None)
+    sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired, "package": None}
+    _lines(sc)
+    return sc
+
+
+def _present_clear(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits: list[str], tired: bool) -> str:
+    """`hits`: every presented topic that is one of his priorities, strong or weak (each a Yes)."""
+    rc = state["recruiting"]
+    names = [_TOPIC_NAME.get(t, t) for t in topics]
+    sc["turns"].append(_turn("you", f"You pitched: {names[0]}, {names[1]} and {names[2]}."))
+    if tired:
+        kind = "tired"
+        sc["turns"].append(_turn("him", "No answer: he is tired of your contact this week."))
+    else:
+        kind = "hit" if hits else "polite"
+        st_ = recruiting.strengths(state, slug, pid)
+        sc["turns"].append(_turn("him", " · ".join(f"{_TOPIC_NAME.get(t, t)}: {'Yes' if t in hits else 'No'}" for t in topics)))
+        if hits:                                     # your program's grade on each Yes: where you stand on what he wants
+            sc["turns"].append(_turn("note", "Your grades on his: " + ", ".join(f"{_TOPIC_NAME.get(t, t)} {int(round(100 * st_[t]))}" for t in hits) + "."))
+        seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
+        for t in hits:                               # a Yes is one of his priorities, and now you know it
+            if t in rc["prospects"][pid]["priorities"] and t not in seen:
+                seen.append(t)
+    sc["cue"] = {"topics": [], "text": ""}
+    if sc["action"] == "hc_visit":
+        sc["turns"].append(_turn("note", ask_note(state, slug, pid, sc["ask"])))
+    sc["question"] = question(state, slug, pid, sc["week"], sc.get("package"))
+    if sc["question"]:
+        sc["turns"].append(_turn("note", "He has a question."))
+    sc["presented"] = list(topics)
+    sc["present"] = {"kind": kind, "hit": list(hits)}
+    _lines(sc)
+    return kind
+
+
+def _reaction_clear(state: dict, slug: str, pid: str, pitch: str, tired: bool) -> dict:
+    name = _TOPIC_NAME.get(pitch, pitch)
+    you = f"You led with {name}."
+    if tired:
+        return {"kind": "tired", "text": "No answer: he is tired of your contact this week.", "you": you}
+    if persona.counts_as_priority(state, pid, pitch):
+        kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
+        grade = int(round(100 * recruiting.strengths(state, slug, pid)[pitch]))
+        text = f"{name}: Yes, one of his priorities. Your program grades {grade} there."
+    else:
+        kind, text = "polite", f"{name}: No, not one of his priorities."
+    return {"kind": kind, "text": text, "you": you}
+
+
+# the topics' names as the page shows them (web/recruiting.js PITCH_NAMES)
+_TOPIC_NAME = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
+               "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League", "facilities": "Facilities",
+               "location": "Location", "stability": "Stability", "game_day": "Game Day", "exposure": "Exposure"}
+
+
 def _lines(sc: dict) -> None:
     sc["lines"] = [t["text"] for t in sc["turns"] if t["who"] == "him"]
 
@@ -1157,6 +1236,9 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     priority you are strongest on; a weak one gets its quiet line; none, polite), your question, his
     cue, his question's intro when he has one, and on a visit his dad's ask. Returns the reaction's kind:
     on a call that keeps his priority to himself, "guarded" (unless tired), whatever he thought of it."""
+    from coach_career import clear
+    if clear.on():
+        return _present_clear(state, slug, pid, sc, topics, list(hits) + [t for t in back if t not in hits], tired)
     rc = state["recruiting"]
     p = rc["prospects"][pid]
     week = sc["week"]
@@ -1289,6 +1371,11 @@ WORD_DOUBT_ANY = "Coach, I've heard about your promises."   # ... with none brok
 def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, truthful: bool | None) -> str:
     """What he says back to your answer (a hollow promise gets its own line; the Package Deal's promise
     waits on the offer, and its straight answer once his mate holds your offer has its own)."""
+    from coach_career import clear
+    if clear.on():                                   # Clear Mode: what your answer did, in a word
+        if answer == "promise":
+            return "Promise believed." if truthful or question.get("kind") == "package" else "Promise not believed: you cannot keep it."
+        return "Answer noted." if answer == "straight" else "Sidestepped."
     if question.get("kind") == "package":
         if answer == "promise":
             return REPLY_LINES["package"]
@@ -1318,6 +1405,9 @@ def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict,
     `tired` (the call pestered him) and the pitch falls flat. On a call that keeps his priority to himself
     (`tells` False) the kind is "guarded" whatever he thought (his personality's line keeps its tone; a
     pitch that was none of his gets a line that names nothing). `you` is your line, for the conversation."""
+    from coach_career import clear
+    if clear.on():
+        return _reaction_clear(state, slug, pid, pitch, tired)
     rng = random.Random(f"react-{state['recruiting']['seed']}-{slug}-{pid}-{state['current_week']}-{action}")
     f = _fields(state, slug, p)
     tr = truth(state, slug, p["id"])

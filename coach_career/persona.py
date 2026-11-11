@@ -254,6 +254,15 @@ def learn_from_read(state: dict, pid: str, looks: float) -> None:
         learn(state, state["team"], pid, "decider")
     if looks >= recruiting.REPORT_LOOKS:
         learn(state, state["team"], pid, "story")
+        from coach_career import clear
+        if clear.on():                               # Clear Mode: a complete report leaves no guesswork about him
+            me = state["team"]
+            for t in ("personality", "decider", "style"):
+                learn(state, me, pid, t)
+            seen = state["recruiting"]["revealed"].setdefault(me, {}).setdefault(pid, [])
+            for t in state["recruiting"]["prospects"][pid]["priorities"]:
+                if t not in seen:
+                    seen.append(t)
 
 
 def story_public(state: dict, pid: str) -> bool:

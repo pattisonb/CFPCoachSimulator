@@ -77,6 +77,18 @@
     if (opts.tips) opts.tips(rows);
     return card("Attributes", [rows], { sub: "(Scouted Range)", key: "attributes", cls: "pv-attributes", wide: opts.wide });
   }
+  // Clear Mode (coach_career/clear.py): his key ratings as numbers. A rating reads one number once his report is complete,
+  // a range before; each with the staff's confidence. clear: the profile's `clear` ({complete, rows, potential}) or null.
+  const ratingText = (r) => (r.est == null ? "Not Scouted" : r.lo === r.hi ? String(r.est) : `${r.lo}–${r.hi}`);
+  function clearRatingsCard(clear, opts = {}) {
+    const rows = clear && clear.rows && clear.rows.length ? clear.rows : null;
+    const body = rows ? el("div", { class: "pv-clear" }, [
+      el("div", { class: "pv-clear-row pv-clear-head", "aria-hidden": "true" }, [el("span", { text: "Rating" }), el("span", { text: clear.complete ? "Value" : "Range" }), el("span", { text: "Confidence" })]),
+      ...rows.map((r) => el("div", { class: "pv-clear-row", "data-key": r.key }, [el("span", { class: "pv-attr-k", text: r.label }),
+        el("b", { class: "pv-clear-v", text: ratingText(r) }), el("span", { class: "muted pv-clear-c", text: r.est == null ? "" : `${r.confidence}%` })]))])
+      : el("p", { class: "muted pv-unscouted", text: "Send a scout to read his ratings." });
+    return card("Key Ratings", [body], { sub: clear && !clear.complete ? "(Scouted Range)" : null, key: "attributes", cls: "pv-attributes pv-clear-card", wide: opts.wide });
+  }
   // Strengths and Areas to Develop, each a list or "None Stand Out"
   function lists(report) {
     const list = (title, xs, mark, cls) => el("div", { class: `pv-list ${cls}` }, [el("div", { class: "pv-kick", text: title }),
@@ -157,5 +169,5 @@
       { key: "traits", cls: "pv-traits", wide: opts.wide });
   }
 
-  window.CFP.pv = { pips, card, grid, hero, bar, attrRows, attributesCard, reportCard, summaryCard, uncertaintyCard, traitsCard, traitRows, range, fmtLooks, NOT_KNOWN };
+  window.CFP.pv = { pips, card, grid, hero, bar, attrRows, attributesCard, clearRatingsCard, ratingText, reportCard, summaryCard, uncertaintyCard, traitsCard, traitRows, range, fmtLooks, NOT_KNOWN };
 })();

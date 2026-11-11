@@ -428,3 +428,12 @@
 /* What He Wants (the profile): his known priorities, each with your program's case */
 .go-wants { display: flex; flex-wrap: wrap; gap: 6px 12px; }
 .go-want { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Clear Mode's Key Ratings (profileview clearRatingsCard): rating, value or range, confidence */
+.pv-clear { display: flex; flex-direction: column; }
+.pv-clear-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 88px; gap: 8px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.pv-clear-row:last-child { border-bottom: 0; }
+.pv-clear-head { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 0; }
+.pv-clear-v { font-variant-numeric: tabular-nums; font-size: 15px; }
+.pv-clear-c { font-variant-numeric: tabular-nums; text-align: right; }
+.pv-clear-head span:last-child { text-align: right; }

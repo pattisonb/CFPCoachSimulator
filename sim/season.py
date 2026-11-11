@@ -3275,6 +3275,14 @@ def _job(state: dict) -> Optional[dict]:
         return None
 
 
+def _clear_on() -> bool:
+    try:
+        from coach_career import clear
+        return clear.on()
+    except ImportError:
+        return False
+
+
 def summary(state: dict) -> dict:
     teams = load_teams()
     rec = _records(state, include_playoff=True)[state["team"]]
@@ -3283,6 +3291,7 @@ def summary(state: dict) -> dict:
     return {
         "id": state["id"], "team": state["team"], "team_name": state["team_name"], "conference": state["conference"],
         "mode": state["mode"], "created_at": state["created_at"], "current_week": state["current_week"],
+        "clear_mode": _clear_on(),                     # the clear-mode branch: numbers, not words (coach_career/clear.py)
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"), "year": season_year(state),
         "offseason_stage": (state.get("offseason") or {}).get("stage"),
         "job": _job(state) if state.get("career") else None,
@@ -4001,7 +4010,7 @@ def development_reads(state: dict, slug: str) -> dict[str, dict]:
     for p in load_teams()[slug]["offense"] + load_teams()[slug]["defense"]:
         c, pot = pairs.get(p.get("slug"), (None, 0))
         if c in levels:
-            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": recruiting.word(pot)} if pot else {})}
+            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": str(int(round(pot))) if _clear_on() else recruiting.word(pot)} if pot else {})}   # Clear Mode: the number
     return out
 
 
