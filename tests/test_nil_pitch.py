@@ -211,8 +211,9 @@ def test_pitch_before_offer_is_still_owed():
     st = fresh()
     pid = next(q for q in ranked(st)[40:100] if recruiting.ask_from(st, ME, q) >= 15)
     cares(st, pid, True)
-    recruiting.set_board(st, pid, True)                 # kept on your board, never offered: stringing him along
+    recruiting.set_board(st, pid, True)                 # kept on your board, never offered, and still contacted: stringing him along
     money_pitch(st, pid)
+    recruiting._contact(st, ME, pid)["n"] += 1          # another contact after the pitch (a message)
     wk = st["current_week"]
     for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
         recruiting._promises(st, w)
@@ -301,6 +302,15 @@ def test_small_school_kind_kid_forgives():
     """A kind kid (recruiting.MONEY_FORGIVING) at a small school (tier MONEY_FORGIVE_TIER or below) lets a broken money
     promise go: his line says so and he does not cool. The same kid at Iowa (tier 3) cools as usual."""
     from coach_career import scenes
+    saved = recruiting.MONEY_FORGIVE_CHANCE["shy"]
+    recruiting.MONEY_FORGIVE_CHANCE["shy"] = 1.0           # a sure thing, so the test reads the rule, not the draw
+    try:
+        _forgives(scenes)
+    finally:
+        recruiting.MONEY_FORGIVE_CHANCE["shy"] = saved
+
+
+def _forgives(scenes):
     for school, forgives in (("tulane", True), (ME, False)):
         st = fresh(school)
         pid = None
@@ -321,7 +331,7 @@ def test_small_school_kind_kid_forgives():
             recruiting._promises(st, w)
         ev = [e for e in st["recruiting"]["log"] if e["kind"] == "promise_broken" and e["pid"] == pid][-1]
         cooled = st["recruiting"]["contacts"][pid][school].get("cooled_until") == wk + recruiting.NIL_PROMISE_WEEKS + recruiting.COOL_WEEKS   # the break's cooling, not the lowball's
-        assert (ev["line"] == scenes.MONEY_FORGIVEN_LINE) == forgives and cooled != forgives, (school, ev, cooled)
+        assert (ev["line"] == scenes.MONEY_FORGIVEN_LINES["shy"]) == forgives and cooled != forgives, (school, ev, cooled)
 
 
 def test_walking_away_closes_it():
@@ -339,6 +349,29 @@ def test_walking_away_closes_it():
     pr = promises(st, pid)[0]
     assert pr["broken"] is None and pr.get("closed") is not None, pr
     assert not [e for e in st["recruiting"]["log"] if e["kind"] == "promise_broken" and e["pid"] == pid]
+
+
+def test_going_quiet_fades_it():
+    """Pitch NIL, then no offer and no more contact: it fades at the deadline, no penalty."""
+    st = fresh()
+    pid = next(q for q in ranked(st)[40:100] if recruiting.ask_from(st, ME, q) >= 15)
+    cares(st, pid, True)
+    recruiting.set_board(st, pid, True)
+    money_pitch(st, pid)
+    wk = st["current_week"]
+    for w in range(wk + 1, wk + 2 + recruiting.NIL_PROMISE_WEEKS):
+        recruiting._promises(st, w)
+    pr = promises(st, pid)[0]
+    assert pr["broken"] is None and pr.get("closed") is not None, pr
+
+
+def test_every_kind_can_forgive_at_a_small_school():
+    """At a small school each personality forgives some of the time, in its own line; a big school never."""
+    from coach_career import scenes
+    assert set(recruiting.MONEY_FORGIVE_CHANCE) == set(scenes.MONEY_FORGIVEN_LINES) >= {"cocky", "shy", "guarded", "attention", "business"}
+    assert all(0 < c < 1 for c in recruiting.MONEY_FORGIVE_CHANCE.values())
+    assert recruiting.MONEY_FORGIVE_CHANCE["shy"] == max(recruiting.MONEY_FORGIVE_CHANCE.values())
+    assert recruiting.MONEY_FORGIVE_CHANCE["cocky"] == min(recruiting.MONEY_FORGIVE_CHANCE.values())
 
 
 if __name__ == "__main__":
@@ -364,4 +397,6 @@ if __name__ == "__main__":
     test_broken_line_fits_the_money_and_the_kid()
     test_small_school_kind_kid_forgives()
     test_walking_away_closes_it()
+    test_going_quiet_fades_it()
+    test_every_kind_can_forgive_at_a_small_school()
     print("nil pitch ok: unattached NIL reads the room against his ask; attached reads the deal; the page reads the ask you know; talking money is a promise, kept, broken or closed")

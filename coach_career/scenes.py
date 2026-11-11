@@ -224,8 +224,13 @@ MONEY_BROKEN_LINES = {
               "attention": "That's not the number you were talking about, Coach.",
               "business": "That's not the number you talked about. It came up short."}}
 MONEY_BROKEN_LINE = MONEY_BROKEN_LINES["none"]["business"]
-# a kind kid at a small school lets it go (recruiting.MONEY_FORGIVING, MONEY_FORGIVE_TIER)
-MONEY_FORGIVEN_LINE = "Sorry, Coach, I know you're a smaller school. No worries if you can't get it done."
+# at a small school he may let it go (recruiting.MONEY_FORGIVE_CHANCE, MONEY_FORGIVE_TIER), each in his own way
+MONEY_FORGIVEN_LINES = {"shy": "Sorry, Coach, I know you're a smaller school. No worries if you can't get it done.",
+                        "business": "I get it, Coach. Smaller school, smaller budget. We're good.",
+                        "guarded": "I figured it might go that way at a smaller school. It's fine.",
+                        "attention": "People will be watching me wherever I play, Coach. We're good.",
+                        "cocky": "No worries, Coach. Maybe I come in and help you raise that budget."}
+MONEY_FORGIVEN_LINE = MONEY_FORGIVEN_LINES["shy"]
 MONEY_OWED_LINE = "You talked money: put it on your offer within two weeks."   # the money promise opens: the player is told
 NIL_NOT_HIS = "The money isn't what this is about for me."   # NIL pitched to a recruit who does not care about it
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",
