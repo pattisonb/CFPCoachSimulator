@@ -22,8 +22,9 @@ def offseason_state():
 
 
 def an_iowa_player(st):
-    """A last-season Iowa player still on next year's Iowa roster."""
-    ids = {c["id"] for c in st["league"]["teams"][ME]["roster"]}
+    """A last-season Iowa player still on next year's Iowa roster (and not a Keep Them Home leaver)."""
+    leaving = {e["id"] for e in (st["offseason"].get("retention") or {}).get("players") or ()}
+    ids = {c["id"] for c in st["league"]["teams"][ME]["roster"]} - leaving
     t = season.load_teams()[ME]
     return next(p for p in t["offense"] + t["defense"] if p["slug"] in ids)
 
@@ -71,6 +72,16 @@ def test_next_season_pending_redshirt(st):
         assert n["class"] == want, (r["name"], r["cls"], r["redshirt"], n["class"])
 
 
+def test_next_season_wants_to_leave(st):
+    """At Keep Them Home a player who wants out reads that he wants to leave (where to), not Returning."""
+    ret = st["offseason"].get("retention") or {}
+    assert st["offseason"]["stage"] == "retention" and ret.get("players"), st["offseason"]["stage"]
+    for e in ret["players"][:4]:
+        n = offseason.player_next(st, e["id"])
+        want = "Wants to Leave: NFL Draft" if e["intent"] == "draft" else "Wants to Leave: Transfer Portal"
+        assert n["status"] == "leaving" and n["status_name"] == want and n["team"] is None, (e["name"], e["intent"], n)
+
+
 def test_next_season_outside_offseason():
     fresh = season.new_season(ME, "full", seed=5, career=True)
     p = season.load_teams()[ME]["offense"][0]
@@ -87,6 +98,7 @@ def test_api_player_by_slug(st):
 
 if __name__ == "__main__":
     st = offseason_state()
+    test_next_season_wants_to_leave(st)
     test_find_by_slug_on_any_team(st)
     test_next_season_returning(st)
     test_next_season_departed(st)

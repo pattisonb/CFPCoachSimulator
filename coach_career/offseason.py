@@ -2495,6 +2495,13 @@ def player_next(state: dict, slug: str) -> Optional[dict]:
         return None
     from sim import season
     lgd = state["league"]
+    off = state["offseason"]
+    if off.get("stage") == "retention":           # Keep Them Home: he wants out and nobody has decided yet
+        e = next((x for x in (off.get("retention") or {}).get("players") or () if x["id"] == slug), None)
+        if e is not None:
+            return {"team": None, "team_name": None, "position": e.get("pos"), "class": e.get("cls"), "class_name": None,
+                    "overall": e.get("overall"), "status": "leaving",
+                    "status_name": "Wants to Leave: NFL Draft" if e.get("intent") == "draft" else "Wants to Leave: Transfer Portal"}
     before = next((s for s, t in season.load_teams().items() if any(p.get("slug") == slug for p in t["offense"] + t["defense"])), None)
     for team, t in lgd["teams"].items():
         c = next((c for c in t["roster"] if c["id"] == slug), None)
