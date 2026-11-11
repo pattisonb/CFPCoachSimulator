@@ -14,9 +14,12 @@ PERSONALITY_LABEL = {"cocky": "Cocky", "shy": "Shy", "guarded": "Guarded", "atte
 DECIDERS = {"self": 0.30, "mom": 0.20, "dad": 0.15, "grandma": 0.10, "hs_coach": 0.15, "trainer": 0.10}   # who decides, by share *tune*
 DECIDER_LABEL = {"self": "Himself", "mom": "Mom", "dad": "Dad", "grandma": "Grandmother", "hs_coach": "High School Coach", "trainer": "Trainer"}
 PORTAL_DECIDERS = ("self", "mom", "dad", "trainer")   # a transfer's decider: no high school coach or grandmother (their shares renormalized)
-DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
-                  "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}   # what each decider cares about
-_TOPICS_BEFORE_PRO = {d: tuple(t for t in ts if t != "pro") for d, ts in DECIDER_TOPICS.items()}   # the tuples the first draw reads, so a saved class keeps its topics
+_TOPICS_BEFORE_GRADES = {"self": (), "mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
+                         "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}
+DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics", "stability"), "dad": ("nil", "playing_time", "pro", "exposure"),
+                  "grandma": ("proximity", "coach", "academics"), "hs_coach": ("coach", "playing_time", "winning", "pro", "stability"),
+                  "trainer": ("nil", "pro", "facilities", "exposure")}   # what each decider cares about (School Grades Phase 2 added the campus grades)
+_TOPICS_BEFORE_PRO = {d: tuple(t for t in ts if t != "pro") for d, ts in _TOPICS_BEFORE_GRADES.items()}   # the tuples the first draw reads, so a saved class keeps its topics
 
 
 def draw(pid: str, seed, portal: bool = False) -> dict:
@@ -31,8 +34,14 @@ def draw(pid: str, seed, portal: bool = False) -> dict:
         decider = rng.choices(PORTAL_DECIDERS, weights=[DECIDERS[d] for d in PORTAL_DECIDERS])[0]
     topics = DECIDER_TOPICS[decider]
     topic = rng.choice(_TOPICS_BEFORE_PRO[decider]) if topics else None      # the draw as it was before Pro Pipeline
-    if "pro" in topics and random.Random(f"persona-pro-{seed}-{pid}").random() < 1 / len(topics):
+    old = _TOPICS_BEFORE_GRADES[decider]
+    if "pro" in old and random.Random(f"persona-pro-{seed}-{pid}").random() < 1 / len(old):
         topic = "pro"                                                      # its own stream: Path to the League takes its share
+    new = tuple(t for t in topics if t not in old)
+    if new:                                                                # the campus grades take their share, in their own stream
+        g = random.Random(f"persona-grades-{seed}-{pid}")
+        if g.random() < len(new) / len(topics):
+            topic = g.choice(new)
     return {"personality": personality, "decider": decider, "decider_topic": topic}
 
 

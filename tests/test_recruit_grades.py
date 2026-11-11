@@ -74,6 +74,70 @@ def test_academic_reads_grade():
     assert recruiting.academic("ndsu") == ("ndsu" in recruiting.ACADEMIC), "no grades: the old list"
 
 
+# ----- Task 2: who cares about what -----
+
+HS = {"proximity": 0.13, "playing_time": 0.13, "prestige": 0.10, "winning": 0.10, "nil": 0.10, "pro": 0.08, "coach": 0.07,
+      "academics": 0.06, "facilities": 0.06, "location": 0.05, "stability": 0.04, "game_day": 0.04, "exposure": 0.04}
+
+
+def test_odds_tables():
+    for t in (recruiting.PRIORITY_ODDS, recruiting.PORTAL_PRIORITY_ODDS, recruiting.PORTAL_TOP_PRIORITY_ODDS):
+        assert abs(sum(t.values()) - 1.0) < 1e-9 and set(t) == set(recruiting.PITCHES), t
+    assert recruiting.PRIORITY_ODDS == HS
+    assert recruiting.PORTAL_PRIORITY_ODDS["playing_time"] == 0.34 and recruiting.PORTAL_TOP_PRIORITY_ODDS["nil"] == 0.25
+
+
+def test_spread():
+    n = 4000
+    firsts = [recruiting._priorities(f"s{i}")[0] for i in range(n)]
+    for t, odds in HS.items():
+        share = firsts.count(t) / n
+        assert abs(share - odds) <= 0.03, (t, share, odds)
+
+
+def share(topic, tilt, n=3000):
+    return sum(topic in recruiting._priorities(f"x{i}", None, tilt) for i in range(n)) / n
+
+
+def test_tilts():
+    mom = recruiting.tilt_for({"stars": 4, "ea_position": "K"}, {"decider": "mom", "personality": None})
+    assert mom == {"proximity": recruiting.TILT, "academics": recruiting.TILT, "stability": recruiting.TILT}, mom
+    assert share("stability", mom) > share("stability", None) + 0.01
+    qb = recruiting.tilt_for({"stars": 4, "ea_position": "QB"}, {"decider": "hs_coach", "personality": None})
+    assert share("coach", qb) > share("coach", None) + 0.01
+    both = recruiting.tilt_for({"stars": 5, "ea_position": "QB"}, {"decider": "dad", "personality": "attention"})
+    assert abs(both["exposure"] - recruiting.TILT ** 4) < 1e-9, both    # dad, attention, five-star and QB all lean Exposure
+
+
+def test_old_priorities_kept():
+    st = fresh()
+    pid = a_pid(st)
+    p = st["recruiting"]["prospects"][pid]
+    p["priorities"] = ["nil", "coach", "academics"]
+    w = recruiting.weights(p)
+    assert abs(sum(w.values()) - 1.0) < 1e-9 and w["nil"] == recruiting.PRIORITY_WEIGHTS[0]
+    assert abs(w["facilities"] - recruiting.OTHER_WEIGHT / 10) < 1e-9
+
+
+def test_portal_tables():
+    t = recruiting.tilt_for({"stars": None, "tier": 4, "portal": True, "group": "RB"}, {"decider": "self", "personality": "shy"})
+    pri = recruiting._priorities("portal-x", recruiting.PORTAL_PRIORITY_ODDS, t)
+    assert len(set(pri)) == 3 and set(pri) <= set(recruiting.PITCHES)
+
+
+def test_decider_draw_kept():
+    from coach_career import persona
+    for i in range(200):
+        d = persona.draw(f"d{i}", 7)
+        if d["decider"] == "self":
+            assert d["decider_topic"] is None
+        if d["decider"] == "mom":
+            assert d["decider_topic"] in ("proximity", "academics", "stability"), d
+        if d["decider"] == "trainer":
+            assert d["decider_topic"] in ("nil", "pro", "facilities", "exposure"), d
+    assert any(persona.draw(f"d{i}", 7)["decider_topic"] == "stability" for i in range(400)), "the new topics get their share"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
