@@ -59,13 +59,13 @@ def test_floors():
 def test_stability():
     base = P.grades(SLUG)["stability"]
     p = prog()
-    P._move_grades(p, SLUG, 2027, rank=None, coach_since=2027, churn=P.CHURN_MEAN)
+    P._move_grades(p, SLUG, 2027, rank=None, coach_since=2026, churn=P.CHURN_MEAN)
     assert abs(live(p)["stability"] - max(10, base - P.STABILITY_CHANGE)) < 1e-9
     for y in (2028, 2029, 2030):
-        P._move_grades(p, SLUG, y, rank=None, coach_since=2027, churn=P.CHURN_MEAN)
+        P._move_grades(p, SLUG, y, rank=None, coach_since=2026, churn=P.CHURN_MEAN)
     assert abs(live(p)["stability"] - base) < 1e-9, "three years rebuild 15, never above the base"
     for y in range(2031, 2045):
-        P._move_grades(p, SLUG, y, rank=None, coach_since=y, churn=P.CHURN_MEAN)
+        P._move_grades(p, SLUG, y, rank=None, coach_since=y - 1, churn=P.CHURN_MEAN)
     assert live(p)["stability"] == 10.0, "never under 10"
 
 
@@ -99,6 +99,24 @@ def test_rating_untouched_and_pulls_live():
     pid = next(iter(st["recruiting"]["prospects"]))
     want = P.grades_now(st, SLUG)["game_day"] / 100
     assert abs(recruiting.pull(st, SLUG, pid, winning=False)["game_day"] - want) < 1e-9
+
+
+def test_a_copy_never_writes_back():
+    """offseason.program_shifts runs update on a shallow copy of each program (a probe): moving the copy's grades must
+    leave the real program's grades_live untouched."""
+    real = prog(winning=70.0, grades_live={"game_day": 2.0, "exposure": 1.0, "stability": 0.0, "academics": 0.0})
+    copy = dict(real)
+    P._move_grades(copy, SLUG, 2028, rank=None, coach_since=2020, churn=0)
+    assert real["grades_live"] == {"game_day": 2.0, "exposure": 1.0, "stability": 0.0, "academics": 0.0}, real["grades_live"]
+
+
+def test_change_read_at_the_carousel():
+    """programs.update runs at the carousel, before that offseason's hires: a coach hired last offseason (since ==
+    year - 1) is this year's change, the way offseason.py reads a new coach."""
+    base = P.grades(SLUG)["stability"]
+    p = prog()
+    P._move_grades(p, SLUG, 2028, rank=None, coach_since=2027, churn=P.CHURN_MEAN)
+    assert abs(live(p)["stability"] - max(10, base - P.STABILITY_CHANGE)) < 1e-9, live(p)["stability"]
 
 
 if __name__ == "__main__":

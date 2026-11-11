@@ -498,13 +498,13 @@ def _move_grades(p: dict, slug: str, year: int, rank: Optional[int], coach_since
     base = grades(slug)
     if base is None:
         return
-    gl = p.setdefault("grades_live", {})
+    gl = p["grades_live"] = dict(p.get("grades_live") or {})     # a new dict: a probe's shallow copy never writes back (as drafts)
     before = _held(base, gl)
     lead = p.get("winning", 40.0) - p.get("winning_base", 40.0)
     gl["game_day"] = _step(gl.get("game_day", 0.0), GAME_DAY_LIVE * lead, GAME_DAY_STEP)
     bonus = next((b for top, b in EXPOSURE_RANKED if rank and rank <= top), 0.0)
     gl["exposure"] = _step(gl.get("exposure", 0.0), EXPOSURE_LIVE * lead + bonus, EXPOSURE_STEP)
-    if coach_since == year:
+    if coach_since == year - 1:          # update runs at the carousel, before this offseason's hires: last offseason's hire is this year's change
         gl["stability"] = gl.get("stability", 0.0) - STABILITY_CHANGE
     else:
         gl["stability"] = min(0.0, gl.get("stability", 0.0) + STABILITY_REBUILD)
