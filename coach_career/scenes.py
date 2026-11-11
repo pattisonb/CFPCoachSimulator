@@ -1141,8 +1141,16 @@ def _open_clear(state: dict, slug: str, pid: str, action: str, week: int, f: dic
     if heard_rival_due(state, slug, pid):
         turns.append(_turn("note", "He heard you promised the job to another player at his position."))
         contact.pop("heard_rival", None)
+    package = None
+    k, data = persona.story(state, pid)
+    if k == "package" and (action == "hc_visit" or not ((rc["contacts"].get(pid) or {}).get(slug) or {}).get("calls")):
+        # a Package Deal says so plainly, at a visit or on the first call: his question about his mate follows your opening
+        turns.append(_turn("note", f"Package Deal: he wants {f.get('mate') or 'his teammate'} to come too."))
+        package = package_about(state, slug, pid)
+        if action == "hc_visit":
+            persona.learn(state, slug, pid, "story")
     sc = {"id": sid, "action": action, "week": week, "turns": turns, "lines": [],
-          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired, "package": None}
+          "cue": None, "ask": recruiting.ask_view(state, slug, pid), "question": None, "presented": None, "tired": tired, "package": package}
     _lines(sc)
     return sc
 
