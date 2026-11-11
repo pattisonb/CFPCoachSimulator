@@ -68,8 +68,83 @@ def test_chip_words():
     assert pr.chip("kept") == "On Track" and pr.chip("bent") == "Slipping" and pr.chip("broken") == "Broken" and pr.chip("none") is None
 
 
+# ----- Task 2: the weekly snapshot (a career in its second season, with its league) -----
+
+def second_season():
+    """A career in 2027 with its own league (offseason run through): promises can exist."""
+    from coach_career import offseason
+    from sim import season
+    import test_offseason
+    st = season.new_season("iowa", "full", seed=5, career=True)
+    test_offseason.finished(st)
+    offseason.start(st)
+    offseason.run_all(st)
+    return offseason.next_season(st)
+
+
+def promise_two(st):
+    """Promise the starting QB and a bench player this season; return their slugs."""
+    from sim import season
+    me, year = st["team"], season.season_year(st)
+    t = season._preview_team(st, me)
+    rows = t["offense"] + t["defense"]
+    qb = next(p for p in rows if p["position"] == "QB" and p.get("in_game"))
+    bench = next(p for p in rows if not p.get("in_game") and p["position"] not in ("K", "P"))
+    roster = {c["id"]: c for c in st["league"]["teams"][me]["roster"]}
+    for slug in (qb["slug"], bench["slug"]):
+        roster[slug]["promised"] = year
+    return qb["slug"], bench["slug"], bench
+
+
+def test_snapshot_records_each_week(st):
+    from sim import season
+    qb, bench, _ = promise_two(st)
+    season.advance(st)
+    season.advance(st)
+    year = str(season.season_year(st))
+    rec = pr.record(st)[year]
+    played = [w for w in rec[qb]]
+    assert len(rec[qb]) == len(rec[bench]) >= 1, rec
+    assert all(w["started"] for w in rec[qb] if not w["injured"]) and not any(w["started"] for w in rec[bench]), rec
+    assert [w["week"] for w in rec[qb]] == sorted({w["week"] for w in rec[qb]}), "one entry per week"
+
+
+def test_snapshot_once_per_week(st):
+    from sim import season
+    year = str(season.season_year(st))
+    before = {k: len(v) for k, v in pr.record(st)[year].items()}
+    pr.snapshot_week(st, st["current_week"])          # that week again: nothing new
+    assert {k: len(v) for k, v in pr.record(st)[year].items()} == before
+
+
+def test_injured_is_marked(st):
+    from sim import season
+    qb, bench, row = promise_two(st)
+    me = st["team"]
+    st.setdefault("injuries", {}).setdefault(me, {})["test-hurt"] = {"name": row["name"], "position": row["position"], "weeks": 3}
+    week = st["current_week"] + 1
+    pr.snapshot_week(st, week)
+    last = pr.record(st)[str(season.season_year(st))][bench][-1]
+    assert last["week"] == week and last["injured"] is True, last
+    st["injuries"][me].pop("test-hurt")
+
+
+def test_first_season_records_nothing():
+    from sim import season
+    st = season.new_season("iowa", "full", seed=5, career=True)
+    season.advance(st)
+    assert not st.get("promises"), st.get("promises")
+
+
 if __name__ == "__main__":
+    import inspect
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    later = None
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
-            fn()
+            if inspect.signature(fn).parameters:
+                later = later or second_season()
+                fn(later)
+            else:
+                fn()
     print("promises ok: late weeks weigh more, big games and a QB benching cost more, injured weeks do not count, personality sets the bar")

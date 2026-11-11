@@ -1646,6 +1646,9 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
     teams = load_teams()
     week = state["current_week"] + 1
     _setup_week(state, week, teams, say)
+    if state.get("career") and state.get("league"):          # promises judged all season: who starts this week (coach_career/promises.py)
+        from coach_career import promises
+        promises.snapshot_week(state, week)
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
     _run_games(state, ids, pool, report, stage=f"Playing {week_label(week)} games")
 

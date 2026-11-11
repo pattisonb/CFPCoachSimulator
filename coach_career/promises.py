@@ -79,3 +79,53 @@ def personality_of(state: dict, slug: str) -> str:
             if c["id"] == slug and (c.get("persona") or {}).get("personality"):
                 return c["persona"]["personality"]
     return persona.draw(slug, "roster")["personality"]
+
+
+# ----- the weekly snapshot (sim/season.advance, before the week's games) -----------------------------------------------
+
+def promised_now(state: dict) -> dict[str, dict]:
+    """Your league roster rows promised a starting role for this season, by slug ({} in a first season: no league)."""
+    from sim import season
+    lgd = state.get("league")
+    if not lgd or not state.get("team"):
+        return {}
+    year = season.season_year(state)
+    return {c["id"]: c for c in (lgd["teams"].get(state["team"]) or {}).get("roster") or () if c.get("promised") == year}
+
+
+def _game(state: dict, slug: str, week: int) -> Optional[dict]:
+    return next((g for g in state["games"].values() if g["week"] == week and slug in (g["home"], g["away"])), None)
+
+
+def is_big(state: dict, slug: str, week: int) -> bool:
+    """Your game that week is a title game, a bowl or the playoff, a rivalry, or against a ranked opponent."""
+    from sim import season
+    g = _game(state, slug, week)
+    if g is None:
+        return False
+    if g.get("kind") in ("ccg", "bowl", "playoff"):
+        return True
+    other = g["away"] if g["home"] == slug else g["home"]
+    return season.rivalry_for(g["home"], g["away"]) is not None or other in season.rank_map(state, week - 1)
+
+
+def snapshot_week(state: dict, week: int) -> None:
+    """Record each promised player's week: started (in the lineup the week's games will use), injured (on the injury
+    list, not redshirting), big. A bye records nothing; a week already recorded is not recorded twice."""
+    from sim import season
+    promised = promised_now(state)
+    me = state.get("team")
+    if not promised or _game(state, me, week) is None:
+        return
+    team = season._preview_team(state, me)
+    rows = {p.get("slug"): p for p in team["offense"] + team["defense"]}
+    hurt = {i.get("name") for i in ((state.get("injuries") or {}).get(me) or {}).values()}
+    big = is_big(state, me, week)
+    year = record(state).setdefault(str(season.season_year(state)), {})
+    for slug in promised:
+        weeks = year.setdefault(slug, [])
+        if any(w["week"] == week for w in weeks):
+            continue
+        p = rows.get(slug) or {}
+        injured = p.get("name") in hurt
+        weeks.append({"week": week, "started": bool(p.get("in_game")) and not injured, "injured": injured, "big": big})
