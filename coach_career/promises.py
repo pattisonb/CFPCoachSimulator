@@ -135,7 +135,7 @@ def is_big(state: dict, slug: str, week: int) -> bool:
     if g.get("kind") in ("ccg", "bowl", "playoff"):
         return True
     other = g["away"] if g["home"] == slug else g["home"]
-    return season.rivalry_for(g["home"], g["away"]) is not None or other in season.rank_map(state, week - 1)
+    return season.rivalry_for(g["home"], g["away"], state) is not None or other in season.rank_map(state, week - 1)
 
 
 def snapshot_week(state: dict, week: int) -> None:

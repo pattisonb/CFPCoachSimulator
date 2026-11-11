@@ -2938,7 +2938,12 @@ def load_rivalries() -> dict[frozenset, dict]:
     return _rivalry_cache
 
 
-def rivalry_for(a: str, b: str) -> Optional[dict]:
+def rivalry_for(a: str, b: str, state: Optional[dict] = None) -> Optional[dict]:
+    """The rivalry between two teams: a career's own named rivalries first (a league file's, from Custom Programs), then
+    the game's (data/rivalries.json)."""
+    for r in ((state or {}).get("league") or {}).get("rivalries") or ():
+        if frozenset(r.get("teams") or ()) == frozenset((a, b)):
+            return r
     return load_rivalries().get(frozenset((a, b)))
 
 
@@ -2977,7 +2982,7 @@ def rivalry_series(state: dict, riv: dict, before_week: Optional[int] = None, te
 def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
     """The rivalry line for one game: the trophy and the series entering it (or, with
     `after`, including it, with who takes or keeps the trophy)."""
-    riv = rivalry_for(g["home"], g["away"])
+    riv = rivalry_for(g["home"], g["away"], state)
     if riv is None:
         return None
     teams = load_teams()

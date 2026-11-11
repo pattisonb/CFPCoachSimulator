@@ -48,6 +48,11 @@ if __name__ == "__main__":
             page.click("#pg-new")
             ed = "#pg-editor"
             page.wait_for_selector(f"{ed}:not([hidden])")
+            # checks as you type: no name or conference yet, so Check Program waits and says why
+            assert page.is_disabled(f"{ed} button:has-text('Check Program')")
+            probs = page.inner_text(f"{ed} .pg-problems")
+            assert "Give the program a name." in probs and "Pick a conference." in probs, probs
+            assert page.query_selector(f"{ed} .pg-field.pg-invalid[data-key=name]")
             page.fill(f"{ed} .pg-field:has-text('Name') input >> nth=0", "Alder Tech")
             page.fill(f"{ed} .pg-field:has-text('Mascot') input", "Owls")
             page.fill(f"{ed} .pg-field:has-text('City') input", "Bend")
@@ -71,7 +76,21 @@ if __name__ == "__main__":
             page.fill(f"{ed} .pg-field:has-text('Defensive Coordinator') input", "Lee Poe")
             page.select_option(f"{ed} .pg-field:has-text('Offense') select", "Spread RPO")
             page.select_option(f"{ed} .pg-field:has-text('Defense') select", "4-3")
-            page.select_option(f"{ed} select.pg-rivals", ["boise-state", "air-force"])
+            # rivals: search, pick (a chip), name one; the fourth is refused (three at most)
+            for q, slug in (("boise", "boise-state"), ("air force", "air-force")):
+                page.fill(f"{ed} .pg-rival-search", q)
+                page.click(f"{ed} .pg-rival-hit[data-slug='{slug}']")
+            page.fill(f"{ed} .pg-rival[data-slug='boise-state'] .pg-rival-name", "Battle for the Bell")
+            page.fill(f"{ed} .pg-rival-search", "nevada")
+            page.click(f"{ed} .pg-rival-hit[data-slug='nevada']")
+            assert page.is_disabled(f"{ed} .pg-rival-search") and "3 of 3" in page.inner_text(f"{ed} .pg-rival-count")
+            page.click(f"{ed} .pg-rival[data-slug='nevada'] .pg-rival-x")
+            assert not page.is_disabled(f"{ed} .pg-rival-search")
+            # a bad roster line is flagged before the game is asked
+            page.fill(f"{ed} textarea", page.input_value(f"{ed} textarea") + "\nBad Guy, WRR, SR")
+            assert "'WRR' is not a position" in page.inner_text(f"{ed} .pg-problems") and page.is_disabled(f"{ed} button:has-text('Check Program')")
+            page.fill(f"{ed} textarea", page.input_value(f"{ed} textarea").replace("\nBad Guy, WRR, SR", ""))
+            assert not page.is_disabled(f"{ed} button:has-text('Check Program')")
             page.click(f"{ed} button:has-text('Check Program')")
             page.wait_for_selector(f"{ed} .pg-good", timeout=180_000)
             assert "Ready to use" in page.inner_text(f"{ed} .pg-good")
@@ -88,7 +107,7 @@ if __name__ == "__main__":
             assert d["teams"][0]["conference"] == "mountain-west" and d["teams"][0]["roster"][1]["overall"] == 74
             co = d["teams"][0]["coaches"]
             assert co["oc"]["name"] == "Sam Roe" and co["dc"]["name"] == "Lee Poe" and co["offense"] == "Spread RPO" and co["defense"] == "4-3", co
-            assert sorted(d["teams"][0]["rivals"]) == ["air-force", "boise-state"], d["teams"][0].get("rivals")
+            assert d["teams"][0]["rivals"] == [{"slug": "boise-state", "name": "Battle for the Bell"}, "air-force"], d["teams"][0].get("rivals")
             # edit a real program
             page.wait_for_function("() => document.querySelectorAll('#pg-real option').length > 100", timeout=120_000)
             page.select_option("#pg-real", "akron")
