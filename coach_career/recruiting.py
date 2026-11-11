@@ -117,6 +117,8 @@ PACKAGE_PROMISE_WEEKS = 2                  # you promised his mate an offer: kep
 PACKAGE_KEPT = 2.0                         # what a kept Package Deal promise earns at the week step it is kept *tune*
 NIL_PROMISE_SHARE = 0.8                    # *tune* a money promise (NIL pitched with nothing on the offer) is kept once the offer holds this share of his ask
 NIL_PROMISE_WEEKS = 2                      # *tune* ... within this many week steps, or it breaks
+MONEY_FORGIVING = ("shy",)                 # *tune* personalities that let a broken money promise go at a small school
+MONEY_FORGIVE_TIER = 4                     # *tune* ... a school at this program tier or below (Group of 5 and the bottom)
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
@@ -2323,15 +2325,18 @@ def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int, tell
 def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: int) -> None:
     """A money promise at the week step: kept once the offer holds NIL_PROMISE_SHARE of his ask (PACKAGE_KEPT lands,
     promise_kept), broken after NIL_PROMISE_WEEKS without it (he cools; promise_broken, why "money"), closed with
-    neither once he is no longer yours to win (committed elsewhere, signed, or an offer you made pulled; a pitch before
-    any offer stays owed: the money has to reach an offer). The share reads his ask now when it fell since the pitch."""
+    neither once he is no longer yours to win (committed elsewhere, signed, an offer you made pulled, or, never offered,
+    taken off your board: you walked away; a pitch before any offer with him still on your board stays owed). The share
+    reads his ask now when it fell since the pitch. A kind kid (MONEY_FORGIVING) at a small school (MONEY_FORGIVE_TIER)
+    lets a broken one go; otherwise his line says whether nothing or too little reached the offer."""
     from coach_career import scenes
     rc = state["recruiting"]
     st_ = rc["status"][pid]
     offered = pid in rc["offers"].get(slug, [])
     if offered:
         pr["offered"] = True
-    if st_["signed"] or (st_["committed"] and st_["committed"] != slug) or (pr.get("offered") and not offered):
+    walked = not pr.get("offered") and slug == state.get("team") and pid not in (rc.get("board") or ())   # you took him off your board
+    if st_["signed"] or (st_["committed"] and st_["committed"] != slug) or (pr.get("offered") and not offered) or walked:
         pr["closed"] = week
         return
     held = (rc["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
@@ -2342,13 +2347,19 @@ def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: in
         return
     if week - pr["week"] < NIL_PROMISE_WEEKS:
         return
+    pr["broken"] = week
+    kind = persona.of(state, pid)["personality"]
+    from coach_career import programs
+    if kind in MONEY_FORGIVING and programs.get(state, slug)["tier"] >= MONEY_FORGIVE_TIER:
+        _event(state, "promise_broken", pid, slug, why="money", forgiven=True, line=scenes.MONEY_FORGIVEN_LINE)   # no cooling, no firmness lost
+        return
+    line = scenes.MONEY_BROKEN_LINES["short" if held else "none"].get(kind, scenes.MONEY_BROKEN_LINE)
     if st_["committed"] == slug and not st_.get("hard"):
         st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
     elif st_["committed"] != slug:
         c["cooled_until"] = week + COOL_WEEKS
         persona.set_cooled_why(state, slug, pid, "promise")
-    pr["broken"] = week
-    _event(state, "promise_broken", pid, slug, why="money", line=scenes.MONEY_BROKEN_LINE)
+    _event(state, "promise_broken", pid, slug, why="money", line=line)
 
 
 def _promises(state: dict, week: int) -> None:

@@ -211,7 +211,21 @@ REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
 # the Package Deal promise kept (recruiting._promises): his History's line, {mate} his mate
 PROMISE_KEPT_LINE = "{mate} got his offer. You kept your word, Coach."
 MONEY_KEPT_LINE = "You put the money on the table. You kept your word, Coach."
-MONEY_BROKEN_LINE = "You talked money and never put it on the table."
+# a money promise broken, in his voice: nothing on your offer ("none") or some, short of what you talked ("short")
+MONEY_BROKEN_LINES = {
+    "none": {"cocky": "You talked money, Coach, and I never saw a dime of it on the table.",
+             "shy": "I know you meant it, Coach. There just was never any money on the offer.",
+             "guarded": "You talked money and never put it on the table. I noticed.",
+             "attention": "Everybody asked me what you were paying. I had nothing to tell them.",
+             "business": "You talked money and never put it on the table."},
+    "short": {"cocky": "You talked a bigger game than that, Coach.",
+              "shy": "I know you tried, Coach. I just thought there'd be more there.",
+              "guarded": "You talked like there was going to be more there.",
+              "attention": "That's not the number you were talking about, Coach.",
+              "business": "That's not the number you talked about. It came up short."}}
+MONEY_BROKEN_LINE = MONEY_BROKEN_LINES["none"]["business"]
+# a kind kid at a small school lets it go (recruiting.MONEY_FORGIVING, MONEY_FORGIVE_TIER)
+MONEY_FORGIVEN_LINE = "Sorry, Coach, I know you're a smaller school. No worries if you can't get it done."
 MONEY_OWED_LINE = "You talked money: put it on your offer within two weeks."   # the money promise opens: the player is told
 NIL_NOT_HIS = "The money isn't what this is about for me."   # NIL pitched to a recruit who does not care about it
 CLASS_WORDS = {"FR": "freshman", "FRRS": "redshirt freshman", "SO": "sophomore", "SORS": "redshirt sophomore",

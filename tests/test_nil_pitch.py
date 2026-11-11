@@ -104,7 +104,9 @@ def cares(st, pid, topic, personality="business"):
 
 
 def money_pitch(st, pid):
-    """A call: present, answer if he asks, then pitch NIL. The reaction."""
+    """A call: present, answer if he asks, then pitch NIL. The reaction. (A Shy recruit has had a call before: his
+    first one tells nothing.)"""
+    recruiting._contact(st, ME, pid).setdefault("calls", 1)
     sc = recruiting.act(st, ME, pid, "call")["scene"]
     sc = recruiting.act(st, ME, pid, "present", scene=sc["id"], topics=list(recruiting.PITCHES)[:3])["scene"]
     if sc.get("question"):
@@ -209,6 +211,7 @@ def test_pitch_before_offer_is_still_owed():
     st = fresh()
     pid = next(q for q in ranked(st)[40:100] if recruiting.ask_from(st, ME, q) >= 15)
     cares(st, pid, True)
+    recruiting.set_board(st, pid, True)                 # kept on your board, never offered: stringing him along
     money_pitch(st, pid)
     wk = st["current_week"]
     for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
@@ -274,6 +277,70 @@ def test_no_money_promise_in_the_portal():
     assert not promises(st, pid)
 
 
+def test_broken_line_fits_the_money_and_the_kid():
+    """Nothing on the offer and some (short of the share) read differently, each in his personality's voice."""
+    from coach_career import scenes
+    for personality in ("business", "shy"):
+        for held_some in (False, True):
+            st = fresh()
+            pid = nil_target(st, None)
+            cares(st, pid, True, personality=personality)
+            money_pitch(st, pid)
+            ask = recruiting.ask_from(st, ME, pid)
+            if held_some:
+                recruiting._nil(st, ME)["held"][pid] = 5
+            wk = st["current_week"]
+            for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
+                recruiting._promises(st, w)
+            ev = [e for e in st["recruiting"]["log"] if e["kind"] == "promise_broken" and e["pid"] == pid][-1]
+            want = scenes.MONEY_BROKEN_LINES["short" if held_some else "none"][personality]
+            assert ev["line"] == want, (personality, held_some, ev["line"], ask)
+
+
+def test_small_school_kind_kid_forgives():
+    """A kind kid (recruiting.MONEY_FORGIVING) at a small school (tier MONEY_FORGIVE_TIER or below) lets a broken money
+    promise go: his line says so and he does not cool. The same kid at Iowa (tier 3) cools as usual."""
+    from coach_career import scenes
+    for school, forgives in (("tulane", True), (ME, False)):
+        st = fresh(school)
+        pid = None
+        for q in ranked(st)[40:100]:
+            if recruiting.ask_from(st, school, q) >= 15:
+                pid = q
+                break
+        cares(st, pid, True, personality="shy")
+        recruiting.act(st, school, pid, "offer", pitch="winning")
+        recruiting._contact(st, school, pid).setdefault("calls", 1)        # not his first call: a Shy recruit tells you
+        sc = recruiting.act(st, school, pid, "call")["scene"]
+        sc = recruiting.act(st, school, pid, "present", scene=sc["id"], topics=list(recruiting.PITCHES)[:3])["scene"]
+        if sc.get("question"):
+            recruiting.act(st, school, pid, "answer", scene=sc["id"], answer="straight")
+        recruiting.act(st, school, pid, "pitch", pitch="nil", scene=sc["id"])
+        wk = st["current_week"]
+        for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
+            recruiting._promises(st, w)
+        ev = [e for e in st["recruiting"]["log"] if e["kind"] == "promise_broken" and e["pid"] == pid][-1]
+        cooled = st["recruiting"]["contacts"][pid][school].get("cooled_until") == wk + recruiting.NIL_PROMISE_WEEKS + recruiting.COOL_WEEKS   # the break's cooling, not the lowball's
+        assert (ev["line"] == scenes.MONEY_FORGIVEN_LINE) == forgives and cooled != forgives, (school, ev, cooled)
+
+
+def test_walking_away_closes_it():
+    """Pitch NIL with no offer, then take him off your board: you walked away, no penalty. Kept on the board with no
+    offer, it still breaks (test_pitch_before_offer_is_still_owed)."""
+    st = fresh()
+    pid = next(q for q in ranked(st)[40:100] if recruiting.ask_from(st, ME, q) >= 15)
+    cares(st, pid, True)
+    recruiting.set_board(st, pid, True)
+    money_pitch(st, pid)
+    recruiting.set_board(st, pid, False)
+    wk = st["current_week"]
+    for w in range(wk + 1, wk + 2 + recruiting.NIL_PROMISE_WEEKS):
+        recruiting._promises(st, w)
+    pr = promises(st, pid)[0]
+    assert pr["broken"] is None and pr.get("closed") is not None, pr
+    assert not [e for e in st["recruiting"]["log"] if e["kind"] == "promise_broken" and e["pid"] == pid]
+
+
 if __name__ == "__main__":
     test_offer_without_nil_reads_room()
     test_before_offer_reads_room_not_tier()
@@ -294,4 +361,7 @@ if __name__ == "__main__":
     test_money_promise_closed_on_pull_or_sign()
     test_guarded_call_tells_nothing()
     test_no_money_promise_in_the_portal()
+    test_broken_line_fits_the_money_and_the_kid()
+    test_small_school_kind_kid_forgives()
+    test_walking_away_closes_it()
     print("nil pitch ok: unattached NIL reads the room against his ask; attached reads the deal; the page reads the ask you know; talking money is a promise, kept, broken or closed")
