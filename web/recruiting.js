@@ -1704,27 +1704,20 @@
         syncBoard();
       }
     }
-    // the pitch as a dropdown: his known priorities first, then the rest, each with your program's case;
-    // ★ marks a known priority, ☆ a topic he brought up this week (a known one keeps ★)
+    // the pitch on the step (Message, Offer): the lead-with pill (leadPicker), his known priorities first, then a topic he
+    // brought up this week, then the rest; the pick lasts the visit (view.pitch)
     function pitchSelect(b) {
       const cued = cueOf(s, b).topics;
-      const order = [...b.priorities_known, ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t))];
-      const selEl = el("select", { id: "rc-pitch", class: "go-sel", "aria-label": `Pitch to ${b.name}` }, order.map((t) => {
-        const star = b.priorities_known.includes(t) ? "★ " : cued.includes(t) ? "☆ " : "";
-        const m = markOf(b, t);
-        const parts = [`${star}${PITCH_NAMES[t]}`, caseWord(b, t) || null, m ? MARKS[m.mark][0] : null].filter(Boolean);
-        return el("option", { value: t, text: parts.join(" · ") });
-      }));
-      selEl.value = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : b.priorities_known[0] || cued[0] || order[0];
-      selEl.addEventListener("change", () => { view.pitch[b.id] = selEl.value; });
-      return selEl;
+      const order = [...b.priorities_known, ...cued.filter((t) => !b.priorities_known.includes(t)), ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t) && !cued.includes(t))];
+      const first = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : order[0];
+      return leadPicker(b, { id: "rc-pitch", order, current: first, cueTopics: cued, cueTip: cueOf(s, b).title, onPick: (t) => { view.pitch[b.id] = t; } });
     }
     // Message, Offer… and Raise NIL… happen here, under the head: the pitch (not for a raise), the NIL points (not for a message)
     function stepView(b, kind) {
       const st = el("div", { class: "go-step", role: "group", "aria-label": kind === "message" ? `Message ${b.name}` : kind === "offer" ? `Offer ${b.name}` : `Raise your NIL offer to ${b.name}` });
       st.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: kind === "message" ? "Message · 5 Hours" : kind === "offer" ? "Offer · No Hours" : "Raise NIL · No Hours" })]));
       const pitch = kind === "raise_nil" ? null : pitchSelect(b);
-      if (pitch) st.append(el("label", { for: "rc-pitch" }, [el("span", { class: "small", text: "Your Pitch" }), pitch]));
+      if (pitch) st.append(el("div", { class: "go-lead-field" }, [el("span", { class: "small", text: "Your Pitch" }), pitch]));
       let nil = null;
       if (kind !== "message") {
         const ask = askWord(b);
@@ -1801,14 +1794,14 @@
         const parts = [];
         if (q) parts.push(questionView(b, scene));
         parts.push(el("div", { class: "go-kicker muted", text: "What You Lead With" }),
-          pitchPicker(b, chosen, (t) => { chosen = t; view.pitch[b.id] = t; }, scene.cue.topics, cueTitle(scene.action), pending()));
+          leadPicker(b, { current: chosen, onPick: (t) => { chosen = t; view.pitch[b.id] = t; }, cueTopics: scene.cue.topics, cueTip: cueTitle(scene.action), locked: pending() }));
         const go = el("button", { type: "button", class: "go-btn primary", text: "Pitch", title: pending() ? "Answer him first" : PITCH_TIP });
         go.disabled = pending();
         // his question answered: the pitch and its radios open up in place
         sc._unlock = () => {
           go.disabled = false;
           go.title = PITCH_TIP;
-          for (const r of sc.querySelectorAll(".go-pitches input")) r.disabled = false;
+          for (const r of sc.querySelectorAll(".go-lead-pick")) r.disabled = false;
         };
         go.addEventListener("click", async () => {
           if (pending()) { H.toast("Answer him first.", 3000); return; }
@@ -1836,8 +1829,8 @@
             last.dataset.kind = re.kind;
             last.setAttribute("role", "status");
             last.tabIndex = -1;
-            // what you led with stays on record (the radios locked); Pitch and Hang Up give way to Done
-            for (const r of fin.querySelectorAll(".go-pitches input")) r.disabled = true;
+            // what you led with stays on record (the pill locked); Pitch and Hang Up give way to Done
+            for (const r of fin.querySelectorAll(".go-lead-pick")) r.disabled = true;
             const done = el("button", { type: "button", class: "go-btn primary go-scene-close", text: "Done", onclick: () => { if (sceneWin === win) H.closeTop(); } });
             acts.replaceChildren(done, el("span", { class: "muted small go-scene-done", text: "It counts at the week step." }));
             hint.textContent = `The ${what} is over. Closing this window ends it; his History keeps a line.`;
@@ -1984,25 +1977,58 @@
       wrap.append(acts);
       return wrap;
     }
-    // the topics as radios, each with your program's case: ★ a known priority, ☆ what he just brought up (`cueTopics`, a scene's cue; `cueTip`, the ☆ title);
-    // `locked`: his question waits, the radios are disabled until you answer
-    function pitchPicker(b, current, onPick, cueTopics, cueTip, locked) {
-      cueTopics = cueTopics || [];
-      const pitches = el("div", { class: "go-pitches", role: "radiogroup", "aria-label": `Pitch to ${b.name}` });
-      for (const t of Object.keys(PITCH_NAMES)) {
+    // what you lead with, as a pill (the player's ask: the Your Pitch dropdown, one pick): the pill shows your pick; it opens
+    // every topic as a chip with ★ (a known priority) or ☆ (what he brought up: `cueTopics`, titled `cueTip`), your
+    // program's case in a word and the mark of what he said when you pitched it (markTag). Picking closes it. `locked`:
+    // his question waits, the pill is disabled until you answer. The pill carries the pick as `.value` and data-value.
+    function leadPicker(b, opts) {
+      const { order = Object.keys(PITCH_NAMES), cueTopics = [], cueTip = "", locked = false, onPick = () => {}, id } = opts;
+      let value = opts.current || "";
+      const label = el("b", { class: "go-lead-name" });
+      const pill = el("button", { type: "button", class: "go-lead-pick", ...(id ? { id } : {}), "aria-haspopup": "true", "aria-expanded": "false",
+        "aria-label": `Pitch to ${b.name}` }, [el("span", { text: "Lead With" }), label, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
+      const menu = el("div", { class: "go-lead-menu", role: "radiogroup", "aria-label": `Pitch to ${b.name}`, hidden: "" });
+      const drop = el("div", { class: "go-lead" }, [pill, menu]);
+      const outside = (e) => { if (!drop.contains(e.target)) close(); };
+      function close() {
+        if (menu.hidden) return;
+        menu.hidden = true;
+        pill.setAttribute("aria-expanded", "false");
+        document.removeEventListener("click", outside, true);
+      }
+      function open() {
+        menu.hidden = false;
+        pill.setAttribute("aria-expanded", "true");
+        document.addEventListener("click", outside, true);
+        const on = menu.querySelector('[aria-checked="true"]') || menu.querySelector(".go-lead-chip");
+        if (on) on.focus({ preventScroll: true });
+        menu.scrollIntoView({ block: "nearest" });
+      }
+      const set = (t) => {
+        value = t;
+        drop.value = pill.value = t;
+        pill.dataset.value = t;
+        label.textContent = t ? PITCH_NAMES[t] : "Pick One";
+        for (const c of menu.children) { const yes = c.dataset.topic === t; c.classList.toggle("on", yes); c.setAttribute("aria-checked", String(yes)); }
+      };
+      for (const t of order) {
         const known = b.priorities_known.includes(t), cue = !known && cueTopics.includes(t);
-        const id = `pitch-${b.id}-${t}`;
-        const r = el("input", { type: "radio", name: `pitch-${b.id}`, id, value: t });
-        r.checked = current === t;
-        if (locked) r.disabled = true;
-        r.addEventListener("change", () => onPick(t));
         const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
         const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
         const tag = [known ? "★" : cue ? "☆" : null, word || null].filter(Boolean).join(" ");
-        pitches.append(el("label", { class: `go-pitch ${known ? "known" : ""} ${cue ? "cue" : ""}`, for: id, title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` }, [r,
-          el("span", {}, [el("b", { text: PITCH_NAMES[t] }), el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this" } : {}) }), markTag(b, t)])]));
+        const chip = el("button", { type: "button", role: "radio", "aria-checked": "false", class: `go-chip go-lead-chip${known ? " known" : ""}${cue ? " cue" : ""}`, "data-topic": t,
+          title: sv == null ? "" : known && sv < 0.25 ? "He cares about this and you are weak here: pitching it backfires" : `Your program's case on ${PITCH_NAMES[t].toLowerCase()}: ${word.toLowerCase()}` },
+          [el("b", { text: PITCH_NAMES[t] }), el("span", { class: "go-chip-tags" }, [markTag(b, t),
+            tag ? el("span", { class: `go-tag ${tone}`, text: tag, ...(cue ? { title: cueTip } : known ? { title: "He told you he cares about this" } : {}) }) : null])]);
+        chip.addEventListener("click", () => { set(t); onPick(t); close(); pill.focus({ preventScroll: true }); });
+        menu.append(chip);
       }
-      return pitches;
+      ui().on(pill, "click", () => (menu.hidden ? open() : close()));
+      ui().on(drop, "focusout", (e) => { if (e.relatedTarget && !drop.contains(e.relatedTarget)) close(); });
+      ui().on(drop, "keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { e.stopPropagation(); close(); pill.focus({ preventScroll: true }); } });
+      pill.disabled = !!locked;
+      set(value);
+      return drop;
     }
   }
 

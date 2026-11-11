@@ -1,5 +1,5 @@
 """Pitch marks on the page: a prospect you pitched shows what he said on each topic, on his card and in the lead-with
-dropdown (He Lit Up, Weak Case, Not His Thing, No Read); a topic never pitched has no mark. Needs Playwright with a
+pill (He Lit Up, Weak Case, Not His Thing, No Read); a topic never pitched has no mark. Needs Playwright with a
 Chromium; skipped without one. (Run as a file.)"""
 import os
 import subprocess
@@ -59,8 +59,10 @@ if __name__ == "__main__":
                 assert all(c[1] and c[1].endswith(".") for c in card), "each mark says why, as a sentence"
                 page.click("#rc-recruit")
                 page.click(".go-menu .go-menu-item[data-action=message]")
-                page.wait_for_selector(".go-pane .go-step select#rc-pitch")
-                opts = dict(page.eval_on_selector_all(".go-pane select#rc-pitch option", "els => els.map(e => [e.value, e.textContent])"))
+                page.wait_for_selector(".go-pane .go-step #rc-pitch")
+                assert page.is_hidden(".go-pane .go-step .go-lead-menu"), "the lead-with sits closed in one pill"
+                page.click(".go-pane .go-step .go-lead-pick")
+                opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", "els => els.map(e => [e.dataset.topic, e.textContent])"))
                 assert "Not His Thing" in opts["nil"] and "Weak Case" in opts["coach"] and "He Lit Up" in opts["winning"] and "No Read" in opts["pro"], opts
                 assert not any(w in opts["prestige"] for w in ("Not His Thing", "Weak Case", "He Lit Up", "No Read")), "never pitched: no mark"
                 text = page.inner_text("body")
