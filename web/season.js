@@ -4,6 +4,8 @@
   // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
   // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
   const seasonWeek = (w) => `Week ${w - 1}`;
+  // how far a save has played, for its card and messages: "Preseason", "Through Week 3", a postseason week by its own name
+  const throughWeek = (w) => (!w ? "Preseason" : w <= 14 ? `Through ${seasonWeek(w)}` : `Through Week ${w}`);
   const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
 
   const state = { teams: [], season: null, viewWeek: null, tab: "schedule", poll: "ap", timer: null, standings: null };
@@ -148,7 +150,7 @@
       const li = el("li", { "data-id": s.id, onclick: () => pickSeason(s.id) }, [
         el("span", { class: "teams", text: `${s.team_name} · ${s.career ? `Coach Career · ${s.year}` : "full"}` }),
         el("span", { class: "score", text: `${s.wins}-${s.losses}` }),
-        el("span", { class: "when", text: `${s.offseason ? "Offseason" : s.done ? `Done · champion ${s.champion_name}` : `Through week ${s.current_week}`} · ${when(s.created_at)}` }),
+        el("span", { class: "when", text: `${s.offseason ? "Offseason" : s.done ? `Done · champion ${s.champion_name}` : throughWeek(s.current_week)} · ${when(s.created_at)}` }),
         del,
       ]);
       if (state.season && state.season.id === s.id) li.classList.add("active");
@@ -243,7 +245,7 @@
     const list = state.seasons || [];
     items.push({ heading: list.length ? "Saved seasons" : "No saved seasons" });
     for (const x of list) {
-      const status = x.offseason ? "Offseason" : x.done ? `Done · champion ${x.champion_name}` : `Through week ${x.current_week}`;
+      const status = x.offseason ? "Offseason" : x.done ? `Done · champion ${x.champion_name}` : throughWeek(x.current_week);
       items.push({ name: `${x.team_name} · ${x.career ? `Coach Career · ${x.year}` : "full"}`, cost: `${x.wins}-${x.losses}`, why: `${status} · ${when(x.created_at)}`,
                    current: !!(state.season && state.season.id === x.id), onPick: () => pickSeason(x.id) });
     }
@@ -325,7 +327,7 @@
 
   async function deleteSeason(s) {
     if (held()) return;
-    const label = `${s.team_name} ${s.wins}-${s.losses} (${s.done ? "complete" : `through week ${s.current_week}`})`;
+    const label = `${s.team_name} ${s.wins}-${s.losses} (${s.done ? "complete" : throughWeek(s.current_week).toLowerCase()})`;
     if (!confirm(`Delete the ${label} season? This cannot be undone.`)) return;
     try {
       await api(`/api/season/${s.id}`, { method: "DELETE" });
@@ -769,7 +771,7 @@
       $("#btn-pause").textContent = "Pause after this week";
     }
     $("#sim-stage").textContent = stageLine(j);
-    $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || "week " + j.total}`;
+    $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || seasonWeek(j.total).toLowerCase()}`;
     // the week strip follows the sim
     if (j.done !== state.simLastDone) { state.simLastDone = j.done; state.viewWeek = j.done; state.season.current_week = j.done; renderWeekStrip(); }
     for (const r of j.results || []) {
@@ -1063,7 +1065,7 @@
     const name = t.name || s.team_name;
     if ($("#chip-name").textContent !== name) $("#chip-name").textContent = name;
     if ($("#chip-line").textContent !== line) $("#chip-line").textContent = line;
-    $("#team-chip").title = state.simming ? `Simming · through ${s.current_week === 0 ? "the preseason" : s.week_labels[s.current_week] || "week " + s.current_week}` : chipTitle(s);
+    $("#team-chip").title = state.simming ? `Simming · through ${s.current_week === 0 ? "the preseason" : s.week_labels[s.current_week] || seasonWeek(s.current_week).toLowerCase()}` : chipTitle(s);
   }
   // the week strip's panel: the season's screens; a career screen shows it only for a one-week sim's bar
   function syncWeeksPanel() {
@@ -2199,7 +2201,7 @@
   }
   function awardsHeader(s, d, live) {
     const given = d.given_through || 0;
-    const through = s.week_labels[s.current_week] || `week ${s.current_week}`;
+    const through = s.week_labels[s.current_week] || seasonWeek(s.current_week).toLowerCase();
     const note = live
       ? `Live race through ${through}: who would win if the voting were held now. Conference awards are given after championship week, the Heisman and national awards in selection week, the postseason awards after the title game.`
       : `Conference awards given after championship week${given >= 15 ? "; Heisman, national awards and All-America teams in selection week" : ""}${given >= 19 ? "; postseason awards after the national championship" : ""}.`;
@@ -2490,7 +2492,7 @@
       return;
     }
     if (projection) {
-      box.append(el("p", { class: "muted small-text", text: `As of the ${s.week_labels[projection.week] || "week " + projection.week} committee ranking: records carried to the end of the regular season on rating-based win odds, the current conference leaders as champions, the projected playoff field left out, then each bowl picks from its tie-ins. Projected final records in parentheses.` }));
+      box.append(el("p", { class: "muted small-text", text: `As of the ${s.week_labels[projection.week] || seasonWeek(projection.week).toLowerCase()} committee ranking: records carried to the end of the regular season on rating-based win odds, the current conference leaders as champions, the projected playoff field left out, then each bowl picks from its tie-ins. Projected final records in parentheses.` }));
     }
     // controls: sort, conference filter, my team
     const confs = [...new Set(rows.flatMap((b) => [b.home_conference, b.away_conference]).filter(Boolean))].sort();
@@ -2665,8 +2667,8 @@
         withTeam ? el("td", { class: "left" }, [teamPill(i.team), i.team_name]) : null,
         el("td", { class: "name" }, [i.name, el("span", { class: "pos", text: i.position })]),
         el("td", { class: "left", text: i.type }),
-        el("td", { class: "left ph", text: `${i.weeks_left} ${i.weeks_left === 1 ? "week" : "weeks"} (${i.weeks} total, since ${s.week_labels[i.since_week] || "week " + i.since_week})` }),
-        el("td", { class: "left", text: i.returns_week > 19 ? "next season" : (s.week_labels[i.returns_week] || `week ${i.returns_week}`) }),
+        el("td", { class: "left ph", text: `${i.weeks_left} ${i.weeks_left === 1 ? "week" : "weeks"} (${i.weeks} total, since ${s.week_labels[i.since_week] || seasonWeek(i.since_week).toLowerCase()})` }),
+        el("td", { class: "left", text: i.returns_week > 19 ? "next season" : (s.week_labels[i.returns_week] || seasonWeek(i.returns_week).toLowerCase()) }),
       ].filter(Boolean)));
     }
     return el("div", { class: "table-scroll" }, [table]);
@@ -2808,14 +2810,14 @@
         go.disabled = true;
         try {
           await api(`/api/season/${s.id}/schedule_edit`, postJSON({ event_id: g.event_id, slug: sel.value }));
-          toast(`Done: you play ${(g.options.find((o) => o.slug === sel.value) || {}).name || sel.value} in week ${g.week}.`, 3000);
+          toast(`Done: you play ${(g.options.find((o) => o.slug === sel.value) || {}).name || sel.value} in ${seasonWeek(g.week)}.`, 3000);
           scheduleState.data = null; state.season = await api(`/api/season/${s.id}`); closeAllModals(); renderSchedule();
         } catch (err) { toast(`Could not trade: ${errText(err)}`, 4000); go.disabled = false; }
       });
       row.append(el("div", { class: "go-row wrap" }, [sel, go]));
       node.append(row);
     }
-    if (d.changes.length) node.append(el("p", { class: "small-text" }, [el("b", { text: "Traded: " }), d.changes.map((c) => `week ${c.week} ${teamName(c.from)} → ${teamName(c.to)}`).join(" · ")]));
+    if (d.changes.length) node.append(el("p", { class: "small-text" }, [el("b", { text: "Traded: " }), d.changes.map((c) => `${seasonWeek(c.week)} ${teamName(c.from)} → ${teamName(c.to)}`).join(" · ")]));
   }
 
   async function renderSchedule() {
@@ -2966,7 +2968,7 @@
     const controls = el("div", { class: "stats-controls" });
     controls.append(confChips(confs, teamStatsState.conf, (v) => { teamStatsState.conf = v; renderSeasonTeamStats(); }));
     box.append(controls);
-    box.append(el("p", { class: "muted small-text", text: `${statsNote(teamStatsState.partial)}Per-game averages over simulated games through ${s.week_labels[s.current_week] || "week " + s.current_week}. Click a column to sort.` }));
+    box.append(el("p", { class: "muted small-text", text: `${statsNote(teamStatsState.partial)}Per-game averages over simulated games through ${s.week_labels[s.current_week] || seasonWeek(s.current_week).toLowerCase()}. Click a column to sort.` }));
 
     let list = rows.filter((r) => !r.fictional && (!teamStatsState.conf || r.conference === teamStatsState.conf));
     const k = teamStatsState.sort;
@@ -3091,7 +3093,7 @@
     box.append(controls);
 
     const info = ps.team ? window.CFP.teamsBySlug[ps.team] : null;
-    const through = s.week_labels[s.current_week] || `week ${s.current_week}`;
+    const through = s.week_labels[s.current_week] || seasonWeek(s.current_week).toLowerCase();
     if (!played && ps.view !== "roster") {
       if (!ps.team) { box.append(el("p", { class: "muted", text: "No games played yet. Pick a team to see its roster, or advance a week." })); return; }
       box.append(el("p", { class: "muted small-text", text: `No games played yet, so here is the ${info ? info.name : ""} roster. Stats appear after the first week.` }));
@@ -3288,7 +3290,7 @@
       const tables = divisions.length ? divisions.map((d) => make(rows.filter((t) => t.division === d), d)) : [make(rows, null)];
       const mine = conf === s.conference;
       const champ = rows.find((t) => t.champion);
-      const note = full ? el("p", { class: "muted small-text", text: `${rows.length} teams · ${champ ? `champion ${champ.name}` : s.current_week >= 14 ? "title game played" : "through " + (s.week_labels[s.current_week] || "week " + s.current_week)} · conference record decides the order, then the tiebreak ladder.` }) : null;
+      const note = full ? el("p", { class: "muted small-text", text: `${rows.length} teams · ${champ ? `champion ${champ.name}` : s.current_week >= 14 ? "title game played" : "through " + (s.week_labels[s.current_week] || seasonWeek(s.current_week).toLowerCase())} · conference record decides the order, then the tiebreak ladder.` }) : null;
       return leagueCard(mine ? "edge" : "", [leagueHead(mine ? "Your Conference" : "Conference", el("h3", { class: "rcp-h1 lg-h2", text: conf })), note,
         el("div", { class: "conf-block table-scroll" }, tables)], { "aria-label": conf });
     };
@@ -3332,7 +3334,7 @@
     const title = kind === "ap" ? "AP Top 25" : kind === "coaches" ? "Coaches Poll (AFCA / USA Today)" : "College Football Playoff rankings";
     if (!list) {
       const note = kind === "cfp"
-        ? `The committee's first ranking comes out after week ${s.cfp_weeks[0]} (Nov 3, 2026), then weekly through selection day.`
+        ? `The committee's first ranking comes out after ${seasonWeek(s.cfp_weeks[0])} (Nov 3, 2026), then weekly through selection day.`
         : "No poll for this week.";
       box.append(el("h3", { text: title }), el("p", { class: "muted", text: note }));
       return;
@@ -3451,7 +3453,7 @@
       if (!cfp) { box.append(el("p", { class: "muted", text: "The projection starts with the committee's first ranking after week 9. Until then, the AP poll is the only ranking." })); return; }
       const proj = projectField(cfp);
       if (!proj) return;
-      box.append(el("p", { class: "muted small-text", text: `Projection from the committee ranking after ${s.week_labels[w] || "week " + w} and the current conference leaders: ACC, Big Ten, Big 12 and SEC champions plus the highest-ranked Group of Six team get in; seeds 1-4 are the four highest-ranked teams and get byes. First-round games are at the higher seed.` }));
+      box.append(el("p", { class: "muted small-text", text: `Projection from the committee ranking after ${s.week_labels[w] || seasonWeek(w).toLowerCase()} and the current conference leaders: ACC, Big Ten, Big 12 and SEC champions plus the highest-ranked Group of Six team get in; seeds 1-4 are the four highest-ranked teams and get byes. First-round games are at the higher seed.` }));
       box.append(bracketTree(proj.seeds, {}, true));
       box.append(seedTable(proj.seeds, proj.reason, proj.pos));
       return;
@@ -3882,7 +3884,7 @@
     if (!r) return false;
     const node = el("div", { class: "resume" });
     node.append(
-      el("div", { class: "muted small-text", text: `${r.conference} · ${w === 0 ? "preseason" : `through ${s.week_labels[w] || "week " + w}`} · ranks are today's ${data.kind === "cfp" ? "CFP ranking" : "AP poll"}` }),
+      el("div", { class: "muted small-text", text: `${r.conference} · ${w === 0 ? "preseason" : `through ${s.week_labels[w] || seasonWeek(w).toLowerCase()}`} · ranks are today's ${data.kind === "cfp" ? "CFP ranking" : "AP poll"}` }),
       el("div", { class: "review-tiles" }, [
         bigTile("Record", r.record, `${r.conf_record} ${r.conference}`),
         bigTile("Strength of schedule", `#${r.sos_rank}`, `opponents ${(r.opp_pct * 100).toFixed(1)}% · theirs ${(r.oo_pct * 100).toFixed(1)}%`),
@@ -4197,7 +4199,7 @@
       history.replaceState(null, "", `?id=${s.id}`);
       showSeason(s);
       loadSeasons().catch(() => {});
-      toast(`Loaded the ${s.team_name} career, through week ${s.current_week}.`, 4000);
+      toast(`Loaded the ${s.team_name} career, ${throughWeek(s.current_week).toLowerCase()}.`, 4000);
     } catch (err) { toast(`Could not load that file: ${errText(err)}`, 5000); }
   });
   $("#btn-clear-seasons").addEventListener("click", clearSeasons);

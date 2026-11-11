@@ -4,6 +4,10 @@
    Every empty case is a sentence; standings and chances are words. */
 (function () {
   "use strict";
+  // a regular-season week as the real calendar names it (Week 0 opens the season: engine week N is Week N-1, as
+  // sim/season.py week_name); a postseason week keeps its own label
+  const wkShort = (s, w) => (w >= 1 && w <= 14 ? `Wk ${w - 1}` : ((s && s.week_labels && s.week_labels[w]) || `Wk ${w}`));
+  const wkLong = (w) => (w >= 1 && w <= 14 ? `Week ${w - 1}` : `Week ${w}`);
   const HQ = window.HQ, k = HQ.kit, el = k.el;
   const on = (n, t, f) => window.CFP.ui.on(n, t, f);     // handlers a patch can hand to the live node
   const rec = () => window.CFP.recruiting || {};
@@ -97,7 +101,7 @@
       return k.list(rows.map((b) => {
         const g = b.visit.game;
         const vs = g && g.opponent_name ? ` · ${g.venue === "away" ? "at" : "vs"} ${g.opponent_name}` : "";
-        return [el("span", { class: "go-tag", text: `Wk ${b.visit.week}` }), k.name(ctx, b.id, b.name), el("span", { class: "hq-sub", text: `${pos(b)}${ctx.size === "M" ? vs : ""}` })];
+        return [el("span", { class: "go-tag", text: wkShort(null, b.visit.week) }), k.name(ctx, b.id, b.name), el("span", { class: "hq-sub", text: `${pos(b)}${ctx.size === "M" ? vs : ""}` })];
       }));
     } });
 
@@ -108,13 +112,13 @@
       const mine = sampleMe(ctx), byId = new Map((d.board.board || []).map((b) => [b.id, b]));
       const seen = new Set(), rows = [];
       for (const e of [...(d.board.recap || [])].reverse()) {
-        if ((e.kind === "commit" || e.kind === "flip") && e.school === mine && !seen.has(e.pid)) { seen.add(e.pid); rows.push({ pid: e.pid, name: e.name, week: e.portal_week ?? e.week, b: byId.get(e.pid) }); }
+        if ((e.kind === "commit" || e.kind === "flip") && e.school === mine && !seen.has(e.pid)) { seen.add(e.pid); rows.push({ pid: e.pid, name: e.name, week: e.portal_week ?? e.week, portal: e.portal_week != null, b: byId.get(e.pid) }); }
       }
       for (const b of d.board.board || []) if (b.committed === mine && !seen.has(b.id)) { seen.add(b.id); rows.push({ pid: b.id, name: b.name, b }); }
       if (!rows.length) return k.empty("No commits yet this cycle.");
       return k.list(rows.slice(0, k.rowsFor(ctx.size)).map((r) => [k.name(ctx, r.pid, r.name),
         r.b ? el("span", { class: "hq-sub", text: pos(r.b) }) : null, r.b ? k.stars(r.b.stars) : null,
-        r.week != null ? el("span", { class: "hq-sub", text: `Week ${r.week}` }) : null]));
+        r.week != null ? el("span", { class: "hq-sub", text: r.portal ? `Week ${r.week}` : wkLong(r.week) }) : null]));
     } });
 
   // ----- Recruiting Activity -------------------------------------------------------------------------------
@@ -143,7 +147,7 @@
       const last = rows[rows.length - 1], net = last.gained - last.lost;
       return el("div", {}, [
         k.stats([[last.total, "Total Commits"], [net > 0 ? `+${net}` : String(net), "This Week"]]),
-        k.chart(rows.map((r) => [`Wk ${r.week}`, r.total])),
+        k.chart(rows.map((r) => [wkShort(null, r.week), r.total])),
       ]);
     } });
 
