@@ -2782,6 +2782,7 @@ def _weekly_step(state: dict, week: int, auto_user: bool) -> list[dict]:
         _visits(state, week)
         persona.learn_styles(state, week)  # an official visit or four weeks holding your offer: his commit style
     scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
+    spend_leftover(state, week + 1 if rc.get("portal") else week)   # what you didn't spend, your staff does: half looks on your board
     mine = state.get("team")
     mode = auto_mode(state)
     auto_mine = auto_user or mode != "off"
@@ -3296,6 +3297,32 @@ def scout_week(state: dict, week: Optional[int] = None) -> None:
             for pid in by_state.get(code, []):
                 if area_open(rc["reads"].get(pid)):
                     look(state, pid, member["evaluation"], rng, by=member["id"], week=week, weight=AREA_LOOK)
+
+
+LEFTOVER_LOOK = 0.5        # *tune* a Send's worth of leftover scouting points buys your staff this much of a look at the week step
+
+
+def spend_leftover(state: dict, week: int) -> int:
+    """The scouting points you did not spend this week, spent by your staff at the week step: each Send's price (look_cost)
+    buys a LEFTOVER_LOOK look by your best evaluator at a prospect on your board whose report is short, the least-scouted
+    first (then by rank), one each a week, while the points last. Its own seeded stream. Returns the points spent."""
+    rc, me = state["recruiting"], state.get("team")
+    left = (rc.get("scout_points") or {}).get(me)
+    if not left:
+        return 0
+    live = [q for q in rc.get("board") or () if q in rc["prospects"] and not rc["status"][q]["signed"]
+            and rc["status"][q]["committed"] in (None, me) and looks_left(rc["reads"].get(q)) > 0]
+    live.sort(key=lambda q: ((rc["reads"].get(q) or {}).get("looks", 0) or 0, rc["prospects"][q]["rank"]))
+    rng = random.Random(f"leftover-{rc['seed']}-{week}")
+    rating, spent = best_evaluator(state), 0
+    for q in live:
+        cost = look_cost(state, me, q)
+        if cost > left - spent:
+            continue
+        look(state, q, rating, rng, week=week, weight=LEFTOVER_LOOK)
+        spent += cost
+    rc["scout_points"][me] = left - spent
+    return spent
 
 
 def area_open(read: Optional[dict]) -> bool:

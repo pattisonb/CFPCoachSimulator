@@ -37,9 +37,9 @@
 .go-row-recruit:hover { background: var(--panel-2); border-color: var(--border); }
 .go-row-recruit[aria-pressed="true"] { background: var(--panel); border-color: var(--go-primary, var(--accent)); }
 .go-row-recruit:focus-visible { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
-.go-row-dot { width: 8px; height: 8px; justify-self: center; background: transparent; }
-.go-row-dot.up { background: var(--good); }
-.go-row-dot.down { background: var(--bad); }
+.go-row-dot { width: 12px; justify-self: center; font-size: 11px; line-height: 1; text-align: center; }   /* his standing this week: ▲ moved up, ▼ slipped back */
+.go-row-dot.up { color: var(--good-text, var(--good)); }
+.go-row-dot.down { color: var(--bad-text, var(--bad)); }
 .go-row-id { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .go-row-id b { font-size: 15px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .go-row-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

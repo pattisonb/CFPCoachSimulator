@@ -1284,6 +1284,7 @@
       const moved = b.stage_move === "up" || b.stage_move === "down" ? b.stage_move : null;
       const dot = btn.querySelector(".go-row-dot");
       dot.className = `go-row-dot ${moved || ""}`;
+      dot.textContent = moved === "up" ? "▲" : moved === "down" ? "▼" : "";     // his standing moved this week: an arrow says which way
       if (moved) {
         const said = moved === "up" ? "Moved up this week" : "Slipped back this week";
         dot.setAttribute("role", "img"); dot.setAttribute("title", said); dot.setAttribute("aria-label", said); dot.removeAttribute("aria-hidden");
