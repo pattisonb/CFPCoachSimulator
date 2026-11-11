@@ -245,6 +245,9 @@
       const where = n.venue === "away" ? " on the road" : n.venue === "neutral" ? " at a neutral site" : "";
       return [el("b", { class: "ofc-ink", text: s.team_name }), ` ${n.won ? "beat" : "lost to"} ${n.opponent_name} ${scoreText(n.points_for, n.points_against)}${where}${n.overtime ? " in overtime" : ""}.`];
     }
+    if (n.kind === "promise")                 // a promised start slipping: your player says so (his player page on the name)
+      return [el("a", { href: "#", class: "plink ofc-ink", "data-player": `${s.team}|${n.name}|${n.position}|${n.slug}`, title: "Open player page", text: n.name }),
+        ` (${n.position}): "${n.line}"`];
     const who = el("button", { type: "button", class: "go-link", text: n.name, onclick: () => window.Recruiting && window.Recruiting.openProfile(s, n.pid) });
     const tag = ` (${n.position}, `;
     const what = n.kind === "asked_more" && n.school === s.team ? `wants more NIL from you: ${n.rival_name || "a rival"} offered more.`

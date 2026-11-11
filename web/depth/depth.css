@@ -480,3 +480,9 @@
 /* the screen's ⓘ (web/ui.js tip) beside its summary */
 .dc-toolbar-left .go-info-wrap { align-self: center; margin-left: 10px; }
 .dc button.go-info { background: transparent; border: 0; color: var(--dc-muted, var(--muted)); }
+
+/* a promised start's chip (On Track, Slipping, Broken) */
+.dc-promise { font-size: var(--dc-fs-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dc-muted); white-space: nowrap; }
+.dc-promise.good { color: var(--dc-good); }
+.dc-promise.warn { color: var(--dc-warn, #b7791f); }
+.dc-promise.bad { color: var(--dc-bad); }
