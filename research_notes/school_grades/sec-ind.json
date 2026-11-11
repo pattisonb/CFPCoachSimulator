@@ -1,0 +1,1550 @@
+{
+ "alabama": {
+  "us_news_rank": {
+   "value": 169,
+   "source": "https://thecrimsonwhite.com/123301/news/uas-national-rankings-increase",
+   "estimate": false,
+   "note": "2026 edition (Sept 2025): 169 of 436, up from 171. The 2027 edition (Sept 2026) rank was not found."
+  },
+  "football_gsr": {
+   "value": 98,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/8.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 1000,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/8_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Bryant–Denny Stadium",
+   "source": "https://en.wikipedia.org/wiki/Alabama_Crimson_Tide_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 100077,
+   "source": "https://en.wikipedia.org/wiki/Bryant–Denny_Stadium",
+   "estimate": false,
+   "note": "Capacity after the 2020 renovation."
+  },
+  "stadium_renovated": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/Bryant–Denny_Stadium",
+   "estimate": false,
+   "note": "Latest major work: the renovation begun after the 2019 season and completed for 2020 (infobox expansions list ends at 2010; body text and AL.com Sept 2020 source cover the 2020 renovation)."
+  },
+  "football_building_year": {
+   "value": 2021,
+   "source": "https://www.dadot.com/mal-moore-facility-renovation-sports-science",
+   "estimate": false,
+   "note": "Mal M. Moore Athletic Facility: latest renovation (lobby, recruiting lounge, offices, sports science addition) completed 2021 per the architect. Earlier large upgrade finished July 2013 (nfl.com). Partial, not a full rebuild."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Hank Crisp Indoor Facility: original opening year not found. The school page and Bleacher Report say it was renovated in summer 2009 (https://bleacherreport.com/articles/2395191-8-best-indoor-facilities-in-college-football). rolltide.com is bot-protected."
+  },
+  "metro_population": {
+   "value": 281850,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Tuscaloosa, AL MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 45.7,
+   "source": "https://en.wikipedia.org/wiki/Tuscaloosa,_Alabama",
+   "estimate": false,
+   "note": "January mean, Tuscaloosa Regional Airport, NOAA 1991–2020 normals (Wikipedia climate box). "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 282k and the university dominates Tuscaloosa."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_Alabama_Crimson_Tide_head_football_coaches",
+   "estimate": false,
+   "note": "Nick Saban (2007–2023), Kalen DeBoer (2024–)."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Alabama_Crimson_Tide_head_football_coaches",
+   "estimate": false,
+   "note": "Kalen DeBoer, first season 2024."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "arkansas": {
+  "us_news_rank": {
+   "value": 183,
+   "source": "https://www.axios.com/local/nw-arkansas/2025/09/24/charted-natural-state-college-rankings",
+   "estimate": false,
+   "note": "2026 edition: No. 183 of 436 (Axios NW Arkansas, Sept 24 2025; page returned 403 to the fetcher, figure taken from the search-result text). 2027 edition rank not found."
+  },
+  "football_gsr": {
+   "value": 84,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/31.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 983,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/31_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Donald W. Reynolds Razorback Stadium",
+   "source": "https://en.wikipedia.org/wiki/Arkansas_Razorbacks_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 76212,
+   "source": "https://en.wikipedia.org/wiki/Donald_W._Reynolds_Razorback_Stadium",
+   "estimate": false,
+   "note": "Capacity since the 2017–18 expansion. Arkansas also plays one game a year at War Memorial Stadium, Little Rock."
+  },
+  "stadium_renovated": {
+   "value": 2018,
+   "source": "https://en.wikipedia.org/wiki/Donald_W._Reynolds_Razorback_Stadium",
+   "estimate": false,
+   "note": "North end zone expansion and renovation, 2017–2018."
+  },
+  "football_building_year": {
+   "value": 2013,
+   "source": "https://arkansasrazorbacks.com/facility/smith-center/",
+   "estimate": false,
+   "note": "Fred W. Smith Football Center, about $40M, dedicated September 2013 (talkbusiness.net, wholehogsports Nov 2013 open house)."
+  },
+  "indoor_practice": {
+   "value": 1998,
+   "source": "https://en.wikipedia.org/wiki/Arkansas_Razorbacks_football",
+   "estimate": false,
+   "note": "Willard and Pat Walker Pavilion, built 1998 per the program article."
+  },
+  "metro_population": {
+   "value": 622177,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Fayetteville–Springdale–Rogers, AR MSA (Northwest Arkansas), Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 36.4,
+   "source": "https://en.wikipedia.org/wiki/Fayetteville,_Arkansas",
+   "estimate": false,
+   "note": "January mean, Drake Field, NOAA 1991–2020 normals (Fayetteville Experimental Station reads 36.7). "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 622k (below 1M); the university is the defining institution of Fayetteville, though the wider NW Arkansas metro is a growing corporate region (Bentonville, Rogers)."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Arkansas_Razorbacks_head_football_coaches",
+   "estimate": false,
+   "note": "Bobby Petrino (2010–11), John L. Smith (2012), Bret Bielema (2013–17), Chad Morris (2018–19), Sam Pittman (2020–25). Interim Bobby Petrino (late 2025) not counted."
+  },
+  "current_hc_since": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/List_of_Arkansas_Razorbacks_head_football_coaches",
+   "estimate": false,
+   "note": "Sam Pittman started 2025 (first season 2020); fired during 2025 with Bobby Petrino interim. Ryan Silverfield is the 2026 head coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "auburn": {
+  "us_news_rank": {
+   "value": 100,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 102 (tie) per the same table."
+  },
+  "football_gsr": {
+   "value": 89,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/37.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 992,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/37_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Jordan–Hare Stadium",
+   "source": "https://en.wikipedia.org/wiki/Auburn_Tigers_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 88043,
+   "source": "https://en.wikipedia.org/wiki/Jordan–Hare_Stadium",
+   "estimate": false,
+   "note": "Capacity since premium seats were added in 2023."
+  },
+  "stadium_renovated": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/Jordan–Hare_Stadium",
+   "estimate": false,
+   "note": "2023 premium-seat expansion and upgrades (concessions, team entrance, Wi-Fi); a north end zone video board followed in 2025."
+  },
+  "football_building_year": {
+   "value": 2023,
+   "source": "https://auburntigers.com/woltosz-football-peformance-center",
+   "estimate": false,
+   "note": "Woltosz Football Performance Center, $92M, dedicated Aug 2021 and formally opened January 2023."
+  },
+  "indoor_practice": {
+   "value": 2023,
+   "source": "https://auburntigers.com/woltosz-football-peformance-center",
+   "estimate": false,
+   "note": "The Woltosz center includes a 95,300 sq ft indoor practice facility (opened January 2023)."
+  },
+  "metro_population": {
+   "value": 208013,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Auburn–Opelika, AL MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 45.0,
+   "source": "https://en.wikipedia.org/wiki/Auburn,_Alabama",
+   "estimate": true,
+   "note": "January mean, Auburn University station, NOAA 1981–2010 normals. Climate box gives only Jan high 56.1 and low 33.8; mean computed as their average."
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 208k and the university dominates Auburn."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Auburn_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Gene Chizik (2009–12), Gus Malzahn (2013–20), Bryan Harsin (2021–22), Hugh Freeze (2023–25). Interims (Cadillac Williams 2022, D.J. Durkin 2025) not counted."
+  },
+  "current_hc_since": {
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/List_of_Auburn_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Hugh Freeze started 2025 (first season 2023); fired during 2025. Alex Golesh is the 2026 head coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "florida": {
+  "us_news_rank": {
+   "value": 34,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied with Texas; 2026 edition was 30 (tie)."
+  },
+  "football_gsr": {
+   "value": 85,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/235.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 988,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/235_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Ben Hill Griffin Stadium",
+   "source": "https://en.wikipedia.org/wiki/Florida_Gators_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 88548,
+   "source": "https://en.wikipedia.org/wiki/Ben_Hill_Griffin_Stadium",
+   "estimate": false,
+   "note": "Official capacity since 2003."
+  },
+  "stadium_renovated": {
+   "value": 2017,
+   "source": "https://en.wikipedia.org/wiki/Ben_Hill_Griffin_Stadium",
+   "estimate": false,
+   "note": "Latest completed renovation 2017 (renovations 2003, 2011, 2015, 2017). A major renovation is scheduled to start after the 2026 season and finish in 2030."
+  },
+  "football_building_year": {
+   "value": 2022,
+   "source": "https://frontofficesports.com/florida-gators-open-85m-football-training-facility",
+   "estimate": false,
+   "note": "James W. Heavener Football Training Center, about $85M, opened August 14, 2022."
+  },
+  "indoor_practice": {
+   "value": 2015,
+   "source": "https://www.pressreader.com/usa/south-florida-sun-sentinel-palm-beach-sunday/20220605/282548726912793",
+   "estimate": false,
+   "note": "Indoor practice facility over the Sanders practice fields opened August 2015 (Sun-Sentinel, June 2022; from search-result text, single source)."
+  },
+  "metro_population": {
+   "value": 359036,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Gainesville, FL MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 54.8,
+   "source": "https://en.wikipedia.org/wiki/Gainesville,_Florida",
+   "estimate": false,
+   "note": "January mean, Gainesville Regional Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 359k and the university dominates Gainesville."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Florida_Gators_head_football_coaches",
+   "estimate": false,
+   "note": "Urban Meyer (2005–10), Will Muschamp (2011–14), Jim McElwain (2015–17), Dan Mullen (2018–21), Billy Napier (2022–25). Interims not counted."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Florida_Gators_head_football_coaches",
+   "estimate": false,
+   "note": "Billy Napier started 2025 (first season 2022); fired during 2025. Jon Sumrall is the 2026 head coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "georgia": {
+  "us_news_rank": {
+   "value": 52,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 46 (tie)."
+  },
+  "football_gsr": {
+   "value": 58,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/257.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 982,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/257_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Sanford Stadium",
+   "source": "https://en.wikipedia.org/wiki/Georgia_Bulldogs_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 93033,
+   "source": "https://en.wikipedia.org/wiki/Sanford_Stadium",
+   "estimate": false,
+   "note": "Capacity since 2024 renovations."
+  },
+  "stadium_renovated": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/Sanford_Stadium",
+   "estimate": false,
+   "note": "Renovations completed for the 2024 season (capacity reset to 93,033); prior west end zone expansion 2018."
+  },
+  "football_building_year": {
+   "value": 2022,
+   "source": "https://news.uga.edu/butts-mehre-building-expansion-dedicated/",
+   "estimate": false,
+   "note": "Butts-Mehre $80M football expansion dedicated May 2022 (first phase in use after spring 2021; a final phase was still under way)."
+  },
+  "indoor_practice": {
+   "value": 2017,
+   "source": "https://news.uga.edu/butts-mehre-building-expansion-dedicated/",
+   "estimate": false,
+   "note": "Indoor Athletic Facility (now William Porter Payne and Porter Otis Payne Indoor Athletic Facility) dedicated Feb 14, 2017, per UGA news (from search-result text)."
+  },
+  "metro_population": {
+   "value": 224148,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Athens-Clarke County, GA MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 44.3,
+   "source": "https://en.wikipedia.org/wiki/Athens,_Georgia",
+   "estimate": false,
+   "note": "January mean, Ben Epps Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 224k and the university dominates Athens."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_Georgia_Bulldogs_head_football_coaches",
+   "estimate": false,
+   "note": "Mark Richt (2001–15), Kirby Smart (2016–)."
+  },
+  "current_hc_since": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/List_of_Georgia_Bulldogs_head_football_coaches",
+   "estimate": false,
+   "note": "Kirby Smart, first season 2016."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "kentucky": {
+  "us_news_rank": {
+   "value": 143,
+   "source": "https://www.yahoo.com/news/articles/top-colleges-ky-according-u-040100180.html",
+   "estimate": false,
+   "note": "2026 edition (article Sept 23 2025): No. 143, up from 152. 2027 edition rank not found."
+  },
+  "football_gsr": {
+   "value": 80,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/334.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 977,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/334_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Kroger Field",
+   "source": "https://en.wikipedia.org/wiki/Kentucky_Wildcats_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 61000,
+   "source": "https://en.wikipedia.org/wiki/Kroger_Field",
+   "estimate": false,
+   "note": "Capacity since the 2015 renovation."
+  },
+  "stadium_renovated": {
+   "value": 2015,
+   "source": "https://en.wikipedia.org/wiki/Kroger_Field",
+   "estimate": false,
+   "note": "Major renovation 2015 (expansion 1999). New video boards 2022 not counted as major."
+  },
+  "football_building_year": {
+   "value": 2016,
+   "source": "https://nkytribune.com/?p=64240",
+   "estimate": false,
+   "note": "Joe Craft Football Training Facility, $45M, opened July 2016 (a $3M weight room redo came about ten years later)."
+  },
+  "indoor_practice": {
+   "value": 2023,
+   "source": "https://lex18.com/sports/bbn-tonight/rich-and-karen-brooks-field-newly-named-field-in-renovated-indoor-facility",
+   "estimate": false,
+   "note": "Nutter Field House renovated (about $5M) into a football-only indoor facility with 120 yards of turf, ready August 2023. This is a renovation, not a new building; original opening year not found."
+  },
+  "metro_population": {
+   "value": 535174,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Lexington-Fayette, KY MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 33.9,
+   "source": "https://en.wikipedia.org/wiki/Lexington,_Kentucky",
+   "estimate": false,
+   "note": "January mean, Blue Grass Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 535k (below 1M). Borderline: Lexington is a mid-size city, but UK is its largest employer and defining institution."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_Kentucky_Wildcats_head_football_coaches",
+   "estimate": false,
+   "note": "Joker Phillips (2010–12), Mark Stoops (2013–25)."
+  },
+  "current_hc_since": {
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/List_of_Kentucky_Wildcats_head_football_coaches",
+   "estimate": false,
+   "note": "Mark Stoops started 2025 (first season 2013); he left after 2025. Will Stein is the 2026 head coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "lsu": {
+  "us_news_rank": {
+   "value": 169,
+   "source": "https://wtop.com/news/2026/01/see-the-best-colleges-rankings-of-sec-schools",
+   "estimate": false,
+   "note": "2026 edition, tie (WTOP reprint of the U.S. News SEC list, Jan 2026; page now 404, figure from search-result text). Wikipedia infobox also shows 169. 2027 edition rank not found."
+  },
+  "football_gsr": {
+   "value": 70,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/365.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 971,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/365_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Tiger Stadium",
+   "source": "https://en.wikipedia.org/wiki/LSU_Tigers_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 102321,
+   "source": "https://en.wikipedia.org/wiki/Tiger_Stadium_(Louisiana)",
+   "estimate": false,
+   "note": "Capacity since the 2014 south end zone upper deck."
+  },
+  "stadium_renovated": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/Tiger_Stadium_(Louisiana)",
+   "estimate": false,
+   "note": "South end zone upper deck expansion completed for 2014."
+  },
+  "football_building_year": {
+   "value": 2019,
+   "source": "https://www.si.com/college/2019/07/22/lsu-football-operations-center-renovation",
+   "estimate": false,
+   "note": "LSU Football Operations Center (opened 2005–06) got a $28M renovation unveiled July 2019."
+  },
+  "indoor_practice": {
+   "value": 1991,
+   "source": "https://en.wikipedia.org/wiki/LSU_Tigers_football",
+   "estimate": false,
+   "note": "LSU Indoor Practice Facility, built 1991 (82,500 sq ft), per the program article."
+  },
+  "metro_population": {
+   "value": 888699,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Baton Rouge, LA MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 52.0,
+   "source": "https://en.wikipedia.org/wiki/Baton_Rouge,_Louisiana",
+   "estimate": false,
+   "note": "January mean, Baton Rouge Metropolitan Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 889k (below 1M). Borderline: Baton Rouge is the state capital and a mid-size city where LSU is the biggest draw, not a small college town."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_LSU_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Les Miles (2005–16), Ed Orgeron (interim 2016, head coach 2017–21), Brian Kelly (2022–25). Interim Frank Wilson (2025) not counted."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_LSU_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Brian Kelly started 2025 (first season 2022); fired Oct 2025. Lane Kiffin is the 2026 head coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "mississippi-st": {
+  "us_news_rank": {
+   "value": 208,
+   "source": "https://www.yahoo.com/news/articles/us-news-releases-best-mississippi-190527135.html",
+   "estimate": false,
+   "note": "2026 edition, tied (WJTV via Yahoo, Oct 2025). 2027 edition rank not found."
+  },
+  "football_gsr": {
+   "value": 92,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/430.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 984,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/430_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Davis Wade Stadium",
+   "source": "https://en.wikipedia.org/wiki/Mississippi_State_Bulldogs_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 60311,
+   "source": "https://en.wikipedia.org/wiki/Davis_Wade_Stadium",
+   "estimate": false,
+   "note": "Capacity since 2022 (after the balcony project)."
+  },
+  "stadium_renovated": {
+   "value": 2014,
+   "source": "https://en.wikipedia.org/wiki/Davis_Wade_Stadium",
+   "estimate": false,
+   "note": "Latest major expansion: $75M north end zone project completed August 2014. Smaller 'Balconies' project 2022."
+  },
+  "football_building_year": {
+   "value": 2013,
+   "source": "https://hailstate.com/sports/2011/4/6/205131301",
+   "estimate": false,
+   "note": "Leo Seal Jr. Football Complex (about 80,000 sq ft, $12M Seal family gift announced 2011) opened January 2013 per the complex's page (https://new.express.adobe.com/webpage/6XcswL2SFZpnW, from search-result text)."
+  },
+  "indoor_practice": {
+   "value": 2005,
+   "source": "https://www.cdispatch.com/sports/article.asp?aid=10742",
+   "estimate": true,
+   "note": "Palmeiro Center (shared with baseball): a 2005 report said the $4M project would run April to late September 2005. A new Billy W. Howard Sr. Indoor Practice Facility is planned to open summer 2028."
+  },
+  "metro_population": {
+   "value": 62063,
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Starkville, MS μSA, Census Vintage 2025 estimate (2020 census figure in the same table). Micropolitan area; no MSA."
+  },
+  "jan_avg_temp_f": {
+   "value": 43.7,
+   "source": "https://en.wikipedia.org/wiki/Starkville,_Mississippi",
+   "estimate": false,
+   "note": "January mean, Mississippi State University station, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Micro area about 62k; the university dominates Starkville."
+  },
+  "head_coaches_since_2010": {
+   "value": 5,
+   "source": "https://en.wikipedia.org/wiki/List_of_Mississippi_State_Bulldogs_head_football_coaches",
+   "estimate": false,
+   "note": "Dan Mullen (2009–17), Joe Moorhead (2018–19), Mike Leach (2020–22), Zach Arnett (2023), Jeff Lebby (2024–). Interim Greg Knox (2023) not counted."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Mississippi_State_Bulldogs_head_football_coaches",
+   "estimate": false,
+   "note": "Jeff Lebby, first season 2024."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "missouri": {
+  "us_news_rank": {
+   "value": 95,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 102 (tie)."
+  },
+  "football_gsr": {
+   "value": 80,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/434.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 990,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/434_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Memorial Stadium (Faurot Field)",
+   "source": "https://en.wikipedia.org/wiki/Missouri_Tigers_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 63609,
+   "source": "https://en.wikipedia.org/wiki/Faurot_Field",
+   "estimate": false,
+   "note": "Capacity for 2026 after the north end zone Centennial Project (infobox: 63,609 (2026))."
+  },
+  "stadium_renovated": {
+   "value": 2026,
+   "source": "https://en.wikipedia.org/wiki/Faurot_Field",
+   "estimate": false,
+   "note": "Faurot Field Centennial Project ($250M north end zone) completed August 2026."
+  },
+  "football_building_year": {
+   "value": 2019,
+   "source": "https://www.sportsvideo.org/2019/09/19/mizzou-tigers-roar-with-renovated-south-end-zone-facility-at-memorial-stadium/",
+   "estimate": false,
+   "note": "$98M South End Zone Facility (football operations) opened for the Sept 7, 2019 home opener."
+  },
+  "indoor_practice": {
+   "value": 2023,
+   "source": "https://mutigers.com/facilities/stephens-indoor-facility",
+   "estimate": false,
+   "note": "Stephens Indoor Facility ($33M, 86,400 sq ft) opened summer 2023, replacing Devine Pavilion (1998)."
+  },
+  "metro_population": {
+   "value": 219062,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Columbia, MO MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 31.0,
+   "source": "https://en.wikipedia.org/wiki/Template:Columbia,_Missouri_weatherbox",
+   "estimate": false,
+   "note": "January mean, Columbia Regional Airport, NOAA 1991–2020 normals (the weatherbox template used on the Columbia, Missouri article). "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 219k and the university dominates Columbia."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Missouri_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Gary Pinkel (2001–15), Barry Odom (2016–19), Eliah Drinkwitz (2020–)."
+  },
+  "current_hc_since": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/List_of_Missouri_Tigers_head_football_coaches",
+   "estimate": false,
+   "note": "Eliah Drinkwitz, first season 2020."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "oklahoma": {
+  "us_news_rank": {
+   "value": 116,
+   "source": "https://www.newsfromthestates.com/node/428700",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied, down six from 110 in 2026 (Oklahoma Voice via States Newsroom, from search-result text)."
+  },
+  "football_gsr": {
+   "value": 78,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/522.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 982,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/522_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Gaylord Family Oklahoma Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/Oklahoma_Sooners_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 80126,
+   "source": "https://en.wikipedia.org/wiki/Gaylord_Family_Oklahoma_Memorial_Stadium",
+   "estimate": false,
+   "note": "Official capacity since renovations before the 2019 season."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Gaylord_Family_Oklahoma_Memorial_Stadium",
+   "estimate": false,
+   "note": "South end zone enclosure ($160M) completed 2016; smaller renovations before 2019."
+  },
+  "football_building_year": {
+   "value": 2017,
+   "source": "https://foxsports.com/stories/other/watch-oklahoma-sooners-move-into-new-facilities",
+   "estimate": false,
+   "note": "Football moved into its new facilities in the south end zone stadium project in May 2017 (Fox Sports, from search-result text). A new $175M football facility is in planning."
+  },
+  "indoor_practice": {
+   "value": 2003,
+   "source": "https://www.athleticbusiness.com/project-galleries/architectural-showcase/2q1nlOtkuJ/everest-training-center-university-of-oklahoma-norman-ok",
+   "estimate": false,
+   "note": "Everest Training Center, occupancy March 2003, dedicated Sept 2003 (some sources say 2002)."
+  },
+  "metro_population": {
+   "value": 1512813,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Oklahoma City, OK MSA (Norman is in it), Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 38.8,
+   "source": "https://en.wikipedia.org/wiki/Norman,_Oklahoma",
+   "estimate": false,
+   "note": "January mean, Norman station, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment call: Norman sits inside the 1.5M Oklahoma City MSA, which would make it Big City by the metro rule, but Norman itself (about 130k) is dominated by the university. Change to Big City if the metro rule is applied strictly."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_Oklahoma_Sooners_head_football_coaches",
+   "estimate": false,
+   "note": "Bob Stoops (1999–2016), Lincoln Riley (2017–21), Brent Venables (2022–). Bob Stoops' 2021 bowl interim stint not counted."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Oklahoma_Sooners_head_football_coaches",
+   "estimate": false,
+   "note": "Brent Venables, first season 2022."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "ole-miss": {
+  "us_news_rank": {
+   "value": 169,
+   "source": "https://www.yahoo.com/news/articles/us-news-releases-best-mississippi-190527135.html",
+   "estimate": false,
+   "note": "2026 edition, tied (WJTV via Yahoo, Oct 2025). 2027 edition rank not found."
+  },
+  "football_gsr": {
+   "value": 86,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/433.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 970,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/433_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Vaught–Hemingway Stadium",
+   "source": "https://en.wikipedia.org/wiki/Ole_Miss_Rebels_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 64038,
+   "source": "https://en.wikipedia.org/wiki/Vaught–Hemingway_Stadium",
+   "estimate": false,
+   "note": "Capacity since 2016 (standing room to about 70,033)."
+  },
+  "stadium_renovated": {
+   "value": 2016,
+   "source": "https://en.wikipedia.org/wiki/Vaught–Hemingway_Stadium",
+   "estimate": false,
+   "note": "North end zone enclosure/expansion completed 2016."
+  },
+  "football_building_year": {
+   "value": 2023,
+   "source": "https://olemisssports.com/news/2023/7/28/ole-miss-football-moves-into-new-manning-center",
+   "estimate": false,
+   "note": "Manning Center (football ops and indoor practice) $45.7M renovation, football moved back in late July 2023."
+  },
+  "indoor_practice": {
+   "value": 2023,
+   "source": "https://olemisssports.com/news/2023/7/28/ole-miss-football-moves-into-new-manning-center",
+   "estimate": false,
+   "note": "The indoor field is inside the Manning Center: renovated and expanded 2013–14 (dedicated April 2014) and fully renovated again 2022–23. Original opening year not found; 2023 is the latest full renovation."
+  },
+  "metro_population": {
+   "value": 71972,
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Oxford, MS μSA, Census Vintage 2025 estimate (2020 census figure in the same table). Micropolitan area; no MSA."
+  },
+  "jan_avg_temp_f": {
+   "value": 41.4,
+   "source": "https://en.wikipedia.org/wiki/Oxford,_Mississippi",
+   "estimate": false,
+   "note": "January mean, University of Mississippi station, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Micropolitan_statistical_area",
+   "estimate": false,
+   "note": "Micro area about 72k; the university dominates Oxford."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Ole_Miss_Rebels_head_football_coaches",
+   "estimate": false,
+   "note": "Houston Nutt (2008–11), Hugh Freeze (2012–16), Matt Luke (interim 2017, head coach 2018–19), Lane Kiffin (2020–25)."
+  },
+  "current_hc_since": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/List_of_Ole_Miss_Rebels_head_football_coaches",
+   "estimate": false,
+   "note": "Lane Kiffin started 2025 (first season 2020) and left after the 2025 regular season; Pete Golding took over (2026 head coach)."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "south-carolina": {
+  "us_news_rank": {
+   "value": 121,
+   "source": "https://www.wrdw.com/2026/09/24/how-our-regions-colleges-tank-us-news-listings/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), from search-result text of a WRDW report. Wikipedia infobox also shows 121."
+  },
+  "football_gsr": {
+   "value": 96,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/648.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 976,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/648_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Williams–Brice Stadium",
+   "source": "https://en.wikipedia.org/wiki/South_Carolina_Gamecocks_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 77559,
+   "source": "https://en.wikipedia.org/wiki/Williams–Brice_Stadium",
+   "estimate": false,
+   "note": "Capacity since 2020 club renovations."
+  },
+  "stadium_renovated": {
+   "value": 2020,
+   "source": "https://en.wikipedia.org/wiki/Williams–Brice_Stadium",
+   "estimate": false,
+   "note": "Club areas renovated 2020. A large renovation announced in 2025 runs through the 2028 season; capacity may change."
+  },
+  "football_building_year": {
+   "value": 2019,
+   "source": "https://gamecocksonline.com/facilities/long-center/",
+   "estimate": false,
+   "note": "Cyndi and Kenneth Long Family Football Operations Center opened January 2019."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Jerri and Steve Spurrier Indoor Practice Facility: the Long Center page calls it 'new' and adjacent but gives no opening year. Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "metro_population": {
+   "value": 879918,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Columbia, SC MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 45.7,
+   "source": "https://en.wikipedia.org/wiki/Columbia,_South_Carolina",
+   "estimate": false,
+   "note": "January mean, Columbia Metropolitan Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 880k (below 1M). Borderline: Columbia is the state capital; the university is central but does not dominate the way it does in a small college town."
+  },
+  "head_coaches_since_2010": {
+   "value": 3,
+   "source": "https://en.wikipedia.org/wiki/List_of_South_Carolina_Gamecocks_head_football_coaches",
+   "estimate": false,
+   "note": "Steve Spurrier (2005–15), Will Muschamp (2016–20), Shane Beamer (2021–). Interims Shawn Elliott (2015) and Mike Bobo (2020) not counted."
+  },
+  "current_hc_since": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/List_of_South_Carolina_Gamecocks_head_football_coaches",
+   "estimate": false,
+   "note": "Shane Beamer, first season 2021."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "tennessee": {
+  "us_news_rank": {
+   "value": 102,
+   "source": "https://news.utk.edu/2025/09/23/u-s-news-recognizes-ut-among-top-universities-for-innovation-value-and-academics/",
+   "estimate": false,
+   "note": "2026 edition: 102nd overall, 49th public (UT release, Sept 23 2025, from search-result text). 2027 edition rank not found (one unconfirmed report says 109)."
+  },
+  "football_gsr": {
+   "value": 79,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/694.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 977,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/694_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Neyland Stadium",
+   "source": "https://en.wikipedia.org/wiki/Tennessee_Volunteers_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 101915,
+   "source": "https://en.wikipedia.org/wiki/Neyland_Stadium",
+   "estimate": false,
+   "note": "Capacity since 2022."
+  },
+  "stadium_renovated": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/Neyland_Stadium",
+   "estimate": false,
+   "note": "Latest renovation listed 2022 (part of a multi-phase renovation)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Anderson Training Center: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Indoor practice facility: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "metro_population": {
+   "value": 968137,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Knoxville, TN MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 39.1,
+   "source": "https://en.wikipedia.org/wiki/Knoxville,_Tennessee",
+   "estimate": false,
+   "note": "January mean, McGhee Tyson Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 968k (just under 1M). Borderline: Knoxville is a mid-size city where UT is the dominant institution."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Tennessee_Volunteers_head_football_coaches",
+   "estimate": false,
+   "note": "Derek Dooley (2010–12), Butch Jones (2013–17), Jeremy Pruitt (2018–20), Josh Heupel (2021–)."
+  },
+  "current_hc_since": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/List_of_Tennessee_Volunteers_head_football_coaches",
+   "estimate": false,
+   "note": "Josh Heupel, first season 2021."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "texas": {
+  "us_news_rank": {
+   "value": 34,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied with Florida; 2026 edition was 30 (tie)."
+  },
+  "football_gsr": {
+   "value": 77,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/703.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 991,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/703_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Darrell K Royal–Texas Memorial Stadium",
+   "source": "https://en.wikipedia.org/wiki/Texas_Longhorns_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 100119,
+   "source": "https://en.wikipedia.org/wiki/Darrell_K_Royal–Texas_Memorial_Stadium",
+   "estimate": false,
+   "note": "Current infobox capacity."
+  },
+  "stadium_renovated": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/Darrell_K_Royal–Texas_Memorial_Stadium",
+   "estimate": false,
+   "note": "South end zone expansion opened for the 2021 season."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Moncrief-Neuhaus Athletic Center: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Indoor practice facility: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "metro_population": {
+   "value": 2620945,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Austin–Round Rock–San Marcos, TX MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 52.2,
+   "source": "https://en.wikipedia.org/wiki/Template:Austin_weatherbox",
+   "estimate": false,
+   "note": "January mean, Camp Mabry, NOAA 1991–2020 normals (template used on the Austin, Texas article). "
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 2.6M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Texas_Longhorns_head_football_coaches",
+   "estimate": false,
+   "note": "Mack Brown (1998–2013), Charlie Strong (2014–16), Tom Herman (2017–20), Steve Sarkisian (2021–)."
+  },
+  "current_hc_since": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/List_of_Texas_Longhorns_head_football_coaches",
+   "estimate": false,
+   "note": "Steve Sarkisian, first season 2021."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "texas-a-m": {
+  "us_news_rank": {
+   "value": 59,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 51 (tie)."
+  },
+  "football_gsr": {
+   "value": 78,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/697.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 968,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/697_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Kyle Field",
+   "source": "https://en.wikipedia.org/wiki/Texas_A&M_Aggies_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 102733,
+   "source": "https://en.wikipedia.org/wiki/Kyle_Field",
+   "estimate": false,
+   "note": "Capacity since 2015."
+  },
+  "stadium_renovated": {
+   "value": 2015,
+   "source": "https://en.wikipedia.org/wiki/Kyle_Field",
+   "estimate": false,
+   "note": "$485M redevelopment, 2014–2015."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Bright Football Complex: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Indoor practice facility (adjacent to Kyle Field): opening year not stated in the program article. Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "metro_population": {
+   "value": 287476,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "College Station–Bryan, TX MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 51.5,
+   "source": "https://en.wikipedia.org/wiki/College_Station,_Texas",
+   "estimate": false,
+   "note": "January mean, Easterwood Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 287k and the university dominates College Station."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Texas_A&M_Aggies_head_football_coaches",
+   "estimate": false,
+   "note": "Mike Sherman (2008–11), Kevin Sumlin (2012–17), Jimbo Fisher (2018–23), Mike Elko (2024–). Interims (Tim DeRuyter 2011, Jeff Banks 2017, Elijah Robinson 2023) not counted."
+  },
+  "current_hc_since": {
+   "value": 2024,
+   "source": "https://en.wikipedia.org/wiki/List_of_Texas_A&M_Aggies_head_football_coaches",
+   "estimate": false,
+   "note": "Mike Elko, first season 2024."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "vanderbilt": {
+  "us_news_rank": {
+   "value": 16,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 17."
+  },
+  "football_gsr": {
+   "value": 90,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/736.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 985,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/736_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "FirstBank Stadium",
+   "source": "https://en.wikipedia.org/wiki/Vanderbilt_Commodores_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 35000,
+   "source": "https://en.wikipedia.org/wiki/FirstBank_Stadium",
+   "estimate": false,
+   "note": "Capacity after the 2022–2025 renovation (down from 40,350)."
+  },
+  "stadium_renovated": {
+   "value": 2025,
+   "source": "https://en.wikipedia.org/wiki/FirstBank_Stadium",
+   "estimate": false,
+   "note": "Stadium rebuild/renovation 2022–2025 (north and south end zones)."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "John Rich Football Operations Center: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Indoor practice facility: Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "metro_population": {
+   "value": 2197416,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Nashville-Davidson–Murfreesboro–Franklin, TN MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 39.6,
+   "source": "https://en.wikipedia.org/wiki/Template:Nashville,_Tennessee_weatherbox",
+   "estimate": false,
+   "note": "January mean, Nashville International Airport, NOAA 1991–2020 normals. "
+  },
+  "setting": {
+   "value": "Big City",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 2.2M."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_Vanderbilt_Commodores_head_football_coaches",
+   "estimate": false,
+   "note": "Robbie Caldwell (2010), James Franklin (2011–13), Derek Mason (2014–20), Clark Lea (2021–). Interim Todd Fitch (2020) not counted."
+  },
+  "current_hc_since": {
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/List_of_Vanderbilt_Commodores_head_football_coaches",
+   "estimate": false,
+   "note": "Clark Lea, first season 2021."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "notre-dame": {
+  "us_news_rank": {
+   "value": 20,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 20."
+  },
+  "football_gsr": {
+   "value": 98,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/513.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 994,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/513_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Notre Dame Stadium",
+   "source": "https://en.wikipedia.org/wiki/Notre_Dame_Fighting_Irish_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 77622,
+   "source": "https://en.wikipedia.org/wiki/Notre_Dame_Stadium",
+   "estimate": false,
+   "note": "Capacity since the Campus Crossroads project (2017)."
+  },
+  "stadium_renovated": {
+   "value": 2017,
+   "source": "https://en.wikipedia.org/wiki/Notre_Dame_Stadium",
+   "estimate": false,
+   "note": "Campus Crossroads renovation 2014–2017."
+  },
+  "football_building_year": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Guglielmino Athletics Complex: year not given in the program article. Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "indoor_practice": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Irish Athletics Center (indoor): year not given in the program article. Not found in Wikipedia's football program, stadium or facility pages; the session's shared web-search budget ran out before a school release could be located."
+  },
+  "metro_population": {
+   "value": 324538,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "South Bend–Mishawaka, IN-MI MSA, Census Vintage 2025 estimate (2020 census figure in the same table). "
+  },
+  "jan_avg_temp_f": {
+   "value": 24.1,
+   "source": "https://en.wikipedia.org/wiki/South_Bend,_Indiana",
+   "estimate": false,
+   "note": "January mean, South Bend Regional Airport, NOAA 1981–2010 normals (the climate box has not been updated to 1991–2020). "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Metro about 325k; Notre Dame is the dominant institution of the South Bend area (campus is in Notre Dame, IN, next to South Bend)."
+  },
+  "head_coaches_since_2010": {
+   "value": 2,
+   "source": "https://en.wikipedia.org/wiki/List_of_Notre_Dame_Fighting_Irish_head_football_coaches",
+   "estimate": false,
+   "note": "Brian Kelly (2010–21), Marcus Freeman (2022–)."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_Notre_Dame_Fighting_Irish_head_football_coaches",
+   "estimate": false,
+   "note": "Marcus Freeman: named Dec 2021 and coached the 2021 Fiesta Bowl (Jan 2022), but first full season is 2022. Use 2021 if the bowl counts."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ },
+ "uconn": {
+  "us_news_rank": {
+   "value": 73,
+   "source": "https://poetsandquantsforundergrads.com/news/u-s-news-best-colleges-ranking-2027-mit-ends-princetons-long-run-at-the-top/2/",
+   "estimate": false,
+   "note": "2027 edition (Sept 2026), tied; 2026 edition was 69 per the same table."
+  },
+  "football_gsr": {
+   "value": 81,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/gsr2025/164.pdf",
+   "estimate": false,
+   "note": "NCAA GSR database (https://web3.ncaa.org/aprsearch/gsrsearch), Football, latest cohort listed (2018 entering class, 2025 report)."
+  },
+  "football_apr": {
+   "value": 952,
+   "source": "https://web3.ncaa.org/aprsearch/public_reports/apr2025/164_2025_apr.pdf",
+   "estimate": false,
+   "note": "NCAA APR database, Football, 2024-25 multi-year rate."
+  },
+  "stadium_name": {
+   "value": "Pratt & Whitney Stadium at Rentschler Field (East Hartford)",
+   "source": "https://en.wikipedia.org/wiki/UConn_Huskies_football",
+   "estimate": false,
+   "note": "Home stadium per program infobox."
+  },
+  "stadium_capacity": {
+   "value": 38066,
+   "source": "https://en.wikipedia.org/wiki/Pratt_&_Whitney_Stadium_at_Rentschler_Field",
+   "estimate": false,
+   "note": "Seats; standing room to 40,000."
+  },
+  "stadium_renovated": {
+   "value": 2003,
+   "source": "https://en.wikipedia.org/wiki/Pratt_&_Whitney_Stadium_at_Rentschler_Field",
+   "estimate": false,
+   "note": "Opened 2003; no major renovation or expansion found in the infobox."
+  },
+  "football_building_year": {
+   "value": 2006,
+   "source": "https://en.wikipedia.org/wiki/UConn_Huskies_football",
+   "estimate": false,
+   "note": "Burton Family Football Complex opened July 2006."
+  },
+  "indoor_practice": {
+   "value": 2006,
+   "source": "https://en.wikipedia.org/wiki/UConn_Huskies_football",
+   "estimate": false,
+   "note": "Mark R. Shenkman Training Center (indoor, full-length field) opened 2006 together with the Burton complex."
+  },
+  "metro_population": {
+   "value": 1171426,
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Hartford–West Hartford–East Hartford, CT MSA, Census Vintage 2025 estimate. Storrs (CDP about 16k) is in Mansfield, Capitol Planning Region (per Wikipedia), which falls inside this MSA under the 2023 OMB delineation. Home games are in East Hartford, also in this MSA. Storrs alone is a rural college village."
+  },
+  "jan_avg_temp_f": {
+   "value": 26.9,
+   "source": "https://en.wikipedia.org/wiki/Template:Windham_County_weatherbox",
+   "estimate": false,
+   "note": "January mean, Windham County weatherbox, which says it covers the University of Connecticut and Storrs, NOAA 1991–2020 normals (Bradley Intl Airport, Hartford, reads 27.1). "
+  },
+  "setting": {
+   "value": "College Town",
+   "source": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+   "estimate": false,
+   "note": "Judgment call: campus life is in Storrs, a small college village, though it sits in the 1.17M Hartford MSA and games are played in East Hartford. Big City is defensible on the metro rule."
+  },
+  "head_coaches_since_2010": {
+   "value": 4,
+   "source": "https://en.wikipedia.org/wiki/List_of_UConn_Huskies_head_football_coaches",
+   "estimate": false,
+   "note": "Distinct people: Randy Edsall (2010, then again 2017–21), Paul Pasqualoni (2011–13), Bob Diaco (2014–16), Jim Mora (2022–25). That is 5 tenures if Edsall's two stints count separately. Interim T.J. Weist (2013) not counted."
+  },
+  "current_hc_since": {
+   "value": 2022,
+   "source": "https://en.wikipedia.org/wiki/List_of_UConn_Huskies_head_football_coaches",
+   "estimate": false,
+   "note": "Jim Mora started 2025 (first season 2022). Jason Candle is the 2026 head coach."
+  },
+  "instagram_followers": {
+   "value": null,
+   "source": null,
+   "estimate": false,
+   "note": "Not collected. instagram.com redirects anonymous requests to a login wall (HTTP 302) and the session's shared web-search budget ran out before a news article citing a count could be found. Checked 2026-11-11."
+  }
+ }
+}

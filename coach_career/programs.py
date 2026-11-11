@@ -5,6 +5,7 @@ published), built by tools/build_program_market.py into data/program_market.json
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -320,6 +321,140 @@ def nil_move(team: dict, met: bool, losing: bool) -> None:
     p["tier"] = tier_of(p["rating"])
 
 
+# ----- School Grades, Phase 1 (docs/superpowers/specs/2026-11-10-school-grades-expansion-design.md): six grades graded
+# on read from data/program_profile.json (tools/build_program_profile.py). Fixed in Phase 1, so nothing goes into a
+# save; the rating, tiers and market do not read them.
+
+PROFILE = Path(__file__).resolve().parents[1] / "data" / "program_profile.json"
+ACADEMICS_W = (0.60, 0.25, 0.15)          # *tune* Academics: U.S. News rank, football GSR, football APR
+RANK_ZERO = 400                           # *tune* the U.S. News rank that scores 0 (log; rank 1 scores 100)
+RANK_CURVE = 2.0                          # *tune* how the log rank bends: 1 is the plan's straight log; 2 keeps the top 10 Elite
+UNRANKED = 25.0                           # *tune* an unranked school's rank score
+ACADEMY_RANK = 85.0                       # *tune* a service academy's rank score (ranked among the top liberal arts colleges)
+ACADEMIES = ("army", "navy", "air-force")
+GSR_SCALE = (60, 100)                     # *tune* GSR scoring 0 and 100
+APR_SCALE = (930, 1000)                   # *tune* APR scoring 0 and 100
+FACILITIES_W = (0.35, 0.40, 0.25)         # *tune* Facilities: stadium, football building, indoor practice
+FACILITY_NOW = 2026                       # *tune* a facility built or renovated this year scores 100 ...
+FACILITY_PER_YEAR = 4                     # *tune* ... minus this a year ...
+FACILITY_FLOOR = 10                       # *tune* ... never under this (and no indoor facility scores this)
+LOCATION_W = (0.6, 0.4)                   # *tune* Location: metro size, January warmth
+SIZE_SCALE = ((50_000, 20), (5_000_000, 100))   # *tune* metro population to score (log)
+WARMTH_SCALE = ((20, 20), (65, 100))      # *tune* January average °F to score
+COACH_STEP, COACH_FLOOR = 15, 10          # *tune* Stability: 100 less this for each head coach after the first, never under the floor
+GAME_DAY_W = (0.6, 0.4)                   # *tune* Game Day: the crowd, how full the stadium is
+CROWD_SCALE = ((15_000, 15), (105_000, 100))   # *tune* the home crowd to score
+FILL_SCALE = ((0.5, 20), (1.0, 100))      # *tune* crowd over capacity to score
+EXPOSURE_W = (0.5, 0.5)                   # *tune* Exposure: TV, Instagram
+TV_SCALE = ((0.3, 10), (8.0, 100))        # *tune* TV millions to score (log)
+INSTAGRAM_SCALE = ((20_000, 10), (2_000_000, 100))   # *tune* Instagram followers to score (log)
+BIG_CITY, MID_CITY = 1_000_000, 500_000   # *tune* the metro a Big City and a Mid-Size City start at
+WARM_AT, MILD_AT = 50, 35                 # *tune* January °F a Warm and a Mild climate start at
+REGIONS = {"South": "AL AR DE FL GA KY LA MD MS NC OK SC TN TX VA WV", "Midwest": "IA IL IN KS MI MN MO ND NE OH SD WI",
+           "West": "AK AZ CA CO HI ID MT NM NV OR UT WA WY", "Northeast": "CT MA ME NH NJ NY PA RI VT"}
+
+
+def _profile() -> dict:
+    if "profile" not in _cache:
+        _cache["profile"] = json.loads(PROFILE.read_text(encoding="utf-8"))["teams"] if PROFILE.exists() else {}
+    return _cache["profile"]
+
+
+def profile_rows() -> dict:
+    """Every profiled program's facts, by slug."""
+    return {s: r["facts"] for s, r in _profile().items()}
+
+
+def _num(v) -> Optional[float]:
+    if v is None or isinstance(v, bool):
+        return None
+    if isinstance(v, (int, float)):
+        return None if v != v else float(v)
+    try:
+        return float(str(v).replace(",", "").split()[0])
+    except (ValueError, IndexError):
+        return None
+
+
+def _line(x: float, scale, log: bool = False) -> float:
+    (x0, y0), (x1, y1) = scale
+    if log:
+        x, x0, x1 = math.log(max(x, 1e-9)), math.log(x0), math.log(x1)
+    return max(0.0, min(100.0, y0 + (y1 - y0) * (x - x0) / (x1 - x0)))
+
+
+def rank_score(rank, slug: str = "") -> float:
+    r = _num(rank)
+    if r is None:
+        return ACADEMY_RANK if slug in ACADEMIES else UNRANKED
+    share = min(1.0, math.log(max(1.0, r)) / math.log(RANK_ZERO))
+    return max(0.0, min(100.0, 100.0 * (1 - share ** RANK_CURVE)))
+
+
+def recency(year) -> float:
+    y = _num(year)
+    if y is None:
+        return float(FACILITY_FLOOR)
+    return float(max(FACILITY_FLOOR, min(100, 100 - FACILITY_PER_YEAR * (FACILITY_NOW - y))))
+
+
+def facilities_score(f: dict) -> float:
+    a, b, c = FACILITIES_W
+    return a * recency(f.get("stadium_renovated")) + b * recency(f.get("football_building_year")) + c * recency(f.get("indoor_practice"))
+
+
+def warmth(temp_f) -> float:
+    t = _num(temp_f)
+    return _line(t, WARMTH_SCALE) if t is not None else 50.0
+
+
+def fill_score(crowd, capacity) -> float:
+    c, cap = _num(crowd), _num(capacity)
+    if c is None or not cap:
+        return 50.0
+    return _line(min(1.0, c / cap), FILL_SCALE)
+
+
+def grades(slug: str) -> Optional[dict]:
+    """The six grades, 0-100 (0.1), from the profile; None for a program with no profile row (a fictional or new one)."""
+    f = profile_rows().get(slug)
+    if f is None:
+        return None
+    gw = ACADEMICS_W
+    gsr, apr = _num(f.get("football_gsr")), _num(f.get("football_apr"))
+    academics = gw[0] * rank_score(f.get("us_news_rank"), slug) + gw[1] * (_line(gsr, ((GSR_SCALE[0], 0), (GSR_SCALE[1], 100))) if gsr is not None else 50.0) \
+        + gw[2] * (_line(apr, ((APR_SCALE[0], 0), (APR_SCALE[1], 100))) if apr is not None else 50.0)
+    metro = _num(f.get("metro_population"))
+    location = LOCATION_W[0] * (_line(metro, SIZE_SCALE, log=True) if metro else 20.0) + LOCATION_W[1] * warmth(f.get("jan_avg_temp_f"))
+    coaches = _num(f.get("head_coaches_since_2010"))
+    stability = float(max(COACH_FLOOR, 100 - COACH_STEP * ((coaches or 1) - 1)))
+    crowd = _num(f.get("attendance"))
+    game_day = GAME_DAY_W[0] * (_line(crowd, CROWD_SCALE) if crowd else 15.0) + GAME_DAY_W[1] * fill_score(crowd, f.get("stadium_capacity"))
+    tv, ig = _num(f.get("tv_millions")), _num(f.get("instagram_followers"))
+    exposure = EXPOSURE_W[0] * (_line(tv, TV_SCALE, log=True) if tv else 10.0) + EXPOSURE_W[1] * (_line(ig, INSTAGRAM_SCALE, log=True) if ig else 10.0)
+    out = {"academics": academics, "facilities": facilities_score(f), "location": location, "stability": stability,
+           "game_day": game_day, "exposure": exposure}
+    return {k: round(max(0.0, min(100.0, v)), 1) for k, v in out.items()}
+
+
+def tags(slug: str) -> Optional[dict]:
+    """Location's tags: the setting (Big City, Mid-Size City, College Town, Small Town), the climate (Warm, Mild, Cold) and
+    the region (South, Midwest, West, Northeast); None for a program with no profile row."""
+    f = profile_rows().get(slug)
+    if f is None:
+        return None
+    metro, temp, said = _num(f.get("metro_population")) or 0, _num(f.get("jan_avg_temp_f")), f.get("setting")
+    if metro >= BIG_CITY:
+        setting = "Big City"
+    elif metro >= MID_CITY and said != "College Town":
+        setting = "Mid-Size City"
+    else:
+        setting = said if said in ("College Town", "Small Town") else "Small Town"
+    climate = None if temp is None else "Warm" if temp >= WARM_AT else "Mild" if temp >= MILD_AT else "Cold"
+    region = next((r for r, states in REGIONS.items() if (f.get("state") or "") in states.split()), None)
+    return {"setting": setting, "climate": climate, "region": region}
+
+
 def word_of(v: float) -> str:
     """The grade word for a 0-100 metric."""
     return next(w for w, f in WORD_FLOORS if v >= f)
@@ -337,7 +472,8 @@ def rows(state: dict) -> list[dict]:
         p4 = season._is_p4(s, bt)
         out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
                     "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"])["text"],
-                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups")}})
+                    **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups")},
+                    "grades": grades(s), "tags": tags(s)})
     out.sort(key=lambda r: -r["rating"])
     for i, r in enumerate(out, 1):
         r["rank"] = i
