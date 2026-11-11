@@ -135,3 +135,28 @@ def recruit_event(state: dict, slug: str, pid: str, kind: str) -> None:
         return
     apply(state, kind, recruiting._group_of(p), p.get("name") or "", star=(p.get("stars") or 0) >= 4,
           personality=persona.of(state, pid)["personality"])
+
+
+# ----- what recruits read --------------------------------------------------------------------------------------------------
+
+def promise_mult(state: dict, pid: Optional[str], group: Optional[str], personality: Optional[str] = None,
+                 decider: Optional[str] = None) -> float:
+    """What a believed promise is worth, times its base: PROMISE_MULT by the reading at his position (1.0 at 50); a
+    Guarded player, or one whose decider is playing time, reads the distance from 1.0 CARES_MORE times as hard. A
+    recruit's personality and decider come from his persona; a roster player's are passed in."""
+    lo, hi = PROMISE_MULT
+    m = lo + (hi - lo) * reading(state, group) / 100.0
+    if pid is not None and personality is None:
+        rc = state.get("recruiting") or {}
+        if pid in (rc.get("prospects") or {}):
+            from coach_career import persona
+            per = persona.of(state, pid)
+            personality, decider = per.get("personality"), per.get("decider_topic")
+    if personality == "guarded" or decider == "playing_time":
+        m = 1.0 + (m - 1.0) * CARES_MORE
+    return m
+
+
+def believes(state: dict, group: Optional[str]) -> bool:
+    """Whether a promise is believed at all: the reading at his position at FLOOR or above."""
+    return reading(state, group) >= FLOOR

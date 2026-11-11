@@ -993,6 +993,10 @@ def question(state: dict, slug: str, pid: str, week: int, package: dict | None =
     return None
 
 
+WORD_DOUBT = "Coach, I heard what happened with {name}."   # Keeps His Word under the floor: the last promise you broke at his position
+WORD_DOUBT_ANY = "Coach, I've heard about your promises."   # ... with none broken at his position
+
+
 def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, truthful: bool | None) -> str:
     """What he says back to your answer (a hollow promise gets its own line; the Package Deal's promise
     waits on the offer, and its straight answer once his mate holds your offer has its own)."""

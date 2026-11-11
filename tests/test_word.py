@@ -172,6 +172,76 @@ def test_word_follows_the_coach():
     assert word.reading(st2) == 47.5, word.book(st2)
 
 
+def _recruit(personality="business", decider=None):
+    import test_nil_pitch as n
+    from coach_career import recruiting
+    st = n.fresh()
+    pid = n.ranked(st)[60]
+    p = st["recruiting"]["prospects"][pid]
+    p["persona"] = dict(recruiting.persona.of(st, pid), personality=personality, decider_topic=decider)
+    return st, pid
+
+
+def _promise(st, pid):
+    """A roster question he can believe (the player ahead is in his last year), answered with a promise."""
+    from coach_career import recruiting
+    sc = {"id": "s1", "action": "call", "week": st["current_week"],
+          "question": {"kind": "roster", "text": "Is he still your starter?", "about": {"name": "Old Guy", "ovr": 0, "last_year": True, "cls": "SR"}, "answer": None, "reply": None}}
+    st["recruiting"].setdefault("scenes", {}).setdefault(st["team"], {})[pid] = sc
+    return recruiting._answer(st, st["team"], pid, "s1", "promise")
+
+
+def test_promise_mult_scale():
+    from coach_career import recruiting
+    st, pid = _recruit()
+    group = recruiting._group_of(st["recruiting"]["prospects"][pid])
+    assert abs(word.promise_mult(st, pid, group) - 1.2) < 1e-9
+    word.book(st)["overall"] = 30
+    assert abs(word.promise_mult(st, pid, group) - 0.8) < 1e-9
+    st, pid = _recruit("guarded")
+    assert abs(word.promise_mult(st, pid, group) - 1.3) < 1e-9
+    st, pid = _recruit(decider="playing_time")
+    assert abs(word.promise_mult(st, pid, group) - 1.3) < 1e-9
+
+
+def test_doubted_promise_earns_nothing():
+    from coach_career import recruiting, scenes
+    st, pid = _recruit()
+    group = recruiting._group_of(st["recruiting"]["prospects"][pid])
+    word.book(st)["overall"] = 30
+    word.apply(st, "broken", group, "Jalen Moss")
+    word.book(st)["overall"] = 30                        # still under the floor at his position
+    r = _promise(st, pid)
+    assert r["points"] == 0, r
+    assert r["scene"]["question"]["reply"] == scenes.WORD_DOUBT.format(name="Jalen Moss"), r["scene"]["question"]
+    ev = [e for e in st["recruiting"]["log"] if e["kind"] == "answer" and e["pid"] == pid][-1]
+    assert ev.get("doubted") is True, ev
+    st, pid = _recruit()
+    word.book(st)["overall"] = 20
+    r = _promise(st, pid)
+    assert r["points"] == 0 and r["scene"]["question"]["reply"] == scenes.WORD_DOUBT_ANY
+
+
+def test_strong_word_earns_more():
+    from coach_career import recruiting
+    st, pid = _recruit()
+    word.book(st)["overall"] = 90
+    r = _promise(st, pid)
+    assert abs(r["points"] - recruiting.ANSWER_PROMISE * 1.4) < 1e-9, r["points"]
+
+
+def test_keep_them_home_reads_word():
+    from coach_career import offseason, promises
+    st = bare()
+    e = {"id": "x", "pos": "QB", "personality": "business", "ask": {"nil": 0, "kind": "role", "known": True},
+         "offers": {"promise": True}, "role_next": "starter", "broken_promise": True, "intent": "stay"}
+    word.book(st)["overall"] = 90
+    assert abs(offseason.stay_chance(e, st) - min(0.9, promises.PROMISE_AGAIN_STAY * 1.4)) < 1e-9
+    word.book(st)["overall"] = 20
+    assert offseason.stay_chance(e, st) == 0.02
+    assert abs(offseason.stay_chance(e) - promises.PROMISE_AGAIN_STAY) < 1e-9, "no state: the old rule"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

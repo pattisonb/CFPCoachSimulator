@@ -1445,8 +1445,10 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     A Package Deal's question ("package", about his mate): straight earns ANSWER_STRAIGHT plus
     PACKAGE_OFFERED when his mate already holds your offer and nothing otherwise (you will look at
     him); a promise earns nothing now and waits on the offer (`_promises`: kept within
-    PACKAGE_PROMISE_WEEKS for PACKAGE_KEPT, broken after)."""
-    from coach_career import scenes
+    PACKAGE_PROMISE_WEEKS for PACKAGE_KEPT, broken after). Your promise is worth ANSWER_PROMISE times Keeps His Word's
+    promise_mult; under its floor he doesn't believe you: nothing, and his line names the last promise you broke at his
+    position."""
+    from coach_career import scenes, word
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -1465,7 +1467,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         raise RecruitingError(409, "you already answered")
     contact = _contact(state, slug, pid)
     week = state["current_week"]
-    points, truthful, revealed = 0.0, None, []
+    points, truthful, revealed, doubted = 0.0, None, [], False
     package = q.get("kind") == "package"
     if package:
         offered = q["about"]["pid"] in rc["offers"].get(slug, [])
@@ -1482,8 +1484,11 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
             revealed.append("playing_time")
     elif answer == "promise":
         truthful = promise_holds(state, slug, pid, q)
-        if truthful:
-            points = ANSWER_PROMISE
+        group = _group_of(p)
+        if slug == state.get("team") and not word.believes(state, group):   # Keeps His Word under the floor: he doesn't believe you
+            doubted = True
+        elif truthful:
+            points = ANSWER_PROMISE * (word.promise_mult(state, pid, group) if slug == state.get("team") else 1.0)
         else:
             points = -ANSWER_HOLLOW * persona.hollow_mult(state, pid, slug)
             contact["cooled_until"] = week + 1
@@ -1491,9 +1496,14 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
             _event(state, "not_buying", pid, slug, topic="playing_time")
         contact.setdefault("promises", []).append({"kind": q["kind"], "about": q["about"], "week": week, "broken": None})
     q["answer"] = answer
-    q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
+    if doubted:
+        name = word.last_broken(state, _group_of(p))
+        q["reply"] = scenes.WORD_DOUBT.format(name=name) if name else scenes.WORD_DOUBT_ANY
+    else:
+        q["reply"] = scenes.answer_reply(state, slug, pid, q, answer, truthful)
     _event(state, "answer", pid, slug, action=sc["action"], answer=answer, about=q["about"]["name"], truthful=truthful,
-           **({"question": "package", "offered": bool(q["about"].get("offered"))} if package else {}))
+           **({"question": "package", "offered": bool(q["about"].get("offered"))} if package else {}),
+           **({"doubted": True} if doubted else {}))
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
