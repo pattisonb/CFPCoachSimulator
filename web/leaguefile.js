@@ -204,7 +204,10 @@
       const picked = list.filter((p) => ids.includes(p.id));
       if (!picked.length) { ui().toast("Tick at least one program first.", 3000); return; }
       let real = {};
-      try { const r = await window.CFP.game.fetch("/api/league/programs"); if (r.ok) real = Object.fromEntries((await r.json()).teams.map((t) => [t.slug, t])); } catch (e) { /* edits then write every field */ }
+      // an edit writes only what changed against the real team: its details, one team at a time
+      for (const slug of [...new Set(picked.filter((p) => p.kind === "edit").map((p) => p.base))]) {
+        try { const r = await window.CFP.game.fetch(`/api/league/programs/${encodeURIComponent(slug)}`); if (r.ok) real[slug] = await r.json(); } catch (e) { /* that edit then writes every field */ }
+      }
       const blob = JSON.stringify(P.doc(picked, real, "Custom Programs"));
       checkFile(new File([blob], "Custom Programs.json", { type: "application/json" }));
     });

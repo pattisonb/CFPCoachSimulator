@@ -81,6 +81,9 @@ if __name__ == "__main__":
                 page.fill(f"{ed} .pg-rival-search", q)
                 page.click(f"{ed} .pg-rival-hit[data-slug='{slug}']")
             page.fill(f"{ed} .pg-rival[data-slug='boise-state'] .pg-rival-name", "Battle for the Bell")
+            # a click on a chip leaves the cursor where it was (no label pulling it into the search box)
+            page.click(f"{ed} .pg-rival[data-slug='air-force'] b")
+            assert page.evaluate("() => !document.activeElement.classList.contains('pg-rival-search')"), "a chip click pulled the cursor into the search box"
             page.fill(f"{ed} .pg-rival-search", "nevada")
             page.click(f"{ed} .pg-rival-hit[data-slug='nevada']")
             assert page.is_disabled(f"{ed} .pg-rival-search") and "3 of 3" in page.inner_text(f"{ed} .pg-rival-count")

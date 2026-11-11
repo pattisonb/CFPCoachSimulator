@@ -57,7 +57,10 @@
   }
 
   // ----- the editor -----
-  const field = (lab, input, hint, key) => el("label", { class: "pg-field", ...(key ? { "data-key": key } : {}) }, [el("span", { class: "pg-label", text: lab }), input, hint ? el("span", { class: "muted small", text: hint }) : null]);
+  // a field: a <label> around a single control; a group of controls (the rival picker) gets a <div>, since a label sends
+  // every click inside it to its first input (the blinking cursor jumping into the search box)
+  const field = (lab, input, hint, key) => el(["INPUT", "SELECT", "TEXTAREA"].includes(input.tagName) ? "label" : "div", { class: "pg-field", ...(key ? { "data-key": key } : {}) },
+    [el("span", { class: "pg-label", text: lab }), input, hint ? el("span", { class: "muted small", text: hint }) : null]);
   function input(p, key, attrs) {
     const f = p.f;
     const { tag, ...rest } = attrs || {};
@@ -191,6 +194,7 @@
   function edit(id) {
     open = id;
     const p = byId(id);
+    if (p.kind === "edit" && real[p.base] && !real[p.base].colors) details(p.base).then(() => { if (open === id) edit(id); }).catch(() => {});
     const f = p.f;
     const ed = $("#pg-editor");
     const confOpts = [["", "Pick a Conference"], ...conferences.map((c) => [c.id, c.name]), ["__new", "New Conference…"]];
@@ -260,7 +264,8 @@
   }
 
   // ----- files -----
-  function download(progs, name) {
+  async function download(progs, name) {
+    try { await Promise.all(progs.filter((p) => p.kind === "edit").map((p) => details(p.base))); } catch (e) { /* an edit then writes every field it has */ }
     const blob = new Blob([JSON.stringify(P.doc(progs, real), null, 1)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = el("a", { href: url, download: name || "custom-programs.json", hidden: "" });
@@ -301,12 +306,32 @@
     toast(`Loaded ${n} program${n === 1 ? "" : "s"}.`);
   }
 
+  // the game's programs are loading: Create and Edit wait (their conference and rival lists come with them)
+  function ready(on) {
+    for (const id of ["#pg-new", "#pg-real"]) $(id).disabled = !on;
+    $("#pg-loading").hidden = on;
+  }
+  // a real team's full details, fetched when you open it (the list carries names only)
+  async function details(slug) {
+    if (real[slug] && real[slug].colors) return real[slug];
+    const d = await api(`/api/league/programs/${encodeURIComponent(slug)}`);
+    real[slug] = { ...(real[slug] || {}), ...d };
+    return real[slug];
+  }
+
   // ----- wiring -----
   async function mount() {
+    ready(false);
     try { localStorage.setItem("cfp-probe", "1"); localStorage.removeItem("cfp-probe"); } catch (e) { $("#pg-store-note").hidden = false; }
     drawList();
     $("#pg-new").addEventListener("click", () => create("new"));
-    $("#pg-real").addEventListener("change", (e) => { const v = e.currentTarget.value; e.currentTarget.value = ""; if (v) create("edit", v); });
+    $("#pg-real").addEventListener("change", async (e) => {
+      const sel = e.currentTarget, v = sel.value;
+      sel.value = "";
+      if (!v) return;
+      try { await ui().busy(sel, details(v)); } catch (err) { toast("That program's details didn't load. Try again."); return; }
+      create("edit", v);
+    });
     $("#pg-download-all").addEventListener("click", () => (list.length ? download(list, "custom-programs.json") : toast("Nothing to download yet.")));
     $("#pg-load").addEventListener("click", () => $("#pg-file").click());
     $("#pg-file").addEventListener("change", (e) => { const file = e.currentTarget.files[0]; e.currentTarget.value = ""; if (file) loadFile(file); });
@@ -315,10 +340,12 @@
       const d = await api("/api/league/programs");
       real = Object.fromEntries(d.teams.map((t) => [t.slug, t]));
       conferences = d.conferences.filter((c) => (c.level || "FBS") === "FBS");
-      playbooks = { offense: [...new Set(d.teams.map((t) => t.offense).filter(Boolean))].sort(), defense: [...new Set(d.teams.map((t) => t.defense).filter(Boolean))].sort() };
+      playbooks = d.playbooks || playbooks;
       const sel = $("#pg-real");
       sel.append(...d.teams.filter((t) => (t.level || "FBS") === "FBS").map((t) => el("option", { value: t.slug, text: t.short_name || t.name })));
+      ready(true);
       drawList();
+      if (open && byId(open)) edit(open);            // an editor opened before the list arrived: its conferences and rivals fill in
     } catch (err) { toast("The game's programs didn't load. Reload the page to try again.", 6000); }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);

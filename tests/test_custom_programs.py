@@ -16,11 +16,27 @@ def doc(*teams, conferences=()):
 
 
 def test_programs_list():
+    """The list is names only (a slug, the names, the conference) with the conferences and the game's playbooks: quick,
+    and never the whole league file. A real team's full details come one team at a time when you edit it."""
+    import time
+    api._PROGRAMS.clear()
+    league_file.release_caches()
+    t0 = time.time()
     r = api.league_programs(api.Params())
+    assert time.time() - t0 < 1.0, f"the list is quick: {time.time() - t0:.1f}s"
     assert len(r["teams"]) >= 130 and len(r["conferences"]) >= 10
     t = next(x for x in r["teams"] if x["slug"] == "akron")
-    assert {"slug", "name", "short_name", "abbreviation", "mascot", "city", "state", "conference", "colors", "prestige"} <= set(t), t
-    assert "roster" not in t, "the page needs no rosters"
+    assert set(t) == {"slug", "name", "short_name", "abbreviation", "conference", "level"} and t["conference"] == "mac", t
+    assert "Spread RPO" in r["playbooks"]["offense"] and "4-3" in r["playbooks"]["defense"], r["playbooks"]
+    d = api.league_program(api.Params(path={"slug": "akron"}))
+    assert {"name", "short_name", "abbreviation", "mascot", "city", "state", "conference", "colors", "prestige", "rivals", "offense", "defense"} <= set(d), d
+    assert d["conference"] == "mac" and d["colors"]["primary"]["hex"] and d["offense"] == "Spread RPO", d
+    try:
+        api.league_program(api.Params(path={"slug": "no-such"}))
+    except api.ApiError as e:
+        assert e.status == 404 if hasattr(e, "status") else True
+    else:
+        raise AssertionError("an unknown team is refused")
 
 
 def test_new_program_passes():

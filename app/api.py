@@ -559,21 +559,52 @@ def _pend(blob: bytes, seed: Optional[int]) -> dict:
 _PROGRAMS: dict = {}
 
 
+def _programs():
+    from coach_career import programs
+    return programs
+
+
+def _scheme(t: dict) -> tuple:
+    sc = ((t.get("coaches") or {}).get("head_coach") or {}).get("scheme") or {}
+    return sc.get("offensive_philosophy"), sc.get("defensive_philosophy")
+
+
 @route("GET", "/api/league/programs")
 def league_programs(p: Params) -> dict:
-    """The game's own programs and conferences for the Custom Programs page (no rosters): each team's slug, names,
-    mascot, home, conference, colors, prestige and playbooks, and every conference's id, name and games."""
+    """The game's own programs for the Custom Programs page, names only (slug, names, conference, level), with every
+    conference (id, name, games) and the playbooks the game's teams run. Quick: it never builds the league file. A real
+    team's full details come one at a time (GET /api/league/programs/{slug}) when you edit it."""
     if "out" not in _PROGRAMS:
-        d = json.loads(league_file.builtin_bytes())
-        keep = ("slug", "name", "short_name", "abbreviation", "mascot", "city", "state", "lat", "lon", "conference", "level", "colors", "prestige", "rivals")
+        b = league_file._builtin()
         teams = []
-        for t in d["teams"]:
-            row = {k: t.get(k) for k in keep}
-            row["offense"], row["defense"] = (t.get("coaches") or {}).get("offense"), (t.get("coaches") or {}).get("defense")
-            teams.append(row)
-        teams.sort(key=lambda r: (r.get("short_name") or r["name"]).casefold())
-        _PROGRAMS["out"] = {"teams": teams, "conferences": d["conferences"]}
+        for slug in b["slugs"]:
+            m = league.base_meta(slug)
+            teams.append({"slug": slug, "name": m.get("school_name") or m.get("short_name") or slug, "short_name": m.get("short_name") or slug,
+                          "abbreviation": m.get("abbreviation") or "", "conference": b["team_conf"].get(slug), "level": m.get("subdivision") or "FBS"})
+        teams.sort(key=lambda r: r["short_name"].casefold())
+        engine = season.load_teams()
+        schemes = [_scheme(engine[s]) for s in b["slugs"] if s in engine]
+        _PROGRAMS["out"] = {
+            "teams": teams,
+            "conferences": [{"id": cid, "name": name, "games": b["games"].get(cid, 8), "level": "FBS"} for cid, name in sorted(b["conf_names"].items(), key=lambda x: x[1].casefold())],
+            "playbooks": {"offense": sorted({o for o, _ in schemes if o}), "defense": sorted({d for _, d in schemes if d})}}
     return _PROGRAMS["out"]
+
+
+@route("GET", "/api/league/programs/{slug}")
+def league_program(p: Params) -> dict:
+    """One real team's full details for Edit a Real Program: names, mascot, home, conference, colors, prestige, rivals and
+    playbooks (no roster)."""
+    slug = p.path["slug"]
+    b = league_file._builtin()
+    if slug not in b["slugs"]:
+        raise ApiError(404, "unknown team")
+    m = league.base_meta(slug)
+    off, de = _scheme(season.load_teams().get(slug) or {})
+    return {"slug": slug, "name": m.get("school_name") or m.get("short_name"), "short_name": m.get("short_name"), "abbreviation": m.get("abbreviation"),
+            "mascot": m.get("mascot"), "city": m.get("city"), "state": m.get("state"), "conference": b["team_conf"].get(slug),
+            "level": m.get("subdivision") or "FBS", "colors": m.get("colors") or {}, "prestige": round(_programs().base(slug)["prestige"], 1),
+            "rivals": [r for r in (m.get("rivals") or []) if r in b["slugs"]], "offense": off, "defense": de}
 
 
 @route("POST", "/api/league/check")
