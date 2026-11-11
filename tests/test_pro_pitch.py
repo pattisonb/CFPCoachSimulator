@@ -7,7 +7,7 @@ from coach_career import persona, programs, recruiting
 from sim import season
 
 if __name__ == "__main__":
-    assert "pro" in recruiting.PITCHES and recruiting.PITCHES.index("pro") == len(recruiting.PITCHES) - 2
+    assert "pro" in recruiting.PITCHES and recruiting.PITCHES.index("pro") == 6   # after the first seven-topic set; the School Grades topics follow academics
     for table in (recruiting.PRIORITY_ODDS, recruiting.PORTAL_PRIORITY_ODDS, recruiting.PORTAL_TOP_PRIORITY_ODDS):
         assert abs(sum(table.values()) - 1.0) < 1e-9 and table["pro"] > 0, table
     p = {"pro": 40, "pro_groups": {"OT": 80, "IOL": 40, "WR": 95, "EDGE": 70}}

@@ -14,6 +14,7 @@ Values marked *tune* are set by tools/check_recruiting.py against the real class
 """
 from __future__ import annotations
 
+import functools
 import math
 import random
 from functools import lru_cache
@@ -24,7 +25,16 @@ from teamdata import game_scale
 from coach_career import persona, recruits
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
-PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "pro", "academics")
+PITCHES = ("proximity", "playing_time", "prestige", "winning", "nil", "coach", "pro", "academics",
+           "facilities", "location", "stability", "game_day", "exposure")   # School Grades Phase 2: the five campus grades are topics too
+NEUTRAL_PULL = 0.5                         # *tune* a grade topic's pull at a program the research has no row for
+LOCATION_MATCH = 0.15                      # *tune* Location's pull gains this for each tag (setting, climate) that matches his taste ...
+LOCATION_CLASH = 0.05                      # *tune* ... and loses this for each that does not
+ACADEMIC_FROM = 70                         # *tune* an Academics grade this high (Strong) makes a school academic (the Grades Scare)
+PLACE_SETTINGS = {"Big City": 0.30, "Mid-Size City": 0.20, "College Town": 0.35, "Small Town": 0.15}   # *tune* his taste in a setting
+WARM_STATES = set("AL AZ CA FL GA HI LA MS SC TX".split())
+COLD_STATES = set("IA ID IL IN MA ME MI MN MT ND NE NH NY OH PA SD VT WI WY".split())
+HOME_CLIMATE = 0.7                         # *tune* how often he wants the climate he grew up in
 # how often each topic is a prospect's priority (drawn without replacement for his top three) *tune*
 PRIORITY_ODDS = {"proximity": 0.18, "playing_time": 0.17, "prestige": 0.14, "winning": 0.13, "nil": 0.13,
                  "coach": 0.10, "pro": 0.10, "academics": 0.05}
@@ -908,8 +918,54 @@ def pull(state: dict, slug: str, pid: str, winning: bool = True) -> dict[str, fl
         "nil": _logistic(1.4 * zn),
         "coach": min(1.0, max(0.0, 0.5 + 1.5 * _coach_edge(state, slug))),
         "pro": _logistic(PRO_PULL_K * (programs.pro_group_grade(pr, group) - 50) / 25),
-        "academics": 0.9 if slug in ACADEMIC else 0.5,
+        **_grade_pulls(state, slug, p),
     }
+
+
+def place_taste(p: dict) -> dict:
+    """Where he'd like to live: a setting and a climate, from his own seeded stream (stored nowhere, so an old save has it
+    too). The climate is the one he grew up in HOME_CLIMATE of the time."""
+    return dict(_taste(p["id"], (p.get("hometown") or {}).get("state")))
+
+
+@functools.lru_cache(maxsize=20000)
+def _taste(pid: str, home: Optional[str]) -> dict:
+    p = {"id": pid, "hometown": {"state": home}}
+    rng = random.Random(f"place-{p['id']}")
+    setting = rng.choices(list(PLACE_SETTINGS), weights=list(PLACE_SETTINGS.values()))[0]
+    home = (p.get("hometown") or {}).get("state")
+    grew = "Warm" if home in WARM_STATES else "Cold" if home in COLD_STATES else "Mild"
+    climate = grew if rng.random() < HOME_CLIMATE else rng.choice(["Warm", "Mild", "Cold"])
+    return {"setting": setting, "climate": climate}
+
+
+def _grade_pulls(state: dict, slug: str, p: dict) -> dict:
+    """The school grades as pulls (programs.grades / 100); Location also reads its tags against his taste. A program with
+    no grades reads NEUTRAL_PULL (Academics: the old ACADEMIC list)."""
+    from coach_career import programs
+    g = programs.grades(slug)
+    if g is None:
+        return {"academics": 0.9 if slug in ACADEMIC else 0.5, **{t: NEUTRAL_PULL for t in ("facilities", "location", "stability", "game_day", "exposure")}}
+    out = {t: g[t] / 100 for t in ("academics", "facilities", "location", "stability", "game_day", "exposure")}
+    tags, taste = programs.tags(slug) or {}, place_taste(p)
+    for k in ("setting", "climate"):
+        if tags.get(k):
+            out["location"] += LOCATION_MATCH if tags[k] == taste[k] else -LOCATION_CLASH
+    out["location"] = max(0.0, min(1.0, out["location"]))
+    return out
+
+
+def academic_schools() -> list[str]:
+    """Every academic school (academic()), sorted: the Grades Scare's list."""
+    from coach_career import programs
+    return sorted({s for s in set(programs.profile_rows()) | set(ACADEMIC) if academic(s)})
+
+
+def academic(slug: str) -> bool:
+    """An academic school (the Grades Scare's): an Academics grade of ACADEMIC_FROM or better; with no grades, the old list."""
+    from coach_career import programs
+    g = programs.grades(slug)
+    return slug in ACADEMIC if g is None else g["academics"] >= ACADEMIC_FROM
 
 
 _FORCED: dict = {}        # tests: (career, school, prospect, topic) -> strength
@@ -2153,7 +2209,7 @@ def auto_recruit(state: dict, slug: str, rng: Optional[random.Random] = None, co
         front, back = persona.board_front(state, slug)
         if front or back:
             board = list(dict.fromkeys([pid for pid in front if live(pid)] + board + [pid for pid in back if live(pid)]))
-        if rc.get("twists") and slug in ACADEMIC:      # a Grades Scare: the academic schools keep him off while it lasts
+        if rc.get("twists") and academic(slug):       # a Grades Scare: the academic schools keep him off while it lasts
             board = [pid for pid in board if not persona.scared_off(state, slug, pid)]
     rc["boards"][slug] = board
     if yours:

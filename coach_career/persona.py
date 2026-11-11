@@ -1105,7 +1105,7 @@ def twist_mult(state: dict, slug: str, pid: str, pitch) -> float:
         return HOT_SEAT_PITCH
     if tw["k"] == "grades" and pitch == "academics":
         from coach_career import recruiting
-        return GRADES_PITCH if slug not in recruiting.ACADEMIC else 1.0
+        return GRADES_PITCH if not recruiting.academic(slug) else 1.0
     return 1.0
 
 
@@ -1115,7 +1115,7 @@ def scared_off(state: dict, slug: str, pid: str) -> bool:
     if not tw or tw["k"] != "grades" or slug == state.get("team"):
         return False
     from coach_career import recruiting
-    return slug in recruiting.ACADEMIC
+    return recruiting.academic(slug)
 
 
 def knock_back(state: dict, slug: str, pid: str, action: str) -> None:
@@ -1285,9 +1285,9 @@ def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
         rc.setdefault("moved", {})[pid] = {"state": st_, "city": city, "home": home}
         return {"k": kind, "s": None, "w": 1}, f"His family moved to {city}, {st_}."
     if kind == "grades":                         # the academic AI schools drop him (their offers too) while it lasts
-        if not any(s != me and (s in offered or pid in (rc["boards"].get(s) or ())) for s in recruiting.ACADEMIC):
+        if not any(s != me and (s in offered or pid in (rc["boards"].get(s) or ())) for s in recruiting.academic_schools()):
             return None                          # no academic school is after him: nothing to scare off
-        for s in sorted(recruiting.ACADEMIC):
+        for s in recruiting.academic_schools():
             if s == me:
                 continue
             board = rc["boards"].get(s)
