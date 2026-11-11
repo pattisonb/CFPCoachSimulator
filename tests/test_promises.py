@@ -136,6 +136,66 @@ def test_first_season_records_nothing():
     assert not st.get("promises"), st.get("promises")
 
 
+# ----- Task 3: the offseason reads the band -----
+
+def _ctx(band=None, personality="business", benched=False, slug="pl"):
+    return {"year": 2028, "losing": False, "p4": True, "tier": 2, "slipping": None, "rising": False,
+            "promise": {} if band is None else {slug: {"band": band, "score": 0.3, "benched_big": benched, "personality": personality}}}
+
+
+def _p(cls, pos="WR"):
+    return {"id": "pl", "cls": cls, "pos": pos, "o": 60, "promised": 2027}
+
+
+def _total(parts):
+    return round(sum(v for _, v in parts), 4)
+
+
+def test_broken_junior_all_but_gone():
+    from coach_career import offseason
+    assert _total(offseason.portal_odds(_p("JR"), "bench", _ctx("broken"))) == 0.92
+
+
+def test_broken_freshman_may_wait():
+    from coach_career import offseason
+    assert _total(offseason.portal_odds(_p("FR"), "bench", _ctx("broken", personality="shy"))) == 0.50
+
+
+def test_broken_big_qb_more():
+    from coach_career import offseason
+    assert _total(offseason.portal_odds(_p("JR", "QB"), "bench", _ctx("broken"))) == 0.95
+
+
+def test_bent_adds_half():
+    from coach_career import offseason
+    parts = dict(offseason.portal_odds(_p("SO"), "bench", _ctx("bent")))
+    assert abs(parts["promised"] - parts["role"] * (pr.BENT_MULT - 1)) < 1e-9, parts
+
+
+def test_kept_stays_more():
+    from coach_career import offseason
+    kept = _total(offseason.portal_odds(_p("SO"), "bench", _ctx("kept")))
+    plain = _total(offseason.portal_odds(dict(_p("SO"), promised=None), "bench", _ctx()))
+    assert abs(kept - plain * offseason.KEPT_STAY) < 1e-4, (kept, plain)
+
+
+def test_old_save_old_rule():
+    from coach_career import offseason
+    parts = dict(offseason.portal_odds(_p("SO"), "bench", _ctx()))
+    assert abs(parts["promised"] - parts["role"] * (offseason.PROMISE_BROKEN - 1)) < 1e-9, parts
+
+
+def test_promise_again_and_nil():
+    from coach_career import offseason
+    e = {"ask": {"kind": "nil", "nil": 100}, "offers": {"nil": 0, "promise": True}, "role_next": "starter", "intent": "portal",
+         "broken_promise": True}
+    assert offseason.stay_chance(e) == pr.PROMISE_AGAIN_STAY
+    assert offseason.stay_chance(dict(e, offers={"nil": 0, "promise": False})) == 0.02
+    assert offseason.stay_chance(dict(e, no_third=True)) == 0.02, "a third promise is worth nothing"
+    for kind, mult in (("business", 0.8), ("cocky", 1.3), ("shy", 1.0)):
+        assert pr.nil_mult(kind) == pr.PROMISE_NIL_MULT * mult
+
+
 if __name__ == "__main__":
     import inspect
     _sys.path.insert(0, str(_Path(__file__).resolve().parent))

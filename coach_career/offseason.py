@@ -433,6 +433,9 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
     roster = lgd["teams"][me]["roster"]
     by_id = {p["id"]: p for p in roster}
     would_start = _would_start(roster, recruiting.PORTAL_STARTERS)
+    from coach_career import promises
+    from sim import season as _season
+    judged = promises.bands(state, _season.season_year(state))     # your promises this season, judged week by week
     out = []
     for item in pending:
         ev, use = item["ev"], item["use"]
@@ -480,9 +483,16 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         shortfall = int(item.get("shortfall") or 0)
         if key == "deal" and shortfall:
             ask = max(ask, shortfall)                                # he wants at least what the market pays over your tier
+        info = judged.get(p["id"])
+        broken_promise = key == "promised" and (info is None or info["band"] == "broken")   # untracked: the old rule broke it
+        no_third = broken_promise and p.get("promised_again") is not None and p.get("promised_again") == p.get("promised")
+        if broken_promise:                                           # it takes a lot of money now, more for some than others
+            kind, ask = "nil", base * promises.nil_mult(promises.personality_of(state, p["id"]))
         out.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": ovr, "stars": p.get("s"),
                     "role_now": use, "role_next": role_next, "intent": intent, "reason_key": key,
-                    "reason": REASONS[key].format(ahead=ahead, round=min(7, (proj - 1) // 32 + 1) if proj else None),
+                    "reason": REASONS[key].format(ahead=ahead, round=min(7, (proj - 1) // 32 + 1) if proj else None)
+                              + (". He won't believe another promise" if no_third else ""),
+                    "broken_promise": broken_promise, "no_third": no_third,
                     "driver": item.get("driver"), "shortfall": shortfall or None,
                     "draft_pick": proj, "draft_kind": ("draft" if proj else "undrafted") if intent == "draft" else None,
                     "elite": intent == "draft" and bool(item.get("elite")), "cls_now": ev["cls"],
@@ -527,6 +537,10 @@ def stay_chance(e: dict) -> float:
         nil_share = 0.0
     honored = bool(offers.get("promise")) and e["role_next"] == "starter"
     hollow = bool(offers.get("promise")) and not honored
+    if e.get("broken_promise"):                  # promised a start and did not get it: one more promise, if it is real, or a lot of money
+        from coach_career import promises
+        chance = promises.PROMISE_AGAIN_STAY if honored and not e.get("no_third") else 0.02
+        return min(0.92, chance + 0.65 * nil_share)
     if e["intent"] == "draft":
         pick = e.get("draft_pick") or 10 ** 6
         if e.get("elite"):                       # rated ELITE_DECLARE or better after a decent season: a top pick, all but gone
@@ -599,6 +613,8 @@ def _resolve_retention(state: dict) -> None:
             p["kept"] = year
             if e["offers"].get("promise"):
                 p["promised"] = year
+                if e.get("broken_promise"):
+                    p["promised_again"] = year                # his second chance: break this one and there is no third
             spent += e["offers"].get("nil", 0)
         elif p is not None:
             leaving.add(p["id"])
@@ -798,13 +814,19 @@ def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
     ovr = house(p["pos"], p["o"])
     if not ctx["p4"] and ovr >= TRANSFER_UP_FROM:
         base = max(base, TRANSFER_UP)                           # a Group of 5 standout moves up
+    from coach_career import promises
     kept = p.get("kept") == year - 1
-    broken = p.get("promised") == year - 1 and use != "starter"   # promised a starting role (Keep Them Home, or as a recruit) and did not get it
-    if kept and not broken:
+    promised = p.get("promised") == year - 1                      # promised a starting role (Keep Them Home, or as a recruit)
+    info = (ctx.get("promise") or {}).get(p["id"]) if promised else None
+    band = info["band"] if info else None                         # judged all season (promises.bands); None: a save from before
+    broken = promised and info is None and use != "starter"      # the old all-or-nothing rule, for an untracked promise
+    if band == "kept" or (kept and not broken and band not in ("bent", "broken")):
         base *= KEPT_STAY
     parts = [("role", base)]
     if broken:
         parts.append(("promised", base * (PROMISE_BROKEN - 1)))   # its own segment: when the draw lands here the promise is why he goes
+    elif band == "bent":
+        parts.append(("promised", base * (promises.BENT_MULT - 1)))
     if use in ("starter", "rotation") and not kept:              # a kept player was paid this year
         market = recruiting.market_value(p["pos"], ovr)
         shortfall = market - NIL_TIER_PAY.get(ctx["tier"], NIL_TIER_PAY[5])
@@ -814,6 +836,8 @@ def portal_odds(p: dict, use: str, ctx: dict) -> list[tuple[str, float]]:
         parts.append((ctx["slipping"], PROGRAM_PULL))
     if ctx.get("rising") and use == "starter":
         parts = [(k, v * RISING_STAY) for k, v in parts]
+    if band == "broken":                                          # all but gone, the older the surer: the rest of his leave chance
+        parts.append(("promised", max(0.0, promises.leave_chance(p["cls"], p["pos"], info) - sum(v for _, v in parts))))
     return parts
 
 
@@ -831,6 +855,9 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
     attrs = _attrs(lgd)
     events, entrants = [], {}
     records = {slug: _record(state, slug) for slug in lgd["teams"]}
+    from coach_career import promises
+    from sim import season as _season
+    my_promises = promises.bands(state, _season.season_year(state))   # the season just played: your promises, judged week by week
     games = _games_played(state)
     # the draft board: seniors and the underclassmen who declare, ranked by draft score (the picks
     # are projections until the draft runs after Keep Them Home)
@@ -854,6 +881,7 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
         losing = wins < losses
         would_start = _would_start(t["roster"], recruiting.PORTAL_STARTERS)
         ctx = _program_context(lgd, slug, losing, p4[slug], shifts)
+        ctx["promise"] = my_promises if slug == me else {}            # your promises, judged all season (AI schools make none)
         os_ = sorted(q["o"] for q in t["roster"])
         low = os_[max(0, int(len(os_) * 0.15) - 1)] if os_ else 0
         team_name = lg.team_meta(state.get("league"), slug)["short_name"]

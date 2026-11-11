@@ -129,3 +129,47 @@ def snapshot_week(state: dict, week: int) -> None:
         p = rows.get(slug) or {}
         injured = p.get("name") in hurt
         weeks.append({"week": week, "started": bool(p.get("in_game")) and not injured, "injured": injured, "big": big})
+
+
+# ----- the offseason: what the band does (offseason.portal_odds, Keep Them Home) -----------------------------------------
+
+LEAVE = {"FR": 0.60, "FRRS": 0.65, "SO": 0.75, "SORS": 0.80, "JR": 0.92, "JRRS": 0.94, "SR": 0.95, "SRRS": 0.95}   # *tune* a broken promise's leave chance by the class he just played
+LEAVE_BIG = 0.03           # *tune* ... more when he was benched in a big game, or is a quarterback
+LEAVE_SHY = -0.10          # *tune* ... less for a Shy player
+LEAVE_CAP = 0.97           # *tune* never certain
+BENT_MULT = 1.5            # *tune* a bent promise's portal multiple (the old all-or-nothing PROMISE_BROKEN was 3.0)
+PROMISE_NIL_MULT = 2.5     # *tune* a broken-promise leaver's NIL ask at Keep Them Home, times the usual
+NIL_MULT_BY = {"business": 0.8, "cocky": 1.3}   # *tune* ... the money talks easiest to All Business, hardest to Cocky
+PROMISE_AGAIN_STAY = 0.55  # *tune* his chance to stay when you promise him again (a role he would really get)
+
+
+def leave_chance(cls: str, position: str, info: dict) -> float:
+    """A broken promise's chance he goes: by the class he played, more after a big-game benching or at quarterback,
+    less for a Shy player, never above LEAVE_CAP."""
+    c = LEAVE.get(cls, 0.9)
+    if info.get("benched_big") or _group(position) == "QB":
+        c += LEAVE_BIG
+    if info.get("personality") == "shy":
+        c += LEAVE_SHY
+    return min(LEAVE_CAP, c)
+
+
+def nil_mult(personality: str) -> float:
+    return PROMISE_NIL_MULT * NIL_MULT_BY.get(personality, 1.0)
+
+
+def bands(state: dict, year: int) -> dict[str, dict]:
+    """Your players promised for `year` who have a weekly record: slug -> {band, score, benched_big, personality}. A
+    promised player with no record (a save from before) is left out: the old all-or-nothing rule reads him."""
+    rec = record(state).get(str(year)) or {}
+    me = state.get("team")
+    rows = {c["id"]: c for c in (((state.get("league") or {}).get("teams") or {}).get(me) or {}).get("roster") or ()}
+    out = {}
+    for slug, weeks in rec.items():
+        c = rows.get(slug)
+        if c is None or c.get("promised") != year:
+            continue
+        kind = personality_of(state, slug)
+        s = score(weeks, c["pos"], kind)
+        out[slug] = {"band": band(s, kind), "score": s, "benched_big": benched_big(weeks), "personality": kind}
+    return out
