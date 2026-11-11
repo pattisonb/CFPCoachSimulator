@@ -233,7 +233,7 @@ def test_repeat_and_visit(st: dict, used: set, talked: str) -> None:
     kinds = whos(sc)
     assert kinds[:7] == ["note", "you", "him", "you", "him", "you", "him"], kinds
     assert sc["turns"][6]["text"] == sc["cue"]["text"]
-    assert sc["turns"][7]["who"] == "note" and sc["turns"][7]["text"].startswith("His dad"), sc["turns"][7]
+    assert sc["turns"][7]["who"] == "note" and sc["turns"][7]["text"].startswith(scenes.ASK_WHO[persona.of(st, pid)["decider"]]), sc["turns"][7]
     note = sc["turns"][7]["text"]                                    # his NIL ask in numerals and the game's NIL words (tests/test_scene_truth.py)
     if sc["ask"].get("exact"):
         assert str(sc["ask"]["exact"]) in note and "NIL" in note and "points" not in note and "hundred" not in note, note

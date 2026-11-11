@@ -1151,7 +1151,7 @@ def close_done(page) -> None:
 def present_three(page, pane: str = ".modal-scene") -> None:
     """A call or visit just opened: the conversation shows your opener and his answer; pick three things and Present,
     which brings his cue in place (the cue and his question follow your opening)."""
-    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-opening-pick", timeout=30_000)
+    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-opening-strip", timeout=30_000)
     if page.query_selector(f"{pane} .go-scene .go-scene-line.cue"):
         return
     assert page.eval_on_selector(f"{pane} .go-scene .go-opening .go-present", "e => e.disabled"), "Present waits for three"
@@ -1208,39 +1208,24 @@ def test_conversation(page, base) -> None:
         assert you_right, "your bubble sits right, his left"
         assert not page.query_selector(".modal-scene .go-scene .go-scene-line.cue"), "the cue waits on your opening"
         assert "YOUR OPENING" in page.inner_text(".modal-scene .go-scene") and "WHAT YOU LEAD WITH" not in page.inner_text(".modal-scene .go-scene")
-        # your pitch is one pill that opens every topic as a chip; up to three, each shown below before Present
+        # your pitch is one row of topic cards that scrolls sideways (never growing the window); pick three, each outlined
         M = ".modal-scene .go-scene"
-        assert page.is_hidden(f"{M} .go-opening-menu") and "0 of 3" in page.inner_text(f"{M} .go-opening-pick"), "the topics sit closed in one pill"
-        page.click(f"{M} .go-opening-pick")
-        chips = page.query_selector_all(f"{M} .go-opening-menu .go-present-chip")
-        assert len(chips) == 13 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
-        time.sleep(0.3)
-        seen = page.evaluate("""(m) => { const menu = document.querySelector(m + ' .go-opening-menu').getBoundingClientRect();
-          const port = document.querySelector('.modal-scene .modal-body').getBoundingClientRect();
-          return [Math.round(menu.top), Math.round(menu.bottom), Math.round(port.top), Math.round(port.bottom)]; }""", M)
-        assert seen[0] >= seen[2] - 1 and seen[1] <= seen[3] + 1, f"the open menu shows whole in the call's window (menu top, bottom; window top, bottom): {seen}"
+        strip = page.eval_on_selector(f"{M} .go-opening-strip", "e => [getComputedStyle(e).overflowX, Math.round(e.getBoundingClientRect().height), e.scrollWidth > e.clientWidth]")
+        assert strip[0] == "auto" and strip[1] < 110, f"the topics sit in one row that scrolls sideways: {strip}"
+        chips = page.query_selector_all(f"{M} .go-opening-strip .go-present-chip")
+        assert len(chips) == 13 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
+        picked = lambda: page.eval_on_selector_all(f"{M} .go-opening-strip .go-present-chip[aria-pressed=true]", "els => els.map(e => e.dataset.topic)")
         chips[0].click(); chips[1].click()
-        assert page.is_visible(f"{M} .go-opening-menu"), "the menu stays open while you pick"
-        picked = lambda: page.eval_on_selector_all(f"{M} .go-opening-picked .go-picked", "els => els.map(e => e.dataset.topic)")
         assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present")
         chips[2].click()
-        assert page.is_hidden(f"{M} .go-opening-menu"), "the third pick closes the menu"
-        assert len(picked()) == 3 and not page.is_disabled(f"{M} .go-present") and "3 of 3" in page.inner_text(f"{M} .go-opening-pick")
-        page.click(f"{M} .go-opening-pick")
+        assert len(picked()) == 3 and not page.is_disabled(f"{M} .go-present") and page.inner_text(".modal-scene .go-present-count").strip() == "3 of 3"
         chips[3].click()
         toasted(page, "Three things. Drop one first.")
-        page.keyboard.press("Escape")
-        assert page.is_hidden(f"{M} .go-opening-menu") and chips[3].get_attribute("aria-pressed") == "false"
-        page.click(f"{M} .go-opening-pick")
-        page.focus(f"{M} .go-opening-menu .go-present-chip:last-child")
-        page.keyboard.press("Tab")
-        time.sleep(0.2)
-        assert page.is_hidden(f"{M} .go-opening-menu"), "tabbing out of the menu closes it"
+        assert chips[3].get_attribute("aria-pressed") == "false"
         gone = picked()[0]
-        page.click(f"{M} .go-opening-picked .go-picked[data-topic={gone}] .go-picked-x")
-        assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present"), "an x drops a pick"
-        page.click(f"{M} .go-opening-pick")
-        page.click(f"{M} .go-opening-menu .go-present-chip[data-topic={gone}]")
+        page.click(f"{M} .go-opening-strip .go-present-chip[data-topic={gone}]")
+        assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present"), "a second click drops a pick"
+        page.click(f"{M} .go-opening-strip .go-present-chip[data-topic={gone}]")
         assert len(picked()) == 3 and page.inner_text(".modal-scene .go-present-count").strip() == "3 of 3"
         h = watch(page, ".modal-scene .go-scene", ".modal-scene .go-present", scrolled=False)
         page.click(".modal-scene .go-present")
@@ -1288,7 +1273,8 @@ def test_conversation(page, base) -> None:
         assert len(turns) == 3 and "note" in turns[0][0].split() and "you" in turns[1][0].split() and "him" in turns[2][0].split(), turns
         present_three(page)
         turns = page.eval_on_selector_all(".modal-scene .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
-        assert any("His dad" in t for _, t in turns), turns
+        from coach_career import scenes as _scenes          # the NIL note speaks for whoever decides (his dad, his trainer, he himself)
+        assert any(t.startswith(who) and "NIL" in t for _, t in turns for who in _scenes.ASK_WHO.values()), turns
         assert "null" not in page.inner_text(".modal-scene .go-scene") and "{" not in page.inner_text(".modal-scene .go-scene")
         assert not errs, errs
     finally:
