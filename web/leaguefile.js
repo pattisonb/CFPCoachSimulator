@@ -202,7 +202,7 @@
     ui().on(use, "click", async () => {
       const ids = [...box.querySelectorAll("input[type=checkbox]:checked")].map((i) => i.value);
       const picked = list.filter((p) => ids.includes(p.id));
-      if (!picked.length) { ui().toast("Tick at least one program first.", 3000); return; }
+      if (!picked.length) { ui().toast("Check at least one program first.", 3000); return; }
       let real = {};
       // an edit writes only what changed against the real team: its details, one team at a time
       for (const slug of [...new Set(picked.filter((p) => p.kind === "edit").map((p) => p.base))]) {

@@ -1,5 +1,5 @@
 """Custom Programs on the page: create a program (name, colors, conference, three players), check it, reload and it is
-still there, download it as a league file, edit a real program; then on New Career tick it, see the summary with the
+still there, download it as a league file, edit a real program; then on New Career check it, see the summary with the
 scheduling note, pick it and start a career at it. Needs Playwright with a Chromium; skipped without one."""
 import json
 import os
@@ -81,6 +81,9 @@ if __name__ == "__main__":
                 page.fill(f"{ed} .pg-rival-search", q)
                 page.click(f"{ed} .pg-rival-hit[data-slug='{slug}']")
             page.fill(f"{ed} .pg-rival[data-slug='boise-state'] .pg-rival-name", "Battle for the Bell")
+            page.select_option(f"{ed} .pg-rival[data-slug='boise-state'] .pg-rival-often", "week")
+            assert page.eval_on_selector(f"{ed} .pg-rival[data-slug='air-force'] .pg-rival-often option[value=week]", "o => o.disabled"), "one rivalry week game"
+            page.select_option(f"{ed} .pg-rival[data-slug='air-force'] .pg-rival-often", "some")
             # a click on a chip leaves the cursor where it was (no label pulling it into the search box)
             page.click(f"{ed} .pg-rival[data-slug='air-force'] b")
             assert page.evaluate("() => !document.activeElement.classList.contains('pg-rival-search')"), "a chip click pulled the cursor into the search box"
@@ -110,7 +113,7 @@ if __name__ == "__main__":
             assert d["teams"][0]["conference"] == "mountain-west" and d["teams"][0]["roster"][1]["overall"] == 74
             co = d["teams"][0]["coaches"]
             assert co["oc"]["name"] == "Sam Roe" and co["dc"]["name"] == "Lee Poe" and co["offense"] == "Spread RPO" and co["defense"] == "4-3", co
-            assert d["teams"][0]["rivals"] == [{"slug": "boise-state", "name": "Battle for the Bell"}, "air-force"], d["teams"][0].get("rivals")
+            assert d["teams"][0]["rivals"] == [{"slug": "boise-state", "name": "Battle for the Bell", "rivalry_week": True}, {"slug": "air-force", "every_year": False}], d["teams"][0].get("rivals")
             # edit a real program
             page.wait_for_function("() => document.querySelectorAll('#pg-real option').length > 100", timeout=120_000)
             page.select_option("#pg-real", "akron")
@@ -148,4 +151,4 @@ if __name__ == "__main__":
             browser.close()
     finally:
         server.terminate()
-    print("custom programs page ok: create, check, kept on reload, download, edit a real program; New Career ticks it, notes the schedule, and starts a career at it")
+    print("custom programs page ok: create, check, kept on reload, download, edit a real program; New Career checks it, notes the schedule, and starts a career at it")

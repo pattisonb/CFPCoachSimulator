@@ -94,6 +94,35 @@ def test_rivalry_name_errors():
     assert not r["ok"] and any("rivalry name" in e.lower() for e in r["errors"]), r["errors"]
 
 
+def test_sometimes_rivalry():
+    """A rival marked every_year false is a named rivalry with no reserved week: it is not in the team's scheduled rivals,
+    and the career still knows it (its name, unnamed ones read "Alder Tech vs. Boise State")."""
+    from sim import season
+    team = {"slug": "alder-tech", "name": "Alder Tech", "short_name": "Alder Tech", "conference": "mountain-west",
+            "rivals": [{"slug": "boise-state", "name": "Battle for the Bell", "every_year": False}, {"slug": "air-force", "every_year": False}, "nevada"]}
+    r = league_file.check(doc(team), seed=3)
+    assert r["ok"], r.get("errors")
+    assert r["league"]["teams"]["alder-tech"]["meta"]["rivals"] == ["nevada"], r["league"]["teams"]["alder-tech"]["meta"]["rivals"]
+    st = {"league": r["league"]}
+    assert season.rivalry_for("alder-tech", "boise-state", st)["name"] == "Battle for the Bell"
+    assert season.rivalry_for("air-force", "alder-tech", st)["name"] == "Alder Tech vs. Air Force"
+
+
+def test_rivalry_week():
+    """A yearly rival marked rivalry_week is played in rivalry week (the schedule's finale week), every year; only one."""
+    from sim import schedule_gen
+    team = {"slug": "alder-tech", "name": "Alder Tech", "conference": "mountain-west",
+            "rivals": [{"slug": "oregon-state", "name": "Cascade Clash", "rivalry_week": True}]}
+    r = league_file.check(doc(team), seed=3)
+    assert r["ok"], r.get("errors")
+    games = [g for g in r["games"].values() if {g["home"], g["away"]} == {"alder-tech", "oregon-state"}]
+    assert games and all(g["week"] == schedule_gen.FINALE_WEEK for g in games), [(g["week"], g["home"], g["away"]) for g in games]
+    assert any(a.get("finale") and sorted(a["teams"]) == ["alder-tech", "oregon-state"] for a in r["league"]["schedule_rules"]["annual"]), "later seasons keep it"
+    team["rivals"].append({"slug": "boise-state", "rivalry_week": True})
+    r = league_file.check(doc(team), seed=3)
+    assert not r["ok"] and any("only one rival" in e for e in r["errors"]), r["errors"]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -135,11 +135,21 @@
         const nm = el("input", { type: "text", maxlength: "60", class: "pg-rival-name", placeholder: "Rivalry name (optional)", "aria-label": `Rivalry name with ${t.short_name || slug}` });
         nm.value = p.f.rivalry_names[slug] || "";
         nm.addEventListener("input", () => { p.f.rivalry_names[slug] = nm.value; p.updated = Date.now(); persist(); });
+        p.f.rivalry_often = p.f.rivalry_often || {};
+        const weekTaken = rv.some((x) => x !== slug && p.f.rivalry_often[x] === "week");
+        const how = el("select", { class: "pg-rival-often", "aria-label": `How often you play ${t.short_name || slug}` }, [
+          el("option", { value: "year", text: "Every Year" }),
+          el("option", { value: "week", text: "Every Year, Rivalry Week", ...(weekTaken ? { disabled: "" } : {}) }),
+          el("option", { value: "some", text: "Sometimes" })]);
+        how.value = p.f.rivalry_often[slug] || "year";
+        how.title = "Every Year reserves a week each season; Rivalry Week plays it in the season's rivalry week (one rival only); Sometimes keeps the name and the series but plays only when the schedule pairs you";
+        how.addEventListener("change", () => { p.f.rivalry_often[slug] = how.value; save(); });
         return el("div", { class: "pg-rival", "data-slug": slug }, [
-          el("b", { text: t.short_name || t.name || slug }), nm,
+          el("b", { text: t.short_name || t.name || slug }), nm, how,
           el("button", { type: "button", class: "ghost small pg-rival-x", "aria-label": `Remove ${t.short_name || slug}`, text: "×", onclick: () => {
             p.f.rivals = rv.filter((x) => x !== slug);
             delete p.f.rivalry_names[slug];
+            if (p.f.rivalry_often) delete p.f.rivalry_often[slug];
             save();
           } })]);
       }));
@@ -205,7 +215,7 @@
       let r;
       try { r = await ui().busy(check, api("/api/league/check", { method: "POST", headers: { "Content-Type": "application/json" }, body })); }
       catch (err) { out.replaceChildren(el("p", { class: "pg-bad", text: "The game couldn't check it. Try again in a moment." })); return; }
-      out.replaceChildren(...(r.ok ? [el("p", { class: "pg-good", text: "Ready to use. Tick it on the New Career screen." })]
+      out.replaceChildren(...(r.ok ? [el("p", { class: "pg-good", text: "Ready to use. Check it on the New Career screen." })]
         : (r.errors || []).map((e) => el("p", { class: "pg-bad", text: e }))));
     });
     const newConf = el("div", { class: "pg-row pg-newconf" }, [
@@ -238,7 +248,7 @@
       el("div", { class: "pg-row" }, [field("Offense", select(p, "offense", [["", "Conference's Usual"], ...playbooks.offense.map((x) => [x, x])])),
         field("Defense", select(p, "defense", [["", "Conference's Usual"], ...playbooks.defense.map((x) => [x, x])]))]),
       el("h3", { class: "pg-sec", text: "Rivals" }),
-      field("Rivals", rivalsPick(p), `Up to ${P.MAX_RIVALS}. Each rivalry is played every year; a rival outside your conference takes one of your non-conference weeks. Name it if you like: the name shows on the game.`, "rivals"),
+      field("Rivals", rivalsPick(p), `Up to ${P.MAX_RIVALS}. Every Year reserves a game each season (a rival outside your conference takes one of your non-conference weeks); Rivalry Week plays it in the season's rivalry week; Sometimes keeps the name and the series but plays only when the schedule pairs you. Name it if you like: the name shows on the game.`, "rivals"),
       el("h3", { class: "pg-sec", text: "Roster" }),
       rosterEditor(p),
       el("div", { class: "pg-problems", "aria-live": "polite" }),
@@ -291,6 +301,7 @@
         oc: ((t.coaches || {}).oc || {}).name, dc: ((t.coaches || {}).dc || {}).name, offense: (t.coaches || {}).offense, defense: (t.coaches || {}).defense,
         rivals: Array.isArray(t.rivals) ? t.rivals.map((r) => (typeof r === "string" ? r : r && r.slug)).filter(Boolean) : undefined,
         rivalry_names: Array.isArray(t.rivals) ? Object.fromEntries(t.rivals.filter((r) => r && typeof r === "object" && r.name).map((r) => [r.slug, r.name])) : undefined,
+        rivalry_often: Array.isArray(t.rivals) ? Object.fromEntries(t.rivals.filter((r) => r && typeof r === "object").map((r) => [r.slug, r.rivalry_week ? "week" : r.every_year === false ? "some" : "year"])) : undefined,
         roster: (t.roster || []).map((r) => [r.name, r.pos, r.class, r.overall].filter((x) => x != null && x !== "").join(", ")).join("\n") };
       if (isReal) {
         const r = real[t.slug], rc = r.colors || {};

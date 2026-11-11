@@ -43,3 +43,4 @@
 .pg-problems:empty { display: none; }
 .pg-problems { display: flex; flex-direction: column; gap: 2px; }
 @media (max-width: 760px) { .pg-rival .pg-rival-x { min-width: 44px; } }
+.pg-rival-often { flex: 0 1 200px; min-width: 0; }

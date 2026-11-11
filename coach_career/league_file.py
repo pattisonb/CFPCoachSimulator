@@ -1045,16 +1045,20 @@ def schedule_rules(merged: dict) -> dict:
             pair = sorted((slug, r))
             ca, cr = teams[slug].get("conference"), teams[r].get("conference")
             rule = rule_for(ca) if ca == cr and ca in confs else None
+            finale = pair in (merged.get("finales") or [])            # Custom Programs: played in rivalry week
             if rule is not None and confs[ca]["games"] > 0:
                 prot = rule.setdefault("protected", [])
                 if not rule.get("round_robin") and pair not in [sorted(p) for p in prot] \
                         and _protect_fits(rule, confs[ca]["games"], pair):
                     prot.append(pair)
                     out_ids.add(ca)
+                if finale and pair not in [sorted(f) for f in rule.get("finales", [])]:
+                    rule.setdefault("finales", []).append(pair)
+                    out_ids.add(ca)
                 continue
             if tuple(pair) not in seen:
                 seen.add(tuple(pair))
-                annual.append({"teams": pair, "name": ""})
+                annual.append({"teams": pair, "name": "", **({"finale": True} if finale else {})})
     return {"conferences": {engine_name(merged, cid): work[cid] for cid in sorted(out_ids)}, "annual": annual}
 
 
@@ -1131,10 +1135,21 @@ RIVALRY_NAME_MAX = 60       # *tune* the longest rivalry name a file may give
 
 
 def rivalry_names(doc: dict) -> tuple[list[dict], list[str]]:
-    """A rival given as {"slug", "name"} (Custom Programs names its rivalries): the entry becomes its slug in the team's
-    rivals (so the rest of the check reads slugs, as before) and the name is collected as a career rivalry,
-    {"teams": [a, b], "name", "trophy": "", "series": {}}. Returns (named rivalries, errors as sentences)."""
+    """A rival given as {"slug", "name", "every_year", "rivalry_week"} (Custom Programs): the entry becomes its slug in the
+    team's rivals (so the rest of the check reads slugs, as before), unless every_year is false: then it reserves no week
+    and is played only when the schedule pairs them. A name, or any rivalry that is not every year, is collected as a career
+    rivalry, {"teams": [a, b], "name", "trophy": "", "series": {}} (unnamed: "A vs. B"). rivalry_week true puts the
+    yearly game in rivalry week (doc["_finales"], read by schedule_rules); one per team. Returns (rivalries, errors)."""
     out, errs, seen = [], [], set()
+    shorts = {t.get("slug"): t.get("short_name") or t.get("name") for t in doc.get("teams") or [] if isinstance(t, dict)}
+    def short(slug):
+        if shorts.get(slug):
+            return shorts[slug]
+        try:
+            return league.base_meta(slug).get("short_name") or slug
+        except Exception:  # noqa: BLE001 - an unknown slug: the check names it
+            return slug
+    finales = doc.setdefault("_finales", [])
     for t in doc.get("teams") or []:
         if not isinstance(t, dict) or not isinstance(t.get("rivals"), list):
             continue
@@ -1149,11 +1164,19 @@ def rivalry_names(doc: dict) -> tuple[list[dict], list[str]]:
                 if name is not None and (not isinstance(name, str) or len(name.strip()) > RIVALRY_NAME_MAX):
                     errs.append(f"{label}: a rivalry name is at most {RIVALRY_NAME_MAX} characters.")
                     continue
-                slugs.append(slug)
+                yearly = r.get("every_year", True) is not False
+                if yearly:
+                    slugs.append(slug)
                 pair = tuple(sorted((t.get("slug") or "", slug)))
-                if name and name.strip() and pair not in seen:
+                if r.get("rivalry_week") and yearly:
+                    if any(t.get("slug") in f for f in finales):
+                        errs.append(f"{label}: only one rival can be the rivalry week game.")
+                        continue
+                    finales.append(list(pair))
+                if (name and name.strip() or not yearly) and pair not in seen:
                     seen.add(pair)
-                    out.append({"teams": list(pair), "name": name.strip(), "trophy": "", "series": {}})
+                    nm = name.strip() if name and name.strip() else f"{short(t.get('slug'))} vs. {short(slug)}"
+                    out.append({"teams": list(pair), "name": nm, "trophy": "", "series": {}})
             else:
                 slugs.append(r)
         t["rivals"] = slugs
@@ -1175,6 +1198,7 @@ def _check_merged(doc: dict, blob: bytes, seed: Optional[int]) -> dict:
     from coach_career import league_fill
     from sim import schedule_gen, season
     merged = merge(doc)
+    merged["finales"] = [sorted(f) for f in doc.get("_finales") or []]     # rivalry week games (rivalry_names)
     counts = {"added": len(merged["added"]), "changed": len(merged["changed"]), "removed": len(merged["removed"])}
     if merged["builtin"]:
         return {"ok": True, "builtin": True,
