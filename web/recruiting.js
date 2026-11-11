@@ -206,7 +206,7 @@
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
       else if (e.kind === "learned" || (LINE_KINDS.has(e.kind) && e.line)) bits = [e.line];     // what your staff learned; a bloomer's jump; a twist; a hat ceremony
       else if ((e.kind === "signed" || e.kind === "unsigned") && e.line) bits = [e.line];     // a recruit of yours went elsewhere: where, and why not you
-      else if (e.kind === "promise_broken") bits = [e.why === "package" ? `${e.about} never got the offer you promised` : `He heard you promised the same spot to ${e.about}`];
+      else if (e.kind === "promise_broken") bits = [e.why === "money" && e.line ? e.line : e.why === "package" ? `${e.about} never got the offer you promised` : `He heard you promised the same spot to ${e.about}`];
       else if (e.kind === "leaning_fcs") bits = ["Leaning toward an FCS program"];
       else if (HISTORY_WORDS[e.kind]) bits = [`${HISTORY_WORDS[e.kind]} ${e.school ? teamName(e.school) : "an FCS program"}`];
       else bits = [`${eventWord(e)} ${e.school ? teamName(e.school) : ""}`.trim()];

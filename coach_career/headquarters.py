@@ -227,7 +227,7 @@ def next_year(state: dict) -> dict:
     for p in outlook(state)["players"]:
         if p["leaving"] or p["group"] not in groups:
             continue
-        groups[p["group"]]["players"].append({"name": p["name"], "position": p["position"], "class_now": p["class"],
+        groups[p["group"]]["players"].append({"slug": p.get("slug"), "name": p["name"], "position": p["position"], "class_now": p["class"],
                                               "class_next": offseason.NEXT_CLASS.get(p["class"], p["class"]), "overall": p["overall"],
                                               "starter": p["starter"], "draft": p["draft"], "transfer": p["transfer"]})
     rc = prospects.class_rc(state)

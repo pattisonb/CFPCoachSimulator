@@ -54,6 +54,7 @@
     if (name === "scouting") return `/api/season/${id}/scouting`;
     if (name === "programs") return `/api/season/${id}/programs`;
     if (name === "classes") return `/api/season/${id}/classes`;
+    if (name === "myclass") return `/api/season/${id}/classes?school=${encodeURIComponent(s.team)}`;   // your class, every recruit
     if (name === "prospects") return `/api/season/${id}/prospects?limit=50`;
     if (name === "scouted") return `/api/season/${id}/scouting?scouted=1&sort=potential&limit=60`;
     if (name === "depth") return `/api/season/${id}/depth/${encodeURIComponent(s.team)}`;
@@ -596,6 +597,11 @@
       el("div", { class: "go-meter-top" }, [el("span", { text: label }), el("b", { text: words })]),
       el("div", { class: "go-meter-track" }, el("span", { class: `go-meter-fill${tone ? ` ${tone}` : ""}`, style: `width: ${Math.round(100 * Math.max(0, Math.min(1, frac || 0)))}%` })),
     ]),
+    // a player of yours whose name opens his player page (the season page's [data-player] handler; the slug finds
+    // him even after an offseason move). The sample card shows the name only.
+    player: (ctx, name, pos, slug) => (ctx.sample || !ctx.season || !name
+      ? el("span", { class: "hq-grow", text: name || "" })
+      : el("a", { href: "#", class: "plink hq-plink hq-grow", "data-player": `${ctx.season.team}|${name}|${pos || ""}${slug ? `|${slug}` : ""}`, title: "Open player page", text: name })),
     // a recruit's name that opens his profile
     name: (ctx, pid, text) => {
       const b = el("button", { type: "button", class: "go-link hq-grow", text });

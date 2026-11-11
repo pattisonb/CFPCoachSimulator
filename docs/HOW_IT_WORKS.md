@@ -1298,7 +1298,7 @@ offered: the family's or his line says so instead of demanding it ("You offered 
 a lot in this house.", `persona.STORY_LINES_OFFERED`), and **Already Offered Him** ("I offered Khalil
 already. Two spots, both yours.") earns `ANSWER_STRAIGHT` plus `PACKAGE_OFFERED` (1). History words
 them `Promised an offer to Khalil Telfair`, `Told him Khalil Telfair already has an offer`, and a
-broken one `Khalil Telfair never got the offer you promised`. The pane, the Prospect Profile popup and the
+broken one `Khalil Telfair never got the offer you promised`. **The NIL pitch reads what you could pay** (`recruiting.strengths`): with NIL held on him it is the deal, held against his ask; with nothing held (offered or not) it is your NIL room (`nil_room`: what is left of the budget, read without opening the record) against his ask, never your program's NIL tier, so a small school that can cover a five-star reads Strong for him and a spent budget reads Weak. The page's word reads his ask as you know it (`known_ask`: the number once he has said it, the range's middle before), so it never leaks the number. **Talking money is a promise**: pitch NIL on a call or visit to a recruit whose priority (or decider's topic) it is, with an ask and nothing held, and he names his number ("He told you he's looking for 40 in NIL.", his ask now exact) and you owe him a `money` promise: `NIL_PROMISE_SHARE` (80%) of his ask on your offer within `NIL_PROMISE_WEEKS` (2) week steps keeps it (`PACKAGE_KEPT` points, "You put the money on the table. You kept your word, Coach."); without it the promise breaks ("You talked money and never put it on the table.": he cools, a commit's firmness drops); it closes quietly if he commits elsewhere, signs or your offer is pulled. A recruit who does not care says "The money isn't what this is about for me." AI schools read the same could-pay strength and make no promises. The pane, the Prospect Profile popup and the
 Scouting Center draw a recruit with one set of pieces (`web/profileview.js`, `web/profile.css`): a hero (his status chip,
 avatar, name, stars, Pos · Archetype | Height | Weight with the position as the game shows it, `display_pos`: an EDGE
 who plays DT reads DT everywhere, and his archetype after it, "DT · Run Stopper"; Hometown · Class of 2027 (the portal:
@@ -1491,13 +1491,16 @@ that throws shows "Couldn't Load This Widget" in its own card. `HQ.kit` holds th
 table, meter, stars, a line chart, Title Case). To add a widget: register it in the right `web/hq-widgets/*.js`
 file with a sample; the canvas, drawer and saving need nothing.
 
-**Sources.** `board` (`/recruiting`), `scouting`, `programs`, `classes`, `prospects` and `hq` (below), each
+**Sources.** `board` (`/recruiting`), `scouting`, `programs`, `classes`, `myclass` (`/classes?school=` yours: every recruit), `prospects` and `hq` (below), each
 fetched once for the visit whatever the number of widgets reading it; a source no placed widget names is never
 fetched. Ready: Class at a Glance, Week's Resources, Top Targets, Class Needs, Visit Schedule, Recent Commits,
-Recruiting Activity, Commitment Tracker, Hot and Cold Movers, Class Breakdown, Recruiting Rankings, Recruit Search,
+Recruiting Activity, Commitment Tracker, Hot and Cold Movers, Class Breakdown, Your Full Class (every commit and signee, best first; a name opens his Prospect Profile), Recruiting Rankings, Recruit Search,
 Scouting Queue, Flags, Area Scouts, Program Comparison, and (round 2, `hq-widgets/outlook.js`) Alerts and Needs
 Attention, Board Health, Offer Efficiency, Position Battle Board (source `depth`), Scholarship Budget, Recruiting
-Calendar, What-If, Senior Impact and Retention, Roster Loss Projections, Recruiting Tasks and Recruiting Goals.
+Calendar, What-If, Senior Impact and Retention, Roster Loss Projections, Recruiting Tasks and Recruiting Goals. A player
+of yours named in a widget (Senior Impact, the Position Battle Board, Next Year's Depth Chart) opens his player page
+(`k.player`); a recruit's name opens his Prospect Profile (`k.name`), during the portal weeks too (the signed class
+kept aside, `prospects.profile`).
 Scouted Players (source `scouted`: the Scouting desk's scouted prospects by potential) shows them as tiles; a tile
 opens his report (the six grades from his profile's `our_grades`, as words) with arrows to step through and Back to
 All. Next Year's Depth Chart (`want=next_year`: every player the outlook keeps a class up by `offseason.NEXT_CLASS`,

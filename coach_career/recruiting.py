@@ -115,6 +115,8 @@ PROMISE_RIVAL = 20                         # firmness lost when the other recrui
 PACKAGE_OFFERED = 1.0                      # a Package Deal's question (scenes.question "package") when his mate already holds your offer: on top of ANSWER_STRAIGHT *tune*
 PACKAGE_PROMISE_WEEKS = 2                  # you promised his mate an offer: kept when the mate holds it within this many weeks, broken after *tune*
 PACKAGE_KEPT = 2.0                         # what a kept Package Deal promise earns at the week step it is kept *tune*
+NIL_PROMISE_SHARE = 0.8                    # *tune* a money promise (NIL pitched with nothing on the offer) is kept once the offer holds this share of his ask
+NIL_PROMISE_WEEKS = 2                      # *tune* ... within this many week steps, or it breaks
 ASK_MORE = (1.5, 1.25)                     # a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
 TOP_GROUP = 8                              # the schools he is seriously considering: his top this many by interest
 # pestering: contacts past his patience from a school he is not considering cost it *tune*
@@ -488,12 +490,13 @@ def _contact(state: dict, slug: str, pid: str) -> dict:
 _ASKS: dict = {}          # (career, class, week, prospect, school, his ask multiplier) -> his ask from the school this week
 
 
-def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> int:
+def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None, peek: bool = False) -> int:
     """What he wants from `slug`: his ask, raised when a rival's number beat the school's, times
-    ASK_TRAIL per place the school trails on his list (as the week's step left it)."""
+    ASK_TRAIL per place the school trails on his list (as the week's step left it). `peek`: read only,
+    never opening a contact record (a strength read for a school that has not touched him)."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    mult = _contact(state, slug, pid).get("ask_mult", 1.0)
+    mult = (((rc["contacts"].get(pid) or {}).get(slug) or {}) if peek else _contact(state, slug, pid)).get("ask_mult", 1.0)
     base = p["nil_ask"] * mult
     if not base:
         return 0
@@ -509,10 +512,11 @@ def ask_from(state: dict, slug: str, pid: str, win: Optional[dict] = None) -> in
     return int(round(ask * GENERATIONAL_ASK)) if is_generational(state, pid) else ask
 
 
-def ask_view(state: dict, slug: str, pid: str) -> dict:
-    """His ask from your school as you know it: the number after a call or visit, a range before."""
-    ask = ask_from(state, slug, pid)
-    asked = _contact(state, slug, pid).get("asked")
+def ask_view(state: dict, slug: str, pid: str, peek: bool = False) -> dict:
+    """His ask from your school as you know it: the number after a call or visit, a range before.
+    `peek`: read only, never opening a contact record."""
+    ask = ask_from(state, slug, pid, peek=peek)
+    asked = (((state["recruiting"]["contacts"].get(pid) or {}).get(slug) or {}) if peek else _contact(state, slug, pid)).get("asked")
     if asked is True:
         return {"exact": ask}
     lo, hi = ASK_NARROW if asked == "range" else ASK_SHOWN
@@ -912,10 +916,27 @@ _FORCED: dict = {}        # tests: (career, school, prospect, topic) -> strength
 _PULLS: dict = {}         # (career, class, prospect, school) -> the school's pulls that hold all season
 
 
-def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
+def nil_room(state: dict, slug: str) -> int:
+    """The NIL the school could still put on an offer, read only (never opens its NIL record): what is left
+    of its budget, or the whole budget (the portal's pool) before the record exists."""
+    rec = state["recruiting"]["nil"].get(slug)
+    if rec is not None:
+        return rec["budget"] - sum(rec["held"].values())
+    return portal_budget(state, slug) if is_portal(state) else nil_budget(state, slug)
+
+
+def known_ask(state: dict, slug: str, pid: str) -> int:
+    """His ask as the player knows it (ask_view): the number once he has said it, else the range's middle."""
+    v = ask_view(state, slug, pid, peek=True)
+    return v["exact"] if "exact" in v else _five((v["lo"] + v["hi"]) / 2)
+
+
+def strengths(state: dict, slug: str, pid: str, known: bool = False) -> dict[str, float]:
     """Your program's strength on each topic for this prospect, 0-1: the school's pull on him
     (playing time from his place on the depth chart, winning, prestige, proximity, coach,
-    academics) with NIL read as your offer against his ask (the program's level before an offer)."""
+    academics) with NIL read against his ask: the NIL held on him once there is some (the deal), and
+    before that what the school could pay him (nil_room plus anything held), never the program's tier.
+    `known`: read his ask as the player knows it (known_ask), so the page's word never leaks the number."""
     mv = state["recruiting"].get("moved")
     key = (state["id"], _ck(state["recruiting"]), pid, slug, bool(mv) and pid in mv)
     static = _PULLS.get(key)
@@ -925,10 +946,9 @@ def strengths(state: dict, slug: str, pid: str) -> dict[str, float]:
         static = _PULLS[key] = pull(state, slug, pid, winning=False)
     out = dict(static)
     out["winning"] = min(1.0, _winning(state).get(slug, 0.5))
-    held = state["recruiting"]["nil"].get(slug, {}).get("held", {}).get(pid)
-    if pid in state["recruiting"]["offers"].get(slug, []):
-        ask = ask_from(state, slug, pid)
-        out["nil"] = 1.0 if not ask else min(1.0, (held or 0) / ask)
+    held = state["recruiting"]["nil"].get(slug, {}).get("held", {}).get(pid) or 0
+    ask = known_ask(state, slug, pid) if known else ask_from(state, slug, pid, peek=True)
+    out["nil"] = 1.0 if not ask else min(1.0, (held if held > 0 else nil_room(state, slug)) / ask)
     for (sid, s_, p_, topic), v in _FORCED.items():
         if sid == state["id"] and s_ == slug and p_ == pid:
             out[topic] = v
@@ -1805,6 +1825,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             if pitch not in seen:
                 seen.append(pitch)
         points = _contact_land(state, slug, p, contact, sc["action"], pitch, auto)
+        if pitch == "nil":
+            _money_talk(state, slug, pid, contact, week, tells=tells, tired=bool(sc.get("tired")))
         del rc["scenes"][slug][pid]
         if points:                                    # the points are the call's or the visit's; its hours went when it opened
             _add_points(state, slug, pid, points * scale, sc["action"])
@@ -2274,6 +2296,61 @@ def flip_by_signing(state: dict, pid: str, gap: float, weeks_left: int) -> float
     return 1 - keep
 
 
+def _money_talk(state: dict, slug: str, pid: str, contact: dict, week: int, tells: bool = True, tired: bool = False) -> None:
+    """You pitched NIL in a call or visit. When NIL is his (a priority or his decider's topic), he has an ask and
+    nothing is held on him yet, he names his number (the contact's ask is exact; a History line says it) and you
+    owe him a money promise: NIL_PROMISE_SHARE of his ask on your offer within NIL_PROMISE_WEEKS (_promises), and the
+    History says so. Not on a call that keeps his priorities to himself (`tells` False: he gives nothing away), not on
+    a call that pestered him (`tired`: the pitch fell flat), and not in the portal (its weeks judge no promises)."""
+    if not tells or tired or is_portal(state) or not persona.counts_as_priority(state, pid, "nil"):
+        return
+    ask = ask_from(state, slug, pid)
+    held = (state["recruiting"]["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
+    if not ask or held:
+        return
+    named = contact.get("asked") is not True
+    contact["asked"] = True
+    if named:
+        _event(state, "learned", pid, slug, line=f"He told you he's looking for {ask} in NIL.")
+    if not any(pr["kind"] == "money" and pr.get("broken") is None and pr.get("kept") is None and pr.get("closed") is None
+               for pr in contact.get("promises") or ()):
+        from coach_career import scenes
+        contact.setdefault("promises", []).append({"kind": "money", "about": {"ask": ask}, "week": week, "broken": None, "kept": None,
+                                                   "offered": pid in state["recruiting"]["offers"].get(slug, [])})
+        _event(state, "learned", pid, slug, line=scenes.MONEY_OWED_LINE)
+
+
+def _money_promise(state: dict, slug: str, pid: str, c: dict, pr: dict, week: int) -> None:
+    """A money promise at the week step: kept once the offer holds NIL_PROMISE_SHARE of his ask (PACKAGE_KEPT lands,
+    promise_kept), broken after NIL_PROMISE_WEEKS without it (he cools; promise_broken, why "money"), closed with
+    neither once he is no longer yours to win (committed elsewhere, signed, or an offer you made pulled; a pitch before
+    any offer stays owed: the money has to reach an offer). The share reads his ask now when it fell since the pitch."""
+    from coach_career import scenes
+    rc = state["recruiting"]
+    st_ = rc["status"][pid]
+    offered = pid in rc["offers"].get(slug, [])
+    if offered:
+        pr["offered"] = True
+    if st_["signed"] or (st_["committed"] and st_["committed"] != slug) or (pr.get("offered") and not offered):
+        pr["closed"] = week
+        return
+    held = (rc["nil"].get(slug) or {}).get("held", {}).get(pid, 0)
+    if held and held >= NIL_PROMISE_SHARE * min(pr["about"]["ask"], ask_from(state, slug, pid) or pr["about"]["ask"]):
+        pr["kept"] = week
+        rc["lists"][pid][slug] = rc["lists"][pid].get(slug, 0.0) + persona.climbs(state, slug, pid, PACKAGE_KEPT)
+        _event(state, "promise_kept", pid, slug, why="money", line=scenes.MONEY_KEPT_LINE)
+        return
+    if week - pr["week"] < NIL_PROMISE_WEEKS:
+        return
+    if st_["committed"] == slug and not st_.get("hard"):
+        st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - PROMISE_RIVAL))
+    elif st_["committed"] != slug:
+        c["cooled_until"] = week + COOL_WEEKS
+        persona.set_cooled_why(state, slug, pid, "promise")
+    pr["broken"] = week
+    _event(state, "promise_broken", pid, slug, why="money", line=scenes.MONEY_BROKEN_LINE)
+
+
 def _promises(state: dict, week: int) -> None:
     """Promises follow him (spec section 4): a recruit told he was the one over another recruit
     (a "recruit" promise) remembers when that recruit commits to the school too, once: committed
@@ -2288,7 +2365,12 @@ def _promises(state: dict, week: int) -> None:
     for pid, by in rc["contacts"].items():
         for slug, c in by.items():
             for pr in c.get("promises") or ():
-                if pr["kind"] not in ("recruit", "package") or pr.get("broken") is not None or pr.get("kept") is not None:
+                if pr.get("broken") is not None or pr.get("kept") is not None or pr.get("closed") is not None:
+                    continue
+                if pr["kind"] == "money":
+                    _money_promise(state, slug, pid, c, pr, week)
+                    continue
+                if pr["kind"] not in ("recruit", "package"):
                     continue
                 st_ = rc["status"][pid]
                 if st_["signed"]:
