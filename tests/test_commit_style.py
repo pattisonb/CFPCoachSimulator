@@ -128,7 +128,7 @@ def test_hat(st, used):
     day, fin = rc["hats"][pid]
     assert day == 6 + persona.HAT_LEAD and len(fin) == persona.HAT_FINALISTS and RIVALS[0] in fin and set(fin) <= set(RIVALS), rc["hats"][pid]
     e = next(e for e in rc["log"] if e["kind"] == "hat" and e["pid"] == pid)
-    assert e["line"].startswith("He will pick from ") and f"Week {day}" in e["line"] and e["line"].endswith("."), e
+    assert e["line"].startswith("He will pick from ") and season.week_label(day) in e["line"] and e["line"].endswith("."), e
     # only his finalists can win: the fourth school jumps ahead of them all and still loses
     out = next(s for s in RIVALS if s not in fin)
     rc["lists"][pid][out] = 80.0

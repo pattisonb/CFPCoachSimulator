@@ -30,6 +30,8 @@ LAST_WEEK = 14                # the regular season's Saturdays (season.LAST_REGU
 FINALE_WEEK = 14              # Thanksgiving weekend: the rivalry finales
 ARMY_NAVY_WEEK = 16           # selection weekend (season.SELECTION_WEEK)
 NONCONF_WEEKS = (1, 2, 3, 4)  # where non-conference games go first
+WEEK0 = 1                     # engine week 1 is the calendar's Week 0: a handful of games the Saturday before Labor Day
+WEEK0_GAMES = 8               # *tune*: about how many games stay in Week 0 (set-week openers first; the rest move to a shared bye)
 LATE_FCS_WEEKS = (11, 12, 13)  # a Power team's late FCS tune-up
 HISTORY_KEEP = 10             # meetings kept per pair
 SECOND_POWER_ROAD = 0.35      # a Group of Five team's chance of a second Power pay game
@@ -211,7 +213,7 @@ def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random
     if short:
         raise ScheduleError(f"{len(short)} teams without {GAMES} games in {year}: {short[:6]}")
     # 4. weeks
-    _assign_weeks(games, fbs, rng)
+    _assign_weeks(games, fbs, rng, year)
     # 5. records and history
     out = {}
     for g in games:
@@ -687,7 +689,7 @@ def _home_conf_counts(games: list[dict], conf_of: dict) -> dict[str, int]:
 
 # ----- weeks ---------------------------------------------------------------------------------------
 
-def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random) -> None:
+def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random, year: int = 0) -> None:
     """A week for every game: fixed weeks first, non-conference games early, conference games from
     week 3, finales in week 14, nobody twice in a week; randomized attempts until it fits."""
     for attempt in range(RESTARTS):
@@ -773,6 +775,7 @@ def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random) -> None:
                 g["week"] = g["_w"]
                 del g["_w"]
             _tidy_byes(games, fbs, fixed_weeks, rng)
+            _week_zero(games, fbs, fixed_weeks, random.Random(f"week0-{year}-{len(games)}"))   # its own stream: the grid's draws never move
             return
     raise ScheduleError("no week grid fits this schedule")
 
@@ -814,6 +817,52 @@ def _tidy_byes(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Rando
                 if w not in weeks and w + 1 not in weeks:
                     if pull(s, w, ("conf", "nonconf", "fcs"), ends + (w - 1, w + 2)):
                         weeks = set(by_week.get(s, {}))
+
+
+def _week_zero(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Random) -> None:
+    """Week 0 (engine week 1), as the real calendar has it: a handful of games the Saturday before Labor Day. The full
+    grid opens everyone in week 1; here all but about WEEK0_GAMES of those games move to a later week both teams have
+    free (a bye they share, nearest the start first), or, when one game blocks such a week, that game first moves to a
+    bye its own two teams share. Kept, in order: the set-week openers (data/series.json), other neutral-site games, then
+    a random few. A game that cannot move stays. Only real teams' weeks count (the FCS stand-ins play many a week)."""
+    real = lambda t: t in fbs                         # fbs: the real teams (no FCS stand-in)
+    slot: dict = {}                                   # (team, week) -> its game there
+    for g in games:
+        for t in (g["home"], g["away"]):
+            if real(t):
+                slot[(t, g["week"])] = g
+    def sides(g):
+        return [t for t in (g["home"], g["away"]) if real(t)]
+    def free(g, w):
+        return all((t, w) not in slot for t in sides(g))
+    def move(g, w):
+        for t in sides(g):
+            slot.pop((t, g["week"]), None)
+            slot[(t, w)] = g
+        g["week"] = w
+    later = [w for w in range(WEEK0 + 1, LAST_WEEK + 1) if w != FINALE_WEEK]
+    opening = [g for g in games if g["week"] == WEEK0]
+    opening.sort(key=lambda g: (0 if id(g) in fixed_weeks else 1 if g.get("neutral") else 2, rng.random()))
+    for g in opening[WEEK0_GAMES:]:
+        if id(g) in fixed_weeks:
+            continue
+        w = next((w for w in later if free(g, w)), None)
+        if w is None:
+            for w2 in later:
+                block = {id(slot[(t, w2)]): slot[(t, w2)] for t in sides(g) if (t, w2) in slot}
+                if len(block) != 1:
+                    continue
+                b = next(iter(block.values()))
+                if id(b) in fixed_weeks or b["kind"] == "conf" and w2 == FINALE_WEEK:
+                    continue
+                to = next((w3 for w3 in later if w3 != w2 and free(b, w3)), None)
+                if to is None:
+                    continue
+                move(b, to)
+                w = w2
+                break
+        if w is not None:
+            move(g, w)
 
 
 def _prefs(g: dict) -> list:

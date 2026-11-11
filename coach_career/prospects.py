@@ -909,12 +909,59 @@ def _level(value: float, stars: int, cuts: dict) -> str:
     return next((name for (_, name), cut in zip(INTEREST_LEVELS, band) if value >= cut), "Low")
 
 
+def _height_in(h) -> int:
+    """Inches (a class stores 74; a portal entrant 6'2\"); 0 when unknown."""
+    if isinstance(h, (int, float)):
+        return int(h)
+    try:
+        ft, inch = str(h).replace('"', "").split("'")
+        return int(ft) * 12 + int(inch or 0)
+    except (ValueError, AttributeError):
+        return 0
+
+
+STATUS_ORDER = {"open": 0, "leaning_fcs": 1, "committed": 2, "signed": 3}
+
+
+def _sort_key(state: dict, viewer: str, key: str, keen: dict):
+    """A Prospects column's sort key (best or first on top; ties by national rank): rank, interest, name, pos, ht, wt,
+    stars, status, sc (your looks), pot (your potential read; unscouted last)."""
+    rc = state["recruiting"]
+    P = rc["prospects"]
+    if key == "interest" or key == "int":
+        return lambda pid: -keen[pid]
+    if key == "name" or key == "who":
+        return lambda pid: P[pid]["name"].lower()
+    if key == "pos":
+        return lambda pid: P[pid]["position"]
+    if key == "ht":
+        return lambda pid: -_height_in(P[pid]["height"])
+    if key == "wt":
+        return lambda pid: -(P[pid]["weight"] or 0)
+    if key == "stars":
+        cls = {"FR": 1, "FRRS": 2, "SO": 3, "SORS": 4, "JR": 5, "JRRS": 6, "SR": 7, "SRRS": 8}   # the portal's Class column
+        return lambda pid: -(P[pid]["stars"] or 0) if P[pid].get("stars") is not None else cls.get(P[pid].get("cls"), 9)
+    if key == "status":
+        def st(pid):
+            x = seen_status(state, pid, viewer)
+            return STATUS_ORDER["signed" if x["signed"] else "committed" if x["committed"] else "leaning_fcs" if x["fcs"] else "open"]
+        return st
+    if key == "sc":
+        return lambda pid: -recruiting.report_looks(rc["reads"].get(pid))
+    if key == "pot":
+        def pot(pid):
+            iv = recruiting.read_interval(state, pid, "potential") if rc["reads"].get(pid) else None
+            return -(iv[0] + iv[1]) / 2 if iv else float("inf")     # unscouted last
+        return pot
+    return lambda pid: P[pid]["rank"]
+
+
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
            home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
            offset: int = 0, limit: int = 50, sort: str = "rank", group: Optional[str] = None) -> dict:
-    """The class you can see, filtered and paged, by national rank (or by interest in your school:
-    `sort="interest"`, or `status="interested"` for those graded High: the prospects your school appeals
-    to most among recruits of their star rating)."""
+    """The class you can see, filtered and paged, by national rank or any column (`sort`: _sort_key's names, "-" first to
+    reverse; "interest" is interest in your school). `status="interested"` keeps those graded High: the prospects your
+    school appeals to most among recruits of their star rating."""
     rc = state["recruiting"]
     q = (q or "").strip().lower()
     out = []
@@ -950,10 +997,16 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
         if status == "interested" and (_level(keen[pid], p["stars"], cuts) != "High" or st["signed"]):
             continue
         out.append(pid)
-    if sort == "interest" or status == "interested":
-        out.sort(key=lambda pid: -keen[pid])
-    elif status == "recommended":
+    # the sort you picked holds whatever the filter (the player's report: Interested in You forced its own order); a
+    # column's key, "-" first for the other way. Recommended keeps its fit order until you pick another sort.
+    desc = sort.startswith("-")
+    key = sort.lstrip("-") or "rank"
+    if key == "rank" and status == "recommended" and not desc:
         out.sort(key=lambda pid: -recs[pid]["fit"])
+    else:
+        fn = _sort_key(state, viewer, key, keen)
+        out.sort(key=lambda pid: rc["prospects"][pid]["rank"])     # ties stay in national rank order either way (a stable sort)
+        out.sort(key=fn, reverse=desc)
     limit = max(1, min(5000, limit))
     rows = []
     for pid in out[offset:offset + limit]:

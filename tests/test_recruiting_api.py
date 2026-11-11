@@ -65,10 +65,13 @@ if __name__ == "__main__":
         assert hidden not in {r["id"] for r in everyone}
         named = search(sid, q=everyone[3]["name"].split()[-1].lower(), limit=200)["rows"]
         assert everyone[3]["id"] in {r["id"] for r in named}
-        # prospects already interested in your school (graded High within their star band), most interested first
+        # prospects already interested in your school (graded High within their star band): the sort you pick holds
+        # (national rank by default, the player's report), interest in you when you sort by it
         keen = search(sid, status="interested", limit=50)
         assert 200 < keen["total"] < 1200 and all(r["interest_level"] == "High" for r in keen["rows"])
-        vals = [r["interest_in_you"] for r in keen["rows"]]
+        ranks = [r["national_rank"] for r in keen["rows"]]
+        assert ranks == sorted(ranks), "Interested in You keeps the national-rank sort"
+        vals = [r["interest_in_you"] for r in search(sid, status="interested", sort="interest", limit=50)["rows"]]
         assert vals == sorted(vals, reverse=True)
         by_pull = search(sid, sort="interest", limit=20)["rows"]
         assert [r["interest_in_you"] for r in by_pull] == sorted((r["interest_in_you"] for r in by_pull), reverse=True)

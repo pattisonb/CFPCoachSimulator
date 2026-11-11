@@ -8,6 +8,9 @@
    game preview's simulated win probability) and /game/{id} (the last box score). Below 900 px one column. */
 (function () {
   "use strict";
+  // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
+  // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
+  const seasonWeek = (w) => `Week ${w - 1}`;
   const { el } = window.CFP;
   const ui = () => window.CFP.ui;
   const rec = () => window.CFP.recruiting || {};
@@ -25,7 +28,7 @@
   const team = (slug) => (window.CFP.teamsBySlug || {})[slug] || {};
   const abbr = (slug, name) => team(slug).abbreviation || name || team(slug).name || slug;
   const confShort = (c) => CONF_SHORT[c] || c;
-  const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || `Week ${w}`;
+  const weekName = (s, w) => (s.week_labels && s.week_labels[w]) || seasonWeek(w);
   // a game or week date as the kicker shows it; the data holds 2026 dates, so later seasons shift by a year
   // (364 days keeps the weekday, as the Schedule tab does); never "Invalid Date"
   const dateText = (d, s) => {
