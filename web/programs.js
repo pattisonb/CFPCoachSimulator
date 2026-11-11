@@ -139,19 +139,27 @@
     // the state's towns: biggest first, none closer than a few dots to one already drawn (the suburbs thin out)
     townsOf(f.state).then((list) => {
       if (!svg.isConnected && !wrap.isConnected) { /* drawn before it joins the page: carry on */ }
-      const placed = [];
+      const placed = [], boxes = [];          // placed: each drawn town's dot-and-name box; boxes: their dots
       const gap = unit * 6;
       let labeled = 0;
+      const majors = list.filter((t) => t.major).length;      // the major cities: always drawn and named, never thinned out
       const proper = (n) => String(n).replace(/\bMc([a-z])/g, (_, c) => `Mc${c.toUpperCase()}`);   // the list's "Mccall" reads McCall
       for (const t0 of list) {
         const t = { ...t0, name: proper(t0.name) };
         const xy = M.project([t.lat, t.lon]);
-        if (!xy || placed.some(([x, y]) => Math.hypot(x - xy[0], y - xy[1]) < gap)) continue;
-        placed.push(xy);
-        const g = svgEl("g", { class: "pg-town", "data-name": t.name, "data-lat": String(t.lat), "data-lon": String(t.lon), tabindex: "0", role: "button",
+        if (!xy) continue;
+        // its dot and name as a box (a name runs right of the dot): a hometown whose box meets one already drawn is left
+        // off, so no name sits on another; a major city always goes on
+        const named = t0.major || labeled < Math.max(10, majors);
+        const box = [xy[0] - unit * 1.2, xy[1] - unit * 2.2, xy[0] + (named ? unit * (1.6 + t.name.length * 1.55) : unit * 1.2), xy[1] + unit * 1.6];
+        const meets = (b) => box[0] < b[2] && b[0] < box[2] && box[1] < b[3] && b[1] < box[3];
+        if (!t0.major && (placed.some(meets) || boxes.some(([x, y]) => Math.hypot(x - xy[0], y - xy[1]) < gap))) continue;
+        placed.push(box);
+        boxes.push(xy);
+        const g = svgEl("g", { class: `pg-town${t0.major ? " major" : ""}`, "data-name": t.name, "data-lat": String(t.lat), "data-lon": String(t.lon), tabindex: "0", role: "button",
           "aria-label": `Put the campus in ${t.name}` });
         g.append(svgEl("circle", { cx: xy[0].toFixed(2), cy: xy[1].toFixed(2), r: String(unit * 0.9), class: "pg-town-dot", "stroke-width": String(unit * 0.25) }));
-        if (labeled < 10) {
+        if (named) {
           const tx = svgEl("text", { x: (xy[0] + unit * 1.4).toFixed(2), y: (xy[1] + unit * 0.9).toFixed(2), class: "pg-town-name", "font-size": String(unit * 2.6) });
           tx.textContent = t.name;
           g.append(tx);
@@ -162,7 +170,7 @@
         g.addEventListener("click", pick);
         g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(e); } });
         towns.append(g);
-        if (placed.length >= 18) break;
+        if (placed.length >= Math.max(18, majors + 8)) break;
       }
       show();
     });

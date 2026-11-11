@@ -18,6 +18,7 @@ import hashlib
 import json
 import os
 import re
+from pathlib import Path
 import shutil
 import sys
 import urllib.parse
@@ -611,12 +612,19 @@ def league_program(p: Params) -> dict:
 
 @route("GET", "/api/league/towns/{state}")
 def league_towns(p: Params) -> dict:
-    """A state's towns for the Custom Programs campus map: the game's own town list (the recruits' hometowns, the same one
-    Close to Home looks a city up in), biggest first: [{name, lat, lon, weight}]. Unknown state: an empty list."""
+    """A state's towns for the Custom Programs campus map: its major cities first (data/major_cities.json, `major`: always
+    drawn and named, the player's ask), then the game's own town list (the recruits' hometowns, the same one Close to
+    Home looks a city up in), biggest first: [{name, lat, lon, weight, major}]. Unknown state: an empty list."""
     from coach_career import recruits
-    rows = (recruits.model()["generation"]["towns"] or {}).get(str(p.path["state"]).upper()) or []
-    towns = sorted(({"name": r[0], "weight": r[1], "lat": r[2], "lon": r[3]} for r in rows), key=lambda t: -t["weight"])
-    return {"state": str(p.path["state"]).upper(), "towns": towns}
+    code = str(p.path["state"]).upper()
+    if "majors" not in _PROGRAMS:
+        _PROGRAMS["majors"] = json.loads((Path(__file__).resolve().parents[1] / "data" / "major_cities.json").read_text(encoding="utf-8"))
+    majors = [{"name": n, "lat": la, "lon": lo, "weight": None, "major": True} for n, la, lo in (_PROGRAMS["majors"].get(code) or [])]
+    seen = {m["name"].casefold() for m in majors}
+    rows = (recruits.model()["generation"]["towns"] or {}).get(code) or []
+    towns = sorted(({"name": r[0], "weight": r[1], "lat": r[2], "lon": r[3], "major": False} for r in rows
+                    if isinstance(r[0], str) and r[0].casefold() not in seen and r[2] is not None), key=lambda t: -t["weight"])
+    return {"state": code, "towns": majors + towns}
 
 
 @route("POST", "/api/league/check")

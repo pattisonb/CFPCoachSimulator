@@ -57,6 +57,7 @@
 .pg-town:hover .pg-town-dot, .pg-town:focus .pg-town-dot, .pg-town.on .pg-town-dot { fill: var(--accent, #c8102e); }
 .pg-town:focus { outline: none; }
 .pg-town-name { fill: var(--text); font-family: inherit; font-weight: 600; paint-order: stroke; stroke: var(--panel-2, #fff); stroke-width: 0.35em; stroke-linejoin: round; }
-.pg-town:hover .pg-town-name, .pg-town.on .pg-town-name { font-weight: 800; }
+.pg-town:hover .pg-town-name, .pg-town.on .pg-town-name, .pg-town.major .pg-town-name { font-weight: 800; }
+.pg-town:not(.major) .pg-town-name { font-weight: 500; opacity: 0.85; }
 .pg-spot-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 @media (max-width: 760px) { .pg-spot-clear { min-height: 44px; } }

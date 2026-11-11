@@ -159,6 +159,17 @@ def test_custom_career_stays_listed():
     assert api.call("GET", f"/api/season/{sid}")["team"] == "alder-tech", "and it opens"
 
 
+def test_towns_major_first():
+    """The campus map's towns: the state's major cities first (always drawn and named: Boise, not only Meridian), then the
+    recruits' hometowns without repeats; every major city inside its state on the map (checked once, by hand)."""
+    d = api.call("GET", "/api/league/towns/ID")
+    names = [t["name"] for t in d["towns"]]
+    majors = [t["name"] for t in d["towns"] if t["major"]]
+    assert majors[0] == "Boise" and names[:len(majors)] == majors, names[:8]
+    assert len(names) == len({n.casefold() for n in names}), "no town twice"
+    assert api.call("GET", "/api/league/towns/ZZ")["towns"] == []
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
