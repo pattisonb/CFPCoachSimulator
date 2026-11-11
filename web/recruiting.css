@@ -399,6 +399,14 @@
 .go-mark.not { color: var(--bad-text); }
 .go-mark.none { color: var(--muted); }
 .go-tag.go-mark { text-transform: none; letter-spacing: 0; font-weight: 700; }
+/* the snapshot's tags in labeled rows (tagGroups): Status, His Topics, Who He Is; a topic's mark reads like its row */
+.pv-tag-groups { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.pv-tag-group { display: grid; grid-template-columns: 92px minmax(0, 1fr); column-gap: 10px; align-items: start; }
+.pv-tag-group .pv-tag-label { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 5px; }
+.pv-tag-group .go-tags { margin: 0; }
+.pv-tag-group .pv-tag-key { grid-column: 2; margin-top: 4px; }
+.pv-tag-group .go-tag.go-mark { text-transform: uppercase; letter-spacing: 0.04em; }
+@media (max-width: 520px) { .pv-tag-group { grid-template-columns: 1fr; row-gap: 4px; } .pv-tag-group .pv-tag-key { grid-column: 1; } .pv-tag-group .pv-tag-label { padding-top: 0; } }
 .go-chip-tags { display: inline-flex; align-items: center; gap: 6px; }
 .go-pitch .go-mark { margin-left: 6px; }
 

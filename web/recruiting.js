@@ -700,7 +700,7 @@
       sd.odds ? el("div", { class: "muted small", "data-key": "odds", text: `${sd.odds}${sd.certainty ? ` · ${sd.certainty}${sd.certainty !== "Solid Read" ? ": the range narrows as signing day nears" : ""}` : ""}` }) : null,
       el("h4", { class: "pv-kick", "data-key": "pri-kick", text: "Priorities" }), pri,
       kvRow("ask", "His Ask", ask ? `He Wants ${ask.replace(/^about/, "About")}` : null),
-      el("div", { class: "go-tags go-badges", "data-key": "tags", ...attr(!tags.length, { hidden: "" }) }, tags)], { key: "snapshot", cls: "pv-snapshot" });
+      tagGroups(tags)], { key: "snapshot", cls: "pv-snapshot" });
   }
   function overviewCards(s, b, me, p) {
     const summary = p ? PV().summaryCard(p.report) : PV().card("Scout's Summary", [el("p", { class: "muted go-loading", text: "Loading his report…" })], { wide: true, key: "summary" });
@@ -713,15 +713,42 @@
     const c = b.scene ? { topics: b.scene.cue ? b.scene.cue.topics : [], action: b.scene.action } : hw && hw.week === s.current_week ? hw : { topics: [] };
     return { topics: c.topics, title: cueTitle(c.action) };
   }
+  // the tags in three labeled rows: Status (need, offer, mood, commitment), His Topics (with a key to ★ and ☆) and Who He
+  // Is (personality, who decides, his story, a coordinator's word, his visit); an empty row is left off
+  const TAG_GROUPS = [["status", "Status"], ["topics", "His Topics"], ["who", "Who He Is"]];
+  function tagGroups(tags) {
+    const rows = TAG_GROUPS.map(([g, label]) => {
+      const mine = tags.filter((n) => n.dataset.group === g);
+      if (!mine.length) return null;
+      const syms = [["★", "★ He told you he cares"], ["☆", "☆ He hinted at it this week"]].filter(([c]) => mine.some((n) => n.textContent.startsWith(c)));
+      const key = g === "topics" && syms.length ? el("div", { class: "muted small pv-tag-key", "data-key": "tag-key", text: syms.map(([, w]) => w).join(" · ") }) : null;
+      return el("div", { class: "pv-tag-group", "data-key": `tags-${g}` }, [el("span", { class: "pv-tag-label", text: label }),
+        el("div", { class: "go-tags go-badges" }, mine), key]);
+    }).filter(Boolean);
+    return el("div", { class: "pv-tag-groups", "data-key": "tags", ...attr(!rows.length, { hidden: "" }) }, rows);
+  }
   function tagList(s, b, me) {
     const out = [...(badges(b, me) || { children: [] }).children];
-    for (const t of b.priorities_known || []) out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this" }));
-    for (const t of Object.keys(PITCH_NAMES)) {
-      const m = markOf(b, t);
-      if (m && (m.mark === "weak" || m.mark === "not_his")) out.push(el("span", { class: `go-tag go-mark ${MARKS[m.mark][1]}`, "data-key": `mark:${t}`, text: `${PITCH_NAMES[t]}: ${MARKS[m.mark][0]}`, title: markWhy(m) }));
+    for (const n of out) n.dataset.group = "status";
+    // his topics, one chip each (the player's report: the row was confusing, a topic twice with opposite signals): ★ he
+    // told you he cares, ☆ he hinted at it this week, or what he said when you pitched it (a Weak Case or Not His Thing
+    // stands in for the star: the last word wins)
+    const cue = cueOf(s, b), known = b.priorities_known || [];
+    const marked = Object.keys(PITCH_NAMES).filter((t) => { const m = markOf(b, t); return m && (m.mark === "weak" || m.mark === "not_his"); });
+    // in the order you learned them: what he told you, then what he said to a pitch, then this week's hints as he gave them
+    const order = [...new Set([...known, ...marked, ...cue.topics])].filter((t) => PITCH_NAMES[t]);
+    for (const t of order) {
+      const m = markOf(b, t), bad = m && (m.mark === "weak" || m.mark === "not_his") ? m : null;
+      const k = known.includes(t), hint = !k && cue.topics.includes(t);
+      if (bad && !(k && bad.mark === "not_his")) {
+        out.push(el("span", { class: `go-tag go-mark ${MARKS[bad.mark][1]}`, "data-key": `mark:${t}`, "data-group": "topics",
+          text: `${k ? "★ " : ""}${PITCH_NAMES[t]} · ${MARKS[bad.mark][0]}`, title: markWhy(bad) }));
+      } else if (k) {
+        out.push(el("span", { class: "go-tag", "data-key": `pri:${t}`, "data-group": "topics", text: `★ ${PITCH_NAMES[t]}`, title: "He told you he cares about this." }));
+      } else if (hint) {
+        out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, "data-group": "topics", text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
+      }
     }
-    const cue = cueOf(s, b);
-    for (const t of cue.topics) if (!(b.priorities_known || []).includes(t)) out.push(el("span", { class: "go-tag cue", "data-key": `pri:${t}`, text: `☆ ${PITCH_NAMES[t] || t}`, title: cue.title }));
     const tr = b.traits || {};
     if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
     if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
@@ -732,7 +759,7 @@
     if (b.likes) out.push(el("span", { class: "go-tag good go-likes", "data-key": "likes", text: likesText(b.likes), title: likesLine(b.likes) }));
     if (b.visit) out.push(visitPill(el("span", { class: "go-tag", text: visitLabel(b.visit) }), b.visit, b.id, me, null, { "data-key": "visit" }));
     if (b.portal && b.role) out.push(el("span", { class: `go-tag ${b.role === "Would Start" ? "good" : b.role === "Next in Line" ? "warn" : "muted"}`, "data-key": "role", text: b.role, title: "Where he would sit on your depth chart next season" }));
-    for (const n of out) if (!n.dataset.key) n.dataset.key = tagKey(n.textContent);
+    for (const n of out) { if (!n.dataset.key) n.dataset.key = tagKey(n.textContent); if (!n.dataset.group) n.dataset.group = "who"; }
     return out;
   }
   // a tag's identity for a keyed patch: the kind, so a changed number ("Offered · 150 NIL") patches in place
@@ -1794,7 +1821,9 @@
     const MAX_PRESENT = 3;
     function sceneView(b, win) {
       const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
-      let chosen = (scene.cue && scene.cue.topics[0]) || b.priorities_known[0] || "";   // he summed up all three: lead with what he told you first
+      // the cue's topics he has not ruled out (a Not His Thing never leads, and loses its hint star)
+      const liveCue = (sc) => ((sc.cue && sc.cue.topics) || []).filter((t) => (markOf(b, t) || {}).mark !== "not_his");
+      let chosen = liveCue(scene)[0] || b.priorities_known[0] || "";   // he summed up all three: lead with what he told you first
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
       sc.append(el("div", { class: "card-bar go-scene-head" }, [el("div", { class: "go-scene-who" }, [avatar(b.id), el("div", { class: "go-kicker", text: `${visit ? (b.portal ? "Face to Face" : "In His Home") : "On the Phone"} · ${b.name}` })])]));
       // the turns: yours right in a muted bubble, his left, a note (who decides, his NIL ask, pestering) centered and plain; the cue keeps its frame
@@ -1964,7 +1993,7 @@
           catch (err) { H.toast(`Could not present: ${H.errText(err)}`, 4000); return; }
           if (!(r && r.scene)) { lapsed(); return; }     // a stale call (the week moved on)
           Object.assign(scene, r.scene);               // the same scene object: the board row and the view share it
-          chosen = (scene.cue && scene.cue.topics[0]) || b.priorities_known[0] || "";
+          chosen = liveCue(scene)[0] || b.priorities_known[0] || "";
           for (const t of picked) noteMark(b, t, "no_read", scene.action, s.current_week);   // your opening's three: pitched, no read on any one
           // the opening leaves, the new turns come in, then his question and the lead-with: all in place
           await ui().fadeOut(wrap);
@@ -2033,7 +2062,8 @@
         for (const c of drop.children) { const yes = c.dataset.topic === t; c.classList.toggle("on", yes); c.setAttribute("aria-checked", String(yes)); c.tabIndex = yes || (!t && c === drop.firstElementChild) ? 0 : -1; }
       };
       for (const t of order) {
-        const known = b.priorities_known.includes(t), cue = !known && cueTopics.includes(t);
+        const ruled = (markOf(b, t) || {}).mark === "not_his";         // he said it's not his thing: no hint star on it
+        const known = b.priorities_known.includes(t), cue = !known && !ruled && cueTopics.includes(t);
         const sv = b.strength ? b.strength[t] : null, word = caseWord(b, t);
         const tone = sv == null ? "" : sv >= 0.6 ? "good" : sv < 0.25 ? "bad" : "";
         const tag = [known ? "★" : cue ? "☆" : null, word || null].filter(Boolean).join(" ");
