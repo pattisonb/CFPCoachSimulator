@@ -1498,7 +1498,8 @@ body:not(.career-mode) .season-tools { display: flex; }   /* a career reaches Se
 .roster-grid .leader-head { justify-content: flex-start; align-items: center; gap: 8px; }
 .roster-grid .leader-head > .small-text:not(.roster-ovr-head) { margin-left: auto; }
 .roster-ovr-head { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; letter-spacing: 0.3px; }
-.go-game { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); background: var(--panel-2); min-width: 0; }
+.go-game { --card-pad-y: 12px; --card-pad-x: 14px;   /* its bar bleeds by its own padding, not the 20 px card default: flush, no overhang */
+  display: flex; flex-direction: column; gap: 10px; padding: var(--card-pad-y) var(--card-pad-x); border: 1px solid var(--border); background: var(--panel-2); min-width: 0; }
 .go-side { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 15px; }
 .go-side .team-pill { flex: none; }
 .go-side-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }

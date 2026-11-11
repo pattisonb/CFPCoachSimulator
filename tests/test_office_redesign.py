@@ -256,6 +256,12 @@ def check_plan_and_gameday(page, base, sid) -> None:
     hero = page.inner_text("#tab-office .ofc-hero")
     assert "FINAL" in hero.upper() and f"{g['points_for']}–{g['points_against']}" in hero and "NEXT GAME" not in hero.upper(), "this week's final leads until you advance"
     assert not page.query_selector("#tab-office .ofc-hero .go-play [data-play=gameday]"), "no Game Day once it is played"
+    # the Last Game card's bar sits flush on the card (no overhang past its sides or top), level with This Week's Plan
+    edges = page.evaluate("""() => { const c = document.querySelector('#tab-office .go-game-last'), b = c.querySelector('.card-bar');
+      const a = c.getBoundingClientRect(), r = b.getBoundingClientRect(), cs = getComputedStyle(c);
+      const bl = parseFloat(cs.borderLeftWidth), bt = parseFloat(cs.borderTopWidth);
+      return [r.left - (a.left + bl), (a.right - bl) - r.right, r.top - (a.top + bt)]; }""")
+    assert all(abs(x) <= 1 for x in edges), f"the Last Game bar overhangs its card (left, right, top): {edges}"
     last = page.inner_text("#tab-office .go-game-last")
     assert f"{g['points_for']}–{g['points_against']}" in last, last
     stats = page.eval_on_selector_all("#tab-office .go-game-last .ofc-stat span", "els => els.map(e => e.textContent)")
