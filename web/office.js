@@ -61,13 +61,18 @@
   // This Week's Plan from the real state: Recruit is done once you have spent hours this week (or your staff
   // recruit on Auto), Game Day until your game is played, then Advance; a week without your game has no Game Day.
   // -> [{ key, title, sub, state: "done" | "now" | "" }], or null once the season is over.
+  const MIN_ACTION_HOURS = 5;       // the cheapest recruiting action (a message): fewer hours left than this and the week's hours are spent
   function planSteps(s, v, game) {
     if (s.done || !v) return null;
     const auto = v.auto_recruit && v.auto_recruit !== "off";
     const used = Number(v.hours_used) || 0;
-    const steps = [{ key: "recruit", title: "Recruit", done: auto || used > 0,
+    // done once the week's hours are spent (too few left for the cheapest action, a message) or your staff recruit on Auto;
+    // some hours spent and some left: started ("part"), not ticked, and Game Day comes up next all the same
+    const left = v.hours_left != null ? Number(v.hours_left) : Math.max(0, (Number(v.hours) || 0) - used);
+    const spent = auto || left < MIN_ACTION_HOURS;
+    const steps = [{ key: "recruit", title: "Recruit", done: spent, part: !spent && used > 0,
       sub: auto ? (v.auto_recruit === "week" ? "Auto-recruit runs this week for you." : "Auto-recruit runs all season for you.")
-        : used > 0 ? `${used} of ${v.hours} hours used this week.` : `${v.hours} hours to spend on your board.` }];
+        : spent ? `All ${v.hours} hours used this week.` : used > 0 ? `${used} of ${v.hours} hours used, ${left} left.` : `${v.hours} hours to spend on your board.` }];
     if (game) {
       const where = game.venue === "away" ? "at" : "against";
       steps.push({ key: "gameday", title: "Game Day", done: !!game.played,
@@ -79,8 +84,8 @@
       sub: w < FINAL_WEEK ? `Everyone else plays, then on to ${weekName(s, w + 1)}.` : "Everyone else plays and the season ends." });
     let current = false;
     for (const x of steps) {
-      x.state = x.done ? "done" : current ? "" : "now";
-      if (!x.done) current = true;
+      x.state = x.done ? "done" : x.part ? "part" : current ? "" : "now";
+      if (!x.done && !x.part) current = true;
     }
     return steps;
   }
@@ -113,6 +118,18 @@
     const result = played ? `${tw.won ? "Won" : "Lost"} ${scoreText(tw.points_for, tw.points_against)} This Week` : "";
     const color = team(s.team).colors && team(s.team).colors.primary;
     const card = el("section", { class: "go-card ofc-hero go-game-next", "aria-label": "Next Game", ...(color ? { style: `--ofc-team:${color}` } : {}) });
+    if (played) {                              // Game Day is done: this week's final leads until you advance (the next game waits)
+      const won = !!tw.won;
+      card.append(el("div", { class: "card-bar ofc-hero-head" }, [el("div", { class: "ofc-hero-when" }, [kicker(`Final · ${weekName(s, tw.week)}${tw.date ? ` · ${dateText(tw.date, s)}` : ""}`)]),
+          el("span", { class: "ofc-chip go-venue", text: VENUE[tw.venue] || "Home Game" })]),
+        el("div", { class: "ofc-match go-sides" }, [side(s.team, s.team_name, s.my_rank && s.my_rank.rank, recText(s.record), true),
+          el("span", { class: `ofc-final ${won ? "won" : "lost"}`, "aria-label": `${won ? "Won" : "Lost"} ${scoreText(tw.points_for, tw.points_against)}` }, [
+            el("span", { class: `go-result ${won ? "good" : "bad"}`, text: won ? "W" : "L" }), el("b", { text: scoreText(tw.points_for, tw.points_against) })]),
+          side(tw.opponent, tw.opponent_name, tw.opponent_rank, tw.opponent_record, false)]),
+        el("p", { class: "muted ofc-hero-note", text: `Advance the week: everyone else plays, then on to ${weekName(s, s.current_week + 2)}.` }),
+        playRow(s));
+      return card;
+    }
     if (!g) {
       const w = s.current_week + 1;
       card.append(el("div", { class: "card-bar ofc-hero-head" }, [kicker(played ? result : `${weekName(s, w)}${((s.week_dates || {})[w] || {}).main ? ` · ${dateText(s.week_dates[w].main, s)}` : ""}`)]),
@@ -235,7 +252,8 @@
     return el("section", { class: "go-card ofc-plan", "aria-label": "This Week's Plan" }, [bar("This Week's Plan"),
       el("ol", { class: "ofc-steps" }, steps.map((x, i) => el("li", {}, [el("button", { type: "button", class: `ofc-step ${x.state}`, "data-step": x.key,
         ...(x.state === "now" ? { "aria-current": "step" } : {}), onclick: act[x.key] }, [
-        el("span", { class: "ofc-step-h" }, [el("span", { class: "ofc-dot", "aria-hidden": "true", text: x.done ? "✓" : String(i + 1) }), el("b", { text: x.title })]),
+        el("span", { class: "ofc-step-h" }, [el("span", { class: "ofc-dot", "aria-hidden": "true", text: x.done ? "✓" : String(i + 1) }), el("b", { text: x.title }),
+          x.part ? el("span", { class: "ofc-step-tag", text: "Hours Left" }) : null]),
         el("span", { class: "ofc-step-sub muted", text: x.sub })])])))]);
   }
 

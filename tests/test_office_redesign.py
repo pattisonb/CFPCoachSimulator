@@ -232,7 +232,8 @@ def check_plan_and_gameday(page, base, sid) -> None:
         call(base, f"/api/season/{sid}/board", {"pid": pid, "on": True})
     call(base, f"/api/season/{sid}/recruit", {"pid": pid, "action": "message", "pitch": "playing_time"})
     open_office(page, base, sid)
-    assert plan(page) == [["Recruit", "done"], ["Game Day", "now"], ["Advance", ""]], plan(page)
+    assert plan(page) == [["Recruit", "part"], ["Game Day", "now"], ["Advance", ""]], plan(page)   # hours left: started, not ticked
+    assert "left" in page.inner_text("#tab-office .ofc-step[data-step=recruit]"), "it says how many hours are left"
     # Game Day: the hero's button plays your game, drive by drive, as the play card's did
     week = call(base, f"/api/season/{sid}")["current_week"]
     page.click("#tab-office .ofc-hero .go-play [data-play=gameday]")
@@ -246,7 +247,9 @@ def check_plan_and_gameday(page, base, sid) -> None:
     assert g["played"] and s["current_week"] == week, "Game Day plays your game and only your game"
     wait_idle(base, sid)
     open_office(page, base, sid)
-    assert plan(page) == [["Recruit", "done"], ["Game Day", "done"], ["Advance", "now"]], plan(page)
+    assert plan(page) == [["Recruit", "part"], ["Game Day", "done"], ["Advance", "now"]], plan(page)
+    hero = page.inner_text("#tab-office .ofc-hero")
+    assert "FINAL" in hero.upper() and f"{g['points_for']}–{g['points_against']}" in hero and "NEXT GAME" not in hero.upper(), "this week's final leads until you advance"
     assert not page.query_selector("#tab-office .ofc-hero .go-play [data-play=gameday]"), "no Game Day once it is played"
     last = page.inner_text("#tab-office .go-game-last")
     assert f"{g['points_for']}–{g['points_against']}" in last, last
