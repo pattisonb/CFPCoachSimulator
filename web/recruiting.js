@@ -1026,7 +1026,7 @@
     const me = s.team;
     const searchHadFocus = document.activeElement && document.activeElement.id === "rc-search";
     // a stage tab or the sort that redrew the board keeps the focus, as the search does
-    const stageHadFocus = document.activeElement && box.contains(document.activeElement) && document.activeElement.dataset.stage;
+    const stageHadFocus = document.activeElement && box.contains(document.activeElement) && (document.activeElement.dataset.stage || document.activeElement.classList.contains("go-stage-pick"));
     const sortHadFocus = document.activeElement && box.contains(document.activeElement) && document.activeElement.id === "rc-sort";
     closeMenu();
     // the stage tab, the position and state filters and the search belong to one career: another career starts clear
@@ -1081,12 +1081,34 @@
       for (const [k] of COLUMNS) counts[k] = pool.filter((b) => columnOf(b) === k).length;
       return counts;
     };
-    const stages = el("div", { class: "go-stages", role: "group", "aria-label": "Stages" }, [["all", "All"], ...COLUMNS].map(([k, name]) => {
+    // the stages: one pill (the stage you are on, its count, ▾) that opens the rest as the same pills
+    const stageNames = Object.fromEntries([["all", "All"], ...COLUMNS]);
+    const pickName = el("span"), pickCount = el("b", { text: "0" });
+    const stagePick = el("button", { type: "button", class: "go-stage-pick", "aria-haspopup": "true", "aria-expanded": "false", "aria-label": "Stage" },
+      [pickName, pickCount, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
+    const stages = el("div", { class: "go-stage-menu", role: "group", "aria-label": "Stages", hidden: "" }, [["all", "All"], ...COLUMNS].map(([k, name]) => {
       const b = el("button", { type: "button", "data-stage": k, "aria-pressed": String(view.stage.key === k), title: COLUMN_TIPS[k] || "Everyone on your board" },
         [el("span", { text: label(k, name) }), el("b", { text: "0" })]);
-      b.addEventListener("click", () => { view.stage.key = k; refill({}); });
+      b.addEventListener("click", () => { view.stage.key = k; closeStages(); refill({}); stagePick.focus({ preventScroll: true }); });
       return b;
     }));
+    const outside = (e) => { if (!stageWrap.contains(e.target)) closeStages(); };
+    function closeStages() {
+      if (stages.hidden) return;
+      stages.hidden = true;
+      stagePick.setAttribute("aria-expanded", "false");
+      document.removeEventListener("click", outside, true);
+    }
+    stagePick.addEventListener("click", () => {
+      if (!stages.hidden) { closeStages(); return; }
+      stages.hidden = false;
+      stagePick.setAttribute("aria-expanded", "true");
+      document.addEventListener("click", outside, true);
+      const on = stages.querySelector('button[aria-pressed="true"]');
+      if (on) on.focus({ preventScroll: true });
+    });
+    const stageWrap = el("div", { class: "go-stages" }, [stagePick, stages]);
+    stageWrap.addEventListener("keydown", (e) => { if (e.key === "Escape" && !stages.hidden) { e.stopPropagation(); closeStages(); stagePick.focus({ preventScroll: true }); } });
     const search = el("input", { type: "search", id: "rc-search", value: view.search, placeholder: "Search name, position, state", "aria-label": "Search your board" });
     let qTimer = null;
     search.addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { view.search = search.value; refill({}); }, 150); });
@@ -1094,7 +1116,7 @@
     const sort = el("select", { id: "rc-sort", class: "go-sel", "aria-label": "Sort" }, [["chance", "Sort: Your Chance"], ["rank", "Sort: National Rank"]].map(([k, t]) => el("option", { value: k, text: t })));
     sort.value = view.sort;
     sort.addEventListener("change", () => { view.sort = sort.value; refill({}); });
-    const stagebar = el("div", { class: "go-stagebar" }, [stages, el("div", { class: "go-tools" }, [search, sort])]);
+    const stagebar = el("div", { class: "go-stagebar" }, [stageWrap, el("div", { class: "go-tools" }, [search, sort])]);
     // what the roster needs this class, by position, behind a disclosure; a position picked there filters the list to it
     const open = (view.needsOpen = needsOpen());
     const needsBox = el("div", { id: "rc-needs", class: "go-needs-box" }, [needsStrip(v.needs_detail, view.group, (g) => { view.group = g; drawBoard(s, box, v); }, () => drawBoard(s, box, v))]);
@@ -1146,7 +1168,7 @@
     settleExpect();
     refill({});
     if (searchHadFocus) { search.focus({ preventScroll: true }); const n = search.value.length; search.setSelectionRange(n, n); }
-    else if (stageHadFocus) { const t = stages.querySelector(`button[data-stage="${stageHadFocus}"]`); if (t) t.focus({ preventScroll: true }); }
+    else if (stageHadFocus) stagePick.focus({ preventScroll: true });          // the menu closed with the redraw: back to its pill
     else if (sortHadFocus) sort.focus({ preventScroll: true });
 
     // an action's re-fetch landed: the meters, the counts, the rows and the pane change in place; nothing is emptied
@@ -1183,6 +1205,8 @@
         if (c.textContent !== n) { c.textContent = n; if (opts.pulse) ui().pulse(c); }
         t.setAttribute("aria-pressed", String(view.stage.key === k));
       }
+      pickName.textContent = label(view.stage.key, stageNames[view.stage.key] || "All");
+      if (pickCount.textContent !== String(counts[view.stage.key])) { pickCount.textContent = String(counts[view.stage.key]); if (opts.pulse) ui().pulse(pickCount); }
       rows = pool.filter(inTab).sort(order[view.sort]);
       const onBoard = v.board.some((b) => b.id === view.selected);
       const inList = rows.some((b) => b.id === view.selected);
@@ -1272,6 +1296,10 @@
         // the first pick brings the list and the pane up together: the board's top meets the pane's sticky line
         const gap = boardEl.getBoundingClientRect().top - (parseFloat(getComputedStyle(side).top) || 0);
         if (gap > 1) window.scrollBy({ top: gap, behavior: "smooth" });
+        else {                               // a short window scrolled past the pane's top: bring his pane (its tabs) back into view
+          const above = side.getBoundingClientRect().top;
+          if (above < 0) window.scrollBy({ top: above - 8, behavior: "smooth" });
+        }
       }
     }
     // the pane for him, in place when it is already his, else swapped in with a cross-fade (nothing reloads)

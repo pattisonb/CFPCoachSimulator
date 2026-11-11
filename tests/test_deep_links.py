@@ -24,6 +24,13 @@ from test_career_e2e import call, free_port, launch, tab_click   # noqa: E402
 LEAKS = re.compile(r"\b(undefined|null|NaN)\b")
 
 
+
+def pick_stage(page, stage: str) -> None:
+    """The board's stages are a dropdown: open the pill, pick the stage."""
+    if page.is_hidden(".go-stage-menu"):
+        page.click(".go-stage-pick")
+    page.click(f".go-stage-menu button[data-stage={stage}]")
+
 def params(page) -> dict:
     """The page's query as a dict; `modal` as a list (bottom to top)."""
     q = urllib.parse.parse_qs(urllib.parse.urlparse(page.url).query)
@@ -109,7 +116,7 @@ def check_board(page, base, A, errors) -> None:
     stage = page.evaluate("""() => { const b = [...document.querySelectorAll('.go-stages button[data-stage]')]
         .filter(x => x.dataset.stage !== 'all' && Number(x.querySelector('b').textContent) >= 2); return b.length ? b[0].dataset.stage : null; }""")
     assert stage, "no stage tab holds two recruits"
-    page.click(f".go-stages button[data-stage={stage}]")
+    pick_stage(page, stage)
     page.wait_for_function(f"() => document.querySelector('.go-stages button[data-stage={stage}]').getAttribute('aria-pressed') === 'true'")
     page.wait_for_function("() => !document.querySelector('.go-row-recruit.go-leaving')")      # the rows of the other tabs have faded out
     pid = page.eval_on_selector_all(".go-row-recruit", "els => els[1].dataset.pid")

@@ -376,3 +376,20 @@
 }
 /* the scene's bar: his avatar beside the line ("On the Phone · his name") */
 .card-bar .go-scene-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+/* the stages as a dropdown (the player's pick): one pill for the stage you are on opens the others as the same pills */
+.go-stages { position: relative; overflow: visible; flex-wrap: nowrap; }
+.go-stages .go-stage-pick { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border: 1px solid var(--text);
+  background: var(--text); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
+.go-stages .go-stage-pick b { font-size: 12px; line-height: 18px; min-width: 18px; padding: 0 6px; text-align: center; background: color-mix(in srgb, var(--bg) 22%, transparent); color: var(--bg); }
+.go-stage-caret { font-size: 11px; }
+.go-stage-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  min-width: 190px; padding: 8px; background: var(--panel); border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+.go-stage-menu[hidden] { display: none; }
+.go-stage-menu button { display: flex; justify-content: space-between; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; cursor: pointer; }
+.go-stage-menu button b { font-size: 12px; line-height: 18px; min-width: 18px; padding: 0 6px; text-align: center; background: var(--panel-2); color: var(--muted); }
+.go-stage-menu button:hover { border-color: var(--muted); }
+.go-stage-menu button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-stage-menu button[aria-pressed="true"] b { background: color-mix(in srgb, var(--bg) 22%, transparent); color: var(--bg); }
+@media (max-width: 760px) { .go-stage-pick, .go-stage-menu button { min-height: 44px; } .go-stages { overflow: visible; } }
