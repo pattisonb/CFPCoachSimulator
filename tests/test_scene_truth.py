@@ -157,14 +157,15 @@ def test_ask_note(st: dict) -> None:
     try:
         big = scenes.ask_note(st, ME, pid, {"exact": 115})
         plain(big)
-        assert big == "His dad wants 115 in NIL, more than you have left (40).", big
+        who = scenes.ASK_WHO[persona.of(st, pid)["decider"]]          # the one who decides speaks to the money
+        assert big == f"{who} wants 115 in NIL, more than you have left (40).", big
         small = scenes.ask_note(st, ME, pid, {"exact": 30})
         plain(small)
         assert "30" in small and "You have 40 NIL left." in small, small
         rng = scenes.ask_note(st, ME, pid, {"lo": 90, "hi": 140})     # before a number: the middle of the range His Ask shows
         plain(rng)
         assert "about 115" in rng, rng
-        assert scenes.ask_note(st, ME, pid, {"exact": 0}) == "His dad says the money isn't the point."
+        assert scenes.ask_note(st, ME, pid, {"exact": 0}) == f"{who} says the money isn't the point."
     finally:
         nil["budget"] = keep
     assert rc["scenes"][ME].get(pid) is not None

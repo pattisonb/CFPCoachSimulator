@@ -154,7 +154,7 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
     "_two_sided": {
         "cue": ["Honestly, Coach? It's {a} or {b}. I go back and forth.",
-                "My dad says {a}. My coach says {b}. I don't know yet.",
+                "My dad says {a}. My trainer says {b}. I don't know yet.",
                 "Some days it's {a}, some days it's {b}. Ask me tomorrow and I'll say the other one."],
     },
 }
@@ -897,13 +897,25 @@ PLURAL = {"QB": "quarterbacks", "RB": "backs", "WR": "receivers", "TE": "tight e
           "DL": "defensive linemen", "LB": "linebackers", "CB": "corners", "S": "safeties", "K": "kickers", "P": "punters", "ATH": "athletes"}
 
 
+STATE_NAMES = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado", "CT": "Connecticut",
+               "DE": "Delaware", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+               "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan",
+               "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire",
+               "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+               "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee",
+               "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin",
+               "WY": "Wyoming", "DC": "Washington, D.C."}
+
+
 def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     from sim import season
     team = season.load_teams().get(slug) or {}
     week = state["current_week"] if week is None else week
     game, nxt = last_game(state, slug, week), next_game(state, slug, week)
     record = _record(state, slug)
-    return {"name": p["name"], "first": p["name"].split()[0], "town": p["hometown"]["city"] or p["hometown"]["state"],   # a transfer has no town on file
+    # a transfer has no town on file: his home state by name ("Sunday dinners in Texas", never "in TX")
+    town = p["hometown"]["city"] or STATE_NAMES.get(p["hometown"]["state"], p["hometown"]["state"]) or "home"
+    return {"name": p["name"], "first": p["name"].split()[0], "town": town,
             "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"], "positions": PLURAL.get(p["position"], "players"),
             "role": _role(state, slug, p["id"]), "record": record, "rec": record[:1].lower() + record[1:], "conf": _conf(state, slug),
             "coach": coach_name(state, slug),
@@ -1188,6 +1200,9 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     return kind
 
 
+ASK_WHO = {"mom": "His mom", "dad": "His dad", "grandma": "His grandmother", "hs_coach": "His high school coach", "trainer": "His trainer", "self": "He"}
+
+
 def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     """The visit's note on his family's NIL ask, in the game's NIL words and numerals: the ask the profile's
     His Ask shows (the number after a visit, the middle of the range before) and where you stand: the NIL
@@ -1195,8 +1210,11 @@ def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     n = ask.get("exact")
     if n is None and ask.get("hi"):
         n = recruiting._five((ask["lo"] + ask["hi"]) / 2)
+    d = persona.of(state, pid)["decider"]                         # the one who decides speaks to the money (never "his dad" for a trainer)
+    who = ASK_WHO.get(d, ASK_WHO["dad"])
+    they = "he's" if d == "self" else "they're"
     if not n:
-        return "His dad says the money isn't the point."
+        return f"{who} says the money isn't the point."
     rec = state["recruiting"]["nil"].get(slug)
     left = (recruiting.nil_left(state, slug) if rec                 # read only: never opens the school's NIL record here
             else recruiting.portal_budget(state, slug) if recruiting.is_portal(state) else recruiting.nil_budget(state, slug))
@@ -1204,10 +1222,10 @@ def ask_note(state: dict, slug: str, pid: str, ask: dict) -> str:
     room = left + held                                            # an offer to him can hold up to this (recruiting.act)
     about = "" if ask.get("exact") is not None else "about "
     if n > room:
-        return f"His dad wants {about}{n} in NIL, more than you have left ({room})."
+        return f"{who} wants {about}{n} in NIL, more than you have left ({room})."
     if held:
-        return f"His dad wants to know about NIL: they're looking for {about}{n}. Your offer holds {held}, and you have {left} NIL left."
-    return f"His dad wants to know about NIL: they're looking for {about}{n}. You have {left} NIL left."
+        return f"{who} wants to know about NIL: {they} looking for {about}{n}. Your offer holds {held}, and you have {left} NIL left."
+    return f"{who} wants to know about NIL: {they} looking for {about}{n}. You have {left} NIL left."
 
 
 def package_about(state: dict, slug: str, pid: str) -> dict | None:

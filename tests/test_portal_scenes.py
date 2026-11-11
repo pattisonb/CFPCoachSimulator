@@ -12,7 +12,7 @@ from coach_career import scenes                        # noqa: E402
 from tests.test_portal_profile import to_portal        # noqa: E402
 
 ME = "ohio-state"
-HS_ONLY = ("Saturday", "having me", "your home", "opening your home", "living room", "practice", "locker room", "Have you eaten")
+HS_ONLY = ("having me", "your home", "opening your home", "living room", "practice", "locker room", "Have you eaten")
 
 
 def test_portal_scenes():
@@ -46,7 +46,48 @@ def test_numbers_in_words():
     assert scenes.portal_fields({}, q)["did"] == "I didn't get many snaps"
 
 
+def test_whole_conversation():
+    """Played through: the opening, your three things, his cue, his question and your answer, your lead-with and his
+    reaction. No high school line anywhere, and his home is a state's name, never a code ("in Texas", not "in TX")."""
+    import re
+    from coach_career import persona, recruiting
+    sid = api.call("POST", "/api/season", {"team": ME, "mode": "full", "seed": 11, "career": True})["id"]
+    to_portal(sid)
+    st = api.loaded_state()
+    rc = st["recruiting"]
+    rc["hours"][ME] = 100000
+    pids = [q for q in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]) if rc["prospects"][q]["from"] != ME][:30]
+    codes = re.compile(r"\b(in|from|back in|of) (" + "|".join(scenes.STATE_NAMES) + r")\b")
+    played = 0
+    for i, pid in enumerate(pids):
+        action = "hc_visit" if i % 3 == 0 else "call"
+        try:
+            sc = recruiting.act(st, ME, pid, action)["scene"]
+        except recruiting.RecruitingError:
+            continue
+        topics = (list(rc["prospects"][pid]["priorities"]) + [t for t in recruiting.PITCHES])[:6]
+        topics = list(dict.fromkeys(topics))[:3]
+        r = recruiting.act(st, ME, pid, "present", scene=sc["id"], topics=topics)
+        sc = r["scene"]
+        if sc.get("question"):
+            recruiting.act(st, ME, pid, "answer", scene=sc["id"], answer="straight")
+        texts = [t["text"] for t in sc["turns"]]
+        cue = (sc.get("cue") or {}).get("topics") or [topics[0]]
+        r2 = recruiting.act(st, ME, pid, "pitch", pitch=cue[0], scene=sc["id"])
+        texts += [str((r2.get("reaction") or {}).get(k) or "") for k in ("you", "text", "line")]
+        text = " ".join(texts)
+        assert not any(w in text for w in ("having me", "opening your home", "living room", "Have you eaten", "high school", "senior film")), text
+        assert not codes.search(text), f"a state code for his home: {text}"
+        d = persona.of(st, pid)["decider"]
+        if "wants" in text and "NIL" in text:
+            assert scenes.ASK_WHO[d] in text, (d, text)
+        assert "{" not in text and "None" not in text and "undefined" not in text, text
+        played += 1
+    assert played >= 10, played
+
+
 if __name__ == "__main__":
     test_numbers_in_words()
     test_portal_scenes()
+    test_whole_conversation()
     print("portal scenes ok: a transfer's call and visit open on his portal entry and say why he left his last school; no high school lines")
