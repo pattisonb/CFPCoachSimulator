@@ -213,7 +213,7 @@ def generate(year: int, teams: dict, history: Optional[dict], rng: random.Random
     if short:
         raise ScheduleError(f"{len(short)} teams without {GAMES} games in {year}: {short[:6]}")
     # 4. weeks
-    _assign_weeks(games, fbs, rng)
+    _assign_weeks(games, fbs, rng, year)
     # 5. records and history
     out = {}
     for g in games:
@@ -689,7 +689,7 @@ def _home_conf_counts(games: list[dict], conf_of: dict) -> dict[str, int]:
 
 # ----- weeks ---------------------------------------------------------------------------------------
 
-def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random) -> None:
+def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random, year: int = 0) -> None:
     """A week for every game: fixed weeks first, non-conference games early, conference games from
     week 3, finales in week 14, nobody twice in a week; randomized attempts until it fits."""
     for attempt in range(RESTARTS):
@@ -775,7 +775,7 @@ def _assign_weeks(games: list[dict], fbs: dict, rng: random.Random) -> None:
                 g["week"] = g["_w"]
                 del g["_w"]
             _tidy_byes(games, fbs, fixed_weeks, rng)
-            _week_zero(games, fbs, fixed_weeks, rng)
+            _week_zero(games, fbs, fixed_weeks, random.Random(f"week0-{year}-{len(games)}"))   # its own stream: the grid's draws never move
             return
     raise ScheduleError("no week grid fits this schedule")
 
