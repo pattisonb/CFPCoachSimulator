@@ -21,7 +21,7 @@ CONF_GAMES = 4        # *tune* the most results Around the Conference shows
 NEWS_WEEKS = 4        # *tune* how many weeks back Program News reaches
 
 # the recruiting events worth a line, the biggest first inside a week
-_NEWS_ORDER = ("signed", "unsigned", "pro", "commit", "hard", "flip", "decommit", "softened", "hat", "bloomed", "twist", "offer", "asked_more", "not_buying",
+_NEWS_ORDER = ("promise", "signed", "unsigned", "pro", "commit", "hard", "flip", "decommit", "softened", "hat", "bloomed", "twist", "offer", "asked_more", "not_buying",
                "hung_up", "pester", "promise_broken")
 
 
@@ -84,7 +84,7 @@ def program_news(state: dict) -> list[dict]:
     # one line a prospect a week: the biggest
     seen, out = set(), []
     for x in items:
-        key = (x["week"], x.get("pid") or x.get("event_id"))
+        key = (x["week"], x.get("pid") or x.get("event_id") or x.get("slug"))
         if key in seen:
             continue
         seen.add(key)

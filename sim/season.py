@@ -1627,6 +1627,9 @@ def play_my_game(state: dict, pool: Optional[Pool] = None, report: Optional[Repo
         return None
     week = state["current_week"] + 1
     _setup_week(state, week, load_teams(), _stage_reporter(report))
+    if state.get("career") and state.get("league"):          # promises: who starts your game, recorded before it is played
+        from coach_career import promises
+        promises.snapshot_week(state, week)
     eid = my_game_id(state, week)
     if eid is None:
         return None

@@ -71,10 +71,20 @@ def chip(b: str) -> Optional[str]:
     return CHIPS.get(b)
 
 
+def mark_promised(row: dict, year: int, personality: Optional[str]) -> None:
+    """A starting role promised for `year`: the row carries it, and the personality the recruiting page showed (so he
+    is graded as you came to know him)."""
+    row["promised"] = year
+    if personality:
+        row["persona"] = dict(row.get("persona") or {}, personality=personality)
+
+
 def personality_of(state: dict, slug: str) -> str:
     """His personality: the persona his league roster row carries, else a stable draw for him."""
     from coach_career import persona
-    for t in ((state.get("league") or {}).get("teams") or {}).values():
+    teams = ((state.get("league") or {}).get("teams") or {})
+    mine = teams.get(state.get("team"))
+    for t in ([mine] if mine else []) + [x for s_, x in teams.items() if s_ != state.get("team")]:
         for c in t.get("roster") or ():
             if c["id"] == slug and (c.get("persona") or {}).get("personality"):
                 return c["persona"]["personality"]

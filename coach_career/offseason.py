@@ -423,6 +423,21 @@ REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants
            "promised": "Was promised a starting role and did not get it"}
 
 
+def _broken_promise(key: str, info: Optional[dict], intent: str) -> bool:
+    """A Keep Them Home leaver whose promised start broke: a Broken band whatever segment his draw landed in, or (an
+    untracked promise) the old rule's `promised` driver. A draft entrant is not leaving over it."""
+    if intent != "portal":
+        return False
+    if info is not None:
+        return info.get("band") == "broken"
+    return key == "promised"
+
+
+def _keeps_promise(e: dict) -> bool:
+    """Your promise to a leaver who stays counts: not to one with no third chance (he won't believe it)."""
+    return bool(e["offers"].get("promise")) and not e.get("no_third")
+
+
 def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict]:
     """Each of your pending leavers: why he is going, his role now and next year, and what it would
     take (his ask stays hidden until you meet him)."""
@@ -484,7 +499,7 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         if key == "deal" and shortfall:
             ask = max(ask, shortfall)                                # he wants at least what the market pays over your tier
         info = judged.get(p["id"])
-        broken_promise = key == "promised" and (info is None or info["band"] == "broken")   # untracked: the old rule broke it
+        broken_promise = _broken_promise(key, info, intent)          # judged Broken (whatever the draw), or the old rule's driver
         no_third = broken_promise and p.get("promised_again") is not None and p.get("promised_again") == p.get("promised")
         if broken_promise:                                           # it takes a lot of money now, more for some than others
             kind, ask = "nil", base * promises.nil_mult(promises.personality_of(state, p["id"]))
@@ -611,7 +626,7 @@ def _resolve_retention(state: dict) -> None:
         stayed = rng.random() < chance
         if stayed:
             p["kept"] = year
-            if e["offers"].get("promise"):
+            if _keeps_promise(e):
                 p["promised"] = year
                 if e.get("broken_promise"):
                     p["promised_again"] = year                # his second chance: break this one and there is no third
@@ -1290,7 +1305,8 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
         c["signed"] = True
         contact = (rc.get("contacts") or {}).get(pid, {}).get(slug) or {}
         if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
-            c["promised"] = lgd["year"]                    # told the job was his: the retention step's promise (PROMISE_BROKEN reads it)
+            from coach_career import persona, promises     # told the job was his: the retention step's promise, graded on the personality you met
+            promises.mark_promised(c, lgd["year"], persona.of(state, pid)["personality"])
         team["roster"].append(c)
         out[slug] = out.get(slug, 0) + 1
     return out
@@ -1504,7 +1520,8 @@ def _close_portal(state: dict) -> None:
         p["transfer"] = e["from"]
         contact = (rc.get("contacts") or {}).get(pid, {}).get(school) or {}
         if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
-            p["promised"] = lgd["year"]                    # told the job was his in the portal: the same promise a signed recruit carries (PROMISE_BROKEN reads it)
+            from coach_career import persona, promises     # told the job was his in the portal: the same promise a signed recruit carries
+            promises.mark_promised(p, lgd["year"], persona.of(state, pid)["personality"])
         if not st_.get("signed"):
             p["walk_on"] = p["preferred"] = True
             st_["signed"] = school

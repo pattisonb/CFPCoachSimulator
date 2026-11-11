@@ -222,6 +222,57 @@ def test_news_once(st):
     assert len([n for n in pr.news(st) if n["slug"] == mine[0]["slug"]]) == 1, "said once"
 
 
+# ----- review fixes -----
+
+def test_game_day_snapshots_before_the_game(st):
+    """Game day (play_my_game) plays your game before advance: the week is recorded then, from that lineup."""
+    from sim import season
+    qb, bench, _ = promise_two(st)
+    while season.my_game_id(st, st["current_week"] + 1) is None:     # past any bye: a week with your game
+        season.advance(st)
+    week = st["current_week"] + 1
+    assert season.play_my_game(st) is not None
+    rec = (st.get("promises") or {}).get(str(season.season_year(st))) or {}
+    assert any(w["week"] == week for w in rec.get(qb, [])), "game day recorded the week before the game"
+    season.advance(st)
+
+
+def test_two_promise_lines_in_one_week(st):
+    """Program News keeps every promise line of a week (they carry a slug, no pid)."""
+    from coach_career import office
+    real = pr.news
+    pr.news = lambda state: [{"week": state["current_week"], "kind": "promise", "slug": s, "name": n, "position": "WR", "line": pr.SLIPPING_LINE}
+                             for s, n in (("a-one", "A One"), ("b-two", "B Two"))]
+    try:
+        names = {n.get("name") for n in office.program_news(st) if n.get("kind") == "promise"}
+    finally:
+        pr.news = real
+    assert names == {"A One", "B Two"}, names
+
+
+def test_promise_carries_the_recruit_personality():
+    """The promised row keeps the personality the recruiting page showed (persona.of), so he is graded on it."""
+    row = {"id": "x-guy"}
+    pr.mark_promised(row, 2028, "cocky")
+    assert row["promised"] == 2028 and row["persona"]["personality"] == "cocky"
+
+
+def test_broken_band_is_broken_whatever_the_draw():
+    """A Broken band reads broken at Keep Them Home even when the draw landed in his role segment."""
+    from coach_career import offseason
+    assert offseason._broken_promise("buried", {"band": "broken"}, "portal") is True
+    assert offseason._broken_promise("promised", None, "portal") is True            # untracked: the old rule broke it
+    assert offseason._broken_promise("promised", {"band": "bent"}, "portal") is False
+    assert offseason._broken_promise("buried", {"band": "broken"}, "draft") is False   # a draft entrant is not the portal
+
+
+def test_no_third_promise_writes_nothing():
+    """A no-third leaver kept with NIL: your promise toggle does not promise him again."""
+    from coach_career import offseason
+    assert offseason._keeps_promise({"offers": {"promise": True}, "no_third": True}) is False
+    assert offseason._keeps_promise({"offers": {"promise": True}}) is True
+
+
 if __name__ == "__main__":
     import inspect
     _sys.path.insert(0, str(_Path(__file__).resolve().parent))
