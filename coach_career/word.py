@@ -73,11 +73,14 @@ def reading(state: dict, group: Optional[str] = None) -> float:
     return _clamp(v)
 
 
-def recover(state: dict) -> None:
-    """An offseason passes: the overall moves RECOVER of the way back to WORD_START; each position's extra fades."""
+def recover(state: dict, year: Optional[int] = None) -> None:
+    """An offseason passes: the overall moves RECOVER of the way back to WORD_START; each position's extra fades. Given
+    the offseason's year, once per year."""
     b = _seen(state)
-    if not b:
+    if not b or (year is not None and str(year) in (b.get("recovered") or ())):
         return
+    if year is not None:
+        b.setdefault("recovered", []).append(str(year))
     b["overall"] = _clamp(b.get("overall", WORD_START) + (WORD_START - b.get("overall", WORD_START)) * RECOVER)
     b["by_group"] = {g: v * GROUP_DECAY for g, v in (b.get("by_group") or {}).items() if abs(v * GROUP_DECAY) >= 0.5}
 
@@ -93,3 +96,42 @@ def last_broken(state: dict, group: str) -> Optional[str]:
         if e.get("group") == group and e.get("kind") in COST and e.get("kind") != "bent":
             return e.get("name")
     return None
+
+
+# ----- what feeds it -----------------------------------------------------------------------------------------------------
+
+BAND_KIND = {"kept": "kept", "bent": "bent", "broken": "broken"}   # a judged season's band -> the word's event ("none": nothing)
+
+
+def apply_bands(state: dict, year: int, bands: Optional[dict] = None) -> None:
+    """Your promised players' season, judged (promises.bands), moves the word once per year. Name, position, overall
+    and stars come from your roster row; a player no longer on it is skipped."""
+    if bands is None:
+        from coach_career import promises
+        bands = promises.bands(state, year)
+    b = _seen(state)
+    if str(year) in (b.get("applied") or ()):
+        return
+    from coach_career import offseason
+    me = state.get("team")
+    rows = {c["id"]: c for c in (((state.get("league") or {}).get("teams") or {}).get(me) or {}).get("roster") or ()}
+    for slug, info in bands.items():
+        kind, c = BAND_KIND.get(info.get("band")), rows.get(slug)
+        if kind is None or c is None:
+            continue
+        star = offseason.house(c["pos"], c["o"]) >= STAR_OVR or (c.get("s") or 0) >= 4
+        apply(state, kind, offseason.GROUP.get(c["pos"], c["pos"]), c.get("n") or "", star=star, personality=info.get("personality") or "")
+    book(state).setdefault("applied", []).append(str(year))
+
+
+def recruit_event(state: dict, slug: str, pid: str, kind: str) -> None:
+    """A recruiting promise kept or broken (money, package, roster): your school's only; his position from his EA
+    position, a star at four stars or better."""
+    if slug != state.get("team"):
+        return
+    from coach_career import persona, recruiting
+    p = state["recruiting"]["prospects"].get(pid)
+    if p is None:
+        return
+    apply(state, kind, recruiting._group_of(p), p.get("name") or "", star=(p.get("stars") or 0) >= 4,
+          personality=persona.of(state, pid)["personality"])

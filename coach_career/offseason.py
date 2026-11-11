@@ -250,6 +250,8 @@ def start(state: dict) -> dict:
     record_seasons(state, lgd)
     usage = _usage()
     draft: dict = {}
+    from coach_career import word
+    word.recover(state, year)                    # Keeps His Word drifts back toward neutral, before this year's promises land
     deps, entrants, pending = _departures(state, lgd, usage, draft=draft)
     signed = _sign_classes(state, lgd)
     state["offseason"] = {"stage": STAGES[0], "year": year, "departures": deps, "draft": draft,
@@ -873,6 +875,8 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
     from coach_career import promises
     from sim import season as _season
     my_promises = promises.bands(state, _season.season_year(state))   # the season just played: your promises, judged week by week
+    from coach_career import word
+    word.apply_bands(state, _season.season_year(state), my_promises)   # ... and they move Keeps His Word, once a year
     games = _games_played(state)
     # the draft board: seniors and the underclassmen who declare, ranked by draft score (the picks
     # are projections until the draft runs after Keep Them Home)

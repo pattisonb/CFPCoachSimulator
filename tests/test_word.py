@@ -71,6 +71,107 @@ def test_last_broken():
     assert word.last_broken(st, "WR") is None
 
 
+def test_bands_feed_once():
+    import test_promises
+    from coach_career import offseason
+    from sim import season
+    st = test_promises.second_season()
+    me, year = st["team"], season.season_year(st)
+    roster = st["league"]["teams"][me]["roster"]
+    qb = next(c for c in roster if c["pos"] == "QB")
+    wr = next(c for c in roster if c["pos"] == "WR")
+    for c in (qb, wr):
+        c["persona"] = {"personality": "business"}
+        c["o"] = 40                                      # not a star: the plain costs
+        c["s"] = 2
+    bands = {qb["id"]: {"band": "broken", "score": 0.1, "benched_big": False, "personality": "business"},
+             wr["id"]: {"band": "kept", "score": 0.9, "benched_big": False, "personality": "business"}}
+    word.apply_bands(st, year, bands)
+    word.apply_bands(st, year, bands)
+    assert word.reading(st) == word.WORD_START - 8 + 3, word.book(st)
+    assert word.reading(st, offseason.GROUP["QB"]) == word.WORD_START - 8 + 3 - 8
+    assert word.last_broken(st, "QB") == qb["n"]
+
+
+def _star(st, pid):
+    from coach_career import persona
+    p = st["recruiting"]["prospects"][pid]
+    return (word.STAR_COST if (p.get("stars") or 0) >= 4 else 1.0) * (word.GUARDED_COST if persona.of(st, pid)["personality"] == "guarded" else 1.0)
+
+
+def test_money_and_package_feed():
+    import test_nil_pitch as n
+    from coach_career import recruiting
+    st = n.fresh()
+    pid = n.nil_target(st, None)
+    n.money_pitch(st, pid)
+    ask = recruiting.ask_from(st, n.ME, pid)
+    recruiting._nil(st, n.ME)["held"][pid] = recruiting._five(recruiting.NIL_PROMISE_SHARE * ask + 2.4)
+    recruiting._promises(st, st["current_week"] + 1)
+    assert word.reading(st) == word.WORD_START + word.GAIN["money_kept"], word.book(st)
+    st = n.fresh()
+    pid = n.nil_target(st, None)
+    n.money_pitch(st, pid)
+    wk = st["current_week"]
+    for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
+        recruiting._promises(st, w)
+    assert word.reading(st) == word.WORD_START - word.COST["money_broken"] * _star(st, pid), word.book(st)
+    assert word.last_broken(st, recruiting._group_of(st["recruiting"]["prospects"][pid])) == st["recruiting"]["prospects"][pid]["name"]
+
+
+def test_forgiven_costs_nothing():
+    import test_nil_pitch as n
+    from coach_career import recruiting
+    saved = recruiting.MONEY_FORGIVE_CHANCE["shy"]
+    recruiting.MONEY_FORGIVE_CHANCE["shy"] = 1.0
+    try:
+        st = n.fresh("tulane")
+        school = "tulane"
+        pid = next(q for q in n.ranked(st)[40:100] if recruiting.ask_from(st, school, q) >= 15)
+        n.cares(st, pid, True, personality="shy")
+        recruiting.act(st, school, pid, "offer", pitch="winning")
+        recruiting._contact(st, school, pid).setdefault("calls", 1)
+        sc = recruiting.act(st, school, pid, "call")["scene"]
+        sc = recruiting.act(st, school, pid, "present", scene=sc["id"], topics=list(recruiting.PITCHES)[:3])["scene"]
+        if sc.get("question"):
+            recruiting.act(st, school, pid, "answer", scene=sc["id"], answer="straight")
+        recruiting.act(st, school, pid, "pitch", pitch="nil", scene=sc["id"])
+        wk = st["current_week"]
+        for w in range(wk + 1, wk + 1 + recruiting.NIL_PROMISE_WEEKS):
+            recruiting._promises(st, w)
+        assert any(e["kind"] == "promise_broken" and e.get("forgiven") for e in st["recruiting"]["log"] if e["pid"] == pid)
+        assert word.reading(st) == word.WORD_START and not (st["career"].get("word") or {}).get("log"), word.book(st)
+    finally:
+        recruiting.MONEY_FORGIVE_CHANCE["shy"] = saved
+
+
+def test_ai_schools_have_no_word():
+    import test_nil_pitch as n
+    from coach_career import recruiting
+    st = n.fresh()
+    pid = n.ranked(st)[50]
+    rc = st["recruiting"]
+    c = recruiting._contact(st, "ohio-state", pid)
+    c.setdefault("promises", []).append({"kind": "money", "week": 1, "about": {"ask": 30}, "n": c.get("n", 0)})
+    rc["nil"].setdefault("ohio-state", {"held": {}})["held"][pid] = 30
+    recruiting._promises(st, 2)
+    assert "word" not in st["career"], "only your coach has a word"
+
+
+def test_word_follows_the_coach():
+    import test_offseason
+    from coach_career import offseason
+    from sim import season
+    st = season.new_season("iowa", "full", seed=5, career=True)
+    word.book(st)["overall"] = 40
+    test_offseason.finished(st)
+    offseason.start(st)
+    offseason.start(st)
+    offseason.run_all(st)
+    st2 = offseason.next_season(st)
+    assert word.reading(st2) == 47.5, word.book(st2)
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
