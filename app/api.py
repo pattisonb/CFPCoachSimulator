@@ -593,15 +593,17 @@ def league_programs(p: Params) -> dict:
 
 @route("GET", "/api/league/programs/{slug}")
 def league_program(p: Params) -> dict:
-    """One real team's full details for Edit a Real Program: names, mascot, home, conference, colors, prestige, rivals and
-    playbooks (no roster)."""
+    """One real team's full details for Edit a Real Program: names, mascot, home (city, state and its campus lat/lon),
+    conference, colors, prestige, rivals and playbooks (no roster)."""
     slug = p.path["slug"]
     b = league_file._builtin()
     if slug not in b["slugs"]:
         raise ApiError(404, "unknown team")
     m = league.base_meta(slug)
     off, de = _scheme(season.load_teams().get(slug) or {})
-    return {"slug": slug, "name": m.get("school_name") or m.get("short_name"), "short_name": m.get("short_name"), "abbreviation": m.get("abbreviation"),
+    from coach_career import recruiting as _rec
+    loc = (_rec.model()["teams"].get(slug) or {}).get("location") or [None, None]   # its campus, for the map
+    return {"lat": loc[0], "lon": loc[1], "slug": slug, "name": m.get("school_name") or m.get("short_name"), "short_name": m.get("short_name"), "abbreviation": m.get("abbreviation"),
             "mascot": m.get("mascot"), "city": m.get("city"), "state": m.get("state"), "conference": b["team_conf"].get(slug),
             "level": m.get("subdivision") or "FBS", "colors": m.get("colors") or {}, "prestige": round(_programs().base(slug)["prestige"], 1),
             "rivals": [r for r in (m.get("rivals") or []) if r in b["slugs"]], "offense": off, "defense": de}

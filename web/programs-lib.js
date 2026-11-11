@@ -73,6 +73,8 @@
     put("mascot", f.mascot, base.mascot);
     put("city", f.city, base.city);
     put("state", f.state, base.state);
+    // a spot set on the map (Close to Home reads it); unset, the game uses the city, else the state's center
+    if (Number.isFinite(f.lat) && Number.isFinite(f.lon) && (f.lat !== base.lat || f.lon !== base.lon)) { t.lat = f.lat; t.lon = f.lon; }
     const conf = f.conference === "__new" ? slugify(f.new_conf_name) : f.conference;
     put("conference", conf, base.conference);
     const bc = base.colors || {};
