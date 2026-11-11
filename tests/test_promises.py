@@ -88,9 +88,12 @@ def promise_two(st):
     me, year = st["team"], season.season_year(st)
     t = season._preview_team(st, me)
     rows = t["offense"] + t["defense"]
-    qb = next(p for p in rows if p["position"] == "QB" and p.get("in_game"))
-    bench = next(p for p in rows if not p.get("in_game") and p["position"] not in ("K", "P"))
     roster = {c["id"]: c for c in st["league"]["teams"][me]["roster"]}
+    starters = [p for p in rows if p.get("in_game")]
+    # the starting QB; while he is hurt, a starter already promised (the same one test to test), else any starter
+    qb = next((p for p in starters if p["position"] == "QB"), None) \
+        or next((p for p in starters if (roster.get(p["slug"]) or {}).get("promised") == year), None) or starters[0]
+    bench = next(p for p in rows if not p.get("in_game") and p["position"] not in ("K", "P"))
     for slug in (qb["slug"], bench["slug"]):
         roster[slug]["promised"] = year
     return qb["slug"], bench["slug"], bench
