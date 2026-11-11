@@ -1484,6 +1484,8 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     rc = state["recruiting"]
     if action == "answer":
         return _answer(state, slug, pid, scene, answer)
+    if action == "promise_job":
+        return _promise_job(state, slug, pid, scene)
     if action == "present":
         return _present(state, slug, pid, scene, topics)
     if action == "pitch":
@@ -1635,6 +1637,118 @@ def pitch_marks(state: dict, slug: str, pid: str) -> dict:
             _MARKS.clear()
         idx = _MARKS[key] = _marks_index(state, slug)
     return dict(idx.get(pid) or {})
+
+
+JOB_PRIORITY = 1.5          # *tune* a job promise is worth this much more when playing time is one of his priorities ...
+JOB_NOT_PRIORITY = 0.5      # *tune* ... and this much when it is not
+JOB_CROWD = 0.6             # *tune* worth this much less for each open promise you already hold at his position
+JOB_CROWD_DOUBT = 0.25      # *tune* his chance to hear it as hollow, for each such promise (its own seeded draw)
+JOB_STRAIN_FIRM = 10        # *tune* the firmness a committed earlier promise loses when you promise the job again
+JOB_STRAIN_SCORE = 0.1      # *tune* a promised roster player's season score loses this for each strain (promises.score)
+
+
+def _open_roster_promise(c: dict) -> Optional[dict]:
+    return next((pr for pr in c.get("promises") or () if pr["kind"] == "roster" and pr.get("broken") is None and pr.get("closed") is None), None)
+
+
+def job_crowd(state: dict, slug: str, group: str, but: str) -> list[dict]:
+    """The open starting-job promises at a position group other than `but`'s: recruits holding an open roster promise
+    from you (uncommitted or committed to you) and your promised roster players (this season's, or next year's roster in
+    the portal). Each: {"kind": "recruit"|"player", "id", "name"}."""
+    rc, out = state["recruiting"], []
+    for pid, by in (rc.get("contacts") or {}).items():
+        c = by.get(slug)
+        if pid == but or not c or pid not in rc["prospects"] or _group_of(rc["prospects"][pid]) != group or not _open_roster_promise(c):
+            continue
+        st_ = rc["status"][pid]
+        if st_["signed"] and st_["signed"] != slug or (st_["committed"] and st_["committed"] != slug):
+            continue
+        out.append({"kind": "recruit", "id": pid, "name": rc["prospects"][pid]["name"]})
+    from coach_career import offseason, promises
+    from sim import season
+    if is_portal(state):
+        year = (state.get("offseason") or {}).get("year") or season.season_year(state) + 1
+        rows = [c for c in ((state.get("league") or {}).get("teams", {}).get(slug) or {}).get("roster") or () if c.get("promised") == year]
+    else:
+        rows = list(promises.promised_now(state).values()) if slug == state.get("team") else []
+    out += [{"kind": "player", "id": c["id"], "name": c.get("n") or ""} for c in rows if offseason.GROUP.get(c["pos"]) == group]
+    return out
+
+
+def _strain(state: dict, slug: str, crowd: list[dict], week: int) -> None:
+    """You promised the job again at his position: each earlier promise hears it. A recruit still deciding cools and will
+    bring it up (heard_rival); one committed to you (not a hard commit) loses JOB_STRAIN_FIRM; a promised player's season
+    takes a strain (promises.add_strain)."""
+    from coach_career import promises, scenes
+    from sim import season
+    rc = state["recruiting"]
+    for x in crowd:
+        if x["kind"] == "recruit":
+            pid, st_ = x["id"], rc["status"][x["id"]]
+            c = _contact(state, slug, pid)
+            if st_["committed"] == slug:
+                if not st_.get("hard"):
+                    st_["firmness"] = int(max(0, (st_.get("firmness") or FIRM_START) - JOB_STRAIN_FIRM))
+            else:
+                c["cooled_until"] = week + COOL_WEEKS
+                persona.set_cooled_why(state, slug, pid, "promise")
+            c["heard_rival"] = week
+            _event(state, "promise_strained", pid, slug, line=scenes.HEARD_RIVAL)
+        else:
+            year = (state.get("offseason") or {}).get("year") if is_portal(state) else season.season_year(state)
+            promises.add_strain(state, year or season.season_year(state), x["id"])
+
+
+def _promise_job(state: dict, slug: str, pid: str, scene: Optional[str]) -> dict:
+    """Promise Him the Job on an open call or visit, asked or not (the player's November 11 ask): a roster promise like
+    his question's, worth ANSWER_PROMISE times Keeps His Word's promise_mult, JOB_PRIORITY when playing time is one of
+    his priorities (else JOB_NOT_PRIORITY) and JOB_CROWD for each open promise you hold at his position, where his own
+    draw may hear it as hollow (JOB_CROWD_DOUBT each). A promise he can't believe (a better returning starter) costs what
+    a hollow promise costs and cools him. Under Keeps His Word's floor he doubts it. One per recruit; your school only.
+    The earlier promises at his position take the strain (_strain)."""
+    from coach_career import scenes, word
+    if slug != state.get("team"):
+        raise RecruitingError(400, "only your school promises the job")
+    rc = state["recruiting"]
+    p = rc["prospects"].get(pid)
+    if p is None:
+        raise RecruitingError(400, "unknown prospect")
+    sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
+    if sc is None or scene is None or sc["id"] != scene:
+        raise RecruitingError(409, "no call or visit open")
+    contact = _contact(state, slug, pid)
+    if _open_roster_promise(contact):
+        raise RecruitingError(409, "You already promised him the job.")
+    week = state["current_week"]
+    group = _group_of(p)
+    about = ahead_of(state, slug, pid) or {"name": None, "ovr": 0, "last_year": True, "cls": None}
+    truthful = promise_holds(state, slug, pid, {"kind": "roster", "about": about})
+    crowd = job_crowd(state, slug, group, pid)
+    rng = random.Random(f"promise-job-{rc['seed']}-{slug}-{pid}-{week}")
+    crowded = bool(crowd) and rng.random() < JOB_CROWD_DOUBT * len(crowd)
+    doubted = truthful and not word.believes(state, group)
+    if doubted:
+        points, reply = 0.0, (scenes.WORD_DOUBT.format(name=word.last_broken(state, group)) if word.last_broken(state, group) else scenes.WORD_DOUBT_ANY)
+    elif truthful and not crowded:
+        mult = JOB_PRIORITY if "playing_time" in p["priorities"] else JOB_NOT_PRIORITY
+        points, reply = ANSWER_PROMISE * word.promise_mult(state, pid, group) * mult * JOB_CROWD ** len(crowd), scenes.REPLY_LINES["promise"]
+    else:
+        points = -ANSWER_HOLLOW * persona.hollow_mult(state, pid, slug)
+        reply = scenes.REPLY_LINES["crowded"] if truthful else scenes.REPLY_LINES["hollow"]
+        contact["cooled_until"] = week + 1
+        persona.set_cooled_why(state, slug, pid, "promise")
+        _event(state, "not_buying", pid, slug, topic="playing_time")
+    contact.setdefault("promises", []).append({"kind": "roster", "about": about, "week": week, "broken": None, "job": True})
+    sc.setdefault("turns", []).extend([{"who": "you", "text": scenes.JOB_SAID}, {"who": "him", "text": reply}])
+    sc["job"] = True
+    _event(state, "answer", pid, slug, action=sc["action"], answer="promise", about=about.get("name"), truthful=truthful, job=True,
+           line="You told him the job is his.", **({"doubted": True} if doubted else {}), **({"crowded": True} if crowded else {}))
+    if points:
+        _add_points(state, slug, pid, points, sc["action"])
+    if crowd:
+        _strain(state, slug, crowd, week)
+    return {"scene": sc, "points": points, "truthful": truthful, "doubted": doubted, "crowded": crowded,
+            "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
 def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:

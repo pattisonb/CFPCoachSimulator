@@ -207,7 +207,10 @@ PACKAGE_ANSWERS = {
 }
 # what he says back: a promise he believes ("promise") or one he has heard before ("hollow"); the Package Deal's
 # straight answer once his mate holds your offer ("package_offered"), and his promise, which waits on the offer ("package")
-REPLY_LINES = {"straight": "Fair. At least you're not blowing smoke.",
+HEARD_RIVAL = "Coach, I heard you told another kid the same thing."   # an earlier job promise at his position, strained (recruiting._strain)
+JOB_SAID = "The job's yours. I mean it."                               # Promise Him the Job, as you say it
+REPLY_LINES = {"crowded": "Everybody gets that line, Coach. I hear you've already got guys at my spot.",
+               "straight": "Fair. At least you're not blowing smoke.",
                "promise": "That's what I needed to hear, Coach.",
                "hollow": "I've heard that one before.",
                "deflect": "...Okay.",
@@ -948,6 +951,10 @@ def open_scene(state: dict, slug: str, pid: str, action: str, week: int) -> dict
         news = twist_line(state, slug, pid, sid, f)
         story = None if news else persona.story_line(state, slug, pid, sid, "him", f, action, first_call=first)
         said = news or story or style_line(state, slug, pid, sid, f) or said      # what happened to him first, then his story, then how he means to commit
+    contact = ((rc["contacts"].get(pid) or {}).get(slug) or {})
+    if slug == state.get("team") and contact.get("heard_rival") is not None and contact.get("heard_rival") < week:
+        said = HEARD_RIVAL                                            # he heard you promised his job again: he says so, once
+        contact.pop("heard_rival", None)
     turns.append(_turn("him", said))
     if action == "hc_visit":                                          # in his living room what happened to him always comes up
         news = twist_line(state, slug, pid, sid, f, always=True)

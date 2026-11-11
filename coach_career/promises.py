@@ -49,9 +49,19 @@ def benched_big(weeks: list[dict]) -> bool:
     return False
 
 
-def score(weeks: list[dict], position: str, personality: str) -> Optional[float]:
+def strain(state: dict, year: int, slug: str) -> int:
+    """How many times you promised his job to someone else this year (Promise Him the Job): read only."""
+    return int(((state.get("promise_strain") or {}).get(str(year)) or {}).get(slug, 0))
+
+
+def add_strain(state: dict, year: int, slug: str) -> None:
+    by = state.setdefault("promise_strain", {}).setdefault(str(year), {})
+    by[slug] = by.get(slug, 0) + 1
+
+
+def score(weeks: list[dict], position: str, personality: str, strain: int = 0) -> Optional[float]:
     """0-1: the weighted share of the weeks that count (not injured) in which he started, less the big-game benching
-    hit; None when no week counts."""
+    hit and recruiting.JOB_STRAIN_SCORE for each time you promised his job to someone else; None when no week counts."""
     counted = [w for w in weeks if not w["injured"]]
     n = len(counted)
     if not n:
@@ -61,6 +71,9 @@ def score(weeks: list[dict], position: str, personality: str) -> Optional[float]
     s = sum(x for x, w in zip(weights, counted) if w["started"]) / sum(weights)
     if benched_big(weeks):
         s -= BENCH_HIT * POSITION_HIT.get(_group(position), 1.0) * (COCKY_HIT if personality == "cocky" else 1.0)
+    if strain:
+        from coach_career import recruiting
+        s -= recruiting.JOB_STRAIN_SCORE * strain
     return round(max(0.0, s), 3)
 
 
@@ -186,7 +199,7 @@ def bands(state: dict, year: int) -> dict[str, dict]:
         if c is None or c.get("promised") != year:
             continue
         kind = personality_of(state, slug)
-        s = score(weeks, c["pos"], kind)
+        s = score(weeks, c["pos"], kind, strain(state, year, slug))
         out[slug] = {"band": band(s, kind), "score": s, "benched_big": benched_big(weeks), "personality": kind}
     return out
 
@@ -204,7 +217,7 @@ def chips_now(state: dict) -> dict[str, str]:
     out = {}
     for slug, c in promised_now(state).items():
         kind = personality_of(state, slug)
-        word = chip(band(score(rec.get(slug) or [], c["pos"], kind), kind))
+        word = chip(band(score(rec.get(slug) or [], c["pos"], kind, strain(state, season.season_year(state), slug)), kind))
         if word:
             out[slug] = word
     return out
