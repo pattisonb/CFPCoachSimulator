@@ -154,6 +154,17 @@ def call(method: str, path: str, body: dict | bytes | None = None) -> dict | byt
                 out = fn(Params(path=values, query=query, body=body))
             except season.StandInError as e:     # a team page asked for an FCS stand-in: it has none
                 raise ApiError(404, str(e)) from e
+            except ApiError:
+                raise
+            except Exception:
+                # an action that broke partway (a bug) must leave no half-done change behind: a change is saved only
+                # when its handler returns, so the season in memory is dropped and the next call reads the saved file
+                # (the player's report: a visit that crashed still counted as this month's visit)
+                sid = values.get("season_id")
+                if method != "GET" and sid and _loaded is not None and _loaded["id"] == sid and _job.get("status") != "running":
+                    _drop(sid)
+                raise
+
             if "season_id" in values and _loaded is not None and isinstance(out, dict):
                 out = _show_conferences(out, _conference_names(_loaded))
             return out

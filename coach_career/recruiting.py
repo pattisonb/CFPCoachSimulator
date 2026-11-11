@@ -524,6 +524,26 @@ def upgrade_asks(state: dict) -> bool:
     return added
 
 
+def hc_visit_week(state: dict, slug: str, pid: str) -> Optional[int]:
+    """The week of the school's last real in-home visit to him, for the once-a-month rule, or None. A visit is real when
+    it was had: Auto-recruit's (its contact carries the pitch), one you presented or pitched in, or one open now. A mark
+    with none of those was left by a visit that broke before it opened (the player's report: a Legacy's visit failed,
+    and the next try said he had been visited this month); it does not count."""
+    rc = state["recruiting"]
+    c = (rc.get("contacts", {}).get(pid) or {}).get(slug) or {}
+    w = c.get("hc_week")
+    if w is None or slug != state.get("team"):
+        return w                                    # an AI school's visits log nothing: its mark stands (and no log scan)
+    if ((rc.get("scenes") or {}).get(slug) or {}).get(pid):
+        return w
+    for e in reversed(rc.get("log") or ()):
+        if e.get("pid") != pid or e.get("school") != slug or e.get("week") != w or e.get("action") != "hc_visit":
+            continue
+        if e["kind"] in ("present", "pitch") or (e["kind"] == "contact" and e.get("pitch")):
+            return w
+    return None
+
+
 def _contact(state: dict, slug: str, pid: str) -> dict:
     return state["recruiting"]["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
 
@@ -2116,7 +2136,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         _LAST_LOOK[0] = look(state, pid, rating, rng)          # one look, SEND_LOOK, or what is left of his report
     else:
         if action == "hc_visit":
-            if contact["hc_week"] is not None and week - contact["hc_week"] < HC_VISIT_GAP:
+            last = hc_visit_week(state, slug, pid)
+            if last is not None and week - last < HC_VISIT_GAP:
                 raise RecruitingError(409, "one in-home visit a month")
             contact["hc_week"] = week
         if you:                                       # a message, call or in-home visit (a scene's pitch is logged when it lands)
