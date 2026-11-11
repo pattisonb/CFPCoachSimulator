@@ -556,6 +556,26 @@ def _pend(blob: bytes, seed: Optional[int]) -> dict:
     return r
 
 
+_PROGRAMS: dict = {}
+
+
+@route("GET", "/api/league/programs")
+def league_programs(p: Params) -> dict:
+    """The game's own programs and conferences for the Custom Programs page (no rosters): each team's slug, names,
+    mascot, home, conference, colors, prestige and playbooks, and every conference's id, name and games."""
+    if "out" not in _PROGRAMS:
+        d = json.loads(league_file.builtin_bytes())
+        keep = ("slug", "name", "short_name", "abbreviation", "mascot", "city", "state", "lat", "lon", "conference", "level", "colors", "prestige", "rivals")
+        teams = []
+        for t in d["teams"]:
+            row = {k: t.get(k) for k in keep}
+            row["offense"], row["defense"] = (t.get("coaches") or {}).get("offense"), (t.get("coaches") or {}).get("defense")
+            teams.append(row)
+        teams.sort(key=lambda r: (r.get("short_name") or r["name"]).casefold())
+        _PROGRAMS["out"] = {"teams": teams, "conferences": d["conferences"]}
+    return _PROGRAMS["out"]
+
+
 @route("POST", "/api/league/check")
 def league_check(p: Params) -> dict:
     """A league file (the body is its bytes) checked for New Career: its errors as sentences, or its

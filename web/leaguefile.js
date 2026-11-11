@@ -14,6 +14,8 @@
   const MAX_LEAGUE_BYTES = 64 * MB;   // the game's own limit (coach_career/league_file.py MAX_LEAGUE_BYTES): refused before reading
   const MAX_ERRORS_SHOWN = 60;        // *tune* error sentences listed before "and N more"
   const MAX_LINES_SHOWN = 12;         // *tune* summary lines shown before Show All (a summary at most 3 longer shows whole)
+  // the league's shape changed (a team added or removed, a conference changed): season one's schedule is generated fresh
+  const SCHEDULE_NOTE = "Your custom programs change the league, so the 2026 schedule is generated fresh for every team: conference games by each conference's rules, your listed rivalries, and the rest filled in. The real 2026 schedule is used only when no team or conference changes.";
   const HELP = "Start from the game's own 2026 league, or import a league file (.json) to add, change or remove teams and conferences. Export League downloads the game's league as a file to edit.";
 
   // mode: "builtin" or "file"; key: the check's key ("builtin" for a file that changes nothing); view: what #league-result shows
@@ -90,6 +92,7 @@
     const start = el("button", { type: "button", class: "accent", id: "btn-league-start", "data-key": "start", text: "Start Career" });
     ui().on(start, "click", startCareer);
     actions.push(start);
+    if (s.structural) out.push(el("p", { class: "league-note", "data-key": "schedule-note", text: SCHEDULE_NOTE }));
     out.push(el("div", { class: "league-actions", "data-key": "actions" }, actions));
     out.push(el("p", { class: "muted league-hint", "data-key": "hint", text: "Pick your team in the team list at the top, then choose Start Career." }));
     return out;
@@ -183,6 +186,31 @@
     if (b) b.click();
   }
 
+  // ----- Custom Programs (programs-lib.js): your saved programs, ticked into this career's league -----
+  function drawCustom() {
+    const box = $("#league-custom");
+    const P = window.CFP.programs;
+    if (!box || !P) return;
+    const list = P.load();
+    const head = el("div", { class: "league-custom-head", "data-key": "head" }, [el("b", { text: "Custom Programs" }),
+      el("a", { href: "./programs.html", class: "small", text: list.length ? "Edit on the Custom Programs page" : "Build a program on the Custom Programs page." })]);
+    if (!list.length) { ui().morph(box, el("div", {}, [head])); return; }
+    const rows = list.map((p) => el("label", { class: "league-custom-row", "data-key": p.id }, [
+      el("input", { type: "checkbox", value: p.id }),
+      el("span", { text: `${(p.f && p.f.name) || p.base || "Untitled Program"}${p.kind === "edit" ? " (Edit)" : ""}` })]));
+    const use = el("button", { type: "button", class: "ghost", id: "btn-use-programs", "data-key": "use", text: "Use Selected Programs" });
+    ui().on(use, "click", async () => {
+      const ids = [...box.querySelectorAll("input[type=checkbox]:checked")].map((i) => i.value);
+      const picked = list.filter((p) => ids.includes(p.id));
+      if (!picked.length) { ui().toast("Tick at least one program first.", 3000); return; }
+      let real = {};
+      try { const r = await window.CFP.game.fetch("/api/league/programs"); if (r.ok) real = Object.fromEntries((await r.json()).teams.map((t) => [t.slug, t])); } catch (e) { /* edits then write every field */ }
+      const blob = JSON.stringify(P.doc(picked, real, "Custom Programs"));
+      checkFile(new File([blob], "Custom Programs.json", { type: "application/json" }));
+    });
+    ui().morph(box, el("div", {}, [head, el("div", { class: "league-custom-list", "data-key": "list" }, rows), el("div", { class: "league-actions", "data-key": "acts" }, [use])]));
+  }
+
   // ----- wiring ----------------------------------------------------------------------------------
   function mount() {
     const panel = $("#league-panel");
@@ -207,6 +235,7 @@
         .catch((err) => ui().toast(`Could not export the league: ${sentence(errText(err))}`, { ms: 6000, kind: "error" }));
     });
     drawSelect();
+    drawCustom();
   }
 
   window.LeagueFile = {

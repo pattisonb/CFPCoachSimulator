@@ -56,6 +56,7 @@
     <nav class="site-nav" aria-label="Sections">
       <a href="./" data-nav="season">Coach Career</a>
       <a href="./coach.html" data-nav="coach">Your Coach</a>
+      <a href="./programs.html" data-nav="programs">Custom Programs</a>
     </nav>
 
     <div class="toolbar" id="season-toolbar">
@@ -90,6 +91,7 @@
             <button id="btn-export-league" class="ghost" type="button">Export League</button>
             <input id="league-file" type="file" accept=".json,application/json" hidden />
           </div>
+          <div id="league-custom" class="league-custom"></div>
           <div id="league-result" aria-live="polite"></div>
         </section>
       </div>
@@ -269,6 +271,7 @@
   <script src="./offseason.js"></script>
   <script src="./depth/portraits.js"></script>
   <script src="./depth/depth.js"></script>
+  <script src="./programs-lib.js"></script>
   <script src="./leaguefile.js"></script>
   <script src="./season.js"></script>
 </body>

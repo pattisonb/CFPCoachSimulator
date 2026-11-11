@@ -1169,4 +1169,4 @@ def _check_merged(doc: dict, blob: bytes, seed: Optional[int]) -> dict:
                  else f"The real {YEAR} schedule is kept.")
     return {"ok": True, "builtin": False, "league": lgd, "engine": engine, "games": games, "structural": merged["structural"],
             "seed": seed,
-            "summary": {"name": merged["name"], **counts, "generated": generated, "lines": lines}}
+            "summary": {"name": merged["name"], **counts, "generated": generated, "lines": lines, "structural": bool(merged["structural"])}}

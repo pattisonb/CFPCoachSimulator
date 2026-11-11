@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Custom Programs · CFP Coach Simulator</title>
+  <meta name="theme-color" content="#131a2e" />
+  <meta name="description" content="Build your own college football programs, or edit real ones, then coach them in a new career." />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="./favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <script>try{var t=localStorage.getItem("cfp.theme");if(!t&&window.matchMedia("(prefers-color-scheme: light)").matches)t="light";if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./programs.css" />
+  <script src="./analytics.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a class="brand-link" href="./" aria-label="CFP Coach Simulator home">
+        <img class="brand-icon" src="./favicon.svg" alt="" width="28" height="28" />
+        <span class="brand-name">CFP Coach Simulator</span>
+      </a>
+    </div>
+    <nav class="site-nav" aria-label="Sections">
+      <a href="./" data-nav="season">Coach Career</a>
+      <a href="./coach.html" data-nav="coach">Your Coach</a>
+      <a href="./programs.html" data-nav="programs" class="active" aria-current="page">Custom Programs</a>
+    </nav>
+    <div class="toolbar">
+      <button class="ghost btn-theme" type="button" aria-label="Toggle light or dark mode"></button>
+    </div>
+  </header>
+
+  <main class="pg-layout">
+    <section class="panel pg-list-panel">
+      <div class="card-bar section-head"><h2>My Custom Programs</h2></div>
+      <p id="pg-store-note" class="muted" hidden>Your browser isn't keeping these between visits. Download them to save.</p>
+      <div class="pg-actions">
+        <button id="pg-new" class="accent" type="button">Create a Program</button>
+        <select id="pg-real" aria-label="A real program to edit"><option value="">Edit a Real Program…</option></select>
+        <button id="pg-download-all" class="ghost" type="button">Download All</button>
+        <button id="pg-load" class="ghost" type="button">Load File</button>
+        <input id="pg-file" type="file" accept=".json,application/json" hidden />
+      </div>
+      <div id="pg-list" class="pg-list"></div>
+      <p class="muted pg-help">Programs you build here show up on the New Career screen under Custom Programs: tick them, pick your team and start. Everything left blank (roster, coaches, colors) is filled in by the game.</p>
+    </section>
+    <section id="pg-editor" class="panel pg-editor" hidden></section>
+  </main>
+  <div id="toast" class="toast" hidden></div>
+  <div id="loading" class="loading" role="status" aria-live="polite" hidden>
+    <div class="loading-box">
+      <p id="loading-text">Loading the game, about 20 MB the first time; it is kept for next time</p>
+      <progress id="loading-bar" max="100"></progress>
+    </div>
+  </div>
+  <script src="./gameview.js"></script>
+  <script src="./ui.js"></script>
+  <script src="./game-client.js"></script>
+  <script src="./programs-lib.js"></script>
+  <script src="./programs.js"></script>
+</body>
+</html>
