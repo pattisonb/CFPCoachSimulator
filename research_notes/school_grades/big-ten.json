@@ -40,13 +40,13 @@
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Tried Wikipedia (team and athletics pages; Smith Football Center has no article). fightingillini.com facility pages are blocked to automated reads or rendered without content."
   },
   "indoor_practice": {
    "value": null,
-   "source": "",
+   "source": "https://en.wikipedia.org/wiki/Illinois_Fighting_Illini",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Wikipedia lists the Irwin Indoor Practice Facility (football) but gives no opening year."
   },
   "metro_population": {
    "value": 236072,
@@ -126,13 +126,13 @@
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Tried Wikipedia Indiana Hoosiers football and Indiana Hoosiers; iuhoosiers.com rendered without content."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 1996,
+   "source": "https://en.wikipedia.org/wiki/Indiana_Hoosiers_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "John Mellencamp Pavilion, dedicated April 12, 1996."
   },
   "metro_population": {
    "value": 161039,
@@ -210,15 +210,15 @@
   },
   "football_building_year": {
    "value": null,
-   "source": "",
+   "source": "https://hawkeyesports.com/hayden-fry-football-complex/",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. The Hayden Fry Football Complex page names the Hansen Football Performance Complex but gives no year."
   },
   "indoor_practice": {
    "value": null,
-   "source": "",
+   "source": "https://hawkeyesports.com/hayden-fry-football-complex/",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. The page lists an Indoor Practice Facility but gives no year."
   },
   "metro_population": {
    "value": 175419,
@@ -295,16 +295,16 @@
    "note": "Infobox lists expansions 1995, 2002, 2008 and no later major project; the 2025 capacity drop is not explained in the article."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
-   "estimate": false,
-   "note": "Not yet researched."
+   "value": 2021,
+   "source": "https://en.wikipedia.org/wiki/Jones-Hill_House",
+   "estimate": true,
+   "note": "Jones-Hill House (former Cole Field House): the indoor field opened August 2017, and a second phase (a 196,000 sq ft addition with the football operations space) began late 2017. A Wikipedia citation is titled 'Terps get first glance of new home' (umterps.com, June 4, 2021). So 2021 is inferred from that title."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 2017,
+   "source": "https://en.wikipedia.org/wiki/Jones-Hill_House",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Jones-Hill House indoor practice facility opened August 2017."
   },
   "metro_population": {
    "value": 6278542,
@@ -384,13 +384,13 @@
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Schembechler Hall has no Wikipedia article; mgoblue.com's Schembechler Hall page rendered without content."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 2009,
+   "source": "https://en.wikipedia.org/wiki/Michigan_Wolverines",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Al Glick Field House, listed as opened 2009 (cites mgoblue.com's facility page)."
   },
   "metro_population": {
    "value": 372258,
@@ -467,16 +467,16 @@
    "note": "Infobox: renovated 2005, 2014; expanded 2005 (latest expansion)."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2007,
+   "source": "https://en.wikipedia.org/wiki/Michigan_State_Spartans_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Duffy Daugherty Football Building: $15 million expansion and renovation in 2007 (Skandalaris Football Center). Later smaller upgrades not checked."
   },
   "indoor_practice": {
    "value": null,
-   "source": "",
+   "source": "https://en.wikipedia.org/wiki/Michigan_State_Spartans_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Wikipedia mentions an 86,000 sq ft indoor practice facility in the football complex but gives no year."
   },
   "metro_population": {
    "value": 473203,
@@ -554,15 +554,15 @@
   },
   "football_building_year": {
    "value": null,
-   "source": "",
+   "source": "https://en.wikipedia.org/wiki/Minnesota_Golden_Gophers_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. The Wikipedia team page describes the Gibson-Nagurski Football Complex with no year; gophersports.com is blocked to automated reads."
   },
   "indoor_practice": {
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Not found in the Wikipedia pages checked; gophersports.com is blocked to automated reads."
   },
   "metro_population": {
    "value": 3690261,
@@ -639,16 +639,16 @@
    "note": "Latest expansion 2013 (East Stadium); a South Stadium renovation is listed as 2026 (planned) and was delayed in 2024."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2023,
+   "source": "https://en.wikipedia.org/wiki/Memorial_Stadium_(Lincoln)",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Osborne Legacy Complex: the home locker room moved there in 2023 (Wikipedia). Facility page: https://huskers.com/osborne-legacy-complex"
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 2006,
+   "source": "https://huskers.com/facilities/hawks-championship-center",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Hawks Championship Center opened for football during spring practice in 2006."
   },
   "metro_population": {
    "value": 340217,
@@ -725,16 +725,16 @@
    "note": "New stadium; opened 2026 on the site of the old Ryan Field."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2018,
+   "source": "https://en.wikipedia.org/wiki/Lakefront_Athletics_and_Recreation_Complex",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Walter Athletics Center opened in 2018 (dedicated August 2018)."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 2018,
+   "source": "https://en.wikipedia.org/wiki/Lakefront_Athletics_and_Recreation_Complex",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Ryan Fieldhouse (Wilson Field) opened April 2018."
   },
   "metro_population": {
    "value": 9449351,
@@ -811,16 +811,16 @@
    "note": "Infobox: renovated 2000–01; expanded 1948, 1991, 2001, 2014 (latest)."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2007,
+   "source": "https://en.wikipedia.org/wiki/Woody_Hayes_Athletic_Center",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Woody Hayes Athletic Center: dedicated November 1987; significant expansion and renovation 2005–2007."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 1987,
+   "source": "https://en.wikipedia.org/wiki/Woody_Hayes_Athletic_Center",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "The indoor field is inside the Woody Hayes Athletic Center, dedicated November 1987 (expanded 2005–2007). The source does not say whether the indoor field itself was rebuilt later."
   },
   "metro_population": {
    "value": 2138926,
@@ -897,16 +897,16 @@
    "note": "Infobox: renovated and expanded 2002."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2013,
+   "source": "https://en.wikipedia.org/wiki/Hatfield-Dowlin_Complex",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Hatfield-Dowlin Complex (Football Operations Center), completed 2013."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 1998,
+   "source": "https://en.wikipedia.org/wiki/Oregon_Ducks_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Moshofsky Sports Center, dedicated August 1998. The university announced a new 170,000 sq ft football indoor facility in 2021; whether it has opened was not confirmed."
   },
   "metro_population": {
    "value": 382971,
@@ -984,15 +984,15 @@
   },
   "football_building_year": {
    "value": null,
-   "source": "",
+   "source": "https://gopsusports.com/louis-and-mildred-lasch-football-building",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. The Lasch Football Building page mentions a newly renovated weight room but gives no opening or renovation year."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 1986,
+   "source": "https://gopsusports.com/holuba-hall",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Holuba Hall opened 1986 (named 1987)."
   },
   "metro_population": {
    "value": 158172,
@@ -1069,16 +1069,16 @@
    "note": "Infobox: renovated 2002, 2023; expanded 2023."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2017,
+   "source": "https://purduesports.com/facilities/kozuch-football-performance-complex",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Kozuch Football Performance Complex opened in August 2017."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 1990,
+   "source": "https://purduesports.com/facilities/mollenkopf-athletic-center",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Mollenkopf Athletic Center built 1990."
   },
   "metro_population": {
    "value": 223716,
@@ -1158,13 +1158,13 @@
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Tried Wikipedia Rutgers Scarlet Knights football and Rutgers Scarlet Knights; scarletknights.com is blocked to automated reads."
   },
   "indoor_practice": {
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. scarletknights.com is blocked to automated reads; not in the Wikipedia pages checked."
   },
   "metro_population": {
    "value": 20081935,
@@ -1241,16 +1241,16 @@
    "note": "Major renovation financed in 2010, started January 2011; the article says the renovations were completed in 2016 (main phase was done for the 2013 season). Further pre-2028 Olympics work was announced in December 2024."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2017,
+   "source": "https://en.wikipedia.org/wiki/UCLA_Bruins_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Wasserman Football Center dedicated August 1, 2017."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
-   "estimate": false,
-   "note": "Not yet researched."
+   "value": "none",
+   "source": "https://en.wikipedia.org/wiki/UCLA_Bruins_football",
+   "estimate": true,
+   "note": "The Wikipedia team page names only Spaulding Field (outdoor grass and turf fields) and the Wasserman Football Center; no indoor field is mentioned. Not confirmed with a direct source."
   },
   "metro_population": {
    "value": 13200998,
@@ -1327,16 +1327,16 @@
    "note": "Infobox renovations: ..., 2011, 2017–2019 (latest)."
   },
   "football_building_year": {
-   "value": null,
-   "source": "",
+   "value": 2026,
+   "source": "https://en.wikipedia.org/wiki/USC_Trojans_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Football moved into the new Bloom Football Performance Center in August 2026 (John McKay Center, opened 2012, before that)."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
-   "estimate": false,
-   "note": "Not yet researched."
+   "value": "none",
+   "source": "https://en.wikipedia.org/wiki/USC_Trojans_football",
+   "estimate": true,
+   "note": "The Wikipedia page describes the Bloom Football Performance Center with two outdoor fields and no indoor field; no indoor practice facility is mentioned. Not confirmed with a direct source."
   },
   "metro_population": {
    "value": 13200998,
@@ -1416,13 +1416,13 @@
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Husky Stadium (rebuilt 2013) houses football operations, but no source checked here says so."
   },
   "indoor_practice": {
-   "value": null,
-   "source": "",
+   "value": 2001,
+   "source": "https://en.wikipedia.org/wiki/Washington_Huskies_football",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Dempsey Indoor opened September 2001."
   },
   "metro_population": {
    "value": 4018762,
@@ -1502,13 +1502,13 @@
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. Tried Wikipedia Wisconsin Badgers football and Wisconsin Badgers; uwbadgers.com is blocked to automated reads."
   },
   "indoor_practice": {
    "value": null,
    "source": "",
    "estimate": false,
-   "note": "Not yet researched."
+   "note": "Web search budget ran out before this could be checked; the Wikipedia team and athletics pages give no year. uwbadgers.com is blocked to automated reads; not in the Wikipedia pages checked."
   },
   "metro_population": {
    "value": 680796,
