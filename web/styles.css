@@ -1703,3 +1703,8 @@ button, input, select, textarea { }
 .go-program-bar .go-place-tags { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-left: 100px; }
 @media (max-width: 720px) { .go-program-bar .go-place-tags { padding-left: 0; } }
 .go-program-bar .go-program-val { white-space: nowrap; }
+
+/* School Grades Phase 3: a grade that moved this offseason */
+[data-moved]::after { margin-left: 4px; font-size: 10px; vertical-align: 1px; }
+[data-moved="up"]::after { content: "▲"; color: var(--good-text, var(--good)); }
+[data-moved="down"]::after { content: "▼"; color: var(--bad-text, var(--bad)); }

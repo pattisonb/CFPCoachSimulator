@@ -1929,6 +1929,20 @@ The constants are `*tune*` in `coach_career/programs.py`. Since Phase 2, recruit
 - The scenes talk about each topic, and a claim line shows only at Strong.
 - His profile's What He Wants row puts each priority he has told you beside your program's case.
 
+Since Phase 3, four grades move once a year in `programs.update` (`_move_grades`; each program's `grades_live`, read
+through `grades_now`):
+
+- **Game Day:** steps toward 0.8 × (winning − its start) at most 4 a year, never under 70% of its researched value.
+- **Exposure:** the same at 0.7 ×, plus 4 for a top-10 final rank (2 for a top 25), never under 75%.
+- **Stability:** loses 15 the year a new head coach starts and rebuilds 5 a year he stays, up to its researched value,
+  never under 10.
+- **Academics:** moves a point a year when the program loses more (or fewer) portal entrants than `CHURN_MEAN` (6),
+  never more than 10 from its researched value.
+- **Location and Facilities** stay fixed.
+
+Recruits and the Programs tab read the live grades. A grade that moved this offseason shows ▲ or ▼, titled "Up 4 since
+last season."
+
 The rating, the tiers,
 the AD's goals and the market are unchanged, and Market stays its own reading; Game Day and Exposure are its two
 parts. The Programs tab groups School Grades into **Football** (Prestige, Winning, Coach, Stability, Conference, Pro
