@@ -24,6 +24,16 @@ OUT_OF_100 = re.compile(r"\b\d{1,3}\s*(/|of)\s*100\b")
 
 
 
+
+def lead(page, scope, topic):
+    """Pick what you lead with from the lead-with pill (opens it if closed)."""
+    if page.is_hidden(f"{scope} .go-lead-menu"):
+        page.click(f"{scope} .go-lead-pick")
+    page.click(f"{scope} .go-lead-menu .go-lead-chip[data-topic='{topic}']")
+
+
+LEAD_OPTS = "els => els.map(e => { const name = e.querySelector('b').textContent, tg = e.querySelector('.go-tag'), tag = tg ? tg.textContent : '', m = e.querySelector('.go-mark'); const star = tag.startsWith('★') ? '★ ' : tag.startsWith('☆') ? '☆ ' : ''; return [e.dataset.topic, [star + name, tag.replace(/^[★☆]\\s*/, ''), m ? m.textContent : ''].filter(Boolean).join(' · ')]; })"
+
 def pick_stage(page, stage: str) -> None:
     """The board's stages are a dropdown: open the pill, pick the stage."""
     if page.is_hidden(".go-stage-menu"):
@@ -275,7 +285,7 @@ def test_pester_tags(page, base) -> None:
         for a in ("scout", "offer", "off_board"):
             assert items[a][0] is None, (a, items[a])
         page.click(".go-menu .go-menu-item[data-action=message]")
-        page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+        page.wait_for_selector(".go-pane .go-step #rc-pitch")
         h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go", scrolled=False)
         n = draws(page)
         page.click(".go-pane .go-step button.go-step-go")
@@ -339,7 +349,7 @@ def test_recruit_question(page) -> None:
         assert answers == [[k, scenes.ANSWER_LABELS[k], scenes.ANSWER_COPY[q["kind"]][k]] for k in ("straight", "promise", "deflect")], answers
         pitch = ".modal-scene .go-scene .go-scene-acts button:has-text('Pitch')"
         assert page.is_disabled(pitch) and page.get_attribute(pitch, "title") == "Answer him first"
-        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-pitches input')].every(r => r.disabled)"), "the pitch radios wait on the answer"
+        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-pick')].every(r => r.disabled)"), "the pitch radios wait on the answer"
         h = watch(page, ".modal-scene .go-scene", ".modal-scene .go-scene .go-answer[data-answer=straight]", scrolled=False)
         toasts = page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length")
         page.click(".modal-scene .go-scene .go-answer[data-answer=straight]")
@@ -350,7 +360,7 @@ def test_recruit_question(page) -> None:
         assert "good" in (reply.get_attribute("class") or ""), reply.get_attribute("class")
         smooth(page, h, "Answering his question")
         assert not page.is_disabled(pitch) and not page.get_attribute(pitch, "title") == "Answer him first", "the pitch unlocks"
-        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-pitches input')].every(r => !r.disabled)")
+        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-pick')].every(r => !r.disabled)")
         assert page.evaluate("() => document.querySelectorAll('#toasts .toast-item').length") == toasts, "the reply is the feedback: no toast"
         # Hang up (the window closes, the call stays open), then Finish: the window comes back, the answered question without its buttons
         page.click(".modal-scene .go-scene button:has-text('Hang Up')")
@@ -1138,7 +1148,7 @@ def close_done(page) -> None:
 def present_three(page, pane: str = ".modal-scene") -> None:
     """A call or visit just opened: the conversation shows your opener and his answer; pick three things and Present,
     which brings his cue in place (the cue and his question follow your opening)."""
-    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-present-chip", timeout=30_000)
+    page.wait_for_selector(f"{pane} .go-scene .go-opening .go-opening-pick", timeout=30_000)
     if page.query_selector(f"{pane} .go-scene .go-scene-line.cue"):
         return
     assert page.eval_on_selector(f"{pane} .go-scene .go-opening .go-present", "e => e.disabled"), "Present waits for three"
@@ -1195,13 +1205,40 @@ def test_conversation(page, base) -> None:
         assert you_right, "your bubble sits right, his left"
         assert not page.query_selector(".modal-scene .go-scene .go-scene-line.cue"), "the cue waits on your opening"
         assert "YOUR OPENING" in page.inner_text(".modal-scene .go-scene") and "WHAT YOU LEAD WITH" not in page.inner_text(".modal-scene .go-scene")
-        chips = page.query_selector_all(".modal-scene .go-scene .go-present-chip")
-        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips)
-        for c in chips[:3]:
-            c.click()
+        # your pitch is one pill that opens every topic as a chip; up to three, each shown below before Present
+        M = ".modal-scene .go-scene"
+        assert page.is_hidden(f"{M} .go-opening-menu") and "0 of 3" in page.inner_text(f"{M} .go-opening-pick"), "the topics sit closed in one pill"
+        page.click(f"{M} .go-opening-pick")
+        chips = page.query_selector_all(f"{M} .go-opening-menu .go-present-chip")
+        assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
+        time.sleep(0.3)
+        seen = page.evaluate("""(m) => { const menu = document.querySelector(m + ' .go-opening-menu').getBoundingClientRect();
+          const port = document.querySelector('.modal-scene .modal-body').getBoundingClientRect();
+          return [Math.round(menu.top), Math.round(menu.bottom), Math.round(port.top), Math.round(port.bottom)]; }""", M)
+        assert seen[0] >= seen[2] - 1 and seen[1] <= seen[3] + 1, f"the open menu shows whole in the call's window (menu top, bottom; window top, bottom): {seen}"
+        chips[0].click(); chips[1].click()
+        assert page.is_visible(f"{M} .go-opening-menu"), "the menu stays open while you pick"
+        picked = lambda: page.eval_on_selector_all(f"{M} .go-opening-picked .go-picked", "els => els.map(e => e.dataset.topic)")
+        assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present")
+        chips[2].click()
+        assert page.is_hidden(f"{M} .go-opening-menu"), "the third pick closes the menu"
+        assert len(picked()) == 3 and not page.is_disabled(f"{M} .go-present") and "3 of 3" in page.inner_text(f"{M} .go-opening-pick")
+        page.click(f"{M} .go-opening-pick")
         chips[3].click()
         toasted(page, "Three things. Drop one first.")
-        assert chips[3].get_attribute("aria-pressed") == "false" and page.inner_text(".modal-scene .go-present-count").strip() == "3 of 3"
+        page.keyboard.press("Escape")
+        assert page.is_hidden(f"{M} .go-opening-menu") and chips[3].get_attribute("aria-pressed") == "false"
+        page.click(f"{M} .go-opening-pick")
+        page.focus(f"{M} .go-opening-menu .go-present-chip:last-child")
+        page.keyboard.press("Tab")
+        time.sleep(0.2)
+        assert page.is_hidden(f"{M} .go-opening-menu"), "tabbing out of the menu closes it"
+        gone = picked()[0]
+        page.click(f"{M} .go-opening-picked .go-picked[data-topic={gone}] .go-picked-x")
+        assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present"), "an x drops a pick"
+        page.click(f"{M} .go-opening-pick")
+        page.click(f"{M} .go-opening-menu .go-present-chip[data-topic={gone}]")
+        assert len(picked()) == 3 and page.inner_text(".modal-scene .go-present-count").strip() == "3 of 3"
         h = watch(page, ".modal-scene .go-scene", ".modal-scene .go-present", scrolled=False)
         page.click(".modal-scene .go-present")
         page.wait_for_selector(".modal-scene .go-scene .go-scene-line.cue", timeout=30_000)
@@ -1217,7 +1254,7 @@ def test_conversation(page, base) -> None:
         hist = page.inner_text("body")
         # the pitch: his reaction joins the conversation, then the board catches up and the scene leaves
         topic = sc["cue"]["topics"][0]
-        page.click(f".modal-scene .go-pitch:has(input[value='{topic}'])")
+        lead(page, ".modal-scene", topic)
         n = draws(page)
         page.click(".modal-scene .go-scene button:has-text('Pitch')")
         page.wait_for_selector(".modal-scene .go-scene .go-convo .go-turn.go-reaction", timeout=30_000)
@@ -1226,7 +1263,7 @@ def test_conversation(page, base) -> None:
         turns = page.eval_on_selector_all(".modal-scene .go-scene .go-convo .go-turn", "els => els.map(e => [e.className, e.textContent])")
         assert turns[-2][1].startswith("You:") and "go-reaction" in turns[-1][0], turns[-2:]
         assert "counts at the week step" in page.inner_text(".modal-scene .go-scene .go-scene-acts")
-        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-pitches input')].every(r => r.disabled)"), "what you led with stays on record, locked"
+        assert page.evaluate("() => [...document.querySelectorAll('.modal-scene .go-scene .go-lead-pick')].every(r => r.disabled)"), "what you led with stays on record, locked"
         assert not page.query_selector(".modal-scene .go-scene button:has-text('Pitch')"), "the buttons gave way"
         settle(page, n)
         assert page.query_selector(".modal-scene .go-scene .go-reaction"), "the finished conversation stays in its window until Done"
@@ -1582,7 +1619,7 @@ if __name__ == "__main__":
             assert page.text_content(".go-pane .pv-hero .pv-badge .pv-kick") == "Your Chance", "Your Chance is the hero's badge"
             assert page.eval_on_selector_all(".go-pane .go-subtabs button[data-sub]", "els => els.map(e => e.dataset.sub)") == ["overview", "scouting", "profile", "history"]
             assert page.query_selector(".go-pane .go-sub-body [data-key=battle] .pv-battle-row, .go-pane .go-sub-body [data-key=battle] .pv-battle-empty"), "Overview draws his list as the Recruiting Battle"
-            assert not page.query_selector(".modal-scene .go-pitch, .go-pane .go-act, .go-pane .go-actions, .go-pane .go-nil"), "nothing is shown for an interaction you are not having"
+            assert not page.query_selector(".modal-scene .go-lead-chip, .go-pane .go-act, .go-pane .go-actions, .go-pane .go-nil"), "nothing is shown for an interaction you are not having"
             # the row's word, the strip's odds and the Overview sentence come from the one ladder
             sd = page.evaluate("([b, me]) => window.CFP.recruiting.standingOf(b, me)", [b, "smu"])
             assert page.inner_text(f".go-row-recruit[data-pid='{pid}'] .go-standing-word").strip() == sd["word"]
@@ -1649,15 +1686,15 @@ if __name__ == "__main__":
             # Message opens the step: the pitch dropdown with his known priorities first; Send posts and the step closes
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=message]")
-            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            page.wait_for_selector(".go-pane .go-step #rc-pitch")
             assert not page.query_selector(".go-menu")
-            opts = page.eval_on_selector_all("#rc-pitch option", "o => o.map(x => [x.value, x.textContent])")
+            opts = page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", LEAD_OPTS)
             known = b["priorities_known"]
             assert [o[0] for o in opts[:len(known)]] == known and all(o[1].startswith("★ ") for o in opts[:len(known)]), (opts, known)
             assert not any(o[1].startswith(("★", "☆")) for o in opts[len(known):]), f"no star without a priority or a cue: {opts}"
-            msg_pitch = page.eval_on_selector("#rc-pitch", "s => s.value")
+            msg_pitch = page.eval_on_selector("#rc-pitch", "s => s.dataset.value")
             if known:
-                assert page.eval_on_selector("#rc-pitch", "s => s.value") == known[0], "the default is his first known priority"
+                assert page.eval_on_selector("#rc-pitch", "s => s.dataset.value") == known[0], "the default is his first known priority"
             assert not page.query_selector(".go-pane .go-step #rc-nil"), "a message carries no NIL field"
             assert page.inner_text(".go-pane .go-step button.go-step-go").strip() == "Send"
             shot(page, "step-1280-dark")
@@ -1675,7 +1712,7 @@ if __name__ == "__main__":
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=offer]")
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
-            assert page.query_selector(".go-pane .go-step select#rc-pitch") and "lowball" in page.inner_text(".go-pane .go-step")
+            assert page.query_selector(".go-pane .go-step #rc-pitch") and "lowball" in page.inner_text(".go-pane .go-step")
             assert page.inner_text(".go-pane .go-step button.go-step-go").strip() == "Offer"
             page.click(".go-pane .go-step button.go-step-cancel")
             assert not page.query_selector(".go-pane .go-step")
@@ -1689,12 +1726,12 @@ if __name__ == "__main__":
             # the cue marks its pitch with a hollow star (a known priority keeps the full one); the old tag's word is gone
             cue = next(x for x in call(base, f"/api/season/{A}/recruiting")["board"] if x["id"] == pid)["scene"]["cue"]["topics"]
             known_now = next(x for x in call(base, f"/api/season/{A}/recruiting")["board"] if x["id"] == pid)["priorities_known"]
-            tags = dict(page.eval_on_selector_all(".modal-scene .go-pitch", "els => els.map(e => [e.querySelector('input').value, e.querySelector('.go-tag').textContent])"))
+            tags = dict(page.eval_on_selector_all(".modal-scene .go-lead-chip", "els => els.map(e => [e.dataset.topic, e.querySelector('.go-tag').textContent])"))
             for t in cue:
                 assert tags[t].startswith("★" if t in known_now else "☆"), (t, tags)
-            assert page.query_selector(".modal-scene .go-pitch.cue .go-tag"), "the cue marks a pitch"
-            assert page.eval_on_selector(".modal-scene .go-pitch.cue .go-tag", "e => e.textContent").startswith("☆")
-            assert page.eval_on_selector(".modal-scene .go-pitch.cue .go-tag", "e => e.title") == CUE_TITLE
+            assert page.query_selector(".modal-scene .go-lead-chip.cue .go-tag"), "the cue marks a pitch"
+            assert page.eval_on_selector(".modal-scene .go-lead-chip.cue .go-tag", "e => e.textContent").startswith("☆")
+            assert page.eval_on_selector(".modal-scene .go-lead-chip.cue .go-tag", "e => e.title") == CUE_TITLE
             assert GONE not in page.inner_text("body"), "the old tag's word is gone"
             assert not page.query_selector("#rc-finish"), "Finish stays out of the head while the window is open"
             assert "primary" not in (page.get_attribute("#rc-recruit", "class") or ""), "Recruit steps back while the call plays"
@@ -1702,7 +1739,7 @@ if __name__ == "__main__":
             shot(page, "scene-1280-dark")
             priorities = season.load_season(A)["recruiting"]["prospects"][pid]["priorities"]
             hit = next(t for t in cue if t in priorities)
-            page.click(f".modal-scene .go-pitch:has(input[value='{hit}'])")
+            lead(page, ".modal-scene", hit)
             n = draws(page)
             page.click(".modal-scene button:has-text('Pitch')")
             page.wait_for_selector(".modal-scene .go-reaction", timeout=30_000)
@@ -1727,8 +1764,8 @@ if __name__ == "__main__":
             # the Offer step's pitch list: his known priorities wear ★, the cued topic he named among them (never both)
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=offer]")
-            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
-            opts = dict(page.eval_on_selector_all("#rc-pitch option", "o => o.map(x => [x.value, x.textContent])"))
+            page.wait_for_selector(".go-pane .go-step #rc-pitch")
+            opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", LEAD_OPTS))
             assert opts[hit].startswith(f"★ {PITCH[hit]}") and "☆" not in opts[hit], opts
             for t in cue:
                 if t != hit:
@@ -2255,7 +2292,7 @@ if __name__ == "__main__":
             cue3 = [t for t in row3["scene"]["cue"]["topics"] if t not in row3["priorities_known"]]
             pri3 = season.load_season(A)["recruiting"]["prospects"][third]["priorities"]
             miss = next(t for t in PITCH if t not in pri3 and t not in row3["scene"]["cue"]["topics"])
-            page.click(f".modal-scene .go-pitch:has(input[value='{miss}'])")
+            lead(page, ".modal-scene", miss)
             n = draws(page)
             page.click(".modal-scene button:has-text('Pitch')")
             page.wait_for_selector(".modal-scene .go-reaction", timeout=30_000)
@@ -2265,8 +2302,8 @@ if __name__ == "__main__":
             assert hollow == [[f"☆ {PITCH[t]}", CUE_TITLE] for t in cue3] and hollow, (hollow, cue3)
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=offer]")
-            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
-            opts = dict(page.eval_on_selector_all("#rc-pitch option", "o => o.map(x => [x.value, x.textContent])"))
+            page.wait_for_selector(".go-pane .go-step #rc-pitch")
+            opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", LEAD_OPTS))
             for t in cue3:
                 assert opts[t].startswith(f"☆ {PITCH[t]} · "), opts
             for t in row3["priorities_known"]:
@@ -2305,7 +2342,7 @@ if __name__ == "__main__":
             time.sleep(0.3)
             # Message: the step's Send goes busy, the step closes, the row and the pane update in place
             menu("message")
-            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            page.wait_for_selector(".go-pane .go-step #rc-pitch")
             h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
@@ -2361,7 +2398,7 @@ if __name__ == "__main__":
             settle(page, n)
             smooth(page, h, "Call")
             topic = next(bb for bb in call(base, f"/api/season/{A}/recruiting")["board"] if bb["id"] == x["id"])["scene"]["cue"]["topics"][0]
-            page.click(f".modal-scene .go-pitch:has(input[value='{topic}'])")
+            lead(page, ".modal-scene", topic)
             h = watch(page, ".go-pane", ".modal-scene button:has-text('Pitch')")
             n = draws(page)
             page.click(".modal-scene button:has-text('Pitch')")
@@ -2410,7 +2447,7 @@ if __name__ == "__main__":
             page.click(f".go-row-recruit[data-pid='{y['id']}']")
             time.sleep(0.6)
             menu("message")
-            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            page.wait_for_selector(".go-pane .go-step #rc-pitch")
             hours = call(base, f"/api/season/{A}/recruiting")["hours_left"]
             page.evaluate("""() => { const g = window.CFP.game, orig = g.fetch; let held = 0; window.__restoreFetch = () => { g.fetch = orig; };
                 g.fetch = async (p, o) => { const r = await orig(p, o); if (/\\/recruiting$/.test(String(p)) && !(o && o.method) && held++ === 0) await new Promise((res) => setTimeout(res, 2500)); return r; }; }""")
@@ -2436,7 +2473,7 @@ if __name__ == "__main__":
             time.sleep(0.6)
             before = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
             menu("message")
-            page.wait_for_selector(".go-pane .go-step select#rc-pitch")
+            page.wait_for_selector(".go-pane .go-step #rc-pitch")
             # CI's case on every machine: a screen-tall spacer above the board puts Send below the fold, so bringing it
             # into view scrolls the page by hundreds of px, and sending must leave that scroll where it was
             page.evaluate("() => { const t = document.querySelector('#tab-recruiting'), d = document.createElement('div'); d.id = 'ux-spacer'; d.style.height = innerHeight + 'px'; t.before(d); }")

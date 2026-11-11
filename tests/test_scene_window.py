@@ -83,7 +83,7 @@ def start_call(page) -> None:
     page.click(".go-pane #rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
     page.click(".go-menu .go-menu-item[data-action=call]")
-    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-present-chip", timeout=30_000)
+    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-opening-pick", timeout=30_000)
     time.sleep(0.4)
 
 
@@ -91,7 +91,7 @@ def start_visit(page) -> None:
     page.click(".go-pane #rc-recruit")
     page.wait_for_selector(".go-menu[role=menu]")
     page.click(".go-menu .go-menu-item[data-action=hc_visit]")
-    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-present-chip", timeout=30_000)
+    page.wait_for_selector(f"{WIN} .go-scene .go-opening .go-opening-pick", timeout=30_000)
     time.sleep(0.4)
 
 
@@ -113,8 +113,9 @@ def answer_if_asked(page) -> None:
 def pitch(page) -> dict:
     answer_if_asked(page)
     # a recruit who gave nothing away on the call leaves no lead picked: pick one, as the player must
-    if not page.query_selector(f"{WIN} .go-pitches input:checked"):
-        page.click(f"{WIN} .go-pitches label >> nth=0")
+    if not page.eval_on_selector(f"{WIN} .go-lead-pick", "e => e.dataset.value"):
+        page.click(f"{WIN} .go-lead-pick")
+        page.click(f"{WIN} .go-lead-menu .go-lead-chip >> nth=0")
     page.click(f"{WIN} .go-scene-acts button:has-text('Pitch')")
     page.wait_for_selector(f"{WIN} .go-convo .go-turn.go-reaction", timeout=30_000)
     page.wait_for_selector(f"{WIN} .go-scene-close", timeout=10_000)
@@ -282,7 +283,7 @@ def phone(browser, base, sid, pids, names, errs) -> None:
     page.wait_for_selector(".go-pane.sheet #rc-finish", timeout=10_000)
     assert not page.query_selector(".go-scene")
     page.click(".go-pane.sheet #rc-finish")
-    page.wait_for_selector(f"{WIN} .go-opening .go-present-chip", timeout=30_000)
+    page.wait_for_selector(f"{WIN} .go-opening .go-opening-pick", timeout=30_000)
     present_three(page)
     answer_if_asked(page)
     shot(page, "400-mid")
