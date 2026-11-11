@@ -72,6 +72,48 @@
     node.addEventListener("change", () => { p.f[key] = node.value; p.updated = Date.now(); changed(p, key); });
     return node;
   }
+  // the roster: add players one at a time (name, position, class, an optional overall) or paste a list; both edit the same
+  // lines (p.f.roster, "Name, POS, CLASS[, overall]"), and the list under them shows each player with an x to drop him
+  const CLASSES = ["FR", "SO", "JR", "SR", "FRRS", "SORS", "JRRS", "SRRS"];
+  const CLASS_WORD = { FRRS: "RS FR", SORS: "RS SO", JRRS: "RS JR", SRRS: "RS SR" };
+  function rosterEditor(p) {
+    const text = input(p, "roster", { tag: "textarea", rows: "6", placeholder: "Jay Smith, QB, JR\nMax Lee, WR, SO, 74" });
+    const listBox = el("div", { class: "pg-players", "aria-live": "polite" });
+    const draw = () => {
+      const rows = P.roster(p.f.roster);
+      listBox.replaceChildren(...(rows.length ? rows.map((r, i) => el("div", { class: "pg-player" }, [
+        el("b", { text: r.name || "No Name" }),
+        el("span", { class: "muted small", text: [r.pos, CLASS_WORD[r.class] || r.class, r.overall != null ? `${r.overall} OVR` : null].filter(Boolean).join(" · ") }),
+        el("button", { type: "button", class: "ghost small pg-player-x", "aria-label": `Remove ${r.name || "player"}`, text: "×", onclick: () => {
+          const lines = String(p.f.roster || "").split(/\n+/).map((l) => l.trim()).filter(Boolean);
+          lines.splice(i, 1);
+          setText(lines.join("\n"));
+        } })])) : [el("p", { class: "muted small", text: "No players yet: the game fills 85 to your strength." })]));
+    };
+    const setText = (v) => { p.f.roster = v; text.value = v; p.updated = Date.now(); changed(p, "roster"); draw(); };
+    text.addEventListener("input", draw);
+    const name = el("input", { type: "text", name: "pname", maxlength: "40", placeholder: "Player name", "aria-label": "Player name" });
+    const pos = el("select", { name: "ppos", "aria-label": "Position" }, [...P.POS].map((x) => el("option", { value: x, text: x })));
+    const cls = el("select", { name: "pcls", "aria-label": "Class" }, CLASSES.map((x) => el("option", { value: x, text: CLASS_WORD[x] || x })));
+    const ovr = el("input", { type: "number", name: "povr", min: "40", max: "99", placeholder: "OVR (optional)", "aria-label": "Overall (optional)" });
+    const add = el("button", { type: "button", class: "ghost", text: "Add Player" });
+    const doAdd = () => {
+      const n = name.value.trim();
+      if (!n) { name.focus(); toast("Give the player a name first."); return; }
+      const line = [n.replace(/,/g, " "), pos.value, cls.value, ovr.value ? String(Math.round(Number(ovr.value))) : null].filter(Boolean).join(", ");
+      setText([String(p.f.roster || "").trim(), line].filter(Boolean).join("\n"));
+      name.value = ""; ovr.value = "";
+      name.focus();
+    };
+    add.addEventListener("click", doAdd);
+    name.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doAdd(); } });
+    draw();
+    return el("div", { class: "pg-roster" }, [
+      el("div", { class: "pg-row pg-add" }, [name, pos, cls, ovr, add]),
+      listBox,
+      field("Or Paste a List", text, "One a line: Name, Position, Class (and an overall if you like). Leave the roster empty and the game fills 85 players to your strength; players you list are kept and the rest are filled in.")]);
+  }
+
   // rivals: a multi-pick of the game's FBS teams (stored as slugs)
   function rivalsPick(p) {
     const own = p.kind === "edit" ? p.base : null;
@@ -143,8 +185,7 @@
       el("h3", { class: "pg-sec", text: "Rivals" }),
       field("Rivals", rivalsPick(p), "Pick any teams; each rivalry is scheduled every year. Ctrl or Cmd-click to pick more than one."),
       el("h3", { class: "pg-sec", text: "Roster" }),
-      field("Players", input(p, "roster", { tag: "textarea", rows: "8", placeholder: "Jay Smith, QB, JR\nMax Lee, WR, SO, 74" }),
-        "One a line: Name, Position, Class (and an overall if you like). Leave it empty and the game fills 85 players to your strength; players you list are kept and the rest are filled in."),
+      rosterEditor(p),
       el("div", { class: "pg-row pg-check" }, [check]),
       out);
     ed.hidden = false;

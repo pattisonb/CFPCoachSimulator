@@ -22,3 +22,10 @@
 @media (max-width: 860px) { .pg-layout { grid-template-columns: minmax(0, 1fr); padding: 12px; } }
 @media (max-width: 760px) { .pg-layout button, .pg-layout select, .pg-layout input:not([type="color"]) { min-height: 44px; } }
 .pg-rivals { width: 100%; min-height: 140px; }
+.pg-roster { display: flex; flex-direction: column; gap: 10px; }
+.pg-add > input[name="pname"] { flex: 2 1 180px; }
+.pg-add > select, .pg-add > input[name="povr"] { flex: 1 1 90px; min-width: 0; }
+.pg-players { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; }
+.pg-player { display: flex; align-items: center; gap: 10px; padding: 4px 8px; background: var(--panel-2); }
+.pg-player .pg-player-x { margin-left: auto; min-width: 32px; }
+@media (max-width: 760px) { .pg-player .pg-player-x { min-width: 44px; } }

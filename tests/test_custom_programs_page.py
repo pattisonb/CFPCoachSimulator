@@ -53,7 +53,20 @@ if __name__ == "__main__":
             page.fill(f"{ed} .pg-field:has-text('City') input", "Bend")
             page.select_option(f"{ed} .pg-field:has-text('State') select", "OR")
             page.select_option(f"{ed} .pg-field:has-text('Conference') select >> nth=0", "mountain-west")
-            page.fill(f"{ed} textarea", "Jay Smith, QB, JR\nMax Lee, WR, SO, 74\nAl Cruz, LT, SR")
+            page.fill(f"{ed} textarea", "Jay Smith, QB, JR\nMax Lee, WR, SO, 74")
+            # one at a time: the Add Player row adds to the list (and the paste box); x removes one
+            page.fill(f"{ed} .pg-add input[name=pname]", "Al Cruz")
+            page.select_option(f"{ed} .pg-add select[name=ppos]", "LT")
+            page.select_option(f"{ed} .pg-add select[name=pcls]", "SR")
+            page.click(f"{ed} .pg-add button:has-text('Add Player')")
+            page.fill(f"{ed} .pg-add input[name=pname]", "Cut Me")
+            page.select_option(f"{ed} .pg-add select[name=ppos]", "K")
+            page.click(f"{ed} .pg-add button:has-text('Add Player')")
+            names = page.eval_on_selector_all(f"{ed} .pg-player b", "els => els.map(e => e.textContent)")
+            assert names == ["Jay Smith", "Max Lee", "Al Cruz", "Cut Me"], names
+            page.click(f"{ed} .pg-player:has-text('Cut Me') .pg-player-x")
+            assert page.eval_on_selector_all(f"{ed} .pg-player b", "els => els.map(e => e.textContent)") == ["Jay Smith", "Max Lee", "Al Cruz"]
+            assert "Al Cruz, LT, SR" in page.input_value(f"{ed} textarea"), "the paste box follows the list"
             page.fill(f"{ed} .pg-field:has-text('Offensive Coordinator') input", "Sam Roe")
             page.fill(f"{ed} .pg-field:has-text('Defensive Coordinator') input", "Lee Poe")
             page.select_option(f"{ed} .pg-field:has-text('Offense') select", "Spread RPO")
