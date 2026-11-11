@@ -57,6 +57,7 @@
       else if (r.overall != null && !(r.overall >= 1 && r.overall <= 99)) out.push({ key: "roster", msg: `${r.name}: an overall runs from 1 to 99.` });
     });
     if ((f.rivals || []).length > MAX_RIVALS) out.push({ key: "rivals", msg: `At most ${MAX_RIVALS} rivals.` });
+    if ((f.rivals || []).filter((x) => (f.rivalry_often || {})[x] === "week").length > 1) out.push({ key: "rivals", msg: "Only one rival can be your rivalry week game." });
     return out;
   }
 
@@ -90,8 +91,14 @@
     const rv = Array.isArray(f.rivals) ? f.rivals.filter(Boolean).slice(0, MAX_RIVALS) : [];
     const names = f.rivalry_names || {};
     const named = rv.some((x) => (names[x] || "").trim());
-    if (rv.length && (named || JSON.stringify([...rv].sort()) !== JSON.stringify([...(base.rivals || [])].sort())))
-      t.rivals = rv.map((x) => ((names[x] || "").trim() ? { slug: x, name: names[x].trim() } : x));
+    const often = f.rivalry_often || {};      // "year" (the default), "week" (every year, in rivalry week) or "some" (no reserved week)
+    const special = rv.some((x) => often[x] === "week" || often[x] === "some");
+    if (rv.length && (named || special || JSON.stringify([...rv].sort()) !== JSON.stringify([...(base.rivals || [])].sort())))
+      t.rivals = rv.map((x) => {
+        const nm = (names[x] || "").trim(), o = often[x] || "year";
+        if (!nm && o === "year") return x;
+        return { slug: x, ...(nm ? { name: nm } : {}), ...(o === "week" ? { rivalry_week: true } : {}), ...(o === "some" ? { every_year: false } : {}) };
+      });
     const r = roster(f.roster);
     if (r.length) t.roster = r;
     if (p.kind === "new") t.level = "FBS";

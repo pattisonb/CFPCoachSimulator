@@ -57,7 +57,10 @@
   }
 
   // ----- the editor -----
-  const field = (lab, input, hint, key) => el("label", { class: "pg-field", ...(key ? { "data-key": key } : {}) }, [el("span", { class: "pg-label", text: lab }), input, hint ? el("span", { class: "muted small", text: hint }) : null]);
+  // a field: a <label> around a single control; a group of controls (the rival picker) gets a <div>, since a label sends
+  // every click inside it to its first input (the blinking cursor jumping into the search box)
+  const field = (lab, input, hint, key) => el(["INPUT", "SELECT", "TEXTAREA"].includes(input.tagName) ? "label" : "div", { class: "pg-field", ...(key ? { "data-key": key } : {}) },
+    [el("span", { class: "pg-label", text: lab }), input, hint ? el("span", { class: "muted small", text: hint }) : null]);
   function input(p, key, attrs) {
     const f = p.f;
     const { tag, ...rest } = attrs || {};
@@ -132,11 +135,21 @@
         const nm = el("input", { type: "text", maxlength: "60", class: "pg-rival-name", placeholder: "Rivalry name (optional)", "aria-label": `Rivalry name with ${t.short_name || slug}` });
         nm.value = p.f.rivalry_names[slug] || "";
         nm.addEventListener("input", () => { p.f.rivalry_names[slug] = nm.value; p.updated = Date.now(); persist(); });
+        p.f.rivalry_often = p.f.rivalry_often || {};
+        const weekTaken = rv.some((x) => x !== slug && p.f.rivalry_often[x] === "week");
+        const how = el("select", { class: "pg-rival-often", "aria-label": `How often you play ${t.short_name || slug}` }, [
+          el("option", { value: "year", text: "Every Year" }),
+          el("option", { value: "week", text: "Every Year, Rivalry Week", ...(weekTaken ? { disabled: "" } : {}) }),
+          el("option", { value: "some", text: "Sometimes" })]);
+        how.value = p.f.rivalry_often[slug] || "year";
+        how.title = "Every Year reserves a week each season; Rivalry Week plays it in the season's rivalry week (one rival only); Sometimes keeps the name and the series but plays only when the schedule pairs you";
+        how.addEventListener("change", () => { p.f.rivalry_often[slug] = how.value; save(); });
         return el("div", { class: "pg-rival", "data-slug": slug }, [
-          el("b", { text: t.short_name || t.name || slug }), nm,
+          el("b", { text: t.short_name || t.name || slug }), nm, how,
           el("button", { type: "button", class: "ghost small pg-rival-x", "aria-label": `Remove ${t.short_name || slug}`, text: "×", onclick: () => {
             p.f.rivals = rv.filter((x) => x !== slug);
             delete p.f.rivalry_names[slug];
+            if (p.f.rivalry_often) delete p.f.rivalry_often[slug];
             save();
           } })]);
       }));
@@ -191,6 +204,7 @@
   function edit(id) {
     open = id;
     const p = byId(id);
+    if (p.kind === "edit" && real[p.base] && !real[p.base].colors) details(p.base).then(() => { if (open === id) edit(id); }).catch(() => {});
     const f = p.f;
     const ed = $("#pg-editor");
     const confOpts = [["", "Pick a Conference"], ...conferences.map((c) => [c.id, c.name]), ["__new", "New Conference…"]];
@@ -201,7 +215,7 @@
       let r;
       try { r = await ui().busy(check, api("/api/league/check", { method: "POST", headers: { "Content-Type": "application/json" }, body })); }
       catch (err) { out.replaceChildren(el("p", { class: "pg-bad", text: "The game couldn't check it. Try again in a moment." })); return; }
-      out.replaceChildren(...(r.ok ? [el("p", { class: "pg-good", text: "Ready to use. Tick it on the New Career screen." })]
+      out.replaceChildren(...(r.ok ? [el("p", { class: "pg-good", text: "Ready to use. Check it on the New Career screen." })]
         : (r.errors || []).map((e) => el("p", { class: "pg-bad", text: e }))));
     });
     const newConf = el("div", { class: "pg-row pg-newconf" }, [
@@ -234,7 +248,7 @@
       el("div", { class: "pg-row" }, [field("Offense", select(p, "offense", [["", "Conference's Usual"], ...playbooks.offense.map((x) => [x, x])])),
         field("Defense", select(p, "defense", [["", "Conference's Usual"], ...playbooks.defense.map((x) => [x, x])]))]),
       el("h3", { class: "pg-sec", text: "Rivals" }),
-      field("Rivals", rivalsPick(p), `Up to ${P.MAX_RIVALS}. Each rivalry is played every year; a rival outside your conference takes one of your non-conference weeks. Name it if you like: the name shows on the game.`, "rivals"),
+      field("Rivals", rivalsPick(p), `Up to ${P.MAX_RIVALS}. Every Year reserves a game each season (a rival outside your conference takes one of your non-conference weeks); Rivalry Week plays it in the season's rivalry week; Sometimes keeps the name and the series but plays only when the schedule pairs you. Name it if you like: the name shows on the game.`, "rivals"),
       el("h3", { class: "pg-sec", text: "Roster" }),
       rosterEditor(p),
       el("div", { class: "pg-problems", "aria-live": "polite" }),
@@ -260,7 +274,8 @@
   }
 
   // ----- files -----
-  function download(progs, name) {
+  async function download(progs, name) {
+    try { await Promise.all(progs.filter((p) => p.kind === "edit").map((p) => details(p.base))); } catch (e) { /* an edit then writes every field it has */ }
     const blob = new Blob([JSON.stringify(P.doc(progs, real), null, 1)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = el("a", { href: url, download: name || "custom-programs.json", hidden: "" });
@@ -286,6 +301,7 @@
         oc: ((t.coaches || {}).oc || {}).name, dc: ((t.coaches || {}).dc || {}).name, offense: (t.coaches || {}).offense, defense: (t.coaches || {}).defense,
         rivals: Array.isArray(t.rivals) ? t.rivals.map((r) => (typeof r === "string" ? r : r && r.slug)).filter(Boolean) : undefined,
         rivalry_names: Array.isArray(t.rivals) ? Object.fromEntries(t.rivals.filter((r) => r && typeof r === "object" && r.name).map((r) => [r.slug, r.name])) : undefined,
+        rivalry_often: Array.isArray(t.rivals) ? Object.fromEntries(t.rivals.filter((r) => r && typeof r === "object").map((r) => [r.slug, r.rivalry_week ? "week" : r.every_year === false ? "some" : "year"])) : undefined,
         roster: (t.roster || []).map((r) => [r.name, r.pos, r.class, r.overall].filter((x) => x != null && x !== "").join(", ")).join("\n") };
       if (isReal) {
         const r = real[t.slug], rc = r.colors || {};
@@ -301,12 +317,32 @@
     toast(`Loaded ${n} program${n === 1 ? "" : "s"}.`);
   }
 
+  // the game's programs are loading: Create and Edit wait (their conference and rival lists come with them)
+  function ready(on) {
+    for (const id of ["#pg-new", "#pg-real"]) $(id).disabled = !on;
+    $("#pg-loading").hidden = on;
+  }
+  // a real team's full details, fetched when you open it (the list carries names only)
+  async function details(slug) {
+    if (real[slug] && real[slug].colors) return real[slug];
+    const d = await api(`/api/league/programs/${encodeURIComponent(slug)}`);
+    real[slug] = { ...(real[slug] || {}), ...d };
+    return real[slug];
+  }
+
   // ----- wiring -----
   async function mount() {
+    ready(false);
     try { localStorage.setItem("cfp-probe", "1"); localStorage.removeItem("cfp-probe"); } catch (e) { $("#pg-store-note").hidden = false; }
     drawList();
     $("#pg-new").addEventListener("click", () => create("new"));
-    $("#pg-real").addEventListener("change", (e) => { const v = e.currentTarget.value; e.currentTarget.value = ""; if (v) create("edit", v); });
+    $("#pg-real").addEventListener("change", async (e) => {
+      const sel = e.currentTarget, v = sel.value;
+      sel.value = "";
+      if (!v) return;
+      try { await ui().busy(sel, details(v)); } catch (err) { toast("That program's details didn't load. Try again."); return; }
+      create("edit", v);
+    });
     $("#pg-download-all").addEventListener("click", () => (list.length ? download(list, "custom-programs.json") : toast("Nothing to download yet.")));
     $("#pg-load").addEventListener("click", () => $("#pg-file").click());
     $("#pg-file").addEventListener("change", (e) => { const file = e.currentTarget.files[0]; e.currentTarget.value = ""; if (file) loadFile(file); });
@@ -315,10 +351,12 @@
       const d = await api("/api/league/programs");
       real = Object.fromEntries(d.teams.map((t) => [t.slug, t]));
       conferences = d.conferences.filter((c) => (c.level || "FBS") === "FBS");
-      playbooks = { offense: [...new Set(d.teams.map((t) => t.offense).filter(Boolean))].sort(), defense: [...new Set(d.teams.map((t) => t.defense).filter(Boolean))].sort() };
+      playbooks = d.playbooks || playbooks;
       const sel = $("#pg-real");
       sel.append(...d.teams.filter((t) => (t.level || "FBS") === "FBS").map((t) => el("option", { value: t.slug, text: t.short_name || t.name })));
+      ready(true);
       drawList();
+      if (open && byId(open)) edit(open);            // an editor opened before the list arrived: its conferences and rivals fill in
     } catch (err) { toast("The game's programs didn't load. Reload the page to try again.", 6000); }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
