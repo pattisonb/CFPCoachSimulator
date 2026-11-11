@@ -609,6 +609,16 @@ def league_program(p: Params) -> dict:
             "rivals": [r for r in (m.get("rivals") or []) if r in b["slugs"]], "offense": off, "defense": de}
 
 
+@route("GET", "/api/league/towns/{state}")
+def league_towns(p: Params) -> dict:
+    """A state's towns for the Custom Programs campus map: the game's own town list (the recruits' hometowns, the same one
+    Close to Home looks a city up in), biggest first: [{name, lat, lon, weight}]. Unknown state: an empty list."""
+    from coach_career import recruits
+    rows = (recruits.model()["generation"]["towns"] or {}).get(str(p.path["state"]).upper()) or []
+    towns = sorted(({"name": r[0], "weight": r[1], "lat": r[2], "lon": r[3]} for r in rows), key=lambda t: -t["weight"])
+    return {"state": str(p.path["state"]).upper(), "towns": towns}
+
+
 @route("POST", "/api/league/check")
 def league_check(p: Params) -> dict:
     """A league file (the body is its bytes) checked for New Career: its errors as sentences, or its
@@ -800,6 +810,21 @@ def gameday_season(p: Params) -> dict:
     return {"status": "running", "done": week, "total": week + 1}
 
 
+def _card_record(st: dict) -> dict:
+    """A saved season's won-lost record from its own games (playoffs in), for its card. Never season._records, which
+    builds its table from the league in play: a career at a Custom Programs team is not in the built-in league, and its
+    card failed, so the career dropped out of the list (the player's report)."""
+    me, w, l = st["team"], 0, 0
+    for g in (st.get("games") or {}).values():
+        if not g.get("played") or me not in (g.get("home"), g.get("away")):
+            continue
+        mine, theirs = (g["home_score"], g["away_score"]) if g["home"] == me else (g["away_score"], g["home_score"])
+        if mine is None or theirs is None or mine == theirs:
+            continue
+        w, l = (w + 1, l) if mine > theirs else (w, l + 1)
+    return {"wins": w, "losses": l}
+
+
 def _champion_name(st: dict) -> Optional[str]:
     """A saved season's champion by name, from its own league (a league file's new team) or the built-in teams."""
     slug = st.get("champion")
@@ -823,17 +848,24 @@ def list_seasons(p: Params) -> dict:
             if cached and cached[0] == mtime:
                 out.append(cached[1])
                 continue
+            st = None
             try:
                 st = json.loads(path.read_text(encoding="utf-8"))
                 if "current_week" not in st or st.get("mode") == "real":   # the old server's real 2026 season
                     continue
-                rec = season._records(st, include_playoff=True)[st["team"]]
+                rec = _card_record(st)          # from the save's own games: a custom program is not in whatever league is loaded
                 card = {"id": st["id"], "team": st["team"], "team_name": st["team_name"], "mode": st["mode"],
                         "created_at": st["created_at"], "current_week": st["current_week"], "done": st["done"],
                         "wins": rec["wins"], "losses": rec["losses"], "champion_name": _champion_name(st),
                         "year": st.get("year") or 2026, "career": bool(st.get("career")), "offseason": (st.get("offseason") or {}).get("stage")}
             except Exception:  # noqa: BLE001 - one unreadable file must not break the list
-                continue
+                if not (isinstance(st, dict) and st.get("id") and st.get("team")):
+                    continue
+                # a save that reads but whose card trips: listed plainly (never hidden; it is the player's career)
+                card = {"id": st["id"], "team": st["team"], "team_name": st.get("team_name") or st["team"], "mode": st.get("mode", "full"),
+                        "created_at": st.get("created_at"), "current_week": st.get("current_week", 0), "done": bool(st.get("done")),
+                        "wins": 0, "losses": 0, "champion_name": None, "year": st.get("year") or 2026, "career": bool(st.get("career")),
+                        "offseason": (st.get("offseason") or {}).get("stage")}
             _cards[path.stem] = (mtime, card)
             out.append(card)
     return {"seasons": out}

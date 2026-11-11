@@ -80,47 +80,104 @@
   const SVGNS = "http://www.w3.org/2000/svg";
   const svgEl = (tag, attrs) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v); return n; };
   const spotText = (f) => `${Math.abs(f.lat).toFixed(2)}° ${f.lat >= 0 ? "N" : "S"}, ${Math.abs(f.lon).toFixed(2)}° ${f.lon <= 0 ? "W" : "E"}`;
+  // the player's ask: the map shows once a state is picked, zoomed to that state (its neighbors faint) with its towns from
+  // the game's own list (GET /api/league/towns/{state}, the list Close to Home reads). A town click puts the campus
+  // there and fills the City; a click elsewhere in the state puts it exactly there. Picking another state redraws it.
+  const townCache = {};
+  async function townsOf(code) {
+    if (!townCache[code]) townCache[code] = api(`/api/league/towns/${code}`).then((d) => d.towns || []).catch(() => []);
+    return townCache[code];
+  }
   function spotPicker(p) {
     const f = p.f, S = window.US_STATES, M = window.USMap;
     const wrap = el("div", { class: "pg-field pg-spot", "data-key": "spot" });
+    const label = el("span", { class: "pg-label", text: "Campus" });
     if (!S || !M || !M.unproject) return wrap;
-    const svg = svgEl("svg", { viewBox: S.viewBox || "0 0 975 610", class: "pg-map", role: "img", "aria-label": "Map: click to set your campus" });
+    if (!f.state || !S.paths[f.state]) {
+      wrap.append(label, el("p", { class: "muted small pg-spot-note", text: "Pick a state above and its map shows here, so you can place your campus." }));
+      wrap._redraw = () => wrap.replaceWith(spotPicker(p));
+      return wrap;
+    }
+    const [bx, by, bw, bh] = M.stateBox(f.state);
+    const pad = Math.max(bw, bh) * 0.08;
+    const vw = bw + pad * 2, vh = bh + pad * 2;
+    const unit = Math.max(vw, vh) / 100;                 // sizes scale with the zoom: a dot, a label, a stroke
+    const svg = svgEl("svg", { viewBox: `${bx - pad} ${by - pad} ${vw} ${vh}`, class: "pg-map", role: "img",
+      "aria-label": `Map of ${f.state}: click a town or a spot to set your campus` });
+    svg.style.setProperty("--u", String(unit));
     const states = svgEl("g", { class: "pg-map-states" });
-    for (const [code, d] of Object.entries(S.paths)) states.append(svgEl("path", { d, "data-state": code, class: "pg-map-state" }));
-    const dot = svgEl("circle", { r: "7", class: "pg-map-dot" });
-    svg.append(states, dot);
+    for (const [code, d] of Object.entries(S.paths)) {
+      states.append(svgEl("path", { d, "data-state": code, class: `pg-map-state${code === f.state ? " on" : " other"}`, "stroke-width": String(unit * (code === f.state ? 0.35 : 0.2)) }));
+    }
+    const towns = svgEl("g", { class: "pg-map-towns" });
+    const dot = svgEl("circle", { r: String(unit * 1.6), class: "pg-map-dot", "stroke-width": String(unit * 0.5) });
+    svg.append(states, towns, dot);
     const note = el("span", { class: "muted small pg-spot-note" });
     const clear = el("button", { type: "button", class: "ghost small pg-spot-clear", text: "Clear Spot" });
     const show = () => {
       const has = Number.isFinite(f.lat) && Number.isFinite(f.lon);
       const xy = has ? M.project([f.lat, f.lon]) : null;
       dot.style.display = xy ? "" : "none";
-      if (xy) { dot.setAttribute("cx", xy[0].toFixed(1)); dot.setAttribute("cy", xy[1].toFixed(1)); }
-      for (const s of states.children) s.classList.toggle("on", s.dataset.state === f.state);
+      if (xy) { dot.setAttribute("cx", xy[0].toFixed(2)); dot.setAttribute("cy", xy[1].toFixed(2)); }
+      for (const t of towns.querySelectorAll(".pg-town")) t.classList.toggle("on", has && Math.abs(+t.dataset.lat - f.lat) < 1e-6 && Math.abs(+t.dataset.lon - f.lon) < 1e-6);
       note.textContent = has ? `Campus at ${spotText(f)}. Recruits nearby count you as close to home.`
-        : "Click the map to set your campus. Unset, the game uses your city if it knows it, else the state's center.";
+        : `Click a town or anywhere in ${f.state} to set your campus. Unset, the game uses your city if it knows it, else the state's center.`;
       clear.hidden = !has;
     };
-    svg.addEventListener("click", (e) => {
-      const pt = svg.createSVGPoint();
-      pt.x = e.clientX; pt.y = e.clientY;
-      const at = pt.matrixTransform(svg.getScreenCTM().inverse());
-      const ll = M.unproject([at.x, at.y]);
-      if (!ll) { toast("Click inside the United States."); return; }
-      f.lat = ll[0]; f.lon = ll[1];
-      const code = e.target && e.target.dataset ? e.target.dataset.state : null;
-      if (code && STATES.includes(code) && code !== f.state) {
-        f.state = code;
-        for (const s of $("#pg-editor").querySelectorAll("select")) if (s.querySelector('option[value="AK"]')) s.value = code;
-        changed(p, "state");
+    const setSpot = (lat, lon, city) => {
+      f.lat = lat; f.lon = lon;
+      if (city) {
+        f.city = city;
+        const ci = $("#pg-editor").querySelector('.pg-field[data-key="city"] input');
+        if (ci) ci.value = city;
+        changed(p, "city");
       }
       p.updated = Date.now();
       changed(p, "spot");
       show();
+    };
+    // the state's towns: biggest first, none closer than a few dots to one already drawn (the suburbs thin out)
+    townsOf(f.state).then((list) => {
+      if (!svg.isConnected && !wrap.isConnected) { /* drawn before it joins the page: carry on */ }
+      const placed = [];
+      const gap = unit * 6;
+      let labeled = 0;
+      for (const t of list) {
+        const xy = M.project([t.lat, t.lon]);
+        if (!xy || placed.some(([x, y]) => Math.hypot(x - xy[0], y - xy[1]) < gap)) continue;
+        placed.push(xy);
+        const g = svgEl("g", { class: "pg-town", "data-name": t.name, "data-lat": String(t.lat), "data-lon": String(t.lon), tabindex: "0", role: "button",
+          "aria-label": `Put the campus in ${t.name}` });
+        g.append(svgEl("circle", { cx: xy[0].toFixed(2), cy: xy[1].toFixed(2), r: String(unit * 0.9), class: "pg-town-dot", "stroke-width": String(unit * 0.25) }));
+        if (labeled < 10) {
+          const tx = svgEl("text", { x: (xy[0] + unit * 1.4).toFixed(2), y: (xy[1] + unit * 0.9).toFixed(2), class: "pg-town-name", "font-size": String(unit * 2.6) });
+          tx.textContent = t.name;
+          g.append(tx);
+          labeled += 1;
+        }
+        const titleEl = svgEl("title"); titleEl.textContent = t.name; g.append(titleEl);
+        const pick = (e) => { e.stopPropagation(); setSpot(t.lat, t.lon, t.name); };
+        g.addEventListener("click", pick);
+        g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(e); } });
+        towns.append(g);
+        if (placed.length >= 18) break;
+      }
+      show();
+    });
+    svg.addEventListener("click", (e) => {
+      const code = e.target && e.target.dataset ? e.target.dataset.state : null;
+      if (code && code !== f.state) { toast(`That's outside ${f.state}. Change the state above to move there.`); return; }
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      const at = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const ll = M.unproject([at.x, at.y]);
+      if (!ll || code !== f.state) { toast(`Click inside ${f.state}.`); return; }
+      setSpot(ll[0], ll[1], null);
     });
     clear.addEventListener("click", () => { delete f.lat; delete f.lon; p.updated = Date.now(); changed(p, "spot"); show(); });
-    wrap.append(el("span", { class: "pg-label", text: "Campus" }), svg, el("div", { class: "pg-spot-foot" }, [note, clear]));
+    wrap.append(label, svg, el("div", { class: "pg-spot-foot" }, [note, clear]));
     wrap._show = show;
+    wrap._redraw = () => wrap.replaceWith(spotPicker(p));
     show();
     return wrap;
   }
@@ -247,7 +304,10 @@
       if (h) h.textContent = label(p);
     }
     if (key === "conference") ed.querySelector(".pg-newconf").hidden = p.f.conference !== "__new";
-    if (key === "state") { const sp = ed.querySelector(".pg-spot"); if (sp && sp._show) sp._show(); }
+    if (key === "state") {                       // the map follows the state; a spot from the old state goes with it
+      delete p.f.lat; delete p.f.lon;
+      const sp = ed.querySelector(".pg-spot"); if (sp && sp._redraw) sp._redraw();
+    }
     ed.querySelector(".pg-check-out").replaceChildren();
     drawList();
   }
@@ -284,7 +344,7 @@
         field("Secondary Color", input(p, "secondary", { type: "color" })),
         field("Accent Color", input(p, "accent", { type: "color" }))]),
       el("h3", { class: "pg-sec", text: "Home" }),
-      el("div", { class: "pg-row" }, [field("City", input(p, "city", { type: "text", maxlength: "40" })),
+      el("div", { class: "pg-row" }, [field("City", input(p, "city", { type: "text", maxlength: "40" }), null, "city"),
         field("State", select(p, "state", [["", "Pick a State"], ...STATES.map((s) => [s, s])]))]),
       spotPicker(p),
       el("h3", { class: "pg-sec", text: "Program" }),

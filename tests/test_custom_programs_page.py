@@ -55,21 +55,45 @@ if __name__ == "__main__":
             assert page.query_selector(f"{ed} .pg-field.pg-invalid[data-key=name]")
             page.fill(f"{ed} .pg-field:has-text('Name') input >> nth=0", "Alder Tech")
             page.fill(f"{ed} .pg-field:has-text('Mascot') input", "Owls")
-            page.fill(f"{ed} .pg-field:has-text('City') input", "Bend")
+            # the campus map waits on a state (the player's ask); then it is that state, zoomed, with its towns
+            assert "Pick a state above" in page.inner_text(f"{ed} .pg-spot") and not page.query_selector(f"{ed} .pg-map")
             page.select_option(f"{ed} .pg-field:has-text('State') select", "OR")
-            # the campus on the map: unset says what the game uses; a click near Bend sets the spot (and the state)
-            assert "Click the map" in page.inner_text(f"{ed} .pg-spot") and page.is_hidden(f"{ed} .pg-spot-clear")
+            page.wait_for_selector(f"{ed} .pg-map .pg-town", timeout=30_000)
             assert page.eval_on_selector(f"{ed} .pg-map-state.on", "e => e.dataset.state") == "OR", "the state is lit"
-            page.select_option(f"{ed} .pg-field:has-text('State') select", "WA")
-            xy = page.evaluate("""() => { const svg = document.querySelector('#pg-editor .pg-map'), r = svg.getBoundingClientRect();
-              const [x, y] = window.USMap.project([44.06, -121.31]); return [r.left + x * r.width / 975, r.top + y * r.height / 610]; }""")
+            vb = page.get_attribute(f"{ed} .pg-map", "viewBox").split()
+            assert float(vb[2]) < 400, f"zoomed to the state: {vb}"
+            towns = page.eval_on_selector_all(f"{ed} .pg-town", "els => els.map(e => e.dataset.name)")
+            assert "Portland" in towns and "Eugene" in towns and 5 <= len(towns) <= 18, towns
+            assert page.eval_on_selector_all(f"{ed} .pg-town-name", "els => els.length") >= 5, "the biggest towns are named"
+            assert "Click a town" in page.inner_text(f"{ed} .pg-spot") and page.is_hidden(f"{ed} .pg-spot-clear")
+            # a town click: the campus there, and the City filled
+            page.click(f"{ed} .pg-town[data-name='Eugene'] circle", force=True)
+            assert page.input_value(f"{ed} .pg-field[data-key=city] input") == "Eugene"
+            assert page.is_visible(f"{ed} .pg-spot-clear") and page.query_selector(f"{ed} .pg-town.on[data-name='Eugene']")
+            import re
+            to_screen = """([lat, lon]) => { const svg = document.querySelector('#pg-editor .pg-map'), m = svg.getScreenCTM(); const [x, y] = window.USMap.project([lat, lon]);
+              return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f]; }"""
+            # a neighbor's ground: refused, nothing moves
+            before = page.inner_text(f"{ed} .pg-spot-note")
+            xy = page.evaluate(to_screen, [42.6, -116.0])          # Idaho, beside Oregon
+            page.mouse.click(xy[0], xy[1])
+            assert page.inner_text(f"{ed} .pg-spot-note") == before, "a click in another state changes nothing"
+            # a spot click: exactly there (near Bend), the City kept
+            xy = page.evaluate(to_screen, [44.06, -121.31])
             page.mouse.click(xy[0], xy[1])
             spot = page.inner_text(f"{ed} .pg-spot-note")
-            import re
             m = re.match(r"Campus at ([\d.]+)° N, ([\d.]+)° W\. ", spot)
-            assert m and abs(float(m[1]) - 44.06) < 0.3 and abs(float(m[2]) - 121.31) < 0.3 and spot.endswith("."), spot
-            assert page.eval_on_selector(f"{ed} .pg-field:has-text('State') select", "e => e.value") == "OR", "the click sets the state"
-            assert page.is_visible(f"{ed} .pg-spot-clear")
+            assert m and abs(float(m[1]) - 44.06) < 0.1 and abs(float(m[2]) - 121.31) < 0.1 and spot.endswith("."), spot
+            page.fill(f"{ed} .pg-field[data-key=city] input", "Bend")
+            # another state redraws the map there
+            page.select_option(f"{ed} .pg-field:has-text('State') select", "WA")
+            page.wait_for_function("() => { const s = document.querySelector('#pg-editor .pg-map-state.on'); return s && s.dataset.state === 'WA'; }", timeout=10_000)
+            assert "Click a town" in page.inner_text(f"{ed} .pg-spot"), "a new state clears the old state's spot"
+            page.select_option(f"{ed} .pg-field:has-text('State') select", "OR")
+            page.wait_for_selector(f"{ed} .pg-map .pg-town", timeout=30_000)
+            xy = page.evaluate(to_screen, [44.06, -121.31])
+            page.mouse.click(xy[0], xy[1])
+            assert page.inner_text(f"{ed} .pg-spot-note").startswith("Campus at 44."), page.inner_text(f"{ed} .pg-spot-note")
             page.select_option(f"{ed} .pg-field:has-text('Conference') select >> nth=0", "mountain-west")
             page.fill(f"{ed} textarea", "Jay Smith, QB, JR\nMax Lee, WR, SO, 74")
             # one at a time: the Add Player row adds to the list (and the paste box); x removes one

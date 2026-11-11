@@ -48,9 +48,15 @@
 /* the campus map (spotPicker): click to set the spot Close to Home measures from */
 .pg-spot { width: 100%; max-width: 560px; }
 .pg-map { display: block; width: 100%; height: auto; cursor: crosshair; border: 1px solid var(--border); background: var(--panel-2); }
-.pg-map-state { fill: var(--us-open, #e7e5df); stroke: var(--panel, #fff); stroke-width: 0.8; }
-.pg-map-state:hover { fill: color-mix(in srgb, var(--us-open, #e7e5df) 70%, var(--text)); }
-.pg-map-state.on { fill: color-mix(in srgb, var(--accent, #1f4e79) 30%, var(--us-open, #e7e5df)); }
-.pg-map-dot { fill: var(--accent, #c8102e); stroke: var(--panel, #fff); stroke-width: 2.5; pointer-events: none; }
+.pg-map-state { fill: var(--us-open, #e7e5df); stroke: var(--panel, #fff); }
+.pg-map-state.other { fill: color-mix(in srgb, var(--us-open, #e7e5df) 55%, var(--panel-2, #f4f4f4)); cursor: not-allowed; }
+.pg-map-state.on { fill: color-mix(in srgb, var(--accent, #1f4e79) 22%, var(--us-open, #e7e5df)); stroke: var(--text); }
+.pg-map-dot { fill: var(--accent, #c8102e); stroke: var(--panel, #fff); pointer-events: none; }
+.pg-town { cursor: pointer; }
+.pg-town-dot { fill: var(--text); stroke: var(--panel, #fff); }
+.pg-town:hover .pg-town-dot, .pg-town:focus .pg-town-dot, .pg-town.on .pg-town-dot { fill: var(--accent, #c8102e); }
+.pg-town:focus { outline: none; }
+.pg-town-name { fill: var(--text); font-family: inherit; font-weight: 600; paint-order: stroke; stroke: var(--panel-2, #fff); stroke-width: 0.35em; stroke-linejoin: round; }
+.pg-town:hover .pg-town-name, .pg-town.on .pg-town-name { font-weight: 800; }
 .pg-spot-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 @media (max-width: 760px) { .pg-spot-clear { min-height: 44px; } }
