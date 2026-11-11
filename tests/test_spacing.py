@@ -295,8 +295,7 @@ if __name__ == "__main__":
                     page.click(".go-menu .go-menu-item[data-action=call]")
                 page.wait_for_selector(".modal-scene .go-scene .go-opening, .modal-scene .go-scene .go-scene-line.cue", timeout=30_000)
                 if page.query_selector(".modal-scene .go-scene .go-opening"):      # a fresh call: present three things, the cue follows
-                    for c in page.query_selector_all(".modal-scene .go-scene .go-present-chip")[:3]:
-                        c.click()
+                    page.eval_on_selector_all(".modal-scene .go-scene .go-present-chip", "els => els.slice(0, 3).forEach((e) => e.click())")
                     page.click(".modal-scene .go-scene .go-present")
                 page.wait_for_selector(".modal-scene .go-scene .go-scene-line.cue", timeout=30_000)
             w.both("recruiting-scene", scene)

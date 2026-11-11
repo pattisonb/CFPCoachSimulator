@@ -20,11 +20,16 @@ from __future__ import annotations
 
 import os
 import random
+import re
 
 from coach_career import persona, recruiting
 
 PERSONA_LINE = 0.5         # how often his personality's own line stands in for the generic one *tune*
 CUE_TWO_SIDED = 0.6        # how often a cue names two topics (one his, one not) *tune: tools/check_recruiting.py*
+CUE_TRUST_CONTACTS = 3     # *tune* from this many contacts with him (or once you offered him) he names no decoy: he's straight with you
+KNOWN_LEADS = ["You already know {k} matters to me.", "You know where I stand on {k}."]   # his answer starts from what you've heard
+ALL_KNOWN = "You know what I care about, Coach: {a}, {b} and {c}."                        # ... when you've heard all three
+REPEAT_LINE = "You already said that one, Coach."                                        # you lead with what your opening said
 # how often a playing-time recruit asks about a named player on a call or visit *tune: tools/check_recruiting.py*
 # (CFP_QUESTION_RATE: the sweep forces it through the dev server's environment)
 QUESTION_RATE = float(os.environ.get("CFP_QUESTION_RATE", "0.6"))
@@ -859,16 +864,24 @@ def cue(state: dict, slug: str, pid: str, week: int, f: dict, tells: bool = True
     if not tells:
         lines = persona.NO_TOPIC.get(persona.of(state, pid)["personality"]) or persona.NO_TOPIC["guarded"]
         return {"topics": [], "text": random.Random(f"persona-line-call-{pid}-{week}-cue").choice(lines).format(**f)}
-    known = (rc["revealed"].get(slug) or {}).get(pid) or []
-    true = next((t for t in p["priorities"] if t not in known), p["priorities"][0])
+    known = [t for t in (rc["revealed"].get(slug) or {}).get(pid) or [] if t in p["priorities"]]
     rng = random.Random(f"cue-{rc['seed']}-{slug}-{pid}-{week}")
-    if rng.random() < CUE_TWO_SIDED:
+    if len(known) >= len(p["priorities"]):            # you've heard all three: he sums them up, nothing new to hint
+        a, b, c = (PHRASES[t] for t in p["priorities"][:3])
+        return {"topics": [], "text": ALL_KNOWN.format(a=a, b=b, c=c)}
+    true = next(t for t in p["priorities"] if t not in known)
+    contact = (rc["contacts"].get(pid) or {}).get(slug) or {}
+    trusted = pid in rc["offers"].get(slug, []) or contact.get("n", 0) >= CUE_TRUST_CONTACTS   # straight with you: no decoy
+    if rng.random() < CUE_TWO_SIDED and not trusted:
         decoy = rng.choice([t for t in recruiting.PITCHES if t not in p["priorities"]])
         topics = [true, decoy] if rng.random() < 0.5 else [decoy, true]
         text = rng.choice(LINES["_two_sided"]["cue"]).format(a=PHRASES[topics[0]], b=PHRASES[topics[1]], **f)
     else:
         topics = [true]
         text = rng.choice(LINES[true]["cue"]).format(**f)
+    if known:                                        # what you already know first, then the new part
+        lead = random.Random(f"cue-known-{rc['seed']}-{slug}-{pid}-{week}").choice(KNOWN_LEADS).format(k=PHRASES[known[0]])
+        text = f"{lead} {re.sub(r'^Honestly, Coach[?,] ', 'Past that? ', text)}"
     return {"topics": topics, "text": text}
 
 
@@ -895,7 +908,8 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
         phrase = said_phrase(tr, best)                              # he echoes what you said
         kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase, Topic=phrase[0].upper() + phrase[1:], **f)
         mine = _persona_line(state, pid, sc["id"], "hit", f, always=not tells_)     # a call that tells nothing names no topic
-        text = mine or text
+        if mine:                                                    # his tone, still naming which of your three landed
+            text = f"{phrase[0].upper()}{phrase[1:]}? {mine}" if tells_ else mine
     elif back:
         kind, text = "quiet", true_line(tr, back[0], "quiet", rng.choice(LINES[back[0]]["quiet"]), f"{sc['id']}-present")[0].format(**f)
         text = _persona_line(state, pid, sc["id"], "quiet", f, always=not tells_) or text
@@ -1011,7 +1025,19 @@ def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, 
     return REPLY_LINES[answer]
 
 
-def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False, tells: bool = True) -> dict:
+def bare_reaction(text: str) -> str:
+    """His line without what wraps it: the repeat note (REPEAT_LINE) and the echo naming what landed ("The NIL side of
+    it? ..."). Tests read the line itself through this."""
+    text = text.removeprefix(REPEAT_LINE + " ")
+    for ph in PHRASES.values():
+        echo = f"{ph[0].upper()}{ph[1:]}? "
+        if text.startswith(echo):
+            return text[len(echo):]
+    return text
+
+
+def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict, tired: bool = False, tells: bool = True,
+             repeat: bool = False) -> dict:
     """How he takes your lead-with: a priority (or his decider's topic, persona.counts_as_priority) where
     you are strong lights him up (hit), one where you are weak goes quiet, anything else is polite;
     `tired` (the call pestered him) and the pitch falls flat. On a call that keeps his priority to himself
@@ -1033,9 +1059,13 @@ def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict,
     if fixed and tells and pitch == "winning" and kind == "hit":
         pass                                                      # his doubt about the record stands: his personality's line would hide it
     elif kind in ("hit", "quiet"):
-        text = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react") or text
+        mine = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react")
+        if mine:                                                  # his personality's tone, still naming what landed (a guarded call names nothing)
+            text = f"{PHRASES[pitch][0].upper()}{PHRASES[pitch][1:]}? {mine}" if tells else mine
     elif not tells:                                               # the topic's polite line would say it is none of his
         text = _no_tell_line(state, p["id"], f"{sid}-react", f)
     elif pitch == "nil":                                          # money is not what he is about, and he says so
         text = NIL_NOT_HIS
+    if repeat:                                                    # your opening already said it
+        text = f"{REPEAT_LINE} {text}"
     return {"kind": kind if tells else "guarded", "text": text, "you": you}

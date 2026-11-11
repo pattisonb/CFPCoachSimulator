@@ -676,6 +676,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "no_room": recruiting.no_room(state, viewer, pid),            # the portal: your roster (or Auto's cap at his position) has no room for him
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "priorities_known": list((rc["revealed"].get(viewer) or {}).get(pid, [])),
+        "pitch_marks": recruiting.pitch_marks(state, viewer, pid),
         **shown(state, p),
     }
     read = rc["reads"].get(pid)
@@ -807,6 +808,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                visit=visit_view(state, viewer, (rc["visits"].get(pid) or {}).get(viewer)),
                visit_weeks=recruiting.visit_weekends(state, viewer, pid, homes),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
+               pitch_marks=recruiting.pitch_marks(state, viewer, pid),
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),

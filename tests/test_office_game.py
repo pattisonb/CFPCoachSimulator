@@ -130,9 +130,10 @@ def check_gameday(page, base, sid) -> None:
     nxt = next(x for x in s["schedule"] if x["opponent"] and not x["played"])
     assert this["played"] and not nxt["played"], (this, nxt)
     k = page.text_content("#tab-office .go-game-next .go-kicker")
-    want = f"{'Won' if this['won'] else 'Lost'} {this['points_for']}–{this['points_against']} This Week · Next Game · "
-    assert k.startswith(want) and "Bye" not in k and (s["week_labels"].get(str(nxt["week"])) or f"Week {nxt['week']}") in k, (k, want)
-    assert nxt["opponent_name"] in page.text_content("#tab-office .go-game-next")
+    assert k.startswith("Final · ") and (s["week_labels"].get(str(this["week"])) or f"Week {this['week']}") in k, k   # this week's final, not the next game
+    hero = page.text_content("#tab-office .go-game-next")
+    assert f"{this['points_for']}–{this['points_against']}" in hero and this["opponent_name"] in hero, hero
+    assert nxt["opponent_name"] == this["opponent_name"] or nxt["opponent_name"] not in hero, "the next game waits until you advance"
     assert page.query_selector("#tab-office .go-play [data-play=advance]:not([disabled])"), "Advance is next"
 
 
