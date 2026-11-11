@@ -188,3 +188,7 @@
 .hq-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .hq-filter { flex: 1 1 110px; min-width: 0; min-height: 36px; }
 @media (max-width: 699px), (pointer: coarse) { .hq-filter { min-height: 44px; } }
+/* Recruiting Tasks: a tick the game made for you (it ticks itself off when you do the task), and a task that no longer applies */
+.hq-task-done.auto[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--go-primary-ink, var(--accent-ink)); }
+.hq-task.moot > .hq-grow > span:first-child { color: var(--muted); }
+.hq-task-note { font-size: 12px; }

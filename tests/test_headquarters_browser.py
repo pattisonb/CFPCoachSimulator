@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -233,6 +234,13 @@ def check_suggested_tasks(page, base, sid) -> None:
     """A money promise (a NIL pitch to a recruit who cares about it) shows in Alerts and as the first Suggested task,
     with the NIL and the week it is due; a recruit who cooled on you gets a task too."""
     board = call(base, f"/api/season/{sid}/recruiting")
+    me = call(base, f"/api/season/{sid}")["team"]
+    for b in board["board"]:                                # free NIL Auto-recruit tied up, so a money promise can be paid
+        if (board.get("nil") or {}).get("left", 0) >= 200:
+            break
+        if b.get("offered") and (b.get("nil") or 0) > 0 and b.get("committed") != me and not b.get("signed"):
+            call(base, f"/api/season/{sid}/recruit", {"pid": b["id"], "action": "pull_offer"})
+            board = call(base, f"/api/season/{sid}/recruiting")
     owed = None
     for b in board["board"][:20]:
         if b.get("committed") or b.get("signed"):
@@ -245,7 +253,8 @@ def check_suggested_tasks(page, base, sid) -> None:
             r = call(base, f"/api/season/{sid}/recruit", {"pid": b["id"], "action": "pitch", "pitch": "nil", "scene": sc["id"]})
         except Exception:  # noqa: BLE001  (out of hours, a call already this week)
             continue
-        if r.get("money_owed"):
+        left = (call(base, f"/api/season/{sid}/recruiting").get("nil") or {}).get("left", 0)
+        if r.get("money_owed") and r["money_owed"]["nil"] <= left:       # one you can pay, so the tick can be shown
             owed = (b["name"], r["money_owed"])
             break
     assert owed, "a recruit who cares about NIL to talk money with"
@@ -256,6 +265,21 @@ def check_suggested_tasks(page, base, sid) -> None:
     first = page.inner_text("#tab-headquarters .hq-card[data-widget='tasks'] .hq-task-suggest >> nth=0")
     assert name in first and f"{mo['nil']} NIL" in first and f"Week {mo['by_week']}" in first, first
     assert f"{mo['nil']} NIL" in page.inner_text("#tab-headquarters .hq-card[data-widget='alerts']")
+    # take the suggestion; put the NIL on his offer; the task ticks itself ("Done for You")
+    page.click("#tab-headquarters .hq-card[data-widget='tasks'] .hq-task-suggest >> nth=0 >> .hq-task-add-suggest")
+    page.wait_for_function("(n) => [...document.querySelectorAll('#tab-headquarters .hq-card[data-widget=tasks] .hq-task')].some(e => e.textContent.includes(n))", arg=name, timeout=15_000)
+    row = next(b for b in call(base, f"/api/season/{sid}/recruiting")["board"] if b["name"] == name)
+    held = row.get("nil") or 0
+    if held < mo["nil"]:                                  # put what he is owed on the offer (already there: nothing to do)
+        body = {"pid": row["id"], "action": "raise_nil" if row.get("offered") else "offer", "nil": mo["nil"], **({} if row.get("offered") else {"pitch": "winning"})}
+        try:
+            call(base, f"/api/season/{sid}/recruit", body)
+        except urllib.error.HTTPError as e:
+            raise AssertionError(f"putting {mo['nil']} NIL on {name} was refused: {e.read()[:200]!r} (held {held})")
+    open_hq(page, base, sid)
+    check_card_clean(page, "tasks")
+    done = page.evaluate("(n) => [...document.querySelectorAll('#tab-headquarters .hq-card[data-widget=tasks] .hq-task')].filter(e => e.textContent.includes(n)).map(e => [e.querySelector('.hq-task-done').getAttribute('aria-checked'), e.querySelector('.hq-task-done').title])", name)
+    assert done and done[0] == ["true", "Done for You"], done
 
 
 def check_impact_filters(page, base, sid) -> None:
