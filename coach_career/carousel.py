@@ -376,10 +376,11 @@ def run(state: dict) -> dict:
     verdicts = {slug: (rv["verdict"] if rv and slug == me else judge(t, slug, res.get(slug, {"wins": 0, "losses": 0}), year, state))
                 for slug, t in lgd["teams"].items()}
     from coach_career import programs
+    surprise = {slug for slug in lgd["teams"] if res.get(slug, {}).get("playoff") and goal(slug, state)["kind"] != "playoff"}   # a playoff the AD did not ask for (read before the tiers move)
     programs.update(state, res, programs.final_ranks(state))
     for slug, t in lgd["teams"].items():                          # the AD's hand on the NIL tier
         r = res.get(slug, {"wins": 0, "losses": 0})
-        programs.nil_move(t, met=verdicts[slug]["met"], losing=r["wins"] < r["losses"])
+        programs.nil_move(t, met=verdicts[slug]["met"], losing=r["wins"] < r["losses"], playoff=slug in surprise)
     changes, open_hc, left_hc = [], [], {}
     holds = {role: contract_holds(state, role, year) for role in COORD_ROLES}    # your coordinators under contract who stay put this year
     your_declined: dict[str, Optional[str]] = {}                                 # role -> the school he turned down (None: a bigger job in general)

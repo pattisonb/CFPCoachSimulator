@@ -172,7 +172,7 @@ PORTAL_COMMIT = (0.25, 0.4, 0.6, 1.0)      # an entrant with offers decides at e
 # portal fund; what it does not spend carries into next year, capped by the program's tier
 REWARD = {"winning": 0.10, "nine_wins": 0.20, "conference": 0.10, "playoff": 0.10, "host": 0.10, "title": 0.15, "goal": 0.10}
 REWARD_CAP = 0.50                          # the reward at most this share of the budget
-REWARD_FLAT = {"playoff": 40, "host": 30, "title": 60}   # *tune* NIL points a playoff run is worth at any school: the reward is never less than these lines' sum, so a small collective's windfall is real money
+REWARD_FLAT = {"playoff": 75, "host": 50, "title": 100}   # *tune* NIL points a playoff run is worth at any school: the reward is never less than these lines' sum, so a small collective's windfall is real money
 REWARD_WHY = {"winning": "winning record", "nine_wins": "nine wins", "conference": "conference champion",
               "playoff": "made the playoff", "host": "hosted a playoff game", "title": "national champion", "goal": "AD goal met"}
 PORTAL_FLOOR = 0.30                        # the collective's portal fund: no program enters the portal with less

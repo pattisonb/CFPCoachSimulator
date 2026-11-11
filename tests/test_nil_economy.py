@@ -31,18 +31,19 @@ if __name__ == "__main__":
     assert recruiting.reward(B, facts(wins=7, losses=5)) == 20                    # winning record 10%
     assert recruiting.reward(B, facts(wins=9, losses=3)) == 40                    # nine wins 20%, not 30%
     assert recruiting.reward(B, facts(wins=7, losses=5, conference=True)) == 40   # +10%
-    assert recruiting.reward(B, facts(wins=7, losses=5, playoff=True)) == 40      # +10%
-    assert recruiting.reward(B, facts(wins=7, losses=5, title=True)) == 60        # +15% is 50: the title's flat 60
+    assert recruiting.reward(B, facts(wins=7, losses=5, playoff=True)) == 75      # +10% is 20: the playoff's flat 75
+    assert recruiting.reward(B, facts(wins=7, losses=5, title=True)) == 100       # +15% is 50: the title's flat 100
     assert recruiting.reward(B, facts(wins=7, losses=5, met=True)) == 40          # +10%
     assert recruiting.reward(B, facts(wins=5, losses=7, met=True)) == 20          # a losing team keeps the lines that apply
-    assert recruiting.reward(B, facts(wins=14, losses=1, conference=True, playoff=True, title=True, met=True)) == 100   # 65% capped at 50%
+    assert recruiting.reward(B, facts(wins=14, losses=1, conference=True, playoff=True, title=True, met=True)) == 175   # 65% capped at 50% is 100: the flat 75 + 100
     assert recruiting.reward(135, facts(wins=7, losses=5)) == five(13.5)          # rounded to fives
-    # a playoff run pays a small collective real money: the flat points (40 the playoff, 30 a game hosted, 60 the title) are the least it earns
-    assert recruiting.reward(B, facts(wins=7, losses=5, playoff=True, host=True)) == 70          # a big budget: the shares (60) lose to the flat 70
-    assert recruiting.reward(400, facts(wins=7, losses=5, playoff=True, host=True)) == 120       # 30% of 400: the shares win
-    assert recruiting.reward(60, facts(wins=10, losses=3, conference=True, playoff=True, met=True)) == 40             # 50% of 60 is 30: the playoff's flat 40
-    assert recruiting.reward(60, facts(wins=11, losses=3, conference=True, playoff=True, host=True, met=True)) == 70   # hosting a game: 30 more
-    assert recruiting.reward(60, facts(wins=13, losses=1, conference=True, playoff=True, host=True, title=True, met=True)) == 130
+    # a playoff run pays a small collective real money: the flat points (75 the playoff, 50 a game hosted, 100 the title) are the least it earns
+    assert recruiting.REWARD_FLAT == {"playoff": 75, "host": 50, "title": 100}
+    assert recruiting.reward(B, facts(wins=7, losses=5, playoff=True, host=True)) == 125         # the shares (60) lose to the flat 125
+    assert recruiting.reward(500, facts(wins=7, losses=5, playoff=True, host=True)) == 150       # 30% of 500: the shares win
+    assert recruiting.reward(60, facts(wins=10, losses=3, conference=True, playoff=True, met=True)) == 75             # 50% of 60 is 30: the playoff's flat 75
+    assert recruiting.reward(60, facts(wins=11, losses=3, conference=True, playoff=True, host=True, met=True)) == 125  # hosting a game: 50 more
+    assert recruiting.reward(60, facts(wins=13, losses=1, conference=True, playoff=True, host=True, title=True, met=True)) == 225
     assert recruiting.reward(60, facts(wins=10, losses=3, conference=True, met=True)) == 25      # no playoff: the shares alone
     assert "hosted a playoff game" in recruiting.reward_why(facts(playoff=True, host=True))
     why = recruiting.reward_why(facts(wins=9, losses=3, conference=True, met=True))
