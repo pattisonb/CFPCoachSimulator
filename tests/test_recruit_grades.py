@@ -219,6 +219,24 @@ def test_saved_class_keeps_its_decider_topics():
             assert d["decider_topic"] in old_topics[d["decider"]], d
 
 
+def test_flip_odds_never_negative():
+    """A committed prospect with a big rival lead: the flip chance is at most 1, so his school's share is never negative
+    and the rivals' shares sum to the flip total (the UX sweep's flip check)."""
+    from coach_career import prospects
+    from sim import season
+    me = "ohio-state"
+    st = season.new_season(me, "full", seed=21, career=True)
+    rc = st["recruiting"]
+    pid = sorted((q for q in rc["prospects"] if not rc["prospects"][q].get("hidden") and not rc["status"][q]["committed"]), key=lambda q: rc["prospects"][q]["rank"])[0]
+    for s in ("georgia", "alabama", "michigan", me):
+        rc["offers"].setdefault(s, []).append(pid)
+    rc["status"][pid].update(committed=me, hard=False)
+    o = prospects.odds(st, pid, viewer=me)
+    assert all(r["pct"] >= 0 for r in o["schools"]), o["schools"]
+    f = prospects.flip_view(st, pid, me)
+    assert abs(sum(r["pct"] for r in f["rivals"]) - f["total"]) < 1e-3, f
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
