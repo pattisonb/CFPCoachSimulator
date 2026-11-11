@@ -185,6 +185,40 @@ def test_no_braces_left():
             assert "{" not in out and "}" not in out, (t, line)
 
 
+# ----- final review fixes -----
+
+def test_stability_claims_speak_of_the_program():
+    """Stability counts the program's head coaches since 2010, not your own time there: no claim line says you have
+    been there a while or that this staff has been together (a coach in his first year would hear a lie)."""
+    from coach_career import scenes
+    lines = [scenes.LEAD_LINES["stability"]] + [k for k, v in scenes.NEEDS.items() if v == "stability"]
+    for line in lines:
+        low = line.lower()
+        assert "been there" not in low and "been together" not in low, line
+
+
+def test_saved_class_keeps_its_decider_topics():
+    """A class made before the campus topics (no topics_v on the recruiting block) keeps its decider's old topic; a new
+    class may draw a new one."""
+    from coach_career import persona
+    old_topics = {"mom": ("proximity", "academics"), "dad": ("nil", "playing_time", "pro"), "grandma": ("proximity", "coach"),
+                  "hs_coach": ("coach", "playing_time", "winning", "pro"), "trainer": ("nil", "pro")}
+    for i in range(300):
+        d = persona.draw(f"k{i}", 7, grades=False)
+        if d["decider_topic"] is not None:
+            assert d["decider_topic"] in old_topics[d["decider"]], d
+    st = fresh()
+    rc = st["recruiting"]
+    assert rc.get("topics_v") == 2, "a new class is marked"
+    rc.pop("topics_v")
+    persona._drawn.cache_clear()
+    for pid in list(rc["prospects"])[:300]:
+        rc["prospects"][pid].pop("persona", None)
+        d = persona.of(st, pid)
+        if d["decider_topic"] is not None:
+            assert d["decider_topic"] in old_topics[d["decider"]], d
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

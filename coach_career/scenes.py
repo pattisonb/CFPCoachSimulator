@@ -431,7 +431,7 @@ _G_LINES = {
         "cue": ["I want to know the staff will still be there when I'm a senior.",
                 "Coaches leave. I've seen it happen to guys I know.",
                 "My mom keeps asking if you're staying, Coach."],
-        "hit": ["You've been there a while. That means something.",
+        "hit": ["That program doesn't run through coaches. That means something.",
                 "Same staff all four years? That's what I want.",
                 "Okay. I trust that you guys aren't going anywhere."],
         "polite": ["Sure. Coaches move, though. That's football.",
@@ -473,7 +473,7 @@ _G_LINES = {
 
 _G_LEAD_LINES = {"facilities": "Come see the building, {first}. Everything you need to get better is under one roof.",
               "location": "You'd love living here, {first}. It's a great place to be for four years.",
-              "stability": "This staff has been together. The coaches recruiting you will be the ones coaching you.",
+              "stability": "This program keeps its coaches, {first}. The people recruiting you are the ones who'd coach you.",
               "game_day": "Wait until you feel a Saturday here. The place is packed and loud.",
               "exposure": "We're on TV every week. Everybody back in {town} would see you play."}
 _G_LEAD_HONEST = {"facilities": "We don't have the newest building, but we've got everything you need to get better.",
@@ -498,7 +498,7 @@ _G_SAID_HONEST = {"facilities": "everything you need to get better", "location":
 _G_NEEDS = {"That building is crazy, Coach. I could live in there.": "facilities",
          "That weight room? That's where I want to be.": "facilities",
          "Okay, the facilities are real. I see it.": "facilities",
-         "You've been there a while. That means something.": "stability",
+         "That program doesn't run through coaches. That means something.": "stability",
          "Same staff all four years? That's what I want.": "stability",
          "That crowd is loud. I felt it on my visit.": "game_day",
          "That's a real Saturday, Coach.": "game_day",

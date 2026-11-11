@@ -369,7 +369,7 @@ def start(state: dict, year: int = 2027) -> None:
         "year": year, "prospects": prospects, "lists": {pid: {} for pid in prospects},
         "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
         "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-        "boards": {}, "seed": state.get("rng_state", 0), "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
+        "boards": {}, "seed": state.get("rng_state", 0), "topics_v": 2, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
         "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {},
     }
     state["recruiting"]["generational"] = draw_generational(state["recruiting"])
@@ -3113,7 +3113,7 @@ def portal_rc(state: dict, entrants: dict, year: int) -> dict:
             "lists": {pid: {} for pid in prospects},
             "status": {pid: {"committed": None, "signed": None, "fcs": False} for pid in prospects},
             "offers": {}, "visits": {}, "contacts": {}, "hours": {}, "scout_points": {}, "nil": {}, "revealed": {}, "board": [], "log": [],
-            "boards": {}, "seed": seed, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
+            "boards": {}, "seed": seed, "topics_v": 2, "reads": {}, "attrs": attrs, "grades": "game", "scale": "ours",
             "pending": {}, "why": {}, "ranks": {}, "reports": [], "action_points": {}, "leader_changes": {}}
 
 

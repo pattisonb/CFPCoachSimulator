@@ -22,7 +22,7 @@ DECIDER_TOPICS = {"self": (), "mom": ("proximity", "academics", "stability"), "d
 _TOPICS_BEFORE_PRO = {d: tuple(t for t in ts if t != "pro") for d, ts in _TOPICS_BEFORE_GRADES.items()}   # the tuples the first draw reads, so a saved class keeps its topics
 
 
-def draw(pid: str, seed, portal: bool = False) -> dict:
+def draw(pid: str, seed, portal: bool = False, grades: bool = True) -> dict:
     """His personality, decider and the decider's topic (None when he decides himself). A transfer in
     the portal (`portal`) keeps the same personality draw; his decider comes from its own stream and
     only PORTAL_DECIDERS, so the class draw never moves."""
@@ -37,7 +37,7 @@ def draw(pid: str, seed, portal: bool = False) -> dict:
     old = _TOPICS_BEFORE_GRADES[decider]
     if "pro" in old and random.Random(f"persona-pro-{seed}-{pid}").random() < 1 / len(old):
         topic = "pro"                                                      # its own stream: Path to the League takes its share
-    new = tuple(t for t in topics if t not in old)
+    new = tuple(t for t in topics if t not in old) if grades else ()      # a class from before the campus topics keeps its old pick
     if new:                                                                # the campus grades take their share, in their own stream
         g = random.Random(f"persona-grades-{seed}-{pid}")
         if g.random() < len(new) / len(topics):
@@ -46,8 +46,8 @@ def draw(pid: str, seed, portal: bool = False) -> dict:
 
 
 @lru_cache(maxsize=20000)
-def _drawn(pid: str, seed, portal: bool = False) -> dict:
-    return draw(pid, seed, portal)
+def _drawn(pid: str, seed, portal: bool = False, grades: bool = False) -> dict:
+    return draw(pid, seed, portal, grades)
 
 
 def of(state: dict, pid: str) -> dict:
@@ -55,7 +55,7 @@ def of(state: dict, pid: str) -> dict:
     otherwise his fixed draw (the portal's for a transfer), cached in memory and not written into the state."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
-    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0), bool(rc.get("portal")))
+    return p["persona"] if "persona" in p else _drawn(pid, rc.get("seed", 0), bool(rc.get("portal")), rc.get("topics_v") == 2)
 
 
 # ----- what the personality and the decider change in recruiting --------------------------------------
