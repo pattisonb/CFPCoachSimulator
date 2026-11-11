@@ -193,8 +193,8 @@
 /* your opening: the topics as chips with your program's case, three at a time (the pane's small chips are status; these are buttons) */
 .go-present-chips { gap: 8px; }
 .go-scene .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 700; background: var(--panel-2); }
-.go-scene .go-present-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
-.go-present-chip.on .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
+.go-scene .go-present-chip.on, .go-scene .go-picked { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-present-chip.on .go-tag, .go-picked .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
 .go-present-count { align-self: center; }
 /* what you lead with: two columns on a desktop, so the conversation and the picker fit the pane together */
 .go-scene .go-pitches { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -393,3 +393,19 @@
 .go-stage-menu button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .go-stage-menu button[aria-pressed="true"] b { background: color-mix(in srgb, var(--bg) 22%, transparent); color: var(--bg); }
 @media (max-width: 760px) { .go-stage-pick, .go-stage-menu button { min-height: 44px; } .go-stages { overflow: visible; } }
+
+/* your pitch (the opening): one pill opens every topic as a chip; picks show below, each with an x */
+.go-opening-drop { position: relative; display: inline-block; }
+.go-opening-pick { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid var(--text);
+  background: var(--text); color: var(--bg); font: inherit; font-weight: 700; cursor: pointer; }
+.go-opening-pick .go-opening-count { font-size: 12px; line-height: 18px; padding: 0 6px; background: color-mix(in srgb, var(--bg) 22%, transparent); }
+.go-opening-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  min-width: 260px; max-height: min(60vh, 420px); overflow-y: auto; padding: 8px; background: var(--panel); border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+.go-opening-menu[hidden] { display: none; }
+.go-opening-menu .go-present-chip { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; }
+.go-opening-picked { gap: 8px; min-height: 0; margin: 8px 0 4px; }
+.go-opening-picked:empty { display: none; }
+.go-picked { display: inline-flex; align-items: center; gap: 8px; padding-right: 2px; }
+.go-picked-x { min-width: 32px; min-height: 32px; padding: 0; border: 0; background: transparent; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+@media (max-width: 760px) { .go-opening-pick, .go-picked-x { min-height: 44px; } .go-picked-x { min-width: 44px; } .go-opening-menu { min-width: min(320px, calc(100vw - 48px)); } }
