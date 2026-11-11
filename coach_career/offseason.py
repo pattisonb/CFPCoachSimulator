@@ -2495,6 +2495,16 @@ def player_next(state: dict, slug: str) -> Optional[dict]:
         return None
     from sim import season
     lgd = state["league"]
+    off = state["offseason"]
+    season_year = off.get("year", lgd.get("year", 0)) - 1     # the season his ratings and stats on the page are from
+    if off.get("stage") == "retention":           # Keep Them Home: he wants out and nobody has decided yet
+        e = next((x for x in (off.get("retention") or {}).get("players") or () if x["id"] == slug), None)
+        if e is not None:
+            draft = e.get("intent") == "draft"
+            return {"team": None, "team_name": None, "position": e.get("pos"), "class": e.get("cls"), "class_name": None,
+                    "overall": e.get("overall"), "status": "leaving", "season": season_year,
+                    "status_name": "Wants to Leave: NFL Draft" if draft else "Wants to Leave: Transfer Portal",
+                    "sentence": "Wants to leave for the NFL Draft." if draft else "Wants to leave for the transfer portal."}
     before = next((s for s, t in season.load_teams().items() if any(p.get("slug") == slug for p in t["offense"] + t["defense"])), None)
     for team, t in lgd["teams"].items():
         c = next((c for c in t["roster"] if c["id"] == slug), None)
@@ -2506,14 +2516,26 @@ def player_next(state: dict, slug: str) -> Optional[dict]:
             if pend and pend["cls"] == cls:                # the redshirt call lands leaving Departures: the class he will have
                 cls = cls + "RS" if pend["redshirt"] else NEXT_CLASS.get(cls, cls)
             words = season.CLASS_NAMES.get(cls, cls)
-            return {"team": team, "team_name": lg.team_meta(lgd, team)["short_name"], "position": c["pos"], "class": cls,
+            name = lg.team_meta(lgd, team)["short_name"]
+            low = words.lower()
+            sentence = (f"Returning to {name} as a {low}, {c['o']} overall." if status == "returning"
+                        else f"Transferred from {lg.team_meta(lgd, before)['short_name']} to {name}, {c['o']} overall." if status == "transfer_in"
+                        else f"Signed with {name} as a {low}, {c['o']} overall.")
+            return {"team": team, "team_name": name, "position": c["pos"], "class": cls,
                     "class_name": " ".join(w[:1].upper() + w[1:] for w in words.split()), "overall": c["o"], "status": status,
-                    "status_name": {"returning": "Returning", "transfer_in": "Transferred In", "signee": "Signed"}[status]}
+                    "status_name": {"returning": "Returning", "transfer_in": "Transferred In", "signee": "Signed"}[status],
+                    "sentence": sentence, "season": season_year}
     ev = next((e for e in reversed(state["offseason"].get("departures") or []) if e["id"] == slug), None)
     if ev is None:
         return None
+    k = ev["kind"]
+    sentence = {"graduated": "Graduated.", "portal": "In the transfer portal.", "quit": "Left the team.",
+                "declared": "Declared for the NFL Draft.", "undrafted": "Declared for the NFL Draft and went undrafted.",
+                "draft": f"Drafted in round {ev['round']}, pick {ev['pick']}." if ev.get("round") and ev.get("pick") else "Drafted."
+                }.get(k, "Left the program.")
     return {"team": None, "team_name": None, "position": ev.get("pos"), "class": ev.get("cls"), "class_name": None,
-            "overall": ev.get("overall"), "status": ev["kind"], "status_name": KIND_NAMES.get(ev["kind"], "Left the Program")}
+            "overall": ev.get("overall"), "status": k, "status_name": KIND_NAMES.get(k, "Left the Program"),
+            "sentence": sentence, "season": season_year}
 
 
 def recruiting_offer_cap(state: dict, slug: str) -> int:

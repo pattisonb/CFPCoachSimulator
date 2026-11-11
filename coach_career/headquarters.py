@@ -173,7 +173,9 @@ def outlook(state: dict) -> dict:
         players.append({"slug": p.get("slug"), "name": p.get("name"), "position": p.get("position"), "group": group, "class": cls,
                         "overall": ovr, "starter": bool(p.get("starter")), "use": use,
                         "leaving": "graduation" if grad else None, "draft": draft,
-                        "transfer": None if grad else _word(chance)})     # a senior graduates: no portal word
+                        "transfer": None if grad else _word(chance),     # a senior graduates: no portal word
+                        # the offseason: where he really is now (wants out, graduated, drafted, in the portal, at a new school)
+                        "next": offseason.player_next(state, p["slug"]) if state.get("offseason") and p.get("slug") else None})
     _replacements(state, players)
     counts = {"graduation": sum(1 for p in players if p["leaving"]), "draft": sum(1 for p in players if p["draft"]),
               "draft_likely": sum(1 for p in players if p["draft"] == "Likely"),

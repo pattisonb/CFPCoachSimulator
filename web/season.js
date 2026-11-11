@@ -1756,18 +1756,14 @@
   const COACH_TIP = "How fast he grows toward his potential each offseason, from Coach's Dream down to Set in His Ways. A big year or a good developer can raise it.";
   const POT_TIP = "How good he can become: his projected rating at his ceiling, in the scouting report's words.";
 
-  // the offseason's Next Season block: where he is now (offseason.player_next), over last season's page
+  // the offseason's status: where he is now, in one sentence (offseason.player_next), over last season's page
   function nextSeasonBlock(p) {
     const n = p.next;
-    if (!n) return null;
-    const from = n.status === "transfer_in" && p.team && p.team.name ? `Transferred From ${p.team.name}` : null;
-    const line = n.team
-      ? [n.team_name, n.position, n.class_name, n.overall != null ? `${n.overall} Overall` : null, from].filter(Boolean).join(" · ")
-      : n.status_name;
+    if (!n || !n.sentence) return null;
     return el("div", { class: "player-next", "data-key": "next" }, [
-      el("span", { class: "go-kicker", text: "Next Season" }),
-      el("b", { class: "player-next-line", text: line }),
-      el("span", { class: "muted small-text", text: "Ratings and stats below are from last season." }),
+      el("span", { class: "go-kicker", text: "Offseason Status" }),
+      el("b", { class: "player-next-line", text: n.sentence }),
+      el("span", { class: "muted small-text", text: `Ratings and stats below are from the ${n.season || "last"} season.` }),
     ]);
   }
 

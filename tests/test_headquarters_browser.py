@@ -180,7 +180,7 @@ def check_sweep(page, base, sid, sizes_pick) -> list:
 
 
 def check_player_links(page, base, sid) -> None:
-    """A player of yours named in Senior Impact and Retention, the Position Battle Board and Next Year's Depth Chart
+    """A player of yours named in Player Impact and Retention, the Position Battle Board and Next Year's Depth Chart
     opens his player page (k.player), 44 px tall on a phone."""
     layout = [{"id": "c1", "widget": "senior-impact", "size": "L"}, {"id": "c2", "widget": "position-battles", "size": "M"},
               {"id": "c3", "widget": "next-depth", "size": "L"}]
