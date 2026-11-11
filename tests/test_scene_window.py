@@ -184,6 +184,15 @@ def desktop(browser, base, sid, pids, names, errs) -> None:
     assert page.inner_text(f"{WIN} .modal-title").strip() == f"Call · {names[pid]}"
     answer_if_asked(page)
     shot(page, "1280-mid")
+    # Promise Him the Job: asked or not, on the call; his reply joins the conversation and the button is gone
+    page.wait_for_selector(f"{WIN} .go-promise-job", timeout=10_000)
+    assert page.inner_text(f"{WIN} .go-promise-job").strip() == "Promise Him the Job"
+    n_turns = page.eval_on_selector_all(f"{WIN} .go-convo .go-turn", "els => els.length")
+    page.click(f"{WIN} .go-promise-job")
+    page.wait_for_selector(f"{WIN} .go-promise-job", state="detached", timeout=15_000)
+    turns = page.eval_on_selector_all(f"{WIN} .go-convo .go-turn", "els => els.map(e => e.textContent)")
+    assert len(turns) == n_turns + 2 and "The job's yours" in turns[-2], turns[-3:]
+    assert not any(w in " ".join(turns[-2:]) for w in ("null", "undefined", "NaN")), turns[-2:]
     re_ = pitch(page)
     assert re_["kind"] in ("hit", "polite", "quiet", "tired", "guarded"), re_
     # after his reaction: Done, the note, no Pitch or Hang Up; the address no longer names the window

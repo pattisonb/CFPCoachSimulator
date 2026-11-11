@@ -49,7 +49,7 @@
   const WORDS = { commit: "verbally committed to", hard: "is now a hard commit to", flip: "flipped to", decommit: "decommitted from", signed: "signed with", offer: "was offered by",
                   asked_more: "wants more from", not_buying: "isn't buying the pitch from", hung_up: "has an unfinished call from" };
   // events that carry their own sentence (his story's, a twist, a hat ceremony, a commitment going soft)
-  const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened", "promise_kept"]);
+  const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened", "promise_kept", "promise_strained"]);
   const eventWord = (e) => (e.kind === "hung_up" && e.action === "hc_visit" ? "has an unfinished visit from" : WORDS[e.kind] || e.kind);
   const WHY = { message: "Message", call: "Call", hc_visit: "HC Visit", official_visit: "Official Visit", offer: "Offer", raise_nil: "NIL Raised" };
   const LINE_LABELS = { pass_yards: "pass yds", passing_touchdowns: "TD", interceptions_thrown: "INT", rush_yards: "rush yds", carries: "car", rushing_touchdowns: "TD",
@@ -203,7 +203,7 @@
       else if (e.kind === "present") bits = [`Presented ${(e.topics || []).map((t) => lowerName(t)).join(", ")}`, e.hit == null ? "He gave nothing away" : LANDED[e.hit] || `${e.hit} landed`];
       else if (e.kind === "answer" && e.question === "package") bits = [e.answer === "promise" ? `Promised an offer to ${e.about}`      // his Package Deal: about his mate
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : e.offered ? `Told him ${e.about} already has an offer` : `Told him straight about ${e.about}`];
-      else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job over ${e.about}${e.truthful === false ? " (he did not buy it)" : ""}`
+      else if (e.kind === "answer") bits = [e.answer === "promise" ? `Promised him the job${e.about ? ` over ${e.about}` : ""}${e.truthful === false || e.crowded ? " (he did not buy it)" : ""}`
         : e.answer === "deflect" ? `Sidestepped his question about ${e.about}` : `Told him straight about ${e.about}`];
       else if (e.kind === "learned" || (LINE_KINDS.has(e.kind) && e.line)) bits = [e.line];     // what your staff learned; a bloomer's jump; a twist; a hat ceremony
       else if ((e.kind === "signed" || e.kind === "unsigned") && e.line) bits = [e.line];     // a recruit of yours went elsewhere: where, and why not you
@@ -1828,6 +1828,8 @@
         sc._unlock = () => {
           go.disabled = false;
           go.title = PITCH_TIP;
+          const jb = sc.querySelector(".go-promise-job");
+          if (jb && !(q && q.answer === "promise")) jb.hidden = false;   // answered with a promise: that was the promise
           for (const r of sc.querySelectorAll(".go-lead-pick")) r.disabled = false;
         };
         go.addEventListener("click", async () => {
@@ -1868,7 +1870,28 @@
           if (!r) lapsed();     // a stale call (the week moved on)
         });
         const hang = el("button", { type: "button", class: "go-link go-hangup", text: "Hang Up", onclick: hangUp });
-        const acts = el("div", { class: "go-row wrap go-scene-acts" }, [go, hang]);
+        // Promise Him the Job (the player's ask): asked or not, once per recruit; hidden while his question about a
+        // named player waits (answering it is the promise)
+        const asking = q && !q.answer && (q.kind === "roster" || q.kind === "recruit");
+        const job = !b.job_promised && !scene.job ? el("button", { type: "button", class: "go-btn go-promise-job", text: "Promise Him the Job",
+          title: "Tell him the starting job is his: it helps land him, and it's a promise he'll hold you to all season" }) : null;
+        if (job && asking) job.hidden = true;              // his question first: answered, it shows (sc._unlock)
+        if (job) job.addEventListener("click", async () => {
+          let r;
+          try { r = await ui().busy(job, H.api(`/api/season/${s.id}/recruit`, H.postJSON({ pid: b.id, action: "promise_job", scene: scene.id }))); }
+          catch (err) { H.toast(`Could not promise: ${H.errText(err)}`, 4000); return; }
+          if (!(r && r.scene)) { lapsed(); return; }
+          Object.assign(scene, r.scene);
+          b.job_promised = true;
+          const row = v.board.find((x) => x.id === b.id);
+          if (row) row.job_promised = true;
+          const added = addTurns(true);
+          await ui().fadeOut(job);
+          job.remove();
+          ui().toast(r.points > 0 ? "Promise: the job is his. He bought it." : r.doubted ? "Promise: he doesn't believe you." : "Promise: he isn't buying it.");
+          if (sceneWin === win && added[0]) reveal(added[0]);
+        });
+        const acts = el("div", { class: "go-row wrap go-scene-acts" }, [go, job, hang]);
         const hint = el("p", { class: "muted small", text: HANG_HINT });
         parts.push(acts, hint);
         const fin = el("div", { class: "go-scene-finish" }, parts);
@@ -2590,5 +2613,5 @@
     else if (tab === "classes") renderClasses(season, box);
   }
 
-  window.Recruiting = { wordTag, parts: { heroOf, scoutCards, looksCard, profileCards, compLine, gradeTips }, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
+  window.Recruiting = { wordTag, parts: { heroOf, scoutCards, looksCard, profileCards, compLine, gradeTips, historyLines }, render, applyRoute, openScene: openSceneRoute, init: (helpers) => { H = H || helpers; }, openProfile: (s, pid, opts) => openProfile(s, pid, null, opts || {}), reveal: (pid) => { view.selected = pid; view.reveal = pid; view.sheet = true; view.group = null; view.state = null; }, board: (s, box, helpers) => { H = helpers; renderRecruiting(s, box); } };
 })();

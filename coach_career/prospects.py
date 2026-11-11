@@ -809,6 +809,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                visit_weeks=recruiting.visit_weekends(state, viewer, pid, homes),
                priorities_known=list((rc["revealed"].get(viewer) or {}).get(pid, [])),
                pitch_marks=recruiting.pitch_marks(state, viewer, pid),
+               job_promised=bool(recruiting._open_roster_promise(((rc["contacts"].get(pid) or {}).get(viewer)) or {})),
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
                hc_week=((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("hc_week"),
