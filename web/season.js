@@ -264,7 +264,7 @@
     sel.value = pick.value;
     const go = el("button", { type: "button", class: "accent", text: "Who Coaches? →" });
     go.addEventListener("click", () => { pick.value = sel.value; chooseCoach("full", true); });
-    openModal("New Season", el("div", { class: "start-pick" }, [el("p", { class: "muted small-text", text: "Pick the program. The 2026 season starts from week 1, with the real schedule and roster." }), sel, go]));
+    openModal("New Season", el("div", { class: "start-pick" }, [el("p", { class: "muted small-text", text: "Pick the program. The 2026 season starts from Week 0, with the real schedule and roster." }), sel, go]));
     sel.focus({ preventScroll: true });
   }
 
@@ -2786,7 +2786,7 @@
     await renderGames(body);
   }
 
-  // before week 1 of a career: trade a non-conference game for another school's the same week
+  // before Week 0 (the opening week) of a career: trade a non-conference game for another school's the same week
   async function openScheduleEditor() {
     const s = state.season;
     const teamName = (slug) => (window.CFP.teamsBySlug[slug] || {}).name || slug;
@@ -2795,7 +2795,7 @@
     let d;
     try { d = await api(`/api/season/${s.id}/schedule_edit`); } catch (err) { node.innerHTML = ""; node.append(el("p", { class: "muted", text: errText(err) })); return; }
     node.innerHTML = "";
-    node.append(el("p", { class: "muted small-text", text: "Before week 1 you can trade a non-conference date for another school's game that week: the two displaced opponents play each other. A school agrees when it gets the home game or you are the bigger draw. An FCS date can go to another FCS team." }));
+    node.append(el("p", { class: "muted small-text", text: "Before Week 0, the season's opening week, you can trade a non-conference date for another school's game that week: the two displaced opponents play each other. A school agrees when it gets the home game or you are the bigger draw. An FCS date can go to another FCS team." }));
     if (!d.games.length) node.append(el("p", { class: "muted", text: "Nothing to trade: the season has begun or you have no non-conference games." }));
     for (const g of d.games) {
       const oppName = g.home === s.team ? g.away_display : g.home_display;        // the schedule's own label (an FCS date reads "FCS <region>")
