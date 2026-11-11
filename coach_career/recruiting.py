@@ -1485,7 +1485,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     elif answer == "promise":
         truthful = promise_holds(state, slug, pid, q)
         group = _group_of(p)
-        if slug == state.get("team") and not word.believes(state, group):   # Keeps His Word under the floor: he doesn't believe you
+        if truthful and slug == state.get("team") and not word.believes(state, group):   # Keeps His Word under the floor: he doesn't believe you
             doubted = True
         elif truthful:
             points = ANSWER_PROMISE * (word.promise_mult(state, pid, group) if slug == state.get("team") else 1.0)

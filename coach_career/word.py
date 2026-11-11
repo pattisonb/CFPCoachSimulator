@@ -133,7 +133,8 @@ def recruit_event(state: dict, slug: str, pid: str, kind: str) -> None:
     p = state["recruiting"]["prospects"].get(pid)
     if p is None:
         return
-    apply(state, kind, recruiting._group_of(p), p.get("name") or "", star=(p.get("stars") or 0) >= 4,
+    star = (p.get("stars") or 0) >= 4 or (bool(p.get("portal")) and (p.get("tier") or 0) >= recruiting.PORTAL_TOP_TIER)   # a four-star-plus recruit or transfer
+    apply(state, kind, recruiting._group_of(p), p.get("name") or "", star=star,
           personality=persona.of(state, pid)["personality"])
 
 

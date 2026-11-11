@@ -263,6 +263,33 @@ def test_office_view_carries_word():
     assert "word" not in st["career"], "the Office reads without writing"
 
 
+def test_portal_star_counts():
+    """A four-star-or-better portal entrant (stars None, rated by tier) is a star: a broken promise costs STAR_COST more."""
+    import test_nil_pitch as n
+    from coach_career import recruiting
+    st = n.fresh()
+    pid = n.ranked(st)[50]
+    p = st["recruiting"]["prospects"][pid]
+    p["persona"] = dict(recruiting.persona.of(st, pid), personality="business")
+    p.update(stars=None, portal=True, tier=recruiting.PORTAL_TOP_TIER)
+    word.recruit_event(st, st["team"], pid, "money_broken")
+    assert word.reading(st) == word.WORD_START - word.COST["money_broken"] * word.STAR_COST, word.book(st)
+
+
+def test_doubted_lie_still_costs():
+    """Under the floor a promise he cannot believe anyway still costs what a hollow promise costs: a worse word never
+    makes lying cheaper."""
+    from coach_career import recruiting
+    st, pid = _recruit()
+    word.book(st)["overall"] = 20
+    sc = {"id": "s1", "action": "call", "week": st["current_week"],
+          "question": {"kind": "roster", "text": "Is he still your starter?", "about": {"name": "Star Guy", "ovr": 99, "last_year": False, "cls": "SO"}, "answer": None, "reply": None}}
+    st["recruiting"].setdefault("scenes", {}).setdefault(st["team"], {})[pid] = sc
+    r = recruiting._answer(st, st["team"], pid, "s1", "promise")
+    assert r["truthful"] is False and r["points"] < 0, r["points"]
+    assert recruiting.cooled(st, st["team"], pid), "a hollow promise cools him, doubted or not"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
