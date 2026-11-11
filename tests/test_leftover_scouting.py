@@ -54,6 +54,33 @@ def test_complete_report_skipped():
     assert looks(st, a) == recruiting.REPORT_LOOKS and looks(st, b) == looks(st, c) == recruiting.LEFTOVER_LOOK, "one per prospect a week; a full report needs none"
 
 
+def test_untouched_week_spends_the_full_points():
+    """A week you never opened the board (Sim to Signing Day, Auto-recruit): all the week's points were left over."""
+    st, pids = fresh()
+    st["recruiting"]["scout_points"] = {}
+    spent = recruiting.spend_leftover(st, 2)
+    assert spent > 0 and all(looks(st, q) == recruiting.LEFTOVER_LOOK for q in pids), (spent, [looks(st, q) for q in pids])
+
+
+def test_marks_index_once():
+    """Pitch marks for a whole board read the log once (an index), not once per row."""
+    st, pids = fresh()
+    rc = st["recruiting"]
+    rc["log"].append({"week": 1, "kind": "pitch", "pid": pids[0], "school": ME, "action": "call", "pitch": "nil", "reaction": "polite"})
+    calls = []
+    real = recruiting._marks_index
+    recruiting._marks_index = lambda *a: calls.append(1) or real(*a)
+    try:
+        for q in pids:
+            recruiting.pitch_marks(st, ME, q)
+    finally:
+        recruiting._marks_index = real
+    assert len(calls) == 1, f"the log is read once for the board, not {len(calls)} times"
+    assert recruiting.pitch_marks(st, ME, pids[0])["nil"]["mark"] == "not_his"
+    rc["log"].append({"week": 1, "kind": "pitch", "pid": pids[1], "school": ME, "action": "call", "pitch": "coach", "reaction": "hit"})
+    assert recruiting.pitch_marks(st, ME, pids[1])["coach"]["mark"] == "hit", "a new log line is read"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -60,6 +60,8 @@ if __name__ == "__main__":
                 page.click("#rc-recruit")
                 page.click(".go-menu .go-menu-item[data-action=message]")
                 page.wait_for_selector(".go-pane .go-step #rc-pitch")
+                time.sleep(0.3)
+                assert page.evaluate("() => document.activeElement && document.activeElement.classList.contains('go-lead-pick')"), "the step's focus lands on the lead-with pill"
                 assert page.is_hidden(".go-pane .go-step .go-lead-menu"), "the lead-with sits closed in one pill"
                 page.click(".go-pane .go-step .go-lead-pick")
                 opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", "els => els.map(e => [e.dataset.topic, e.textContent])"))

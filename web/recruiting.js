@@ -1442,7 +1442,7 @@
       if (action === "message" || action === "offer" || action === "raise_nil") {
         view.step = { pid: b.id, kind: action };
         patchPane(b);
-        const f = box.querySelector(".go-step select, .go-step input");
+        const f = box.querySelector(".go-step .go-lead-pick, .go-step input");
         if (f) f.focus({ preventScroll: true });
       } else if (action === "off_board") {
         // taking him off pulls your offer too (the engine does it): one misclick should not cost you a recruit
@@ -1747,7 +1747,7 @@
     const MAX_PRESENT = 3;
     function sceneView(b, win) {
       const scene = b.scene, visit = scene.action === "hc_visit", what = visit ? "visit" : "call";
-      let chosen = (scene.cue && scene.cue.topics[0]) || "";
+      let chosen = (scene.cue && scene.cue.topics[0]) || b.priorities_known[0] || "";   // he summed up all three: lead with what he told you first
       const sc = el("section", { class: "go-scene", tabindex: "-1", "aria-label": `${visit ? "In-home visit" : "Call"} with ${b.name}` });
       sc.append(el("div", { class: "card-bar go-scene-head" }, [el("div", { class: "go-scene-who" }, [avatar(b.id), el("div", { class: "go-kicker", text: `${visit ? "In His Home" : "On the Phone"} · ${b.name}` })])]));
       // the turns: yours right in a muted bubble, his left, a note (who decides, his NIL ask, pestering) centered and plain; the cue keeps its frame
@@ -1924,7 +1924,7 @@
           catch (err) { H.toast(`Could not present: ${H.errText(err)}`, 4000); return; }
           if (!(r && r.scene)) { lapsed(); return; }     // a stale call (the week moved on)
           Object.assign(scene, r.scene);               // the same scene object: the board row and the view share it
-          chosen = scene.cue.topics[0] || "";
+          chosen = (scene.cue && scene.cue.topics[0]) || b.priorities_known[0] || "";
           for (const t of picked) noteMark(b, t, "no_read", scene.action, s.current_week);   // your opening's three: pitched, no read on any one
           // the opening leaves, the new turns come in, then his question and the lead-with: all in place
           closeMenu();

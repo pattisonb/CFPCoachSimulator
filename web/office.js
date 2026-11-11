@@ -126,7 +126,7 @@
           el("span", { class: `ofc-final ${won ? "won" : "lost"}`, "aria-label": `${won ? "Won" : "Lost"} ${scoreText(tw.points_for, tw.points_against)}` }, [
             el("span", { class: `go-result ${won ? "good" : "bad"}`, text: won ? "W" : "L" }), el("b", { text: scoreText(tw.points_for, tw.points_against) })]),
           side(tw.opponent, tw.opponent_name, tw.opponent_rank, tw.opponent_record, false)]),
-        el("p", { class: "muted ofc-hero-note", text: `Advance the week: everyone else plays, then on to ${weekName(s, s.current_week + 2)}.` }),
+        el("p", { class: "muted ofc-hero-note", text: s.current_week + 1 < FINAL_WEEK ? `Advance the week: everyone else plays, then on to ${weekName(s, s.current_week + 2)}.` : "Advance the week: everyone else plays and the season ends." }),
         playRow(s));
       return card;
     }

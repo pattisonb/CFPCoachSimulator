@@ -1503,14 +1503,14 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
 PITCH_MARK = {"hit": "hit", "quiet": "weak", "polite": "not_his", "guarded": "no_read", "tired": "no_read"}   # his reaction -> the mark the page shows
 
 
-def pitch_marks(state: dict, slug: str, pid: str) -> dict:
-    """What he said about each topic your school pitched him (your History): {topic: {"mark", "week", "action"}}. The mark
-    is "hit" (He Lit Up), "weak" (Weak Case: he cares, your case is weak), "not_his" (Not His Thing: polite, not one of his
-    priorities) or "no_read" (guarded, tired, or one of your opening's three, which reads no single topic). The latest real
-    read wins and a No Read never hides one. A topic you never pitched has no entry."""
+_MARKS: dict = {}          # (career, school, log identity, log length) -> {pid: marks}: one pass over the log per view
+
+
+def _marks_index(state: dict, slug: str) -> dict:
+    """Every prospect's pitch marks for `slug` in one pass over the log (pitch_marks's rules)."""
     out: dict = {}
     for e in state["recruiting"].get("log") or ():
-        if e.get("pid") != pid or e.get("school") != slug:
+        if e.get("school") != slug:
             continue
         if e.get("kind") == "pitch" and e.get("pitch"):
             seen = [(e["pitch"], PITCH_MARK.get(e.get("reaction"), "no_read"))]
@@ -1518,11 +1518,28 @@ def pitch_marks(state: dict, slug: str, pid: str) -> dict:
             seen = [(t, "no_read") for t in e.get("topics") or ()]
         else:
             continue
+        mine = out.setdefault(e.get("pid"), {})
         for topic, mark in seen:
-            if mark == "no_read" and topic in out and out[topic]["mark"] != "no_read":
+            if mark == "no_read" and topic in mine and mine[topic]["mark"] != "no_read":
                 continue
-            out[topic] = {"mark": mark, "week": e.get("week"), "action": e.get("action")}
+            mine[topic] = {"mark": mark, "week": e.get("week"), "action": e.get("action")}
     return out
+
+
+def pitch_marks(state: dict, slug: str, pid: str) -> dict:
+    """What he said about each topic your school pitched him (your History): {topic: {"mark", "week", "action"}}. The mark
+    is "hit" (He Lit Up), "weak" (Weak Case: he cares, your case is weak), "not_his" (Not His Thing: polite, not one of his
+    priorities) or "no_read" (guarded, tired, or one of your opening's three, which reads no single topic). The latest real
+    read wins and a No Read never hides one. A topic you never pitched has no entry. The log is read once per view
+    (_marks_index, cached on the log's length)."""
+    log = state["recruiting"].get("log") or []
+    key = (state.get("id"), slug, id(log), len(log))
+    idx = _MARKS.get(key)
+    if idx is None:
+        if len(_MARKS) > 64:
+            _MARKS.clear()
+        idx = _MARKS[key] = _marks_index(state, slug)
+    return dict(idx.get(pid) or {})
 
 
 def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:
@@ -3307,7 +3324,9 @@ def spend_leftover(state: dict, week: int) -> int:
     buys a LEFTOVER_LOOK look by your best evaluator at a prospect on your board whose report is short, the least-scouted
     first (then by rank), one each a week, while the points last. Its own seeded stream. Returns the points spent."""
     rc, me = state["recruiting"], state.get("team")
-    left = (rc.get("scout_points") or {}).get(me)
+    if not me or not state.get("career"):            # a career's staff only
+        return 0
+    left = scout_points_left(state, me)            # a week you never opened the board: all of the week's points are left
     if not left:
         return 0
     live = [q for q in rc.get("board") or () if q in rc["prospects"] and not rc["status"][q]["signed"]
