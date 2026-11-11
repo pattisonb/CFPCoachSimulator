@@ -1406,9 +1406,10 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         start = len(rc["log"])
         from coach_career import scenes
         tells = scenes.tells(state, slug, pid, sc["action"]) if sc else True       # asked before the pitch lands: a Shy recruit's first call is a call by then
+        repeat = bool(sc and pitch in (sc.get("presented") or ()))                    # your opening already said it: he notices
         revealed = _act(state, slug, pid, action, pitch, nil, scene=scene)
         tired = any(e["kind"] == "pester" for e in rc["log"][start:])      # the call or visit pestered him: the pitch fell flat
-        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired, tells=tells)
+        said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired=tired, tells=tells, repeat=repeat)
         if slug == state.get("team"):                 # your History: the pitch and how he took it
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed},
@@ -1497,6 +1498,48 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     if points:
         _add_points(state, slug, pid, points, sc["action"])
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+
+
+PITCH_MARK = {"hit": "hit", "quiet": "weak", "polite": "not_his", "guarded": "no_read", "tired": "no_read"}   # his reaction -> the mark the page shows
+
+
+_MARKS: dict = {}          # (career, school, log identity, log length) -> {pid: marks}: one pass over the log per view
+
+
+def _marks_index(state: dict, slug: str) -> dict:
+    """Every prospect's pitch marks for `slug` in one pass over the log (pitch_marks's rules)."""
+    out: dict = {}
+    for e in state["recruiting"].get("log") or ():
+        if e.get("school") != slug:
+            continue
+        if e.get("kind") == "pitch" and e.get("pitch"):
+            seen = [(e["pitch"], PITCH_MARK.get(e.get("reaction"), "no_read"))]
+        elif e.get("kind") == "present":
+            seen = [(t, "no_read") for t in e.get("topics") or ()]
+        else:
+            continue
+        mine = out.setdefault(e.get("pid"), {})
+        for topic, mark in seen:
+            if mark == "no_read" and topic in mine and mine[topic]["mark"] != "no_read":
+                continue
+            mine[topic] = {"mark": mark, "week": e.get("week"), "action": e.get("action")}
+    return out
+
+
+def pitch_marks(state: dict, slug: str, pid: str) -> dict:
+    """What he said about each topic your school pitched him (your History): {topic: {"mark", "week", "action"}}. The mark
+    is "hit" (He Lit Up), "weak" (Weak Case: he cares, your case is weak), "not_his" (Not His Thing: polite, not one of his
+    priorities) or "no_read" (guarded, tired, or one of your opening's three, which reads no single topic). The latest real
+    read wins and a No Read never hides one. A topic you never pitched has no entry. The log is read once per view
+    (_marks_index, cached on the log's length)."""
+    log = state["recruiting"].get("log") or []
+    key = (state.get("id"), slug, id(log), len(log))
+    idx = _MARKS.get(key)
+    if idx is None:
+        if len(_MARKS) > 64:
+            _MARKS.clear()
+        idx = _MARKS[key] = _marks_index(state, slug)
+    return dict(idx.get(pid) or {})
 
 
 def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:
@@ -2756,6 +2799,7 @@ def _weekly_step(state: dict, week: int, auto_user: bool) -> list[dict]:
         _visits(state, week)
         persona.learn_styles(state, week)  # an official visit or four weeks holding your offer: his commit style
     scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
+    spend_leftover(state, week + 1 if rc.get("portal") else week)   # what you didn't spend, your staff does: half looks on your board
     mine = state.get("team")
     mode = auto_mode(state)
     auto_mine = auto_user or mode != "off"
@@ -3270,6 +3314,34 @@ def scout_week(state: dict, week: Optional[int] = None) -> None:
             for pid in by_state.get(code, []):
                 if area_open(rc["reads"].get(pid)):
                     look(state, pid, member["evaluation"], rng, by=member["id"], week=week, weight=AREA_LOOK)
+
+
+LEFTOVER_LOOK = 0.5        # *tune* a Send's worth of leftover scouting points buys your staff this much of a look at the week step
+
+
+def spend_leftover(state: dict, week: int) -> int:
+    """The scouting points you did not spend this week, spent by your staff at the week step: each Send's price (look_cost)
+    buys a LEFTOVER_LOOK look by your best evaluator at a prospect on your board whose report is short, the least-scouted
+    first (then by rank), one each a week, while the points last. Its own seeded stream. Returns the points spent."""
+    rc, me = state["recruiting"], state.get("team")
+    if not me or not state.get("career"):            # a career's staff only
+        return 0
+    left = scout_points_left(state, me)            # a week you never opened the board: all of the week's points are left
+    if not left:
+        return 0
+    live = [q for q in rc.get("board") or () if q in rc["prospects"] and not rc["status"][q]["signed"]
+            and rc["status"][q]["committed"] in (None, me) and looks_left(rc["reads"].get(q)) > 0]
+    live.sort(key=lambda q: ((rc["reads"].get(q) or {}).get("looks", 0) or 0, rc["prospects"][q]["rank"]))
+    rng = random.Random(f"leftover-{rc['seed']}-{week}")
+    rating, spent = best_evaluator(state), 0
+    for q in live:
+        cost = look_cost(state, me, q)
+        if cost > left - spent:
+            continue
+        look(state, q, rating, rng, week=week, weight=LEFTOVER_LOOK)
+        spent += cost
+    rc["scout_points"][me] = left - spent
+    return spent
 
 
 def area_open(read: Optional[dict]) -> bool:

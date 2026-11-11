@@ -84,7 +84,7 @@ def test_losing(st: dict) -> None:
         assert re["kind"] == "hit", re                                  # a Fair case on his priority still lands
         f = scenes._fields(st, ME, st["recruiting"]["prospects"][pid])
         doubt = {x.format(**f) for v in scenes.WIN_DOUBT.values() for x in v}
-        assert re["text"] in doubt, re                                  # the skeptical variant, every time
+        assert scenes.bare_reaction(re["text"]) in doubt, re   # the skeptical variant, every time (he may note you said it already)
         assert "two and five" in re["text"].lower() or "won before" in re["text"], re
         honest = {x.format(**f) for k, x in scenes.LEAD_WINNING.items() if k.startswith("losing")}
         assert re["you"] in honest, re
@@ -182,8 +182,8 @@ def test_winning(st: dict) -> None:
         assert re["kind"] == "hit" and re["you"] in confident, re
         hits = {x.format(**f) for x in scenes.LINES["winning"]["hit"] if scenes._holds(x, scenes.truth(st, ME, pid))}
         mine = {x.format(**f) for x in persona.LINES["business"]["hit"]}
-        assert re["text"] in hits | mine, re
-        generic += re["text"] in hits
+        assert scenes.bare_reaction(re["text"]) in hits | mine, re
+        generic += scenes.bare_reaction(re["text"]) in hits
         assert "winning right away" in said(sc), said(sc)
     assert generic, "the confident hit lines appear"
 
