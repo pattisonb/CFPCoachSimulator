@@ -142,7 +142,9 @@
       const placed = [];
       const gap = unit * 6;
       let labeled = 0;
-      for (const t of list) {
+      const proper = (n) => String(n).replace(/\bMc([a-z])/g, (_, c) => `Mc${c.toUpperCase()}`);   // the list's "Mccall" reads McCall
+      for (const t0 of list) {
+        const t = { ...t0, name: proper(t0.name) };
         const xy = M.project([t.lat, t.lon]);
         if (!xy || placed.some(([x, y]) => Math.hypot(x - xy[0], y - xy[1]) < gap)) continue;
         placed.push(xy);
