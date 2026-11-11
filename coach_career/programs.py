@@ -301,6 +301,8 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         if bt and bt["conference"] in conf_score:
             p["conference"] = round(conf_score[bt["conference"]], 1)
         p.setdefault("drafts", empty_drafts(year - 2))
+        churn = sum(1 for d in ((state.get("offseason") or {}).get("departures") or ()) if d.get("team") == s and d.get("kind") == "portal")
+        _move_grades(p, s, year, ranks.get(s), hc.get("since"), churn)     # School Grades Phase 3: the moving grades
         p["drafts"] = (p["drafts"] + [draft_line(year - 1, picks.get(s, []))])[-PRO_YEARS:]    # a new list: a probe's copy never writes back
         pro_recompute(p, year - 1)
         p["rating"] = round(mix(p), 1)
@@ -448,6 +450,77 @@ def _grades(slug: str) -> Optional[dict]:
     return {k: round(max(0.0, min(100.0, v)), 1) for k, v in out.items()}
 
 
+# ----- School Grades, Phase 3: four grades move each offseason, each held to its floor (spec "Decided" 6) -----------------
+GAME_DAY_LIVE = 0.8           # *tune* Game Day's live target: this much of (winning - winning_base) ...
+GAME_DAY_STEP = 4.0           # *tune* ... moving at most this much a year
+GAME_DAY_FLOOR = 0.70         # Game Day never under this share of its researched value
+EXPOSURE_LIVE = 0.7           # *tune* Exposure's live target: this much of (winning - winning_base) ...
+EXPOSURE_STEP = 4.0           # *tune* ... at most this much a year ...
+EXPOSURE_RANKED = ((10, 4.0), (25, 2.0))   # *tune* ... plus this for a final rank this good that year
+EXPOSURE_FLOOR = 0.75         # Exposure never under this share of its researched value
+STABILITY_CHANGE = 15.0       # *tune* a new head coach this year costs this ...
+STABILITY_REBUILD = 5.0       # *tune* ... and each year he stays rebuilds this, up to the researched value
+STABILITY_FLOOR = 10.0        # Stability never under this
+ACADEMICS_STEP = 1.0          # *tune* churn above or below CHURN_MEAN moves Academics this much a year ...
+ACADEMICS_BAND = 10.0         # ... never more than this from its researched value
+CHURN_MEAN = 6                # *tune* the portal entrants a program loses in a typical offseason
+MOVING = ("game_day", "exposure", "stability", "academics")
+
+
+def _held(base: dict, gl: dict) -> dict:
+    """The base grades plus their live parts, each held to its floor (and 100)."""
+    out = dict(base)
+    gd, ex = base["game_day"] + gl.get("game_day", 0.0), base["exposure"] + gl.get("exposure", 0.0)
+    out["game_day"] = min(100.0, max(base["game_day"] * GAME_DAY_FLOOR, gd))
+    out["exposure"] = min(100.0, max(base["exposure"] * EXPOSURE_FLOOR, ex))
+    out["stability"] = min(base["stability"], max(STABILITY_FLOOR, base["stability"] + gl.get("stability", 0.0)))
+    out["academics"] = max(0.0, min(100.0, base["academics"] + max(-ACADEMICS_BAND, min(ACADEMICS_BAND, gl.get("academics", 0.0)))))
+    return {k: round(v, 1) for k, v in out.items()}
+
+
+def grades_now(state: dict, slug: str) -> Optional[dict]:
+    """The grades as they stand in this career: the researched base (grades) plus each moving grade's live part
+    (program["grades_live"], from programs.update), held to its floor. No league, or an old save: the base. Read only."""
+    base = grades(slug)
+    if base is None:
+        return None
+    lgd = state.get("league") if isinstance(state, dict) else None
+    prog = (((lgd or {}).get("teams") or {}).get(slug) or {}).get("program") or {}
+    return _held(base, prog.get("grades_live") or {})
+
+
+def _step(cur: float, target: float, step: float) -> float:
+    return cur + max(-step, min(step, target - cur))
+
+
+def _move_grades(p: dict, slug: str, year: int, rank: Optional[int], coach_since: Optional[int], churn: int) -> None:
+    """One offseason's move of a program's live grades (p["grades_live"]); p["grades_moved"] keeps each grade's change."""
+    base = grades(slug)
+    if base is None:
+        return
+    gl = p["grades_live"] = dict(p.get("grades_live") or {})     # a new dict: a probe's shallow copy never writes back (as drafts)
+    before = _held(base, gl)
+    lead = p.get("winning", 40.0) - p.get("winning_base", 40.0)
+    gl["game_day"] = _step(gl.get("game_day", 0.0), GAME_DAY_LIVE * lead, GAME_DAY_STEP)
+    bonus = next((b for top, b in EXPOSURE_RANKED if rank and rank <= top), 0.0)
+    gl["exposure"] = _step(gl.get("exposure", 0.0), EXPOSURE_LIVE * lead + bonus, EXPOSURE_STEP)
+    if coach_since == year - 1:          # update runs at the carousel, before this offseason's hires: last offseason's hire is this year's change
+        gl["stability"] = gl.get("stability", 0.0) - STABILITY_CHANGE
+    else:
+        gl["stability"] = min(0.0, gl.get("stability", 0.0) + STABILITY_REBUILD)
+    if churn != CHURN_MEAN:
+        gl["academics"] = gl.get("academics", 0.0) + (ACADEMICS_STEP if churn < CHURN_MEAN else -ACADEMICS_STEP)
+    # a live part never runs past what its floor or cap holds (so a floor reached is left by the first good year)
+    gl["game_day"] = max(base["game_day"] * (GAME_DAY_FLOOR - 1), min(100 - base["game_day"], gl["game_day"]))
+    gl["exposure"] = max(base["exposure"] * (EXPOSURE_FLOOR - 1), min(100 - base["exposure"], gl["exposure"]))
+    gl["stability"] = max(STABILITY_FLOOR - base["stability"], gl["stability"])
+    gl["academics"] = max(-ACADEMICS_BAND, min(ACADEMICS_BAND, gl.get("academics", 0.0)))
+    for k in MOVING:
+        gl[k] = round(gl.get(k, 0.0), 2)
+    after = _held(base, gl)
+    p["grades_moved"] = {k: round(after[k] - before[k], 1) for k in MOVING}
+
+
 def tags(slug: str) -> Optional[dict]:
     """Location's tags (cached, like grades)."""
     if slug not in _TAGS:
@@ -495,7 +568,7 @@ def rows(state: dict) -> list[dict]:
         out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
                     "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"])["text"],
                     **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups")},
-                    "grades": grades(s), "tags": tags(s)})
+                    "grades": grades_now(state, s), "tags": tags(s), "grades_moved": (p.get("grades_moved") or None)})
     out.sort(key=lambda r: -r["rating"])
     for i, r in enumerate(out, 1):
         r["rank"] = i

@@ -972,7 +972,7 @@ def _grade_pulls(state: dict, slug: str, p: dict) -> dict:
     """The school grades as pulls (programs.grades / 100); Location also reads its tags against his taste. A program with
     no grades reads NEUTRAL_PULL (Academics: the old ACADEMIC list)."""
     from coach_career import programs
-    g = programs.grades(slug)
+    g = programs.grades_now(state, slug)                 # Phase 3: the live grades
     if g is None:
         return {"academics": 0.9 if slug in ACADEMIC else 0.5, **{t: NEUTRAL_PULL for t in ("facilities", "location", "stability", "game_day", "exposure")}}
     out = {t: g[t] / 100 for t in ("academics", "facilities", "location", "stability", "game_day", "exposure")}

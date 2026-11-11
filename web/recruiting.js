@@ -322,6 +322,13 @@
   const NEW_GRADES = ["academics", "facilities", "location", "stability", "game_day", "exposure"];
   // a row's value for a measure: the rating's own on the row, a new grade in r.grades; null when not graded
   const gradeOf = (r, k) => (NEW_GRADES.includes(k) ? (r.grades ? r.grades[k] : null) : r[k] || 0);
+  // School Grades Phase 3: a grade that moved this offseason by half a point or more: data-moved (the stylesheet draws
+  // ▲ or ▼ after the word, so the word's text stays the word) and a title saying how much
+  const movedMark = (r, k) => {
+    const d = (r.grades_moved || {})[k];
+    if (d == null || Math.abs(d) < 0.5) return {};
+    return { "data-moved": d > 0 ? "up" : "down", title: `${d > 0 ? "Up" : "Down"} ${Math.round(Math.abs(d))} since last season.` };
+  };
   function programCard(pv) {
     const you = pv.you;
     if (!you) return el("div");
@@ -345,7 +352,7 @@
               const tags = k === "location" && you.tags ? [you.tags.setting, you.tags.climate, you.tags.region].filter(Boolean) : [];
               return el("div", { class: "go-program-bar", "data-metric": k, title: metricTip(k) }, [
                 el("span", { class: "go-program-label", text: label }), el("i", {}, [el("b", { style: `width:${v == null ? 0 : Math.max(2, Math.min(100, v))}%` })]),
-                el("span", { class: "go-program-val", text: v == null ? "Not Graded" : METRIC_WORDS(v, pv) }),
+                el("span", { class: "go-program-val", text: v == null ? "Not Graded" : METRIC_WORDS(v, pv), ...movedMark(you, k) }),
                 tags.length ? el("span", { class: "go-place-tags" }, tags.map((t) => el("span", { class: "go-tag go-place-tag", text: t }))) : null]);
             }))]))]),
         el("div", { class: "go-program-col" }, [el("div", { class: "go-kicker muted go-program-h" }, ["Position Pro Potential ",
@@ -393,7 +400,7 @@
     for (const r of pv.rows) {
       body.append(el("tr", { class: r.team === pv.you.team ? "mine" : "" }, [
         el("td", {}, [window.CFP.teamPill(r.team), ` ${r.name}`]), el("td", {}, [el("span", { class: "go-tag", text: r.tier_name })]),
-        ...cols.map(([k]) => { const v = gradeOf(r, k); if (v == null) return el("td", { class: "muted small", text: "Not Graded" }); const w = METRIC_WORDS(v, pv); return el("td", { class: `word ${w.toLowerCase()}`, text: w }); }),
+        ...cols.map(([k]) => { const v = gradeOf(r, k); if (v == null) return el("td", { class: "muted small", text: "Not Graded" }); const w = METRIC_WORDS(v, pv); return el("td", { class: `word ${w.toLowerCase()}`, text: w, ...movedMark(r, k) }); }),
         el("td", { class: "small", text: r.goal })]));
     }
     t.append(body);

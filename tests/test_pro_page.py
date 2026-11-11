@@ -79,6 +79,20 @@ if __name__ == "__main__":
                 print(f"pro page test skipped: no Chromium for Playwright ({str(exc).splitlines()[0]})")
                 raise SystemExit(0)
             shots = os.environ.get("PRO_SHOTS")
+            # School Grades Phase 3: a grade that moved this year shows ▲ or ▼ with a sentence (a second-season career)
+            import test_promises
+            st2 = test_promises.second_season()
+            prog = st2["league"]["teams"][st2["team"]]["program"]
+            prog["grades_moved"] = {"game_day": 4.0, "exposure": -2.0, "stability": 0.0, "academics": 0.2}
+            season.save_season(st2)
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            page.goto(f"{base}/index.html?id={st2['id']}&tab=office")
+            page.wait_for_selector("#season:visible")
+            tab_click(page, "programs")
+            page.wait_for_selector("#tab-programs .go-program-bar", timeout=120_000)
+            moved = page.eval_on_selector_all("#tab-programs .go-program-bar [data-moved]", "els => els.map(e => [e.closest('.go-program-bar').dataset.metric, getComputedStyle(e, '::after').content.replace(/\"/g, ''), e.title])")
+            assert sorted(moved) == [["exposure", "▼", "Down 2 since last season."], ["game_day", "▲", "Up 4 since last season."]], moved
+            page.close()
             for width, height in ((1280, 900), (400, 800)):
                 page = browser.new_page(viewport={"width": width, "height": height})
                 errors = []
