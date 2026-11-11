@@ -541,12 +541,12 @@
     if (!head) return;
     let line = head.querySelector(".dc-preview");
     if (!line) { line = el("div", { class: "dc-preview", "aria-live": "polite" }); head.append(line); }
-    line.replaceChildren(
+    line.replaceChildren(...[                         // replaceChildren writes a null as the text "null": the empty parts are dropped
       el("strong", { text: p.name }),
       el("span", { class: "dc-muted", text: [p.jersey ? `#${p.jersey}` : "", p.position, CLASS_LABEL[p.class] || p.class, p.height && p.weight ? `${p.height} ${p.weight}` : ""].filter(Boolean).join(" · ") }),
       el("span", { class: `dc-card-ovr ${tier(p.overall)}`, title: "Overall rating", text: String(p.overall) }),
       behind.length ? el("span", { class: "dc-muted", text: behind.map((b, k) => `${ordinal(k + 2)} ${shortName(b.name)} ${b.overall}`).join(" · ") }) : null,
-    );
+    ].filter(Boolean));
     head.classList.add("previewing");
   }
 
