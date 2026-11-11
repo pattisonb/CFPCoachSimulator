@@ -1465,6 +1465,9 @@ body.team-theme .topbar #btn-seasons-menu[aria-expanded="true"] { background: co
 .moved-banner[hidden] { display: none; }
 .moved-banner p { margin: 0; flex: 1 1 320px; }
 .moved-banner a { color: inherit; }
+.moved-banner .moved-x { min-width: 36px; min-height: 36px; padding: 0; border: 1px solid currentColor; background: transparent; color: inherit;
+  font-size: 20px; line-height: 1; cursor: pointer; }
+@media (max-width: 760px) { .moved-banner .moved-x { min-width: 44px; min-height: 44px; } }
 .moved-go { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; background: var(--accent-ink); color: var(--accent) !important; font-weight: 700; text-decoration: none; }
 @media (max-width: 640px) { .moved-go { min-height: 44px; } }
 
