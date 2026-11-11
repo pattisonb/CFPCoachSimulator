@@ -273,6 +273,16 @@ def test_no_third_promise_writes_nothing():
     assert offseason._keeps_promise({"offers": {"promise": True}}) is True
 
 
+def test_reads_change_nothing():
+    """Reading the chips, the news and the bands writes nothing into the save (the Office's read must change nothing)."""
+    import json
+    from sim import season
+    st = season.new_season("iowa", "full", seed=5, career=True)
+    before = json.dumps(st, sort_keys=True, default=str)
+    pr.chips_now(st), pr.news(st), pr.bands(st, season.season_year(st))
+    assert json.dumps(st, sort_keys=True, default=str) == before, "a read wrote into the save"
+
+
 if __name__ == "__main__":
     import inspect
     _sys.path.insert(0, str(_Path(__file__).resolve().parent))
