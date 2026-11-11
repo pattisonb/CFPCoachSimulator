@@ -184,11 +184,23 @@
 .hq-commit { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); border-color: var(--go-primary, var(--accent)); }
 .hq-full { opacity: 0.7; }
 
-/* Player Impact and Retention: a filter per column, wrapping on a phone */
-.hq-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.hq-filter { flex: 1 1 110px; min-width: 0; min-height: 36px; }
-@media (max-width: 699px), (pointer: coarse) { .hq-filter { min-height: 44px; } }
 /* Recruiting Tasks: a tick the game made for you (it ticks itself off when you do the task), and a task that no longer applies */
 .hq-task-done.auto[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--go-primary-ink, var(--accent-ink)); }
 .hq-task.moot > .hq-grow > span:first-child { color: var(--muted); }
 .hq-task-note { font-size: 12px; }
+
+/* filter pills (k.filtered): a small label and its value, as wide as they need, one row that wraps; a pick that is set
+   reads dark like a pressed chip. The <select> is the pill's whole face (keyboard and a phone's own picker still work). */
+.hq-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.hq-fpill { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); font-size: 12px; line-height: 1; cursor: pointer; white-space: nowrap; }
+.hq-fpill:hover { border-color: var(--muted); }
+.hq-fpill:focus-within { outline: 2px solid var(--go-primary, var(--accent)); outline-offset: 1px; }
+.hq-fpill-k { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.hq-fpill-sel { appearance: none; -webkit-appearance: none; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-weight: 700;
+  padding: 0 14px 0 0; margin: 0 -14px 0 0; min-height: 30px; cursor: pointer; max-width: 16ch; text-overflow: ellipsis; }
+.hq-fpill-sel option { color: var(--text); background: var(--panel); font-weight: 400; }
+.hq-fpill-caret { font-size: 9px; pointer-events: none; opacity: 0.7; }
+.hq-fpill.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.hq-fpill.on .hq-fpill-k { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+@media (max-width: 699px), (pointer: coarse) { .hq-fpill, .hq-fpill-sel { min-height: 44px; } }

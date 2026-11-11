@@ -153,11 +153,13 @@
       const rows = [];
       for (const u of d.depth.units || []) for (const r of u.rows || []) {
         const [a, b] = r.players || [];
-        if (a) rows.push([r.role || r.label, k.player(ctx, a.name, a.position, a.slug), b ? k.player(ctx, b.name, b.position, b.slug) : "Nobody", battleWord(a.overall, b && b.overall)]);
+        if (a) rows.push({ unit: u.label || u.unit || "", pos: r.role || r.label, a, b, word: battleWord(a.overall, b && b.overall) });
       }
       if (!rows.length) return k.empty("No depth chart yet.");
-      const shown = rows.slice(0, ctx.size === "L" ? rows.length : 8);
-      return k.table(["Pos", "Starter", "Challenger", "Status"], shown.map((r) => [r[0], r[1], r[2], el("span", { class: "go-tag", text: r[3] })]));
+      return k.filtered("position-battles", rows, [["unit", "Unit", (r) => r.unit], ["status", "Status", (r) => r.word]], (shown) =>
+        k.table(["Pos", "Starter", "Challenger", "Status"], shown.slice(0, ctx.size === "L" ? shown.length : 8).map((r) => [r.pos,
+          k.player(ctx, r.a.name, r.a.position, r.a.slug), r.b ? k.player(ctx, r.b.name, r.b.position, r.b.slug) : "Nobody", el("span", { class: "go-tag", text: r.word })])),
+        "No battles match these filters.");
     } });
 
   // ----- Scholarship Budget ---------------------------------------------------------------------------------------
@@ -218,7 +220,6 @@
       return el("div", {}, [pick, result]);
     } });
 
-  const impactFilter = { pos: "", role: "", cls: "", outlook: "", rep: "" };   // Player Impact and Retention's filters (this visit)
   // ----- Player Impact and Retention ------------------------------------------------------------------------------
   reg({ id: "senior-impact", title: "Player Impact and Retention", category: "program", blurb: "Your seniors, draft-eligible starters and transfer risks, how likely each is to leave (in the offseason, what really happened), and the recruit who could take his place.",
     sizes: ["M", "L"], size: "M", sources: ["hq"], want: ["outlook"], sample: { hq: { outlook: SAMPLE_OUTLOOK } }, viewAll: "depth",
@@ -235,30 +236,17 @@
       const rep = (p) => (p.replacement
         ? el("span", { class: "hq-rep" }, [k.name(ctx, p.replacement.pid, p.replacement.name), el("span", { class: "go-tag", text: p.replacement.status })])
         : el("span", { class: "hq-sub", text: "Nobody Yet" }));
-      // a filter for each column: position, role, class, outlook and replacement (committed, offered, on board, nobody)
+      // a filter pill for each column: position, role, class, outlook and replacement (committed, offered, on board, nobody)
       const role = (p) => (p.starter ? "Starter" : "Reserve");
       const repWord = (p) => (p.replacement ? p.replacement.status : "Nobody Yet");
       const cols = [["pos", "Pos", (p) => p.position], ["role", "Role", role], ["cls", "Class", (p) => p.class], ["outlook", "Outlook", why], ["rep", "Replacement", repWord]];
-      const f = impactFilter;
-      const box = el("div", { class: "hq-impact-rows" });
-      const paint = () => {
-        const shown = ps.filter((p) => cols.every(([key, , get]) => !f[key] || get(p) === f[key])).slice(0, k.rowsFor(ctx.size));
-        box.replaceChildren(!shown.length ? k.empty("Nobody matches these filters.") : ctx.size === "L"
+      return k.filtered("senior-impact", ps, cols, (shown) => {
+        shown = shown.slice(0, k.rowsFor(ctx.size));
+        return ctx.size === "L"
           ? k.table(["Player", "Pos", "Class", "Role", "Outlook", "Replacement"], shown.map((p) =>
             [k.player(ctx, p.name, p.position, p.slug), p.position, p.class, role(p), el("span", { class: "go-tag", text: why(p) }), rep(p)]))
-          : k.table(["Player", "Pos", "Outlook", "Replacement"], shown.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)])));
-      };
-      const bar = el("div", { class: "hq-filters" }, cols.map(([key, label, get]) => {
-        const vals = [...new Set(ps.map(get))].filter(Boolean).sort();
-        if (f[key] && !vals.includes(f[key])) f[key] = "";
-        const sel = el("select", { class: "hq-input hq-filter", "aria-label": label },
-          [el("option", { value: "", text: `Any ${label}` }), ...vals.map((v) => el("option", { value: v, text: v }))]);
-        sel.value = f[key];
-        on(sel, "change", (e) => { f[key] = e.currentTarget.value; paint(); });
-        return sel;
-      }));
-      paint();
-      return el("div", {}, [bar, box]);
+          : k.table(["Player", "Pos", "Outlook", "Replacement"], shown.map((p) => [k.player(ctx, p.name, p.position, p.slug), p.position, el("span", { class: "go-tag", text: why(p) }), rep(p)]));
+      });
     } });
 
   // ----- Roster Loss Projections ---------------------------------------------------------------------------------

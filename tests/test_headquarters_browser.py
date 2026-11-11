@@ -288,13 +288,18 @@ def check_impact_filters(page, base, sid) -> None:
     open_hq(page, base, sid)
     card = "#tab-headquarters .hq-card[data-widget='senior-impact']"
     check_card_clean(page, "senior-impact")
-    labels = page.eval_on_selector_all(f"{card} select.hq-filter", "els => els.map(e => e.getAttribute('aria-label'))")
-    assert labels == ["Pos", "Role", "Class", "Outlook", "Replacement"], labels
+    labels = page.eval_on_selector_all(f"{card} select.hq-fpill-sel", "els => els.map(e => e.getAttribute('aria-label'))")
+    assert labels and set(labels) <= {"Pos", "Role", "Class", "Outlook", "Replacement"} and labels[0] == "Pos", labels   # a column with one value shows no pill
+    tall = page.eval_on_selector_all(f"{card} .hq-fpill", "els => els.map(e => Math.round(e.getBoundingClientRect().height))")
+    assert all(32 <= h <= 46 for h in tall), f"the filter pills stay compact: {tall}"
+    wide = page.evaluate("(c) => { const f = document.querySelector(c + ' .hq-filters'), r = f.getBoundingClientRect(); return [...f.children].reduce((s, e) => s + e.getBoundingClientRect().width, 0) / r.width; }", card)
+    assert wide < 0.95, f"the pills size to their content, not the row ({wide:.2f})"
     rows = lambda: page.eval_on_selector_all(f"{card} tbody tr", "els => els.map(e => e.cells[3].textContent)")
     everyone = rows()
     if "Starter" in everyone and "Reserve" in everyone:
         page.select_option(f"{card} select[aria-label=Role]", "Starter")
         assert set(rows()) == {"Starter"}, rows()
+        assert page.get_attribute(f"{card} .hq-fpill[data-filter=role]", "class").split().count("on") == 1, "a set filter reads dark"
         page.select_option(f"{card} select[aria-label=Role]", "")
         assert rows() == everyone
 
