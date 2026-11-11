@@ -1201,6 +1201,11 @@ def test_conversation(page, base) -> None:
         page.click(f"{M} .go-opening-pick")
         chips = page.query_selector_all(f"{M} .go-opening-menu .go-present-chip")
         assert len(chips) == 8 and all(c.get_attribute("aria-pressed") == "false" for c in chips) and page.is_visible(f"{M} .go-opening-menu")
+        time.sleep(0.3)
+        seen = page.evaluate("""(m) => { const menu = document.querySelector(m + ' .go-opening-menu').getBoundingClientRect();
+          const port = document.querySelector('.modal-scene .modal-body').getBoundingClientRect();
+          return [Math.round(menu.top), Math.round(menu.bottom), Math.round(port.top), Math.round(port.bottom)]; }""", M)
+        assert seen[0] >= seen[2] - 1 and seen[1] <= seen[3] + 1, f"the open menu shows whole in the call's window (menu top, bottom; window top, bottom): {seen}"
         chips[0].click(); chips[1].click()
         assert page.is_visible(f"{M} .go-opening-menu"), "the menu stays open while you pick"
         picked = lambda: page.eval_on_selector_all(f"{M} .go-opening-picked .go-picked", "els => els.map(e => e.dataset.topic)")
@@ -1213,6 +1218,11 @@ def test_conversation(page, base) -> None:
         toasted(page, "Three things. Drop one first.")
         page.keyboard.press("Escape")
         assert page.is_hidden(f"{M} .go-opening-menu") and chips[3].get_attribute("aria-pressed") == "false"
+        page.click(f"{M} .go-opening-pick")
+        page.focus(f"{M} .go-opening-menu .go-present-chip:last-child")
+        page.keyboard.press("Tab")
+        time.sleep(0.2)
+        assert page.is_hidden(f"{M} .go-opening-menu"), "tabbing out of the menu closes it"
         gone = picked()[0]
         page.click(f"{M} .go-opening-picked .go-picked[data-topic={gone}] .go-picked-x")
         assert len(picked()) == 2 and page.is_disabled(f"{M} .go-present"), "an x drops a pick"

@@ -1858,8 +1858,11 @@
           document.addEventListener("click", outside, true);
           const first = chips.querySelector('.go-present-chip[aria-pressed="false"]') || chips.querySelector(".go-present-chip");
           if (first) first.focus({ preventScroll: true });
+          // the opening sits at the foot of the call's window, which scrolls: bring the whole menu into view
+          chips.scrollIntoView({ block: "nearest" });
         }
         ui().on(pick, "click", () => (chips.hidden ? openMenu() : closeMenu()));
+        ui().on(opener, "focusout", (e) => { if (e.relatedTarget && !opener.contains(e.relatedTarget)) closeMenu(); });   // tabbed out
         ui().on(opener, "keydown", (e) => { if (e.key === "Escape" && !chips.hidden) { e.stopPropagation(); closeMenu(); pick.focus({ preventScroll: true }); } });
         const byTopic = {};
         const sync = () => {

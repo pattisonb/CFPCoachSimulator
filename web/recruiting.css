@@ -193,8 +193,8 @@
 /* your opening: the topics as chips with your program's case, three at a time (the pane's small chips are status; these are buttons) */
 .go-present-chips { gap: 8px; }
 .go-scene .go-present-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; font-size: 13px; font-weight: 700; background: var(--panel-2); }
-.go-scene .go-present-chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
-.go-present-chip.on .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
+.go-scene .go-present-chip.on, .go-scene .go-picked { background: var(--text); color: var(--bg); border-color: var(--text); }
+.go-present-chip.on .go-tag, .go-picked .go-tag { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--bg) 60%, transparent); }
 .go-present-count { align-self: center; }
 /* what you lead with: two columns on a desktop, so the conversation and the picker fit the pane together */
 .go-scene .go-pitches { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
