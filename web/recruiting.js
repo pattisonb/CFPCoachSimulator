@@ -734,7 +734,10 @@
     // told you he cares, ☆ he hinted at it this week, or what he said when you pitched it (a Weak Case or Not His Thing
     // stands in for the star: the last word wins)
     const cue = cueOf(s, b), known = b.priorities_known || [];
-    for (const t of Object.keys(PITCH_NAMES)) {
+    const marked = Object.keys(PITCH_NAMES).filter((t) => { const m = markOf(b, t); return m && (m.mark === "weak" || m.mark === "not_his"); });
+    // in the order you learned them: what he told you, then what he said to a pitch, then this week's hints as he gave them
+    const order = [...new Set([...known, ...marked, ...cue.topics])].filter((t) => PITCH_NAMES[t]);
+    for (const t of order) {
       const m = markOf(b, t), bad = m && (m.mark === "weak" || m.mark === "not_his") ? m : null;
       const k = known.includes(t), hint = !k && cue.topics.includes(t);
       if (bad && !(k && bad.mark === "not_his")) {
