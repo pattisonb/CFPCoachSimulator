@@ -57,6 +57,19 @@ if __name__ == "__main__":
             page.fill(f"{ed} .pg-field:has-text('Mascot') input", "Owls")
             page.fill(f"{ed} .pg-field:has-text('City') input", "Bend")
             page.select_option(f"{ed} .pg-field:has-text('State') select", "OR")
+            # the campus on the map: unset says what the game uses; a click near Bend sets the spot (and the state)
+            assert "Click the map" in page.inner_text(f"{ed} .pg-spot") and page.is_hidden(f"{ed} .pg-spot-clear")
+            assert page.eval_on_selector(f"{ed} .pg-map-state.on", "e => e.dataset.state") == "OR", "the state is lit"
+            page.select_option(f"{ed} .pg-field:has-text('State') select", "WA")
+            xy = page.evaluate("""() => { const svg = document.querySelector('#pg-editor .pg-map'), r = svg.getBoundingClientRect();
+              const [x, y] = window.USMap.project([44.06, -121.31]); return [r.left + x * r.width / 975, r.top + y * r.height / 610]; }""")
+            page.mouse.click(xy[0], xy[1])
+            spot = page.inner_text(f"{ed} .pg-spot-note")
+            import re
+            m = re.match(r"Campus at ([\d.]+)° N, ([\d.]+)° W\. ", spot)
+            assert m and abs(float(m[1]) - 44.06) < 0.3 and abs(float(m[2]) - 121.31) < 0.3 and spot.endswith("."), spot
+            assert page.eval_on_selector(f"{ed} .pg-field:has-text('State') select", "e => e.value") == "OR", "the click sets the state"
+            assert page.is_visible(f"{ed} .pg-spot-clear")
             page.select_option(f"{ed} .pg-field:has-text('Conference') select >> nth=0", "mountain-west")
             page.fill(f"{ed} textarea", "Jay Smith, QB, JR\nMax Lee, WR, SO, 74")
             # one at a time: the Add Player row adds to the list (and the paste box); x removes one
@@ -111,6 +124,8 @@ if __name__ == "__main__":
             d = json.loads(Path(dl.value.path()).read_text())
             assert d["format"] == "cfp-league/1" and len(d["teams"]) == 1 and len(d["teams"][0]["roster"]) == 3, d
             assert d["teams"][0]["conference"] == "mountain-west" and d["teams"][0]["roster"][1]["overall"] == 74
+            t0 = d["teams"][0]
+            assert abs(t0["lat"] - 44.06) < 0.3 and abs(t0["lon"] + 121.31) < 0.3 and t0["state"] == "OR", (t0.get("lat"), t0.get("lon"), t0.get("state"))
             co = d["teams"][0]["coaches"]
             assert co["oc"]["name"] == "Sam Roe" and co["dc"]["name"] == "Lee Poe" and co["offense"] == "Spread RPO" and co["defense"] == "4-3", co
             assert d["teams"][0]["rivals"] == [{"slug": "boise-state", "name": "Battle for the Bell", "rivalry_week": True}, {"slug": "air-force", "every_year": False}], d["teams"][0].get("rivals")

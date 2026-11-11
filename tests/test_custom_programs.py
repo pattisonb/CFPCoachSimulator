@@ -123,6 +123,22 @@ def test_rivalry_week():
     assert not r["ok"] and any("only one rival" in e for e in r["errors"]), r["errors"]
 
 
+def test_home_spot():
+    """Close to Home measures from the program's spot: a set lat/lon, else its city found in the game's town list, else
+    the state's center. An edited real team that changes city moves too."""
+    from coach_career import league_fill
+    def spot(team):
+        r = league_file.check(doc(team), seed=3)
+        assert r["ok"], r.get("errors")
+        return r["league"]["recruiting_models"][team["slug"]]["location"]
+    base = {"slug": "alder-tech", "name": "Alder Tech", "conference": "mountain-west"}
+    assert spot({**base, "city": "Bend", "state": "OR"}) == [44.058, -121.315]
+    assert spot({**base, "city": "Nowhere Junction", "state": "OR"}) == list(league_fill.STATE_CENTER["OR"])
+    assert spot({**base, "city": "Bend", "state": "OR", "lat": 45.0, "lon": -120.0}) == [45.0, -120.0]
+    assert spot({**base, "city": "el paso", "state": "TX"}) == [31.775, -106.465], "case does not matter"
+    assert spot({"slug": "akron", "city": "Cleveland"}) == [41.505, -81.693], "an edit that changes city moves"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

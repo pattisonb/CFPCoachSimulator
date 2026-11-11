@@ -22,9 +22,50 @@
     };
   }
 
+  // the inverse: [x, y] screen -> [lat, lon] degrees (the same conic, solved back)
+  function conicInverse(parallels, rotate, center, scale, translate) {
+    const p0 = rad(parallels[0]), p1 = rad(parallels[1]);
+    const n = (Math.sin(p0) + Math.sin(p1)) / 2;
+    const c = Math.cos(p0) ** 2 + 2 * n * Math.sin(p0);
+    const r0 = Math.sqrt(c) / n;
+    const lam0 = rad(center[0]), phi0 = rad(center[1]);
+    const rc = Math.sqrt(c - 2 * n * Math.sin(phi0)) / n;
+    const cx = rc * Math.sin(n * lam0), cy = r0 - rc * Math.cos(n * lam0);
+    return (x, y) => {
+      const X = (x - translate[0]) / scale + cx, Y = cy - (y - translate[1]) / scale;
+      const r = Math.sign(n) * Math.sqrt(X * X + (r0 - Y) ** 2);
+      const lam = Math.atan2(X * Math.sign(n), (r0 - Y) * Math.sign(n)) / n;
+      const phi = Math.asin(Math.max(-1, Math.min(1, (c - (r * n) ** 2) / (2 * n))));
+      return [(phi * 180) / Math.PI, (lam * 180) / Math.PI - rotate];
+    };
+  }
+
   const lower48 = conic([29.5, 45.5], 96, [-0.6, 38.7], K, [487.5, 305]);
   const alaska = conic([55, 65], 154, [-2, 58.5], 0.35 * K, [487.5 - 0.307 * K, 305 + 0.201 * K]);
   const hawaii = conic([8, 18], 157, [-3, 19.9], K, [487.5 - 0.205 * K, 305 + 0.212 * K]);
+
+  const invLower48 = conicInverse([29.5, 45.5], 96, [-0.6, 38.7], K, [487.5, 305]);
+  const invAlaska = conicInverse([55, 65], 154, [-2, 58.5], 0.35 * K, [487.5 - 0.307 * K, 305 + 0.201 * K]);
+  const invHawaii = conicInverse([8, 18], 157, [-3, 19.9], K, [487.5 - 0.205 * K, 305 + 0.212 * K]);
+  // a map point back to [lat, lon] (whichever region projects back onto it), or null off the map
+  function unproject(xy) {
+    if (!xy) return null;
+    // the insets first (they sit inside the lower 48's box), each held to its own region
+    const regions = [
+      [invHawaii, (la, lo) => la >= 18 && la <= 23 && lo >= -161 && lo <= -154],
+      [invAlaska, (la, lo) => la >= 51 && la <= 72 && (lo <= -129 && lo >= -180 || lo >= 172)],
+      [invLower48, (la, lo) => la >= 24 && la <= 50 && lo >= -126 && lo <= -66],
+    ];
+    for (const [inv, inside] of regions) {
+      const ll = inv(xy[0], xy[1]);
+      if (!Number.isFinite(ll[0]) || !Number.isFinite(ll[1])) continue;
+      ll[1] = ((ll[1] + 540) % 360) - 180;
+      if (!inside(ll[0], ll[1])) continue;
+      const back = project(ll);
+      if (back && Math.abs(back[0] - xy[0]) < 0.5 && Math.abs(back[1] - xy[1]) < 0.5) return [Math.round(ll[0] * 1000) / 1000, Math.round(ll[1] * 1000) / 1000];
+    }
+    return null;
+  }
 
   function project(ll) {
     if (!ll) return null;
@@ -411,5 +452,5 @@
       selected: () => (opts.onState ? opts.selectedState || null : mem.state) };
   }
 
-  window.USMap = { project, centroid, stateBox, render };
+  window.USMap = { project, unproject, centroid, stateBox, render };
 })();

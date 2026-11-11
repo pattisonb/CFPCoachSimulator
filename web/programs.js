@@ -75,6 +75,55 @@
     node.addEventListener("change", () => { p.f[key] = node.value; p.updated = Date.now(); changed(p, key); });
     return node;
   }
+  // the campus on a map (the player's ask): click to set the spot Close to Home measures from; the state follows the
+  // click. Unset, the game uses the city if it knows it, else the state's center. f.lat/f.lon, rounded to 0.001.
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const svgEl = (tag, attrs) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v); return n; };
+  const spotText = (f) => `${Math.abs(f.lat).toFixed(2)}° ${f.lat >= 0 ? "N" : "S"}, ${Math.abs(f.lon).toFixed(2)}° ${f.lon <= 0 ? "W" : "E"}`;
+  function spotPicker(p) {
+    const f = p.f, S = window.US_STATES, M = window.USMap;
+    const wrap = el("div", { class: "pg-field pg-spot", "data-key": "spot" });
+    if (!S || !M || !M.unproject) return wrap;
+    const svg = svgEl("svg", { viewBox: S.viewBox || "0 0 975 610", class: "pg-map", role: "img", "aria-label": "Map: click to set your campus" });
+    const states = svgEl("g", { class: "pg-map-states" });
+    for (const [code, d] of Object.entries(S.paths)) states.append(svgEl("path", { d, "data-state": code, class: "pg-map-state" }));
+    const dot = svgEl("circle", { r: "7", class: "pg-map-dot" });
+    svg.append(states, dot);
+    const note = el("span", { class: "muted small pg-spot-note" });
+    const clear = el("button", { type: "button", class: "ghost small pg-spot-clear", text: "Clear Spot" });
+    const show = () => {
+      const has = Number.isFinite(f.lat) && Number.isFinite(f.lon);
+      const xy = has ? M.project([f.lat, f.lon]) : null;
+      dot.style.display = xy ? "" : "none";
+      if (xy) { dot.setAttribute("cx", xy[0].toFixed(1)); dot.setAttribute("cy", xy[1].toFixed(1)); }
+      for (const s of states.children) s.classList.toggle("on", s.dataset.state === f.state);
+      note.textContent = has ? `Campus at ${spotText(f)}. Recruits nearby count you as close to home.`
+        : "Click the map to set your campus. Unset, the game uses your city if it knows it, else the state's center.";
+      clear.hidden = !has;
+    };
+    svg.addEventListener("click", (e) => {
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      const at = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const ll = M.unproject([at.x, at.y]);
+      if (!ll) { toast("Click inside the United States."); return; }
+      f.lat = ll[0]; f.lon = ll[1];
+      const code = e.target && e.target.dataset ? e.target.dataset.state : null;
+      if (code && STATES.includes(code) && code !== f.state) {
+        f.state = code;
+        for (const s of $("#pg-editor").querySelectorAll("select")) if (s.querySelector('option[value="AK"]')) s.value = code;
+        changed(p, "state");
+      }
+      p.updated = Date.now();
+      changed(p, "spot");
+      show();
+    });
+    clear.addEventListener("click", () => { delete f.lat; delete f.lon; p.updated = Date.now(); changed(p, "spot"); show(); });
+    wrap.append(el("span", { class: "pg-label", text: "Campus" }), svg, el("div", { class: "pg-spot-foot" }, [note, clear]));
+    wrap._show = show;
+    show();
+    return wrap;
+  }
   // the roster: add players one at a time (name, position, class, an optional overall) or paste a list; both edit the same
   // lines (p.f.roster, "Name, POS, CLASS[, overall]"), and the list under them shows each player with an x to drop him
   const CLASSES = ["FR", "SO", "JR", "SR", "FRRS", "SORS", "JRRS", "SRRS"];
@@ -198,6 +247,7 @@
       if (h) h.textContent = label(p);
     }
     if (key === "conference") ed.querySelector(".pg-newconf").hidden = p.f.conference !== "__new";
+    if (key === "state") { const sp = ed.querySelector(".pg-spot"); if (sp && sp._show) sp._show(); }
     ed.querySelector(".pg-check-out").replaceChildren();
     drawList();
   }
@@ -236,6 +286,7 @@
       el("h3", { class: "pg-sec", text: "Home" }),
       el("div", { class: "pg-row" }, [field("City", input(p, "city", { type: "text", maxlength: "40" })),
         field("State", select(p, "state", [["", "Pick a State"], ...STATES.map((s) => [s, s])]))]),
+      spotPicker(p),
       el("h3", { class: "pg-sec", text: "Program" }),
       el("div", { class: "pg-row" }, [field("Conference", select(p, "conference", confOpts), null, "conference"),
         field("Strength", select(p, "strength", [["", "Conference Average"], ...P.STRENGTHS.map((s) => [s, s])])),
@@ -263,6 +314,7 @@
     const r = base ? real[base] : null;
     const c = (r && r.colors) || {};
     const f = r ? { name: r.name, short_name: r.short_name, abbreviation: r.abbreviation, mascot: r.mascot, city: r.city, state: r.state,
+      lat: Number.isFinite(r.lat) ? r.lat : undefined, lon: Number.isFinite(r.lon) ? r.lon : undefined,
       conference: r.conference, primary: (c.primary || {}).hex, secondary: (c.secondary || {}).hex, accent: (c.accent || {}).hex, prestige: r.prestige,
       offense: r.offense, defense: r.defense, rivals: [...(r.rivals || [])] }
       : { conference: "", primary: "#1f4e79", secondary: "#ffffff", accent: "#111111", new_conf_games: "8" };
@@ -295,6 +347,7 @@
       const c = t.colors || {};
       const nc = confs[t.conference];
       const f = { name: t.name, short_name: t.short_name, abbreviation: t.abbreviation, mascot: t.mascot, city: t.city, state: t.state,
+        lat: Number.isFinite(t.lat) ? t.lat : undefined, lon: Number.isFinite(t.lon) ? t.lon : undefined,
         conference: nc ? "__new" : t.conference, new_conf_name: nc ? nc.name : undefined, new_conf_games: nc ? String(nc.games || 8) : undefined,
         primary: (c.primary || {}).hex, secondary: (c.secondary || {}).hex, accent: (c.accent || {}).hex,
         strength: t.strength == null ? "" : String(t.strength), prestige: t.prestige, coach: ((t.coaches || {}).head || {}).name,
@@ -305,7 +358,7 @@
         roster: (t.roster || []).map((r) => [r.name, r.pos, r.class, r.overall].filter((x) => x != null && x !== "").join(", ")).join("\n") };
       if (isReal) {
         const r = real[t.slug], rc = r.colors || {};
-        for (const [k, v] of [["name", r.name], ["short_name", r.short_name], ["abbreviation", r.abbreviation], ["mascot", r.mascot], ["city", r.city], ["state", r.state], ["conference", r.conference], ["prestige", r.prestige]])
+        for (const [k, v] of [["name", r.name], ["short_name", r.short_name], ["abbreviation", r.abbreviation], ["mascot", r.mascot], ["city", r.city], ["state", r.state], ["lat", r.lat], ["lon", r.lon], ["conference", r.conference], ["prestige", r.prestige]])
           if (f[k] == null) f[k] = v;
         for (const k of ["primary", "secondary", "accent"]) if (!f[k]) f[k] = (rc[k] || {}).hex;
       }

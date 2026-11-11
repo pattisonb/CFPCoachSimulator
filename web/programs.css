@@ -44,3 +44,13 @@
 .pg-problems { display: flex; flex-direction: column; gap: 2px; }
 @media (max-width: 760px) { .pg-rival .pg-rival-x { min-width: 44px; } }
 .pg-rival-often { flex: 0 1 200px; min-width: 0; }
+
+/* the campus map (spotPicker): click to set the spot Close to Home measures from */
+.pg-spot { width: 100%; max-width: 560px; }
+.pg-map { display: block; width: 100%; height: auto; cursor: crosshair; border: 1px solid var(--border); background: var(--panel-2); }
+.pg-map-state { fill: var(--us-open, #e7e5df); stroke: var(--panel, #fff); stroke-width: 0.8; }
+.pg-map-state:hover { fill: color-mix(in srgb, var(--us-open, #e7e5df) 70%, var(--text)); }
+.pg-map-state.on { fill: color-mix(in srgb, var(--accent, #1f4e79) 30%, var(--us-open, #e7e5df)); }
+.pg-map-dot { fill: var(--accent, #c8102e); stroke: var(--panel, #fff); stroke-width: 2.5; pointer-events: none; }
+.pg-spot-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 760px) { .pg-spot-clear { min-height: 44px; } }

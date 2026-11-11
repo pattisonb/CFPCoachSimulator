@@ -588,9 +588,24 @@ def _tree_median(vals: list, missing_zero: bool = False):
     return out
 
 
+def _town(city, state) -> Optional[list[float]]:
+    """A city's spot from the game's own town list (the recruits' hometowns, by state): [lat, lon], or None."""
+    if not isinstance(city, str) or not city.strip() or not isinstance(state, str):
+        return None
+    want = city.strip().casefold()
+    for row in (recruits.model()["generation"]["towns"].get(state) or ()):
+        if isinstance(row[0], str) and row[0].casefold() == want and row[2] is not None:
+            return [row[2], row[3]]
+    return None
+
+
 def _location(team: dict, members: list[dict]) -> list[float]:
+    """A team's spot: its lat/lon, else its city in the game's town list, else its state's center, else its conference's."""
     if isinstance(team.get("lat"), (int, float)) and isinstance(team.get("lon"), (int, float)):
         return [team["lat"], team["lon"]]
+    town = _town(team.get("city"), team.get("state"))
+    if town:
+        return town
     if team.get("state") in STATE_CENTER:
         return list(STATE_CENTER[team["state"]])
     locs = [m["location"] for m in members if m.get("location")]
@@ -737,11 +752,14 @@ def to_league(merged: dict, seed: int) -> tuple[dict, list[str]]:
                 entry["depth"] = _depth(doc, entry["roster"])
             if new:
                 models[slug] = recruiting_model_for(doc, conf, target)
-            elif any(doc.get(k) != bdoc.get(k) for k in ("lat", "lon", "state")):
+            elif any(doc.get(k) != bdoc.get(k) for k in ("lat", "lon", "state", "city")):
                 m = copy.deepcopy(recruits.model()["teams"].get(slug) or {})
+                town = _town(doc.get("city"), doc.get("state"))
                 if (doc.get("lat"), doc.get("lon")) != (bdoc.get("lat"), bdoc.get("lon")) and _location(doc, []) != list(US_CENTER):
                     m["location"] = _location(doc, [])
-                elif doc.get("state") in STATE_CENTER:      # moved to another state, no new lat/lon: the state's center
+                elif town:                                   # moved city, no new lat/lon: the city in the game's town list
+                    m["location"] = town
+                elif doc.get("state") != bdoc.get("state") and doc.get("state") in STATE_CENTER:   # another state: its center
                     m["location"] = list(STATE_CENTER[doc["state"]])
                 if doc.get("state") != bdoc.get("state") and doc.get("state"):
                     share = m.get("in_state_share") or 0.0
