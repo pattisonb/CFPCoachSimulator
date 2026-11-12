@@ -29,3 +29,30 @@ if __name__ == "__main__":
         if g["kind"] == "playoff":
             print(f"  wk{g['week']} {g['title']} @ {g.get('site')}: {g['away_display']} {g['away_score']} - {g['home_display']} {g['home_score']}")
     print("bowl weeks:", dict(collections.Counter(b["week"] for b in bowls)))
+
+    # a six-win team is never left home while a five-win team plays, unless the no-same-conference rule forced it (the
+    # player's report: a 6-win UConn sat while a 5-win Missouri State played); UConn's "FBS Independent" is independent
+    import random as _random
+    from sim import bowls as _bowls
+    teams = season.load_teams()
+    real = [x for x, t in teams.items() if not t["fictional"]]
+    assert teams["uconn"]["conference"] in _bowls.INDEPENDENT
+    ratings = {x: t["team_ratings"]["overall"] for x, t in teams.items()}
+    for seed in range(30):
+        rng = _random.Random(seed)
+        rec = {x: {"wins": 0, "losses": 0} for x in teams}
+        for x in real:
+            w = rng.choice(range(3, 12))
+            rec[x] = {"wins": w, "losses": 12 - w}
+        field = set(sorted(real, key=lambda x: -rec[x]["wins"])[:12])
+        out = _bowls.select_bowls(rec, teams, field, [], ratings)
+        picked = {x for b in out if not b["unfilled"] for x in (b["home"], b["away"])}
+        six_out = {x for x in real if x not in field and x not in picked and rec[x]["wins"] >= 6}
+        for b in out:
+            if b["unfilled"]:
+                continue
+            for x, partner in ((b["home"], b["away"]), (b["away"], b["home"])):
+                if rec[x]["wins"] == 5:
+                    left = {teams[y]["conference"] for y in six_out}
+                    assert left <= {teams[partner]["conference"]}, (seed, b["bowl"], x, sorted(six_out))
+    print("bowl selection ok: no six-win team sits while a five-win team plays, but for the same-conference rule")
