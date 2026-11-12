@@ -1870,7 +1870,7 @@ Every program in a career's league carries a living rating, seven metrics on 0-1
 |---|---|---|
 | prestige | the program's name: history plus a decade of results | at most 3 a year toward history + 0.3 × (the ten-season mean of its season scores − its real 2023-25 winning): results like the real ones move nothing |
 | winning | the last three seasons, 3-2-1 | every offseason: a season scores win share plus AP finishes (top 25 and top 10 0.35 each, top 5 0.5, number one 0.8; max 3.0), on a fixed curve where a 2-10 season is about 18 and a 12-0 number one 100 |
-| NIL | the collective's tier | settles at its start plus 0.55 × the prestige change, 0.30 × the winning change and 0.15 × the market change, pushed 6 above that by the AD after a year that met his goal and 6 below after a losing year, at most 4 up or 3 down a year, 10-100; the NIL budget is 3 × tier points (Ohio State 275, Texas Tech 189, SMU 136, Tulane 112, Akron 71: the top as the recruiting baseline gave it, the middle with room for a few blue-chip asks) |
+| NIL | the collective's tier | settles at its start plus 0.55 × the prestige change, 0.30 × the winning change and 0.15 × the market change, pushed 6 above that by the AD after a year that met his goal and 6 below after a losing year, at most 4 up or 3 down a year (a playoff the AD did not ask for: 12 further above and up to 10 up that year), 10-100; the NIL budget is 3 × tier points (Ohio State 275, Texas Tech 189, SMU 136, Tulane 112, Akron 71: the top as the recruiting baseline gave it, the middle with room for a few blue-chip asks) |
 | market | crowds and TV | a fixed base (below) plus a live part that steps at most 3 a year toward 0.3 × (winning − its real 2023-25 winning), capped at ±8 where the building is full (base 85+) and ±18 elsewhere; a new head coach's first year adds 1.5 |
 | conference | the conference's strength | the mean engine rating of its members, on the 2026 scale, anchored to its start (half of any change counts) |
 | coach | the head coach's appeal | his overall plus 3 a year of tenure up to five, minus 5 |
@@ -2151,8 +2151,10 @@ it at 1280 and 400 px.
 `docs/superpowers/specs/2026-10-30-nil-economy-design.md`). The season budget B is the
 collective's tier times three. At signing day what is left of B (`left = B − spent`) plus a reward
 from the season just played (a winning record 10% of B, nine or more wins 20% instead, +10% for a
-conference title, +10% for the playoff, +15% for the national title, +10% for a met AD goal, capped
-at 50%, in fives) makes the portal pool, never less than the collective's portal fund of 30% of B:
+conference title, +10% for the playoff, +10% for a playoff game hosted on campus, +15% for the national
+title, +10% for a met AD goal, capped at 50%, in fives; never less than the playoff lines' flat points,
+`REWARD_FLAT`: 75 for the playoff, 50 for a game hosted, 100 for the title, so a playoff run at a small
+school pays what it pays anyone) makes the portal pool, never less than the collective's portal fund of 30% of B:
 `pool = max(0.3·B, left + reward)`. Keeping players home spends from that pool, and the transfers
 you sign hold the rest. When the portal closes, what is unspent carries into next year's budget up
 to a cap by tier (15% of next year's B for tier 1, 20% for tier 2, 25% for tier 3, 30% for tiers 4

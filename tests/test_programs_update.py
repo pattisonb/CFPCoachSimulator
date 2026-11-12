@@ -97,6 +97,9 @@ if __name__ == "__main__":
     t["nil"] = 60.0
     programs.nil_move(lgd["teams"]["ohio-state"], met=True, losing=False)
     assert t["nil"] == 60.0 + programs.NIL_UP, t["nil"]
+    t["nil"] = 60.0                                          # a playoff the AD did not ask for: the boosters open their wallets
+    programs.nil_move(lgd["teams"]["ohio-state"], met=True, losing=False, playoff=True)
+    assert t["nil"] == 60.0 + programs.NIL_PLAYOFF_UP and programs.NIL_PLAYOFF_UP > programs.NIL_UP, t["nil"]
     t["nil"] = 95.0
     programs.nil_move(lgd["teams"]["ohio-state"], met=False, losing=True)
     assert t["nil"] == 95.0 - programs.NIL_DOWN, t["nil"]

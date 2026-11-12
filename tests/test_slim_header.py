@@ -82,7 +82,7 @@ def check_no_banner_and_chip(page, base, sid) -> None:
     line = page.inner_text("#chip-line")
     assert name == s["team_name"], name
     rank = (s.get("my_rank") or {}).get("rank")
-    want = " · ".join(x for x in [f"#{rank}" if rank else "", f"{s['record']['wins']}-{s['record']['losses']}", f"Week {s['current_week'] + 1}"] if x)
+    want = " · ".join(x for x in [f"#{rank}" if rank else "", f"{s['record']['wins']}-{s['record']['losses']}", (s.get("week_labels") or {}).get(str(s["current_week"] + 1)) or f"Week {s['current_week']}"] if x)   # the calendar's week: the opening week is Week 0
     assert line == want, (line, want)
     for bad in ("null", "undefined", "NaN"):
         assert bad not in name + line + (page.get_attribute("#team-chip", "title") or ""), (name, line)
@@ -116,7 +116,7 @@ def check_no_banner_and_chip(page, base, sid) -> None:
     page.wait_for_function("() => !document.body.classList.contains('simming')", timeout=60_000)
     s = call(base, f"/api/season/{sid}")
     rec = f"{s['record']['wins']}-{s['record']['losses']}"
-    page.wait_for_function("(want) => document.querySelector('#chip-line').textContent.includes(want)", arg=f"{rec} · Week {s['current_week'] + 1}", timeout=30_000)
+    page.wait_for_function("(want) => document.querySelector('#chip-line').textContent.includes(want)", arg=f"{rec} · " + ((s.get("week_labels") or {}).get(str(s["current_week"] + 1)) or f"Week {s['current_week']}"), timeout=30_000)
 
 
 def check_phone(page, base, sid) -> None:
