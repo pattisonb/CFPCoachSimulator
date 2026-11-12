@@ -99,8 +99,7 @@ body { --pv-warn: var(--go-warn, #f5b942); }
 .pv-attr-w { text-align: right; color: var(--muted); white-space: nowrap; }
 .pv-unc { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px var(--pv-gap); }
 .pv-unc-row { display: grid; grid-template-columns: minmax(96px, 9em) auto 1fr; gap: 10px; align-items: center; min-height: 30px; }
-.pv-unc-row.pv-conf-row { grid-template-columns: minmax(96px, 9em) 1fr; }   /* Clear Mode: the label and its confidence word, no meter */
-.pv-conf-row .pv-clear-c { text-align: left; }
+.pv-clear-card .pv-clear + * { margin-top: 12px; }   /* Clear Mode: the looks line and flags under Key Ratings */
 
 /* the report: the potential headline, the verdict, Strengths and Areas to Develop */
 .pv-potential { font-size: 20px; font-weight: 800; padding: 6px 12px; background: color-mix(in srgb, var(--good) 12%, transparent); }

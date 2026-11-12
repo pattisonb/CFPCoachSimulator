@@ -820,14 +820,16 @@
       const extra = [PV().abilitiesRow(p ? p.abilities : null), ...(sendBox || [])].filter(Boolean);
       const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: extra.length ? extra : null, potentialTone: potTone,
         ...(pot && pot.est != null ? { potentialLabel: pot.label, potentialText: PV().ratingText(pot), potentialNote: `${pot.confidence} Confidence` } : {}) });
-      return [report, PV().clearRatingsCard(c, { coach: ((rep && rep.attributes) || []).find((a) => a.group === "coachability") }), looksCard(s, b, p, looks, opts)];
+      // no Looks & Confidence card: Key Ratings already say each read's confidence; its looks line and flags close Key Ratings
+      return [report, PV().clearRatingsCard(c, { coach: ((rep && rep.attributes) || []).find((a) => a.group === "coachability"), extra: looksExtras(s, b, p, looks, opts) })];
     }
     const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone });
     tips(report);
     const attrs = PV().attributesCard(rep, { tips });
     return [report, attrs, looksCard(s, b, p, looks, opts)];
   }
-  function looksCard(s, b, p, looks, opts = {}) {
+  // the looks line, the staff's flags (or the note that there are none), the reads and links: Looks & Uncertainty's blocks
+  function looksExtras(s, b, p, looks, opts = {}) {
     const likes = (p && p.likes) || b.likes;
     const flags = [...new Set([...(b.generational || (p && p.public.generational) ? ["generational"] : []), ...(b.find ? [b.find] : p && p.public.find ? [p.public.find] : [])])];
     const extra = [looksLine(looks)].filter(Boolean);
@@ -837,7 +839,10 @@
     if (opts.link) extra.push(el("div", { class: "go-scout-foot", "data-key": "foot" }, [el("button", { type: "button", class: "go-link sc-reports-link", text: "Reports on the Scouting Tab",
       onclick: () => { if (window.CFP.scouting) window.CFP.scouting.want("reports"); H.onChange("scouting"); } })]));
     if (opts.extra) extra.push(...[].concat(opts.extra).filter(Boolean));
-    return PV().uncertaintyCard(p ? p.report : null, extra, { confidence: !!s.clear_mode });   // Clear Mode: Looks & Confidence
+    return extra;
+  }
+  function looksCard(s, b, p, looks, opts = {}) {
+    return PV().uncertaintyCard(p ? p.report : null, looksExtras(s, b, p, looks, opts), { confidence: !!s.clear_mode });   // Clear Mode: a plain Looks card
   }
 
   // ----- Profile: his traits (Not Known Yet with how each shows) and the background, with the comp once complete -----

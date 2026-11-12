@@ -110,9 +110,8 @@ def check_page(st: dict, pid: str) -> None:
                 pot = page.inner_text(".go-pane .pv-report")
                 assert "Potential at" in pot and "Confidence" in pot, pot
                 assert page.query_selector(".go-pane .pv-report .pv-abilities"), "his abilities (or None Yet) on the report"
-                conf = page.eval_on_selector_all(".go-pane .pv-uncertainty .pv-unc-row", "els => els.map(e => e.textContent.trim())")
-                assert conf and all(t.endswith(" Confidence") or t.endswith("Not Scouted") for t in conf), conf
-                assert not page.query_selector(".go-pane .pv-uncertainty .pv-pips"), "no bar meter on Looks & Confidence: it read as a skill rating"
+                assert not page.query_selector(".go-pane .pv-uncertainty"), "no Looks & Confidence card: Key Ratings say each read's confidence"
+                assert page.query_selector(".go-pane .pv-clear-card [data-key=flags], .go-pane .pv-clear-card [data-key=no-flags]"), "the staff's flags close Key Ratings"
                 fits = page.evaluate("""() => { const pr = document.querySelector('.go-pane').getBoundingClientRect();
                   return [...document.querySelectorAll('.go-pane .pv-clear-row, .go-pane .pv-abilities')].every(r => { const b = r.getBoundingClientRect();
                     return b.left >= pr.left - 0.5 && b.right <= pr.right + 0.5; }); }""")
