@@ -1413,6 +1413,21 @@ def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optiona
     return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength) * mult
 
 
+def _grade_points(state: dict, slug: str, p: dict, action: str) -> float:
+    """Your own message or offer, which carries no pitch (the player's ask): worth your grades on what he cares about,
+    the mean of your strength on his priorities (and his decider's topic), as a pitch on one of them would be
+    (PITCH_PRIORITY), never a backfire; his personality scales it as it scales a contact. Pitching him on a call or
+    visit is how you move those grades' weight; Auto-recruit and the AI keep their one-pitch path."""
+    pid = p["id"]
+    mult = persona.pitch_mult(state, pid, action, None, False)
+    if action == "offer":
+        mult *= persona.offer_mult(state, pid)
+    st_ = strengths(state, slug, pid)
+    tops = [t for t in PITCHES if persona.counts_as_priority(state, pid, t)] or list(p.get("priorities") or ())
+    grade = sum(st_[t] for t in tops) / len(tops) if tops else 0.0
+    return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * grade) * mult
+
+
 def best_pitch(state: dict, slug: str, pid: str, required: bool = False) -> Optional[str]:
     """The topic a staff pitches: the strongest of the priorities it knows that will not backfire;
     nothing in particular when it knows none (`required`, an offer: its strongest topic)."""
@@ -1535,12 +1550,19 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed},
                 "money_owed": money_owed(state, slug, pid) if pitch == "nil" else None}
     opens = slug == state.get("team") and action in SCENES and pitch is None
-    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week)
+    manual = slug == state.get("team") and action in ("message", "offer")
+    if manual:
+        pitch = None                                        # the player's ask: no pitch on a message or an offer
+    if manual and action == "offer" and answer == "promise" and _open_roster_promise(_contact(state, slug, pid)):
+        raise RecruitingError(409, "You already promised him the job.")
+    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week, manual=manual)
     if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
             marks.append(pid)
     out = {"hours_left": _hours(state, slug), "revealed": revealed}
+    if manual and action == "offer" and answer == "promise":     # the offer carries the job: worth more where playing time is his
+        out["promise"] = {k: v for k, v in _job_promise(state, slug, pid, "offer").items() if k != "reply"}
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
         from coach_career import prospects as pr
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
@@ -1757,9 +1779,23 @@ def _promise_job(state: dict, slug: str, pid: str, scene: Optional[str]) -> dict
     sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
     if sc is None or scene is None or sc["id"] != scene:
         raise RecruitingError(409, "no call or visit open")
-    contact = _contact(state, slug, pid)
-    if _open_roster_promise(contact):
+    if _open_roster_promise(_contact(state, slug, pid)):
         raise RecruitingError(409, "You already promised him the job.")
+    out = _job_promise(state, slug, pid, sc["action"])
+    sc.setdefault("turns", []).extend([{"who": "you", "text": scenes.JOB_SAID}, {"who": "him", "text": out["reply"]}])
+    sc["job"] = True
+    return {"scene": sc, "points": out["points"], "truthful": out["truthful"], "doubted": out["doubted"], "crowded": out["crowded"],
+            "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+
+
+def _job_promise(state: dict, slug: str, pid: str, action: str) -> dict:
+    """The starting-job promise itself, made on a call or visit (_promise_job) or with your offer (act, answer "promise"):
+    see _promise_job for what it is worth. Records the promise and its History line and adds its points. Returns points,
+    his reply, truthful, doubted, crowded."""
+    from coach_career import scenes, word
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    contact = _contact(state, slug, pid)
     week = state["current_week"]
     group = _group_of(p)
     about = ahead_of(state, slug, pid) or {"name": None, "ovr": 0, "last_year": True, "cls": None}
@@ -1780,16 +1816,14 @@ def _promise_job(state: dict, slug: str, pid: str, scene: Optional[str]) -> dict
         persona.set_cooled_why(state, slug, pid, "promise")
         _event(state, "not_buying", pid, slug, topic="playing_time")
     contact.setdefault("promises", []).append({"kind": "roster", "about": about, "week": week, "broken": None, "job": True})
-    sc.setdefault("turns", []).extend([{"who": "you", "text": scenes.JOB_SAID}, {"who": "him", "text": reply}])
-    sc["job"] = True
-    _event(state, "answer", pid, slug, action=sc["action"], answer="promise", about=about.get("name"), truthful=truthful, job=True,
+    _event(state, "answer", pid, slug, action=action, answer="promise", about=about.get("name"), truthful=truthful, job=True,
            line="You told him the job is his.", **({"doubted": True} if doubted else {}), **({"crowded": True} if crowded else {}))
     if points:
-        _add_points(state, slug, pid, points, sc["action"])
+        _add_points(state, slug, pid, points, action)
     if crowd:
         _strain(state, slug, crowd, week)
-    return {"scene": sc, "points": points, "truthful": truthful, "doubted": doubted, "crowded": crowded,
-            "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+    return {"points": points, "reply": reply, "truthful": truthful, "doubted": doubted, "crowded": crowded}
+
 
 
 def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:
@@ -1982,13 +2016,14 @@ def latest_report(state: dict) -> Optional[dict]:
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
          scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False,
-         visit_week: Optional[int] = None) -> Optional[str]:
+         visit_week: Optional[int] = None, manual: bool = False) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
     finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
     never pesters him. `visit_week`: the home weekend an official visit is for, one of your remaining
     regular-season home games he has not booked elsewhere (only you pick one; Auto-recruit and the
-    AI take his first free weekend)."""
+    AI take his first free weekend). `manual`: your own message or offer by hand, which carries no pitch and is worth your
+    grades on what he cares about (_grade_points)."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -2034,7 +2069,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             rc["commits_v"] = rc.get("commits_v", 0) + 1
             _event(state, "decommit", pid, slug)
     elif action == "offer":
-        if pitch is None:
+        if pitch is None and not manual:
             raise RecruitingError(400, "an offer needs a pitch: what you are selling him")
         if nil > nil_left(state, slug):
             raise RecruitingError(400, "not enough NIL points")
@@ -2061,7 +2096,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         else:
             cold = not contact["n"] and not (rc["visits"].get(pid, {}).get(slug) or {}).get("done")
             contact["cold_offer"] = cold
-            points += _contact_points(state, slug, p, "offer", pitch) * (COLD_OFFER if cold else 1.0)
+            points += (_grade_points(state, slug, p, "offer") if manual else _contact_points(state, slug, p, "offer", pitch)) * (COLD_OFFER if cold else 1.0)
     elif action == "raise_nil":
         if pid not in offers:
             raise RecruitingError(409, "no offer to raise")
@@ -2165,7 +2200,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 contact["asked"] = "range"
         if not opens:
             contact["last_contact"] = week
-            points = _contact_land(state, slug, p, contact, action, pitch, auto)
+            points = _contact_land(state, slug, p, contact, action, pitch, auto, manual)
     if action != "scout":                          # a Send spends scouting points, not hours
         rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
@@ -2174,7 +2209,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
 
 
 def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str],
-                  auto: bool = False) -> float:
+                  auto: bool = False, manual: bool = False) -> float:
     """A contact's points (a message, call or visit, one-shot or a scene's pitch): the pitch's worth
     cut by earlier contacts, halved while he is cooled; a backfire is logged. Past PESTER_FREE
     contacts from your hand while he is not considering you (`not_considering`), the contact pesters him instead: negative
@@ -2197,7 +2232,8 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
             if action == "call":
                 contact["calls"] = contact.get("calls", 0) + 1
             return points
-    points = _contact_points(state, slug, p, action, pitch, first_call=action == "call" and not contact.get("calls")) / (1 + DIMINISH * contact["n"])
+    base = _grade_points(state, slug, p, action) if manual and action == "message" else _contact_points(state, slug, p, action, pitch, first_call=action == "call" and not contact.get("calls"))
+    points = base / (1 + DIMINISH * contact["n"])
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=pitch)
     if cooled(state, slug, pid):

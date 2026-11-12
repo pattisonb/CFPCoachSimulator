@@ -445,3 +445,6 @@
 /* Clear Mode: the abilities a recruit arrives with, under his Key Ratings */
 .pv-abilities { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 2px; }
 .pv-abilities .trait { padding: 0 6px; font-size: 11px; }
+/* the offer's promise: a checkbox row, a tap target on a phone */
+.go-check-row { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; cursor: pointer; line-height: 1.35; }
+.go-check-row .go-check { width: 20px; height: 20px; margin: 1px 0 0; flex: none; accent-color: var(--go-primary, var(--accent)); }

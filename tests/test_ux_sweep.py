@@ -290,7 +290,7 @@ def test_pester_tags(page, base) -> None:
         for a in ("scout", "offer", "off_board"):
             assert items[a][0] is None, (a, items[a])
         page.click(".go-menu .go-menu-item[data-action=message]")
-        page.wait_for_selector(".go-pane .go-step #rc-pitch")
+        page.wait_for_selector(".go-pane .go-step button.go-step-go")
         h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go", scrolled=False)
         n = draws(page)
         page.click(".go-pane .go-step button.go-step-go")
@@ -1674,18 +1674,12 @@ if __name__ == "__main__":
             page.keyboard.press("Tab")
             assert not page.query_selector(".go-menu"), "Tab closes the menu"
             assert page.evaluate("() => document.activeElement.id") == "rc-recruit", "Tab returns focus to the button"
-            # Message opens the step: the pitch dropdown with his known priorities first; Send posts and the step closes
+            # Message opens the step: no pitch (it counts your grades on what he cares about); Send posts and the step closes
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=message]")
-            page.wait_for_selector(".go-pane .go-step #rc-pitch")
+            page.wait_for_selector(".go-pane .go-step button.go-step-go")
             assert not page.query_selector(".go-menu")
-            opts = page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", LEAD_OPTS)
-            known = b["priorities_known"]
-            assert [o[0] for o in opts[:len(known)]] == known and all(o[1].startswith("★ ") for o in opts[:len(known)]), (opts, known)
-            assert not any(o[1].startswith(("★", "☆")) for o in opts[len(known):]), f"no star without a priority or a cue: {opts}"
-            msg_pitch = page.eval_on_selector("#rc-pitch", "s => s.dataset.value")
-            if known:
-                assert page.eval_on_selector("#rc-pitch", "s => s.dataset.value") == known[0], "the default is his first known priority"
+            assert not page.query_selector(".go-pane .go-step #rc-pitch"), "a message carries no pitch"
             assert not page.query_selector(".go-pane .go-step #rc-nil"), "a message carries no NIL field"
             assert page.inner_text(".go-pane .go-step button.go-step-go").strip() == "Send"
             shot(page, "step-1280-dark")
@@ -1703,7 +1697,8 @@ if __name__ == "__main__":
             page.click("#rc-recruit")
             page.click(".go-menu .go-menu-item[data-action=offer]")
             page.wait_for_selector(".go-pane .go-step input#rc-nil")
-            assert page.query_selector(".go-pane .go-step #rc-pitch") and "lowball" in page.inner_text(".go-pane .go-step")
+            assert not page.query_selector(".go-pane .go-step #rc-pitch") and "lowball" in page.inner_text(".go-pane .go-step"), "an offer carries no pitch"
+            assert page.query_selector(".go-pane .go-step #rc-promise") or b.get("job_promised"), "the offer can carry the job promise"
             assert page.inner_text(".go-pane .go-step button.go-step-go").strip() == "Offer"
             page.click(".go-pane .go-step button.go-step-cancel")
             assert not page.query_selector(".go-pane .go-step")
@@ -1752,16 +1747,6 @@ if __name__ == "__main__":
             assert page.query_selector(".modal-scene .go-scene .go-reaction"), "the finished conversation stays in its window after the board catches up"
             one_star("after the re-render")
             close_done(page)
-            # the Offer step's pitch list: his known priorities wear ★, the cued topic he named among them (never both)
-            page.click("#rc-recruit")
-            page.click(".go-menu .go-menu-item[data-action=offer]")
-            page.wait_for_selector(".go-pane .go-step #rc-pitch")
-            opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", LEAD_OPTS))
-            assert opts[hit].startswith(f"★ {PITCH[hit]}") and "☆" not in opts[hit], opts
-            for t in cue:
-                if t != hit:
-                    assert opts[t].startswith(f"☆ {PITCH[t]}"), opts
-            page.click(".go-pane .go-step button.go-step-cancel")
             # History: the message you sent and the call with its pitch and his reaction (once the server logs contacts)
             row_now = next(x for x in call(base, f"/api/season/{A}/recruiting")["board"] if x["id"] == pid)
             if "history" in row_now:
@@ -1769,7 +1754,7 @@ if __name__ == "__main__":
                 time.sleep(0.3)
                 hist = page.inner_text(".go-pane .go-sub-body")
                 wk = season.load_season(A)["current_week"]
-                assert f"Week {wk - 1} · Message · {PITCH[msg_pitch]}" in hist, hist
+                assert f"Week {wk - 1} · Message" in hist, hist
                 assert f"Week {wk - 1} · Call · {PITCH[hit]} · {REACTION[kind]}" in hist, hist
                 page.click(".go-subtabs button[data-sub=overview]")
             assert not page.query_selector("#rc-finish"), "a finished call leaves the head"
@@ -2291,16 +2276,7 @@ if __name__ == "__main__":
             close_done(page)
             hollow = page.eval_on_selector_all(".go-pane .go-tags .go-tag.cue", "els => els.map(e => [e.textContent, e.title])")
             assert hollow == [[f"☆ {PITCH[t]}", CUE_TITLE] for t in cue3] and hollow, (hollow, cue3)
-            page.click("#rc-recruit")
-            page.click(".go-menu .go-menu-item[data-action=offer]")
-            page.wait_for_selector(".go-pane .go-step #rc-pitch")
-            opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", LEAD_OPTS))
-            for t in cue3:
-                assert opts[t].startswith(f"☆ {PITCH[t]} · "), opts
-            for t in row3["priorities_known"]:
-                assert opts[t].startswith(f"★ {PITCH[t]}") and "☆" not in opts[t], opts
             assert GONE not in page.inner_text("body")
-            page.click(".go-pane .go-step button.go-step-cancel")
             assert not errors, errors
 
             # --- Smoothness: every board action patches in place (the pane stays, nothing that holds it is removed, no scroll
@@ -2333,7 +2309,7 @@ if __name__ == "__main__":
             time.sleep(0.3)
             # Message: the step's Send goes busy, the step closes, the row and the pane update in place
             menu("message")
-            page.wait_for_selector(".go-pane .go-step #rc-pitch")
+            page.wait_for_selector(".go-pane .go-step button.go-step-go")
             h = watch(page, ".go-pane", ".go-pane .go-step button.go-step-go")
             n = draws(page)
             page.click(".go-pane .go-step button.go-step-go")
@@ -2438,7 +2414,7 @@ if __name__ == "__main__":
             page.click(f".go-row-recruit[data-pid='{y['id']}']")
             time.sleep(0.6)
             menu("message")
-            page.wait_for_selector(".go-pane .go-step #rc-pitch")
+            page.wait_for_selector(".go-pane .go-step button.go-step-go")
             hours = call(base, f"/api/season/{A}/recruiting")["hours_left"]
             page.evaluate("""() => { const g = window.CFP.game, orig = g.fetch; let held = 0; window.__restoreFetch = () => { g.fetch = orig; };
                 g.fetch = async (p, o) => { const r = await orig(p, o); if (/\\/recruiting$/.test(String(p)) && !(o && o.method) && held++ === 0) await new Promise((res) => setTimeout(res, 2500)); return r; }; }""")
@@ -2464,7 +2440,7 @@ if __name__ == "__main__":
             time.sleep(0.6)
             before = dict(page.evaluate("() => [...document.querySelectorAll('.go-stages button[data-stage]')].map(b => [b.dataset.stage, +b.querySelector('b').textContent])"))
             menu("message")
-            page.wait_for_selector(".go-pane .go-step #rc-pitch")
+            page.wait_for_selector(".go-pane .go-step button.go-step-go")
             # CI's case on every machine: a screen-tall spacer above the board puts Send below the fold, so bringing it
             # into view scrolls the page by hundreds of px, and sending must leave that scroll where it was
             page.evaluate("() => { const t = document.querySelector('#tab-recruiting'), d = document.createElement('div'); d.id = 'ux-spacer'; d.style.height = innerHeight + 'px'; t.before(d); }")

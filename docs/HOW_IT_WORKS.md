@@ -1020,8 +1020,12 @@ Once he signs with you, his profile shows every attribute, now and at his potent
 specialists 0.3) with a spread. What he wants *from you* rises 15% per place you trail on his
 list, and 25% each time a rival's NIL on him is half again yours while you are in his top eight.
 His card shows a range ("wants about 30-60") until a call, in-home visit or official visit tells
-you the number. NIL points are a yearly budget from the program's level, attached to offers. An
-offer goes out with a pitch (what you are selling him) and a number: the NIL counts in full up to
+you the number. NIL points are a yearly budget from the program's level, attached to offers. Your
+offer (and your message) carries no pitch: it is worth your grades on what he cares about, the mean of your strength on his
+priorities as a pitch on one of them would be (`recruiting._grade_points`), never a backfire; pitching him on a call or visit is
+how you make your case. An offer may carry **Promise Him a Starting Role** when you have not promised it yet: the call's job
+promise (`_job_promise`), worth more where playing time is one of his priorities and judged through his first season. AI schools
+and Auto-recruit still offer with their strongest topic as a pitch. The NIL counts in full up to
 his ask and 30% past it; under half his ask (or nothing when he asks 20 or more) is a lowball:
 the offer itself earns nothing and he cools on you for three weeks (contacts count half, he
 declines a visit) until you **Raise NIL** to what he wants. AI schools offer up to 110% of his ask
@@ -1276,8 +1280,7 @@ line (stars, position, state) and one word of standing; a dot marks a move up or
 The pane is the only place anything happens to him: a head with his status chip and one **Recruit
 ▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
 week, Monthly, Offer him first, Finish your call first). Message and Offer… open a step in the
-pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
-NIL points with his ask for an offer. A call or in-home visit plays as a conversation in **its own
+pane: no pitch, the NIL points with his ask for an offer, and the starting-role promise as a checkbox. A call or in-home visit plays as a conversation in **its own
 window** over the board (`openSceneWindow` in `web/recruiting.js`: the shared modal, a dialog with
 `aria-modal`, the focus kept inside, titled "Call · Marcus Bell" or "In-Home Visit · Marcus Bell";
 680 px wide on a desktop, the whole screen at 700 px and under). In it your turns sit right in a

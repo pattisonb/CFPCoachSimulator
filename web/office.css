@@ -168,4 +168,8 @@
 @media (min-width: 900px) {
   .ofc-grid, .ofc-row { align-items: stretch; }
   .ofc-grid .card-bar:has(.go-btn, button) { padding-top: 3px; padding-bottom: 3px; }
+  /* one line: a long postseason title (Week 18 · Final · the bowl's name) ends in an ellipsis, the whole on hover */
+  .ofc-grid .card-bar { flex-wrap: nowrap; }
+  .ofc-grid .card-bar > :first-child { min-width: 0; }
+  .ofc-grid .card-bar .go-kicker { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }

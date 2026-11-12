@@ -117,11 +117,13 @@ if __name__ == "__main__":
     assert five["nil_ask"] > 40 and tx["nil_ask"] <= 20 and all("nil_ask" in p for p in rc["prospects"].values()), (five["nil_ask"], tx["nil_ask"])
     ask = recruiting.ask_from(st, "ohio-state", five["id"])
     assert ask >= five["nil_ask"]
-    # an offer needs a pitch; a lowball cools him (no points for the offer, contacts count half, no visit) until it reaches his ask
+    # an AI school's offer still needs a pitch (yours by hand carries none: it counts your grades on what he cares about);
+    # a lowball cools him (no points for the offer, contacts count half, no visit) until it reaches his ask
     try:
-        recruiting.act(st, "ohio-state", five["id"], "offer", nil=0); raise AssertionError("an offer without a pitch went through")
+        recruiting._act(st, "michigan", five["id"], "offer", nil=0); raise AssertionError("an AI offer without a pitch went through")
     except recruiting.RecruitingError as e:
         assert e.code == 400
+    assert recruiting._grade_points(st, "ohio-state", five, "offer") > 0, "your offer is worth your grades on what he cares about"
     before = recruiting.points_now(st, "ohio-state", five["id"])
     recruiting.act(st, "ohio-state", five["id"], "offer", pitch=five["priorities"][0], nil=0)
     assert recruiting.cooled(st, "ohio-state", five["id"]) and recruiting.points_now(st, "ohio-state", five["id"]) == before

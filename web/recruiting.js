@@ -281,6 +281,7 @@
     if (nil) body.nil = nil;
     if (opts.scene) body.scene = opts.scene;
     if (opts.week != null) body.week = opts.week;     // an official visit's home weekend, picked in the Recruit menu
+    if (opts.answer) body.answer = opts.answer;       // an offer that carries the job promise: answer "promise"
     const names = { message: "Message", call: "Call", hc_visit: "Head Coach Visit", official_visit: "Official Visit Invite", offer: "Offer", pull_offer: "Offer Pulled", raise_nil: "NIL Raised", scout: "Scouting Trip" };
     let r;
     try { r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body)); }
@@ -1493,7 +1494,7 @@
       const job = (async () => {
         const r = await act(s, b.id, action, pitch || null, nil, { ...opts, silent: true, onScene: (sc) => openScene(b, sc) });
         if (!r) return null;
-        ui().toast(SAID[action] ? SAID[action](b, nil) : `${action} done`);
+        ui().toast(`${SAID[action] ? SAID[action](b, nil) : `${action} done`}${opts.answer === "promise" ? " · Promised a Starting Role" : ""}`);
         view.step = null;
         await refresh(s, box);
         return r;
@@ -1819,20 +1820,14 @@
         syncBoard();
       }
     }
-    // the pitch on the step (Message, Offer): the lead-with pill (leadPicker), his known priorities first, then a topic he
-    // brought up this week, then the rest; the pick lasts the visit (view.pitch)
-    function pitchSelect(b) {
-      const cued = cueOf(s, b).topics;
-      const order = [...b.priorities_known, ...cued.filter((t) => !b.priorities_known.includes(t)), ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t) && !cued.includes(t))];
-      const first = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : order[0];
-      return leadPicker(b, { id: "rc-pitch", order, current: first, cueTopics: cued, cueTip: cueOf(s, b).title, onPick: (t) => { view.pitch[b.id] = t; } });
-    }
-    // Message, Offer… and Raise NIL… happen here, under the head: the pitch (not for a raise), the NIL points (not for a message)
+    // Message, Offer… and Raise NIL… happen here, under the head: no pitch (the player's ask: a message or an offer is worth
+    // your grades on what he cares about; a call or visit is where you pitch him), the NIL points (not for a message), and on
+    // an offer the promise of a starting role, when you have not made it yet
     function stepView(b, kind) {
       const st = el("div", { class: "go-step", role: "group", "aria-label": kind === "message" ? `Message ${b.name}` : kind === "offer" ? `Offer ${b.name}` : `Raise your NIL offer to ${b.name}` });
       st.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: kind === "message" ? "Message · 5 Hours" : kind === "offer" ? "Offer · No Hours" : "Raise NIL · No Hours" })]));
-      const pitch = kind === "raise_nil" ? null : pitchSelect(b);
-      if (pitch) st.append(el("div", { class: "go-lead-field" }, [el("span", { class: "small", text: "Your Pitch" }), pitch]));
+      const pitch = null;
+      if (kind !== "raise_nil") st.append(el("p", { class: "muted small", text: "It counts your grades on what he cares about: pitch him on a call or visit to make your case." }));
       let nil = null;
       if (kind !== "message") {
         const ask = askWord(b);
@@ -1841,10 +1836,16 @@
         st.append(el("label", { for: "rc-nil" }, [el("span", { class: "small", text: `NIL Points · ${kind === "offer" ? (ask ? `He wants ${ask}` : "No ask known yet") : `Your offer is ${b.nil || 0}${ask ? ` · he wants ${ask}` : ""}`}` }), nil]));
         if (kind === "offer") st.append(el("p", { class: "muted small", text: "Well under what he wants reads as a lowball, and some recruits take offense sooner." }));
       }
+      let promise = null;
+      if (kind === "offer" && !b.job_promised && !b.portal) {
+        promise = el("input", { type: "checkbox", id: "rc-promise", class: "go-check" });
+        st.append(el("label", { for: "rc-promise", class: "go-check-row" }, [promise, el("span", {}, [el("b", { text: "Promise Him a Starting Role" }),
+          el("span", { class: "muted small", text: " Counts for more if playing time is one of his priorities. It is judged through his first season, and a broken promise costs you." })])]));
+      }
       const go = el("button", { type: "button", class: "go-btn primary go-step-go", text: kind === "message" ? "Send" : kind === "offer" ? "Offer" : "Raise" });
       const cancel = el("button", { type: "button", class: "go-btn go-step-cancel", text: "Cancel" });
       go.addEventListener("click", async () => {
-        const r = await run(b, kind, pitch ? pitch.value : null, nil ? Number(nil.value) || 0 : null, go);
+        const r = await run(b, kind, pitch ? pitch.value : null, nil ? Number(nil.value) || 0 : null, go, promise && promise.checked ? { answer: "promise" } : {});
         // the step closed with the action: the Recruit button takes the focus (unless a call's window opened meanwhile and holds it)
         if (r && !view.step && !sceneWin) { const btn = box.querySelector("#rc-recruit"); if (btn) btn.focus({ preventScroll: true }); }
       });

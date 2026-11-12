@@ -144,7 +144,7 @@
     const bye = !thisWeek && !played;
     const k = `${played ? `${result} · Next Game · ` : bye ? "Bye This Week · Next Game · " : ""}${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date, s)}` : ""}`;
     const name = g.title || (g.rivalry && g.rivalry.name) || null;
-    const head = el("div", { class: "card-bar ofc-hero-head" }, [el("div", { class: "ofc-hero-when" }, [kicker(k)]), el("span", { class: "ofc-chip go-venue", text: VENUE[g.venue] || "Home Game" })]);
+    const head = el("div", { class: "card-bar ofc-hero-head" }, [el("div", { class: "ofc-hero-when", title: k }, [kicker(k)]), el("span", { class: "ofc-chip go-venue", text: VENUE[g.venue] || "Home Game" })]);
     const title = (name || g.site) ? el("div", { class: "ofc-hero-name" }, [name ? el("div", { class: "ofc-title", text: name }) : null, g.site ? el("div", { class: "muted small ofc-site", text: g.site }) : null]) : null;
     const myRank = s.my_rank && s.my_rank.rank;
     const match = el("div", { class: "ofc-match go-sides" }, [side(s.team, s.team_name, myRank, recText(s.record), true),
