@@ -13,6 +13,13 @@
 .ofc-grid.ofc-split > .go-game-last { grid-column: 1; grid-row: span 2; }
 .ofc-grid.ofc-split > .ofc-plan { grid-column: 2; }
 .ofc-grid.ofc-split > :is(.ofc-report-slot, .go-report) { grid-column: 2 / -1; }
+/* the right side ends level with Last Game: This Week's Plan and Recruiting Pulse as tall as each other, What Changed
+   filling the rest (contain: size, so its length never stretches the row) and scrolling inside when it runs long */
+.ofc-grid.ofc-split > :is(.go-game-last, .ofc-plan, .ofc-recruit, .go-report) { align-self: stretch; }
+.ofc-grid.ofc-split { grid-template-rows: auto auto 1fr; }   /* Last Game's extra height goes to What Changed's row, not the plan's */
+.ofc-grid.ofc-split > .go-report { contain: size; min-height: 140px; display: flex; flex-direction: column; overflow: hidden; }
+.ofc-grid.ofc-split > .go-report > .card-bar, .ofc-grid.ofc-split > .go-report > p { flex: none; }
+.ofc-grid.ofc-split > .go-report > .go-report-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .ofc-grid > :is(.ofc-news, .ofc-conf, .ofc-targets) { align-self: stretch; }
 .ofc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; min-width: 0; }
 .ofc-row > :only-child { grid-column: 1 / -1; }
@@ -122,6 +129,9 @@
   .ofc-grid, .ofc-row { grid-template-columns: minmax(0, 1fr); }
   .ofc-grid > *, .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row, .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report,
   .ofc-grid.ofc-split > :is(.go-game-last, .ofc-plan, .ofc-report-slot, .go-report) { grid-column: auto; grid-row: auto; }
+  .ofc-grid.ofc-split { grid-template-rows: none; }
+  .ofc-grid.ofc-split > .go-report { contain: none; min-height: 0; }   /* a phone stacks the cards: What Changed at its own height */
+  .ofc-grid.ofc-split > .go-report > .go-report-rows { overflow-y: visible; }
 }
 @media (max-width: 599px) {
   .ofc-steps { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }
