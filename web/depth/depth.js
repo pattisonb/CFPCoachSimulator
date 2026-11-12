@@ -188,7 +188,7 @@
 
   function setParams() {
     const s = ctx.season();
-    ctx.setParams({ screen: "depth", team: S.team !== s.team ? S.team : null, sub: S.screen !== "overview" ? S.screen : null, unit: S.unit !== "offense" ? S.unit : null,
+    ctx.setParams({ team: S.team !== s.team ? S.team : null, sub: S.screen !== "overview" ? S.screen : null, unit: S.unit !== "offense" ? S.unit : null,
       view: S.screen === "overview" && S.view !== "formation" ? S.view : null, player: S.screen === "players" ? S.psel : null, f: S.form[S.unit] || null, role: S.view === "list" ? S.role : null });
   }
   const unitOf = (id) => UNITS.find((u) => u.id === id) || UNITS[0];
@@ -219,15 +219,14 @@
   async function draw(root, token) {
     setParams();
     const s = ctx.season();
-    const t = window.CFP.teamsBySlug[S.team] || { name: S.team };
     const work = el("div", { class: "dc-work" });
     root.append(work);
     const main = el("section", { class: "dc-main", "aria-live": "polite" });
-    work.append(sidebar(t, s), main);
+    work.append(main);
     try {
       await need("chart");
       if (token !== seq) return false;
-      header(main);
+      header(main, s);
       if (S.screen === "overview") await overview(main, root);
       else if (S.screen === "players") await players(main, root);
       else if (S.screen === "redshirts") await redshirts(main, root);
@@ -244,7 +243,7 @@
     if (!host || !ctx) return;
     const token = ++seq;
     host.innerHTML = "";
-    if (await draw(host, token)) fit();
+    if (await draw(host, token)) { sizeToWindow(); fit(); }
   }
   // the screen drawn again off screen and the one in front patched to match it (web/ui.js morph): nothing blanks,
   // the scroll and the focus stay. opts.pulse (after a move, a redshirt, a position change) flashes what changed;
@@ -262,33 +261,12 @@
     fit();
   }
 
-  // the sidebar: the team's mark and name, the week, the team picker and the way back, the screens, the head coach
-  function sidebar(t, s) {
-    const coach = (cache.chart && cache.chart.head_coach) || t.head_coach || "";
-    const initials = coach.split(" ").map((w) => w[0]).join("").slice(0, 2);
-    const teamSel = el("select", { class: "dc-team-select", "aria-label": "Team" }, ctx.teams().filter((x) => !x.fictional).map((x) => el("option", { value: x.slug, text: x.name })));
-    teamSel.value = S.team;
-    listen(teamSel, "change", (e) => { S.team = e.currentTarget.value; S.sel = null; render(); });
-    const status = s.done ? "Season complete" : (s.week_labels && s.week_labels[s.current_week + 1]) || `Week ${s.current_week + 1}`;
-    return el("aside", { class: "dc-side", "aria-label": "Depth chart" }, [
-      el("button", { type: "button", class: "dc-btn dc-btn-back", text: "← Season", onclick: () => ctx.close() }),
-      el("div", { class: "dc-brand" }, [el("span", { class: "dc-mark", text: t.abbreviation || "", "aria-hidden": "true" }), el("div", { class: "dc-brand-text" }, [
-        el("span", { class: "dc-brand-name", text: (t.mascot || t.name || "").toUpperCase() }),
-        el("span", { class: "dc-brand-sub", text: `${s.done ? "Final" : s.current_week === 0 ? "Preseason" : "In Season"} · ${status}` }),
-      ])]),
-      el("div", { class: "dc-side-team" }, [teamSel, S.team !== s.team ? el("button", { type: "button", class: "dc-btn", text: "My Team", onclick: () => { S.team = s.team; S.sel = null; render(); } }) : null]),
-      // the season's Settings (god mode edits another team's chart) are behind the screen: a way to them from here
-      ctx.openSettings ? el("button", { type: "button", class: "dc-btn dc-btn-settings", text: "⚙ Settings", title: "Season settings: god mode and more", onclick: () => ctx.openSettings() }) : null,
-      el("div", { class: "dc-label", text: "Depth Chart" }),
-      el("nav", { class: "dc-nav" }, SCREENS.map((x) => el("button", { type: "button", class: `dc-nav-item ${S.screen === x.id ? "on" : ""}`, "aria-current": S.screen === x.id ? "page" : null,
-        onclick: () => go({ screen: x.id, sel: null }) }, [el("span", { text: x.name }), el("kbd", { text: x.key, title: `Press ${x.key}` })]))),
-      coach ? el("div", { class: "dc-side-foot" }, [el("span", { class: "dc-coach-mark", text: initials, "aria-hidden": "true" }), el("div", {}, [el("strong", { text: coach }), el("small", { text: "Head Coach" })])]) : null,
-    ]);
-  }
-
-  // the page head, one line: the title, and the arrows that cycle the units
-  function header(main) {
+  // the page head, as the other tabs have it: the title and a line under it (where the season stands, the head
+  // coach, the team when it is another's), then one bar: the four views (keys 1 to 4), the unit ([ and ]), the team
+  // picker and Settings. It stands in for the old screen's sidebar and its unit arrows.
+  function header(main, s) {
     const u = unitOf(S.unit);
+    const t = window.CFP.teamsBySlug[S.team] || { name: S.team };
     const word = u.id === "special" ? ["Special", "Teams"] : ["First Team", u.name];
     const titles = {
       overview: S.view === "list" ? [ROLE_NAME[S.role] || S.role, "Depth"] : word,
@@ -297,15 +275,28 @@
       availability: ["Who Is", "Available"],
     };
     const [a, b] = titles[S.screen];
+    const coach = (cache.chart && cache.chart.head_coach) || t.head_coach || "";
+    const when = s.done ? "Season complete" : s.current_week === 0 ? "Preseason" : `In season, ${(s.week_labels && s.week_labels[s.current_week + 1]) || `Week ${s.current_week + 1}`} up next`;
+    const line = [S.team !== s.team ? t.name : null, when, coach ? `Head coach ${coach}` : null].filter(Boolean).join(" · ") + ".";
     main.append(el("div", { class: "dc-page-head" }, [
-      el("h1", { class: "dc-title", title: `${u.name} / ${SCREENS.find((x) => x.id === S.screen).name}` }, [`${a} `, el("em", { text: b })]),
-      el("div", { class: "dc-cycle", role: "group", "aria-label": "Unit" }, [
-        el("button", { type: "button", class: "dc-btn dc-icon", "aria-label": `Previous unit: ${UNITS[(UNITS.indexOf(u) + 2) % 3].name}`, title: "Previous unit ([)", text: "‹", onclick: () => cycleUnit(-1) }),
-        el("span", { class: "dc-cycle-name" }, [u.name, el("span", { class: "dc-cycle-dots", "aria-hidden": "true" }, UNITS.map((x) => el("i", { class: x.id === u.id ? "on" : "" })))]),
-        el("button", { type: "button", class: "dc-btn dc-icon", "aria-label": `Next unit: ${UNITS[(UNITS.indexOf(u) + 1) % 3].name}`, title: "Next unit (])", text: "›", onclick: () => cycleUnit(1) }),
-      ]),
+      el("div", { class: "dc-head-text" }, [
+        el("h1", { class: "dc-title", title: `${u.name} / ${SCREENS.find((x) => x.id === S.screen).name}` }, [`${a} `, el("em", { text: b })]),
+        el("p", { class: "dc-head-sub", text: line })]),
     ]));
-    if (!canEdit()) main.append(el("p", { class: "dc-note", text: ctx.season().done ? "The season is complete: the depth chart is read-only." : "Another team's chart: turn on god mode in ⚙ Settings to edit it." }));
+    const teamSel = el("select", { class: "dc-team-select", "aria-label": "Team" }, ctx.teams().filter((x) => !x.fictional).map((x) => el("option", { value: x.slug, text: x.name })));
+    teamSel.value = S.team;
+    listen(teamSel, "change", (e) => { S.team = e.currentTarget.value; S.sel = null; render(); });
+    main.append(el("div", { class: "dc-bar", role: "group", "aria-label": "Depth chart" }, [
+      el("nav", { class: "dc-views go-seg", "aria-label": "Views" }, SCREENS.map((x) => el("button", { type: "button", class: `dc-view ${S.screen === x.id ? "on" : ""}`, "data-screen": x.id,
+        "aria-current": S.screen === x.id ? "page" : null, onclick: () => go({ screen: x.id, sel: null }) }, [el("span", { text: x.name }), el("kbd", { text: x.key, title: `Press ${x.key}` })]))),
+      el("div", { class: "dc-units go-seg", role: "group", "aria-label": "Unit" }, UNITS.map((x) => el("button", { type: "button", class: `dc-unit ${x.id === u.id ? "on" : ""}`, "data-unit": x.id,
+        "aria-pressed": String(x.id === u.id), title: "Switch units with [ and ]", text: x.name, onclick: () => go({ unit: x.id, sel: null }) }))),
+      el("span", { class: "dc-bar-grow" }),
+      el("div", { class: "dc-bar-team" }, [teamSel, S.team !== s.team ? el("button", { type: "button", class: "dc-btn", text: "My Team", onclick: () => { S.team = s.team; S.sel = null; render(); } }) : null]),
+      // the season's Settings (god mode edits another team's chart)
+      ctx.openSettings ? el("button", { type: "button", class: "dc-btn dc-btn-settings", text: "⚙ Settings", title: "Season settings: god mode and more", onclick: () => ctx.openSettings() }) : null,
+    ]));
+    if (!canEdit()) main.append(el("p", { class: "dc-note", text: s.done ? "The season is complete: the depth chart is read-only." : "Another team's chart: turn on god mode in ⚙ Settings to edit it." }));
   }
 
   // every screen's toolbar: its own controls on the left (tabs, a summary), the search on the right,
@@ -382,7 +373,16 @@
     rows.classList.toggle("fit-scroll", !fits);
   }
   let fitFrame = 0;
-  const onResize = () => { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(fit); };
+  // in its tab the chart fills the window under the page's bars, as the old screen did (the field's cards size to it)
+  function sizeToWindow() {
+    if (!host || host.hidden) return;
+    const top = host.getBoundingClientRect().top + window.scrollY;
+    let h = Math.max(520, Math.round(window.innerHeight - top - 20));
+    host.style.setProperty("--dc-h", `${h}px`);
+    const over = document.documentElement.scrollHeight - window.innerHeight;   // the card's padding and the page's margin under it
+    if (over > 0 && h > 520) { h = Math.max(520, h - over); host.style.setProperty("--dc-h", `${h}px`); }
+  }
+  const onResize = () => { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(() => { sizeToWindow(); fit(); }); };
 
   // where each slot stands: rows of a nine-column field, the offense from behind the quarterback
   // (the line on top), the defense facing it (the line at the bottom)
@@ -1075,17 +1075,14 @@
       S.sel = null; S.q = "";
       S.psel = params.get("player") || null;
       host.hidden = false;
-      document.body.classList.add("dc-open");
       document.addEventListener("keydown", onKey);
       window.addEventListener("resize", onResize);
-      window.scrollTo({ top: 0 });
       render();
     },
     close() {
       if (!host) return;
       host.hidden = true;
       host.innerHTML = "";
-      document.body.classList.remove("dc-open");
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
     },

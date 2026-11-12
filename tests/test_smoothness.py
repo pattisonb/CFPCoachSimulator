@@ -157,7 +157,7 @@ def season_cases(page, base: str, sid: str) -> None:
 
     # --- Settings over the depth chart screen: god mode does not redraw the field behind the dialog
     open_tab(page, base, sid, "depth", ".dc-card")
-    page.click(".dc-side .dc-btn-settings")        # the season's Settings, from the screen's own sidebar
+    page.click(".dc-bar .dc-btn-settings")         # the season's Settings, from the depth chart's bar
     page.wait_for_selector(".modal-body .settings")
     god = ready(page, ".settings-row:has-text('God Mode') .switch")
     assert_smooth(page, ".dc-field", lambda: god.click(),
@@ -191,7 +191,7 @@ def season_cases(page, base: str, sid: str) -> None:
     page.keyboard.press("Escape")
 
     # --- depth chart: a redshirt from the Redshirts board, both ways; the board patches
-    page.click(".dc-nav-item:has-text('Redshirts')")
+    page.click(".dc-view:has-text('Redshirts')")
     rs = page.wait_for_selector(".dc-person button:has-text('Redshirt'):not(.dc-on)")
     name = rs.evaluate("b => b.closest('.dc-person').querySelector('strong').textContent")
     center(rs)

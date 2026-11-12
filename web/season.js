@@ -1020,7 +1020,7 @@
     if (s.done && state.tab === "games") state.tab = "summary";
     if (s.done && state.tab === "schedule" && !state.summaryShown) { state.tab = "summary"; state.summaryShown = true; }
     if (justDone && !s.offseason_stage) { state.tab = "summary"; state.summaryShown = true; }
-    if (opening) { if (window.CFPDepth && window.CFPDepth.isOpen()) closeDepth(false); applyTeamTheme(s.team); }
+    if (opening) { if (window.CFPDepth && window.CFPDepth.isOpen()) window.CFPDepth.close(); applyTeamTheme(s.team); }
     // the team picker (for a new season) starts on the open season's team
     if (opening && $("#pick-team").querySelector(`option[value="${s.team}"]`)) $("#pick-team").value = s.team;
     state.standings = null;
@@ -1235,7 +1235,6 @@
     if (tabsObserver) tabsObserver.takeRecords();
   }
   function tabPick(name) {
-    if (name === "depth") { openDepth(); return; }     // the depth chart is its own screen
     goTab(name);
   }
   function openTabMore() {
@@ -1270,7 +1269,7 @@
     state.tab = name;
     for (const b of $("#season-tabs").querySelectorAll("button")) b.classList.toggle("active", b.dataset.tab === name);
     layoutTabs();   // the open tab always keeps a slot in the row
-    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "headquarters", "prospects", "scouting", "classes"]) $(`#tab-${t}`).hidden = t !== name;
+    for (const t of ["games", "schedule", "standings", "rankings", "bracket", "bowls", "summary", "awards", "stats", "programs", "office", "offseason", "recruiting", "headquarters", "prospects", "scouting", "depth", "classes"]) $(`#tab-${t}`).hidden = t !== name;
     document.body.classList.toggle("on-office", name === "office");
     document.body.classList.toggle("on-career-tab", CAREER_TABS.includes(name));
     document.body.classList.toggle("no-week-strip", NO_WEEK_TABS.includes(name));
@@ -1282,16 +1281,16 @@
   }
 
   // ----- the address: every place on the page has a URL (web/route.js; docs/HOW_IT_WORKS.md "Deep links") -----
-  // ?id=<save>&tab=<tab>, the open tab's own views (TAB_KEYS), the depth chart (screen=depth and its keys) and
+  // ?id=<save>&tab=<tab>, the open tab's own views (TAB_KEYS; the depth chart's at tab=depth) and
   // the open modals (modal=<kind>:<arg>, bottom to top). A top-level tab or a modal pushes a history entry; a
   // filter, a sort, a sub-tab or another recruit replaces it. Writing the address never redraws anything.
   const route = window.CFP.route;
-  const TABS = ["office", "offseason", "recruiting", "headquarters", "prospects", "scouting", "classes", "games", "schedule", "standings", "rankings", "stats", "programs", "bracket", "bowls", "awards", "summary"];
+  const TABS = ["office", "offseason", "recruiting", "headquarters", "prospects", "scouting", "depth", "classes", "games", "schedule", "standings", "rankings", "stats", "programs", "bracket", "bowls", "awards", "summary"];
   const BOARD_KEYS = ["stage", "sort", "pid", "pane"];
+  const DEPTH_KEYS = ["team", "sub", "unit", "view", "player", "f", "role"];   // the depth chart tab's: ?tab=depth&sub=players&unit=defense
   const TAB_KEYS = { recruiting: BOARD_KEYS, offseason: [...BOARD_KEYS, "opos", "ostatus", "opage", "odev"], prospects: ["ppos", "pstars", "pstate", "pstatus", "psort", "pgroup", "ppage"],
-    scouting: ["qboard", "spid", "ssub", "sops"], rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
+    scouting: ["qboard", "spid", "ssub", "sops"], depth: DEPTH_KEYS, rankings: ["poll"], stats: ["stats", "steam", "sview"], awards: ["aview"] };
   const VIEW_KEYS = [...new Set(Object.values(TAB_KEYS).flat())];
-  const DEPTH_KEYS = ["team", "sub", "unit", "view", "player", "f", "role"];
   // a tab and the keys of every other tab dropped, so an address never carries a view from a tab left behind
   function tabPatch(name) {
     const p = { tab: name };
@@ -1307,6 +1306,7 @@
   // a route's tab and views onto the page's state, before the tab draws (load, refresh, Back and Forward).
   // Anything that does not check out is left to the page's own defaults: the nearest valid view.
   function applyViewRoute(r, s, opening) {
+    if (r.screen === "depth") { r.tab = "depth"; delete r.screen; route.set({ screen: null, tab: "depth" }); }   // an old link to the depth chart's own screen: its tab, its views kept
     if (TABS.includes(r.tab)) {
       state.tab = r.tab;
       if (opening) { state.officeFor = `${s.id}-${s.year}`; state.summaryShown = true; }   // the career's own landing tab gives way to the address
@@ -1333,9 +1333,10 @@
     if (r.tab === "scouting" && window.CFP.scouting && window.CFP.scouting.applyRoute) window.CFP.scouting.applyRoute(r);
     if (r.tab === "offseason" && window.Offseason && window.Offseason.applyRoute) window.Offseason.applyRoute(r);
   }
-  // after the season drew: the depth chart and the modals the address names, each checked as it opens
+  // after the season drew: the modals the address names, each checked as it opens. An old link to the depth chart's
+  // own screen (screen=depth) lands on its tab, its views kept
   async function landOn(r) {
-    if (r.screen === "depth" && state.season) openDepth(new URLSearchParams(location.search), false);
+    if (r.screen === "depth" && state.season) { route.set({ screen: null, tab: "depth" }); state.tab = "depth"; renderWeekStrip(); renderTab(); }
     else if (r.screen) route.set({ screen: null });
     await restoreModals(r.modal || []);
   }
@@ -1376,13 +1377,8 @@
     if (!state.season || state.season.id !== r.id) { closeAllModals(true); await openSeason(r.id, r); return; }
     const want = history.state && history.state.cfp ? route.depth() : r.modal.length;
     while (modalStack.length > want) closeModal(true);
-    const depthWant = r.screen === "depth";
-    const depthOpen = !!(window.CFPDepth && window.CFPDepth.isOpen());
     const tabMoved = TABS.includes(r.tab) && r.tab !== state.tab;
-    if (tabMoved) applyViewRoute(r, state.season, false);
-    if (depthWant && !depthOpen) openDepth(new URLSearchParams(location.search), false);
-    else if (!depthWant && depthOpen) closeDepth(false);             // it draws the tab under it
-    else if (tabMoved && !depthWant) { renderWeekStrip(); renderTab(); }
+    if (tabMoved) { applyViewRoute(r, state.season, false); renderWeekStrip(); renderTab(); }
     if (modalStack.length < want) {
       const have = modalTokens().length;
       for (const t of r.modal.slice(have)) { if (modalStack.length >= want || !(await openToken(t))) break; }
@@ -1391,6 +1387,7 @@
   });
 
   function renderTab() {
+    if (state.tab !== "depth" && window.CFPDepth && window.CFPDepth.isOpen()) window.CFPDepth.close();   // its keys and resize listener go with it
     selectTab(state.tab);
     const t = state.tab;
     if (t === "games") renderGames();
@@ -1405,13 +1402,14 @@
     else if (t === "offseason" && window.Offseason) window.Offseason.render(state.season, $("#tab-offseason"), recruitingHelpers);
     else if (t === "office" && window.Office) window.Office.render(state.season, $("#tab-office"), recruitingHelpers);
     else if (t === "headquarters" && window.HQ) window.HQ.render(state.season, $("#tab-headquarters"), recruitingHelpers);
+    else if (t === "depth") showDepth();
     else if (CAREER_TABS.includes(t) && window.Recruiting) window.Recruiting.render(t, state.season, recruitingHelpers);
   }
 
   // Coach Career: the recruiting tabs (recruiting.js) and the week's steps under the header
   const CAREER_TABS = ["offseason", "office", "recruiting", "headquarters", "prospects", "scouting", "classes", "programs"];
   // league tabs that show the season as it stands, never a picked week: the week strip stays off them
-  const NO_WEEK_TABS = ["standings", "stats", "awards", "summary", "bowls"];
+  const NO_WEEK_TABS = ["standings", "stats", "awards", "summary", "bowls", "depth"];
   // the League menu follows the calendar in a career: the bracket and bowls once the field is set
   // (as Championship Week ends), the awards once the races have a shape, the classes once signing opens,
   // the summary when the season is done; a plain season keeps every tab
@@ -1567,34 +1565,20 @@
     else renderSeasonPlayerStats();
   }
 
-  // ----- the depth chart: its own screen (web/depth/depth.js) at ?id=…&screen=depth -------
-  // Opening it pushes a history entry, so Back returns to the season; its own moves (unit,
-  // screen, formation, position) replace that entry, so the URL can be kept or shared as it stands.
-  // The season's tab stays in the address under it, so closing it (or a refresh) lands back there.
-  const depthClear = () => Object.fromEntries(DEPTH_KEYS.map((k) => [k, null]));
+  // ----- the depth chart: a tab (web/depth/depth.js) at ?id=…&tab=depth, its views in DEPTH_KEYS -------
   function setDepthParams(params) {
-    const patch = { ...depthClear(), screen: "depth" };
+    const patch = Object.fromEntries(DEPTH_KEYS.map((k) => [k, null]));
     for (const [k, v] of Object.entries(params)) if (DEPTH_KEYS.includes(k)) patch[k] = v;
     route.set(patch);
   }
-  function openDepth(params, push = true) {
+  // the tab drawn: opened from the address the first time, refreshed (patched in place) after a sim or an edit
+  function showDepth() {
     if (!state.season || !window.CFPDepth) return;
-    if (push) route.set({ ...depthClear(), screen: "depth" }, { push: true, state: { cfpDepth: true } });
+    if (window.CFPDepth.isOpen()) { window.CFPDepth.refresh(); return; }
     window.CFPDepth.open({
       host: $("#depth-screen"), season: () => state.season, teams: leagueTeams, api, postJSON, toast, errText, godMode, openPlayer, openSettings,
-      setParams: setDepthParams, close: () => closeDepth(true),
-    }, params || new URLSearchParams());
-  }
-
-  // back to the season: the history entry the screen pushed is popped (or, opened from a link, replaced)
-  function closeDepth(fromScreen) {
-    if (!window.CFPDepth || !window.CFPDepth.isOpen()) return;
-    window.CFPDepth.close();
-    if (fromScreen) {
-      if (history.state && history.state.cfpDepth) route.back(1);
-      else route.set({ ...depthClear(), screen: null });
-    }
-    renderTab();
+      setParams: setDepthParams,
+    }, new URLSearchParams(location.search));
   }
 
   // ----- shared modal ----------------------------------------------------------

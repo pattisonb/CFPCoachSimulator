@@ -1263,8 +1263,9 @@ Recruiting). The tab bar is one row of the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) with a **League ▾** menu at its right end that follows the calendar (Standings, Rankings, Stats
 and, in a career, **Programs** all year; Awards from week 4; Classes from selection week; Bracket and Bowls as soon as Championship Week is played (the field is set then, so the Office can name your bowl or playoff game); Season Recap
-all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
-screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
+all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart is a tab like the
+others (`web/depth/depth.js`, `index.html?id=…&tab=depth`; an old `screen=depth` link lands on it), drawn in the page's
+card with its views (Overview, Players, Redshirts, Availability), the unit, the team and ⚙ Settings in one bar under the title: the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a
 time (List view), a Players box of portraits, the Redshirts board and Availability; its moves,
 redshirts and position changes patch the screen in place (`CFP.ui.morph`), and god mode opens
@@ -2144,7 +2145,7 @@ empty state only). Nothing hides or shows on scroll any more.
 **Settings and Download Career** live behind ☰ Menu in a career, on every tab. Their buttons
 (`#season-tools`, `#btn-settings`, `#btn-download-career`) stay in the page, hidden, and the menu
 clicks them; an older plain season, which has no Office, still shows them as buttons on every screen.
-The depth chart screen keeps its own ⚙ Settings in its sidebar. `tests/test_slim_header.py` checks all of
+The depth chart tab keeps its own ⚙ Settings in its bar. `tests/test_slim_header.py` checks all of
 it at 1280 and 400 px.
 
 **NIL economy** (`coach_career/recruiting.py` `portal_pool`, `reward`, `carry_over`; spec
@@ -2850,7 +2851,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |
-| `screen=depth` | The depth chart over the tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` |
+| `tab=depth` | The depth chart tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` (an old `screen=depth` link lands here) |
 | `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>[\|<slug>]` (the slug finds him on any team when the name or position moved), `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab); on the recruiting board `scene:<pid>`, an unfinished call or visit's window (it reopens once the board has drawn, while the board still has that call open; his reaction drops the token, so a finished one never comes back) |
 
 A top-level tab, the depth chart and a modal push a history entry (Back closes the modal, leaves

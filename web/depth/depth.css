@@ -487,3 +487,55 @@
 .dc-promise.good { color: var(--dc-good); }
 .dc-promise.warn { color: var(--dc-warn, #b7791f); }
 .dc-promise.bad { color: var(--dc-bad); }
+
+/* ---------- the depth chart as a tab (#tab-depth): inside the page card as Prospects is, in the site's own colors;
+   the old screen's sidebar is the bar under the title (.dc-bar) ---------- */
+#depth-screen.dc-in-tab {
+  --dc-bg: var(--panel); --dc-surface: var(--panel-2); --dc-raised: color-mix(in srgb, var(--panel-2) 60%, var(--panel)); --dc-line: var(--border);
+  --dc-frame: var(--text); --dc-text: var(--text); --dc-muted: var(--muted); --dc-ink: var(--text); --dc-on-ink: var(--panel); --dc-pad: 0px;
+  min-height: 0; background: var(--panel); }
+#depth-screen.dc-in-tab[hidden] { display: none; }
+#tab-depth { padding: 18px 20px 20px; }
+#depth-screen .dc-work { display: block; min-height: 0; }
+#depth-screen .dc-main { max-width: none; padding: 0; }
+#depth-screen .dc-page-head { align-items: flex-end; }
+.dc-head-sub { margin: 4px 0 0; color: var(--dc-muted); font-size: 13px; }
+.dc-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--dc-line); }
+.dc-views, .dc-units { display: flex; border: 1px solid var(--dc-line); }
+.dc .dc-view, .dc .dc-unit { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 0; border-right: 1px solid var(--dc-line);
+  background: var(--panel); color: var(--dc-text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.dc .dc-view:last-child, .dc .dc-unit:last-child { border-right: 0; }
+.dc .dc-view:hover, .dc .dc-unit:hover { background: var(--dc-raised); }
+.dc .dc-view.on { background: var(--dc-ink); color: var(--dc-on-ink); }
+.dc .dc-unit { font-size: 13px; }
+.dc .dc-unit.on { background: var(--go-primary, var(--accent)); color: var(--go-primary-ink, var(--accent-ink)); }
+.dc-view kbd { font-size: 10px; padding: 0 4px; border: 1px solid currentColor; opacity: 0.55; }
+.dc-bar-grow { flex: 1 1 auto; }
+.dc-bar-team { display: flex; align-items: center; gap: 8px; }
+.dc-bar .dc-team-select { min-height: 44px; max-width: 220px; }
+.dc-bar .dc-btn { min-height: 44px; }
+@media (min-width: 861px) {
+  #depth-screen.dc-in-tab { height: var(--dc-h, calc(100dvh - 210px)); }
+  #depth-screen .dc-work { height: 100%; }
+}
+@media (max-width: 860px) {
+  #tab-depth { padding: 12px 8px 16px; }
+  .dc-views { width: 100%; }
+  .dc .dc-view { flex: 1 1 0; justify-content: center; padding: 0 4px; font-size: 12px; }
+  .dc-view kbd { display: none; }
+  .dc-units { width: 100%; }
+  .dc .dc-unit { flex: 1 1 0; justify-content: center; padding: 0 4px; font-size: 12px; }
+  .dc-bar-grow { display: none; }
+  .dc-bar-team { flex: 1 1 auto; } .dc-bar .dc-team-select { flex: 1 1 auto; max-width: none; }
+}
+#depth-screen .dc-bar .dc-btn { font-size: 14px !important; font-weight: 700; padding: 0 14px; }   /* the bar's buttons at the bar's size, not the pixel face's */
+/* a laptop's short window: the head tightens so the field still fits without scrolling inside itself */
+@media (min-width: 861px) and (max-height: 860px) {
+  #tab-depth { padding-top: 10px; padding-bottom: 10px; }
+  #depth-screen .dc-head-sub { display: none; }
+  #depth-screen .dc-title { font-size: 26px !important; }
+  #depth-screen .dc-bar { margin-top: 8px; padding-bottom: 8px; }
+  #depth-screen .dc-bar :is(.dc-view, .dc-unit, .dc-btn, .dc-team-select) { min-height: 38px; }
+  #depth-screen .dc-toolbar { min-height: 46px; margin-top: 2px; }
+  #depth-screen .dc-toolbar-left { min-height: 44px; }
+}

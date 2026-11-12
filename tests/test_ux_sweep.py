@@ -2183,13 +2183,13 @@ if __name__ == "__main__":
             assert all(refused), "an option the other school refuses cannot be picked"
             page.keyboard.press("Escape")
 
-            # --- Depth chart: its own screen at ?screen=depth. The tab opens it and Back returns; the formation's cards
+            # --- Depth chart: a tab at ?tab=depth. The tab opens it and Back returns; the formation's cards
             # pick a player whose depth controls are big enough to tap and named; your roster redshirts from the board;
             # class codes read as "RS Sr."; a link straight to the screen opens it
             for width in (1280, 400):
                 page.set_viewport_size({"width": width, "height": 1000})
                 open_tab(page, base, A, "depth", ".dc-card")
-                assert "screen=depth" in page.url and page.is_hidden(".season-layout"), "the depth chart takes over the page"
+                assert "tab=depth" in page.url and "screen=" not in page.url, "the depth chart is a tab"
                 assert page.locator(".dc-card").count() == 11, "eleven on the field"
                 page.click(".dc-card >> nth=0")
                 page.wait_for_selector(".dc-depth-acts button", timeout=30_000)
@@ -2204,11 +2204,11 @@ if __name__ == "__main__":
                 assert "null" not in depth.split(), "an empty value printed as null"
                 # the units cycle, and the URL follows
                 page.keyboard.press("]")
-                page.wait_for_selector(".dc-cycle-name:has-text('Defense')", timeout=30_000)
+                page.wait_for_selector(".dc-unit.on:has-text('Defense')", timeout=30_000)
                 assert "unit=defense" in page.url
                 # your roster redshirts from the board, both ways
                 if width == 1280:
-                    page.click(".dc-nav-item:has-text('Redshirts')")
+                    page.click(".dc-view:has-text('Redshirts')")
                     page.wait_for_selector(".dc-person", timeout=30_000)
                     page.click(".dc-person button:has-text('Redshirt') >> nth=0")
                     page.wait_for_selector(".dc-person button:has-text('Off redshirt')", timeout=30_000)
@@ -2216,7 +2216,7 @@ if __name__ == "__main__":
                     page.click(".dc-person button:has-text('Off redshirt')")
                     page.wait_for_function("() => !document.body.innerText.includes('Off Redshirt')", timeout=30_000)
                 # the Players box: a tile picks a player and his card follows; the arrows walk the box
-                page.click(".dc-nav-item:has-text('Players')")
+                page.click(".dc-view:has-text('Players')")
                 page.wait_for_selector(".dc-tile", timeout=30_000)
                 tiles = page.locator(".dc-tile")
                 assert tiles.count() > 10, "a box of portraits"
@@ -2228,7 +2228,7 @@ if __name__ == "__main__":
                 page.keyboard.press("ArrowRight")
                 page.wait_for_function("(slug) => new URLSearchParams(location.search).get('player') !== slug", arg=tile2, timeout=30_000)
                 # a player page from the rail: attribute labels do not clip; the bar colors are explained
-                page.click(".dc-nav-item:has-text('Overview')")
+                page.click(".dc-view:has-text('Overview')")
                 page.wait_for_selector(".dc-card", timeout=30_000)
                 page.click(".dc-card >> nth=0")
                 page.click(".dc-panel-acts .dc-player-link")
@@ -2240,10 +2240,10 @@ if __name__ == "__main__":
                 assert "75" in legend and ("red" in legend.lower() or "green" in legend.lower()), "the rating bar colors are explained"
                 assert not CLASS_CODE.search(legend), CLASS_CODE.search(legend).group(0)
                 page.keyboard.press("Escape")
-                # Back to the season; a link straight to the screen opens it on the screen it names
-                page.click(".dc-btn-back")
-                page.wait_for_selector("#season:visible", timeout=30_000)
-                assert "screen=depth" not in page.url and page.is_hidden("#depth-screen")
+                # Back to the tab before; a link straight to the depth chart opens it on the view it names
+                page.go_back()
+                page.wait_for_function("() => new URLSearchParams(location.search).get('tab') !== 'depth'", timeout=30_000)
+                page.wait_for_selector("#depth-screen", state="hidden", timeout=30_000)
                 page.goto(f"{base}/index.html?id={A}&screen=depth&view=list&unit=defense&role=CB")
                 page.wait_for_selector(".dc-table tbody tr", timeout=120_000)
                 assert page.inner_text(".dc-role.on").strip() == "CB", "the link opens the screen it names"
