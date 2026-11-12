@@ -71,7 +71,7 @@ DRAFT_REF_SHARE = 0.08                             # a grade is against the top 
 DRAFT_REF_MIN = 12                                 # ... at least this many of them *tune*
 DRAFT_MIN_SD = 4.0                                 # ... and their spread taken as at least this (card overall points) *tune*
 DRAFT_ABS_SHARE = 0.25                             # the share of a grade against every position's prospects, not his own (a 99 is a 99) *tune*
-DRAFT_ABS_SHARE_CLEAR = 0.4         # *tune* Clear Mode's share: its slower physical growth leaves a year's best QB near 76, and the first pick should still be a top player
+DRAFT_ABS_SHARE_CLEAR = 0.33        # *tune* Clear Mode's share: its slower physical growth leaves a year's best QB near 76, and the first pick should still be a top player
 DRAFT_RUN = 0.12                                   # the board steps the n-th player at a position down this much a place ... *tune*
 DRAFT_RUN_CAP = 6                                  # ... for at most this many places (needs spread a first round) *tune*
 # projected first-rounders almost always go (the real drafts: a handful of first-round underclassmen stay a year) *tune*
