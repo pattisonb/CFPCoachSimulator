@@ -118,6 +118,8 @@ def fg_max_distance(kicker):
     """Longest field goal this kicker will attempt, in yards."""
     power_mult = sliders.get_multiplier(sliders.kicking_power)
     long_range = (getattr(kicker, "traits", None) or {}).get("long_range", 0) * cfg.TRAIT_FX["long_range"]
+    if cfg.EXTRA_TRAITS:                  # Clear Mode: a cannon leg kicks from farther
+        long_range += (getattr(kicker, "traits", None) or {}).get("cannon_leg", 0) * cfg.TRAIT_FX["cannon_leg"]
     return round(cfg.FG_MAX_DISTANCE * power_mult + ((kicker.kick_power or 50) * power_mult - 50) / 8 + long_range)
 
 
@@ -125,6 +127,8 @@ def get_punt_distance(punter):
     punt_power_mult = sliders.get_multiplier(sliders.kicking_power)
     mean, sd = cfg.PUNT_DISTANCE
     punt_distance = int(random.gauss(mean * punt_power_mult, sd))
+    if cfg.EXTRA_TRAITS:                  # Clear Mode: a cannon leg punts farther
+        punt_distance += (getattr(punter, "traits", None) or {}).get("cannon_leg", 0) * cfg.TRAIT_FX["cannon_leg"]
     return round(punt_distance + (((punter.punt_power or 50) * punt_power_mult) - 50) / 5)
 
 

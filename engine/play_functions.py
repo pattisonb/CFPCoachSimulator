@@ -227,6 +227,9 @@ def _throw_depth(target, tendencies, play_action=False):
     return random.choices(DEPTHS, weights=[short * rest, mid * rest, deep], k=1)[0]
 
 
+CLUTCH_NOW = [False]   # Clear Mode: this drive is in clutch time (set by the game loop each drive; game_config CLUTCH_*)
+
+
 def _tr(player, *keys):
     """The player's tier (0-4) summed over the given traits (traits never change in a game:
     each key tuple is summed once per player)."""
@@ -475,6 +478,10 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, ve
     pursuit = _group_rating(defense, front_positions, ('speed', 'tackling'))
     yards += (carrier_rating - pursuit) * cfg.RUSH_PER_CARRIER_POINT
     yards += cfg.RUSH_GUESSED if guessed_play else cfg.RUSH_NOT_GUESSED
+    if cfg.EXTRA_TRAITS:                   # Clear Mode: a lead-blocking back, and a closer late in a close game
+        yards += _tr_points(_members(offense, ('FB', 'RB', 'TE')), ("lead_back",)) * cfg.TRAIT_FX["lead_back"]
+        if CLUTCH_NOW[0]:
+            yards += _tr(carrier, "closer") * cfg.TRAIT_FX["closer"] * 40
 
     big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL) * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
     if not guessed_play:
@@ -729,9 +736,15 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
         completion += cfg.PLAY_ACTION_COMPLETION + (_attr(qb, "play_action") - diag) * cfg.PLAY_ACTION_SKILL
     if man:
         completion += _tr(target, "press_beater") * fx["press_beater"]
-        completion -= _tr_points(covers, ("shadow", "jam_artist")) * fx["cover"]
+        completion -= _tr_points(covers, cfg.COVER_TRAITS_MAN) * fx["cover"]
     elif depth != "deep":
-        completion -= _tr_points(covers, ("route_jumper",)) * fx["cover"]
+        completion -= _tr_points(covers, cfg.COVER_TRAITS_ZONE) * fx["cover"]
+    if cfg.EXTRA_TRAITS:                   # Clear Mode: the passer's own steadying abilities
+        completion += _tr(qb, "coach_on_the_field") * fx["coach_field"]
+        if play_action:
+            completion += _tr(qb, "ball_handler") * fx["ball_handler"]
+        if CLUTCH_NOW[0]:
+            completion += _tr(qb, "closer") * fx["closer"]
     completion += (qb_accuracy - cfg.NEUTRAL) * cfg.COMPLETION_PER_QB_POINT
     completion += (receiver_skill - cfg.NEUTRAL) * cfg.COMPLETION_PER_RECV_POINT
     completion -= (coverage - cfg.NEUTRAL) * cfg.COMPLETION_PER_COV_POINT
@@ -844,11 +857,17 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
         return "interception", max(1, min(99, spot - return_yards))
 
     # --- Scramble instead of a throw ---
-    if random.random() < cfg.SCRAMBLE_CHANCE * (qb.speed / cfg.NEUTRAL):
+    scramble_mult = 1.0
+    if cfg.EXTRA_TRAITS:                   # Clear Mode: a running quarterback scrambles more; defenders who read it, less
+        scramble_mult = (1 + _tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"]) \
+            * max(0.5, 1 - _tr_points(_members(defense, ('MLB', 'ROLB', 'LOLB', 'S', 'DE')), ("option_killer",)) * cfg.TRAIT_FX["option_killer"])
+    if random.random() < cfg.SCRAMBLE_CHANCE * (qb.speed / cfg.NEUTRAL) * scramble_mult:
         qb.stats["pass_attempts"] -= 1
         target.stats["targets"] -= 1
         last_play["scramble"] = True
         yards = random.randint(1, 12) if random.random() < 0.5 + (qb.speed - 50) / 100 else -random.randint(1, 5)
+        if cfg.EXTRA_TRAITS and yards > 0:
+            yards += round(_tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"] * 10)
         if yardline + yards >= 100:
             yards = 100 - yardline
             qb.stats['rushing_touchdowns'] += 1

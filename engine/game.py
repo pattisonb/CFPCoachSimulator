@@ -316,6 +316,9 @@ class GameSim:
         lead = self.score[self.side(offense)] - self.score[self.side(defense)]
         for team, team_lead in ((offense, lead), (defense, -lead)):
             team.lead, team.half, team.in_overtime = team_lead, self.half, self.in_overtime
+        # Clear Mode: clutch time for the abilities that answer it (the fourth quarter or overtime, within one score)
+        play_functions.CLUTCH_NOW[0] = bool(cfg.EXTRA_TRAITS and abs(lead) <= cfg.CLUTCH_MARGIN
+                                            and (self.in_overtime or (self.half == 2 and seconds <= cfg.CLUTCH_SECONDS)))
         play_ran, result, yardline, seconds_left = sim_drive(
             offense, defense, 1, 10, start_yardline, seconds, hurrying, verbose=False,
             trailing_late=trailing_late,

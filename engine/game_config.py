@@ -180,6 +180,32 @@ LINE_PASS_TRAITS = ("pocket_protector", "quick_set", "quick_pass_set", "interior
 RUSH_TRAITS = ("pocket_collapser", "edge_bender", "gap_penetrator", "pressure_player", "finisher", "jump_the_snap")
 TACKLE_TRAITS = ("sure_tackler", "pack_tackler", "block_buster", "hand_fighter", "edge_setter")
 HIT_TRAITS = ("heavy_hitter", "jarring_hits", "ball_jarrer")
+
+# ----- Clear Mode (the clear-mode branch): the 17 abilities that did nothing get effects -----
+# Each is per tier and small, a fixed nudge with no draw of its own, so a game's other draws are the same.
+EXTRA_TRAITS = True               # the branch's switch (coach_career/clear.py CLEAR)
+CLUTCH_SECONDS = 900              # "clutch time": the fourth quarter (and overtime) ...
+CLUTCH_MARGIN = 8                 # ... within one score
+COVER_TRAITS_MAN = ("shadow", "jam_artist")
+COVER_TRAITS_ZONE = ("route_jumper",)
+if EXTRA_TRAITS:
+    TRAIT_FX.update({
+        "closer": 0.004,            # completion, and rush yards x 40, in clutch time: closer
+        "ice_water": 0.015,         # field-goal make chance in clutch time: ice_water, clutch_leg
+        "ball_handler": 0.004,      # completion on play-action throws
+        "scramble": 0.06,           # scramble chance x (1 + this), and +10x this yards: option_maestro, tuck_and_run
+        "coach_field": 0.0015,      # completion on every throw: coach_on_the_field
+        "lead_back": 0.12,          # run yards per point of lead-blocking backs on the field
+        "option_killer": 0.06,      # scramble chance x (1 - this per point) of the defenders who read it
+        "pin_artist": 0.05,         # pin chance on a punt that would carry inside the 10
+        "cannon_leg": 1.5,          # punt yards, and field-goal range in yards
+        "natural_talent": 0.06,     # offseason growth x (1 + this): coach_career/offseason.develop
+    })
+    LINE_RUN_TRAITS = LINE_RUN_TRAITS + ("line_leader", "grinder", "screen_blocker")
+    LINE_PASS_TRAITS = LINE_PASS_TRAITS + ("line_leader",)
+    TACKLE_TRAITS = TACKLE_TRAITS + ("defensive_leader",)
+    COVER_TRAITS_MAN = COVER_TRAITS_MAN + ("diving_breakup", "defensive_leader")
+    COVER_TRAITS_ZONE = COVER_TRAITS_ZONE + ("diving_breakup", "defensive_leader")
 # ----- Coach styles -----
 # What the offensive scheme leans toward: deep and short shares of throws (x), the share of
 # runs that go outside (+), how often it uses play-action (x). Multiple is neutral.

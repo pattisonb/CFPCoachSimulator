@@ -1664,6 +1664,12 @@ def year_pace(p: dict, starter: bool = False) -> float:
     return max(pace, STARTER_YEAR) if starter else pace
 
 
+def rv2_tier(ab: str) -> int:
+    """An ability's tier (1 Bronze .. 4 Platinum) from a roster's "name|tier"."""
+    from teamdata import ratings as rv2
+    return rv2.TRAIT_TIERS.get(ab.split("|")[-1], 0)
+
+
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starter: bool = False) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
     coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
@@ -1671,6 +1677,10 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starte
     rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * year_pace(p, starter)
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
+    if clear.on():                                            # Clear Mode: Natural Talent grows faster (engine TRAIT_FX)
+        from engine import game_config as _cfg
+        tier = max((rv2_tier(a) for a in p.get("ab") or [] if a.split("|")[0] == "The Natural"), default=0)
+        rate *= 1 + tier * _cfg.TRAIT_FX.get("natural_talent", 0)
     base = rate
     rate = min(DEV_YEAR_CAP, rate)                            # no offseason closes more than half his room (DEV_YEAR_CAP)
     # Clear Mode: physical ratings grow slower, technique and mental faster (clear.PHYS_RATE, clear.SKILL_RATE), each
