@@ -107,7 +107,7 @@
 .dc-field-head .dc-ident { transition: opacity 0.15s; }
 .dc-field-head.previewing .dc-preview { opacity: 1; }
 .dc-field-head.previewing .dc-ident { opacity: 0; }
-.dc-rows { --s: 4; display: flex; flex-direction: column; justify-content: space-evenly; gap: 16px; min-height: 0; padding: 6px 6px 0; }
+.dc-rows { --s: 4; display: flex; flex-direction: column; justify-content: space-evenly; gap: 8px; min-height: 0; padding: 6px 6px 0; }
 .dc-rows.fit-1 .dc-layer-3, .dc-rows.fit-2 .dc-layer { display: none; }
 .dc-rows.fit-2 { gap: 10px; }
 /* the tightest fit: the name and the rating share the line under the portrait, the class line goes */

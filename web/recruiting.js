@@ -80,7 +80,7 @@
     const weight = (r) => (r.rank !== r.prev_rank ? 2 : 0) + r.events.filter((e) => BIG.has(e.kind)).length * 3 + (r.moves.some((m) => m.you) ? 1 : 0);
     const rows = report.rows.filter((r) => weight(r) > 0).sort((a, b) => weight(b) - weight(a));
     if (!rows.length) return null;
-    card.append(el("ul", { class: "go-news go-report-rows" }, rows.slice(0, 6).map((r) => {
+    card.append(el("ul", { class: "go-news go-report-rows" }, rows.map((r) => {     // every one: the card scrolls inside
       const bits = [];
       if (r.rank == null) bits.push("Not on his list");
       else if (r.prev_rank != null && r.prev_rank !== r.rank) bits.push(`${r.prev_rank > r.rank ? "Up" : "Down"} to #${r.rank} of ${r.of}${r.rank === 1 ? "" : r.leader ? ` · ${r.leader.name} leads` : ""}`);
@@ -97,7 +97,6 @@
       }
       return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
     })));
-    if (rows.length > 6) card.append(el("p", { class: "muted small", text: `${rows.length - 6} more moved: see his list on the board.` }));
     return card;
   }
 
@@ -945,6 +944,7 @@
     f.state = STATES.includes(r.pstate) ? r.pstate : "";
     f.status = r.pstatus === "recommended" || STATUS.some(([k]) => k && k === r.pstatus) ? r.pstatus : "";
     f.sort = PR_SORTS.has(String(r.psort || "").replace(/^-/, "")) ? r.psort : "rank";
+    if (f.sort.replace(/^-/, "") === "stars" && s && s.offseason_stage && /^portal/.test(s.offseason_stage)) f.sort = "rank";   // no star sort in the portal
     f.group = /^[A-Z]{1,4}$/.test(r.pgroup || "") ? r.pgroup : "";
     const pg = Number(r.ppage);
     view.offset = Number.isInteger(pg) && pg > 1 ? (pg - 1) * 50 : 0;
@@ -2230,7 +2230,9 @@
       });
       return el("th", { scope: "col", class: `pr-c-${k}`, "data-sort": key }, [btn]);
     };
-    const starsHead = sortHead("stars", inPortal ? "Class" : "Stars");
+    // the portal's column is the entrant's class (Fr., So.…), not stars: it does not sort
+    const plainClassHead = () => el("th", { scope: "col", class: "pr-c-stars", text: "Class" });
+    const starsHead = inPortal ? plainClassHead() : sortHead("stars", "Stars");
     const thead = el("thead", {}, [el("tr", {}, HEADS.map(([k, t]) => (k === "stars" ? starsHead : sortHead(k, t))))]);
     function syncSortHeads() {
       const base = f.sort.replace(/^-/, ""), down = DESC_FIRST.has(base) !== f.sort.startsWith("-");
@@ -2481,7 +2483,8 @@
       if (portalRows && !ctx.portal) {                          // the summary may predate the portal
         ctx.portal = view.portal = true;
         title.textContent = `Transfer Portal · ${year}`;
-        starsHead.textContent = "Class";
+        starsHead.replaceWith(plainClassHead());                // the summary predated the portal: the column stops sorting
+        if (f.sort.replace(/^-/, "") === "stars") f.sort = "rank";
       }
       ctx.summary = d.summary || null;
       ctx.rows = d.rows;

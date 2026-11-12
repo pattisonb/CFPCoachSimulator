@@ -359,9 +359,10 @@
     const rows = host && host.querySelector(".dc-rows");
     if (!rows) return;
     if (window.matchMedia("(max-width: 860px)").matches) { rows.style.removeProperty("--s"); return; }
-    // biggest first; then without the 3rd strings, then without strings at all (they are in the drawer and the list);
-    // if nothing fits, the field scrolls
-    const steps = [[4, 0], [3, 0], [3, 1], [2, 0], [2, 1], [2, 2], [2, 3]];
+    // biggest first, the backups kept as the portraits shrink (the player's ask: the defense's three rows show their 2nd
+    // and 3rd strings as the offense does); then without the 3rd strings, then without strings at all (they are in the
+    // drawer and the list); if nothing fits, the field scrolls
+    const steps = [[4, 0], [3, 0], [2.5, 0], [2, 0], [1.5, 0], [2, 1], [1.5, 1], [2, 2], [2, 3]];
     let fits = false;
     for (const [sc, level] of steps) {
       rows.style.setProperty("--s", sc);
