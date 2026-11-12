@@ -83,14 +83,13 @@ build use the standard library only. Every push to `main` deploys to production,
 pull request gets a preview deployment with its own link. `game.zip`, `version.json` and
 `worker.js` are served `no-cache`, so a new deploy is picked up on the next visit.
 
-The old GitHub Pages address still builds the same `dist/` on every push to `main`
-(`.github/workflows/pages.yml`) and shows a strip pointing to the new site, because careers
-are saved in the browser per address: a player opens theirs there, uses Download Career, and
-Load Career on the new site. It also serves as a preview of any branch when Vercel's free plan
-runs out of preview deployments: in the repository's Actions, run the Pages workflow with a
-branch name to build that branch, or set the repository variable `PAGES_BRANCH` (Settings,
-Secrets and variables, Actions, Variables) to pin the site to a branch until it is cleared, so
-the merges that redeploy `main` in between do not put `main` back. The build writes
+The GitHub Pages address serves the `clear-mode` branch (`main` is the Vercel site): a push to
+`clear-mode` starts the Pages workflow by name (`.github/workflows/pages-clear-mode.yml` on that
+branch), which runs from `main` so the `github-pages` environment allows the deploy, and builds
+`clear-mode` by default (`.github/workflows/pages.yml`). It shows a strip pointing to the main
+site, because careers are saved in the browser per address. To preview another branch, run the
+Pages workflow with its name, or set the repository variable `PAGES_BRANCH` (Settings, Secrets
+and variables, Actions, Variables) to change the default until it is cleared. The build writes
 `dist/preview.json` (branch, commit, build time) and the strip says which branch the copy is.
 
 The data refresh tools (`tools/fetch_*.py`, `tools/forward_test.py`, the realism and
@@ -121,7 +120,7 @@ the only plain square is the gray "empty" placeholder for a slot with no team ye
 | `tools/build_site.py` | Builds the static site into `dist/` (`web/`, `game.zip`, `version.json`) |
 | `web/worker.js`, `web/game-client.js` | The game in the browser: Pyodide in a Web Worker, saves in IndexedDB; the page's client for it |
 | `vercel.json` | How Vercel builds and serves the site: production from `main`, a preview per pull request |
-| `.github/workflows/pages.yml` | Keeps the old GitHub Pages address running (with a strip pointing to the new site) on every push to `main` |
+| `.github/workflows/pages.yml` | Builds the GitHub Pages address from `clear-mode` (started by name from a push to that branch), or any branch you name |
 | `sim/` | The season simulation: the season engine, polls, bowls, awards, in-season form, head coaches, the real box score import |
 | `web/` | The site: plain HTML, CSS and JavaScript, no build step |
 | `tools/fetch_results.py` | Downloads the 2026 FBS results played so far from NCAA.com into `data/season_games.json` |

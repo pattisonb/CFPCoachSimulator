@@ -1,20 +1,18 @@
-# Build the browser site (dist/) and publish it to GitHub Pages on every push to main.
+# Build the browser site (dist/) and publish it to GitHub Pages. Pages serves the clear-mode branch (main is the
+# Vercel site): a push to clear-mode starts this workflow by name (.github/workflows/pages-clear-mode.yml on that
+# branch), and it runs from main so the github-pages environment allows the deploy.
 # One-time setting: the repository's Settings -> Pages -> Source: GitHub Actions.
 #
-# The Pages site doubles as a preview of any branch (Vercel's free plan runs out of preview
-# deployments): Run workflow with a branch name builds that branch instead of main, and the
-# repository variable PAGES_BRANCH (Settings -> Secrets and variables -> Actions -> Variables)
-# pins the site to a branch until it is cleared, so the merges that redeploy main in between do
-# not put main back. The page says which branch and commit it is (dist/preview.json).
+# Run workflow with a branch name builds that branch instead, and the repository variable PAGES_BRANCH
+# (Settings -> Secrets and variables -> Actions -> Variables) changes the default from clear-mode. The page says which
+# branch and commit it is (dist/preview.json).
 name: Pages
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch to build (empty: PAGES_BRANCH if set, else main)"
+        description: "Branch to build (empty: PAGES_BRANCH if set, else clear-mode)"
         required: false
         default: ""
 
@@ -40,7 +38,7 @@ jobs:
           INPUT_BRANCH: ${{ inputs.branch }}
           PINNED: ${{ vars.PAGES_BRANCH }}
         run: |
-          ref="${INPUT_BRANCH:-${PINNED:-main}}"
+          ref="${INPUT_BRANCH:-${PINNED:-clear-mode}}"
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
           echo "Building branch $ref" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/checkout@v4

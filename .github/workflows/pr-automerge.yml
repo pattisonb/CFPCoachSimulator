@@ -9,8 +9,7 @@
 #   - the PR's head is the commit that was tested (a newer push gets its own run)
 #   - main is the commit it was tested against; if main moved (another PR merged first), the PR is
 #     sent back to PR Tests against the new main instead of being merged
-# A merge made here does not fire the push trigger of the Pages workflow (GitHub does not start
-# workflows from this token's pushes), so the deploy is started by name.
+# A merge to main deploys on Vercel; GitHub Pages serves the clear-mode branch and is not started from here.
 #
 # Two ways in: workflow_run for a PR Tests run a push started, and workflow_dispatch (run_id) for a
 # dispatched PR Tests run, which hands off here by name from its last job (GitHub fires no
@@ -117,5 +116,4 @@ jobs:
           fi
 
           gh pr merge "$PR" --repo "$REPO" --merge --match-head-commit "$HEAD_SHA"
-          gh workflow run pages.yml --repo "$REPO" --ref main
           comment "Every test passed against the current main: merged. Vercel deploys main to the site."
