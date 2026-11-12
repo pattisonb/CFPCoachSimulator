@@ -309,6 +309,7 @@
 /* ---------- redshirts and availability ---------- */
 .dc-people { display: flex; flex-direction: column; margin-top: 16px; }
 .dc-people .dc-kicker { margin: 18px 0 6px; }
+@media (min-width: 861px) { .dc-people .dc-kicker { position: sticky; top: 0; z-index: 1; padding: 4px 0; background: var(--dc-bg); } }   /* Sitting Out, Eligible: stay in view while the list scrolls in its panel (a phone scrolls the page) */
 .dc-person { display: grid; grid-template-columns: 46px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) 40px auto; align-items: center; gap: 12px; min-height: 52px; padding: 6px 8px;
   border-top: 1px solid var(--dc-line); font-size: var(--dc-fs-s); }
 .dc-person-main { display: flex; flex-direction: column; min-width: 0; }
