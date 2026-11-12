@@ -1279,15 +1279,105 @@ def _game_team(slug: str, form_shift: float, player_shifts: dict, edits: dict, m
     return _with_injuries(apply_depth(team, depth), injured)
 
 
+def _with_earned(team: dict, earned: Optional[dict]) -> dict:
+    """Clear Mode: the abilities his players have earned this career ({"Name|POS": {trait: tier}}) over the roster's own."""
+    if not earned:
+        return team
+    team = dict(team)
+    for unit in ("offense", "defense"):
+        players = []
+        for p in team.get(unit) or []:
+            got = earned.get(f"{p.get('name')}|{p.get('position')}")
+            if got:
+                have = {t["key"]: t["tier"] for t in p.get("traits") or [] if isinstance(t, dict)}
+                for k, tier in got.items():
+                    have[k] = max(have.get(k, 0), tier)
+                p = dict(p, traits=[{"key": k, "tier": t} for k, t in sorted(have.items(), key=lambda kv: -kv[1])])
+            players.append(p)
+        team[unit] = players
+    return team
+
+
+def _moments(r: dict, home_team: dict, away_team: dict) -> dict:
+    """Clear Mode: the game's big moments by player ({"home": {"Name|POS": {metric: n}}, "away": ...}): a go-ahead or tying
+    score in the fourth quarter or overtime (clutch_score: the scorer and his passer; clutch_kick: the kicker), and a sack,
+    interception or forced fumble then while his team led by one score (clutch_stop). From the scoring plays and the play
+    log (engine.drive_functions.play_log, this game's)."""
+    from engine import drive_functions as dfn
+    import re
+    roster = {}
+    for side, t in (("home", home_team), ("away", away_team)):
+        for p in (t.get("offense") or []) + (t.get("defense") or []):
+            roster.setdefault(p.get("name"), (side, f"{p.get('name')}|{p.get('position')}"))
+    out = {"home": {}, "away": {}}
+
+    def credit(name, metric):
+        hit = roster.get(name)
+        if hit:
+            d = out[hit[0]].setdefault(hit[1], {})
+            d[metric] = d.get(metric, 0) + 1
+    def secs(clock) -> int:
+        """'10:44' -> 644 seconds left in the quarter; an overtime or missing clock reads 0."""
+        try:
+            mm, ss_ = str(clock).split(":")
+            return int(mm) * 60 + int(ss_)
+        except (ValueError, AttributeError):
+            return 0
+    scores = r.get("scoring_plays") or []
+    prev = {"home": 0, "away": 0}
+    marks = []                                       # (quarter, seconds left, home lead after)
+    for s in scores:
+        side = s["team"]
+        before = prev[side] - prev["away" if side == "home" else "home"]
+        after = s["home_score"] - s["away_score"] if side == "home" else s["away_score"] - s["home_score"]
+        if s["quarter"] >= 4 and before <= 0 <= after:
+            desc = s.get("description") or ""
+            names = re.findall(r"([A-Z][\w.'\- ]+?) \((?:[A-Z]{1,4})\)", desc)
+            passer = re.match(r"^(.+?) pass to ", desc)                    # "A pass to B (WR)": the passer has no tag
+            if passer:
+                names = names + [passer.group(1).strip()]
+            if s.get("kind") in ("field_goal", "fg"):
+                for n in names[:1]:
+                    credit(n, "clutch_kick")
+            else:
+                for n in names[:2]:
+                    credit(n, "clutch_score")
+        prev = {"home": s["home_score"], "away": s["away_score"]}
+        marks.append((s["quarter"], secs(s.get("clock")), s["home_score"] - s["away_score"]))
+
+    def home_lead(q, left):
+        lead = 0
+        for mq, mleft, hl in marks:
+            if mq < q or (mq == q and mleft > left):
+                lead = hl
+        return lead
+    for e in dfn.play_log:
+        q = e.get("quarter") or 0
+        if q < 4:
+            continue
+        left = secs(e.get("clock"))
+        for who in (e.get("sacked_by"), e.get("picked_by")):
+            if not who or who not in roster:
+                continue
+            side = roster[who][0]
+            lead = home_lead(q, left) * (1 if side == "home" else -1)
+            if 1 <= lead <= 8:
+                credit(who, "clutch_stop")
+    return out
+
+
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
-    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args
-    home_team = _game_team(home, form[0], form[2], edits[0], morale[0], depth[0], home_out)
-    away_team = _game_team(away, form[1], form[3], edits[1], morale[1], depth[1], away_out)
+    event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args[:12]
+    earned = args[12] if len(args) > 12 else (None, None)
+    home_team = _with_earned(_game_team(home, form[0], form[2], edits[0], morale[0], depth[0], home_out), earned[0])
+    away_team = _with_earned(_game_team(away, form[1], form[3], edits[1], morale[1], depth[1], away_out), earned[1])
     r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2])
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
            "injuries": {"home": r["home"].get("injuries", []), "away": r["away"].get("injuries", [])}}
+    if earned != (None, None):                         # Clear Mode: the game's big moments, for ability goals
+        out["moments"] = _moments(r, home_team, away_team)
     if keep_full:
         r["home_slug"], r["away_slug"] = home, away
         out["game"] = r
@@ -1383,6 +1473,18 @@ def player_form_shifts(state: dict, slug: str) -> dict:
     return (state.get("player_form") or {}).get(slug) or {}
 
 
+def _earned_for(state: dict, slug: str) -> dict:
+    """Clear Mode: a team's earned abilities for its game ({"Name|POS": {trait: tier}}; {} when none)."""
+    return dict(((state.get("abilities_earned") or {}).get(slug) or {}))
+
+
+def _base_traits(slug: str) -> dict:
+    """A team's players' own abilities ({"Name|POS": {trait: tier}}) from the league in play."""
+    t = load_teams().get(slug) or {}
+    return {f"{p.get('name')}|{p.get('position')}": {x["key"]: x["tier"] for x in p.get("traits") or [] if isinstance(x, dict)}
+            for p in (t.get("offense") or []) + (t.get("defense") or [])}
+
+
 def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, report: Optional[Reporter] = None,
                stage: str = "Simulating") -> None:
     def form_shift(g: dict, slug: str) -> float:
@@ -1405,7 +1507,8 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
                      (team_edits(state, home), team_edits(state, away)),
                      (morale_payload(state, home), morale_payload(state, away), morale_on(state)),
                      (form_shift(g, home), form_shift(g, away),
-                      player_form_shifts(state, home), player_form_shifts(state, away))))
+                      player_form_shifts(state, home), player_form_shifts(state, away)))
+                    + (((_earned_for(state, home), _earned_for(state, away)),) if _clear_on() else ()))
     before = rank_map(state, state["current_week"]) if morale_on(state) else {}
     if not jobs:
         return
@@ -1418,6 +1521,10 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         if "stats" in r:
             _accumulate_stats(state, g, r["stats"])
             _update_morale(state, g, r["stats"], before)
+            if _clear_on():                              # Clear Mode: ability goals move after every game
+                from coach_career import ability_goals
+                ability_goals.after_game(state, dict(g, event_id=r["event_id"]), r["stats"], r.get("moments") or {},
+                                         {g["home"]: _base_traits(g["home"]), g["away"]: _base_traits(g["away"])})
         if "game" in r:
             if state["team"] in (g["home"], g["away"]):
                 state["my_boxes"][r["event_id"]] = r["game"]
@@ -3275,6 +3382,14 @@ def _job(state: dict) -> Optional[dict]:
         return None
 
 
+def _clear_on() -> bool:
+    try:
+        from coach_career import clear
+        return clear.on()
+    except ImportError:
+        return False
+
+
 def summary(state: dict) -> dict:
     teams = load_teams()
     rec = _records(state, include_playoff=True)[state["team"]]
@@ -3283,6 +3398,7 @@ def summary(state: dict) -> dict:
     return {
         "id": state["id"], "team": state["team"], "team_name": state["team_name"], "conference": state["conference"],
         "mode": state["mode"], "created_at": state["created_at"], "current_week": state["current_week"],
+        "clear_mode": _clear_on(),                     # the clear-mode branch: numbers, not words (coach_career/clear.py)
         "phase": state["phase"], "done": state["done"], "champion": state.get("champion"), "year": season_year(state),
         "offseason_stage": (state.get("offseason") or {}).get("stage"),
         "job": _job(state) if state.get("career") else None,
@@ -3881,8 +3997,12 @@ def morale_view(state: dict, slug: str, name: str, position: str) -> dict:
         team_label = "Team in a slump"
     else:
         team_label = ""
-    return {"enabled": on, "form": round(form, 2), "team": round(tm, 2), "factor": round(morale_factor(state, slug, name, position), 3),
-            "label": label, "team_label": team_label}
+    factor = morale_factor(state, slug, name, position)
+    return {"enabled": on, "form": round(form, 2), "team": round(tm, 2), "factor": round(factor, 3),
+            "label": label, "team_label": team_label,
+            # what each does to his play next game, in percent (Clear Mode shows these in place of the words)
+            "form_pct": round(100 * MORALE_PLAYER_EFFECT * form), "team_pct": round(100 * MORALE_TEAM_EFFECT * tm),
+            "total_pct": round(100 * (factor - 1))}
 
 
 def player_edits(state: dict, slug: str) -> dict:
@@ -3979,6 +4099,44 @@ def team_data(state: dict, slug: str) -> dict:
     return with_edits(load_teams()[slug], team_edits(state, slug))
 
 
+def attribute_ceilings(state: dict, slug: str) -> dict[str, dict[str, int]]:
+    """Clear Mode, your own roster: player slug -> {card attribute: how many points he can still grow there}, his card at
+    his potential (skills + the room each has left, league.potential) against his card now. The coach knows his players;
+    anyone else's stays hidden. {} without a career league or outside Clear Mode."""
+    if not (_clear_on() and slug and slug == state.get("team")):
+        return {}
+    key = (state.get("id"), season_year(state), state.get("current_week"), (state.get("offseason") or {}).get("stage"), slug,
+           len(state.get("player_edits") or {}))
+    if _CEILINGS.get("key") == key:                   # his ratings move only with a week, an offseason stage or an edit
+        return _CEILINGS["out"]
+    out = _attribute_ceilings(state, slug)
+    _CEILINGS.update(key=key, out=out)
+    return out
+
+
+_CEILINGS: dict = {}
+
+
+def _attribute_ceilings(state: dict, slug: str) -> dict[str, dict[str, int]]:
+    from coach_career import league as lg, prospects as pr
+    from teamdata import game_scale
+    lgd = state.get("league") or {}
+    roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
+    if not roster:                                    # the first season: the built-in league's players (league.from_base)
+        lgd = lg.from_base()
+        roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
+    if not roster:
+        return {}
+    attrs = lgd.get("attrs") or game_scale.keys()
+    out = {}
+    for c in roster:
+        who = {"ea_position": c["pos"], "position": c["pos"]}
+        now = pr.card_attributes(dict(zip(attrs, c["r"])), who)
+        top = pr.card_attributes(lg.potential(c, attrs), who)
+        out[c["id"]] = {k: max(0, top[k] - now.get(k, top[k])) for k in top}
+    return out
+
+
 def development_reads(state: dict, slug: str) -> dict[str, dict]:
     """player slug -> {"coachability": his level (recruits.COACHABILITY's words), "coach_level": 1
     (Coach's Dream) to 6 (Set in His Ways), "potential_word": the word for his projected overall at
@@ -4001,7 +4159,7 @@ def development_reads(state: dict, slug: str) -> dict[str, dict]:
     for p in load_teams()[slug]["offense"] + load_teams()[slug]["defense"]:
         c, pot = pairs.get(p.get("slug"), (None, 0))
         if c in levels:
-            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": recruiting.word(pot)} if pot else {})}
+            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": str(int(round(pot))) if _clear_on() else recruiting.word(pot)} if pot else {})}   # Clear Mode: the number
     return out
 
 
@@ -4281,6 +4439,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     line = (ss.get("players") or {}).get(f"{name}|{position}")
     stats = dict(line["stats"]) if line else {}
     mf = morale_factor(state, team, name, position)
+    ceil = attribute_ceilings(state, team).get(p.get("slug"), {})      # Clear Mode: his room to grow per attribute
     base_p = next((x for x in teams[team]["offense"] + teams[team]["defense"] if x.get("slug") == p.get("slug")), p)
     ratings = [{"key": k, "label": lbl, "value": display_rating(p, k),
                 "boost": display_rating(p, k, max(1, min(99, round(p[k] * mf)))) - display_rating(p, k)}
@@ -4301,7 +4460,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     entry = next((c for c in (((state.get("league") or {}).get("teams") or {}).get(team) or {}).get("roster", []) if c.get("id") == p.get("slug")), None)
     for h in (entry or {}).get("hist") or []:
         history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
-    from coach_career import promises
+    from coach_career import promises, ability_goals
     promise = promises.chips_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
     return {
         "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
@@ -4315,7 +4474,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         # ratings v2: the position's attributes, the measurables, play style and traits
         "attributes": [{"key": k, "label": ratings_v2.ATTRIBUTES[k][0], "group": ratings_v2.ATTRIBUTES[k][1],
                         "about": ratings_v2.ATTRIBUTES[k][2], "value": v,
-                        "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0}
+                        "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0,
+                        # Clear Mode, your own player: his ceiling there (the bar's unfilled part shows it)
+                        **({"potential": min(99, v + ceil[k])} if k in ceil else {})}
                        for k, v in (p.get("attributes") or {}).items() if k in ratings_v2.ATTRIBUTES],
         "height_in": p.get("height_in"), "archetype": p.get("archetype"),
         "traits": [{"key": tr["key"], "name": ratings_v2.TRAIT_INFO.get(tr["key"], (tr["key"], ""))[0],
@@ -4324,7 +4485,11 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
                     # the attributes it rests on, with his values (the ones his position carries)
                     "built_on": [{"label": ratings_v2.ATTRIBUTES[k][0], "value": (p.get("attributes") or {})[k]}
                                  for k in ratings_v2.TRAIT_KEYS.get(tr["key"], []) if k in (p.get("attributes") or {})],
-                    "intangible": not ratings_v2.TRAIT_KEYS.get(tr["key"])} for tr in (p.get("traits") or [])],
+                    "intangible": not ratings_v2.TRAIT_KEYS.get(tr["key"]), "earned": bool(tr.get("earned"))}
+                   for tr in ability_goals.merged_traits(state, team, f"{name}|{position}", p.get("traits") or [])],
+        # Clear Mode: the ability he works toward and how far along he is
+        "ability_goal": ability_goals.goal_view(state, team, f"{name}|{position}", position,
+                                                {x["key"]: x["tier"] for x in p.get("traits") or [] if isinstance(x, dict)}) if ability_goals.on() else None,
         "edited_attributes": sorted((player_edits(state, team).get(p.get("slug"), {}).get("attributes") or {}).keys()),
         "morale": morale_view(state, team, name, position),
         "form": player_form_shifts(state, team).get(p.get("slug") or ""),

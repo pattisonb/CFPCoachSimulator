@@ -266,6 +266,9 @@
       const where = n.venue === "away" ? " on the road" : n.venue === "neutral" ? " at a neutral site" : "";
       return [el("b", { class: "ofc-ink", text: s.team_name }), ` ${n.won ? "beat" : "lost to"} ${n.opponent_name} ${scoreText(n.points_for, n.points_against)}${where}${n.overtime ? " in overtime" : ""}.`];
     }
+    if (n.kind === "ability")                 // Clear Mode: your player earned an ability (his player page on the name)
+      return [el("span", { "aria-hidden": "true", text: "★ " }), n.slug ? el("a", { href: "#", class: "plink ofc-ink", "data-player": `${s.team}|${n.name}|${n.position}|${n.slug}`, title: "Open player page", text: n.name }) : el("b", { class: "ofc-ink", text: n.name }),
+        ` (${n.position}) ${n.line[0].toLowerCase()}${n.line.slice(1)}`];
     if (n.kind === "promise")                 // a promised start slipping: your player says so (his player page on the name)
       return [el("a", { href: "#", class: "plink ofc-ink", "data-player": `${s.team}|${n.name}|${n.position}|${n.slug}`, title: "Open player page", text: n.name }),
         ` (${n.position}): "${n.line}"`];

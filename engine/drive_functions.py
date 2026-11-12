@@ -414,6 +414,9 @@ def attempt_kick(yardline, kicker, defense_team=None):
     make += ((kicker.kick_accuracy or cfg.NEUTRAL) - cfg.NEUTRAL) * cfg.FG_PER_ACCURACY_POINT
     if distance < 40:
         make += (getattr(kicker, "traits", None) or {}).get("automatic", 0) * cfg.TRAIT_FX["automatic"]
+    if cfg.EXTRA_TRAITS and kicker is not None and play_functions.CLUTCH_NOW[0]:   # Clear Mode: nerves of steel late
+        t = getattr(kicker, "traits", None) or {}
+        make += (t.get("ice_water", 0) + t.get("clutch_leg", 0)) * cfg.TRAIT_FX["ice_water"]
     make = max(0.03, min(0.98, make))
     made = random.random() < make
     if distance >= 50:
@@ -497,6 +500,8 @@ def _attempt_punt(yardline, punter, defense_team=None, return_team=None):
     # coffin-corner kick) and either pins the receiving team or loses it into the end zone.
     if landing >= 90:
         pin = cfg.PUNT_PIN_CHANCE + ((punter.punt_accuracy or cfg.NEUTRAL) - cfg.NEUTRAL) / 100
+        if cfg.EXTRA_TRAITS:              # Clear Mode: a pin artist pins more
+            pin += (getattr(punter, "traits", None) or {}).get("pin_artist", 0) * cfg.TRAIT_FX["pin_artist"]
         if random.random() < pin:
             spot = min(landing, random.randint(88, 99))
             return spot, spot - yardline, False, None, 0, False, random.choice(("fair_catch", "downed", "out_of_bounds"))
@@ -533,6 +538,7 @@ def _attempt_punt(yardline, punter, defense_team=None, return_team=None):
 def _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_zone, play_ran):
     """Field goal with the clock about to run out, on any down."""
     seconds_remaining -= random.randint(4, 6)
+    play_functions.CLUTCH_NOW[0] = True if cfg.EXTRA_TRAITS else play_functions.CLUTCH_NOW[0]   # the kick with time running out
     kick_made, kick_blocked = attempt_kick(yardline, kicker, defense)
     result = "field goal" if kick_made and not kick_blocked else "missed kick"
     if in_red_zone and result == "field goal":

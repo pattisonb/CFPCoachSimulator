@@ -4,6 +4,14 @@
   // a regular-season week as the real calendar names it: the opening week (a handful of games before Labor Day
   // weekend) is Week 0, so engine week N reads Week N-1 (sim/season.py week_name); the portal's weeks are their own
   const seasonWeek = (w) => `Week ${w - 1}`;
+  // Clear Mode (the clear-mode branch): morale as what it does to his play, in percent, in place of Hot Streak and the rest
+  const clearMode = () => !!(state.season && state.season.clear_mode);
+  const moralePcts = (m) => {
+    const sg = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;
+    const tone = (n) => (n > 0 ? "good" : n < 0 ? "bad" : "");
+    return [el("span", { class: `tag ${tone(m.form_pct)}`.trim(), text: `Form (${sg(m.form_pct)})`, title: "What his recent games against his season so far add to his ratings next game" }),
+      el("span", { class: `tag ${tone(m.team_pct)}`.trim(), text: `Team Mood (${sg(m.team_pct)})`, title: "What the team's results against expectations add to everyone next game" })];
+  };
   // how far a save has played, for its card and messages: "Preseason", "Through Week 3", a postseason week by its own name
   const throughWeek = (w) => (!w ? "Preseason" : w <= 14 ? `Through ${seasonWeek(w)}` : `Through Week ${w}`);
   const { $, el, SBOX_IDS, teamPill, renderScoreboard, renderScoring, renderTeamStats, renderPlayers, renderDrives } = window.CFP;
@@ -1810,8 +1818,9 @@
             p.injured && !(p.redshirt && p.redshirt.on) ? el("span", { class: "tag bad", text: "Injured" }) : null,
             p.promise ? el("span", { class: `tag ${p.promise === "On Track" ? "good" : p.promise === "Broken" ? "bad" : "warn"}`, title: "You promised him a starting role; how it is landing so far", text: `Promise: ${p.promise}` }) : null,
             p.redshirt && p.redshirt.on ? el("span", { class: "tag", text: "Redshirting", title: "Sitting out the rest of the season; keeps his year" }) : null,
-            p.morale && p.morale.enabled && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
-            p.morale && p.morale.enabled && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
+            ...(p.morale && p.morale.enabled && clearMode() ? moralePcts(p.morale) : []),
+            p.morale && p.morale.enabled && !clearMode() && p.morale.label !== "Steady" ? el("span", { class: `tag ${p.morale.label === "Hot streak" ? "good hot" : "bad cold"}`, text: `${p.morale.label === "Hot streak" ? "🔥" : "❄"} ${p.morale.label}`, title: `Form ${p.morale.form > 0 ? "+" : ""}${p.morale.form}: his recent games against his season so far` }) : null,
+            p.morale && p.morale.enabled && !clearMode() && p.morale.team_label ? el("span", { class: `tag ${p.morale.team > 0 ? "good" : "bad"}`, text: p.morale.team_label, title: `Team mood ${p.morale.team > 0 ? "+" : ""}${p.morale.team}` }) : null,
             // rest-of-season seasons: what the real 2026 box scores say about him against his rating
             p.form ? el("span", { class: `tag ${p.form.shift > 0 ? "good" : "bad"}`, text: `${p.form.shift > 0 ? "📈" : "📉"} Box scores ${p.form.shift > 0 ? "+" : ""}${Math.round(p.form.shift)}`, title: `Real 2026 box scores: ${p.form.note}. The rating shift is informational unless player form is switched on.` }) : null,
             p.games ? el("span", { class: "tag", text: `${p.games} of ${p.team_games} games` }) : el("span", { class: "tag", text: "No Games Yet" }),
@@ -1819,11 +1828,17 @@
           devTag ? el("div", { class: "player-dev" }, [devTag, potTag]) : null,
           (p.archetype || (p.traits || []).length) ? el("div", { class: "player-traits" }, [
             p.archetype ? el("span", { class: "tag style", text: p.archetype, title: "Play style" }) : null,
-            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) })),
+            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}${tr.earned ? " earned" : ""}`, text: tr.name, title: traitHover(tr) })),
           ]) : null,
+          abilityGoal(p.ability_goal),
         ]),
       ]),
-      el("div", { class: "player-ovr" }, [el("div", { class: "player-ovr-num", text: String(p.overall) }), el("div", { class: "review-label", text: "Overall" })]),
+      el("div", { class: "player-ovr" }, [(() => {
+        // Clear Mode: the overall he plays at next game (his morale), colored, the change in parentheses
+        const m = p.morale, d = clearMode() && m && m.enabled ? Math.max(1, Math.min(99, Math.round(p.overall * m.factor))) - p.overall : 0;
+        return d ? el("div", { class: `player-ovr-num boosted-num ${d > 0 ? "up" : "down"}` }, [`${d > 0 ? "▲" : "▼"} ${p.overall + d}`,
+          el("span", { class: "boost-paren", text: ` (${d > 0 ? "+" : "−"}${Math.abs(d)})` })]) : el("div", { class: "player-ovr-num", text: String(p.overall) });
+      })(), el("div", { class: "review-label", text: "Overall" })]),
     );
     box.append(hero);
 
@@ -1851,18 +1866,27 @@
         rat.append(el("div", { class: "attr-group", text: g }));
         for (const a of attrs.filter((x) => x.group === g)) {
           const boost = a.boost ? el("span", { class: `boost ${a.boost > 0 ? "up" : "down"}`, text: `${a.boost > 0 ? "▲" : "▼"}${Math.abs(a.boost)}` }) : null;
+          // Clear Mode: the rating he plays at next game, colored, with the change in parentheses ("▲ 42 (+2)")
+          const shownNum = clearMode() && a.boost ? el("b", { class: `rating-num boosted-num ${a.boost > 0 ? "up" : "down"}` },
+            [`${a.boost > 0 ? "▲" : "▼"} ${a.value + a.boost} `, el("span", { class: "boost-paren", text: `(${a.boost > 0 ? "+" : "−"}${Math.abs(a.boost)})` })]) : null;
           rat.append(el("div", { class: `rating-row ${editedAttrs.has(a.key) ? "edited" : ""} ${a.boost ? "boosted" : ""}` }, [
             el("span", { class: "rating-label", text: a.label, title: `${a.about}${editedAttrs.has(a.key) ? " (edited in god mode)" : ""}` }),
-            ratingBar(a.value),
-            el("b", { class: "rating-num" }, [String(a.value), boost])]));
+            ratingBar(a.value, a.potential),
+            shownNum || el("b", { class: "rating-num" }, [String(a.value), boost])]));
         }
       }
     }
     for (const r of attrs.length ? [] : shown) {
       const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
-      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), ratingBar(r.value), el("b", { class: "rating-num" }, [String(r.value), boost])]));
+      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), ratingBar(r.value),
+        clearMode() && r.boost ? el("b", { class: `rating-num boosted-num ${r.boost > 0 ? "up" : "down"}` }, [`${r.boost > 0 ? "▲" : "▼"} ${r.value + r.boost} `,
+          el("span", { class: "boost-paren", text: `(${r.boost > 0 ? "+" : "−"}${Math.abs(r.boost)})` })]) : el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
-    if (p.morale && p.morale.enabled && (attrs.length ? attrs : p.ratings).some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
+    if (p.morale && p.morale.enabled && clearMode()) {
+      const sg = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;
+      rat.append(el("div", { class: "small-text morale-total", style: "margin-top:6px" }, [el("b", { text: `Next game: ${sg(p.morale.total_pct)}` }),
+        el("span", { class: "muted", text: ` (form ${sg(p.morale.form_pct)}, team ${sg(p.morale.team_pct)})` })]));
+    } else if (p.morale && p.morale.enabled && (attrs.length ? attrs : p.ratings).some((r) => r.boost)) rat.append(el("div", { class: "muted small-text", style: "margin-top:6px", text: `Arrows: how his ratings enter the next game (${p.morale.label.toLowerCase()}${p.morale.team_label ? ", " + p.morale.team_label.toLowerCase() : ""}).` }));
     const others = Object.entries(p.ratings_at || {}).filter(([pos]) => pos !== p.position && !(pos === "MLB" && /LB$/.test(p.position))).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (others.length) rat.append(el("div", { class: "muted small-text", style: "margin-top:8px", text: `Rated at other spots: ${others.map(([pos, v]) => `${pos} ${v}`).join(" · ")}` }));
     grid.append(rat);
@@ -1956,12 +1980,15 @@
   }
 
   // A 1-99 rating as a bar: the fill is the value out of 100 (at least a sliver), colored by tier.
-  function ratingBar(value) {
+  // potential (Clear Mode, your own player): his ceiling there as the bar's unfilled part, light gray, its number on hover
+  function ratingBar(value, potential) {
     const pct = Math.max(2, Math.min(100, value));
     let tone = "lo";
     if (value >= 75) tone = "hi";
     else if (value >= 55) tone = "mid";
-    return el("div", { class: "rating-bar" }, [el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]);
+    const room = potential != null && potential > value ? el("div", { class: "rating-room", style: `left:${pct}%;width:${Math.min(100, potential) - pct}%` }) : null;
+    return el("div", { class: `rating-bar${potential != null ? " has-pot" : ""}`, ...(potential != null ? { title: `Now ${value} · Potential ${potential}` } : {}) },
+      [room, el("div", { class: `rating-fill ${tone}`, style: `width:${pct}%` })]);
   }
 
   // A headline number with its label underneath (and an optional note), for rows of review tiles.
@@ -3726,7 +3753,19 @@
     return `Built on ${tr.built_on.map((b) => `${b.label} ${b.value}`).join(" · ")}.`;
   }
   function traitHover(tr) {
-    return `${tr.tier_name} trait: ${tr.about}.\n${traitBasis(tr)}`.trim();
+    return `${tr.tier_name} trait: ${tr.about}.${tr.earned ? "\nEarned on the field." : ""}\n${traitBasis(tr)}`.trim();
+  }
+  // Clear Mode: the ability he works toward in games, with how far along he is
+  function abilityGoal(g) {
+    if (!g) return null;
+    const pct = Math.round(100 * Math.min(1, g.have / Math.max(1, g.need)));
+    return el("div", { class: "ability-goal", title: `He earns ${g.name} (${g.tier_name}) with ${g.text}. Progress counts in every game, the season's stats and big late moments alike.` }, [
+      el("span", { class: "ability-goal-k", text: "Working Toward" }),
+      el("span", { class: `trait tier-${g.tier}`, text: g.name }),
+      el("span", { class: "muted small-text", text: ` ${g.tier_name} · ${g.text[0].toUpperCase()}${g.text.slice(1)}` }),
+      el("span", { class: "ability-goal-bar", "aria-hidden": "true" }, [el("span", { style: `width:${pct}%` })]),
+      el("b", { class: "small-text", text: `${g.have} of ${g.need}` }),
+    ]);
   }
 
   // ratings v2: every attribute with what it does, the traits, and the rating at every position
@@ -3754,8 +3793,10 @@
     if ((p.traits || []).length || p.archetype) {
       node.append(el("h4", { text: "Play Style and Traits" }));
       if (p.archetype) node.append(el("p", { class: "small-text" }, [el("b", { text: p.archetype }), el("span", { class: "muted", text: " · play style" })]));
-      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) }), el("span", { class: "muted small-text", text: ` ${tr.tier_name} · ${tr.about}. ${traitBasis(tr)}` })]));
-      node.append(el("p", { class: "muted small-text", text: "Traits come at four tiers (bronze, silver, gold, platinum) and are carried over from the source rosters, which list each player's tiers but not the exact thresholds that earned them. Each one rests on the attributes shown. Their effects in games come in a later phase of the ratings revamp." }));
+      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) }), el("span", { class: "muted small-text", text: ` ${tr.tier_name}${tr.earned ? " · Earned" : ""} · ${tr.about}. ${traitBasis(tr)}` })]));
+      node.append(el("p", { class: "muted small-text", text: clearMode()
+        ? "Traits come at four tiers (bronze, silver, gold, platinum). Every one changes how he plays. Players earn new ones, and move up a tier, by reaching goals in games; a trait marked earned came that way."
+        : "Traits come at four tiers (bronze, silver, gold, platinum) and are carried over from the source rosters, which list each player's tiers but not the exact thresholds that earned them. Each one rests on the attributes shown. Their effects in games come in a later phase of the ratings revamp." }));
     }
     appendRatingsAt(node, p);
     openModal(el("span", {}, [`${p.name} · Attributes`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);

@@ -23,7 +23,10 @@
 .hq-bar { gap: 8px 12px; padding-top: 1px; padding-bottom: 1px; font-size: 11px; }
 .hq-card .hq-bar { margin-bottom: 0; }        /* the shared bar pulls its body up under it; here the body's padding sets the room */
 .hq-card .hq-bar .hq-viewall { min-height: 26px; padding: 0 2px; }
-.hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-top: 12px; }
+.hq-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-top: 12px; }
+/* a wide table scrolls sideways with the card's body, so its scrollbar sits at the card's bottom edge, always in view
+   (its own scroller put the bar under the table's last row, out of sight until you scrolled down to it) */
+.hq-body :is(.table-scroll, .go-scroll, .off-scroll, .go-map-table-wrap) { overflow-x: visible; }
 .hq-bar, .hq-edit { flex: none; }
 .hq-body > :first-child { margin-top: 0; }
 .hq-failed, .hq-wait { margin: 4px 0; }
@@ -186,6 +189,12 @@
 .hq-groups.hq-groups-strip { display: flex; gap: 16px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; scroll-snap-type: x proximity;
   overscroll-behavior-x: contain; scrollbar-width: thin; }
 .hq-groups-strip .hq-group { flex: 0 0 240px; scroll-snap-align: start; }
+/* the strip fits the card, so its sideways scrollbar shows without scrolling down; a long position scrolls in its column */
+.hq-body:has(.hq-groups-strip) { display: flex; flex-direction: column; overflow: hidden; }
+.hq-body:has(.hq-groups-strip) > * { flex: none; }
+.hq-body:has(.hq-groups-strip) > .hq-next { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.hq-next > .hq-groups-strip { flex: 1 1 auto; min-height: 0; }
+.hq-groups-strip .hq-group { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .hq-groups-strip .hq-group[hidden] { display: none; }
 @media (max-width: 760px) { .hq-pos-pick .hq-pos-chip { min-height: 44px; } .hq-groups-strip .hq-group { flex-basis: min(260px, 82vw); } }
 .hq-group-head { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--go-primary, var(--accent)); }

@@ -15,7 +15,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from coach_career import persona, recruiting
+from coach_career import clear, persona, recruiting
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 SOURCE_TEAMS = ROOT / "cfb_sim_data" / "teams"
@@ -646,6 +646,11 @@ def flip_view(state: dict, pid: str, viewer: Optional[str] = None) -> Optional[d
             "rivals": [{"school": r["school"], "name": teams[r["school"]]["name"], "pct": round(r["pct"], 4), "word": flip_word(r["pct"])} for r in rivals]}
 
 
+def _abilities_seen(p: dict) -> Optional[list]:
+    from coach_career import ability_goals
+    return ability_goals.recruit_abilities(p) if ability_goals.on() else None
+
+
 def profile(state: dict, pid: str, viewer: str) -> dict:
     """The Prospect Profile as `viewer` (your school) sees it. Never carries the true grades. During the portal weeks
     a recruit of the signed high school class (kept aside, class_rc: Headquarters' replacements, the class widgets)
@@ -698,8 +703,11 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "flip": flip_view(state, pid, viewer),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
+        # Clear Mode: the abilities he arrives with, once your staff has looked at him
+        "abilities": _abilities_seen(p) if read else None,
         "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
         "our_grades": our_grades,
+        "clear": clear.ratings(state, pid) if clear.on() else None,      # Clear Mode: his key ratings in numbers
         "looks": looks_out(read),
         "our_comp": our_comp,
         "likes": staff_likes(state, pid, viewer),
@@ -743,8 +751,9 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "group": recruiting._group_of(p),
         "looks": looks_out(read), "scouted": recruiting.report_complete(read), "likes": staff_likes(state, pid, viewer),
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
-        "our_potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
+        "our_potential": recruiting.shown_range(state, pid, "potential") if read else None,
         "our_grades": {g: list(recruiting.grade_range(state, pid, g)) for g in recruiting.GROUPS} if read else None,
+        **({"clear_pot": (lambda r: r and r["potential"])(clear.ratings(state, pid))} if clear.on() and read else {}),   # Clear Mode: potential in numbers
         **({"portal": True, "from": p["from"], "from_name": p["from_name"], "cls": p["cls"], "usage": p.get("usage"),
             "line": p.get("line"), "portal_rank": p.get("portal_rank")} if p.get("portal") else {}),
     }
@@ -1324,7 +1333,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
         queue.append({"pid": pid, "name": p["name"], "position": p["position"], "display_pos": display_pos(p["ea_position"]), "stars": p["stars"],
                       "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
                       "looks": looks_out(read), "trips": trips, "cost": cost,
-                      "potential": list(recruiting.grade_range(state, pid, "potential")) if read else None,
+                      "potential": recruiting.shown_range(state, pid, "potential") if read else None,
                       "can_send": not short and not done and not gone,
                       "why": gone or (REPORT_COMPLETE if done else NOT_ENOUGH_POINTS if short else None),
                       "state": p["hometown"]["state"], "likes": staff_likes(state, pid, me), "on_board": pid in rc["board"],

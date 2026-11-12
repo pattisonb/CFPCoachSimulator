@@ -2700,6 +2700,18 @@ If a progress check collides with the sim thread changing the season, it answers
 the last good record; the page retries a missed check up to five times, and if the
 season is gone it closes the season and says so instead of waiting forever.
 
+### The runner on the sim bar
+
+A little ball carrier runs at the front of both sim bars (the header's for one week, the
+overlay's for a longer sim), his front foot at the bar's leading edge, so he carries the
+bar across as the sim goes. He is pixel art (four 48 × 48 frames, from the pocket-franchise
+sprite work) turned into one SVG by `tools/build_runner_sprite.py`, which writes
+`web/runner.js`; rerun it after changing `tools/sprites/ball-carrier-run.png`. The kit's
+reds are classes (`.runner-kit`, `.runner-kit-shade`) painted in `--team-primary` and a
+darker mix of it, so he wears your team's color; the outline, skin, facemask, ball and
+white pants stay as drawn. With no team open he wears the art's red. Reduced motion
+holds him on one frame.
+
 ### Team colors
 
 While a season is open the page wears the team's colors. The accent (buttons, week

@@ -17,7 +17,7 @@ import random
 import statistics as st
 from typing import Optional
 
-from coach_career import league as lg
+from coach_career import clear, league as lg
 from coach_career import position_fit
 from coach_career import recruits
 from teamdata import game_scale
@@ -248,6 +248,8 @@ def start(state: dict) -> dict:
     coach_names.distinct(state, built=built)     # one coach, one name: your coach's record is yours, no one doubles up
     _season_moves(state, lgd)
     record_seasons(state, lgd)
+    from coach_career import ability_goals
+    ability_goals.carry_over(state, lgd)         # Clear Mode: abilities earned in games stay with the player
     usage = _usage()
     draft: dict = {}
     from coach_career import word
@@ -1329,7 +1331,12 @@ def _compact_prospect(state: dict, p: dict, attrs: list[str]) -> dict:
            "weight_lbs": p["weight"], "archetype": p["archetype"], "dev_trait": "Normal",
            "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
            "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"]}
-    return lg.compact(src, attrs)
+    out = lg.compact(src, attrs)
+    from coach_career import ability_goals
+    ab = ability_goals.recruit_ab_field(p)       # Clear Mode: some recruits arrive with an ability or two
+    if ab:
+        out["ab"] = ab
+    return out
 
 
 # ----- the transfer portal ----------------------------------------------------------------------
@@ -1665,6 +1672,12 @@ def year_pace(p: dict, starter: bool = False) -> float:
     return max(pace, STARTER_YEAR) if starter else pace
 
 
+def rv2_tier(ab: str) -> int:
+    """An ability's tier (1 Bronze .. 4 Platinum) from a roster's "name|tier"."""
+    from teamdata import ratings as rv2
+    return rv2.TRAIT_TIERS.get(ab.split("|")[-1], 0)
+
+
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starter: bool = False) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
     coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
@@ -1672,10 +1685,19 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starte
     rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * year_pace(p, starter)
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
+    if clear.on():                                            # Clear Mode: Natural Talent grows faster (engine TRAIT_FX)
+        from engine import game_config as _cfg
+        tier = max((rv2_tier(a) for a in p.get("ab") or [] if a.split("|")[0] == "The Natural"), default=0)
+        rate *= 1 + tier * _cfg.TRAIT_FX.get("natural_talent", 0)
+    base = rate
     rate = min(DEV_YEAR_CAP, rate)                            # no offseason closes more than half his room (DEV_YEAR_CAP)
+    # Clear Mode: physical ratings grow slower, technique and mental faster (clear.PHYS_RATE, clear.SKILL_RATE), each
+    # still under DEV_YEAR_CAP; the same draws either way
+    paces = [min(DEV_YEAR_CAP, base * (clear.PHYS_RATE if k in PHYSICAL else clear.SKILL_RATE)) for k in attrs] if clear.on() else None
     new_r, new_g = [], []
-    for v, g in zip(p["r"], p["g"]):
-        step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0
+    for i, (v, g) in enumerate(zip(p["r"], p["g"])):
+        r_k = paces[i] if paces else rate
+        step = int(round(min(g, g * r_k * rng.uniform(0.8, 1.2)))) if g > 0 else 0
         new_r.append(min(99, v + step))
         new_g.append(g - step)
     before = p["o"]
@@ -1909,6 +1931,8 @@ def _develop_all(state: dict) -> dict:
                 p["g"] = [g + room if k not in PHYSICAL else g for k, g in zip(attrs, p["g"])]
                 p["g"] = [min(g, 99 - v) for g, v in zip(p["g"], p["r"])]
                 breakouts += 1
+            if clear.on():                 # Clear Mode: ceilings move both ways (a struggling year, a slow learner, a drift)
+                clear.ceiling_drift(p, attrs, perf.get(p["id"]), year, PHYSICAL)
             if level_up and rng.random() < LEVEL_UP and p.get("c") in levels[1:]:
                 p["c"] = levels[levels.index(p["c"]) - 1]
                 why.append(coachability_note(p["c"], "award"))

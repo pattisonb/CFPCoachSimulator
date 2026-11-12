@@ -76,15 +76,16 @@ def program_news(state: dict) -> list[dict]:
         items.append({"week": g["week"], "kind": "game", "event_id": g["event_id"], "won": pf > pa, "points_for": pf, "points_against": pa,
                       "opponent": opp, "opponent_name": season.team_display(opp, teams),
                       "venue": "neutral" if g.get("neutral") else "home" if home else "away", "overtime": g.get("overtime") or 0})
-    from coach_career import promises
+    from coach_career import promises, ability_goals
     items += [n for n in promises.news(state) if n["week"] > week - NEWS_WEEKS]     # a promised start slipping: he says so
+    items += [n for n in ability_goals.news(state) if n["week"] > week - NEWS_WEEKS]   # Clear Mode: an ability he earned     # a promised start slipping: he says so
     # newest week first; inside a week your game, then commitments to you, then the rest by weight
     rank = {k: i for i, k in enumerate(_NEWS_ORDER)}
     items.sort(key=lambda x: (-x["week"], x["kind"] != "game", not x.get("yours"), rank.get(x["kind"], 99)))
     # one line a prospect a week: the biggest
     seen, out = set(), []
     for x in items:
-        key = (x["week"], x.get("pid") or x.get("event_id") or x.get("slug"))
+        key = (x["week"], x.get("pid") or x.get("event_id") or x.get("slug"), x.get("trait"))
         if key in seen:
             continue
         seen.add(key)

@@ -77,6 +77,25 @@
     if (opts.tips) opts.tips(rows);
     return card("Attributes", [rows], { sub: "(Scouted Range)", key: "attributes", cls: "pv-attributes", wide: opts.wide });
   }
+  // Clear Mode (coach_career/clear.py): his key ratings as numbers. A rating reads one number once his report is complete,
+  // a range before; each with the staff's confidence. clear: the profile's `clear` ({complete, rows, potential}) or null.
+  const ratingText = (r) => (r.est == null ? "Not Scouted" : `${r.lo}–${r.hi}`);      // always a range: it narrows with each look
+  function clearRatingsCard(clear, opts = {}) {
+    const rows = clear && clear.rows && clear.rows.length ? clear.rows : null;
+    const body = rows ? el("div", { class: "pv-clear" }, [
+      el("div", { class: "pv-clear-row pv-clear-head", "aria-hidden": "true" }, [el("span", { text: "Rating" }), el("span", { text: "Range" }), el("span", { text: "Confidence" })]),
+      ...rows.map((r) => el("div", { class: "pv-clear-row", "data-key": r.key }, [el("span", { class: "pv-attr-k", text: r.label }),
+        el("b", { class: "pv-clear-v", text: ratingText(r) }), el("span", { class: `pv-clear-c conf-${String(r.confidence || "").toLowerCase()}`, text: r.confidence || "" })]))])
+      : el("p", { class: "muted pv-unscouted", text: "Send a scout to read his ratings." });
+    return card("Key Ratings", [body], { sub: "(Scouted Range)", key: "attributes", cls: "pv-attributes pv-clear-card", wide: opts.wide });
+  }
+  // Clear Mode: the abilities a recruit arrives with (null before a look: nothing; an empty list: "None Yet")
+  function abilitiesRow(ab) {
+    if (!ab) return null;
+    return el("div", { class: "pv-abilities", "data-key": "abilities" }, [el("span", { class: "pv-kick", text: "Abilities" }),
+      ...(ab.length ? ab.map((a) => el("span", { class: `trait tier-${a.tier}`, text: a.name, title: `${a.tier_name} trait: ${a.about}.` }))
+        : [el("span", { class: "muted small", text: "None Yet" })])]);
+  }
   // Strengths and Areas to Develop, each a list or "None Stand Out"
   function lists(report) {
     const list = (title, xs, mark, cls) => el("div", { class: `pv-list ${cls}` }, [el("div", { class: "pv-kick", text: title }),
@@ -89,7 +108,8 @@
     const looks = Math.min(REPORT_LOOKS, Number(opts.looks) || 0);
     const right = [pips(looks), el("span", { class: "muted pv-looks", text: `${fmtLooks(looks)} of ${REPORT_LOOKS} Looks` })];
     const body = report ? [
-      el("div", { class: `pv-potential ${opts.potentialTone || "good"}`, "data-group": "potential" }, [el("span", { text: "Potential: " }), el("b", { text: report.headline })]),
+      el("div", { class: `pv-potential ${opts.potentialTone || "good"}`, "data-group": "potential" }, [el("span", { text: `${opts.potentialLabel || "Potential"}: ` }), el("b", { text: opts.potentialText || report.headline }),
+        opts.potentialNote ? el("span", { class: "muted pv-pot-note", text: ` · ${opts.potentialNote}` }) : null]),
       el("p", { class: "pv-verdict", text: report.verdict }), el("div", { class: "pv-cols" }, lists(report))]
       : [el("p", { class: "pv-verdict muted pv-unscouted", text: "Send a scout to read him." })];
     if (opts.foot) body.push(opts.foot);
@@ -105,15 +125,20 @@
   // Looks & Uncertainty: per attribute a pip meter (three for a sure read, one for a wide one) and Low / Medium / High,
   // flowing in columns across the card; then any extra blocks (This Week's looks, flags, the comp)
   const PIPS_FOR = { Low: 3, Medium: 2, High: 1 };
+  // opts.confidence (Clear Mode): the same card as Looks & Confidence, its words turned around (Low uncertainty is High
+  // confidence), as the Key Ratings say them
+  const CONF_OF = { Low: "High", Medium: "Medium", High: "Low" };
   function uncertaintyCard(report, extra, opts = {}) {
     const by = Object.fromEntries(((report && report.attributes) || []).map((a) => [a.group, a]));
+    const conf = !!opts.confidence;
     const rows = el("div", { class: "pv-unc" }, ATTRS.map(([g, label]) => {
       const u = by[g] && by[g].uncertainty;
+      const w = u ? (conf ? CONF_OF[u] : u) : null;
       return el("div", { class: "pv-unc-row", "data-group": g }, [el("span", { class: "pv-attr-k", text: label }),
-        pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${u} uncertainty` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: u || "Not Scouted" })]);
+        pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${w} ${conf ? "confidence" : "uncertainty"}` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: w || "Not Scouted" })]);
     }));
-    return card("Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
-      tip: "Each look narrows a read: three dots is a confident read (Low uncertainty), one a wide one (High)." });
+    return card(conf ? "Looks & Confidence" : "Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
+      tip: conf ? "Each look narrows a read: three dots is High confidence, one is Low." : "Each look narrows a read: three dots is a confident read (Low uncertainty), one a wide one (High)." });
   }
 
   // the traits, from whatever the traits view carries: Who Decides with what that person Cares About, Personality, His Story,
@@ -157,5 +182,5 @@
       { key: "traits", cls: "pv-traits", wide: opts.wide });
   }
 
-  window.CFP.pv = { pips, card, grid, hero, bar, attrRows, attributesCard, reportCard, summaryCard, uncertaintyCard, traitsCard, traitRows, range, fmtLooks, NOT_KNOWN };
+  window.CFP.pv = { pips, card, grid, hero, bar, attrRows, attributesCard, clearRatingsCard, abilitiesRow, ratingText, reportCard, summaryCard, uncertaintyCard, traitsCard, traitRows, range, fmtLooks, NOT_KNOWN };
 })();

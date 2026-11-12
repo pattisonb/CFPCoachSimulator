@@ -42,7 +42,9 @@ def check_reads(st: dict, label: str) -> collections.Counter:
     assert len(reads) >= 0.9 * len(slugs), (label, len(reads), len(slugs))
     for slug, r in reads.items():
         assert r["coachability"] in LEVELS and r["coach_level"] == LEVELS.index(r["coachability"]) + 1, (label, slug, r)
-        assert r.get("potential_word") in recruiting.WORDS, (label, slug, r)
+        from coach_career import clear
+        pw = r.get("potential_word")
+        assert (pw is not None and pw.isdigit() and 1 <= int(pw) <= 99) if clear.on() else pw in recruiting.WORDS, (label, slug, r)   # Clear Mode: the number
     other = "michigan"
     assert season.development_reads(st, other) == {}, "another team's coachability leaked"
     them = season.load_teams()[other]

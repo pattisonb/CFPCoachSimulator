@@ -1546,7 +1546,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
         read = rc["reads"].get(pid)                          # his looks and the read's potential range now: an open list patches its row from these
         out["looks"] = pr.looks_out(read)
-        out["potential"] = list(grade_range(state, pid, "potential")) if read else None
+        out["potential"] = shown_range(state, pid, "potential") if read else None
     if opens:
         out["scene"] = rc["scenes"][slug][pid]
     return out
@@ -3460,6 +3460,23 @@ def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, fl
     if report_complete(state["recruiting"]["reads"].get(pid)):
         return mean, mean
     return mean - half, mean + half
+
+
+def shown_range(state: dict, pid: str, group: str) -> Optional[list]:
+    """A read as the page shows it: grade_range's words, or in Clear Mode (coach_career/clear.py) the read's numbers
+    (one number twice once his report is complete). Only for display: code that ranks reads uses grade_range."""
+    from coach_career import clear
+    if not clear.on():
+        r = grade_range(state, pid, group)
+        return list(r) if r else None
+    iv = read_interval(state, pid, group)
+    clamp = lambda x: str(max(1, min(99, int(round(x)))))         # the game's 1-99 scale (a read's points can stray past it)
+    if not iv:
+        return None
+    if iv[0] == iv[1]:                                            # a complete report: a narrow range, never one number
+        half = max(2.0, read_spread(state, pid, group)[1])
+        return [clamp(iv[0] - half), clamp(iv[0] + half)]
+    return [clamp(iv[0]), clamp(iv[1])]
 
 
 def grade_range(state: dict, pid: str, group: str) -> Optional[tuple[str, str]]:
