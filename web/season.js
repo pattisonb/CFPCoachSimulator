@@ -1832,7 +1832,12 @@
           ]) : null,
         ]),
       ]),
-      el("div", { class: "player-ovr" }, [el("div", { class: "player-ovr-num", text: String(p.overall) }), el("div", { class: "review-label", text: "Overall" })]),
+      el("div", { class: "player-ovr" }, [(() => {
+        // Clear Mode: the overall he plays at next game (his morale), colored, the change in parentheses
+        const m = p.morale, d = clearMode() && m && m.enabled ? Math.max(1, Math.min(99, Math.round(p.overall * m.factor))) - p.overall : 0;
+        return d ? el("div", { class: `player-ovr-num boosted-num ${d > 0 ? "up" : "down"}` }, [`${d > 0 ? "▲" : "▼"} ${p.overall + d}`,
+          el("span", { class: "boost-paren", text: ` (${d > 0 ? "+" : "−"}${Math.abs(d)})` })]) : el("div", { class: "player-ovr-num", text: String(p.overall) });
+      })(), el("div", { class: "review-label", text: "Overall" })]),
     );
     box.append(hero);
 

@@ -1731,3 +1731,7 @@ button, input, select, textarea { }
 .rating-row:has(.boosted-num) { grid-template-columns: 110px 1fr 84px; }
 .rating-num.boosted-num { white-space: nowrap; }
 @media (max-width: 700px) { .rating-row:has(.boosted-num) { grid-template-columns: 96px 1fr 78px; } }
+.player-ovr-num.boosted-num { white-space: nowrap; }
+.player-ovr-num.boosted-num.up { color: var(--good-text); }
+.player-ovr-num.boosted-num.down { color: var(--bad-text); }
+.player-ovr-num.boosted-num .boost-paren { font-size: 0.45em; font-weight: 700; vertical-align: middle; }
