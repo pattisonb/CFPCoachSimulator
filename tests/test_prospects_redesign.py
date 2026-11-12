@@ -118,11 +118,11 @@ def check_filters(page, base, sid, errors) -> None:
     assert set(page.eval_on_selector_all(f"{ROWS} .pr-c-status .go-tag", "els => els.map(e => e.textContent)")) <= {"Uncommitted", "Leaning FCS", "Quiet"}
     page.select_option("select[aria-label=Status]", "")
     # the sort: interest in you first
-    page.select_option("select[aria-label=Sort]", "interest")
+    page.click("#tab-prospects th.pr-c-int .pr-sort")
     want = [r["id"] for r in api(base, sid, "sort=interest")["rows"][:5]]
     wait_rows(page, "rows.length && rows.slice(0, 5).every((r, i) => r.dataset.key === arg[i])", want)
     wait_url(page, lambda p: p.get("psort") == "interest", "psort=interest")
-    page.select_option("select[aria-label=Sort]", "rank")
+    page.click("#tab-prospects th.pr-c-rank .pr-sort")
     # the search
     name = api(base, sid)["rows"][7]["name"]
     page.fill("#tab-prospects input[aria-label='Search by name']", name)

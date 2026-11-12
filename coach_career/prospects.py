@@ -323,7 +323,7 @@ def report(state: dict, pid: str) -> Optional[dict]:
         "strengths": [REPORT_LABELS[g] for g in strengths],
         "develop": [REPORT_LABELS[g] for g in develop],
         "attributes": [{"group": g, "label": REPORT_LABELS[g], "words": words[g], "lo": clamp(iv[g][0]), "hi": clamp(iv[g][1]),
-                        "mid": clamp(mid[g]), "tone": tone(mid[g]), "uncertainty": uncertainty(state, pid, g)} for g in ATTRIBUTE_GROUPS],
+                        "mid": clamp(mid[g]), "word": recruiting.word(mid[g]), "tone": tone(mid[g]), "uncertainty": uncertainty(state, pid, g)} for g in ATTRIBUTE_GROUPS],
         "certainty": uncertainty(state, pid, "potential"),
     }
 

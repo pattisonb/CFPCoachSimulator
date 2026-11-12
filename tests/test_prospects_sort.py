@@ -1,6 +1,6 @@
 """Sorting the Prospects table (the player's report: picking Interested in You, he couldn't then sort by national rank;
 and the table should sort by its columns). The sort you pick holds whatever the filter; each column's header sorts by
-it, a second click the other way, the Sort menu and the address follow. Server and browser. (Run as a file.)"""
+it, a second click the other way, the address follows. Server and browser. (Run as a file.)"""
 import os
 import subprocess
 import sys
@@ -71,18 +71,19 @@ if __name__ == "__main__":
                 # Interested in You, then the national rank sort holds
                 page.select_option("#tab-prospects select[aria-label=Status]", "interested")
                 settle()
-                page.select_option("#tab-prospects select[aria-label=Sort]", "interest")
-                settle()
-                page.select_option("#tab-prospects select[aria-label=Sort]", "rank")
-                settle()
+                if page.is_visible("#tab-prospects th.pr-c-rank .pr-sort"):     # the # column (a phone hides it: the list opens by rank)
+                    page.click("#tab-prospects th.pr-c-int .pr-sort")
+                    settle()
+                    page.click("#tab-prospects th.pr-c-rank .pr-sort")
+                    settle()
                 got = ranks()
                 assert got and got == sorted(got), f"Interested in You sorted by national rank: {got[:8]}"
-                # a header sorts; again, the other way; the Sort menu and the address follow
+                # a header sorts; again, the other way; the address follows (no Sort menu: the headers sort)
+                assert not page.query_selector("#tab-prospects select[aria-label=Sort]"), "the Sort menu is gone"
                 names = lambda: page.eval_on_selector_all(f"{ROWS} .pr-c-who .pr-name, {ROWS} .pr-c-who a, {ROWS} .pr-c-who b", "els => els.map(e => e.textContent.trim().toLowerCase())")
                 page.click("#tab-prospects th.pr-c-who .pr-sort")
                 settle()
                 assert page.get_attribute("#tab-prospects th.pr-c-who", "aria-sort") == "ascending"
-                assert page.eval_on_selector("#tab-prospects select[aria-label=Sort]", "e => e.value") == "name"
                 assert "psort=name" in page.url, page.url
                 n1 = names()
                 assert n1 and n1 == sorted(n1), n1[:6]

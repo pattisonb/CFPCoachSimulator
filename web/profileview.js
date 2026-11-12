@@ -80,12 +80,15 @@
   // Clear Mode (coach_career/clear.py): his key ratings as numbers. A rating reads one number once his report is complete,
   // a range before; each with the staff's confidence. clear: the profile's `clear` ({complete, rows, potential}) or null.
   const ratingText = (r) => (r.est == null ? "Not Scouted" : `${r.lo}–${r.hi}`);      // always a range: it narrows with each look
+  // opts.coach: the report's Coachability read; it stays one word (the read's middle), a last row under the numbers
   function clearRatingsCard(clear, opts = {}) {
     const rows = clear && clear.rows && clear.rows.length ? clear.rows : null;
+    const coach = opts.coach && opts.coach.word ? el("div", { class: "pv-clear-row pv-clear-coach", "data-key": "coachability" }, [
+      el("span", { class: "pv-attr-k", text: "Coachability" }), el("b", { class: "pv-clear-words", text: opts.coach.word })]) : null;
     const body = rows ? el("div", { class: "pv-clear" }, [
       el("div", { class: "pv-clear-row pv-clear-head", "aria-hidden": "true" }, [el("span", { text: "Rating" }), el("span", { text: "Range" }), el("span", { text: "Confidence" })]),
       ...rows.map((r) => el("div", { class: "pv-clear-row", "data-key": r.key }, [el("span", { class: "pv-attr-k", text: r.label }),
-        el("b", { class: "pv-clear-v", text: ratingText(r) }), el("span", { class: `pv-clear-c conf-${String(r.confidence || "").toLowerCase()}`, text: r.confidence || "" })]))])
+        el("b", { class: "pv-clear-v", text: ratingText(r) }), el("span", { class: `pv-clear-c conf-${String(r.confidence || "").toLowerCase()}`, text: r.confidence || "" })])), coach])
       : el("p", { class: "muted pv-unscouted", text: "Send a scout to read his ratings." });
     return card("Key Ratings", [body], { sub: "(Scouted Range)", key: "attributes", cls: "pv-attributes pv-clear-card", wide: opts.wide });
   }

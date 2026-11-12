@@ -15,7 +15,7 @@
                         facilities: "Facilities", location: "Location", stability: "Stability", game_day: "Game Day", exposure: "Exposure" };
   const GROUP_NAMES = { athleticism: "Athleticism", size_strength: "Size & Strength", technique: "Technique", football_iq: "Football IQ",
                         potential: "Potential", coachability: "Coachability" };
-  // the Prospects table's sorts (prospects._sort_key): a column header's key, and the Sort menu's words
+  // the Prospects table's sorts (prospects._sort_key): a column header's key, and its words for the header's hover
   const PR_SORT_OPTS = [["rank", "National Rank"], ["interest", "Interest in You"], ["name", "Name"], ["pos", "Position"], ["ht", "Height"], ["wt", "Weight"],
     ["stars", "Stars"], ["status", "Status"], ["sc", "Scouted"], ["pot", "Potential"]];
   const PR_SORTS = new Set(PR_SORT_OPTS.map(([v]) => v));
@@ -820,7 +820,7 @@
       const extra = [PV().abilitiesRow(p ? p.abilities : null), ...(sendBox || [])].filter(Boolean);
       const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: extra.length ? extra : null, potentialTone: potTone,
         ...(pot && pot.est != null ? { potentialLabel: pot.label, potentialText: PV().ratingText(pot), potentialNote: `${pot.confidence} Confidence` } : {}) });
-      return [report, PV().clearRatingsCard(c), looksCard(s, b, p, looks, opts)];
+      return [report, PV().clearRatingsCard(c, { coach: ((rep && rep.attributes) || []).find((a) => a.group === "coachability") }), looksCard(s, b, p, looks, opts)];
     }
     const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone });
     tips(report);
@@ -2198,8 +2198,7 @@
       mk("position", [["", "Any Position"], ...POSITIONS.map((p) => [p, p])], "Position"),
       mk("stars", [["", "Any Stars"], ["5", "5 Stars"], ["4", "4 Stars"], ["3", "3 Stars"], ["2", "2 Stars"]], "Stars"),
       mk("state", [["", "Any State"], ...STATES.map((c) => [c, c])], "Home state"),
-      mk("status", STATUS, "Status"),
-      mk("sort", PR_SORT_OPTS.map(([v, t]) => [v, `Sort: ${t}`]), "Sort")]);
+      mk("status", STATUS, "Status")]);   // no Sort menu: the column headers sort
     // the filters' look follows the view (a chip, a state tapped on the map, View All): no redraw
     function syncFilters(withSearch) {
       const rec = f.status === "recommended";
@@ -2212,7 +2211,7 @@
     const listHead = el("div", { class: "go-row wrap go-list-head pr-list-head" });
     const HEADS = [["rank", "#"], ["who", "Prospect"], ["pos", "Pos"], ["ht", "Ht"], ["wt", "Wt"], ["stars", inPortal ? "Class" : "Stars"],
       ["status", "Status"], ["int", "Interest in You"], ["sc", "Scouted"], ["pot", "Potential"], ["act", "Board"]];
-    // a column's header sorts by it (the player's ask); again, the other way. The Sort menu follows.
+    // a column's header sorts by it (the player's ask); again, the other way
     const sortHead = (k, t) => {
       const key = HEAD_SORT[k];
       if (!key) return el("th", { scope: "col", class: `pr-c-${k}`, text: t, ...(k === "act" ? { "aria-label": "Your Board" } : {}) });

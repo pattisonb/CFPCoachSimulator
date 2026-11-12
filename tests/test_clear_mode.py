@@ -100,7 +100,9 @@ def check_page(st: dict, pid: str) -> None:
                 page.click(f".go-row-recruit[data-pid='{pid}']")
                 page.click(".go-pane .go-subtabs button[data-sub=scouting]")
                 page.wait_for_selector(".go-pane .pv-clear-card .pv-clear-row:not(.pv-clear-head)", timeout=60_000)
-                rows = page.eval_on_selector_all(".go-pane .pv-clear-row:not(.pv-clear-head)",
+                coach = page.inner_text(".go-pane .pv-clear-coach")
+                assert coach.startswith("Coachability") and not re.search(r"\d|–", coach), f"coachability in one word: {coach!r}"
+                rows = page.eval_on_selector_all(".go-pane .pv-clear-row:not(.pv-clear-head):not(.pv-clear-coach)",
                                                  "els => els.map(e => [...e.children].map(c => c.textContent.trim()))")
                 assert 4 <= len(rows) <= 8, rows
                 for label, rng, conf in rows:

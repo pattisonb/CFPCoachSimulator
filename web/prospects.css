@@ -70,6 +70,8 @@
 /* a long school or read takes two lines in a wide font rather than push Ht and Wt off the card */
 .pr-table td.pr-c-status, .pr-table td.pr-c-pot, .pr-table td.pr-c-sc { white-space: normal; }
 .pr-table .pr-c-status .go-tag, .pr-table .pr-c-pot .go-tag { display: inline-block; white-space: normal; max-width: 7.5em; line-height: 1.25; }
+/* the status in a wide face (Space Mono): "Uncommitted" whole on one line, "Hard Commit: Southern Miss" on two, never three */
+.pr-table .pr-c-status .go-tag { font-size: 12px; max-width: 10.5em; overflow: visible; text-overflow: clip; overflow-wrap: normal; }
 /* Scouted as words, not a chip (the row holds three chips already): "1 of 3 Looks" and "Fully Scouted" on two short lines */
 .pr-table .pr-sc { display: inline-block; white-space: normal; max-width: 4.6em; line-height: 1.2; font-size: 12.5px; font-weight: 600; color: var(--muted); }
 .pr-table .pr-sc.warn { color: var(--go-warn-text, var(--accent)); }
