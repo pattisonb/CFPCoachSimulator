@@ -9,6 +9,10 @@
 .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row { grid-column: 1 / 3; }
 .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report { grid-column: 1 / -1; }
 .ofc-grid > .ofc-report-slot:empty { display: none; }
+/* Last Game down the first column; This Week's Plan and Recruiting Pulse beside it, What Changed under the two */
+.ofc-grid.ofc-split > .go-game-last { grid-column: 1; grid-row: span 2; }
+.ofc-grid.ofc-split > .ofc-plan { grid-column: 2; }
+.ofc-grid.ofc-split > :is(.ofc-report-slot, .go-report) { grid-column: 2 / -1; }
 .ofc-grid > :is(.ofc-news, .ofc-conf, .ofc-targets) { align-self: stretch; }
 .ofc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; min-width: 0; }
 .ofc-row > :only-child { grid-column: 1 / -1; }
@@ -38,6 +42,11 @@
 .ofc-team-name { font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-size: 28px; font-weight: 800; text-transform: uppercase;
   letter-spacing: 0.4px; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ofc-team-sub { font-size: 14px; font-variant-numeric: tabular-nums; }
+/* the matchup's numbers under each name: the labels in a light gray, the numbers a darker one */
+.ofc-team-ovr { font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--muted) 70%, transparent); font-variant-numeric: tabular-nums; }
+.ofc-team-ovr b { color: var(--muted); font-weight: 700; font-size: 12px; }
+.ofc-ovr-part { white-space: nowrap; }
+@media (max-width: 899px) { .ofc-team-ovr { font-size: 10px; letter-spacing: 0; } .ofc-team-ovr b { font-size: 11px; } }
 .ofc-team .go-rank { font-size: 13px; color: var(--text); }
 .ofc-vs { font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-size: 22px; font-weight: 800; color: var(--muted); text-transform: uppercase; padding: 0; }
 .ofc-edge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 20px; }
@@ -111,7 +120,8 @@
 /* one column below 900 px; a phone stacks everything */
 @media (max-width: 899px) {
   .ofc-grid, .ofc-row { grid-template-columns: minmax(0, 1fr); }
-  .ofc-grid > *, .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row, .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report { grid-column: auto; }
+  .ofc-grid > *, .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row, .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report,
+  .ofc-grid.ofc-split > :is(.go-game-last, .ofc-plan, .ofc-report-slot, .go-report) { grid-column: auto; grid-row: auto; }
 }
 @media (max-width: 599px) {
   .ofc-steps { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }

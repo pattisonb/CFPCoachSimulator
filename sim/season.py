@@ -3277,6 +3277,15 @@ def _preview_prediction(state: dict, g: dict, sims: int) -> dict:
     return pred
 
 
+def _unit_overalls(team: Optional[dict]) -> Optional[dict]:
+    """A team's overall, offense and defense rounded to whole numbers (team_ratings: each unit weighted toward its
+    starters, as the unit overalls are everywhere); None for a team without ratings (an FCS stand-in)."""
+    r = (team or {}).get("team_ratings") or {}
+    if team is None or team.get("fictional") or not all(isinstance(r.get(k), (int, float)) for k in ("overall", "offense", "defense")):
+        return None
+    return {k: int(round(r[k])) for k in ("overall", "offense", "defense")}
+
+
 def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     """This week for one team: the next game with both ranks and records, and a prediction
     from simulating it `sims` times (win odds, the likely score, the margin, the passer and
@@ -3300,6 +3309,7 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
                  "opponent_record": _record_str(rec[opp]) if opp in rec and not teams.get(opp, {}).get("fictional") else "",
                  "my_rank": ranks.get(slug), "my_record": _record_str(rec[slug]),
                  "venue": _venue(g, home), "rivalry": game_rivalry(state, g, after=g["played"])})
+    game["ratings"] = {"mine": _unit_overalls(teams.get(slug)), "theirs": _unit_overalls(teams.get(opp))}   # the Office's matchup: each side's overall, offense, defense
     if g["played"]:
         # game day is done: the result, not a prediction
         pf, pa = _scores_for(g, home)
