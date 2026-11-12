@@ -1671,10 +1671,15 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starte
     rate = recruits.RATE.get(p.get("c"), 0.27) * factor * DEV_RATE * year_pace(p, starter)
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
+    base = rate
     rate = min(DEV_YEAR_CAP, rate)                            # no offseason closes more than half his room (DEV_YEAR_CAP)
+    # Clear Mode: physical ratings grow slower, technique and mental faster (clear.PHYS_RATE, clear.SKILL_RATE), each
+    # still under DEV_YEAR_CAP; the same draws either way
+    paces = [min(DEV_YEAR_CAP, base * (clear.PHYS_RATE if k in PHYSICAL else clear.SKILL_RATE)) for k in attrs] if clear.on() else None
     new_r, new_g = [], []
-    for v, g in zip(p["r"], p["g"]):
-        step = int(round(min(g, g * rate * rng.uniform(0.8, 1.2)))) if g > 0 else 0
+    for i, (v, g) in enumerate(zip(p["r"], p["g"])):
+        r_k = paces[i] if paces else rate
+        step = int(round(min(g, g * r_k * rng.uniform(0.8, 1.2)))) if g > 0 else 0
         new_r.append(min(99, v + step))
         new_g.append(g - step)
     before = p["o"]

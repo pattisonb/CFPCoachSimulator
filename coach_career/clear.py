@@ -39,6 +39,12 @@ def on() -> bool:
     return CLEAR
 
 
+# growth by kind (the player's ask; Clear Mode only): athleticism is mostly set by the time he arrives, coaching shows in
+# technique and the mental game. SKILL_RATE is set so the average overall gain a year matches the game's.
+PHYS_RATE = 0.5                  # *tune* physical ratings close their gap to potential at this share of the usual pace
+SKILL_RATE = 1.08                # *tune* technique and mental ratings at this share (calibrated: the same average overall gain a year, 4.05 vs 4.07)
+
+
 # potential that moves both ways each offseason (the player's ask; Clear Mode only): a year's ceilings can fall too
 CEIL_STRUGGLE = 2                # *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
 CEIL_SOLID = 2                   # *tune* a solid year (production CEIL_SOLID_Z over the average starter, short of a breakout) adds this
