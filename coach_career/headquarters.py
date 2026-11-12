@@ -289,7 +289,7 @@ def promises_tracker(state: dict) -> dict:
     order = {"Broken": 0, "Slipping": 1, "Not Judged Yet": 2, "On Track": 3, "Next Season": 4}
     players.sort(key=lambda r: (order.get(r["status"], 9), r["name"]))
     rc = state.get("recruiting") or {}
-    recruits = []
+    recruits, seen = [], set()
     for pid, by in (rc.get("contacts") or {}).items():
         c = (by or {}).get(me) or {}
         p = (rc.get("prospects") or {}).get(pid)
@@ -323,6 +323,9 @@ def promises_tracker(state: dict) -> dict:
                 status = "Owed Next Season"
             else:
                 status = "Open"
+            if (pid, what, status) in seen:          # the same promise made twice (an older save): shown once
+                continue
+            seen.add((pid, what, status))
             recruits.append({"key": f"{pid}-{i}", "pid": pid, "name": p["name"], "position": p.get("position"), "stars": p.get("stars"),
                              "what": what, "status": status, "week": pr.get("week")})
     rorder = {"Broken": 0, "Owed Next Season": 2, "Kept": 3}

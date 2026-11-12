@@ -323,6 +323,8 @@ if __name__ == "__main__":
         assert r["points"] == 0 and r["truthful"] is None and r["scene"]["question"]["reply"] == "Then we'll be watching for it."
         pr_a = rc["contacts"][pa][ME]["promises"][0]
         assert pr_a["kind"] == "package" and pr_a["about"]["pid"] == ma and pr_a["week"] == week and pr_a["kept"] is None and pr_a["broken"] is None
+        again = scenes.question(st, ME, pa, week + 1, package={"pid": ma, "name": mname})
+        assert not again or again["kind"] != "package", "promised once: he does not ask about his mate again"
         ev = events(st, pa, "answer")[-1]
         assert ev["question"] == "package" and ev["offered"] is False and ev["answer"] == "promise" and ev["about"] == mname
         recruiting._promises(st, week)

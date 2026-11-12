@@ -84,8 +84,11 @@
   // opts.extra: blocks under the ratings (Clear Mode: the looks line and the staff's flags)
   function clearRatingsCard(clear, opts = {}) {
     const rows = clear && clear.rows && clear.rows.length ? clear.rows : null;
+    // Coachability: its word in the Range column and its own confidence, like every other row
+    const cc = clear && clear.coach_confidence;
     const coach = opts.coach && opts.coach.word ? el("div", { class: "pv-clear-row pv-clear-coach", "data-key": "coachability" }, [
-      el("span", { class: "pv-attr-k", text: "Coachability" }), el("b", { class: "pv-clear-words", text: opts.coach.word })]) : null;
+      el("span", { class: "pv-attr-k", text: "Coachability" }), el("b", { class: "pv-clear-v pv-clear-words", text: opts.coach.word }),
+      el("span", { class: `pv-clear-c conf-${String(cc || "").toLowerCase()}`, text: cc || "" })]) : null;
     const body = rows ? el("div", { class: "pv-clear" }, [
       el("div", { class: "pv-clear-row pv-clear-head", "aria-hidden": "true" }, [el("span", { text: "Rating" }), el("span", { text: "Range" }), el("span", { text: "Confidence" })]),
       ...rows.map((r) => el("div", { class: "pv-clear-row", "data-key": r.key }, [el("span", { class: "pv-attr-k", text: r.label }),

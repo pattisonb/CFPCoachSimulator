@@ -1,6 +1,6 @@
 """Quick calls and the one head coach visit (the player's ask: calling and pitching over and over gets old). After a
 recruit's first call, Call is a quick check-in: it spends the hours for a slight boost (QUICK_CALL of a call's base) and
-opens no conversation; Call and Pitch talks again. Your head coach visits a recruit once. (Run as a file.)"""
+opens no conversation (the menu offers only this call after the first). Your head coach visits a recruit once. (Run as a file.)"""
 import sys
 from pathlib import Path
 

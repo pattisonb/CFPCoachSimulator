@@ -313,6 +313,8 @@ def view(state: dict, viewer: str, pid: str) -> dict:
             "story": (STORY_LABEL[kind] if kind else NO_STORY) if k["story"] else None,
             "story_key": kind,
             "story_detail": story_detail(state, viewer, pid) if kind else None,
+            # a Package Deal's mate, so the page can open his profile from the chip
+            "story_mate": story(state, pid)[1].get("mate") if kind == "package" and story(state, pid)[1].get("mate") in state["recruiting"]["prospects"] else None,
             "commit_style": STYLE_LABEL[style(state, pid)] if k["style"] else None,
             "style_key": style(state, pid) if k["style"] else None,
             "has_style": style(state, pid) is not None,

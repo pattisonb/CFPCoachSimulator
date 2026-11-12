@@ -433,7 +433,7 @@
 .pv-clear { display: flex; flex-direction: column; }
 .pv-clear-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 88px; gap: 8px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .pv-clear-row:last-child { border-bottom: 0; }
-.pv-clear-coach .pv-clear-words { grid-column: 2 / -1; text-align: right; }   /* Coachability: in words, across the Range and Confidence columns */
+.pv-clear-coach .pv-clear-words { white-space: nowrap; }   /* Coachability: its word in the Range column, its confidence beside */
 .pv-clear-head { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 0; }
 .pv-clear-v { font-variant-numeric: tabular-nums; font-size: 15px; }
 .pv-clear-c { font-variant-numeric: tabular-nums; text-align: right; }
@@ -446,6 +446,10 @@
 .pv-abilities { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 2px; }
 .pv-abilities .trait { padding: 0 6px; font-size: 11px; }
 /* the offer's promise: a checkbox row, a tap target on a phone */
-.go-check-row { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; cursor: pointer; line-height: 1.35; }
+.go-check-row, .go-pane .go-step label.go-check-row { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; min-height: 44px; padding: 8px 0; cursor: pointer; line-height: 1.35; }
 .go-check-row .go-check { width: 20px; height: 20px; margin: 1px 0 0; flex: none; accent-color: var(--go-primary, var(--accent)); }
 .go-fav-mark { color: var(--bad-text, #c0392b); }
+
+/* a tag that opens something (a Package Deal's teammate) */
+button.go-tag-link { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+button.go-tag-link:hover { border-color: currentColor; }

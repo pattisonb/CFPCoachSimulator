@@ -1621,7 +1621,8 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         q["about"]["offered"] = offered                                 # as it stands when you answer
         if answer == "straight" and offered:
             points = ANSWER_STRAIGHT + PACKAGE_OFFERED
-        elif answer == "promise":
+        elif answer == "promise" and not any(pr["kind"] == "package" and (pr.get("about") or {}).get("pid") == q["about"]["pid"] and not pr.get("broken")
+                                             and pr.get("closed") is None for pr in contact.get("promises") or ()):   # one promise per mate
             contact.setdefault("promises", []).append({"kind": "package", "about": dict(q["about"]), "week": week, "broken": None, "kept": None})
     elif answer == "straight":
         points = ANSWER_STRAIGHT

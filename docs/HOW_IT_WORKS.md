@@ -1280,7 +1280,7 @@ line (stars, position, state) and one word of standing; a dot marks a move up or
 The pane is the only place anything happens to him: a head with his status chip and one **Recruit
 ▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
 week, Once per recruit, Offer him first, Finish your call first). After his first call, **Call** is a quick check-in
-(the hours, `QUICK_CALL` of a call's worth, no conversation) and **Call and Pitch** talks again. Message and Offer… open a step in the
+(the hours, `QUICK_CALL` of a call's worth, no conversation), the only call the menu offers; to pitch him again, visit. Message and Offer… open a step in the
 pane: no pitch, the NIL points with his ask for an offer, and the starting-role promise as a checkbox. A call or in-home visit plays as a conversation in **its own
 window** over the board (`openSceneWindow` in `web/recruiting.js`: the shared modal, a dialog with
 `aria-modal`, the focus kept inside, titled "Call · Marcus Bell" or "In-Home Visit · Marcus Bell";

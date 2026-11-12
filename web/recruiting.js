@@ -525,6 +525,8 @@
   }
   // ----- the stages: his stage with you decides his tab; a commitment or a signature anywhere ends the race -----
   const COLUMNS = [["cold", "Cold"], ["contact", "In Touch"], ["top", "Top 8"], ["visited", "Visited"], ["committed", "Committed"]];
+  // the board's filter menu: the stages, then your favorites (♥), which cut across them
+  const FAV_TIP = "Your favorites: the recruits you marked with a heart";
   const COLUMN_TIPS = { cold: "No contact yet: an offer now counts half", contact: "You have reached out; get into his top 8 for a visit",
     top: "He is seriously considering you: invite him on a visit", visited: "He has been on campus", committed: "His recruitment is decided: committed or signed, to you or elsewhere" };
   const PHONE = "(max-width: 759px)";
@@ -800,7 +802,12 @@
     const tr = b.traits || {};
     if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
     if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
-    if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`.trim(), "data-key": "trait:story",
+    if (tr.story_key && tr.story_mate) {          // a Package Deal: the chip opens his teammate's profile
+      const chip = el("button", { type: "button", class: "go-tag go-tag-link", "data-key": "trait:story", text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story,
+        title: `${storyTip(tr) || "His story"} Open his teammate's profile.` });
+      ui().on(chip, "click", (ev) => { ev.stopPropagation(); openProfile(s, tr.story_mate); });
+      out.push(chip);
+    } else if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`.trim(), "data-key": "trait:story",
       text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: storyTip(tr) || "His story" }));
     if (tr.style_key) out.push(el("span", { class: "go-tag", "data-key": "trait:style", text: tr.commit_style, title: STYLE_TIPS[tr.style_key] || "How he commits" }));
     if (b.twist) out.push(el("span", { class: "go-tag warn", "data-key": "twist", text: b.twist.label, title: b.twist.line || TWIST_TIP }));
@@ -955,7 +962,7 @@
   function applyRoute(r, s) {
     if (r.tab === "prospects") return applyProspects(r);
     if (r.tab !== "recruiting" && r.tab !== "offseason") return;
-    const stages = ["all", ...COLUMNS.map(([k]) => k)];
+    const stages = ["all", ...COLUMNS.map(([k]) => k), "favorites"];
     if (!view.stage || view.stage.sid !== s.id) { view.group = null; view.state = null; view.search = ""; }
     view.stage = { sid: s.id, key: stages.includes(r.stage) ? r.stage : "all" };
     view.sort = r.sort === "rank" ? "rank" : "chance";
@@ -1248,15 +1255,17 @@
     const countsOf = (pool) => {
       const counts = { all: pool.length };
       for (const [k] of COLUMNS) counts[k] = pool.filter((b) => columnOf(b) === k).length;
+      counts.favorites = pool.filter((b) => b.favorite).length;
       return counts;
     };
     // the stages: one pill (the stage you are on, its count, ▾) that opens the rest as the same pills
-    const stageNames = Object.fromEntries([["all", "All"], ...COLUMNS]);
+    const MENU = [["all", "All"], ...COLUMNS, ["favorites", "Favorites"]];
+    const stageNames = Object.fromEntries(MENU);
     const pickName = el("span"), pickCount = el("b", { text: "0" });
     const stagePick = el("button", { type: "button", class: "go-stage-pick", "aria-haspopup": "true", "aria-expanded": "false", "aria-label": "Stage" },
       [pickName, pickCount, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
-    const stages = el("div", { class: "go-stage-menu", role: "group", "aria-label": "Stages", hidden: "" }, [["all", "All"], ...COLUMNS].map(([k, name]) => {
-      const b = el("button", { type: "button", "data-stage": k, "aria-pressed": String(view.stage.key === k), title: COLUMN_TIPS[k] || "Everyone on your board" },
+    const stages = el("div", { class: "go-stage-menu", role: "group", "aria-label": "Stages", hidden: "" }, MENU.map(([k, name]) => {
+      const b = el("button", { type: "button", "data-stage": k, "aria-pressed": String(view.stage.key === k), title: k === "favorites" ? FAV_TIP : COLUMN_TIPS[k] || "Everyone on your board" },
         [el("span", { text: label(k, name) }), el("b", { text: "0" })]);
       b.addEventListener("click", () => { view.stage.key = k; closeStages(); refill({}); stagePick.focus({ preventScroll: true }); });
       return b;
@@ -1305,7 +1314,11 @@
 
     // ----- the list: one row a recruit in the chosen tab, in sort order -----
     const order = { chance: byChance(me), rank: (a, b) => (a.national_rank ?? Infinity) - (b.national_rank ?? Infinity) };
-    const inTab = (b) => view.stage.key === "all" || columnOf(b) === view.stage.key;
+    const inTab = (b) => view.stage.key === "all" || (view.stage.key === "favorites" ? !!b.favorite : columnOf(b) === view.stage.key);
+    // a ♥ set or cleared anywhere: the Favorites count follows, and the Favorites list drops or gains him
+    const onFavList = (e) => { if (!box.isConnected || !stagebar.isConnected) { document.removeEventListener("cfp:favorite", onFavList); return; }
+      const x = v.board.find((y) => y.id === e.detail.pid); if (!x) return; x.favorite = !!e.detail.on; refill({}); };
+    document.addEventListener("cfp:favorite", onFavList);
     // picked from the map's dot or his profile (view.reveal) while a tab, the search or a filter hides him: show everyone and him
     const want = view.reveal ? v.board.find((b) => b.id === view.reveal) : null;
     view.reveal = null;
@@ -1628,10 +1641,9 @@
       const short = (cost) => (cost > hours ? `Not enough hours: ${hours} left` : null);
       const items = [
         ["message", "Message", "5h", done.includes("message") ? "Once a week" : short(5)],
-        // after his first call, Call is a quick check-in (no conversation, a slight boost); Call and Pitch talks again
-        ...(b.calls > 0 ? [["call_quick", "Call", "15h · Quick Check-In", done.includes("call") ? "Once a week" : short(15)],
-          ["call", "Call and Pitch", "15h", done.includes("call") ? "Once a week" : short(15)]]
-          : [["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)]]),
+        // after his first call, Call is a quick check-in only (no conversation, a slight boost): the pitching was done on the first
+        b.calls > 0 ? ["call_quick", "Call", "15h · Quick Check-In", done.includes("call") ? "Once a week" : short(15)]
+          : ["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)],
         ["hc_visit", "HC Visit", "30h", hcDone ? "Once per recruit" : short(30)],
         ["scout", "Scout", `${b.scout_cost} Points · ${fmtLooks(looks)} of 3 Looks${looks < 3 && 3 - looks <= 1 ? " · Finishes His Report" : ""}`,
           looks >= 3 ? "His report is complete: 3 of 3 looks" : v.points_left < b.scout_cost ? "Not enough scouting points left this week." : null],
