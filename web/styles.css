@@ -1720,3 +1720,10 @@ button, input, select, textarea { }
 .league-custom-row { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .league-note { margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--panel-2); }
 @media (max-width: 760px) { .league-custom-row { min-height: 44px; } }
+
+/* ---------- a trial: the light theme set in Space Mono, every face (the body, the display type, the top bar's pixel face).
+   Remove this block and the Space Mono family in the pages' font links to go back. ---------- */
+:root[data-theme="light"] :is(body, body *) { font-family: "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace !important; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) :is(body, body *) { font-family: "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace !important; }
+}
