@@ -39,6 +39,33 @@ def on() -> bool:
     return CLEAR
 
 
+# potential that moves both ways each offseason (the player's ask; Clear Mode only): a year's ceilings can fall too
+CEIL_STRUGGLE = 3                # *tune* a starter who struggled (production well under the average starter) loses this much room
+CEIL_SLOW = 1                    # *tune* the two slowest coachability levels lose this much room a year
+CEIL_DRIFT_SD = 1.5              # *tune* every player's ceilings drift this much either way a year (one draw a player)
+SLOW_LEVELS = ("Slow to Click", "Set in His Ways")
+
+
+def ceiling_drift(p: dict, attrs: list[str], perf: Optional[dict], year: int, physical: set) -> int:
+    """Move one player's room to grow (p["g"]) for a year, on his skill and football IQ (never his physical
+    ratings, as a breakout's room): a struggling starter loses CEIL_STRUGGLE, the slow learners CEIL_SLOW, and everyone
+    drifts by a draw of its own stream (`ceiling-{year}-{id}`), so no other draw moves. Room stays within 0 and his
+    ratings' 99. Returns the points of room changed, summed (negative: his ceiling fell)."""
+    import random
+    shift = random.Random(f"ceiling-{year}-{p['id']}").gauss(0, CEIL_DRIFT_SD)
+    z = (perf or {}).get("z")
+    if z is not None and z <= -0.75:
+        shift -= CEIL_STRUGGLE
+    if p.get("c") in SLOW_LEVELS:
+        shift -= CEIL_SLOW
+    step = int(round(shift))
+    if not step:
+        return 0
+    before = sum(p["g"])
+    p["g"] = [g if k in physical else max(0, min(99 - v, g + step)) for k, g, v in zip(attrs, p["g"], p["r"])]
+    return sum(p["g"]) - before
+
+
 def confidence(state: dict, pid: str, group: str) -> str:
     """How sure the staff is of a read, in a word: High, Medium or Low (the report's uncertainty, turned around)."""
     from coach_career import prospects as pr

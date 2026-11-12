@@ -17,7 +17,7 @@ import random
 import statistics as st
 from typing import Optional
 
-from coach_career import league as lg
+from coach_career import clear, league as lg
 from coach_career import position_fit
 from coach_career import recruits
 from teamdata import game_scale
@@ -1908,6 +1908,8 @@ def _develop_all(state: dict) -> dict:
                 p["g"] = [g + room if k not in PHYSICAL else g for k, g in zip(attrs, p["g"])]
                 p["g"] = [min(g, 99 - v) for g, v in zip(p["g"], p["r"])]
                 breakouts += 1
+            if clear.on():                 # Clear Mode: ceilings move both ways (a struggling year, a slow learner, a drift)
+                clear.ceiling_drift(p, attrs, perf.get(p["id"]), year, PHYSICAL)
             if level_up and rng.random() < LEVEL_UP and p.get("c") in levels[1:]:
                 p["c"] = levels[levels.index(p["c"]) - 1]
                 why.append(coachability_note(p["c"], "award"))
