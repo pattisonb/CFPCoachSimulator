@@ -1265,6 +1265,8 @@ def headquarters_view(p: Params) -> dict:
         out["goals"] = headquarters.goals(st)
     if "tasks" in want:
         out["tasks"] = headquarters.tasks(st)
+    if "promises" in want:
+        out["promises"] = headquarters.promises_tracker(st)
     if "whatif" in want:
         try:
             out["whatif"] = headquarters.what_if(st, p.q("pid") or "")

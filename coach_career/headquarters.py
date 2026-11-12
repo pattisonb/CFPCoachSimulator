@@ -267,6 +267,69 @@ def next_year(state: dict) -> dict:
     return {"groups": out}
 
 
+def promises_tracker(state: dict) -> dict:
+    """Every promise you have out (the Promises widget). `players`: your players promised a starting role, this season
+    with the week-by-week chip (promises.chips_now: On Track, Slipping, Broken; Not Judged Yet before a week counts) and
+    next season's as Next Season. `recruits`: each promise made to a recruit (a starting role, a start over a named
+    player, ahead of another recruit, an offer to his mate, NIL by a week) with its state: Open, Kept, Broken, Due Week N,
+    or Owed Next Season once he signs with you. A promise closed because he went elsewhere is left out."""
+    from coach_career import promises as pm
+    from sim import season
+    me = state.get("team")
+    year = season.season_year(state)
+    chips = pm.chips_now(state)
+    roster = ((((state.get("league") or {}).get("teams") or {}).get(me) or {}).get("roster")) or []
+    players = []
+    for c in roster:
+        when = c.get("promised")
+        if when is None or when < year:
+            continue
+        players.append({"slug": c["id"], "name": c["n"], "position": c["pos"],
+                        "status": "Next Season" if when > year else chips.get(c["id"]) or "Not Judged Yet"})
+    order = {"Broken": 0, "Slipping": 1, "Not Judged Yet": 2, "On Track": 3, "Next Season": 4}
+    players.sort(key=lambda r: (order.get(r["status"], 9), r["name"]))
+    rc = state.get("recruiting") or {}
+    recruits = []
+    for pid, by in (rc.get("contacts") or {}).items():
+        c = (by or {}).get(me) or {}
+        p = (rc.get("prospects") or {}).get(pid)
+        if not p:
+            continue
+        signed = ((rc.get("status") or {}).get(pid) or {}).get("signed") == me
+        for i, pr in enumerate(c.get("promises") or ()):
+            if pr.get("closed") is not None:
+                continue
+            kind, about = pr["kind"], pr.get("about") or {}
+            if kind == "roster":
+                what = f"Starts Over {about['name']}" if about.get("name") and not pr.get("job") else "Starting Role"
+            elif kind == "recruit":
+                what = f"Ahead of {about.get('name') or 'Another Recruit'}"
+            elif kind == "package":
+                what = f"Offer {about.get('name') or 'His Teammate'}"
+            elif kind == "money":
+                what = "NIL Owed"
+            else:
+                continue
+            if pr.get("broken"):
+                status = "Broken"
+            elif pr.get("kept"):
+                status = "Kept"
+            elif kind == "money":
+                owed = recruiting.money_owed(state, me, pid)
+                if owed:
+                    what = f"NIL {owed['nil']}"
+                status = f"Due Week {max(0, owed['by_week'] - 1)}" if owed else "Open"     # Week 0 opens the season
+            elif signed and kind in ("roster", "recruit"):
+                status = "Owed Next Season"
+            else:
+                status = "Open"
+            recruits.append({"key": f"{pid}-{i}", "pid": pid, "name": p["name"], "position": p.get("position"), "stars": p.get("stars"),
+                             "what": what, "status": status, "week": pr.get("week")})
+    rorder = {"Broken": 0, "Owed Next Season": 2, "Kept": 3}
+    recruits.sort(key=lambda r: (rorder.get(r["status"], 1), -(r["week"] or 0)))
+    return {"players": players, "recruits": recruits}
+
+
 def what_if(state: dict, pid: str) -> dict:
     """Your class rank now and if he commits to you, and his group's need now and after. Changes nothing. Both ranks
     come from prospects.class_table as you see it (another school's Quiet Commit left out), so the rank if he commits

@@ -1520,7 +1520,7 @@ of yours named in a widget (Player Impact and Retention, the Position Battle Boa
 kept aside, `prospects.profile`).
 Scouted Players (source `scouted`: the Scouting desk's scouted prospects by potential) shows them as tiles; a tile
 opens his report (the six grades from his profile's `our_grades`, as words) with arrows to step through and Back to
-All. Next Year's Depth Chart (`want=next_year`: every player the outlook keeps a class up by `offseason.NEXT_CLASS`,
+All. Promises (`want=promises`, `headquarters.promises_tracker`) lists every promise you have out: your players promised a start (this season's with the weekly chip from `promises.chips_now`, On Track, Slipping or Broken; next season's as Next Season) and each promise to a recruit (Starting Role, Starts Over a named player, Ahead of another recruit, Offer his mate, NIL by a week) as Open, Kept, Broken, Due Week N or Owed Next Season; one closed because he went elsewhere is left out. Next Year's Depth Chart (`want=next_year`: Commits, Offered, On Board and Contacted chips choose which recruits show; every player the outlook keeps a class up by `offseason.NEXT_CLASS`,
 best overall first, your commits and signees in their groups as they come in, and each group's need from
 `recruiting.needs_detail`, which allows for the usual attrition, so Class Needs and this agree). Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
 

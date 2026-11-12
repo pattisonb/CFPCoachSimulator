@@ -106,4 +106,32 @@
       syncShow();
       return el("div", { class: "hq-next" }, [chips, showRow, strip]);
     } });
+
+  // ----- Promises: every promise you have out, to your players and to recruits ------------------------------------
+  const PROMISE_TONE = { Broken: "bad", Slipping: "warn", "On Track": "good", Kept: "good" };
+  const SAMPLE_PROMISES = {
+    players: [{ slug: "p1", name: "J. Sanders", position: "QB", status: "On Track" }, { slug: "p2", name: "D. Thomas", position: "WR", status: "Slipping" }],
+    recruits: [{ key: "r1-0", pid: "r1", name: "Marcus Williams", position: "QB", stars: 5, what: "Starting Role", status: "Open" },
+      { key: "r2-0", pid: "r2", name: "Tre Jackson", position: "CB", stars: 4, what: "NIL 45", status: "Due Week 9" }] };
+  HQ.register({ id: "promises", title: "Promises", category: "program", status: "ready",
+    blurb: "Every promise you have out: your players promised a start and how it is going, and what you told each recruit.",
+    sizes: ["S", "M", "L"], size: "M", sources: ["hq"], want: ["promises"], sample: { hq: { promises: SAMPLE_PROMISES } }, viewAll: "recruiting",
+    draw: (d, ctx) => {
+      const pr = (d.hq && d.hq.promises) || { players: [], recruits: [] };
+      if (!pr.players.length && !pr.recruits.length) return k.empty("No promises out. A starting role you promise a player or a recruit shows here.");
+      const tag = (status) => el("span", { class: `go-tag ${PROMISE_TONE[status] || ""}`.trim(), text: status });
+      const parts = [];
+      if (pr.players.length) {
+        parts.push(el("div", { class: "go-kicker muted hq-promise-head", text: "Your Players" }));
+        parts.push(k.list(pr.players.slice(0, k.rowsFor(ctx.size)).map((r) => ({ key: `p-${r.slug}`,
+          cells: [k.player(ctx, r.name, r.position, r.slug), el("span", { class: "hq-sub", text: r.position }), el("span", { class: "hq-sub", text: "Starting Role" }), tag(r.status)] }))));
+      }
+      if (pr.recruits.length) {
+        parts.push(el("div", { class: "go-kicker muted hq-promise-head", text: "Recruits" }));
+        parts.push(k.list(pr.recruits.slice(0, k.rowsFor(ctx.size)).map((r) => ({ key: `r-${r.key}`,
+          cells: [k.name(ctx, r.pid, r.name), el("span", { class: "hq-sub", text: r.position || "" }),
+            ctx.size === "S" ? null : el("span", { class: "hq-sub hq-promise-what", text: r.what }), tag(r.status)] }))));
+      }
+      return el("div", { class: "hq-promises" }, parts);
+    } });
 })();
