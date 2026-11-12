@@ -9,8 +9,8 @@
   const moralePcts = (m) => {
     const sg = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;
     const tone = (n) => (n > 0 ? "good" : n < 0 ? "bad" : "");
-    return [el("span", { class: `tag ${tone(m.form_pct)}`.trim(), text: `Form ${sg(m.form_pct)}`, title: "What his recent games against his season so far add to his ratings next game" }),
-      el("span", { class: `tag ${tone(m.team_pct)}`.trim(), text: `Team Mood ${sg(m.team_pct)}`, title: "What the team's results against expectations add to everyone next game" })];
+    return [el("span", { class: `tag ${tone(m.form_pct)}`.trim(), text: `Form (${sg(m.form_pct)})`, title: "What his recent games against his season so far add to his ratings next game" }),
+      el("span", { class: `tag ${tone(m.team_pct)}`.trim(), text: `Team Mood (${sg(m.team_pct)})`, title: "What the team's results against expectations add to everyone next game" })];
   };
   // how far a save has played, for its card and messages: "Preseason", "Through Week 3", a postseason week by its own name
   const throughWeek = (w) => (!w ? "Preseason" : w <= 14 ? `Through ${seasonWeek(w)}` : `Through Week ${w}`);
@@ -1860,16 +1860,21 @@
         rat.append(el("div", { class: "attr-group", text: g }));
         for (const a of attrs.filter((x) => x.group === g)) {
           const boost = a.boost ? el("span", { class: `boost ${a.boost > 0 ? "up" : "down"}`, text: `${a.boost > 0 ? "▲" : "▼"}${Math.abs(a.boost)}` }) : null;
+          // Clear Mode: the rating he plays at next game, colored, with the change in parentheses ("▲ 42 (+2)")
+          const shownNum = clearMode() && a.boost ? el("b", { class: `rating-num boosted-num ${a.boost > 0 ? "up" : "down"}` },
+            [`${a.boost > 0 ? "▲" : "▼"} ${a.value + a.boost} `, el("span", { class: "boost-paren", text: `(${a.boost > 0 ? "+" : "−"}${Math.abs(a.boost)})` })]) : null;
           rat.append(el("div", { class: `rating-row ${editedAttrs.has(a.key) ? "edited" : ""} ${a.boost ? "boosted" : ""}` }, [
             el("span", { class: "rating-label", text: a.label, title: `${a.about}${editedAttrs.has(a.key) ? " (edited in god mode)" : ""}` }),
             ratingBar(a.value, a.potential),
-            el("b", { class: "rating-num" }, [String(a.value), boost])]));
+            shownNum || el("b", { class: "rating-num" }, [String(a.value), boost])]));
         }
       }
     }
     for (const r of attrs.length ? [] : shown) {
       const boost = r.boost ? el("span", { class: `boost ${r.boost > 0 ? "up" : "down"}`, text: `${r.boost > 0 ? "▲" : "▼"}${Math.abs(r.boost)}`, title: `${r.boost > 0 ? "+" : ""}${r.boost} from ${p.morale && p.morale.label !== "Steady" ? p.morale.label.toLowerCase() : "morale"}${p.morale && p.morale.team_label ? " and the team's mood" : ""}` }) : null;
-      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), ratingBar(r.value), el("b", { class: "rating-num" }, [String(r.value), boost])]));
+      rat.append(el("div", { class: `rating-row ${edited.has(r.key) ? "edited" : ""} ${r.boost ? "boosted" : ""}` }, [el("span", { class: "rating-label", text: r.label, title: edited.has(r.key) ? "Edited in god mode" : "" }), ratingBar(r.value),
+        clearMode() && r.boost ? el("b", { class: `rating-num boosted-num ${r.boost > 0 ? "up" : "down"}` }, [`${r.boost > 0 ? "▲" : "▼"} ${r.value + r.boost} `,
+          el("span", { class: "boost-paren", text: `(${r.boost > 0 ? "+" : "−"}${Math.abs(r.boost)})` })]) : el("b", { class: "rating-num" }, [String(r.value), boost])]));
     }
     if (p.morale && p.morale.enabled && clearMode()) {
       const sg = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;

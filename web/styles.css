@@ -1723,3 +1723,11 @@ button, input, select, textarea { }
 .league-custom-row { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .league-note { margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--panel-2); }
 @media (max-width: 760px) { .league-custom-row { min-height: 44px; } }
+
+/* Clear Mode: a rating as he plays it next game, its change in parentheses */
+.rating-num.boosted-num.up { color: var(--good-text); }
+.rating-num.boosted-num.down { color: var(--bad-text); }
+.rating-num.boosted-num .boost-paren { font-weight: 600; font-size: 0.9em; }
+.rating-row:has(.boosted-num) { grid-template-columns: 110px 1fr 84px; }
+.rating-num.boosted-num { white-space: nowrap; }
+@media (max-width: 700px) { .rating-row:has(.boosted-num) { grid-template-columns: 96px 1fr 78px; } }
