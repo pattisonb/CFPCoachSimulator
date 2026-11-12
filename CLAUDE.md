@@ -18,4 +18,5 @@
 
 ## Process
 - Tests are plain scripts: `python3 tests/<file>.py`; the full suite is `python3 tests/run_all.py`.
+- On the `clear-mode` branch (the player's experiment, live on GitHub Pages), keep testing light: run only the tests that touch what changed (for example `test_copy_case.py` and `test_clear_mode.py` for a wording change), not the full suite or the spacing and UX sweeps, unless the change is to layout or the player asks.
 - Commits end with the session's two attribution trailer lines; no model identifiers in code or commits.

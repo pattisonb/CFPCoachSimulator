@@ -576,7 +576,7 @@
     // the portal: he picks only among offering schools with room, so a lead without room is no lead
     if (b.no_room) out.append(el("span", { class: "go-tag bad", "data-key": "no-room", text: b.no_room.label, title: b.no_room.tip }));
     if (b.committed === me && !b.signed) out.append(b.hard ? el("span", { class: "go-tag good", text: "Hard Commit", title: "Locked in: he cannot flip and his offer stands until he signs" })
-      : el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "warn" : ""}`, text: `Verbal · ${b.firmness}`, title: "A verbal commit (0-100): he warms to you on his own each week, faster with a message, call or visit; rivals offering more playing time cool him. At 90 he is a hard commit and cannot flip." }));
+      : el("span", { class: `go-tag ${b.firmness >= 70 ? "good" : b.firmness < 40 ? "warn" : ""}`, text: "Verbally Committed", title: "A verbal commit: he warms to you on his own each week, faster with a message, call or visit; rivals offering more playing time cool him. Firm enough and he becomes a hard commit and cannot flip." }));
     return out.childElementCount ? out : null;
   }
 
@@ -741,7 +741,7 @@
     const rows = TAG_GROUPS.map(([g, label]) => {
       const mine = tags.filter((n) => n.dataset.group === g);
       if (!mine.length) return null;
-      const syms = [["★", "★ He told you he cares"], ["☆", "☆ He hinted at it this week"]].filter(([c]) => mine.some((n) => n.textContent.startsWith(c)));
+      const syms = [["☆", "☆ He hinted at it this week"]].filter(([c]) => mine.some((n) => n.textContent.startsWith(c)));
       const key = g === "topics" && syms.length ? el("div", { class: "muted small pv-tag-key", "data-key": "tag-key", text: syms.map(([, w]) => w).join(" · ") }) : null;
       return el("div", { class: "pv-tag-group", "data-key": `tags-${g}` }, [el("span", { class: "pv-tag-label", text: label }),
         el("div", { class: "go-tags go-badges" }, mine), key]);
