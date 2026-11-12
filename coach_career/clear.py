@@ -40,24 +40,33 @@ def on() -> bool:
 
 
 # potential that moves both ways each offseason (the player's ask; Clear Mode only): a year's ceilings can fall too
-CEIL_STRUGGLE = 3                # *tune* a starter who struggled (production well under the average starter) loses this much room
-CEIL_SLOW = 1                    # *tune* the two slowest coachability levels lose this much room a year
+CEIL_STRUGGLE = 2                # *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
+CEIL_SOLID = 2                   # *tune* a solid year (production CEIL_SOLID_Z over the average starter, short of a breakout) adds this
+CEIL_SOLID_Z = 0.0               # *tune* ... from this production score up (about a starter's top fifth; a breakout is 1.0)
+CEIL_STRUGGLE_Z = -2.0           # *tune* a struggling year: this production score or under (about a starter's bottom fifth)
+CEIL_SLOW = 1                    # *tune* the slow coachability levels lose this much room a year, the fast ones gain it
 CEIL_DRIFT_SD = 1.5              # *tune* every player's ceilings drift this much either way a year (one draw a player)
 SLOW_LEVELS = ("Slow to Click", "Set in His Ways")
+FAST_LEVELS = ("Coach's Dream", "Film Junkie", "Quick Study")   # as many players as SLOW_LEVELS (about 30% each), so it nets out
 
 
 def ceiling_drift(p: dict, attrs: list[str], perf: Optional[dict], year: int, physical: set) -> int:
     """Move one player's room to grow (p["g"]) for a year, on his skill and football IQ (never his physical
-    ratings, as a breakout's room): a struggling starter loses CEIL_STRUGGLE, the slow learners CEIL_SLOW, and everyone
+    ratings, as a breakout's room): a struggling starter loses CEIL_STRUGGLE and a solid year adds CEIL_SOLID; the slow
+    learners lose CEIL_SLOW and the fast ones gain it; and everyone
     drifts by a draw of its own stream (`ceiling-{year}-{id}`), so no other draw moves. Room stays within 0 and his
     ratings' 99. Returns the points of room changed, summed (negative: his ceiling fell)."""
     import random
     shift = random.Random(f"ceiling-{year}-{p['id']}").gauss(0, CEIL_DRIFT_SD)
     z = (perf or {}).get("z")
-    if z is not None and z <= -0.75:
+    if z is not None and z <= CEIL_STRUGGLE_Z:
         shift -= CEIL_STRUGGLE
+    elif z is not None and CEIL_SOLID_Z <= z < 1.0:     # a breakout (z >= 1, offseason.BREAKOUT_FROM) already adds its own room
+        shift += CEIL_SOLID
     if p.get("c") in SLOW_LEVELS:
         shift -= CEIL_SLOW
+    elif p.get("c") in FAST_LEVELS:
+        shift += CEIL_SLOW
     step = int(round(shift))
     if not step:
         return 0
