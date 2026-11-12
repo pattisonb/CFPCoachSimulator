@@ -592,7 +592,7 @@
         : e.ask.kind === "playing_time" ? `He wants a starting role${e.ask.nil ? `; short of that, about ${e.ask.nil} NIL would do it` : ""}.`
         : `He wants about ${e.ask.nil} NIL to stay.`;
       const offers = [];
-      if (e.offers.promise) offers.push(e.role_next === "starter" ? "Promised a starting role" : "Promised a starting role he would not get");
+      if (e.offers.promise) offers.push(e.role_next === "starter" ? "Promised a starting role" : `Promised a starting role${e.start_over ? ` over ${e.start_over}` : ""}: start him all season`);
       if (e.offers.nil) offers.push(`${e.offers.nil} NIL on the table`);
       if (e.offers.released) offers.push("Letting him go");
       const nil = el("input", { type: "number", min: "0", step: "5", value: String(e.offers.nil || e.ask.nil || 0), class: "go-nil", id: `keep-nil-${e.id}`, "aria-label": `NIL offer for ${e.name}` });
@@ -603,7 +603,7 @@
       const btn = (label, sub, onclick, tone, off) => { const b = el("button", { type: "button", class: `go-act ${tone || ""}` }, [el("b", { text: label }), el("span", { text: sub })]); if (off) b.setAttribute("disabled", ""); ui.on(b, "click", onclick); return b; };
       c.append(el("div", { class: "go-actions off-keep-acts" }, [
         btn("Meet", e.met ? "Done: you heard his ask." : "Free: hear his ask.", (ev) => retain(ev, e.id, "meet", `Met with ${e.name}`), "", e.met),
-        btn("Promise a Start", e.role_next === "starter" ? "He would start." : "He would not.", (ev) => retain(ev, e.id, "promise", `Promised ${e.name} a start`), e.role_next === "starter" ? "go" : "", e.offers.promise),
+        btn("Promise a Start", e.role_next === "starter" ? "He would start." : e.start_over ? `You start him over ${e.start_over}.` : "You start him next season.", (ev) => retain(ev, e.id, "promise", `Promised ${e.name} a start`), e.role_next === "starter" ? "go" : "", e.offers.promise),
         btn("Offer NIL", "From next year's NIL.", (ev) => {        // the amount typed in the live box beside the button
           const amount = Number(document.getElementById(`keep-nil-${e.id}`).value) || 0;
           retain(ev, e.id, "nil", `Offer to ${e.name} · ${amount} NIL`, amount);

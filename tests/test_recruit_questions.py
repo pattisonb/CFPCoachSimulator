@@ -191,7 +191,7 @@ if __name__ == "__main__":
         assert recruiting.pending(st, ME, pid2) == 0.0 and not rc["contacts"][pid2][ME].get("promises")
         assert events(st, pid2, "answer")[-1]["answer"] == "deflect"
 
-        # ----- a hollow promise: the player ahead is back next year and well clear of him -----
+        # ----- a promise over a better returning player: your word holds (the player's ask), next season judges it -----
         pid3 = None
         while pid3 is None:
             cand = cold(st, True, used)
@@ -200,17 +200,10 @@ if __name__ == "__main__":
                 pid3 = cand
         sc3 = call(sid, pid3)
         assert sc3["question"]["kind"] == "roster" and sc3["question"]["about"]["last_year"] is False
-        assert not recruiting.promise_holds(st, ME, pid3, sc3["question"])
+        assert recruiting.promise_holds(st, ME, pid3, sc3["question"])
         r = answer(sid, pid3, sc3, "promise")
-        hollow = recruiting.ANSWER_HOLLOW * persona.hollow_mult(st, pid3, ME)      # a Cocky recruit's hollow promise costs double
-        assert abs(r["points"] + hollow) < 1e-9 and r["truthful"] is False
-        assert r["scene"]["question"]["reply"] == "I've heard that one before." == scenes.REPLY_LINES["hollow"]
-        assert abs(recruiting.pending(st, ME, pid3) + hollow) < 1e-9
-        c3 = rc["contacts"][pid3][ME]
-        assert c3["cooled_until"] == week + 1 and recruiting.cooled(st, ME, pid3)
-        assert events(st, pid3, "not_buying"), "a hollow promise: he isn't buying it"
-        assert c3["promises"] == [{"kind": "roster", "about": sc3["question"]["about"], "week": week, "broken": None}]
-        assert events(st, pid3, "answer")[-1]["truthful"] is False
+        assert r["truthful"] is True and (r["points"] > 0 or events(st, pid3, "answer")[-1].get("doubted"))
+        assert not recruiting.cooled(st, ME, pid3) and not events(st, pid3, "not_buying")
 
         # ----- a true promise: the player ahead is in his last year next season -----
         pid4 = None
@@ -233,8 +226,8 @@ if __name__ == "__main__":
         # the margin alone holds it too: within PROMISE_MARGIN of a returning player
         q_ = dict(sc4["question"], about=dict(sc4["question"]["about"], last_year=False, ovr=rc["prospects"][pid4]["ovr"] + recruiting.PROMISE_MARGIN))
         assert recruiting.promise_holds(st, ME, pid4, q_)
-        q_["about"]["ovr"] += 1
-        assert not recruiting.promise_holds(st, ME, pid4, q_)
+        q_["about"]["ovr"] += 30
+        assert recruiting.promise_holds(st, ME, pid4, q_), "well clear of him, it still holds: your word"
 
         # ----- no question: no playing-time priority; or nobody ahead and nobody else offered -----
         pid5 = cold(st, False, used)

@@ -677,7 +677,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "quiet": bool(status.get("quiet")),
         "hard": bool(status.get("hard")) and not status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),
-        "on_board": pid in rc["board"],
+        "on_board": pid in rc["board"], "favorite": pid in (rc.get("favorites") or ()),
         "no_room": recruiting.no_room(state, viewer, pid),            # the portal: your roster (or Auto's cap at his position) has no room for him
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "priorities_known": list((rc["revealed"].get(viewer) or {}).get(pid, [])),
@@ -746,6 +746,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (season.team_display(school, teams) if school else None),
         "pro": bool(st.get("pro")),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
+        "favorite": pid in (rc.get("favorites") or ()),          # your own mark (♥): a filter, nothing more
         # your offer is out but he hasn't read it yet: it lands at the week step (contact_week moves past it then)
         "offer_landing": pid in rc["offers"].get(viewer, []) and (rc.get("offer_landing") or {}).get(pid) == recruiting.contact_week(state),
         "group": recruiting._group_of(p),
@@ -1000,6 +1001,8 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
         if status == "leaning_fcs" and not st["fcs"]:
             continue
         if status == "offered" and pid not in rc["offers"].get(viewer, []):
+            continue
+        if status == "favorites" and pid not in (rc.get("favorites") or ()):
             continue
         if status == "board" and pid not in rc["board"]:
             continue

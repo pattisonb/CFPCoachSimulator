@@ -1348,6 +1348,18 @@ def recruit_action(p: Params) -> dict:
     return out
 
 
+@route("POST", "/api/season/{season_id}/favorite")
+def favorite_change(p: Params) -> dict:
+    """Your favorites (♥): a prospect marked or cleared."""
+    st = _career_state(p.path["season_id"], change=True)
+    pid, on = _field(p, "pid", str), _field(p, "on", bool, True)
+    if pid not in recruiting.visible(st):
+        raise ApiError(404, "unknown prospect")
+    recruiting.set_favorite(st, pid, on)
+    _save_loaded()
+    return {"favorites": st["recruiting"]["favorites"]}
+
+
 @route("POST", "/api/season/{season_id}/board")
 def board_change(p: Params) -> dict:
     st = _career_state(p.path["season_id"], change=True)

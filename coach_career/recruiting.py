@@ -119,7 +119,7 @@ COOLED_CONTACT = 0.5
 ANSWER_STRAIGHT = 1.0                      # his question about a named player (scenes.question): a straight answer's points ...
 ANSWER_PROMISE = 3.0                       # ... a promise he can believe (he would start; he is the better recruit) ...
 ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he cools on you a week too) *tune*
-PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
+PROMISE_MARGIN = 5                         # no longer read: a roster promise always holds (your word, judged next season); kept for old tools
 LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
 PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
 PACKAGE_OFFERED = 1.0                      # a Package Deal's question (scenes.question "package") when his mate already holds your offer: on top of ANSWER_STRAIGHT *tune*
@@ -712,17 +712,15 @@ def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
 
 
 def promise_holds(state: dict, slug: str, pid: str, question: dict) -> bool:
-    """Whether he can believe your promise: over a roster player, when that player is in his last
-    year or the recruit's overall is within PROMISE_MARGIN of his; over another recruit, when the
-    recruit is rated at least as high."""
+    """Whether he can believe your promise. Over a roster player, always (the player's ask): a promised start is your
+    word to play him over the better player, and next season judges whether you do (promises.py); what can still make
+    one fail is two promises at his position (job_crowd) or your record at it (word.believes). Over another recruit,
+    when the recruit is rated at least as high."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
     about = question["about"]
     if question["kind"] == "roster":
-        if "ovr" not in about or "last_year" not in about:          # a scene from before these were kept: read him again
-            ahead = ahead_of(state, slug, pid) or {}
-            about = {**about, "ovr": ahead.get("ovr", 99), "last_year": ahead.get("last_year", False)}
-        return bool(about["last_year"]) or p["ovr"] >= about["ovr"] - PROMISE_MARGIN
+        return True
     other = rc["prospects"].get(about.get("pid"))
     return other is None or p["ovr"] >= other["ovr"]
 
@@ -3558,6 +3556,16 @@ def make_staff(state: dict) -> list[dict]:
     for member in staff:                   # signed through this season or the next one or two (offseason.py: contracts)
         member["contract_until"] = year + rng.randint(0, 2)
     return staff
+
+
+def set_favorite(state: dict, pid: str, on: bool) -> None:
+    """Mark a prospect as one of your favorites (♥) or clear the mark: the player's own list, kept with the class (a new
+    class starts with none) and read only by the Prospects filter and the marks on the page. Nothing in recruiting reads it."""
+    favs = state["recruiting"].setdefault("favorites", [])
+    if on and pid not in favs:
+        favs.append(pid)
+    elif not on and pid in favs:
+        favs.remove(pid)
 
 
 def set_board(state: dict, pid: str, on: bool) -> None:

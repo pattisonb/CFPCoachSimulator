@@ -223,7 +223,7 @@ def check_retention(page, v: dict) -> None:
         assert labels == ["Meet", "Promise a Start", "Offer NIL", "Let Him Go"], labels
         hints = [b.inner_text().strip() for b in c.query_selector_all(".off-keep-acts .go-act > span")]
         assert len(hints) == 4 and all(h.endswith(".") for h in hints), hints
-        assert hints[1] == ("He would start." if e["role_next"] == "starter" else "He would not."), hints
+        assert hints[1] == ("He would start." if e["role_next"] == "starter" else f"You start him over {e['start_over']}." if e.get("start_over") else "You start him next season."), hints
 
 
 def check_portal(page, v: dict) -> None:

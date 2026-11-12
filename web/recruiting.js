@@ -23,7 +23,7 @@
   const DESC_FIRST = new Set(["interest", "ht", "wt", "stars", "sc", "pot"]);   // their first click shows the most first (values descending)
   const HEAD_SORT = { rank: "rank", who: "name", pos: "pos", ht: "ht", wt: "wt", stars: "stars", status: "status", int: "interest", sc: "sc", pot: "pot" };
   const STATUS = [["", "Any Status"], ["interested", "Interested in You"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
-                  ["offered", "Offered by You"], ["board", "On Your Board"]];
+                  ["offered", "Offered by You"], ["board", "On Your Board"], ["favorites", "Your Favorites"]];
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const STATES = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
                   "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
@@ -303,6 +303,32 @@
   }
   // a scouting trip landed (here or in the Scouting Center): the lists on screen patch his looks and his read in place
   const scouted = (pid, r) => document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid, looks: r.looks, potential: r.potential || null } }));
+  // your favorites (♥): your own mark, a filter on Prospects; announced (cfp:favorite) so every ♥ on screen follows
+  async function setFavorite(s, pid, on) {
+    try { await H.api(`/api/season/${s.id}/favorite`, H.postJSON({ pid, on })); document.dispatchEvent(new CustomEvent("cfp:favorite", { detail: { pid, on } })); return true; }
+    catch (err) { H.toast(`Could not change your favorites: ${H.errText(err)}`, 4000); return false; }
+  }
+  // a ♥ toggle for a prospect (the Prospect Profile, a Prospects row); `get`/`set` read and write the caller's own record
+  function favButton(s, pid, name, get, set, cls = "") {
+    const btn = el("button", { type: "button", class: `go-btn go-fav ${cls}`.trim() });
+    const label = () => {
+      const on = !!get();
+      btn.textContent = on ? "♥" : "♡";
+      btn.classList.toggle("on", on);
+      btn.setAttribute("aria-pressed", String(on));
+      btn.setAttribute("aria-label", on ? `Take ${name} off your favorites` : `Add ${name} to your favorites`);
+      btn.title = on ? "One of your favorites: take him off" : "Add him to your favorites";
+    };
+    label();
+    ui().on(btn, "click", async (e) => {
+      e.stopPropagation();
+      const want = !get();
+      if (await ui().busy(btn, setFavorite(s, pid, want))) { set(want); label(); ui().pulse(btn); H.toast(want ? `${name} is one of your favorites.` : `${name} is off your favorites.`, 2500); }
+    });
+    const onFav = (ev) => { if (!btn.isConnected) { document.removeEventListener("cfp:favorite", onFav); return; } if (ev.detail.pid === pid && !!get() !== !!ev.detail.on) { set(!!ev.detail.on); label(); } };
+    document.addEventListener("cfp:favorite", onFav);
+    return btn;
+  }
   async function setBoard(s, pid, on) {
     // a change from anywhere (the Prospect Profile's star, the board, the table) is announced, so a list on screen follows it
     try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); document.dispatchEvent(new CustomEvent("cfp:board", { detail: { pid, on } })); return true; }
@@ -1386,10 +1412,15 @@
       const on = b.id === view.selected;
       const btn = el("button", { type: "button", class: `go-row-recruit ${on ? "selected" : ""}`, "data-pid": b.id, "aria-pressed": String(on), tabindex: on || (!view.selected && b === rows[0]) ? "0" : "-1" }, [
         el("span", { class: "go-row-dot" }), avatar(b.id, "sm"),
-        el("span", { class: "go-row-id" }, [el("b", { text: b.name }),
+        el("span", { class: "go-row-id" }, [el("b", {}, [b.name, el("span", { class: "go-fav-mark", text: " ♥", title: "One of your favorites", ...(b.favorite ? {} : { hidden: "" }) })]),
           el("span", { class: "muted small go-row-line" }, b.portal ? [rowLine(b)] : [el("span", { class: "go-stars", text: stars(b.stars) }), rowLine(b)])]),
         el("span", { class: "go-standing-word" })]);
       btn.addEventListener("click", () => choose(v.board.find((x) => x.id === b.id) || b));
+      // a ♥ set or cleared elsewhere (his profile) shows on his row at once
+      const onFav = (e) => { if (!btn.isConnected) { document.removeEventListener("cfp:favorite", onFav); return; }
+        if (e.detail.pid !== b.id) return; const x = v.board.find((y) => y.id === b.id); if (x) x.favorite = !!e.detail.on; b.favorite = !!e.detail.on;
+        const m = btn.querySelector(".go-fav-mark"); if (m) m.hidden = !e.detail.on; };
+      document.addEventListener("cfp:favorite", onFav);
       patchRow(btn, b, true);
       return btn;
     }
@@ -2393,6 +2424,7 @@
       // the button patched is the live one the player clicked (e.currentTarget): a reconcile morphs this row onto the
       // row on screen and hands it this handler, so `add` here may be a fresh node that never reached the page
       ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, e.currentTarget); });
+      const fav = favButton(s, r.id, r.name, () => r.favorite, (v) => { r.favorite = v; if (f.status === "favorites" && !v) load(); }, "pr-fav");
       const tr = el("tr", { class: "go-list-row rc-row pr-row", "data-key": r.id }, [
         el("td", { class: "pr-c-rank muted", text: `#${r.portal && r.portal_rank ? r.portal_rank : r.national_rank}` }),
         el("td", { class: "pr-c-who" }, [who]),
@@ -2405,7 +2437,7 @@
         el("td", { class: "pr-c-sc" }, [el("span", { class: `pr-sc ${scTone}`, title: r.looks >= 3 ? "His report is complete: 3 of 3 looks" : r.looks > 0 ? `${fmtLooks(r.looks)} of 3 looks: each look narrows your staff's read` : "No look at him yet: send a scout", text: scText })]),
         el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? `Your staff's read of his potential after ${fmtLooks(r.looks)} of 3 looks` : "Your staff has no read on him yet",
           text: CLEAR ? (r.clear_pot && r.clear_pot.est != null ? PV().ratingText(r.clear_pot) : "Not Read") : potText(pot) })]),
-        el("td", { class: "pr-c-act" }, [add])]);
+        el("td", { class: "pr-c-act" }, [el("div", { class: "pr-acts" }, [fav, add])])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
       return tr;
     }
@@ -2649,7 +2681,7 @@
     }
     node.innerHTML = "";
     node.append(el("div", { class: "rc-profile-head go-profile-head" }, [heroOf(b, me, { nameNode: name })]),
-      el("div", { class: "pv-tabrow" }, [strip, el("div", { class: "pv-acts rc-profile-actions" }, [toBoard, star])]), body);
+      el("div", { class: "pv-tabrow" }, [strip, el("div", { class: "pv-acts rc-profile-actions" }, [toBoard, favButton(s, pid, pub.name, () => pub.favorite, (v) => { pub.favorite = v; }, "pv-star"), star])]), body);
     draw();
     return true;
   }

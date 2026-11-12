@@ -207,13 +207,17 @@ def _record(state: dict, slug: str) -> tuple[int, int]:
     return r.get("wins", 0), r.get("losses", 0)
 
 
-def _usage() -> dict[str, dict[str, str]]:
-    """team -> player slug -> starter / rotation (next on his role's depth) / bench, from the season's teams."""
+def _usage(state: Optional[dict] = None) -> dict[str, dict[str, str]]:
+    """team -> player slug -> starter / rotation (next on his role's depth) / bench, from the season's teams, with the
+    depth chart each team played (`state`'s depth-chart changes: the starter you set all season is your starter)."""
     from sim import season
     out = {}
+    depth = (state or {}).get("depth") or {}
     for slug, t in season.load_teams().items():
         if t.get("fictional"):
             continue
+        if depth.get(slug):
+            t = season.apply_depth(season.team_data(state, slug), depth[slug])
         u, starts = {}, {}
         players = t["offense"] + t["defense"]
         for p in players:
@@ -251,7 +255,7 @@ def start(state: dict) -> dict:
     record_seasons(state, lgd)
     from coach_career import ability_goals
     ability_goals.carry_over(state, lgd)         # Clear Mode: abilities earned in games stay with the player
-    usage = _usage()
+    usage = _usage(state)
     draft: dict = {}
     from coach_career import word
     word.recover(state, year)                    # Keeps His Word drifts back toward neutral, before this year's promises land
@@ -467,6 +471,7 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         peers = sorted((q for q in roster if GROUP.get(q["pos"], "S") == g), key=lambda q: -q["o"])
         n = recruiting.PORTAL_STARTERS.get(g, 1)
         role_next = "starter" if p["id"] in would_start else "rotation" if p in peers[:n + 2] else "bench"
+        over = next((q["n"] for q in peers if q["id"] != p["id"] and q["id"] in would_start), None) if role_next != "starter" else None
         intent = "draft" if ev["kind"] == "declared" else "portal"
         proj = ev.get("proj")                                   # his projected pick (None: projected to go undrafted)
         if intent == "draft":
@@ -510,7 +515,7 @@ def _retention_entries(state: dict, lgd: dict, pending: list[dict]) -> list[dict
         if broken_promise:                                           # it takes a lot of money now, more for some than others
             kind, ask = "nil", base * promises.nil_mult(promises.personality_of(state, p["id"]))
         out.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "overall": ovr, "stars": p.get("s"),
-                    "role_now": use, "role_next": role_next, "intent": intent, "reason_key": key,
+                    "role_now": use, "role_next": role_next, "start_over": over, "intent": intent, "reason_key": key,
                     "reason": REASONS[key].format(ahead=ahead, round=min(7, (proj - 1) // 32 + 1) if proj else None)
                               + (". He won't believe another promise" if no_third else ""),
                     "broken_promise": broken_promise, "no_third": no_third,
@@ -550,13 +555,14 @@ def _chance_word(c: float) -> str:
 
 
 def stay_chance(e: dict, state: Optional[dict] = None) -> float:
-    """His chance to stay from what you offered against what he wants: NIL at his ask, or a starting
-    role he would actually get; a draft entrant projected in the first round is gone whatever you say."""
+    """His chance to stay from what you offered against what he wants: NIL at his ask, or your promise of a starting
+    role (the player's ask: your word counts whoever rates higher today, and next season judges whether you start him,
+    promises.py); a draft entrant projected in the first round is gone whatever you say."""
     ask, offers = e["ask"], e["offers"]
     nil_share = min(1.0, offers.get("nil", 0) / ask["nil"]) if ask["nil"] else (1.0 if offers.get("nil", 0) else 0.0)
     if nil_share < RETAIN_LOWBALL:
         nil_share = 0.0
-    honored = bool(offers.get("promise")) and e["role_next"] == "starter"
+    honored = bool(offers.get("promise"))
     hollow = bool(offers.get("promise")) and not honored
     if e.get("broken_promise"):                  # promised a start and did not get it: one more promise, if it is real, or a lot of money
         from coach_career import promises
