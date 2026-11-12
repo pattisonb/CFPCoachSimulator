@@ -162,3 +162,10 @@
 /* This Week's Plan: Recruit started with hours left (not ticked) */
 .ofc-step.part .ofc-dot { background: var(--panel-2); color: var(--text); }
 .ofc-step-tag { margin-left: auto; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* the tiles line up (a pass over every week of a season, 1600 and 1280 px): cards sharing a row are as tall as each
+   other, and a title bar holding a button (Full Box Score, Board →) is as tall as a plain one */
+@media (min-width: 900px) {
+  .ofc-grid, .ofc-row { align-items: stretch; }
+  .ofc-grid .card-bar:has(.go-btn, button) { padding-top: 3px; padding-bottom: 3px; }
+}
