@@ -6,6 +6,8 @@ final grades is an ⓘ, off the page; the traits are easy to find (the Profile t
 Cares About, Personality and His Story). At 400 px nothing runs sideways, every control stands 44 px tall and the cards
 stack. Needs Playwright with a Chromium; skipped without one. PROFILE_SHOTS=<folder> saves screenshots (deviceScaleFactor 2)."""
 import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
+import os
 import subprocess
 import sys
 import time

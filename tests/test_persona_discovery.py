@@ -1,5 +1,7 @@
 """Discovery (persona.py): his personality and decider start Not Known Yet and are learned by scouting
 (the decider, at 2 looks) and talking (the personality, at the school's first call; Guarded: first in-home visit)."""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import random
 import sys as _sys
 from pathlib import Path as _Path

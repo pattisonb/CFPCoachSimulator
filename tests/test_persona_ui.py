@@ -8,6 +8,8 @@ decider's label; a Guarded call (no topics cued) still plays and still lets you 
 controls stand 44 px tall. Needs Playwright with a Chromium; skipped without one.
 PERSONA_SHOTS=<folder> saves persona-*.png screenshots."""
 import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
+import os
 import re
 import subprocess
 import sys

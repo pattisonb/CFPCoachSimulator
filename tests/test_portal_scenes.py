@@ -3,6 +3,8 @@ portal players should reference their last school or last year's stats or stuff 
 The season is over, so no "Saturday" game talk and no living room: you open on his portal entry, he says why he left
 his last school (by name), and a visit's family line is about his move. The high school scenes are untouched.
 (Run as a file.)"""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import sys as _sys
 from pathlib import Path as _Path
 

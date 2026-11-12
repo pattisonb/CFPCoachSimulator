@@ -1,5 +1,7 @@
 """Each personality and decider has its own voice in calls and in-home visits (persona.LINES,
 persona.DECIDER_LINES, persona.NO_TOPIC; hooks in coach_career/scenes.py). Native; run as a file."""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import sys as _sys
 from pathlib import Path as _Path
 

@@ -2,6 +2,8 @@
 pill (He Lit Up, Weak Case, Not His Thing, No Read); a topic never pitched has no mark. Needs Playwright with a
 Chromium; skipped without one. (Run as a file.)"""
 import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
+import os
 import subprocess
 import sys
 import time

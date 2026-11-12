@@ -124,7 +124,7 @@ def browser_checks(fresh: dict, later: dict) -> str:
                     dev = page.inner_text(".modal:not([hidden]) .player-dev")
                     m = SHOWN.search(dev)
                     assert m and m.group(1) == pl["coachability"], (width, dev, pl["coachability"])
-                    assert re.search(r"Potential:?\s*(" + "|".join(recruiting.WORDS) + ")", dev), dev
+                    assert re.search(r"Potential:?\s*(" + "|".join(recruiting.WORDS) + r"|\d{1,2})", dev), dev   # Clear Mode: the number
                     tip = page.get_attribute(".modal:not([hidden]) .player-dev .tag.dev", "title")
                     assert tip and tip[0].isupper() and tip.endswith("."), tip
                     body = page.inner_text(".modal:not([hidden])")

@@ -1,6 +1,8 @@
 """What a recruit's personality and decider change on the engine side (persona.py rules): Cocky, Shy,
 Guarded, Loves the Attention, All Business, and the decider's topic and the Trainer's NIL. Each test forces
 the persona on one prospect in a fresh career and compares it to a neutral baseline on the same prospect."""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import sys as _sys
 from pathlib import Path as _Path
 

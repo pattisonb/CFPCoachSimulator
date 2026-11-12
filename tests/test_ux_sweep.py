@@ -2,6 +2,8 @@
 number out of 100, depth-chart controls big enough to tap and never faint, labels that do not
 clip, buttons that say what they do, class codes that read, tooltips reachable by tap, and the
 confirms a one-tap skip needs. Needs Playwright with a Chromium; skipped without one."""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import json
 import os
 import re

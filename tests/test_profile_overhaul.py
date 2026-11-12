@@ -21,6 +21,8 @@ the Scouting Center. Checks:
   control in the pane stands 44 px tall.
 Needs Playwright with a Chromium; skipped without one. OVERHAUL_SHOTS=<folder> saves screenshots."""
 import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
+import os
 import re
 import subprocess
 import sys
