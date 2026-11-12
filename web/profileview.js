@@ -129,7 +129,7 @@
   // flowing in columns across the card; then any extra blocks (This Week's looks, flags, the comp)
   const PIPS_FOR = { Low: 3, Medium: 2, High: 1 };
   // opts.confidence (Clear Mode): the same card as Looks & Confidence, its words turned around (Low uncertainty is High
-  // confidence), as the Key Ratings say them
+  // confidence), as the Key Ratings say them, and no pip meter: three full bars read as a strong player, not a sure read
   const CONF_OF = { Low: "High", Medium: "Medium", High: "Low" };
   function uncertaintyCard(report, extra, opts = {}) {
     const by = Object.fromEntries(((report && report.attributes) || []).map((a) => [a.group, a]));
@@ -137,11 +137,13 @@
     const rows = el("div", { class: "pv-unc" }, ATTRS.map(([g, label]) => {
       const u = by[g] && by[g].uncertainty;
       const w = u ? (conf ? CONF_OF[u] : u) : null;
+      if (conf) return el("div", { class: "pv-unc-row pv-conf-row", "data-group": g }, [el("span", { class: "pv-attr-k", text: label }),
+        el("span", { class: w ? `pv-clear-c conf-${w.toLowerCase()}` : "muted pv-unc-w", text: w ? `${w} Confidence` : "Not Scouted" })]);
       return el("div", { class: "pv-unc-row", "data-group": g }, [el("span", { class: "pv-attr-k", text: label }),
         pips(u ? PIPS_FOR[u] : 0, 3, u ? `${label}: ${w} ${conf ? "confidence" : "uncertainty"}` : `${label}: not scouted`), el("span", { class: "muted pv-unc-w", text: w || "Not Scouted" })]);
     }));
     return card(conf ? "Looks & Confidence" : "Looks & Uncertainty", [rows, ...[].concat(extra || []).filter(Boolean)], { wide: opts.wide !== false, key: "uncertainty", cls: "pv-uncertainty",
-      tip: conf ? "Each look narrows a read: three dots is High confidence, one is Low." : "Each look narrows a read: three dots is a confident read (Low uncertainty), one a wide one (High)." });
+      tip: conf ? "How sure your staff is of each read, not how good he is: each look narrows a read toward High Confidence." : "Each look narrows a read: three dots is a confident read (Low uncertainty), one a wide one (High)." });
   }
 
   // the traits, from whatever the traits view carries: Who Decides with what that person Cares About, Personality, His Story,
