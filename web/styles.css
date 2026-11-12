@@ -1769,3 +1769,11 @@ button, input, select, textarea { }
 .dc-pc-ovr b { font-size: 40px !important; }
 .dc-card-name, .dc-layer-ovr, .dc-pc-trait b, .dc-pc-bar b { font-size: 15px !important; }
 @media (max-width: 760px) { .dc-title { font-size: 20px !important; } }
+/* Headquarters' widgets were sized for the system face; Space Mono is about a fifth wider, so their text steps down and
+   tightens a little, and the next year's depth chart keeps its counts on one line and its position chips whole */
+body .hq-body { font-size: 12.5px; letter-spacing: -0.02em; }
+body .hq-body :is(.hq-list .hq-sub, .hq-stars, .hq-table) { font-size: 11px; }
+body .hq-body .hq-table { font-size: 12px; }
+body .hq-body .hq-pos-pick { flex: none; }
+body .hq-body .hq-groups-strip .hq-group { flex-basis: 280px; }
+body .hq-body .hq-group-head .hq-sub { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
