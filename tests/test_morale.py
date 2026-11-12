@@ -24,7 +24,9 @@ if __name__ == "__main__":
     print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 210dc1a30d1c708c)")
     # re-recorded when the FCS stand-ins were renamed for their regions: the fingerprint picks teams by
     # sorted slug and hashes their names; with the old order and names it is the same games as before
-    assert base == "210dc1a30d1c708c"
+    from engine import game_config
+    # Clear Mode's engine (game_config.EXTRA_TRAITS: the abilities the engine never read now act) has its own
+    assert base == ("05dcb4c15a369667" if game_config.EXTRA_TRAITS else "210dc1a30d1c708c")
 
     # in-game momentum changes a game and leaves the flag off afterwards
     season._init(str(season.TEAMS_FILE))

@@ -2,6 +2,8 @@
 until NIL is attached, the NIL strength reads what the school could pay him (its NIL room against his ask), not
 0 after an offer and not the program's tier before one; the page's grade reads the ask as the player knows it.
 Task 2: pitching NIL with nothing attached is a money promise, kept or broken at the week step."""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import sys as _sys
 from pathlib import Path as _Path
 

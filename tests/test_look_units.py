@@ -90,8 +90,14 @@ if __name__ == "__main__":
     # on your board his complete report stays in the queue: no Send (why: the 409 text), the looks full, one final grade word
     kept = next(r for r in prospects.scouting_view(st, sort="board")["queue"] if r["pid"] == inside)
     assert kept["can_send"] is False and kept["why"] == prospects.REPORT_COMPLETE == "His report is complete: 3 of 3 looks", kept
-    assert kept["looks"] == 3 and kept["potential"][0] == kept["potential"][1] in recruiting.WORDS, kept["potential"]
-    assert kept["potential"] == list(recruiting.grade_range(st, inside, "potential"))
+    from coach_career import clear
+    if clear.on():                        # Clear Mode: always a range of numbers (a complete report's is a few points wide)
+        lo, hi = (int(x) for x in kept["potential"])
+        assert kept["looks"] == 3 and 1 <= lo <= hi <= 99 and hi - lo <= 12, kept["potential"]
+    else:
+        assert kept["looks"] == 3 and kept["potential"][0] == kept["potential"][1] in recruiting.WORDS, kept["potential"]
+    if not clear.on():                    # Clear Mode shows the read's numbers, not its grade words
+        assert kept["potential"] == list(recruiting.grade_range(st, inside, "potential"))
     assert all(lo == hi for lo, hi in (recruiting.read_interval(st, inside, g) for g in recruiting.GROUPS)), "a complete report's read is one point per group"
     rc["board"] = []
     off = next(r for r in prospects.scouting_view(st, q=rc["prospects"][inside]["name"], limit=prospects.QUEUE_MAX)["queue"] if r["pid"] == inside)

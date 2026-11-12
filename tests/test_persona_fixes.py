@@ -9,6 +9,8 @@
 - why he cooled (a lowball, silence for a Loves the Attention recruit) reaches the board;
 - a transfer in the portal never draws a High School Coach or Grandmother decider, and the class draw stays put.
 Saves go to a temporary folder. Run as a file."""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import shutil
 import sys
 import tempfile

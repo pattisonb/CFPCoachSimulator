@@ -4,6 +4,8 @@ PESTER_SHARE of his leader's interest), each further message, call or in-home vi
 on his list, costs more than the last and raises his ask; a prospect who is considering you never
 pesters, and Auto-recruit for your school never does it. Native, through the
 API as tests/test_recruiting_api.py. (Run as a file: multiprocessing on Windows.)"""
+import os
+os.environ["CFP_CLEAR"] = "0"     # the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode.py covers Clear Mode)
 import sys as _sys
 from pathlib import Path as _Path
 

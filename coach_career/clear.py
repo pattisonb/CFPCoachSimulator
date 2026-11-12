@@ -12,9 +12,10 @@ player is shown and when he learns it.
 """
 from __future__ import annotations
 
+import os
 from typing import Optional
 
-CLEAR = True                     # *tune* the branch's switch: Clear Mode on
+CLEAR = os.environ.get("CFP_CLEAR", "1") != "0"   # *tune* the branch's switch: Clear Mode on (CFP_CLEAR=0 turns it off: the word-mode tests)
 
 CONFIDENCE = {"Low": "High", "Medium": "Medium", "High": "Low"}   # a read's uncertainty word -> the confidence word shown
 
