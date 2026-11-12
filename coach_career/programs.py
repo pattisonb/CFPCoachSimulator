@@ -29,6 +29,8 @@ NEW_COACH_LIFT = 1.5             # a new head coach's first year
 NIL_UP, NIL_DOWN = 4.0, 3.0      # the AD's biggest move a year: up after a year that met the goal, down after a losing year
 NIL_TARGET = {"prestige": 0.55, "winning": 0.30, "market": 0.15}   # the collective follows these from where the program started
 NIL_PUSH = 6.0                   # the AD's push above (goal met) or below (losing year) that target
+NIL_PLAYOFF_PUSH = 12.0          # *tune* a playoff the AD did not ask for (his goal is not the playoff) pushes the target this much further
+NIL_PLAYOFF_UP = 10.0            # *tune* ... and the collective may rise this much that year: the boosters open their wallets
 NIL_FLOOR_TIER = 10.0
 COACH_TENURE = 3.0               # coach appeal: overall + this a year of tenure (up to five) - 5
 COACH_TIER_MEAN = {1: 77, 2: 65, 3: 60, 4: 48, 5: 40}   # real 2026 head coaches' overall by tier: what a program of that tier can hire
@@ -310,14 +312,15 @@ def update(state: dict, results: dict, ranks: dict, year: Optional[int] = None, 
         p["year"] = year
 
 
-def nil_move(team: dict, met: bool, losing: bool) -> None:
+def nil_move(team: dict, met: bool, losing: bool, playoff: bool = False) -> None:
     """The collective settles where the program's prestige, winning and market put it; the AD
     pushes it above that after a year that met his goal and it sinks below after a losing year,
-    at most NIL_UP up or NIL_DOWN down a year."""
+    at most NIL_UP up or NIL_DOWN down a year. `playoff`: the program made a playoff its AD did not
+    ask for: the target is NIL_PLAYOFF_PUSH higher and the year's rise may reach NIL_PLAYOFF_UP."""
     p = team["program"]
     bases = {"prestige": p["history"], "winning": p.get("winning_base", 40.0), "market": p.get("market_base", p["market"])}
-    target = p.get("nil_base", p["nil"]) + sum(w * (float(p[k]) - bases[k]) for k, w in NIL_TARGET.items()) + (NIL_PUSH if met else -NIL_PUSH if losing else 0.0)
-    step = max(-NIL_DOWN, min(NIL_UP, target - p["nil"]))
+    target = p.get("nil_base", p["nil"]) + sum(w * (float(p[k]) - bases[k]) for k, w in NIL_TARGET.items()) + (NIL_PUSH if met else -NIL_PUSH if losing else 0.0) + (NIL_PLAYOFF_PUSH if playoff else 0.0)
+    step = max(-NIL_DOWN, min(NIL_PLAYOFF_UP if playoff else NIL_UP, target - p["nil"]))
     p["nil"] = round(max(NIL_FLOOR_TIER, min(100.0, p["nil"] + step)), 1)
     p["rating"] = round(mix(p), 1)
     p["tier"] = tier_of(p["rating"])

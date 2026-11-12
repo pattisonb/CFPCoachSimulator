@@ -1,0 +1,24 @@
+# GitHub Pages serves the clear-mode branch (main is the Vercel site). Pages deploys from the workflow on main, so a
+# push to clear-mode asks that workflow, by name, to build clear-mode. GITHUB_TOKEN may start a workflow_dispatch run.
+name: Pages from clear-mode
+
+on:
+  push:
+    branches: [clear-mode]
+
+permissions:
+  actions: write
+
+concurrency:
+  group: pages-clear-mode
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy clear-mode to Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh workflow run pages.yml --repo "$REPO" --ref main -f branch=clear-mode

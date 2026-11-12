@@ -64,7 +64,7 @@ def check(page, pid, homes, width):
     assert rows[0]["action"] == "back", rows[0]
     weeks = [r for r in rows if r["action"] == "visit_week"]
     assert [r["week"] for r in weeks] == homes, (weeks, homes)
-    assert all(r["name"].startswith(f"Wk {r['week']} · vs ") for r in weeks), weeks
+    assert all(r["name"].startswith(f"Wk {r['week'] - 1} · vs ") for r in weeks), weeks
     assert weeks[0]["disabled"] and weeks[0]["why"] == "He's at Michigan that weekend", weeks[0]
     assert weeks[1]["cost"] == "First Free Weekend" and not weeks[1]["disabled"], weeks[1]
     assert all(r["cost"] != "First Free Weekend" for r in weeks[2:]), weeks
@@ -87,7 +87,7 @@ def book(page, pid, homes):
     page.wait_for_function("(n) => +(document.querySelector('.rc-head').parentElement.dataset.draw || 0) > n", arg=draw, timeout=30_000)
     time.sleep(0.5)
     pill = page.eval_on_selector_all(".go-pane [data-key=visit]", "els => els.map(e => (e.querySelector('.go-tag') || e).textContent)")   # the pill, in its tip wrapper when it has one
-    assert pill == [f"Visit Wk {target}"], (pill, target)
+    assert pill == [f"Visit Wk {target - 1}"], (pill, target)   # the calendar's week: engine week N reads Week N-1
     page.click(".go-pane [data-sub=history]")
     page.wait_for_selector(".go-pane .pv-tl-row", timeout=10_000)
     lines = page.eval_on_selector_all(".go-pane .pv-tl-row", "els => els.map(e => e.dataset.line)")

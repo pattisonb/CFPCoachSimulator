@@ -1754,3 +1754,18 @@ button, input, select, textarea { }
 .ability-goal-bar { display: inline-block; width: 80px; height: 6px; border-radius: 3px; background: var(--line, #ddd); overflow: hidden; }
 .ability-goal-bar > span { display: block; height: 100%; background: var(--accent); }
 .trait.earned { outline: 1px dashed currentColor; outline-offset: 1px; }
+
+/* ---------- a trial on the clear-mode branch: every face is Space Mono (the body, the display type, the top bar's pixel
+   face), in both themes. Remove this block and the Space Mono family in the pages' font links to go back. ---------- */
+:is(body, body *) { font-family: "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace !important; }
+/* the sizes that were set for monogram, a narrow pixel face (0.375 em a letter): Space Mono is 0.6 em a letter, so each
+   is about 0.62 of what it was and the same words take the same room */
+.topbar .brand-name { font-size: 20px !important; }
+.topbar .site-nav a, .topbar button, body.team-theme .topbar button.ghost, .topbar #season-toolbar select { font-size: 15px !important; }
+.dc .dc-btn, .dc .dc-tab, .dc .dc-nav-item, .dc .dc-role, .dc .dc-form-name, .dc-cycle-name, .dc-brand-name, .dc-mark, .dc-ident-name,
+.dc-card-ovr, .dc-depth-ovr, .dc-list-ovr, .dc-person-ovr, .dc-stat strong, .dc-ident-stats dd, .dc-tile-ovr b, .dc-tile-flag,
+.dc-rail-title, .dc-panel-name, .dc-preview strong { font-size: 20px !important; }
+.dc-title, .dc .dc-pc-name { font-size: 30px !important; }
+.dc-pc-ovr b { font-size: 40px !important; }
+.dc-card-name, .dc-layer-ovr, .dc-pc-trait b, .dc-pc-bar b { font-size: 15px !important; }
+@media (max-width: 760px) { .dc-title { font-size: 20px !important; } }

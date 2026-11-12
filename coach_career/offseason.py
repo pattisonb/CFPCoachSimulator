@@ -338,7 +338,8 @@ def _review(state: dict, lgd: dict) -> dict:
     if nil_now is not None:                               # the collective: where the AD's hand takes it (programs.nil_move, at the carousel)
         from coach_career import programs, recruiting
         probe = {"program": dict(t["program"])}
-        programs.nil_move(probe, met=v["met"], losing=res["wins"] < res["losses"])
+        programs.nil_move(probe, met=v["met"], losing=res["wins"] < res["losses"],
+                          playoff=bool(res.get("playoff")) and carousel.goal(me, state)["kind"] != "playoff")
         nil_next = probe["program"]["nil"]
         budget_next = max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_next))
         budgets = {"nil_now": max(recruiting.NIL_FLOOR, recruiting._five(recruiting.NIL_PER_TIER * nil_now)), "nil_next": budget_next}

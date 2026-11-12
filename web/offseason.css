@@ -232,6 +232,8 @@ p .off-contract { margin-left: 6px; }
   .off-keep-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .off-leaver-top { grid-template-columns: auto minmax(0, 1fr); }
   .off-leaver-top .off-roles { grid-column: 1 / -1; }
+  .off-lines:not(.off-board-lines) li { grid-template-columns: 26px minmax(0, 1fr) auto; row-gap: 8px; }   /* a long name beside "Left for Ohio State": the tag takes its own row */
+  .off-lines:not(.off-board-lines) li > .go-tag { grid-column: 2 / -1; justify-self: start; }
   .off-foot .off-go, .off-foot .go-btn { flex: 1 1 100%; }
   .off-foot .off-go { margin: 0; }
   .off-foot .off-back { flex: 1 1 100%; }

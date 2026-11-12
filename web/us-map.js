@@ -262,7 +262,7 @@
       if (cur[2] >= LABEL_AT * FW) return;
       const px = basePx() * k;              // screen pixels per canvas unit now
       const [vx, vy, vw, vh] = shown(cur);
-      const size = 11 / px, gap = 3 / px, lh = size * 1.3;
+      const size = 11 / px, gap = 3 / px; let lh = size * 1.3;
       const inView = [...gDots.querySelectorAll("circle.us-dot")].filter((c) => {
         const x = +c.getAttribute("cx"), y = +c.getAttribute("cy");
         return c.dataset.name && x >= vx && x <= vx + vw && y >= vy && y <= vy + vh;
@@ -276,6 +276,8 @@
       // a name's width as this browser draws it (fonts differ by machine; an estimate let names overlap): measured once
       // per layout on a probe at the label's size and weight, falling back to an estimate where measuring is not possible
       const probe = el("text", { class: "us-label", "font-size": +size.toFixed(3), visibility: "hidden" }, gDots);
+      // a line's height as this face draws it: a tall face (Space Mono) is more than 1.3 of its size, and two names a line apart touched
+      try { probe.textContent = "Ag"; const h = probe.getBBox().height; if (h > 0) lh = Math.max(lh, h + 1 / px); } catch (e) { /* the estimate stands */ }
       const widthOf = (name) => {
         probe.textContent = name;
         let w = 0;
