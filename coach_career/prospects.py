@@ -825,6 +825,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
                hc_week=recruiting.hc_visit_week(state, viewer, pid),    # a visit that broke before it opened never counts
+               calls=int((((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("calls")) or 0),   # finished calls: after one, Call is a quick call
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == recruiting.contact_week(state)],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),

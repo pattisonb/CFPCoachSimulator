@@ -101,7 +101,8 @@ COLD_OFFER = 0.5                           # an offer before any contact counts 
 STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
 WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
-HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
+HC_VISIT_GAP = 4                           # weeks between an AI school's head coach in-home visits to one prospect (yours: one per recruit)
+QUICK_CALL = 0.5                           # *tune* a quick call after his first (no conversation, no pitch): this share of a call's base, a slight boost
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
 NIL_PER_TIER = 3.0                         # NIL points a year per point of the program's NIL tier *tune*
@@ -1547,13 +1548,18 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed},
                 "money_owed": money_owed(state, slug, pid) if pitch == "nil" else None}
-    opens = slug == state.get("team") and action in SCENES and pitch is None
+    # a quick call (the player's ask): after his first call, Call just spends the hours for a slight boost; Call and Pitch
+    # opens the conversation as before
+    quick = slug == state.get("team") and action == "call" and answer == "quick"
+    if quick and not _contact(state, slug, pid).get("calls"):
+        raise RecruitingError(409, "Call and pitch him first: a quick call follows a first conversation.")
+    opens = slug == state.get("team") and action in SCENES and pitch is None and not quick
     manual = slug == state.get("team") and action in ("message", "offer")
     if manual:
         pitch = None                                        # the player's ask: no pitch on a message or an offer
     if manual and action == "offer" and answer == "promise" and _open_roster_promise(_contact(state, slug, pid)):
         raise RecruitingError(409, "You already promised him the job.")
-    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week, manual=manual)
+    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week, manual=manual, quick=quick)
     if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
@@ -2014,7 +2020,7 @@ def latest_report(state: dict) -> Optional[dict]:
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
          scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False,
-         visit_week: Optional[int] = None, manual: bool = False) -> Optional[str]:
+         visit_week: Optional[int] = None, manual: bool = False, quick: bool = False) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
     finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
@@ -2173,6 +2179,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     else:
         if action == "hc_visit":
             last = hc_visit_week(state, slug, pid)
+            if you and last is not None:                   # the player's ask: your head coach visits a recruit once
+                raise RecruitingError(409, "Your head coach visits a recruit once.")
             if last is not None and week - last < HC_VISIT_GAP:
                 raise RecruitingError(409, "one in-home visit a month")
             contact["hc_week"] = week
@@ -2198,7 +2206,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 contact["asked"] = "range"
         if not opens:
             contact["last_contact"] = week
-            points = _contact_land(state, slug, p, contact, action, pitch, auto, manual)
+            points = _contact_land(state, slug, p, contact, action, pitch, auto, manual) * (QUICK_CALL if quick else 1.0)
     if action != "scout":                          # a Send spends scouting points, not hours
         rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:

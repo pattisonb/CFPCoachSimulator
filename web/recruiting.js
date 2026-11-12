@@ -1607,6 +1607,8 @@
         }
       } else if (action === "official_visit" && opts.week != null) {   // the weekend picked in the menu's second step
         run(b, action, null, null, btn, { week: opts.week }).then(() => refocus(b));
+      } else if (action === "call_quick") {     // a quick call: the hours, a slight boost, no conversation
+        run(b, "call", null, null, btn, { answer: "quick" }).then(() => refocus(b));
       } else run(b, action, null, null, btn).then(() => refocus(b));
     }
     // the Official Visit's second step: one row a home weekend you have left ("Wk 6 · vs #4 USC"), the first
@@ -1622,12 +1624,15 @@
     function menuItems(b) {
       const busy = b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
       const done = b.done_this_week || [], looks = Math.min(3, b.looks || 0), hours = v.hours_left;
-      const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
+      const hcDone = b.hc_week != null;                  // your head coach visits a recruit once
       const short = (cost) => (cost > hours ? `Not enough hours: ${hours} left` : null);
       const items = [
         ["message", "Message", "5h", done.includes("message") ? "Once a week" : short(5)],
-        ["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)],
-        ["hc_visit", "HC Visit", "30h", hcWait ? "Monthly" : short(30)],
+        // after his first call, Call is a quick check-in (no conversation, a slight boost); Call and Pitch talks again
+        ...(b.calls > 0 ? [["call_quick", "Call", "15h · Quick Check-In", done.includes("call") ? "Once a week" : short(15)],
+          ["call", "Call and Pitch", "15h", done.includes("call") ? "Once a week" : short(15)]]
+          : [["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)]]),
+        ["hc_visit", "HC Visit", "30h", hcDone ? "Once per recruit" : short(30)],
         ["scout", "Scout", `${b.scout_cost} Points · ${fmtLooks(looks)} of 3 Looks${looks < 3 && 3 - looks <= 1 ? " · Finishes His Report" : ""}`,
           looks >= 3 ? "His report is complete: 3 of 3 looks" : v.points_left < b.scout_cost ? "Not enough scouting points left this week." : null],
         ["official_visit", v.portal ? "Campus Visit" : "Official Visit", "10h", !b.offered ? "Offer him first" : b.visit ? (b.visit.done ? "Visited" : `Booked for ${seasonWeek(b.visit.week)}`)
@@ -1638,7 +1643,7 @@
         ["off_board", "Off the Board", "", b.offered && b.hard && b.committed === me ? "Hard commit: his offer stands until he signs" : null],
       ];
       const tip = (action) => (b.pestering && ["message", "call", "hc_visit"].includes(action) ? "Costs you interest while he is tuning you out" : null);
-      return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why, title: tip(action) }));
+      return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why, title: tip(action === "call_quick" ? "call" : action) }));
     }
     function openMenu(b, btn) {
       if (menuState) { closeMenu(true); return; }
