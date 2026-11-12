@@ -18,6 +18,9 @@ from typing import Optional
 CLEAR = os.environ.get("CFP_CLEAR", "1") != "0"   # *tune* the branch's switch: Clear Mode on (CFP_CLEAR=0 turns it off: the word-mode tests)
 
 CONFIDENCE = {"Low": "High", "Medium": "Medium", "High": "Low"}   # a read's uncertainty word -> the confidence word shown
+# Clear Mode judges confidence on the range the page shows (the read plus WORD_SLACK each side), not the word read's own
+# width: half-widths under these are High, then Medium, else Low; a complete report is High *tune*
+CLEAR_CONFIDENCE = ((6.0, "High"), (10.0, "Medium"))
 
 # each position group's key player-card ratings, most important first (up to eight); the card's own labels name them
 KEYS = {
@@ -84,8 +87,14 @@ def ceiling_drift(p: dict, attrs: list[str], perf: Optional[dict], year: int, ph
 
 def confidence(state: dict, pid: str, group: str) -> str:
     """How sure the staff is of a read, in a word: High, Medium or Low (the report's uncertainty, turned around)."""
-    from coach_career import prospects as pr
-    return CONFIDENCE.get(pr.uncertainty(state, pid, group) or "High", "Low")
+    from coach_career import recruiting
+    mh = _raw_half(state, pid, group)
+    if mh is None:
+        return "High"
+    if recruiting.report_complete(state["recruiting"]["reads"].get(pid)):
+        return "High"
+    half = max(2.0, mh[1])                          # the half-width the row shows (ratings' row: at least a couple of points)
+    return next((w for edge, w in CLEAR_CONFIDENCE if half < edge), "Low")
 
 
 def _raw_half(state: dict, pid: str, group: str) -> Optional[tuple[float, float]]:
