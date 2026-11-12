@@ -87,12 +87,14 @@
       ...rows.map((r) => el("div", { class: "pv-clear-row", "data-key": r.key }, [el("span", { class: "pv-attr-k", text: r.label }),
         el("b", { class: "pv-clear-v", text: ratingText(r) }), el("span", { class: `pv-clear-c conf-${String(r.confidence || "").toLowerCase()}`, text: r.confidence || "" })]))])
       : el("p", { class: "muted pv-unscouted", text: "Send a scout to read his ratings." });
-    // the abilities he arrives with (null before a look; an empty list: none)
-    const ab = opts.abilities;
-    const abRow = ab ? el("div", { class: "pv-abilities", "data-key": "abilities" }, [el("span", { class: "pv-kick", text: "Abilities" }),
+    return card("Key Ratings", [body], { sub: "(Scouted Range)", key: "attributes", cls: "pv-attributes pv-clear-card", wide: opts.wide });
+  }
+  // Clear Mode: the abilities a recruit arrives with (null before a look: nothing; an empty list: "None Yet")
+  function abilitiesRow(ab) {
+    if (!ab) return null;
+    return el("div", { class: "pv-abilities", "data-key": "abilities" }, [el("span", { class: "pv-kick", text: "Abilities" }),
       ...(ab.length ? ab.map((a) => el("span", { class: `trait tier-${a.tier}`, text: a.name, title: `${a.tier_name} trait: ${a.about}.` }))
-        : [el("span", { class: "muted small", text: "None Yet" })])]) : null;
-    return card("Key Ratings", [body, abRow].filter(Boolean), { sub: "(Scouted Range)", key: "attributes", cls: "pv-attributes pv-clear-card", wide: opts.wide });
+        : [el("span", { class: "muted small", text: "None Yet" })])]);
   }
   // Strengths and Areas to Develop, each a list or "None Stand Out"
   function lists(report) {
@@ -180,5 +182,5 @@
       { key: "traits", cls: "pv-traits", wide: opts.wide });
   }
 
-  window.CFP.pv = { pips, card, grid, hero, bar, attrRows, attributesCard, clearRatingsCard, ratingText, reportCard, summaryCard, uncertaintyCard, traitsCard, traitRows, range, fmtLooks, NOT_KNOWN };
+  window.CFP.pv = { pips, card, grid, hero, bar, attrRows, attributesCard, clearRatingsCard, abilitiesRow, ratingText, reportCard, summaryCard, uncertaintyCard, traitsCard, traitRows, range, fmtLooks, NOT_KNOWN };
 })();

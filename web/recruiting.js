@@ -817,9 +817,10 @@
       // Clear Mode: the report as ever (its verdict, strengths and areas to develop), Potential at his position as a range
       // with the staff's confidence in a word, and Key Ratings (his position's key ratings as ranges) in place of the bars
       const c = p ? p.clear : null, pot = c && c.potential;
-      const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone,
+      const extra = [PV().abilitiesRow(p ? p.abilities : null), ...(sendBox || [])].filter(Boolean);
+      const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: extra.length ? extra : null, potentialTone: potTone,
         ...(pot && pot.est != null ? { potentialLabel: pot.label, potentialText: PV().ratingText(pot), potentialNote: `${pot.confidence} Confidence` } : {}) });
-      return [report, PV().clearRatingsCard(c, { abilities: p ? p.abilities : null }), looksCard(s, b, p, looks, opts)];
+      return [report, PV().clearRatingsCard(c), looksCard(s, b, p, looks, opts)];
     }
     const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone });
     tips(report);

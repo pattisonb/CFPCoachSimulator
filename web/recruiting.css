@@ -442,4 +442,5 @@
 .pv-clear-c.conf-low { color: var(--bad-text); font-weight: 700; }
 
 /* Clear Mode: the abilities a recruit arrives with, under his Key Ratings */
-.pv-abilities { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.pv-abilities { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 2px; }
+.pv-abilities .trait { padding: 0 6px; font-size: 11px; }
