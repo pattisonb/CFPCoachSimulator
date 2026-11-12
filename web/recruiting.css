@@ -440,3 +440,6 @@
 .pv-clear-c.conf-high { color: var(--good-text); font-weight: 700; }
 .pv-clear-c.conf-medium { color: var(--go-warn-text, #b86e00); font-weight: 700; }
 .pv-clear-c.conf-low { color: var(--bad-text); font-weight: 700; }
+
+/* Clear Mode: the abilities a recruit arrives with, under his Key Ratings */
+.pv-abilities { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }

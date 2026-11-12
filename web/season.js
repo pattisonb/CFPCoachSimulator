@@ -1828,8 +1828,9 @@
           devTag ? el("div", { class: "player-dev" }, [devTag, potTag]) : null,
           (p.archetype || (p.traits || []).length) ? el("div", { class: "player-traits" }, [
             p.archetype ? el("span", { class: "tag style", text: p.archetype, title: "Play style" }) : null,
-            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) })),
+            ...(p.traits || []).map((tr) => el("span", { class: `trait tier-${tr.tier}${tr.earned ? " earned" : ""}`, text: tr.name, title: traitHover(tr) })),
           ]) : null,
+          abilityGoal(p.ability_goal),
         ]),
       ]),
       el("div", { class: "player-ovr" }, [(() => {
@@ -3752,7 +3753,19 @@
     return `Built on ${tr.built_on.map((b) => `${b.label} ${b.value}`).join(" · ")}.`;
   }
   function traitHover(tr) {
-    return `${tr.tier_name} trait: ${tr.about}.\n${traitBasis(tr)}`.trim();
+    return `${tr.tier_name} trait: ${tr.about}.${tr.earned ? "\nEarned on the field." : ""}\n${traitBasis(tr)}`.trim();
+  }
+  // Clear Mode: the ability he works toward in games, with how far along he is
+  function abilityGoal(g) {
+    if (!g) return null;
+    const pct = Math.round(100 * Math.min(1, g.have / Math.max(1, g.need)));
+    return el("div", { class: "ability-goal", title: `He earns ${g.name} (${g.tier_name}) with ${g.text}. Progress counts in every game, the season's stats and big late moments alike.` }, [
+      el("span", { class: "ability-goal-k", text: "Working Toward" }),
+      el("span", { class: `trait tier-${g.tier}`, text: g.name }),
+      el("span", { class: "muted small-text", text: ` ${g.tier_name} · ${g.text[0].toUpperCase()}${g.text.slice(1)}` }),
+      el("span", { class: "ability-goal-bar", "aria-hidden": "true" }, [el("span", { style: `width:${pct}%` })]),
+      el("b", { class: "small-text", text: `${g.have} of ${g.need}` }),
+    ]);
   }
 
   // ratings v2: every attribute with what it does, the traits, and the rating at every position
@@ -3780,8 +3793,10 @@
     if ((p.traits || []).length || p.archetype) {
       node.append(el("h4", { text: "Play Style and Traits" }));
       if (p.archetype) node.append(el("p", { class: "small-text" }, [el("b", { text: p.archetype }), el("span", { class: "muted", text: " · play style" })]));
-      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) }), el("span", { class: "muted small-text", text: ` ${tr.tier_name} · ${tr.about}. ${traitBasis(tr)}` })]));
-      node.append(el("p", { class: "muted small-text", text: "Traits come at four tiers (bronze, silver, gold, platinum) and are carried over from the source rosters, which list each player's tiers but not the exact thresholds that earned them. Each one rests on the attributes shown. Their effects in games come in a later phase of the ratings revamp." }));
+      for (const tr of p.traits || []) node.append(el("div", { class: "trait-line" }, [el("span", { class: `trait tier-${tr.tier}`, text: tr.name, title: traitHover(tr) }), el("span", { class: "muted small-text", text: ` ${tr.tier_name}${tr.earned ? " · Earned" : ""} · ${tr.about}. ${traitBasis(tr)}` })]));
+      node.append(el("p", { class: "muted small-text", text: clearMode()
+        ? "Traits come at four tiers (bronze, silver, gold, platinum). Every one changes how he plays. Players earn new ones, and move up a tier, by reaching goals in games; a trait marked earned came that way."
+        : "Traits come at four tiers (bronze, silver, gold, platinum) and are carried over from the source rosters, which list each player's tiers but not the exact thresholds that earned them. Each one rests on the attributes shown. Their effects in games come in a later phase of the ratings revamp." }));
     }
     appendRatingsAt(node, p);
     openModal(el("span", {}, [`${p.name} · Attributes`, el("span", { class: "muted small-text", text: ` · ${p.overall} overall at ${p.position}` })]), node);

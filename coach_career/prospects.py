@@ -646,6 +646,11 @@ def flip_view(state: dict, pid: str, viewer: Optional[str] = None) -> Optional[d
             "rivals": [{"school": r["school"], "name": teams[r["school"]]["name"], "pct": round(r["pct"], 4), "word": flip_word(r["pct"])} for r in rivals]}
 
 
+def _abilities_seen(p: dict) -> Optional[list]:
+    from coach_career import ability_goals
+    return ability_goals.recruit_abilities(p) if ability_goals.on() else None
+
+
 def profile(state: dict, pid: str, viewer: str) -> dict:
     """The Prospect Profile as `viewer` (your school) sees it. Never carries the true grades. During the portal weeks
     a recruit of the signed high school class (kept aside, class_rc: Headquarters' replacements, the class widgets)
@@ -698,6 +703,8 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "flip": flip_view(state, pid, viewer),
         "grade_details": details,
         "evaluation": _evaluation(p, public_grades) if top else None,
+        # Clear Mode: the abilities he arrives with, once your staff has looked at him
+        "abilities": _abilities_seen(p) if read else None,
         "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
         "our_grades": our_grades,
         "clear": clear.ratings(state, pid) if clear.on() else None,      # Clear Mode: his key ratings in numbers

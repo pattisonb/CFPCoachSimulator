@@ -819,7 +819,7 @@
       const c = p ? p.clear : null, pot = c && c.potential;
       const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone,
         ...(pot && pot.est != null ? { potentialLabel: pot.label, potentialText: PV().ratingText(pot), potentialNote: `${pot.confidence} Confidence` } : {}) });
-      return [report, PV().clearRatingsCard(c), looksCard(s, b, p, looks, opts)];
+      return [report, PV().clearRatingsCard(c, { abilities: p ? p.abilities : null }), looksCard(s, b, p, looks, opts)];
     }
     const report = PV().reportCard(rep, { looks, tip: scoutTip(looks), foot: p && !p.ratings ? compLine(p, looks) : null, extra: sendBox, potentialTone: potTone });
     tips(report);

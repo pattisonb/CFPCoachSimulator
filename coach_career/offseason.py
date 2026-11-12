@@ -248,6 +248,8 @@ def start(state: dict) -> dict:
     coach_names.distinct(state, built=built)     # one coach, one name: your coach's record is yours, no one doubles up
     _season_moves(state, lgd)
     record_seasons(state, lgd)
+    from coach_career import ability_goals
+    ability_goals.carry_over(state, lgd)         # Clear Mode: abilities earned in games stay with the player
     usage = _usage()
     draft: dict = {}
     from coach_career import word
@@ -1328,7 +1330,12 @@ def _compact_prospect(state: dict, p: dict, attrs: list[str]) -> dict:
            "weight_lbs": p["weight"], "archetype": p["archetype"], "dev_trait": "Normal",
            "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
            "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"]}
-    return lg.compact(src, attrs)
+    out = lg.compact(src, attrs)
+    from coach_career import ability_goals
+    ab = ability_goals.recruit_ab_field(p)       # Clear Mode: some recruits arrive with an ability or two
+    if ab:
+        out["ab"] = ab
+    return out
 
 
 # ----- the transfer portal ----------------------------------------------------------------------

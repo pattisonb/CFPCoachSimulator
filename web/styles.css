@@ -1735,3 +1735,10 @@ button, input, select, textarea { }
 .player-ovr-num.boosted-num.up { color: var(--good-text); }
 .player-ovr-num.boosted-num.down { color: var(--bad-text); }
 .player-ovr-num.boosted-num .boost-paren { font-size: 0.45em; font-weight: 700; vertical-align: middle; }
+
+/* Clear Mode: the ability a player works toward, with a small progress bar */
+.ability-goal { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.ability-goal-k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.ability-goal-bar { display: inline-block; width: 80px; height: 6px; border-radius: 3px; background: var(--line, #ddd); overflow: hidden; }
+.ability-goal-bar > span { display: block; height: 100%; background: var(--accent); }
+.trait.earned { outline: 1px dashed currentColor; outline-offset: 1px; }
