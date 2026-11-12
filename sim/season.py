@@ -2966,7 +2966,7 @@ def _fcs_picker_names(teams: dict) -> dict[str, str]:
     return out
 
 
-def schedule_options(state: dict, event_id: str) -> list[dict]:
+def schedule_options(state: dict, event_id: str, teams: Optional[dict] = None) -> list[dict]:
     """Who could take the other side of one of your non-conference games: FBS teams with a
     non-conference game that week (the two displaced opponents would play each other), each
     with whether the school agrees and why; for an FCS date, the FCS teams (they always come)."""
@@ -2976,7 +2976,7 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
     if not g or event_id not in mine:
         raise ScheduleError(409, "that game cannot be traded now")
     me = state["team"]
-    teams = load_teams()
+    teams = teams or load_teams()           # the offseason's Edit Schedule passes next year's (conferences as moved)
     opp = g["home"] if g["away"] == me else g["away"]
     venue = "neutral" if g["neutral"] else "home" if g["home"] == me else "away"
     fcs = bool(teams[opp].get("fictional"))
@@ -3006,10 +3006,10 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
     return out
 
 
-def schedule_swap(state: dict, event_id: str, slug: str) -> dict:
+def schedule_swap(state: dict, event_id: str, slug: str, teams: Optional[dict] = None) -> dict:
     """Trade one of your non-conference games for `slug`'s that week: you play them at your old
     venue, your old opponent plays theirs in their old game."""
-    opts = {o["slug"]: o for o in schedule_options(state, event_id)}
+    opts = {o["slug"]: o for o in schedule_options(state, event_id, teams)}
     o = opts.get(slug)
     if o is None:
         raise ScheduleError(409, "that school is not available that week")
@@ -3017,7 +3017,7 @@ def schedule_swap(state: dict, event_id: str, slug: str) -> dict:
         raise ScheduleError(409, f"{o['name']} said no: {o['why']}")
     g = state["games"][event_id]
     me = state["team"]
-    teams = load_teams()
+    teams = teams or load_teams()
     old = g["home"] if g["away"] == me else g["away"]
     if o["venue"] == "home" or g["neutral"] and g["home"] == me:
         g["home"], g["away"] = me, slug

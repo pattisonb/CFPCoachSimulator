@@ -165,6 +165,10 @@ if __name__ == "__main__":
     target = car["offers"][0]
     offseason.choose_job(st, target)
     offseason.advance(st)
+    assert off["stage"] == "conferences"            # then Change Conferences and Edit Schedule
+    offseason.advance(st)
+    assert off["stage"] == "schedule" and off["next_schedule"]["games"]
+    offseason.advance(st)
     assert off["stage"] == "ready"
     hired = next(s for s in st["career"]["staff"] if s["id"] == sid)
     assert hired["name"] == staff["candidates"][sid][1]["name"]

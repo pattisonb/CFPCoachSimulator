@@ -255,3 +255,19 @@ p .off-contract { margin-left: 6px; }
 .off-page a.off-name { color: inherit; font-weight: 700; text-decoration: none; }
 .off-page a.off-name:hover, .off-page a.off-name:focus-visible { text-decoration: underline; text-decoration-color: var(--accent); }
 .off-page .go-link.off-name { font-weight: 700; text-align: left; }
+
+/* Change Conferences and Edit Schedule */
+.off-conf-pick select { min-height: 44px; flex: 1 1 200px; min-width: 0; }
+.off-conf-pick .off-conf-go { min-height: 44px; }
+.off-conf-moved button { min-height: 44px; margin-left: 6px; }
+.off-conf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.off-conf { background: var(--panel-2); padding: 10px 12px; min-width: 0; }
+.off-conf-head { margin-bottom: 6px; }
+.off-conf-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 13px; }
+.off-conf-list li { display: flex; align-items: center; gap: 4px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.off-conf-list .go-tag { margin-left: auto; }
+.off-sched { width: 100%; }
+.off-sched-row { display: grid; gap: 6px; padding: 8px 0; border-top: 1px solid var(--line); }
+.off-sched-row select { min-height: 44px; flex: 1 1 220px; min-width: 0; }
+.off-sched-row button { min-height: 44px; }
+.off-sched th { text-align: left; }

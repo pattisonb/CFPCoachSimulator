@@ -40,11 +40,12 @@
 
   // the stepper's short names, and where a primary button goes ("Advance to …")
   const SHORT = { departures: "Departures", retention: "Keep Them Home", portal_w1: "Portal (Week 1)", portal_w2: "Portal (Week 2)",
-    portal_w3: "Portal (Week 3)", portal_w4: "Portal (Week 4)", development: "Development", staff: "Staff Changes", ready: "Recap" };
+    portal_w3: "Portal (Week 3)", portal_w4: "Portal (Week 4)", development: "Development", staff: "Staff Changes", conferences: "Conferences", schedule: "Schedule", ready: "Recap" };
   const LONG = { departures: "Departures", retention: "Keep Them Home", portal_w1: "Transfer Portal (Week 1)", portal_w2: "Transfer Portal (Week 2)",
     portal_w3: "Transfer Portal (Week 3)", portal_w4: "Transfer Portal (Week 4)", portal_1: "Transfer Portal (Round 1)", portal_2: "Transfer Portal (Round 2)",
-    development: "Development", staff: "Staff Changes", ready: "Recap" };
-  const PAGE_OF = { departures: "departures", retention: "retention", portal_1: "portal", portal_2: "portal", development: "development", staff: "staff", ready: "ready" };
+    development: "Development", staff: "Staff Changes", conferences: "Change Conferences", schedule: "Edit Schedule", ready: "Recap" };
+  const PAGE_OF = { departures: "departures", retention: "retention", portal_1: "portal", portal_2: "portal", development: "development", staff: "staff",
+    conferences: "conferences", schedule: "schedule", ready: "ready" };
   const pageName = (stage) => PAGE_OF[stage] || (stage.startsWith("portal_w") ? "portal" : "ready");
   const isFirst = (v) => !!(v.stages && v.stages.length && v.stages[0].key === v.stage);   // Keep Them Home (an older save: Departures)
 
@@ -248,7 +249,8 @@
     const w = v.stage.startsWith("portal_w") ? Number(v.stage.slice(-1)) : 0;
     if (w) return w < 4 ? `Advance to Transfer Portal (Week ${w + 1})` : "Close the Portal and Advance";
     return { retention: "Advance to Departures", departures: v.retention ? "Advance to Transfer Portal (Week 1)" : "Advance to the Transfer Portal", portal_1: "Advance to Portal Round 2", portal_2: "Close the Portal and Advance",
-      development: "Advance to Staff Changes", staff: "Finish the Offseason", ready: `Start the ${v.year} Season` }[v.stage];
+      development: "Advance to Staff Changes", staff: "Advance to Change Conferences", conferences: "Advance to Edit Schedule", schedule: "Finish the Offseason",
+      ready: `Start the ${v.year} Season` }[v.stage];
   }
 
   // the stage drawn into root; patching: drawn off screen to patch the live one
@@ -266,7 +268,7 @@
     if (v.stage === "ready") view.page = "stage";
     const hub = view.page === "hub";
     const page = el("div", { class: "off-page", "data-page": hub ? "hub" : pageName(v.stage), "data-key": `page-${hub ? "hub" : v.stage}` });
-    const fired = v.fired && !["staff", "ready"].includes(v.stage) ? firedNote(v) : null;
+    const fired = v.fired && !["staff", "conferences", "schedule", "ready"].includes(v.stage) ? firedNote(v) : null;
     const advanceGo = (ev) => advance(s, BOX, ev.currentTarget, v.stage === "ready" ? "next_season" : null);
     if (hub) {
       page.append(header(v, `Offseason · On to ${v.year}`));
@@ -285,6 +287,8 @@
       else if (v.stage.startsWith("portal_w")) drawPortalWeek(s, v, page, patching);
       else if (v.stage === "development") drawDevelopment(s, v, page, patching);
       else if (v.stage === "staff") drawStaff(s, v, page);
+      else if (v.stage === "conferences") drawConferences(s, v, page);
+      else if (v.stage === "schedule") drawSchedule(s, v, page);
       else drawReady(v, page, s);
       page.append(footer(s, v, { label: nextLabel(v), onGo: advanceGo, back: v.stage !== "ready", center: v.stage === "ready" }));
     }
@@ -312,6 +316,8 @@
     portal_old: () => "Offer transfers from the portal table. Entrants with offers pick a school when the round ends.",
     development: () => "The portal is closed. See who improved, check the redshirts and move players between positions.",
     staff: () => "Fill the jobs on your staff, hire from the coaching market and see the carousel around the league.",
+    conferences: () => "Move programs between the conferences that exist before next season's schedule is drawn.",
+    schedule: (v) => `Next season's schedule is drawn. Trade your non-conference games before the ${v.year} season.`,
   };
   function drawHub(s, v, page) {
     const kind = v.stage.startsWith("portal_w") ? "portal" : v.stage === "portal_1" || v.stage === "portal_2" ? "portal_old" : v.stage;
@@ -837,6 +843,70 @@
       el("span", { class: `go-btn off-cand-hire ${picked ? "" : "primary"}`, text: picked ? "Hired" : `Hire ${c.name.split(" ").slice(-1)[0]}` })]);
     ui.on(b, "click", onClick);
     return b;
+  }
+
+  // ----- Change Conferences: move a program to a conference that already exists (none can be made) ----------------
+  function drawConferences(s, v, page) {
+    const cv = v.conferences || { conferences: [], moves: [] };
+    const confs = cv.conferences;
+    const teamSel = el("select", { "aria-label": "Program to Move", class: "off-conf-team" }, [el("option", { value: "", text: "Pick a Program…" }),
+      ...confs.filter((c) => c.teams.length).map((c) => el("optgroup", { label: c.name }, c.teams.map((t) => el("option", { value: t.team, text: t.name }))))]);
+    const confSel = el("select", { "aria-label": "Conference to Join", class: "off-conf-to" }, [el("option", { value: "", text: "Move to…" }),
+      ...confs.map((c) => el("option", { value: c.name, text: c.name }))]);
+    const go = el("button", { type: "button", class: "primary off-conf-go", text: "Move Program" });
+    ui.on(go, "click", (ev) => {
+      if (!teamSel.value || !confSel.value) { H.toast("Pick a program and the conference it joins."); return; }
+      const name = teamSel.selectedOptions[0].textContent, to = confSel.value;
+      act(ev, s, () => H.api(`/api/season/${s.id}/offseason/conference`, staged({ team: teamSel.value, conference: to })), `${name} joins the ${to} next season.`);
+    });
+    const move = card("off-conf-move", "conf-move", [kicker("Move a Program"),
+      el("p", { class: "muted small-text", text: "Move a program to another conference for next season. Only a conference that already exists can take one, and a move its schedule cannot fit is refused." }),
+      el("div", { class: "go-row wrap off-conf-pick" }, [teamSel, confSel, go])]);
+    const moves = card("off-conf-moves", "conf-moves", [kicker("Moves This Offseason"),
+      cv.moves.length ? el("ul", { class: "off-list" }, cv.moves.map((m) => {
+        const undo = el("button", { type: "button", class: "ghost small", text: "Undo" });
+        ui.on(undo, "click", (ev) => act(ev, s, () => H.api(`/api/season/${s.id}/offseason/conference`, staged({ team: m.team, conference: m.from })),
+          `${m.name} stays in the ${m.from}.`));
+        return el("li", { "data-key": `move-${m.team}`, class: "off-conf-moved" }, [window.CFP.teamPill(m.team), el("b", { text: ` ${m.name}` }), ` ${m.from} → ${m.to} `, undo]);
+      })) : el("p", { class: "muted", text: "No moves yet. Every conference stays as it is." })]);
+    page.append(row("g21", "conf-top", [move, moves]));
+    const grid = el("div", { class: "off-conf-grid" }, confs.filter((c) => c.teams.length).map((c) => el("div", { class: "off-conf", "data-key": `conf-${c.name}` }, [
+      el("div", { class: "off-conf-head" }, [el("b", { text: c.name }), el("span", { class: "muted", text: ` ${c.teams.length} ${c.teams.length === 1 ? "Team" : "Teams"}` })]),
+      el("ul", { class: "off-conf-list" }, c.teams.map((t) => el("li", { "data-key": t.team }, [window.CFP.teamPill(t.team), ` ${t.name}`,
+        t.moved_from ? el("span", { class: "go-tag good", text: "New" }) : null])))])));
+    page.append(card("off-confs", "confs", [kicker("Next Season's Conferences"), grid]));
+  }
+
+  // ----- Edit Schedule: next season's schedule, drawn; trade your non-conference games ---------------------------
+  function drawSchedule(s, v, page) {
+    const sv = v.schedule || { games: [], editable: [], changes: [] };
+    const me = sv.team || s.team;
+    const wk = (w) => (w <= 14 ? `Week ${w - 1}` : `Week ${w}`);          // Week 0 opens the season
+    const opp = (g) => (g.home === me ? g.away_display : g.home_display);
+    const list = el("table", { class: "go-table off-sched" }, [el("thead", {}, el("tr", {}, ["Week", "Opponent", "Game"].map((h) => el("th", { text: h })))),
+      el("tbody", {}, sv.games.map((g) => el("tr", { "data-key": g.event_id }, [el("td", { text: wk(g.week) }),
+        el("td", {}, [g.home === me ? "vs " : g.neutral ? "vs " : "at ", window.CFP.teamPill(g.home === me ? g.away : g.home), ` ${opp(g)}`,
+          g.neutral ? el("span", { class: "muted small-text", text: " · Neutral Site" }) : null]),
+        el("td", {}, el("span", { class: `go-tag ${g.conference_game ? "" : "muted"}`, text: g.conference_game ? "Conference" : "Non-Conference" }))])))]);
+    const yours = card("off-sched-card", "sched", [kicker(`Your ${v.year} Schedule`), list]);
+    const trade = card("off-sched-trade", "sched-trade", [kicker("Trade a Non-Conference Game"),
+      el("p", { class: "muted small-text", text: "Trade a non-conference date for another school's game that week: the two displaced opponents play each other. A school agrees when it gets the home game or you are the bigger draw." })]);
+    if (!sv.editable.length) trade.append(el("p", { class: "muted", text: "No non-conference games to trade." }));
+    for (const g of sv.editable) {
+      const sel = el("select", { "aria-label": `Trade the ${wk(g.week)} Game` }, [el("option", { value: "", text: "Trade For…" }),
+        ...g.options.map((o) => el("option", { value: o.slug, text: `${o.name} · ${o.standing} · ${o.venue === "home" ? "You Host" : o.venue === "away" ? "You Travel" : "Neutral"}${o.accepts ? "" : ` · No: ${o.why}`}`, ...(o.accepts ? {} : { disabled: "true" }) }))]);
+      const go = el("button", { type: "button", class: "ghost small", text: "Trade" });
+      ui.on(go, "click", (ev) => {
+        if (!sel.value) { H.toast("Pick the school to trade for."); return; }
+        const name = (g.options.find((o) => o.slug === sel.value) || {}).name || sel.value;
+        act(ev, s, () => H.api(`/api/season/${s.id}/offseason/schedule`, staged({ event_id: g.event_id, slug: sel.value })), `You play ${name} in ${wk(g.week)}.`);
+      });
+      trade.append(el("div", { class: "off-sched-row", "data-key": `trade-${g.event_id}` }, [
+        el("div", {}, [el("b", { text: `${wk(g.week)}: ${g.home === me ? "vs" : "at"} ${opp(g)}` })]), el("div", { class: "go-row wrap" }, [sel, go])]));
+    }
+    if (sv.changes.length) trade.append(el("p", { class: "small-text", "data-key": "traded" }, [el("b", { text: "Traded: " }),
+      sv.changes.map((c) => `${wk(c.week)} ${teamName(c.from)} → ${teamName(c.to)}`).join(" · ")]));
+    page.append(row("g21", "sched-row", [yours, trade]));
   }
 
   function drawStaff(s, v, page) {

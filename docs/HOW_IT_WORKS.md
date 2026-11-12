@@ -2170,7 +2170,14 @@ players home cost and what carries), the portal board's header shows the pool, a
 season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
 **The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Keep Them Home,
-Departures, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. **Every player's
+Departures, the Transfer Portal's four weeks, Development, Staff Changes, Change Conferences, Edit Schedule, then the
+Recap. **Change Conferences** (`offseason.move_conference`) moves a program to a conference that already exists (no new
+ones): the move is the league's (`lgd["conference_moves"]`, applied by `league.team_meta`, so it lasts), it is checked by
+drawing a schedule with it (one the conferences cannot schedule is refused), Undo moves it back, and the page lists every
+conference's members. **Edit Schedule** draws next season's schedule there (`offseason._draw_schedule`, the same
+`_rng(state, "schedule")` stream `next_season` drew it from, so an untouched schedule is the one it always was) and trades
+your non-conference games the way the Week 0 editor does (`season.schedule_options`/`schedule_swap` on next year's
+teams); `next_season` plays the schedule drawn there. **Every player's
 name opens his profile** (`nameLink`): a portal entrant (your board, Your Moves, Who Got Away) opens his Prospect
 Profile while the portal is open; anyone else, and every name once the portal closes, opens his player page by
 slug, where an **Offseason Status** banner (`offseason.player_next`'s `sentence`) says where he is now in one

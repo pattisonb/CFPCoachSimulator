@@ -24,13 +24,14 @@ from teamdata import game_scale
 
 # Keep Them Home first, then Departures: who wants out is decided at the start, the draft runs after your
 # answers (and the AI schools'), so Departures shows only what happened. Saves from the older order: migrate()
-STAGES = ("retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "ready")
+STAGES = ("retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "conferences", "schedule", "ready")
 PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
 OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from the two-round portal
 STAGE_NAMES = {"departures": "Departures", "retention": "Keep Them Home", "portal_w1": "Transfer Portal, Week 1", "portal_w2": "Transfer Portal, Week 2",
                "portal_w3": "Transfer Portal, Week 3", "portal_w4": "Transfer Portal, Week 4",
                "portal_1": "Transfer Portal, Round 1", "portal_2": "Transfer Portal, Round 2",
-               "development": "Development", "staff": "Staff", "ready": "Ready for Next Season"}
+               "development": "Development", "staff": "Staff", "conferences": "Change Conferences", "schedule": "Edit Schedule",
+               "ready": "Ready for Next Season"}
 ROSTER_LIMIT = 85          # EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
 FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this
 GROUP = {"QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OL", "LG": "OL", "C": "OL", "RG": "OL", "RT": "OL",
@@ -2392,8 +2393,139 @@ def advance(state: dict) -> dict:
         if choice:
             _take_job(state, choice)
         off["roles_filled"] = fill_roles(state)      # the schemes are set: every staff fills a role no one plays
+        off["stage"] = "conferences"
+    elif stage == "conferences":                     # the conferences are set: next season's schedule is drawn
+        _draw_schedule(state)
+        off["stage"] = "schedule"
+    elif stage == "schedule":
         off["stage"] = "ready"
     return off
+
+
+# ----- Change Conferences and Edit Schedule: the last two steps -------------------------------------
+# Change Conferences moves a program to another conference that already exists (no new ones); the move
+# is the league's (lgd["conference_moves"], read by league.team_meta) and lasts. A move is checked by
+# drawing a schedule with it: one the conferences cannot schedule is refused. Edit Schedule draws next
+# season's schedule (from the same stream next_season drew it from) and trades your non-conference
+# games the way the Week 0 editor does (season.schedule_options and schedule_swap on next year's teams).
+
+class ConferenceError(Exception):
+    def __init__(self, code: int, message: str):
+        super().__init__(message)
+        self.code = code
+
+
+def next_teams(state: dict) -> dict:
+    """Next season's teams as the schedule needs them: each one's identity with its conference as moved."""
+    lgd = state["league"]
+    out = {}
+    for s in lg.league_slugs(lgd):
+        m = lg.team_meta(lgd, s)
+        out[s] = dict(m, name=m.get("name") or m["short_name"])          # the engine's teams name a school by its short name
+    return out
+
+
+def conferences_view(state: dict) -> dict:
+    """Every conference next season (the ones that exist; none can be made) and its members."""
+    from sim import polls
+    teams = next_teams(state)
+    confs: dict[str, list] = {}
+    for s, t in teams.items():
+        if t.get("fictional"):
+            continue
+        orig = lg.base_meta(s)["conference"] if s in lg.base_slugs() else t["conference"]
+        confs.setdefault(t["conference"], []).append({"team": s, "name": t["name"], "moved_from": orig if orig != t["conference"] else None})
+    for s in lg.base_slugs():                                     # a conference every member left still exists
+        m = lg.base_meta(s)
+        if not m.get("fictional"):
+            confs.setdefault(m["conference"], [])
+    out = [{"name": c, "independent": c in polls.INDEPENDENT or c == "FBS Independent", "power": c in polls.P4,
+            "teams": sorted(v, key=lambda r: r["name"])} for c, v in confs.items()]
+    out.sort(key=lambda c: (c["independent"], not c["power"], c["name"]))
+    off = state["offseason"]
+    return {"conferences": out, "moves": list(off.get("conference_moves") or []), "open": off["stage"] == "conferences"}
+
+
+def move_conference(state: dict, slug: str, conference: str) -> dict:
+    """Move one program to an existing conference for next season (back to where it was undoes a move)."""
+    from sim import schedule_gen
+    off = state["offseason"]
+    if off["stage"] != "conferences":
+        raise ConferenceError(409, "Conferences can be changed only at the Change Conferences step.")
+    teams = next_teams(state)
+    t = teams.get(slug)
+    if t is None or t.get("fictional"):
+        raise ConferenceError(404, "No such program.")
+    names = {c["name"] for c in conferences_view(state)["conferences"]}
+    if conference not in names:
+        raise ConferenceError(409, "Only a conference that already exists can take a program.")
+    was = t["conference"]
+    if conference == was:
+        return conferences_view(state)
+    teams[slug] = dict(t, conference=conference)
+    lgd = state["league"]
+    try:
+        schedule_gen.generate(off["year"], teams, lgd.get("schedule_history"), random.Random(f"conference-check-{off['year']}-{slug}-{conference}"),
+                              lgd.get("schedule_rules"))
+    except schedule_gen.ScheduleError:
+        raise ConferenceError(409, f"The {conference} cannot make a schedule with {t['name']} in it.") from None
+    moves = lgd.setdefault("conference_moves", {})
+    home = lg.team_meta({**lgd, "conference_moves": {}}, slug)["conference"]
+    if conference == home:
+        moves.pop(slug, None)
+    else:
+        moves[slug] = conference
+    log = off.setdefault("conference_moves", [])
+    log[:] = [m for m in log if m["team"] != slug]
+    if conference != home:
+        log.append({"team": slug, "name": t["name"], "from": home, "to": conference})
+    nxt = lg.path(state["id"], off["year"])                # a teams file built for next year before the move is stale
+    if nxt.exists():
+        try:
+            nxt.unlink()
+        except OSError:
+            pass
+    return conferences_view(state)
+
+
+def _draw_schedule(state: dict) -> None:
+    from sim import schedule_gen
+    off, lgd = state["offseason"], state["league"]
+    games, hist = schedule_gen.generate(off["year"], next_teams(state), lgd.get("schedule_history"), _rng(state, "schedule"),
+                                        lgd.get("schedule_rules"))
+    off["next_schedule"] = {"games": games, "history": hist, "changes": []}
+
+
+def _schedule_shim(state: dict) -> dict:
+    """The state the Week 0 editor reads, with next season's games, your next team and nothing played."""
+    off = state["offseason"]
+    ns = off["next_schedule"]
+    shim = dict(state)
+    shim.update(games=ns["games"], current_week=0, team=off.get("move_to") or state["team"], schedule_changes=ns["changes"],
+                career=state.get("career") or True)
+    return shim
+
+
+def schedule_view(state: dict) -> dict:
+    """Next season's schedule for your team, with the non-conference games you can trade and who would take each."""
+    from sim import season
+    off = state["offseason"]
+    if not off.get("next_schedule"):
+        return {"games": [], "editable": [], "changes": [], "open": False}
+    shim, teams = _schedule_shim(state), next_teams(state)
+    me = shim["team"]
+    mine = sorted((g for g in shim["games"].values() if me in (g["home"], g["away"])), key=lambda g: g["week"])
+    open_ = off["stage"] == "schedule"
+    editable = [dict(g, options=season.schedule_options(shim, g["event_id"], teams)) for g in season.schedule_editable(shim)] if open_ else []
+    return {"team": me, "games": mine, "editable": editable, "changes": shim["schedule_changes"], "open": open_}
+
+
+def schedule_trade(state: dict, event_id: str, slug: str) -> dict:
+    from sim import season
+    if state["offseason"]["stage"] != "schedule" or not state["offseason"].get("next_schedule"):
+        raise season.ScheduleError(409, "The schedule can be edited only at the Edit Schedule step.")
+    season.schedule_swap(_schedule_shim(state), event_id, slug, next_teams(state))
+    return schedule_view(state)
 
 
 def migrate(state: dict) -> None:
@@ -2497,8 +2629,11 @@ def next_season(state: dict) -> dict:
     # the year's schedule, built the way the conferences build theirs; the league carries the history it needs
     from sim import schedule_gen
     teams = season.load_teams()
-    games, lgd["schedule_history"] = schedule_gen.generate(year, teams, lgd.get("schedule_history"), _rng(state, "schedule"),
-                                                          lgd.get("schedule_rules"))
+    if off.get("next_schedule"):                 # drawn (and maybe edited) at the Edit Schedule step
+        games, lgd["schedule_history"] = off["next_schedule"]["games"], off["next_schedule"]["history"]
+    else:
+        games, lgd["schedule_history"] = schedule_gen.generate(year, teams, lgd.get("schedule_history"), _rng(state, "schedule"),
+                                                              lgd.get("schedule_rules"))
     new = season.new_season(team, "full", seed=_rng(state, "seed").randrange(1 << 30), coach=state.get("coach"), year=year, schedule=games)
     new.update(id=state["id"], created_at=state["created_at"], league=lgd, settings=state.get("settings", new["settings"]))
     car = state["career"]
@@ -2658,7 +2793,7 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
     return rows[:limit]
 
 
-RECAP_STAGES = ("development", "staff", "ready")
+RECAP_STAGES = ("development", "staff", "conferences", "schedule", "ready")
 
 
 def _school_name(state: dict, slug: Optional[str]) -> str:
@@ -2879,4 +3014,8 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                         "renewed": staff.get("renewed", []), "turned_down": staff.get("turned_down", {}),
                         "developed": ((off.get("report") or {}).get("coaches") or {}).get("mine", []),
                         "market": carousel.market_rows(state)[:40] if off["stage"] == "staff" else []}
+    if off["stage"] == "conferences":
+        out["conferences"] = conferences_view(state)
+    elif off["stage"] == "schedule":
+        out["schedule"] = schedule_view(state)
     return out

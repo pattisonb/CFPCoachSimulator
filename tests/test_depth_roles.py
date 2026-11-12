@@ -44,7 +44,7 @@ if __name__ == "__main__":
             roster[:] = [c for c in roster if c["pos"] != "C"]
         offseason.advance(st)
         off, lgd = st["offseason"], st["league"]
-        assert off["stage"] == "ready"
+        assert off["stage"] == "conferences"
         gaps = missing(lgd)
         assert not gaps["C"] and not gaps["SAM"], f"offseason {year + 1}: teams missing a role: {gaps}"
         for slug, t in lgd["teams"].items():
@@ -66,9 +66,13 @@ if __name__ == "__main__":
             undo = offseason.change_position(st, mine[0]["id"], mine[0]["from"])
             assert undo["pos"] == mine[0]["from"] and not any(m["id"] == mine[0]["id"] for m in off["position_changes"])
             assert offseason.empty_roles(lgd["teams"][me]) == ["C"]
+            while st["offseason"]["stage"] != "ready":       # Change Conferences, Edit Schedule
+                offseason.advance(st)
             st = offseason.next_season(st)
             assert not any(c["pos"] == "C" for c in st["league"]["teams"][me]["roster"]), "Undo was overruled at the next season"
         else:
+            while st["offseason"]["stage"] != "ready":       # Change Conferences, Edit Schedule
+                offseason.advance(st)
             st = offseason.next_season(st)
     assert filled, "no staff filled a role in two offseasons (the check would prove nothing)"
     league.forget(st["id"])
