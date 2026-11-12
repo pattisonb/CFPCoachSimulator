@@ -352,6 +352,18 @@ button.accent { background: #3ddc84; color: #04210f; border-color: #3ddc84; }
 /* the sim bars: season.js draws them every 100 ms between statuses, so each step glides into the next */
 #sim-bar, #season-progress-bar { transition: width 0.15s linear; }
 @media (prefers-reduced-motion: reduce) { #sim-bar, #season-progress-bar { transition: none; } }
+/* the little ball carrier at the front of a sim bar (web/runner.js): a 48 px window onto his four-frame sheet,
+   his front foot at the bar's leading edge, stepping through the frames; his kit is the team's primary */
+.progress.has-runner { overflow: visible; margin-top: 46px; }
+.progress.has-runner .progress-bar { position: relative; }
+.runner { position: absolute; right: -14px; bottom: 4px; width: 48px; height: 48px; overflow: hidden; pointer-events: none; }
+.runner .runner-sheet { display: block; width: 192px; height: 48px; animation: runner-step 0.48s steps(4) infinite; }
+@keyframes runner-step { to { transform: translateX(-192px); } }
+@media (prefers-reduced-motion: reduce) { .runner .runner-sheet { animation: none; } }
+.runner-kit { fill: #ac3232; }
+.runner-kit-shade { fill: #4b1111; }
+body.team-theme .runner-kit { fill: var(--team-primary); }
+body.team-theme .runner-kit-shade { fill: color-mix(in srgb, var(--team-primary) 45%, #000); }
 .progress-text { font-size: 13px; margin-bottom: 4px; }
 .progress-text b { color: var(--text); font-weight: 600; }
 .season-weeks { margin-bottom: 12px; }
