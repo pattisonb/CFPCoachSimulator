@@ -304,7 +304,8 @@
   // a scouting trip landed (here or in the Scouting Center): the lists on screen patch his looks and his read in place
   const scouted = (pid, r) => document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid, looks: r.looks, potential: r.potential || null } }));
   async function setBoard(s, pid, on) {
-    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
+    // a change from anywhere (the Prospect Profile's star, the board, the table) is announced, so a list on screen follows it
+    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); document.dispatchEvent(new CustomEvent("cfp:board", { detail: { pid, on } })); return true; }
     catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
   }
 
@@ -2409,7 +2410,8 @@
     async function toggleBoard(r, btn) {
       const want = !r.on_board;
       if (!want && r.offered && !window.confirm(`Take ${r.name} off your board? Your offer to him is pulled too: the NIL points come back to you${r.committed === me && !r.signed ? ", and he decommits from you" : ""}.`)) return;
-      const ok = await ui().busy(btn, setBoard(s, r.id, want));
+      r.selfBoard = true;                                         // its own announcement (cfp:board) is not a change from elsewhere
+      const ok = await ui().busy(btn, setBoard(s, r.id, want)).finally(() => { r.selfBoard = false; });
       if (!ok) return;
       r.on_board = want;
       if (!want) r.offered = false;
@@ -2443,8 +2445,21 @@
       const tr = tbody.querySelector(`tr.pr-row[data-key="${CSS.escape(r.id)}"]`);
       if (tr) { ui().morph(tr, drawRow(r)); for (const c of [".pr-c-sc .pr-sc", ".pr-c-pot .go-tag"]) { const n = tr.querySelector(c); if (n) ui().pulse(n); } }
       if (first && r.looks > 0 && ctx.summary) { ctx.summary.footprint.evaluated += 1; drawSide(); }     // his first look: Your Footprint's Evaluated count
+      if (CLEAR) load();      // Clear Mode's potential (clear_pot) is the server's: the page reads again and patches the row in place
     };
     document.addEventListener("cfp:scouted", onScouted);
+    // a board change made elsewhere (the Prospect Profile's star): his row's button follows, in place
+    const onBoard = (e) => {
+      if (!tbody.isConnected) { document.removeEventListener("cfp:board", onBoard); return; }
+      const d = e.detail || {}, r = ctx.rows.find((x) => x.id === d.pid);
+      if (!r || r.selfBoard || !!r.on_board === !!d.on) return;
+      r.on_board = !!d.on;
+      if (!d.on) r.offered = false;
+      const tr = tbody.querySelector(`tr.pr-row[data-key="${CSS.escape(r.id)}"]`);
+      if (tr) { ui().morph(tr, drawRow(r)); const n = tr.querySelector(".pr-board"); if (n) ui().pulse(n); }
+      if (ctx.summary) { ctx.summary.footprint.board = Math.max(0, ctx.summary.footprint.board + (d.on ? 1 : -1)); drawSide(); }
+    };
+    document.addEventListener("cfp:board", onBoard);
 
     let seq = 0;
     async function load(opts = {}) {
