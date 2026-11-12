@@ -30,9 +30,13 @@
   // ----- Next Year's Depth Chart: next year's roster by group, a class up, with your commits as they come in ---------
   const el = k.el;
   const NEXT_KEY = "cfp-hq-next-groups";       // the positions picked to show (this browser's own)
+  const SHOW_KEY = "cfp-hq-next-show";         // which recruits show besides your commits: offered, on your board, contacted (this browser's own)
+  const SHOW = [["commits", "Commits"], ["offered", "Offered"], ["board", "On Board"], ["contacted", "Contacted"]];
+  const KIND_TAG = { offered: "Offered", board: "Board", contacted: "Contact" };
   const SAMPLE_NEXT = { groups: [
     { group: "QB", target: 4, filled: 3, need: 1, players: [{ name: "J. Sanders", position: "QB", class_next: "SR", overall: 88, starter: true },
-      { name: "D. Williams", position: "QB", class_next: "SO", overall: 74 }], commits: [{ pid: "s1", name: "Marcus Williams", stars: 5, position: "QB" }] },
+      { name: "D. Williams", position: "QB", class_next: "SO", overall: 74 }], commits: [{ pid: "s1", name: "Marcus Williams", stars: 5, position: "QB" }],
+      targets: [{ pid: "s3", name: "Tre Jackson", stars: 4, position: "QB", kind: "offered" }] },
     { group: "WR", target: 11, filled: 9, need: 2, players: [{ name: "D. Thomas", position: "WR", class_next: "JR", overall: 85, draft: "Possible" },
       { name: "R. Davis", position: "WR", class_next: "SO", overall: 79 }], commits: [] }] };
   HQ.register({ id: "next-depth", title: "Next Year's Depth Chart", category: "program", status: "ready",
@@ -55,11 +59,28 @@
         k.list([
           ...g.commits.map((c) => ({ key: `c-${c.pid}`, cells: [el("span", { class: "go-tag hq-next-class hq-commit", text: c.signed ? "Signed" : "Commit" }),
             k.name(ctx, c.pid, c.name), el("span", { class: "hq-sub", text: c.position }), k.starsShort(c.stars)] })),
+          ...(g.targets || []).map((c) => ({ key: `t-${c.kind}-${c.pid}`, cells: [el("span", { class: `go-tag hq-next-class hq-target-tag ${c.kind}`, text: KIND_TAG[c.kind] }),
+            k.name(ctx, c.pid, c.name), el("span", { class: "hq-sub", text: c.position }), k.starsShort(c.stars)] })),
           ...g.players.map((p, i) => ({ key: `p-${g.group}-${i}-${p.name}`, cells: [el("span", { class: "go-tag hq-next-class", text: p.class_next }),
             k.player(ctx, p.name, p.position, p.slug), p.draft ? el("span", { class: "hq-sub", text: `Draft: ${p.draft}` }) : null,
             el("span", { class: "hq-sub", text: String(p.overall) })] })),
         ]),
       ])));
+      // which recruits show beside the returners: your commits (on unless you turn them off) and the rest of your targets
+      let show = new Set(["commits"]);
+      try { const saved = JSON.parse(localStorage.getItem(SHOW_KEY) || "null"); if (Array.isArray(saved)) show = new Set(saved); } catch (e) { /* a private window: commits */ }
+      const showRow = el("div", { class: "hq-pos-pick hq-show-pick", role: "group", "aria-label": "Recruits to show" },
+        SHOW.map(([key, label]) => el("button", { type: "button", class: "go-chip hq-pos-chip", "data-show": key, text: label })));
+      const syncShow = () => {
+        for (const c of showRow.children) { const on = show.has(c.dataset.show); c.classList.toggle("on", on); c.setAttribute("aria-pressed", String(on)); }
+        for (const li of strip.querySelectorAll("[data-key]")) {
+          const key = li.dataset.key || "";
+          if (key.startsWith("c-")) li.hidden = !show.has("commits");
+          else if (key.startsWith("t-")) li.hidden = !show.has(key.split("-")[1]);
+        }
+        try { localStorage.setItem(SHOW_KEY, JSON.stringify([...show])); } catch (e) { /* kept for the visit */ }
+      };
+      for (const c of showRow.children) c.addEventListener("click", () => { const key = c.dataset.show; if (show.has(key)) show.delete(key); else show.add(key); syncShow(); });
       const chips = el("div", { class: "hq-pos-pick", role: "group", "aria-label": "Positions to show" });
       const sync = () => {
         for (const c of chips.children) {
@@ -82,6 +103,7 @@
         chips.append(c);
       }
       sync();
-      return el("div", { class: "hq-next" }, [chips, strip]);
+      syncShow();
+      return el("div", { class: "hq-next" }, [chips, showRow, strip]);
     } });
 })();

@@ -32,10 +32,10 @@ GRADE_LINES = {
     "champion": "National champions at {record}: the season every program dreams of.",
     "playoff": "A playoff season at {record}; the run ended in {round}.",
     "met": "The AD asked you to {goal}, and {record} did it: a season to build on.",
-    "bowl": "A {record} season that reached a bowl but fell short of the AD's goal to {goal}.",
+    "bowl": "{A} {record} season that reached a bowl but fell short of the AD's goal to {goal}.",
     "missed": "A competitive {record} season, but it fell short of the postseason and the AD's goal to {goal}.",
     "losing": "A losing season at {record}; the program needs a better year.",
-    "fired": "A {record} season that puts the job in question.",
+    "fired": "{A} {record} season that puts the job in question.",
 }
 
 
@@ -106,6 +106,6 @@ def season_grade(state: dict) -> dict:
     else:
         band = "missed"
     text = goal["text"]
-    line = GRADE_LINES[band].format(record=f"{wins}-{losses}", goal=text[:1].lower() + text[1:],
+    line = GRADE_LINES[band].format(record=f"{wins}-{losses}", A="An" if wins in (8, 11, 18) else "A", goal=text[:1].lower() + text[1:],
                                     round=ROUND_WORDS.get(max((g["week"] for g in playoff), default=0), "the playoff"))
     return {"grade": grade, "score": score, "band": band, "line": line, "goal": text, "met": met}

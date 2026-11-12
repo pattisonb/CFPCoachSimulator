@@ -221,7 +221,8 @@ def next_year(state: dict) -> dict:
     """Next year's roster by group, as it stands: everyone the outlook keeps (seniors graduate) a class up, best overall
     first, with his draft or portal word; your commits (and signees) in their groups as freshmen; each group's target,
     the headcount filled, and `need`, recruiting.needs_detail's (which allows for the usual attrition and early leavers,
-    so it can be more than target - filled)."""
+    so it can be more than target - filled). `targets`: the rest of your recruits at the group (the player's ask), each
+    with `kind`, the most he is to you: offered, on your board, or contacted; one signed or committed elsewhere is left out."""
     from coach_career import offseason, prospects
     me = state["team"]
     detail = recruiting.needs_detail(state, me)
@@ -241,10 +242,25 @@ def next_year(state: dict) -> dict:
         if g in groups:
             groups[g]["commits"].append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
                                          "signed": st["signed"] == me, "hard": bool(st.get("hard")), "rank": q["rank"]})
+    offered = set(rc["offers"].get(me, []))
+    board = set(rc.get("board") or ())
+    for pid, st in rc["status"].items():
+        if st["signed"] or st["committed"]:
+            continue
+        kind = "offered" if pid in offered else "board" if pid in board else \
+            "contacted" if ((rc["contacts"].get(pid) or {}).get(me) or {}).get("n") else None
+        if kind is None:
+            continue
+        q = rc["prospects"][pid]
+        g = recruiting._group_of(q)
+        if g in groups:
+            groups[g].setdefault("targets", []).append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
+                                                        "rank": q["rank"], "kind": kind})
     out = []
     for g in groups.values():
         g["players"].sort(key=lambda x: -x["overall"])
         g["commits"].sort(key=lambda x: x["rank"])
+        g.setdefault("targets", []).sort(key=lambda x: ({"offered": 0, "board": 1, "contacted": 2}[x["kind"]], x["rank"]))
         g["filled"] = len(g["players"]) + len(g["commits"])
         g["need"] = int(detail[g["group"]].get("need") or 0)     # the game's own need: it allows for the usual attrition, as Class Needs
         out.append(g)

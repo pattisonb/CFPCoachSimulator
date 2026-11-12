@@ -776,7 +776,7 @@
       $("#sim-results").innerHTML = "";
       state.simShown = new Set();
       $("#btn-pause").disabled = false;
-      $("#btn-pause").textContent = "Pause after this week";
+      $("#btn-pause").textContent = "Pause After This Week";
     }
     $("#sim-stage").textContent = stageLine(j);
     $("#sim-overlay .review-label").textContent = `Simming through ${s.week_labels[j.total] || seasonWeek(j.total).toLowerCase()}`;
