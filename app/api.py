@@ -509,6 +509,7 @@ def _team_card(t: dict) -> dict:
     return {
         "slug": t["slug"], "name": t["name"], "school": t["school"], "abbreviation": t["abbreviation"],
         "mascot": t["mascot"], "conference": t["conference"], "subdivision": t["subdivision"],
+        "city": t.get("city"), "state": t.get("state"),
         # the bracket's conference groups by the engine's names (a league file may rename a conference on the page)
         "group": "P4" if t["conference"] in polls.P4 else "G6" if t["conference"] in polls.G6 else "",
         "fictional": t["fictional"], "colors": t["colors"], "stadium": t["stadium"],

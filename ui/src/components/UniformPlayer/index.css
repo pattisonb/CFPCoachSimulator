@@ -1,0 +1,5 @@
+/* the sprite's own pixels, scaled up whole */
+.uniform-player {
+  display: block;
+  image-rendering: pixelated;
+}

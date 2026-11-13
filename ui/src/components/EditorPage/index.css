@@ -1,0 +1,118 @@
+/* One window: the header, the intro row, then the editor (a sidebar and a main area). */
+.editor {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+/* Back on the left edge, the title in the middle, an optional control on the right, as wide as the window */
+.editor__intro {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--s3);
+  width: min(1200px, 100% - 2 * var(--gutter));
+  margin: 0 auto;
+  padding-bottom: var(--s4);
+}
+
+.editor__heading {
+  display: grid;
+  justify-items: center;
+  gap: var(--s1);
+  text-align: center;
+}
+
+.editor__title {
+  font-size: var(--t-xl);
+  text-transform: uppercase;
+}
+
+.editor__lede {
+  color: var(--ink-soft);
+}
+
+.editor__back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--control);
+  padding: 0 var(--s3);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  font-weight: 700;
+  font-size: var(--t-sm);
+  text-decoration: none;
+}
+
+.editor__back:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.editor__aside {
+  justify-self: end;
+  width: min(300px, 100%);
+}
+
+/* the window, framed like Play's, with the same step-up in text size */
+.editor__window {
+  --t-xs: 13px;
+  --t-sm: 14px;
+  --t-md: 16px;
+  --t-lg: clamp(17px, 2.4vh, 22px);
+
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  width: min(1200px, 100% - 2 * var(--gutter));
+  min-height: 0;
+  margin: 0 auto var(--s4);
+  font-size: var(--t-md);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 8px 8px 0 var(--shadow);
+}
+
+.editor__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s3);
+  background: var(--paper);
+  border-right: var(--line) solid var(--ink);
+}
+
+/* the sidebar scrolls before anything in it squeezes */
+.editor__side > * {
+  flex-shrink: 0;
+}
+
+.editor__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s3) var(--s4);
+}
+
+@media (width <= 1100px) {
+  .editor__window {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .editor__main {
+    padding: var(--s3);
+  }
+}
+
+/* short windows: the line under the title gives its room to the editor */
+@media (height <= 820px) {
+  .editor__lede {
+    display: none;
+  }
+}

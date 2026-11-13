@@ -1,0 +1,43 @@
+/* Page changes (router.ts navigate), Play and its editors alike: a calm fade-through. The header holds still; the
+   rest of the old page fades out as it lifts a little, then the new page fades in as it settles into place. Nothing
+   resizes or slides sideways. Off when the viewer asks for less motion. */
+.header {
+  view-transition-name: site-header;
+}
+
+:root {
+  --vt-out: 240ms; /* *tune* the old page fading out */
+  --vt-in: 520ms; /* *tune* the new page fading in */
+  --vt-gap: 160ms; /* *tune* how long after the start the new page begins to show */
+  --vt-rise: 10px; /* *tune* how far each page drifts */
+}
+
+::view-transition-old(root) {
+  animation: page-out var(--vt-out) cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in var(--vt-in) cubic-bezier(0.16, 1, 0.3, 1) var(--vt-gap) both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--vt-rise)));
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--vt-rise));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

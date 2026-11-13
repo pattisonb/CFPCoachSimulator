@@ -1,0 +1,49 @@
+/* A labeled form control: the label over the control, a hint under it. */
+.field {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.field > .label {
+  color: var(--ink-soft);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: var(--control);
+  padding: 0 var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  border-radius: 0;
+}
+
+.field textarea {
+  padding: var(--s1) var(--s2);
+  resize: vertical;
+}
+
+.field input[type="color"] {
+  padding: 4px;
+  cursor: pointer;
+}
+
+.field__hint {
+  font-size: var(--t-xs);
+  color: var(--ink-soft);
+}
+
+.field--invalid > .label,
+.field--invalid .field__hint {
+  color: #c0392b;
+}
+
+.field--invalid input,
+.field--invalid select,
+.field--invalid textarea {
+  border-color: #c0392b;
+}

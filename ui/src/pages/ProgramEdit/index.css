@@ -1,0 +1,252 @@
+/* Custom Program: the program in the sidebar (its quarterback, name, colors, checks), the form in the tabs. The page
+   shell is EditorPage. */
+
+/* the quarterback on a strip of turf */
+.program__stage {
+  display: grid;
+  place-items: end center;
+  padding: var(--s2) var(--s2) 0;
+  background: linear-gradient(to bottom, var(--tile) 78%, #3f7d3a 78%);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.program__player {
+  width: auto;
+  height: clamp(120px, 24vh, 228px);
+  margin-bottom: clamp(6px, 1.4vh, 14px);
+}
+
+.program__who {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.program__name {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.program__sub {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.program__colors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s2);
+}
+
+.program__status {
+  display: grid;
+  gap: 4px;
+  min-height: 24px;
+  font-size: var(--t-sm);
+}
+
+.program__soft {
+  color: var(--ink-soft);
+}
+
+.program__bad {
+  color: #c0392b;
+}
+
+.program__good {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2e7d32;
+}
+
+.program__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-top: auto;
+}
+
+.program__actions .btn {
+  min-width: 0;
+  padding: 0 var(--s2);
+}
+
+.program__actions .program__check {
+  grid-column: 1 / -1;
+}
+
+/* a tab's fields, two to a row */
+
+.program__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s3) var(--s4);
+}
+
+/* a small square remove button */
+.program__x {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink-soft);
+  cursor: pointer;
+}
+
+.program__x:hover {
+  border-color: var(--ink);
+}
+
+/* rivals */
+.rivals {
+  display: grid;
+  gap: var(--s3);
+}
+
+.rivals__hits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.rivals__hit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--s2);
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--line) solid var(--ink-soft);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rivals__hit:hover {
+  border-color: var(--ink);
+}
+
+.rivals__list {
+  display: grid;
+  gap: var(--s2);
+  list-style: none;
+}
+
+.rivals__row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.rivals__team {
+  align-self: center;
+  text-transform: uppercase;
+}
+
+.rivals__row .program__x {
+  margin-bottom: 6px;
+}
+
+/* roster */
+.roster-edit {
+  display: grid;
+  gap: var(--s3);
+  min-height: 0;
+}
+
+.roster-edit__add {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--s2);
+}
+
+.roster-edit__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s4);
+}
+
+.roster-edit__list {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.roster-edit__list > .label {
+  color: var(--ink-soft);
+}
+
+.roster-edit__list ul {
+  list-style: none;
+}
+
+.roster-edit__row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s2);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.roster-edit__row.is-bad {
+  color: #c0392b;
+}
+
+.roster-edit__pos {
+  font-weight: 700;
+}
+
+.roster-edit__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-edit__meta {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.roster-edit__paste textarea {
+  min-height: 160px;
+  font-size: var(--t-sm);
+}
+
+/* narrower windows: the roster's list over its paste box, the rivals' names over their fields */
+@media (width <= 1100px) {
+  .roster-edit__add {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roster-edit__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rivals__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .rivals__team {
+    grid-column: 1 / -1;
+  }
+}
+
+/* short windows: a smaller quarterback */
+@media (height <= 820px) {
+  .program__player {
+    height: clamp(100px, 18vh, 160px);
+  }
+}

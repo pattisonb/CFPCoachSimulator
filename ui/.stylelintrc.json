@@ -1,0 +1,17 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "selector-class-pattern": [
+      "^[a-z][a-z0-9-]*(__[a-z0-9-]+)?(--[a-z0-9-]+)?$|^is-[a-z-]+$",
+      {
+        "message": "Use block__element--modifier class names (for example home__title, btn--solid)"
+      }
+    ],
+    "unit-allowed-list": [
+      ["px", "%", "vh", "vw", "fr", "deg", "ms", "s"],
+      {
+        "message": "Use px for sizes (vh/vw only inside clamp() scales), never em, rem or ch"
+      }
+    ]
+  }
+}

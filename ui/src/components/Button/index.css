@@ -1,0 +1,49 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--control);
+  padding: 0 var(--s4);
+  border: var(--line) solid;
+  border-radius: 0;
+  font-weight: 700;
+  font-size: var(--t-md);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn:not(:disabled):active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.btn--solid {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow-soft);
+}
+
+.btn--outline {
+  background: var(--paper-hi);
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* the hero's calls to action */
+.btn--lg {
+  min-height: clamp(48px, 7.5vh, 60px); /* a little shorter on short windows */
+  padding: 0 var(--s5);
+  font-size: var(--t-lg);
+  box-shadow: 6px 6px 0 var(--shadow-soft);
+}
+
+.btn--lg.btn--outline {
+  box-shadow: 6px 6px 0 var(--shadow);
+}

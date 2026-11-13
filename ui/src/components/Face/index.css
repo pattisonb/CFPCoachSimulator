@@ -1,0 +1,5 @@
+.face {
+  display: block;
+  image-rendering: pixelated;
+  user-select: none;
+}

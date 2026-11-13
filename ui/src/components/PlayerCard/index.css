@@ -1,0 +1,80 @@
+.player-card {
+  position: fixed;
+  z-index: 20;
+  width: 320px;
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s3);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  pointer-events: none;
+}
+
+.player-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* the player's face, on the same tile as the coach editor's faces */
+.player-card__face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  padding: 2px;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+}
+
+.player-card__who {
+  display: grid;
+  min-width: 0;
+}
+
+.player-card__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.player-card__pos {
+  white-space: nowrap;
+  font-size: var(--t-xs);
+  color: var(--ink-soft);
+}
+
+.player-card__ovr {
+  margin-left: auto;
+  font-size: var(--t-xl);
+  font-weight: 700;
+}
+
+.player-card__bar {
+  height: 8px;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.player-card__bar span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+
+.player-card__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s1) var(--s3);
+}
+
+.player-card__facts dt {
+  font-size: var(--t-xs);
+  color: var(--ink-soft);
+}
+
+.player-card__facts dd {
+  font-weight: 700;
+}

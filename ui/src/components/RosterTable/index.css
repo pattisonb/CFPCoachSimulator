@@ -1,0 +1,105 @@
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 0;
+}
+
+.roster__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.roster__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.roster__summary,
+.roster__empty {
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+.roster__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-top: var(--line) solid var(--ink);
+}
+
+/* rows are for pointing at, not copying: hovering one shows its player card */
+.roster__table {
+  user-select: none;
+  cursor: default;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.roster__table th,
+.roster__table td {
+  padding: 6px var(--s2);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.roster__group th {
+  padding-top: var(--s3);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+
+.roster__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-hi);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.roster__table .roster__num {
+  text-align: right;
+}
+
+.roster__name {
+  font-weight: 700;
+}
+
+.roster__table tr:not(.is-starter) .roster__name {
+  font-weight: 400;
+}
+
+.roster__tag {
+  margin-left: var(--s2);
+  padding: 0 6px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.roster__ovr {
+  font-weight: 700;
+}
+
+.roster__row:hover,
+.roster__row:focus-visible,
+.roster__row.is-hovered {
+  background: var(--paper);
+  outline: none;
+}
+
+.roster__row:focus-visible td:first-child {
+  box-shadow: inset 4px 0 0 var(--ink);
+}

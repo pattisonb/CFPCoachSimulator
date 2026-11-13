@@ -1,0 +1,6 @@
+.ball-logo {
+  width: 32px;
+  height: 20px;
+  image-rendering: pixelated;
+  rotate: -12deg;
+}

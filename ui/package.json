@@ -1,0 +1,32 @@
+{
+  "name": "cfp-coach-simulator-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "lint:css": "stylelint \"src/**/*.css\"",
+    "check": "prettier --check . && stylelint \"src/**/*.css\" && tsc --noEmit"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.7",
+    "pocket-faces": "file:../../sprite-test/packages/pocket-faces",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "prettier": "^3.3.3",
+    "stylelint": "^16.10.0",
+    "stylelint-config-standard": "^36.0.1",
+    "typescript": "5.6.3",
+    "vite": "5.4.11"
+  }
+}

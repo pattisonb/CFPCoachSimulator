@@ -1,0 +1,27 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chip__count {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.chip--on {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.chip--on .chip__count {
+  color: inherit;
+}

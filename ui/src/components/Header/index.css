@@ -1,0 +1,79 @@
+/* brand · nav (centered) · theme switch */
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s3) var(--gutter);
+}
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.header__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  background: var(--logo-bg);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.header__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header__nav {
+  display: flex;
+  gap: var(--s4);
+}
+
+.header__nav a {
+  display: flex;
+  align-items: center;
+  min-height: var(--control);
+  color: inherit;
+  text-decoration: none;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  border-bottom: var(--line) solid transparent;
+}
+
+.header__nav a:hover,
+.header__nav a.is-active {
+  border-bottom-color: currentcolor;
+}
+
+.header__theme {
+  justify-self: end;
+  display: grid;
+  place-items: center;
+  width: var(--control);
+  height: var(--control);
+  background: none;
+  border: var(--line) solid transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.header__theme:hover {
+  border-color: currentcolor;
+}
+
+@media (width <= 900px) {
+  .header__name {
+    display: none;
+  }
+}

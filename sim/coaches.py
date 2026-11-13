@@ -151,7 +151,8 @@ def blank() -> dict:
             "offense_scheme": "Multiple", "defense_scheme": "4-2-5", "calls_offense": True, "calls_defense": False,
             "style": {k: 50 for k in STYLE},
             "look": {"skin": LOOK["skin"][1], "hair": "short", "hair_color": LOOK["hair_color"][1], "facial_hair": "none",
-                     "glasses": "none", "headwear": "cap", "outfit": "polo"}}
+                     "glasses": "none", "headwear": "cap", "outfit": "polo"},
+            "face": None}
 
 
 def clean(data: dict) -> dict:
@@ -204,7 +205,33 @@ def clean(data: dict) -> dict:
         v = given_look.get(k)
         look[k] = v if v in opts else c["look"][k]
     c["look"] = look
+    c["face"] = _clean_face(data.get("face"))
     return c
+
+
+# a pocket-faces look from the new UI (ui/): its fields come from that package's data (0.2 adds categories without code),
+# so any field named in letters holding a part id or None is kept, plus the fade and the list of flipped layers
+FACE_ID = re.compile(r"[a-z0-9_]{1,40}")
+FACE_KEY = re.compile(r"[A-Za-z]{1,30}")
+FACE_MAX_FIELDS = 32  # *tune* more fields than any face has: the rest are dropped
+
+
+def _clean_face(face) -> Optional[dict]:
+    """The face's fields kept as plain ids (letters, digits, underscores) or None, `hairFade` as a bool and `flip`
+    as a list of ids; anything else is dropped."""
+    if not isinstance(face, dict):
+        return None
+    out: dict = {}
+    for k, v in face.items():
+        if len(out) >= FACE_MAX_FIELDS or not isinstance(k, str) or not FACE_KEY.fullmatch(k):
+            continue
+        if k == "hairFade":
+            out[k] = v is True
+        elif k == "flip":
+            out[k] = [x for x in v if isinstance(x, str) and FACE_ID.fullmatch(x)][:8] if isinstance(v, list) else []
+        elif v is None or (isinstance(v, str) and FACE_ID.fullmatch(v)):
+            out[k] = v
+    return out
 
 
 def _path(coach_id: str) -> Path:

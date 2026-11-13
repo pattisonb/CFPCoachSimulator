@@ -1,0 +1,178 @@
+/* Your Coach: the coach in the sidebar (face, name, save), the face parts in the tabs. The page shell is EditorPage. */
+
+.coach__portrait {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  padding: var(--s2);
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.coach__portrait .face {
+  width: auto;
+  height: clamp(112px, 20vh, 240px);
+}
+
+.coach__name {
+  text-align: center;
+  font-size: var(--t-lg);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.coach__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+}
+
+.coach__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-top: auto;
+}
+
+.coach__actions .btn {
+  min-width: 0;
+  padding: 0 var(--s2);
+}
+
+.coach__status {
+  min-height: 24px;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+}
+
+/* the tab's rows of choices */
+.coach__panel {
+  display: grid;
+  align-content: start;
+  gap: var(--s4);
+}
+
+.part {
+  display: grid;
+  gap: var(--s2);
+}
+
+/* the field's name, the chosen part's name, and its toggles on the right; one fixed height whatever shows */
+.part__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 32px;
+}
+
+.part__head > .label {
+  color: var(--ink-soft);
+}
+
+.part__current {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.part__toggles {
+  display: flex;
+  gap: var(--s1);
+  margin-left: auto;
+}
+
+.part__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--s2);
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--line) solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.part__toggle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.part__toggle:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.part__toggle[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.part__faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.part__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.part__option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  background: var(--tile);
+  border: var(--line) solid var(--ink-soft);
+  cursor: pointer;
+}
+
+.part__option:hover {
+  border-color: var(--ink);
+}
+
+/* chosen: a solid edge and the pixel shadow (bottom and right only, like every other raised thing) */
+.part__option.is-on {
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* the chosen face thumbnail's corner badge, in the ink color (it stands out on the tiles in both themes) */
+.part__tick {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.part__option--swatch {
+  display: flex;
+  gap: var(--s2);
+  min-height: var(--control);
+  padding: 0 var(--s3) 0 var(--s2);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.part__swatch {
+  width: 22px;
+  height: 22px;
+  border: var(--line) solid var(--ink);
+}
+
+.part__name {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
