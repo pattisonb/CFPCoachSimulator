@@ -1,0 +1,26 @@
+export const messages = {
+  partsLabel: "Customize",
+  groups: { head: "Head", hair: "Hair", features: "Features" },
+  /** our names for the face data's fields (Title Case, American spelling); a new field uses the data's */
+  fields: {
+    faceShape: "Face Shape",
+    skinTone: "Skin Tone",
+    ears: "Ears",
+    chin: "Chin",
+    hair: "Hair",
+    hairColor: "Hair Color",
+    beard: "Facial Hair",
+    brows: "Brows",
+    eyeColor: "Eye Color",
+    nose: "Nose",
+    mouth: "Mouth",
+  },
+  fade: "Fade",
+  fadeHint: "Draw the temples in a lighter fade.",
+  noFade: "This style has no fade.",
+  flip: "Flip",
+  flipLabel: (field: string) => `Flip ${field}`,
+  flipHint: "Mirror this part.",
+  noFlip: "This part looks the same flipped.",
+  none: "None",
+} as const;

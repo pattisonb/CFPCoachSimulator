@@ -81,6 +81,11 @@
   overflow: hidden;
 }
 
+/* a section that lays out its own columns edge to edge (the Office) */
+.game__body--flush {
+  padding: 0;
+}
+
 .game__empty {
   display: grid;
   justify-items: center;

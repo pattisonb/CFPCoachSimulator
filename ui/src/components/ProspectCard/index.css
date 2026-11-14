@@ -1,0 +1,146 @@
+/* A prospect's file: a raised panel beside the list, scrolling on its own. */
+.prospect-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--s3);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.prospect-card__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  border: var(--line) solid transparent;
+  cursor: pointer;
+}
+
+.prospect-card__close:hover {
+  border-color: var(--ink);
+}
+
+.prospect-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-right: 32px;
+}
+
+.prospect-card__face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 108px; /* the face at 3x (99 x 102) */
+  height: 108px;
+  overflow: hidden;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+}
+
+.prospect-card__who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.prospect-card__name {
+  font-size: var(--t-lg);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.prospect-card__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.prospect-card__ranks {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.prospect-card__board {
+  justify-self: start;
+}
+
+.prospect-card__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2) var(--s3);
+  padding-block: var(--s2);
+  border-block: var(--line) solid var(--line-soft);
+}
+
+.prospect-card__facts dt {
+  color: var(--ink-soft);
+}
+
+.prospect-card__facts dd {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.prospect-card__block {
+  display: grid;
+  gap: var(--s1);
+  font-size: var(--t-sm);
+}
+
+.prospect-card__kicker {
+  color: var(--ink-soft);
+}
+
+.prospect-card__outlook {
+  font-weight: 700;
+}
+
+.prospect-card__list {
+  display: grid;
+  gap: 4px;
+  padding-left: 16px;
+}
+
+.prospect-card__schools {
+  display: grid;
+  list-style: none;
+}
+
+.prospect-card__schools li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: 4px 0;
+}
+
+.prospect-card__schools li + li {
+  border-top: var(--line) solid var(--line-soft);
+}
+
+.prospect-card__tag {
+  padding: 0 6px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+/* stars in the font's absence: pixel icons, the empty ones soft */
+.prospect-stars {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.prospect-stars__empty {
+  color: var(--ink-soft);
+}

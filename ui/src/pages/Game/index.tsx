@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
 import DepthChart from "../../components/DepthChart/index.tsx";
+import Office from "../../components/Office/index.tsx";
+import Prospects from "../../components/Prospects/index.tsx";
 import GameNav, { type NavTeam } from "../../components/GameNav/index.tsx";
 import SeasonStrip from "../../components/SeasonStrip/index.tsx";
 import { api } from "../../api.ts";
@@ -10,6 +12,7 @@ import { faces, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
 import { navigate, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
+import { useSim } from "../../sim.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
 import type { Theme } from "../../theme.ts";
 import type { RecruitingWeek, SavedCoach, SeasonCoach, SeasonSummary, TeamCard } from "../../types.ts";
@@ -45,7 +48,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const [lastShown, setLastShown] = useState<"open" | "rail">(navMode === "rail" ? "rail" : "open");
   const [load, setLoad] = useState<Load>(seasonId ? { kind: "loading" } : { kind: "none" });
   const [teams, setTeams] = useState<TeamCard[]>(() => cachedTeams() ?? []);
-  const [energy, setEnergy] = useState<{ left: number; total: number } | null>(null);
+  const [recruiting, setRecruiting] = useState<RecruitingWeek | null>(null);
   const [savedFace, setSavedFace] = useState<FaceSpec | null>(null);
 
   useEffect(() => {
@@ -62,12 +65,25 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       .then((season) => live && setLoad({ kind: "ready", season }))
       .catch((e: Error) => live && setLoad({ kind: "error", msg: e.message }));
     api<RecruitingWeek>(`/api/season/${seasonId}/recruiting`)
-      .then((r) => live && setEnergy({ left: r.hours_left, total: r.hours }))
-      .catch(() => live && setEnergy(null));
+      .then((r) => live && setRecruiting(r))
+      .catch(() => live && setRecruiting(null));
     return () => {
       live = false;
     };
   }, [seasonId]);
+
+  // after a sim: the season and the week's recruiting again, in place (no loading screen)
+  const refresh = useCallback(() => {
+    if (!seasonId) return;
+    api<SeasonSummary>(`/api/season/${seasonId}`)
+      .then((season) => setLoad({ kind: "ready", season }))
+      .catch(() => {});
+    api<RecruitingWeek>(`/api/season/${seasonId}/recruiting`)
+      .then(setRecruiting)
+      .catch(() => {});
+  }, [seasonId]);
+  const sim = useSim(seasonId, refresh);
+  const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
 
   const season = load.kind === "ready" ? load.season : null;
   const coach = season?.coach ?? null;
@@ -160,9 +176,30 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           )}
         </div>
 
-        {season && section.key === "depth" ? (
+        {season && section.key === "office" ? (
+          <section
+            key={section.key}
+            className="game__body game__body--fill game__body--flush game__section"
+            aria-label={section.label}
+          >
+            <Office season={season} recruiting={recruiting} teams={bySlug} sim={sim} onSection={open} />
+          </section>
+        ) : season && section.key === "prospects" ? (
+          <section
+            key={section.key}
+            className="game__body game__body--fill game__body--flush game__section"
+            aria-label={section.label}
+          >
+            <Prospects key={season.current_week} seasonId={season.id} year={season.year} />
+          </section>
+        ) : season && section.key === "depth" ? (
           <section key={section.key} className="game__body game__body--fill game__section" aria-label={section.label}>
-            <DepthChart seasonId={season.id} team={season.team} weekLabels={season.week_labels} />
+            <DepthChart
+              key={season.current_week}
+              seasonId={season.id}
+              team={season.team}
+              weekLabels={season.week_labels}
+            />
           </section>
         ) : season ? (
           // keyed on the section, so each one fades in as it opens

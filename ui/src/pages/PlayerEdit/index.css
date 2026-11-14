@@ -1,0 +1,41 @@
+/* Edit Player Look: the player in the sidebar (face, name, save), the face parts in the tabs. The page shell is
+   EditorPage; the parts are FaceEditor. */
+.player-edit__portrait {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  padding: var(--s2);
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.player-edit__portrait .face {
+  width: auto;
+  height: clamp(112px, 20vh, 240px);
+}
+
+.player-edit__name {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.player-edit__line {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  text-align: center;
+}
+
+/* stacked, full width: the sidebar is too narrow for two labels side by side */
+.player-edit__actions {
+  display: grid;
+  gap: var(--s2);
+}
+
+.player-edit__status {
+  min-height: 21px;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}

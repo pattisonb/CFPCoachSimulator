@@ -5,6 +5,7 @@ export const messages = {
   stars: (n: number) => `${n}-Star Recruit`,
   dev: (trait: string) => `${trait} Dev`,
   was: (pos: string) => `Was ${pos}`,
+  editLook: "Edit Look",
   out: "Out",
   rs: "RS",
   wasTitle: (pos: string) => `Moved from ${pos} this season`,

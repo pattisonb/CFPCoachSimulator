@@ -96,6 +96,13 @@ export interface ScheduleGame {
   points_against: number | null;
   overtime: number;
   date: string | null;
+  /** the opponent's record now ("3-1") */
+  opponent_record?: string | null;
+  /** a neutral site's name */
+  site?: string | null;
+  rivalry?: { name: string } | null;
+  /** a box score exists (GET /api/season/{id}/game/{event_id}) */
+  has_box?: boolean;
 }
 
 /** Who coaches your team this season: your created coach, or the team's own */
@@ -117,12 +124,106 @@ export interface SeasonSummary {
   my_rank: { rank: number | null; kind: string; week: number } | null;
   coach: SeasonCoach;
   week_labels: Record<string, string>;
+  /** each week's dates; `main` is its Saturday */
+  week_dates: Record<string, { start: string; end: string; main: string }>;
+  /** your job with the AD: the season's goal and how secure you are (0-100) */
+  job: { goal: string; security: number; mood: string; ultimatum: boolean } | null;
+  champion_name: string | null;
+  offseason_stage: string | null;
+  /** your team's injury report */
+  injuries: unknown[];
 }
 
 /** GET /api/season/{id}/recruiting (the week's hours: the coach's energy) */
 export interface RecruitingWeek {
   hours: number;
   hours_left: number;
+  hours_used: number;
+  /** "off", "week" or "season" */
+  auto_recruit: string;
+  committed: number;
+  open_spots: number;
+  class_rank: number | null;
+  nil: { budget: number; left: number; carry: number };
+  /** this week's scouting points */
+  points_left: number;
+  points_week: number;
+}
+
+/** GET /api/season/{id}/preview?team= : this week's game and a simulated prediction */
+export interface GamePreview {
+  game: unknown | null;
+  /** "bye" or "done" when there's no game */
+  reason?: string;
+  prediction: { win_prob: number; points_for: number; points_against: number } | null;
+}
+
+/** One item of Program News (coach_career/office.py program_news) */
+export interface NewsItem {
+  week: number;
+  kind: string;
+  /** a game */
+  won?: boolean;
+  points_for?: number;
+  points_against?: number;
+  opponent_name?: string;
+  venue?: "home" | "away" | "neutral";
+  overtime?: number;
+  /** a prospect or player */
+  pid?: string;
+  name?: string;
+  position?: string;
+  stars?: number;
+  school?: string;
+  school_name?: string | null;
+  rival_name?: string | null;
+  line?: string;
+  reason?: string;
+}
+
+export interface ConferenceGame {
+  away: string;
+  home: string;
+  away_name: string;
+  home_name: string;
+  away_score: number;
+  home_score: number;
+  overtime?: number;
+  mine?: boolean;
+}
+
+/** GET /api/season/{id}/office */
+export interface OfficeView {
+  news: NewsItem[];
+  conference: {
+    name: string;
+    week: number | null;
+    games: ConferenceGame[];
+    standing: {
+      conf_rank: number;
+      of: number;
+      division: string | null;
+      wins: number;
+      losses: number;
+      conf_wins: number;
+      conf_losses: number;
+    } | null;
+    independent: boolean;
+  };
+}
+
+/** GET /api/season/{id}/status : the sim job */
+export interface SimStatus {
+  status: "idle" | "running" | "error";
+  kind?: string | null;
+  done: number;
+  total: number;
+  stage: string | null;
+  week: number | null;
+  games_done: number | null;
+  games_total: number | null;
+  progress: number | null;
+  error: string | null;
 }
 
 /** A player as the depth chart shows him (sim/season.py _depth_card): GET /api/season/{id}/depth/{team} */
@@ -156,6 +257,8 @@ export interface DepthCard {
   coach_level?: number;
   potential_word?: string;
   redshirt?: { on: boolean; can: boolean; games: number; limit: number; why: string | null };
+  /** the face drawn for him this season (Edit Player Look), else null */
+  face?: unknown;
 }
 
 export interface DepthRow {
@@ -214,4 +317,95 @@ export interface PlayerProfile {
   ratings_at: Record<string, number>;
   games: number;
   team: { name: string };
+  jersey: string | null;
+  class: string | null;
+  /** the face drawn for him this season (Edit Player Look), else null */
+  face?: unknown;
+}
+
+/** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */
+export interface ProspectRow {
+  id: string;
+  name: string;
+  stars: number;
+  national_rank: number;
+  pos_rank: number;
+  /** the recruiting position (QB, OT, IOL, EDGE…) */
+  display_pos: string;
+  /** the roster group he'd fill (QB, OL, DL…) */
+  group: string;
+  height_display: string;
+  weight_display: string;
+  hometown: { city: string; state: string };
+  archetype: string;
+  /** a school's slug when committed or signed */
+  committed: string | null;
+  signed: string | null;
+  school_name: string | null;
+  leaning_fcs: boolean;
+  pro: boolean;
+  on_board: boolean;
+  offered: boolean;
+  /** your staff's looks at him (a full report at 3) */
+  looks: number;
+  /** your staff's potential read, low and high (grade words, or numbers in Clear Mode); null before a look */
+  our_potential: [string, string] | null;
+  interest_level: "High" | "Medium" | "Low";
+  generational: boolean;
+  /** a full report's flag: gem, bust */
+  find: string | null;
+  /** Recommended only: why he fits ("from a state you sign from", "a position you need: QB 2 left") */
+  why?: string[];
+}
+
+export interface NeedGroup {
+  target: number;
+  back: number;
+  commits: number;
+  need: number;
+}
+
+/** GET /api/season/{id}/prospects */
+export interface ProspectsView {
+  total: number;
+  rows: ProspectRow[];
+  needs: Record<string, NeedGroup>;
+  recommended_ids: string[];
+  summary: {
+    total: number;
+    stars: Record<string, number>;
+    footprint: { board: number; contact: number; evaluated: number };
+    outlook: { commits: number; spots: number; by_stars: Record<string, number> };
+    top: { id: string; name: string; stars: number; national_rank: number; display_pos: string }[];
+    /** per home state: the class, its 4- and 5-stars, your board */
+    by_state: Record<string, { n: number; blue: number; board: number }>;
+  };
+}
+
+/** GET /api/season/{id}/prospect/{pid} (the parts the new UI uses) */
+export interface ProspectDetail {
+  public: {
+    id: string;
+    name: string;
+    hometown: { city: string; state: string };
+    high_school: string;
+    height_display: string;
+    weight_display: string;
+    archetype: string;
+    stars: number;
+    composite: number;
+    national_rank: number;
+    position_rank: number;
+    state_rank: number;
+    display_pos: string;
+    committed: string | null;
+    signed: string | null;
+    on_board: boolean;
+    offered_by_you: boolean;
+    schools: { school: string; name: string; offered: boolean }[];
+  };
+  need: number | null;
+  looks: number;
+  evaluation: { strengths: string[]; solid: string[]; weaknesses: string[]; outlook: string } | null;
+  row: ProspectRow;
 }

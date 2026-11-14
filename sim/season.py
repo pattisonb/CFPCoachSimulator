@@ -2152,6 +2152,7 @@ def _depth_card(state: dict, slug: str):
     yours = bool(state.get("career")) and slug == state.get("team") and not state.get("done")   # your roster: redshirt in place
     moves = position_changes(state, slug)
     dev = development_reads(state, slug)                     # your roster: coachability and potential
+    looks = player_faces(state, slug)                        # faces drawn this season (Edit Player Look)
 
     from coach_career import promises
     chips = promises.chips_now(state) if state.get("career") and slug == state.get("team") else {}   # a promised start: On Track, Slipping, Broken
@@ -2171,6 +2172,7 @@ def _depth_card(state: dict, slug: str):
                 "headline": awards.headline({"stats": st}, group) if st else "",
                 "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"], "returns_week": state["current_week"] + inj["weeks_left"]} if inj else None,
                 "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
+                "face": looks.get(p.get("slug")),
                 **({"redshirt": redshirt_status(state, slug, p)} if yours else {})}
     return card
 
@@ -4010,6 +4012,34 @@ def player_edits(state: dict, slug: str) -> dict:
     return (state.get("player_edits") or {}).get(slug) or {}
 
 
+# *tune* The largest face (as JSON) a player may be given; a pocket-faces face is well under 1 KB.
+MAX_FACE_BYTES = 4000
+
+
+def player_faces(state: dict, slug: str) -> dict:
+    """Faces drawn for one team's players this season (the new UI's Edit Player Look): player slug -> the
+    pocket-faces face, as the page sent it. A look only: no game, sim or digest reads it."""
+    return (state.get("player_faces") or {}).get(slug) or {}
+
+
+def set_player_face(state: dict, slug: str, player_slug: str, face: Optional[dict]) -> Optional[dict]:
+    """Give one player a face for the rest of the season, or (None) back to the one drawn from his id. Any team's
+    player. Returns the face stored."""
+    team = load_teams().get(slug)
+    if team is None:
+        raise ValueError("unknown team")
+    if not any(p.get("slug") == player_slug for p in team["offense"] + team["defense"]):
+        raise ValueError("unknown player")
+    faces = state.setdefault("player_faces", {}).setdefault(slug, {})
+    if face is None:
+        faces.pop(player_slug, None)
+        return None
+    if not isinstance(face, dict) or len(json.dumps(face)) > MAX_FACE_BYTES:
+        raise ValueError("a face is a pocket-faces face object")
+    faces[player_slug] = face
+    return face
+
+
 def with_edits(team: dict, edits: Optional[dict]) -> dict:
     """A copy of the team with god-mode edits merged into its players (edited attributes
     merge into the player's own; the engine composites they move are stored with them)."""
@@ -4464,6 +4494,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     promise = promises.chips_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
     return {
         "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
+        "face": player_faces(state, team).get(p.get("slug")),
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),

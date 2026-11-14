@@ -1531,6 +1531,23 @@ def season_player_edit(p: Params) -> dict:
     return {"edits": edits, "player": season.player_profile(state, team, slug=player)}
 
 
+@route("POST", "/api/season/{season_id}/player/face")
+def season_player_face(p: Params) -> dict:
+    """Edit Player Look: give any player a face for this season ({team, player, face}), or `face` null to go
+    back to the one drawn from his id. A look only: games never read it."""
+    state = _season_state(p.path["season_id"])
+    team, player = _field(p, "team", str), _field(p, "player", str)
+    face = _field(p, "face", dict, None)
+    _check_team(team)
+    _check_not_running()
+    try:
+        out = season.set_player_face(state, team, player, face)
+    except ValueError as exc:
+        raise ApiError(400, str(exc)) from exc
+    _save_loaded()
+    return {"team": team, "player": player, "face": out}
+
+
 @route("GET", "/api/season/{season_id}/preview")
 def season_preview(p: Params) -> dict:
     """This week for a team (default: yours): the next game, a prediction from simulating

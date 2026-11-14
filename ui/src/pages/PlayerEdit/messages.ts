@@ -1,0 +1,18 @@
+export const messages = {
+  title: "Edit Player Look",
+  lede: (team: string) => `A new look for the rest of this season with ${team}. His ratings stay as they are.`,
+  back: "Back to the Game",
+  line: (parts: (string | null)[]) => parts.filter(Boolean).join(" · "),
+  jersey: (j: string) => `#${j}`,
+  randomize: "Randomize",
+  reset: "His Own Face",
+  resetHint: "Go back to the face he was drawn with.",
+  save: "Save Look",
+  saving: "Saving…",
+  saved: "Saved. He looks like this everywhere this season.",
+  resetDone: "Back to the face he was drawn with.",
+  saveError: (msg: string) => `Couldn't save his look: ${msg}.`,
+  loading: "Loading the player…",
+  loadError: (msg: string) => `Couldn't load the player: ${msg}.`,
+  missing: "No player picked. Open him from the Depth Chart.",
+} as const;

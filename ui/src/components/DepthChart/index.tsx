@@ -3,7 +3,8 @@ import Face from "../Face/index.tsx";
 import FolderTabs from "../FolderTabs/index.tsx";
 import PlayerView from "../PlayerView/index.tsx";
 import { api } from "../../api.ts";
-import { playerFace, titleCase } from "../../faces.ts";
+import { lookOf, titleCase } from "../../faces.ts";
+import { navigate } from "../../router.ts";
 import { formatClass } from "../../format.ts";
 import type { DepthCard, DepthChart as Chart, DepthRow, PlayerProfile } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -142,6 +143,7 @@ export default function DepthChart({ seasonId, team, weekLabels }: Props) {
             profile={profile?.kind === "ready" ? profile.profile : null}
             error={profile?.kind === "error" ? profile.msg : null}
             weekLabels={weekLabels}
+            onEditLook={() => navigate("playerEdit", { season: seasonId, team, player: picked.p.slug })}
           />
         ) : (
           <p className="depth__state">{m.pickHint}</p>
@@ -173,7 +175,7 @@ function PlayerRow({ p, spot, starter, lastStarter, on, onPick }: RowProps) {
     >
       <span className="depth__spot">{spot}</span>
       <span className="depth__face">
-        <Face face={playerFace(p.slug, p.position)} scale={1} label="" />
+        <Face face={lookOf(p.face, p.slug, p.position)} scale={1} label="" />
       </span>
       <span className="depth__who">
         <span className="depth__name">{p.name}</span>

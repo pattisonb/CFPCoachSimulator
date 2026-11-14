@@ -81,3 +81,8 @@ export function playerFace(id: string, position: string): Face {
   playerFaces.set(key, face);
   return face;
 }
+
+/** A player's look: the face drawn for him this season (Edit Player Look), else the one from his id. */
+export function lookOf(saved: unknown, id: string, position: string): Face {
+  return saved ? faces.repair(saved).face : playerFace(id, position);
+}

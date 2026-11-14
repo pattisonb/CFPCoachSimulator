@@ -1,0 +1,209 @@
+/* The pixel map: the real state outlines as square pixels (usPixels.ts). A state's pixels mix ink into the soft line
+   color by how many prospects live there; the borders between states are drawn in the page's own color, so each
+   state stands apart as its own stepped shape. The big map adds each state's two letters. */
+.tile-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s1);
+  min-width: 0;
+  min-height: 0;
+}
+
+.tile-map__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.tile-map--big {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  height: 100%;
+}
+
+.tile-map--big .tile-map__svg {
+  height: 100%;
+}
+
+.tile-map__state {
+  --tile-ink: 0%;
+
+  outline: none;
+}
+
+/* every state mixes ink into the page's own color, from a tenth (none from here) to nine tenths: even the lightest
+   stands clear of the background */
+.tile-map__fill {
+  fill: color-mix(in srgb, var(--ink) var(--tile-ink), var(--paper-hi));
+  shape-rendering: crispedges;
+  transition:
+    fill 120ms ease-out,
+    opacity 160ms ease-out;
+}
+
+.tile-map__state.is-live {
+  cursor: pointer;
+}
+
+/* pointed at or focused: the whole state lights up; picked: solid ink */
+.tile-map__state.is-live.is-hover .tile-map__fill,
+.tile-map__state.is-live:focus-visible .tile-map__fill {
+  fill: color-mix(in srgb, var(--ink) 72%, var(--paper-hi));
+}
+
+.tile-map__state.is-live.is-on .tile-map__fill {
+  fill: var(--ink);
+}
+
+/* the picked state, raised: lifted up-left on a hard shadow, like a card */
+.tile-map__raised-shadow,
+.tile-map__raised-fill {
+  shape-rendering: crispedges;
+}
+
+.tile-map__raised-shadow {
+  fill: var(--shadow);
+}
+
+.tile-map__raised-fill {
+  fill: var(--ink);
+}
+
+/* one outline around the raised state (never a line between its own pixels) */
+.tile-map__raised-edge {
+  fill: none;
+  stroke: var(--paper-hi);
+  stroke-width: 0.14;
+  stroke-linecap: square;
+}
+
+/* a state picked: the rest step back */
+.tile-map.has-pick .tile-map__state:not(.is-on, .is-hover) .tile-map__fill {
+  opacity: 0.6;
+}
+
+/* the borders: the page's color between two states (thin), so neighbors read apart */
+.tile-map__borders {
+  fill: none;
+  stroke: var(--paper-hi);
+  stroke-width: 0.16;
+  shape-rendering: crispedges;
+  pointer-events: none;
+}
+
+.tile-map__over {
+  pointer-events: none;
+}
+
+/* the lit state's own outline, in ink */
+.tile-map__outline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.22;
+  stroke-linecap: square;
+}
+
+/* someone from here on your board: a lit pixel at the state's middle */
+.tile-map__dot {
+  fill: var(--paper-hi);
+  stroke: var(--ink);
+  stroke-width: 0.08;
+}
+
+.tile-map__label {
+  fill: var(--ink);
+  font-size: 1.15px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: -0.02px;
+}
+
+.tile-map__label.is-dark {
+  fill: var(--paper-hi);
+}
+
+/* a small state's callout: its letters beside the map and a hairline to it */
+.tile-map__label--out {
+  fill: var(--ink-soft);
+}
+
+.tile-map__state.is-hover .tile-map__label--out,
+.tile-map__state.is-on .tile-map__label--out {
+  fill: var(--ink);
+}
+
+.tile-map__leader {
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 0.08;
+}
+
+.tile-map__readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-height: 22px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.tile-map__readout > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile-map__clear {
+  flex: none;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  border: 0;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tile-map__clear:hover {
+  color: var(--ink);
+}
+
+.tile-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.tile-map__legend i {
+  --tile-ink: 0%;
+
+  width: 10px;
+  height: 10px;
+  background: color-mix(in srgb, var(--ink) var(--tile-ink), var(--paper-hi));
+}
+
+.tile-map__legend-board {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tile-map__legend .tile-map__legend-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--paper-hi);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-map__fill {
+    transition: none;
+  }
+}

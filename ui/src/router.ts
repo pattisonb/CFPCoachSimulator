@@ -5,7 +5,13 @@ import { flushSync } from "react-dom";
 // from, so the app also works from a sub-path.
 
 /** *tune* Every page's path, relative to ROOT. */
-export const ROUTES = { play: "", game: "play", coachEdit: "coach/edit", programEdit: "program/edit" } as const;
+export const ROUTES = {
+  play: "",
+  game: "play",
+  coachEdit: "coach/edit",
+  programEdit: "program/edit",
+  playerEdit: "player/edit",
+} as const;
 export type Route = keyof typeof ROUTES;
 
 const routeOf = (path: string): Route => {

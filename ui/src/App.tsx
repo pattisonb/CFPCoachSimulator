@@ -1,6 +1,7 @@
 import CoachEdit from "./pages/CoachEdit/index.tsx";
 import Game from "./pages/Game/index.tsx";
 import Home from "./pages/Home/index.tsx";
+import PlayerEdit from "./pages/PlayerEdit/index.tsx";
 import ProgramEdit from "./pages/ProgramEdit/index.tsx";
 import MobileNotSupported from "./pages/MobileNotSupported/index.tsx";
 import { useRoute } from "./router.ts";
@@ -19,6 +20,16 @@ export default function App() {
     );
   if (route === "coachEdit")
     return <CoachEdit theme={theme} onToggleTheme={toggleTheme} teamSlug={params.get("team")} />;
+  if (route === "playerEdit")
+    return (
+      <PlayerEdit
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        seasonId={params.get("season")}
+        team={params.get("team")}
+        player={params.get("player")}
+      />
+    );
   if (route === "programEdit")
     return (
       <ProgramEdit

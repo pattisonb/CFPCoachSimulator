@@ -1044,11 +1044,19 @@ def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
     contact = evaluated = 0
     top = []
     offers = set(rc["offers"].get(viewer, []))
+    board = set(rc["board"])
+    by_state: dict = {}                       # the new UI's tile map: per home state, the class, its blue chips, your board
     for pid in visible:
         p, st = rc["prospects"][pid], seen_status(state, pid, viewer)
         k = str(p.get("stars") or 0)
         if k in stars:
             stars[k] += 1
+        home = (p.get("hometown") or {}).get("state")
+        if home:
+            cell = by_state.setdefault(home, {"n": 0, "blue": 0, "board": 0})
+            cell["n"] += 1
+            cell["blue"] += (p.get("stars") or 0) >= 4
+            cell["board"] += pid in board
         c = (rc["contacts"].get(pid) or {}).get(viewer) or {}
         if c.get("n") or pid in offers:
             contact += 1
@@ -1063,7 +1071,7 @@ def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
     return {"stars": stars, "total": len(visible),
             "footprint": {"board": len(rc["board"]), "contact": contact, "evaluated": evaluated},
             "outlook": {"commits": commits, "spots": commits + sum(max(0, r["need"]) for r in needs.values()), "by_stars": mine},
-            "top": top}
+            "top": top, "by_state": by_state}
 
 
 class class_block:

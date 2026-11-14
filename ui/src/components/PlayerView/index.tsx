@@ -1,6 +1,6 @@
-import { Star } from "@phosphor-icons/react";
+import { PencilSimple, Star } from "@phosphor-icons/react";
 import Face from "../Face/index.tsx";
-import { playerFace } from "../../faces.ts";
+import { lookOf } from "../../faces.ts";
 import { formatClass, ordinal } from "../../format.ts";
 import type { DepthCard, PlayerProfile } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -15,6 +15,8 @@ interface Props {
   error?: string | null;
   /** the season's week names, for when an injured player is back */
   weekLabels?: Record<string, string>;
+  /** open Edit Player Look for him */
+  onEditLook?: () => void;
 }
 
 /** *tune* How many other positions "At Other Positions" lists, best first. */
@@ -31,7 +33,7 @@ const tier = (v: number) => (v >= 80 ? "hi" : v < 50 ? "lo" : "");
  * signs), who he is, where he sits on the depth chart, how he's doing, his traits and every attribute against his
  * ceiling. The card's facts show at once; the profile's parts fill in when it comes.
  */
-export default function PlayerView({ card: p, profile: pr, error, weekLabels }: Props) {
+export default function PlayerView({ card: p, profile: pr, error, weekLabels, onEditLook }: Props) {
   const back = p.injury ? (weekLabels?.[String(p.injury.returns_week)] ?? m.week(p.injury.returns_week)) : null;
   const status = p.injury ? m.injured(p.injury.type, back!) : p.redshirt?.on ? m.redshirting : m.healthy;
   const spot = p.role && p.depth ? m.spot(p.role, ordinal(p.depth), p.starter) : m.notOnChart;
@@ -61,7 +63,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels }: 
     <article className="player-view" aria-label={p.name}>
       <header className="player-view__head">
         <span className="player-view__face">
-          <Face face={playerFace(p.slug, p.position)} scale={6} label="" />
+          <Face face={lookOf(p.face, p.slug, p.position)} scale={6} label="" />
         </span>
         <div className="player-view__who">
           <h2 className="player-view__name">{p.name}</h2>
@@ -91,6 +93,12 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels }: 
             )}
             {p.injury && <span className="player-view__tag player-view__tag--out">{m.out}</span>}
             {p.redshirt?.on && <span className="player-view__tag">{m.rs}</span>}
+            {onEditLook && (
+              <button type="button" className="player-view__edit" onClick={onEditLook}>
+                <PencilSimple size={14} weight="bold" aria-hidden="true" />
+                {m.editLook}
+              </button>
+            )}
           </div>
         </div>
         <div className="player-view__ovr" aria-label={m.overallLabel(p.overall)}>

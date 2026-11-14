@@ -23,6 +23,6 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   }
   const res = await doFetch(path, init);
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(data?.error || data?.detail || `Request failed (${res.status})`);
   return data as T;
 }

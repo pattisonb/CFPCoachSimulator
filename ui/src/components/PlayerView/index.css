@@ -69,6 +69,25 @@
   gap: 1px;
 }
 
+/* Edit Look: a quiet link-like button at the end of the tags */
+.player-view__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  background: transparent;
+  color: var(--ink);
+  border: var(--line) dashed var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 140ms ease-out;
+}
+
+.player-view__edit:hover {
+  border: var(--line) solid var(--ink);
+}
+
 .player-view__tag--out {
   background: var(--ink);
   color: var(--paper-hi);
