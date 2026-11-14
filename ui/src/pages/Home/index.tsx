@@ -20,8 +20,6 @@ interface Props {
 }
 
 // Actions not wired to the game yet: each one is a step in the refactor.
-const notYet = () => {};
-
 // kept between visits to Play, so coming back from another page draws at once
 const rosterCache = new Map<string, RosterPlayer[]>();
 
@@ -177,7 +175,7 @@ export default function Home({ theme, onToggleTheme }: Props) {
               <ul className="home__seasons">
                 {seasons.map((s) => (
                   <li key={s.id}>
-                    <button type="button" className="season-card" onClick={notYet}>
+                    <button type="button" className="season-card" onClick={() => navigate("game", { id: s.id })}>
                       <span className="season-card__name">{s.team_name}</span>
                       <span className="season-card__soft">{m.seasonKind(s)}</span>
                       <span className="season-card__row">

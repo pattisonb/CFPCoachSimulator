@@ -31,8 +31,25 @@ export const titleCase = (s: string) =>
     .join(" ")
     .replace(/colour/gi, (c) => (c[0] === "C" ? "Color" : "color"));
 
-/** *tune* Positions drawn with the widest face shapes. */
-const LINEMEN = new Set(["OL", "DL"]);
+/** *tune* Positions drawn with the widest face shapes: the roster's (OL, DL), the depth chart's roles (LT, DT…) and
+ *  recruiting's (OT, IOL, EDGE), so a recruit keeps his face when he signs. */
+const LINEMEN = new Set([
+  "OL",
+  "OT",
+  "IOL",
+  "OG",
+  "LT",
+  "LG",
+  "C",
+  "RG",
+  "RT",
+  "DL",
+  "DT",
+  "EDGE",
+  "DE",
+  "LEDG",
+  "REDG",
+]);
 /** *tune* Linemen pick from the last this-many face shapes (the widest); skill players never from the last SKILL_SKIP. */
 const LINEMAN_SHAPES = 3;
 const SKILL_SKIP = 2;
@@ -48,11 +65,12 @@ function hash(s: string): number {
 }
 
 /**
- * A roster player's face, the same every time for the same player: rolled from their id, then given a face shape
- * that suits the position (linemen the widest shapes, everyone else the narrower ones).
+ * A player's face, the same every time for the same player: rolled from their id, then given a face shape that suits
+ * the position (linemen the widest shapes, everyone else the narrower ones). A recruit's id (r2027-0001) becomes his
+ * roster slug when he signs, so prospect and player share one face.
  */
 export function playerFace(id: string, position: string): Face {
-  const key = `${id}|${position}`;
+  const key = `${id}|${LINEMEN.has(position) ? "line" : "skill"}`;
   const hit = playerFaces.get(key);
   if (hit) return hit;
   const shapes = LINEMEN.has(position) ? SHAPES.slice(-LINEMAN_SHAPES) : SHAPES.slice(0, -SKILL_SKIP);

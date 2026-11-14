@@ -1,0 +1,243 @@
+/* One player, top to bottom: who he is, the facts, his traits, then every attribute against his ceiling. */
+.player-view {
+  container-type: inline-size;
+  display: grid;
+  align-content: start;
+  gap: var(--s3);
+}
+
+/* ---------- the head: face, name, tags, the overall ---------- */
+.player-view__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.player-view__face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 108px;
+  height: 108px;
+  overflow: hidden;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* drawn at 6x and shown at 3x (99 x 102): halving whole pixels keeps them whole, and a narrow card's 2x is a third */
+.player-view__face img {
+  width: 99px;
+  height: 102px;
+}
+
+.player-view__who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.player-view__name {
+  font-size: var(--t-xl);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.player-view__line {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.player-view__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.player-view__tag {
+  padding: 1px 8px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.player-view__stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.player-view__tag--out {
+  background: var(--ink);
+  color: var(--paper-hi);
+  text-transform: uppercase;
+}
+
+.player-view__ovr {
+  display: grid;
+  justify-items: center;
+  flex: none;
+  margin-left: auto;
+  padding: var(--s1) var(--s2);
+  border: var(--line) solid var(--ink);
+  color: var(--ink-soft);
+}
+
+.player-view__ovr-value {
+  color: var(--ink);
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+/* ---------- the facts: a grid of label over value ---------- */
+.player-view__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s2) var(--s3);
+  padding-block: var(--s2);
+  border-block: var(--line) solid var(--line-soft);
+}
+
+.player-view__facts dt {
+  color: var(--ink-soft);
+}
+
+.player-view__facts dd {
+  font-weight: 700;
+}
+
+.player-view__soft {
+  color: var(--ink-soft);
+}
+
+.player-view__kicker {
+  margin-bottom: var(--s1);
+  color: var(--ink-soft);
+}
+
+/* ---------- traits, the goal, other positions ---------- */
+.player-view__extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3) var(--s4);
+}
+
+.player-view__traits,
+.player-view__elsewhere {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  list-style: none;
+}
+
+/* a trait: its name over its tier; the tier sets how strong the frame reads */
+.player-view__trait {
+  display: grid;
+  padding: 4px 10px;
+  border: var(--line) solid var(--ink-soft);
+}
+
+.player-view__trait small {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.player-view__trait--t3 {
+  border-color: var(--ink);
+}
+
+.player-view__trait--t4 {
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.player-view__goal {
+  display: grid;
+  font-size: var(--t-sm);
+}
+
+.player-view__elsewhere li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 10px;
+  border: var(--line) solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+/* ---------- attributes: a column per group; each bar shows the rating, the ceiling faint behind it ---------- */
+.player-view__attrs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s3) var(--s4);
+}
+
+.player-view__group {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.player-view__bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 26px;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+}
+
+.player-view__bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-view__bar-track {
+  position: relative;
+  height: 8px;
+  border: var(--line) solid var(--ink);
+}
+
+.player-view__bar-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.player-view__bar-ceiling {
+  background: var(--line-soft);
+}
+
+.player-view__bar-fill {
+  background: var(--ink);
+}
+
+.player-view__bar-fill.lo {
+  background: var(--ink-soft);
+}
+
+.player-view__bar-value {
+  text-align: right;
+}
+
+/* low ratings read soft (high ones keep the ink: the design has no color for "good") */
+.player-view .lo {
+  color: var(--ink-soft);
+}
+
+/* a narrow card: the face at 2x and a smaller name, so the head stays one row */
+@container (width < 560px) {
+  .player-view__face {
+    width: 76px;
+    height: 76px;
+  }
+
+  .player-view__face img {
+    width: 66px;
+    height: 68px;
+  }
+
+  .player-view__name {
+    font-size: var(--t-lg);
+  }
+}

@@ -7,10 +7,14 @@ export const messages = {
   preview: "Your coach",
   randomize: "Randomize",
   save: "Save Coach",
+  /** opened for a team: save the coach and enter the game */
+  confirm: "Confirm and Play",
   saving: "Saving…",
+  starting: "Starting…",
+  startError: (msg: string) => `Couldn't start the season: ${msg}.`,
   saved: (name: string) => `Saved ${name}.`,
   saveError: (msg: string) => `Couldn't save the coach: ${msg}.`,
-  needName: "Give your coach a first and last name to save.",
+  needName: "Give your coach a first and last name to go on.",
 
   firstName: "First Name",
   lastName: "Last Name",

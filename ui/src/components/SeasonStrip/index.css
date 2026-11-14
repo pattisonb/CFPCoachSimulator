@@ -1,0 +1,134 @@
+/* The season across the top: arrows at both ends, a row of week tiles between (scrolls sideways, no bar). */
+.season-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+
+.season-strip__arrow {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  margin-bottom: 6px; /* level with the tiles above the list's shadow room */
+  padding: 0;
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid transparent;
+  cursor: pointer;
+}
+
+.season-strip__arrow:disabled {
+  color: var(--line-soft);
+  cursor: default;
+}
+
+.season-strip__arrow:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.season-strip__list {
+  position: relative; /* the tiles' offsets are measured from here */
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0 6px 6px 0; /* room for the next game's shadow */
+  list-style: none;
+  scrollbar-width: none;
+}
+
+/* one week: its name, the opponent, the result or the date */
+.season-strip__game {
+  display: grid;
+  flex: none;
+  align-content: center;
+  gap: 2px;
+  width: 112px;
+  padding: 6px var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--line-soft);
+}
+
+.season-strip__game.is-bye {
+  background: transparent;
+  border-style: dashed;
+}
+
+.season-strip__game.is-next {
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.season-strip__week {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.season-strip__week-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.season-strip__tag {
+  padding: 0 4px;
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.season-strip__opp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.season-strip__opp--bye {
+  color: var(--ink-soft);
+}
+
+.season-strip__swatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: var(--tile);
+  border: 1px solid var(--ink);
+}
+
+.season-strip__venue,
+.season-strip__rank {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.season-strip__abbr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.season-strip__line {
+  min-height: 18px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+.season-strip__game.is-won .season-strip__line,
+.season-strip__game.is-lost .season-strip__line {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.season-strip__game.is-lost .season-strip__line {
+  color: var(--ink-soft);
+}

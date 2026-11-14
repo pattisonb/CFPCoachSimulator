@@ -1,0 +1,430 @@
+/* The game's sidebar. The slot is its place in the page's grid (its width animates between the modes); the nav
+   fills it, or, hidden, floats at the window's left edge and slides out when it peeks.
+
+   Every icon (logo, team swatch, sections, foot rows) is centered on the same line, 26 px into the rail, in every
+   mode, so minimizing only narrows the sidebar and fades the names: nothing jumps. */
+.game-nav-slot {
+  --nav-pad: 12px; /* *tune* the sidebar's side padding */
+  --nav-rail: 52px; /* the minimized rail's inner width: a 40 px swatch in a 4 px framed card */
+  --nav-open: 260px; /* *tune* the open sidebar's width */
+  --nav-ease: 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  --nav-quick: 140ms ease-out; /* hover and pick feedback */
+  --nav-hover: color-mix(in srgb, var(--ink) 9%, transparent); /* *tune* the hover tint */
+
+  position: relative;
+  width: var(--nav-open);
+  height: 100%;
+  transition: width var(--nav-ease);
+}
+
+.game-nav-slot--rail {
+  width: calc(var(--nav-rail) + 2 * var(--nav-pad) + var(--line));
+}
+
+.game-nav-slot--hidden {
+  width: 0;
+}
+
+/* hidden: the strip at the left edge that brings it back */
+.game-nav-slot__edge {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 19;
+  width: 12px;
+}
+
+.game-nav {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  overflow: hidden;
+  padding: var(--s3) var(--nav-pad);
+  background: var(--paper);
+  border-right: var(--line) solid var(--ink);
+  transition:
+    transform var(--nav-ease),
+    box-shadow var(--nav-ease);
+}
+
+.game-nav-slot--hidden .game-nav {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  width: var(--nav-open);
+  transform: translateX(calc(-100% - 12px));
+}
+
+.game-nav-slot--hidden .game-nav.is-peeking {
+  transform: none;
+  box-shadow: 8px 0 0 var(--shadow);
+}
+
+.game-nav svg {
+  flex: none;
+}
+
+/* names: one line, fading out as it minimizes */
+.game-nav__text,
+.game-nav__name,
+.game-nav__who {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 160ms;
+}
+
+.game-nav__who {
+  display: grid;
+  min-width: 0;
+}
+
+/* the brand name: two lines at most, so the controls fit beside it */
+.game-nav__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.is-rail .game-nav__text,
+.is-rail .game-nav__name,
+.is-rail .game-nav__who {
+  opacity: 0;
+}
+
+/* ---------- top: the logo, the name, and the sidebar's own controls ---------- */
+.game-nav__brand {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s2);
+  height: 40px;
+  padding-left: 6px; /* centers the 40 px logo on the icon line */
+}
+
+.game-nav__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  background: var(--logo-bg);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.game-nav__dock {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+/* an icon alone (the top's controls) */
+.game-nav__tool {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  border: var(--line) solid transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--nav-quick),
+    color var(--nav-quick);
+}
+
+.game-nav__tool:hover {
+  background: var(--nav-hover);
+  color: var(--ink);
+}
+
+/* minimized: Expand over the logo, shown on hover or keyboard focus */
+.game-nav__expand.game-nav__tool {
+  position: absolute;
+  top: 0;
+  left: 6px;
+  width: 40px;
+  height: 40px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border-color: var(--ink);
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.game-nav__brand:hover .game-nav__expand,
+.game-nav__brand .game-nav__expand:focus-visible {
+  opacity: 1;
+}
+
+/* ---------- your team: a raised card; minimized, the swatch alone ---------- */
+.game-nav__team {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s2);
+  padding: 4px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  transition:
+    background-color var(--nav-ease),
+    border-color var(--nav-ease),
+    box-shadow var(--nav-ease);
+}
+
+.is-rail .game-nav__team {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.game-nav__swatch {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+  transition: box-shadow var(--nav-ease);
+}
+
+.is-rail .game-nav__swatch {
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.game-nav__team-name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.game-nav__team-line {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+/* ---------- the sections ---------- */
+.game-nav__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+  scrollbar-width: none;
+}
+
+/* a group's name; minimized, a hairline in its place (the first group needs none) */
+.game-nav__group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 28px;
+  margin-top: var(--s2);
+  color: var(--ink-soft);
+  border-top: var(--line) solid transparent;
+}
+
+.game-nav__group:first-child {
+  margin-top: 0;
+}
+
+.is-rail .game-nav__group {
+  border-top-color: var(--line-soft);
+}
+
+.is-rail .game-nav__group:first-child {
+  display: none;
+}
+
+.game-nav__fold {
+  padding: 0;
+  background: none;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  cursor: pointer;
+}
+
+.game-nav__fold:hover {
+  color: var(--ink);
+}
+
+.game-nav__fold svg {
+  transition: transform 160ms;
+}
+
+/* minimized, the caret alone, on the icon line */
+.is-rail .game-nav__fold {
+  justify-content: flex-end;
+  padding-right: 19px;
+}
+
+.game-nav__fold[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
+}
+
+.game-nav__list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+
+.game-nav__list[hidden] {
+  display: none;
+}
+
+/* one row (a section, or a foot row): icon and name. Hover tints it; the open section is filled in ink. Minimized,
+   each row narrows to a square around its icon, inside the rail, so its edges never meet the sidebar's. */
+.game-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: 36px;
+  margin-left: 0;
+  padding: 0 14px; /* the 20 px icon on the icon line */
+  overflow: hidden;
+  background: transparent;
+  color: var(--ink);
+  border: var(--line) solid transparent;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--nav-quick),
+    color var(--nav-quick),
+    width var(--nav-ease),
+    margin var(--nav-ease),
+    padding var(--nav-ease);
+}
+
+.is-rail .game-nav__item {
+  width: 44px;
+  margin-left: 4px; /* 4 + 2 border + 10 padding: the icon stays on its line */
+  padding: 0 10px;
+}
+
+.game-nav__item[aria-disabled="true"] {
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.game-nav__item:hover {
+  background: var(--nav-hover);
+}
+
+.game-nav__item:active:not([aria-disabled="true"]) {
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.game-nav__item[aria-current="page"] {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+/* ---------- the foot: Settings, the Dark Mode switch, Back to Main Menu ---------- */
+.game-nav__foot {
+  display: grid;
+  gap: 2px;
+  padding-top: var(--s2);
+  border-top: var(--line) solid var(--line-soft);
+}
+
+/* a square pixel switch at the row's end: the knob slides right and the track fills when on */
+.game-nav__switch {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  margin-left: auto;
+  border: var(--line) solid currentcolor;
+  transition:
+    background-color 160ms,
+    opacity 160ms;
+}
+
+.is-rail .game-nav__switch {
+  opacity: 0;
+}
+
+.game-nav__switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  background: currentcolor;
+  transition: transform 160ms;
+}
+
+[aria-checked="true"] > .game-nav__switch {
+  background: var(--ink);
+}
+
+[aria-checked="true"] > .game-nav__switch::after {
+  background: var(--paper);
+  transform: translateX(14px);
+}
+
+/* ---------- minimized: the one tooltip beside the rail ---------- */
+
+/* an ink label with a pixel notch pointing at its icon; it fades and slides in, and glides between icons */
+.game-nav__tip {
+  position: fixed;
+  z-index: 30;
+  padding: 5px 10px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  box-shadow: 3px 3px 0 var(--shadow);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(10px, -50%);
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
+}
+
+.game-nav__tip::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  border-block: 6px solid transparent;
+  border-right: 6px solid var(--ink);
+  transform: translateY(-50%);
+}
+
+.game-nav__tip.is-shown {
+  opacity: 1;
+  transform: translate(14px, -50%);
+}
+
+.game-nav__tip.is-gliding {
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out,
+    top 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-nav__tip,
+  .game-nav-slot,
+  .game-nav,
+  .game-nav *,
+  .game-nav *::after {
+    transition: none;
+  }
+}

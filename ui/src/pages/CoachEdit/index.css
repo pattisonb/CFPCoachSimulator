@@ -35,6 +35,11 @@
   margin-top: auto;
 }
 
+/* Confirm and Play needs the full width: the two buttons stack */
+.coach__actions--stacked {
+  grid-template-columns: 1fr;
+}
+
 .coach__actions .btn {
   min-width: 0;
   padding: 0 var(--s2);

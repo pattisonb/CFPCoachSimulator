@@ -4,7 +4,7 @@
   --paper: #f7f7f5;
   --paper-hi: #fff;
   --ink: #37352f;
-  --ink-soft: #787774;
+  --ink-soft: #64635e; /* *tune* secondary text: about 6:1 on white */
   --line-soft: #e9e9e7; /* hairlines between rows */
   --shadow: #37352f; /* the hard pixel shadow under cards and buttons */
   --shadow-soft: #787774;
@@ -37,7 +37,7 @@
   --paper: #191919;
   --paper-hi: #202020;
   --ink: #d4d4d4;
-  --ink-soft: #9b9b9b;
+  --ink-soft: #b8b8b8; /* *tune* secondary text: about 9:1 on the window */
   --line-soft: #2f2f2f;
   --shadow: #0f0f0f;
   --shadow-soft: #0f0f0f;

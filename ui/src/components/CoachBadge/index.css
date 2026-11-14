@@ -1,0 +1,81 @@
+/* Your coach at the game's top right: a raised card, the face in a tile, then name, role and energy. */
+.coach-badge {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s2);
+  padding: 6px var(--s2) 6px 6px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.coach-badge__face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px; /* the face at 2x (66 x 68), pixel-sharp */
+  height: 72px;
+  overflow: hidden;
+  background: var(--tile);
+}
+
+/* dark: a step lighter than the tile, so the face stands off the card without a frame */
+:root[data-theme="dark"] .coach-badge__face {
+  background: #5a5a5a;
+}
+
+.coach-badge__who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.coach-badge__name {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.coach-badge__role {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+/* ENERGY ▮▮▮▮▮▮▮▯▯▯ 105/150 */
+.coach-badge__energy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.coach-badge__energy-label {
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.coach-badge__bar {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: var(--line) solid var(--ink);
+}
+
+.coach-badge__bar span {
+  width: 8px;
+  height: 10px;
+  background: var(--line-soft);
+}
+
+.coach-badge__bar span.is-on {
+  background: var(--ink);
+}
+
+.coach-badge__value {
+  min-width: 56px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}

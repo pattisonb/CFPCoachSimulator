@@ -1,0 +1,17 @@
+export const messages = {
+  brand: "Pocket College Football",
+  navLabel: "Game Sections",
+  career: "Your Program",
+  league: "League",
+  noTeam: "No Team",
+  teamLine: (record: string, week: number) => `${record} · Week ${week}`,
+  settings: "Settings",
+  settingsSoon: "Settings: Coming Soon",
+  soon: "Coming Soon: Download Career and more.",
+  exit: "Back to Main Menu",
+  minimize: "Minimize Sidebar",
+  hide: (shortcut: string) => `Hide Sidebar (${shortcut})`,
+  expand: "Expand Sidebar",
+  keepOpen: "Keep Sidebar Open",
+  darkMode: "Dark Mode",
+} as const;
