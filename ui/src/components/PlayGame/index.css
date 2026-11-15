@@ -1,0 +1,74 @@
+/* Play Game Day: the two sides side by side with Swap between them, a line on what happens, then the buttons. */
+.play-game {
+  display: grid;
+  gap: var(--s3);
+}
+
+.play-game__sides {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--s2);
+}
+
+.play-game__side {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.play-game__label {
+  color: var(--ink-soft);
+}
+
+.play-game__team {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.play-game__swatch {
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.play-game__select {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--control);
+  padding: 0 8px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.play-game__swap {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: var(--control);
+  padding: 0;
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  cursor: pointer;
+}
+
+.play-game__swap:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.play-game__swap:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.play-game__note {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.play-game__error {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}

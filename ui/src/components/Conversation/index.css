@@ -1,0 +1,659 @@
+/* A call or in-home visit, played like a chat: a head (who, where, the three steps), the log scrolling on its own, a
+   dock with the step you're on. The window keeps one height the whole way through, so nothing jumps. */
+
+/* ---------- the head ---------- */
+.talk-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s3);
+  flex: 1;
+  min-width: 0;
+}
+
+.talk-head__face {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.talk-head__where {
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--paper-hi);
+}
+
+.talk-head__who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.talk-head__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+}
+
+/* the line is live: a small blinking square, out once it's over */
+.talk-head__live {
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  animation: talk-blink 1.4s steps(2, jump-none) infinite;
+}
+
+.talk-head__live.is-off {
+  background: var(--ink-soft);
+  animation: none;
+}
+
+.talk-head__name {
+  overflow: hidden;
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.talk-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* Open, Listen, Pitch: a square for each, filled when done, bold for the one you're on */
+.talk-steps {
+  display: flex;
+  gap: 14px;
+  margin: 0 var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.talk-steps li {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 240ms ease-out;
+}
+
+.talk-steps__box {
+  width: 14px;
+  height: 14px;
+  border: var(--line) solid currentcolor;
+  transition:
+    background-color 240ms ease-out,
+    transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.talk-steps .is-now {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.talk-steps .is-now .talk-steps__box {
+  transform: scale(1.2);
+}
+
+.talk-steps .is-done .talk-steps__box {
+  background: currentcolor;
+}
+
+/* ---------- the body ---------- */
+.talk {
+  --talk-height: 600px; /* *tune* the body's height, at most the screen's */
+
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: min(var(--talk-height), 100vh - 240px);
+  min-height: 0;
+  margin: 0 calc(-1 * var(--s4)) calc(-1 * var(--s4));
+  border-top: var(--line) solid var(--ink);
+}
+
+.talk__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* ---------- the log ---------- */
+.talk__log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: var(--s3) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  background-color: var(--paper);
+  background-image: radial-gradient(color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.talk__line,
+.talk__note {
+  animation: talk-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.talk__line {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  max-width: 78%;
+}
+
+.talk__line.is-you {
+  align-self: flex-end;
+}
+
+.talk__face {
+  width: 40px;
+  height: 40px;
+}
+
+.talk__face.is-blank {
+  visibility: hidden;
+}
+
+.talk__bubble {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.talk__bubble p {
+  font-size: var(--t-md);
+  line-height: 1.5;
+}
+
+.talk__line.is-you .talk__bubble {
+  background: var(--ink);
+  color: var(--paper-hi);
+  box-shadow: 3px 3px 0 var(--shadow-soft);
+}
+
+.talk__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.talk__line.is-family {
+  padding-left: 50px;
+}
+
+.talk__line.is-family .talk__face {
+  display: none;
+}
+
+.talk__line.is-family .talk__bubble {
+  border-style: dashed;
+  box-shadow: none;
+}
+
+/* his cue and his reaction: the lines the conversation turns on */
+.talk__tag {
+  padding: 1px 6px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+}
+
+.talk__line.is-cue .talk__bubble,
+.talk__line.is-hit .talk__bubble {
+  border-width: 3px;
+  box-shadow: 5px 5px 0 var(--shadow);
+}
+
+.talk__line.is-hit .talk__bubble {
+  animation: talk-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.talk__line.is-quiet .talk__bubble p,
+.talk__line.is-polite .talk__bubble p,
+.talk__line.is-guarded .talk__bubble p {
+  color: var(--ink-soft);
+}
+
+.talk__line.is-quiet .talk__tag,
+.talk__line.is-polite .talk__tag,
+.talk__line.is-guarded .talk__tag {
+  background: var(--ink-soft);
+}
+
+/* he's typing: three blocks hopping in turn */
+.talk__dots {
+  display: flex;
+  gap: 5px;
+  padding: 14px 16px;
+}
+
+.talk__dot {
+  width: 7px;
+  height: 7px;
+  background: var(--ink);
+  animation: talk-hop 900ms ease-in-out infinite;
+}
+
+.talk__dot:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.talk__dot:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+/* the room: who decides, his family's ask, a tired line */
+.talk__note {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  align-self: center;
+  max-width: 80%;
+  padding: 6px 14px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  border: var(--line) dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  font-size: var(--t-sm);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ---------- the dock ---------- */
+.talk__dock {
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4) 0;
+  background: var(--paper-hi);
+  border-top: var(--line) solid var(--ink);
+}
+
+.talk__panel {
+  display: grid;
+  align-content: start;
+  gap: var(--s2);
+  min-height: 132px;
+  animation: talk-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: opacity 200ms ease-out;
+}
+
+/* while he talks the step waits, dimmed */
+.talk__dock.is-waiting .talk__panel {
+  opacity: 0.4;
+}
+
+.talk__step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.talk__step-title {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+/* the topics: a card each, your pull in three blocks */
+.talk__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.talk__topic {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--control);
+  padding: 6px 12px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 2px 2px 0 var(--shadow);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    color 140ms ease-out,
+    box-shadow 140ms ease-out,
+    transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.talk__topic:disabled {
+  cursor: default;
+}
+
+.talk__topic.is-full {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.talk__topic:hover:not(:disabled, .is-full, .is-on) {
+  box-shadow: 4px 4px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.talk__topic.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+  box-shadow: 4px 4px 0 var(--shadow-soft);
+  transform: translate(-2px, -2px);
+}
+
+/* what he cares about (thick edge), and what he just brought up (dashed) */
+.talk__topic.is-known {
+  border-width: 3px;
+}
+
+.talk__topic.is-cue {
+  border-style: dashed;
+}
+
+.talk__num {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  animation: talk-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.talk__pull {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.talk__pull i {
+  width: 6px;
+  height: 10px;
+  border: 1px solid currentcolor;
+  opacity: 0.5;
+}
+
+.talk__pull i.is-on {
+  background: currentcolor;
+  opacity: 1;
+}
+
+.talk__mark {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.talk__topic.is-on .talk__mark {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* his question's three answers */
+.talk__answers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.talk__answer {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 92px;
+  padding: 10px 12px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    box-shadow 140ms ease-out,
+    transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.talk__answer b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.talk__answer span {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+
+.talk__answer:disabled {
+  cursor: default;
+}
+
+.talk__answer:hover:not(:disabled) {
+  box-shadow: 5px 5px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.talk__answer:active:not(:disabled) {
+  box-shadow: 1px 1px 0 var(--shadow);
+  transform: translate(2px, 2px);
+}
+
+/* how it went: a stamp and a word */
+.talk__result {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s1) 0;
+}
+
+.talk__stamp {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow-soft);
+  animation: talk-stamp 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.talk__result.is-quiet .talk__stamp,
+.talk__result.is-polite .talk__stamp,
+.talk__result.is-guarded .talk__stamp,
+.talk__result.is-tired .talk__stamp {
+  background: var(--paper-hi);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.talk__result-text {
+  display: grid;
+  gap: 4px;
+  animation: talk-in 360ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.talk__result-text .label {
+  color: var(--ink-soft);
+}
+
+.talk__result-word {
+  font-size: var(--t-2xl);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.talk__error {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.talk__acts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-height: 76px;
+  padding: var(--s2) 0 var(--s3);
+}
+
+.talk__go {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-left: auto;
+}
+
+/* your opening's three picks, filling as you choose */
+.talk__slots {
+  display: flex;
+  gap: 4px;
+}
+
+.talk__slots i {
+  width: 14px;
+  height: 14px;
+  border: var(--line) solid var(--ink);
+  transition: background-color 160ms ease-out;
+}
+
+.talk__slots i.is-on {
+  background: var(--ink);
+  animation: talk-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.talk__hang {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--control);
+  padding: 0 4px;
+  background: none;
+  color: var(--ink-soft);
+  border: 0;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 140ms ease-out;
+}
+
+.talk__hang:hover {
+  color: var(--ink);
+}
+
+@keyframes talk-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes talk-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+@keyframes talk-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-12deg);
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(-3deg);
+  }
+}
+
+@keyframes talk-hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes talk-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@media (width <= 760px) {
+  .talk-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .talk-steps {
+    display: none;
+  }
+
+  .talk__answers {
+    grid-template-columns: 1fr;
+  }
+
+  .talk__line {
+    max-width: 94%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talk__line,
+  .talk__note,
+  .talk__panel,
+  .talk__num,
+  .talk__stamp,
+  .talk__result-text,
+  .talk__line.is-hit .talk__bubble,
+  .talk__slots i.is-on,
+  .talk__dot,
+  .talk-head__live {
+    animation: none;
+  }
+
+  .talk__topic,
+  .talk__answer,
+  .talk-steps__box {
+    transition: none;
+  }
+}

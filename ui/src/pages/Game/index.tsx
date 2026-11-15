@@ -4,7 +4,7 @@ import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
 import DepthChart from "../../components/DepthChart/index.tsx";
 import Office from "../../components/Office/index.tsx";
-import Prospects from "../../components/Prospects/index.tsx";
+import RecruitingHub, { type HubTab } from "../../components/RecruitingHub/index.tsx";
 import GameNav, { type NavTeam } from "../../components/GameNav/index.tsx";
 import SeasonStrip from "../../components/SeasonStrip/index.tsx";
 import { api } from "../../api.ts";
@@ -15,7 +15,7 @@ import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
 import type { Theme } from "../../theme.ts";
-import type { RecruitingWeek, SavedCoach, SeasonCoach, SeasonSummary, TeamCard } from "../../types.ts";
+import type { RecruitingBoard, SavedCoach, SeasonCoach, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -36,6 +36,13 @@ type Load =
 
 const coachName = (c: SeasonCoach) => (c.existing ? c.name : `${c.first_name} ${c.last_name}`);
 
+/** How each built section sits in the window: edge to edge with its own columns, or padded. */
+const PANE: Record<string, string> = {
+  office: "",
+  recruiting: "",
+  depth: "game__pane--padded",
+};
+
 /**
  * /play: the game itself. Its own layout, no site header: the GameNav sidebar on the left; on the right, the
  * season's schedule and your coach (face, energy) across the top, then the open section's screen. Picking a section
@@ -44,11 +51,20 @@ const coachName = (c: SeasonCoach) => (c.existing ? c.name : `${c.first_name} ${
  */
 export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Props) {
   const [section, setSection] = useState(() => sectionOf(sectionKey));
+  // Recruiting's tab: the Board, or Prospects (?tab=; an old ?section=prospects link opens it, sectionOf maps it)
+  const [hubTab, setHubTab] = useState<HubTab>(() =>
+    sectionKey === "prospects" || new URLSearchParams(location.search).get("tab") === "prospects"
+      ? "prospects"
+      : "board",
+  );
+  // every section opened stays mounted (hidden when not shown): going back is instant and keeps its filters,
+  // page, picks and scroll
+  const [visited, setVisited] = useState<string[]>(() => [sectionOf(sectionKey).key]);
   const [navMode, setNavMode] = useNavMode();
   const [lastShown, setLastShown] = useState<"open" | "rail">(navMode === "rail" ? "rail" : "open");
   const [load, setLoad] = useState<Load>(seasonId ? { kind: "loading" } : { kind: "none" });
   const [teams, setTeams] = useState<TeamCard[]>(() => cachedTeams() ?? []);
-  const [recruiting, setRecruiting] = useState<RecruitingWeek | null>(null);
+  const [recruiting, setRecruiting] = useState<RecruitingBoard | null>(null);
   const [savedFace, setSavedFace] = useState<FaceSpec | null>(null);
 
   useEffect(() => {
@@ -64,13 +80,21 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     api<SeasonSummary>(`/api/season/${seasonId}`)
       .then((season) => live && setLoad({ kind: "ready", season }))
       .catch((e: Error) => live && setLoad({ kind: "error", msg: e.message }));
-    api<RecruitingWeek>(`/api/season/${seasonId}/recruiting`)
-      .then((r) => live && setRecruiting(r))
-      .catch(() => live && setRecruiting(null));
     return () => {
       live = false;
     };
   }, [seasonId]);
+
+  // the week's recruiting board (and with it Energy): on load, after every recruiting action and after a sim. Every
+  // change to the board goes through here, so Recruiting never refetches just because it was opened
+  const reloadRecruiting = useCallback(async () => {
+    if (!seasonId) return;
+    const r = await api<RecruitingBoard>(`/api/season/${seasonId}/recruiting`);
+    setRecruiting(r);
+  }, [seasonId]);
+  useEffect(() => {
+    reloadRecruiting().catch(() => setRecruiting(null));
+  }, [reloadRecruiting]);
 
   // after a sim: the season and the week's recruiting again, in place (no loading screen)
   const refresh = useCallback(() => {
@@ -78,10 +102,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     api<SeasonSummary>(`/api/season/${seasonId}`)
       .then((season) => setLoad({ kind: "ready", season }))
       .catch(() => {});
-    api<RecruitingWeek>(`/api/season/${seasonId}/recruiting`)
-      .then(setRecruiting)
-      .catch(() => {});
-  }, [seasonId]);
+    reloadRecruiting().catch(() => {});
+  }, [seasonId, reloadRecruiting]);
   const sim = useSim(seasonId, refresh);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
 
@@ -126,13 +148,26 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     return () => window.removeEventListener("keydown", onKey);
   }, [navMode, lastShown, setNavMode]);
 
+  // the address names the section and, in Recruiting, the Prospects tab; the rest of it (?id=) stays
+  const writeAddress = (key: string, tab: HubTab) => {
+    const params = new URLSearchParams(location.search);
+    params.set("section", key);
+    if (key === "recruiting" && tab === "prospects") params.set("tab", tab);
+    else params.delete("tab");
+    replaceParams("game", Object.fromEntries(params));
+  };
+
+  const openTab = (tab: HubTab) => {
+    setHubTab(tab);
+    writeAddress("recruiting", tab);
+  };
+
   const open = (key: string) => {
     const next = sectionOf(key);
+    if (next.key === section.key) return;
     setSection(next);
-    // keeps the rest of the address (?id=)
-    const params = new URLSearchParams(location.search);
-    params.set("section", next.key);
-    replaceParams("game", Object.fromEntries(params));
+    setVisited((v) => (v.includes(next.key) ? v : [...v, next.key]));
+    writeAddress(next.key, hubTab);
   };
 
   const toMenu = (
@@ -176,59 +211,73 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           )}
         </div>
 
-        {season && section.key === "office" ? (
-          <section
-            key={section.key}
-            className="game__body game__body--fill game__body--flush game__section"
-            aria-label={section.label}
-          >
-            <Office season={season} recruiting={recruiting} teams={bySlug} sim={sim} onSection={open} />
-          </section>
-        ) : season && section.key === "prospects" ? (
-          <section
-            key={section.key}
-            className="game__body game__body--fill game__body--flush game__section"
-            aria-label={section.label}
-          >
-            <Prospects key={season.current_week} seasonId={season.id} year={season.year} />
-          </section>
-        ) : season && section.key === "depth" ? (
-          <section key={section.key} className="game__body game__body--fill game__section" aria-label={section.label}>
-            <DepthChart
-              key={season.current_week}
-              seasonId={season.id}
-              team={season.team}
-              weekLabels={season.week_labels}
-            />
-          </section>
-        ) : season ? (
-          // keyed on the section, so each one fades in as it opens
-          // the sidebar names the open section, so the section's screen takes the whole space
-          <section key={section.key} className="game__body game__section" aria-label={section.label}>
-            <div className="game__empty">
-              <section.icon size={32} weight="bold" aria-hidden="true" />
-              <h1 className="game__empty-title">{m.notBuilt(section.label)}</h1>
-              <p className="game__blurb">{section.blurb}</p>
-              <p className="game__blurb">{m.notBuiltText}</p>
-            </div>
+        {season ? (
+          // one window for every section: it never changes; the sections stack in it and cross-fade (Game/index.css)
+          <section className="game__body" aria-label={section.label}>
+            {visited.map((key) => {
+              const sec = sectionOf(key);
+              return (
+                <div
+                  key={key}
+                  className={["game__pane", PANE[key] ?? "game__pane--center", key === section.key && "is-shown"]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-hidden={key !== section.key}
+                >
+                  {key === "office" ? (
+                    <Office season={season} recruiting={recruiting} teams={bySlug} sim={sim} onSection={open} />
+                  ) : key === "recruiting" ? (
+                    <RecruitingHub
+                      seasonId={season.id}
+                      team={season.team}
+                      year={season.year}
+                      weekLabels={season.week_labels}
+                      board={recruiting}
+                      reload={reloadRecruiting}
+                      tab={hubTab}
+                      onTab={openTab}
+                      weekKey={season.current_week}
+                      coach={coach && face ? { name: coachName(coach), face } : null}
+                    />
+                  ) : key === "depth" ? (
+                    <DepthChart
+                      key={season.current_week}
+                      seasonId={season.id}
+                      team={season.team}
+                      weekLabels={season.week_labels}
+                    />
+                  ) : (
+                    // the sidebar names the open section, so the section's screen takes the whole space
+                    <div className="game__empty">
+                      <sec.icon size={32} weight="bold" aria-hidden="true" />
+                      <h1 className="game__empty-title">{m.notBuilt(sec.label)}</h1>
+                      <p className="game__blurb">{sec.blurb}</p>
+                      <p className="game__blurb">{m.notBuiltText}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </section>
         ) : (
           <section className="game__body">
-            <div className="game__empty" role="status">
-              {load.kind === "loading" && <p className="game__blurb">{m.loading}</p>}
-              {load.kind === "error" && (
-                <>
-                  <p className="game__empty-title">{m.loadError(load.msg)}</p>
-                  {toMenu}
-                </>
-              )}
-              {load.kind === "none" && (
-                <>
-                  <p className="game__empty-title">{m.noSeason}</p>
-                  <p className="game__blurb">{m.noSeasonText}</p>
-                  {toMenu}
-                </>
-              )}
+            <div className="game__pane game__pane--center is-shown">
+              <div className="game__empty" role="status">
+                {load.kind === "loading" && <p className="game__blurb">{m.loading}</p>}
+                {load.kind === "error" && (
+                  <>
+                    <p className="game__empty-title">{m.loadError(load.msg)}</p>
+                    {toMenu}
+                  </>
+                )}
+                {load.kind === "none" && (
+                  <>
+                    <p className="game__empty-title">{m.noSeason}</p>
+                    <p className="game__blurb">{m.noSeasonText}</p>
+                    {toMenu}
+                  </>
+                )}
+              </div>
             </div>
           </section>
         )}

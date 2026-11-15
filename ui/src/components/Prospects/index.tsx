@@ -16,7 +16,7 @@ import Modal from "../Modal/index.tsx";
 import ProspectCard, { Stars, statusOf } from "../ProspectCard/index.tsx";
 import TileMap from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
-import { useMedia } from "../../viewport.ts";
+import { setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import type { ProspectRow, ProspectsView } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -26,10 +26,20 @@ interface Props {
   seasonId: string;
   /** the season's year: the class is the next one */
   year: number;
+  /** the board changed (a star): the Recruiting board loads it again */
+  onBoardChange?: () => void;
+  /** its tab is the one shown (Recruiting's tabs keep both mounted) */
+  active?: boolean;
+  /** how many are on your board: shown again after the Board tab changed it, the stars and your class line load again */
+  boardSize?: number;
+  /** the class's size, once known (the Prospects tab's count) */
+  onClassSize?: (n: number) => void;
 }
 
 /** *tune* Prospects a page. */
 const PAGE = 50;
+/** *tune* Under this width the table drops its Size column and slims the others. */
+const NARROW_TABLE = 1000;
 /** *tune* How long the search waits after a key before it asks the server. */
 const SEARCH_MS = 220;
 
@@ -82,10 +92,22 @@ function Looks({ n }: { n: number }) {
  * map of where the class lives, your needs by position (each one a filter), your class so far and the best
  * uncommitted. A row opens his file (ProspectCard) over the side column.
  */
-export default function Prospects({ seasonId, year }: Props) {
+export default function Prospects({ seasonId, year, onBoardChange, active = true, boardSize, onClassSize }: Props) {
   const [view, setView] = useState<View>("all");
-  // a narrower window: the Size column goes, so the rest fit without scrolling sideways
-  const narrow = useMedia("(width <= 1280px)");
+  // a narrow table (a smaller window, or the sidebar open): the Size column goes and the rest slim down, so the
+  // prospect column keeps its room; measured on the table's own box, not the window's
+  const [narrow, setNarrow] = useState(false);
+  const measure = useRef<ResizeObserver | null>(null);
+  const tableBox = useCallback((el: HTMLDivElement | null) => {
+    measure.current?.disconnect();
+    scroller.current = el;
+    if (!el) return;
+    // a hidden tab measures 0 wide: it keeps the width it had
+    measure.current = new ResizeObserver(([e]) => {
+      if (e.contentRect.width > 0) setNarrow(e.contentRect.width < NARROW_TABLE);
+    });
+    measure.current.observe(el);
+  }, []);
   // the big labeled map, in a window over the page
   const [mapOpen, setMapOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -102,7 +124,7 @@ export default function Prospects({ seasonId, year }: Props) {
   const [note, setNote] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const seq = useRef(0);
-  const scroller = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement | null>(null);
 
   // the search waits for a pause in typing
   useEffect(() => {
@@ -137,18 +159,28 @@ export default function Prospects({ seasonId, year }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+  // shown again after the board changed on the Board tab: this page's stars and counts follow (its own stars
+  // reload it as they land, so only coming back to it checks)
+  const shownBoard = data?.summary.footprint.board;
+  useEffect(() => {
+    if (active && boardSize !== undefined && shownBoard !== undefined && boardSize !== shownBoard) load();
+  }, [active]);
   // block bodies only: newer browsers' scrollTo returns a promise, and an effect may return nothing but its cleanup
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
   }, [page, view, q, group, stars, home, sort]);
 
   const rows = useMemo(() => data?.rows ?? [], [data]);
+  const classTotal = data?.summary.total;
+  useEffect(() => {
+    if (classTotal != null) onClassSize?.(classTotal);
+  }, [classTotal, onClassSize]);
 
   // the board: on or off, in place, then the counts again
   const setBoard = async (r: ProspectRow, on: boolean) => {
     if (!on && r.offered && !window.confirm(m.pullsOffer(r.name))) return;
     try {
-      await api(`/api/season/${seasonId}/board`, { method: "POST", body: { pid: r.id, on } });
+      await setOnBoard(seasonId, [r.id], on);
       setData(
         (d) =>
           d && {
@@ -158,6 +190,7 @@ export default function Prospects({ seasonId, year }: Props) {
       );
       setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
       load();
+      onBoardChange?.();
     } catch (e) {
       setNote(m.boardError((e as Error).message));
     }
@@ -168,7 +201,8 @@ export default function Prospects({ seasonId, year }: Props) {
     const ids = rows.filter((r) => !r.on_board).map((r) => r.id);
     setAdding(true);
     try {
-      for (const pid of ids) await api(`/api/season/${seasonId}/board`, { method: "POST", body: { pid, on: true } });
+      await setOnBoard(seasonId, ids, true);
+      onBoardChange?.();
       setNote(m.added(ids.length));
     } catch (e) {
       setNote(m.boardError((e as Error).message));
@@ -221,14 +255,11 @@ export default function Prospects({ seasonId, year }: Props) {
   );
 
   return (
-    <div className="prospects">
+    <div className={`prospects${narrow ? " is-narrow" : ""}`}>
       {/* ---------- the list ---------- */}
       <section className="prospects__main" aria-label={m.title}>
         <header className="prospects__head">
-          <h1 className="prospects__title">
-            <span>{m.title}</span>
-            <span className="prospects__title-sub">{m.classOf(year + 1, s?.total ?? 0)}</span>
-          </h1>
+          <p className="prospects__lede">{m.classOf(year + 1, s?.total ?? 0)}</p>
           {s && (
             <div className="prospects__class">
               <span className="label">{m.yourClass}</span>
@@ -301,7 +332,7 @@ export default function Prospects({ seasonId, year }: Props) {
           )}
         </div>
 
-        <div className={`prospects__table-wrap${loading ? " is-loading" : ""}`} ref={scroller}>
+        <div className={`prospects__table-wrap${loading ? " is-loading" : ""}`} ref={tableBox}>
           {error ? (
             <p className="prospects__soft prospects__empty">{m.loadError(error)}</p>
           ) : !data ? (

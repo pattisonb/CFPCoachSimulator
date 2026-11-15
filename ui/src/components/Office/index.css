@@ -113,22 +113,6 @@
   white-space: nowrap;
 }
 
-.office__swatch {
-  flex: none;
-  background: var(--tile);
-  border: var(--line) solid var(--ink);
-}
-
-.office__swatch--l {
-  width: 40px;
-  height: 40px;
-}
-
-.office__swatch--s {
-  width: 14px;
-  height: 14px;
-}
-
 /* the line between the two sides: the word, with a rule running out from it */
 .office__vs,
 .office__final {

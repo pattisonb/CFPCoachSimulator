@@ -10,6 +10,14 @@
   overflow: visible;
 }
 
+.modal--sm {
+  width: min(560px, 100vw - 64px);
+}
+
+.modal--talk {
+  width: min(820px, 100vw - 64px);
+}
+
 .modal::backdrop {
   background: color-mix(in srgb, var(--ink) 35%, transparent);
 }

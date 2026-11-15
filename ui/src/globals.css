@@ -95,3 +95,12 @@ input {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+/* a face in its square: the tile color, the ink edge; each place sets the size (and a shadow, if it has one) */
+.face-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+}

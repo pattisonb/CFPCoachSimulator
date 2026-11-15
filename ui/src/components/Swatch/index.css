@@ -1,0 +1,6 @@
+/* A team's colors in a square: its size comes from the component. */
+.swatch {
+  flex: none;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+}

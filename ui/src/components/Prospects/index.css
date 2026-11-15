@@ -1,7 +1,7 @@
 /* Prospects: the class's table on the left (its head, tools, the table scrolling on its own, the pager), and a side
    column with the map and the best uncommitted, or a prospect's file in their place. */
 .prospects {
-  --prospects-side: 340px; /* *tune* */
+  --prospects-side: 380px; /* *tune* the same as the Board's side, so a tab switch keeps the columns */
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--prospects-side);
@@ -34,16 +34,10 @@
   margin-bottom: var(--s1);
 }
 
-.prospects__title {
-  display: grid;
-  font-size: var(--t-xl);
-  line-height: 1.15;
-  text-transform: uppercase;
-}
-
-.prospects__title-sub {
+.prospects__lede {
   color: var(--ink-soft);
   font-size: var(--t-md);
+  text-transform: uppercase;
 }
 
 .prospects__class {
@@ -501,40 +495,41 @@
 
 @media (width <= 1280px) {
   .prospects {
-    --prospects-side: 290px;
+    --prospects-side: 320px;
   }
+}
 
-  .prospects__col-rank {
-    width: 40px;
-  }
+/* a narrow table (the sidebar open, or a smaller window): slimmer columns, and no Size column (the script) */
+.prospects.is-narrow .prospects__col-rank {
+  width: 40px;
+}
 
-  .prospects__col-pos {
-    width: 48px;
-  }
+.prospects.is-narrow .prospects__col-pos {
+  width: 48px;
+}
 
-  .prospects__col-stars {
-    width: 76px;
-  }
+.prospects.is-narrow .prospects__col-stars {
+  width: 76px;
+}
 
-  .prospects__col-status {
-    width: 108px;
-  }
+.prospects.is-narrow .prospects__col-status {
+  width: 108px;
+}
 
-  .prospects__col-int {
-    width: 80px;
-  }
+.prospects.is-narrow .prospects__col-int {
+  width: 80px;
+}
 
-  .prospects__col-sc {
-    width: 72px;
-  }
+.prospects.is-narrow .prospects__col-sc {
+  width: 72px;
+}
 
-  .prospects__col-pot {
-    width: 96px;
-  }
+.prospects.is-narrow .prospects__col-pot {
+  width: 96px;
+}
 
-  .prospects__col-board {
-    width: 52px;
-  }
+.prospects.is-narrow .prospects__col-board {
+  width: 52px;
 }
 
 @media (prefers-reduced-motion: reduce) {

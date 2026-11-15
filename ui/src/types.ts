@@ -409,3 +409,126 @@ export interface ProspectDetail {
   evaluation: { strengths: string[]; solid: string[]; weaknesses: string[]; outlook: string } | null;
   row: ProspectRow;
 }
+
+/** One school on a recruit's list (GET /recruiting → board[].list) */
+export interface ListSchool {
+  school: string;
+  name: string;
+  /** his interest against the leader's, 0 to 1 */
+  bar: number | null;
+  pct: number | null;
+  rank: number | null;
+  offered: boolean;
+  you?: boolean;
+  visit: { week: number; done: boolean; game: { opponent_name: string } | null } | null;
+}
+
+/** One recruit on your board (GET /api/season/{id}/recruiting → board[], coach_career/prospects.py board_row) */
+export interface BoardRow {
+  id: string;
+  name: string;
+  stars: number;
+  display_pos: string;
+  national_rank: number;
+  pos_rank: number;
+  height_display: string;
+  weight_display: string;
+  hometown: { city: string; state: string };
+  archetype: string;
+  /** cold, contact, top, visited, committed */
+  stage: string;
+  committed: string | null;
+  signed: string | null;
+  hard: boolean;
+  school_name: string | null;
+  offered: boolean;
+  /** your offer lands at the week step */
+  offer_landing: boolean;
+  /** your NIL on the table */
+  nil: number;
+  /** his NIL ask of you: a range until a visit pins it */
+  ask: { lo?: number; hi?: number; exact?: number };
+  standing: {
+    place: number | null;
+    of: number;
+    pct: number | null;
+    lo: number | null;
+    hi: number | null;
+    certainty: string;
+  };
+  list: ListSchool[];
+  priorities_known: string[];
+  /** your program's pull on each topic, 0 to 1 */
+  strength: Record<string, number>;
+  done_this_week: string[];
+  hc_week: number | null;
+  visit: { week: number; done: boolean } | null;
+  visit_weeks: { week: number; label: string; opponent_name: string; taken_by: string | null }[];
+  cooled: boolean;
+  cooled_why: string | null;
+  pestering: boolean;
+  no_room: { label: string; tip: string } | null;
+  history: { week: number; kind: string; school?: string; action?: string; line?: string; nil?: number }[];
+  need: number | null;
+  looks: number;
+  /** what he said about each topic you pitched him: hit, weak, not_his, no_read */
+  pitch_marks: Record<string, { mark: string; week?: number; action?: string }>;
+  /** you already promised him the starting job */
+  job_promised: boolean;
+  /** your call or in-home visit this week, open until you pitch */
+  scene: Scene | null;
+}
+
+/** A turn of a call or visit: you, him, someone in his family (with their label), or a note on the room. */
+export interface SceneTurn {
+  who: "you" | "him" | "family" | "note";
+  text: string;
+  label?: string;
+}
+
+/** His question about a named player (or his Package Deal mate), and your answer once given. */
+export interface SceneQuestion {
+  kind: "roster" | "recruit" | "package";
+  text: string;
+  answer: "straight" | "promise" | "deflect" | null;
+  reply: string | null;
+  about: { name: string; position?: string; offered?: boolean };
+  /** a Package Deal's own three answers */
+  answers?: Record<string, { label: string; text: string }>;
+  truthful?: boolean | null;
+}
+
+/** A call or in-home visit as a conversation (coach_career/scenes.py). */
+export interface Scene {
+  id: string;
+  action: "call" | "hc_visit";
+  week: number;
+  turns: SceneTurn[];
+  /** the line he tells you what he cares about in (after your opening), and the topics it points at */
+  cue: { text: string; topics: string[] } | null;
+  question: SceneQuestion | null;
+  /** your opening's three topics, once presented */
+  presented: string[] | null;
+  tired: boolean;
+  /** you promised him the job on this call */
+  job?: boolean;
+}
+
+/** POST /recruit action "pitch": how he took what you led with */
+export interface SceneReaction {
+  kind: "hit" | "polite" | "quiet" | "tired" | "guarded";
+  text: string;
+  /** your line */
+  you: string;
+  revealed: string | null;
+}
+
+/** GET /api/season/{id}/recruiting (the parts the board reads) */
+export interface RecruitingBoard extends RecruitingWeek {
+  week: number;
+  board: BoardRow[];
+  offers: number;
+  offers_left: number;
+  pitches: string[];
+  hours_cost: Record<string, number>;
+}

@@ -2177,6 +2177,20 @@ def _depth_card(state: dict, slug: str):
     return card
 
 
+def _players_by_role(t: dict, players: list[dict]) -> dict[str, list[dict]]:
+    """A team's players at each role in depth order (his depth, then the better player first), and its kick and punt
+    returner as the KR and PR roles. The Depth Chart and the practice field's roster link read the same order."""
+    by_role: dict[str, list[dict]] = {}
+    for p in players:
+        if p.get("role"):
+            by_role.setdefault(p["role"], []).append(p)
+    for group in by_role.values():
+        group.sort(key=lambda p: (p.get("depth") or 99, -player_overall(p)))
+    for role, key in (("KR", "kick_returner"), ("PR", "punt_returner")):
+        by_role[role] = [p for p in players if p.get("slug") == t.get(key)]
+    return by_role
+
+
 def depth_chart_view(state: dict, slug: str) -> dict:
     """A team's depth chart: every role in formation order, players in depth order, with
     class, size, rating and the player's season headline."""
@@ -2185,20 +2199,13 @@ def depth_chart_view(state: dict, slug: str) -> dict:
     t = apply_depth(team_data(state, slug), overrides)
     players = t["offense"] + t["defense"]
     card = _depth_card(state, slug)
-    by_role: dict[str, list[dict]] = {}
-    for p in players:
-        if p.get("role"):
-            by_role.setdefault(p["role"], []).append(p)
-    for role in by_role:
-        by_role[role].sort(key=lambda p: (p.get("depth") or 99, -player_overall(p)))
-    returners = {"KR": [p for p in players if p.get("slug") == t.get("kick_returner")],
-                 "PR": [p for p in players if p.get("slug") == t.get("punt_returner")]}
+    by_role = _players_by_role(t, players)
 
     units = []
     for unit, rows in DEPTH_ROWS:
         out_rows = []
         for role, label in rows:
-            group = returners.get(role) if role in returners else by_role.get(role, [])
+            group = by_role.get(role, [])
             if not group:
                 continue
             out_rows.append({"role": role, "label": label, "starters": role_starters(t, role), "players": [card(p, role) for p in group[:6]]})
@@ -2207,6 +2214,51 @@ def depth_chart_view(state: dict, slug: str) -> dict:
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
             "ratings": t.get("team_ratings", {}), "roster_size": len(players), "units": units,
             "overridden": bool(overrides), "editable": True}
+
+
+# the trait tiers by name, for a roster link's abilities (teamdata/ratings.py TRAIT_TIERS)
+_TIER_NAMES = {v: k for k, v in ratings_v2.TRAIT_TIERS.items()}
+
+
+def playlink_team(state: dict, slug: str) -> dict:
+    """One team in the shape of a Pocket Franchise roster link (docs/PLAY_ON_THE_FIELD.md; the reader is
+    sprite-test/lib/game/roster-link.ts): the depth chart as this season has it, starter first, and every player
+    with his current skills (game_scale's 54, after development) and what his card shows. `_position` and `_look`
+    (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim."""
+    check_fbs(slug)
+    t = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
+    players = t["offense"] + t["defense"]
+    depth = {role: [p["slug"] for p in group] for role, group in _players_by_role(t, players).items() if group}
+
+    looks = player_faces(state, slug)
+
+    def player(p: dict) -> dict:
+        out = {"slug": p["slug"], "name": p["name"], "pos": p.get("role") or p["position"], "skills": list(p.get("skills") or [])}
+        # for the page to draw his face from (lookOf: a saved look, else rolled from slug and position); it puts the
+        # pocket-faces face and skin on the link and drops these two
+        out["_position"] = p["position"]
+        if looks.get(p["slug"]):
+            out["_look"] = looks[p["slug"]]
+        try:
+            out["jersey"] = int(p.get("jersey"))
+        except (TypeError, ValueError):
+            pass
+        if p.get("height_in"):
+            out["h"] = p["height_in"]
+        if p.get("weight"):
+            out["w"] = p["weight"]
+        for key, field in (("cls", "class"), ("arch", "archetype"), ("dev", "dev_trait")):
+            if p.get(field):
+                out[key] = p[field]
+        out["ovr"] = shown_overall(p)
+        earned = [[ratings_v2.TRAIT_INFO[x["key"]][0], _TIER_NAMES[x["tier"]]] for x in p.get("traits") or []
+                  if x.get("key") in ratings_v2.TRAIT_INFO and x.get("tier") in _TIER_NAMES]
+        if earned:
+            out["abilities"] = earned
+        return out
+
+    return {"slug": slug, "name": t["name"], "abbr": t.get("abbreviation"), "colors": t.get("colors") or {},
+            "depth": depth, "players": [player(p) for p in players if p.get("slug") and p.get("skills")]}
 
 
 def depth_roster_view(state: dict, slug: str) -> dict:

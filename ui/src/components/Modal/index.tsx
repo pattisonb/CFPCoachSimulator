@@ -9,8 +9,12 @@ interface Props {
   title: string;
   /** a line under the title */
   lede?: string;
+  /** a head of its own in place of the title and lede (the title still names the window) */
+  head?: ReactNode;
   /** the row under the content (its actions) */
   footer?: ReactNode;
+  /** sm: a small window for a short choice; talk: a conversation's width (the default fits a map) */
+  size?: "sm" | "md" | "talk";
   children: ReactNode;
 }
 
@@ -18,7 +22,7 @@ interface Props {
  * A window over the page, on the browser's own dialog (so Escape closes it, focus stays inside and the page behind
  * dims and waits). A click on the dimmed page closes it too. Framed like every other card: ink edge, hard shadow.
  */
-export default function Modal({ open, onClose, title, lede, footer, children }: Props) {
+export default function Modal({ open, onClose, title, lede, head, footer, size = "md", children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -31,7 +35,7 @@ export default function Modal({ open, onClose, title, lede, footer, children }: 
   return (
     <dialog
       ref={ref}
-      className="modal"
+      className={`modal modal--${size}`}
       aria-label={title}
       onClose={onClose}
       onCancel={(e) => {
@@ -46,10 +50,12 @@ export default function Modal({ open, onClose, title, lede, footer, children }: 
       {open && (
         <div className="modal__card">
           <header className="modal__head">
-            <div>
-              <h2 className="modal__title">{title}</h2>
-              {lede && <p className="modal__lede">{lede}</p>}
-            </div>
+            {head ?? (
+              <div>
+                <h2 className="modal__title">{title}</h2>
+                {lede && <p className="modal__lede">{lede}</p>}
+              </div>
+            )}
             <button type="button" className="modal__close" aria-label={m.close} title={m.close} onClick={onClose}>
               <X size={18} weight="bold" aria-hidden="true" />
             </button>

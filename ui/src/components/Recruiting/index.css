@@ -1,0 +1,549 @@
+/* The Recruiting board: the recruits on the left (head, filters, the list scrolling on its own), the one picked on
+   the right. */
+.recruiting {
+  --recruiting-side: 380px; /* *tune* the same as Prospects' side */
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--recruiting-side);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.recruiting__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.recruiting__main {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--s2);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s4) var(--s4) var(--s3);
+}
+
+.recruiting__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-bottom: var(--s1);
+}
+
+.recruiting__lede {
+  color: var(--ink-soft);
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.recruiting__meters {
+  display: flex;
+  gap: var(--s4);
+}
+
+.recruiting__meters dt {
+  color: var(--ink-soft);
+}
+
+.recruiting__meters dd {
+  font-size: var(--t-lg);
+  font-weight: 700;
+}
+
+.recruiting__meters small {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+.recruiting__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.recruiting__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recruiting__select {
+  min-height: 32px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+}
+
+.recruiting__auto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.recruiting__auto .label {
+  color: var(--ink-soft);
+}
+
+/* the list: groups by stage, rows that pick a recruit */
+.recruiting__list {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.recruiting__group + .recruiting__group {
+  margin-top: var(--s3);
+}
+
+.recruiting__group-title {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+}
+
+.recruiting__group-title span {
+  color: var(--ink);
+}
+
+.recruiting__rows {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.recruiting__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto 104px 48px;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  padding: 6px 10px 6px 6px;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--line) solid transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease-out,
+    background-color 140ms ease-out;
+}
+
+.recruiting__row:hover {
+  border-color: var(--line-soft);
+}
+
+.recruiting__row[aria-pressed="true"] {
+  background: var(--paper-hi);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.recruiting__face {
+  width: 38px;
+  height: 38px;
+}
+
+.recruiting__who {
+  display: grid;
+  min-width: 0;
+}
+
+.recruiting__who .recruiting__soft {
+  font-size: var(--t-xs);
+}
+
+/* where you stand: a word in a tag, its weight by tone */
+.recruiting__word {
+  justify-self: start;
+  padding: 1px 8px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.recruiting__word.is-good {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.recruiting__word.is-muted {
+  color: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
+
+.recruiting__word.is-bad {
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+.recruiting__pct {
+  font-weight: 700;
+  text-align: right;
+}
+
+.recruiting__side {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s4) var(--s4) var(--s4) var(--s3);
+  background: var(--paper);
+  border-left: var(--line) solid var(--line-soft);
+  scrollbar-gutter: stable;
+}
+
+/* an empty board: a note and the way to Prospects */
+.recruiting--empty {
+  grid-template-columns: 1fr;
+}
+
+.recruiting__empty {
+  place-self: center;
+  display: grid;
+  justify-items: center;
+  gap: var(--s2);
+  max-width: 420px;
+  padding: var(--s4);
+  border: var(--line) dashed var(--ink-soft);
+  text-align: center;
+}
+
+.recruiting__empty-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: var(--s1);
+}
+
+.recruiting__empty-title {
+  font-size: var(--t-lg);
+}
+
+/* ---------- a recruit's panel ---------- */
+.recruit {
+  display: grid;
+  align-content: start;
+  gap: var(--s3);
+}
+
+.recruit__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-right: 28px;
+}
+
+.recruit__face {
+  width: 108px;
+  height: 108px;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.recruit__who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recruit__name {
+  font-size: var(--t-lg);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.recruit__ranks {
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.recruit__off {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  border: var(--line) solid transparent;
+  cursor: pointer;
+}
+
+.recruit__off:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* your chance: a big number and what it means */
+.recruit__chance {
+  display: grid;
+  gap: 4px;
+  padding: var(--s2) var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.recruit__chance .label {
+  color: var(--ink-soft);
+}
+
+.recruit__chance-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.recruit__big {
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+.recruit__word-big {
+  flex: none;
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.recruit__warn {
+  padding: 6px 10px;
+  border: var(--line) dashed var(--ink);
+  font-size: var(--t-sm);
+}
+
+.recruit__block {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  font-size: var(--t-sm);
+}
+
+.recruit__kicker {
+  color: var(--ink-soft);
+}
+
+.recruit__list {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.recruit__list li {
+  display: grid;
+  gap: 3px;
+}
+
+.recruit__list li.is-you {
+  font-weight: 700;
+}
+
+.recruit__school {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.recruit__tag {
+  padding: 0 6px;
+  border: 1px solid var(--ink-soft);
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.recruit__bar {
+  height: 8px;
+  border: 1px solid var(--line-soft);
+}
+
+.recruit__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink-soft);
+}
+
+.recruit__list li.is-you .recruit__bar i {
+  background: var(--ink);
+}
+
+.recruit__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+}
+
+.recruit__wants {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  font-weight: 700;
+}
+
+.recruit__wants li.is-unknown {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* the week's actions */
+.recruit__work {
+  gap: var(--s2);
+  padding-top: var(--s2);
+  border-top: var(--line) solid var(--line-soft);
+}
+
+.recruit__pitch {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px var(--s2);
+}
+
+.recruit__pitch .label {
+  color: var(--ink-soft);
+}
+
+.recruit__pitch select,
+.recruit__visit select {
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.recruit__pitch .recruiting__soft {
+  grid-column: 2;
+  font-size: var(--t-xs);
+}
+
+/* a call or visit you stepped out of: finish it this week */
+.recruit__open {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s1) var(--s2);
+  padding: 10px 12px;
+  border: var(--line) dashed var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.recruit__acts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.recruit__act {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    transform 80ms ease-out;
+}
+
+.recruit__act span {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.recruit__act:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.recruit__act:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 8%, var(--paper-hi));
+}
+
+.recruit__act:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+
+.recruit__offer,
+.recruit__visit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.recruit__offer input {
+  width: 84px;
+  min-height: 36px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.recruit__offer .btn,
+.recruit__visit .btn {
+  min-height: 36px;
+  padding: 0 var(--s2);
+  font-size: var(--t-sm);
+}
+
+.recruit__visit .label {
+  flex-basis: 100%;
+  color: var(--ink-soft);
+}
+
+.recruit__visit select {
+  flex: 1;
+}
+
+.recruit__note {
+  min-height: 1px;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.recruit__history {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.recruit__history li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: var(--s2);
+}
+
+.recruit__when {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+@media (width <= 1280px) {
+  .recruiting {
+    --recruiting-side: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recruiting__row,
+  .recruit__act {
+    transition: none;
+  }
+}

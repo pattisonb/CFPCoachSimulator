@@ -1578,6 +1578,15 @@ def season_depth_chart(p: Params) -> dict:
     return season.depth_chart_view(state, p.path["slug"])
 
 
+@route("GET", "/api/season/{season_id}/playlink/{slug}")
+def season_playlink(p: Params) -> dict:
+    """One team in a Pocket Franchise roster link's shape (docs/PLAY_ON_THE_FIELD.md): its depth chart and every
+    player's current skills, for Play It on the Field. A read only."""
+    state = _season_state(p.path["season_id"])
+    _check_team(p.path["slug"])
+    return season.playlink_team(state, p.path["slug"])
+
+
 @route("GET", "/api/season/{season_id}/depth/{slug}/formations")
 def season_depth_formations(p: Params) -> dict:
     """The formations a team uses most, filled from its depth chart as the next game fills them."""

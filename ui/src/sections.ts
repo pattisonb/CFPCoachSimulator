@@ -12,7 +12,6 @@ import {
   Table,
   TreeStructure,
   Trophy,
-  UsersThree,
   type Icon,
 } from "@phosphor-icons/react";
 
@@ -36,7 +35,6 @@ export const CAREER_SECTIONS = [
   },
   { key: "recruiting", label: "Recruiting", icon: Handshake, blurb: "Spend the week's hours on your board." },
   { key: "headquarters", label: "Headquarters", icon: Buildings, blurb: "Your staff, facilities and budget." },
-  { key: "prospects", label: "Prospects", icon: UsersThree, blurb: "Every recruit in the class." },
   { key: "scouting", label: "Scouting", icon: Binoculars, blurb: "Learn what your targets can really do." },
   { key: "schedule", label: "Schedule", icon: CalendarBlank, blurb: "Your games, week by week." },
   { key: "depth", label: "Depth Chart", icon: ListNumbers, blurb: "Who starts, and who's next." },
@@ -61,6 +59,6 @@ export const DEFAULT_SECTION: SectionKey = "office";
 
 /** The section for an address's ?section=, or the default for a missing or unknown one. */
 export const sectionOf = (key: string | null): Section =>
-  ALL.find((s) => s.key === key) ?? ALL.find((s) => s.key === DEFAULT_SECTION)!;
+  ALL.find((s) => s.key === (key === "prospects" ? "recruiting" : key)) ?? ALL.find((s) => s.key === DEFAULT_SECTION)!;
 
 export const isLeague = (key: string) => LEAGUE_SECTIONS.some((s) => s.key === key);

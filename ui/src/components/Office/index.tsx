@@ -14,6 +14,7 @@ import {
   CaretRight,
   Check,
   FastForward,
+  GameController,
   Football,
   Handshake,
   Lightning,
@@ -25,6 +26,8 @@ import {
   Trophy,
   type Icon,
 } from "@phosphor-icons/react";
+import PlayGame from "../PlayGame/index.tsx";
+import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
@@ -121,6 +124,8 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const [office, setOffice] = useState<OfficeView | null>(null);
   const [officeError, setOfficeError] = useState<string | null>(null);
   const [preview, setPreview] = useState<GamePreview | null>(null);
+  // Play Game Day: pick the sides, then the field (Pocket Franchise) or a sim
+  const [playOpen, setPlayOpen] = useState(false);
 
   const weekName = (w: number) => s.week_labels[String(w)] ?? m.week(w - 1);
   const games = s.schedule.filter((g) => g.opponent);
@@ -209,7 +214,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
           : m.gameDaySub(thisWeek.venue === "away" ? m.atOpp : m.against, thisWeek.opponent_name),
         meta: kickoffText(thisWeek.date),
         done: thisWeek.played,
-        go: thisWeek.played ? undefined : () => sim.start("gameday"),
+        go: thisWeek.played ? undefined : () => setPlayOpen(true),
       });
     todos.push({
       key: "advance",
@@ -242,7 +247,14 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         ) : (
           <GameCard s={s} thisWeek={thisWeek} next={next} teams={teams} preview={preview} weekName={weekName} />
         )}
-        <Actions s={s} sim={sim} game={thisWeek && !thisWeek.played ? thisWeek : null} weekName={weekName} />
+        <Actions
+          s={s}
+          sim={sim}
+          game={thisWeek && !thisWeek.played ? thisWeek : null}
+          weekName={weekName}
+          next={next}
+          onPlay={() => setPlayOpen(true)}
+        />
       </aside>
 
       {/* ---------- middle: the week and its to-dos ---------- */}
@@ -376,23 +388,26 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
           )}
         </section>
       </aside>
+      <PlayGame
+        open={playOpen}
+        onClose={() => setPlayOpen(false)}
+        seasonId={s.id}
+        team={s.team}
+        opponent={next?.opponent ?? null}
+        teams={teams}
+        week={next ? weekName(next.week) : ""}
+        date={next ? kickoffText(next.date) : ""}
+        onSim={thisWeek && !thisWeek.played ? () => sim.start("gameday") : undefined}
+      />
     </div>
   );
-}
-
-/** A team's colors as a corner-split swatch, as the sidebar and strip draw them. */
-function Swatch({ team, size }: { team: TeamCard | undefined; size: "s" | "l" }) {
-  const style: CSSProperties | undefined = team
-    ? { background: `linear-gradient(135deg, ${team.colors.primary} 50%, ${team.colors.secondary} 50%)` }
-    : undefined;
-  return <span className={`office__swatch office__swatch--${size}`} style={style} aria-hidden="true" />;
 }
 
 /** One side of the matchup: swatch, name, rank and record. */
 function Side({ team, name, line }: { team: TeamCard | undefined; name: string; line: string }) {
   return (
     <div className="office__side">
-      <Swatch team={team} size="l" />
+      <Swatch team={team} size={40} />
       <span className="office__side-text">
         <b className="office__side-name">{name}</b>
         <span className="office__soft">{line}</span>
@@ -542,12 +557,18 @@ function Actions({
   sim,
   game,
   weekName,
+  next,
+  onPlay,
 }: {
   s: SeasonSummary;
   sim: Sim;
   /** your game this week, while it's unplayed */
   game: ScheduleGame | null;
   weekName: (w: number) => string;
+  /** your next game (this week's, or after a bye): the field's opponent */
+  next: ScheduleGame | null;
+  /** Play Game Day (or, any other week, Play It on the Field): the window that picks the sides */
+  onPlay: () => void;
 }) {
   const gameReady = game !== null;
   // Sim Through's list floats over the page (fixed, in a portal on <body>: the section's fade-in animation would
@@ -645,7 +666,15 @@ function Actions({
           title={m.playGame}
           sub={m.playGameSub(game.venue === "away" ? m.atOpp : m.vs, game.opponent_name)}
           main
-          onClick={() => sim.start("gameday")}
+          onClick={onPlay}
+        />
+      )}
+      {!game && (
+        <ActionTile
+          icon={GameController}
+          title={m.field}
+          sub={next ? m.fieldSub(next.opponent_name) : m.fieldAny}
+          onClick={onPlay}
         />
       )}
       <ActionTile
@@ -724,7 +753,7 @@ function TeamTag({
   const t = teams.get(slug);
   return (
     <span className={`office__res-team${won ? " is-won" : ""}`} title={name}>
-      <Swatch team={t} size="s" />
+      <Swatch team={t} size={14} />
       {t?.abbreviation ?? name}
     </span>
   );

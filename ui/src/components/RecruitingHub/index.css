@@ -1,0 +1,80 @@
+/* Recruiting's two tabs, Board and Prospects: both mounted, the one not shown hidden. */
+.hub {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hub__pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hub__pane[hidden] {
+  display: none;
+}
+
+/* the tab bar: Recruiting's name, then Board and Prospects, one fixed strip across the top. It never changes size,
+   so switching tabs moves only what's below it. */
+.hub-tabs {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  gap: var(--s3);
+  padding: 0 var(--s4);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.hub-tabs__title {
+  align-self: center;
+  margin-right: var(--s2);
+  font-size: var(--t-lg);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hub-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  margin-bottom: calc(-1 * var(--line));
+  padding: 0 var(--s1);
+  background: none;
+  color: var(--ink-soft);
+  border: 0;
+  border-bottom: 4px solid transparent;
+  font-size: var(--t-md);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.hub-tabs__tab:hover {
+  color: var(--ink);
+  border-bottom-color: var(--line-soft);
+}
+
+.hub-tabs__tab[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.hub-tabs__count {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-tabs__tab {
+    transition: none;
+  }
+}
