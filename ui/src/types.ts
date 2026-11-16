@@ -17,6 +17,8 @@ export interface TeamCard {
   ratings: { overall: number; offense: number; defense: number; special_teams: number };
   head_coach: string;
   stadium: { name: string; capacity: number };
+  /** the coordinators, as "OC Name (Scheme)" */
+  staff?: { offense: string; defense: string };
 }
 
 /** GET /api/teams/{slug} → players[] */
@@ -100,9 +102,47 @@ export interface ScheduleGame {
   opponent_record?: string | null;
   /** a neutral site's name */
   site?: string | null;
-  rivalry?: { name: string } | null;
+  rivalry?: Rivalry | null;
+  /** the AP rank you held going into the week */
+  my_rank?: number | null;
   /** a box score exists (GET /api/season/{id}/game/{event_id}) */
   has_box?: boolean;
+}
+
+/** A rivalry game's line (sim/season.py game_rivalry): the series entering it, or after it with who took the trophy */
+export interface Rivalry {
+  name: string;
+  trophy?: string;
+  /** "SMU leads 5-3" */
+  series?: string;
+  /** a played game: "TCU keeps the Iron Skillet" */
+  headline?: string;
+}
+
+/** GET /api/season/{id}/schedule/{slug}: any FBS team's season */
+export interface TeamScheduleView {
+  team: string;
+  team_name: string;
+  conference: string;
+  record: { wins: number; losses: number; conf_wins: number; conf_losses: number };
+  rank: number | null;
+  schedule: ScheduleGame[];
+}
+
+/** One side of a box score (GET /api/season/{id}/game/{event_id}; the parts the new UI uses) */
+export interface BoxSide {
+  name: string;
+  score: number;
+  quarters: number[];
+  overtime: number[];
+  team_stats: Record<string, number>;
+}
+
+export interface BoxScore {
+  home: BoxSide;
+  away: BoxSide;
+  home_slug: string;
+  away_slug: string;
 }
 
 /** Who coaches your team this season: your created coach, or the team's own */
@@ -132,6 +172,58 @@ export interface SeasonSummary {
   offseason_stage: string | null;
   /** your team's injury report */
   injuries: unknown[];
+  /** the bowls, once they're set on selection day (sim/season.py bowl_view) */
+  bowls?: Bowl[];
+  /** before then, from the committee's first ranking: the projected lineup */
+  bowl_projection?: BowlProjection | null;
+  /** the playoff field, once it's set */
+  bracket?: { seeds?: { team: string }[] } | null;
+}
+
+/** One bowl: its game (set, projected, or played) and its history */
+export interface Bowl {
+  bowl: string;
+  name: string;
+  /** "Dec 15" */
+  date: string | null;
+  /** "5:30 pm" */
+  time: string | null;
+  site: string | null;
+  /** 17, 18 or 19: the bowl weeks */
+  week: number;
+  event_id?: string;
+  home: string | null;
+  away: string | null;
+  home_name: string | null;
+  away_name: string | null;
+  home_record: string | null;
+  away_record: string | null;
+  home_conference: string | null;
+  away_conference: string | null;
+  /** the conferences it takes, as picked this year */
+  tie_ins: string[];
+  /** no eligible teams were left for it */
+  unfilled?: boolean;
+  projected?: boolean;
+  played: boolean;
+  home_score?: number | null;
+  away_score?: number | null;
+  overtime?: number;
+  mine: boolean;
+  has_box: boolean;
+  games_played?: number | null;
+  first_played?: number | null;
+  payout?: string | null;
+  recent?: { year: number; winner: string; winner_score: number; loser: string; loser_score: number }[];
+}
+
+/** The projected bowl lineup (sim/season.py bowl_projection) */
+export interface BowlProjection {
+  /** the committee ranking it's built from */
+  week: number;
+  bowls: Bowl[];
+  /** the projected playoff field */
+  playoff: string[];
 }
 
 /** GET /api/season/{id}/recruiting (the week's hours: the coach's energy) */
@@ -531,4 +623,215 @@ export interface RecruitingBoard extends RecruitingWeek {
   offers_left: number;
   pitches: string[];
   hours_cost: Record<string, number>;
+}
+
+/** One of your staff as a scout (GET /api/season/{id}/scouting → scouts[]) */
+export interface Scout {
+  id: string;
+  name: string;
+  /** "Offensive Coordinator", "Defensive Coordinator", "Recruiter" */
+  role: string;
+  /** how well he reads talent, as a word (Weak to All-American) */
+  evaluation_word: string;
+  area: string | null;
+  contract_until: number | null;
+  /** prospects in his area he still has looks to give */
+  looking_at: number;
+  /** this week: looks given, reads that changed, flags raised */
+  yield: { looks: number; narrowed: number; flags: number };
+}
+
+/** One line of a scout's report: a prospect he looked at and what changed */
+export interface ReportItem {
+  pid: string;
+  name: string;
+  position: string;
+  stars: number;
+  /** "first read: potential Strong–All-American", "potential narrowed to Solid" */
+  change: string;
+  flags: string[];
+  likes: { who: string; text: string } | null;
+  on_board: boolean;
+  complete: boolean;
+}
+
+/** One scout's report for a week */
+export interface ReportGroup {
+  scout_id: string;
+  scout: string;
+  area: string | null;
+  looks: number;
+  changed: number;
+  items: ReportItem[];
+}
+
+/** A find your staff flagged this class */
+export interface ScoutFlag {
+  pid: string;
+  name: string;
+  position: string;
+  stars: number;
+  /** "generational", "gem", "bust" or "likes" */
+  flag: string;
+  looks: number;
+  likes: { who: string; text: string } | null;
+  on_board: boolean;
+  standing_word: string;
+}
+
+/** GET /api/season/{id}/scouting (the parts Staff uses; it asks for one queue row) */
+export interface ScoutingView {
+  hours: number;
+  hours_left: number;
+  points_left: number;
+  points_week: number;
+  scouts: Scout[];
+  /** each area's states */
+  areas: Record<string, string[]>;
+  full_reports: number;
+  trips_this_week: number;
+  board_size: number;
+  board_scouted: number;
+  reports: { this_week: ReportGroup[]; last_week: ReportGroup[] };
+  flags: ScoutFlag[];
+}
+
+/** A player in an award race or result (sim/awards.py Pool.card; `slug` and `face` added by season.awards_view) */
+export interface AwardPlayer {
+  name: string;
+  position: string;
+  role: string | null;
+  /** "JR", "SRRS" */
+  class: string | null;
+  team: string;
+  team_name: string;
+  conference: string;
+  games: number;
+  /** the season line: "40 rec, 672 yds, 8 TD" */
+  line: string;
+  /** the short line: "672 yds · 8 TD" */
+  headline: string;
+  score: number;
+  slug?: string;
+  /** his look, when you drew him one (Edit Player Look) */
+  face?: unknown;
+}
+
+/** A Heisman candidate: a player with his votes */
+export interface HeismanCandidate extends AwardPlayer {
+  first: number;
+  second: number;
+  third: number;
+  points: number;
+  region: string;
+  record: string;
+  rank: number | null;
+  /** the final vote: his line as the season ended */
+  final_line?: string;
+}
+
+export interface HeismanVote {
+  candidates: HeismanCandidate[];
+  winner: HeismanCandidate | null;
+  finalists: HeismanCandidate[];
+  ballots: number;
+  possible: number;
+  /** the winner's points as a share of the possible, in percent */
+  share: number;
+}
+
+/** A coach in a coach award's race */
+export interface AwardCoach {
+  team: string;
+  team_name: string;
+  conference: string;
+  coach: string;
+  /** an assistant's award (the Broyles): his role */
+  role?: string;
+  wins: number;
+  losses: number;
+  champion?: boolean;
+  rank?: number | null;
+  preseason_rank?: number | null;
+}
+
+export interface PlayerAward {
+  name: string;
+  /** what kind of award ("qb", "dpoy", "mvp"…): the page groups by it */
+  kind: string;
+  /** what it honors: "best receiver" */
+  honors?: string;
+  winner: AwardPlayer | null;
+  finalists: AwardPlayer[];
+  /** the live race: the top five now */
+  race?: AwardPlayer[];
+}
+
+export interface CoachAward {
+  name: string;
+  winner: AwardCoach | null;
+  finalists: AwardCoach[];
+  assistant?: boolean;
+}
+
+/** The national awards: the live race, or the results once given */
+export interface NationalAwards {
+  heisman: HeismanVote | null;
+  awards: PlayerAward[];
+  coach_awards: CoachAward[];
+}
+
+/** One of your team's honors once given (sim/awards.py my_awards) */
+export interface MyHonor {
+  stage: string;
+  award: string;
+  who: string;
+  position?: string;
+  place: string;
+  line?: string;
+}
+
+/** GET /api/season/{id}/awards */
+export interface AwardsView {
+  /** the last week whose awards are given (0: none yet) */
+  given_through: number;
+  national: NationalAwards | null;
+  /** the live race, until the national awards are given */
+  race?: NationalAwards & { live: boolean };
+  postseason: { awards: PlayerAward[] } | null;
+  mine: MyHonor[];
+  my_conference: string;
+  team: string;
+}
+
+/** One team's row in its conference's standings (GET /api/season/{id}/standings → standings[conf][]) */
+export interface StandingRow {
+  slug: string;
+  name: string;
+  /** "East", "West" in a conference with divisions */
+  division: string | null;
+  wins: number;
+  losses: number;
+  conf_wins: number;
+  conf_losses: number;
+  points_for: number;
+  points_against: number;
+  home_wins: number;
+  home_losses: number;
+  away_wins: number;
+  away_losses: number;
+  /** positive: wins in a row; negative: losses */
+  streak: number;
+  last: { won: boolean; score: string; opponent: string; opponent_name: string; venue: string; week: number } | null;
+  ap_rank: number | null;
+  cfp_rank: number | null;
+  conf_rank: number;
+  /** tied on conference record: what broke the tie */
+  tiebreak?: string;
+  champion: boolean;
+  runner_up: boolean;
+}
+
+export interface StandingsView {
+  standings: Record<string, StandingRow[]>;
 }

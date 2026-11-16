@@ -1,0 +1,33 @@
+export const messages = {
+  title: "Select Your Team",
+  loading: "Loading teams…",
+  loadError: (msg: string) => `Can't reach the game: ${msg}. Is the dev server running?`,
+  tryAgain: "Try Again",
+
+  conference: "Conference",
+  allConferences: "All Conferences",
+  sort: "Sort",
+  sorts: { name: "By Name", overall: "By Overall", prestige: "By Prestige" },
+  teamsLabel: "Teams",
+  count: (n: number) => (n === 1 ? "1 Team" : `${n} Teams`),
+
+  prestige: (n: number, of: number) => `Prestige ${n} of ${of}`,
+  ovr: "OVR",
+  off: "OFF",
+  def: "DEF",
+  st: "ST",
+  ratingTips: { ovr: "Overall", off: "Offense", def: "Defense", st: "Special Teams" },
+  headCoach: "Head Coach",
+  offScheme: "Off. Scheme",
+  defScheme: "Def. Scheme",
+  stadium: "Stadium",
+  seats: (n: number) => `${n.toLocaleString("en-US")} Seats`,
+  helmet: (team: string) => `${team} helmet`,
+
+  play: "Play",
+  playAs: (team: string) => `Play as ${team}`,
+  back: "Back",
+  random: "Random Team",
+  newProgram: "Custom Program",
+  keys: "Controls",
+} as const;

@@ -1,0 +1,286 @@
+/* Bowls: the picked bowl as a banner, the filter bar, then every bowl by window as cards. One scroll for the whole
+   page: the banner scrolls away and the list gets the window. */
+.bowls {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s5);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.bowls__kicker {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.bowls__soft {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* the filter row: pinned to the top of the page as the list scrolls under it */
+.bowls__bar {
+  position: sticky;
+  top: calc(-1 * var(--s3));
+  z-index: 2;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin: 0 calc(-1 * var(--s4));
+  padding: var(--s2) var(--s4);
+  background: var(--paper-hi);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.bowls__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ----- the banner ----- */
+.bowls-banner {
+  flex: none;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  animation: bowls-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes bowls-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+}
+
+.bowls-banner__unfilled {
+  display: grid;
+  place-items: center;
+  height: clamp(120px, 20vh, 196px);
+  color: var(--ink-soft);
+  background: var(--tile);
+}
+
+/* under the art: the bowl's name and when and where, then its facts; one fixed height, so picking never moves the list */
+.bowls-banner__info {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2.6fr);
+  gap: var(--s4);
+  align-items: start;
+  height: 116px; /* *tune* fits four lines of facts */
+  padding: var(--s2) var(--s3);
+  overflow: hidden;
+  border-top: var(--line) solid var(--ink);
+}
+
+.bowls-banner__when {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bowls-banner__name {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.bowls-banner__chip {
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 0 8px;
+  overflow: hidden;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bowls-banner__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s2) var(--s5);
+  font-size: var(--t-sm);
+}
+
+.bowls-banner__cell {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  max-width: 340px;
+}
+
+/* ----- the list ----- */
+.bowls__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.bowls__list {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--s4);
+  padding-right: 8px;
+}
+
+.bowls__window {
+  display: grid;
+  gap: var(--s2);
+}
+
+.bowls__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s2);
+}
+
+/* a bowl: its name and day, then a row per team */
+.bowl-card {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: var(--s1) var(--s2) var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.bowl-card:hover {
+  box-shadow: 4px 4px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.bowl-card.is-mine {
+  border-width: 3px;
+}
+
+/* the picked bowl: its head inverted, like the highlight bar on a game menu */
+.bowl-card.is-picked {
+  box-shadow: 6px 6px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.bowl-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin: calc(-1 * var(--s1)) calc(-1 * var(--s2)) 2px;
+  padding: var(--s1) var(--s2);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.bowl-card__head b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bowl-card__head span {
+  flex: none;
+  color: var(--ink-soft);
+}
+
+.bowl-card.is-picked .bowl-card__head {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-bottom-color: var(--ink);
+}
+
+.bowl-card.is-picked .bowl-card__head span {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.bowl-card__team {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.bowl-card__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bowl-card__you {
+  padding: 0 4px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bowl-card__rec {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.bowl-card__score {
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.bowl-card__team.is-won .bowl-card__name {
+  font-weight: 700;
+}
+
+.bowl-card__team.is-lost {
+  color: var(--ink-soft);
+}
+
+.bowl-card__note {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+@media (width <= 1100px) {
+  .bowls-banner__info {
+    grid-template-columns: minmax(160px, 1fr) minmax(0, 2fr);
+    gap: var(--s3);
+  }
+
+  .bowls-banner__facts {
+    gap: var(--s2) var(--s3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bowls-banner {
+    animation: none;
+  }
+
+  .bowl-card {
+    transition: none;
+  }
+}

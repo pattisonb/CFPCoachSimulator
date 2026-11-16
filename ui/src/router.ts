@@ -11,6 +11,7 @@ export const ROUTES = {
   coachEdit: "coach/edit",
   programEdit: "program/edit",
   playerEdit: "player/edit",
+  teamSelect: "select", // the helmet team select, a trial of a second look for Play's team pick
 } as const;
 export type Route = keyof typeof ROUTES;
 

@@ -1358,7 +1358,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
                           "standing_word": _standing_word(state, pid, me)})
     flags.sort(key=lambda f: (FLAG_ORDER.index(f["flag"]), rc["prospects"][f["pid"]]["rank"]))
     return {"hours": recruiting.weekly_hours(state, me), "hours_left": hours_left, "points_left": points_left,
-            "points_week": recruiting.scout_points(state, me), "scouts": scouts,
+            "points_week": recruiting.scout_points(state, me), "scouts": scouts, "areas": recruiting.AREAS,
             "full_reports": sum(1 for read in rc["reads"].values() if recruiting.report_complete(read)),
             "trips_this_week": round(this_count.get("trip", 0)),
             "board_size": len(rc["board"]), "board_scouted": sum(1 for q in rc["board"] if recruiting.report_looks(rc["reads"].get(q)) > 0),

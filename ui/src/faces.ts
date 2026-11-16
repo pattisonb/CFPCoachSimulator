@@ -86,3 +86,15 @@ export function playerFace(id: string, position: string): Face {
 export function lookOf(saved: unknown, id: string, position: string): Face {
   return saved ? faces.repair(saved).face : playerFace(id, position);
 }
+
+const staffFaces = new Map<string, Face>();
+
+/** A staff member's face (a coordinator or a scout), the same every time for the same name. */
+export function staffFace(name: string): Face {
+  let face = staffFaces.get(name);
+  if (!face) {
+    face = faces.resolve(faces.random(`staff-${name}`));
+    staffFaces.set(name, face);
+  }
+  return face;
+}

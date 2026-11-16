@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import sheetUrl from "../../assets/qb-idle.png";
+import { hexToRgb, shade, type RGB } from "../../colors.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -23,20 +24,6 @@ const BALL = new Set([0x822a2a, 0x441914]);
 export interface Uniform {
   primary: string;
   secondary: string;
-}
-
-type RGB = [number, number, number];
-
-function hexToRgb(hex: string): RGB {
-  const n = parseInt(/^#?([0-9a-f]{6})$/i.exec(hex)?.[1] ?? "777777", 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-/** A color's shade: darker, or lighter when it is already near black (so the shading still shows). */
-function shade([r, g, b]: RGB): RGB {
-  const dark = 0.2126 * r + 0.7152 * g + 0.0722 * b < 40;
-  const mix = (c: number) => Math.round(dark ? c + (255 - c) * 0.22 : c * 0.68);
-  return [mix(r), mix(g), mix(b)];
 }
 
 interface Sheet {

@@ -1,0 +1,397 @@
+/* Standings: the conference chips, then your conference as team-colored bars and the rest as compact tables (or one
+   conference's full table). The page scrolls as one. */
+.standings__note {
+  padding: var(--s4);
+  color: var(--ink-soft);
+}
+
+.standings {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s4);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s5);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.standings__kicker {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.standings__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* the conference chips, pinned to the top as the page scrolls */
+.standings__bar {
+  position: sticky;
+  top: calc(-1 * var(--s3));
+  z-index: 2;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  margin: calc(-1 * var(--s3)) calc(-1 * var(--s4)) 0;
+  padding: var(--s2) var(--s4);
+  background: var(--paper-hi);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.standings__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.standings__rank {
+  flex: none;
+  padding: 0 5px;
+  border: var(--line) solid currentcolor;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.standings__mark {
+  flex: none;
+  margin-left: 4px;
+  vertical-align: -2px;
+}
+
+/* ----- your conference: a wall of bars ----- */
+.wall {
+  display: grid;
+  gap: var(--s2);
+}
+
+.wall__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s1) var(--s3);
+}
+
+.wall__title {
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.wall__head .standings__link {
+  align-self: center;
+  margin-left: auto;
+}
+
+.wall__group {
+  display: grid;
+  gap: var(--s1);
+}
+
+.wall__div {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.wall__bars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px var(--s3);
+  list-style: none;
+}
+
+/* a team's bar: its color with a fade to dark at the right; its place, then its letters in a slanted panel of its
+   second color (where a logo would be), its name, and its record big at the right */
+.wall__bar {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px 96px minmax(0, 1fr) auto;
+  gap: var(--s2);
+  align-items: center;
+  min-height: 64px;
+  padding: 0 var(--s3) 0 var(--s2);
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000));
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+}
+
+.wall__bar.is-mine {
+  box-shadow: 6px 6px 0 var(--shadow);
+  outline: 3px solid var(--paper-hi);
+  outline-offset: -5px;
+}
+
+.wall__place {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.wall__logo {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--c) 82%, #000);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+}
+
+.wall__logo span {
+  color: var(--c2);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+  white-space: nowrap;
+  transform: rotate(-6deg) scale(1.15);
+}
+
+/* longer letters get smaller, so all of them fit the panel */
+.wall__logo span[data-len="4"] {
+  font-size: 30px;
+}
+
+.wall__logo span[data-len="5"] {
+  font-size: 24px;
+}
+
+.wall__who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
+}
+
+.wall__name {
+  overflow: hidden;
+  font-size: var(--t-lg);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wall__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.wall__tag {
+  padding: 0 5px;
+  background: var(--on);
+  color: var(--c);
+  text-shadow: none;
+}
+
+.wall__records {
+  display: grid;
+  justify-items: end;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
+}
+
+.wall__record {
+  font-size: var(--t-xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.wall__conf {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* ----- the other conferences: compact tables, packed into columns ----- */
+.standings__grid {
+  columns: 3 360px;
+  column-gap: var(--s3);
+}
+
+.compact {
+  margin-bottom: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  break-inside: avoid;
+}
+
+.compact__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--s2);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: 0;
+  font-size: var(--t-sm);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.compact__head svg {
+  transition: transform 120ms ease-out;
+}
+
+.compact__head:hover svg {
+  transform: translateX(2px);
+}
+
+/* the last row's line is the card's own border */
+.compact__table {
+  width: 100%;
+  margin-bottom: -1px;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.compact__table th {
+  padding: 4px 6px;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.compact__table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.compact__table .compact__team {
+  width: 100%;
+  max-width: 0;
+  text-align: left;
+}
+
+.compact__table :where(tr.is-mine) td {
+  background: color-mix(in srgb, var(--ink) 8%, var(--paper-hi));
+  font-weight: 700;
+}
+
+.compact__who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.compact__place {
+  flex: none;
+  width: 18px;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+.compact__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact__soft {
+  color: var(--ink-soft);
+}
+
+/* ----- one conference's full table ----- */
+.full {
+  display: grid;
+  gap: var(--s3);
+}
+
+.full__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+.full__table {
+  width: 100%;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  border-collapse: collapse;
+  box-shadow: 6px 6px 0 var(--shadow);
+  font-variant-numeric: tabular-nums;
+}
+
+.full__table th {
+  padding: 8px var(--s2);
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.full__table td {
+  padding: 8px var(--s2);
+  border-bottom: 1px solid var(--line-soft);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.full__table .full__left {
+  text-align: left;
+}
+
+.full__table :where(tr.is-mine) td {
+  background: color-mix(in srgb, var(--ink) 8%, var(--paper-hi));
+}
+
+.full__table .is-up {
+  font-weight: 700;
+}
+
+.full__table .is-down {
+  color: var(--ink-soft);
+}
+
+.full__last {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+@media (width <= 1100px) {
+  .wall__bars {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .full__last {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compact__head svg {
+    transition: none;
+  }
+}

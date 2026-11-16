@@ -29,7 +29,7 @@ import {
 import PlayGame from "../PlayGame/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
-import { ordinal } from "../../format.ts";
+import { dateText, kickoffText, ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
 import type {
   GamePreview,
@@ -83,23 +83,6 @@ const EVENT_WORDS: Record<string, string> = {
 /** Events that carry their own sentence. */
 const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened"]);
 
-const ET = "America/New_York";
-const DAY = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: ET });
-const KICKOFF = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: ET,
-});
-/** "Sat, Sep 5" (a day) or with a kickoff "Sat 12:30 PM"; never "Invalid Date" */
-const dateText = (d: string | null | undefined) => {
-  const t = d ? Date.parse(d.length === 10 ? `${d}T17:00Z` : d) : NaN;
-  return Number.isNaN(t) ? "" : DAY.format(t);
-};
-const kickoffText = (d: string | null | undefined) => {
-  const t = d && d.includes("T") ? Date.parse(d) : NaN;
-  return Number.isNaN(t) ? dateText(d) : KICKOFF.format(t);
-};
 const confShort = (c: string) => CONF_SHORT[c] ?? c;
 const winPct = (p: number) => Math.min(99, Math.max(1, Math.round(100 * p)));
 const recordText = (r: { wins: number; losses: number }) => `${r.wins}-${r.losses}`;
@@ -190,7 +173,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         sub: v.points_left > 0 ? m.scoutSub(v.points_left) : m.scoutDone,
         meta: m.points(v.points_left),
         done: v.points_left <= 0,
-        go: () => onSection("scouting"),
+        go: () => onSection("staff"),
       });
     }
     const hurt = s.injuries?.length ?? 0;

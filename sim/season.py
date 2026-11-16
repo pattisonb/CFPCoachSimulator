@@ -36,7 +36,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Callable, Iterator, Optional
+from typing import Any, Callable, Iterator, Optional
 
 from sim import awards
 from teamdata import ratings as ratings_v2
@@ -2412,7 +2412,39 @@ def awards_view(state: dict) -> dict:
                 _race_cache.clear()
             _race_cache[key] = race
         out["race"] = race
-    return out
+    return _with_player_ids(state, teams, out)
+
+
+def _with_player_ids(state: dict, teams: dict, view: Any) -> Any:
+    """The awards view with each player in it given his roster `slug` and, when you drew him one (Edit Player Look),
+    his `face`: a copy, so the stored awards and the race cache stay as they were. A player is any dict with a team,
+    a name and a position; coaches and line units (no position) are left alone."""
+    rosters: dict[str, dict] = {}
+
+    def ids(team: str, name: str, position: str) -> tuple[Optional[str], Any]:
+        if team not in rosters:
+            t = teams.get(team) or {}
+            rosters[team] = {"by": {(p["name"], p["position"]): p.get("slug") for p in (t.get("offense") or []) + (t.get("defense") or [])},
+                             "looks": player_faces(state, team)}
+        r = rosters[team]
+        slug = r["by"].get((name, position))
+        return slug, (r["looks"].get(slug) if slug else None)
+
+    def walk(x: Any) -> Any:
+        if isinstance(x, list):
+            return [walk(v) for v in x]
+        if not isinstance(x, dict):
+            return x
+        out = {k: walk(v) for k, v in x.items()}
+        if isinstance(out.get("team"), str) and isinstance(out.get("name"), str) and isinstance(out.get("position"), str):
+            slug, face = ids(out["team"], out["name"], out["position"])
+            if slug:
+                out["slug"] = slug
+            if face:
+                out["face"] = face
+        return out
+
+    return walk(view)
 
 
 # the award-card stat line for a position (awards.stat_line groups)

@@ -1,0 +1,629 @@
+/* Awards: the Heisman banner, then the award cards beside your team's honors; the Heisman tab is the vote. */
+.aw__note {
+  padding: var(--s4);
+  color: var(--ink-soft);
+}
+
+.aw__scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s4);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s5);
+  overflow-y: auto;
+}
+
+.aw__kicker {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.aw__empty {
+  padding: var(--s2);
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* a face in its team's color (the tile's own background, set inline) */
+.aw-face {
+  overflow: hidden;
+}
+
+.aw-face--1 {
+  width: 40px;
+  height: 40px;
+}
+
+.aw-face--2 {
+  width: 72px;
+  height: 72px;
+}
+
+.aw-face--3 {
+  width: 116px;
+  height: 116px;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* a name with his team and position under it */
+.aw-who {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.aw-who > b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aw-who__team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aw-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+
+.aw-link:hover {
+  transform: translateX(2px);
+}
+
+/* ----- the Heisman banner ----- */
+.aw-hero {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.aw-hero--empty {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  padding: var(--s4);
+  color: var(--ink-soft);
+}
+
+.aw-hero--empty b {
+  color: var(--ink);
+}
+
+.aw-hero__art {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: center;
+  min-height: clamp(160px, 24vh, 220px);
+  padding: var(--s3) var(--s4);
+  overflow: hidden;
+  background: var(--c);
+  color: var(--on);
+  border-right: var(--line) solid var(--ink);
+}
+
+/* the team's letters, oversized behind him */
+.aw-hero__mark {
+  position: absolute;
+  right: -16px;
+  bottom: -28px;
+  color: var(--c2);
+  font-size: clamp(120px, 22vh, 220px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -8px;
+  opacity: 0.5;
+  pointer-events: none;
+  transform: rotate(-8deg);
+}
+
+.aw-hero__art > .aw-face {
+  position: relative;
+  border-color: var(--on);
+}
+
+.aw-hero__text {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
+}
+
+.aw-hero__kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.aw-hero__tag {
+  padding: 0 6px;
+  background: var(--on);
+  color: var(--c);
+  text-shadow: none;
+}
+
+/* a long name wraps to a second line rather than losing its end */
+.aw-hero__name {
+  font-size: var(--t-2xl);
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.aw-hero__who {
+  font-weight: 700;
+}
+
+.aw-hero__line {
+  font-size: var(--t-sm);
+  opacity: 0.9;
+}
+
+.aw-hero__points {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 120px;
+  padding: var(--s2) var(--s3);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  text-align: center;
+}
+
+.aw-hero__points b {
+  font-size: var(--t-2xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.aw-hero__share {
+  max-width: 140px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.aw-hero__chase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s2) var(--s3);
+}
+
+.aw-hero__chase ol {
+  display: grid;
+  list-style: none;
+}
+
+.aw-hero__chase li {
+  display: grid;
+  grid-template-columns: 20px auto minmax(0, 1fr) auto;
+  gap: var(--s2);
+  align-items: center;
+  padding: 4px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.aw-hero__place {
+  color: var(--ink-soft);
+  font-weight: 700;
+  text-align: center;
+}
+
+.aw-hero__pts {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ----- the cards and your team ----- */
+.aw__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.aw__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.aw__group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.aw__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.aw__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+
+/* a trophy card: the award, the leader up front, the next two under him */
+.aw-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.aw-card:hover {
+  box-shadow: 4px 4px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.aw-card.is-mine {
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+/* two lines' room for what it honors, so the cards in a row line up */
+.aw-card__head {
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  min-height: 62px;
+  padding: var(--s1) var(--s2);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.aw-card__name {
+  font-size: var(--t-sm);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.aw-card__honors {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.aw-card__lead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s2);
+  align-items: center;
+  padding: var(--s2);
+}
+
+.aw-card__tag {
+  justify-self: start;
+  padding: 0 6px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.aw-card__winner {
+  font-size: var(--t-lg);
+}
+
+.aw-card__headline {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.aw-card__rest {
+  display: grid;
+  margin-top: auto;
+  padding: 0 var(--s2) var(--s1);
+  list-style: none;
+}
+
+.aw-card__rest li {
+  display: grid;
+  grid-template-columns: 16px auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.aw-card__n {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.aw-card__rest-name {
+  overflow: hidden;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aw-card__rest-name b {
+  color: var(--ink);
+}
+
+.aw-card__rest-line {
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.aw-card__rest li.is-mine .aw-card__rest-name,
+.aw-hero__chase li.is-mine b {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+/* your team's tab: a strip in your colors with the counts, then each honor as a card */
+.aw-mine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.aw-mine__head {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  overflow: hidden;
+  background: var(--c);
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.aw-mine__mark {
+  position: absolute;
+  right: 30%;
+  bottom: -36px;
+  color: var(--c2);
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -6px;
+  opacity: 0.45;
+  pointer-events: none;
+  transform: rotate(-8deg);
+}
+
+.aw-mine__title {
+  position: relative;
+  font-size: var(--t-xl);
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
+}
+
+.aw-mine__pod {
+  position: relative;
+  display: flex;
+  gap: var(--s2);
+}
+
+.aw-mine__pod > div {
+  display: grid;
+  gap: 2px;
+  min-width: 112px;
+  padding: var(--s1) var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+}
+
+.aw-mine__pod dt {
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.aw-mine__pod dd {
+  font-size: var(--t-xl);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.aw-mine__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--s3);
+  list-style: none;
+}
+
+.aw-mine__card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s2);
+  align-items: center;
+  padding: var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.aw-mine__card.is-top {
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.aw-mine__place {
+  justify-self: start;
+  padding: 0 6px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.aw-mine__place.is-top {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.aw-mine__award {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.aw-mine__none {
+  max-width: 480px;
+  padding: var(--s4);
+  color: var(--ink-soft);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+/* ----- the Heisman vote ----- */
+.aw-vote {
+  max-width: 1200px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.aw-vote__head {
+  display: grid;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.aw-vote__title {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.aw-vote__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.aw-vote__table th {
+  padding: 8px var(--s2);
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.aw-vote__table td {
+  padding: 6px var(--s2);
+  border-bottom: 1px solid var(--line-soft);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.aw-vote__table .aw-vote__left {
+  text-align: left;
+}
+
+.aw-vote__table tr.is-top td {
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper-hi));
+}
+
+.aw-vote__table tr.is-mine b {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.aw-vote__rank {
+  font-weight: 700;
+}
+
+.aw-vote__player {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+  min-width: 0;
+}
+
+.aw-vote__line {
+  overflow: hidden;
+  max-width: 420px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  text-overflow: ellipsis;
+}
+
+.aw-vote__points {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+  min-width: 200px;
+}
+
+.aw-vote__bar {
+  flex: 1;
+  height: 10px;
+  border: var(--line) solid var(--ink);
+}
+
+.aw-vote__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+
+@media (width <= 1100px) {
+  .aw-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aw-hero__art {
+    border-right: 0;
+    border-bottom: var(--line) solid var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-card,
+  .aw-link {
+    transition: none;
+  }
+}

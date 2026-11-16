@@ -15,7 +15,7 @@ const CALLOUT_OUT = 3;
 type Cell = [number, number];
 
 /** The state in a cell ("..": none, or off the grid). */
-const at = (c: number, r: number) =>
+export const at = (c: number, r: number) =>
   r < 0 || r >= PIXEL_ROWS || c < 0 || c >= PIXEL_COLS ? ".." : PIXEL_ROWS_DATA[r].slice(c * 2, c * 2 + 2);
 
 interface StateShape {
@@ -35,7 +35,7 @@ interface StateShape {
  * inside its state (a distance from the border, counted in cells); a state with no such pair (RI, DE, DC…) gets a
  * callout beside the map, on the side it's nearer, with a leader line.
  */
-const SHAPES = (() => {
+export const SHAPES = (() => {
   const cells = new Map<string, Cell[]>();
   for (let r = 0; r < PIXEL_ROWS; r++)
     for (let c = 0; c < PIXEL_COLS; c++) {

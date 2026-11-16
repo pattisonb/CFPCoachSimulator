@@ -3,6 +3,7 @@ import Game from "./pages/Game/index.tsx";
 import Home from "./pages/Home/index.tsx";
 import PlayerEdit from "./pages/PlayerEdit/index.tsx";
 import ProgramEdit from "./pages/ProgramEdit/index.tsx";
+import TeamSelect from "./pages/TeamSelect/index.tsx";
 import MobileNotSupported from "./pages/MobileNotSupported/index.tsx";
 import { useRoute } from "./router.ts";
 import { useTheme } from "./theme.ts";
@@ -39,5 +40,6 @@ export default function App() {
         teamSlug={params.get("team")}
       />
     );
+  if (route === "teamSelect") return <TeamSelect theme={theme} onToggleTheme={toggleTheme} />;
   return <Home theme={theme} onToggleTheme={toggleTheme} />;
 }

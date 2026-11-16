@@ -1,0 +1,9 @@
+/* the sprite's own pixels, scaled up whole */
+.helmet {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.helmet.is-flipped {
+  transform: scaleX(-1);
+}

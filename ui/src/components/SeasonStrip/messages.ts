@@ -4,7 +4,7 @@ export const messages = {
   later: "Later Games",
   next: "Next",
   bye: "Bye",
-  at: "@",
+  at: "at",
   vs: "vs",
   week: (n: number) => `Week ${n}`,
   result: (won: boolean, pf: number, pa: number, ot: number) =>

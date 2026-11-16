@@ -1,0 +1,632 @@
+/* Staff: the tab bar (SectionTabs), then Scouts (the week's numbers, the scout cards beside the coverage map) or
+   Reports (each scout's cards, the finds). */
+.staff__note {
+  padding: var(--s4);
+  color: var(--ink-soft);
+}
+
+.staff__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* ----- Scouts ----- */
+.staff__scouts {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+}
+
+.staff__totals {
+  display: grid;
+  flex: none;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: var(--s2);
+}
+
+.staff__total {
+  display: grid;
+  gap: 2px;
+  padding: var(--s1) var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.staff__total dt {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.staff__total dd {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.staff__bar {
+  flex: 1;
+  height: 10px;
+  border: var(--line) solid var(--ink);
+}
+
+.staff__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: width 300ms ease-out;
+}
+
+.staff__cols {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(360px, 1fr) minmax(0, 1.4fr);
+  gap: var(--s4);
+  min-height: 0;
+}
+
+.staff__list {
+  display: grid;
+  align-content: start;
+  gap: var(--s2);
+  min-height: 0;
+  padding: 0 var(--s2) 8px 0; /* room for a picked card's shadow, and air before the scroll bar */
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-gutter: stable;
+}
+
+/* a scout: who he is up top (the part you pick), his area and his week under it */
+.scout {
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  transition:
+    box-shadow 140ms ease-out,
+    transform 140ms ease-out;
+}
+
+.scout.is-picked {
+  box-shadow: 6px 6px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.scout__pick {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--s2);
+  align-items: center;
+  width: 100%;
+  padding: var(--s2);
+  background: none;
+  color: inherit;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scout__pick:focus-visible {
+  outline-offset: -4px;
+}
+
+.scout__face {
+  width: 72px;
+  height: 72px;
+}
+
+.scout.is-picked .scout__face {
+  background: var(--ink);
+}
+
+.scout__who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scout__name {
+  overflow: hidden;
+  font-size: var(--t-lg);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.scout__pick:hover .scout__name {
+  text-decoration: underline;
+}
+
+.scout__role,
+.scout__contract {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.scout__short,
+.scout__final {
+  padding: 0 6px;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.scout__final {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.scout__eye {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  color: var(--ink-soft);
+}
+
+/* his eye for talent: the better the word, the heavier the tag */
+.scout__word {
+  padding: 2px 8px;
+  color: var(--ink);
+  border: var(--line) solid var(--line-soft);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.scout__word--solid,
+.scout__word--strong {
+  border-color: var(--ink);
+}
+
+.scout__word--elite,
+.scout__word--allamerican {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.scout__body {
+  display: grid;
+  gap: 6px;
+  padding: var(--s2);
+  border-top: 1px solid var(--line-soft);
+}
+
+.scout__area {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--s2);
+  align-items: center;
+}
+
+.scout__area > .label {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.scout__select {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.scout__select select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 32px 0 10px;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+}
+
+.scout__select svg {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+}
+
+.scout__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px var(--s2);
+  padding-left: calc(72px + var(--s2));
+  font-size: var(--t-sm);
+}
+
+.scout__line > .label {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.scout__warn {
+  font-weight: 700;
+}
+
+/* the map's card */
+.staff__map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 0;
+  padding: var(--s3);
+  overflow: hidden;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.staff__map-head {
+  display: flex;
+  justify-content: space-between;
+}
+
+.staff__toast {
+  min-height: 22px;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+/* ----- the coverage map ----- */
+.coverage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+/* the map keeps its shape and fits the card's height; the faces sit on it by percent */
+.coverage__map {
+  position: relative;
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-height: 0;
+}
+
+/* sized in script to the map's own shape (CoverageMap), so the faces placed by percent land on their areas */
+.coverage__frame {
+  position: absolute;
+}
+
+.coverage__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.coverage__base {
+  fill: color-mix(in srgb, var(--ink) 6%, var(--paper-hi));
+  shape-rendering: crispedges;
+}
+
+.coverage__area {
+  outline: none;
+  cursor: pointer;
+}
+
+.coverage__fill {
+  fill: color-mix(in srgb, var(--ink) 10%, var(--paper-hi));
+  shape-rendering: crispedges;
+  transition: fill 120ms ease-out;
+}
+
+.coverage__area.is-covered .coverage__fill {
+  fill: color-mix(in srgb, var(--ink) 32%, var(--paper-hi));
+}
+
+.coverage__area.is-hover .coverage__fill,
+.coverage__area:focus-visible .coverage__fill {
+  fill: color-mix(in srgb, var(--ink) 56%, var(--paper-hi));
+}
+
+.coverage__over {
+  pointer-events: none;
+}
+
+.coverage__edge {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.12;
+  stroke-linecap: square;
+  opacity: 0.55;
+}
+
+.coverage__hover {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.24;
+  stroke-linecap: square;
+}
+
+.coverage__raised-shadow,
+.coverage__raised-fill {
+  shape-rendering: crispedges;
+}
+
+.coverage__raised-shadow {
+  fill: var(--shadow);
+}
+
+.coverage__raised-fill {
+  fill: var(--ink);
+}
+
+.coverage__raised-edge {
+  fill: none;
+  stroke: var(--paper-hi);
+  stroke-width: 0.14;
+  stroke-linecap: square;
+}
+
+/* an area's faces, centered on its middle */
+.coverage__pins {
+  position: absolute;
+  display: flex;
+  gap: 2px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.coverage__pin {
+  width: 36px;
+  height: 36px;
+  box-shadow: 2px 2px 0 var(--shadow);
+}
+
+.coverage__pins.is-mine .coverage__pin {
+  border-color: var(--paper-hi);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.coverage__readout,
+.coverage__hint {
+  min-height: 22px;
+  overflow: hidden;
+  font-size: var(--t-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coverage__readout {
+  display: flex;
+  gap: var(--s2);
+}
+
+.coverage__states,
+.coverage__hint {
+  color: var(--ink-soft);
+}
+
+/* ----- Reports ----- */
+.staff__reports {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+}
+
+.staff__chips {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.reports {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: var(--s3);
+  align-items: start;
+}
+
+.report {
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.report__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--s2);
+  align-items: center;
+  padding: var(--s2);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.report__face {
+  width: 44px;
+  height: 44px;
+}
+
+.report__who {
+  display: grid;
+  min-width: 0;
+}
+
+.report__who b {
+  text-transform: uppercase;
+}
+
+.report__count {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  text-align: right;
+}
+
+.report__items {
+  list-style: none;
+}
+
+.report__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px var(--s2);
+  align-items: center;
+  padding: 6px var(--s2);
+}
+
+.report__item + .report__item {
+  border-top: 1px solid var(--line-soft);
+}
+
+.report__prospect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.report__change {
+  grid-column: 2;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.staff__star {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  border: var(--line) solid transparent;
+  cursor: pointer;
+}
+
+.staff__star:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.staff__star.is-on {
+  color: var(--ink);
+}
+
+/* a find's tag: gems and generational talents filled, a bust risk dashed, a coordinator's word outlined */
+.staff__flag {
+  padding: 0 6px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.staff__flag--gem,
+.staff__flag--generational {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.staff__flag--bust {
+  border-style: dashed;
+}
+
+.finds {
+  display: grid;
+  max-width: 1100px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  list-style: none;
+}
+
+.find {
+  display: grid;
+  grid-template-columns: auto auto minmax(160px, 1.4fr) minmax(0, 1fr) 96px minmax(120px, 1fr);
+  gap: var(--s2);
+  align-items: center;
+  padding: 6px var(--s2);
+}
+
+.find + .find {
+  border-top: 1px solid var(--line-soft);
+}
+
+.find__face {
+  width: 40px;
+  height: 40px;
+}
+
+.find__who {
+  display: grid;
+  min-width: 0;
+}
+
+.find__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.find__standing {
+  font-size: var(--t-sm);
+  text-align: right;
+}
+
+.staff__empty {
+  display: grid;
+  gap: 4px;
+  max-width: 480px;
+  padding: var(--s4);
+  color: var(--ink-soft);
+  background: var(--paper-hi);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.staff__empty b {
+  color: var(--ink);
+}
+
+@media (width <= 1100px) {
+  /* one column that scrolls as a whole: the cards, then the map */
+  .staff__scouts {
+    overflow-y: auto;
+  }
+
+  .staff__cols {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .staff__list {
+    overflow: visible;
+  }
+
+  .staff__map {
+    min-height: 420px;
+  }
+
+  .staff__totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scout,
+  .staff__bar i,
+  .coverage__fill {
+    transition: none;
+  }
+}

@@ -1,5 +1,4 @@
 import {
-  Binoculars,
   Briefcase,
   Buildings,
   CalendarBlank,
@@ -11,6 +10,7 @@ import {
   Ranking,
   Table,
   TreeStructure,
+  UsersThree,
   Trophy,
   type Icon,
 } from "@phosphor-icons/react";
@@ -35,8 +35,8 @@ export const CAREER_SECTIONS = [
   },
   { key: "recruiting", label: "Recruiting", icon: Handshake, blurb: "Spend the week's hours on your board." },
   { key: "headquarters", label: "Headquarters", icon: Buildings, blurb: "Your staff, facilities and budget." },
-  { key: "scouting", label: "Scouting", icon: Binoculars, blurb: "Learn what your targets can really do." },
   { key: "schedule", label: "Schedule", icon: CalendarBlank, blurb: "Your games, week by week." },
+  { key: "staff", label: "Staff", icon: UsersThree, blurb: "Your coordinators and scouts." },
   { key: "depth", label: "Depth Chart", icon: ListNumbers, blurb: "Who starts, and who's next." },
 ] as const satisfies readonly Section[];
 
@@ -57,8 +57,11 @@ const ALL: readonly Section[] = [...CAREER_SECTIONS, ...LEAGUE_SECTIONS];
 /** *tune* The section /play opens on when the address names none. */
 export const DEFAULT_SECTION: SectionKey = "office";
 
+/** Old section keys and where they live now: Prospects is a Recruiting tab; Scouting became Staff. */
+const MOVED: Record<string, string> = { prospects: "recruiting", scouting: "staff" };
+
 /** The section for an address's ?section=, or the default for a missing or unknown one. */
 export const sectionOf = (key: string | null): Section =>
-  ALL.find((s) => s.key === (key === "prospects" ? "recruiting" : key)) ?? ALL.find((s) => s.key === DEFAULT_SECTION)!;
+  ALL.find((s) => s.key === (MOVED[key ?? ""] ?? key)) ?? ALL.find((s) => s.key === DEFAULT_SECTION)!;
 
 export const isLeague = (key: string) => LEAGUE_SECTIONS.some((s) => s.key === key);

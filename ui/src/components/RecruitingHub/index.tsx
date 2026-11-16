@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Prospects from "../Prospects/index.tsx";
 import Recruiting from "../Recruiting/index.tsx";
+import SectionTabs, { SectionPane } from "../SectionTabs/index.tsx";
 import type { Face } from "../../faces.ts";
 import type { RecruitingBoard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
-import "./index.css";
 
 export type HubTab = "board" | "prospects";
 
@@ -42,31 +42,18 @@ export default function RecruitingHub({
   coach,
 }: Props) {
   const [classSize, setClassSize] = useState<number | null>(null);
-  const tabs = (
-    <div className="hub-tabs" role="tablist" aria-label={m.label}>
-      <h1 className="hub-tabs__title">{m.label}</h1>
-      {(["board", "prospects"] as HubTab[]).map((t) => (
-        <button
-          key={t}
-          type="button"
-          role="tab"
-          aria-selected={tab === t}
-          className="hub-tabs__tab"
-          onClick={() => onTab(t)}
-        >
-          {t === "board" ? m.board : m.prospects}
-          <span className="hub-tabs__count">
-            {t === "board" ? (board?.board.length ?? "") : (classSize?.toLocaleString("en-US") ?? "")}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-
   return (
-    <div className="hub">
-      {tabs}
-      <div className="hub__pane" hidden={tab !== "board"}>
+    <div className="section-tabs__wrap">
+      <SectionTabs
+        title={m.label}
+        value={tab}
+        onChange={onTab}
+        tabs={[
+          { key: "board", label: m.board, count: board?.board.length },
+          { key: "prospects", label: m.prospects, count: classSize?.toLocaleString("en-US") },
+        ]}
+      />
+      <SectionPane shown={tab === "board"}>
         <Recruiting
           key={weekKey}
           seasonId={seasonId}
@@ -78,8 +65,8 @@ export default function RecruitingHub({
           coach={coach}
           onFindProspects={() => onTab("prospects")}
         />
-      </div>
-      <div className="hub__pane" hidden={tab !== "prospects"}>
+      </SectionPane>
+      <SectionPane shown={tab === "prospects"}>
         <Prospects
           key={weekKey}
           seasonId={seasonId}
@@ -89,7 +76,7 @@ export default function RecruitingHub({
           onBoardChange={() => void reload()}
           onClassSize={setClassSize}
         />
-      </div>
+      </SectionPane>
     </div>
   );
 }

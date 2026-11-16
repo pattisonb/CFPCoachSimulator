@@ -1,0 +1,196 @@
+/* A matchup as art: two teams' halves in their colors on a slanted seam, each with its letters oversized behind
+   it, and a paper tile on the seam (vs, at, or the score). Schedule and Bowls draw their banners with it. The white
+   behind the halves shows through the seam as a stripe. */
+.matchup {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: clamp(120px, 20vh, 196px);
+  overflow: hidden;
+  background: #fff; /* the seam between the two teams: white in both themes, like a painted stripe */
+}
+
+.matchup__side {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--c);
+  color: var(--on);
+}
+
+.matchup__side--left {
+  justify-content: flex-end;
+  padding: var(--s2) 76px var(--s2) var(--s3);
+  text-align: right;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 32px) 100%, 0 100%);
+}
+
+.matchup__side--right {
+  justify-content: flex-start;
+  margin-left: -26px;
+  padding: var(--s2) var(--s3) var(--s2) 102px;
+  clip-path: polygon(32px 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* the team's letters, oversized and cut off at the outer edge, like a logo on a wall */
+.matchup__mark {
+  position: absolute;
+  top: 50%;
+  color: var(--c2);
+  font-size: clamp(88px, 17vh, 176px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -6px;
+  white-space: nowrap;
+  opacity: 0.55;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(-8deg);
+}
+
+.matchup__side--left .matchup__mark {
+  left: -12px;
+}
+
+.matchup__side--right .matchup__mark {
+  right: -12px;
+}
+
+.matchup__text {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
+}
+
+.matchup__side--left .matchup__text {
+  justify-items: end;
+}
+
+.matchup__side--right .matchup__text {
+  justify-items: start;
+}
+
+.matchup__tags {
+  display: inline-flex;
+  gap: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.matchup__tag,
+.matchup__rank {
+  padding: 0 6px;
+  border: var(--line) solid currentcolor;
+  text-shadow: none;
+}
+
+.matchup__school {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--t-lg);
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.matchup__mascot {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--t-2xl);
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.matchup__view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  margin-top: 4px;
+  padding: 0 8px;
+  background: none;
+  color: inherit;
+  border: var(--line) solid currentcolor;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: none;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+
+.matchup__view:hover {
+  transform: translateX(2px);
+}
+
+/* vs, at, or the final score: a paper tile on the seam */
+.matchup__mid {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 72px;
+  padding: 8px 14px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  transform: translate(-50%, -50%);
+}
+
+.matchup__mid.is-won {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.matchup__vs {
+  font-size: var(--t-xl);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.matchup__score {
+  display: flex;
+  gap: 6px;
+  font-size: var(--t-xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.matchup__score i {
+  font-style: normal;
+  opacity: 0.6;
+}
+
+@media (width <= 1100px) {
+  .matchup__side--left {
+    padding-right: 76px;
+  }
+
+  .matchup__side--right {
+    padding-left: 104px;
+  }
+
+  .matchup__mascot {
+    font-size: var(--t-xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matchup__view {
+    transition: none;
+  }
+}

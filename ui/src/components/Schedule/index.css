@@ -1,0 +1,470 @@
+/* Schedule: a bar across the top, the picked game as a banner in both teams' colors, then the season as a list that
+   scrolls under its own header. */
+.sched {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+
+  /* the list's columns, shared by its header and every row */
+  --sched-cols: minmax(140px, 1.3fr) 112px 92px minmax(220px, 3fr) 128px minmax(120px, 2fr);
+}
+
+/* the bar: the section's name, the team on show (and Back to yours), the Regular Season / Postseason filter */
+.sched-bar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  min-height: 56px;
+  padding: var(--s1) var(--s4);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.sched-bar__title {
+  font-size: var(--t-lg);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.sched-bar__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sched-bar__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.sched-bar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sched-bar__phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  margin-left: auto;
+}
+
+.sched__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+}
+
+/* ----- the banner ----- */
+.sched-banner {
+  flex: none;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  animation: sched-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sched-banner--empty {
+  height: clamp(120px, 22vh, 200px);
+  animation: none;
+}
+
+@keyframes sched-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+}
+
+/* under the art: when and where, then what to know */
+.sched-banner__info {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(0, 2.4fr);
+  gap: var(--s4);
+  align-items: start;
+  height: 116px; /* *tune* fits the line score and the four team stats: picking another game never moves the list */
+  padding: var(--s2) var(--s3);
+  overflow: hidden;
+  border-top: var(--line) solid var(--ink);
+}
+
+.sched-banner__when {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+}
+
+.sched-banner__kicker {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.sched-banner__named {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.sched-banner__chip {
+  margin-top: 4px;
+  padding: 0 8px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.sched-banner__soft {
+  color: var(--ink-soft);
+}
+
+.sched-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s2) var(--s5);
+}
+
+.sched-detail__cell {
+  display: grid;
+  gap: 4px;
+  max-width: 360px;
+}
+
+.sched-detail__odds {
+  flex: 1;
+  min-width: 240px;
+  max-width: 520px;
+}
+
+.sched-detail__odds-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.sched-detail__big {
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+.sched-detail__bar {
+  flex: 1;
+  min-width: 120px;
+  height: 12px;
+  border: var(--line) solid var(--ink);
+}
+
+.sched-detail__bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  animation: sched-fill 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes sched-fill {
+  from {
+    width: 0;
+  }
+}
+
+/* the line score: quarters, overtime and the total */
+.sched-line {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.sched-line caption {
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.sched-line th,
+.sched-line td {
+  padding: 1px 8px;
+  text-align: center;
+}
+
+.sched-line thead th {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.sched-line tbody th {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 0;
+  text-align: left;
+}
+
+.sched-line tbody tr + tr > * {
+  border-top: 1px solid var(--line-soft);
+}
+
+.sched-line tr.is-won,
+.sched-line .sched-line__total {
+  font-weight: 700;
+}
+
+.sched-line__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* team stats: yours, the stat, theirs */
+.sched-stats {
+  display: grid;
+  gap: 2px;
+}
+
+.sched-stats__row {
+  display: grid;
+  grid-template-columns: 48px 120px 48px;
+  align-items: baseline;
+}
+
+.sched-stats__row dt {
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.sched-stats__row dd {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.sched-stats__row dd:first-child {
+  text-align: right;
+}
+
+.sched-stats__row dd.is-best {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ----- the list ----- */
+.sched-table {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 160px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.sched-head {
+  display: grid;
+  flex: none;
+  grid-template-columns: var(--sched-cols);
+  gap: var(--s2);
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--s3);
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.sched-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.sched-row {
+  display: grid;
+  grid-template-columns: var(--sched-cols);
+  gap: var(--s2);
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--s3);
+  background: none;
+  color: var(--ink);
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+.sched-row:hover {
+  background: var(--tile);
+}
+
+.sched-row:focus-visible {
+  outline-offset: -4px;
+}
+
+.sched-row--bye {
+  min-height: 34px;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  cursor: default;
+}
+
+.sched-row--bye:hover {
+  background: none;
+}
+
+.sched-row__bye {
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.sched-row__week {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sched-row__tag {
+  padding: 0 6px;
+  border: var(--line) solid currentcolor;
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.sched-row__opp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sched-row__venue {
+  flex: none;
+  width: 20px;
+  color: var(--ink-soft);
+}
+
+.sched-row__rank {
+  flex: none;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.sched-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sched-row__rec {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.sched-row__result {
+  display: inline-block;
+  padding: 0 8px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sched-row__result.is-won {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.sched-row__note {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the picked game: inverted, like the highlight bar on a game menu */
+.sched-row.is-picked,
+.sched-row.is-picked:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.sched-row.is-picked .sched-row__venue,
+.sched-row.is-picked .sched-row__rec,
+.sched-row.is-picked .sched-row__note {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.sched-row.is-picked .sched-row__result {
+  border-color: var(--paper-hi);
+}
+
+.sched-row.is-picked .sched-row__result.is-won {
+  background: var(--paper-hi);
+  color: var(--ink);
+}
+
+.sched__note {
+  display: grid;
+  gap: 4px;
+  padding: var(--s4);
+  color: var(--ink-soft);
+}
+
+/* ----- a tablet or a narrow window: no Kickoff or Notes, a smaller banner ----- */
+@media (width <= 1100px) {
+  .sched {
+    --sched-cols: minmax(128px, 1fr) 104px minmax(0, 2.6fr) 104px;
+  }
+
+  .sched-col--kickoff,
+  .sched-col--notes {
+    display: none;
+  }
+
+  .sched-banner__info {
+    grid-template-columns: minmax(160px, 1fr) minmax(0, 3fr);
+    gap: var(--s3);
+  }
+
+  .sched-detail {
+    gap: var(--s2) var(--s4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sched-banner,
+  .sched-detail__bar i {
+    animation: none;
+  }
+
+  .sched-row {
+    transition: none;
+  }
+}

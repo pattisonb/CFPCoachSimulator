@@ -4,6 +4,11 @@ import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
 import DepthChart from "../../components/DepthChart/index.tsx";
 import Office from "../../components/Office/index.tsx";
+import Awards from "../../components/Awards/index.tsx";
+import Bowls from "../../components/Bowls/index.tsx";
+import Schedule from "../../components/Schedule/index.tsx";
+import Standings from "../../components/Standings/index.tsx";
+import Staff from "../../components/Staff/index.tsx";
 import RecruitingHub, { type HubTab } from "../../components/RecruitingHub/index.tsx";
 import GameNav, { type NavTeam } from "../../components/GameNav/index.tsx";
 import SeasonStrip from "../../components/SeasonStrip/index.tsx";
@@ -41,6 +46,11 @@ const PANE: Record<string, string> = {
   office: "",
   recruiting: "",
   depth: "game__pane--padded",
+  schedule: "",
+  staff: "",
+  awards: "",
+  bowls: "",
+  standings: "",
 };
 
 /**
@@ -239,6 +249,26 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       weekKey={season.current_week}
                       coach={coach && face ? { name: coachName(coach), face } : null}
                     />
+                  ) : key === "standings" ? (
+                    <Standings season={season} teams={bySlug} />
+                  ) : key === "bowls" ? (
+                    <Bowls season={season} teams={bySlug} />
+                  ) : key === "awards" ? (
+                    <Awards
+                      key={season.current_week}
+                      season={season}
+                      teams={bySlug}
+                      coach={coach && face ? { name: coachName(coach), face } : null}
+                    />
+                  ) : key === "staff" ? (
+                    <Staff
+                      key={season.current_week}
+                      seasonId={season.id}
+                      year={season.year}
+                      onBoardChange={() => void reloadRecruiting()}
+                    />
+                  ) : key === "schedule" ? (
+                    <Schedule season={season} teams={bySlug} />
                   ) : key === "depth" ? (
                     <DepthChart
                       key={season.current_week}
