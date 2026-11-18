@@ -1,0 +1,426 @@
+/* Play's New Season window: the team list at the left, the picked team at the right. It fills the window; only the
+   grid of teams scrolls (and the team's panel, on a screen too small for it). */
+.chooser {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr); /* *tune* the list's width */
+  min-height: 0;
+}
+
+/* ----- the list: search, filters, the grid of tiles, then Random Team and Custom Program ----- */
+.chooser__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 0;
+  padding: var(--s3);
+  background: var(--paper);
+  border-right: var(--line) solid var(--ink);
+}
+
+/* a key's hint, beside what it does */
+.chooser__kbd {
+  min-width: 22px;
+  padding: 1px 6px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  font: inherit;
+  font-size: var(--t-xs);
+  text-align: center;
+}
+
+.chooser__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 8px 0 10px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.chooser__search:focus-within {
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.chooser__search input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  background: none;
+  color: var(--ink);
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.chooser__search input::placeholder {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.chooser__search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.chooser__search:focus-within .chooser__kbd,
+.chooser__search:has(.chooser__clear) .chooser__kbd {
+  display: none;
+}
+
+.chooser__clear {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  cursor: pointer;
+}
+
+.chooser__filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+}
+
+.chooser__select {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chooser__select .label {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.chooser__select select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 28px 0 8px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+}
+
+.chooser__select svg {
+  position: absolute;
+  right: 8px;
+  bottom: 11px;
+  pointer-events: none;
+}
+
+.chooser__count {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.chooser__grid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  align-content: start;
+  gap: var(--s2);
+  min-height: 0;
+  margin: 0 calc(-1 * var(--s2));
+  padding: 6px var(--s2) var(--s2);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.chooser__none {
+  flex: 1;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* a team's tile: its letters outlined and dropped (colors from tileColors in index.tsx) on a striped plate of its color */
+.chooser__tile {
+  display: grid;
+  place-items: center;
+  height: 52px;
+  padding: 0;
+  overflow: hidden;
+  background: repeating-linear-gradient(-60deg, transparent 0 10px, rgb(255 255 255 / 8%) 10px 12px),
+    linear-gradient(160deg, var(--c) 55%, color-mix(in srgb, var(--c) 65%, #000));
+  color: var(--fill);
+  border: var(--line) solid var(--ink);
+  box-shadow: inset 0 -5px 0 var(--c2);
+  cursor: pointer;
+  transition:
+    transform 100ms ease-out,
+    box-shadow 100ms ease-out;
+}
+
+.chooser__tile:hover {
+  transform: translate(-1px, -1px);
+}
+
+.chooser__tile[aria-selected="true"] {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow:
+    inset 0 -5px 0 var(--c2),
+    4px 4px 0 var(--shadow);
+  transform: translate(-2px, -2px);
+}
+
+.chooser__abbr {
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-shadow:
+    -1px -1px 0 var(--edge),
+    1px -1px 0 var(--edge),
+    -1px 1px 0 var(--edge),
+    1px 1px 0 var(--edge),
+    3px 3px 0 var(--drop),
+    4px 4px 0 var(--edge);
+  transform: skewX(-8deg);
+}
+
+.chooser__more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s1) var(--s2);
+  padding-top: var(--s2);
+  border-top: var(--line) solid var(--ink);
+}
+
+.chooser__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 4px;
+  background: none;
+  color: var(--ink);
+  border: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chooser__link:hover {
+  text-decoration: underline;
+}
+
+/* ----- the picked team: its banner over its Overview and Roster ----- */
+.chooser__team {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--s3);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+}
+
+/* the banner: helmet, name, prestige and staff, ratings and Play, on the team's colors */
+.team-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  overflow: hidden;
+  background: repeating-linear-gradient(-60deg, transparent 0 22px, rgb(255 255 255 / 5%) 22px 24px),
+    linear-gradient(120deg, var(--c) 45%, color-mix(in srgb, var(--c) 62%, #000));
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+/* the team's letters, oversized behind everything, like a logo painted on a wall */
+.team-banner__mark {
+  position: absolute;
+  top: -30%;
+  left: 18%;
+  color: var(--c2);
+  font-size: 220px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -8px;
+  white-space: nowrap;
+  opacity: 0.3;
+  pointer-events: none;
+  transform: rotate(-8deg);
+}
+
+.team-banner__helmet {
+  position: relative;
+  width: auto;
+  height: clamp(96px, 17vh, 160px);
+  filter: drop-shadow(6px 6px 0 rgb(0 0 0 / 28%));
+  animation: helmet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes helmet-in {
+  from {
+    opacity: 0;
+    transform: translateX(-30px) rotate(-6deg);
+  }
+}
+
+.team-banner__who {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
+}
+
+.team-banner__school {
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.team-banner__mascot {
+  max-width: 100%;
+  font-size: var(--t-2xl);
+  line-height: 1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.team-banner__stars {
+  display: flex;
+  gap: 2px;
+  margin: 2px 0 4px;
+}
+
+.team-banner__stars .is-off {
+  opacity: 0.45;
+}
+
+.team-banner__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--s4);
+  font-size: var(--t-xs);
+}
+
+.team-banner__facts div {
+  display: flex;
+  gap: 6px;
+}
+
+.team-banner__facts dt {
+  opacity: 0.8;
+}
+
+.team-banner__facts dd {
+  font-weight: 700;
+}
+
+.team-banner__side {
+  position: relative;
+  display: grid;
+  justify-items: end;
+  gap: var(--s3);
+}
+
+.team-banner__ratings {
+  display: flex;
+  gap: var(--s1);
+}
+
+.team-banner__rating {
+  display: grid;
+  justify-items: center;
+  min-width: 56px;
+  padding: 6px 4px 4px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.team-banner__rating:first-child {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.team-banner__rating b {
+  font-size: var(--t-xl);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+/* ----- the panel under the banner (FolderTabs): Overview or Roster, each filling it ----- */
+.folder-tabs__panel.team-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.team-details__note {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  color: var(--ink-soft);
+}
+
+@media (width <= 1200px) {
+  .chooser {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .team-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .team-banner__side {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+/* short screens: the banner drops its facts and tightens */
+@media (height <= 820px) {
+  .team-banner {
+    padding-block: var(--s2);
+  }
+
+  .team-banner__facts {
+    display: none;
+  }
+
+  .chooser__team {
+    gap: var(--s2);
+    padding-top: var(--s2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chooser__tile {
+    transition: none;
+  }
+
+  .team-banner__helmet {
+    animation: none;
+  }
+}

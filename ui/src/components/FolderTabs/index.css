@@ -7,10 +7,14 @@
   min-height: 0;
 }
 
+.folder-tabs__bar {
+  display: flex;
+  margin-bottom: calc(-1 * var(--line));
+}
+
 .folder-tabs__list {
   display: flex;
   gap: var(--s1);
-  margin-bottom: calc(-1 * var(--line));
 }
 
 .folder-tabs__tab {
@@ -37,6 +41,14 @@
   background: var(--paper-hi);
   color: var(--ink);
   border-bottom-color: var(--paper-hi);
+}
+
+.folder-tabs__aside {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-left: auto;
+  padding-bottom: 6px;
 }
 
 .folder-tabs__flag {

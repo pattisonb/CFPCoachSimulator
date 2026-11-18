@@ -146,8 +146,319 @@
   text-align: right;
 }
 
+/* ---------- the formation: the starters' cards on a field where they line up ---------- */
+.folder-tabs__panel.depth--formation {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.formation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s3);
+  background: var(--paper);
+}
+
+.formation__kicks {
+  display: flex;
+  gap: var(--s1);
+}
+
+/* grass in mowed stripes with yard lines, the same in both themes; the board sits centered in it */
+.formation__field {
+  --grass: #3f8a3a;
+  --grass-hi: #47963f;
+
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+      180deg,
+      transparent 0 calc(20% - 2px),
+      rgb(255 255 255 / 45%) calc(20% - 2px) 20%
+    ),
+    repeating-linear-gradient(180deg, var(--grass) 0 10%, var(--grass-hi) 10% 20%);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+/* the board: natural size in px (formation.ts boardOf), scaled to fit the field in Formation.tsx */
+.board {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+
+/* the line of scrimmage, across the whole field */
+.board__los {
+  position: absolute;
+  right: -2000px;
+  left: -2000px;
+  height: 4px;
+  background: #ffd84a;
+  transform: translateY(-50%);
+}
+
+/* a starter's spot: the tag, his card, the next ones up (sizes match formation.ts) */
+.board__slot {
+  position: absolute;
+  display: grid;
+  gap: 6px;
+}
+
+.board__label {
+  height: 16px;
+  color: #fff;
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  line-height: 16px;
+  text-align: center;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 60%);
+}
+
+.board__card {
+  display: grid;
+  grid-template-rows: 100px auto auto auto;
+  height: 184px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 40%);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 100ms ease-out;
+}
+
+.board__card:hover {
+  transform: translate(-2px, -2px);
+}
+
+.board__top {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+  background: repeating-linear-gradient(-60deg, transparent 0 10px, rgb(255 255 255 / 7%) 10px 12px),
+    linear-gradient(160deg, var(--c) 50%, color-mix(in srgb, var(--c) 60%, #000));
+  color: var(--on);
+}
+
+.board__ovr {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+}
+
+.board__ovr b {
+  font-size: 28px;
+}
+
+.board__ovr span {
+  margin-top: 2px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.board__jersey {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.board__face {
+  display: grid;
+  place-items: end center;
+}
+
+.board__face .face {
+  width: 80px;
+  height: auto;
+}
+
+.board__card.is-out .board__face {
+  opacity: 0.6;
+}
+
+.board__out,
+.board__rs {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 0 4px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.board__out {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.board__name {
+  display: grid;
+  padding: 5px 8px 0;
+  border-top: var(--line) solid var(--ink);
+  line-height: 1.2;
+}
+
+.board__name span,
+.board__name b,
+.board__meta,
+.board__type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board__name span {
+  font-size: var(--t-xs);
+}
+
+.board__name b {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.board__meta,
+.board__type {
+  padding: 0 8px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.board__type {
+  font-weight: 700;
+}
+
+/* the next ones up: small cards with a face, a name and an overall */
+.board__backups {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.board__backup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 40px;
+  padding: 2px 6px 2px 2px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.board__backup:hover {
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 40%);
+}
+
+.board__backup-face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--c) 22%, var(--tile));
+}
+
+.board__backup-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.board__backup-name span,
+.board__backup-name b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board__backup-name span {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.board__backup-name b {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+}
+
+.board__backup-ovr {
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+}
+
+.board__backup-ovr b {
+  font-size: var(--t-sm);
+}
+
+.board__backup-ovr span {
+  color: var(--ink-soft);
+  font-size: 9px;
+}
+
+.formation__returners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.formation__returner {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.formation__returner:hover {
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.formation__returner .label {
+  color: var(--ink-soft);
+}
+
 @media (width <= 1100px) {
   .folder-tabs__panel.depth {
     grid-template-columns: 280px minmax(0, 1fr);
+  }
+
+  .folder-tabs__panel.depth--formation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board__card {
+    transition: none;
   }
 }

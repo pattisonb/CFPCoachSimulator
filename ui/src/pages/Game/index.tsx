@@ -275,6 +275,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       seasonId={season.id}
                       team={season.team}
                       weekLabels={season.week_labels}
+                      colors={myTeam?.colors}
                     />
                   ) : (
                     // the sidebar names the open section, so the section's screen takes the whole space

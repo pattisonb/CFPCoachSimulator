@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
 import spriteUrl from "../../assets/helmet.png";
-import { hexToRgb, shade, type RGB } from "../../colors.ts";
+import { darken, hexToRgb } from "../../colors.ts";
 import "./index.css";
 
 // The helmet sprite (assets/helmet.png): a 13 x 13 helmet facing right, drawn in a red shell with a darker red
 // shade, a gray facemask, black outlines and two dark-gray pixels at the ear hole. The shell's reds take the team's
-// primary color, scaled by how dark each red is in the art; the facemask can take a color of its own.
+// primary color, the shade always a darker version of it; the facemask can take a color of its own.
 
-/** The art's shell red: every pixel of that hue (green = blue, red above them) is the shell, lit or shaded. */
+/** The art's shell red; every other pixel of that hue (green = blue, red above them) is the shell's shade. */
 const SHELL_RED = 172;
-/** The art's shade red, and the deepest one at the facemask's corner. */
-const SHADE_RED = 85;
 const FACEMASK = 0x9badb7;
 
-/** *tune* How much of the team color the helmet's shading keeps (and lifts, on a near-black color). */
+/** *tune* How much of the team color the helmet's shade keeps (always darker, even on a dark color). */
 const SHADE_KEEP = 0.55;
-const SHADE_LIFT = 0.3;
-const DEEP_KEEP = 0.25;
 
 interface Sprite {
   data: ImageData;
@@ -62,11 +58,7 @@ function paint({ data, box }: Sprite, shell: string, mask: string | undefined): 
   const hit = painted.get(key);
   if (hit) return hit;
   const lit = hexToRgb(shell);
-  const tones: Record<number, RGB> = {
-    [SHELL_RED]: lit,
-    [SHADE_RED]: shade(lit, SHADE_KEEP, SHADE_LIFT),
-  };
-  const deep = shade(lit, DEEP_KEEP, 0);
+  const dark = darken(lit, SHADE_KEEP);
   const maskRgb = mask ? hexToRgb(mask) : null;
   const out = new ImageData(box.w, box.h);
   const src = data.data;
@@ -76,8 +68,8 @@ function paint({ data, box }: Sprite, shell: string, mask: string | undefined): 
       const o = (y * box.w + x) * 4;
       if (src[i + 3] < 128) continue;
       const [r, g, b] = [src[i], src[i + 1], src[i + 2]];
-      let to: RGB | null = null;
-      if (g === b && r > g) to = tones[r] ?? deep;
+      let to: number[] | null = null;
+      if (g === b && r > g) to = r === SHELL_RED ? lit : dark;
       else if (maskRgb && ((r << 16) | (g << 8) | b) === FACEMASK) to = maskRgb;
       out.data.set(to ?? [r, g, b], o);
       out.data[o + 3] = 255;

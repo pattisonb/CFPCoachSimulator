@@ -1,16 +1,24 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import Face from "../Face/index.tsx";
+import Chip from "../Chip/index.tsx";
 import FolderTabs from "../FolderTabs/index.tsx";
+import Modal from "../Modal/index.tsx";
 import PlayerView from "../PlayerView/index.tsx";
 import { api } from "../../api.ts";
+import { inkOn } from "../../colors.ts";
 import { lookOf, titleCase } from "../../faces.ts";
 import { navigate } from "../../router.ts";
 import { formatClass } from "../../format.ts";
 import type { DepthCard, DepthChart as Chart, DepthRow, PlayerProfile } from "../../types.ts";
+import Formation from "./Formation.tsx";
+import type { Kick } from "./formation.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
 type UnitKey = "offense" | "defense" | "special";
+/** The panel: the roles as lists beside the player's card, or the unit lined up on a field. */
+type View = "formation" | "list";
+const VIEWS: View[] = ["formation", "list"];
 /** The chart's units come in this order (sim/season.py DEPTH_ROWS). */
 const UNITS: UnitKey[] = ["offense", "defense", "special"];
 
@@ -19,6 +27,8 @@ interface Props {
   /** the team's slug (yours) */
   team: string;
   weekLabels: Record<string, string>;
+  /** the team's colors, for the lineup's cards */
+  colors?: { primary: string; secondary: string };
 }
 
 type Load = { kind: "loading" } | { kind: "error"; msg: string } | { kind: "ready"; chart: Chart };
@@ -29,11 +39,17 @@ const keyOf = (role: string, slug: string) => `${role}|${slug}`;
 
 /**
  * The Depth Chart section: Offense, Defense and Special Teams as tabs; each lists its roles in formation order, the
- * players in depth order with the starters marked, and the picked player's whole card beside the list.
+ * players in depth order with the starters marked, and the picked player's whole card beside the list. The Lineup
+ * view (the first one) shows each starter as a card with his backups under him; the Formation view lines the starters
+ * up on a field. Special Teams shows the field goal or the punt unit in both.
  */
-export default function DepthChart({ seasonId, team, weekLabels }: Props) {
+export default function DepthChart({ seasonId, team, weekLabels, colors }: Props) {
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [unit, setUnit] = useState<UnitKey>("offense");
+  const [view, setView] = useState<View>("formation");
+  const [kick, setKick] = useState<Kick>("fg");
+  /** the picked player's full card, over the formation */
+  const [card, setCard] = useState(false);
   const [pick, setPick] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Map<string, Profile>>(() => new Map());
   const asked = useRef(new Set<string>());
@@ -55,12 +71,21 @@ export default function DepthChart({ seasonId, team, weekLabels }: Props) {
     [load, unit],
   );
 
+  // every role on the chart (the kicking units draw on the offense and defense), and the unit each is in
+  const allRows = useMemo(() => {
+    const out = new Map<string, DepthRow & { unit: UnitKey }>();
+    if (load.kind === "ready")
+      load.chart.units.forEach((u, i) => u.rows.forEach((r) => out.set(r.role, { ...r, unit: UNITS[i] })));
+    return out;
+  }, [load]);
+
   // the picked player, else the unit's first starter
   const picked = useMemo(() => {
-    for (const r of rows) for (const p of r.players) if (keyOf(r.role, p.slug) === pick) return { row: r, p };
+    for (const r of [...rows, ...allRows.values()])
+      for (const p of r.players) if (keyOf(r.role, p.slug) === pick) return { row: r, p };
     const r = rows[0];
     return r?.players[0] ? { row: r, p: r.players[0] } : null;
-  }, [rows, pick]);
+  }, [rows, allRows, pick]);
 
   // his profile, once per player
   const slug = picked?.p.slug;
@@ -77,6 +102,8 @@ export default function DepthChart({ seasonId, team, weekLabels }: Props) {
         store({ kind: "error", msg: e.message });
       });
   }, [slug, seasonId, team]);
+
+  const choose = (role: string, s: string) => setPick(keyOf(role, s));
 
   // ↑ ↓ walk the list
   const onKey = (e: KeyboardEvent) => {
@@ -108,47 +135,105 @@ export default function DepthChart({ seasonId, team, weekLabels }: Props) {
         setUnit(k);
         setPick(null);
       }}
-      panelClassName="depth"
+      panelClassName={view === "list" ? "depth" : "depth depth--formation"}
+      aside={
+        <div className="depth__views" role="group" aria-label={m.viewLabel}>
+          {VIEWS.map((v) => (
+            <Chip key={v} on={view === v} onClick={() => setView(v)}>
+              {m.views[v]}
+            </Chip>
+          ))}
+        </div>
+      }
     >
-      <div className="depth__list" ref={list} onKeyDown={onKey}>
-        {rows.map((r) => (
-          <section key={r.role} className="depth__role" aria-labelledby={`depth-${r.role}`}>
-            <h3 className="depth__role-head" id={`depth-${r.role}`}>
-              <b>{r.role}</b>
-              <span>{titleCase(r.label)}</span>
-              <span className="depth__role-count">{m.starters(r.starters)}</span>
-            </h3>
-            <ol className="depth__players">
-              {r.players.map((p, i) => (
-                <li key={p.slug}>
-                  <PlayerRow
-                    p={p}
-                    spot={i + 1}
-                    starter={i < r.starters}
-                    lastStarter={i === r.starters - 1 && i < r.players.length - 1}
-                    on={picked?.row.role === r.role && picked.p.slug === p.slug}
-                    onPick={() => setPick(keyOf(r.role, p.slug))}
-                  />
-                </li>
-              ))}
-            </ol>
-          </section>
-        ))}
-      </div>
-      <div className="depth__view" aria-live="polite">
-        {picked ? (
-          <PlayerView
-            key={picked.p.slug}
-            card={picked.p}
-            profile={profile?.kind === "ready" ? profile.profile : null}
-            error={profile?.kind === "error" ? profile.msg : null}
-            weekLabels={weekLabels}
-            onEditLook={() => navigate("playerEdit", { season: seasonId, team, player: picked.p.slug })}
-          />
-        ) : (
-          <p className="depth__state">{m.pickHint}</p>
-        )}
-      </div>
+      {view !== "list" ? (
+        <>
+          <div
+            className="formation"
+            style={
+              {
+                "--c": colors?.primary ?? "var(--ink)",
+                "--c2": colors?.secondary ?? "var(--ink-soft)",
+                "--on": colors ? inkOn(colors.primary) : "var(--paper-hi)",
+              } as CSSProperties
+            }
+          >
+            {unit === "special" && (
+              <div className="formation__kicks" role="group" aria-label={m.kickLabel}>
+                <Chip on={kick === "fg"} onClick={() => setKick("fg")}>
+                  {m.fieldGoal}
+                </Chip>
+                <Chip on={kick === "punt"} onClick={() => setKick("punt")}>
+                  {m.punt}
+                </Chip>
+              </div>
+            )}
+            <Formation
+              unit={unit}
+              rows={allRows}
+              kick={kick}
+              onOpen={(role, slug) => {
+                choose(role, slug);
+                setCard(true);
+              }}
+            />
+          </div>
+          <Modal open={card && !!picked} onClose={() => setCard(false)} title={picked?.p.name ?? ""} head={<span />}>
+            {picked && (
+              <PlayerView
+                key={picked.p.slug}
+                card={picked.p}
+                profile={profile?.kind === "ready" ? profile.profile : null}
+                error={profile?.kind === "error" ? profile.msg : null}
+                weekLabels={weekLabels}
+                onEditLook={() => navigate("playerEdit", { season: seasonId, team, player: picked.p.slug })}
+              />
+            )}
+          </Modal>
+        </>
+      ) : (
+        <>
+          <div className="depth__list" ref={list} onKeyDown={onKey}>
+            {rows.map((r) => (
+              <section key={r.role} className="depth__role" aria-labelledby={`depth-${r.role}`}>
+                <h3 className="depth__role-head" id={`depth-${r.role}`}>
+                  <b>{r.role}</b>
+                  <span>{titleCase(r.label)}</span>
+                  <span className="depth__role-count">{m.starters(r.starters)}</span>
+                </h3>
+                <ol className="depth__players">
+                  {r.players.map((p, i) => (
+                    <li key={p.slug}>
+                      <PlayerRow
+                        p={p}
+                        spot={i + 1}
+                        starter={i < r.starters}
+                        lastStarter={i === r.starters - 1 && i < r.players.length - 1}
+                        on={picked?.row.role === r.role && picked.p.slug === p.slug}
+                        onPick={() => setPick(keyOf(r.role, p.slug))}
+                      />
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+          <div className="depth__view" aria-live="polite">
+            {picked ? (
+              <PlayerView
+                key={picked.p.slug}
+                card={picked.p}
+                profile={profile?.kind === "ready" ? profile.profile : null}
+                error={profile?.kind === "error" ? profile.msg : null}
+                weekLabels={weekLabels}
+                onEditLook={() => navigate("playerEdit", { season: seasonId, team, player: picked.p.slug })}
+              />
+            ) : (
+              <p className="depth__state">{m.pickHint}</p>
+            )}
+          </div>
+        </>
+      )}
     </FolderTabs>
   );
 }

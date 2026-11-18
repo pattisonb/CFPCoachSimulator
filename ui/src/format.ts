@@ -44,3 +44,16 @@ export const timeText = (d: string | null | undefined) => {
   const t = timeOf(d);
   return Number.isNaN(t) ? "" : TIME.format(t);
 };
+
+/** "Jalen Smith Jr." → "Smith" */
+export const lastName = (name: string) => {
+  const parts = name.split(" ").filter((w) => !/^(jr|sr|ii|iii|iv|v)\.?$/i.test(w));
+  return parts[parts.length - 1] ?? name;
+};
+
+/** Everything but the last name ("Jalen Smith Jr." → "Jalen"). */
+export const firstNames = (name: string) => {
+  const last = lastName(name);
+  const i = name.lastIndexOf(last);
+  return i > 0 ? name.slice(0, i).trim() : "";
+};

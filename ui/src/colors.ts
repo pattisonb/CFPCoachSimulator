@@ -15,6 +15,12 @@ function luminance(hex: string): number {
 /** The text color that reads on a team color: white, or near-black on a light one (gold, white, silver). */
 export const inkOn = (hex: string): string => (luminance(hex) > 0.4 ? "#111" : "#fff");
 
+/** How far apart two colors' lightness is (WCAG contrast ratio), 1 (the same) to 21 (black on white). */
+export function contrast(a: string, b: string): number {
+  const [lo, hi] = [luminance(a), luminance(b)].sort((x, y) => x - y);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
 export type RGB = [number, number, number];
 
 /** A "#rrggbb" color as its three channels; mid-gray for anything else. */
@@ -32,3 +38,6 @@ export function shade([r, g, b]: RGB, keep = 0.68, lift = 0.22): RGB {
   const mix = (c: number) => Math.round(dark ? c + (255 - c) * lift : c * keep);
   return [mix(r), mix(g), mix(b)];
 }
+
+/** A color made darker, keeping `keep` of each channel. */
+export const darken = ([r, g, b]: RGB, keep: number): RGB => [r, g, b].map((c) => Math.round(c * keep)) as RGB;

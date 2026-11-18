@@ -13,7 +13,10 @@ interface Props {
 
 const TOP = 3;
 
-/** The team at a glance: offense and defense, each with its rating and its best players. */
+/** A coordinator's scheme, from "OC Name (Scheme)". */
+const scheme = (line: string | undefined) => /\(([^)]+)\)/.exec(line ?? "")?.[1];
+
+/** The team at a glance: offense and defense, each with its rating, scheme and best players. */
 export default function TeamOverview({ team, players }: Props) {
   const { hovered, bind, card } = usePlayerHover();
   const units = useMemo(() => {
@@ -23,7 +26,11 @@ export default function TeamOverview({ team, players }: Props) {
       { key: "defense", label: m.defense, rating: team.ratings.defense },
     ].map((u) => {
       const rows = players.filter((p) => p.unit === u.key);
-      return { ...u, rows, starters: rows.filter((p) => p.starter).length, top: byOverall(rows).slice(0, TOP) };
+      return {
+        ...u,
+        scheme: scheme(u.key === "offense" ? team.staff?.offense : team.staff?.defense),
+        top: byOverall(rows).slice(0, TOP),
+      };
     });
   }, [team, players]);
   if (!units) return <p className="overview__empty">{m.loading}</p>;
@@ -36,7 +43,7 @@ export default function TeamOverview({ team, players }: Props) {
             <div className="unit__head">
               <div className="unit__title">
                 <h3 className="unit__name">{u.label}</h3>
-                <span className="unit__depth">{m.depth(u.rows.length, u.starters)}</span>
+                {u.scheme && <span className="unit__depth">{u.scheme}</span>}
               </div>
               <span className="unit__rating" aria-label={`${m.rating} ${Math.round(u.rating)}`}>
                 {Math.round(u.rating)}

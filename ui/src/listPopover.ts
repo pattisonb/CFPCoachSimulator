@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 
-// The searchable pickers' shared behavior (TeamPicker, ProgramPicker): a list fixed under its button, a search box
+// The searchable picker's behavior (the program picker): a list fixed under its button, a search box
 // that takes focus, arrows to move, Enter to choose, Escape to close; a click elsewhere, a resize or any scroll
 // outside the list closes it (the list is placed once, so it would drift).
 

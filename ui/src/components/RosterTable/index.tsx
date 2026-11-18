@@ -48,7 +48,7 @@ export default function RosterTable({ players }: Props) {
         ))}
       </div>
       <div className="roster__head">
-        <span className="roster__summary">{m.summary(shown.length, shown.filter((p) => p.starter).length)}</span>
+        <span className="roster__summary">{m.summary(shown.length)}</span>
       </div>
       <div className="roster__scroll" onScroll={clear}>
         <table className="roster__table">
