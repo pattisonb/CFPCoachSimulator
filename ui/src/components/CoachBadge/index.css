@@ -1,5 +1,6 @@
 /* Your coach at the game's top right: a raised card, the face in a tile, then name, role and energy. */
 .coach-badge {
+  position: relative;
   display: flex;
   flex: none;
   align-items: center;
@@ -8,6 +9,14 @@
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* a small control inside the card's top right corner */
+.coach-badge__corner {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
 }
 
 .coach-badge__face {
@@ -36,6 +45,11 @@
   font-weight: 700;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* the name keeps clear of a control in the corner */
+.coach-badge:has(.coach-badge__corner) .coach-badge__name {
+  padding-right: 24px;
 }
 
 .coach-badge__role {

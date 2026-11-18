@@ -23,48 +23,61 @@
   display: flex;
   flex: none;
   align-items: stretch;
-  min-height: 56px; /* the tabs' own height, so a bar with none (Bowls) is as tall as the rest */
-  gap: var(--s3);
+  min-height: 44px; /* *tune* the bar's height, with tabs or without (Bowls) */
+  gap: var(--s2);
   padding: 0 var(--s4);
   border-bottom: var(--line) solid var(--ink);
 }
 
+/* the section's name: a heading, not a tab. A rule the bar's full height closes it off from the tabs */
 .section-tabs__title {
-  align-self: center;
-  margin-right: var(--s2);
+  display: flex;
+  align-items: center;
+  margin-right: var(--s1);
+  padding-right: var(--s3);
+  border-right: var(--line) solid var(--line-soft);
   font-size: var(--t-lg);
   line-height: 1;
   text-transform: uppercase;
+  cursor: default;
+}
+
+/* nothing after the name (no tabs): no rule */
+.section-tabs__title:last-child,
+.section-tabs__title:has(+ .section-tabs__aside) {
+  border-right: 0;
 }
 
 .section-tabs__tab {
   display: inline-flex;
   align-items: center;
+  align-self: center;
   gap: 8px;
-  min-height: 56px;
-  margin-bottom: calc(-1 * var(--line));
-  padding: 0 var(--s1);
+  min-height: 30px;
+  padding: 0 var(--s2);
   background: none;
   color: var(--ink-soft);
-  border: 0;
-  border-bottom: 4px solid transparent;
+  border: var(--line) solid transparent;
   font-size: var(--t-md);
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
   transition:
     color 160ms ease-out,
-    border-color 160ms ease-out;
+    border-color 160ms ease-out,
+    background-color 160ms ease-out;
 }
 
 .section-tabs__tab:hover {
   color: var(--ink);
-  border-bottom-color: var(--line-soft);
+  border-color: var(--line-soft);
 }
 
+/* the tab shown: outlined in a box */
 .section-tabs__tab[aria-selected="true"] {
+  background: var(--paper-hi);
   color: var(--ink);
-  border-bottom-color: var(--ink);
+  border-color: var(--ink);
 }
 
 .section-tabs__aside {

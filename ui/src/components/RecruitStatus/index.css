@@ -1,0 +1,13 @@
+/* A recruit's offer or commitment as one small icon: ink when it is with you, soft when it is not. */
+.recruit-status {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--ink);
+}
+
+.recruit-status--soft {
+  color: var(--ink-soft);
+}

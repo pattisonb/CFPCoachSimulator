@@ -7,7 +7,6 @@ export const messages = {
 
   all: "All Conferences",
   confsLabel: "Which conference",
-  yours: "Your Conference",
   open: (conf: string) => `Open the full ${conf} table`,
   back: "All Conferences",
   teams: (n: number) => `${n} Teams`,
@@ -38,7 +37,6 @@ export const messages = {
   last: (won: boolean, score: string, venue: string, opp: string) =>
     `${won ? "W" : "L"} ${score} ${venue === "away" ? "at" : "vs"} ${opp}`,
   none: "–",
-  you: "You",
   ap: (n: number) => `#${n}`,
   apTip: "AP rank",
   cfp: (n: number) => `CFP ${n}`,

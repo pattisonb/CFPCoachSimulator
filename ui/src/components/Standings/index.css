@@ -70,159 +70,14 @@
   vertical-align: -2px;
 }
 
-/* ----- your conference: a wall of bars ----- */
-.wall {
-  display: grid;
-  gap: var(--s2);
-}
-
-.wall__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--s1) var(--s3);
-}
-
-.wall__title {
+/* a conference's name over its full table */
+.standings__title {
   font-size: var(--t-xl);
   line-height: 1.1;
   text-transform: uppercase;
 }
 
-.wall__head .standings__link {
-  align-self: center;
-  margin-left: auto;
-}
-
-.wall__group {
-  display: grid;
-  gap: var(--s1);
-}
-
-.wall__div {
-  color: var(--ink-soft);
-  font-weight: 700;
-}
-
-.wall__bars {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px var(--s3);
-  list-style: none;
-}
-
-/* a team's bar: its color with a fade to dark at the right; its place, then its letters in a slanted panel of its
-   second color (where a logo would be), its name, and its record big at the right */
-.wall__bar {
-  position: relative;
-  display: grid;
-  grid-template-columns: 30px 96px minmax(0, 1fr) auto;
-  gap: var(--s2);
-  align-items: center;
-  min-height: 64px;
-  padding: 0 var(--s3) 0 var(--s2);
-  overflow: hidden;
-  background: linear-gradient(90deg, var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000));
-  color: var(--on);
-  border: var(--line) solid var(--ink);
-}
-
-.wall__bar.is-mine {
-  box-shadow: 6px 6px 0 var(--shadow);
-  outline: 3px solid var(--paper-hi);
-  outline-offset: -5px;
-}
-
-.wall__place {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  background: var(--paper-hi);
-  color: var(--ink);
-  border: var(--line) solid var(--ink);
-  font-weight: 700;
-}
-
-.wall__logo {
-  display: grid;
-  place-items: center;
-  align-self: stretch;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--c) 82%, #000);
-  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
-}
-
-.wall__logo span {
-  color: var(--c2);
-  font-size: 40px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -2px;
-  white-space: nowrap;
-  transform: rotate(-6deg) scale(1.15);
-}
-
-/* longer letters get smaller, so all of them fit the panel */
-.wall__logo span[data-len="4"] {
-  font-size: 30px;
-}
-
-.wall__logo span[data-len="5"] {
-  font-size: 24px;
-}
-
-.wall__who {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
-}
-
-.wall__name {
-  overflow: hidden;
-  font-size: var(--t-lg);
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.wall__tags {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.wall__tag {
-  padding: 0 5px;
-  background: var(--on);
-  color: var(--c);
-  text-shadow: none;
-}
-
-.wall__records {
-  display: grid;
-  justify-items: end;
-  text-shadow: 0 2px 0 rgb(0 0 0 / 22%);
-}
-
-.wall__record {
-  font-size: var(--t-xl);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.wall__conf {
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-
-/* ----- the other conferences: compact tables, packed into columns ----- */
+/* ----- every conference: compact tables, packed into columns ----- */
 .standings__grid {
   columns: 3 360px;
   column-gap: var(--s3);
@@ -381,10 +236,6 @@
 }
 
 @media (width <= 1100px) {
-  .wall__bars {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .full__last {
     display: none;
   }

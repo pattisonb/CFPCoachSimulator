@@ -1,13 +1,11 @@
 export const messages = {
   title: "Recruiting Board",
-  classLine: (year: number, n: number) => `Class of ${year} · ${n} on Your Board`,
   nil: "NIL Left",
   offers: "Offers",
   commits: "Commits",
-  auto: "Auto-Recruit",
-  autoModes: { off: "Off", week: "This Week", season: "All Season" } as Record<string, string>,
 
   stages: "Stage",
+  noneAtStage: "No one on your board is at this stage.",
   stageNames: {
     all: "All",
     committed: "Committed",

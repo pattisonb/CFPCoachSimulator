@@ -1,0 +1,143 @@
+/* A setting on a small button ("Auto-Recruit · Off ▾") and the menu that changes it, dropping from under it. */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+/* in a row of filters: as tall as a chip */
+.dropdown__button--md {
+  min-height: 32px;
+  padding: 0 var(--s2);
+  font-size: var(--t-sm);
+}
+
+/* how many the value (or an option) holds */
+.dropdown__count {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* icon only: a square with no frame until it is pointed at or open */
+.dropdown__button--icon {
+  justify-content: center;
+  width: 24px;
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+}
+
+.dropdown__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.dropdown__label {
+  color: var(--ink-soft);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* pointed at or open: the button in ink */
+.dropdown__button:enabled:hover,
+.dropdown__button:enabled[aria-expanded="true"] {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.dropdown__button:enabled:hover .dropdown__label,
+.dropdown__button:enabled:hover .dropdown__count,
+.dropdown__button:enabled[aria-expanded="true"] .dropdown__label,
+.dropdown__button:enabled[aria-expanded="true"] .dropdown__count {
+  color: inherit;
+}
+
+.dropdown__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 30;
+  display: grid;
+  width: max-content; /* as wide as its longest option, never squeezed to the button's width */
+  min-width: 100%;
+  padding: 6px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+/* the setting's name, at the top of an icon button's menu */
+.dropdown__title {
+  padding: 2px 10px 6px 6px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.dropdown--left .dropdown__menu {
+  left: 0;
+}
+
+.dropdown--right .dropdown__menu {
+  right: 0;
+}
+
+.dropdown__item {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: start;
+  gap: var(--s2);
+  padding: 6px 10px 6px 6px;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  font-size: var(--t-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+.dropdown__item:hover,
+.dropdown__item:focus-visible {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+.dropdown__check {
+  margin-top: 2px;
+  visibility: hidden;
+}
+
+.dropdown__item[aria-checked="true"] .dropdown__check {
+  visibility: visible;
+}
+
+.dropdown__text {
+  display: grid;
+  gap: 2px;
+}
+
+.dropdown__hint {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown__button,
+  .dropdown__item {
+    transition: none;
+  }
+}

@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Crown, Medal } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
-import { inkOn } from "../../colors.ts";
 import type { SeasonSummary, StandingRow, StandingsView, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -22,7 +21,6 @@ const SHORT: Record<string, string> = {
   "FBS Independents": "Independents",
 };
 const short = (c: string) => SHORT[c] ?? c;
-const abbr = (t: TeamCard | undefined, r: StandingRow) => t?.abbreviation ?? r.name.slice(0, 3).toUpperCase();
 
 /** A conference's teams split by division (one group with no name when it has none). */
 function byDivision(rows: StandingRow[]): [string | null, StandingRow[]][] {
@@ -31,9 +29,8 @@ function byDivision(rows: StandingRow[]): [string | null, StandingRow[]][] {
 }
 
 /**
- * Standings: your conference up top as a wall of team-colored bars (the team's letters oversized, its record big),
- * then every other conference as a compact table in a grid. Pick a conference (its header, or a chip) for its full
- * table: home and away, points, differential, streak and the last game.
+ * Standings: every conference as a compact table in a grid, yours first. Pick a conference (its header, or a chip)
+ * for its full table: home and away, points, differential, streak and the last game.
  */
 export default function Standings({ season, teams }: Props) {
   const [data, setData] = useState<StandingsView | null>(null);
@@ -65,7 +62,6 @@ export default function Standings({ season, teams }: Props) {
 
   const week = season.current_week;
   const status = week ? m.through(season.week_labels[week] ?? `Week ${week}`) : m.preseason;
-  const mine = data?.standings[season.conference];
 
   return (
     <div className="section-tabs__wrap">
@@ -96,31 +92,18 @@ export default function Standings({ season, teams }: Props) {
           {open && data.standings[open] ? (
             <Full conf={open} rows={data.standings[open]} teams={teams} me={season.team} onBack={() => show(null)} />
           ) : (
-            <>
-              {mine && (
-                <Wall
-                  conf={season.conference}
-                  rows={mine}
+            <div className="standings__grid">
+              {confs.map((c) => (
+                <Compact
+                  key={c}
+                  conf={c}
+                  rows={data.standings[c]}
                   teams={teams}
                   me={season.team}
-                  onOpen={() => show(season.conference)}
+                  onOpen={() => show(c)}
                 />
-              )}
-              <div className="standings__grid">
-                {confs
-                  .filter((c) => c !== season.conference)
-                  .map((c) => (
-                    <Compact
-                      key={c}
-                      conf={c}
-                      rows={data.standings[c]}
-                      teams={teams}
-                      me={season.team}
-                      onOpen={() => show(c)}
-                    />
-                  ))}
-              </div>
-            </>
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -151,79 +134,6 @@ function Marks({ r }: { r: StandingRow }) {
       {r.champion && <Crown size={14} weight="fill" aria-label={m.championTip} className="standings__mark" />}
       {r.runner_up && <Medal size={14} weight="fill" aria-label={m.runnerUpTip} className="standings__mark" />}
     </>
-  );
-}
-
-/** Your conference as a wall of bars, each in its team's colors, two across. */
-function Wall({
-  conf,
-  rows,
-  teams,
-  me,
-  onOpen,
-}: {
-  conf: string;
-  rows: StandingRow[];
-  teams: Map<string, TeamCard>;
-  me: string;
-  onOpen: () => void;
-}) {
-  return (
-    <section className="wall" aria-label={conf}>
-      <header className="wall__head">
-        <span className="label standings__kicker">{m.yours}</span>
-        <h2 className="wall__title">{conf}</h2>
-        <button type="button" className="standings__link" onClick={onOpen}>
-          {m.open(short(conf))}
-          <ArrowRight size={14} weight="bold" aria-hidden="true" />
-        </button>
-      </header>
-      {byDivision(rows).map(([div, group]) => (
-        <div key={div ?? "all"} className="wall__group">
-          {div && <h3 className="label wall__div">{div}</h3>}
-          <ol className="wall__bars">
-            {group.map((r) => {
-              const t = teams.get(r.slug);
-              const style = {
-                "--c": t?.colors.primary ?? "var(--tile)",
-                "--c2": t?.colors.secondary ?? "var(--line-soft)",
-                "--on": t ? inkOn(t.colors.primary) : "var(--ink)",
-              } as CSSProperties;
-              return (
-                <li
-                  key={r.slug}
-                  className={`wall__bar${r.slug === me ? " is-mine" : ""}`}
-                  style={style}
-                  title={r.tiebreak ? m.tiebreak(r.tiebreak) : undefined}
-                >
-                  <span className="wall__place">{r.conf_rank}</span>
-                  <span className="wall__logo" aria-hidden="true">
-                    <span data-len={Math.min(5, abbr(t, r).length)}>{abbr(t, r)}</span>
-                  </span>
-                  <span className="wall__who">
-                    <b className="wall__name">
-                      {r.name}
-                      <Marks r={r} />
-                    </b>
-                    <span className="wall__tags">
-                      {r.slug === me && <span className="wall__tag">{m.you}</span>}
-                      <Rank r={r} />
-                      <span>{m.streak(r.streak)}</span>
-                    </span>
-                  </span>
-                  <span className="wall__records">
-                    <b className="wall__record">{m.record(r.wins, r.losses)}</b>
-                    <span className="wall__conf">
-                      {m.record(r.conf_wins, r.conf_losses)} {m.cols.conf}
-                    </span>
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-      ))}
-    </section>
   );
 }
 
@@ -317,7 +227,7 @@ function Full({
           <ArrowLeft size={14} weight="bold" aria-hidden="true" />
           {m.back}
         </button>
-        <h2 className="wall__title">{conf}</h2>
+        <h2 className="standings__title">{conf}</h2>
         <span className="standings__soft">
           {m.teams(rows.length)}
           {champ ? ` · ${m.champion(champ.name)}` : ""}

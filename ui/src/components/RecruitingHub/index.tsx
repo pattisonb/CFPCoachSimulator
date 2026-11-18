@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Prospects from "../Prospects/index.tsx";
 import Recruiting from "../Recruiting/index.tsx";
 import SectionTabs, { SectionPane } from "../SectionTabs/index.tsx";
@@ -41,7 +40,6 @@ export default function RecruitingHub({
   weekKey,
   coach,
 }: Props) {
-  const [classSize, setClassSize] = useState<number | null>(null);
   return (
     <div className="section-tabs__wrap">
       <SectionTabs
@@ -49,8 +47,8 @@ export default function RecruitingHub({
         value={tab}
         onChange={onTab}
         tabs={[
-          { key: "board", label: m.board, count: board?.board.length },
-          { key: "prospects", label: m.prospects, count: classSize?.toLocaleString("en-US") },
+          { key: "board", label: m.board },
+          { key: "prospects", label: m.prospects },
         ]}
       />
       <SectionPane shown={tab === "board"}>
@@ -58,7 +56,6 @@ export default function RecruitingHub({
           key={weekKey}
           seasonId={seasonId}
           team={team}
-          year={year}
           weekLabels={weekLabels}
           board={board}
           reload={reload}
@@ -74,7 +71,6 @@ export default function RecruitingHub({
           active={tab === "prospects"}
           boardSize={board?.board.length}
           onBoardChange={() => void reload()}
-          onClassSize={setClassSize}
         />
       </SectionPane>
     </div>

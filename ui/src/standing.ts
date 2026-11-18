@@ -78,6 +78,20 @@ export function standingOf(b: BoardRow, me: string): Standing {
   };
 }
 
+/** His offer or commitment, for the board's icon: where it stands, and whether it is with another school. */
+export interface RecruitStatus {
+  key: "none" | "sent" | "offered" | "verbal" | "hard" | "signed";
+  /** committed or signed elsewhere */
+  away: boolean;
+}
+
+export function statusOf(b: BoardRow, me: string): RecruitStatus {
+  const school = b.signed || b.committed;
+  if (school) return { key: b.signed ? "signed" : b.hard ? "hard" : "verbal", away: school !== me };
+  if (!b.offered) return { key: "none", away: false };
+  return { key: b.offer_landing ? "sent" : "offered", away: false };
+}
+
 /** The ladder, best first: the board's "Your Chance" order. */
 const RUNG: Record<string, number> = {
   Yours: 0,

@@ -1,10 +1,10 @@
-/* The Recruiting board: the recruits on the left (head, filters, the list scrolling on its own), the one picked on
-   the right. */
+/* The Recruiting board: the recruits in a list on the left (head, filters, the list scrolling on its own), only as
+   wide as its longest row needs; the one picked takes all the width that is left. */
 .recruiting {
-  --recruiting-side: 380px; /* *tune* the same as Prospects' side */
+  --recruiting-list-min: 300px; /* *tune* the list never gets narrower than this, so a short stage barely moves it */
 
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--recruiting-side);
+  grid-template-columns: minmax(var(--recruiting-list-min), max-content) minmax(0, 1fr);
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -21,22 +21,20 @@
   gap: var(--s2);
   min-width: 0;
   min-height: 0;
-  padding: var(--s4) var(--s4) var(--s3);
+  padding: var(--s4) 0 var(--s3) var(--s4); /* no right padding: the list's scroll bar sits on the divider */
+}
+
+.recruiting__head,
+.recruiting__tools {
+  padding-right: var(--s4);
 }
 
 .recruiting__head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  justify-content: space-between;
   gap: var(--s3);
   margin-bottom: var(--s1);
-}
-
-.recruiting__lede {
-  color: var(--ink-soft);
-  font-size: var(--t-md);
-  text-transform: uppercase;
 }
 
 .recruiting__meters {
@@ -66,12 +64,6 @@
   gap: var(--s2);
 }
 
-.recruiting__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .recruiting__select {
   min-height: 32px;
   padding: 0 8px;
@@ -80,22 +72,15 @@
   font-size: var(--t-sm);
 }
 
-.recruiting__auto {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.recruiting__auto .label {
-  color: var(--ink-soft);
-}
-
 /* the list: groups by stage, rows that pick a recruit */
+
+/* the scroll bar runs down the column's edge, against the divider; its room is always kept (14 px, the app's scroll
+   bar), so the rows line up with the head whether the list scrolls or not */
 .recruiting__list {
   min-height: 0;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: max(6px, calc(var(--s4) - 14px));
+  scrollbar-gutter: stable;
 }
 
 .recruiting__group + .recruiting__group {
@@ -121,11 +106,11 @@
 
 .recruiting__row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto 104px 48px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--s2);
   width: 100%;
-  padding: 6px 10px 6px 6px;
+  padding: 4px 10px 4px 4px;
   background: var(--paper);
   color: var(--ink);
   border: var(--line) solid transparent;
@@ -146,43 +131,36 @@
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
-.recruiting__face {
-  width: 38px;
-  height: 38px;
+/* his face at 2x (66 x 68), pixel-sharp, on the tile with no edge */
+.recruiting__row .recruiting__face {
+  width: 68px;
+  height: 68px;
+  border: 0;
 }
 
+/* his name on one line: the list is as wide as its longest name needs */
 .recruiting__who {
   display: grid;
   min-width: 0;
+  white-space: nowrap;
 }
 
 .recruiting__who .recruiting__soft {
   font-size: var(--t-xs);
 }
 
-/* where you stand: a word in a tag, its weight by tone */
-.recruiting__word {
-  justify-self: start;
-  padding: 1px 8px;
-  border: var(--line) solid var(--ink);
-  font-size: var(--t-xs);
-  font-weight: 700;
-  white-space: nowrap;
+/* the row's right edge: his offer or commitment as an icon, then your chance */
+.recruiting__standing {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
 }
 
-.recruiting__word.is-good {
-  background: var(--ink);
-  color: var(--paper-hi);
-}
-
-.recruiting__word.is-muted {
-  color: var(--ink-soft);
-  border-color: var(--ink-soft);
-}
-
-.recruiting__word.is-bad {
-  border-style: dashed;
-  color: var(--ink-soft);
+/* under his name: his position, then his stars */
+.recruiting__facts {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
 }
 
 .recruiting__pct {
@@ -193,10 +171,11 @@
 .recruiting__side {
   min-height: 0;
   overflow-y: auto;
-  padding: var(--s4) var(--s4) var(--s4) var(--s3);
+  padding: var(--s4);
   background: var(--paper);
   border-left: var(--line) solid var(--line-soft);
   scrollbar-gutter: stable;
+  container: recruit-side / inline-size;
 }
 
 /* an empty board: a note and the way to Prospects */
@@ -232,6 +211,33 @@
   display: grid;
   align-content: start;
   gap: var(--s3);
+}
+
+/* under the head: where he stands (your chance, his list, the offer, what he wants) beside the week's work and his
+   history; one column when the panel is narrow */
+.recruit__cols {
+  display: grid;
+  align-items: start;
+  gap: var(--s3);
+}
+
+.recruit__col {
+  display: grid;
+  align-content: start;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+@container recruit-side (width >= 520px) {
+  .recruit__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s4);
+  }
+
+  .recruit__col .recruit__work {
+    padding-top: 0;
+    border-top: 0;
+  }
 }
 
 .recruit__head {
@@ -533,12 +539,6 @@
 .recruit__when {
   color: var(--ink-soft);
   font-size: var(--t-xs);
-}
-
-@media (width <= 1280px) {
-  .recruiting {
-    --recruiting-side: 320px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

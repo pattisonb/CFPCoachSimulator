@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, SidebarSimple } from "@phosphor-icons/react";
+import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
+import Dropdown from "../../components/Dropdown/index.tsx";
 import DepthChart from "../../components/DepthChart/index.tsx";
 import Office from "../../components/Office/index.tsx";
 import Awards from "../../components/Awards/index.tsx";
@@ -114,6 +115,11 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       .catch(() => {});
     reloadRecruiting().catch(() => {});
   }, [seasonId, reloadRecruiting]);
+  // Auto-Recruit (your staff works the board for you): Off, This Week or All Season, from the coach card
+  const setAutoRecruit = async (mode: string) => {
+    await api(`/api/season/${seasonId}/settings`, { method: "POST", body: { auto_recruit: mode } });
+    await reloadRecruiting();
+  };
   const sim = useSim(seasonId, refresh);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
 
@@ -217,7 +223,30 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           )}
           {season && <SeasonStrip games={season.schedule} teams={bySlug} weekLabels={season.week_labels} />}
           {season && coach && face && (
-            <CoachBadge name={coachName(coach)} team={season.team_name} face={face} energy={energy} />
+            <CoachBadge
+              name={coachName(coach)}
+              team={season.team_name}
+              face={face}
+              energy={energy}
+              corner={
+                recruiting && (
+                  <Dropdown
+                    label={m.auto}
+                    icon={
+                      <Robot
+                        size={16}
+                        weight={recruiting.auto_recruit === "off" ? "bold" : "fill"}
+                        aria-hidden="true"
+                      />
+                    }
+                    align="right"
+                    value={recruiting.auto_recruit}
+                    options={Object.entries(m.autoModes).map(([value, label]) => ({ value, label }))}
+                    onChange={(mode) => void setAutoRecruit(mode)}
+                  />
+                )
+              }
+            />
           )}
         </div>
 

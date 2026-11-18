@@ -20,7 +20,8 @@ interface Props<K extends string> {
 }
 
 /**
- * A section's tab bar: its name, then its tabs, one fixed strip across the top. It never changes size, so switching
+ * A section's tab bar: its name (a heading, set off by a rule: not a tab), then its tabs as boxes, the one shown
+ * outlined; one fixed strip across the top. It never changes size, so switching
  * tabs moves only what's below it. The panes go in `SectionPane`s under it (all mounted, the others hidden).
  */
 export default function SectionTabs<K extends string>({ title, tabs, value, onChange, aside }: Props<K>) {
@@ -37,7 +38,7 @@ export default function SectionTabs<K extends string>({ title, tabs, value, onCh
           onClick={() => onChange(t.key)}
         >
           {t.label}
-          <span className="section-tabs__count">{t.count ?? ""}</span>
+          {t.count != null && <span className="section-tabs__count">{t.count}</span>}
         </button>
       ))}
       {aside && <div className="section-tabs__aside">{aside}</div>}
