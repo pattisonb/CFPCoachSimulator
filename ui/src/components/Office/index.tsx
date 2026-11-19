@@ -247,6 +247,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
           weekName={weekName}
           next={next}
           onPlay={() => setPlayOpen(true)}
+          onOffseason={() => onSection("offseason")}
         />
       </aside>
 
@@ -570,6 +571,7 @@ function Actions({
   weekName,
   next,
   onPlay,
+  onOffseason,
 }: {
   s: SeasonSummary;
   sim: Sim;
@@ -580,6 +582,8 @@ function Actions({
   next: ScheduleGame | null;
   /** Play Game Day (or, any other week, Play It on the Field): the window that picks the sides */
   onPlay: () => void;
+  /** the season is over: open the Offseason */
+  onOffseason: () => void;
 }) {
   const gameReady = game !== null;
   // Sim Through's list floats over the page (fixed, in a portal on <body>: the section's fade-in animation would
@@ -631,7 +635,7 @@ function Actions({
     return (
       <section className="office__actions" aria-label={m.actions}>
         <h2 className="office__panel-title">{m.actions}</h2>
-        <ActionTile icon={SkipForward} title={m.toOffseason} sub={m.soon} main disabled />
+        <ActionTile icon={SkipForward} title={m.toOffseason} sub={m.offseasonSub} main onClick={onOffseason} />
       </section>
     );
 

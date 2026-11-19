@@ -1,0 +1,614 @@
+/* The Offseason: the stages across the top, the open stage's name and the way on, then its panels. */
+.off {
+  flex: 1;
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  font-size: var(--t-sm);
+}
+
+.off__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.off__wait {
+  display: grid;
+  gap: var(--s2);
+  max-width: 600px;
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.off__wait h2 {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+/* the stepper: every stage in a row, numbered; a finished one ticked, the current one in ink */
+.off__steps {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--s3);
+  overflow-x: auto;
+  list-style: none;
+}
+
+.off__steps li {
+  flex: 1 1 0;
+  min-width: 96px;
+}
+
+.off__step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  color: var(--ink-soft);
+  border: var(--line) solid var(--line-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.off__step:disabled {
+  cursor: default;
+}
+
+.off__steps li.is-done .off__step {
+  color: var(--ink);
+  border-color: var(--ink-soft);
+}
+
+.off__steps li.is-current .off__step {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.off__step.is-shown {
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.off__step-n {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid currentcolor;
+}
+
+.off__step-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.off__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s3);
+  margin-bottom: var(--s3);
+}
+
+.off__head h2 {
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* the way on: the one filled button on the screen */
+.off__next {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  min-height: var(--control);
+  padding: 0 var(--s3);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow-soft);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.off__next:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.off__next.is-quiet {
+  background: none;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.off__note {
+  margin-bottom: var(--s2);
+  padding: 6px var(--s2);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.off__lede {
+  margin-bottom: var(--s2);
+  font-size: var(--t-md);
+  line-height: 1.5;
+}
+
+.off__kicker {
+  margin-top: var(--s2);
+  color: var(--ink-soft);
+}
+
+.off__wide {
+  overflow-x: auto;
+}
+
+.off__row,
+.off__tool {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.off__tool {
+  margin-bottom: var(--s3);
+}
+
+.off__say {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--s2);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--line-soft);
+}
+
+.off__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 var(--s2);
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.off__btn:disabled {
+  color: var(--ink-soft);
+  border-color: var(--line-soft);
+  cursor: default;
+}
+
+.off__btn:hover:enabled,
+.off__btn.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.off__tag {
+  padding: 1px 8px;
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.off__tag.is-solid {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+/* a list of people: name and a soft line, a number, then a tag or a button at the far end */
+.off__list,
+.off__leavers,
+.off__cands,
+.off__games,
+.off__teams {
+  display: grid;
+  list-style: none;
+}
+
+.off__list li,
+.off__cands li,
+.off__games li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.off__who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.off__grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.off__num {
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.off__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.off__pick,
+.off__week {
+  flex: none;
+  min-width: 24px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.off__week {
+  min-width: 132px;
+}
+
+/* a player thinking of leaving: who he is and why, what he asks, then what you can do */
+.off__leavers li {
+  display: grid;
+  gap: 6px;
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.off__leavers li.is-gone {
+  opacity: 0.6;
+}
+
+.off__leaver-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.off__ask {
+  font-weight: 700;
+}
+
+.off__nil {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.off__nil input {
+  width: 64px;
+  min-height: 30px;
+  padding: 0 6px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font: inherit;
+}
+
+.off__cands li.is-picked {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+.off__ratings {
+  display: flex;
+  gap: var(--s2);
+}
+
+.off__ratings div {
+  display: grid;
+  justify-items: center;
+}
+
+.off__ratings dt {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.off__ratings dd {
+  font-weight: 700;
+}
+
+.off__confs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  align-items: start;
+  gap: var(--s3);
+}
+
+.off__confs .panel {
+  margin-bottom: 0;
+}
+
+.off__teams li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.off__teams li.is-moved {
+  font-weight: 700;
+}
+
+/* the AD's meeting: what he said, wide, beside where it leaves you */
+.off__meeting {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--s3);
+}
+
+/* ---------- Keep Them Home: a row of player cards that scrolls sideways ---------- */
+.off__keep-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.off__keep-head h3 {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.off__keep-head .off__tag {
+  margin-left: auto;
+}
+
+.off__cards {
+  display: flex;
+  gap: var(--s3);
+  padding: 4px 6px var(--s2) 0;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+}
+
+/* a card: his face on your color with his overall, what he says, four facts, then your moves */
+.off-card {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 264px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  scroll-snap-align: start;
+}
+
+.off-card.is-gone {
+  opacity: 0.55;
+}
+
+.off-card__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--c);
+  color: var(--on);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.off-card__face {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+}
+
+.off-card__name {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.off-card__name b {
+  overflow: hidden;
+  font-size: var(--t-md);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.off-card__pos,
+.off-card__intent {
+  font-size: var(--t-xs);
+  opacity: 0.85;
+}
+
+.off-card__intent {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 0 6px;
+  border: 1px solid currentcolor;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.off-card__ovr {
+  display: grid;
+  justify-items: center;
+  min-width: 44px;
+  padding: 2px 4px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  line-height: 1;
+}
+
+.off-card__ovr b {
+  font-size: 22px;
+}
+
+.off-card__ovr span {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+/* what he says: three lines at most, so every card's facts start level */
+.off-card__quote {
+  display: -webkit-box;
+  min-height: 62px;
+  padding: 8px 10px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.off-card__facts {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.off-card__facts div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.off-card__facts dt {
+  color: var(--ink-soft);
+}
+
+.off-card__facts dd {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.off-card__facts dd.is-soft {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.off-card__acts {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* the move that matters most now: one filled bar across the card */
+.off-card__main,
+.off-card__quiet {
+  min-height: 36px;
+  padding: 0 8px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.off-card__main {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.off-card__quiet {
+  min-height: 30px;
+  background: none;
+  color: var(--ink-soft);
+  border-color: var(--line-soft);
+}
+
+.off-card__main:disabled,
+.off-card__quiet:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.off-card__quiet:hover:enabled {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.off-card__main.is-done {
+  background: none;
+  color: var(--ink);
+  opacity: 1;
+}
+
+.off-card__nil {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.off-card__nil input {
+  min-height: 30px;
+  padding: 0 6px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font: inherit;
+}
+
+/* a row whose second part is a sentence: it sits under the name instead of beside it */
+.off__list li.off__stack {
+  display: grid;
+  gap: 2px;
+}
+
+/* a list's first row has its panel's rule over it already */
+.off__list li:first-child,
+.off__cands li:first-child,
+.off__games li:first-child,
+.off__leavers li:first-child {
+  border-top: 0;
+}
+
+@media (width <= 700px) {
+  .off__meeting {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .off__btn {
+    min-height: 44px;
+  }
+}

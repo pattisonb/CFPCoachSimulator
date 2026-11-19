@@ -1,4 +1,5 @@
 import {
+  ArrowsClockwise,
   Briefcase,
   Buildings,
   CalendarBlank,
@@ -40,6 +41,12 @@ export const CAREER_SECTIONS = [
   { key: "schedule", label: "Schedule", icon: CalendarBlank, blurb: "Your games, week by week." },
   { key: "staff", label: "Staff", icon: UsersThree, blurb: "Your coordinators and scouts." },
   { key: "depth", label: "Depth Chart", icon: ListNumbers, blurb: "Who starts, and who's next." },
+  {
+    key: "offseason",
+    label: "Offseason",
+    icon: ArrowsClockwise,
+    blurb: "Between seasons: who stays, who goes, and next year.",
+  },
 ] as const satisfies readonly Section[];
 
 export const LEAGUE_SECTIONS = [

@@ -74,6 +74,7 @@ export const messages = {
   offseasonNext: "The offseason is next: departures, the transfer portal, your staff and your meeting with the AD.",
   toOffseason: "On to the Offseason",
   soon: "Coming soon to the new game.",
+  offseasonSub: "Who stays, who goes, the portal and next year.",
 
   earlySigning: "The Early Signing Period Is Done",
   nationalSigning: "National Signing Day Is Done",

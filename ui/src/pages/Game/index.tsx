@@ -6,6 +6,7 @@ import Dropdown from "../../components/Dropdown/index.tsx";
 import Bracket from "../../components/Bracket/index.tsx";
 import GameWindow from "../../components/GameWindow/index.tsx";
 import Headquarters from "../../components/Headquarters/index.tsx";
+import Offseason from "../../components/Offseason/index.tsx";
 import Programs from "../../components/Programs/index.tsx";
 import Rankings from "../../components/Rankings/index.tsx";
 import Recap from "../../components/Recap/index.tsx";
@@ -25,7 +26,7 @@ import SeasonStrip from "../../components/SeasonStrip/index.tsx";
 import { api } from "../../api.ts";
 import { faces, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
-import { navigate, replaceParams } from "../../router.ts";
+import { hrefFor, navigate, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
@@ -68,6 +69,7 @@ const PANE: Record<string, string> = {
   recap: "",
   scores: "",
   programs: "",
+  offseason: "",
 };
 
 /**
@@ -356,6 +358,13 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                     <Bracket season={season} teams={bySlug} />
                   ) : key === "recap" ? (
                     <Recap season={season} teams={bySlug} />
+                  ) : key === "offseason" ? (
+                    <Offseason
+                      season={season}
+                      teams={bySlug}
+                      onSection={open}
+                      onNextSeason={(id) => location.assign(hrefFor("game", { id, section: "office" }))}
+                    />
                   ) : key === "scores" ? (
                     <Scores key={season.current_week} season={season} teams={bySlug} onBox={openBox} />
                   ) : key === "programs" ? (
