@@ -18,6 +18,35 @@ from coach_career import league as lg          # noqa: E402
 from teamdata import game_scale               # noqa: E402
 
 
+def recenter() -> dict:
+    """Hold the scale's promise for the overall: the middle Power 4 starter at a position reads 50. The fit matches the
+    old overalls player by player, which can leave a group's middle a point or two off; each group that is off by more than
+    half a point has its positions' constants moved by the difference. Returns {group: shift}."""
+    import statistics
+    from sim import season
+    scale = dict(game_scale.data())
+    keys = game_scale.keys()
+    by: dict = {}
+    for slug, t in season.load_teams().items():
+        if t.get("fictional") or not season._is_p4(slug, t):
+            continue
+        for q in t["offense"] + t["defense"]:
+            if q.get("in_game") and q.get("skills"):
+                pos = q.get("source_position") or q["position"]
+                by.setdefault(game_scale.group(pos), []).append(game_scale.overall(dict(zip(keys, q["skills"])), pos))
+    moved = {}
+    for grp, vals in by.items():
+        d = 50 - statistics.median(vals)
+        if abs(d) > 0.5:          # exactly half a point is a rounding flip: moving it only moves it back
+            moved[grp] = round(d, 2)
+            for pos, f in scale["card_overall"].items():
+                if game_scale.group(pos) == grp:
+                    f["const"] = round(f["const"] + d, 4)
+    if moved:
+        game_scale.write_scale(scale)
+    return moved
+
+
 def main() -> None:
     scale = dict(game_scale.data())
     if not scale.get("card_overall"):          # fit to the overalls the game had (refitting to its own output would drift)
@@ -28,6 +57,9 @@ def main() -> None:
         game_scale.write_scale(scale)
         now = [game_scale.overall(ours, pos) - o for ours, pos, o in players]
         print(f"fit on {len(players)} players: overall moved {sum(map(abs, now)) / len(now):.2f} on average, {max(map(abs, now))} at most")
+    moved = recenter()
+    if moved:
+        print(f"recentered so the middle Power 4 starter reads 50: {moved}")
     if lg.BASE_LEAGUE_FILE.exists():           # the base league as a file (a built site): its stored overalls too
         base = json.loads(lg.BASE_LEAGUE_FILE.read_text(encoding="utf-8"))
         attrs = base.get("attrs") or game_scale.keys()
