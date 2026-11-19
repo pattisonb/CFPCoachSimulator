@@ -49,9 +49,19 @@ def prospect(st, pitch_in_priorities=True, want=None):
 
 
 def pts(st, pid, action, pitch, personality, **kw):
+    """The points one pitched contact lands. A message goes through `_act`, the one-pitch path Auto-recruit and the AI
+    schools use: your own message by hand carries no pitch (`act` drops it and counts your grades, see `by_hand`)."""
     force(st, pid, personality, **kw)
     reset(st, pid)
-    recruiting.act(st, ME, pid, action, pitch)
+    (recruiting._act if action == "message" else recruiting.act)(st, ME, pid, action, pitch)
+    return recruiting.pending(st, ME, pid)
+
+
+def by_hand(st, pid, personality, **kw):
+    """The points your own message lands: no pitch, worth your grades on what he cares about (recruiting._grade_points)."""
+    force(st, pid, personality, **kw)
+    reset(st, pid)
+    recruiting.act(st, ME, pid, "message", "prestige")     # the pitch is dropped
     return recruiting.pending(st, ME, pid)
 
 
@@ -68,6 +78,13 @@ if __name__ == "__main__":
     assert approx(pts(st, pid, "message", t, "cocky"), 1.3 * pts(st, pid, "message", t, "shy"))
     pid2, t2 = prospect(st, True, ("academics",))
     assert approx(pts(st, pid2, "message", t2, "cocky"), pts(st, pid2, "message", t2, "shy"))
+    # ... and your own message carries no pitch, so nothing for Cocky to like more: it is worth your grades on what he cares about
+    hand = by_hand(st, pid, "cocky")
+    s = recruiting.strengths(st, ME, pid)
+    tops = rc["prospects"][pid]["priorities"]
+    assert approx(hand, by_hand(st, pid, "shy")) and approx(hand, recruiting.BASE_POINTS["message"] * (recruiting.PITCH_PRIORITY[0] + recruiting.PITCH_PRIORITY[1] * sum(s[x] for x in tops) / len(tops))), hand
+    last = rc["log"][-1]
+    assert last["kind"] == "contact" and last["pid"] == pid and last["action"] == "message" and "pitch" not in last, last
 
     # test_cocky_lowball_at_70: 0.6 x ask is a lowball for Cocky, not for Shy
     pid, _ = prospect(st)
@@ -183,6 +200,7 @@ if __name__ == "__main__":
     rc = st["recruiting"]
     pid, t = prospect(st)
     assert approx(pts(st, pid, "message", t, "business"), 0.3 * pts(st, pid, "message", t, "shy"))
+    assert approx(by_hand(st, pid, "business"), 0.3 * by_hand(st, pid, "shy")), "a message by hand counts 0.3 too"
 
     # test_decider_topic_counts_as_priority: a pitch on Mom's topic scores like a priority
     pid, t = prospect(st, False, ("proximity", "academics"))

@@ -52,13 +52,20 @@ if __name__ == "__main__":
         assert next(e for e in v["retention"]["players"] if e["id"] == e0["id"])["ask"]["known"]
         rs = v["redshirts"]["players"]
         assert rs, "seed 5 has a redshirt call to make"
-        p0 = dict(rs[0])                        # a copy: the native view shares its dicts with the state
+        # a player who is not on the Keep Them Home list: one who leaves there is dropped from the redshirt calls
+        # (offseason._resolve_retention: "only for the players still here"), and this one is used through Departures
+        talks = {e["id"] for e in ret}
+        assert any(p["id"] not in talks for p in rs), "seed 5 has a redshirt call for a player who is not leaving"
+        p0 = dict(next(p for p in rs if p["id"] not in talks))     # a copy: the native view shares its dicts with the state
         # a stage the offseason is not at (a page a step behind or ahead): refused, nothing changes
         refused(sid, "redshirt", {"pid": p0["id"], "on": not p0["redshirt"], "stage": "departures"}, "Departures")
         refused(sid, "redshirt", {"pid": p0["id"], "on": True, "stage": "nonsense"}, "an earlier stage")
         # a double-clicked Advance: the first moves on, the second (drawn on Keep Them Home) is refused
         v = post(sid, "advance", {"stage": "retention"})
         assert v["stage"] == "departures", v["stage"]
+        here = {c["id"] for c in api.loaded_state()["league"]["teams"][ME]["roster"]}
+        calls = {p["id"] for p in v["redshirts"]["players"]}
+        assert p0["id"] in calls and calls <= here, "a redshirt call is left for a player who went at Keep Them Home"
         refused(sid, "advance", {"stage": "retention"}, "Keep Them Home")
         refused(sid, "retain", {"pid": e0["id"], "action": "promise", "stage": "retention"}, "Keep Them Home")
         assert api.loaded_state()["offseason"]["stage"] == "departures", "the stale Advance skipped a stage"

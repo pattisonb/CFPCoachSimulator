@@ -7,13 +7,16 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 _sys.path.insert(0, str(_Path(__file__).resolve().parent))
 
-from coach_career import persona, promises, recruiting, scenes, word
+from coach_career import clear, persona, promises, recruiting, scenes, word
 
 ME = "iowa"
+HEARD_NOTE = "He heard you promised the job to another player at his position."     # Clear Mode's note for scenes.HEARD_RIVAL
 
 
 def fresh():
     from sim import season
+    recruiting.use_league_models({})
+    season.use_league(None)     # the 2026 league: test_strain_on_roster_player leaves its career's second-season league in play
     st = season.new_season(ME, "full", seed=5, career=True)
     st["current_week"] = 1
     st["recruiting"]["hours"][ME] = 1000
@@ -176,12 +179,19 @@ def test_heard_rival_line():
     st["current_week"] += 1
     st["recruiting"]["scenes"].get(ME, {}).pop(a, None)
     sc2 = open_call(st, a)
-    him = [t["text"] for t in sc2["turns"] if t["who"] == "him"]
-    assert him and him[0] == scenes.HEARD_RIVAL, sc2["turns"]
+    # Clear Mode (coach_career/clear.py, on by default) says it in a plain note; the word-mode call (CFP_CLEAR=0) has him say it first
+    if clear.on():
+        heard = lambda sc: [t["text"] for t in sc["turns"] if t["who"] == "note" and t["text"] == HEARD_NOTE]
+        assert len(heard(sc2)) == 1 and all(t["who"] == "note" for t in sc2["turns"]), sc2["turns"]
+    else:
+        heard = lambda sc: [t["text"] for t in sc["turns"] if t["who"] == "him" and t["text"] == scenes.HEARD_RIVAL]
+        him = [t["text"] for t in sc2["turns"] if t["who"] == "him"]
+        assert him and him[0] == scenes.HEARD_RIVAL, sc2["turns"]
+    assert "heard_rival" not in st["recruiting"]["contacts"][a][ME], "the stamp is spent once he has said it"
     st["current_week"] += 1
     st["recruiting"]["scenes"][ME].pop(a, None)
     sc3 = open_call(st, a)
-    assert all(t["text"] != scenes.HEARD_RIVAL for t in sc3["turns"] if t["who"] == "him"), "said once"
+    assert sc3["turns"] and not heard(sc3), "said once"
 
 
 def test_no_second_promise_through_his_question():

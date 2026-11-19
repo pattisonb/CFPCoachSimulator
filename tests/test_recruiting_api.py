@@ -1,6 +1,10 @@
 """Coach Career recruiting API (app/api.py): every route's happy path and its refusals (no hours,
 an unknown prospect, a running sim). The routes are called through `api.call`, as the page's
 requests are. Saves go to a temporary folder. (Run as a file: multiprocessing on Windows.)"""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # the scene routes are read here in word mode (turns, cue topics, reaction kinds), which Clear Mode replaces (coach_career/clear.py)
+
 import sys as _sys
 from pathlib import Path as _Path
 
@@ -274,7 +278,7 @@ if __name__ == "__main__":
         got = [(x["kind"], x.get("action"), x.get("pitch"), x.get("reaction"), x.get("nil")) for x in h]
         assert got == [("raise_nil", None, None, None, 150), ("offer", None, None, None, 120),
                        ("pitch", "call", topic, said, None), ("present", "call", None, None, None), ("contact", "call", None, None, None),
-                       ("contact", "message", "prestige", None, None)], got
+                       ("contact", "message", None, None, None)], got      # your message by hand carries no pitch: the one sent is dropped
         assert all(x["week"] == 0 and x["school"] == "ohio-state" for x in h), h
         pres = next(x for x in h if x["kind"] == "present")
         assert pres["topics"] == ["winning", "nil", "coach"] and isinstance(pres["hit"], int), pres
