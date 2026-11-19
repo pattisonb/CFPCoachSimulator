@@ -42,6 +42,14 @@ const haystack = (t: TeamCard) =>
 const isField = (el: EventTarget | null) =>
   el instanceof HTMLSelectElement || el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
 
+/** *tune* A color can ring the helmet when it stands this far from the banner's (contrast ratio). */
+const GLOW_CONTRAST = 2.2;
+/** The color that rings the helmet so it stands off the banner: the secondary, else the third, else black or white. */
+function glowOn(colors: TeamCard["colors"]): string {
+  const ok = (c?: string) => !!c && /^#[0-9a-f]{3,8}$/i.test(c) && contrast(colors.primary, c) >= GLOW_CONTRAST;
+  return ok(colors.secondary) ? colors.secondary : ok(colors.accent) ? colors.accent! : inkOn(colors.primary);
+}
+
 /**
  * Play's New Season window: every team as a tile of its letters in its colors (search, conference and sort above),
  * and the picked team at the right, its helmet and ratings in a team-banner of its colors over its Overview and Roster.
@@ -206,6 +214,21 @@ export default function TeamSelect({ teams }: Props) {
                 onDoubleClick={() => play(t)}
               >
                 <span className="chooser__abbr">{t.abbreviation}</span>
+                {/* his program at a glance, in the corner: overall, offense, defense */}
+                <span className="chooser__nums" aria-hidden="true">
+                  {(
+                    [
+                      ["ovr", t.ratings.overall],
+                      ["off", t.ratings.offense],
+                      ["def", t.ratings.defense],
+                    ] as const
+                  ).map(([k, v]) => (
+                    <span key={k} className={`chooser__num${k === "ovr" ? " is-main" : ""}`}>
+                      <b>{Math.round(v)}</b>
+                      <small>{m[k]}</small>
+                    </span>
+                  ))}
+                </span>
               </button>
             ))}
           </div>
@@ -246,12 +269,12 @@ function Banner({ team, onPlay }: { team: TeamCard; onPlay: () => void }) {
     "--c": team.colors.primary,
     "--c2": team.colors.secondary,
     "--on": inkOn(team.colors.primary),
+    "--glow": glowOn(team.colors),
   } as CSSProperties;
   const ratings = [
     ["ovr", team.ratings.overall],
     ["off", team.ratings.offense],
     ["def", team.ratings.defense],
-    ["st", team.ratings.special_teams],
   ] as const;
   const facts = [
     [m.headCoach, team.head_coach],
@@ -266,7 +289,10 @@ function Banner({ team, onPlay }: { team: TeamCard; onPlay: () => void }) {
       <Helmet color={team.colors.primary} className="team-banner__helmet" label={m.helmet(team.name)} />
       <div className="team-banner__who">
         <span className="team-banner__school">
-          {team.name} · {short(team.conference)}
+          {/* where the school is, on the line that names it (the facts row under the stars stays as it was) */}
+          {[team.name, short(team.conference), [team.city, team.state].filter(Boolean).join(", ")]
+            .filter(Boolean)
+            .join(" · ")}
         </span>
         <h2 className="team-banner__mascot">{team.mascot}</h2>
         <span

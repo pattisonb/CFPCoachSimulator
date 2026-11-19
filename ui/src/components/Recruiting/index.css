@@ -37,9 +37,11 @@
   margin-bottom: var(--s1);
 }
 
+/* four meters in the board's own width: two rows of two, so a fourth never makes the column wider */
 .recruiting__meters {
-  display: flex;
-  gap: var(--s4);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2) var(--s4);
 }
 
 .recruiting__meters dt {

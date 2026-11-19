@@ -130,7 +130,7 @@
 .chooser__grid {
   display: grid;
   flex: 1;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* two square tiles a row, room for each one's ratings */
   align-content: start;
   gap: var(--s2);
   min-height: 0;
@@ -147,11 +147,13 @@
 }
 
 /* a team's tile: its letters outlined and dropped (colors from tileColors in index.tsx) on a striped plate of its color */
+
+/* its height follows its own width (padding counts against the width; aspect-ratio did not size the grid's rows) */
 .chooser__tile {
-  display: grid;
-  place-items: center;
-  height: 52px;
-  padding: 0;
+  position: relative;
+  display: block;
+  height: 0;
+  padding: 0 0 52%; /* *tune* a tile's height as a share of its width */
   overflow: hidden;
   background: repeating-linear-gradient(-60deg, transparent 0 10px, rgb(255 255 255 / 8%) 10px 12px),
     linear-gradient(160deg, var(--c) 55%, color-mix(in srgb, var(--c) 65%, #000));
@@ -178,7 +180,10 @@
 }
 
 .chooser__abbr {
-  font-size: 20px;
+  position: absolute;
+  top: 5px;
+  left: 8px; /* the word mark in the top left, the ratings in the bottom right */
+  font-size: 22px;
   font-style: italic;
   font-weight: 700;
   letter-spacing: -1px;
@@ -267,7 +272,11 @@
   position: relative;
   width: auto;
   height: clamp(96px, 17vh, 160px);
-  filter: drop-shadow(6px 6px 0 rgb(0 0 0 / 28%));
+
+  /* ringed in a color that stands off the banner (its secondary or third, glowOn), with a soft glow of it behind:
+     a helmet the banner's own color, or a black one on a dark banner, was lost against it */
+  filter: drop-shadow(2px 0 0 var(--glow)) drop-shadow(-2px 0 0 var(--glow)) drop-shadow(0 2px 0 var(--glow))
+    drop-shadow(0 -2px 0 var(--glow)) drop-shadow(0 0 12px color-mix(in srgb, var(--glow) 55%, transparent));
   animation: helmet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
@@ -423,4 +432,43 @@
   .team-banner__helmet {
     animation: none;
   }
+}
+
+/* a team's ratings in the tile's bottom right corner: three small cards, the overall solid */
+.chooser__nums {
+  position: absolute;
+  right: 5px;
+  bottom: 9px;
+  display: flex;
+  gap: 3px;
+}
+
+.chooser__num {
+  display: grid;
+  justify-items: center;
+  min-width: 28px;
+  padding: 2px 3px 1px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  line-height: 1.05;
+}
+
+.chooser__num b {
+  font-size: var(--t-sm);
+}
+
+.chooser__num small {
+  color: var(--ink-soft);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.chooser__num.is-main {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.chooser__num.is-main small {
+  color: inherit;
 }

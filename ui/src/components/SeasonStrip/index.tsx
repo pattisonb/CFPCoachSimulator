@@ -78,11 +78,13 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
   // (held for the length of the pop: the page redraws several times a second while a sim runs)
   const seen = useRef<Set<string> | null>(null);
   const [fresh, setFresh] = useState<Set<string>>(() => new Set());
-  const playedKeys = games.filter((g) => g.played).map((g) => `${g.week}-${g.opponent ?? g.kind}`);
+  const playedKeys = games.filter((g) => g.played && g.opponent).map((g) => `${g.week}-${g.opponent}`);
   const playedKey = playedKeys.join("|");
   useEffect(() => {
     const before = seen.current;
-    seen.current = new Set(playedKeys);
+    // what has popped is never forgotten: when a sim ends, its live results give way to the saved season, and for a
+    // moment the week reads as unplayed again (it popped a second time when the season then loaded)
+    seen.current = new Set([...(before ?? []), ...playedKeys]);
     if (!before) return;
     const added = playedKeys.filter((k) => !before.has(k));
     if (!added.length) return;

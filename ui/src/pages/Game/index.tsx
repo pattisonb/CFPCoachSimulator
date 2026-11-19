@@ -23,7 +23,10 @@ import Staff from "../../components/Staff/index.tsx";
 import RecruitingHub, { type HubTab } from "../../components/RecruitingHub/index.tsx";
 import GameNav, { type NavTeam } from "../../components/GameNav/index.tsx";
 import SeasonStrip from "../../components/SeasonStrip/index.tsx";
+import FindReveal from "../../components/FindReveal/index.tsx";
 import { api } from "../../api.ts";
+import { useFinds } from "../../finds.ts";
+import { useTab } from "../../tab.ts";
 import { faces, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
 import { inkOn, teamAccent } from "../../colors.ts";
@@ -230,6 +233,19 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const stripWeek = (liveResults && sim.status?.current_week) || season?.current_week || 0;
   const simRecord = sim.status?.kind === "gameday" ? undefined : sim.status?.record;
   const simWeek = sim.status?.kind === "gameday" ? undefined : sim.status?.current_week;
+  // the browser tab: "Toledo Dynasty", and the sim's progress, your record and the week while one runs
+  useTab(
+    season?.team_name ?? null,
+    simRecord ?? season?.record ?? null,
+    {
+      running: sim.running,
+      progress: sim.status?.progress ?? 0,
+      week: season ? (season.week_labels[String((simWeek ?? season.current_week) + 1)] ?? null) : null,
+      failed: !!sim.error,
+    },
+    accent ?? "#f5b942",
+    myTeam?.colors,
+  );
   const navTeam: NavTeam | null = season && {
     name: season.team_name,
     primary: myTeam?.colors.primary ?? "var(--ink)",
@@ -283,6 +299,10 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     open("recruiting");
     openTab(onBoard ? "board" : "prospects");
   };
+
+  // finds can land when a week passes, an offseason stage turns, or a look comes back on someone on your board
+  const looks = recruiting?.board.reduce((n, b) => n + (b.looks ?? 0), 0) ?? 0;
+  const finds = useFinds(season?.id, season?.year, `${season?.current_week}-${offStage}-${looks}`);
 
   const toMenu = (
     <Button variant="outline" onClick={() => navigate("play")}>
@@ -496,6 +516,16 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           </section>
         )}
       </main>
+      {/* a gem or a generational talent your staff has just found: the whole screen stops for it */}
+      <FindReveal
+        find={finds.find}
+        more={finds.more}
+        onClose={finds.next}
+        onOpen={(pid) => {
+          finds.next();
+          openRecruit(pid);
+        }}
+      />
       {season && (
         <TeamResume
           seasonId={season.id}

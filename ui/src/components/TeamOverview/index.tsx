@@ -16,6 +16,9 @@ const TOP = 3;
 /** A coordinator's scheme, from "OC Name (Scheme)". */
 const scheme = (line: string | undefined) => /\(([^)]+)\)/.exec(line ?? "")?.[1];
 
+/** The specialists: rated on their own scale, so they never lead a side's best players. */
+const SPECIALISTS = new Set(["K", "P", "LS"]);
+
 /** The team at a glance: offense and defense, each with its rating, scheme and best players. */
 export default function TeamOverview({ team, players }: Props) {
   const { hovered, bind, card } = usePlayerHover();
@@ -25,7 +28,8 @@ export default function TeamOverview({ team, players }: Props) {
       { key: "offense", label: m.offense, rating: team.ratings.offense },
       { key: "defense", label: m.defense, rating: team.ratings.defense },
     ].map((u) => {
-      const rows = players.filter((p) => p.unit === u.key);
+      // kickers and punters are listed with a side but are not its best players
+      const rows = players.filter((p) => p.unit === u.key && !SPECIALISTS.has(p.position));
       return {
         ...u,
         scheme: scheme(u.key === "offense" ? team.staff?.offense : team.staff?.defense),

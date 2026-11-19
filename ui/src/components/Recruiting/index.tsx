@@ -42,8 +42,18 @@ const STARTER_BOARD = 10;
 
 /** The board's groups, in order: where each recruit stands in his recruitment. */
 const STAGES = ["committed", "visited", "top", "contact", "cold", "gone"] as const;
-/** the filter: every stage, one stage, or your favorites (♥), which cut across the stages */
-type StageKey = (typeof STAGES)[number] | "all" | "favorites";
+/** the filters that cut across the stages: your favorites (♥), and whether your staff's report on him is complete */
+const ACROSS = {
+  favorites: (r: BoardRow) => !!r.favorite,
+  scouted: (r: BoardRow) => (r.looks ?? 0) >= FULL_REPORT,
+  unscouted: (r: BoardRow) => (r.looks ?? 0) < FULL_REPORT,
+} as const;
+type Across = keyof typeof ACROSS;
+/** *tune* Looks that make a full scouting report (recruiting.REPORT_LOOKS). */
+const FULL_REPORT = 3;
+const isAcross = (s: string): s is Across => s in ACROSS;
+/** the filter: every stage, one stage, or one of the filters across them */
+type StageKey = (typeof STAGES)[number] | "all" | Across;
 
 /** Committed to you counts as committed; committed or signed elsewhere is "gone". */
 const stageOf = (r: BoardRow, me: string): (typeof STAGES)[number] => {
@@ -83,7 +93,7 @@ export default function Recruiting({
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: rows.length };
     for (const r of rows) c[stageOf(r, team)] = (c[stageOf(r, team)] ?? 0) + 1;
-    c.favorites = rows.filter((r) => r.favorite).length;
+    for (const k of Object.keys(ACROSS) as Across[]) c[k] = rows.filter(ACROSS[k]).length;
     return c;
   }, [rows, team]);
   const order = useMemo(
@@ -92,10 +102,10 @@ export default function Recruiting({
   );
   const groups = useMemo(
     () =>
-      STAGES.filter((s) => stage === "all" || stage === "favorites" || stage === s)
+      STAGES.filter((s) => stage === "all" || isAcross(stage) || stage === s)
         .map((s) => ({
           key: s,
-          rows: rows.filter((r) => stageOf(r, team) === s && (stage !== "favorites" || r.favorite)).sort(order),
+          rows: rows.filter((r) => stageOf(r, team) === s && (!isAcross(stage) || ACROSS[stage](r))).sort(order),
         }))
         .filter((g) => g.rows.length),
     [rows, stage, team, order],
@@ -166,6 +176,13 @@ export default function Recruiting({
                   {board.committed} <small>/ {board.open_spots}</small>
                 </dd>
               </div>
+              {/* this week's scouting points: what a Send costs comes out of these */}
+              <div title={m.scoutTip}>
+                <dt className="label">{m.scout}</dt>
+                <dd>
+                  {board.points_left} <small>/ {board.points_week}</small>
+                </dd>
+              </div>
             </dl>
           )}
         </header>
@@ -177,7 +194,7 @@ export default function Recruiting({
             size="md"
             value={stage}
             // a stage with no one in it is left out (unless it is the one you are on)
-            options={(["all", ...STAGES, "favorites"] as StageKey[])
+            options={(["all", ...STAGES, "favorites", "scouted", "unscouted"] as StageKey[])
               .filter((s) => s === "all" || s === stage || counts[s])
               .map((s) => ({
                 value: s,
@@ -201,7 +218,7 @@ export default function Recruiting({
           {groups.length === 0 && <p className="recruiting__soft">{m.noneAtStage}</p>}
           {groups.map((g) => (
             <section key={g.key} className="recruiting__group" aria-label={m.stageNames[g.key]}>
-              {(stage === "all" || stage === "favorites") && (
+              {(stage === "all" || isAcross(stage)) && (
                 <h2 className="label recruiting__group-title">
                   {m.stageNames[g.key]} <span>{g.rows.length}</span>
                 </h2>
@@ -275,6 +292,8 @@ export default function Recruiting({
 /** His panel's tabs (the old board's pane): what you do on Overview, what you know on the other three. */
 const TABS = ["overview", "scouting", "profile", "history"] as const;
 type Tab = (typeof TABS)[number];
+/** the tab you were last on: the next recruit you pick opens on it (reading reports down the board stays on Scouting) */
+let lastTab: Tab = "overview";
 
 /**
  * A recruit's panel: his head, then four tabs. Overview: your chance, the Recruiting Battle, the Recruit Snapshot and
@@ -327,7 +346,11 @@ function RecruitPanel({
   const [note, setNote] = useState<string | null>(null);
   // the call or visit in its window: the one just opened, or the open one Finish brings back
   const [talk, setTalk] = useState<Scene | null>(null);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTabState] = useState<Tab>(() => lastTab);
+  const setTab = (t: Tab) => {
+    lastTab = t;
+    setTabState(t);
+  };
   // his file (the report, his traits, his background): read again whenever the board loads, since a look, an offer
   // or a call changes it; the last one stays up while the next arrives
   const [detail, setDetail] = useState<ProspectDetail | null>(null);

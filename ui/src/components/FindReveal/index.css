@@ -1,0 +1,243 @@
+/* The moment your staff finds a gem or a generational talent: the screen dims, rays turn, the icon stamps in. */
+.find-reveal {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  background: transparent;
+  border: 0;
+}
+
+.find-reveal[open] {
+  display: grid;
+  place-items: center;
+}
+
+.find-reveal::backdrop {
+  background: rgb(10 10 10 / 82%);
+  animation: find-dim 320ms ease-out both;
+}
+
+.find-reveal__card {
+  --glow: var(--team, var(--ink));
+
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(460px, 100%);
+  padding: var(--s4);
+  overflow: hidden;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 8px 8px 0 var(--glow);
+  text-align: center;
+  animation: find-card 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* the rays behind the icon: a slow turn, soft at the edges */
+.find-reveal__rays {
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  width: 520px;
+  height: 520px;
+  margin-left: -260px;
+  background: repeating-conic-gradient(from 0deg, var(--glow) 0deg 9deg, transparent 9deg 18deg);
+  opacity: 0.14;
+  mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+  animation: find-turn 18s linear infinite;
+  pointer-events: none;
+}
+
+.find-reveal__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  background: var(--glow);
+  color: var(--team-on, var(--paper-hi));
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  animation: find-stamp 620ms 160ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.find-reveal__kicker,
+.find-reveal__title,
+.find-reveal__who,
+.find-reveal__line,
+.find-reveal__actions {
+  position: relative;
+  animation: find-rise 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.find-reveal__kicker {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  animation-delay: 420ms;
+}
+
+.find-reveal__title {
+  font-size: clamp(24px, 3.6vh, 34px);
+  text-wrap: balance;
+  line-height: 1.05;
+  text-transform: uppercase;
+  animation-delay: 500ms;
+}
+
+.find-reveal__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: var(--line) solid var(--ink);
+  text-align: left;
+  animation-delay: 640ms;
+}
+
+.find-reveal__face {
+  flex: none;
+}
+
+.find-reveal__name {
+  display: grid;
+  line-height: 1.25;
+}
+
+.find-reveal__name b {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.find-reveal__name span,
+.find-reveal__line {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.find-reveal__line {
+  max-width: 320px;
+  line-height: 1.45;
+  animation-delay: 740ms;
+}
+
+.find-reveal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  animation-delay: 840ms;
+}
+
+.find-reveal__go,
+.find-reveal__skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: var(--line) solid var(--ink);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.find-reveal__go {
+  background: var(--glow);
+  color: var(--team-on, var(--paper-hi));
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.find-reveal__skip {
+  background: var(--paper-hi);
+  color: var(--ink);
+}
+
+.find-reveal__go:hover,
+.find-reveal__skip:hover {
+  transform: translate(-1px, -1px);
+}
+
+/* a generational talent: the rays brighter and quicker, the icon pulsing once it has landed */
+.find-reveal.is-generational .find-reveal__rays {
+  opacity: 0.24;
+  animation-duration: 9s;
+}
+
+.find-reveal.is-generational .find-reveal__icon {
+  animation:
+    find-stamp 620ms 160ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    find-pulse 1.6s 900ms ease-in-out infinite;
+}
+
+@keyframes find-dim {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes find-card {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+}
+
+@keyframes find-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(2.4) rotate(-14deg);
+  }
+
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes find-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes find-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes find-pulse {
+  50% {
+    box-shadow:
+      4px 4px 0 var(--shadow),
+      0 0 0 10px color-mix(in srgb, var(--glow) 25%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .find-reveal::backdrop,
+  .find-reveal__card,
+  .find-reveal__rays,
+  .find-reveal__icon,
+  .find-reveal.is-generational .find-reveal__icon,
+  .find-reveal__kicker,
+  .find-reveal__title,
+  .find-reveal__who,
+  .find-reveal__line,
+  .find-reveal__actions {
+    animation: none;
+  }
+}
