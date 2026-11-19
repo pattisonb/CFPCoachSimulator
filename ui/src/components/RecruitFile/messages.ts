@@ -53,13 +53,11 @@ export const messages = {
   outside: "Outside His Top 5",
   notOnIt: "Not on It",
   scouted: "Scouted",
-  looksOf: (looks: string) => `${looks} of 3 Looks`,
-  notYet: "Not Yet",
-  priorities: "Priorities",
+  priorities: "His Priorities",
+  yourPull: "Your Program:",
   priority: (i: number) => `${ORDINALS[i] ?? ""} Priority`,
   priorityHint: "A call may reveal it.",
   pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
-  pullTip: (topic: string, word: string) => `Your program's case on ${topic}: ${word}.`,
   hisAsk: "His Ask",
   ask: (lo?: number, hi?: number, exact?: number) =>
     exact != null ? `He Wants ${exact} NIL` : lo != null && hi != null ? `He Wants ${lo}–${hi} NIL` : null,
@@ -109,8 +107,8 @@ export const messages = {
     done: "His report is complete: these are your staff's final grades. A read can still be wrong; the truth shows once he is on your roster.",
   },
   comp: "Comp",
-  compText: (name: string, school: string, pos: string, ovr?: number) =>
-    `${name}, ${school} (${pos}${ovr ? `, ${ovr} OVR` : ""})`,
+  compRest: (school: string, pos: string, ovr?: number) =>
+    [school, pos, ovr ? `${ovr} OVR` : null].filter(Boolean).join(" · "),
   compNone: "Nobody Close Enough",
   compLater: "His third look brings it.",
 

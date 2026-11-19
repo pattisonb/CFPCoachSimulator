@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]   # the project root
 EVALUATED = 300                    # the top 300 get a written evaluation and a public comp
 COMP_PERCENTILE = 0.50             # COMP_MAX_DISTANCE: this percentile of starter-to-starter distances *tune*
 COMP_ATTRIBUTES = 10               # the attributes compared: those that track a starter's overall most at the position
+COMP_CHOICES = 6                   # a comp is one of this many nearest players, picked by the recruit's own seed, so a class's best do not all share one comp *tune*
 OUR_COMP_LOOKS = 3                 # looks before your staff offer their own comp
 READ_SHIFT = 0.5                   # rating points an attribute moves per grade point a read is off *tune*
 PUBLIC_SD = 3.0                    # the national rankings' error on his grades, in grade points *tune*
@@ -56,8 +57,9 @@ SCHOOL_KINDS = ("High School", "High School", "High School", "Central", "North",
 # ----- comps ---------------------------------------------------------------------------------------
 
 @lru_cache(maxsize=1)
-def starter_pool() -> tuple[dict, ...]:
-    """Today's starters in the league in play, with their skills on our scale and our overall."""
+def player_pool() -> tuple[dict, ...]:
+    """Everyone on a roster in the league in play (starters and backups alike), with their skills on our
+    scale and our overall: who a recruit can be compared to."""
     from teamdata import game_scale
     from sim import season
     keys = game_scale.keys()
@@ -66,10 +68,17 @@ def starter_pool() -> tuple[dict, ...]:
         if t.get("fictional"):
             continue
         for p in t["offense"] + t["defense"]:
-            if p.get("in_game") and p.get("skills") and p.get("role"):
+            if p.get("skills") and p.get("role"):
                 out.append({"name": p["name"], "slug": p["slug"], "school": t.get("school") or t["name"], "team": slug,
-                            "position": p["role"], "skills": dict(zip(keys, p["skills"])), "overall": p.get("ovr")})
+                            "position": p["role"], "skills": dict(zip(keys, p["skills"])), "overall": p.get("ovr"),
+                            "starter": bool(p.get("in_game"))})
     return tuple(out)
+
+
+@lru_cache(maxsize=1)
+def starter_pool() -> tuple[dict, ...]:
+    """Today's starters in the league in play: what the comps' skills and distances are measured on."""
+    return tuple(s for s in player_pool() if s["starter"])
 
 
 @lru_cache(maxsize=None)
@@ -113,15 +122,22 @@ def ceiling(state: dict, p: dict) -> dict:
     return recruiting.attributes(state, p, "potential")
 
 
-def comp(profile_vector: dict, position: str, pool) -> Optional[dict]:
-    """The nearest starter at the same position, or None when nobody is close enough."""
+def comp(profile_vector: dict, position: str, pool, key: Optional[str] = None) -> Optional[dict]:
+    """A player in `pool` at the same position he compares to, or None when nobody is close enough.
+    With a `key` (the recruit, and whose read it is) the comp is one of the COMP_CHOICES nearest,
+    picked by a stream seeded on the key: the same recruit keeps his comp while those players stay
+    his nearest, and two recruits of one mold do not always land on the same name. Without a key,
+    the nearest."""
     keys = _attributes(position)
     if not keys:
         return None
-    best = min((s for s in pool if s["position"] == position), key=lambda s: _distance(profile_vector, s["skills"], keys),
-               default=None)
-    if best is None or _distance(profile_vector, best["skills"], keys) > comp_max_distance(position):
+    limit = comp_max_distance(position)
+    near = sorted(((_distance(profile_vector, s["skills"], keys), s["team"], s["slug"], s) for s in pool if s["position"] == position),
+                  key=lambda x: x[:3])
+    near = [x[3] for x in near if x[0] <= limit][:COMP_CHOICES if key else 1]
+    if not near:
         return None
+    best = random.Random(f"comp-{key}").choice(near) if key else near[0]
     out = {k: best[k] for k in ("name", "slug", "school", "team")}
     out["position"] = display_pos(best["position"])
     out["overall"] = best.get("overall")
@@ -421,6 +437,7 @@ def reset_caches() -> None:
     _RANKS = (None, {})
     _POS_RANKS = (None, {})
     _LIKES = (None, {})
+    player_pool.cache_clear()
     starter_pool.cache_clear()
     _attributes.cache_clear()
     comp_max_distance.cache_clear()
@@ -688,7 +705,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     our_comp = None
     if read and recruiting.report_looks(read) >= OUR_COMP_LOOKS:
         ours = {g: read["g"][g][0] for g in recruiting.GROUPS}
-        our_comp = comp(_shifted(state, p, ours), p["ea_position"], starter_pool())
+        our_comp = comp(_shifted(state, p, ours), p["ea_position"], player_pool(), key=f"ours-{pid}")
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
     traits = persona.view(state, viewer, pid)
     return {
@@ -704,7 +721,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "evaluation": _evaluation(p, public_grades) if top else None,
         # Clear Mode: the abilities he arrives with, once your staff has looked at him
         "abilities": _abilities_seen(p) if read else None,
-        "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], starter_pool()) if top else None,
+        "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], player_pool(), key=f"public-{pid}") if top else None,
         "our_grades": our_grades,
         "clear": clear.ratings(state, pid) if clear.on() else None,      # Clear Mode: his key ratings in numbers
         "looks": looks_out(read),
@@ -932,7 +949,7 @@ STATUS_ORDER = {"open": 0, "leaning_fcs": 1, "committed": 2, "signed": 3}
 
 def _sort_key(state: dict, viewer: str, key: str, keen: dict):
     """A Prospects column's sort key (best or first on top; ties by national rank): rank, interest, name, pos, ht, wt,
-    stars, status, sc (your looks), pot (your potential read; unscouted last)."""
+    stars, status, offers (the schools that have offered), sc (your looks), pot (your potential read; unscouted last)."""
     rc = state["recruiting"]
     P = rc["prospects"]
     if key == "interest" or key == "int":
@@ -953,6 +970,12 @@ def _sort_key(state: dict, viewer: str, key: str, keen: dict):
             x = seen_status(state, pid, viewer)
             return STATUS_ORDER["signed" if x["signed"] else "committed" if x["committed"] else "leaning_fcs" if x["fcs"] else "open"]
         return st
+    if key == "offers":                       # the schools that have offered him, most first
+        n: dict = {}
+        for pids in rc["offers"].values():
+            for pid in pids:
+                n[pid] = n.get(pid, 0) + 1
+        return lambda pid: -n.get(pid, 0)
     if key == "sc":
         return lambda pid: -recruiting.report_looks(rc["reads"].get(pid))
     if key == "pot":
@@ -1024,6 +1047,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
                  can_scout=can_scout(state, viewer, pid), hard=bool(rc["status"][pid].get("hard")) and not rc["status"][pid]["signed"])
         if pid in recs:
             r["why"] = recs[pid]["why"]
+        r["offers_n"] = sum(1 for pids in rc["offers"].values() if pid in pids)     # how many schools have offered him
         rows.append(r)
     needs = recruiting.needs_detail(state, viewer)
     return {"total": len(out), "rows": rows, "needs": needs, "recommended_ids": list(recs),

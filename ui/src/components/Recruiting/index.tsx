@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Chat, ChatsCircle, Heart, House, Phone, Star, X } from "@phosphor-icons/react";
+import { Chat, ChatsCircle, Heart, House, MagnifyingGlass, Phone, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Conversation from "../Conversation/index.tsx";
 import Face from "../Face/index.tsx";
-import { Stars } from "../ProspectCard/index.tsx";
+import ScoutMark from "../ScoutMark/index.tsx";
+import { Stars, transferLine } from "../ProspectCard/index.tsx";
 import { HistoryTab, OverviewTab, ProfileTab, ScoutingTab } from "../RecruitFile/index.tsx";
 import Panel from "../Panel/index.tsx";
 import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
@@ -19,6 +20,10 @@ import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../typ
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
+
+/** The roster groups in order (the keys a need is counted under). */
+const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
+const groupOf = (r: BoardRow) => r.group ?? r.display_pos;
 
 interface Props {
   seasonId: string;
@@ -62,8 +67,6 @@ const stageOf = (r: BoardRow, me: string): (typeof STAGES)[number] => {
   return (STAGES as readonly string[]).includes(r.stage) ? (r.stage as (typeof STAGES)[number]) : "cold";
 };
 
-const pct = (p: number | null | undefined) => (p == null ? null : `${Math.round(100 * p)}%`);
-
 /**
  * The Recruiting board: the recruits you're working, grouped by stage (or one stage), each with where you stand;
  * beside it the one picked, worked from his panel (his list, your offer against his ask, what he wants, and the
@@ -81,15 +84,40 @@ export default function Recruiting({
 }: Props) {
   const [stage, setStage] = useState<StageKey>("all");
   const [sort, setSort] = useState<"chance" | "rank">("chance");
+  // the list narrowed to a name (or a hometown) and to one position group
+  const [q, setQ] = useState("");
+  const [pos, setPos] = useState("all");
   const [picked, setPicked] = useState<string | null>(null);
   // another section asked for him: show every stage (he may not be in the one filtered to) and pick him
   useEffect(() => {
     if (!pick) return;
     setStage("all");
+    setQ("");
+    setPos("all");
     setPicked(pick);
   }, [pick]);
 
-  const rows = useMemo(() => board?.board ?? [], [board]);
+  const all = useMemo(() => board?.board ?? [], [board]);
+  // the position groups on your board, in roster order, and how many of each
+  const posCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const r of all) c[groupOf(r)] = (c[groupOf(r)] ?? 0) + 1;
+    return c;
+  }, [all]);
+  const positions = [
+    ...GROUP_ORDER.filter((g) => posCounts[g]),
+    ...Object.keys(posCounts).filter((g) => !GROUP_ORDER.includes(g)),
+  ];
+  // what your class still needs: the groups with spots to fill
+  const needs = GROUP_ORDER.filter((g) => (board?.needs?.[g] ?? 0) > 0);
+  const rows = useMemo(() => {
+    const text = q.trim().toLowerCase();
+    return all.filter(
+      (r) =>
+        (pos === "all" || groupOf(r) === pos) &&
+        (!text || `${r.name} ${r.hometown.city} ${r.hometown.state} ${r.display_pos}`.toLowerCase().includes(text)),
+    );
+  }, [all, q, pos]);
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: rows.length };
     for (const r of rows) c[stageOf(r, team)] = (c[stageOf(r, team)] ?? 0) + 1;
@@ -132,7 +160,7 @@ export default function Recruiting({
     }
   };
 
-  if (board && rows.length === 0)
+  if (board && all.length === 0)
     return (
       <div className="recruiting recruiting--empty">
         <div className="recruiting__empty">
@@ -176,18 +204,21 @@ export default function Recruiting({
                   {board.committed} <small>/ {board.open_spots}</small>
                 </dd>
               </div>
-              {/* this week's scouting points: what a Send costs comes out of these */}
-              <div title={m.scoutTip}>
-                <dt className="label">{m.scout}</dt>
-                <dd>
-                  {board.points_left} <small>/ {board.points_week}</small>
-                </dd>
-              </div>
             </dl>
           )}
         </header>
 
         <div className="recruiting__tools">
+          <label className="recruiting__search">
+            <MagnifyingGlass size={16} weight="bold" aria-hidden="true" />
+            <input
+              type="search"
+              value={q}
+              placeholder={m.search}
+              aria-label={m.search}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </label>
           <Dropdown
             label={m.stages}
             hideLabel
@@ -203,15 +234,47 @@ export default function Recruiting({
               }))}
             onChange={(s) => setStage(s as StageKey)}
           />
-          <select
-            className="recruiting__select"
-            aria-label={m.sort}
+          <Dropdown
+            label={m.position}
+            hideLabel
+            size="md"
+            value={pos}
+            options={[
+              { value: "all", label: m.allPositions },
+              ...positions.map((g) => ({
+                value: g,
+                label: g,
+                count: posCounts[g],
+                hint: (board?.needs?.[g] ?? 0) > 0 ? m.needN(board?.needs?.[g] ?? 0) : undefined,
+              })),
+            ]}
+            onChange={setPos}
+          />
+          <Dropdown
+            label={m.sort}
+            hideLabel
+            size="md"
+            align="right"
             value={sort}
-            onChange={(e) => setSort(e.target.value as "chance" | "rank")}
-          >
-            <option value="chance">{m.sortChance}</option>
-            <option value="rank">{m.sortRank}</option>
-          </select>
+            options={[
+              { value: "chance", label: m.sortChance, hint: m.sortChanceHint },
+              { value: "rank", label: m.sortRank, hint: m.sortRankHint },
+            ]}
+            onChange={(v) => setSort(v as "chance" | "rank")}
+          />
+          {/* your class's needs: a chip a position with spots to fill, each one a filter */}
+          {needs.length > 0 && (
+            <div className="recruiting__needs" role="group" aria-label={m.needs}>
+              <span className="label recruiting__soft recruiting__needs-title" title={m.needsTip}>
+                {m.needs}
+              </span>
+              {needs.map((g) => (
+                <Chip key={g} on={pos === g} count={board?.needs?.[g]} onClick={() => setPos(pos === g ? "all" : g)}>
+                  {g}
+                </Chip>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="recruiting__list">
@@ -225,7 +288,10 @@ export default function Recruiting({
               )}
               <ul className="recruiting__rows">
                 {g.rows.map((r) => {
-                  const sd = standingOf(r, team);
+                  // your place on his list, when you are on it
+                  const race = r.list.filter((x) => x.bar != null);
+                  const mine = race.find((x) => x.you || x.school === team);
+                  const rank = mine ? (mine.rank ?? race.indexOf(mine) + 1) : null;
                   return (
                     <li key={r.id}>
                       <button
@@ -246,13 +312,14 @@ export default function Recruiting({
                           </b>
                           <span className="recruiting__soft recruiting__facts">
                             {r.display_pos}
-                            <Stars n={r.stars} size={10} />
+                            {r.portal ? <span>{transferLine(r)}</span> : <Stars n={r.stars} size={10} />}
+                            <ScoutMark looks={r.looks} size={12} />
                             <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={11} />
                           </span>
+                          {rank != null && <span className="recruiting__soft recruiting__place">{m.onList(rank)}</span>}
                         </span>
                         <span className="recruiting__standing">
                           <RecruitStatus status={statusOf(r, team)} />
-                          {sd.pct != null && <span className="recruiting__pct">{pct(sd.pct)}</span>}
                         </span>
                       </button>
                     </li>
@@ -328,8 +395,9 @@ function RecruitPanel({
   // his list: your place on it, or why you have none
   const race = r.list.filter((x) => x.bar != null);
   const mine = race.find((x) => x.you || x.school === team);
-  const listPlace = mine
-    ? m.listPlace(mine.rank ?? race.indexOf(mine) + 1, Math.max(r.standing.of, race.length))
+  const place = mine ? (mine.rank ?? race.indexOf(mine) + 1) : null;
+  const listPlace = place
+    ? m.listPlace(place, Math.max(r.standing.of, race.length))
     : r.offered && !(r.signed || r.committed)
       ? m.outside
       : m.notOnIt;
@@ -457,7 +525,7 @@ function RecruitPanel({
     <article className="recruit" aria-label={r.name}>
       {/* his head and the tab row stay at the top while the tab under them scrolls */}
       <div className="pin-top">
-        {/* the head: who he is, your offer and your place on his list, and your chance in the square */}
+        {/* the head: who he is, your offer and your chance in words, and your place on his list in the square */}
         <ProfileHead
           face={<Face face={playerFace(r.id, r.display_pos)} scale={6} label="" />}
           name={r.name}
@@ -475,23 +543,16 @@ function RecruitPanel({
           }
           cells={[
             { label: m.offer, value: r.offered ? m.nilAmount(r.nil) : m.noOffer },
-            { label: m.hisList, value: listPlace },
+            { label: m.chance, value: sd.odds ?? sd.word },
             { label: m.hisAsk, value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact) },
           ]}
           tile={{
-            label: m.chance,
-            value:
-              sd.pct != null ? (
-                <>
-                  {Math.round(100 * sd.pct)}
-                  <small>%</small>
-                </>
-              ) : (
-                sd.word
-              ),
-            word: sd.pct == null,
-            aria: `${m.chance}: ${pct(sd.pct) ?? sd.word}`,
-            tip: { title: sd.odds ?? sd.word, text: sd.text },
+            label: m.hisList,
+            // your place on his list, big; off it (or once he is yours or gone), the word for where you stand
+            value: place ? m.place(place) : sd.word === "Yours" || sd.word === "Lost" ? sd.word : listPlace,
+            word: !place,
+            aria: `${m.hisList}: ${listPlace}`,
+            tip: { title: listPlace, text: sd.text },
           }}
         />
 

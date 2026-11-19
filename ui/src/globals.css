@@ -10,6 +10,7 @@
   --shadow-soft: #787774;
   --logo-bg: #fff; /* behind the spinning ball, in both themes */
   --tile: #f1f1ef; /* behind faces and sprites */
+  --good: #3f8a3a; /* progress made: a meter's fill (the field's green) */
 
   /* type */
   --font: "Space Mono", ui-monospace, menlo, monospace;
@@ -64,6 +65,7 @@ body {
   color: var(--ink);
   font: 400 var(--t-md) / 1.5 var(--font);
   -webkit-font-smoothing: antialiased;
+  cursor: default; /* the arrow over words too: a text cursor flickering in and out as the pointer crosses a page of labels reads as a glitch */
 }
 
 h1,
@@ -83,6 +85,12 @@ select,
 input {
   font: inherit;
   color: inherit;
+}
+
+/* where you type, the text cursor */
+input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="button"], [type="submit"]),
+textarea {
+  cursor: text;
 }
 
 :focus-visible {

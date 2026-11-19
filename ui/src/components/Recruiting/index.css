@@ -38,10 +38,13 @@
 }
 
 /* four meters in the board's own width: two rows of two, so a fourth never makes the column wider */
+
+/* NIL, offers and commits on one row (the week's hours and scouting points are in the tab bar) */
 .recruiting__meters {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s2) var(--s4);
+  grid-template-columns: repeat(3, auto);
+  justify-content: space-between;
+  gap: var(--s2);
 }
 
 .recruiting__meters dt {
@@ -49,29 +52,83 @@
 }
 
 .recruiting__meters dd {
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .recruiting__meters small {
   color: var(--ink-soft);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
   font-weight: 400;
 }
 
+/* the list's tools on one even grid: the search across it, then three filters a third each, then your needs */
 .recruiting__tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.recruiting__select {
-  min-height: 32px;
+/* each filter fills its third: its value at the left, its caret at the right */
+.recruiting__tools > .dropdown {
+  display: block;
+  min-width: 0;
+}
+
+.recruiting__tools > .dropdown > .dropdown__button {
+  justify-content: space-between;
+  width: 100%;
   padding: 0 8px;
+  overflow: hidden;
+  font-size: var(--t-xs);
+}
+
+/* search your board: a field the row's full width, a glass at its start */
+.recruiting__search {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 var(--s2);
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
+}
+
+.recruiting__search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  outline: 0;
   font-size: var(--t-sm);
+}
+
+.recruiting__search:focus-within {
+  outline: var(--line) solid currentcolor;
+  outline-offset: 3px;
+}
+
+/* your class's needs: their name, then a chip a position on an even grid of five (so two tidy rows at most) */
+.recruiting__needs {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.recruiting__needs-title {
+  grid-column: 1 / -1;
+}
+
+.recruiting__needs .chip {
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 4px;
+  font-size: var(--t-xs);
 }
 
 /* the list: groups by stage, rows that pick a recruit */
@@ -107,8 +164,9 @@
 }
 
 .recruiting__row {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--s2);
   width: 100%;
@@ -140,22 +198,36 @@
   border: 0;
 }
 
-/* his name on one line: the list is as wide as its longest name needs */
+/* his name on one line; a long one is cut short, never run under the icons at the row's end */
 .recruiting__who {
   display: grid;
   min-width: 0;
   white-space: nowrap;
 }
 
+.recruiting__who b {
+  min-width: 0;
+  padding-right: 22px; /* clear of the icon in the row's corner */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .recruiting__who .recruiting__soft {
   font-size: var(--t-xs);
 }
 
-/* the row's right edge: his offer or commitment as an icon, then your chance */
+/* the row's top right corner: his offer or commitment as an icon */
 .recruiting__standing {
+  position: absolute;
+  top: 6px;
+  right: 8px;
   display: flex;
-  align-items: center;
-  gap: var(--s1);
+}
+
+/* under his stars: your place on his list */
+.recruiting__place {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* under his name: his position, then his stars */
@@ -163,11 +235,8 @@
   display: flex;
   align-items: center;
   gap: var(--s1);
-}
-
-.recruiting__pct {
-  font-weight: 700;
-  text-align: right;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .recruiting__side {

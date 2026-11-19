@@ -21,8 +21,12 @@ const LAST_WEEK = 20;
 /** *tune* The first week after the regular season: the weeks from here get a placeholder until a game is set. */
 const FIRST_POST_WEEK = 15;
 
-/** *tune* How long a tile that has just got its result stays marked, in ms (index.css strip-pop and strip-flash). */
-const POP_MS = 1000;
+/** *tune* How long a tile that has just got its result stays marked, in ms (index.css strip-flash). */
+const POP_MS = 1800;
+/** *tune* How long the strip takes to glide to the week you are in after a week is played, in ms. */
+const GLIDE_MS = 1100;
+/** *tune* How long one press of an arrow takes to scroll, in ms. */
+const PAGE_MS = 500;
 /** *tune* How many tiles one press of an arrow scrolls. */
 const PAGE_TILES = 3;
 
@@ -57,18 +61,41 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
     setEnds({ start: el.scrollLeft <= 1, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 });
   };
 
+  // the strip's own glide: the browser's smooth scroll is quick and starts over with a jerk each time it is asked
+  // again, so the strip is moved a frame at a time, easing out; a new glide picks up from wherever the last one got to
+  const frame = useRef(0);
+  const glide = (left: number, ms: number) => {
+    const el = list.current;
+    if (!el) return;
+    window.cancelAnimationFrame(frame.current);
+    const from = el.scrollLeft;
+    const to = Math.max(0, Math.min(left, el.scrollWidth - el.clientWidth));
+    if (Math.abs(to - from) < 1 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      el.scrollLeft = to;
+      return;
+    }
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const p = Math.min(1, (now - t0) / ms);
+      el.scrollLeft = from + (to - from) * (1 - (1 - p) ** 3);
+      if (p < 1) frame.current = window.requestAnimationFrame(step);
+    };
+    frame.current = window.requestAnimationFrame(step);
+  };
+  useEffect(() => () => window.cancelAnimationFrame(frame.current), []);
+
   // the week you are in near the left, with the last one played beside it: set at once when the strip first shows,
   // glided to after that (a sim moving through the weeks carries the strip along with it)
   const shown = useRef(false);
-  const nextKey = next ? `${next.week}-${next.event_id ?? next.kind}` : "";
+  // by its week alone: the same week's game coming back from the server under another id is not a move
+  const nextKey = next ? String(next.week) : "";
   useEffect(() => {
     const el = list.current;
     const tile = el?.querySelector<HTMLElement>(".season-strip__game.is-next");
     const before = tile?.previousElementSibling as HTMLElement | null;
     if (el && tile) {
       const left = Math.max(0, (before ?? tile).offsetLeft);
-      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (shown.current && !still) el.scrollTo({ left, behavior: "smooth" });
+      if (shown.current) glide(left, GLIDE_MS);
       else el.scrollLeft = left;
       shown.current = true;
     }
@@ -104,7 +131,7 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
   const page = (dir: 1 | -1) => {
     const el = list.current;
     const tile = el?.firstElementChild as HTMLElement | null;
-    if (el && tile) el.scrollBy({ left: dir * PAGE_TILES * (tile.offsetWidth + 4), behavior: "smooth" });
+    if (el && tile) glide(el.scrollLeft + dir * PAGE_TILES * (tile.offsetWidth + 4), PAGE_MS);
   };
 
   return (

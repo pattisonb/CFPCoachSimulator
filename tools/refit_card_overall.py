@@ -18,10 +18,13 @@ from coach_career import league as lg          # noqa: E402
 from teamdata import game_scale               # noqa: E402
 
 
+RECENTER_OVER = 1.0     # *tune* a group is moved only when its middle starter is off by more than this (the scale's own tolerance,
+                        # tests/test_scale.py): a smaller nudge to every group flipped roundings that other things are tuned on
+
+
 def recenter() -> dict:
     """Hold the scale's promise for the overall: the middle Power 4 starter at a position reads 50. The fit matches the
-    old overalls player by player, which can leave a group's middle a point or two off; each group that is off by more than
-    half a point has its positions' constants moved by the difference. Returns {group: shift}."""
+    old overalls player by player, which can leave a group's middle a point or two off; each group that is off by more than RECENTER_OVER has its positions' constants moved by the difference. Returns {group: shift}."""
     import statistics
     from sim import season
     scale = dict(game_scale.data())
@@ -37,7 +40,7 @@ def recenter() -> dict:
     moved = {}
     for grp, vals in by.items():
         d = 50 - statistics.median(vals)
-        if abs(d) > 0.5:          # exactly half a point is a rounding flip: moving it only moves it back
+        if abs(d) > RECENTER_OVER:
             moved[grp] = round(d, 2)
             for pos, f in scale["card_overall"].items():
                 if game_scale.group(pos) == grp:

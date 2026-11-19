@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { CaretDown, Star } from "@phosphor-icons/react";
 import RangeBar from "../RangeBar/index.tsx";
+import PlayerLink from "../PlayerLink/index.tsx";
 import { messages as m } from "./messages.ts";
 import type { Ctx, Size, Who } from "./types.ts";
 
@@ -163,14 +164,10 @@ export function RName({
   );
 }
 
-/** One of your players' names: it opens the Depth Chart. */
-export function PName({ ctx, children }: { ctx: Ctx; children: ReactNode }) {
-  if (ctx.sample) return <span className="hq-link hq-grow">{children}</span>;
-  return (
-    <button type="button" className="hq-link hq-grow" onClick={ctx.openPlayer}>
-      {children}
-    </button>
-  );
+/** One of your players' names: it opens his card in a window. */
+export function PName({ ctx, name, pos }: { ctx: Ctx; name: string; pos?: string }) {
+  if (ctx.sample) return <span className="hq-link hq-grow">{name}</span>;
+  return <PlayerLink team={ctx.team} name={name} position={pos} className="hq-link hq-grow" />;
 }
 
 // the widgets' filter picks, by widget id: they last the visit, across redraws and section changes

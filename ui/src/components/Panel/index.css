@@ -1,26 +1,14 @@
-/* A tab's panels: packed into two columns when there is room. */
+/* A tab's panels: two to a row when there is room (one when there is not). The panels of a row are one height, so
+   every panel's top and bottom edge lines up with its neighbor's; an odd one out at the end runs the full width. */
 .panels {
-  columns: 2 340px;
-  column-gap: var(--s3);
-}
-
-/* two fixed columns, the panels dealt into them in turn (one column when there is no room for two) */
-.panels--split {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  align-items: start;
-  gap: 0 var(--s3);
-  columns: auto;
-}
-
-.panels__col {
-  min-width: 0;
+  align-items: stretch;
+  gap: var(--s3);
 }
 
 .panels--stack {
-  display: grid;
-  gap: var(--s3);
-  columns: auto;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .panel {
@@ -34,11 +22,16 @@
   break-inside: avoid;
 }
 
-.panels--stack > .panel {
+.panels > .panel {
+  min-width: 0;
   margin-bottom: 0;
 }
 
-/* a panel's header: its name over a rule, in ink on the card (no dark bar) */
+.panels:not(.panels--stack) > .panel:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* a panel's header: your three colors along its top, then its name over a rule, in ink on the card (no dark bar) */
 .panel__head {
   display: flex;
   flex-wrap: wrap;
@@ -46,9 +39,9 @@
   justify-content: space-between;
   gap: 2px var(--s2);
   margin: 0 calc(-1 * var(--s3)) 4px;
-  padding: var(--s2) var(--s3);
+  padding: calc(var(--s2) + 4px) var(--s3) var(--s2);
+  background: var(--team-stripe, none) top / 100% 4px no-repeat; /* your three colors along every panel's top edge */
   border-bottom: var(--line) solid var(--ink);
-  box-shadow: inset 4px 0 0 var(--team, transparent); /* a marker in your color down every panel's heading */
 }
 
 .panel__head h3 {

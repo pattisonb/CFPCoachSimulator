@@ -15,8 +15,8 @@
   container: hq / inline-size;
 }
 
-/* masonry: index.tsx pack() places each card in the column(s) with the most room, on rows of 4 px, so the gap under
-   a card is always the grid's gap and short cards stack beside a tall one */
+/* rows: index.tsx pack() places the cards in order on tracks of 4 px, a row as tall as its tallest card and the others
+   stretched to it, so every card's top and bottom edge lines up with its neighbors' */
 .hq__grid {
   --hq-cols: 4;
 
@@ -109,7 +109,8 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s2);
-  padding: 8px var(--s2);
+  padding: 12px var(--s2) 8px;
+  background: var(--team-stripe, none) top / 100% 4px no-repeat; /* your three colors along the card's top, as on a panel */
   border-bottom: var(--line) solid var(--ink);
 }
 

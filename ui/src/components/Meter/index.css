@@ -1,0 +1,36 @@
+/* Progress as one bar with its percentage at the end: an empty gray track that fills in green. */
+.meter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 220px; /* *tune* the longest a meter runs in a wide row */
+}
+
+.meter__track {
+  flex: 1;
+  height: 10px;
+  min-width: 60px;
+  background: var(--line-soft);
+}
+
+.meter__track i {
+  display: block;
+  height: 100%;
+  background: var(--good);
+  transition: width 300ms ease-out;
+}
+
+/* as wide as "100%", so the bar's end never moves */
+.meter__pct {
+  flex: none;
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter__track i {
+    transition: none;
+  }
+}

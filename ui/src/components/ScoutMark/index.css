@@ -1,0 +1,14 @@
+/* How far a prospect has been scouted: binoculars in outline, the filled pair over it cut off at his progress. */
+.scout-mark {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  vertical-align: middle;
+}
+
+.scout-mark__fill {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  color: var(--good);
+}

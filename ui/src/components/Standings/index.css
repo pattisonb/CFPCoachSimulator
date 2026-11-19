@@ -77,14 +77,16 @@
   text-transform: uppercase;
 }
 
-/* ----- every conference: compact tables, packed into columns ----- */
+/* ----- every conference: compact tables in rows, the cards of a row one height so their edges line up ----- */
 .standings__grid {
-  columns: 3 360px;
-  column-gap: var(--s3);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  align-items: stretch;
+  gap: var(--s3);
 }
 
 .compact {
-  margin-bottom: var(--s3);
+  min-width: 0;
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
   break-inside: avoid;

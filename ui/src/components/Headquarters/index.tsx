@@ -77,8 +77,9 @@ interface Entry {
 }
 
 /**
- * Headquarters: a board you build from widgets (web/hq.js). Cards pack into four columns like a wall of notes: Small
- * is one column wide, Medium two, Large the whole row, each as tall as its content (or the height you drag it to).
+ * Headquarters: a board you build from widgets (web/hq.js). Cards sit in rows on four columns: Small is one
+ * column wide, Medium two, Large the whole row; a row is as tall as its tallest card (its content, or the height you
+ * drag it to) and the others stretch to it, so the cards' edges line up.
  * Edit Layout lays the controls over every card: drag it to move, pick its size, remove it. Add Widget opens the
  * catalog, where each widget shows a live preview from canned data. The layout saves with the career a moment after
  * every change. Each read the cards need is fetched once, however many cards use it.
@@ -224,13 +225,12 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
     team: sample ? "you" : season.team,
     act: sample ? async () => false : act,
     openRecruit: sample ? () => {} : onRecruit,
-    openPlayer: () => !sample && onSection("depth"),
     savePlan: sample ? async () => false : savePlan,
     get: (path) => api(path),
   });
   const go = (key: string) => (key === "prospects" ? onProspects() : onSection(key));
 
-  // ----- masonry: each card, in order, goes to the column(s) with the most room -----
+  // ----- rows: the cards in order, each row as tall as its tallest card -----
   /** Remember where every card is now, so the next layout slides each one from there. */
   const flip = () => {
     if (!grid.current || still()) return;
@@ -243,22 +243,31 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
       (n): n is HTMLElement => n instanceof HTMLElement && !!n.dataset.size && !n.classList.contains("is-dragging"),
     );
     const cols = columnsOf(g);
-    const h = new Array<number>(cols).fill(0);
-    for (const n of items) {
-      const w = n.dataset.size === "L" ? cols : n.dataset.size === "M" ? Math.min(2, cols) : 1;
+    // each card's own height: what it holds, or the height you set (the last pass's stretch taken off first)
+    for (const n of items) n.style.minHeight = "";
+    const sized = items.map((n) => ({
+      n,
+      w: n.dataset.size === "L" ? cols : n.dataset.size === "M" ? Math.min(2, cols) : 1,
+      rows: Math.max(1, Math.ceil((n.getBoundingClientRect().height + GAP) / ROW)),
+    }));
+    // the cards in order, left to right, a new row when the next one does not fit; a row is as tall as its tallest
+    // card and the others stretch to it, so every top and bottom edge in a row lines up
+    let top = 0;
+    for (let i = 0; i < sized.length; ) {
+      let j = i;
+      let used = 0;
+      while (j < sized.length && used + sized[j].w <= cols) used += sized[j++].w;
+      const row = sized.slice(i, j);
+      const rows = Math.max(...row.map((c) => c.rows));
       let at = 0;
-      let top = Infinity;
-      for (let c = 0; c + w <= cols; c++) {
-        const t = Math.max(...h.slice(c, c + w));
-        if (t < top) {
-          top = t;
-          at = c;
-        }
+      for (const c of row) {
+        c.n.style.gridColumn = `${at + 1} / span ${c.w}`;
+        c.n.style.gridRow = `${top + 1} / span ${rows}`;
+        if (row.length > 1) c.n.style.minHeight = `${rows * ROW - GAP}px`;
+        at += c.w;
       }
-      const rows = Math.max(1, Math.ceil((n.getBoundingClientRect().height + GAP) / ROW));
-      n.style.gridColumn = `${at + 1} / span ${w}`;
-      n.style.gridRow = `${top + 1} / span ${rows}`;
-      for (let c = at; c < at + w; c++) h[c] = top + rows;
+      top += rows;
+      i = j;
     }
     const from = flipFrom.current;
     flipFrom.current = null;

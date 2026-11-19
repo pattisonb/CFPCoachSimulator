@@ -36,6 +36,59 @@ dd.recruit-file__inline {
   grid-template-columns: auto minmax(0, 1fr);
 }
 
+/* his priorities: three tiles side by side under their heading, each naming the priority, the topic and your pull */
+.recruit-file__prios {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s1) var(--s2);
+  padding: var(--s2) 0 var(--s1);
+  border-top: 1px solid var(--line-soft);
+}
+
+.recruit-file__prios-title {
+  grid-column: 1 / -1;
+  color: var(--ink-soft);
+}
+
+.recruit-file__prio {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--s2);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.recruit-file__prio.is-unknown {
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.recruit-file__prio .label {
+  color: var(--ink-soft);
+}
+
+.recruit-file__prio-name {
+  overflow: hidden;
+  font-size: var(--t-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recruit-file__prio.is-unknown .recruit-file__prio-name {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.recruit-file__prio-pull {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.recruit-file__prio-pull b {
+  color: var(--ink);
+}
+
 /* ----- Overview: the battle. A school on one line: its place, its name and tags, its pull as a bar, its word ----- */
 .recruit-file__commit {
   display: grid;
@@ -339,5 +392,4 @@ dd.recruit-file__inline {
 /* a finished recruitment: the battle and the scout's summary side by side, each whole (stacked when narrow) */
 .recruit-file__pair {
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  align-items: start;
 }

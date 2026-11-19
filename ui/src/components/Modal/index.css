@@ -83,6 +83,13 @@
   scrollbar-gutter: stable;
 }
 
+/* a conversation: the window itself never scrolls, up and down or sideways (the talk inside runs to the card's edges
+   and scrolls its own log) */
+.modal--talk .modal__body {
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
+
 .modal__foot {
   display: flex;
   flex-wrap: wrap;

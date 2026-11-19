@@ -170,6 +170,10 @@
   width: 132px;
 }
 
+.prospects__col-offers {
+  width: 64px;
+}
+
 .prospects__col-int {
   width: 88px;
 }
@@ -303,6 +307,12 @@
   min-width: 0;
 }
 
+/* a long name breaks inside its own column, never out over the next one */
+.prospects__name b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .prospects__name .prospects__soft {
   font-size: var(--t-xs);
 }
@@ -331,26 +341,6 @@
 
 .prospects__pot {
   font-weight: 700;
-}
-
-/* looks: three pixel segments, filled whole or half */
-.prospects__looks {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.prospects__looks i {
-  width: 10px;
-  height: 10px;
-  border: 1px solid var(--ink);
-}
-
-.prospects__looks i.is-full {
-  background: var(--ink);
-}
-
-.prospects__looks i.is-half {
-  background: linear-gradient(90deg, var(--ink) 50%, transparent 50%);
 }
 
 /* the two marks in a row's last cell: your favorite (a heart), then your board (a star) */
@@ -519,7 +509,11 @@
 }
 
 .prospects.is-narrow .prospects__col-status {
-  width: 108px;
+  width: 92px;
+}
+
+.prospects.is-narrow .prospects__col-offers {
+  width: 56px;
 }
 
 .prospects.is-narrow .prospects__col-int {

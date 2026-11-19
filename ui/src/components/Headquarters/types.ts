@@ -267,8 +267,6 @@ export interface Ctx {
   act: (kind: "board" | "scout", who: { pid: string; name: string }) => Promise<boolean>;
   /** open a recruit on the Recruiting board */
   openRecruit: (pid: string) => void;
-  /** open your Depth Chart (a player's name) */
-  openPlayer: () => void;
   /** store tasks or goal targets, then redraw the cards that read them */
   savePlan: (body: { tasks?: Task[]; goals?: Record<string, number> }) => Promise<boolean>;
   /** one-off reads: a search, a What-If */

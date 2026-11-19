@@ -170,27 +170,28 @@
   text-transform: uppercase;
 }
 
-/* the three cells, between his name and the tile: each in its own column on a wide card, a rule before each */
+/* the three cells, between his name and the tile: stacked in one column, a rule before it, so his name keeps its room */
 .profile-head__cells {
   display: grid;
   grid-column: 3;
   grid-row: 1;
-  grid-template-columns: 110px 160px 96px; /* *tune* the three cells' widths */
-  align-self: stretch;
-}
-
-.profile-head__cells div {
-  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: center;
-  gap: 4px;
-  min-width: 0;
+  align-self: stretch;
+  gap: 6px;
+  width: 150px; /* *tune* wide enough for "Narrow Favorite" and a short stat line */
   padding-left: var(--s3);
   border-left: var(--line) solid var(--line-soft);
 }
 
+.profile-head__cells div {
+  display: grid;
+  min-width: 0;
+}
+
 .profile-head__cells dt {
   color: var(--ink-soft);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -209,29 +210,8 @@
   display: block;
 }
 
-/* most cards: the three stack in one column beside the tile, so his name keeps its room (side by side they cut a
-   long name short even on a card 1,150 px wide) */
+/* most cards: what was beside his name goes under it, so the name has the whole line */
 @container profile-head (width < 1360px) {
-  .profile-head__cells {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: center;
-    gap: 6px;
-    width: 150px; /* *tune* wide enough for "Has Not Played" and a short stat line */
-    padding-left: var(--s3);
-    border-left: var(--line) solid var(--line-soft);
-  }
-
-  .profile-head__cells div {
-    gap: 0;
-    padding-left: 0;
-    border-left: 0;
-  }
-
-  .profile-head__cells dt {
-    font-size: var(--t-xs);
-  }
-
-  /* what was beside his name goes under it, so the name has the whole line */
   .profile-head__title {
     display: grid;
     gap: 2px;

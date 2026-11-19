@@ -14,12 +14,14 @@ import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
 import Modal from "../Modal/index.tsx";
-import ProspectCard, { Stars, statusOf } from "../ProspectCard/index.tsx";
+import Dropdown from "../Dropdown/index.tsx";
+import ScoutMark from "../ScoutMark/index.tsx";
+import ProspectCard, { Stars, statusOf, transferLine } from "../ProspectCard/index.tsx";
 import TileMap from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
-import type { ProspectRow, ProspectsView } from "../../types.ts";
+import type { NeedGroup, ProspectRow, ProspectsView } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -65,6 +67,7 @@ const SORTS: Partial<Record<Col, string>> = {
   wt: "wt",
   stars: "stars",
   status: "status",
+  offers: "offers",
   int: "int",
   sc: "sc",
   pot: "pot",
@@ -72,22 +75,13 @@ const SORTS: Partial<Record<Col, string>> = {
 /** the groups in roster order (the needs' keys come in this order too) */
 const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
 
-/** Recommended's reasons as one line: "From a state you sign from · a position you need: QB 2 left" */
-const whyText = (why: string[]) => {
-  const line = why.join(" · ");
-  return line.charAt(0).toUpperCase() + line.slice(1);
+/** What a position chip counts: spots left, or your commits, board or offers there against the spots to fill. */
+type ChipShow = "need" | "commits" | "board" | "offers";
+const chipCount = (n: NeedGroup, show: ChipShow): string | null => {
+  if (show === "need") return n.need > 0 ? String(n.need) : null;
+  if (show === "commits") return `${n.commits}/${n.commits + Math.max(0, n.need)}`;
+  return `${(show === "board" ? n.board : n.offers) ?? 0}/${Math.max(0, n.need)}`;
 };
-
-/** Your staff's looks as three pixel segments, each filled in halves. */
-function Looks({ n }: { n: number }) {
-  return (
-    <span className="prospects__looks" role="img" aria-label={m.looks(n)} title={m.looks(n)}>
-      {[0, 1, 2].map((i) => (
-        <i key={i} className={n >= i + 1 ? "is-full" : n > i ? "is-half" : undefined} />
-      ))}
-    </span>
-  );
-}
 
 /**
  * The Prospects section: the whole class, to find who to recruit. A table you can search, filter (view, position,
@@ -97,6 +91,7 @@ function Looks({ n }: { n: number }) {
  */
 export default function Prospects({ seasonId, year, onBoardChange, active = true, boardSize, onClassSize }: Props) {
   const [view, setView] = useState<View>("all");
+  const [chips, setChips] = useState<ChipShow>("need");
   // a narrow table (a smaller window, or the sidebar open): the Size column goes and the rest slim down, so the
   // prospect column keeps its room; measured on the table's own box, not the window's
   const [narrow, setNarrow] = useState(false);
@@ -327,17 +322,24 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
         </div>
 
         <div className="prospects__chips prospects__groups" role="group" aria-label={m.group}>
+          <Dropdown
+            label={m.chipShow}
+            size="md"
+            value={chips}
+            options={(Object.keys(m.chipShows) as ChipShow[]).map((k) => ({
+              value: k,
+              label: m.chipShows[k],
+              hint: m.chipHints[k],
+            }))}
+            onChange={(k) => setChips(k as ChipShow)}
+          />
           <Chip on={group === null} onClick={() => setGroup(null)}>
             {m.allGroups}
           </Chip>
           {groups.map((g) => (
-            <Chip
-              key={g}
-              on={group === g}
-              count={needs[g].need > 0 ? needs[g].need : undefined}
-              onClick={() => setGroup(g)}
-            >
+            <Chip key={g} on={group === g} onClick={() => setGroup(g)}>
               {g}
+              {chipCount(needs[g], chips) && <span className="chip__count">{chipCount(needs[g], chips)}</span>}
             </Chip>
           ))}
           {view === "recommended" && notOnBoard > 0 && (
@@ -365,6 +367,7 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                 {!narrow && <col className="prospects__col-size" />}
                 <col className="prospects__col-stars" />
                 <col className="prospects__col-status" />
+                <col className="prospects__col-offers" />
                 <col className="prospects__col-int" />
                 <col className="prospects__col-sc" />
                 <col className="prospects__col-pot" />
@@ -378,6 +381,7 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                   {!narrow && <Th col="ht" />}
                   <Th col="stars" />
                   <Th col="status" className="left" />
+                  <Th col="offers" />
                   <Th col="int" />
                   <Th col="sc" />
                   <Th col="pot" />
@@ -410,8 +414,8 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                             {r.name}{" "}
                             <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={12} />
                           </b>
-                          <span className="prospects__soft" title={r.why?.length ? whyText(r.why) : undefined}>
-                            {r.why?.length ? whyText(r.why) : `${r.hometown.city}, ${r.hometown.state}`}
+                          <span className="prospects__soft">
+                            {r.portal ? transferLine(r) : `${r.hometown.city}, ${r.hometown.state}`}
                           </span>
                         </span>
                       </button>
@@ -426,8 +430,11 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                       <Stars n={r.stars} size={10} />
                     </td>
                     <td className="left prospects__status">{statusOf(r)}</td>
+                    <td className="prospects__offers">
+                      {r.offers_n ? r.offers_n : <span className="prospects__soft">–</span>}
+                    </td>
                     <td className={`prospects__int is-${r.interest_level.toLowerCase()}`}>{r.interest_level}</td>
-                    <td>{r.looks > 0 ? <Looks n={r.looks} /> : <span className="prospects__soft">–</span>}</td>
+                    <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : <span className="prospects__soft">–</span>}</td>
                     <td className="prospects__pot">
                       {r.our_potential ? (
                         r.our_potential[0] === r.our_potential[1] ? (

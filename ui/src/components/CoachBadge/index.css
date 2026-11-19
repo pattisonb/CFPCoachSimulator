@@ -93,3 +93,48 @@
   font-size: var(--t-xs);
   font-weight: 700;
 }
+
+/* floating (Recruiting, which has no top row): your face alone in the window's bottom right corner. Pointed at, tabbed
+   to or with its menu open, the card slides out from the right: it grows to the left, carrying your face over to its
+   place as your name and the week's energy come in beside it. */
+.coach-badge--float {
+  --badge-slide: 360ms; /* *tune* how long the card takes to slide out and back */
+
+  position: fixed;
+  right: calc(var(--s5) + 16px);
+  bottom: calc(var(--s4) + 16px);
+  z-index: 6;
+  gap: 0;
+  padding: 6px;
+}
+
+/* your name and energy are there all along, behind the card's edge: the slide uncovers them (nothing fades in) */
+.coach-badge--float .coach-badge__who {
+  max-width: 0;
+  overflow: hidden;
+  transition:
+    max-width var(--badge-slide) cubic-bezier(0.22, 1, 0.36, 1),
+    margin var(--badge-slide) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.coach-badge--float .coach-badge__corner {
+  visibility: hidden;
+}
+
+.coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__who {
+  max-width: 300px; /* *tune* wider than the longest name and team */
+  margin: 0 4px 0 var(--s2);
+}
+
+/* the corner's control shows once the card is out */
+.coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__corner {
+  visibility: visible;
+  transition: visibility 0s linear var(--badge-slide);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-badge--float .coach-badge__who,
+  .coach-badge--float .coach-badge__corner {
+    transition: none !important;
+  }
+}

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Classes from "../Classes/index.tsx";
 import Prospects from "../Prospects/index.tsx";
 import Recruiting from "../Recruiting/index.tsx";
@@ -25,6 +26,8 @@ interface Props {
   pick?: string | null;
   /** the real teams by slug, for the class rankings' colors */
   teams: Map<string, TeamCard>;
+  /** at the tab bar's far end (Auto-Recruit, while the coach card is off the screen) */
+  aside?: ReactNode;
 }
 
 /**
@@ -46,6 +49,7 @@ export default function RecruitingHub({
   coach,
   pick,
   teams,
+  aside,
 }: Props) {
   return (
     <div className="section-tabs__wrap">
@@ -58,6 +62,7 @@ export default function RecruitingHub({
           { key: "prospects", label: m.prospects },
           { key: "classes", label: m.classes },
         ]}
+        aside={aside}
       />
       <SectionPane shown={tab === "board"}>
         <Recruiting

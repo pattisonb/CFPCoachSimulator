@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
-import CoachBadge from "../../components/CoachBadge/index.tsx";
+import CoachBadge, { Energy } from "../../components/CoachBadge/index.tsx";
 import Dropdown from "../../components/Dropdown/index.tsx";
 import Bracket from "../../components/Bracket/index.tsx";
 import GameWindow from "../../components/GameWindow/index.tsx";
@@ -171,10 +171,23 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   });
   const openBox = (id: string) => setGame({ id, live: false });
   // the Offseason has the screen to itself: the season is over, so its week strip and the week's Energy say nothing
-  const bare = section.key === "offseason";
+  // Recruiting has it too, for the room: your coach's card floats in the window's corner there instead
+  const bare = section.key === "offseason" || section.key === "recruiting";
   /** a team's resume in a window (from Rankings and Programs) */
   const [resume, setResume] = useState<string | null>(null);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
+
+  // Auto-Recruit, in the coach card's corner
+  const autoMenu = recruiting && (
+    <Dropdown
+      label={m.auto}
+      icon={<Robot size={16} weight={recruiting.auto_recruit === "off" ? "bold" : "fill"} aria-hidden="true" />}
+      align="right"
+      value={recruiting.auto_recruit}
+      options={Object.entries(m.autoModes).map(([value, label]) => ({ value, label }))}
+      onChange={(mode) => void setAutoRecruit(mode)}
+    />
+  );
 
   const season = load.kind === "ready" ? load.season : null;
   const coach = season?.coach ?? null;
@@ -244,7 +257,14 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       (a, b) => a.week - b.week,
     );
   }, [season?.schedule, liveResults]);
-  const stripWeek = (liveResults && sim.status?.current_week) || season?.current_week || 0;
+  // the week a sim has got to is held after it ends, until the saved season catches up: for a moment between the two
+  // the season still says the old week, which sent the strip back a week and then forward again
+  const simAt = useRef({ season: "", week: 0 });
+  if (simAt.current.season !== `${season?.id}-${season?.year}`)
+    simAt.current = { season: `${season?.id}-${season?.year}`, week: 0 };
+  if (liveResults && sim.status?.current_week) simAt.current.week = sim.status.current_week;
+  if ((season?.current_week ?? 0) >= simAt.current.week) simAt.current.week = 0;
+  const stripWeek = Math.max(season?.current_week ?? 0, simAt.current.week);
   const simRecord = sim.status?.kind === "gameday" ? undefined : sim.status?.record;
   const simWeek = sim.status?.kind === "gameday" ? undefined : sim.status?.current_week;
   // the browser tab: "Toledo Dynasty", and the sim's progress, your record and the week while one runs
@@ -380,27 +400,21 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                 team={season.team_name}
                 face={face}
                 energy={energy}
-                corner={
-                  recruiting && (
-                    <Dropdown
-                      label={m.auto}
-                      icon={
-                        <Robot
-                          size={16}
-                          weight={recruiting.auto_recruit === "off" ? "bold" : "fill"}
-                          aria-hidden="true"
-                        />
-                      }
-                      align="right"
-                      value={recruiting.auto_recruit}
-                      options={Object.entries(m.autoModes).map(([value, label]) => ({ value, label }))}
-                      onChange={(mode) => void setAutoRecruit(mode)}
-                    />
-                  )
-                }
+                corner={autoMenu}
               />
             )}
           </div>
+          {/* Recruiting has no top row: you are a face in the window's bottom right corner, the card on hover */}
+          {season && coach && face && section.key === "recruiting" && (
+            <CoachBadge
+              floating
+              name={coachName(coach)}
+              team={season.team_name}
+              face={face}
+              energy={energy}
+              corner={autoMenu}
+            />
+          )}
 
           {season ? (
             // one window for every section: it never changes; the sections stack in it and cross-fade (Game/index.css)
@@ -426,6 +440,16 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       />
                     ) : key === "recruiting" ? (
                       <RecruitingHub
+                        aside={
+                          <>
+                            <Energy energy={energy} />
+                            <Energy
+                              energy={recruiting && { left: recruiting.points_left, total: recruiting.points_week }}
+                              label={m.scouting}
+                              hint={m.scoutingHint}
+                            />
+                          </>
+                        }
                         teams={bySlug}
                         seasonId={season.id}
                         team={season.team}

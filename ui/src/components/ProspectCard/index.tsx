@@ -27,6 +27,27 @@ export function statusOf(r: ProspectRow): string {
   return m.open;
 }
 
+/** *tune* How many of a transfer's numbers his one-line season shows. */
+const TRANSFER_STATS = 3;
+
+/**
+ * A transfer in one line, where a recruit has his stars: what he did last season ("1,204 Rush Yds · 9 TD") when he
+ * played, else the games he got into, else the school he left.
+ */
+export function transferLine(r: {
+  from_name?: string;
+  line?: { games: number; stats: Record<string, number> } | null;
+}): string {
+  const stats = Object.entries(r.line?.stats ?? {}).filter(([k, v]) => v && m.stat[k]);
+  if (stats.length)
+    return stats
+      .slice(0, TRANSFER_STATS)
+      .map(([k, v]) => `${v.toLocaleString("en-US")} ${m.stat[k]}`)
+      .join(" · ");
+  if (r.line?.games) return m.games(r.line.games);
+  return r.from_name ? m.from(r.from_name) : "";
+}
+
 /** A prospect's stars as pixel stars (the font has none). */
 export function Stars({ n, size = 12 }: { n: number; size?: number }) {
   return (

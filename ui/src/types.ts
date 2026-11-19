@@ -549,6 +549,12 @@ export interface PlayerProfile {
 
 /** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */
 export interface ProspectRow {
+  /** how many schools have offered him */
+  offers_n?: number;
+  /** the transfer portal: he is a transfer, with the school he left and what he did there last season */
+  portal?: boolean;
+  from_name?: string;
+  line?: { games: number; started: number; stats: Record<string, number> } | null;
   id: string;
   name: string;
   stars: number;
@@ -591,6 +597,9 @@ export interface NeedGroup {
   back: number;
   commits: number;
   need: number;
+  /** on your board there, and your open offers there */
+  board?: number;
+  offers?: number;
 }
 
 /** GET /api/season/{id}/prospects */
@@ -652,7 +661,7 @@ export interface ProspectDetail {
     potential: (RatingRead & { position: string }) | null;
   } | null;
   /** the roster player he compares to, once his report is complete */
-  our_comp: { name: string; school: string; position: string; overall?: number } | null;
+  our_comp: { name: string; school: string; team: string; position: string; overall?: number } | null;
   /** a committed recruit: his chance to flip in a word, and each school working him */
   flip: { word: string; rivals: { school: string; name: string; word: string }[] } | null;
   /** what happened to him this season */
@@ -730,6 +739,12 @@ export interface ListSchool {
 
 /** One recruit on your board (GET /api/season/{id}/recruiting → board[], coach_career/prospects.py board_row) */
 export interface BoardRow {
+  /** his roster group (QB, RB, WR, TE, OL, DL, LB, CB, S, K, P, ATH): what a need is counted in */
+  group?: string;
+  /** the transfer portal: he is a transfer, with the school he left and what he did there last season */
+  portal?: boolean;
+  from_name?: string;
+  line?: { games: number; started: number; stats: Record<string, number> } | null;
   id: string;
   name: string;
   stars: number;
@@ -867,6 +882,8 @@ export interface SceneReaction {
 
 /** GET /api/season/{id}/recruiting (the parts the board reads) */
 export interface RecruitingBoard extends RecruitingWeek {
+  /** spots still to fill this class, by roster group */
+  needs?: Record<string, number>;
   week: number;
   board: BoardRow[];
   offers: number;

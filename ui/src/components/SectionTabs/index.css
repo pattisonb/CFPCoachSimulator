@@ -35,9 +35,7 @@
   align-items: center;
   margin-right: var(--s1);
   padding-right: var(--s3);
-  padding-left: var(--s2);
   border-right: var(--line) solid var(--line-soft);
-  box-shadow: inset 6px 0 0 var(--team, transparent); /* a bar of your team's color beside every section's name */
   font-size: var(--t-lg);
   line-height: 1;
   text-transform: uppercase;

@@ -201,11 +201,12 @@
   height: 40px;
   background: var(--tile);
   border: var(--line) solid var(--ink);
-  transition: box-shadow var(--nav-ease);
 }
 
-.is-rail .game-nav__swatch {
-  box-shadow: 4px 4px 0 var(--shadow);
+/* minimized: the swatch alone, flat in its ink edge (a shadow tinted in your own color ran into the swatch and made
+   it look lopsided), and no stripe under a card that is not there */
+.is-rail .game-nav__team::after {
+  display: none;
 }
 
 .game-nav__team-name {

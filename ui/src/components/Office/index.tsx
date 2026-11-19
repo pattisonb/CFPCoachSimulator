@@ -105,6 +105,9 @@ interface Todo {
  * move the season on; the middle, the week's to-do list as a checked timeline; the right, Program News and the
  * conference's scores. The top row (schedule, coach, Energy) is the game's own, above it.
  */
+/** *tune* How long the next to-do must hold still before the highlight moves to it, in ms. */
+const NOW_SETTLE_MS = 450;
+
 export default function Office({ season: s, recruiting: v, teams, sim, onSection, onBox }: Props) {
   const [office, setOffice] = useState<OfficeView | null>(null);
   const [officeError, setOfficeError] = useState<string | null>(null);
@@ -211,7 +214,15 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       go: () => sim.start("advance"),
     });
   }
-  const current = todos.find((t) => !t.done)?.key;
+  const first = todos.find((t) => !t.done)?.key;
+  // the to-do in ink follows the week, but only once it has settled: a sim (and the moment after it, while the new
+  // week's schedule and its recruiting hours arrive one after the other) moved it from one row to another and back
+  const [current, setCurrent] = useState(first);
+  useEffect(() => {
+    if (sim.running) return;
+    const t = window.setTimeout(() => setCurrent(first), NOW_SETTLE_MS);
+    return () => window.clearTimeout(t);
+  }, [first, sim.running]);
 
   const conf = confShort(office?.conference.name ?? s.conference);
   const st = office?.conference.standing;

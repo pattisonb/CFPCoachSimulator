@@ -278,16 +278,8 @@ function PositionBattles({ d, ctx }: P) {
           heads={[m.pos, m.starter, m.challenger, m.status]}
           rows={shown.slice(0, ctx.size === "L" ? shown.length : 8).map((r) => [
             r.pos,
-            <PName key="a" ctx={ctx}>
-              {r.a.name}
-            </PName>,
-            r.b ? (
-              <PName key="b" ctx={ctx}>
-                {r.b.name}
-              </PName>
-            ) : (
-              m.nobody
-            ),
+            <PName key="a" ctx={ctx} name={r.a.name} pos={r.pos} />,
+            r.b ? <PName key="b" ctx={ctx} name={r.b.name} pos={r.pos} /> : m.nobody,
             <Tag key="w" solid={r.word === m.battles.secure}>
               {r.word}
             </Tag>,
@@ -439,11 +431,7 @@ function SeniorImpact({ d, ctx }: P) {
       ]}
       render={(all) => {
         const shown = all.slice(0, rowsFor(ctx.size));
-        const name = (p: OutlookPlayer) => (
-          <PName key="n" ctx={ctx}>
-            {p.name}
-          </PName>
-        );
+        const name = (p: OutlookPlayer) => <PName key="n" ctx={ctx} name={p.name} />;
         return ctx.size === "L" ? (
           <Table
             heads={[m.player, m.pos, m.classCol, m.role, m.outlook, m.replacement]}
@@ -790,7 +778,7 @@ function NextDepth({ d, ctx }: P) {
               {g.players.map((p, i) => (
                 <li key={`p-${i}-${p.name}`}>
                   <Tag>{p.class_next}</Tag>
-                  <PName ctx={ctx}>{p.name}</PName>
+                  <PName ctx={ctx} name={p.name} />
                   {p.draft && <span className="hq-sub">{m.draft(p.draft)}</span>}
                   <b className="hq-num">{p.overall}</b>
                 </li>
@@ -893,7 +881,7 @@ function Promises({ d, ctx }: P) {
                   {r.name}
                 </RName>
               ) : (
-                <PName ctx={ctx}>{r.name}</PName>
+                <PName ctx={ctx} name={r.name} pos={r.pos} />
               )}
               <span className="hq-sub">{r.pos}</span>
               {ctx.size !== "S" && <span className="hq-sub">{r.what}</span>}

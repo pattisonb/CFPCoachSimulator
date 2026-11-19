@@ -20,7 +20,8 @@ import {
   UsersThree,
   X,
 } from "@phosphor-icons/react";
-import Blocks from "../Blocks/index.tsx";
+import Meter from "../Meter/index.tsx";
+import PlayerLink from "../PlayerLink/index.tsx";
 import Button from "../Button/index.tsx";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
 import RangeBar from "../RangeBar/index.tsx";
@@ -198,29 +199,34 @@ export function OverviewTab({
             <PanelRow label={m.standing} value={sd.odds ?? sd.word} hint={sd.text} />
             <div className="panel__row">
               <dt>{m.scouted}</dt>
-              <dd className="recruit-file__inline">
-                <Blocks have={looks} need={3} />
-                <b>{looks ? m.looksOf(fmtLooks(looks)) : m.notYet}</b>
+              <dd>
+                <Meter value={looks / 3} label={m.scouted} />
               </dd>
             </div>
+          </PanelRows>
+          {/* what he cares about, a tile each side by side: which priority it is, the topic, then your program's case
+              on it as a word (so his priority is never read as your strength, or the other way around) */}
+          <div className="recruit-file__prios">
+            <span className="label recruit-file__prios-title">{m.priorities}</span>
             {[0, 1, 2].map((i) => {
               const t = known[i];
-              if (!t) return <PanelRow key={i} label={m.priority(i)} unknown={m.unknown} hint={m.priorityHint} />;
-              const word = m.pulls[pullOf(r.strength[t])];
-              const name = PITCH_NAMES[t] ?? t;
+              const name = t ? (PITCH_NAMES[t] ?? t) : null;
+              const word = t ? m.pulls[pullOf(r.strength[t])] : null;
               return (
-                <div key={i} className="panel__row">
-                  <dt>{name}</dt>
-                  <dd>
-                    <Tooltip title={name} text={m.pullTip(name, word)} block className="recruit-file__inline">
-                      <RangeBar lo={0} hi={Math.round(100 * (r.strength[t] ?? 0))} />
-                      <b>{word}</b>
-                    </Tooltip>
-                  </dd>
+                <div key={i} className={`recruit-file__prio${t ? "" : " is-unknown"}`}>
+                  <span className="label">{m.priority(i)}</span>
+                  <b className="recruit-file__prio-name">{name ?? m.unknown}</b>
+                  {t ? (
+                    <span className="recruit-file__prio-pull">
+                      {m.yourPull} <b>{word}</b>
+                    </span>
+                  ) : (
+                    <span className="recruit-file__soft">{m.priorityHint}</span>
+                  )}
                 </div>
               );
             })}
-          </PanelRows>
+          </div>
           {r.no_room && <p className="recruit-file__warn">{r.no_room.tip}</p>}
         </Panel>
       )}
@@ -271,7 +277,7 @@ export function ScoutingTab({
             ? m.cantScout
             : undefined;
   const comp = detail.our_comp;
-  const compText = comp ? m.compText(comp.name, comp.school, comp.position, comp.overall) : null;
+  const compText = comp ? <PlayerLink team={comp.team} name={comp.name} /> : null;
   const coach = rep?.attributes.find((a) => a.group === "coachability");
   return (
     <Panels label={m.tabs.scouting}>
@@ -279,7 +285,7 @@ export function ScoutingTab({
         {/* the report's lead: how many looks, and his potential as your staff reads it */}
         <div className="recruit-file__lead">
           <div className="recruit-file__looks">
-            <Blocks have={looks} need={3} label={m.looks(fmtLooks(looks))} />
+            <Meter value={looks / 3} label={m.scouted} />
             <b>{m.looks(fmtLooks(looks))}</b>
             <span className="recruit-file__soft">
               {looks >= 3
@@ -318,14 +324,15 @@ export function ScoutingTab({
             label={m.comp}
             value={compText ?? (looks >= 3 ? m.compNone : undefined)}
             unknown={m.unknown}
-            hint={comp || looks >= 3 ? null : m.compLater}
+            hint={comp ? m.compRest(comp.school, comp.position, comp.overall) : looks >= 3 ? null : m.compLater}
           />
         </PanelRows>
-        {!yours && (
+        {/* a finished report has nothing left to send for: the lead above already says Report Complete */}
+        {!yours && looks < 3 && (
           <div className="recruit-file__acts">
             <Button disabled={busy || cant} onClick={onScout}>
               <Binoculars size={18} weight="bold" aria-hidden="true" />
-              {looks >= 3 ? m.complete : left <= 1 ? m.sendFinishes(detail.scout_cost) : m.sendScout(detail.scout_cost)}
+              {left <= 1 ? m.sendFinishes(detail.scout_cost) : m.sendScout(detail.scout_cost)}
             </Button>
             <span className="recruit-file__soft">{why ?? m.pointsLeft(detail.points_left)}</span>
           </div>
@@ -429,7 +436,7 @@ export function ProfileTab({
   const p = detail.public;
   const looks = looksOf(r, detail);
   const comp = detail.our_comp;
-  const compText = comp ? m.compText(comp.name, comp.school, comp.position, comp.overall) : null;
+  const compText = comp ? <PlayerLink team={comp.team} name={comp.name} /> : null;
   const st = p.hometown.state === "DC" ? "D.C." : p.hometown.state;
   const story = tr.story ? (tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story) : null;
   const traits: [string, string | null][] = [
@@ -501,7 +508,7 @@ export function ProfileTab({
             label={m.comp}
             value={compText ?? (looks >= 3 ? m.compNone : undefined)}
             unknown={m.unknown}
-            hint={comp || looks >= 3 ? null : m.compLater}
+            hint={comp ? m.compRest(comp.school, comp.position, comp.overall) : looks >= 3 ? null : m.compLater}
           />
         </PanelRows>
       </Panel>
