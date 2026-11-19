@@ -1,6 +1,10 @@
 """School Grades Phase 2 (docs/superpowers/plans/2026-11-11-school-grades-phase-2.md): recruits want the grades. Five new
 topics (Facilities, Location, Stability, Game Day, Exposure); Academics reads its grade; Location reads its tags against
 his taste."""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # a word-mode test: the conversations it reads are the ones Clear Mode replaces (coach_career/clear.py)
+
 import sys as _sys
 from pathlib import Path as _Path
 
