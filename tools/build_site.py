@@ -9,7 +9,7 @@ app are copied to a scratch folder, the names are swapped there, and the build r
 
 What lands in `ui/dist/`: the app (vite build, with VITE_GAME=browser so it talks to the worker instead of a
 server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `game.zip` (the Python game and the data a
-career reads), `league.json` (the built-in league as a file) and `version.json` (the commit).
+career reads) and `version.json` (the commit).
 
 The first offseason's league comes precomputed (league.write_base_files writes data/base_league.json and
 data/base_meta.json), so the 146 source rosters stay out of the zip; only the fictional teams' files ship.
@@ -74,8 +74,7 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
         from tools.generic import scrub
         scrub.run(root)
     _run([sys.executable, "-m", "teamdata.build_teams"], root)
-    _run([sys.executable, "-c", "from coach_career import league, league_file; league.write_base_files(); "
-          "open('league.json', 'wb').write(league_file.builtin_bytes())"], root)
+    _run([sys.executable, "-c", "from coach_career import league; league.write_base_files()"], root)
     return root
 
 
@@ -117,7 +116,6 @@ def build(out: Path = ROOT / "ui" / "dist", generic: bool = False) -> dict:
         shutil.rmtree(out, ignore_errors=True)
         shutil.copytree(ui / "dist", out)
         files = write_zip(root, out / "game.zip")
-        shutil.copy2(root / "league.json", out / "league.json")
     (out / "version.json").write_text(json.dumps({"commit": commit, "generic": generic}), encoding="utf-8")
     return {"zip_bytes": (out / "game.zip").stat().st_size, "files": files}
 

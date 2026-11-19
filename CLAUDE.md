@@ -18,6 +18,11 @@
 - The gate is `npx tsc --noEmit`, `npx stylelint "src/**/*.css"` and `npx prettier --check --end-of-line auto src` in `ui/`. There are no browser tests: look at a change in the browser.
 - Words only ever sit on a team color with its `--team-on` (black or white, whichever reads).
 
+## Published site
+- Vercel builds `main` with `python3 tools/build_site.py --generic` (vercel.json): the app in `ui/` plus the Python game packed to run in the browser (`ui/public/worker.js`, `ui/src/gameClient.ts`). `npm run dev` is unchanged and keeps the real rosters.
+- Nothing published carries a real name: `tools/generic/tables.py` holds the lookalikes (schools, mascots, bowls, conferences, trophies, awards) and `tools/generic/scrub.py` draws same-initial names for players and coaches. A new real name in the data or in the game's words needs a lookalike there; `python3 tests/test_generic_names.py` is the gate.
+- Branches: `main` is the React app; `v0` (the old `web/` site) and `v1` (Clear Mode before React) are kept as they were.
+
 ## Process
 - Engine tests are plain scripts: `python3 tests/<file>.py`; the full suite is `python3 tests/run_all.py`. Keep testing light: run the tests that touch what changed, not the full suite, unless the player asks.
 - The Python server does not reload: an engine change needs `npm run dev` restarted.
