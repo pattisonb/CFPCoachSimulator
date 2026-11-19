@@ -14,6 +14,7 @@ export const messages = {
     scouted: "Scouted",
     unscouted: "Unscouted",
     committed: "Committed",
+    visited: "Visited",
     top: "Top 8",
     contact: "In Touch",
     cold: "Cold",
