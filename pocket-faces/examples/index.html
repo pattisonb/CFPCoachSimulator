@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pocket-faces example</title>
+  <style>
+    body { margin: 24px; font: 13px/1.4 ui-monospace, monospace; background: #e9eef5; color: #14203c; }
+    .roster { display: flex; flex-wrap: wrap; gap: 8px; }
+    figure { margin: 0; text-align: center; }
+    pre { background: #fff; padding: 12px; white-space: pre-wrap; word-break: break-all; }
+    .editor { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+    .editor label { display: block; margin: 0 0 6px; }
+    .editor select { font: inherit; margin-left: 6px; }
+  </style>
+</head>
+<body>
+  <!-- Serve the package folder (npx serve, python3 -m http.server) after `npm run build`, open /examples/ -->
+  <h1>pocket-faces</h1>
+
+  <h2>1. In a game canvas</h2>
+  <canvas id="game" width="480" height="140"></canvas>
+
+  <h2>2. A roster, one canvas per face</h2>
+  <div class="roster" id="roster"></div>
+
+  <h2>3. A customiser built from catalog()</h2>
+  <div class="editor">
+    <div id="preview"></div>
+    <form id="form"></form>
+    <pre id="json"></pre>
+  </div>
+
+  <h2>4. An old save, repaired</h2>
+  <pre id="repair"></pre>
+
+  <script type="module">
+    import { createFaces } from "../dist/index.js";
+    import data from "../dist/data.js";
+
+    const faces = createFaces(data);
+
+    // 1. draw faces wherever, every frame if you like (each face is made once)
+    const ctx = document.getElementById("game").getContext("2d");
+    ["qb-12", "wr-80", "rb-28", "lb-54"].forEach((id, i) => faces.draw(ctx, faces.random(id), 10 + i * 118, 10, { scale: 4 }));
+
+    // 2. a canvas per face
+    for (let i = 1; i <= 16; i++) {
+      const fig = document.createElement("figure");
+      fig.append(faces.canvas(faces.random(`player-${i}`), { scale: 2 }), Object.assign(document.createElement("figcaption"), { textContent: `player-${i}` }));
+      document.getElementById("roster").append(fig);
+    }
+
+    // 3. every option comes from the data: new parts and categories show up here with no code change
+    let face = faces.random("player-1");
+    const form = document.getElementById("form");
+    const render = () => {
+      face = faces.resolve(face);
+      document.getElementById("preview").replaceChildren(faces.canvas(face, { scale: 6 }));
+      document.getElementById("json").textContent = JSON.stringify(face, null, 2);
+      form.replaceChildren();
+      for (const entry of faces.catalog()) {
+        const label = document.createElement("label");
+        const select = document.createElement("select");
+        for (const c of entry.choices) select.append(new Option(c.label, JSON.stringify(c.id), false, c.id === face[entry.field]));
+        select.onchange = () => { face = { ...face, [entry.field]: JSON.parse(select.value) }; render(); };
+        label.append(entry.label, select);
+        // the toggles only where they change something
+        if (entry.field === "hair" && faces.canFade(face)) label.append(toggle("fade", face.hairFade, (on) => (face = { ...face, hairFade: on })));
+        if (entry.flip && faces.canFlip(face, entry.category)) {
+          const on = face.flip.includes(entry.category);
+          label.append(toggle("flip", on, (v) => (face = { ...face, flip: v ? [...face.flip, entry.category] : face.flip.filter((c) => c !== entry.category) })));
+        }
+        form.append(label);
+      }
+    };
+    const toggle = (text, on, set) => {
+      const l = document.createElement("label");
+      l.style.display = "inline";
+      const box = Object.assign(document.createElement("input"), { type: "checkbox", checked: on });
+      box.onchange = () => { set(box.checked); render(); };
+      l.append(" ", box, text);
+      return l;
+    };
+    render();
+
+    // 4. a face saved with an older version (gray hair was removed in 0.2)
+    const old = { faceShape: "face_shape_04", skinTone: "tan", hair: "hair_01", hairColor: "gray", beard: null, nose: "nose_00", mouth: "mouth_00", ears: "ears_00", chin: null, eyeColor: "blue" };
+    const { face: fixedFace, fixed } = faces.repair(old);
+    document.getElementById("repair").textContent = "fixed:\n  " + fixed.join("\n  ") + "\n\n" + JSON.stringify(fixedFace);
+  </script>
+</body>
+</html>
