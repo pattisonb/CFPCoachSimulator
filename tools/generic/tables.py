@@ -295,7 +295,7 @@ MARKS = {
 # Mascots for the FCS schools on a schedule (their names are drawn: a city in their state, a suffix, one of these).
 FCS_MASCOTS = (
     "Badgers", "Falcons", "Bears", "Hawks", "Rams", "Pirates", "Knights", "Raiders", "Lions", "Panthers", "Colonels",
-    "Pioneers", "Rattlers", "Bobcats", "Mariners", "Explorers", "Foxes", "Stags", "Herons", "Bulls", "Wildcats",
+    "Pioneers", "Rattlers", "Bobcats", "Sailors", "Explorers", "Foxes", "Stags", "Herons", "Bulls", "Wildcats",
     "Tigers", "Eagles", "Hornets", "Cougars", "Vikings", "Spartans", "Trojans", "Owls", "Cardinals", "Broncos",
     "Lancers", "Rangers", "Patriots", "Chargers", "Storm", "Thunder", "Comets", "Jets", "Marlins",
 )
