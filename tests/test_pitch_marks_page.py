@@ -74,16 +74,6 @@ if __name__ == "__main__":
                 page.wait_for_selector(".go-pane [data-trait=wants]", timeout=30_000)
                 wants = page.eval_on_selector_all(".go-pane [data-trait=wants] .go-want", "els => els.map(e => [e.querySelector('b').textContent, (e.querySelector('.go-tag') || {}).textContent])")
                 assert len(wants) == 2 and all(w[1] in ("Strong", "Fair", "Weak") for w in wants), wants
-                page.click("#rc-recruit")
-                page.click(".go-menu .go-menu-item[data-action=message]")
-                page.wait_for_selector(".go-pane .go-step #rc-pitch")
-                time.sleep(0.3)
-                assert page.evaluate("() => document.activeElement && document.activeElement.classList.contains('go-lead-chip')"), "the step's focus lands on the lead-with strip"
-                strip = page.eval_on_selector(".go-pane .go-step .go-lead", "e => [e.scrollWidth > e.clientWidth, getComputedStyle(e).overflowX, e.getBoundingClientRect().height]")
-                assert strip[1] == "auto" and strip[2] < 110, f"the lead-with is one row that scrolls sideways: {strip}"
-                opts = dict(page.eval_on_selector_all(".go-pane .go-step .go-lead-chip", "els => els.map(e => [e.dataset.topic, e.textContent])"))
-                assert "Not His Thing" in opts["nil"] and "Weak Case" in opts["coach"] and "He Lit Up" in opts["winning"] and "No Read" in opts["pro"], opts
-                assert not any(w in opts["prestige"] for w in ("Not His Thing", "Weak Case", "He Lit Up", "No Read")), "never pitched: no mark"
                 # Promise Him the Job's History lines: no "undefined" when nobody was ahead; a strain says what he heard
                 lines = page.evaluate("""() => window.Recruiting.parts.historyLines([
                   {week: 3, kind: "answer", answer: "promise", job: true, truthful: true, pid: "x", school: "iowa", line: "You told him the job is his."},
@@ -102,4 +92,4 @@ if __name__ == "__main__":
             browser.close()
     finally:
         server.terminate()
-    print("pitch marks page ok: the card and the lead-with show what he said; a topic never pitched has no mark; 1280 and 400")
+    print("pitch marks page ok: the card shows what he said; a topic never pitched has no mark; 1280 and 400")

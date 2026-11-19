@@ -183,3 +183,8 @@
 .pr-sort-mark:empty { display: none; }                      /* only the sorted column takes the mark's room */
 .pr-table th.pr-c-int .pr-sort { white-space: normal; text-align: left; }   /* "Interest in You" may take two lines, as before */
 @media (max-width: 760px) { .pr-table th .pr-sort { min-height: 44px; } }
+/* your favorites (♥) beside the board button; a phone's narrow column keeps only the board button (the ♥ is in his profile) */
+.pr-acts { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.go-fav { min-width: 40px; min-height: 36px; padding: 0; font-size: 18px; line-height: 1; }
+.go-fav.on { color: var(--bad-text, #c0392b); }
+@container (max-width: 600px) { .pr-fav { display: none; } }

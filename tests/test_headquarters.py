@@ -185,6 +185,23 @@ def plan_round_trip(sid: str) -> None:
     assert GET(sid)["layout"]["cards"] == GET(sid)["layout"]["cards"]      # the layout is left alone
 
 
+def promises_listed(sid: str) -> None:
+    """The Promises widget's read: empty, then a starting role promised with an offer and a money promise, in words."""
+    from coach_career import recruiting
+    assert GET(sid, "?want=promises")["promises"] == {"players": [], "recruits": []}
+    st = api.loaded_state()
+    me, rc = st["team"], st["recruiting"]
+    rc["hours"][me] = 500
+    pids = [q for q in recruiting.prospect_list(st) if not rc["prospects"][q].get("hidden") and me not in rc["contacts"].get(q, {})
+            and not recruiting.would_pester(st, me, q)][:2]
+    recruiting.act(st, me, pids[0], "offer", answer="promise", nil=0)
+    recruiting._contact(st, me, pids[1]).setdefault("promises", []).append({"kind": "money", "about": {"ask": 60}, "week": st["current_week"],
+                                                                            "broken": None, "kept": None})
+    rows = {r["pid"]: r for r in GET(sid, "?want=promises")["promises"]["recruits"]}
+    assert rows[pids[0]]["what"] == "Starting Role" and rows[pids[0]]["status"] == "Open", rows[pids[0]]
+    assert rows[pids[1]]["what"].startswith("NIL ") and rows[pids[1]]["status"].startswith("Due Week "), rows[pids[1]]
+
+
 def plan_refused(sid: str) -> None:
     before = GET(sid, "?want=tasks,goals")
     for body in ({"tasks": [{"id": "t1", "text": "", "done": False}]}, {"tasks": [{"id": "T 1", "text": "x", "done": False}]},
@@ -281,7 +298,8 @@ if __name__ == "__main__":
         goals_defaults_and_saved(sid)
         plan_round_trip(sid)
         plan_refused(sid)
+        promises_listed(sid)
         print("headquarters ok: empty on an old save; round trip; unknown ids kept; bad layouts refused; "
-              "the season untouched; commits by week and movers; contacts, the outlook, What-If, goals and tasks")
+              "the season untouched; commits by week and movers; contacts, the outlook, What-If, goals, tasks and promises")
     finally:
         shutil.rmtree(season.SEASONS_DIR, ignore_errors=True)

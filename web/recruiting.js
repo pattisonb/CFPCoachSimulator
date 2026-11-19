@@ -23,7 +23,7 @@
   const DESC_FIRST = new Set(["interest", "ht", "wt", "stars", "sc", "pot"]);   // their first click shows the most first (values descending)
   const HEAD_SORT = { rank: "rank", who: "name", pos: "pos", ht: "ht", wt: "wt", stars: "stars", status: "status", int: "interest", sc: "sc", pot: "pot" };
   const STATUS = [["", "Any Status"], ["interested", "Interested in You"], ["open", "Uncommitted"], ["committed", "Committed"], ["signed", "Signed"], ["leaning_fcs", "Leaning FCS"],
-                  ["offered", "Offered by You"], ["board", "On Your Board"]];
+                  ["offered", "Offered by You"], ["board", "On Your Board"], ["favorites", "Your Favorites"]];
   const POSITIONS = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "ATH", "K", "P"];
   const STATES = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME",
                   "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
@@ -80,7 +80,7 @@
     const weight = (r) => (r.rank !== r.prev_rank ? 2 : 0) + r.events.filter((e) => BIG.has(e.kind)).length * 3 + (r.moves.some((m) => m.you) ? 1 : 0);
     const rows = report.rows.filter((r) => weight(r) > 0).sort((a, b) => weight(b) - weight(a));
     if (!rows.length) return null;
-    card.append(el("ul", { class: "go-news go-report-rows" }, rows.slice(0, 6).map((r) => {
+    card.append(el("ul", { class: "go-news go-report-rows" }, rows.map((r) => {     // every one: the card scrolls inside
       const bits = [];
       if (r.rank == null) bits.push("Not on his list");
       else if (r.prev_rank != null && r.prev_rank !== r.rank) bits.push(`${r.prev_rank > r.rank ? "Up" : "Down"} to #${r.rank} of ${r.of}${r.rank === 1 ? "" : r.leader ? ` · ${r.leader.name} leads` : ""}`);
@@ -97,7 +97,6 @@
       }
       return el("li", {}, [el("button", { type: "button", class: "go-link", text: r.name, onclick: () => openProfile(s, r.pid) }), el("span", { class: "muted small", text: ` ${r.position} ${stars(r.stars)} · ` }), el("span", { text: bits.join(" · ") })]);
     })));
-    if (rows.length > 6) card.append(el("p", { class: "muted small", text: `${rows.length - 6} more moved: see his list on the board.` }));
     return card;
   }
 
@@ -281,6 +280,7 @@
     if (nil) body.nil = nil;
     if (opts.scene) body.scene = opts.scene;
     if (opts.week != null) body.week = opts.week;     // an official visit's home weekend, picked in the Recruit menu
+    if (opts.answer) body.answer = opts.answer;       // an offer that carries the job promise: answer "promise"
     const names = { message: "Message", call: "Call", hc_visit: "Head Coach Visit", official_visit: "Official Visit Invite", offer: "Offer", pull_offer: "Offer Pulled", raise_nil: "NIL Raised", scout: "Scouting Trip" };
     let r;
     try { r = await H.api(`/api/season/${s.id}/recruit`, H.postJSON(body)); }
@@ -303,8 +303,35 @@
   }
   // a scouting trip landed (here or in the Scouting Center): the lists on screen patch his looks and his read in place
   const scouted = (pid, r) => document.dispatchEvent(new CustomEvent("cfp:scouted", { detail: { pid, looks: r.looks, potential: r.potential || null } }));
+  // your favorites (♥): your own mark, a filter on Prospects; announced (cfp:favorite) so every ♥ on screen follows
+  async function setFavorite(s, pid, on) {
+    try { await H.api(`/api/season/${s.id}/favorite`, H.postJSON({ pid, on })); document.dispatchEvent(new CustomEvent("cfp:favorite", { detail: { pid, on } })); return true; }
+    catch (err) { H.toast(`Could not change your favorites: ${H.errText(err)}`, 4000); return false; }
+  }
+  // a ♥ toggle for a prospect (the Prospect Profile, a Prospects row); `get`/`set` read and write the caller's own record
+  function favButton(s, pid, name, get, set, cls = "") {
+    const btn = el("button", { type: "button", class: `go-btn go-fav ${cls}`.trim() });
+    const label = () => {
+      const on = !!get();
+      btn.textContent = on ? "♥" : "♡";
+      btn.classList.toggle("on", on);
+      btn.setAttribute("aria-pressed", String(on));
+      btn.setAttribute("aria-label", on ? `Take ${name} off your favorites` : `Add ${name} to your favorites`);
+      btn.title = on ? "One of your favorites: take him off" : "Add him to your favorites";
+    };
+    label();
+    ui().on(btn, "click", async (e) => {
+      e.stopPropagation();
+      const want = !get();
+      if (await ui().busy(btn, setFavorite(s, pid, want))) { set(want); label(); ui().pulse(btn); H.toast(want ? `${name} is one of your favorites.` : `${name} is off your favorites.`, 2500); }
+    });
+    const onFav = (ev) => { if (!btn.isConnected) { document.removeEventListener("cfp:favorite", onFav); return; } if (ev.detail.pid === pid && !!get() !== !!ev.detail.on) { set(!!ev.detail.on); label(); } };
+    document.addEventListener("cfp:favorite", onFav);
+    return btn;
+  }
   async function setBoard(s, pid, on) {
-    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); return true; }
+    // a change from anywhere (the Prospect Profile's star, the board, the table) is announced, so a list on screen follows it
+    try { await H.api(`/api/season/${s.id}/board`, H.postJSON({ pid, on })); document.dispatchEvent(new CustomEvent("cfp:board", { detail: { pid, on } })); return true; }
     catch (err) { H.toast(`Could not change your board: ${H.errText(err)}`, 4000); return false; }
   }
 
@@ -498,6 +525,8 @@
   }
   // ----- the stages: his stage with you decides his tab; a commitment or a signature anywhere ends the race -----
   const COLUMNS = [["cold", "Cold"], ["contact", "In Touch"], ["top", "Top 8"], ["visited", "Visited"], ["committed", "Committed"]];
+  // the board's filter menu: the stages, then your favorites (♥), which cut across them
+  const FAV_TIP = "Your favorites: the recruits you marked with a heart";
   const COLUMN_TIPS = { cold: "No contact yet: an offer now counts half", contact: "You have reached out; get into his top 8 for a visit",
     top: "He is seriously considering you: invite him on a visit", visited: "He has been on campus", committed: "His recruitment is decided: committed or signed, to you or elsewhere" };
   const PHONE = "(max-width: 759px)";
@@ -773,7 +802,12 @@
     const tr = b.traits || {};
     if (tr.personality) out.push(el("span", { class: "go-tag", "data-key": "trait:personality", text: tr.personality, title: "His personality: how he sounds on a call and how he reacts to you" }));
     if (tr.decider) out.push(el("span", { class: "go-tag", "data-key": "trait:decider", text: `Decides: ${tr.decider}`, title: "Who makes the final call on where he goes" }));
-    if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`.trim(), "data-key": "trait:story",
+    if (tr.story_key && tr.story_mate) {          // a Package Deal: the chip opens his teammate's profile
+      const chip = el("button", { type: "button", class: "go-tag go-tag-link", "data-key": "trait:story", text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story,
+        title: `${storyTip(tr) || "His story"} Open his teammate's profile.` });
+      ui().on(chip, "click", (ev) => { ev.stopPropagation(); openProfile(s, tr.story_mate); });
+      out.push(chip);
+    } else if (tr.story_key) out.push(el("span", { class: `go-tag ${tr.story_key === "two_sport" && /High$/.test(tr.story_detail || "") ? "warn" : ""}`.trim(), "data-key": "trait:story",
       text: tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story, title: storyTip(tr) || "His story" }));
     if (tr.style_key) out.push(el("span", { class: "go-tag", "data-key": "trait:style", text: tr.commit_style, title: STYLE_TIPS[tr.style_key] || "How he commits" }));
     if (b.twist) out.push(el("span", { class: "go-tag warn", "data-key": "twist", text: b.twist.label, title: b.twist.line || TWIST_TIP }));
@@ -928,7 +962,7 @@
   function applyRoute(r, s) {
     if (r.tab === "prospects") return applyProspects(r);
     if (r.tab !== "recruiting" && r.tab !== "offseason") return;
-    const stages = ["all", ...COLUMNS.map(([k]) => k)];
+    const stages = ["all", ...COLUMNS.map(([k]) => k), "favorites"];
     if (!view.stage || view.stage.sid !== s.id) { view.group = null; view.state = null; view.search = ""; }
     view.stage = { sid: s.id, key: stages.includes(r.stage) ? r.stage : "all" };
     view.sort = r.sort === "rank" ? "rank" : "chance";
@@ -943,6 +977,7 @@
     f.state = STATES.includes(r.pstate) ? r.pstate : "";
     f.status = r.pstatus === "recommended" || STATUS.some(([k]) => k && k === r.pstatus) ? r.pstatus : "";
     f.sort = PR_SORTS.has(String(r.psort || "").replace(/^-/, "")) ? r.psort : "rank";
+    if (f.sort.replace(/^-/, "") === "stars" && s && s.offseason_stage && /^portal/.test(s.offseason_stage)) f.sort = "rank";   // no star sort in the portal
     f.group = /^[A-Z]{1,4}$/.test(r.pgroup || "") ? r.pgroup : "";
     const pg = Number(r.ppage);
     view.offset = Number.isInteger(pg) && pg > 1 ? (pg - 1) * 50 : 0;
@@ -1220,15 +1255,17 @@
     const countsOf = (pool) => {
       const counts = { all: pool.length };
       for (const [k] of COLUMNS) counts[k] = pool.filter((b) => columnOf(b) === k).length;
+      counts.favorites = pool.filter((b) => b.favorite).length;
       return counts;
     };
     // the stages: one pill (the stage you are on, its count, ▾) that opens the rest as the same pills
-    const stageNames = Object.fromEntries([["all", "All"], ...COLUMNS]);
+    const MENU = [["all", "All"], ...COLUMNS, ["favorites", "Favorites"]];
+    const stageNames = Object.fromEntries(MENU);
     const pickName = el("span"), pickCount = el("b", { text: "0" });
     const stagePick = el("button", { type: "button", class: "go-stage-pick", "aria-haspopup": "true", "aria-expanded": "false", "aria-label": "Stage" },
       [pickName, pickCount, el("span", { class: "go-stage-caret", "aria-hidden": "true", text: "▾" })]);
-    const stages = el("div", { class: "go-stage-menu", role: "group", "aria-label": "Stages", hidden: "" }, [["all", "All"], ...COLUMNS].map(([k, name]) => {
-      const b = el("button", { type: "button", "data-stage": k, "aria-pressed": String(view.stage.key === k), title: COLUMN_TIPS[k] || "Everyone on your board" },
+    const stages = el("div", { class: "go-stage-menu", role: "group", "aria-label": "Stages", hidden: "" }, MENU.map(([k, name]) => {
+      const b = el("button", { type: "button", "data-stage": k, "aria-pressed": String(view.stage.key === k), title: k === "favorites" ? FAV_TIP : COLUMN_TIPS[k] || "Everyone on your board" },
         [el("span", { text: label(k, name) }), el("b", { text: "0" })]);
       b.addEventListener("click", () => { view.stage.key = k; closeStages(); refill({}); stagePick.focus({ preventScroll: true }); });
       return b;
@@ -1277,7 +1314,11 @@
 
     // ----- the list: one row a recruit in the chosen tab, in sort order -----
     const order = { chance: byChance(me), rank: (a, b) => (a.national_rank ?? Infinity) - (b.national_rank ?? Infinity) };
-    const inTab = (b) => view.stage.key === "all" || columnOf(b) === view.stage.key;
+    const inTab = (b) => view.stage.key === "all" || (view.stage.key === "favorites" ? !!b.favorite : columnOf(b) === view.stage.key);
+    // a ♥ set or cleared anywhere: the Favorites count follows, and the Favorites list drops or gains him
+    const onFavList = (e) => { if (!box.isConnected || !stagebar.isConnected) { document.removeEventListener("cfp:favorite", onFavList); return; }
+      const x = v.board.find((y) => y.id === e.detail.pid); if (!x) return; x.favorite = !!e.detail.on; refill({}); };
+    document.addEventListener("cfp:favorite", onFavList);
     // picked from the map's dot or his profile (view.reveal) while a tab, the search or a filter hides him: show everyone and him
     const want = view.reveal ? v.board.find((b) => b.id === view.reveal) : null;
     view.reveal = null;
@@ -1384,10 +1425,15 @@
       const on = b.id === view.selected;
       const btn = el("button", { type: "button", class: `go-row-recruit ${on ? "selected" : ""}`, "data-pid": b.id, "aria-pressed": String(on), tabindex: on || (!view.selected && b === rows[0]) ? "0" : "-1" }, [
         el("span", { class: "go-row-dot" }), avatar(b.id, "sm"),
-        el("span", { class: "go-row-id" }, [el("b", { text: b.name }),
+        el("span", { class: "go-row-id" }, [el("b", {}, [b.name, el("span", { class: "go-fav-mark", text: " ♥", title: "One of your favorites", ...(b.favorite ? {} : { hidden: "" }) })]),
           el("span", { class: "muted small go-row-line" }, b.portal ? [rowLine(b)] : [el("span", { class: "go-stars", text: stars(b.stars) }), rowLine(b)])]),
         el("span", { class: "go-standing-word" })]);
       btn.addEventListener("click", () => choose(v.board.find((x) => x.id === b.id) || b));
+      // a ♥ set or cleared elsewhere (his profile) shows on his row at once
+      const onFav = (e) => { if (!btn.isConnected) { document.removeEventListener("cfp:favorite", onFav); return; }
+        if (e.detail.pid !== b.id) return; const x = v.board.find((y) => y.id === b.id); if (x) x.favorite = !!e.detail.on; b.favorite = !!e.detail.on;
+        const m = btn.querySelector(".go-fav-mark"); if (m) m.hidden = !e.detail.on; };
+      document.addEventListener("cfp:favorite", onFav);
       patchRow(btn, b, true);
       return btn;
     }
@@ -1492,7 +1538,7 @@
       const job = (async () => {
         const r = await act(s, b.id, action, pitch || null, nil, { ...opts, silent: true, onScene: (sc) => openScene(b, sc) });
         if (!r) return null;
-        ui().toast(SAID[action] ? SAID[action](b, nil) : `${action} done`);
+        ui().toast(`${SAID[action] ? SAID[action](b, nil) : `${action} done`}${opts.answer === "promise" ? " · Promised a Starting Role" : ""}`);
         view.step = null;
         await refresh(s, box);
         return r;
@@ -1574,6 +1620,8 @@
         }
       } else if (action === "official_visit" && opts.week != null) {   // the weekend picked in the menu's second step
         run(b, action, null, null, btn, { week: opts.week }).then(() => refocus(b));
+      } else if (action === "call_quick") {     // a quick call: the hours, a slight boost, no conversation
+        run(b, "call", null, null, btn, { answer: "quick" }).then(() => refocus(b));
       } else run(b, action, null, null, btn).then(() => refocus(b));
     }
     // the Official Visit's second step: one row a home weekend you have left ("Wk 6 · vs #4 USC"), the first
@@ -1589,12 +1637,14 @@
     function menuItems(b) {
       const busy = b.scene ? (b.scene.action === "hc_visit" ? "visit" : "call") : null;
       const done = b.done_this_week || [], looks = Math.min(3, b.looks || 0), hours = v.hours_left;
-      const hcWait = b.hc_week != null && s.current_week - b.hc_week < 4;
+      const hcDone = b.hc_week != null;                  // your head coach visits a recruit once
       const short = (cost) => (cost > hours ? `Not enough hours: ${hours} left` : null);
       const items = [
         ["message", "Message", "5h", done.includes("message") ? "Once a week" : short(5)],
-        ["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)],
-        ["hc_visit", "HC Visit", "30h", hcWait ? "Monthly" : short(30)],
+        // after his first call, Call is a quick check-in only (no conversation, a slight boost): the pitching was done on the first
+        b.calls > 0 ? ["call_quick", "Call", "15h · Quick Check-In", done.includes("call") ? "Once a week" : short(15)]
+          : ["call", "Call", "15h", done.includes("call") ? "Once a week" : short(15)],
+        ["hc_visit", "HC Visit", "30h", hcDone ? "Once per recruit" : short(30)],
         ["scout", "Scout", `${b.scout_cost} Points · ${fmtLooks(looks)} of 3 Looks${looks < 3 && 3 - looks <= 1 ? " · Finishes His Report" : ""}`,
           looks >= 3 ? "His report is complete: 3 of 3 looks" : v.points_left < b.scout_cost ? "Not enough scouting points left this week." : null],
         ["official_visit", v.portal ? "Campus Visit" : "Official Visit", "10h", !b.offered ? "Offer him first" : b.visit ? (b.visit.done ? "Visited" : `Booked for ${seasonWeek(b.visit.week)}`)
@@ -1605,7 +1655,7 @@
         ["off_board", "Off the Board", "", b.offered && b.hard && b.committed === me ? "Hard commit: his offer stands until he signs" : null],
       ];
       const tip = (action) => (b.pestering && ["message", "call", "hc_visit"].includes(action) ? "Costs you interest while he is tuning you out" : null);
-      return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why, title: tip(action) }));
+      return items.map(([action, name, cost, why]) => ({ action, name, cost, why: busy ? `Finish your ${busy} first` : why, title: tip(action === "call_quick" ? "call" : action) }));
     }
     function openMenu(b, btn) {
       if (menuState) { closeMenu(true); return; }
@@ -1818,20 +1868,14 @@
         syncBoard();
       }
     }
-    // the pitch on the step (Message, Offer): the lead-with pill (leadPicker), his known priorities first, then a topic he
-    // brought up this week, then the rest; the pick lasts the visit (view.pitch)
-    function pitchSelect(b) {
-      const cued = cueOf(s, b).topics;
-      const order = [...b.priorities_known, ...cued.filter((t) => !b.priorities_known.includes(t)), ...Object.keys(PITCH_NAMES).filter((t) => !b.priorities_known.includes(t) && !cued.includes(t))];
-      const first = view.pitch[b.id] && order.includes(view.pitch[b.id]) ? view.pitch[b.id] : order[0];
-      return leadPicker(b, { id: "rc-pitch", order, current: first, cueTopics: cued, cueTip: cueOf(s, b).title, onPick: (t) => { view.pitch[b.id] = t; } });
-    }
-    // Message, Offer… and Raise NIL… happen here, under the head: the pitch (not for a raise), the NIL points (not for a message)
+    // Message, Offer… and Raise NIL… happen here, under the head: no pitch (the player's ask: a message or an offer is worth
+    // your grades on what he cares about; a call or visit is where you pitch him), the NIL points (not for a message), and on
+    // an offer the promise of a starting role, when you have not made it yet
     function stepView(b, kind) {
       const st = el("div", { class: "go-step", role: "group", "aria-label": kind === "message" ? `Message ${b.name}` : kind === "offer" ? `Offer ${b.name}` : `Raise your NIL offer to ${b.name}` });
       st.append(el("div", { class: "card-bar" }, [el("div", { class: "go-kicker", text: kind === "message" ? "Message · 5 Hours" : kind === "offer" ? "Offer · No Hours" : "Raise NIL · No Hours" })]));
-      const pitch = kind === "raise_nil" ? null : pitchSelect(b);
-      if (pitch) st.append(el("div", { class: "go-lead-field" }, [el("span", { class: "small", text: "Your Pitch" }), pitch]));
+      const pitch = null;
+      if (kind !== "raise_nil") st.append(el("p", { class: "muted small", text: "It counts your grades on what he cares about: pitch him on a call or visit to make your case." }));
       let nil = null;
       if (kind !== "message") {
         const ask = askWord(b);
@@ -1840,10 +1884,16 @@
         st.append(el("label", { for: "rc-nil" }, [el("span", { class: "small", text: `NIL Points · ${kind === "offer" ? (ask ? `He wants ${ask}` : "No ask known yet") : `Your offer is ${b.nil || 0}${ask ? ` · he wants ${ask}` : ""}`}` }), nil]));
         if (kind === "offer") st.append(el("p", { class: "muted small", text: "Well under what he wants reads as a lowball, and some recruits take offense sooner." }));
       }
+      let promise = null;
+      if (kind === "offer" && !b.job_promised && !b.portal) {
+        promise = el("input", { type: "checkbox", id: "rc-promise", class: "go-check" });
+        st.append(el("label", { for: "rc-promise", class: "go-check-row" }, [promise, el("span", {}, [el("b", { text: "Promise Him a Starting Role" }),
+          el("span", { class: "muted small", text: " Counts for more if playing time is one of his priorities. It is judged through his first season, and a broken promise costs you." })])]));
+      }
       const go = el("button", { type: "button", class: "go-btn primary go-step-go", text: kind === "message" ? "Send" : kind === "offer" ? "Offer" : "Raise" });
       const cancel = el("button", { type: "button", class: "go-btn go-step-cancel", text: "Cancel" });
       go.addEventListener("click", async () => {
-        const r = await run(b, kind, pitch ? pitch.value : null, nil ? Number(nil.value) || 0 : null, go);
+        const r = await run(b, kind, pitch ? pitch.value : null, nil ? Number(nil.value) || 0 : null, go, promise && promise.checked ? { answer: "promise" } : {});
         // the step closed with the action: the Recruit button takes the focus (unless a call's window opened meanwhile and holds it)
         if (r && !view.step && !sceneWin) { const btn = box.querySelector("#rc-recruit"); if (btn) btn.focus({ preventScroll: true }); }
       });
@@ -2228,7 +2278,9 @@
       });
       return el("th", { scope: "col", class: `pr-c-${k}`, "data-sort": key }, [btn]);
     };
-    const starsHead = sortHead("stars", inPortal ? "Class" : "Stars");
+    // the portal's column is the entrant's class (Fr., So.…), not stars: it does not sort
+    const plainClassHead = () => el("th", { scope: "col", class: "pr-c-stars", text: "Class" });
+    const starsHead = inPortal ? plainClassHead() : sortHead("stars", "Stars");
     const thead = el("thead", {}, [el("tr", {}, HEADS.map(([k, t]) => (k === "stars" ? starsHead : sortHead(k, t))))]);
     function syncSortHeads() {
       const base = f.sort.replace(/^-/, ""), down = DESC_FIRST.has(base) !== f.sort.startsWith("-");
@@ -2389,6 +2441,7 @@
       // the button patched is the live one the player clicked (e.currentTarget): a reconcile morphs this row onto the
       // row on screen and hands it this handler, so `add` here may be a fresh node that never reached the page
       ui().on(add, "click", (e) => { e.stopPropagation(); toggleBoard(r, e.currentTarget); });
+      const fav = favButton(s, r.id, r.name, () => r.favorite, (v) => { r.favorite = v; if (f.status === "favorites" && !v) load(); }, "pr-fav");
       const tr = el("tr", { class: "go-list-row rc-row pr-row", "data-key": r.id }, [
         el("td", { class: "pr-c-rank muted", text: `#${r.portal && r.portal_rank ? r.portal_rank : r.national_rank}` }),
         el("td", { class: "pr-c-who" }, [who]),
@@ -2401,7 +2454,7 @@
         el("td", { class: "pr-c-sc" }, [el("span", { class: `pr-sc ${scTone}`, title: r.looks >= 3 ? "His report is complete: 3 of 3 looks" : r.looks > 0 ? `${fmtLooks(r.looks)} of 3 looks: each look narrows your staff's read` : "No look at him yet: send a scout", text: scText })]),
         el("td", { class: "pr-c-pot" }, [el("span", { class: `go-tag ${potTone}`, title: pot ? `Your staff's read of his potential after ${fmtLooks(r.looks)} of 3 looks` : "Your staff has no read on him yet",
           text: CLEAR ? (r.clear_pot && r.clear_pot.est != null ? PV().ratingText(r.clear_pot) : "Not Read") : potText(pot) })]),
-        el("td", { class: "pr-c-act" }, [add])]);
+        el("td", { class: "pr-c-act" }, [el("div", { class: "pr-acts" }, [fav, add])])]);
       ui().on(tr, "click", (e) => { if (!e.target.closest("button, a, input, select")) openProfile(s, r.id); });
       return tr;
     }
@@ -2409,7 +2462,8 @@
     async function toggleBoard(r, btn) {
       const want = !r.on_board;
       if (!want && r.offered && !window.confirm(`Take ${r.name} off your board? Your offer to him is pulled too: the NIL points come back to you${r.committed === me && !r.signed ? ", and he decommits from you" : ""}.`)) return;
-      const ok = await ui().busy(btn, setBoard(s, r.id, want));
+      r.selfBoard = true;                                         // its own announcement (cfp:board) is not a change from elsewhere
+      const ok = await ui().busy(btn, setBoard(s, r.id, want)).finally(() => { r.selfBoard = false; });
       if (!ok) return;
       r.on_board = want;
       if (!want) r.offered = false;
@@ -2443,8 +2497,21 @@
       const tr = tbody.querySelector(`tr.pr-row[data-key="${CSS.escape(r.id)}"]`);
       if (tr) { ui().morph(tr, drawRow(r)); for (const c of [".pr-c-sc .pr-sc", ".pr-c-pot .go-tag"]) { const n = tr.querySelector(c); if (n) ui().pulse(n); } }
       if (first && r.looks > 0 && ctx.summary) { ctx.summary.footprint.evaluated += 1; drawSide(); }     // his first look: Your Footprint's Evaluated count
+      if (CLEAR) load();      // Clear Mode's potential (clear_pot) is the server's: the page reads again and patches the row in place
     };
     document.addEventListener("cfp:scouted", onScouted);
+    // a board change made elsewhere (the Prospect Profile's star): his row's button follows, in place
+    const onBoard = (e) => {
+      if (!tbody.isConnected) { document.removeEventListener("cfp:board", onBoard); return; }
+      const d = e.detail || {}, r = ctx.rows.find((x) => x.id === d.pid);
+      if (!r || r.selfBoard || !!r.on_board === !!d.on) return;
+      r.on_board = !!d.on;
+      if (!d.on) r.offered = false;
+      const tr = tbody.querySelector(`tr.pr-row[data-key="${CSS.escape(r.id)}"]`);
+      if (tr) { ui().morph(tr, drawRow(r)); const n = tr.querySelector(".pr-board"); if (n) ui().pulse(n); }
+      if (ctx.summary) { ctx.summary.footprint.board = Math.max(0, ctx.summary.footprint.board + (d.on ? 1 : -1)); drawSide(); }
+    };
+    document.addEventListener("cfp:board", onBoard);
 
     let seq = 0;
     async function load(opts = {}) {
@@ -2465,7 +2532,8 @@
       if (portalRows && !ctx.portal) {                          // the summary may predate the portal
         ctx.portal = view.portal = true;
         title.textContent = `Transfer Portal · ${year}`;
-        starsHead.textContent = "Class";
+        starsHead.replaceWith(plainClassHead());                // the summary predated the portal: the column stops sorting
+        if (f.sort.replace(/^-/, "") === "stars") f.sort = "rank";
       }
       ctx.summary = d.summary || null;
       ctx.rows = d.rows;
@@ -2630,7 +2698,7 @@
     }
     node.innerHTML = "";
     node.append(el("div", { class: "rc-profile-head go-profile-head" }, [heroOf(b, me, { nameNode: name })]),
-      el("div", { class: "pv-tabrow" }, [strip, el("div", { class: "pv-acts rc-profile-actions" }, [toBoard, star])]), body);
+      el("div", { class: "pv-tabrow" }, [strip, el("div", { class: "pv-acts rc-profile-actions" }, [toBoard, favButton(s, pid, pub.name, () => pub.favorite, (v) => { pub.favorite = v; }, "pv-star"), star])]), body);
     draw();
     return true;
   }

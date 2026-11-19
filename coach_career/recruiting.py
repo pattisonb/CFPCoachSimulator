@@ -101,7 +101,8 @@ COLD_OFFER = 0.5                           # an offer before any contact counts 
 STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
 WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
-HC_VISIT_GAP = 4                           # weeks between head coach in-home visits to one prospect
+HC_VISIT_GAP = 4                           # weeks between an AI school's head coach in-home visits to one prospect (yours: one per recruit)
+QUICK_CALL = 0.5                           # *tune* a quick call after his first (no conversation, no pitch): this share of a call's base, a slight boost
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
 NIL_PER_TIER = 3.0                         # NIL points a year per point of the program's NIL tier *tune*
@@ -119,7 +120,7 @@ COOLED_CONTACT = 0.5
 ANSWER_STRAIGHT = 1.0                      # his question about a named player (scenes.question): a straight answer's points ...
 ANSWER_PROMISE = 3.0                       # ... a promise he can believe (he would start; he is the better recruit) ...
 ANSWER_HOLLOW = 2.0                        # ... and what a hollow one costs (he cools on you a week too) *tune*
-PROMISE_MARGIN = 5                         # a roster promise holds when he is within this of the player ahead, or that player is in his last year *tune: tools/check_recruiting.py*
+PROMISE_MARGIN = 5                         # no longer read: a roster promise always holds (your word, judged next season); kept for old tools
 LAST_YEAR = {"JR", "JRRS"}                 # this season's class of a player in his last year next season (the portal's rosters already read next season: LEAVING)
 PROMISE_RIVAL = 20                         # firmness lost when the other recruit you promised him over commits to you too
 PACKAGE_OFFERED = 1.0                      # a Package Deal's question (scenes.question "package") when his mate already holds your offer: on top of ANSWER_STRAIGHT *tune*
@@ -712,17 +713,15 @@ def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
 
 
 def promise_holds(state: dict, slug: str, pid: str, question: dict) -> bool:
-    """Whether he can believe your promise: over a roster player, when that player is in his last
-    year or the recruit's overall is within PROMISE_MARGIN of his; over another recruit, when the
-    recruit is rated at least as high."""
+    """Whether he can believe your promise. Over a roster player, always (the player's ask): a promised start is your
+    word to play him over the better player, and next season judges whether you do (promises.py); what can still make
+    one fail is two promises at his position (job_crowd) or your record at it (word.believes). Over another recruit,
+    when the recruit is rated at least as high."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
     about = question["about"]
     if question["kind"] == "roster":
-        if "ovr" not in about or "last_year" not in about:          # a scene from before these were kept: read him again
-            ahead = ahead_of(state, slug, pid) or {}
-            about = {**about, "ovr": ahead.get("ovr", 99), "last_year": ahead.get("last_year", False)}
-        return bool(about["last_year"]) or p["ovr"] >= about["ovr"] - PROMISE_MARGIN
+        return True
     other = rc["prospects"].get(about.get("pid"))
     return other is None or p["ovr"] >= other["ovr"]
 
@@ -1413,6 +1412,21 @@ def _contact_points(state: dict, slug: str, p: dict, action: str, pitch: Optiona
     return BASE_POINTS[action] * (PITCH_OTHER[0] + PITCH_OTHER[1] * strength) * mult
 
 
+def _grade_points(state: dict, slug: str, p: dict, action: str) -> float:
+    """Your own message or offer, which carries no pitch (the player's ask): worth your grades on what he cares about,
+    the mean of your strength on his priorities (and his decider's topic), as a pitch on one of them would be
+    (PITCH_PRIORITY), never a backfire; his personality scales it as it scales a contact. Pitching him on a call or
+    visit is how you move those grades' weight; Auto-recruit and the AI keep their one-pitch path."""
+    pid = p["id"]
+    mult = persona.pitch_mult(state, pid, action, None, False)
+    if action == "offer":
+        mult *= persona.offer_mult(state, pid)
+    st_ = strengths(state, slug, pid)
+    tops = [t for t in PITCHES if persona.counts_as_priority(state, pid, t)] or list(p.get("priorities") or ())
+    grade = sum(st_[t] for t in tops) / len(tops) if tops else 0.0
+    return BASE_POINTS[action] * (PITCH_PRIORITY[0] + PITCH_PRIORITY[1] * grade) * mult
+
+
 def best_pitch(state: dict, slug: str, pid: str, required: bool = False) -> Optional[str]:
     """The topic a staff pitches: the strongest of the priorities it knows that will not backfire;
     nothing in particular when it knows none (`required`, an offer: its strongest topic)."""
@@ -1534,13 +1548,25 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed},
                 "money_owed": money_owed(state, slug, pid) if pitch == "nil" else None}
-    opens = slug == state.get("team") and action in SCENES and pitch is None
-    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week)
+    # a quick call (the player's ask): after his first call, Call just spends the hours for a slight boost; Call and Pitch
+    # opens the conversation as before
+    quick = slug == state.get("team") and action == "call" and answer == "quick"
+    if quick and not _contact(state, slug, pid).get("calls"):
+        raise RecruitingError(409, "Call and pitch him first: a quick call follows a first conversation.")
+    opens = slug == state.get("team") and action in SCENES and pitch is None and not quick
+    manual = slug == state.get("team") and action in ("message", "offer")
+    if manual:
+        pitch = None                                        # the player's ask: no pitch on a message or an offer
+    if manual and action == "offer" and answer == "promise" and _open_roster_promise(_contact(state, slug, pid)):
+        raise RecruitingError(409, "You already promised him the job.")
+    revealed = _act(state, slug, pid, action, pitch, nil, opens=opens, visit_week=week, manual=manual, quick=quick)
     if action in ("offer", "raise_nil") and slug == state.get("team"):     # your offer or your NIL by hand: Auto-recruit leaves it be
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
             marks.append(pid)
     out = {"hours_left": _hours(state, slug), "revealed": revealed}
+    if manual and action == "offer" and answer == "promise":     # the offer carries the job: worth more where playing time is his
+        out["promise"] = {k: v for k, v in _job_promise(state, slug, pid, "offer").items() if k != "reply"}
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
         from coach_career import prospects as pr
         out["look"] = dict(_LAST_LOOK[0], likes=pr.staff_likes(state, pid, slug))
@@ -1595,7 +1621,8 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
         q["about"]["offered"] = offered                                 # as it stands when you answer
         if answer == "straight" and offered:
             points = ANSWER_STRAIGHT + PACKAGE_OFFERED
-        elif answer == "promise":
+        elif answer == "promise" and not any(pr["kind"] == "package" and (pr.get("about") or {}).get("pid") == q["about"]["pid"] and not pr.get("broken")
+                                             and pr.get("closed") is None for pr in contact.get("promises") or ()):   # one promise per mate
             contact.setdefault("promises", []).append({"kind": "package", "about": dict(q["about"]), "week": week, "broken": None, "kept": None})
     elif answer == "straight":
         points = ANSWER_STRAIGHT
@@ -1757,9 +1784,23 @@ def _promise_job(state: dict, slug: str, pid: str, scene: Optional[str]) -> dict
     sc = ((rc.get("scenes") or {}).get(slug) or {}).get(pid)
     if sc is None or scene is None or sc["id"] != scene:
         raise RecruitingError(409, "no call or visit open")
-    contact = _contact(state, slug, pid)
-    if _open_roster_promise(contact):
+    if _open_roster_promise(_contact(state, slug, pid)):
         raise RecruitingError(409, "You already promised him the job.")
+    out = _job_promise(state, slug, pid, sc["action"])
+    sc.setdefault("turns", []).extend([{"who": "you", "text": scenes.JOB_SAID}, {"who": "him", "text": out["reply"]}])
+    sc["job"] = True
+    return {"scene": sc, "points": out["points"], "truthful": out["truthful"], "doubted": out["doubted"], "crowded": out["crowded"],
+            "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+
+
+def _job_promise(state: dict, slug: str, pid: str, action: str) -> dict:
+    """The starting-job promise itself, made on a call or visit (_promise_job) or with your offer (act, answer "promise"):
+    see _promise_job for what it is worth. Records the promise and its History line and adds its points. Returns points,
+    his reply, truthful, doubted, crowded."""
+    from coach_career import scenes, word
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    contact = _contact(state, slug, pid)
     week = state["current_week"]
     group = _group_of(p)
     about = ahead_of(state, slug, pid) or {"name": None, "ovr": 0, "last_year": True, "cls": None}
@@ -1780,16 +1821,14 @@ def _promise_job(state: dict, slug: str, pid: str, scene: Optional[str]) -> dict
         persona.set_cooled_why(state, slug, pid, "promise")
         _event(state, "not_buying", pid, slug, topic="playing_time")
     contact.setdefault("promises", []).append({"kind": "roster", "about": about, "week": week, "broken": None, "job": True})
-    sc.setdefault("turns", []).extend([{"who": "you", "text": scenes.JOB_SAID}, {"who": "him", "text": reply}])
-    sc["job"] = True
-    _event(state, "answer", pid, slug, action=sc["action"], answer="promise", about=about.get("name"), truthful=truthful, job=True,
+    _event(state, "answer", pid, slug, action=action, answer="promise", about=about.get("name"), truthful=truthful, job=True,
            line="You told him the job is his.", **({"doubted": True} if doubted else {}), **({"crowded": True} if crowded else {}))
     if points:
-        _add_points(state, slug, pid, points, sc["action"])
+        _add_points(state, slug, pid, points, action)
     if crowd:
         _strain(state, slug, crowd, week)
-    return {"scene": sc, "points": points, "truthful": truthful, "doubted": doubted, "crowded": crowded,
-            "hours_left": rc["hours"].get(slug, _hours(state, slug))}
+    return {"points": points, "reply": reply, "truthful": truthful, "doubted": doubted, "crowded": crowded}
+
 
 
 def _present(state: dict, slug: str, pid: str, scene: Optional[str], topics: Optional[list]) -> dict:
@@ -1982,13 +2021,14 @@ def latest_report(state: dict) -> Optional[dict]:
 
 def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = None, nil: int = 0,
          scale: float = 1.0, scene: Optional[str] = None, opens: bool = False, auto: bool = False,
-         visit_week: Optional[int] = None) -> Optional[str]:
+         visit_week: Optional[int] = None, manual: bool = False, quick: bool = False) -> Optional[str]:
     """The one action path every school takes (yours, the AI's, Auto-recruit's). Only `act` passes
     `opens` (your call or visit with no pitch: a scene, no points yet) and `scene` (the pitch that
     finishes it); every other caller keeps the one-shot path. `auto`: Auto-recruit's contact, which
     never pesters him. `visit_week`: the home weekend an official visit is for, one of your remaining
     regular-season home games he has not booked elsewhere (only you pick one; Auto-recruit and the
-    AI take his first free weekend)."""
+    AI take his first free weekend). `manual`: your own message or offer by hand, which carries no pitch and is worth your
+    grades on what he cares about (_grade_points)."""
     rc = state["recruiting"]
     p = rc["prospects"].get(pid)
     if p is None:
@@ -2034,7 +2074,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             rc["commits_v"] = rc.get("commits_v", 0) + 1
             _event(state, "decommit", pid, slug)
     elif action == "offer":
-        if pitch is None:
+        if pitch is None and not manual:
             raise RecruitingError(400, "an offer needs a pitch: what you are selling him")
         if nil > nil_left(state, slug):
             raise RecruitingError(400, "not enough NIL points")
@@ -2061,7 +2101,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         else:
             cold = not contact["n"] and not (rc["visits"].get(pid, {}).get(slug) or {}).get("done")
             contact["cold_offer"] = cold
-            points += _contact_points(state, slug, p, "offer", pitch) * (COLD_OFFER if cold else 1.0)
+            points += (_grade_points(state, slug, p, "offer") if manual else _contact_points(state, slug, p, "offer", pitch)) * (COLD_OFFER if cold else 1.0)
     elif action == "raise_nil":
         if pid not in offers:
             raise RecruitingError(409, "no offer to raise")
@@ -2140,6 +2180,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     else:
         if action == "hc_visit":
             last = hc_visit_week(state, slug, pid)
+            if you and last is not None:                   # the player's ask: your head coach visits a recruit once
+                raise RecruitingError(409, "Your head coach visits a recruit once.")
             if last is not None and week - last < HC_VISIT_GAP:
                 raise RecruitingError(409, "one in-home visit a month")
             contact["hc_week"] = week
@@ -2165,7 +2207,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
                 contact["asked"] = "range"
         if not opens:
             contact["last_contact"] = week
-            points = _contact_land(state, slug, p, contact, action, pitch, auto)
+            points = _contact_land(state, slug, p, contact, action, pitch, auto, manual) * (QUICK_CALL if quick else 1.0)
     if action != "scout":                          # a Send spends scouting points, not hours
         rc["hours"][slug] = _hours(state, slug) - HOURS[action]
     if points:
@@ -2174,7 +2216,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
 
 
 def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, pitch: Optional[str],
-                  auto: bool = False) -> float:
+                  auto: bool = False, manual: bool = False) -> float:
     """A contact's points (a message, call or visit, one-shot or a scene's pitch): the pitch's worth
     cut by earlier contacts, halved while he is cooled; a backfire is logged. Past PESTER_FREE
     contacts from your hand while he is not considering you (`not_considering`), the contact pesters him instead: negative
@@ -2197,7 +2239,8 @@ def _contact_land(state: dict, slug: str, p: dict, contact: dict, action: str, p
             if action == "call":
                 contact["calls"] = contact.get("calls", 0) + 1
             return points
-    points = _contact_points(state, slug, p, action, pitch, first_call=action == "call" and not contact.get("calls")) / (1 + DIMINISH * contact["n"])
+    base = _grade_points(state, slug, p, action) if manual and action == "message" else _contact_points(state, slug, p, action, pitch, first_call=action == "call" and not contact.get("calls"))
+    points = base / (1 + DIMINISH * contact["n"])
     if points < 0:
         _event(state, "not_buying", pid, slug, topic=pitch)
     if cooled(state, slug, pid):
@@ -3522,6 +3565,16 @@ def make_staff(state: dict) -> list[dict]:
     for member in staff:                   # signed through this season or the next one or two (offseason.py: contracts)
         member["contract_until"] = year + rng.randint(0, 2)
     return staff
+
+
+def set_favorite(state: dict, pid: str, on: bool) -> None:
+    """Mark a prospect as one of your favorites (♥) or clear the mark: the player's own list, kept with the class (a new
+    class starts with none) and read only by the Prospects filter and the marks on the page. Nothing in recruiting reads it."""
+    favs = state["recruiting"].setdefault("favorites", [])
+    if on and pid not in favs:
+        favs.append(pid)
+    elif not on and pid in favs:
+        favs.remove(pid)
 
 
 def set_board(state: dict, pid: str, on: bool) -> None:

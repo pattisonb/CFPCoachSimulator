@@ -38,6 +38,8 @@ COACH_LEAGUE_MEAN = 52           # the real 2026 head coaches' mean overall
 GOALS = {1: ("playoff", 10, "Make the College Football Playoff"), 2: ("wins", 9, "Win nine games"),
          3: ("wins", 8, "Win eight games"), 4: ("wins", 7, "Win seven games and go bowling"), 5: ("wins", 6, "Reach a bowl game")}
 G5_TITLE_FROM = 42.0             # a Group of 5 program rated this high expects to win its conference
+INDEPENDENT_GOAL = ("wins", 10, "Win ten games")   # the same program with no conference to win (UConn): ten wins instead *tune*
+INDEPENDENTS = {"FBS Independents", "FBS Independent", "Independent", "Independents"}
 MARKET_DEFAULT = 25              # a program without three seasons of FBS crowds (new to FBS)
 P4 = {"SEC", "Big Ten", "Big 12", "ACC"}
 PRO_ROUND_POINTS = {1: 4, 2: 3, 3: 2}   # a pick's points by round; every later round is 1 *tune*
@@ -212,9 +214,13 @@ def z(state: dict, slug: str) -> float:
     return z_of(get(state, slug)["rating"])
 
 
-def goal_for(tier: int, p4: bool, rating: Optional[float] = None) -> dict:
-    """What the AD expects of a program of this tier (a strong Group of 5 program: its conference)."""
+def goal_for(tier: int, p4: bool, rating: Optional[float] = None, independent: bool = False) -> dict:
+    """What the AD expects of a program of this tier (a strong Group of 5 program: its conference; an independent one has
+    none to win, so ten wins)."""
     if not p4 and (rating if rating is not None else 100 if tier <= 3 else 0) >= G5_TITLE_FROM:
+        if independent:
+            kind, wins, text = INDEPENDENT_GOAL
+            return {"kind": kind, "wins": wins, "text": text}
         return {"kind": "conference", "wins": 10, "text": "Win the conference"}
     kind, wins, text = GOALS[tier]
     return {"kind": kind, "wins": wins, "text": text}
@@ -569,7 +575,7 @@ def rows(state: dict) -> list[dict]:
         p = get(state, s)
         p4 = season._is_p4(s, bt)
         out.append({"team": s, "name": bt["name"], "conference": bt["conference"], "tier": p["tier"], "tier_name": TIER_NAMES[p["tier"]],
-                    "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"])["text"],
+                    "rating": p["rating"], "goal": goal_for(p["tier"], p4, p["rating"], bt.get("conference") in INDEPENDENTS)["text"],
                     **{k: p[k] for k in ("prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups")},
                     "grades": grades_now(state, s), "tags": tags(s), "grades_moved": (p.get("grades_moved") or None)})
     out.sort(key=lambda r: -r["rating"])

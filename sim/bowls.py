@@ -3,7 +3,7 @@ selection by conference tie-ins, and the names and sites of the playoff games.
 
 Selection follows how the real process works in practice: once the 12-team playoff field
 is set, every remaining team with six wins is bowl-eligible (five-win teams fill empty
-spots, as the NCAA allows). Bowls pick in order of payout; each bowl fills its two slots
+spots, as the NCAA allows, and only once no six-win team is left for a slot). Bowls pick in order of payout; each bowl fills its two slots
 from its contracted conferences, taking the best remaining team there (by the committee's
 final order, then record and rating), and falls back to the best remaining team from
 anywhere when a conference's pool is empty. Two teams from the same conference are not
@@ -44,7 +44,7 @@ DEFAULT_TIE_INS = {
     "Frisco Football Classic": ["Conference USA", "Mountain West"], "Salute to Veterans Bowl": ["Conference USA", "Sun Belt"],
 }
 G5 = {"American Athletic Conference", "Conference USA", "MAC", "Mountain West", "Pac-12", "Sun Belt"}
-INDEPENDENT = {"FBS Independents", "Independent", "Independents"}
+INDEPENDENT = {"FBS Independents", "FBS Independent", "Independent", "Independents"}   # the team file says "FBS Independent" (UConn)
 
 
 def load_bowls() -> dict:
@@ -137,20 +137,22 @@ def select_bowls(records: dict, teams: dict, playoff_field: set, order: list[str
     for b in ordered_bowls(data):
         ties = tie_ins_for(b)
         picks: list[str] = []
-        for min_wins in (6, 5):
-            picks = []
-            for conf in ties:
-                other_conf = teams[picks[0]]["conference"] if picks else None
-                # a missing tie-in is filled from the same tier first (a Group of Five bowl takes
-                # another Group of Five team before a leftover power-conference team)
-                fallback = "Group of Five" if conf in G5 else "At-large"
+        for conf in ties:
+            other_conf = teams[picks[0]]["conference"] if picks else None
+            # a missing tie-in is filled from the same tier first (a Group of Five bowl takes
+            # another Group of Five team before a leftover power-conference team); every slot takes a six-win team from
+            # anywhere before a five-win one (a five-win tie-in team never goes ahead of a six-win team left out)
+            fallback = "Group of Five" if conf in G5 else "At-large"
+            s = None
+            for min_wins in (6, 5):
                 s = (best_from(conf, other_conf, min_wins) or best_from(fallback, other_conf, min_wins)
                      or best_from("At-large", other_conf, min_wins))
                 if s:
-                    picks.append(s)
-                    taken.add(s)
-            if len(picks) == 2:
-                break
+                    break
+            if s:
+                picks.append(s)
+                taken.add(s)
+        if len(picks) < 2:
             for s in picks:
                 taken.discard(s)
         filled = len(picks) == 2

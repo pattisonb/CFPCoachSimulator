@@ -1,10 +1,8 @@
-/* The depth chart screen's globals: its tokens, base type and the page takeover. Everything is scoped
+/* The depth chart's globals: its tokens and base type (in its tab, depth.css maps the tokens to the site's panel). Everything is scoped
    to .dc (the screen's root, #depth-screen) so nothing here reaches the rest of the site. The tokens
    come from the site's own colors, so the light and dark themes and the team accent carry over.
    Components are in depth.css. */
 
-/* while the screen is open the season page under it is hidden; the site's top bar stays */
-body.dc-open .season-layout { display: none; }
 
 .dc {
   /* color: an 8-bit menu, ink on dark: near-black surfaces, crisp light frames, white for what is picked;

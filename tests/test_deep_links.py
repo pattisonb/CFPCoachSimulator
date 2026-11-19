@@ -253,12 +253,12 @@ def check_depth(page, base, A, errors) -> None:
     wait_url(page, lambda p: p.get("tab") == "standings", "tab=standings")
     tab_click(page, "depth")
     page.wait_for_selector("#depth-screen:not([hidden])", timeout=60_000)
-    p = wait_url(page, lambda p: p.get("screen") == "depth", "screen=depth")
-    assert p["tab"] == "standings"
-    reload(page, "#depth-screen:not([hidden])")      # the depth chart covers the season
-    assert params(page).get("screen") == "depth"
+    p = wait_url(page, lambda p: p.get("tab") == "depth", "tab=depth")
+    assert "screen" not in p, p
+    reload(page, "#depth-screen:not([hidden])")      # the depth chart is a tab: a refresh lands on it
+    assert params(page).get("tab") == "depth"
     page.go_back()
-    wait_url(page, lambda p: "screen" not in p, "the season after Back")
+    wait_url(page, lambda p: p.get("tab") == "standings", "the tab before after Back")
     page.wait_for_selector("#depth-screen", state="hidden")
     page.wait_for_function("() => !document.querySelector('#tab-standings').hidden")
     clean(page, errors)

@@ -1350,6 +1350,9 @@ def question(state: dict, slug: str, pid: str, week: int, package: dict | None =
     always, its own draw for the line; the answers ride on the question, by whether you offered him)."""
     rc = state["recruiting"]
     p = rc["prospects"][pid]
+    if package and any(pr["kind"] == "package" and (pr.get("about") or {}).get("pid") == package["pid"] and not pr.get("broken")
+                       and pr.get("closed") is None for pr in (((rc["contacts"].get(pid) or {}).get(slug)) or {}).get("promises") or ()):
+        package = None                       # you already promised his mate an offer (open or kept): he does not ask again
     if package:
         about = {**package, "offered": package["pid"] in rc["offers"].get(slug, [])}   # as it stands when he asks
         rng = random.Random(f"question-package-{rc['seed']}-{slug}-{pid}-{week}")

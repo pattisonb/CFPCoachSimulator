@@ -282,7 +282,7 @@ if __name__ == "__main__":
             def step(_):
                 menu(_)
                 page.click(".go-menu .go-menu-item[data-action=offer]")
-                page.wait_for_selector(".go-pane .go-step #rc-pitch", timeout=30_000)
+                page.wait_for_selector(".go-pane .go-step button.go-step-go", timeout=30_000)
             w.both("recruiting-step", step)
 
             def scene(_):

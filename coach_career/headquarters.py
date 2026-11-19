@@ -221,7 +221,8 @@ def next_year(state: dict) -> dict:
     """Next year's roster by group, as it stands: everyone the outlook keeps (seniors graduate) a class up, best overall
     first, with his draft or portal word; your commits (and signees) in their groups as freshmen; each group's target,
     the headcount filled, and `need`, recruiting.needs_detail's (which allows for the usual attrition and early leavers,
-    so it can be more than target - filled)."""
+    so it can be more than target - filled). `targets`: the rest of your recruits at the group (the player's ask), each
+    with `kind`, the most he is to you: offered, on your board, or contacted; one signed or committed elsewhere is left out."""
     from coach_career import offseason, prospects
     me = state["team"]
     detail = recruiting.needs_detail(state, me)
@@ -241,14 +242,95 @@ def next_year(state: dict) -> dict:
         if g in groups:
             groups[g]["commits"].append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
                                          "signed": st["signed"] == me, "hard": bool(st.get("hard")), "rank": q["rank"]})
+    offered = set(rc["offers"].get(me, []))
+    board = set(rc.get("board") or ())
+    for pid, st in rc["status"].items():
+        if st["signed"] or st["committed"]:
+            continue
+        kind = "offered" if pid in offered else "board" if pid in board else \
+            "contacted" if ((rc["contacts"].get(pid) or {}).get(me) or {}).get("n") else None
+        if kind is None:
+            continue
+        q = rc["prospects"][pid]
+        g = recruiting._group_of(q)
+        if g in groups:
+            groups[g].setdefault("targets", []).append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
+                                                        "rank": q["rank"], "kind": kind})
     out = []
     for g in groups.values():
         g["players"].sort(key=lambda x: -x["overall"])
         g["commits"].sort(key=lambda x: x["rank"])
+        g.setdefault("targets", []).sort(key=lambda x: ({"offered": 0, "board": 1, "contacted": 2}[x["kind"]], x["rank"]))
         g["filled"] = len(g["players"]) + len(g["commits"])
         g["need"] = int(detail[g["group"]].get("need") or 0)     # the game's own need: it allows for the usual attrition, as Class Needs
         out.append(g)
     return {"groups": out}
+
+
+def promises_tracker(state: dict) -> dict:
+    """Every promise you have out (the Promises widget). `players`: your players promised a starting role, this season
+    with the week-by-week chip (promises.chips_now: On Track, Slipping, Broken; Not Judged Yet before a week counts) and
+    next season's as Next Season. `recruits`: each promise made to a recruit (a starting role, a start over a named
+    player, ahead of another recruit, an offer to his mate, NIL by a week) with its state: Open, Kept, Broken, Due Week N,
+    or Owed Next Season once he signs with you. A promise closed because he went elsewhere is left out."""
+    from coach_career import promises as pm
+    from sim import season
+    me = state.get("team")
+    year = season.season_year(state)
+    chips = pm.chips_now(state)
+    roster = ((((state.get("league") or {}).get("teams") or {}).get(me) or {}).get("roster")) or []
+    players = []
+    for c in roster:
+        when = c.get("promised")
+        if when is None or when < year:
+            continue
+        players.append({"slug": c["id"], "name": c["n"], "position": c["pos"],
+                        "status": "Next Season" if when > year else chips.get(c["id"]) or "Not Judged Yet"})
+    order = {"Broken": 0, "Slipping": 1, "Not Judged Yet": 2, "On Track": 3, "Next Season": 4}
+    players.sort(key=lambda r: (order.get(r["status"], 9), r["name"]))
+    rc = state.get("recruiting") or {}
+    recruits, seen = [], set()
+    for pid, by in (rc.get("contacts") or {}).items():
+        c = (by or {}).get(me) or {}
+        p = (rc.get("prospects") or {}).get(pid)
+        if not p:
+            continue
+        signed = ((rc.get("status") or {}).get(pid) or {}).get("signed") == me
+        for i, pr in enumerate(c.get("promises") or ()):
+            if pr.get("closed") is not None:
+                continue
+            kind, about = pr["kind"], pr.get("about") or {}
+            if kind == "roster":
+                what = f"Starts Over {about['name']}" if about.get("name") and not pr.get("job") else "Starting Role"
+            elif kind == "recruit":
+                what = f"Ahead of {about.get('name') or 'Another Recruit'}"
+            elif kind == "package":
+                what = f"Offer {about.get('name') or 'His Teammate'}"
+            elif kind == "money":
+                what = "NIL Owed"
+            else:
+                continue
+            if pr.get("broken"):
+                status = "Broken"
+            elif pr.get("kept"):
+                status = "Kept"
+            elif kind == "money":
+                owed = recruiting.money_owed(state, me, pid)
+                if owed:
+                    what = f"NIL {owed['nil']}"
+                status = f"Due Week {max(0, owed['by_week'] - 1)}" if owed else "Open"     # Week 0 opens the season
+            elif signed and kind in ("roster", "recruit"):
+                status = "Owed Next Season"
+            else:
+                status = "Open"
+            if (pid, what, status) in seen:          # the same promise made twice (an older save): shown once
+                continue
+            seen.add((pid, what, status))
+            recruits.append({"key": f"{pid}-{i}", "pid": pid, "name": p["name"], "position": p.get("position"), "stars": p.get("stars"),
+                             "what": what, "status": status, "week": pr.get("week")})
+    rorder = {"Broken": 0, "Owed Next Season": 2, "Kept": 3}
+    recruits.sort(key=lambda r: (rorder.get(r["status"], 1), -(r["week"] or 0)))
+    return {"players": players, "recruits": recruits}
 
 
 def what_if(state: dict, pid: str) -> dict:

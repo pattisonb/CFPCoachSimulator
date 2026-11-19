@@ -156,7 +156,7 @@ def check_table(page, base, sid, errors) -> None:
         p, looks = r["our_potential"], r["looks"]
         assert c["pot"] == ("Not Read" if not p else p[0] if p[0] == p[1] else f"{p[0]} – {p[1]}"), (c["pot"], p)
         assert c["sc"] == ("Fully Scouted" if looks >= 3 else f"{looks} of 3 Looks" if looks else "Not Yet"), (c["sc"], looks)
-        assert c["act"] == ("✓ On Board" if r["on_board"] else "+ Board")
+        assert c["act"].replace("♡", "").replace("♥", "").strip() == ("✓ On Board" if r["on_board"] else "+ Board")   # the ♥ (your favorites) sits beside it
     assert any(c["pot"] == "Not Read" and c["sc"] == "Not Yet" for c in cells) and any(c["sc"] == "Fully Scouted" and c["pot"] != "Not Read" for c in cells), "scouted and unscouted rows both show"
     st = {c["status"] for c in cells}
     assert "Uncommitted" in st and any(s.startswith("Verbal: ") for s in st), st

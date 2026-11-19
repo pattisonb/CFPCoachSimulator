@@ -144,7 +144,7 @@
     const bye = !thisWeek && !played;
     const k = `${played ? `${result} · Next Game · ` : bye ? "Bye This Week · Next Game · " : ""}${weekName(s, g.week)}${g.date ? ` · ${dateText(g.date, s)}` : ""}`;
     const name = g.title || (g.rivalry && g.rivalry.name) || null;
-    const head = el("div", { class: "card-bar ofc-hero-head" }, [el("div", { class: "ofc-hero-when" }, [kicker(k)]), el("span", { class: "ofc-chip go-venue", text: VENUE[g.venue] || "Home Game" })]);
+    const head = el("div", { class: "card-bar ofc-hero-head" }, [el("div", { class: "ofc-hero-when", title: k }, [kicker(k)]), el("span", { class: "ofc-chip go-venue", text: VENUE[g.venue] || "Home Game" })]);
     const title = (name || g.site) ? el("div", { class: "ofc-hero-name" }, [name ? el("div", { class: "ofc-title", text: name }) : null, g.site ? el("div", { class: "muted small ofc-site", text: g.site }) : null]) : null;
     const myRank = s.my_rank && s.my_rank.rank;
     const match = el("div", { class: "ofc-match go-sides" }, [side(s.team, s.team_name, myRank, recText(s.record), true),
@@ -155,6 +155,16 @@
       const edge = el("div", { class: "go-edge ofc-edge" }, [el("span", { class: "muted small", text: "Scouting the matchup…" })]);
       card.append(edge);
       H.api(`/api/season/${s.id}/preview?team=${s.team}`).then((pv) => {
+        const rt = pv && pv.game && pv.game.ratings;     // each side's overall, offense and defense under its name
+        if (rt) [["mine", ".ofc-team.mine"], ["theirs", ".ofc-team.theirs"]].forEach(([k, sel]) => {
+          const box = match.querySelector(`${sel} .ofc-team-text`), r = rt[k];
+          if (!box || !r || box.querySelector(".ofc-team-ovr")) return;
+          const part = (label, v) => el("span", { class: "ofc-ovr-part" }, [`${label} `, el("b", { text: String(v) })]);   // a label and its number never part
+          const line = el("span", { class: "ofc-team-ovr", title: "Overall, offense and defense, weighted toward the starters" },
+            [part("OVR", r.overall), " · ", part("OFF", r.offense), " · ", part("DEF", r.defense)]);
+          box.append(line);
+          ui().fadeIn(line);
+        });
         const p = pv && pv.prediction;
         edge.innerHTML = "";
         if (!p || p.win_prob == null) return;
@@ -397,16 +407,22 @@
     }
     const grid = el("div", { class: "ofc-grid" });
     page.append(grid);
-    // row by row: Next Game beside Program Pulse; Last Game and This Week's Plan beside Recruiting Pulse; What Changed
-    // across; Program News, Around the Conference and Top Targets as one row (office.css lays the grid out)
+    // row by row: Next Game beside Program Pulse; Last Game, then This Week's Plan and Recruiting Pulse with What Changed
+    // under the two of them (beside Last Game, which is the taller card; .ofc-split); Program News, Around the Conference
+    // and Top Targets as one row (office.css lays the grid out). Without a last game What Changed runs across.
     const pulse = pulseCard(s, games);
     grid.append(heroCard(s, games), pulse);
-    const row1 = el("div", { class: "ofc-row" });
-    if (games.last) row1.append(lastGameCard(s, games.last));
     const planSlot = s.done ? null : el("section", { class: "go-card ofc-plan", "aria-label": "This Week's Plan" }, [bar("This Week's Plan"), loading("Loading your week…")]);
-    if (planSlot) row1.append(planSlot);
     let recruit = recruitCard(s, null), targets = targetsCard(s, null);
-    if (row1.children.length) grid.append(row1);
+    if (games.last && planSlot) {
+      grid.classList.add("ofc-split");
+      grid.append(lastGameCard(s, games.last), planSlot);
+    } else {
+      const row1 = el("div", { class: "ofc-row" });
+      if (games.last) row1.append(lastGameCard(s, games.last));
+      if (planSlot) row1.append(planSlot);
+      if (row1.children.length) grid.append(row1);
+    }
     grid.append(recruit);
     const reportSlot = el("div", { class: "ofc-report-slot" });
     grid.append(reportSlot);

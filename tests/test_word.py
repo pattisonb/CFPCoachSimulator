@@ -276,9 +276,9 @@ def test_portal_star_counts():
     assert word.reading(st) == word.WORD_START - word.COST["money_broken"] * word.STAR_COST, word.book(st)
 
 
-def test_doubted_lie_still_costs():
-    """Under the floor a promise he cannot believe anyway still costs what a hollow promise costs: a worse word never
-    makes lying cheaper."""
+def test_doubted_promise_is_worth_nothing():
+    """Under the floor he doubts a promised start (over a better player, which is your word now, never a lie): it is worth
+    nothing and does not cool him."""
     from coach_career import recruiting
     st, pid = _recruit()
     word.book(st)["overall"] = 20
@@ -286,8 +286,8 @@ def test_doubted_lie_still_costs():
           "question": {"kind": "roster", "text": "Is he still your starter?", "about": {"name": "Star Guy", "ovr": 99, "last_year": False, "cls": "SO"}, "answer": None, "reply": None}}
     st["recruiting"].setdefault("scenes", {}).setdefault(st["team"], {})[pid] = sc
     r = recruiting._answer(st, st["team"], pid, "s1", "promise")
-    assert r["truthful"] is False and r["points"] < 0, r["points"]
-    assert recruiting.cooled(st, st["team"], pid), "a hollow promise cools him, doubted or not"
+    assert r["truthful"] is True and r["points"] == 0, r["points"]
+    assert not recruiting.cooled(st, st["team"], pid), "a doubted promise is worth nothing; it does not cool him"
 
 
 if __name__ == "__main__":

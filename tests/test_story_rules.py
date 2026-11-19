@@ -166,9 +166,7 @@ if __name__ == "__main__":
     assert approx(persona.draft_risk(st, ME, tpid), persona.DRAFT_RISK)
     assert persona.draft_word(persona.DRAFT_RISK) == "High"
     reset(st, tpid)
-    for w in (1, 2):
-        st["current_week"] = w
-        recruiting.act(st, ME, tpid, "message", "playing_time")
+    recruiting._contact(st, ME, tpid)["pt"] = 2          # two Playing Time pitches (calls and visits pitch now; a message carries none)
     assert approx(persona.draft_risk(st, ME, tpid), persona.DRAFT_RISK - 2 * persona.DRAFT_PT), persona.draft_risk(st, ME, tpid)
     ask = recruiting.ask_from(st, ME, tpid)
     recruiting.act(st, ME, tpid, "offer", "playing_time", nil=int(ask * 1.4) + 5)
@@ -176,7 +174,7 @@ if __name__ == "__main__":
     over = max(0.0, held / max(ask, 5) - 1)
     want = max(persona.DRAFT_FLOOR, persona.DRAFT_RISK - 2 * persona.DRAFT_PT - persona.DRAFT_NIL * over)
     assert approx(persona.draft_risk(st, ME, tpid), want, 1e-6), (persona.draft_risk(st, ME, tpid), want)
-    assert persona.draft_word(0.12) == "Some" and persona.draft_word(0.05) == "Low"
+    assert persona.draft_word(0.06) == "Some" and persona.draft_word(0.03) == "Low"
     # many pitches cannot take it under the floor
     rc["contacts"][tpid][ME]["pt"] = 50
     assert approx(persona.draft_risk(st, ME, tpid), persona.DRAFT_FLOOR)

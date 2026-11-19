@@ -107,7 +107,9 @@ def team_meta(lgd: Optional[dict], slug: str) -> dict:
     """A league team's identity: its own "meta" when the league carries one (a team from a league
     file the game does not know), otherwise the base team's (base_meta)."""
     meta = ((lgd or {}).get("teams") or {}).get(slug, {}).get("meta")
-    return meta if meta is not None else base_meta(slug)
+    meta = meta if meta is not None else base_meta(slug)
+    moved = ((lgd or {}).get("conference_moves") or {}).get(slug)      # the offseason's Change Conferences step
+    return dict(meta, conference=moved) if moved and moved != meta.get("conference") else meta
 
 
 @lru_cache(maxsize=1)

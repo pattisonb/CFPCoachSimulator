@@ -9,6 +9,18 @@
 .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row { grid-column: 1 / 3; }
 .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report { grid-column: 1 / -1; }
 .ofc-grid > .ofc-report-slot:empty { display: none; }
+/* Last Game down the first column; This Week's Plan and Recruiting Pulse beside it, What Changed under the two */
+.ofc-grid.ofc-split > .go-game-last { grid-column: 1; grid-row: span 2; }
+.ofc-grid.ofc-split > .ofc-plan { grid-column: 2; }
+.ofc-grid.ofc-split > :is(.ofc-report-slot, .go-report) { grid-column: 2 / -1; }
+/* the right side ends level with Last Game: This Week's Plan and Recruiting Pulse as tall as each other, What Changed
+   filling the rest (contain: size, so its length never stretches the row) and scrolling inside when it runs long */
+.ofc-grid.ofc-split > :is(.go-game-last, .ofc-plan, .ofc-recruit, .go-report) { align-self: stretch; }
+.ofc-grid.ofc-split { grid-template-rows: auto auto 1fr; }   /* Last Game's extra height goes to What Changed's row, not the plan's */
+.ofc-grid.ofc-split > .go-report { contain: size; min-height: 140px; display: flex; flex-direction: column; overflow: hidden; }
+.ofc-grid.ofc-split > .go-report > .card-bar, .ofc-grid.ofc-split > .go-report > p { flex: none; }
+.ofc-grid > .go-report > .go-report-rows { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }   /* every recruit who moved: the list scrolls */
+.ofc-grid.ofc-split > .go-report > .go-report-rows { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .ofc-grid > :is(.ofc-news, .ofc-conf, .ofc-targets) { align-self: stretch; }
 .ofc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; min-width: 0; }
 .ofc-row > :only-child { grid-column: 1 / -1; }
@@ -38,6 +50,11 @@
 .ofc-team-name { font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-size: 28px; font-weight: 800; text-transform: uppercase;
   letter-spacing: 0.4px; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ofc-team-sub { font-size: 14px; font-variant-numeric: tabular-nums; }
+/* the matchup's numbers under each name: the labels in a light gray, the numbers a darker one */
+.ofc-team-ovr { font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--muted) 70%, transparent); font-variant-numeric: tabular-nums; }
+.ofc-team-ovr b { color: var(--muted); font-weight: 700; font-size: 12px; }
+.ofc-ovr-part { white-space: nowrap; }
+@media (max-width: 899px) { .ofc-team-ovr { font-size: 10px; letter-spacing: 0; } .ofc-team-ovr b { font-size: 11px; } }
 .ofc-team .go-rank { font-size: 13px; color: var(--text); }
 .ofc-vs { font-family: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif; font-size: 22px; font-weight: 800; color: var(--muted); text-transform: uppercase; padding: 0; }
 .ofc-edge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 20px; }
@@ -111,7 +128,11 @@
 /* one column below 900 px; a phone stacks everything */
 @media (max-width: 899px) {
   .ofc-grid, .ofc-row { grid-template-columns: minmax(0, 1fr); }
-  .ofc-grid > *, .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row, .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report { grid-column: auto; }
+  .ofc-grid > *, .ofc-grid > .ofc-hero, .ofc-grid > .ofc-row, .ofc-grid > .ofc-report-slot, .ofc-grid > .go-report,
+  .ofc-grid.ofc-split > :is(.go-game-last, .ofc-plan, .ofc-report-slot, .go-report) { grid-column: auto; grid-row: auto; }
+  .ofc-grid.ofc-split { grid-template-rows: none; }
+  .ofc-grid.ofc-split > .go-report { contain: none; min-height: 0; }   /* a phone stacks the cards: What Changed at its own height */
+  .ofc-grid.ofc-split > .go-report > .go-report-rows { max-height: 320px; overflow-y: auto; }
 }
 @media (max-width: 599px) {
   .ofc-steps { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }
@@ -142,3 +163,14 @@
 /* This Week's Plan: Recruit started with hours left (not ticked) */
 .ofc-step.part .ofc-dot { background: var(--panel-2); color: var(--text); }
 .ofc-step-tag { margin-left: auto; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* the tiles line up (a pass over every week of a season, 1600 and 1280 px): cards sharing a row are as tall as each
+   other, and a title bar holding a button (Full Box Score, Board →) is as tall as a plain one */
+@media (min-width: 900px) {
+  .ofc-grid, .ofc-row { align-items: stretch; }
+  .ofc-grid .card-bar:has(.go-btn, button) { padding-top: 3px; padding-bottom: 3px; }
+  /* one line: a long postseason title (Week 18 · Final · the bowl's name) ends in an ellipsis, the whole on hover */
+  .ofc-grid .card-bar { flex-wrap: nowrap; }
+  .ofc-grid .card-bar > :first-child { min-width: 0; }
+  .ofc-grid .card-bar .go-kicker { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}

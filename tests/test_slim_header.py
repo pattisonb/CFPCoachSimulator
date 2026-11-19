@@ -144,8 +144,9 @@ def check_other_screens(page, base, sid, done) -> None:
     page.goto(f"{base}/index.html?id={sid}&screen=depth")
     page.wait_for_selector(".dc-card", timeout=120_000)
     assert not page.evaluate(SHOWN)
-    h = page.evaluate("() => [document.querySelector('#depth-screen').getBoundingClientRect().height, innerHeight]")
-    assert abs(h[0] - h[1]) <= 2, f"the depth chart fills the window: {h}"
+    time.sleep(0.8)
+    over = page.evaluate("() => document.documentElement.scrollHeight - innerHeight")
+    assert over <= 2, f"the depth chart's tab fits the window: the page scrolls {over}px"
     page.goto(f"{base}/index.html?id={done}")
     page.wait_for_selector("#tab-offseason .off-steps", timeout=120_000)
     page.click("#btn-menu")

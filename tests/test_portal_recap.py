@@ -84,9 +84,11 @@ if __name__ == "__main__":
         advance(sid)
         v2 = G(sid, "offseason")
         assert v2["stage"] == "staff" and check_recap(sid, v2) == rec
-        advance(sid)
-        v3 = G(sid, "offseason")
-        assert v3["stage"] == "ready" and check_recap(sid, v3) == rec
+        for _ in range(3):                      # Change Conferences, Edit Schedule, the recap
+            advance(sid)
+            v3 = G(sid, "offseason")
+            assert check_recap(sid, v3) == rec, v3["stage"]
+        assert v3["stage"] == "ready"
     finally:
         season.close_pool()
         shutil.rmtree(season.SEASONS_DIR, ignore_errors=True)

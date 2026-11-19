@@ -92,7 +92,7 @@ def test_one_per_recruit():
     assert len(roster_promises(st, pid)) == 1
 
 
-def test_hollow_costs():
+def test_promise_over_a_better_player_holds():
     st = fresh()
     pid = None
     for q in ranked(st):
@@ -103,8 +103,9 @@ def test_hollow_costs():
     setup(st, pid)
     sc = open_call(st, pid)
     r = recruiting.act(st, ME, pid, "promise_job", scene=sc["id"])
-    assert not r["truthful"] and abs(r["points"] + recruiting.ANSWER_HOLLOW * persona.hollow_mult(st, pid, ME)) < 1e-9, r
-    assert recruiting.cooled(st, ME, pid)
+    # the player's ask: a promised start is your word to play him over the better player (next season judges it), never hollow
+    assert r["truthful"] and r["points"] > 0, r
+    assert not recruiting.cooled(st, ME, pid)
 
 
 def test_crowd_and_strain():
@@ -224,4 +225,4 @@ if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
             fn()
-    print("promise job ok: it helps (more on his priority), one per recruit, a hollow one costs, a second at the position is worth less and strains the first; a promised player's score takes the strain; his next call says so once")
+    print("promise job ok: it helps (more on his priority), one per recruit, a promise over a better player holds, a second at the position is worth less and strains the first; a promised player's score takes the strain; his next call says so once")

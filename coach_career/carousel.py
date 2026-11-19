@@ -62,9 +62,10 @@ def goal(slug: str, state: Optional[dict] = None) -> dict:
     """What the AD expects every year: by the program's tier (the living rating)."""
     from coach_career import programs
     from sim import season
-    p4 = season._is_p4(slug, season.load_teams()[slug])
+    bt = season.load_teams()[slug]
+    p4 = season._is_p4(slug, bt)
     p = programs.get(state or {}, slug)
-    return programs.goal_for(p["tier"], p4, p["rating"])
+    return programs.goal_for(p["tier"], p4, p["rating"], bt.get("conference") in programs.INDEPENDENTS)
 
 
 def attract(state: dict, slug: str) -> float:

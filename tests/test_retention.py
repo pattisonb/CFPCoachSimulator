@@ -43,11 +43,12 @@ if __name__ == "__main__":
         offseason.retain(st, p0["id"], "nil", nil=budget + 1); raise AssertionError("NIL past the portal pool")
     except offseason.RetentionError as ex:
         assert ex.code == 400
-    # the chances: a met ask keeps him, a hollow promise does not, a first-round pick is gone
+    # the chances: a met ask keeps him, so does your promise of a start even behind a better player (next season judges
+    # whether you play him), a first-round pick is gone
     base = {"intent": "portal", "role_next": "bench", "ask": {"kind": "nil", "nil": 40, "known": True}, "offers": {"nil": 0, "promise": False}, "reason_key": "buried", "draft_pick": None}
     assert offseason.stay_chance({**base, "offers": {"nil": 40, "promise": False}}) >= 0.7
     assert offseason.stay_chance({**base, "offers": {"nil": 10, "promise": False}}) <= 0.3        # a lowball
-    assert offseason.stay_chance({**base, "ask": {"kind": "playing_time", "nil": 15, "known": True}, "offers": {"nil": 0, "promise": True}}) <= 0.3   # hollow: he would still sit
+    assert offseason.stay_chance({**base, "ask": {"kind": "playing_time", "nil": 15, "known": True}, "offers": {"nil": 0, "promise": True}}) >= 0.7   # your word: you start him over the better player
     assert offseason.stay_chance({**base, "role_next": "starter", "ask": {"kind": "playing_time", "nil": 15, "known": True}, "offers": {"nil": 0, "promise": True}}) >= 0.7
     assert offseason.stay_chance({**base, "intent": "draft", "draft_pick": 12, "offers": {"nil": 200, "promise": True}}) <= 0.12
     # a 95+ entrant after a decent season (tests/test_elite_draft.py): nearly impossible to keep, whatever you offer

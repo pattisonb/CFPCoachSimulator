@@ -102,11 +102,9 @@ def sweep(page, where: str, problems: list, skip: tuple = ()) -> list[str]:
         tab_click(page, tab)
         quiet(page)
         check(page, f"{where} {tab}", problems, standings=tab == "standings")
-        if tab == "depth":                     # a screen of its own: its team list is the league's, then back to the season
+        if tab == "depth":                     # its team list is the league's
             opts = page.eval_on_selector_all(".dc-team-select option", "os => os.map(o => o.value)")
             assert "alder-tech" in opts and "kent-state" not in opts, f"{where} depth: the team list"
-            page.click(".dc-btn-back")
-            page.wait_for_selector("#depth-screen", state="hidden", timeout=30_000)
         if os.environ.get("LEAGUE_TABS_VERBOSE"):
             print(f"    {where} {tab} ok", flush=True)
         seen.append(tab)

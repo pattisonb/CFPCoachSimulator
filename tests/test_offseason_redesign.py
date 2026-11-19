@@ -223,7 +223,7 @@ def check_retention(page, v: dict) -> None:
         assert labels == ["Meet", "Promise a Start", "Offer NIL", "Let Him Go"], labels
         hints = [b.inner_text().strip() for b in c.query_selector_all(".off-keep-acts .go-act > span")]
         assert len(hints) == 4 and all(h.endswith(".") for h in hints), hints
-        assert hints[1] == ("He would start." if e["role_next"] == "starter" else "He would not."), hints
+        assert hints[1] == ("He would start." if e["role_next"] == "starter" else f"You start him over {e['start_over']}." if e.get("start_over") else "You start him next season."), hints
 
 
 def check_portal(page, v: dict) -> None:
@@ -374,6 +374,18 @@ def run(base: str, sid: str, browser) -> None:
     stepper_ok(page, v)
     assert "YOUR STAFF" in text(page).upper()
     every_combo(page, "5-staff")
+    assert primary(page) == "Advance to Change Conferences", primary(page)
+    click_primary(page)
+    wait_page(page, "conferences")
+    stepper_ok(page, call(base, f"/api/season/{sid}/offseason"))
+    assert "NEXT SEASON'S CONFERENCES" in text(page).upper()
+    every_combo(page, "5b-conferences")
+    assert primary(page) == "Advance to Edit Schedule", primary(page)
+    click_primary(page)
+    wait_page(page, "schedule")
+    stepper_ok(page, call(base, f"/api/season/{sid}/offseason"))
+    assert "TRADE A NON-CONFERENCE GAME" in text(page).upper()
+    every_combo(page, "5c-schedule")
     assert primary(page) == "Finish the Offseason", primary(page)
     click_primary(page)
     wait_page(page, "ready")

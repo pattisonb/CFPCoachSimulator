@@ -227,3 +227,8 @@
 .hq-fpill.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 .hq-fpill.on .hq-fpill-k { color: color-mix(in srgb, var(--bg) 70%, transparent); }
 @media (max-width: 699px), (pointer: coarse) { .hq-fpill, .hq-fpill-sel { min-height: 44px; } }
+
+/* Promises */
+.hq-promise-head { margin: 8px 0 4px; }
+.hq-promise-head:first-child { margin-top: 0; }
+.hq-promise-what { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }

@@ -906,7 +906,7 @@ actions have earned with him.
 
 **Your week.** Hours: `50 + (recruiting rating - 50) / 4`. A message costs 5, a call 15 (half
 the time he lets slip one of his priorities, `CALL_REVEAL`, and you come away with his ask as a
-range of about 15% either side, not the number), a head coach in-home visit 30 (once a month; it
+range of about 15% either side, not the number), a head coach in-home visit 30 (yours once per recruit, an AI school's once a month; it
 tells you one priority for sure and his number), an official visit invite 10 (on a home weekend
 you pick: the Recruit menu's Official Visit opens a list of your regular-season home games still
 to play, "Wk 6 · vs #4 USC", the first weekend he has free marked; a weekend he already visits
@@ -1020,8 +1020,12 @@ Once he signs with you, his profile shows every attribute, now and at his potent
 specialists 0.3) with a spread. What he wants *from you* rises 15% per place you trail on his
 list, and 25% each time a rival's NIL on him is half again yours while you are in his top eight.
 His card shows a range ("wants about 30-60") until a call, in-home visit or official visit tells
-you the number. NIL points are a yearly budget from the program's level, attached to offers. An
-offer goes out with a pitch (what you are selling him) and a number: the NIL counts in full up to
+you the number. NIL points are a yearly budget from the program's level, attached to offers. Your
+offer (and your message) carries no pitch: it is worth your grades on what he cares about, the mean of your strength on his
+priorities as a pitch on one of them would be (`recruiting._grade_points`), never a backfire; pitching him on a call or visit is
+how you make your case. An offer may carry **Promise Him a Starting Role** when you have not promised it yet: the call's job
+promise (`_job_promise`), worth more where playing time is one of his priorities and judged through his first season. AI schools
+and Auto-recruit still offer with their strongest topic as a pitch. The NIL counts in full up to
 his ask and 30% past it; under half his ask (or nothing when he asks 20 or more) is a lowball:
 the offer itself earns nothing and he cools on you for three weeks (contacts count half, he
 declines a visit) until you **Raise NIL** to what he wants. AI schools offer up to 110% of his ask
@@ -1263,8 +1267,9 @@ Recruiting). The tab bar is one row of the
 screens you act on (Office, Offseason once the season is over, Recruiting, Prospects, Scouting,
 Schedule, Depth Chart) with a **League ▾** menu at its right end that follows the calendar (Standings, Rankings, Stats
 and, in a career, **Programs** all year; Awards from week 4; Classes from selection week; Bracket and Bowls as soon as Championship Week is played (the field is set then, so the Office can name your bowl or playoff game); Season Recap
-all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart button opens its own
-screen (`web/depth/depth.js`, `index.html?id=…&screen=depth`, Back returns to the season): the
+all year, and the title game lands the player on it). A plain season keeps every League tab. The Depth Chart is a tab like the
+others (`web/depth/depth.js`, `index.html?id=…&tab=depth`; an old `screen=depth` link lands on it), drawn in the page's
+card with its views (Overview, Players, Redshirts, Availability), the unit, the team and ⚙ Settings in one bar under the title: the
 team's most-used formations as the next game fills them (`formations_view`) or one position at a
 time (List view), a Players box of portraits, the Redshirts board and Availability; its moves,
 redshirts and position changes patch the screen in place (`CFP.ui.morph`), and god mode opens
@@ -1274,9 +1279,9 @@ a search and a sort, then a plain list beside one sticky pane. A list row is his
 line (stars, position, state) and one word of standing; a dot marks a move up or down this week.
 The pane is the only place anything happens to him: a head with his status chip and one **Recruit
 ▾** button, whose menu lists every action with its hour cost or the reason it waits (Once a
-week, Monthly, Offer him first, Finish your call first). Message and Offer… open a step in the
-pane: the pitch as a dropdown (his known priorities first, each with your program's case), the
-NIL points with his ask for an offer. A call or in-home visit plays as a conversation in **its own
+week, Once per recruit, Offer him first, Finish your call first). After his first call, **Call** is a quick check-in
+(the hours, `QUICK_CALL` of a call's worth, no conversation), the only call the menu offers; to pitch him again, visit. Message and Offer… open a step in the
+pane: no pitch, the NIL points with his ask for an offer, and the starting-role promise as a checkbox. A call or in-home visit plays as a conversation in **its own
 window** over the board (`openSceneWindow` in `web/recruiting.js`: the shared modal, a dialog with
 `aria-modal`, the focus kept inside, titled "Call · Marcus Bell" or "In-Home Visit · Marcus Bell";
 680 px wide on a desktop, the whole screen at 700 px and under). In it your turns sit right in a
@@ -1515,7 +1520,7 @@ of yours named in a widget (Player Impact and Retention, the Position Battle Boa
 kept aside, `prospects.profile`).
 Scouted Players (source `scouted`: the Scouting desk's scouted prospects by potential) shows them as tiles; a tile
 opens his report (the six grades from his profile's `our_grades`, as words) with arrows to step through and Back to
-All. Next Year's Depth Chart (`want=next_year`: every player the outlook keeps a class up by `offseason.NEXT_CLASS`,
+All. Promises (`want=promises`, `headquarters.promises_tracker`) lists every promise you have out: your players promised a start (this season's with the weekly chip from `promises.chips_now`, On Track, Slipping or Broken; next season's as Next Season) and each promise to a recruit (Starting Role, Starts Over a named player, Ahead of another recruit, Offer his mate, NIL by a week) as Open, Kept, Broken, Due Week N or Owed Next Season; one closed because he went elsewhere is left out. Next Year's Depth Chart (`want=next_year`: Commits, Offered, On Board and Contacted chips choose which recruits show; every player the outlook keeps a class up by `offseason.NEXT_CLASS`,
 best overall first, your commits and signees in their groups as they come in, and each group's need from
 `recruiting.needs_detail`, which allows for the usual attrition, so Class Needs and this agree). Coming Soon (`hq-widgets/planned.js`): Staff Assignments, which needs a recruiting mechanic of its own.
 
@@ -2144,7 +2149,7 @@ empty state only). Nothing hides or shows on scroll any more.
 **Settings and Download Career** live behind ☰ Menu in a career, on every tab. Their buttons
 (`#season-tools`, `#btn-settings`, `#btn-download-career`) stay in the page, hidden, and the menu
 clicks them; an older plain season, which has no Office, still shows them as buttons on every screen.
-The depth chart screen keeps its own ⚙ Settings in its sidebar. `tests/test_slim_header.py` checks all of
+The depth chart tab keeps its own ⚙ Settings in its bar. `tests/test_slim_header.py` checks all of
 it at 1280 and 400 px.
 
 **NIL economy** (`coach_career/recruiting.py` `portal_pool`, `reward`, `carry_over`; spec
@@ -2165,7 +2170,14 @@ players home cost and what carries), the portal board's header shows the pool, a
 season's Programs tab says "NIL carried over: 25 (of 135 this year)" on your program's card.
 
 **The Offseason screen** (`web/offseason.js`, `web/offseason.css`) walks the steps: Keep Them Home,
-Departures, the Transfer Portal's four weeks, Development, Staff Changes, then the Recap. **Every player's
+Departures, the Transfer Portal's four weeks, Development, Staff Changes, Change Conferences, Edit Schedule, then the
+Recap. **Change Conferences** (`offseason.move_conference`) moves a program to a conference that already exists (no new
+ones): the move is the league's (`lgd["conference_moves"]`, applied by `league.team_meta`, so it lasts), it is checked by
+drawing a schedule with it (one the conferences cannot schedule is refused), Undo moves it back, and the page lists every
+conference's members. **Edit Schedule** draws next season's schedule there (`offseason._draw_schedule`, the same
+`_rng(state, "schedule")` stream `next_season` drew it from, so an untouched schedule is the one it always was) and trades
+your non-conference games the way the Week 0 editor does (`season.schedule_options`/`schedule_swap` on next year's
+teams); `next_season` plays the schedule drawn there. **Every player's
 name opens his profile** (`nameLink`): a portal entrant (your board, Your Moves, Who Got Away) opens his Prospect
 Profile while the portal is open; anyone else, and every name once the portal closes, opens his player page by
 slug, where an **Offseason Status** banner (`offseason.player_next`'s `sentence`) says where he is now in one
@@ -2850,7 +2862,7 @@ anything; landing on one (a load, Back, Forward) draws the target tab, which cou
 | `poll` | Rankings: `ap`, `coaches`, `cfp`, `resume` |
 | `stats`, `steam`, `sview` | Stats: `team` for Team Stats; the player stats' team (`all` for the league) and view (`roster`, a category) |
 | `aview` | Awards: the view |
-| `screen=depth` | The depth chart over the tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` |
+| `tab=depth` | The depth chart tab, with its own `team`, `sub`, `unit`, `view`, `player`, `f`, `role` (an old `screen=depth` link lands here) |
 | `modal` | The open modals, bottom to top, repeated: `box:<event id>`, `player:<team>\|<name>\|<pos>[\|<slug>]` (the slug finds him on any team when the name or position moved), `resume:<team>\|<week>`, `profile:<pid>`, `settings`; on the Scouting tab `reports`, `reports:last_week`, `reports:flags` (All Reports on that tab); on the recruiting board `scene:<pid>`, an unfinished call or visit's window (it reopens once the board has drawn, while the board still has that call open; his reaction drops the token, so a finished one never comes back) |
 
 A top-level tab, the depth chart and a modal push a history entry (Back closes the modal, leaves
@@ -3703,7 +3715,7 @@ save may set `story`/`story_data` on `p["persona"]`; `persona.story(state, pid)`
 | Legacy (`school`, drawn by `exp(LEGACY_TILT × strength)`) | His legacy school is `LEGACY_HEAD` interest ahead (`story_interest`, not a place on his list). Other schools' Coach and Prestige pitches ×`LEGACY_PITCH` (`story_mult`). The legacy school's lowball cools him `LEGACY_COST` times longer (`lowball_weeks`), its hollow promise costs double (`hollow_mult(..., slug)`). An AI legacy school puts him at the front of its board when it signs his star level (`board_front`, `LEGACY_LEVEL`). | Complete report, or a visit where it comes up |
 | Hometown Hero (`state`) | Schools in his state: his pull ×`HERO_STATE`; out-of-state pitches ×`HERO_AWAY` except Playing Time and NIL. Blue-chip heroes join their state schools' boards. His commitment makes the league news. | Public |
 | Package Deal (`mate`, `lead`) | Paired both ways with one of the `MATE_NEAR` prospects rated just under him (his town, else his state). He commits (or flips) only where his mate holds an offer and both have room (`_pair_ok`); `_commit` brings the mate along the same week. An AI school that offers one offers the other. | Complete report, or his first call or visit |
-| Two-Sport | When he signs (either period), one roll `draft-{seed}-{pid}` against `draft_risk`: `DRAFT_RISK` less `DRAFT_PT` per Playing Time pitch from that school (`contact["pt"]`) and `DRAFT_NIL` per ask's worth of NIL over his ask, floor `DRAFT_FLOOR`. Going pro: status `signed/committed = "FCS"` with `pro: true`, the NIL unspent, a `pro` event; rows show "Pro Baseball" / "Went Pro in Baseball". Shown as "Draft Risk: High / Some / Low" from your school. | Complete report |
+| Two-Sport | When he signs (either period), one roll `draft-{seed}-{pid}` against `draft_risk`: `DRAFT_RISK` (0.10; 0.30 sent about 45 a class to baseball) less `DRAFT_PT` per Playing Time pitch from that school (`contact["pt"]`) and `DRAFT_NIL` per ask's worth of NIL over his ask, floor `DRAFT_FLOOR`. Going pro: status `signed/committed = "FCS"` with `pro: true`, the NIL unspent, a `pro` event; rows show "Pro Baseball" / "Went Pro in Baseball". Shown as "Draft Risk: High / Some / Low" from your school (`DRAFT_WORDS`: 8% and up, 4% and up, under). | Complete report |
 | Injury Comeback | Shown one star under his own (min two) with a shown composite in that band; his real stars and composite in `p["real"]`. Public grades understate him by `SHOWN_BAND`. AI schools that would offer him do so `COMEBACK_AI` of the time (`ai_doubts`, a fixed draw per school). A school that contacted him before `LOYALTY_WEEK` (`contact["loyal"]`) gets ×`LOYALTY` on its contacts. A look's error on his potential ×`COMEBACK_READ`. | Public |
 | Late Bloomer (`week` 5–9, `jump` 1–2) | Starts at two or three stars, his shown composite from the bottom `BLOOM_SHOWN` of that band (outside the top 300), `p["real"]` holding the truth. At the week step after his week (`persona.bloom`): real stars, composite and NIL ask back, unhidden, the class re-ranked (`rerank`, ranks stay 1..N), `rc["class_v"]` bumped (the tier, fit and rank caches key on it), a public `bloomed` event ("He jumped to four stars."), and the `BLOOM_BOARDS` AI schools he fits best add him (a blue chip at the front). | The jump is public; before it, a complete report |
 

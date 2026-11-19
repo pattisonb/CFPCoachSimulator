@@ -3056,7 +3056,7 @@ def _fcs_picker_names(teams: dict) -> dict[str, str]:
     return out
 
 
-def schedule_options(state: dict, event_id: str) -> list[dict]:
+def schedule_options(state: dict, event_id: str, teams: Optional[dict] = None) -> list[dict]:
     """Who could take the other side of one of your non-conference games: FBS teams with a
     non-conference game that week (the two displaced opponents would play each other), each
     with whether the school agrees and why; for an FCS date, the FCS teams (they always come)."""
@@ -3066,7 +3066,7 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
     if not g or event_id not in mine:
         raise ScheduleError(409, "that game cannot be traded now")
     me = state["team"]
-    teams = load_teams()
+    teams = teams or load_teams()           # the offseason's Edit Schedule passes next year's (conferences as moved)
     opp = g["home"] if g["away"] == me else g["away"]
     venue = "neutral" if g["neutral"] else "home" if g["home"] == me else "away"
     fcs = bool(teams[opp].get("fictional"))
@@ -3096,10 +3096,10 @@ def schedule_options(state: dict, event_id: str) -> list[dict]:
     return out
 
 
-def schedule_swap(state: dict, event_id: str, slug: str) -> dict:
+def schedule_swap(state: dict, event_id: str, slug: str, teams: Optional[dict] = None) -> dict:
     """Trade one of your non-conference games for `slug`'s that week: you play them at your old
     venue, your old opponent plays theirs in their old game."""
-    opts = {o["slug"]: o for o in schedule_options(state, event_id)}
+    opts = {o["slug"]: o for o in schedule_options(state, event_id, teams)}
     o = opts.get(slug)
     if o is None:
         raise ScheduleError(409, "that school is not available that week")
@@ -3107,7 +3107,7 @@ def schedule_swap(state: dict, event_id: str, slug: str) -> dict:
         raise ScheduleError(409, f"{o['name']} said no: {o['why']}")
     g = state["games"][event_id]
     me = state["team"]
-    teams = load_teams()
+    teams = teams or load_teams()
     old = g["home"] if g["away"] == me else g["away"]
     if o["venue"] == "home" or g["neutral"] and g["home"] == me:
         g["home"], g["away"] = me, slug
@@ -3367,6 +3367,15 @@ def _preview_prediction(state: dict, g: dict, sims: int) -> dict:
     return pred
 
 
+def _unit_overalls(team: Optional[dict]) -> Optional[dict]:
+    """A team's overall, offense and defense rounded to whole numbers (team_ratings: each unit weighted toward its
+    starters, as the unit overalls are everywhere); None for a team without ratings (an FCS stand-in)."""
+    r = (team or {}).get("team_ratings") or {}
+    if team is None or team.get("fictional") or not all(isinstance(r.get(k), (int, float)) for k in ("overall", "offense", "defense")):
+        return None
+    return {k: int(round(r[k])) for k in ("overall", "offense", "defense")}
+
+
 def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
     """This week for one team: the next game with both ranks and records, and a prediction
     from simulating it `sims` times (win odds, the likely score, the margin, the passer and
@@ -3390,6 +3399,7 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
                  "opponent_record": _record_str(rec[opp]) if opp in rec and not teams.get(opp, {}).get("fictional") else "",
                  "my_rank": ranks.get(slug), "my_record": _record_str(rec[slug]),
                  "venue": _venue(g, home), "rivalry": game_rivalry(state, g, after=g["played"])})
+    game["ratings"] = {"mine": _unit_overalls(teams.get(slug)), "theirs": _unit_overalls(teams.get(opp))}   # the Office's matchup: each side's overall, offense, defense
     if g["played"]:
         # game day is done: the result, not a prediction
         pf, pa = _scores_for(g, home)
