@@ -12,8 +12,30 @@ function luminance(hex: string): number {
   return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
 }
 
-/** The text color that reads on a team color: white, or near-black on a light one (gold, white, silver). */
-export const inkOn = (hex: string): string => (luminance(hex) > 0.4 ? "#111" : "#fff");
+/**
+ * *tune* How light a color must be before text on it turns dark. Near-black and white read equally well on a color of
+ * about 0.18; a little over that, so the deep team colors (crimson, navy, forest) keep white text and the bright ones
+ * (orange, gold, sky blue, silver) get dark text instead of white that washes out.
+ */
+const INK_FLIP = 0.22;
+
+/** The text color that reads on a team color: white on a deep one, near-black on a bright one. */
+export const inkOn = (hex: string): string => (luminance(hex) > INK_FLIP ? "#111" : "#fff");
+
+/** The page behind a panel, in each theme (globals.css --paper-hi): what a team color has to show up against. */
+const PAGE = { light: "#ffffff", dark: "#202020" } as const;
+/** *tune* A team color closer to the page than this (contrast ratio) is taken to disappear on it. */
+const ACCENT_MIN = 1.6;
+
+/**
+ * The team color to draw with on the page: the primary, unless it disappears against the page in this theme (white or
+ * cream on the light page, black or deep navy on the dark one). Then the secondary, when it shows up better.
+ */
+export function teamAccent(colors: { primary: string; secondary: string }, theme: "light" | "dark"): string {
+  const page = PAGE[theme];
+  if (contrast(colors.primary, page) >= ACCENT_MIN) return colors.primary;
+  return contrast(colors.secondary, page) > contrast(colors.primary, page) ? colors.secondary : colors.primary;
+}
 
 /** How far apart two colors' lightness is (WCAG contrast ratio), 1 (the same) to 21 (black on white). */
 export function contrast(a: string, b: string): number {

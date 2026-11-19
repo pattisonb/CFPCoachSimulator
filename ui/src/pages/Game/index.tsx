@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
@@ -26,12 +26,13 @@ import SeasonStrip from "../../components/SeasonStrip/index.tsx";
 import { api } from "../../api.ts";
 import { faces, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
+import { inkOn, teamAccent } from "../../colors.ts";
 import { hrefFor, navigate, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
 import type { Theme } from "../../theme.ts";
-import type { RecruitingBoard, SavedCoach, SeasonCoach, SeasonSummary, TeamCard } from "../../types.ts";
+import type { RecruitingBoard, SavedCoach, SeasonCoach, SeasonSummary, TeamCard, ScheduleGame } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -150,6 +151,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     else refresh();
   });
   const openBox = (id: string) => setGame({ id, live: false });
+  // the Offseason has the screen to itself: the season is over, so its week strip and the week's Energy say nothing
+  const bare = section.key === "offseason";
   /** a team's resume in a window (from Rankings and Programs) */
   const [resume, setResume] = useState<string | null>(null);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
@@ -172,12 +175,56 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
 
   const bySlug = useMemo(() => new Map(teams.map((t) => [t.slug, t])), [teams]);
   const myTeam = season ? bySlug.get(season.team) : undefined;
+  // your team's colors for the whole game: the primary, or the secondary when the primary would vanish against this
+  // theme's page; the text on it black or white, whichever reads
+  const accent = myTeam ? teamAccent(myTeam.colors, theme) : null;
+  const teamVars =
+    myTeam && accent
+      ? ({
+          "--team": accent,
+          "--team-2": accent === myTeam.colors.primary ? myTeam.colors.secondary : myTeam.colors.primary,
+          "--team-on": inkOn(accent),
+        } as CSSProperties)
+      : undefined;
+  // while a sim runs, the week strip and your record follow it: each result lands on its tile as the week is played
+  // (a game not on the schedule yet, a bowl or a playoff game, gets a tile of its own). Game Day keeps its score back
+  // for the playback.
+  const liveResults = sim.status?.kind === "gameday" ? undefined : sim.status?.results;
+  const stripGames = useMemo(() => {
+    const games = season?.schedule ?? [];
+    if (!liveResults?.length) return games;
+    const hit = (g: ScheduleGame) => liveResults.find((r) => r.week === g.week && r.opponent === g.opponent);
+    const known = games.map((g) => {
+      const r = g.played ? undefined : hit(g);
+      return r
+        ? {
+            ...g,
+            played: true,
+            won: r.won,
+            points_for: r.points_for,
+            points_against: r.points_against,
+            overtime: r.overtime,
+          }
+        : g;
+    });
+    const fresh = liveResults
+      .filter((r) => !games.some((g) => g.week === r.week && g.opponent === r.opponent))
+      .map((r) => ({ ...r, event_id: null, opponent_rank: null, played: true }) as unknown as ScheduleGame);
+    // a new game takes the place of that week's open date
+    return [...known.filter((g) => !(g.kind === "bye" && fresh.some((r) => r.week === g.week))), ...fresh].sort(
+      (a, b) => a.week - b.week,
+    );
+  }, [season?.schedule, liveResults]);
+  const stripWeek = (liveResults && sim.status?.current_week) || season?.current_week || 0;
+  const simRecord = sim.status?.kind === "gameday" ? undefined : sim.status?.record;
+  const simWeek = sim.status?.kind === "gameday" ? undefined : sim.status?.current_week;
   const navTeam: NavTeam | null = season && {
     name: season.team_name,
     primary: myTeam?.colors.primary ?? "var(--ink)",
     secondary: myTeam?.colors.secondary ?? "var(--paper)",
-    record: `${season.record.wins}-${season.record.losses}`,
-    week: season.current_week,
+    // a running sim moves the record and the week as it goes
+    record: `${(simRecord ?? season.record).wins}-${(simRecord ?? season.record).losses}`,
+    week: simWeek ?? season.current_week,
   };
 
   // ⌘\\ / Ctrl+\\: hide the sidebar, or show it again as it was before
@@ -225,7 +272,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   );
 
   return (
-    <div className="game">
+    <div className="game" style={teamVars}>
       <GameNav
         team={navTeam}
         active={section.key}
@@ -238,7 +285,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           setNavMode(next);
         }}
       />
-      <main className="game__main">
+      <main className={`game__main${bare && navMode !== "hidden" ? " is-bare" : ""}`}>
         {/* the season so far and to come, then you */}
         <div className="game__top">
           {navMode === "hidden" && (
@@ -252,16 +299,16 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
               <SidebarSimple size={20} weight="bold" aria-hidden="true" />
             </button>
           )}
-          {season && (
+          {season && !bare && (
             <SeasonStrip
-              games={season.schedule}
+              games={stripGames}
               teams={bySlug}
               weekLabels={season.week_labels}
-              week={season.current_week}
+              week={stripWeek}
               onBox={openBox}
             />
           )}
-          {season && coach && face && (
+          {season && coach && face && !bare && (
             <CoachBadge
               name={coachName(coach)}
               team={season.team_name}

@@ -4,7 +4,8 @@ import type { SimStatus } from "./types.ts";
 
 // Running the season forward. POST /advance (a week, or through week `to`) or /gameday (your game alone) starts a job
 // on the server, which plays it a week at a time in the background (tools/dev_server.py, web/worker.js); the page
-// polls /status until the job is idle again, then reloads what changed.
+// polls /status until the job is idle again, then reloads what changed. Each poll carries your results so far
+// (?since=0), your record and the week the sim has reached, so the page can show them as they happen.
 
 /** *tune* How often a running sim is checked. */
 const POLL_MS = 450;
@@ -35,7 +36,7 @@ export function useSim(seasonId: string | null, onDone: (last?: SimStatus) => vo
   const poll = useCallback(() => {
     window.clearTimeout(timer.current);
     if (!seasonId) return;
-    api<SimStatus>(`/api/season/${seasonId}/status`)
+    api<SimStatus>(`/api/season/${seasonId}/status?since=0`)
       .then((s) => {
         if (s.status === "running") {
           setStatus(s);
@@ -56,7 +57,7 @@ export function useSim(seasonId: string | null, onDone: (last?: SimStatus) => vo
   useEffect(() => {
     if (!seasonId) return;
     let live = true;
-    api<SimStatus>(`/api/season/${seasonId}/status`)
+    api<SimStatus>(`/api/season/${seasonId}/status?since=0`)
       .then((s) => {
         if (!live || s.status !== "running") return;
         setStatus(s);

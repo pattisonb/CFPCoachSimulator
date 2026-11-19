@@ -137,3 +137,17 @@ input {
   background: var(--tile);
   border: var(--line) solid var(--ink);
 }
+
+/* A profile's head and tab row, pinned to the top of whatever scrolls it (a window, the Depth Chart's side, the
+   Recruiting panel). The scroller says how much top padding it has (--pin-pad) and what it is painted with (--pin-bg),
+   so the pinned part covers that padding and nothing shows above or through it. */
+.pin-top {
+  position: sticky;
+  top: calc(-1 * var(--pin-pad, 0px));
+  z-index: 3;
+  display: grid;
+  gap: var(--s2);
+  margin-top: calc(-1 * var(--pin-pad, 0px));
+  padding: var(--pin-pad, 0px) 0 var(--s2);
+  background: var(--pin-bg, var(--paper-hi));
+}

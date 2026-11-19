@@ -148,61 +148,64 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
 
   return (
     <article className="player-view" aria-label={p.name}>
-      <ProfileHead
-        face={<Face face={lookOf(p.face, p.slug, p.position)} scale={6} label="" />}
-        corner={
-          onEditLook && (
-            <Tooltip text={m.editLookTip} title={m.editLook}>
-              <button type="button" aria-label={m.editLook} onClick={onEditLook}>
-                <PencilSimple size={14} weight="bold" aria-hidden="true" />
-              </button>
-            </Tooltip>
-          )
-        }
-        name={p.name}
-        beside={[p.jersey && m.jersey(p.jersey), p.position].filter(Boolean).join(" ")}
-        line={[formatClass(p.class), p.height, p.weight ? m.pounds(p.weight) : null].filter(Boolean).join(" · ")}
-        tags={
-          <>
-            {/* his place on the depth chart, as a tag: WR2 (a starter's in ink) */}
-            <HeadTag
-              solid={p.starter}
-              tip={{
-                title: m.depthChart,
-                text: p.role && p.depth ? m.spotTip(ordinal(p.depth), p.role, p.starter) : m.notOnChartTip,
-              }}
-            >
-              {spot ?? m.notOnChart}
-            </HeadTag>
-            {p.archetype && <span>{p.archetype}</span>}
-            {pr?.stars ? (
-              <Tooltip text={m.starsTip} title={m.stars(pr.stars)}>
-                <span className="player-view__stars" role="img" aria-label={m.stars(pr.stars)}>
-                  {Array.from({ length: pr.stars }, (_, k) => (
-                    <Star key={k} size={14} weight="fill" aria-hidden="true" />
-                  ))}
-                </span>
+      {/* his head and his tabs stay at the top while the tab under them scrolls */}
+      <div className="pin-top">
+        <ProfileHead
+          face={<Face face={lookOf(p.face, p.slug, p.position)} scale={6} label="" />}
+          corner={
+            onEditLook && (
+              <Tooltip text={m.editLookTip} title={m.editLook}>
+                <button type="button" aria-label={m.editLook} onClick={onEditLook}>
+                  <PencilSimple size={14} weight="bold" aria-hidden="true" />
+                </button>
               </Tooltip>
-            ) : null}
-            {p.moved_from && <HeadTag tip={{ text: m.wasTitle(p.moved_from) }}>{m.was(p.moved_from)}</HeadTag>}
-            {p.injury && <HeadTag solid>{m.out}</HeadTag>}
-            {p.redshirt?.on && <HeadTag>{m.rs}</HeadTag>}
-          </>
-        }
-        cells={[
-          { label: m.status, value: status },
-          { label: m.thisSeason, value: season },
-          { label: m.form, value: pr?.morale?.enabled ? pr.morale.label : m.none },
-        ]}
-        tile={{ label: m.overall, value: p.overall, aria: m.overallLabel(p.overall), soft: tier(p.overall) === "lo" }}
-      />
+            )
+          }
+          name={p.name}
+          beside={[p.jersey && m.jersey(p.jersey), p.position].filter(Boolean).join(" ")}
+          line={[formatClass(p.class), p.height, p.weight ? m.pounds(p.weight) : null].filter(Boolean).join(" · ")}
+          tags={
+            <>
+              {/* his place on the depth chart, as a tag: WR2 (a starter's in ink) */}
+              <HeadTag
+                solid={p.starter}
+                tip={{
+                  title: m.depthChart,
+                  text: p.role && p.depth ? m.spotTip(ordinal(p.depth), p.role, p.starter) : m.notOnChartTip,
+                }}
+              >
+                {spot ?? m.notOnChart}
+              </HeadTag>
+              {p.archetype && <span>{p.archetype}</span>}
+              {pr?.stars ? (
+                <Tooltip text={m.starsTip} title={m.stars(pr.stars)}>
+                  <span className="player-view__stars" role="img" aria-label={m.stars(pr.stars)}>
+                    {Array.from({ length: pr.stars }, (_, k) => (
+                      <Star key={k} size={14} weight="fill" aria-hidden="true" />
+                    ))}
+                  </span>
+                </Tooltip>
+              ) : null}
+              {p.moved_from && <HeadTag tip={{ text: m.wasTitle(p.moved_from) }}>{m.was(p.moved_from)}</HeadTag>}
+              {p.injury && <HeadTag solid>{m.out}</HeadTag>}
+              {p.redshirt?.on && <HeadTag>{m.rs}</HeadTag>}
+            </>
+          }
+          cells={[
+            { label: m.status, value: status },
+            { label: m.thisSeason, value: season },
+            { label: m.form, value: pr?.morale?.enabled ? pr.morale.label : m.none },
+          ]}
+          tile={{ label: m.overall, value: p.overall, aria: m.overallLabel(p.overall), soft: tier(p.overall) === "lo" }}
+        />
 
-      <div className="player-view__tabs" role="tablist" aria-label={m.about}>
-        {TABS.map((k) => (
-          <Chip key={k} role="tab" on={tab === k} onClick={() => setTab(k)}>
-            {m.tabs[k]}
-          </Chip>
-        ))}
+        <div className="player-view__tabs" role="tablist" aria-label={m.about}>
+          {TABS.map((k) => (
+            <Chip key={k} role="tab" on={tab === k} onClick={() => setTab(k)}>
+              {m.tabs[k]}
+            </Chip>
+          ))}
+        </div>
       </div>
 
       {error && <p className="player-view__soft">{m.loadError(error)}</p>}

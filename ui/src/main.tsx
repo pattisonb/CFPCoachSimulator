@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import BusyNote from "./components/BusyNote/index.tsx";
 import { installTitleTips } from "./components/Tooltip/titleTips.ts";
 import "./fonts.css";
 import "./globals.css";
@@ -12,5 +13,6 @@ installTitleTips();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
+    <BusyNote />
   </StrictMode>,
 );

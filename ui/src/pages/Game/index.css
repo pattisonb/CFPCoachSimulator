@@ -26,6 +26,15 @@
   flex: 1;
 }
 
+/* a section with no top row (the Offseason): the section takes the whole height */
+.game__main.is-bare {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.game__main.is-bare .game__top {
+  display: none;
+}
+
 /* the strip's tiles stretch to the card's height; both leave the same room below for their shadows, so their
    bottom edges line up */
 .game__top .coach-badge {

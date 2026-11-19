@@ -377,6 +377,25 @@ export interface SimStatus {
   error: string | null;
   /** Game Day: your game's id once it has been played, for the playback */
   gameday_event?: string | null;
+  /** the last week the sim has finished */
+  current_week?: number;
+  record?: { wins: number; losses: number; conf_wins: number; conf_losses: number };
+  /** your games played so far (sim/season.py my_results), for the week strip while a sim runs */
+  results?: SimResult[];
+}
+
+/** One of your results as a running sim reports it. */
+export interface SimResult {
+  week: number;
+  title: string | null;
+  kind: string;
+  won: boolean;
+  points_for: number;
+  points_against: number;
+  opponent: string;
+  opponent_name: string;
+  venue: "home" | "away" | "neutral" | null;
+  overtime: number;
 }
 
 /** A player as the depth chart shows him (sim/season.py _depth_card): GET /api/season/{id}/depth/{team} */

@@ -822,8 +822,8 @@ def _tidy_byes(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Rando
 def _week_zero(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Random) -> None:
     """Week 0 (engine week 1), as the real calendar has it: a handful of games the Saturday before Labor Day. The full
     grid opens everyone in week 1; here all but about WEEK0_GAMES of those games move to a later week both teams have
-    free (a bye they share, nearest the start first), or, when one game blocks such a week, that game first moves to a
-    bye its own two teams share. Kept, in order: the set-week openers (data/series.json), other neutral-site games, then
+    free (a bye they share, nearest the start first), or, when games block such a week (one, or one for each side), those
+    games first move to byes their own teams share. Kept, in order: the set-week openers (data/series.json), other neutral-site games, then
     a random few. A game that cannot move stays. Only real teams' weeks count (the FCS stand-ins play many a week)."""
     real = lambda t: t in fbs                         # fbs: the real teams (no FCS stand-in)
     slot: dict = {}                                   # (team, week) -> its game there
@@ -843,26 +843,38 @@ def _week_zero(games: list[dict], fbs: dict, fixed_weeks: set, rng: random.Rando
     later = [w for w in range(WEEK0 + 1, LAST_WEEK + 1) if w != FINALE_WEEK]
     opening = [g for g in games if g["week"] == WEEK0]
     opening.sort(key=lambda g: (0 if id(g) in fixed_weeks else 1 if g.get("neutral") else 2, rng.random()))
-    for g in opening[WEEK0_GAMES:]:
+    # from the least wanted up, move games out until about WEEK0_GAMES are left: one that cannot move stays and counts
+    # toward them (it used to stay on top of the WEEK0_GAMES kept, which left a dozen or more)
+    left = len(opening)
+    for g in reversed(opening):
+        if left <= WEEK0_GAMES:
+            break
         if id(g) in fixed_weeks:
             continue
         w = next((w for w in later if free(g, w)), None)
         if w is None:
+            # no week both have open: clear one. The games in the way that week (one, or one for each side) each move
+            # to a week their own two teams have open; a game that cannot move leaves the week as it is
             for w2 in later:
                 block = {id(slot[(t, w2)]): slot[(t, w2)] for t in sides(g) if (t, w2) in slot}
-                if len(block) != 1:
+                if not block or any(id(b) in fixed_weeks or b["kind"] == "conf" and w2 == FINALE_WEEK for b in block.values()):
                     continue
-                b = next(iter(block.values()))
-                if id(b) in fixed_weeks or b["kind"] == "conf" and w2 == FINALE_WEEK:
+                plan, taken = [], set()               # (game, its new week); a team's week is promised once
+                for b in block.values():
+                    to = next((w3 for w3 in later if w3 != w2 and free(b, w3) and not any((t, w3) in taken for t in sides(b))), None)
+                    if to is None:
+                        break
+                    plan.append((b, to))
+                    taken.update((t, to) for t in sides(b))
+                if len(plan) != len(block):
                     continue
-                to = next((w3 for w3 in later if w3 != w2 and free(b, w3)), None)
-                if to is None:
-                    continue
-                move(b, to)
+                for b, to in plan:
+                    move(b, to)
                 w = w2
                 break
         if w is not None:
             move(g, w)
+            left -= 1
 
 
 def _prefs(g: dict) -> list:

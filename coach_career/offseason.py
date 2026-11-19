@@ -1687,6 +1687,13 @@ def rv2_tier(ab: str) -> int:
     return rv2.TRAIT_TIERS.get(ab.split("|")[-1], 0)
 
 
+def _overall_weights(pos: str) -> dict:
+    """The ratings our overall formula reads at a position, with their weights (teamdata/game_scale.py overall)."""
+    from teamdata import game_scale
+    table = game_scale.data()["overall"]
+    return (table.get(pos) or table[game_scale._FIRST.get(game_scale.group(pos), "QB")])["w"]
+
+
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starter: bool = False) -> int:
     """One offseason's growth on our scale: each skill closes part of its gap to potential at his
     coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
@@ -1961,11 +1968,17 @@ def _develop_all(state: dict) -> dict:
             starter = (perf.get(p["id"]) or {}).get("z") is not None
             if starter and year_pace(p, True) > year_pace(p):
                 why.append(f"Started as a {'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore'}")
+            was = list(p["r"]) if slug == state["team"] else None          # your players' ratings before, for the report
             g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng, starter)
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
-                mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why,
+                # each rating that moved, with where it was and is (the Development card): a view of the growth, never read back
+                # `w`: the rating's weight in his position's overall formula (w times the change is what it added to his overall)
+                weights = _overall_weights(p["pos"])
+                grew = [{"key": k, "from": a, "to": b, "w": round(weights.get(k, 0.0), 4)}
+                        for k, a, b in zip(attrs, was or [], p["r"]) if b != a]
+                mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why, "grew": grew,
                              "transfer": p.get("transfer") if _new_transfer(state["offseason"], p, slug) else None})
     mine.sort(key=lambda r: -r["gain"])
     return {"mean_gain_ea": round(st.mean(gains), 2) if gains else 0.0, "mine": mine, "raised_ceilings": breakouts,

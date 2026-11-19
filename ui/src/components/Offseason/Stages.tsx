@@ -1,16 +1,18 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight } from "@phosphor-icons/react";
-import DataTable, { type Column } from "../DataTable/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
+import Modal from "../Modal/index.tsx";
 import Face from "../Face/index.tsx";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
+import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { playerFace } from "../../faces.ts";
 import { formatClass } from "../../format.ts";
+import type { TeamCard } from "../../types.ts";
 import type { StageProps } from "./index.tsx";
 import { messages as m } from "./messages.ts";
-import type { Candidate, ConferencesView, Departure, JobRow, Leaver, NextSchedule, OffPlayer } from "./types.ts";
+import type { Candidate, ConferencesView, Departure, Grown, JobRow, Leaver, NextSchedule } from "./types.ts";
 
 type P = StageProps;
 
@@ -29,14 +31,6 @@ export function Stage({ stage, ...p }: P & { stage: string }) {
 
 // ---------- small shared pieces ----------
 
-const who = (x: OffPlayer) => (
-  <span className="off__who">
-    <b>{x.name}</b>
-    <span className="off__soft">
-      {x.pos} · {formatClass(x.cls)}
-    </span>
-  </span>
-);
 const Btn = ({
   children,
   on,
@@ -48,6 +42,15 @@ const Btn = ({
 );
 const Tag = ({ children, solid }: { children: ReactNode; solid?: boolean }) => (
   <span className={`off__tag${solid ? " is-solid" : ""}`}>{children}</span>
+);
+/** A tag in a school's own color (a player signed there, a coach hired there). */
+const TeamTag = ({ children, team }: { children: ReactNode; team: TeamCard | undefined }) => (
+  <span
+    className="off__tag is-team"
+    style={team ? ({ "--c": team.colors.primary, "--on": inkOn(team.colors.primary) } as CSSProperties) : undefined}
+  >
+    {children}
+  </span>
 );
 const Empty = ({ children }: { children: ReactNode }) => <p className="off__soft">{children}</p>;
 const teamName = (teams: P["teams"], slug: string) => teams.get(slug)?.name ?? slug;
@@ -99,38 +102,6 @@ function ReviewPanel({ v, busy, live, act }: P) {
   );
 }
 
-/** Your call on each redshirt (a player who sat most of the year keeps the year). */
-function Redshirts({ v, busy, live, act }: P) {
-  const rs = v.redshirts;
-  if (!rs.players.length) return null;
-  const open = live && !rs.decided;
-  return (
-    <Panel title={m.redshirts.title} aside={open ? m.redshirts.note : m.redshirts.decided}>
-      <ul className="off__list">
-        {rs.players.map((x) => (
-          <li key={x.id}>
-            {who(x)}
-            <span className="off__soft">{m.redshirts.games(x.games, x.team_games)}</span>
-            <b className="off__num">{x.overall}</b>
-            {open ? (
-              <Btn
-                on={x.redshirt}
-                disabled={busy}
-                aria-pressed={x.redshirt}
-                onClick={() => act("/redshirt", { pid: x.id, on: !x.redshirt })}
-              >
-                {x.redshirt ? m.redshirts.on : m.redshirts.off}
-              </Btn>
-            ) : (
-              <Tag solid={x.redshirt}>{x.redshirt ? m.redshirts.on : m.redshirts.off}</Tag>
-            )}
-          </li>
-        ))}
-      </ul>
-    </Panel>
-  );
-}
-
 // ---------- Your meeting with the AD: the offseason's first step ----------
 
 function Meeting(p: P) {
@@ -153,23 +124,86 @@ function Meeting(p: P) {
 
 // ---------- Keep Them Home ----------
 
+/** *tune* A released card's fade, and the slide of the cards that close up after it, in ms. */
+const CARD_FADE = 180;
+const CARD_SLIDE = 320;
+
 function Retention(p: P) {
   const { v, busy, live, act } = p;
   const rt = v.retention;
+  // the ones you let go drop to the back of the row, in the order they were in
+  const ordered = [...rt.players.filter((x) => !x.offers.released), ...rt.players.filter((x) => x.offers.released)];
+  const order = ordered.map((x) => x.id).join("|");
+
+  // When a card is let go: the row stays scrolled where it is, the card fades out where it stood, the cards after it
+  // slide forward to close the gap, and it fades back in at the end of the row.
+  /** a player whose full card is open over the row */
+  const [card, setCard] = useState<PlayerRef | null>(null);
+  const row = useRef<HTMLUListElement>(null);
+  const lefts = useRef(new Map<string, number>());
+  const wasGone = useRef(new Set<string>());
+  const scrollAt = useRef(0);
+  useLayoutEffect(() => {
+    const ul = row.current;
+    if (!ul) return;
+    ul.scrollLeft = scrollAt.current; // a reorder must not move what you are looking at
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const next = new Map<string, number>();
+    const gone = new Set<string>();
+    for (const li of [...ul.children] as HTMLElement[]) {
+      const id = li.dataset.id ?? "";
+      const left = li.offsetLeft;
+      next.set(id, left);
+      const released = li.classList.contains("is-gone");
+      if (released) gone.add(id);
+      const was = lefts.current.get(id);
+      if (still || was == null) continue;
+      const from = `translateX(${was - left}px)`;
+      if (released && !wasGone.current.has(id)) {
+        // the card just let go: out where it stood, then in at its new place (dimmed, as a released card rests)
+        const cut = CARD_FADE / (CARD_FADE + CARD_SLIDE);
+        li.animate(
+          [
+            { transform: from, opacity: 1 },
+            { transform: from, opacity: 0, offset: cut },
+            { transform: "none", opacity: 0, offset: Math.min(0.99, cut + 0.01) },
+            { transform: "none", opacity: 0.55 },
+          ],
+          { duration: CARD_FADE + CARD_SLIDE, easing: "ease-out" },
+        );
+      } else if (was !== left) {
+        // everyone else waits for the fade, then slides to where it now belongs
+        li.animate([{ transform: from }, { transform: "none" }], {
+          duration: CARD_SLIDE,
+          delay: CARD_FADE,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "backwards",
+        });
+      }
+    }
+    lefts.current = next;
+    wasGone.current = gone;
+  }, [order]);
   return (
     <>
       {/* the players thinking of leaving: a row of cards that scrolls sideways, one a player */}
       <section className="off__keep" aria-label={m.keep.title}>
         <header className="off__keep-head">
-          <h3>{m.keep.title}</h3>
-          <span className="off__soft">{m.keep.count(rt.players.length)}</span>
+          <h3>{m.keep.count(rt.players.length)}</h3>
           <span className="off__tag is-solid">{m.keep.pool(rt.left, rt.budget)}</span>
         </header>
         {!rt.players.length ? (
           <Empty>{m.keep.none}</Empty>
         ) : (
-          <ul className="off__cards" tabIndex={0}>
-            {rt.players.map((x) => (
+          <ul
+            className="off__cards"
+            tabIndex={0}
+            ref={row}
+            onScroll={(e) => {
+              scrollAt.current = e.currentTarget.scrollLeft;
+            }}
+          >
+            {ordered.map((x) => (
               <LeaverCard
                 key={x.id}
                 x={x}
@@ -177,12 +211,13 @@ function Retention(p: P) {
                 busy={busy}
                 live={live}
                 act={act}
-                colors={p.teams.get(p.season.team)?.colors}
+                onCard={() => setCard({ team: p.season.team, name: x.name })}
               />
             ))}
           </ul>
         )}
       </section>
+      <PlayerWindow seasonId={p.season.id} who={card} weekLabels={p.season.week_labels} onClose={() => setCard(null)} />
     </>
   );
 }
@@ -197,20 +232,21 @@ function LeaverCard({
   busy,
   live,
   act,
-  colors,
+  onCard,
 }: {
   x: Leaver;
   left: number;
   busy: boolean;
   live: boolean;
   act: P["act"];
-  colors?: { primary: string; secondary: string };
+  /** open his full player card */
+  onCard: () => void;
 }) {
   const [nil, setNil] = useState(x.offers.nil || x.ask.nil || 0);
   const gone = x.offers.released;
   const style = {
-    "--c": colors?.primary ?? "var(--ink)",
-    "--on": colors ? inkOn(colors.primary) : "var(--paper-hi)",
+    "--c": "var(--team, var(--ink))",
+    "--on": "var(--team-on, var(--paper-hi))",
   } as CSSProperties;
   const ask = !x.met
     ? m.keep.askUnknown
@@ -220,16 +256,18 @@ function LeaverCard({
         ? m.keep.askRoleShort
         : m.keep.askNoneShort;
   return (
-    <li className={`off-card${gone ? " is-gone" : ""}`} style={style}>
+    <li className={`off-card${gone ? " is-gone" : ""}`} style={style} data-id={x.id}>
       <header className="off-card__top">
-        <span className="off-card__face">
-          <Face face={playerFace(x.id, x.pos)} scale={3} label="" />
+        <span className="face-tile off-card__face">
+          <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
         </span>
         <span className="off-card__name">
           <span className="off-card__pos">
             {x.pos} · {formatClass(x.cls)}
           </span>
-          <b>{x.name}</b>
+          <button type="button" className="off-card__open" title={m.keep.openCard(x.name)} onClick={onCard}>
+            {x.name}
+          </button>
           <span className="off-card__intent">{m.intents[x.intent] ?? x.intent}</span>
         </span>
         <span className="off-card__ovr">
@@ -311,133 +349,203 @@ function LeaverCard({
 
 // ---------- Departures ----------
 
+/** *tune* How many of the best players lost get a card of their own. */
+const TOP_LOSSES = 5;
+/** How a player left, in the order the board's columns stand. */
+const WAYS = ["portal", "draft", "undrafted", "graduated", "quit"];
+
+/**
+ * Departures: who is gone, at a glance. Four numbers up top (how many left, how many to the portal, how Keep Them Home
+ * went, the best player lost); the biggest losses as cards; then everyone as a board, a column for each way out
+ * (portal, draft, graduated…), each player a bar of his overall so the weight of a column shows. Under it your
+ * redshirt calls as tiles, and the draft's first round as a board of picks (folded: it is the league's news, not
+ * yours).
+ */
 function Departures(p: P) {
-  const { v, season } = p;
+  const { v, season, teams, busy, live, act } = p;
   const d = v.departures;
+  const gone = [...d.mine].sort((a, b) => b.overall - a.overall);
   const results = v.retention.results ?? [];
-  const cols: Column<Departure>[] = [
-    { key: "who", label: m.cols.player, render: (x) => who(x), sort: (x) => x.name },
-    { key: "ovr", label: m.cols.overall, num: true, render: (x) => x.overall, sort: (x) => x.overall },
-    { key: "kind", label: m.cols.how, render: (x) => x.kind_name ?? m.kinds[x.kind] ?? x.kind, sort: (x) => x.kind },
-  ];
+  const stayed = results.filter((r) => r.status === "stayed").length;
+  const best = gone[0];
+  const top = gone.slice(0, TOP_LOSSES);
+  const ways = [...new Set(gone.map((x) => x.kind))].sort(
+    (a, b) => (WAYS.indexOf(a) + 1 || 99) - (WAYS.indexOf(b) + 1 || 99),
+  );
+  const how = (x: Departure) => x.kind_name ?? m.kinds[x.kind] ?? x.kind;
+  const max = Math.max(...gone.map((x) => x.overall), 1);
+  const cardStyle = {
+    "--c": "var(--team, var(--ink))",
+    "--on": "var(--team-on, var(--paper-hi))",
+  } as CSSProperties;
+  const rs = v.redshirts;
+  const rsOpen = live && !rs.decided;
+  const league = d.league;
+
   return (
-    <Panels>
-      {results.length > 0 && (
-        <Panel title={m.results.title}>
-          <ul className="off__list">
-            {results.map((x) => (
-              <li key={x.id}>
-                {who(x)}
+    <div className="dev">
+      <dl className="dev__stats">
+        <div>
+          <dt className="label">{m.departures.goneLabel}</dt>
+          <dd>{gone.length}</dd>
+        </div>
+        <div>
+          <dt className="label">{m.departures.portalLabel}</dt>
+          <dd>{gone.filter((x) => x.kind === "portal").length}</dd>
+        </div>
+        {results.length > 0 && (
+          <div>
+            <dt className="label">{m.departures.keptLabel}</dt>
+            <dd>{m.departures.keptLine(stayed, results.length)}</dd>
+          </div>
+        )}
+        {best && (
+          <div>
+            <dt className="label">{m.departures.bestLabel}</dt>
+            <dd>
+              {best.overall} <small>{best.name}</small>
+            </dd>
+          </div>
+        )}
+      </dl>
+      <p className="off__soft">
+        {m.departures.leagueLine(
+          league.portal ?? 0,
+          league.graduated ?? 0,
+          (league.draft ?? 0) + (league.declared ?? 0),
+        )}
+      </p>
+
+      {!gone.length ? (
+        <Empty>{m.departures.none}</Empty>
+      ) : (
+        <>
+          <section aria-label={m.departures.biggest}>
+            <h3 className="label dev__kicker">{m.departures.biggest}</h3>
+            <ul className="dev__jumps">
+              {top.map((x) => (
+                <li key={x.id} className="dev-card" style={cardStyle}>
+                  <header className="dev-card__top">
+                    <span className="face-tile dev-card__face">
+                      <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                    </span>
+                    <b className="dev-card__gain">{x.overall}</b>
+                  </header>
+                  <b className="dev-card__name">{x.name}</b>
+                  <span className="off__soft">
+                    {x.pos} · {formatClass(x.cls)}
+                  </span>
+                  <span className="dev-card__line">
+                    <Tag solid={x.kind === "portal"}>{how(x)}</Tag>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* everyone, a column for each way out */}
+          <section className="dev__chart" aria-label={m.departures.yours}>
+            <header className="dev__chart-head">
+              <h3 className="label dev__kicker">{m.departures.yours}</h3>
+            </header>
+            <div className="gone">
+              {ways.map((w) => {
+                const list = gone.filter((x) => x.kind === w);
+                return (
+                  <section key={w} className="gone__col">
+                    <h4 className="gone__head">
+                      <b>{how(list[0])}</b>
+                      <span className="off__tag is-solid">{list.length}</span>
+                    </h4>
+                    <ol className="gone__list">
+                      {list.map((x) => (
+                        <li key={x.id}>
+                          <span className="dev__who gone__who">
+                            <b>{x.name}</b>
+                            <span className="off__soft">{x.pos}</span>
+                          </span>
+                          <span className="dev__track" aria-hidden="true">
+                            <i className="dev__gain" style={{ left: 0, width: `${(100 * x.overall) / max}%` }} />
+                          </span>
+                          <b className="dev__now">{x.overall}</b>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* your redshirt calls: a tile a player, his switch on it */}
+      {rs.players.length > 0 && (
+        <section aria-label={m.redshirts.title}>
+          <h3 className="label dev__kicker">
+            {m.redshirts.title} · {rsOpen ? m.redshirts.note : m.redshirts.decided}
+          </h3>
+          <ul className="shirts">
+            {rs.players.map((x) => (
+              <li key={x.id} className={`shirt${x.redshirt ? " is-on" : ""}`}>
+                <span className="shirt__who">
+                  <b>{x.name}</b>
+                  <span className="off__soft">
+                    {x.pos} · {formatClass(x.cls)} · {m.redshirts.games(x.games, x.team_games)}
+                  </span>
+                </span>
                 <b className="off__num">{x.overall}</b>
-                <Tag solid={x.status === "stayed"}>{m.results.status[x.status] ?? x.status}</Tag>
+                {rsOpen ? (
+                  <button
+                    type="button"
+                    className={`off__btn${x.redshirt ? " is-on" : ""}`}
+                    disabled={busy}
+                    aria-pressed={x.redshirt}
+                    onClick={() => act("/redshirt", { pid: x.id, on: !x.redshirt })}
+                  >
+                    {x.redshirt ? m.redshirts.on : m.redshirts.off}
+                  </button>
+                ) : (
+                  <Tag solid={x.redshirt}>{x.redshirt ? m.redshirts.on : m.redshirts.off}</Tag>
+                )}
               </li>
             ))}
           </ul>
-        </Panel>
+        </section>
       )}
-      <Panel title={m.departures.yours} aside={m.departures.count(d.mine.length)} className="off__wide">
-        {d.mine.length ? (
-          <DataTable label={m.departures.yours} columns={cols} rows={d.mine} rowKey={(x) => x.id} sortBy="ovr" />
-        ) : (
-          <Empty>{m.departures.none}</Empty>
-        )}
-      </Panel>
-      <Panel title={m.departures.league}>
-        <PanelRows>
-          {Object.entries(d.league).map(([k, n]) => (
-            <PanelRow key={k} label={m.kinds[k] ?? k} value={n.toLocaleString("en-US")} />
-          ))}
-        </PanelRows>
-      </Panel>
+
+      {/* the draft's first round: the league's news, folded, as a board of picks */}
       {d.first_round.length > 0 && (
-        <Panel title={m.departures.firstRound}>
-          <ol className="off__list">
+        <Panel
+          title={m.departures.firstRound}
+          aside={m.departures.picks(d.first_round.length)}
+          collapsible
+          defaultOpen={false}
+          className="gone__draft"
+        >
+          <ol className="picks">
             {d.first_round.slice(0, 32).map((x) => (
-              <li key={x.id} className={x.team === season.team ? "is-mine" : undefined}>
-                <span className="off__pick">{x.pick}</span>
-                {who(x)}
-                <span className="off__soft off__team">
-                  <Swatch team={p.teams.get(x.team)} size={12} />
-                  {x.team_name}
+              <li key={x.id} className={`pick${x.team === season.team ? " is-mine" : ""}`}>
+                <span className="pick__n">{x.pick}</span>
+                <Swatch team={teams.get(x.team)} size={16} />
+                <span className="pick__who">
+                  <b>{x.name}</b>
+                  <span className="off__soft">
+                    {x.pos} · {teams.get(x.team)?.abbreviation ?? x.team_name}
+                  </span>
                 </span>
               </li>
             ))}
           </ol>
         </Panel>
       )}
-      <Redshirts {...p} />
-      <PositionMoves {...p} />
-    </Panels>
-  );
-}
-
-/** Move one of your players to another position for next season, with the overall he would be there. */
-function PositionMoves({ v, busy, live, act, get }: P) {
-  const [pid, setPid] = useState("");
-  const [options, setOptions] = useState<{ pos: string; overall: number; current: boolean }[] | null>(null);
-  useEffect(() => {
-    setOptions(null);
-    if (!pid) return;
-    let on = true;
-    get<{ options: { pos: string; overall: number; current: boolean }[] }>(
-      `/position_options?pid=${encodeURIComponent(pid)}`,
-    )
-      .then((r) => on && setOptions(r.options))
-      .catch(() => on && setOptions([]));
-    return () => {
-      on = false;
-    };
-  }, [pid, v.position_changes.length]);
-  const here = options?.find((o) => o.current);
-  return (
-    <Panel title={m.moves.title} aside={m.moves.note}>
-      {live && (
-        <div className="off__row">
-          <Dropdown
-            label={m.moves.player}
-            size="md"
-            value={pid}
-            options={[
-              { value: "", label: m.moves.pick },
-              ...v.my_roster.map((x) => ({ value: x.id, label: x.name, hint: `${x.pos} · ${x.overall}` })),
-            ]}
-            onChange={setPid}
-          />
-          {options && options.length > 1 && here && (
-            <Dropdown
-              label={m.moves.to}
-              size="md"
-              disabled={busy}
-              value={here.pos}
-              options={options.map((o) => ({
-                value: o.pos,
-                label: o.pos,
-                hint: o.current ? m.moves.now(o.overall) : m.moves.would(o.overall),
-              }))}
-              onChange={(pos) => pos !== here.pos && act("/position", { pid, pos })}
-            />
-          )}
-        </div>
-      )}
-      {v.position_changes.length ? (
-        <ul className="off__list">
-          {v.position_changes.map((c, i) => (
-            <li key={i}>
-              <b>{c.name}</b>
-              <span className="off__soft">{m.moves.line(c.from, c.to)}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <Empty>{m.moves.none}</Empty>
-      )}
-    </Panel>
+    </div>
   );
 }
 
 // ---------- the transfer portal, a week at a time ----------
 
-function Portal({ v, teams, onSection, live }: P) {
+function Portal({ v, teams, onSection, live, season }: P) {
   const pt = v.portal;
   return (
     <Panels>
@@ -472,15 +580,15 @@ function Portal({ v, teams, onSection, live }: P) {
                   <span className="off__soft">{x.pos}</span>
                 </span>
                 <b className="off__num">{x.overall}</b>
-                <Tag solid={!!x.signed}>
-                  {x.signed
-                    ? m.portal.signedWith(teamName(teams, x.signed))
-                    : x.committed
-                      ? m.portal.committedTo(teamName(teams, x.committed))
-                      : x.offered
-                        ? m.portal.offered
-                        : m.portal.watching}
-                </Tag>
+                {x.signed || x.committed ? (
+                  <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
+                    {x.signed
+                      ? m.portal.signedWith(teamName(teams, x.signed))
+                      : m.portal.committedTo(teamName(teams, x.committed ?? ""))}
+                  </TeamTag>
+                ) : (
+                  <Tag>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
+                )}
               </li>
             ))}
           </ul>
@@ -488,7 +596,7 @@ function Portal({ v, teams, onSection, live }: P) {
           <Empty>{m.portal.noBoard}</Empty>
         )}
       </Panel>
-      <Moves v={v} teams={teams} />
+      <Moves v={v} teams={teams} me={season.team} />
       {pt.away.length > 0 && (
         <Panel title={m.portal.away}>
           <ul className="off__list">
@@ -508,7 +616,7 @@ function Portal({ v, teams, onSection, live }: P) {
 }
 
 /** The portal moves in and out of your program so far. */
-function Moves({ v, teams }: Pick<P, "v" | "teams">) {
+function Moves({ v, teams, me }: Pick<P, "v" | "teams"> & { me: string }) {
   if (!v.portal.moves_mine.length) return null;
   return (
     <Panel title={m.portal.moves}>
@@ -520,9 +628,16 @@ function Moves({ v, teams }: Pick<P, "v" | "teams">) {
               <span className="off__soft">{x.pos}</span>
             </span>
             <b className="off__num">{x.overall}</b>
-            <span className="off__soft">
-              {m.portal.move(teamName(teams, x.from), teamName(teams, x.to), !!x.walk_on)}
+            {/* where he came from and where he went, each in its colors; In or Out is from your side */}
+            <span className="off__move">
+              <Swatch team={teams.get(x.from)} size={14} />
+              {teams.get(x.from)?.abbreviation ?? teamName(teams, x.from)}
+              <ArrowRight size={12} weight="bold" aria-hidden="true" />
+              <Swatch team={teams.get(x.to)} size={14} />
+              {teams.get(x.to)?.abbreviation ?? teamName(teams, x.to)}
+              {x.walk_on && <span className="off__soft">{m.portal.walkOn}</span>}
             </span>
+            {x.to === me ? <TeamTag team={teams.get(me)}>{m.portal.in}</TeamTag> : <Tag>{m.portal.out}</Tag>}
           </li>
         ))}
       </ul>
@@ -532,55 +647,334 @@ function Moves({ v, teams }: Pick<P, "v" | "teams">) {
 
 // ---------- Development ----------
 
+type Unit = "all" | "offense" | "defense" | "special";
+const OFFENSE = new Set(["QB", "HB", "RB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "OL", "OT", "IOL"]);
+const SPECIAL = new Set(["K", "P", "KR", "PR"]);
+const unitOf = (pos: string): Unit => (SPECIAL.has(pos) ? "special" : OFFENSE.has(pos) ? "offense" : "defense");
+/**
+ * The game's notes on a player's offseason (coach_career/offseason.py growth_terms and the coachability roll), sorted
+ * by what they say: what sped his growth up, what held it back, and a change to how coachable he is (which shapes the
+ * years to come, not this jump).
+ */
+function notesOf(why: string[]) {
+  const helped: string[] = [];
+  const despite: string[] = [];
+  const changed: string[] = [];
+  for (const w of why) {
+    if (/^struggled/i.test(w)) despite.push(w);
+    else if (/^now an? /i.test(w)) changed.push(w);
+    else helped.push(w);
+  }
+  return { helped, despite, changed };
+}
+/** The notes as one sentence, for a bar's hover. */
+const notesLine = (why: string[]) => {
+  const n = notesOf(why);
+  return [
+    n.helped.length ? m.dev.helped(n.helped.join(", ")) : "",
+    n.despite.length ? m.dev.despite(n.despite.join(", ")) : "",
+    ...n.changed,
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+/** *tune* How many of the biggest jumps get a card of their own. */
+const TOP_JUMPS = 5;
+
+/**
+ * Development: the offseason's growth at a glance. Four numbers up top (how many grew, the biggest jump, the average,
+ * what the portal netted); the biggest jumps as cards; then everyone as a growth chart: a bar a player, the soft part
+ * where he was and the part in your color what he gained, sorted by the gain and filtered by unit. Under it, the
+ * portal's ins and outs as chips in each school's colors.
+ */
 function Development({ v, teams }: P) {
+  const [unit, setUnit] = useState<Unit>("all");
+  /** the player whose growth is open in a window */
+  const [open, setOpen] = useState<Grown | null>(null);
   const rep = v.report;
   const rec = v.portal_recap;
-  type Row = NonNullable<typeof rep>["mine"][number];
-  const cols: Column<Row>[] = [
-    { key: "who", label: m.cols.player, render: (x) => who(x), sort: (x) => x.name },
-    {
-      key: "gain",
-      label: m.cols.gain,
-      num: true,
-      render: (x) => (x.gain > 0 ? `+${x.gain}` : x.gain),
-      sort: (x) => x.gain,
-    },
-    { key: "ovr", label: m.cols.now, num: true, render: (x) => x.overall, sort: (x) => x.overall },
-    { key: "why", label: m.cols.why, render: (x) => <span className="off__soft">{x.why.join(" · ")}</span> },
-  ];
+  const all = [...(rep?.mine ?? [])].sort((a, b) => b.gain - a.gain || b.overall - a.overall);
+  if (!rep || !all.length) return <Empty>{m.dev.none}</Empty>;
+  const grew = all.filter((x) => x.gain > 0);
+  const best = all[0];
+  const avg = all.reduce((s, x) => s + x.gain, 0) / all.length;
+  const top = all.slice(0, TOP_JUMPS).filter((x) => x.gain > 0);
+  const shown = all.filter((x) => unit === "all" || unitOf(x.pos) === unit);
+  // the chart's scale: the best rating on it, so the longest bar fills its track
+  const max = Math.max(...all.map((x) => Math.max(x.overall, x.overall - x.gain)), 1);
+  const cardStyle = {
+    "--c": "var(--team, var(--ink))",
+    "--on": "var(--team-on, var(--paper-hi))",
+  } as CSSProperties;
+  const signed = (x: number) => (x > 0 ? `+${x}` : String(x));
+  const units: Unit[] = ["all", "offense", "defense", "special"];
+
   return (
-    <Panels>
-      <Panel title={m.dev.title} aside={rep ? m.dev.walkOns(rep.walk_ons) : undefined} className="off__wide">
-        {rep?.mine.length ? (
-          <DataTable label={m.dev.title} columns={cols} rows={rep.mine} rowKey={(x) => x.id} sortBy="gain" />
-        ) : (
-          <Empty>{m.dev.none}</Empty>
+    <div className="dev">
+      <dl className="dev__stats">
+        <div>
+          <dt className="label">{m.dev.grew}</dt>
+          <dd>{m.dev.grewOf(grew.length, all.length)}</dd>
+        </div>
+        <div>
+          <dt className="label">{m.dev.biggest}</dt>
+          <dd>
+            {signed(best.gain)} <small>{best.name}</small>
+          </dd>
+        </div>
+        <div>
+          <dt className="label">{m.dev.average}</dt>
+          <dd>{signed(Math.round(avg * 10) / 10)}</dd>
+        </div>
+        {rec && (
+          <div>
+            <dt className="label">{m.dev.portalNet}</dt>
+            <dd>{m.dev.portalNetLine(rec.signed.length, rec.lost.length)}</dd>
+          </div>
         )}
-      </Panel>
-      {rec && (
-        <Panel title={m.dev.portal} aside={m.dev.portalLine(rec.signed_league, rec.entrants)}>
-          <h4 className="label off__kicker">{m.dev.got(rec.signed.length)}</h4>
-          <ul className="off__list">
-            {rec.signed.map((x) => (
-              <li key={x.id}>
-                {who(x)}
-                <b className="off__num">{x.overall}</b>
+      </dl>
+
+      {top.length > 0 && (
+        <section aria-label={m.dev.jumps}>
+          <h3 className="label dev__kicker">{m.dev.jumps}</h3>
+          <ul className="dev__jumps">
+            {top.map((x) => (
+              <li key={x.id} className="dev-card" style={cardStyle}>
+                <button
+                  type="button"
+                  className="dev-card__open"
+                  aria-label={m.dev.openGrowth(x.name)}
+                  title={m.dev.openGrowth(x.name)}
+                  onClick={() => setOpen(x)}
+                />
+                <header className="dev-card__top">
+                  <span className="face-tile dev-card__face">
+                    <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                  </span>
+                  <b className="dev-card__gain">{signed(x.gain)}</b>
+                </header>
+                <b className="dev-card__name">{x.name}</b>
+                <span className="off__soft">
+                  {x.pos} · {formatClass(x.cls)}
+                </span>
+                <span className="dev-card__line">
+                  {x.overall - x.gain} <ArrowRight size={12} weight="bold" aria-hidden="true" /> <b>{x.overall}</b>
+                </span>
+                <Notes why={x.why} />
               </li>
             ))}
           </ul>
-          <h4 className="label off__kicker">{m.dev.lost(rec.lost.length)}</h4>
-          <ul className="off__list">
-            {rec.lost.map((x) => (
-              <li key={x.id}>
-                {who(x)}
-                <span className="off__soft">{m.dev.lostLine(x.to_name, x.reason)}</span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
+        </section>
       )}
-      <Moves v={v} teams={teams} />
-    </Panels>
+
+      <section className="dev__chart" aria-label={m.dev.title}>
+        <header className="dev__chart-head">
+          <h3 className="label dev__kicker">{m.dev.title}</h3>
+          <div className="off__row" role="group" aria-label={m.dev.unitLabel}>
+            {units.map((u) => (
+              <button
+                key={u}
+                type="button"
+                className={`off__btn${unit === u ? " is-on" : ""}`}
+                aria-pressed={unit === u}
+                onClick={() => setUnit(u)}
+              >
+                {m.dev.units[u]}
+              </button>
+            ))}
+          </div>
+          <span className="dev__legend" aria-hidden="true">
+            <i className="dev__key dev__key--was" />
+            {m.dev.was}
+            <i className="dev__key dev__key--gain" />
+            {m.dev.gained}
+          </span>
+        </header>
+        {shown.length ? (
+          <ol className="dev__bars">
+            {shown.map((x) => {
+              const before = x.overall - x.gain;
+              const lo = Math.min(before, x.overall);
+              return (
+                <li key={x.id} title={notesLine(x.why) || undefined}>
+                  <button
+                    type="button"
+                    className="dev__who"
+                    title={m.dev.openGrowth(x.name)}
+                    onClick={() => setOpen(x)}
+                  >
+                    <b>{x.name}</b>
+                    <span className="off__soft">{x.pos}</span>
+                  </button>
+                  <span className="dev__track" aria-hidden="true">
+                    <i className="dev__was" style={{ width: `${(100 * lo) / max}%` }} />
+                    <i
+                      className={`dev__gain${x.gain < 0 ? " is-loss" : ""}`}
+                      style={{ left: `${(100 * lo) / max}%`, width: `${(100 * Math.abs(x.gain)) / max}%` }}
+                    />
+                  </span>
+                  <b className="dev__now">{x.overall}</b>
+                  <span className={`dev__delta${x.gain > 0 ? " is-up" : ""}`}>{signed(x.gain)}</span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <Empty>{m.dev.noneInUnit}</Empty>
+        )}
+      </section>
+
+      {rec && (rec.signed.length > 0 || rec.lost.length > 0) && (
+        <section className="dev__portal" aria-label={m.dev.portal}>
+          <div>
+            <h3 className="label dev__kicker">{m.dev.got(rec.signed.length)}</h3>
+            <ul className="dev__chips">
+              {rec.signed.map((x) => (
+                <li key={x.id} className="dev__chip is-in">
+                  <b>{x.name}</b>
+                  <span className="off__soft">
+                    {x.pos} · {x.overall}
+                  </span>
+                </li>
+              ))}
+              {!rec.signed.length && <li className="off__soft">{m.dev.nobody}</li>}
+            </ul>
+          </div>
+          <div>
+            <h3 className="label dev__kicker">{m.dev.lost(rec.lost.length)}</h3>
+            <ul className="dev__chips">
+              {rec.lost.map((x) => (
+                <li key={x.id} className="dev__chip" title={x.reason}>
+                  <b>{x.name}</b>
+                  <span className="off__soft">
+                    {x.pos} · {x.overall}
+                  </span>
+                  <span className="off__move">
+                    <ArrowRight size={12} weight="bold" aria-hidden="true" />
+                    <Swatch team={teams.get((x as { to?: string }).to ?? "")} size={12} />
+                    {x.to_name}
+                  </span>
+                </li>
+              ))}
+              {!rec.lost.length && <li className="off__soft">{m.dev.nobody}</li>}
+            </ul>
+          </div>
+        </section>
+      )}
+      <GrowthWindow who={open} style={cardStyle} onClose={() => setOpen(null)} />
+    </div>
+  );
+}
+
+/** *tune* A rating counts as one that lifted his overall when its weight in his position's formula is at least this. */
+const MAIN_WEIGHT = 0.03;
+const ratingName = (key: string) =>
+  m.dev.ratingNames[key] ?? key.replace(/_/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
+/**
+ * One player's offseason in a window: his overall before and after, the game's notes, and every rating that moved.
+ * What Lifted His Overall: the ratings his position's overall is built on, biggest lift first, each as a bar (the soft
+ * part where it was, the part in your color what it gained) with what it added to his overall. Also Improved: the
+ * rest, folded. A report made before the game kept each change says so.
+ */
+function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSProperties; onClose: () => void }) {
+  const rows = (who?.grew ?? [])
+    .map((g) => ({ ...g, label: ratingName(g.key), lift: (g.w ?? 0) * (g.to - g.from) }))
+    .sort((a, b) => b.lift - a.lift || b.to - b.from - (a.to - a.from));
+  const main = rows.filter((r) => Math.abs(r.w ?? 0) >= MAIN_WEIGHT);
+  const rest = rows.filter((r) => Math.abs(r.w ?? 0) < MAIN_WEIGHT).sort((a, b) => b.to - b.from - (a.to - a.from));
+  const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+  const bars = (list: typeof rows, lifts: boolean) => (
+    <ol className="growth__bars">
+      {list.map((r) => {
+        const lo = Math.min(r.from, r.to);
+        return (
+          <li key={r.key} className={lifts ? "has-lift" : undefined}>
+            <span className="growth__label">{r.label}</span>
+            <span className="dev__track" aria-hidden="true">
+              <i className="dev__was" style={{ width: `${lo}%` }} />
+              <i
+                className={`dev__gain${r.to < r.from ? " is-loss" : ""}`}
+                style={{ left: `${lo}%`, width: `${Math.abs(r.to - r.from)}%` }}
+              />
+            </span>
+            <span className="growth__from">{r.from}</span>
+            <b className="dev__now">{r.to}</b>
+            <span className={`dev__delta${r.to > r.from ? " is-up" : ""}`}>{signed(r.to - r.from)}</span>
+            {lifts && (
+              <span className="growth__lift" title={m.dev.liftTip}>
+                {m.dev.lift(Math.round(r.lift * 10) / 10)}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+
+  return (
+    <Modal open={!!who} onClose={onClose} title={who?.name ?? ""} head={<span />} size="talk">
+      {who && (
+        <div className="growth" style={style}>
+          <header className="growth__head">
+            <span className="face-tile growth__face">
+              <Face face={playerFace(who.id, who.pos)} scale={2} label="" />
+            </span>
+            <span className="growth__name">
+              <b>{who.name}</b>
+              <span className="off__soft">
+                {who.pos} · {formatClass(who.cls)}
+              </span>
+            </span>
+            <span className="growth__ovr">
+              <span className="label">{m.dev.overall}</span>
+              <span className="growth__line">
+                {who.overall - who.gain} <ArrowRight size={14} weight="bold" aria-hidden="true" /> <b>{who.overall}</b>
+              </span>
+            </span>
+            <b className="growth__gain">{signed(who.gain)}</b>
+          </header>
+          <Notes why={who.why} />
+          {!who.grew ? (
+            <p className="off__soft">{m.dev.noDetail}</p>
+          ) : !rows.length ? (
+            <p className="off__soft">{m.dev.noChange}</p>
+          ) : (
+            <>
+              <section>
+                <h4 className="label dev__kicker">{m.dev.lifted(main.length)}</h4>
+                {main.length ? bars(main, true) : <p className="off__soft">{m.dev.noLift}</p>}
+              </section>
+              {rest.length > 0 && (
+                <Panel title={m.dev.also(rest.length)} collapsible defaultOpen={false} className="growth__rest">
+                  <div className="growth__cols">{bars(rest, false)}</div>
+                </Panel>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+/** A jump card's notes, each kind under its own word: what helped, what he grew in spite of, what changed in him. */
+function Notes({ why }: { why: string[] }) {
+  const n = notesOf(why);
+  if (!why.length) return null;
+  const line = (label: string, items: string[]) =>
+    items.length > 0 && (
+      <span className="dev-card__note">
+        <span className="label">{label}</span>
+        {items.join(" · ")}
+      </span>
+    );
+  return (
+    <span className="dev-card__why">
+      {line(m.dev.helpedLabel, n.helped)}
+      {line(m.dev.despiteLabel, n.despite)}
+      {line(m.dev.changedLabel, n.changed)}
+    </span>
   );
 }
 

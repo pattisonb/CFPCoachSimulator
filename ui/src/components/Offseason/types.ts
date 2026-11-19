@@ -86,6 +86,15 @@ export interface JobRow {
   goal: string;
 }
 
+/** A player in the development report: his overall's gain, the game's notes, and each rating that moved. */
+export interface Grown extends OffPlayer {
+  gain: number;
+  why: string[];
+  transfer: string | null;
+  /** every rating that changed, where it was and is; missing on a report made before the game kept them */
+  grew?: { key: string; from: number; to: number; /** its weight in his position's overall formula */ w?: number }[];
+}
+
 export interface OffView {
   stage: string;
   stage_name: string;
@@ -158,7 +167,7 @@ export interface OffView {
     signed_league: number;
   } | null;
   report: {
-    mine: (OffPlayer & { gain: number; why: string[]; transfer: string | null })[];
+    mine: Grown[];
     walk_ons: number;
   } | null;
   your_staff: StaffMember[];

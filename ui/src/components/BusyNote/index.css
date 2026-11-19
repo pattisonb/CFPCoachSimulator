@@ -1,0 +1,51 @@
+/* The loading notice: an ink pill at the bottom of the screen, a square that turns, and what is happening. */
+.busy-note {
+  position: fixed;
+  bottom: var(--s4);
+  left: 50%;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 var(--s3);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow-soft);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: busy-in 160ms ease-out;
+  pointer-events: none;
+}
+
+.busy-note__spin {
+  width: 12px;
+  height: 12px;
+  background: var(--team, var(--paper-hi));
+  border: 2px solid var(--paper-hi);
+  animation: busy-spin 900ms steps(8) infinite;
+}
+
+@keyframes busy-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+@keyframes busy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .busy-note,
+  .busy-note__spin {
+    animation: none;
+  }
+}

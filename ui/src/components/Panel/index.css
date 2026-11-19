@@ -87,3 +87,27 @@
   gap: 2px;
   min-width: 0;
 }
+
+/* a panel that folds: its name is the button; shut, it is just its head */
+.panel__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.panel.is-folded {
+  padding-bottom: 0;
+}
+
+.panel.is-folded .panel__head {
+  margin-bottom: 0;
+  border-bottom: 0;
+}

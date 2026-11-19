@@ -175,6 +175,9 @@
   background: var(--paper);
   border-left: var(--line) solid var(--line-soft);
   scrollbar-gutter: stable;
+
+  --pin-pad: var(--s4); /* a pinned head covers this panel's top padding, in its own paper */
+  --pin-bg: var(--paper);
   container: recruit-side / inline-size;
 }
 

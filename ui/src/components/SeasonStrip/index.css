@@ -44,6 +44,11 @@
 .season-strip__game {
   position: relative;
   display: grid;
+  transition:
+    border-color 240ms ease-out,
+    box-shadow 240ms ease-out,
+    background-color 240ms ease-out; /* the highlight slides off one week and onto the next */
+
   grid-template-columns: minmax(0, 1fr); /* a long week name is cut short, never wider than its tile */
   flex: none;
   align-content: center;
@@ -155,4 +160,47 @@
 
 .season-strip__game.is-link:hover {
   border-color: var(--ink);
+}
+
+/* a result that has just come in: the tile lifts and settles, its score line flashing in your team's color */
+.season-strip__game.is-fresh {
+  animation: strip-pop 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.season-strip__game.is-fresh .season-strip__line {
+  animation: strip-flash 900ms ease-out;
+}
+
+@keyframes strip-pop {
+  0% {
+    transform: translateY(0);
+  }
+
+  35% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes strip-flash {
+  0% {
+    background: var(--team, var(--ink));
+    color: var(--team-on, var(--paper-hi));
+  }
+
+  100% {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-strip__game,
+  .season-strip__game.is-fresh,
+  .season-strip__game.is-fresh .season-strip__line {
+    transition: none;
+    animation: none;
+  }
 }

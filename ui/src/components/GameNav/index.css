@@ -326,9 +326,10 @@
   background: color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
+/* where you are: in your team's color (ink before a season is loaded) */
 .game-nav__item[aria-current="page"] {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 /* ---------- the foot: Settings, the Dark Mode switch, Back to Main Menu ---------- */

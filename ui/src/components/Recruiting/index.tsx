@@ -430,71 +430,74 @@ function RecruitPanel({
 
   return (
     <article className="recruit" aria-label={r.name}>
-      {/* the head: who he is, your offer and your place on his list, and your chance in the square */}
-      <ProfileHead
-        face={<Face face={playerFace(r.id, r.display_pos)} scale={6} label="" />}
-        name={r.name}
-        beside={`${r.display_pos} · ${m.ranks(r.national_rank, r.pos_rank, r.display_pos)}`}
-        line={[r.height_display, r.weight_display, `${r.hometown.city}, ${r.hometown.state}`].join(" · ")}
-        tags={
-          <>
-            <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
-            <Stars n={r.stars} />
-            {r.job_promised && (
-              <HeadTag tip={{ title: m.jobPromised, text: m.jobPromisedTip }}>{m.jobPromised}</HeadTag>
-            )}
-          </>
-        }
-        cells={[
-          { label: m.offer, value: r.offered ? m.nilAmount(r.nil) : m.noOffer },
-          { label: m.hisList, value: listPlace },
-          { label: m.hisAsk, value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact) },
-        ]}
-        tile={{
-          label: m.chance,
-          value:
-            sd.pct != null ? (
-              <>
-                {Math.round(100 * sd.pct)}
-                <small>%</small>
-              </>
-            ) : (
-              sd.word
-            ),
-          word: sd.pct == null,
-          aria: `${m.chance}: ${pct(sd.pct) ?? sd.word}`,
-          tip: { title: sd.odds ?? sd.word, text: sd.text },
-        }}
-      />
+      {/* his head and the tab row stay at the top while the tab under them scrolls */}
+      <div className="pin-top">
+        {/* the head: who he is, your offer and your place on his list, and your chance in the square */}
+        <ProfileHead
+          face={<Face face={playerFace(r.id, r.display_pos)} scale={6} label="" />}
+          name={r.name}
+          beside={`${r.display_pos} · ${m.ranks(r.national_rank, r.pos_rank, r.display_pos)}`}
+          line={[r.height_display, r.weight_display, `${r.hometown.city}, ${r.hometown.state}`].join(" · ")}
+          tags={
+            <>
+              <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
+              <Stars n={r.stars} />
+              {r.job_promised && (
+                <HeadTag tip={{ title: m.jobPromised, text: m.jobPromisedTip }}>{m.jobPromised}</HeadTag>
+              )}
+            </>
+          }
+          cells={[
+            { label: m.offer, value: r.offered ? m.nilAmount(r.nil) : m.noOffer },
+            { label: m.hisList, value: listPlace },
+            { label: m.hisAsk, value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact) },
+          ]}
+          tile={{
+            label: m.chance,
+            value:
+              sd.pct != null ? (
+                <>
+                  {Math.round(100 * sd.pct)}
+                  <small>%</small>
+                </>
+              ) : (
+                sd.word
+              ),
+            word: sd.pct == null,
+            aria: `${m.chance}: ${pct(sd.pct) ?? sd.word}`,
+            tip: { title: sd.odds ?? sd.word, text: sd.text },
+          }}
+        />
 
-      {/* his tabs, what your last action did, and Off My Board, on one row */}
-      <div className="recruit__bar">
-        <div className="recruit__tabs" role="tablist" aria-label={m.about}>
-          {TABS.map((k) => (
-            <Chip key={k} role="tab" on={tab === k} onClick={() => setTab(k)}>
-              {m.tabs[k]}
-            </Chip>
-          ))}
+        {/* his tabs, what your last action did, and Off My Board, on one row */}
+        <div className="recruit__bar">
+          <div className="recruit__tabs" role="tablist" aria-label={m.about}>
+            {TABS.map((k) => (
+              <Chip key={k} role="tab" on={tab === k} onClick={() => setTab(k)}>
+                {m.tabs[k]}
+              </Chip>
+            ))}
+          </div>
+          <p className="recruit__note" role="status">
+            {note}
+          </p>
+          <Tooltip title={m.favorite} text={r.favorite ? m.favoriteOnTip : m.favoriteTip}>
+            <button
+              type="button"
+              className={`recruit__off${r.favorite ? " is-on" : ""}`}
+              aria-label={r.favorite ? m.removeFavorite(r.name) : m.addFavorite(r.name)}
+              aria-pressed={!!r.favorite}
+              onClick={toggleFavorite}
+            >
+              <Heart size={16} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
+            </button>
+          </Tooltip>
+          <Tooltip title={m.offBoard} text={m.offBoardTip}>
+            <button type="button" className="recruit__off" aria-label={m.offBoard} onClick={offBoard}>
+              <X size={16} weight="bold" aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
-        <p className="recruit__note" role="status">
-          {note}
-        </p>
-        <Tooltip title={m.favorite} text={r.favorite ? m.favoriteOnTip : m.favoriteTip}>
-          <button
-            type="button"
-            className={`recruit__off${r.favorite ? " is-on" : ""}`}
-            aria-label={r.favorite ? m.removeFavorite(r.name) : m.addFavorite(r.name)}
-            aria-pressed={!!r.favorite}
-            onClick={toggleFavorite}
-          >
-            <Heart size={16} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
-          </button>
-        </Tooltip>
-        <Tooltip title={m.offBoard} text={m.offBoardTip}>
-          <button type="button" className="recruit__off" aria-label={m.offBoard} onClick={offBoard}>
-            <X size={16} weight="bold" aria-hidden="true" />
-          </button>
-        </Tooltip>
       </div>
 
       {tab === "overview" && (

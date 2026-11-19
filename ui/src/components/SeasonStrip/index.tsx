@@ -21,6 +21,8 @@ const LAST_WEEK = 20;
 /** *tune* The first week after the regular season: the weeks from here get a placeholder until a game is set. */
 const FIRST_POST_WEEK = 15;
 
+/** *tune* How long a tile that has just got its result stays marked, in ms (index.css strip-pop and strip-flash). */
+const POP_MS = 1000;
 /** *tune* How many tiles one press of an arrow scrolls. */
 const PAGE_TILES = 3;
 
@@ -55,12 +57,42 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
     setEnds({ start: el.scrollLeft <= 1, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 });
   };
 
-  // the next game near the left, with the last one played beside it
+  // the week you are in near the left, with the last one played beside it: set at once when the strip first shows,
+  // glided to after that (a sim moving through the weeks carries the strip along with it)
+  const shown = useRef(false);
+  const nextKey = next ? `${next.week}-${next.event_id ?? next.kind}` : "";
   useEffect(() => {
     const el = list.current;
     const tile = el?.querySelector<HTMLElement>(".season-strip__game.is-next");
     const before = tile?.previousElementSibling as HTMLElement | null;
-    if (el && tile) el.scrollLeft = Math.max(0, (before ?? tile).offsetLeft);
+    if (el && tile) {
+      const left = Math.max(0, (before ?? tile).offsetLeft);
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (shown.current && !still) el.scrollTo({ left, behavior: "smooth" });
+      else el.scrollLeft = left;
+      shown.current = true;
+    }
+  }, [nextKey]);
+
+  // a result that has just come in pops once (the tiles already played when the strip showed do not)
+  // (held for the length of the pop: the page redraws several times a second while a sim runs)
+  const seen = useRef<Set<string> | null>(null);
+  const [fresh, setFresh] = useState<Set<string>>(() => new Set());
+  const playedKeys = games.filter((g) => g.played).map((g) => `${g.week}-${g.opponent ?? g.kind}`);
+  const playedKey = playedKeys.join("|");
+  useEffect(() => {
+    const before = seen.current;
+    seen.current = new Set(playedKeys);
+    if (!before) return;
+    const added = playedKeys.filter((k) => !before.has(k));
+    if (!added.length) return;
+    setFresh(new Set(added));
+    const t = window.setTimeout(() => setFresh(new Set()), POP_MS);
+    return () => window.clearTimeout(t);
+  }, [playedKey]);
+
+  useEffect(() => {
+    const el = list.current;
     measure();
     const ro = new ResizeObserver(measure);
     if (el) ro.observe(el);
@@ -98,6 +130,7 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
             g.played && (g.won ? "is-won" : "is-lost"),
             isNext && "is-next",
             box && "is-link",
+            fresh.has(`${g.week}-${g.opponent ?? g.kind}`) && "is-fresh",
           ]
             .filter(Boolean)
             .join(" ");

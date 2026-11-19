@@ -28,6 +28,19 @@
   text-transform: uppercase;
 }
 
+/* pinned to the top of the section: the stepper, the stage's name and the way on (it covers the section's own top
+   padding, so nothing shows above it) */
+.off__top {
+  position: sticky;
+  top: calc(-1 * var(--s3));
+  z-index: 3;
+  margin: calc(-1 * var(--s3)) calc(-1 * var(--s4)) var(--s3);
+  padding: var(--s3) var(--s4) calc(var(--s2) + 6px);
+  background: var(--paper-hi);
+  border-bottom: var(--line) solid var(--ink);
+  box-shadow: inset 0 -6px 0 var(--team, transparent); /* a band of your team's color under the bar */
+}
+
 /* the stepper: every stage in a row, numbered; a finished one ticked, the current one in ink */
 .off__steps {
   display: flex;
@@ -39,16 +52,17 @@
 
 .off__steps li {
   flex: 1 1 0;
-  min-width: 96px;
+  min-width: 84px;
 }
 
+/* a step: its number over its name, so a dozen fit across with their names whole */
 .off__step {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  justify-items: start;
+  gap: 3px;
   width: 100%;
-  min-height: 36px;
-  padding: 0 8px;
+  min-height: 48px;
+  padding: 5px 8px;
   background: var(--paper-hi);
   color: var(--ink-soft);
   border: var(--line) solid var(--line-soft);
@@ -67,9 +81,10 @@
   border-color: var(--ink-soft);
 }
 
+/* where you are: in your team's color */
 .off__steps li.is-current .off__step {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
   border-color: var(--ink);
 }
 
@@ -98,7 +113,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s2) var(--s3);
-  margin-bottom: var(--s3);
 }
 
 .off__head h2 {
@@ -115,10 +129,10 @@
   gap: 8px;
   min-height: var(--control);
   padding: 0 var(--s3);
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
   border: var(--line) solid var(--ink);
-  box-shadow: 4px 4px 0 var(--shadow-soft);
+  box-shadow: 4px 4px 0 var(--shadow);
   font-size: var(--t-sm);
   font-weight: 700;
   letter-spacing: 1px;
@@ -221,6 +235,23 @@
   background: var(--ink);
   color: var(--paper-hi);
   border-color: var(--ink);
+}
+
+/* a tag in a school's own color */
+.off__tag.is-team {
+  background: var(--c, var(--ink));
+  color: var(--on, var(--paper-hi));
+  border-color: var(--ink);
+}
+
+/* a portal move: from one school's colors to another's */
+.off__move {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* a list of people: name and a soft line, a number, then a tag or a button at the far end */
@@ -380,7 +411,7 @@
 }
 
 .off__keep-head h3 {
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
   text-transform: uppercase;
 }
 
@@ -394,7 +425,7 @@
   padding: 4px 6px var(--s2) 0;
   overflow-x: auto;
   list-style: none;
-  scroll-snap-type: x proximity;
+  overflow-anchor: none; /* a card moving to the back must not drag the scroll with it */
 }
 
 /* a card: his face on your color with his overall, what he says, four facts, then your moves */
@@ -402,11 +433,10 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  width: 264px;
+  width: 284px;
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
-  scroll-snap-align: start;
 }
 
 .off-card.is-gone {
@@ -424,14 +454,11 @@
   border-bottom: var(--line) solid var(--ink);
 }
 
+/* his face fills its tile, the size the Recruiting board draws it (the shared face tile centers it) */
 .off-card__face {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   overflow: hidden;
-  background: var(--tile);
-  border: var(--line) solid var(--ink);
 }
 
 .off-card__name {
@@ -440,12 +467,25 @@
   line-height: 1.2;
 }
 
-.off-card__name b {
+/* his name opens his full card */
+.off-card__open {
+  padding: 0;
   overflow: hidden;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
   font-size: var(--t-md);
+  font-weight: 700;
+  text-align: left;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.off-card__open:hover {
+  text-decoration: underline;
 }
 
 .off-card__pos,
@@ -546,8 +586,8 @@
 }
 
 .off-card__main {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 .off-card__quiet {
@@ -587,6 +627,507 @@
   color: var(--ink);
   border: var(--line) solid var(--ink);
   font: inherit;
+}
+
+/* ---------- Development: headline numbers, the biggest jumps as cards, then a growth chart ---------- */
+.dev {
+  display: grid;
+  gap: var(--s3);
+}
+
+.dev__kicker {
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.dev__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s2);
+}
+
+.dev__stats div {
+  display: grid;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  box-shadow: inset 6px 0 0 var(--team, var(--ink));
+}
+
+.dev__stats dt {
+  color: var(--ink-soft);
+}
+
+.dev__stats dd {
+  overflow: hidden;
+  font-size: var(--t-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dev__stats small {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+/* a jump: his face on your color with the gain large beside it, then who he is and where he went from and to */
+.dev__jumps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--s2);
+  list-style: none;
+}
+
+.dev-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 0 10px 10px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* the whole card opens his growth */
+.dev-card__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.dev-card:hover {
+  transform: translate(-2px, -2px);
+}
+
+.dev-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -10px 6px;
+  padding: 8px 10px;
+  background: var(--c);
+  color: var(--on);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.dev-card__face {
+  width: 68px;
+  height: 68px;
+  overflow: hidden;
+}
+
+.dev-card__gain {
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+.dev-card__name {
+  overflow: hidden;
+  font-size: var(--t-md);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dev-card__line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: var(--t-md);
+}
+
+/* his notes, each kind under its own small word */
+.dev-card__why {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.dev-card__note {
+  display: grid;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+}
+
+.dev-card__note .label {
+  color: var(--ink-soft);
+}
+
+.dev__chart {
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.dev__chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  margin-bottom: var(--s2);
+}
+
+.dev__chart-head .dev__kicker {
+  margin-bottom: 0;
+}
+
+.dev__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.dev__key {
+  width: 14px;
+  height: 10px;
+  margin-left: 8px;
+}
+
+.dev__key--was,
+.dev__was {
+  background: var(--ink-soft);
+}
+
+.dev__key--gain,
+.dev__gain {
+  background: var(--team, var(--ink));
+}
+
+/* the chart: two columns of bars; each a name, the bar, the rating now and the gain */
+.dev__bars {
+  columns: 420px 2; /* read down the first column, then the second: the biggest gains stay together */
+  column-gap: var(--s4);
+  list-style: none;
+}
+
+.dev__bars li {
+  display: grid;
+  grid-template-columns: 172px minmax(0, 1fr) 28px 36px;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  border-top: 1px solid var(--line-soft);
+  break-inside: avoid;
+}
+
+/* his name opens his growth */
+.dev__who {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dev__who:hover {
+  text-decoration: underline;
+}
+
+.dev__who b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dev__track {
+  position: relative;
+  height: 12px;
+  background: var(--tile);
+}
+
+.dev__was,
+.dev__gain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.dev__was {
+  opacity: 0.45;
+}
+
+/* a player who slipped: the part he lost, hatched */
+.dev__gain.is-loss {
+  background: repeating-linear-gradient(45deg, var(--ink) 0 2px, transparent 2px 5px);
+}
+
+.dev__now,
+.dev__delta {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.dev__delta {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.dev__delta.is-up {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.dev__portal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--s3);
+}
+
+.dev__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.dev__chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--paper-hi);
+  border: 1px solid var(--ink-soft);
+}
+
+.dev__chip.is-in {
+  border-color: var(--ink);
+  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+}
+
+/* ---------- Departures: a board with a column for each way out, redshirt tiles, the draft's picks ---------- */
+.gone {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  align-items: start;
+  gap: var(--s3);
+}
+
+.gone__col {
+  min-width: 0;
+}
+
+.gone__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  text-transform: uppercase;
+}
+
+.gone__list {
+  list-style: none;
+}
+
+/* a player who left: his name, a bar of his overall and the number */
+.gone__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 24px;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.gone__who {
+  cursor: default;
+}
+
+.gone__draft {
+  margin-bottom: 0;
+}
+
+/* a redshirt call: who he is, his overall, and his switch */
+.shirts,
+.picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 6px;
+  list-style: none;
+}
+
+.shirt,
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--paper-hi);
+  border: 1px solid var(--line-soft);
+}
+
+.shirt.is-on {
+  border-color: var(--ink);
+  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+}
+
+.shirt__who,
+.pick__who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.picks {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+.pick.is-mine {
+  border-color: var(--ink);
+  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+}
+
+.pick__n {
+  min-width: 22px;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---------- a player's growth in a window: his overall, then every rating that moved ---------- */
+.growth {
+  display: grid;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+}
+
+.growth__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2);
+  background: var(--c);
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+}
+
+.growth__face {
+  width: 68px;
+  height: 68px;
+  overflow: hidden;
+}
+
+.growth__name {
+  display: grid;
+  min-width: 0;
+}
+
+.growth__name b {
+  overflow: hidden;
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.growth__name .off__soft,
+.growth__ovr .label {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.growth__ovr {
+  display: grid;
+  justify-items: end;
+}
+
+.growth__line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-lg);
+}
+
+.growth__gain {
+  padding: 4px 10px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+/* the rest of what moved: folded, in two columns when open */
+.growth__rest {
+  margin-bottom: 0;
+}
+
+.growth__cols {
+  columns: 300px 2;
+  column-gap: var(--s4);
+}
+
+.growth__bars {
+  list-style: none;
+}
+
+/* a rating: its name, the bar, where it was, where it is, and the change */
+.growth__bars li {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 24px 24px 32px;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  border-top: 1px solid var(--line-soft);
+  break-inside: avoid;
+}
+
+/* a rating his overall is built on: what its change added, at the row's end */
+.growth__bars li.has-lift {
+  grid-template-columns: 170px minmax(0, 1fr) 24px 24px 32px 76px;
+  min-height: 30px;
+}
+
+.growth__lift {
+  padding: 0 6px;
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.growth__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.growth__from {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 /* a row whose second part is a sentence: it sits under the name instead of beside it */

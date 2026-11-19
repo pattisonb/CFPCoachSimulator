@@ -1,3 +1,5 @@
+import { trackSlow } from "./busy.ts";
+
 // The one way to the game. The old UI's web/game-client.js (window.CFP.game) runs the game in a
 // Web Worker on the static site; when it is on the page we use it, otherwise plain fetch, which
 // the Vite dev server proxies to the Python dev server.
@@ -11,7 +13,13 @@ export interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;
 }
 
-export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
+export function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
+  const quiet = /\/status(\?|$)/.test(path);
+  const work = request<T>(path, options);
+  return quiet ? work : trackSlow(work, options.method && options.method !== "GET" ? "Working…" : "Loading…");
+}
+
+async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const doFetch = window.CFP?.game?.fetch ?? fetch;
   const { body, headers, ...rest } = options;
   const init: RequestInit = { ...rest, headers };

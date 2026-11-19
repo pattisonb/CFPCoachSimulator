@@ -23,6 +23,8 @@
   overflow-y: auto;
   scrollbar-gutter: stable; /* a longer tab brings a scroll bar: its room is always kept, so nothing shifts */
   padding: var(--s3) var(--s4);
+
+  --pin-pad: var(--s3); /* a pinned head covers this side's top padding */
 }
 
 /* ---------- a role: its heading, then its players in order ---------- */

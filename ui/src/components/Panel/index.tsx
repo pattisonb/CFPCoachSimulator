@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { CaretDown, CaretRight } from "@phosphor-icons/react";
 import Tooltip from "../Tooltip/index.tsx";
 import "./index.css";
 
@@ -8,20 +9,44 @@ export default function Panel({
   aside,
   children,
   className,
+  collapsible,
+  defaultOpen = true,
 }: {
   title: string;
   /** at the head's far end, soft: a count, a note */
   aside?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** its head folds it shut and open again (a long list you may not want in the way) */
+  collapsible?: boolean;
+  /** a collapsible panel's state to start */
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const shown = !collapsible || open;
   return (
-    <section className={["panel", className].filter(Boolean).join(" ")} aria-label={title}>
+    <section
+      className={["panel", collapsible && "panel--fold", !shown && "is-folded", className].filter(Boolean).join(" ")}
+      aria-label={title}
+    >
       <header className="panel__head">
-        <h3>{title}</h3>
+        {collapsible ? (
+          <h3>
+            <button type="button" className="panel__toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+              {open ? (
+                <CaretDown size={14} weight="bold" aria-hidden="true" />
+              ) : (
+                <CaretRight size={14} weight="bold" aria-hidden="true" />
+              )}
+              {title}
+            </button>
+          </h3>
+        ) : (
+          <h3>{title}</h3>
+        )}
         {aside && <span className="panel__aside">{aside}</span>}
       </header>
-      {children}
+      {shown && children}
     </section>
   );
 }

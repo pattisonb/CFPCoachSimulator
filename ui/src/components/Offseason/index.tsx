@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Check } from "@phosphor-icons/react";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import { api } from "../../api.ts";
+import { beginBusy } from "../../busy.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import { Stage } from "./Stages.tsx";
@@ -102,6 +103,7 @@ export default function Offseason({ season, teams, onSection, onNextSeason }: Pr
   const advance = async () => {
     setBusy(true);
     setNote(null);
+    const done = beginBusy(ready ? m.starting(v?.year ?? season.year + 1) : next ? m.movingTo(next.name) : m.working);
     try {
       const out = await api<Partial<OffView> & { next_season?: boolean; summary?: { id: string } }>(`${base}/advance`, {
         method: "POST",
@@ -110,7 +112,9 @@ export default function Offseason({ season, teams, onSection, onNextSeason }: Pr
       if (out.next_season && out.summary) return onNextSeason(out.summary.id);
       setShown(null);
       setV(out as OffView);
+      done();
     } catch (e) {
+      done();
       setNote(m.failed((e as Error).message));
     } finally {
       setBusy(false);
@@ -158,48 +162,51 @@ export default function Offseason({ season, teams, onSection, onNextSeason }: Pr
           <p className="off__soft">{error ? m.loadError(error) : m.loading}</p>
         ) : (
           <>
-            {/* every stage in order: the ones behind you open again to be read */}
-            <ol className="off__steps" aria-label={m.stagesLabel}>
-              {steps.map((s, i) => (
-                <li key={s.key} className={`${s.current ? "is-current" : ""}${s.done ? " is-done" : ""}`}>
-                  <button
-                    type="button"
-                    className={`off__step${showing.key === s.key ? " is-shown" : ""}`}
-                    disabled={!s.done && !s.current}
-                    aria-current={s.current ? "step" : undefined}
-                    title={s.name}
-                    onClick={() => setShown(s.current ? null : s.key)}
-                  >
-                    <span className="off__step-n">
-                      {s.done ? <Check size={12} weight="bold" aria-hidden="true" /> : i + 1}
-                    </span>
-                    <span className="off__step-name">{m.shortStage[s.key] ?? s.name}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
+            {/* the stages and the way on stay at the top while the stage's panels scroll under them */}
+            <div className="off__top">
+              {/* every stage in order: the ones behind you open again to be read */}
+              <ol className="off__steps" aria-label={m.stagesLabel}>
+                {steps.map((s, i) => (
+                  <li key={s.key} className={`${s.current ? "is-current" : ""}${s.done ? " is-done" : ""}`}>
+                    <button
+                      type="button"
+                      className={`off__step${showing.key === s.key ? " is-shown" : ""}`}
+                      disabled={!s.done && !s.current}
+                      aria-current={s.current ? "step" : undefined}
+                      title={s.name}
+                      onClick={() => setShown(s.current ? null : s.key)}
+                    >
+                      <span className="off__step-n">
+                        {s.done ? <Check size={12} weight="bold" aria-hidden="true" /> : i + 1}
+                      </span>
+                      <span className="off__step-name">{m.shortStage[s.key] ?? s.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
 
-            <header className="off__head">
-              <div>
-                <h2>{showing.name}</h2>
-                <p className="off__soft">{m.about[showing.key] ?? ""}</p>
-              </div>
-              {showing.key === "review" && inMeeting ? (
-                <button type="button" className="off__next" onClick={leaveMeeting}>
-                  {m.onTo(next?.name ?? "")}
-                  <ArrowRight size={16} weight="bold" aria-hidden="true" />
-                </button>
-              ) : showing.key === stage ? (
-                <button type="button" className="off__next" disabled={busy} onClick={advance}>
-                  {ready ? m.startSeason(v.year) : next ? m.onTo(next.name) : m.advance}
-                  <ArrowRight size={16} weight="bold" aria-hidden="true" />
-                </button>
-              ) : (
-                <button type="button" className="off__next is-quiet" onClick={() => setShown(null)}>
-                  {m.backTo(steps[at]?.name ?? v.stage_name)}
-                </button>
-              )}
-            </header>
+              <header className="off__head">
+                <div>
+                  <h2>{showing.name}</h2>
+                  <p className="off__soft">{m.about[showing.key] ?? ""}</p>
+                </div>
+                {showing.key === "review" && inMeeting ? (
+                  <button type="button" className="off__next" onClick={leaveMeeting}>
+                    {m.onTo(next?.name ?? "")}
+                    <ArrowRight size={16} weight="bold" aria-hidden="true" />
+                  </button>
+                ) : showing.key === stage ? (
+                  <button type="button" className="off__next" disabled={busy} onClick={advance}>
+                    {busy ? m.working : ready ? m.startSeason(v.year) : next ? m.onTo(next.name) : m.advance}
+                    <ArrowRight size={16} weight="bold" aria-hidden="true" />
+                  </button>
+                ) : (
+                  <button type="button" className="off__next is-quiet" onClick={() => setShown(null)}>
+                    {m.backTo(steps[at]?.name ?? v.stage_name)}
+                  </button>
+                )}
+              </header>
+            </div>
             {note && (
               <p className="off__note" role="alert">
                 {note}
