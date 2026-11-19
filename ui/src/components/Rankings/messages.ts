@@ -20,13 +20,16 @@ export const messages = {
   noChange: "No change",
   up: (n: number) => `Up ${n}`,
   down: (n: number) => `Down ${n}`,
-  now: (rank: number) => `#${rank}`,
+
+  last: "Last Result",
+  next: "Next Game",
+  win: "W",
+  loss: "L",
+  vs: "vs",
+  at: "at",
 
   others: "Others Receiving Votes",
-  othersNote: "Points",
-  movers: "This Week's Movers",
-  firstPoll: "This is the season's first poll, so there is nothing to compare it with yet.",
-  noMoves: "Nobody moved this week.",
+  dropped: "Dropped Out",
   noPoll: "No poll yet.",
 
   cfpWaiting: "The Committee Hasn't Ranked Yet",

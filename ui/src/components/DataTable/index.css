@@ -14,10 +14,6 @@
 }
 
 .data-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--paper-hi);
   color: var(--ink-soft);
   border-bottom: var(--line) solid var(--ink);
   font-size: var(--t-xs);

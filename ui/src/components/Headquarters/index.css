@@ -865,3 +865,33 @@ button.hq-link:hover {
     transition: none;
   }
 }
+
+/* the board's two tools, in the section bar: small flat boxes the size of a tab; Done fills while you edit */
+.hq-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 var(--s2);
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hq-tool:hover,
+.hq-tool.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+@media (width <= 700px) {
+  .hq-tool {
+    min-height: 44px;
+  }
+}

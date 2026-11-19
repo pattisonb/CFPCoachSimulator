@@ -630,14 +630,19 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
                 )}
               </span>
             )}
-            <Button onClick={() => setDrawer(true)}>
-              <Plus size={16} weight="bold" aria-hidden="true" />
+            <button type="button" className="hq-tool" onClick={() => setDrawer(true)}>
+              <Plus size={13} weight="bold" aria-hidden="true" />
               {m.addWidget}
-            </Button>
-            <Button variant="outline" aria-pressed={editing} onClick={() => setEditing((v) => !v)}>
-              {!editing && <PencilSimple size={16} weight="bold" aria-hidden="true" />}
+            </button>
+            <button
+              type="button"
+              className={`hq-tool${editing ? " is-on" : ""}`}
+              aria-pressed={editing}
+              onClick={() => setEditing((v) => !v)}
+            >
+              {!editing && <PencilSimple size={13} weight="bold" aria-hidden="true" />}
               {editing ? m.done : m.editLayout}
-            </Button>
+            </button>
           </>
         }
       />

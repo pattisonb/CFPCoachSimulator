@@ -1,33 +1,14 @@
-/* Rankings: the poll as a table at the left; the others receiving votes and the week's movers beside it. */
+/* Rankings: the poll as one full-width table; the others receiving votes and the dropped teams in lines under it. */
 .rankings {
   flex: 1;
   min-height: 0;
   padding: var(--s3) var(--s4) var(--s4);
   overflow-y: auto;
   scrollbar-gutter: stable;
-  container: rankings / inline-size;
 }
 
-.rankings__cols {
-  display: grid;
-  align-items: start;
-  gap: var(--s3);
-}
-
-@container rankings (width >= 900px) {
-  .rankings__cols {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  }
-}
-
-.rankings__panel,
-.rankings__side .panel {
-  margin-bottom: 0;
-}
-
-.rankings__side {
-  display: grid;
-  gap: var(--s3);
+.rankings__panel {
+  margin-bottom: var(--s2);
 }
 
 .rankings__soft {
@@ -57,40 +38,23 @@
   color: var(--ink-soft);
 }
 
-.rankings__others {
-  display: grid;
-  list-style: none;
+/* under the table, the way the AP prints it: one running line of teams and points */
+.rankings__line {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  line-height: 1.5;
 }
 
-.rankings__others li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-  border-top: 1px solid var(--line-soft);
-}
-
-.rankings__others li:first-child {
-  border-top: 0;
-}
-
-.rankings__others li.is-mine {
+.rankings__line b,
+.rankings__line .is-mine {
+  color: var(--ink);
   font-weight: 700;
 }
 
-.rankings__place {
-  min-width: 22px;
-  color: var(--ink-soft);
-  font-size: var(--t-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-.rankings__grow {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.rankings__game b {
+  display: inline-block;
+  min-width: 14px;
 }
 
 /* the committee has not ranked yet: what that means, and the way to the projection */

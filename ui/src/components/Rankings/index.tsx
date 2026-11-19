@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Minus, Star } from "@phosphor-icons/react";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Panel from "../Panel/index.tsx";
 import SectionTabs, { SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import { api } from "../../api.ts";
 import type { PollEntry, SeasonSummary, TeamCard, WeekPolls } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -19,10 +20,37 @@ interface Props {
 type Tab = "ap" | "coaches" | "cfp";
 const OTHERS: Record<Tab, keyof WeekPolls | null> = { ap: "ap_others", coaches: "coaches_others", cfp: null };
 
+/** A game on a week's slate (GET /week/{n} → games[]). */
+interface SlateGame {
+  week: number;
+  home: string;
+  away: string;
+  home_name: string;
+  away_name: string;
+  home_rank: number | null;
+  away_rank: number | null;
+  neutral: boolean;
+  played: boolean;
+  home_score: number | null;
+  away_score: number | null;
+}
+/** One team's side of a game: the opponent, where, and the score once played. */
+function gameFor(team: string, g: SlateGame | undefined) {
+  if (!g) return null;
+  const home = g.home === team;
+  const rank = home ? g.away_rank : g.home_rank;
+  const foe = `${g.neutral ? m.vs : home ? m.vs : m.at} ${rank ? `#${rank} ` : ""}${home ? g.away_name : g.home_name}`;
+  if (!g.played || g.home_score == null || g.away_score == null) return { foe, won: null, score: "" };
+  const pf = home ? g.home_score : g.away_score;
+  const pa = home ? g.away_score : g.home_score;
+  return { foe, won: pf > pa, score: `${pf}–${pa}` };
+}
+
 /**
  * Rankings: the AP Top 25, the Coaches Poll and the committee's CFP ranking, any week of the season (the preseason
  * poll is Week 0's). Each team with where it was last week, its record and conference, and its points and first-place
- * votes; beside the table, the others receiving votes and the week's movers. The committee ranks from Week 10: until
+ * votes, its last result and its next game; under the table, the way the AP prints it, the others receiving votes and
+ * the teams that dropped out. The committee ranks from Week 10: until
  * then its tab says so, and the Bracket shows where the field would stand from the AP poll.
  */
 export default function Rankings({ season, teams, onBracket }: Props) {
@@ -40,10 +68,46 @@ export default function Rankings({ season, teams, onBracket }: Props) {
   const others = at != null && othersKey ? ((polls[String(at)]?.[othersKey] as PollEntry[] | undefined) ?? []) : [];
   const firstCfp = season.cfp_weeks?.[0];
   const mine = rows.find((r) => r.team === season.team) ?? others.find((r) => r.team === season.team);
+  // the first poll has nothing before it, so it shows no moves
+  const first = rows.length > 0 && rows.every((r) => r.previous == null);
+  const before = at != null ? weeks.filter((w) => w < at)[0] : undefined;
+  const dropped =
+    before != null ? (polls[String(before)]?.[tab] ?? []).filter((p) => !rows.some((r) => r.team === p.team)) : [];
+
+  // the slates around the poll: a poll comes out after its week's games, so the last result is that week's (or the
+  // one before, after an open date) and the next game is the week after's
+  const [slates, setSlates] = useState<Record<number, SlateGame[]>>({});
+  useEffect(() => {
+    if (at == null) return;
+    let live = true;
+    for (const w of [at - 1, at, at + 1, at + 2])
+      if (w >= 1)
+        api<{ games: SlateGame[] }>(`/api/season/${season.id}/week/${w}`)
+          .then((v) => live && setSlates((s) => ({ ...s, [w]: v.games })))
+          .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [at, season.id, season.current_week]);
+  const find = (team: string, ws: number[]) => {
+    for (const w of ws) {
+      const g = slates[w]?.find((x) => x.home === team || x.away === team);
+      if (g) return g;
+    }
+    return undefined;
+  };
+  const last = (team: string) => {
+    const g = at != null ? find(team, [at, at - 1]) : undefined;
+    return g?.played ? gameFor(team, g) : null;
+  };
+  const next = (team: string) => {
+    const g = at != null ? find(team, [at + 1, at + 2]) : undefined;
+    return g && g.week > (at ?? 0) ? gameFor(team, g) : null;
+  };
 
   const columns: Column<PollEntry>[] = [
     { key: "rank", label: m.rank, num: true, render: (r) => <b>{r.rank}</b>, sort: (r) => -r.rank },
-    { key: "move", label: m.move, tip: m.moveTip, render: (r) => <Move r={r} /> },
+    ...(first ? [] : [{ key: "move", label: m.move, tip: m.moveTip, render: (r: PollEntry) => <Move r={r} /> }]),
     {
       key: "team",
       label: m.team,
@@ -57,7 +121,47 @@ export default function Rankings({ season, teams, onBracket }: Props) {
     },
     { key: "record", label: m.record, render: (r) => r.record },
     { key: "conf", label: m.conference, render: (r) => r.conference, sort: (r) => r.conference },
+    {
+      // before anyone has played there is no result to show: the column appears with the first games
+      key: "last",
+      label: m.last,
+      render: (r) => {
+        const g = last(r.team);
+        return g ? (
+          <span className="rankings__game">
+            <b>{g.won ? m.win : m.loss}</b> {g.score} <span className="rankings__soft">{g.foe}</span>
+          </span>
+        ) : (
+          ""
+        );
+      },
+    },
+    {
+      key: "next",
+      label: m.next,
+      render: (r) => {
+        const g = next(r.team);
+        if (!g) return "";
+        // a later week you are looking back at: the game has been played since
+        return (
+          <span className="rankings__game">
+            {g.foe}
+            {g.won != null && (
+              <span className="rankings__soft">
+                {" "}
+                · {g.won ? m.win : m.loss} {g.score}
+              </span>
+            )}
+          </span>
+        );
+      },
+    },
   ];
+  if (!rows.some((r) => last(r.team)))
+    columns.splice(
+      columns.findIndex((c) => c.key === "last"),
+      1,
+    );
   if (tab !== "cfp")
     columns.push(
       {
@@ -120,7 +224,7 @@ export default function Rankings({ season, teams, onBracket }: Props) {
               <p className="rankings__soft">{m.noPoll}</p>
             )
           ) : (
-            <div className="rankings__cols">
+            <>
               <Panel title={m.tabs[tab]} aside={at != null ? weekName(at) : undefined} className="rankings__panel">
                 <DataTable
                   label={m.tabs[tab]}
@@ -130,26 +234,23 @@ export default function Rankings({ season, teams, onBracket }: Props) {
                   mine={(r) => r.team === season.team}
                 />
               </Panel>
-              <div className="rankings__side">
-                {others.length > 0 && (
-                  <Panel title={m.others} aside={m.othersNote}>
-                    <ol className="rankings__others">
-                      {others.map((r) => (
-                        <li key={r.team} className={r.team === season.team ? "is-mine" : undefined}>
-                          <span className="rankings__place">{r.rank}</span>
-                          <Swatch team={teams.get(r.team)} size={14} />
-                          <span className="rankings__grow">{r.name}</span>
-                          <b>{r.points ?? 0}</b>
-                        </li>
-                      ))}
-                    </ol>
-                  </Panel>
-                )}
-                <Panel title={m.movers}>
-                  <Movers rows={rows} teams={teams} />
-                </Panel>
-              </div>
-            </div>
+              {others.length > 0 && (
+                <p className="rankings__line">
+                  <b>{m.others}:</b>{" "}
+                  {others.map((r, i) => (
+                    <span key={r.team} className={r.team === season.team ? "is-mine" : undefined}>
+                      {r.name} {r.points ?? 0}
+                      {i < others.length - 1 ? ", " : "."}
+                    </span>
+                  ))}
+                </p>
+              )}
+              {dropped.length > 0 && (
+                <p className="rankings__line">
+                  <b>{m.dropped}:</b> {dropped.map((r) => `${r.name} (${r.rank})`).join(", ")}.
+                </p>
+              )}
+            </>
           )}
         </div>
       </SectionPane>
@@ -182,35 +283,5 @@ function Move({ r }: { r: PollEntry }) {
       )}
       {Math.abs(d)}
     </span>
-  );
-}
-
-/** The week's biggest climbers and fallers, and who is new. */
-function Movers({ rows, teams }: { rows: PollEntry[]; teams: Map<string, TeamCard> }) {
-  const gain = (r: PollEntry) => (r.previous ?? r.rank) - r.rank;
-  const fresh = rows.filter((r) => r.previous == null);
-  const up = rows
-    .filter((r) => gain(r) > 0)
-    .sort((a, b) => gain(b) - gain(a))
-    .slice(0, 3);
-  const down = rows
-    .filter((r) => gain(r) < 0)
-    .sort((a, b) => gain(a) - gain(b))
-    .slice(0, 3);
-  // the preseason poll (and any first poll): everyone is new, so there is nothing to compare
-  if (!up.length && !down.length && fresh.length === rows.length)
-    return <p className="rankings__soft">{m.firstPoll}</p>;
-  if (!up.length && !down.length && !fresh.length) return <p className="rankings__soft">{m.noMoves}</p>;
-  return (
-    <ol className="rankings__others">
-      {[...up, ...down, ...fresh.slice(0, 3)].map((r) => (
-        <li key={r.team}>
-          <Move r={r} />
-          <Swatch team={teams.get(r.team)} size={14} />
-          <span className="rankings__grow">{r.name}</span>
-          <b>{m.now(r.rank)}</b>
-        </li>
-      ))}
-    </ol>
   );
 }
