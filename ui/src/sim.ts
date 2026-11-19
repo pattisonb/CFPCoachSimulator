@@ -3,7 +3,7 @@ import { api } from "./api.ts";
 import type { SimStatus } from "./types.ts";
 
 // Running the season forward. POST /advance (a week, or through week `to`) or /gameday (your game alone) starts a job
-// on the server, which plays it a week at a time in the background (tools/dev_server.py, web/worker.js); the page
+// on the server, which plays it a week at a time in the background (tools/dev_server.py); the page
 // polls /status until the job is idle again, then reloads what changed. Each poll carries your results so far
 // (?since=0), your record and the week the sim has reached, so the page can show them as they happen.
 

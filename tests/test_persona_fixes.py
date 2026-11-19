@@ -218,9 +218,6 @@ def test_cooled_why():
         raise AssertionError("a visit while he is cooled")
     except recruiting.RecruitingError as e:
         assert e.code == 409 and "went quiet" in str(e), str(e)
-    js = (ROOT / "web" / "recruiting.js").read_text()
-    for words in ("He felt ignored: call or visit to warm him back up", "Cooled: he wants to hear from you", "Cooled: raise your offer first"):
-        assert words in js, words
     print("ok why he cooled reaches the board")
 
 

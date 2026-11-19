@@ -17,7 +17,6 @@ from typing import Optional
 
 CLEAR = os.environ.get("CFP_CLEAR", "1") != "0"   # *tune* the branch's switch: Clear Mode on (CFP_CLEAR=0 turns it off: the word-mode tests)
 
-CONFIDENCE = {"Low": "High", "Medium": "Medium", "High": "Low"}   # a read's uncertainty word -> the confidence word shown
 # Clear Mode judges confidence on the range the page shows (the read plus WORD_SLACK each side), not the word read's own
 # width: half-widths under these are High, then Medium, else Low; a complete report is High *tune*
 CLEAR_CONFIDENCE = ((6.0, "High"), (10.0, "Medium"))

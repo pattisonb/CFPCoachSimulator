@@ -1,6 +1,24 @@
 type S = Record<string, number>;
-const n = (v: number | undefined) => (v ?? 0).toLocaleString("en-US");
-
+/** One stat column of the players table: its header, what it means, and its number from a player's line. */
+export interface StatCol {
+  key: string;
+  label: string;
+  tip: string;
+  /** an average or a percentage: shown with one decimal */
+  dec?: boolean;
+  /** from his season line and the games he has played */
+  get: (s: S, games: number) => number;
+}
+const col = (key: string, label: string, tip: string, get: (s: S, games: number) => number, dec = false): StatCol => ({
+  key,
+  label,
+  tip,
+  get,
+  dec,
+});
+const v = (x: number | undefined) => x ?? 0;
+/** a over b (times `scale`), 0 when there is no b */
+const rate = (a: number | undefined, b: number | undefined, scale = 1) => (b ? ((a ?? 0) / b) * scale : 0);
 export const messages = {
   title: "Stats",
   tabs: { players: "Players", teams: "Teams", injuries: "Injuries" },
@@ -16,75 +34,151 @@ export const messages = {
   preseason: "Preseason",
   week: (w: number) => `Week ${w}`,
   scopeLabel: "Whose leaders",
-  scopes: { all: "All of FBS" },
+  conference: "Conference",
+  allConferences: "All Conferences",
+  teamLabel: "Team",
+  allTeams: "All Teams",
+  yours: "Your team",
   loading: "Loading the leaders…",
   loadError: (msg: string) => `Couldn't load the stats: ${msg}.`,
   noGames: "No Games Played Yet",
   noGamesText: "The leaders fill in as the season is played. Sim the week from the Office to get it started.",
   teamStats: "Team Stats",
-  sortHint: "Click a Column to Sort",
 
   /** each category: its name, what its number is, and the line beside each player */
+  // a category of player stats: its name, and every number the game keeps for it, in order (the first is what the
+  // table starts sorted by). Each column sorts. `dec`: shown with one decimal (an average, a percentage).
   cats: {
     passing: {
       title: "Passing",
-      unit: "Yards",
-      line: (s: S) =>
-        `${n(s.completions)}/${n(s.pass_attempts)} · ${n(s.passing_touchdowns)} TD · ${n(s.interceptions_thrown)} INT`,
+      cols: [
+        col("yds", "Yds", "Passing yards", (s) => v(s.pass_yards)),
+        col("ypg", "Yds/G", "Passing yards a game", (s, g) => rate(s.pass_yards, g), true),
+        col("cmp", "Cmp", "Completions", (s) => v(s.completions)),
+        col("att", "Att", "Attempts", (s) => v(s.pass_attempts)),
+        col("pct", "Cmp %", "Completion percentage", (s) => rate(s.completions, s.pass_attempts, 100), true),
+        col("ypa", "Y/A", "Yards an attempt", (s) => rate(s.pass_yards, s.pass_attempts), true),
+        col("td", "TD", "Touchdown passes", (s) => v(s.passing_touchdowns)),
+        col("int", "Int", "Interceptions thrown", (s) => v(s.interceptions_thrown)),
+        col("sck", "Sacked", "Times sacked", (s) => v(s.sacks_taken)),
+        col("fd", "1st Dn", "Passing first downs", (s) => v(s.passing_first_downs)),
+        col("conv", "3rd Dn", "Third and fourth downs converted by a pass", (s) => v(s.passing_conversions)),
+        col("long", "Long", "Longest completion", (s) => v(s.long_pass)),
+      ],
     },
     rushing: {
       title: "Rushing",
-      unit: "Yards",
-      line: (s: S) => `${n(s.carries)} car · ${n(s.rushing_touchdowns)} TD`,
+      cols: [
+        col("yds", "Yds", "Rushing yards", (s) => v(s.rush_yards)),
+        col("ypg", "Yds/G", "Rushing yards a game", (s, g) => rate(s.rush_yards, g), true),
+        col("car", "Car", "Carries", (s) => v(s.carries)),
+        col("avg", "Avg", "Yards a carry", (s) => rate(s.rush_yards, s.carries), true),
+        col("td", "TD", "Rushing touchdowns", (s) => v(s.rushing_touchdowns)),
+        col("long", "Long", "Longest run", (s) => v(s.long_rush)),
+        col("exp", "20+", "Runs of 20 yards or more", (s) => v(s.explosive_runs)),
+        col("fd", "1st Dn", "Rushing first downs", (s) => v(s.rushing_first_downs)),
+        col("conv", "3rd Dn", "Third and fourth downs converted by a run", (s) => v(s.rushing_conversions)),
+        col("fum", "Fum", "Fumbles", (s) => v(s.fumbles)),
+      ],
     },
     receiving: {
       title: "Receiving",
-      unit: "Yards",
-      line: (s: S) => `${n(s.receptions)} rec · ${n(s.receiving_touchdowns)} TD`,
+      cols: [
+        col("yds", "Yds", "Receiving yards", (s) => v(s.receiving_yards)),
+        col("ypg", "Yds/G", "Receiving yards a game", (s, g) => rate(s.receiving_yards, g), true),
+        col("rec", "Rec", "Receptions", (s) => v(s.receptions)),
+        col("tgt", "Tgt", "Targets", (s) => v(s.targets)),
+        col("pct", "Catch %", "Catches for every target", (s) => rate(s.receptions, s.targets, 100), true),
+        col("avg", "Avg", "Yards a catch", (s) => rate(s.receiving_yards, s.receptions), true),
+        col("td", "TD", "Receiving touchdowns", (s) => v(s.receiving_touchdowns)),
+        col("long", "Long", "Longest catch", (s) => v(s.long_reception)),
+        col("exp", "25+", "Catches of 25 yards or more", (s) => v(s.explosive_catches)),
+        col("fd", "1st Dn", "Receiving first downs", (s) => v(s.receiving_first_downs)),
+      ],
     },
-    touchdowns: {
-      title: "Touchdowns",
-      unit: "Rushing and Receiving",
-      line: (s: S) => `${n(s.rushing_touchdowns)} rush · ${n(s.receiving_touchdowns)} rec`,
-    },
-    tackles: {
-      title: "Tackles",
-      unit: "Total",
-      line: (s: S) => `${n(s.solo_tackles)} solo · ${n(s.tackles_for_loss)} TFL`,
-    },
-    sacks: { title: "Sacks", unit: "Sacks", line: (s: S) => `${n(s.hurries)} hurries · ${n(s.forced_fumbles)} FF` },
-    tfl: {
-      title: "Tackles for Loss",
-      unit: "TFL",
-      line: (s: S) => `${n(s.sacks)} sacks · ${n(s.solo_tackles)} solo`,
-    },
-    interceptions: {
-      title: "Interceptions",
-      unit: "Picks",
-      line: (s: S) => `${n(s.passes_defended)} PD · ${n(s.interception_return_yards)} ret yds`,
-    },
-    pbu: {
-      title: "Passes Defended",
-      unit: "Broken Up",
-      line: (s: S) => `${n(s.interceptions)} INT · ${n(s.solo_tackles)} solo`,
-    },
-    explosives: {
-      title: "Explosive Plays",
-      unit: "Runs of 20+ and Catches of 25+",
-      line: (s: S) => `${n(s.explosive_runs)} runs · ${n(s.explosive_catches)} catches`,
+    defense: {
+      title: "Defense",
+      cols: [
+        col("tkl", "Tkl", "Total tackles", (s) => v(s.solo_tackles) + v(s.assisted_tackles)),
+        col("solo", "Solo", "Solo tackles", (s) => v(s.solo_tackles)),
+        col("ast", "Ast", "Assisted tackles", (s) => v(s.assisted_tackles)),
+        col("tfl", "TFL", "Tackles for loss", (s) => v(s.tackles_for_loss)),
+        col("sacks", "Sacks", "Sacks", (s) => v(s.sacks)),
+        col("hur", "Hur", "Quarterback hurries", (s) => v(s.hurries)),
+        col("int", "Int", "Interceptions", (s) => v(s.interceptions)),
+        col("iyd", "Int Yds", "Interception return yards", (s) => v(s.interception_return_yards)),
+        col("pd", "PD", "Passes defended", (s) => v(s.passes_defended)),
+        col("ff", "FF", "Forced fumbles", (s) => v(s.forced_fumbles)),
+        col("fr", "FR", "Fumble recoveries", (s) => v(s.fumble_recoveries)),
+        col("td", "TD", "Defensive touchdowns", (s) => v(s.defensive_touchdowns)),
+      ],
     },
     kicking: {
       title: "Kicking",
-      unit: "Points",
-      line: (s: S) => `${n(s.fg_made)}/${n(s.fg_attempted)} FG · long ${n(s.long_fg)}`,
+      cols: [
+        col("pts", "Pts", "Points", (s) => 3 * v(s.fg_made) + v(s.pat_made)),
+        col("fgm", "FGM", "Field goals made", (s) => v(s.fg_made)),
+        col("fga", "FGA", "Field goals attempted", (s) => v(s.fg_attempted)),
+        col("pct", "FG %", "Field goal percentage", (s) => rate(s.fg_made, s.fg_attempted, 100), true),
+        col("m40", "40+ M", "Made from 40 yards or more", (s) => v(s.fg_40_made)),
+        col("a40", "40+ A", "Tried from 40 yards or more", (s) => v(s.fg_40_att)),
+        col("m50", "50+ M", "Made from 50 yards or more", (s) => v(s.fg_50_made)),
+        col("a50", "50+ A", "Tried from 50 yards or more", (s) => v(s.fg_50_att)),
+        col("long", "Long", "Longest field goal", (s) => v(s.long_fg)),
+        col("xpm", "XPM", "Extra points made", (s) => v(s.pat_made)),
+        col("xpa", "XPA", "Extra points attempted", (s) => v(s.pat_attempts)),
+      ],
     },
     punting: {
       title: "Punting",
-      unit: "Average",
-      line: (s: S) => `${n(s.punts)} punts · ${n(s.punts_inside_20)} inside the 20`,
+      cols: [
+        col("avg", "Avg", "Yards a punt", (s) => rate(s.punt_yards, s.punts), true),
+        col("net", "Net", "Net yards a punt", (s) => rate(s.punt_net_yards, s.punts), true),
+        col("punts", "Punts", "Punts", (s) => v(s.punts)),
+        col("yds", "Yds", "Punt yards", (s) => v(s.punt_yards)),
+        col("in20", "In 20", "Punts downed inside the 20", (s) => v(s.punts_inside_20)),
+        col("tb", "TB", "Touchbacks", (s) => v(s.punt_touchbacks)),
+        col("long", "Long", "Longest punt", (s) => v(s.long_punt)),
+      ],
     },
-  } as Record<string, { title: string; unit: string; line: (s: S) => string }>,
-
+    returns: {
+      title: "Returns",
+      cols: [
+        col("kyd", "KR Yds", "Kickoff return yards", (s) => v(s.kickoff_return_yards)),
+        col("kr", "KR", "Kickoff returns", (s) => v(s.kickoff_returns)),
+        col("kavg", "KR Avg", "Yards a kickoff return", (s) => rate(s.kickoff_return_yards, s.kickoff_returns), true),
+        col("ktd", "KR TD", "Kickoff return touchdowns", (s) => v(s.kickoff_return_touchdowns)),
+        col("klong", "KR Long", "Longest kickoff return", (s) => v(s.long_kickoff_return)),
+        col("pyd", "PR Yds", "Punt return yards", (s) => v(s.punt_return_yards)),
+        col("pr", "PR", "Punt returns", (s) => v(s.punt_returns)),
+        col("pavg", "PR Avg", "Yards a punt return", (s) => rate(s.punt_return_yards, s.punt_returns), true),
+        col("ptd", "PR TD", "Punt return touchdowns", (s) => v(s.punt_return_touchdowns)),
+        col("plong", "PR Long", "Longest punt return", (s) => v(s.long_punt_return)),
+      ],
+    },
+    blocking: {
+      title: "Blocking",
+      cols: [
+        col("snaps", "Snaps", "Snaps played", (s) => v(s.snaps)),
+        col("gs", "Starts", "Games started", (s) => v(s.games_started)),
+        col("kb", "Key Blocks", "Blocks that sprang a run", (s) => v(s.key_blocks)),
+        col("sa", "Sacks Allowed", "Sacks allowed", (s) => v(s.sacks_allowed)),
+        col("pa", "Pressures", "Pressures allowed", (s) => v(s.pressures_allowed)),
+        col("st", "Stuffs", "Runs stuffed at his block", (s) => v(s.stuffs_allowed)),
+      ],
+    },
+  } as Record<string, { title: string; cols: StatCol[] }>,
+  category: "Category",
+  games: "G",
+  gamesTip: "Games played",
+  playersShown: (shown: number, all: number) =>
+    shown < all
+      ? `${shown.toLocaleString("en-US")} of ${all.toLocaleString("en-US")} Players`
+      : `${all.toLocaleString("en-US")} Players`,
+  showAll: (n: number) => `Show All ${n.toLocaleString("en-US")}`,
+  noPlayers: "Nobody here has a number in this category yet.",
+  player: "Player",
+  place: "#",
   cols: {
     team: "Team",
     record: "W-L",

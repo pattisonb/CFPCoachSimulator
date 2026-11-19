@@ -233,9 +233,6 @@ def starter_slugs(team: dict) -> set[str]:
     return out
 
 
-def load_team(path: Path) -> dict:
-    return team_from_source(json.loads(path.read_text(encoding="utf-8")))
-
 
 def team_from_source(t: dict) -> dict:
     """One team in the source format (cfb_sim_data/teams/*.json, or a career's league.py

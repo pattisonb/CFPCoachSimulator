@@ -1,14 +1,14 @@
-/* Space Mono, from the repo's shared web/fonts folder (SIL Open Font License: web/fonts/SpaceMono-OFL.txt). */
+/* Space Mono (SIL Open Font License: assets/fonts/SpaceMono-OFL.txt). */
 @font-face {
   font-family: "Space Mono";
-  src: url("@web/fonts/SpaceMono-Regular.ttf") format("truetype");
+  src: url("./assets/fonts/SpaceMono-Regular.ttf") format("truetype");
   font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Space Mono";
-  src: url("@web/fonts/SpaceMono-Bold.ttf") format("truetype");
+  src: url("./assets/fonts/SpaceMono-Bold.ttf") format("truetype");
   font-weight: 700;
   font-display: swap;
 }

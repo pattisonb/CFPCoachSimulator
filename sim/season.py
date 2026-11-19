@@ -11,15 +11,12 @@ Polls: the AP poll starts from the real 2026 preseason poll and is updated after
 week by the model in polls.py; the committee ranking appears after weeks 9-13 and the
 final one after week 14, matching the 2026 release schedule (Nov 3 through Dec 6).
 
-Modes:
-    full       every game simulated from week 1
-    remaining  real results and real polls kept through the last completed week; the
-               rest is simulated
+Every game is simulated from week 1.
 
 Games against FCS schools are played against the fictional FCS school from the same
 region (data/fcs_map.json).
 
-Usage:  python -m sim.season ohio-state [full|remaining]      # simulate to the end and print
+Usage:  python -m sim.season ohio-state      # simulate to the end and print
 """
 from __future__ import annotations
 
@@ -154,7 +151,7 @@ def use_league(path: Optional[Path]) -> None:
         return
     _league_path = path
     _teams_cache, _TEAMS, _STAR_CUTS = {}, {}, None
-    for c in (_teams_meta, _scale_cache, _form_cache, _race_cache, _preview_cache):
+    for c in (_teams_meta, _scale_cache, _race_cache, _preview_cache):
         c.clear()
     close_pool()                              # the workers hold the old league
     from coach_career import prospects
@@ -386,7 +383,7 @@ def fcs_map(schedules: dict, teams: dict) -> dict[str, str]:
     return {k: v["counterpart"] for k, v in saved.items()}
 
 
-# ----- real 2026 polls (preseason and, in "remaining" mode, the weeks already played) ----
+# ----- the real 2026 preseason polls ----
 
 def _real_polls_2026(teams: dict) -> dict:
     """{week_after: [slugs]} for the AP polls in data/history/polls.json; week 0 = preseason."""
@@ -566,8 +563,8 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     `league`: a career from a league file (league_file.check's, already in play through use_league),
     stored with id `career_id` before the career starts. `real_polls=False`: the preseason poll comes
     from the ratings (_rating_poll), not the real 2026 AP poll (a league whose shape the file changed)."""
-    if career and mode != "full":
-        raise ValueError("Coach Career starts from week 1")
+    if mode != "full":
+        raise ValueError("a season starts from week 1")
     teams = load_teams()
     if team_slug not in teams:
         raise ValueError(f"unknown team {team_slug}")
@@ -598,33 +595,18 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
                "away_display": teams[away]["name"] if g["away_slug"] else fcs_label(away),
                "conference_game": teams[home]["conference"] == teams[away]["conference"] and not teams[home]["fictional"],
                "played": False, "home_score": None, "away_score": None, "overtime": 0, "real": False, "kind": "regular"}
-        if mode == "remaining" and g["final"] and g["home_score"] is not None:
-            rec.update(played=True, home_score=g["home_score"], away_score=g["away_score"], real=True)
         games[rec["event_id"]] = rec
     _spread_double_bookings(games, teams)
     if fill_open_dates:
         _fill_open_dates(games, teams)
 
-    # current week = last week in which every game has been played (remaining mode)
-    current = 0
-    if mode == "remaining":
-        for w in range(1, LAST_REGULAR_WEEK + 1):
-            wk = [g for g in games.values() if g["week"] == w]
-            if wk and all(g["played"] for g in wk):
-                current = w
-            else:
-                break
-
-    # remaining mode: each team's in-season form from the real results so far (form.py), applied in every sim
-    form_teams, form_players = _form_table(teams, current) if mode == "remaining" else ({}, {})
     state = {
         "coach": coach,
         "id": uuid.uuid4().hex[:12], "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "team": team_slug, "team_name": teams[team_slug]["name"], "conference": teams[team_slug]["conference"],
-        "mode": mode, "seed": seed, "current_week": current, "phase": "regular", "done": False,
+        "mode": mode, "seed": seed, "current_week": 0, "phase": "regular", "done": False,
         "games": games, "polls": {}, "scores": {}, "champions": {}, "runners_up": {}, "bracket": None, "playoff": {}, "my_boxes": {},
         "settings": {"god_mode": False, "morale": True},
-        "form": form_teams, "player_form": form_players,
         "rng_state": rng.randrange(1 << 30), "year": year,
     }
     if league is not None:
@@ -633,7 +615,6 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
             state["id"] = career_id
     use_real = real_polls and year == 2026
     real_polls = _real_polls_2026(teams) if use_real else {}
-    real = real_polls if mode == "remaining" else {}
     preseason = real_polls.get(0) or _rating_poll(teams)
     ap_params, _ = polls.load_params()
     ratings = {slug: t["team_ratings"]["overall"] for slug, t in teams.items() if not t["fictional"]}
@@ -645,14 +626,9 @@ def new_season(team_slug: str, mode: str = "full", seed: Optional[int] = None, f
     real_pre = _real_ap_votes_2026(0, teams) if use_real else None
     if real_pre and real_pre[0][:25] == preseason[:25]:
         preseason, pre_others, pre_votes = real_pre[0], real_pre[1] or pre_others, {**pre_votes, **real_pre[2]}
-    # week=0: the preseason poll shows 0-0 even in "remaining" mode, where games are already played
     state["polls"]["0"] = {"ap": _poll_entries(preseason[:25], {}, state, teams, 0, votes=pre_votes),
                            "ap_others": _poll_entries(pre_others, {}, state, teams, 0, start=26, votes=pre_votes)}
     state["polls"]["0"].update(_coaches_entries(state, teams, preseason[:25], pre_others, {}, tiers, ap_params, 0, None))
-    # remaining mode: replay the played weeks through the model (scores) but show the real polls
-    if mode == "remaining" and current > 0:
-        for w in range(1, current + 1):
-            _update_polls_after_week(state, teams, w, real_ap=real.get(w))
     if career:
         from coach_career import career as career_mod
         career_mod.new_career(state, coach)
@@ -997,7 +973,7 @@ def _final_ap_poll(state: dict, teams: dict) -> None:
                                                  records=rec, pinned=(champion, runner_up)))
 
 
-def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optional[list[str]] = None) -> None:
+def _update_polls_after_week(state: dict, teams: dict, week: int) -> None:
     ap_params, cfp_params = polls.load_params()
     tiers = _tiers(teams)
     prev = state["polls"].get(str(week - 1), {}).get("ap", [])
@@ -1010,15 +986,11 @@ def _update_polls_after_week(state: dict, teams: dict, week: int, real_ap: Optio
     state["scores"] = polls.update_scores(state["scores"], week_games, prev_rank, rec_t, tiers, week, CCG_WEEK, ap_params)
     # ... but the AP poll moves from last week's poll and its vote points, the way voters do
     prev_full = prev + state["polls"].get(str(week - 1), {}).get("ap_others", [])
-    real = _real_ap_votes_2026(week, teams) if real_ap else None
-    if real:
-        order, others, votes = real
-        state["ap_ballots"] = None         # the next simulated week seeds its voters from this real poll
-    elif any(e.get("points") for e in prev_full):
+    if any(e.get("points") for e in prev_full):
         order, others, votes = _ballot_poll(state, prev_full, week_games, rec_t, tiers, week)
     else:                                  # an old saved season without vote points
         full = polls.rank(state["scores"], rec_t, tiers, ap_params, n=25 + AP_OTHERS)
-        order = real_ap[:25] if real_ap else full[:25]
+        order = full[:25]
         others = [t for t in full if t not in set(order)][:AP_OTHERS]
         votes = _ap_votes(state, order + others, tiers, ap_params, week)
     entry = {"ap": _poll_entries(order, prev_rank, state, teams, week, votes=votes),
@@ -1089,7 +1061,7 @@ def redshirt_status(state: dict, slug: str, p: dict) -> dict:
     line = ((state.get("season_stats") or {}).get(slug, {}).get("players") or {}).get(f"{p['name']}|{p['position']}")
     games = line["games"] if line else 0
     cls = p.get("class") or ""
-    can = bool(state.get("career")) and state.get("mode") != "real" and slug == state.get("team") and not state.get("done") \
+    can = bool(state.get("career")) and slug == state.get("team") and not state.get("done") \
         and cls in REDSHIRT_CLASSES and games <= REDSHIRT_GAMES
     return {"on": p.get("slug") in rs, "can": can, "games": games, "limit": REDSHIRT_GAMES,
             "why": None if can else ("his redshirt year is used" if cls.endswith("RS") or cls in ("SR", "SRRS") else
@@ -1269,12 +1241,12 @@ def change_position(state: dict, slug: str, player_slug: str, pos: str) -> dict:
             "moved_from": (position_changes(state, slug).get(player_slug) or {}).get("from")}
 
 
-def _game_team(slug: str, form_shift: float, player_shifts: dict, edits: dict, morale: Optional[dict],
+def _game_team(slug: str, shift: float, edits: dict, morale: Optional[dict],
                depth: Optional[dict], injured: list) -> dict:
-    """One side of a game as the engine plays it (in a pool worker): the team's form, then
-    god-mode edits and your coach, morale, the depth chart and the injury list."""
-    from sim.form import apply_form
-    team = apply_form(_TEAMS[slug], form_shift, player_shifts)
+    """One side of a game as the engine plays it (in a pool worker): the real FCS school's strength for a stand-in
+    (`shift`), then god-mode edits and your coach, morale, the depth chart and the injury list."""
+    from sim.form import with_form
+    team = with_form(_TEAMS[slug], shift)
     team = with_morale(with_edits(team, edits), morale)
     return _with_injuries(apply_depth(team, depth), injured)
 
@@ -1370,8 +1342,8 @@ def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
     event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args[:12]
     earned = args[12] if len(args) > 12 else (None, None)
-    home_team = _with_earned(_game_team(home, form[0], form[2], edits[0], morale[0], depth[0], home_out), earned[0])
-    away_team = _with_earned(_game_team(away, form[1], form[3], edits[1], morale[1], depth[1], away_out), earned[1])
+    home_team = _with_earned(_game_team(home, form[0], edits[0], morale[0], depth[0], home_out), earned[0])
+    away_team = _with_earned(_game_team(away, form[1], edits[1], morale[1], depth[1], away_out), earned[1])
     r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2])
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
@@ -1421,24 +1393,6 @@ def _week_seeds(state: dict, week: int) -> dict[str, int]:
     return seeds[str(week)]
 
 
-_form_cache: dict = {}
-
-
-def _form_table(teams: dict, through_week: int) -> tuple[dict, dict]:
-    """(team form, player form) fit from the real 2026 results and box scores through
-    `through_week` (both empty without results); cached per week for the process."""
-    if through_week in _form_cache:
-        return _form_cache[through_week]
-    try:
-        from sim.form import load_all_form
-        out = load_all_form(teams, through_week)
-    except Exception as exc:  # noqa: BLE001
-        print(f"form: skipped ({exc})")
-        out = ({}, {})
-    _form_cache[through_week] = out
-    return out
-
-
 def state_fictional(slug: str) -> bool:
     """Is `slug` one of the fictional FCS stand-ins?"""
     return bool(load_teams().get(slug, {}).get("fictional"))
@@ -1462,17 +1416,6 @@ def check_fbs(slug: str) -> None:
         raise StandInError(f"{t['name']} is an FCS stand-in: it shows only in the box scores of its games")
 
 
-def team_form_shift(state: dict, slug: str) -> float:
-    """The rating shift a team carries into its sims from its in-season form (remaining mode)."""
-    f = (state.get("form") or {}).get(slug)
-    return float(f["rating"]) if f else 0.0
-
-
-def player_form_shifts(state: dict, slug: str) -> dict:
-    """slug's players' own form shifts (remaining mode), player slug -> {shift, games, note}."""
-    return (state.get("player_form") or {}).get(slug) or {}
-
-
 def _earned_for(state: dict, slug: str) -> dict:
     """Clear Mode: a team's earned abilities for its game ({"Name|POS": {trait: tier}}; {} when none)."""
     return dict(((state.get("abilities_earned") or {}).get(slug) or {}))
@@ -1488,8 +1431,8 @@ def _base_traits(slug: str) -> dict:
 def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, report: Optional[Reporter] = None,
                stage: str = "Simulating") -> None:
     def form_shift(g: dict, slug: str) -> float:
-        # the team's in-season form, plus the real FCS school's strength for a stand-in
-        return team_form_shift(state, slug) + (g.get("fcs_shift", 0.0) if state_fictional(slug) else 0.0)
+        # the real FCS school's strength, for a stand-in
+        return g.get("fcs_shift", 0.0) if state_fictional(slug) else 0.0
 
     jobs = []
     if game_ids:
@@ -1506,8 +1449,7 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
                      _injured(state, home), _injured(state, away),
                      (team_edits(state, home), team_edits(state, away)),
                      (morale_payload(state, home), morale_payload(state, away), morale_on(state)),
-                     (form_shift(g, home), form_shift(g, away),
-                      player_form_shifts(state, home), player_form_shifts(state, away)))
+                     (form_shift(g, home), form_shift(g, away)))
                     + (((_earned_for(state, home), _earned_for(state, away)),) if _clear_on() else ()))
     before = rank_map(state, state["current_week"]) if morale_on(state) else {}
     if not jobs:
@@ -2636,8 +2578,7 @@ def load_season(season_id: str) -> Optional[dict]:
         for side in ("home", "away"):
             if " (as " in (g.get(f"{side}_display") or ""):
                 g[f"{side}_display"] = fcs_label(g[side])
-    if state.get("mode") != "real":
-        schedule_ahead(state)         # seasons saved before the postseason was set a week early
+    schedule_ahead(state)             # seasons saved before the postseason was set a week early
     from teamdata import game_scale
     if game_scale.upgrade(state):          # careers saved while their league and recruits were in EA numbers
         pass
@@ -3033,7 +2974,7 @@ SCHEDULE_DRAW = 8                 # the other school says yes when it gets the h
 def schedule_editable(state: dict) -> list[dict]:
     """Your non-conference regular-season games you can still trade: before week 1 of a career."""
     me = state.get("team")
-    if not state.get("career") or state.get("mode") == "real" or state.get("current_week", 0) > 0 or not me:
+    if not state.get("career") or state.get("current_week", 0) > 0 or not me:
         return []
     return sorted((g for g in state["games"].values() if g["kind"] == "regular" and not g["conference_game"] and not g["played"]
                    and me in (g["home"], g["away"])), key=lambda g: g["week"])
@@ -3365,9 +3306,7 @@ _preview_cache: dict = {}
 def _preview_team(state: dict, slug: str) -> dict:
     """The team as the next sim will see it: god-mode edits where that exists, the depth
     chart and the injury list."""
-    from sim.form import apply_form
-    base = apply_form(team_data(state, slug), team_form_shift(state, slug), player_form_shifts(state, slug))
-    return _with_injuries(apply_depth(base, (state.get("depth") or {}).get(slug)), _injured(state, slug))
+    return _with_injuries(apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug)), _injured(state, slug))
 
 
 _PREVIEW_KEYS = ("completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown",
@@ -3568,7 +3507,6 @@ def summary(state: dict) -> dict:
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "coach": _coach_line(state, teams[state["team"]]),
-        "form": (state.get("form") or {}).get(state["team"]),
         "week_labels": {**{w: week_name(w) for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship Week",
                         SELECTION_WEEK: "Selection", **BOWL_WEEK_LABELS},
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
@@ -4037,8 +3975,6 @@ def season_review(state: dict) -> dict:
     else:
         finish = None
     boxes = list(state["my_boxes"].values())
-    boxes += [b for g in state["games"].values() if g.get("real") and g["played"] and me in (g["home"], g["away"])
-              and g["event_id"] not in state["my_boxes"] for b in [load_box(state, g["event_id"])] if b]
     surprises, disappointments = _surprises(state, teams, ap)
     if title_game:
         title_game = {**title_game, "home_record": _record_str(all_rec[title_game["home"]]), "away_record": _record_str(all_rec[title_game["away"]])}
@@ -4716,18 +4652,11 @@ def player_honors(state: dict, team: str, name: str) -> list[dict]:
 
 
 def player_game_log(state: dict, team: str, name: str, position: str) -> Optional[list[dict]]:
-    """Per-game lines from the box scores the season keeps: your own team's simulated games,
-    and every team's real games (the real season, and the real weeks of a season started
-    from today)."""
-    real = state.get("mode") == "real"
-    mine = team == state["team"]
-    real_games = [g["event_id"] for g in state["games"].values()
-                  if team in (g["home"], g["away"]) and g["played"] and (real or g.get("real"))
-                  and g["event_id"] not in state["my_boxes"] and (box_dir(state) / f"{g['event_id']}.json").exists()]
-    if not mine and not real_games:
+    """Per-game lines from the box scores the season keeps: your own team's games."""
+    if team != state["team"]:
         return None
     out = []
-    boxes = [(eid, load_box(state, eid)) for eid in real_games] + (list(state["my_boxes"].items()) if mine else [])
+    boxes = list(state["my_boxes"].items())
     for eid, box in boxes:
         g = state["games"].get(eid)
         if not g or not box:
@@ -4860,7 +4789,6 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
                                                 {x["key"]: x["tier"] for x in p.get("traits") or [] if isinstance(x, dict)}) if ability_goals.on() else None,
         "edited_attributes": sorted((player_edits(state, team).get(p.get("slug"), {}).get("attributes") or {}).keys()),
         "morale": morale_view(state, team, name, position),
-        "form": player_form_shifts(state, team).get(p.get("slug") or ""),
         # rated at every position; at his own position it is the card's overall
         "ratings_at": {k: (shown_overall(p, base_p) if k != "KR" and same_group(RATING_KEY.get(k, k), position)
                            else house_value(RATING_KEY.get(k, k) if k != "KR" else "KR", "return_rating" if k == "KR" else "overall", int(v)))
@@ -4878,9 +4806,8 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
 if __name__ == "__main__":
     import sys
     slug = sys.argv[1] if len(sys.argv) > 1 else "ohio-state"
-    mode = sys.argv[2] if len(sys.argv) > 2 else "full"
     t0 = time.perf_counter()
-    st = new_season(slug, mode)
+    st = new_season(slug, "full")
     advance_to(st, 19, progress=lambda w, t: print(f"  week {w}", end="\r"))
     s = summary(st)
     print(f"\n{s['team_name']} {s['record']['wins']}-{s['record']['losses']} in {time.perf_counter() - t0:.1f}s; champion: {s['champion_name']}")

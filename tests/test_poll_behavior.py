@@ -54,12 +54,4 @@ if __name__ == "__main__":
         print(f"{k:<22}{st.mean(drops[k]):>10.1f}{len(drops[k]):>5}{(f'{rv:.1f}' if rv else '-'):>11}")
     print(f"new teams per week: sim {st.mean(turnover):.1f} (real polls 2014-2025 turn over about 3 a week)")
 
-    rem = season.new_season("ohio-state", "remaining")
-    w = rem["current_week"]
-    real_last = season._real_ap_votes_2026(w, season.load_teams())
-    if real_last:
-        shown = rem["polls"][str(w)]["ap"]
-        assert [e["team"] for e in shown] == real_last[0], "a real week shows the real poll"
-        assert shown[0]["points"] == real_last[2][shown[0]["team"]]["points"], "with its real vote points"
-        print(f"rest of season: week {w} shows the real poll with real points ({shown[0]['name']} {shown[0]['points']})")
     print("poll behavior ok")

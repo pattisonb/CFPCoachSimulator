@@ -42,7 +42,6 @@ TARGET = {"QB": 4, "RB": 6, "WR": 11, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB"
 LOWER_LEVEL = 0.3          # the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
 LOWER_LEVEL_P4 = 0.15     # ... at a Power 4 school (mostly walk-ons there)
 FLOOR = {"QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1}
-ENGINE_POS = {"QB": "QB", "RB": "RB", "WR": "WR", "TE": "TE", "OL": "OL", "DL": "DL", "LB": "MLB", "CB": "CB", "S": "S", "K": "K", "P": "P"}
 
 # ----- departures *tune* -----
 NEXT_CLASS = {"FR": "SO", "FRRS": "SORS", "SO": "JR", "SORS": "JRRS", "JR": "SR", "JRRS": "SRRS"}
@@ -2089,23 +2088,6 @@ def _fill_rosters(state: dict) -> dict:
 
 
 # ----- staff and coaches ------------------------------------------------------------------------
-
-def _coach_pool(lgd: dict, role: str) -> list[dict]:
-    return [t["coaches"][role] for t in lgd["teams"].values() if t["coaches"].get(role)]
-
-
-def _new_coach(lgd: dict, role: str, slug: str, year: int, rng: random.Random, like: Optional[dict] = None) -> dict:
-    """A generated coach for `role`: ratings drawn like a random coach in the league at that role
-    (a little below: a first-time hire), scheme and tendencies from `like` (the program's
-    predecessor) or a random coach."""
-    import json
-    from coach_career import carousel
-    model = rng.choice(_coach_pool(lgd, role))
-    base = json.loads(json.dumps(like or model))
-    ratings = {k: int(max(30, min(95, v + rng.gauss(-2, 6)))) for k, v in model["ratings"].items()}
-    base.update(name=recruits._name(rng, carousel._taken_names(lgd)), ratings=ratings, since=year, coach_id=f"{slug}:{role}:{year}",
-                previous_job="Promoted from the staff", ratings_generated=True)
-    return base
 
 
 def _staff_taken(state: dict) -> set[str]:

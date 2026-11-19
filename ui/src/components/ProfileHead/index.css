@@ -209,8 +209,9 @@
   display: block;
 }
 
-/* a thinner card: the three stack in one column, so his name keeps its room */
-@container profile-head (width < 1000px) {
+/* most cards: the three stack in one column beside the tile, so his name keeps its room (side by side they cut a
+   long name short even on a card 1,150 px wide) */
+@container profile-head (width < 1360px) {
   .profile-head__cells {
     grid-template-columns: minmax(0, 1fr);
     align-content: center;

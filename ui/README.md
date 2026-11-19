@@ -1,8 +1,6 @@
-# New UI (React)
+# The App (React)
 
-A React rewrite of the game's front end. The Python game (`app/`, `engine/`, `sim/`, `coach_career/`)
-does not change; this folder replaces `web/` one screen at a time. The site map of every screen
-to port is in the "CFP Coach Simulator Site Map" artifact.
+The game's front end, in React. The Python game (`app/`, `engine/`, `sim/`, `coach_career/`) is the back end it talks to.
 
 Stack: React 18 + Vite 5 + TypeScript (strict), no router or state library yet.
 
@@ -11,12 +9,11 @@ Stack: React 18 + Vite 5 + TypeScript (strict), no router or state library yet.
 ```
 cd ui
 npm install      # first time only
-npm run dev      # the new UI on http://localhost:5173
+npm run dev      # the game on http://localhost:5173
 ```
 
 `npm run dev` also starts the game's API (`python3 tools/dev_server.py` on port 8000) unless one is
-already running, and stops it when you quit. Vite forwards every `/api/...` call to it, so the new
-UI talks to the same game as the old one.
+already running, and stops it when you quit. Vite forwards every `/api/...` call to it,.
 
 ## Layout
 
@@ -39,6 +36,4 @@ Run `npm run check` before committing. Editors with the Prettier and Stylelint e
 
 ## Build
 
-`npm run typecheck` checks the types. `npm run build` type-checks, then writes a static site to `ui/dist/` with relative URLs. Running the game in the
-browser on the static site (the Pyodide worker in `web/worker.js` and `game.zip`) is not wired up
-yet. Do that before the new UI replaces `web/` in `tools/build_site.py`.
+`npm run typecheck` checks the types. `npm run build` type-checks, then writes the app to `ui/dist/` with relative URLs. The built app still needs the game's API (`tools/dev_server.py`) to talk to.

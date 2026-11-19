@@ -6,6 +6,7 @@ import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import type { PollEntry, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import PlayerLink from "../PlayerLink/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -239,7 +240,17 @@ export default function Recap({ season, teams }: Props) {
                     {MY_LEADERS.map(([k, line]) => {
                       const p = me.leaders[k];
                       if (!p || typeof p === "number") return null;
-                      return <PanelRow key={k} label={m.leaderNames[k]} value={`${p.name} · ${line(p.stats)}`} />;
+                      return (
+                        <PanelRow
+                          key={k}
+                          label={m.leaderNames[k]}
+                          value={
+                            <>
+                              <PlayerLink team={season.team} name={p.name} /> · {line(p.stats)}
+                            </>
+                          }
+                        />
+                      );
                     })}
                   </PanelRows>
                 ) : (
@@ -307,7 +318,11 @@ export default function Recap({ season, teams }: Props) {
                         <PanelRow
                           key={k}
                           label={m.nationalNames[k]}
-                          value={`${p.name}, ${p.team_name ?? ""} · ${line(p.stats)}`}
+                          value={
+                            <>
+                              <PlayerLink team={p.team} name={p.name} />, {p.team_name ?? ""} · {line(p.stats)}
+                            </>
+                          }
                         />
                       ) : null;
                     })}

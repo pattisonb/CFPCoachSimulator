@@ -1,5 +1,5 @@
-"""Serve the game on this computer: the page from `web/` and `/api/...` from the dispatcher
-(`app/api.py`), with the standard library only.
+"""Serve the game's API on this computer: `/api/...` from the dispatcher (`app/api.py`), with the standard
+library only. The page is the React app in `ui/`, which `npm run dev` there serves (and starts this for you).
 
     python tools/dev_server.py [--port N] [--host H]
 
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import mimetypes
 import os
 import re
 import sys
@@ -28,8 +27,6 @@ sys.path.insert(0, str(ROOT))
 from app import api  # noqa: E402
 from coach_career import league_file  # noqa: E402
 
-WEB_DIR = (ROOT / "web").resolve()
-PAGES = {"/": "index.html", "/season": "index.html", "/coach": "coach.html"}
 STATUS = re.compile(r"^/api/season/([^/]+)/status$")
 SEASON_ID = re.compile(r"^/api/season/([^/]+)/")
 RAW_BODY = {"/api/league/check"}   # paths whose body is passed on as bytes whatever its Content-Type
@@ -102,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api" or path.startswith("/api/"):
             self._api(method, path)
         elif method == "GET":
-            self._static(path)
+            self._json(404, {"detail": "not found: the page is served by the app in ui/ (npm run dev)"})
         else:
             self._send(405, b'{"detail":"method not allowed"}', "application/json")
 
@@ -135,18 +132,6 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, bytes(out), "application/gzip",
                               {"Content-Disposition": f'attachment; filename="coach-career-{sid}.ccsave"'})
         self._json(200, out)
-
-    def _static(self, path: str) -> None:
-        name = PAGES.get(path, urllib.parse.unquote(path).lstrip("/"))
-        file = (WEB_DIR / name).resolve()
-        if name == "league.json" and not file.is_file():
-            return self._send(200, league_file.builtin_bytes(), "application/json")
-        if not file.is_relative_to(WEB_DIR) or not file.is_file():
-            return self._json(404, {"detail": "not found"})
-        ctype = mimetypes.guess_type(file.name)[0] or "application/octet-stream"
-        if ctype.startswith("text/") or ctype in ("application/javascript", "application/json", "image/svg+xml"):
-            ctype += "; charset=utf-8"
-        self._send(200, file.read_bytes(), ctype)
 
     def _json(self, code: int, data: dict) -> None:
         self._send(code, json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), "application/json")

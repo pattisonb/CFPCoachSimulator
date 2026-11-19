@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { Children, useState, type ReactNode } from "react";
 import { CaretDown, CaretRight } from "@phosphor-icons/react";
 import Tooltip from "../Tooltip/index.tsx";
 import "./index.css";
@@ -53,27 +53,38 @@ export default function Panel({
 
 /**
  * A tab's panels. Packed into two columns when there is room (each as tall as it needs, like a newspaper); `stack`
- * keeps them one under another, full width.
+ * keeps them one under another, full width; `split` deals them into two columns in turn (first left, second right,
+ * third left…), so a panel is in the same place whatever its neighbors' heights (a newspaper's columns balance by
+ * height, which moved the same panel from one player's card to the next).
  */
 export function Panels({
   stack,
+  split,
   label,
   children,
   className,
 }: {
   stack?: boolean;
+  split?: boolean;
   /** names the tab's panel for screen readers */
   label?: string;
   children: ReactNode;
   className?: string;
 }) {
+  const items = split ? Children.toArray(children) : [];
   return (
     <div
-      className={["panels", stack && "panels--stack", className].filter(Boolean).join(" ")}
+      className={["panels", stack && "panels--stack", split && "panels--split", className].filter(Boolean).join(" ")}
       role={label ? "tabpanel" : undefined}
       aria-label={label}
     >
-      {children}
+      {split
+        ? [0, 1].map((side) => (
+            <div key={side} className="panels__col">
+              {items.filter((_, i) => i % 2 === side)}
+            </div>
+          ))
+        : children}
     </div>
   );
 }

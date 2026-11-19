@@ -18,7 +18,6 @@ from typing import Optional
 from coach_career import clear, persona, recruiting
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
-SOURCE_TEAMS = ROOT / "cfb_sim_data" / "teams"
 EVALUATED = 300                    # the top 300 get a written evaluation and a public comp
 COMP_PERCENTILE = 0.50             # COMP_MAX_DISTANCE: this percentile of starter-to-starter distances *tune*
 COMP_ATTRIBUTES = 10               # the attributes compared: those that track a starter's overall most at the position
@@ -724,8 +723,6 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
 
 # ----- list rows and the Recruiting tab --------------------------------------------------------------
 
-STATUSES = ("open", "committed", "signed", "leaning_fcs", "offered", "board")
-
 
 def row(state: dict, pid: str, viewer: str) -> dict:
     """A prospect as a line in a list: who he is, where he stands, what you know."""
@@ -889,7 +886,6 @@ def standing(state: dict, pid: str, viewer: str) -> dict:
             "leader": {"school": lead["school"], "name": season.load_teams()[lead["school"]]["name"], "pct": rnd(lead["pct"])} if lead else None}
 
 
-INTERESTED_TOP = 0.15             # "Interested in you": the prospects your school appeals to most, this share
 INTEREST_LEVELS = ((0.15, "High"), (0.5, "Medium"), (1.0, "Low"))   # *tune* the shares of a star band shown High, then Medium; the rest Low
 
 

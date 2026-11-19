@@ -4,6 +4,19 @@
   column-gap: var(--s3);
 }
 
+/* two fixed columns, the panels dealt into them in turn (one column when there is no room for two) */
+.panels--split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  align-items: start;
+  gap: 0 var(--s3);
+  columns: auto;
+}
+
+.panels__col {
+  min-width: 0;
+}
+
 .panels--stack {
   display: grid;
   gap: var(--s3);

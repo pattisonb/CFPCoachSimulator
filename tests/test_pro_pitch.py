@@ -46,6 +46,4 @@ if __name__ == "__main__":
     kt = scenes.truth(st, "ohio-state", k)
     assert kt["pro_spot"] == (programs.get(st, "ohio-state")["pro_groups"].get(rc["prospects"][k]["ea_position"], 0) >= 100 * scenes.CLAIM_FROM)
     assert scenes.truth(st, "ohio-state", wr)["pro"] is True and scenes.truth(st, "army", wr)["pro"] is False
-    js = (_Path(__file__).resolve().parents[1] / "web" / "recruiting.js").read_text()
-    assert 'pro: "Path to the League"' in js
     print(f"pro pitch ok: Ohio State WR {osu['pro']:.2f} vs San José State {sjsu['pro']:.2f}; {share:.0%} of the class carry it, {first:.0%} first")

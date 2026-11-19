@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import Tooltip from "../Tooltip/index.tsx";
 import "./index.css";
 
@@ -34,10 +34,38 @@ interface Props {
 /**
  * The head of a profile, a player's or a recruit's: his face at one end and a square tile the same size at the other
  * (the overall, your chance), mirroring it; between them his name, a line of facts and his tags, then three cells.
- * The cells sit each in its own column on a wide card, stack in one column on a thinner one, and drop to a row under
- * his name on a narrow one. Every part keeps one line and one place, so nothing moves from one profile to the next.
+ * The cells sit each in its own column on a very wide card, stack in one column beside the tile on most, and drop to a
+ * row under his name on a narrow one. A name too long for its line is set smaller until it fits. Every part keeps one line and one place, so nothing moves from one profile to the next.
  */
+/** *tune* A name too long for its line is set smaller, a step at a time, down to this share of its full size. */
+const NAME_MIN = 0.6;
+const NAME_STEP = 0.04;
+
+/** Sets a long name smaller until it fits its one line (then, at the least size, it is cut short as before). */
+function useFitName(name: string) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.fontSize = "";
+      const full = parseFloat(getComputedStyle(el).fontSize);
+      let k = 1;
+      while (el.scrollWidth > el.clientWidth + 1 && k > NAME_MIN) {
+        k -= NAME_STEP;
+        el.style.fontSize = `${(full * k).toFixed(1)}px`;
+      }
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el.parentElement ?? el);
+    return () => ro.disconnect();
+  }, [name]);
+  return ref;
+}
+
 export default function ProfileHead({ face, corner, name, beside, line, tags, cells, tile }: Props) {
+  const nameRef = useFitName(name);
   const square = (
     <div className={`profile-head__tile${tile.word ? " is-word" : ""}`} role="img" aria-label={tile.aria}>
       <span className="label" aria-hidden="true">
@@ -57,7 +85,9 @@ export default function ProfileHead({ face, corner, name, beside, line, tags, ce
         </span>
         <div className="profile-head__who">
           <div className="profile-head__title">
-            <h2 className="profile-head__name">{name}</h2>
+            <h2 className="profile-head__name" ref={nameRef} title={name}>
+              {name}
+            </h2>
             {beside && <p className="profile-head__beside">{beside}</p>}
           </div>
           {line && <p className="profile-head__line">{line}</p>}

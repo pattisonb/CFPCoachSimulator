@@ -111,7 +111,6 @@ def movers(state: dict) -> dict:
 
 # ----- round 2: the reads behind the planned widgets (spec "Round 2") ----------------------------------------
 
-STALE_WEEKS = 3          # *tune* weeks without contact before an offered target reads as going stale (the page's rule)
 DRAFT_LIKELY = 90        # *tune* a draft-eligible underclassman rated this (card overall) or better is likely to declare
 DRAFT_POSSIBLE = 84      # *tune* ... and this or better might
 TRANSFER_HIGH = 0.15     # *tune* a projected portal chance this high reads "High"

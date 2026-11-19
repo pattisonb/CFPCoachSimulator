@@ -55,7 +55,6 @@ function gameServer(): Plugin {
 export default defineConfig({
   plugins: [react(), gameServer()],
   base: "./",
-  // "@web/..." reaches the old UI's folder, so shared assets (fonts) live in one place: web/
   // pocket-faces is installed from a local folder and reinstalled when it changes: served as is, so a new version
   // shows up without clearing Vite's pre-bundle cache (it is plain ESM with no dependencies)
   optimizeDeps: { exclude: ["pocket-faces"] },
@@ -68,7 +67,6 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 800, // *tune* the faces chunk is the biggest, by design
   },
-  resolve: { alias: { "@web": fileURLToPath(new URL("../web", import.meta.url)) } },
   server: {
     port: 5173,
     fs: { allow: [REPO_ROOT] },

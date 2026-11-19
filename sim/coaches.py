@@ -80,55 +80,6 @@ STYLE = {
     "man_coverage_rate": ("Man coverage", "defense", "How often the defense plays man instead of zone."),
     "press_rate": ("Press", "defense", "How often corners press receivers at the line in man coverage."),
 }
-# Coordinators to hire after the season (the offseason, coming with coach mode). During a
-# season the team's own coordinators stay. Fictional names; each has a scheme, a play-calling
-# rating and a style on the league scale.
-OC_POOL = {
-    "kessler": {"name": "Dale Kessler", "scheme": "Air Raid", "play_calling": 82,
-                "about": "Four wide on every snap. Throws it 50 times and takes its shots.",
-                "style": {"pass_rate": 78, "tempo": 80, "deep_shot_rate": 72, "play_action_rate": 22}},
-    "whitfield": {"name": "Ron Whitfield", "scheme": "West Coast", "play_calling": 79,
-                  "about": "Timing routes, ball out quick, chains moving. Rarely throws deep.",
-                  "style": {"pass_rate": 62, "tempo": 45, "deep_shot_rate": 25, "play_action_rate": 45}},
-    "bell": {"name": "Marcus Bell", "scheme": "Spread RPO", "play_calling": 80,
-             "about": "Reads the box on every play and makes the defense wrong.",
-             "style": {"pass_rate": 55, "tempo": 72, "deep_shot_rate": 50, "play_action_rate": 72}},
-    "price": {"name": "Jalen Price", "scheme": "Power Spread", "play_calling": 78,
-              "about": "Spread looks, downhill runs, then play-action over the top.",
-              "style": {"pass_rate": 46, "tempo": 60, "deep_shot_rate": 58, "play_action_rate": 66}},
-    "brannigan": {"name": "Tom Brannigan", "scheme": "Pro Style", "play_calling": 77,
-                  "about": "Under center, two tight ends, run it until they stop it.",
-                  "style": {"pass_rate": 40, "tempo": 32, "deep_shot_rate": 45, "play_action_rate": 82}},
-    "odom": {"name": "Curtis Odom", "scheme": "Spread Option", "play_calling": 75,
-             "about": "The quarterback is a runner first. Outside zone and the read option.",
-             "style": {"pass_rate": 36, "tempo": 66, "deep_shot_rate": 40, "play_action_rate": 55}},
-    "dorsey": {"name": "Hank Dorsey", "scheme": "Flexbone Triple Option", "play_calling": 74,
-               "about": "Dive, keep, pitch. Throws ten times a game and makes them count.",
-               "style": {"pass_rate": 10, "tempo": 40, "deep_shot_rate": 30, "play_action_rate": 60}},
-    "navarro": {"name": "Eli Navarro", "scheme": "Multiple", "play_calling": 84,
-                "about": "No fixed system. Builds the game plan around the players on hand.",
-                "style": {"pass_rate": 52, "tempo": 50, "deep_shot_rate": 50, "play_action_rate": 50}},
-}
-DC_POOL = {
-    "lindholm": {"name": "Gary Lindholm", "scheme": "4-3", "play_calling": 80,
-                 "about": "Four down linemen, gap sound, zone behind it. Makes you earn it.",
-                 "style": {"blitz_rate": 38, "man_coverage_rate": 40, "press_rate": 40}},
-    "cole": {"name": "Reggie Cole", "scheme": "3-4", "play_calling": 79,
-             "about": "Pressure from every angle. Sacks, and the odd big play allowed.",
-             "style": {"blitz_rate": 74, "man_coverage_rate": 58, "press_rate": 55}},
-    "okafor": {"name": "Sam Okafor", "scheme": "4-2-5", "play_calling": 82,
-               "about": "Built to stop the spread: a nickel on the field and corners up in your face.",
-               "style": {"blitz_rate": 50, "man_coverage_rate": 64, "press_rate": 68}},
-    "simms": {"name": "Andre Simms", "scheme": "Multiple 4-2-5", "play_calling": 78,
-              "about": "Disguises everything. Man coverage, press corners, blitzes off the edge.",
-              "style": {"blitz_rate": 62, "man_coverage_rate": 72, "press_rate": 75}},
-    "hollis": {"name": "Dwayne Hollis", "scheme": "3-3-5", "play_calling": 76,
-               "about": "Speed over size. Three safeties and a lot of zone pressure.",
-               "style": {"blitz_rate": 70, "man_coverage_rate": 35, "press_rate": 32}},
-    "varga": {"name": "Pete Varga", "scheme": "Tite Front 3-4", "play_calling": 81,
-              "about": "Squeezes the inside run, sits in zone, never gives up the deep ball.",
-              "style": {"blitz_rate": 32, "man_coverage_rate": 45, "press_rate": 45}},
-}
 POSITIONS_PLAYED = ("QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "K/P", "Did not play")
 PLAYING_LEVELS = ("Walk-on", "College starter", "All-conference", "All-American", "NFL")
 # the sprite: option lists the page offers (coach.js draws them)

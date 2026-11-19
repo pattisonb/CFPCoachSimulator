@@ -3,6 +3,7 @@ import { ArrowRight } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
 import SectionTabs, { SampleNote, SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
+import PlayerLink from "../PlayerLink/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { AllAmericaTeams, Coaches, Conferences, NationalTable } from "./More.tsx";
 import { SAMPLE } from "./sample.ts";
@@ -344,7 +345,9 @@ function Hero({
             {live ? m.strawPoll : m.heisman}
             <span className="aw-hero__tag">{live ? m.leader : m.winner}</span>
           </span>
-          <b className="aw-hero__name">{w.name}</b>
+          <b className="aw-hero__name">
+            <PlayerLink team={w.team} name={w.name} position={w.position} />
+          </b>
           <span className="aw-hero__who">{[whoLine(w), w.record].filter(Boolean).join(" · ")}</span>
           <span className="aw-hero__line">{w.final_line ?? w.line}</span>
         </div>
@@ -364,7 +367,9 @@ function Hero({
               <span className="aw-hero__place">{i + 2}</span>
               <PlayerFace p={c} teams={teams} />
               <span className="aw-who">
-                <b>{c.name}</b>
+                <b>
+                  <PlayerLink team={c.team} name={c.name} position={c.position} />
+                </b>
                 <span className="aw-who__team">
                   <Swatch team={teams.get(c.team)} size={12} />
                   {c.position} · {c.team_name}
@@ -411,7 +416,9 @@ function AwardCard({
             <PlayerFace p={w} teams={teams} big={2} />
             <span className="aw-who">
               <span className="aw-card__tag">{live ? m.leader : m.winner}</span>
-              <b className="aw-card__winner">{w.name}</b>
+              <b className="aw-card__winner">
+                <PlayerLink team={w.team} name={w.name} position={w.position} />
+              </b>
               <span className="aw-who__team">
                 <Swatch team={teams.get(w.team)} size={12} />
                 {whoLine(w)}
@@ -430,7 +437,9 @@ function AwardCard({
                   <span className="aw-card__n">{i + 2}</span>
                   <Swatch team={teams.get(p.team)} size={12} />
                   <span className="aw-card__rest-name">
-                    <b>{p.name}</b>
+                    <b>
+                      <PlayerLink team={p.team} name={p.name} position={p.position} />
+                    </b>
                   </span>
                   <span className="aw-card__rest-line">{p.headline}</span>
                 </li>
@@ -609,7 +618,9 @@ function Vote({
                 <span className="aw-vote__player">
                   <PlayerFace p={c} teams={teams} />
                   <span className="aw-who">
-                    <b>{c.name}</b>
+                    <b>
+                      <PlayerLink team={c.team} name={c.name} position={c.position} />
+                    </b>
                     <span className="aw-who__team">
                       <Swatch team={teams.get(c.team)} size={12} />
                       {whoLine(c)}

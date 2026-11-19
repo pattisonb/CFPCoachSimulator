@@ -13,10 +13,12 @@
 - Constants the player may want to tune are module-level, marked `*tune*`, with a one-line comment.
 
 ## Front end
-- Actions patch in place (`window.CFP.ui`: toast, pulse, fadeIn, fadeOut, reconcile, busy, on, morph); a full redraw only on tab open, recruit switch, career change, week advance or offseason stage change. See `docs/HOW_IT_WORKS.md` "Smooth actions".
-- Every URL relative; every control at least 44 px tall on a phone; `tests/test_spacing.py` and `tests/test_ux_sweep.py` are the gate.
+- The app is `ui/` (React, Vite, TypeScript); the old `web/` UI is gone. `ui/PLAN.md` holds its design rules and its changelog (newest first): add a row with every change.
+- Use the tokens in `ui/src/globals.css` and px spacing; a component is a folder with `index.tsx`, `index.css` and, when it has words, `messages.ts`. Reuse an existing component before making one; anything new is reusable.
+- The gate is `npx tsc --noEmit`, `npx stylelint "src/**/*.css"` and `npx prettier --check --end-of-line auto src` in `ui/`. There are no browser tests: look at a change in the browser.
+- Words only ever sit on a team color with its `--team-on` (black or white, whichever reads).
 
 ## Process
-- Tests are plain scripts: `python3 tests/<file>.py`; the full suite is `python3 tests/run_all.py`.
-- On the `clear-mode` branch (the player's experiment, live on GitHub Pages), keep testing light: run only the tests that touch what changed (for example `test_copy_case.py` and `test_clear_mode.py` for a wording change), not the full suite or the spacing and UX sweeps, unless the change is to layout or the player asks.
+- Engine tests are plain scripts: `python3 tests/<file>.py`; the full suite is `python3 tests/run_all.py`. Keep testing light: run the tests that touch what changed, not the full suite, unless the player asks.
+- The Python server does not reload: an engine change needs `npm run dev` restarted.
 - Commits end with the session's two attribution trailer lines; no model identifiers in code or commits.

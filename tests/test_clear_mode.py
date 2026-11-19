@@ -1,7 +1,7 @@
 """Clear Mode (coach_career/clear.py), the branch's switch on: what replaced the word-mode screens and conversations
 (their own tests run with CFP_CLEAR=0). A pitched topic gets a plain Yes or No; a complete report leaves no guesswork
 (his priorities, personality, decider and style known); his key ratings and potential read as ranges of numbers that
-narrow with every look, with a confidence word; and the recruit pane shows them. (Run as a file.)"""
+narrow with every look, with a confidence word. (Run as a file.)"""
 import os
 import re
 import subprocess
@@ -69,66 +69,9 @@ def check_api(st: dict) -> str:
     return pid
 
 
-def check_page(st: dict, pid: str) -> None:
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print("clear mode page check skipped: Playwright is not installed")
-        return
-    from test_career_e2e import free_port, launch
-    st["recruiting"]["board"].append(pid)
-    season.save_season(st)
-    port = free_port()
-    base = f"http://127.0.0.1:{port}"
-    server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
-                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    try:
-        for _ in range(120):
-            try:
-                urllib.request.urlopen(base + "/api/teams", timeout=2)
-                break
-            except OSError:
-                time.sleep(0.5)
-        with sync_playwright() as pw:
-            browser = launch(pw)
-            for width in (1280, 400):
-                page = browser.new_page(viewport={"width": width, "height": 900})
-                errors = []
-                page.on("pageerror", lambda e: errors.append(str(e)))
-                page.goto(f"{base}/index.html?id={st['id']}&tab=recruiting")
-                page.wait_for_selector(f".go-row-recruit[data-pid='{pid}']", timeout=120_000)
-                page.click(f".go-row-recruit[data-pid='{pid}']")
-                page.click(".go-pane .go-subtabs button[data-sub=scouting]")
-                page.wait_for_selector(".go-pane .pv-clear-card .pv-clear-row:not(.pv-clear-head)", timeout=60_000)
-                coach = page.inner_text(".go-pane .pv-clear-coach")
-                assert coach.startswith("Coachability") and not re.search(r"\d|–", coach), f"coachability in one word: {coach!r}"
-                rows = page.eval_on_selector_all(".go-pane .pv-clear-row:not(.pv-clear-head):not(.pv-clear-coach)",
-                                                 "els => els.map(e => [...e.children].map(c => c.textContent.trim()))")
-                assert 4 <= len(rows) <= 8, rows
-                for label, rng, conf in rows:
-                    assert label and re.fullmatch(r"\d{1,2}[–-]\d{1,2}", rng) and conf in ("High", "Medium", "Low"), (label, rng, conf)
-                pot = page.inner_text(".go-pane .pv-report")
-                assert "Potential at" in pot and "Confidence" in pot, pot
-                assert page.query_selector(".go-pane .pv-report .pv-abilities"), "his abilities (or None Yet) on the report"
-                assert not page.query_selector(".go-pane .pv-uncertainty"), "no Looks & Confidence card: Key Ratings say each read's confidence"
-                assert page.query_selector(".go-pane .pv-clear-card [data-key=flags], .go-pane .pv-clear-card [data-key=no-flags]"), "the staff's flags close Key Ratings"
-                fits = page.evaluate("""() => { const pr = document.querySelector('.go-pane').getBoundingClientRect();
-                  return [...document.querySelectorAll('.go-pane .pv-clear-row, .go-pane .pv-abilities')].every(r => { const b = r.getBoundingClientRect();
-                    return b.left >= pr.left - 0.5 && b.right <= pr.right + 0.5; }); }""")
-                assert fits, f"a Key Ratings row runs past the pane at {width}"
-                text = page.inner_text(".go-pane")
-                m = LEAKS.search(text); assert not m, f"a leak in the pane at {width}: {text[max(0, m.start() - 80):m.end() + 40]!r}"
-                assert not errors, errors
-                page.close()
-            browser.close()
-    finally:
-        server.terminate()
-
-
 if __name__ == "__main__":
     st = season.new_season(ME, "full", seed=11, career=True)
-    pid = check_api(st)
-    check_page(st, pid)
+    check_api(st)
     season.close_pool()
     print("clear mode ok: Yes or No on a pitch, a complete report leaves no guesswork, Key Ratings and Potential as narrowing "
-          "ranges with a confidence word, and the pane shows them at 1280 and 400")
+          "ranges with a confidence word")

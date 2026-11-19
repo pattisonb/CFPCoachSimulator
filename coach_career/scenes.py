@@ -184,9 +184,6 @@ QUESTION_LINES = {
                         "{mate} has your offer. Just tell me you mean it for both of us."],
 }
 ANSWERS = ("straight", "promise", "deflect")
-# your reply buttons: a Title Case label (what the button says) over your line, by the question's kind
-# (the page draws them; the engine keeps the one copy)
-ANSWER_LABELS = {"straight": "Tell Him Straight", "promise": "Make Him a Promise", "deflect": "Sidestep It"}
 ANSWER_COPY = {
     "roster": {"straight": "He's the starter today. You'd compete, and the best man plays.",
                "promise": "The job's yours.",

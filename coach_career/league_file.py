@@ -122,11 +122,6 @@ def builtin_bytes() -> bytes:
     return dumps(export_document())
 
 
-def write_builtin(path: Path) -> int:
-    data = builtin_bytes()
-    Path(path).write_bytes(data)
-    return len(data)
-
 
 # ---- Parsing and validation -------------------------------------------------------------------
 

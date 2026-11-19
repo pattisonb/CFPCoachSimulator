@@ -10,7 +10,9 @@
 .stats__bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px var(--s3);
   margin-bottom: var(--s3);
 }
 
@@ -25,45 +27,14 @@
   gap: 8px;
 }
 
-.stats__table {
-  margin-bottom: 0;
-  overflow-x: auto;
-}
-
 /* a leader: his place, his team's colors, who he is, his line, then the number the list is ranked by */
-.stats__list {
-  display: grid;
-  list-style: none;
-}
 
-.stats__list li {
-  display: grid;
-  grid-template-columns: 20px auto minmax(0, 1fr) auto 56px;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 0;
-  border-top: 1px solid var(--line-soft);
-}
-
-.stats__list li:first-child {
-  border-top: 0;
-}
-
-.stats__list li.is-mine {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
-  box-shadow: inset 3px 0 0 var(--ink);
-}
-
+/* about ten leaders show; the rest of the list scrolls inside its panel */
 .stats__place {
   color: var(--ink-soft);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
   text-align: right;
-}
-
-.stats__who {
-  display: grid;
-  min-width: 0;
 }
 
 .stats__who b,
@@ -73,23 +44,7 @@
   white-space: nowrap;
 }
 
-.stats__line {
-  color: var(--ink-soft);
-  font-size: var(--t-xs);
-  white-space: nowrap;
-}
-
-.stats__value {
-  font-size: var(--t-md);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
 /* the leader of a category reads a size up */
-.stats__list li:first-child .stats__value {
-  font-size: var(--t-lg);
-}
-
 .stats__empty {
   display: grid;
   gap: var(--s2);
@@ -107,4 +62,54 @@
 .stats__empty p {
   color: var(--ink-soft);
   font-size: var(--t-sm);
+}
+
+.stats__player {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* the category chips at the left, whose numbers at the right */
+.stats__cats,
+.stats__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stats__count {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.stats__more {
+  min-height: 32px;
+  padding: 0 10px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* every team's line in one box that scrolls both ways, its header frozen */
+.stats__teams {
+  max-height: clamp(320px, calc(100vh - 230px), 2400px);
+  padding: 0 var(--s3) var(--s2);
+  overflow: auto;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  scrollbar-gutter: stable;
+}
+
+.stats__teams .data-table th {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }

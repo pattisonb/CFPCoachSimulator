@@ -15,16 +15,3 @@ export function useTooNarrow(): boolean {
   }, [query]);
   return narrow;
 }
-
-/** True while a media query matches (a layout that changes its columns, not just its styles). Follows resizes. */
-export function useMedia(query: string): boolean {
-  const [hit, setHit] = useState(() => matchMedia(query).matches);
-  useEffect(() => {
-    const mq = matchMedia(query);
-    const update = () => setHit(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [query]);
-  return hit;
-}

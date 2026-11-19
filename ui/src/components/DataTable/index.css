@@ -1,4 +1,4 @@
-/* A table of rows: soft headers, hairlines, numbers set right; your own row in bold on a tint. */
+/* A table of rows: soft headers, hairlines, numbers set right; your own row on a tint, the sorted column in bold. */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -51,12 +51,43 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* fixed columns: each as wide as its heading says, so nothing moves when the rows change */
+.data-table--sticky {
+  table-layout: fixed;
+}
+
+.data-table--sticky td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .data-table tr.is-mine td {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--team, var(--ink)) 10%, transparent);
+}
+
+/* the one column in bold: the one the table is sorted by */
+.data-table td.is-sorted {
   font-weight: 700;
+}
+
+/* the header row stays put while the rows scroll under it (its rule drawn as a shadow: a collapsed border scrolls away) */
+.data-table--sticky th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-hi);
+  border-bottom: 0;
+  box-shadow: inset 0 calc(-1 * var(--line)) 0 var(--ink);
 }
 
 .data-table tr.is-mine td:first-child {
   padding-left: 8px;
   box-shadow: inset 3px 0 0 var(--ink);
+}
+
+/* the sort arrow's place in a heading, kept whether or not it is showing */
+.data-table__arrow {
+  display: inline-flex;
+  flex: none;
+  width: 10px;
 }

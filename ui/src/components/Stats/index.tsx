@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Chip from "../Chip/index.tsx";
+import Dropdown from "../Dropdown/index.tsx";
+import PlayerLink from "../PlayerLink/index.tsx";
 import DataTable, { type Column } from "../DataTable/index.tsx";
-import Panel, { Panels } from "../Panel/index.tsx";
 import SectionTabs, { SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
@@ -14,16 +15,14 @@ interface Props {
   teams: Map<string, TeamCard>;
 }
 
-/** One player in a leaders list (GET /stats/leaders → leaders[category][]) */
-interface Leader {
+/** One player's line in a category (GET /stats/players?cat= → players[]) */
+interface PlayerLine {
   name: string;
   position: string;
   team: string;
   team_name: string;
   games: number;
   stats: Record<string, number>;
-  /** the category's own number: yards, sacks, an average */
-  value: number;
 }
 
 /** One team's season line (GET /stats/teams → teams[]) */
@@ -61,52 +60,78 @@ interface Injury {
   conference: string;
   returns_week: number;
 }
-type Scope = "all" | "conference" | "team";
+/** The categories in the order their chips show (the game's keys). */
+const CATEGORIES = ["passing", "rushing", "receiving", "defense", "kicking", "punting", "returns", "blocking"] as const;
+type Category = (typeof CATEGORIES)[number];
+/** *tune* How many rows the players table draws before Show All (a category can hold thousands). */
+const ROWS = 250;
 
-/** *tune* How many leaders each category lists. */
-const LEADERS = 10;
-/** The categories in the order the page shows them (the server's keys). */
-const CATEGORIES = [
-  "passing",
-  "rushing",
-  "receiving",
-  "touchdowns",
-  "tackles",
-  "sacks",
-  "tfl",
-  "interceptions",
-  "pbu",
-  "explosives",
-  "kicking",
-  "punting",
-] as const;
-
+/** A number as the tables show it: whole when it is whole (100, not 100.0), else one decimal. */
 const one = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 /**
- * Stats: the season's leaders. Players: a panel a category (passing yards, sacks, punting average…), the top ten in
- * each, for all of FBS, your conference or your own team. Teams: every team's season line in one table you can sort
+ * Stats: the season in numbers. Players: one table for a category (passing, defense, returns…) with every number the
+ * game keeps for it and every player who has one, sortable by any column, for the whole league or a conference or a
+ * team. Teams: every team's season line in one table you can sort
  * by any column, yours marked. Before anyone has played, the page says so.
  */
 export default function Stats({ season, teams }: Props) {
   const [tab, setTab] = useState<Tab>("players");
-  const [scope, setScope] = useState<Scope>("all");
-  const [leaders, setLeaders] = useState<Record<string, Leader[]> | null>(null);
+  const [cat, setCat] = useState<Category>("passing");
+  const [allRows, setAllRows] = useState(false);
+  // whose numbers: every conference and team to start (the whole league), narrowed by either dropdown
+  const [conf, setConf] = useState("");
+  const [only, setOnly] = useState(""); // one team's slug, or all
+  const fbs = useMemo(
+    () => [...teams.values()].filter((t) => !t.fictional).sort((a, b) => a.name.localeCompare(b.name)),
+    [teams],
+  );
+  const conferences = useMemo(() => [...new Set(fbs.map((t) => t.conference))].sort(), [fbs]);
+  const pickConf = (c: string) => {
+    setConf(c);
+    if (only && c && teams.get(only)?.conference !== c) setOnly("");
+  };
+  const scopeBar = (
+    <div className="stats__filters" role="group" aria-label={m.scopeLabel}>
+      <Dropdown
+        label={m.conference}
+        size="md"
+        value={conf}
+        options={[{ value: "", label: m.allConferences }, ...conferences.map((c) => ({ value: c, label: c }))]}
+        onChange={pickConf}
+      />
+      <Dropdown
+        label={m.teamLabel}
+        size="md"
+        value={only}
+        options={[
+          { value: "", label: m.allTeams },
+          ...fbs
+            .filter((t) => !conf || t.conference === conf)
+            .map((t) => ({ value: t.slug, label: t.name, hint: t.slug === season.team ? m.yours : undefined })),
+        ]}
+        onChange={setOnly}
+      />
+    </div>
+  );
+  const [players, setPlayers] = useState<PlayerLine[] | null>(null);
   const [lines, setLines] = useState<TeamLine[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    const q = new URLSearchParams({ n: String(LEADERS) });
-    if (scope === "team") q.set("team", season.team);
-    if (scope === "conference") q.set("conference", season.conference);
-    api<{ leaders: Record<string, Leader[]> }>(`/api/season/${season.id}/stats/leaders?${q}`)
-      .then((v) => live && setLeaders(v.leaders))
+    setPlayers(null);
+    setAllRows(false);
+    const q = new URLSearchParams({ cat, limit: "100000" });
+    if (only) q.set("team", only);
+    else if (conf) q.set("conference", conf);
+    api<{ players: PlayerLine[] }>(`/api/season/${season.id}/stats/players?${q}`)
+      .then((v) => live && setPlayers(v.players))
       .catch((e: Error) => live && setError(e.message));
     return () => {
       live = false;
     };
-  }, [season.id, season.team, season.conference, scope]);
+  }, [season.id, season.current_week, cat, conf, only]);
 
   useEffect(() => {
     if (tab !== "teams" || lines) return;
@@ -131,9 +156,7 @@ export default function Stats({ season, teams }: Props) {
       live = false;
     };
   }, [tab, season.id, season.current_week]);
-  const hurtShown = (hurt ?? []).filter((i) =>
-    scope === "all" ? true : scope === "team" ? i.team === season.team : i.conference === season.conference,
-  );
+  const hurtShown = (hurt ?? []).filter((i) => (only ? i.team === only : conf ? i.conference === conf : true));
   const lastWeek = Math.max(...Object.keys(season.week_labels).map(Number), 0);
   const hurtColumns: Column<Injury>[] = [
     {
@@ -141,7 +164,8 @@ export default function Stats({ season, teams }: Props) {
       label: m.injuryCols.player,
       render: (i) => (
         <span>
-          <b>{i.name}</b> <span className="stats__soft">{i.position}</span>
+          <PlayerLink team={i.team} name={i.name} position={i.position} />{" "}
+          <span className="stats__soft">{i.position}</span>
         </span>
       ),
       sort: (i) => i.name,
@@ -166,7 +190,7 @@ export default function Stats({ season, teams }: Props) {
     },
   ];
 
-  const any = !!leaders && Object.values(leaders).some((l) => l.length > 0);
+  const any = season.current_week > 0 || !!players?.length;
   const weekName = season.week_labels[String(season.current_week)] ?? m.week(season.current_week);
   const team = (slug: string, name: string) => (
     <span className="stats__team">
@@ -260,49 +284,89 @@ export default function Stats({ season, teams }: Props) {
       />
       <SectionPane shown={tab === "players"}>
         <div className="stats">
-          <div className="stats__bar" role="group" aria-label={m.scopeLabel}>
-            <Chip on={scope === "all"} onClick={() => setScope("all")}>
-              {m.scopes.all}
-            </Chip>
-            <Chip on={scope === "conference"} onClick={() => setScope("conference")}>
-              {season.conference}
-            </Chip>
-            <Chip on={scope === "team"} onClick={() => setScope("team")}>
-              {season.team_name}
-            </Chip>
+          <div className="stats__bar">
+            <div className="stats__cats" role="group" aria-label={m.category}>
+              {CATEGORIES.map((c) => (
+                <Chip key={c} on={cat === c} onClick={() => setCat(c)}>
+                  {m.cats[c].title}
+                </Chip>
+              ))}
+            </div>
+            {scopeBar}
           </div>
           {error ? (
             <p className="stats__soft">{m.loadError(error)}</p>
-          ) : !leaders ? (
+          ) : !players ? (
             <p className="stats__soft">{m.loading}</p>
           ) : !any ? (
             <div className="stats__empty">
               <h2>{m.noGames}</h2>
               <p>{m.noGamesText}</p>
             </div>
+          ) : !players.length ? (
+            <p className="stats__soft">{m.noPlayers}</p>
           ) : (
-            <Panels>
-              {CATEGORIES.filter((c) => leaders[c]?.length).map((c) => (
-                <Panel key={c} title={m.cats[c].title} aside={m.cats[c].unit}>
-                  <ol className="stats__list">
-                    {leaders[c].map((p, i) => (
-                      <li key={`${p.team}-${p.name}`} className={p.team === season.team ? "is-mine" : undefined}>
-                        <span className="stats__place">{i + 1}</span>
-                        <Swatch team={teams.get(p.team)} size={14} />
-                        <span className="stats__who">
-                          <b>{p.name}</b>
+            <>
+              {/* every player with a number here and every number the game keeps, the header frozen; any header sorts */}
+              <div className="stats__teams" tabIndex={0}>
+                <DataTable
+                  key={cat}
+                  label={m.cats[cat].title}
+                  sticky
+                  limit={allRows ? undefined : ROWS}
+                  sortBy={m.cats[cat].cols[0].key}
+                  rows={players}
+                  rowKey={(p) => `${p.team}-${p.name}-${p.position}`}
+                  mine={(p) => p.team === season.team}
+                  columns={[
+                    {
+                      key: "place",
+                      label: m.place,
+                      width: 44,
+                      render: (_p, i) => <span className="stats__place">{i + 1}</span>,
+                    },
+                    {
+                      key: "player",
+                      label: m.player,
+                      sort: (p) => p.name,
+                      render: (p) => (
+                        <span className="stats__player">
+                          <Swatch team={teams.get(p.team)} size={14} />
+                          <PlayerLink team={p.team} name={p.name} position={p.position} />
                           <span className="stats__soft">
-                            {p.position} · {p.team_name}
+                            {p.position} · {teams.get(p.team)?.abbreviation ?? p.team_name}
                           </span>
                         </span>
-                        <span className="stats__line">{m.cats[c].line(p.stats)}</span>
-                        <b className="stats__value">{one(p.value)}</b>
-                      </li>
-                    ))}
-                  </ol>
-                </Panel>
-              ))}
-            </Panels>
+                      ),
+                    },
+                    {
+                      key: "g",
+                      label: m.games,
+                      tip: m.gamesTip,
+                      num: true,
+                      sort: (p) => p.games,
+                      render: (p) => p.games,
+                    },
+                    ...m.cats[cat].cols.map((c) => ({
+                      key: c.key,
+                      label: c.label,
+                      tip: c.tip,
+                      num: true,
+                      sort: (p: PlayerLine) => c.get(p.stats, p.games),
+                      render: (p: PlayerLine) => one(Math.round(c.get(p.stats, p.games) * 10) / 10),
+                    })),
+                  ]}
+                />
+              </div>
+              <p className="stats__count">
+                {m.playersShown(allRows ? players.length : Math.min(ROWS, players.length), players.length)}
+                {!allRows && players.length > ROWS && (
+                  <button type="button" className="stats__more" onClick={() => setAllRows(true)}>
+                    {m.showAll(players.length)}
+                  </button>
+                )}
+              </p>
+            </>
           )}
         </div>
       </SectionPane>
@@ -316,31 +380,25 @@ export default function Stats({ season, teams }: Props) {
               <p>{m.noGamesText}</p>
             </div>
           ) : (
-            <Panel title={m.teamStats} aside={m.sortHint} className="stats__table">
+            <div className="stats__teams" tabIndex={0}>
               <DataTable
                 label={m.teamStats}
+                sticky
                 columns={columns}
                 rows={lines.filter((t) => t.games > 0)}
                 rowKey={(t) => t.team}
                 mine={(t) => t.team === season.team}
                 sortBy="margin"
               />
-            </Panel>
+            </div>
           )}
         </div>
       </SectionPane>
       <SectionPane shown={tab === "injuries"}>
         <div className="stats">
-          <div className="stats__bar" role="group" aria-label={m.scopeLabel}>
-            <Chip on={scope === "all"} onClick={() => setScope("all")}>
-              {m.scopes.all}
-            </Chip>
-            <Chip on={scope === "conference"} onClick={() => setScope("conference")}>
-              {season.conference}
-            </Chip>
-            <Chip on={scope === "team"} onClick={() => setScope("team")}>
-              {season.team_name}
-            </Chip>
+          <div className="stats__bar">
+            <span className="label stats__soft">{hurt ? m.injuryCount(hurtShown.length) : ""}</span>
+            {scopeBar}
           </div>
           {!hurt ? (
             <p className="stats__soft">{error ? m.loadError(error) : m.loading}</p>
@@ -350,16 +408,17 @@ export default function Stats({ season, teams }: Props) {
               <p>{m.noInjuriesText}</p>
             </div>
           ) : (
-            <Panel title={m.injuries} aside={m.injuryCount(hurtShown.length)} className="stats__table">
+            <div className="stats__teams" tabIndex={0}>
               <DataTable
                 label={m.injuries}
+                sticky
                 columns={hurtColumns}
                 rows={hurtShown}
                 rowKey={(r) => `${r.team}-${r.name}`}
                 mine={(r) => r.team === season.team}
                 sortBy="out"
               />
-            </Panel>
+            </div>
           )}
         </div>
       </SectionPane>

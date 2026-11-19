@@ -23,7 +23,6 @@ G5 = {"American Athletic Conference", "Conference USA", "MAC", "Mountain West", 
 FRESHMAN = {"FR", "FRRS"}
 UPPERCLASS = {"JR", "JRRS", "SR", "SRRS"}
 EDGE_ROLES = {"LEDG", "REDG"}
-INTERIOR_DL = {"DT"}
 LB_POSITIONS = {"MLB", "ROLB", "LOLB", "OLB"}
 DB_POSITIONS = {"CB", "S"}
 
@@ -123,7 +122,6 @@ COACH_AWARDS = [
     ("Bobby Dodd Coach of the Year", 0.6, 0.6), ("George Munger Award", 0.4, 0.9), ("Home Depot Coach of the Year", 0.4, 1.0),
     ("Walter Camp Coach of the Year", 0.5, 0.7),
 ]   # (name, weight on wins, weight on surprise)
-POSTSEASON_AWARDS = [("Manning Award", "qb"), ("Paul \"Bear\" Bryant Award", "coach_title"), ("Joe Moore Award", "ol_unit")]
 
 # ----- small helpers --------------------------------------------------------------
 

@@ -283,10 +283,6 @@ def upgrades_view(state: dict, team: str, key: str, base: dict) -> dict:
     return out
 
 
-def traits_for_game(state: dict, team: str) -> dict:
-    """{player key: {trait: tier}} he has earned this career, for the engine's team (merged over the roster's own)."""
-    return ((state.get("abilities_earned") or {}).get(team) or {}) if on() else {}
-
 
 def news(state: dict) -> list[dict]:
     """Program News items for your players' abilities earned (Clear Mode): {week, kind "ability", slug, name, position,

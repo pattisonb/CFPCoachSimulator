@@ -4,6 +4,7 @@ import Chip from "../Chip/index.tsx";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Panel from "../Panel/index.tsx";
+import PlayerLink from "../PlayerLink/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { formatClass } from "../../format.ts";
@@ -45,7 +46,9 @@ export function NationalTable({ awards, teams, mine, live }: Shared & { awards: 
     p ? (
       <span className="aw-table__who">
         <Swatch team={teams.get(p.team)} size={14} />
-        <b>{p.name}</b>
+        <b>
+          <PlayerLink team={p.team} name={p.name} position={p.position} />
+        </b>
         <span className="aw-table__soft">
           {p.position} · {p.team_name}
         </span>
@@ -191,7 +194,9 @@ function HonorField({ picks, teams, mine, face }: Shared & { picks: (TeamPick | 
                 >
                   <span className="aw-man__slot">{m.slots[p.slot] ?? p.slot}</span>
                   {face(p)}
-                  <b className="aw-man__name">{p.name}</b>
+                  <b className="aw-man__name">
+                    <PlayerLink team={p.team} name={p.name} position={p.position} />
+                  </b>
                   <span className="aw-man__team">
                     <Swatch team={teams.get(p.team)} size={12} />
                     {teams.get(p.team)?.abbreviation ?? p.team_name}

@@ -212,7 +212,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
       {!pr && !error && <p className="player-view__soft player-view__loading">{m.loading}</p>}
 
       {pr && tab === "overview" && (
-        <Panels label={m.tabs.overview}>
+        <Panels split label={m.tabs.overview}>
           {groups.map((g) => (
             <Panel key={g} title={g}>
               {pr.attributes
@@ -244,7 +244,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
       )}
 
       {pr && tab === "ratings" && (
-        <Panels label={m.tabs.ratings}>
+        <Panels split label={m.tabs.ratings}>
           {/* the same attributes the Overview shows and the sim plays with: his overall is built from these */}
           <Panel title={m.builds}>
             {pr.attributes.map((a) => (
@@ -263,7 +263,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
       )}
 
       {pr && tab === "development" && (
-        <Panels label={m.tabs.development}>
+        <Panels split label={m.tabs.development}>
           <Panel title={m.room} aside={m.roomNote}>
             {pr.attributes.some((a) => a.potential != null) ? (
               [...pr.attributes]
@@ -386,7 +386,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
       )}
 
       {pr && tab === "history" && (
-        <Panels label={m.tabs.history}>
+        <Panels split label={m.tabs.history}>
           <Panel title={m.thisSeason} aside={pr.team.record ? `${pr.team.name} · ${pr.team.record}` : pr.team.name}>
             <p className="player-view__lead">{season}</p>
             {pr.ranks?.length ? (

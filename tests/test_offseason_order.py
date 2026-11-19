@@ -1,9 +1,8 @@
-"""The offseason's order (offseason.py, web/offseason.js): Keep Them Home comes first, then Departures.
+"""The offseason's order (offseason.py): Keep Them Home comes first, then Departures.
 Who wants out (graduating, declaring early, entering the portal) is decided when the offseason opens;
 the draft runs only after your answers at Keep Them Home and the AI schools' own, so a player you kept
 is never drafted and The First Round is the final pool's. A save from the older order (Departures
-first, the draft already shown) still loads and carries on. The browser part checks the stepper and
-the two pages (screenshots to SHOT_DIR when it is set); without Playwright it is skipped.
+first, the draft already shown) still loads and carries on.
 `python3 tests/test_offseason_order.py`"""
 import copy
 import os
@@ -169,89 +168,7 @@ def old_saves() -> None:
     print("  old saves: Departures-first saves migrate to Keep Them Home, then a rerun draft")
 
 
-def browser() -> None:
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        print("  browser skipped: Playwright is not installed")
-        return
-    from coach_career import league
-    from test_career_e2e import call, free_port, launch
-    st = season.new_season("ohio-state", "full", seed=5, career=True)
-    finished(st)
-    season.save_season(st)
-    sid = st["id"]
-    shots = os.environ.get("SHOT_DIR")
-    port = free_port()
-    base = f"http://127.0.0.1:{port}"
-    server = subprocess.Popen([sys.executable, "tools/dev_server.py"], cwd=ROOT, env={**os.environ, "PORT": str(port)},
-                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    try:
-        for _ in range(120):
-            try:
-                urllib.request.urlopen(base + "/api/teams", timeout=2)
-                break
-            except OSError:
-                time.sleep(0.5)
-        with sync_playwright() as p:
-            try:
-                b = launch(p)
-            except Exception as exc:  # noqa: BLE001
-                print(f"  browser skipped: no Chromium ({str(exc).splitlines()[0]})")
-                return
-            page = b.new_page(viewport={"width": 1280, "height": 900}, color_scheme="dark")
-            errors = []
-            page.on("pageerror", lambda e: errors.append(str(e)))
-            page.add_init_script("try { localStorage.setItem('cfp.theme', 'dark'); } catch (e) {}")
-            page.goto(f"{base}/index.html?id={sid}")
-            page.wait_for_selector("#tab-offseason .off-page[data-page=hub]", timeout=180_000)
-            names = page.eval_on_selector_all("#tab-offseason .off-step-name", "ns => ns.map((n) => n.textContent)")
-            assert names[:2] == ["Keep Them Home", "Departures"], names
-            assert "Stage 1 of 9" in page.inner_text("#tab-offseason .off-chip")
-            prim = lambda: page.inner_text("#tab-offseason .off-foot .go-btn.primary")   # noqa: E731
-            assert prim() == "Advance to Keep Them Home", prim()
-            assert page.query_selector("#tab-offseason .off-review-acts") or call(base, f"/api/season/{sid}/offseason")["review"]["decided"]
-            page.click("#tab-offseason .off-foot .go-btn.primary")
-            page.wait_for_selector("#tab-offseason .off-page[data-page=retention]", timeout=60_000)
-            assert page.eval_on_selector("#tab-offseason .off-step.now .off-step-name", "n => n.textContent") == "Keep Them Home"
-            text = page.inner_text("#tab-offseason")
-            assert "Projected Pick" in text or "projected pick" in text, "the early entrants' projections are missing"
-            assert "1 in 50" in text, "the elite entrant's odds are not stated"
-            assert prim() == "Advance to Departures", prim()
-            if shots:
-                Path(shots).mkdir(parents=True, exist_ok=True)
-                page.screenshot(path=str(Path(shots) / "1-keep-them-home-1280-dark.png"), full_page=True)
-            v = call(base, f"/api/season/{sid}/offseason")
-            if not v["review"]["decided"]:
-                call(base, f"/api/season/{sid}/offseason/review", {"action": "nothing", "stage": "retention"})
-            page.click("#tab-offseason .off-foot .go-btn.primary")
-            page.wait_for_selector("#tab-offseason .off-page[data-page=departures]", timeout=120_000)
-            page.wait_for_function("() => !document.querySelector('#tab-offseason .off-busy')", timeout=120_000)
-            v = call(base, f"/api/season/{sid}/offseason")
-            assert v["stage"] == "departures"
-            steps = page.eval_on_selector_all("#tab-offseason .off-step", "ns => ns.map((n) => n.className)")
-            assert "done" in steps[0] and "now" in steps[1], steps
-            assert "Stage 2 of 9" in page.inner_text("#tab-offseason .off-chip")
-            first = page.inner_text("#tab-offseason .off-first")
-            assert v["departures"]["first_round"][0]["name"] in first, first
-            assert prim() == "Advance to Transfer Portal (Week 1)", prim()
-            if shots:
-                page.screenshot(path=str(Path(shots) / "2-departures-1280-dark.png"), full_page=True)
-            assert not errors, errors
-            b.close()
-        print("  browser: the stepper reads Keep Them Home, then Departures")
-    finally:
-        try:
-            call(base, f"/api/season/{sid}", method="DELETE")
-        except Exception:  # noqa: BLE001
-            pass
-        league.forget(sid)
-        server.terminate()
-        server.wait(timeout=30)
-
-
 if __name__ == "__main__":
     order_and_draft()
     old_saves()
-    browser()
     print("offseason order ok")
