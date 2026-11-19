@@ -1,0 +1,36 @@
+/* A read as a range on a track: filled from its low end to its high end, a mark on the best guess. */
+.range-bar {
+  position: relative;
+  display: block;
+  height: 10px;
+  min-width: 60px;
+  border: 1px solid var(--line-soft);
+}
+
+.range-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--ink);
+}
+
+.range-bar--soft .range-bar__fill {
+  background: var(--ink-soft);
+}
+
+/* a team's color: a faint edge, so a pale color still shows on the track */
+.range-bar__fill.is-colored {
+  outline: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  outline-offset: -1px;
+}
+
+/* the best guess: a notch in the page's color with an ink core, so it shows on the fill */
+.range-bar__mid {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 4px;
+  background: var(--ink);
+  outline: 2px solid var(--paper-hi);
+  transform: translateX(-50%);
+}

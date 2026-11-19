@@ -10,6 +10,9 @@ export const messages = {
   live: (week: string) => `Live Race · Through ${week}`,
   final: "Final",
   sample: "Sample",
+  preseason: "Preseason Favorites",
+  preseasonTip:
+    "The races take shape in Week 4. Until then these are the preseason favorites: the best-rated starters at each award's positions, helped by where their team is ranked.",
   sampleTip: "The races take shape in Week 4. Until then this is sample data, so you can see how the page works.",
   liveNote:
     "Who would win if the voting were held now. Conference awards are given after championship week, the Heisman and national awards in selection week, the postseason awards after the title game.",

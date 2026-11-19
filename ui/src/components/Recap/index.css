@@ -1,0 +1,140 @@
+/* Season Recap: a headline, then panels: your season first, the country's after. */
+.recap {
+  flex: 1;
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.recap__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* the headline: the champion (or your record), and the AD's grade at the far end once the season is graded */
+.recap__lead {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.recap__lead > div:first-of-type {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+
+.recap__lead h2 {
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.recap__lead p {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.recap__grade {
+  display: grid;
+  justify-items: center;
+  min-width: 96px;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.recap__grade .label {
+  width: 100%;
+  padding: 2px 6px;
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  text-align: center;
+}
+
+.recap__grade b {
+  padding: 6px var(--s2);
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+.recap__gradeline {
+  margin: calc(-1 * var(--s2)) 0 var(--s3);
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.recap__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recap__kicker {
+  margin-top: var(--s2);
+  color: var(--ink-soft);
+}
+
+.recap__list,
+.recap__results {
+  display: grid;
+  list-style: none;
+}
+
+.recap__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.recap__list li.is-mine {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+.recap__place {
+  min-width: 20px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.recap__grow {
+  flex: 1;
+  min-width: 0;
+}
+
+/* a result: the two teams with their scores, the winner in bold */
+.recap__results li {
+  display: grid;
+  gap: 2px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.recap__side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+}
+
+.recap__side.is-won {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* the first row of a list has its panel's rule over it already */
+.recap__list li:first-child,
+.recap__results li:first-child {
+  border-top: 0;
+}

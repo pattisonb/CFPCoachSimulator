@@ -177,7 +177,64 @@ export interface SeasonSummary {
   /** before then, from the committee's first ranking: the projected lineup */
   bowl_projection?: BowlProjection | null;
   /** the playoff field, once it's set */
-  bracket?: { seeds?: { team: string }[] } | null;
+  bracket?: Bracket | null;
+  /** before then: the bracket as it would be seeded today, from the committee's ranking (the AP poll until it ranks) */
+  bracket_projection?: Bracket | null;
+  /** the bowls from the same order, from Week 0 (bowl_projection waits for the committee) */
+  bowl_outlook?: BowlProjection | null;
+  /** every week's polls, by week ("0" is the preseason) */
+  polls?: Record<string, WeekPolls>;
+  /** the weeks the committee ranks */
+  cfp_weeks?: number[];
+}
+
+/** One team in a poll (sim/polls.py). */
+export interface PollEntry {
+  rank: number;
+  team: string;
+  name: string;
+  /** last week's rank; null when it was unranked */
+  previous: number | null;
+  record: string;
+  conference: string;
+  first_place?: number;
+  points?: number;
+}
+
+/** A week's polls: the AP and Coaches Top 25 with the others receiving votes, and the committee's once it ranks. */
+export interface WeekPolls {
+  ap?: PollEntry[];
+  ap_others?: PollEntry[];
+  coaches?: PollEntry[];
+  coaches_others?: PollEntry[];
+  cfp?: PollEntry[];
+}
+
+export interface BracketSeed {
+  seed: number;
+  team: string;
+  name: string;
+  /** its place in the ranking the bracket was built from */
+  rank: number | null;
+  conference: string;
+  /** "SEC champion", "at-large", "Group of Six auto bid (highest ranked)" */
+  bid: string;
+  /** the top four: no first-round game */
+  bye: boolean;
+}
+
+/** The 12-team playoff (sim/polls.py build_bracket): the real one, or today's projection. */
+export interface Bracket {
+  seeds: BracketSeed[];
+  first_round: { home: BracketSeed; away: BracketSeed }[];
+  /** each top-four seed and the first-round game whose winner it meets ("5 vs 12") */
+  quarterfinals: { bye: BracketSeed; winner_of: string }[];
+  first_four_out: { team: string; name: string; rank: number | null }[];
+  autos: { team: string; bid: string; name: string }[];
+  /** a projection: where it came from, and that poll's week */
+  projected?: boolean;
+  source?: "ap" | "cfp";
+  week?: number;
 }
 
 /** One bowl: its game (set, projected, or played) and its history */
@@ -403,16 +460,64 @@ export interface PlayerProfile {
   stars: number | null;
   attributes: PlayerAttribute[];
   traits: PlayerTrait[];
-  ability_goal: { name: string; tier_name: string; have: number; need: number; text: string } | null;
+  /** the ability he is working toward: its key, the tier he would reach, how far along, and what it takes */
+  ability_goal: {
+    trait: string;
+    name: string;
+    tier: number;
+    tier_name: string;
+    have: number;
+    need: number;
+    text: string;
+  } | null;
   morale: { enabled: boolean; label: string } | null;
   /** his overall at every position group */
   ratings_at: Record<string, number>;
   games: number;
-  team: { name: string };
+  team: { name: string; record?: string };
   jersey: string | null;
   class: string | null;
   /** the face drawn for him this season (Edit Player Look), else null */
   face?: unknown;
+  /** the broad ratings (Speed, Strength, Awareness…), and which of them his position leans on */
+  ratings?: { key: string; label: string; value: number }[];
+  key_ratings?: string[];
+  /** your own roster: how fast he grows, and how good he can become */
+  coachability?: string;
+  potential_word?: string;
+  redshirt?: { on: boolean; can: boolean; games: number; limit: number; why: string | null };
+  /** where his main numbers rank at his position, in FBS and in his conference */
+  ranks?: {
+    key: string;
+    label: string;
+    value: number;
+    fbs_rank: number;
+    fbs_n: number;
+    conf_rank: number;
+    conf_n: number;
+  }[];
+  /** his games this season, in order; null when the game keeps no box scores for his team */
+  game_log?:
+    | {
+        week: number;
+        opponent_name: string;
+        venue: string;
+        won: boolean;
+        points_for: number;
+        points_against: number;
+        started: boolean;
+      }[]
+    | null;
+  honors?: { stage: string; award: string; place: string; detail: string }[];
+  /** his past seasons, oldest first */
+  history?: {
+    year: number;
+    team_name: string;
+    class: string | null;
+    position: string;
+    games: number;
+    honors: { kind: string; name: string }[];
+  }[];
 }
 
 /** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */
@@ -495,11 +600,83 @@ export interface ProspectDetail {
     on_board: boolean;
     offered_by_you: boolean;
     schools: { school: string; name: string; offered: boolean }[];
+    leaning_fcs?: boolean;
+    pro?: boolean;
   };
   need: number | null;
   looks: number;
   evaluation: { strengths: string[]; solid: string[]; weaknesses: string[]; outlook: string } | null;
   row: ProspectRow;
+  /** who he is, as far as you have learned (each null until then) */
+  traits: RecruitTraits;
+  /** how each trait you don't know yet shows itself */
+  trait_hints: Record<string, string>;
+  /** your staff's report; null before a look */
+  report: ScoutReport | null;
+  /** Clear Mode: his position's key ratings as ranges; null before a look or outside Clear Mode */
+  clear: {
+    complete: boolean;
+    looks: number;
+    rows: RatingRead[];
+    potential: (RatingRead & { position: string }) | null;
+  } | null;
+  /** the roster player he compares to, once his report is complete */
+  our_comp: { name: string; school: string; position: string; overall?: number } | null;
+  /** a committed recruit: his chance to flip in a word, and each school working him */
+  flip: { word: string; rivals: { school: string; name: string; word: string }[] } | null;
+  /** what happened to him this season */
+  twist: { key: string; label: string; line?: string; weeks_left?: number } | null;
+  can_scout: boolean;
+  /** scouting points one trip to him costs, and what you have left this week */
+  scout_cost: number;
+  points_left: number;
+}
+
+/** A recruit's traits (coach_career/prospects.py): the words, each null until you learn it. */
+export interface RecruitTraits {
+  personality: string | null;
+  decider: string | null;
+  story: string | null;
+  story_key: string | null;
+  story_detail: string | null;
+  commit_style: string | null;
+  style_key: string | null;
+  /** his story names your school (a legacy whose family played for you) */
+  story_yours?: boolean;
+}
+
+/** One rating as your staff reads it: an estimate inside a range, and how sure they are. */
+export interface RatingRead {
+  key: string;
+  label: string;
+  est: number;
+  lo: number;
+  hi: number;
+  /** Low, Medium, High */
+  confidence: string;
+}
+
+/** Your staff's scouting report on a prospect. */
+export interface ScoutReport {
+  /** his potential as a range of grade words ("Weak – Strong") */
+  headline: string;
+  potential: [string, string];
+  potential_tone: string;
+  verdict: string;
+  strengths: string[];
+  develop: string[];
+  attributes: {
+    group: string;
+    label: string;
+    words: [string, string];
+    lo: number;
+    hi: number;
+    mid: number;
+    word: string;
+    tone: string;
+    uncertainty: string;
+  }[];
+  certainty: string;
 }
 
 /** One school on a recruit's list (GET /recruiting → board[].list) */
@@ -512,6 +689,9 @@ export interface ListSchool {
   rank: number | null;
   offered: boolean;
   you?: boolean;
+  /** places moved on his list since last week (up is positive), and whether the school is new on it */
+  move?: number | null;
+  new?: boolean;
   visit: { week: number; done: boolean; game: { opponent_name: string } | null } | null;
 }
 
@@ -560,15 +740,43 @@ export interface BoardRow {
   cooled_why: string | null;
   pestering: boolean;
   no_room: { label: string; tip: string } | null;
-  history: { week: number; kind: string; school?: string; action?: string; line?: string; nil?: number }[];
+  history: RecruitEvent[];
   need: number | null;
   looks: number;
   /** what he said about each topic you pitched him: hit, weak, not_his, no_read */
   pitch_marks: Record<string, { mark: string; week?: number; action?: string }>;
   /** you already promised him the starting job */
   job_promised: boolean;
+  /** you talked money with him: the NIL you owe on your offer, and the week it is due by */
+  money_owed?: { nil: number; by_week: number } | null;
   /** your call or in-home visit this week, open until you pitch */
   scene: Scene | null;
+}
+
+/** One entry in a recruit's history, newest first (coach_career/recruiting.py log). */
+export interface RecruitEvent {
+  week: number;
+  kind: string;
+  school?: string;
+  /** a contact's or pitch's action: message, call, hc_visit, official_visit */
+  action?: string;
+  /** the topic pitched, and how he took it: hit, polite, quiet, tired, guarded */
+  pitch?: string;
+  reaction?: string;
+  /** an opening's topics, and how many landed (null: he gave nothing away) */
+  topics?: string[];
+  hit?: number | null;
+  /** his question: how you answered (straight, promise, deflect), about whom */
+  question?: string;
+  answer?: string;
+  about?: string;
+  offered?: boolean;
+  truthful?: boolean | null;
+  crowded?: boolean;
+  why?: string;
+  /** a line the game wrote for it */
+  line?: string;
+  nil?: number;
 }
 
 /** A turn of a call or visit: you, him, someone in his family (with their label), or a note on the room. */

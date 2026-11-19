@@ -1,0 +1,718 @@
+import {
+  ArrowDown,
+  ArrowUp,
+  Binoculars,
+  BookOpen,
+  Chat,
+  CurrencyDollar,
+  Flag,
+  Handshake,
+  House,
+  type Icon,
+  Minus,
+  Newspaper,
+  PenNib,
+  Phone,
+  Scroll,
+  Star,
+  User,
+  UsersThree,
+  X,
+} from "@phosphor-icons/react";
+import Blocks from "../Blocks/index.tsx";
+import Button from "../Button/index.tsx";
+import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
+import RangeBar from "../RangeBar/index.tsx";
+import Swatch from "../Swatch/index.tsx";
+import Tooltip from "../Tooltip/index.tsx";
+import { inkOn } from "../../colors.ts";
+import { cachedTeams } from "../../teams.ts";
+import { PITCH_NAMES, pullOf, standingOf } from "../../standing.ts";
+import type { BoardRow, ListSchool, ProspectDetail, RecruitEvent } from "../../types.ts";
+import { messages as m } from "./messages.ts";
+import "./index.css";
+
+// A recruit's file, the four tabs of his panel on the board (web/recruiting.js overviewCards, scoutCards,
+// profileCards, historyCards), on the same panels as a player's card. Overview: the Recruiting Battle, the Recruit
+// Snapshot, the Scout's Summary. Scouting: the report and his ratings. Profile: who he is and his background.
+// History: the timeline, notes and who moved on his list. His offer, his ask and your chance are in the panel's head.
+
+/** Looks in words: 1, 2½, ½. */
+const fmtLooks = (n: number) => `${Math.floor(n) || (n % 1 ? "" : "0")}${n % 1 ? "½" : ""}`;
+const looksOf = (r: BoardRow, d: ProspectDetail | null) => Math.min(3, d?.looks ?? r.looks ?? 0);
+const teamOf = (slug: string | null | undefined) => cachedTeams()?.find((t) => t.slug === slug);
+const teamName = (slug: string | null | undefined, fallback?: string | null) =>
+  teamOf(slug)?.name ?? fallback ?? slug ?? m.aSchool;
+
+/** The schools on his list that have a place in his race. */
+const raceOf = (r: BoardRow) => r.list.filter((x) => x.bar != null);
+
+// ---------- Overview ----------
+
+/** A school's place in his race, in a word: the leader is the Favorite; then Contender, In the Mix, Long Shot. */
+function battleWord(x: ListSchool, i: number, rows: ListSchool[], r: BoardRow, flip: Record<string, string>): string {
+  const holder = r.signed || r.committed;
+  if (holder) {
+    if (x.school === holder) return r.signed ? m.words.signed : r.hard ? m.words.hard : m.words.committed;
+    return r.signed ? m.words.missed : m.words.flip(flip[x.school] ?? m.words.none);
+  }
+  if (!x.offered) return m.words.noOffer;
+  if (i === 0) return m.words.favorite;
+  return (x.bar ?? 0) >= (rows[0].bar ?? 0) - 0.1
+    ? m.words.contender
+    : (x.bar ?? 0) >= 0.15
+      ? m.words.mix
+      : m.words.long;
+}
+
+/** A committed or signed recruit: where, and his chance to flip in a sentence. */
+function CommitBanner({ r, d }: { r: BoardRow; d: ProspectDetail | null }) {
+  const holder = r.signed || r.committed;
+  if (!holder) return null;
+  const school = teamName(holder, r.school_name);
+  const leader = d?.flip?.rivals[0]?.name;
+  const word = d?.flip?.word ?? "None";
+  const sub = r.signed
+    ? m.commit.signedSub
+    : r.hard
+      ? m.commit.hardSub
+      : word === "None" || !leader
+        ? m.commit.solid
+        : word === "Slim"
+          ? m.commit.slim(leader)
+          : word === "Real"
+            ? m.commit.real(leader)
+            : m.commit.close(leader);
+  const colors = teamOf(holder)?.colors;
+  return (
+    <div
+      className="recruit-file__commit"
+      style={
+        colors ? { background: colors.primary, color: inkOn(colors.primary), borderColor: colors.secondary } : undefined
+      }
+    >
+      <b>{r.signed ? m.commit.signed(school) : r.hard ? m.commit.hard(school) : m.commit.verbal(school)}</b>
+      <span>{sub}</span>
+    </div>
+  );
+}
+
+/** A report's verdict, then what he does well and what he has to work on. */
+function Summary({ rep }: { rep: NonNullable<ProspectDetail["report"]> }) {
+  return (
+    <>
+      <p className="recruit-file__verdict">{rep.verdict}</p>
+      <div className="recruit-file__lists">
+        {rep.strengths.length > 0 && (
+          <div>
+            <h4 className="label recruit-file__kicker">{m.strengths}</h4>
+            <ul>
+              {rep.strengths.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {rep.develop.length > 0 && (
+          <div>
+            <h4 className="label recruit-file__kicker">{m.develop}</h4>
+            <ul>
+              {rep.develop.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Overview: the Recruiting Battle, the Recruit Snapshot and the Scout's Summary, one under another. */
+export function OverviewTab({
+  r,
+  detail,
+  team,
+  weekLabels,
+}: {
+  r: BoardRow;
+  detail: ProspectDetail | null;
+  team: string;
+  weekLabels: Record<string, string>;
+}) {
+  const rows = raceOf(r);
+  const flip = Object.fromEntries((detail?.flip?.rivals ?? []).map((x) => [x.school, x.word]));
+  const holder = r.signed || r.committed;
+  const sd = standingOf(r, team);
+  const looks = looksOf(r, detail);
+  const known = r.priorities_known;
+  const rep = detail?.report;
+  return (
+    <Panels stack>
+      <Panel title={m.battle} aside={rows.length ? m.schools(rows.length) : undefined}>
+        <CommitBanner r={r} d={detail} />
+        {rows.length ? (
+          <ol className="recruit-file__battle">
+            {rows.slice(0, 8).map((x, i) => {
+              const you = x.you || x.school === team;
+              return (
+                <li key={x.school} className={you ? "is-you" : undefined}>
+                  <span className="recruit-file__place">{x.rank ?? i + 1}</span>
+                  <span className="recruit-file__school">
+                    <Swatch team={teamOf(x.school)} size={16} />
+                    <b>{x.name}</b>
+                    {x.offered && <span className="recruit-file__tag">{m.offered}</span>}
+                    {x.visit && (
+                      <span className="recruit-file__tag">
+                        {x.visit.done
+                          ? m.visited
+                          : m.visit(weekLabels[String(x.visit.week)] ?? m.week(x.visit.week - 1))}
+                      </span>
+                    )}
+                  </span>
+                  {/* his pull, in the school's own color */}
+                  <RangeBar
+                    lo={0}
+                    hi={Math.round(100 * (x.bar ?? 0))}
+                    soft={!you}
+                    color={teamOf(x.school)?.colors.primary}
+                  />
+                  <span className="recruit-file__word">{battleWord(x, i, rows, r, flip)}</span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <p className="recruit-file__soft">{holder ? m.raceOver : m.noList}</p>
+        )}
+      </Panel>
+
+      <Panel title={m.snapshot}>
+        <PanelRows>
+          <PanelRow label={m.standing} value={sd.odds ?? sd.word} hint={sd.text} />
+          <div className="panel__row">
+            <dt>{m.scouted}</dt>
+            <dd className="recruit-file__inline">
+              <Blocks have={looks} need={3} />
+              <b>{looks ? m.looksOf(fmtLooks(looks)) : m.notYet}</b>
+            </dd>
+          </div>
+          {[0, 1, 2].map((i) => {
+            const t = known[i];
+            if (!t) return <PanelRow key={i} label={m.priority(i)} unknown={m.unknown} hint={m.priorityHint} />;
+            const word = m.pulls[pullOf(r.strength[t])];
+            const name = PITCH_NAMES[t] ?? t;
+            return (
+              <div key={i} className="panel__row">
+                <dt>{name}</dt>
+                <dd>
+                  <Tooltip title={name} text={m.pullTip(name, word)} block className="recruit-file__inline">
+                    <RangeBar lo={0} hi={Math.round(100 * (r.strength[t] ?? 0))} />
+                    <b>{word}</b>
+                  </Tooltip>
+                </dd>
+              </div>
+            );
+          })}
+        </PanelRows>
+        {r.no_room && <p className="recruit-file__warn">{r.no_room.tip}</p>}
+      </Panel>
+
+      <Panel title={m.summary}>
+        {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{detail ? m.noSummary : m.loading}</p>}
+      </Panel>
+    </Panels>
+  );
+}
+
+// ---------- Scouting ----------
+
+/** A read's uncertainty said the way the Key Ratings say it: as the staff's confidence (the opposite word). */
+const CONFIDENCE_OF: Record<string, string> = { Low: "High", Medium: "Medium", High: "Low" };
+
+/** Scouting: your staff's report on him, his ratings as ranges, and Send a Scout. */
+export function ScoutingTab({
+  r,
+  detail,
+  team,
+  busy,
+  onScout,
+}: {
+  r: BoardRow;
+  detail: ProspectDetail | null;
+  team: string;
+  busy: boolean;
+  /** send a scout for another look (it costs scouting points) */
+  onScout: () => void;
+}) {
+  if (!detail) return <p className="recruit-file__soft">{m.loading}</p>;
+  const looks = looksOf(r, detail);
+  const rep = detail.report;
+  const clear = detail.clear;
+  const pot = clear?.potential;
+  const yours = !!r.signed || r.committed === team;
+  const left = 3 - looks;
+  const cant = looks >= 3 || !detail.can_scout || detail.points_left < detail.scout_cost || !!r.scene;
+  const why =
+    looks >= 3
+      ? undefined
+      : detail.points_left < detail.scout_cost
+        ? m.noPoints
+        : r.scene
+          ? m.finishFirst
+          : !detail.can_scout
+            ? m.cantScout
+            : undefined;
+  const comp = detail.our_comp;
+  const compText = comp ? m.compText(comp.name, comp.school, comp.position, comp.overall) : null;
+  const coach = rep?.attributes.find((a) => a.group === "coachability");
+  return (
+    <Panels label={m.tabs.scouting}>
+      <Panel title={m.report}>
+        {/* the report's lead: how many looks, and his potential as your staff reads it */}
+        <div className="recruit-file__lead">
+          <div className="recruit-file__looks">
+            <Blocks have={looks} need={3} label={m.looks(fmtLooks(looks))} />
+            <b>{m.looks(fmtLooks(looks))}</b>
+            <span className="recruit-file__soft">
+              {looks >= 3
+                ? m.complete
+                : looks <= 0
+                  ? m.looksShort.none
+                  : left <= 1
+                    ? m.looksShort.one
+                    : m.looksShort.more(fmtLooks(left))}
+            </span>
+          </div>
+          {rep && (
+            <div className="recruit-file__potential">
+              <span className="label">{pot ? pot.label : m.potential}</span>
+              {pot ? (
+                <>
+                  <b className="recruit-file__big">{m.range(pot.est, pot.lo, pot.hi)}</b>
+                  <RangeBar
+                    lo={pot.lo}
+                    hi={pot.hi}
+                    mid={pot.est}
+                    soft={pot.confidence === "Low"}
+                    label={m.rangeLabel(pot.label, pot.est, pot.lo, pot.hi)}
+                  />
+                  <span className="recruit-file__soft">{m.confidence(pot.confidence)}</span>
+                </>
+              ) : (
+                <b className="recruit-file__big">{m.wordRange(rep.potential[0], rep.potential[1])}</b>
+              )}
+            </div>
+          )}
+        </div>
+        {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{m.looksLine.none}</p>}
+        <PanelRows>
+          <PanelRow
+            label={m.comp}
+            value={compText ?? (looks >= 3 ? m.compNone : undefined)}
+            unknown={m.unknown}
+            hint={comp || looks >= 3 ? null : m.compLater}
+          />
+        </PanelRows>
+        {!yours && (
+          <div className="recruit-file__acts">
+            <Button disabled={busy || cant} onClick={onScout}>
+              <Binoculars size={18} weight="bold" aria-hidden="true" />
+              {looks >= 3 ? m.complete : left <= 1 ? m.sendFinishes(detail.scout_cost) : m.sendScout(detail.scout_cost)}
+            </Button>
+            <span className="recruit-file__soft">{why ?? m.pointsLeft(detail.points_left)}</span>
+          </div>
+        )}
+      </Panel>
+
+      <Panel title={clear ? m.keyRatings : m.attributes} aside={rep || clear ? m.softKey : undefined}>
+        {clear ? (
+          <div className="recruit-file__ratings">
+            {clear.rows.map((x) => (
+              <Tooltip
+                key={x.key}
+                title={x.label}
+                text={m.ratingTip(x.est, x.lo, x.hi, x.confidence)}
+                block
+                className="recruit-file__rating"
+              >
+                <span className="recruit-file__rating-name">{x.label}</span>
+                <RangeBar lo={x.lo} hi={x.hi} mid={x.est} soft={x.confidence === "Low"} />
+                <b className="recruit-file__num">{m.range(x.est, x.lo, x.hi)}</b>
+              </Tooltip>
+            ))}
+            {/* how fast he will grow, as your staff reads it: in words, never a number */}
+            {coach && (
+              <Tooltip
+                title={coach.label}
+                text={m.coachTip(coach.words[0], coach.words[1], CONFIDENCE_OF[coach.uncertainty] ?? "Medium")}
+                block
+                className="recruit-file__rating"
+              >
+                <span className="recruit-file__rating-name">{coach.label}</span>
+                <RangeBar
+                  lo={Math.round(coach.lo)}
+                  hi={Math.round(coach.hi)}
+                  mid={Math.round(coach.mid)}
+                  soft={CONFIDENCE_OF[coach.uncertainty] === "Low"}
+                />
+                <b className="recruit-file__num">{m.wordRange(coach.words[0], coach.words[1])}</b>
+              </Tooltip>
+            )}
+          </div>
+        ) : rep ? (
+          <div className="recruit-file__ratings">
+            {rep.attributes.map((x) => (
+              <Tooltip
+                key={x.group}
+                title={x.label}
+                text={m.wordsTip(x.words[0], x.words[1], x.uncertainty)}
+                block
+                className="recruit-file__rating"
+              >
+                <span className="recruit-file__rating-name">{x.label}</span>
+                <RangeBar lo={x.lo} hi={x.hi} mid={x.mid} soft={x.uncertainty === "High"} />
+                <b className="recruit-file__num">{m.wordRange(x.words[0], x.words[1])}</b>
+              </Tooltip>
+            ))}
+          </div>
+        ) : (
+          <p className="recruit-file__soft">{m.noRatings}</p>
+        )}
+        {looks >= 3 && <p className="recruit-file__foot">{m.looksLine.done}</p>}
+      </Panel>
+    </Panels>
+  );
+}
+
+// ---------- Profile ----------
+
+/** "Open", "Committed: Texas", "Signed: SMU", "Leaning FCS", "Going Pro" */
+function statusText(r: BoardRow, d: ProspectDetail): string {
+  if (d.public.pro) return m.statuses.pro;
+  const holder = r.signed || r.committed;
+  if (holder) return (r.signed ? m.statuses.signed : m.statuses.committed)(teamName(holder, r.school_name));
+  return d.public.leaning_fcs ? m.statuses.fcs : m.statuses.open;
+}
+
+const TRAIT_ICON: Record<string, Icon> = {
+  personality: User,
+  decider: UsersThree,
+  story: BookOpen,
+  commit_style: Handshake,
+};
+
+/** Profile: who he is, a card a trait (one not known yet says how it shows itself), and his background. */
+export function ProfileTab({ r, detail }: { r: BoardRow; detail: ProspectDetail | null }) {
+  if (!detail) return <p className="recruit-file__soft">{m.loading}</p>;
+  const tr = detail.traits;
+  const hints = detail.trait_hints;
+  const p = detail.public;
+  const looks = looksOf(r, detail);
+  const comp = detail.our_comp;
+  const compText = comp ? m.compText(comp.name, comp.school, comp.position, comp.overall) : null;
+  const st = p.hometown.state === "DC" ? "D.C." : p.hometown.state;
+  const story = tr.story ? (tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story) : null;
+  const traits: [string, string | null][] = [
+    ["personality", tr.personality],
+    ["decider", tr.decider],
+    ["story", story],
+    ["commit_style", tr.commit_style],
+  ];
+  const known = traits.filter(([, v]) => v).length;
+  const tips: Record<string, string | undefined> = {
+    story: tr.story_key ? m.storyTips[tr.story_key]?.(tr.story_detail, !!tr.story_yours) : undefined,
+    commit_style: tr.style_key ? m.styleTips[tr.style_key] : undefined,
+  };
+  return (
+    <Panels stack label={m.tabs.profile}>
+      <Panel title={m.traits} aside={m.knownOf(known, traits.length)}>
+        <ul className="recruit-file__traits">
+          {traits.map(([k, v]) => {
+            const Mark = TRAIT_ICON[k] ?? User;
+            return (
+              <li key={k} className={`recruit-file__trait${v ? "" : " is-unknown"}`}>
+                <Tooltip
+                  title={v ? `${m.traitNames[k]}: ${v}` : m.traitNames[k]}
+                  text={v ? (tips[k] ?? m.traitAbout[k]) : (hints[k] ?? m.traitAbout[k])}
+                >
+                  <span className="recruit-file__trait-icon" aria-hidden="true">
+                    <Mark size={22} weight={v ? "fill" : "regular"} />
+                  </span>
+                </Tooltip>
+                <div className="recruit-file__trait-what">
+                  <span className="label">{m.traitNames[k]}</span>
+                  <b>{v ?? m.unknown}</b>
+                  {!v && hints[k] && <span className="recruit-file__soft">{hints[k]}</span>}
+                  {/* what a story or a way of committing means for recruiting him */}
+                  {v && tips[k] && <span className="recruit-file__soft">{tips[k]}</span>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        {detail.twist && (
+          <PanelRows>
+            <PanelRow
+              label={m.happened}
+              value={
+                detail.twist.weeks_left
+                  ? `${detail.twist.label} · ${m.weeksLeft(detail.twist.weeks_left)}`
+                  : detail.twist.label
+              }
+              hint={detail.twist.line}
+            />
+          </PanelRows>
+        )}
+      </Panel>
+      <Panel title={m.background}>
+        <PanelRows>
+          <PanelRow label={m.highSchool} value={p.high_school} unknown={m.unknown} />
+          <PanelRow label={m.archetype} value={p.archetype} unknown={m.unknown} />
+          <PanelRow label={m.rankings} value={m.ranks(p.national_rank, r.pos_rank, r.display_pos, p.state_rank, st)} />
+          {p.composite != null && <PanelRow label={m.composite} value={p.composite.toFixed(4)} />}
+          <PanelRow label={m.status} value={statusText(r, detail)} />
+          <PanelRow
+            label={m.comp}
+            value={compText ?? (looks >= 3 ? m.compNone : undefined)}
+            unknown={m.unknown}
+            hint={comp || looks >= 3 ? null : m.compLater}
+          />
+        </PanelRows>
+      </Panel>
+    </Panels>
+  );
+}
+
+// ---------- History ----------
+
+const KIND_ICON: Record<string, Icon> = {
+  message: Chat,
+  call: Phone,
+  hc_visit: House,
+  official_visit: House,
+  pitch: Phone,
+  offer: Scroll,
+  raise_nil: CurrencyDollar,
+  pull_offer: X,
+  learned: Binoculars,
+  present: Phone,
+  answer: Phone,
+  hung_up: Phone,
+  asked_more: CurrencyDollar,
+  commit: Flag,
+  hard: Flag,
+  flip: Flag,
+  decommit: Flag,
+  signed: PenNib,
+  leaning_fcs: Flag,
+  bloomed: Star,
+  pro: Star,
+};
+
+/** A line of his history, in the old board's order: "Call · Program Prestige · He Lit Up". */
+interface Item {
+  week: number;
+  kind: string;
+  text: string;
+}
+
+/** A topic inside a sentence: lower case, unless it is all capitals (NIL). */
+const lowerTopic = (t: string) => {
+  const n = PITCH_NAMES[t] ?? t;
+  return n === n.toUpperCase() ? n : n.toLowerCase();
+};
+
+/** Kinds whose line the game wrote itself. */
+const LINE_KINDS = new Set([
+  "learned",
+  "bloomed",
+  "pro",
+  "twist",
+  "hat",
+  "softened",
+  "promise_kept",
+  "promise_strained",
+]);
+
+/**
+ * His history as lines, newest first (web/recruiting.js historyItems). A call's or visit's pitch folds into that
+ * call's line, so one conversation is one entry.
+ */
+export function historyItems(events: RecruitEvent[], team: string): Item[] {
+  const folded = new Set<number>();
+  const actionOf = new Map<number, string>();
+  events.forEach((e, i) => {
+    if (e.kind !== "pitch") return;
+    // the call or visit this pitch finished: the same week, the nearest older contact that opened a conversation
+    const j = events.findIndex(
+      (c, k) =>
+        k > i &&
+        !folded.has(k) &&
+        c.kind === "contact" &&
+        c.week === e.week &&
+        (c.action === "call" || c.action === "hc_visit") &&
+        !c.pitch &&
+        (!e.action || c.action === e.action),
+    );
+    if (j >= 0) {
+      folded.add(j);
+      actionOf.set(i, events[j].action ?? "call");
+    }
+  });
+  const school = (e: RecruitEvent) => (e.school ? (e.school === team ? m.you : teamName(e.school)) : m.fcs);
+  const topic = (t?: string) => (t ? (PITCH_NAMES[t] ?? t) : null);
+  const line = (e: RecruitEvent, i: number): (string | null | undefined)[] => {
+    const k = e.kind;
+    const about = e.about ?? "";
+    if (k === "contact") return [m.actions[e.action ?? ""] ?? e.action, topic(e.pitch)];
+    if (k === "pitch")
+      return [
+        m.actions[e.action ?? actionOf.get(i) ?? ""] ?? m.actions.pitch,
+        topic(e.pitch),
+        m.reactions[e.reaction ?? ""],
+      ];
+    if (k === "offer")
+      return e.school && e.school !== team ? [m.h.offeredBy(teamName(e.school))] : [m.actions.offer, m.h.nil(e.nil)];
+    if (k === "raise_nil") return [m.actions.raise_nil, m.h.nil(e.nil)];
+    if (k === "pull_offer") return [m.actions.pull_offer];
+    if (k === "hung_up") return [e.action === "hc_visit" ? m.h.visitUnfinished : m.h.callUnfinished];
+    if (k === "asked_more") return [m.h.askedMore];
+    if (k === "not_buying") return [m.h.notBuying];
+    if (k === "pester")
+      return [m.h.tunedOut(e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message")];
+    if (k === "present")
+      return [
+        m.h.presented((e.topics ?? []).map(lowerTopic).join(", ")),
+        e.hit == null ? m.h.nothing : m.h.landed(e.hit),
+      ];
+    if (k === "answer" && e.question === "package")
+      return [
+        e.answer === "promise"
+          ? m.h.promisedOffer(about)
+          : e.answer === "deflect"
+            ? m.h.sidestepped(about)
+            : e.offered
+              ? m.h.alreadyOffered(about)
+              : m.h.straight(about),
+      ];
+    if (k === "answer")
+      return [
+        e.answer === "promise"
+          ? m.h.promisedJob(about, e.truthful === false || !!e.crowded)
+          : e.answer === "deflect"
+            ? m.h.sidestepped(about)
+            : m.h.straight(about),
+      ];
+    if (e.line && (LINE_KINDS.has(k) || k === "signed" || k === "unsigned")) return [e.line];
+    if (k === "promise_broken")
+      return [
+        e.why === "money" && e.line ? e.line : e.why === "package" ? m.h.brokenPackage(about) : m.h.brokenSpot(about),
+      ];
+    if (k === "leaning_fcs") return [m.h.leaningFcs];
+    if (m.h.moves[k]) return [m.h.moves[k](school(e))];
+    return [e.line ?? m.h.other(school(e), k.replace(/_/g, " "))];
+  };
+  return events.flatMap((e, i) =>
+    folded.has(i)
+      ? []
+      : [
+          {
+            week: e.week,
+            kind: e.kind === "contact" || e.kind === "pitch" ? (e.action ?? actionOf.get(i) ?? "pitch") : e.kind,
+            text: line(e, i).filter(Boolean).join(" · "),
+          },
+        ],
+  );
+}
+
+/** What you know about him and where you stand this week, as plain sentences. */
+function notesOf(r: BoardRow, d: ProspectDetail | null, team: string): string[] {
+  const out: string[] = [];
+  const tr = d?.traits;
+  if (tr?.personality) out.push(m.note.personality[tr.personality] ?? m.note.personalityOther(tr.personality));
+  if (tr?.decider)
+    out.push(tr.decider === "Himself" ? m.note.decidesHimself : m.note.decides(tr.decider.toLowerCase()));
+  const known = r.priorities_known.map((t) => PITCH_NAMES[t] ?? t);
+  if (known.length) out.push(m.note.cares(known));
+  const mine = raceOf(r).find((x) => x.you || x.school === team);
+  if (r.signed === team || r.committed === team) out.push(r.signed ? m.note.signed : m.note.committed);
+  else if (!mine) out.push(m.note.notOnList);
+  else if (mine.new) out.push(m.note.joined);
+  else if ((mine.move ?? 0) > 0) out.push(m.note.rose);
+  else if ((mine.move ?? 0) < 0) out.push(m.note.slipped);
+  else out.push(m.note.steady);
+  if (!tr?.personality && !known.length) out.push(m.note.callFirst);
+  return out;
+}
+
+/** History: the Recruiting Timeline, Recruiting Notes from what you know, and Recent Interest Changes. */
+export function HistoryTab({ r, detail, team }: { r: BoardRow; detail: ProspectDetail | null; team: string }) {
+  const rows = raceOf(r);
+  const items = historyItems(r.history, team);
+  return (
+    <Panels label={m.tabs.history}>
+      <Panel title={m.timeline} aside={items.length ? m.entries(items.length) : undefined}>
+        {items.length ? (
+          <ul className="recruit-file__timeline">
+            {items.map((x, i) => {
+              const Mark = KIND_ICON[x.kind] ?? Newspaper;
+              return (
+                <li key={i}>
+                  <Mark size={16} weight="bold" aria-hidden="true" />
+                  <span>
+                    <b>{m.week(Math.max(0, x.week - 1))}</b> · {x.text}
+                  </span>
+                  <span className="recruit-file__tag">{m.chips[x.kind] ?? m.news}</span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="recruit-file__soft">{m.noHistory}</p>
+        )}
+      </Panel>
+
+      <Panel title={m.notes}>
+        <ul className="recruit-file__notes">
+          {notesOf(r, detail, team).map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      </Panel>
+
+      <Panel title={m.changes}>
+        {rows.length ? (
+          <ol className="recruit-file__battle recruit-file__battle--moves">
+            {rows.slice(0, 8).map((x, i) => {
+              const you = x.you || x.school === team;
+              const move = x.move ?? 0;
+              const Arrow = x.new ? Star : move > 0 ? ArrowUp : move < 0 ? ArrowDown : Minus;
+              return (
+                <li key={x.school} className={you ? "is-you" : undefined}>
+                  <span className="recruit-file__place">{x.rank ?? i + 1}</span>
+                  <span className="recruit-file__school">
+                    <Swatch team={teamOf(x.school)} size={16} />
+                    <b>{x.name}</b>
+                  </span>
+                  <span className="recruit-file__move">
+                    <Arrow size={14} weight="bold" aria-hidden="true" />
+                    {x.new
+                      ? m.moves.fresh
+                      : move > 0
+                        ? m.moves.up(move)
+                        : move < 0
+                          ? m.moves.down(-move)
+                          : m.moves.same}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <p className="recruit-file__soft">{m.noList}</p>
+        )}
+      </Panel>
+    </Panels>
+  );
+}

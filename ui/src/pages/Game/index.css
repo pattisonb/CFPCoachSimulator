@@ -69,9 +69,10 @@
 
 /* *tune* the section fade: the old one dims away, then the new one comes up */
 :root {
-  --section-out: 220ms;
-  --section-in: 480ms;
-  --section-gap: 140ms; /* the new one starts as the old is nearly gone */
+  /* *tune* a section change is instant (the player's ask: no fade between screens); give these times to bring one back */
+  --section-out: 0ms;
+  --section-in: 0ms;
+  --section-gap: 0ms;
 }
 
 /* one section: it fills the window and brings its own padding (fill, flush or centered). The one shown fades up;

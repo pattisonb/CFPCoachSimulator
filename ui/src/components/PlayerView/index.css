@@ -1,60 +1,20 @@
-/* One player, top to bottom: who he is, the facts, his traits, then every attribute against his ceiling. */
+/* One player: his head (the shared ProfileHead), his tabs, then the tab's panels (the shared Panel). */
 .player-view {
-  container-type: inline-size;
   display: grid;
   align-content: start;
-  gap: var(--s3);
+  gap: var(--s2);
 }
 
-/* ---------- the head: face, name, tags, the overall ---------- */
-.player-view__head {
-  display: flex;
+/* his stars, in the head's tag row, set off from his archetype by a rule */
+.player-view__stars {
+  display: inline-flex;
   align-items: center;
-  gap: var(--s3);
+  gap: 2px;
+  padding-left: 8px;
+  border-left: var(--line) solid var(--ink-soft);
 }
 
-.player-view__face {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 108px;
-  height: 108px;
-  overflow: hidden;
-  background: var(--tile);
-  border: var(--line) solid var(--ink);
-  box-shadow: 4px 4px 0 var(--shadow);
-}
-
-/* drawn at 6x and shown at 3x (99 x 102): halving whole pixels keeps them whole, and a narrow card's 2x is a third */
-.player-view__face img {
-  width: 99px;
-  height: 102px;
-}
-
-.player-view__who {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.player-view__name {
-  font-size: var(--t-xl);
-  line-height: 1.15;
-  text-transform: uppercase;
-}
-
-.player-view__line {
-  color: var(--ink-soft);
-  font-size: var(--t-sm);
-  font-weight: 700;
-}
-
-.player-view__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
+/* a small boxed tag on a badge card (Earned, Working Toward Silver) */
 .player-view__tag {
   padding: 1px 8px;
   border: var(--line) solid var(--ink);
@@ -63,159 +23,58 @@
   white-space: nowrap;
 }
 
-.player-view__stars {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
+/* while his profile loads: as tall as a panel's head, so less moves when it lands */
+.player-view__loading {
+  min-height: 120px;
 }
 
-/* Edit Look: a quiet link-like button at the end of the tags */
-.player-view__edit {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 8px;
-  background: transparent;
-  color: var(--ink);
-  border: var(--line) dashed var(--ink-soft);
-  font-size: var(--t-xs);
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 140ms ease-out;
-}
-
-.player-view__edit:hover {
-  border: var(--line) solid var(--ink);
-}
-
-.player-view__tag--out {
-  background: var(--ink);
-  color: var(--paper-hi);
-  text-transform: uppercase;
-}
-
-.player-view__ovr {
-  display: grid;
-  justify-items: center;
-  flex: none;
-  margin-left: auto;
-  padding: var(--s1) var(--s2);
-  border: var(--line) solid var(--ink);
-  color: var(--ink-soft);
-}
-
-.player-view__ovr-value {
-  color: var(--ink);
-  font-size: var(--t-2xl);
-  line-height: 1;
-}
-
-/* ---------- the facts: a grid of label over value ---------- */
-.player-view__facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--s2) var(--s3);
-  padding-block: var(--s2);
-  border-block: var(--line) solid var(--line-soft);
-}
-
-.player-view__facts dt {
-  color: var(--ink-soft);
-}
-
-.player-view__facts dd {
-  font-weight: 700;
+/* ---------- the tabs ---------- */
+.player-view__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .player-view__soft {
   color: var(--ink-soft);
-}
-
-.player-view__kicker {
-  margin-bottom: var(--s1);
-  color: var(--ink-soft);
-}
-
-/* ---------- traits, the goal, other positions ---------- */
-.player-view__extras {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s3) var(--s4);
-}
-
-.player-view__traits,
-.player-view__elsewhere {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s1);
-  list-style: none;
-}
-
-/* a trait: its name over its tier; the tier sets how strong the frame reads */
-.player-view__trait {
-  display: grid;
-  padding: 4px 10px;
-  border: var(--line) solid var(--ink-soft);
-}
-
-.player-view__trait small {
-  color: var(--ink-soft);
-  font-size: var(--t-xs);
-}
-
-.player-view__trait--t3 {
-  border-color: var(--ink);
-}
-
-.player-view__trait--t4 {
-  border-color: var(--ink);
-  box-shadow: 3px 3px 0 var(--shadow);
-}
-
-.player-view__goal {
-  display: grid;
   font-size: var(--t-sm);
 }
 
-.player-view__elsewhere li {
-  display: flex;
-  gap: 8px;
-  padding: 4px 10px;
-  border: var(--line) solid var(--line-soft);
-  font-size: var(--t-sm);
+.player-view__lead {
+  font-weight: 700;
 }
 
-/* ---------- attributes: a column per group; each bar shows the rating, the ceiling faint behind it ---------- */
-.player-view__attrs {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--s3) var(--s4);
-}
-
-.player-view__group {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-}
-
+/* a rating: its name, a bar (the ceiling faint behind it), its number; a hairline under each */
 .player-view__bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 72px 26px;
+  grid-template-columns: minmax(0, 1fr) minmax(64px, 36%) minmax(28px, auto);
   align-items: center;
   gap: var(--s2);
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
   font-size: var(--t-sm);
 }
 
+/* the first under a panel's head has the head's rule over it already */
+.panel__head + .player-view__bar,
+.panel__head + .player-view__bar-row .player-view__bar {
+  border-top: 0;
+}
+
+/* a long name wraps: nothing is cut short */
 .player-view__bar-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.player-view__bar-label.is-key {
+  font-weight: 700;
 }
 
 .player-view__bar-track {
   position: relative;
-  height: 8px;
-  border: var(--line) solid var(--ink);
+  height: 10px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .player-view__bar-track i {
@@ -236,7 +95,27 @@
 }
 
 .player-view__bar-value {
+  font-variant-numeric: tabular-nums;
   text-align: right;
+  white-space: nowrap;
+}
+
+/* Room to Grow: where he is, then where he can get to, in two set columns, so every row's bar is the same width and
+   the numbers line up down the panel */
+.player-view__grow {
+  display: grid;
+  grid-template-columns: 26px 44px; /* *tune* his rating now, then "→ 96" or "Max" */
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.player-view__grow b {
+  text-align: right;
+}
+
+.player-view__grow .player-view__soft {
+  font-size: var(--t-xs);
 }
 
 /* low ratings read soft (high ones keep the ink: the design has no color for "good") */
@@ -244,19 +123,199 @@
   color: var(--ink-soft);
 }
 
-/* a narrow card: the face at 2x and a smaller name, so the head stays one row */
-@container (width < 560px) {
-  .player-view__face {
-    width: 76px;
-    height: 76px;
-  }
+.player-view__list {
+  display: grid;
+  list-style: none;
+}
 
-  .player-view__face img {
-    width: 66px;
-    height: 68px;
-  }
+.player-view__list li {
+  display: grid;
+  gap: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
 
-  .player-view__name {
-    font-size: var(--t-lg);
-  }
+.player-view__list li:last-child {
+  border-bottom: 0;
+}
+
+/* ---------- Abilities: what he is working toward, then his badges ---------- */
+
+/* a medal: the tier's metal on a tile with an ink edge. The only color on the card */
+.player-view__medal {
+  --metal: #a9713f; /* *tune* Bronze */
+
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  background: var(--metal);
+  color: #fff;
+  border: var(--line) solid var(--ink);
+}
+
+.player-view__medal--t2 {
+  --metal: #8b9299; /* *tune* Silver */
+}
+
+.player-view__medal--t3 {
+  --metal: #c2941a; /* *tune* Gold */
+}
+
+/* Platinum: the tile in ink, raised on a shadow */
+.player-view__medal--t4 {
+  --metal: var(--ink);
+
+  color: var(--paper-hi);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.player-view__medal.is-big {
+  width: 64px;
+  height: 64px;
+}
+
+.player-view__medal.is-small {
+  width: 18px;
+  height: 18px;
+  border-width: 1px;
+  box-shadow: none;
+}
+
+/* the goal: its medal, what it is and what it takes, then how far along he is */
+.player-view__goal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  padding: var(--s2) 0 var(--s1);
+}
+
+.player-view__goal-what {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 180px;
+}
+
+.player-view__goal-name {
+  font-size: var(--t-lg);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.player-view__goal-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-md);
+  white-space: nowrap;
+}
+
+.player-view__progress-bar {
+  width: 180px;
+  border: var(--line) solid var(--ink);
+}
+
+/* his badges: cards, as many across as fit */
+.player-view__badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s2);
+  padding: var(--s2) 0 var(--s1);
+  list-style: none;
+}
+
+.player-view__badge-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--paper);
+  border: var(--line) solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.player-view__badge-what {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.player-view__badge-what > b {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.player-view__badge-tier {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.player-view__badge-tier .player-view__tag {
+  border-width: 1px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.player-view__built {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.player-view__built-on {
+  color: var(--ink);
+}
+
+.player-view__tiers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--s2);
+  font-size: var(--t-xs);
+}
+
+.player-view__tier-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* History's tables: ranks, games, past seasons */
+.player-view__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.player-view__table th,
+.player-view__table td {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.player-view__table thead th {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.player-view__table tbody tr:last-child th,
+.player-view__table tbody tr:last-child td {
+  border-bottom: 0;
 }

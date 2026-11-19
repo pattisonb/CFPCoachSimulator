@@ -20,6 +20,8 @@ interface Props {
   weekKey: number;
   /** your coach: his face and name beside your lines on a call or visit */
   coach: { name: string; face: Face } | null;
+  /** a recruit to open on the Board (asked for from another section) */
+  pick?: string | null;
 }
 
 /**
@@ -39,6 +41,7 @@ export default function RecruitingHub({
   onTab,
   weekKey,
   coach,
+  pick,
 }: Props) {
   return (
     <div className="section-tabs__wrap">
@@ -60,6 +63,7 @@ export default function RecruitingHub({
           board={board}
           reload={reload}
           coach={coach}
+          pick={pick}
           onFindProspects={() => onTab("prospects")}
         />
       </SectionPane>

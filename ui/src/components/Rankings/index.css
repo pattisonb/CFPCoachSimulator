@@ -1,0 +1,126 @@
+/* Rankings: the poll as a table at the left; the others receiving votes and the week's movers beside it. */
+.rankings {
+  flex: 1;
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  container: rankings / inline-size;
+}
+
+.rankings__cols {
+  display: grid;
+  align-items: start;
+  gap: var(--s3);
+}
+
+@container rankings (width >= 900px) {
+  .rankings__cols {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.rankings__panel,
+.rankings__side .panel {
+  margin-bottom: 0;
+}
+
+.rankings__side {
+  display: grid;
+  gap: var(--s3);
+}
+
+.rankings__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.rankings__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+/* where it was last week: up in ink, down soft, new with a star */
+.rankings__move {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 34px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.rankings__move.is-down,
+.rankings__move.is-same {
+  color: var(--ink-soft);
+}
+
+.rankings__others {
+  display: grid;
+  list-style: none;
+}
+
+.rankings__others li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.rankings__others li:first-child {
+  border-top: 0;
+}
+
+.rankings__others li.is-mine {
+  font-weight: 700;
+}
+
+.rankings__place {
+  min-width: 22px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.rankings__grow {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the committee has not ranked yet: what that means, and the way to the projection */
+.rankings__empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--s2);
+  max-width: 640px;
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.rankings__empty h2 {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.rankings__empty p {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.rankings__link {
+  padding: 6px var(--s2);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
+}

@@ -9,7 +9,6 @@ export const messages = {
   stageNames: {
     all: "All",
     committed: "Committed",
-    visited: "Visited",
     top: "Top 8",
     contact: "In Touch",
     cold: "Cold",
@@ -27,28 +26,33 @@ export const messages = {
   pickOne: "Pick a recruit to work him.",
 
   // the recruit's panel
-  ranks: (nat: number, pos: number, posName: string) => `#${nat} Nationally · #${pos} ${posName}`,
-  chance: "Your Chance",
-  hisList: "His List",
-  noList: "No school has his attention yet.",
-  offered: "Offered",
-  visit: (label: string) => `Visit ${label}`,
-  visited: "Visited",
-  you: "You",
-  aSchool: "A school",
-  offer: "Your Offer",
-  noOffer: "No Offer Yet",
+  about: "About Him",
+  tabs: { overview: "Overview", scouting: "Scouting", profile: "Profile", history: "History" },
+  ranks: (nat: number, pos: number, posName: string) => `#${nat} Nat. · #${pos} ${posName}`,
+  chance: "Chance",
+  noOffer: "None Yet",
   nilAmount: (n: number) => `${n} NIL`,
+  hisList: "His List",
+  listPlace: (at: number, of: number) => `#${at} of ${of}`,
+  outside: "Outside His Top 5",
+  notOnIt: "Not on It",
+  hisAsk: "His Ask",
   ask: (lo?: number, hi?: number, exact?: number) =>
-    exact != null
-      ? `His Ask: ${exact} NIL`
-      : lo != null && hi != null
-        ? `His Ask: ${lo}–${hi} NIL`
-        : "His Ask: Unknown",
-  wants: "What He Wants",
-  unknown: "Not Known Yet",
-  wantsTip: "His three priorities. Calls and visits reveal them; pitch what he cares about.",
-  cooled: (why: string | null) => `He's cooled on you${why ? `: ${why}` : ""}.`,
+    exact != null ? `${exact} NIL` : lo != null && hi != null ? `${lo}–${hi} NIL` : "Not Known Yet",
+  hoursLeft: (n: number) => `${n} Hours Left`,
+  offBoardTip: "Take him off your board. An offer he holds is pulled.",
+  offer: "Your Offer",
+  cooled: (why: string | null) =>
+    COOLED[why ?? ""] ?? "He's cooled on you. Contacts count half until he warms back up.",
+  moneyOwed: (nil: number, by: string) =>
+    `You talked money: put at least ${nil} NIL on your offer by ${by}, or he cools on you.`,
+  jobPromised: "Job Promised",
+  jobPromisedTip:
+    "You promised him a starting role. It is judged through his first season, and a broken promise costs you.",
+  promiseRole: "Promise Him a Starting Role",
+  promiseRoleHelp:
+    "Counts for more if playing time is one of his priorities. It is judged through his first season, and a broken promise costs you.",
+  promisedRole: "You promised him a starting role.",
   pestering: "He feels pestered. Ease off until a visit or an offer changes things.",
 
   work: "Work Him",
@@ -80,6 +84,7 @@ export const messages = {
   // what an action says when it lands (web/recruiting.js SAID): `n` is its hours, or its NIL for an offer
   said: {
     message: (name: string, n: number) => `Message sent to ${name} · ${n} hours.`,
+    scout: (name: string, n: number) => `Scout sent to ${name} · ${n} points.`,
     official_visit: (name: string, n: number) => `Official visit invite to ${name} · ${n} hours.`,
     offer: (name: string, n: number) => `Offer sent to ${name} · ${n} NIL.`,
     raise_nil: (name: string, n: number) => `Offer to ${name} raised to ${n} NIL.`,
@@ -88,21 +93,14 @@ export const messages = {
   revealed: (topic: string) => `He told you he cares about ${topic}.`,
   failed: (msg: string) => `Couldn't do that: ${msg}.`,
 
-  recent: "Recent",
   week: (n: number) => `Week ${n}`,
-  hist: {
-    offer: (school: string, nil?: number) => `${school} offered${nil ? ` (${nil} NIL)` : ""}.`,
-    contact: (school: string, action?: string) =>
-      `${school}: ${action ? (ACTION_NAMES[action] ?? action) : "contact"}.`,
-    hung_up: (school: string) => `${school} left a call unfinished.`,
-    commit: (school: string) => `Committed to ${school}.`,
-    decommit: (school: string) => `Decommitted from ${school}.`,
-  },
 } as const;
 
-const ACTION_NAMES: Record<string, string> = {
-  message: "a message",
-  call: "a call",
-  hc_visit: "a head coach visit",
-  official_visit: "an official visit",
+/** Why he cooled on you (the board's cooled_why), and what warms him back up. */
+const COOLED: Record<string, string> = {
+  lowball:
+    "He read your offer as a lowball. Contacts count half and he won't visit until you raise it to what he wants.",
+  promise: "He doubts a promise you made. Contacts count half and he won't visit until he cools off.",
+  quiet: "He felt ignored. Call or visit to warm him back up; contacts count half and he won't visit until then.",
+  game: "He saw you lose. Contacts count half until he warms back up.",
 };

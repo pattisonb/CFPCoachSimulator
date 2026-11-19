@@ -1,0 +1,66 @@
+/* A table of rows: soft headers, hairlines, numbers set right; your own row in bold on a tint. */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.data-table th,
+.data-table td {
+  padding: 6px 10px 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-hi);
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* a sortable header: the label is the button */
+.data-table th button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.data-table th button:hover,
+.data-table th[aria-sort] {
+  color: var(--ink);
+}
+
+.data-table th[aria-sort] {
+  font-weight: 700;
+}
+
+.data-table .is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tr.is-mine td {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  font-weight: 700;
+}
+
+.data-table tr.is-mine td:first-child {
+  padding-left: 8px;
+  box-shadow: inset 3px 0 0 var(--ink);
+}

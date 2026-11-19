@@ -1,0 +1,297 @@
+/* A profile's head: his face, who he is, three facts, a square tile; one light card. The outer box only measures
+   (its width picks the layout); the card inside is what you see. */
+.profile-head {
+  container: profile-head / inline-size;
+}
+
+/* fixed places, so nothing moves from one profile to the next */
+.profile-head__card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  padding: var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.profile-head__face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 108px;
+  overflow: hidden;
+  background: var(--tile);
+}
+
+/* drawn at 6x and shown at 3x (99 x 102): halving whole pixels keeps them whole, and a narrow card's 2x is a third */
+.profile-head__face img {
+  width: 99px;
+  height: 102px;
+}
+
+.profile-head__corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+/* a control on his face's corner: a 24 px square that turns to ink when pointed at */
+.profile-head__corner button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: 0;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    color 140ms ease-out;
+}
+
+.profile-head__corner button:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.profile-head__who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* the name gives way first (cut short), what is beside it always shows whole */
+.profile-head__title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+/* one line each: a long name or a long run of tags is cut short, never wrapped (a wrap would move everything under) */
+.profile-head__name {
+  overflow: hidden;
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.profile-head__beside {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--t-lg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.profile-head__line {
+  overflow: hidden;
+  font-size: var(--t-md);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-head__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  overflow: hidden;
+  font-size: var(--t-md);
+  white-space: nowrap;
+}
+
+.profile-head__tag {
+  padding: 1px 8px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.profile-head__tag.is-solid {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+/* the tile: a square the size of his face, at the head's other end, its label over a big value */
+.profile-head__tile-slot {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.profile-head__tile {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-items: center;
+  width: 108px;
+  height: 108px;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  color: var(--ink-soft);
+}
+
+.profile-head__tile .label {
+  width: 100%;
+  padding: 2px 0;
+  border-bottom: var(--line) solid var(--ink);
+  text-align: center;
+}
+
+.profile-head__tile-value {
+  align-self: center;
+  color: var(--ink);
+  font-size: 56px;
+  line-height: 1;
+}
+
+.profile-head__tile-value.is-soft {
+  color: var(--ink-soft);
+}
+
+/* a unit after the number (%): small, so three digits still fit */
+.profile-head__tile-value small {
+  font-size: 40%;
+}
+
+/* a word in the tile: small capitals that wrap inside the square */
+.profile-head__tile.is-word .profile-head__tile-value {
+  padding: 0 6px;
+  font-size: var(--t-md);
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* the three cells, between his name and the tile: each in its own column on a wide card, a rule before each */
+.profile-head__cells {
+  display: grid;
+  grid-column: 3;
+  grid-row: 1;
+  grid-template-columns: 110px 160px 96px; /* *tune* the three cells' widths */
+  align-self: stretch;
+}
+
+.profile-head__cells div {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding-left: var(--s3);
+  border-left: var(--line) solid var(--line-soft);
+}
+
+.profile-head__cells dt {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.profile-head__cells dd,
+.profile-head__clip {
+  overflow: hidden;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-head__clip {
+  display: block;
+}
+
+/* a thinner card: the three stack in one column, so his name keeps its room */
+@container profile-head (width < 1000px) {
+  .profile-head__cells {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 6px;
+    width: 150px; /* *tune* wide enough for "Has Not Played" and a short stat line */
+    padding-left: var(--s3);
+    border-left: var(--line) solid var(--line-soft);
+  }
+
+  .profile-head__cells div {
+    gap: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .profile-head__cells dt {
+    font-size: var(--t-xs);
+  }
+
+  /* what was beside his name goes under it, so the name has the whole line */
+  .profile-head__title {
+    display: grid;
+    gap: 2px;
+  }
+
+  .profile-head__beside {
+    font-size: var(--t-md);
+  }
+
+  .profile-head__who {
+    gap: 2px;
+  }
+}
+
+/* a narrow card: the face and the tile at 2x, a smaller name, the cells in a row under them */
+@container profile-head (width < 560px) {
+  .profile-head__card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .profile-head__face,
+  .profile-head__tile {
+    width: 76px;
+    height: 76px;
+  }
+
+  .profile-head__face img {
+    width: 66px;
+    height: 68px;
+  }
+
+  .profile-head__tile-slot {
+    grid-column: 3;
+  }
+
+  .profile-head__tile-value {
+    font-size: 38px;
+  }
+
+  .profile-head__tile.is-word .profile-head__tile-value {
+    font-size: var(--t-xs);
+  }
+
+  .profile-head__name {
+    font-size: var(--t-lg);
+  }
+
+  .profile-head__cells {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: 2fr 3fr 2fr;
+    gap: var(--s3);
+    width: auto;
+    padding: var(--s2) 0 0;
+    border-top: var(--line) solid var(--line-soft);
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-head__corner button {
+    transition: none;
+  }
+}

@@ -35,7 +35,9 @@ const sideOf = (b: Bowl, which: "away" | "home", teams: Map<string, TeamCard>, m
  */
 export default function Bowls({ season, teams }: Props) {
   const set = season.bowls?.length ? season.bowls : null;
-  const projection = set ? null : (season.bowl_projection ?? null);
+  // from the committee's ranking once it ranks; before that the same projection read from the AP poll
+  const early = !set && !season.bowl_projection && !!season.bowl_outlook;
+  const projection = set ? null : (season.bowl_projection ?? season.bowl_outlook ?? null);
   const sample = !set && !projection;
   const sampled = useMemo(() => sampleFor(season.team, season.team_name), [season.team, season.team_name]);
   const bowls = set ?? projection?.bowls ?? sampled.bowls;
@@ -71,8 +73,12 @@ export default function Bowls({ season, teams }: Props) {
       {m.sample}
     </SectionStatus>
   ) : (
-    <SectionStatus tip={projection ? m.projectedTip : undefined}>
-      {projection ? m.projected(weekName) : m.set}
+    <SectionStatus sample={early} tip={early ? m.earlyTip : projection ? m.projectedTip : undefined}>
+      {early
+        ? m.projectedEarly(projection?.week ? weekName : m.preseasonPoll)
+        : projection
+          ? m.projected(weekName)
+          : m.set}
     </SectionStatus>
   );
 
@@ -91,6 +97,7 @@ export default function Bowls({ season, teams }: Props) {
       <SectionTabs title={m.title} value="all" onChange={() => {}} tabs={[]} aside={status} />
       <div className="bowls" ref={page}>
         {sample && <SampleNote>{m.sampleTip}</SampleNote>}
+        {early && <SampleNote>{m.earlyTip}</SampleNote>}
         {current && (
           <Banner key={current.bowl} b={current} teams={teams} me={me} yours={current === mine ? standing : null} />
         )}

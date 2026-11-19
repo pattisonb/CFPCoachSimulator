@@ -1,10 +1,10 @@
 /* The Recruiting board: the recruits in a list on the left (head, filters, the list scrolling on its own), only as
    wide as its longest row needs; the one picked takes all the width that is left. */
 .recruiting {
-  --recruiting-list-min: 300px; /* *tune* the list never gets narrower than this, so a short stage barely moves it */
+  --recruiting-list: 320px; /* *tune* the list's width: set, so the divider never moves as the list changes */
 
   display: grid;
-  grid-template-columns: minmax(var(--recruiting-list-min), max-content) minmax(0, 1fr);
+  grid-template-columns: var(--recruiting-list) minmax(0, 1fr);
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -206,119 +206,55 @@
   font-size: var(--t-lg);
 }
 
-/* ---------- a recruit's panel ---------- */
+/* ---------- a recruit's panel: his head (the shared ProfileHead), one row of tabs, then the tab ---------- */
 .recruit {
   display: grid;
   align-content: start;
-  gap: var(--s3);
+  gap: var(--s2);
 }
 
-/* under the head: where he stands (your chance, his list, the offer, what he wants) beside the week's work and his
-   history; one column when the panel is narrow */
-.recruit__cols {
-  display: grid;
-  align-items: start;
-  gap: var(--s3);
-}
-
-.recruit__col {
-  display: grid;
-  align-content: start;
-  gap: var(--s3);
-  min-width: 0;
-}
-
-@container recruit-side (width >= 520px) {
-  .recruit__cols {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s4);
-  }
-
-  .recruit__col .recruit__work {
-    padding-top: 0;
-    border-top: 0;
-  }
-}
-
-.recruit__head {
-  position: relative;
+/* the tabs at the left, what your last action did in the middle, Off My Board at the right */
+.recruit__bar {
   display: flex;
   align-items: center;
-  gap: var(--s3);
-  padding-right: 28px;
+  gap: var(--s2);
 }
 
-.recruit__face {
-  width: 108px;
-  height: 108px;
-  box-shadow: 4px 4px 0 var(--shadow);
+.recruit__tabs {
+  display: flex;
+  flex: none;
+  gap: 6px;
 }
 
-.recruit__who {
-  display: grid;
-  gap: 4px;
+.recruit__note {
+  flex: 1;
   min-width: 0;
-}
-
-.recruit__name {
-  font-size: var(--t-lg);
-  line-height: 1.15;
-  text-transform: uppercase;
-}
-
-.recruit__ranks {
-  font-size: var(--t-xs);
+  overflow: hidden;
+  font-size: var(--t-sm);
   font-weight: 700;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .recruit__off {
-  position: absolute;
-  top: 0;
-  right: 0;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   background: none;
   color: var(--ink-soft);
-  border: var(--line) solid transparent;
+  border: var(--line) solid var(--line-soft);
   cursor: pointer;
+  transition:
+    color 140ms ease-out,
+    border-color 140ms ease-out;
 }
 
 .recruit__off:hover {
   color: var(--ink);
   border-color: var(--ink);
-}
-
-/* your chance: a big number and what it means */
-.recruit__chance {
-  display: grid;
-  gap: 4px;
-  padding: var(--s2) var(--s3);
-  background: var(--paper-hi);
-  border: var(--line) solid var(--ink);
-}
-
-.recruit__chance .label {
-  color: var(--ink-soft);
-}
-
-.recruit__chance-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-}
-
-.recruit__big {
-  font-size: var(--t-2xl);
-  line-height: 1;
-}
-
-.recruit__word-big {
-  flex: none;
-  font-size: var(--t-lg);
-  text-transform: uppercase;
 }
 
 .recruit__warn {
@@ -327,85 +263,41 @@
   font-size: var(--t-sm);
 }
 
-.recruit__block {
+/* Overview: his file's panels beside the week's work; in a narrow panel the work comes first */
+.recruit__overview {
   display: grid;
-  align-content: start;
-  gap: 6px;
-  font-size: var(--t-sm);
+  gap: var(--s2);
 }
 
-.recruit__kicker {
-  color: var(--ink-soft);
-}
-
-.recruit__list {
+.recruit__cols {
   display: grid;
-  gap: 6px;
-  list-style: none;
-}
-
-.recruit__list li {
-  display: grid;
-  gap: 3px;
-}
-
-.recruit__list li.is-you {
-  font-weight: 700;
-}
-
-.recruit__school {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.recruit__tag {
-  padding: 0 6px;
-  border: 1px solid var(--ink-soft);
-  color: var(--ink-soft);
-  font-size: var(--t-xs);
-  font-weight: 400;
-}
-
-.recruit__bar {
-  height: 8px;
-  border: 1px solid var(--line-soft);
-}
-
-.recruit__bar i {
-  display: block;
-  height: 100%;
-  background: var(--ink-soft);
-}
-
-.recruit__list li.is-you .recruit__bar i {
-  background: var(--ink);
-}
-
-.recruit__pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: var(--s3);
 }
 
-.recruit__wants {
-  display: grid;
-  gap: 2px;
-  list-style: none;
-  font-weight: 700;
+.recruit__col {
+  min-width: 0;
 }
 
-.recruit__wants li.is-unknown {
-  color: var(--ink-soft);
-  font-weight: 400;
+.recruit__col + .recruit__col {
+  order: -1;
 }
 
-/* the week's actions */
+@container recruit-side (width >= 760px) {
+  .recruit__cols {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  .recruit__col + .recruit__col {
+    order: 0;
+  }
+}
+
+/* the week's actions, in a panel of their own */
 .recruit__work {
   gap: var(--s2);
-  padding-top: var(--s2);
-  border-top: var(--line) solid var(--line-soft);
+  margin-bottom: 0;
+  padding-bottom: var(--s3);
 }
 
 .recruit__pitch {
@@ -502,6 +394,31 @@
   font-weight: 700;
 }
 
+/* an offer's promise of a starting role: a checkbox, its name, then what it means */
+.recruit__promise {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s2);
+  cursor: pointer;
+}
+
+.recruit__promise input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--ink);
+}
+
+.recruit__promise span {
+  display: grid;
+  gap: 2px;
+}
+
+.recruit__promise .recruiting__soft {
+  font-size: var(--t-xs);
+}
+
 .recruit__offer .btn,
 .recruit__visit .btn {
   min-height: 36px;
@@ -518,32 +435,10 @@
   flex: 1;
 }
 
-.recruit__note {
-  min-height: 1px;
-  font-size: var(--t-sm);
-  font-weight: 700;
-}
-
-.recruit__history {
-  display: grid;
-  gap: 4px;
-  list-style: none;
-}
-
-.recruit__history li {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: var(--s2);
-}
-
-.recruit__when {
-  color: var(--ink-soft);
-  font-size: var(--t-xs);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .recruiting__row,
-  .recruit__act {
+  .recruit__act,
+  .recruit__off {
     transition: none;
   }
 }

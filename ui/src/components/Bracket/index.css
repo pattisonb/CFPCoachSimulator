@@ -1,0 +1,211 @@
+/* The Bracket: four rounds across, each matchup a small card; the field and the first four out beside them. */
+.bracket {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--s2);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  container: bracket / inline-size;
+}
+
+.bracket__note {
+  padding: var(--s4);
+}
+
+.bracket__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+/* where you stand, in a sentence */
+.bracket__standing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-md);
+  font-weight: 700;
+}
+
+.bracket__cols {
+  display: grid;
+  align-items: start;
+  gap: var(--s3);
+}
+
+@container bracket (width >= 1000px) {
+  .bracket__cols {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+/* the rounds side by side: each round's games spread down its column, so a game sits between the two that feed it */
+.bracket__tree {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  gap: var(--s2);
+  min-height: 520px;
+  padding: var(--s3);
+  overflow-x: auto;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.bracket__round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.bracket__round-name {
+  padding-bottom: 6px;
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.bracket__games {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: var(--s2);
+}
+
+/* a matchup: two lines in a frame, a notch at its right edge pointing to the next round */
+.bracket__game {
+  position: relative;
+  display: grid;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+}
+
+.bracket__round:not(:last-child) .bracket__game::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(-1 * var(--s2) - var(--line));
+  width: var(--s2);
+  border-top: var(--line) solid var(--ink);
+}
+
+.bracket__line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 8px 4px 4px;
+}
+
+.bracket__line + .bracket__line {
+  border-top: 1px solid var(--line-soft);
+}
+
+.bracket__line.is-pending {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.bracket__line.is-won {
+  font-weight: 700;
+}
+
+.bracket__line.is-lost {
+  color: var(--ink-soft);
+}
+
+.bracket__line.is-mine,
+.bracket__field li.is-mine {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 3px 0 0 var(--ink);
+  font-weight: 700;
+}
+
+.bracket__grow {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket__grow b,
+.bracket__grow .bracket__soft {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bracket__score {
+  font-variant-numeric: tabular-nums;
+}
+
+/* the bowl hosting the game, under its two lines */
+.bracket__bowl {
+  padding: 2px 8px;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-xs);
+}
+
+/* a seed in a small box; a top-four seed (a bye) in ink; a place with no seed, empty and soft */
+.bracket__seed {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bracket__seed.is-bye {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.bracket__seed.is-out {
+  color: var(--ink-soft);
+  border-style: dashed;
+}
+
+.bracket__side {
+  display: grid;
+  gap: var(--s3);
+}
+
+.bracket__side .panel {
+  margin-bottom: 0;
+}
+
+.bracket__field {
+  display: grid;
+  list-style: none;
+}
+
+.bracket__field li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.bracket__field li:first-child {
+  border-top: 0;
+}
+
+.bracket__tag {
+  padding: 0 6px;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+}

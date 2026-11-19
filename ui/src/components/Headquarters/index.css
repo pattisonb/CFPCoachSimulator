@@ -1,0 +1,867 @@
+/* Headquarters: the bar, the widget wall (4 / 2 / 1 columns), Edit Layout and the catalog drawer. A card is a panel
+   like the profiles': its name over a rule on a light card. */
+.hq {
+  --hq-card-h: 400px; /* *tune* a card on Auto grows to this, then its body scrolls */
+
+  position: relative;
+}
+
+.hq__page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s3) var(--s4) var(--s4);
+  scrollbar-gutter: stable;
+  container: hq / inline-size;
+}
+
+/* masonry: index.tsx pack() places each card in the column(s) with the most room, on rows of 4 px, so the gap under
+   a card is always the grid's gap and short cards stack beside a tall one */
+.hq__grid {
+  --hq-cols: 4;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--hq-cols), minmax(0, 1fr));
+  grid-auto-rows: 4px;
+  align-items: start;
+  gap: 0 16px;
+}
+
+@container hq (width < 1100px) {
+  .hq__grid {
+    --hq-cols: 2;
+  }
+}
+
+@container hq (width < 620px) {
+  .hq__grid {
+    --hq-cols: 1;
+  }
+}
+
+/* an empty board: what Headquarters is, and two ways to start */
+.hq__empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--s2);
+  max-width: 640px;
+  margin-bottom: var(--s3);
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.hq__empty h2 {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.hq__empty p {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* the line a resized card's bottom snaps to: a neighbor's bottom edge */
+.hq__guide {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  height: 0;
+  border-top: var(--line) dashed var(--ink);
+  pointer-events: none;
+}
+
+/* what just happened, in the bar: Added…, Removed… Undo */
+.hq-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  max-width: 420px;
+  overflow: hidden;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- a card ---------- */
+.hq-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-height: var(--hq-card-h);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+}
+
+/* a height you set: the cap no longer applies */
+.hq-card.has-height {
+  max-height: none;
+}
+
+.hq-card__head {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: 8px var(--s2);
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.hq-card__head h3 {
+  overflow: hidden;
+  font-size: var(--t-md);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hq-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s2);
+  overscroll-behavior: contain;
+}
+
+/* the bottom edge: drag it to set the card's height */
+.hq-card__edge {
+  position: absolute;
+  right: 0;
+  bottom: -5px;
+  left: 0;
+  z-index: 4;
+  height: 10px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.hq-card__edge::after {
+  content: "";
+  position: absolute;
+  right: 35%;
+  bottom: 4px;
+  left: 35%;
+  height: 3px;
+  background: var(--ink);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.hq-card__edge:hover::after,
+.hq-card__edge:focus-visible::after,
+.hq-card.is-resizing .hq-card__edge::after {
+  opacity: 1;
+}
+
+.hq-card.is-resizing {
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* a drag: the card lifts off the grid and follows the pointer; the placeholder holds the spot it will land in */
+.hq-card.is-dragging {
+  position: absolute;
+  z-index: 20;
+  max-height: none;
+  box-shadow: 8px 8px 0 var(--shadow);
+  cursor: grabbing;
+  pointer-events: none;
+}
+
+.hq-placeholder {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+/* Edit Layout: every card is outlined, its controls over it on a see-through layer */
+.hq.is-editing .hq-card {
+  outline: var(--line) dashed var(--ink-soft);
+  outline-offset: 3px;
+}
+
+.hq.is-editing .hq-card.is-dragging {
+  outline: 0;
+}
+
+.hq-edit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  place-content: center center;
+  align-items: center;
+  gap: 8px;
+  padding: var(--s2);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--paper-hi) 86%, transparent);
+}
+
+.hq-edit__title {
+  flex: 1 0 100%;
+  font-size: var(--t-sm);
+  letter-spacing: 1px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.hq-edit__group {
+  display: flex;
+  gap: 6px;
+}
+
+.hq-edit__drag {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) dashed var(--ink);
+  cursor: grab;
+  touch-action: none;
+}
+
+.hq-edit__drag:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-style: solid;
+}
+
+/* ---------- the kit: the pieces every widget draws with ---------- */
+.hq-empty-line {
+  padding: 4px 0;
+  color: var(--ink-soft);
+}
+
+.hq-soft,
+.hq-sub {
+  color: var(--ink-soft);
+}
+
+.hq-sub {
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+.hq-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.hq-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.hq-stack {
+  display: grid;
+  gap: var(--s2);
+}
+
+.hq-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.hq-row .chip {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: var(--t-xs);
+}
+
+.hq-pair {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.hq-kicker {
+  margin-bottom: 4px;
+  color: var(--ink-soft);
+}
+
+/* big numbers over their labels */
+.hq-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: var(--s2);
+}
+
+.hq-stat {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* a number, or a short word (Unranked, 21 of 35): one line, sized so two fit across a Small card */
+.hq-stat dd {
+  overflow: hidden;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hq-stat dt {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* one-line rows, a hairline between them */
+.hq-list {
+  display: grid;
+  list-style: none;
+}
+
+.hq-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.hq-list .hq-grow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* a list whose rows are sentences: they wrap */
+.hq-list--wrap li {
+  align-items: flex-start;
+}
+
+.hq-list--wrap .hq-wrap,
+.hq-list--wrap .hq-wrap .hq-sub {
+  overflow: visible;
+  white-space: normal;
+}
+
+.hq-list--wrap .hq-wrap .hq-sub {
+  font-size: var(--t-sm);
+}
+
+.hq-list li:first-child {
+  border-top: 0;
+}
+
+/* a name that opens him: plain text, underlined when pointed at */
+.hq-link {
+  padding: 0;
+  background: none;
+  color: var(--ink);
+  border: 0;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.hq-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hq-tag {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.hq-tag.is-solid {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.hq-tag.is-soft {
+  color: var(--ink-soft);
+  border-color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.hq-stars {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+/* a small button on a row: Add, Scout, a tick */
+.hq-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+.hq-btn:disabled {
+  color: var(--ink-soft);
+  border-color: var(--line-soft);
+  cursor: default;
+}
+
+.hq-btn:enabled:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.hq-btn--icon {
+  width: 26px;
+  padding: 0;
+}
+
+.hq-input {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+}
+
+.hq-input--num {
+  flex: none;
+  width: 72px;
+}
+
+/* a table: soft heads, hairlines, your own row in bold on a tint */
+.hq-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hq-table th,
+.hq-table td {
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.hq-table th {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hq-table tr.is-mine td {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  font-weight: 700;
+}
+
+.hq-table tr.is-mine td:first-child {
+  padding-left: 8px;
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+/* a labeled meter */
+.hq-meter {
+  display: grid;
+  gap: 4px;
+}
+
+.hq-meter__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.hq-meter__top span {
+  color: var(--ink-soft);
+}
+
+/* a line chart in ink */
+.hq-chart {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+
+.hq-chart__line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+.hq-chart__area {
+  fill: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.hq-chart__dot {
+  fill: var(--ink);
+}
+
+.hq-chart text {
+  fill: var(--ink-soft);
+  font-size: 10px;
+}
+
+/* two lists side by side when there is room (Rising, Falling) */
+.hq-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--s2) var(--s3);
+}
+
+.hq-donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+.hq-donut svg {
+  flex: none;
+  width: 104px;
+  height: 104px;
+}
+
+.hq-donut .hq-list {
+  flex: 1;
+  min-width: 110px;
+}
+
+.hq-key {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--ink);
+}
+
+/* filter pills over a widget's rows: each is the browser's own select, dressed as a pill */
+.hq-filtered {
+  display: grid;
+  gap: 6px;
+}
+
+.hq-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hq-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+
+.hq-pill.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.hq-pill__k {
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hq-pill.is-on .hq-pill__k {
+  color: inherit;
+}
+
+.hq-pill select {
+  max-width: 120px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+}
+
+.hq-pill select option {
+  background: var(--paper-hi);
+  color: var(--ink);
+}
+
+/* ---------- widgets' own pieces ---------- */
+
+/* a task: a tick box, what to do, delete */
+.hq-check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  cursor: pointer;
+}
+
+.hq-check[aria-checked="true"] {
+  background: var(--ink);
+}
+
+.hq-task.is-done .hq-wrap {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.hq-goal {
+  display: grid;
+  gap: 6px;
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.hq-goal:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Next Year's Depth Chart: the groups side by side in one row that scrolls sideways */
+.hq-groups {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s2);
+  padding-bottom: 6px;
+  overflow-x: auto;
+}
+
+.hq-group {
+  flex: 0 0 250px;
+  min-width: 0;
+  padding: 0 var(--s2) 4px;
+  background: var(--paper);
+  border: var(--line) solid var(--line-soft);
+}
+
+.hq-group__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 calc(-1 * var(--s2));
+  padding: 6px var(--s2);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.hq-group__head b {
+  font-size: var(--t-md);
+}
+
+/* Scouted Players: a tile a prospect; a tile opens his report in the card */
+.hq-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.hq-tile {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 4px;
+  padding: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--line) solid var(--line-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease-out;
+}
+
+.hq-tile:hover {
+  border-color: var(--ink);
+}
+
+.hq-tile__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hq-tile__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.hq-detail {
+  display: grid;
+  gap: 8px;
+}
+
+.hq-detail__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-md);
+}
+
+.hq-grades {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.hq-grades div {
+  display: grid;
+  gap: 2px;
+}
+
+.hq-grades dt {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.hq-grades dd {
+  font-weight: 700;
+}
+
+/* ---------- the catalog: a drawer down the right edge ---------- */
+.hq-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: min(460px, 100%);
+  padding: var(--s3);
+  background: var(--paper);
+  border-left: var(--line) solid var(--ink);
+  box-shadow: -8px 0 0 var(--shadow-soft, color-mix(in srgb, var(--ink) 12%, transparent));
+}
+
+.hq-drawer__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.hq-drawer__head h2 {
+  flex: 1;
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.hq-drawer__tools {
+  display: grid;
+  gap: 8px;
+}
+
+.hq-drawer__list {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--s2);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hq-entry {
+  display: grid;
+  gap: 6px;
+  padding: var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.hq-entry__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hq-entry__head h3 {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.hq-entry__blurb {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+/* the preview: the widget itself, drawn from canned data; nothing in it can be pressed */
+.hq-preview {
+  max-height: 200px;
+  padding: var(--s2);
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+  pointer-events: none;
+}
+
+.hq-entry__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hq-entry__foot .btn {
+  min-height: 32px;
+  padding: 0 var(--s2);
+  font-size: var(--t-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-btn,
+  .hq-tile,
+  .hq-card__edge::after {
+    transition: none;
+  }
+}

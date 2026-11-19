@@ -3,6 +3,11 @@ import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
 import Dropdown from "../../components/Dropdown/index.tsx";
+import Bracket from "../../components/Bracket/index.tsx";
+import Headquarters from "../../components/Headquarters/index.tsx";
+import Rankings from "../../components/Rankings/index.tsx";
+import Recap from "../../components/Recap/index.tsx";
+import Stats from "../../components/Stats/index.tsx";
 import DepthChart from "../../components/DepthChart/index.tsx";
 import Office from "../../components/Office/index.tsx";
 import Awards from "../../components/Awards/index.tsx";
@@ -52,6 +57,11 @@ const PANE: Record<string, string> = {
   awards: "",
   bowls: "",
   standings: "",
+  headquarters: "",
+  rankings: "",
+  stats: "",
+  bracket: "",
+  recap: "",
 };
 
 /**
@@ -76,6 +86,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const [load, setLoad] = useState<Load>(seasonId ? { kind: "loading" } : { kind: "none" });
   const [teams, setTeams] = useState<TeamCard[]>(() => cachedTeams() ?? []);
   const [recruiting, setRecruiting] = useState<RecruitingBoard | null>(null);
+  // a recruit another section asked to open on the board (a name in Headquarters)
+  const [recruitPick, setRecruitPick] = useState<string | null>(null);
   const [savedFace, setSavedFace] = useState<FaceSpec | null>(null);
 
   useEffect(() => {
@@ -277,7 +289,34 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       onTab={openTab}
                       weekKey={season.current_week}
                       coach={coach && face ? { name: coachName(coach), face } : null}
+                      pick={recruitPick}
                     />
+                  ) : key === "headquarters" ? (
+                    <Headquarters
+                      key={season.current_week}
+                      season={season}
+                      onSection={open}
+                      onProspects={() => {
+                        open("recruiting");
+                        openTab("prospects");
+                      }}
+                      onRecruit={(pid) => {
+                        // on your board: open him there; not on it: the class list, where you can find and star him
+                        const onBoard = !!recruiting?.board.some((b) => b.id === pid);
+                        if (onBoard) setRecruitPick(pid);
+                        open("recruiting");
+                        openTab(onBoard ? "board" : "prospects");
+                      }}
+                      onBoardChange={() => void reloadRecruiting()}
+                    />
+                  ) : key === "rankings" ? (
+                    <Rankings season={season} teams={bySlug} onBracket={() => open("bracket")} />
+                  ) : key === "stats" ? (
+                    <Stats key={season.current_week} season={season} teams={bySlug} />
+                  ) : key === "bracket" ? (
+                    <Bracket season={season} teams={bySlug} />
+                  ) : key === "recap" ? (
+                    <Recap season={season} teams={bySlug} />
                   ) : key === "standings" ? (
                     <Standings season={season} teams={bySlug} />
                   ) : key === "bowls" ? (

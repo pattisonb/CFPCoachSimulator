@@ -126,7 +126,10 @@ export default function Awards({ season, teams, coach }: Props) {
 
   const live = !view?.national;
   const real = view ? (view.national ?? view.race ?? null) : null;
-  const sample = !!view && live && !real?.heisman && !real?.awards.length;
+  // before the race has a shape the game sends its preseason favorites (the best-rated players at each award's
+  // positions); the canned sample only stands in when a save has neither
+  const preseason = !!view && live && !!(view.race as { preseason?: boolean } | undefined)?.preseason;
+  const sample = !!view && live && !preseason && !real?.heisman && !real?.awards.length;
   const nat = sample ? SAMPLE : real;
   const extra = useMemo(() => (!live && view?.postseason ? view.postseason.awards : []), [live, view]);
   const national = useMemo(() => (nat ? [...nat.awards, ...extra] : []), [nat, extra]);
@@ -136,6 +139,10 @@ export default function Awards({ season, teams, coach }: Props) {
   const status = !view ? null : sample ? (
     <SectionStatus sample tip={m.sampleTip}>
       {m.sample}
+    </SectionStatus>
+  ) : preseason ? (
+    <SectionStatus sample tip={m.preseasonTip}>
+      {m.preseason}
     </SectionStatus>
   ) : (
     <SectionStatus tip={live ? m.liveNote : undefined}>{live ? m.live(weekName) : m.final}</SectionStatus>
@@ -164,6 +171,7 @@ export default function Awards({ season, teams, coach }: Props) {
             <SectionPane shown={tab === "overview"}>
               <div className="aw__scroll">
                 {sample && <SampleNote>{m.sampleTip}</SampleNote>}
+                {preseason && <SampleNote>{m.preseasonTip}</SampleNote>}
                 <Hero h={nat.heisman} live={live} teams={teams} mine={season.team} onVote={() => setTab("heisman")} />
                 <div className="aw__main">
                   <div className="aw__col">

@@ -21,6 +21,7 @@
 .depth__view {
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable; /* a longer tab brings a scroll bar: its room is always kept, so nothing shifts */
   padding: var(--s3) var(--s4);
 }
 

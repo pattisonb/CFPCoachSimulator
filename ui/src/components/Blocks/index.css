@@ -1,0 +1,22 @@
+/* Progress as blocks in a frame: one a step, filled in ink. */
+.blocks {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border: var(--line) solid var(--ink);
+}
+
+.blocks i {
+  width: 12px;
+  height: 16px;
+  background: var(--line-soft);
+}
+
+.blocks i.is-on {
+  background: var(--ink);
+}
+
+/* half a step: the block's left half */
+.blocks i.is-half {
+  background: linear-gradient(90deg, var(--ink) 50%, var(--line-soft) 50%);
+}

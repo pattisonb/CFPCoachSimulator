@@ -178,7 +178,13 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
               }}
             />
           </div>
-          <Modal open={card && !!picked} onClose={() => setCard(false)} title={picked?.p.name ?? ""} head={<span />}>
+          <Modal
+            open={card && !!picked}
+            onClose={() => setCard(false)}
+            title={picked?.p.name ?? ""}
+            head={<span />}
+            tall
+          >
             {picked && (
               <PlayerView
                 key={picked.p.slug}

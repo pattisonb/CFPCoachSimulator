@@ -8,6 +8,8 @@ interface Props {
   /** what it means, in a sentence */
   text: string;
   children: ReactNode;
+  /** wrap a whole row (the wrapper is a block, so the row inside keeps its layout) */
+  block?: boolean;
   className?: string;
 }
 
@@ -21,7 +23,7 @@ const FLIP_UNDER = 90;
  * The game's own tooltip on anything: point at (or tab to) the children and an ink label with a pixel notch shows over
  * them, at once. It is drawn on the page itself, so a scrolling list never clips it.
  */
-export default function Tooltip({ title, text, children, className }: Props) {
+export default function Tooltip({ title, text, children, block, className }: Props) {
   const [place, setPlace] = useState<{ left: number; top: number; under: boolean; nudge: number } | null>(null);
   const ref = useRef<HTMLSpanElement>(null);
   const id = useId();
@@ -38,7 +40,7 @@ export default function Tooltip({ title, text, children, className }: Props) {
 
   return (
     <span
-      className={["tooltip", className].filter(Boolean).join(" ")}
+      className={["tooltip", block && "tooltip--block", className].filter(Boolean).join(" ")}
       ref={ref}
       aria-describedby={place ? id : undefined}
       onMouseEnter={show}

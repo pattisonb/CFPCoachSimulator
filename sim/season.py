@@ -2411,6 +2411,10 @@ def awards_view(state: dict) -> dict:
             if len(_race_cache) > 16:
                 _race_cache.clear()
             _race_cache[key] = race
+        # before the race has a shape (the first weeks, or nobody has played enough): the preseason favorites
+        thin = not (race.get("heisman") or {}).get("candidates")
+        if state["current_week"] < AWARDS_RACE_WEEK or thin:
+            race = awards_outlook(state, teams)
         out["race"] = race
     return _with_player_ids(state, teams, out)
 
@@ -3497,6 +3501,10 @@ def summary(state: dict) -> dict:
         "polls": state["polls"], "champions": state["champions"], "bracket": state["bracket"], "playoff": state["playoff"],
         "cfp_weeks": sorted(CFP_WEEKS), "bowls": bowl_view(state), "playoff_sites": state.get("playoff_sites"),
         "bowl_projection": bowl_projection(state),
+        # outlooks before there is anything official (views only): the bracket as it would be seeded today, and the
+        # bowls from the same order, both from the AP poll until the committee ranks
+        "bracket_projection": bracket_projection(state),
+        "bowl_outlook": bowl_projection(state, early=True),
         "week_dates": week_dates(state),
         "heisman": ((state.get("awards") or {}).get("national") or {}).get("heisman"),
         "settings": settings(state),
@@ -3508,20 +3516,183 @@ def summary(state: dict) -> dict:
     }
 
 
-def bowl_projection(state: dict) -> Optional[dict]:
+def _projection_order(state: dict) -> Optional[tuple[list[str], str, int]]:
+    """The ranking a projection reads, best first: the committee's latest when it has ranked, else the latest AP poll
+    (its 25, the others receiving votes, then every other FBS team by rating). (order, "cfp" or "ap", the poll's week)."""
+    ps = state.get("polls", {})
+    for w in range(state["current_week"], -1, -1):
+        p = ps.get(str(w)) or {}
+        if p.get("cfp"):
+            return (p.get("cfp_full") or [e["team"] for e in p["cfp"]]), "cfp", w
+    teams = load_teams()
+    for w in range(state["current_week"], -1, -1):
+        p = ps.get(str(w)) or {}
+        if p.get("ap"):
+            order = [e["team"] for e in p["ap"]] + [e["team"] for e in (p.get("ap_others") or [])]
+            seen = set(order)
+            rest = sorted((s for s, t in teams.items() if not t["fictional"] and s not in seen),
+                          key=lambda s: -teams[s]["team_ratings"]["overall"])
+            return order + rest, "ap", w
+    return None
+
+
+def _conference_leaders(state: dict, teams: dict, order: list[str]) -> dict[str, str]:
+    """Each conference's leader today, a projection's champion: by conference record, then record, then the ranking,
+    then rating (before anyone has played, the best-ranked team)."""
+    rec = _records(state)
+    pos = {s: i for i, s in enumerate(order)}
+    leaders: dict[str, tuple] = {}
+    for slug, t in teams.items():
+        if t["fictional"]:
+            continue
+        r = rec[slug]
+        cg = r["conf_wins"] + r["conf_losses"]
+        key = (r["conf_wins"] / cg if cg else 0.0, r["wins"] / max(1, r["wins"] + r["losses"]), -pos.get(slug, 999),
+               t["team_ratings"]["overall"])
+        if t["conference"] not in leaders or key > leaders[t["conference"]][0]:
+            leaders[t["conference"]] = (key, slug)
+    return {conf: slug for conf, (_, slug) in leaders.items()}
+
+
+def bracket_projection(state: dict) -> Optional[dict]:
+    """The playoff bracket as it would be seeded today (polls.build_bracket), from the committee's latest ranking, or
+    the AP poll before the committee ranks, with each conference's current leader as its champion. A view only: the
+    real bracket is set on selection day (state["bracket"]), and then this is None."""
+    if state.get("bracket"):
+        return None
+    got = _projection_order(state)
+    if not got:
+        return None
+    order, source, week = got
+    teams = load_teams()
+    conf_of = {slug: t["conference"] for slug, t in teams.items()}
+    names = {slug: t["name"] for slug, t in teams.items()}
+    try:
+        b = polls.build_bracket(order, _conference_leaders(state, teams, order), conf_of, names)
+    except Exception:  # noqa: BLE001 - a field that will not build: no projection
+        return None
+    return {**b, "projected": True, "source": source, "week": week}
+
+
+AWARDS_RACE_WEEK = 4          # *tune* the awards page shows the preseason favorites until this many weeks are played
+OUTLOOK_HOPEFULS = 5          # *tune* names in each award's preseason list
+OUTLOOK_HEISMAN = 12          # *tune* names on the preseason Heisman watch
+OUTLOOK_TEAM = 4.0            # *tune* rating points a team's poll position is worth to a favorite (x awards._rank_bonus)
+# an award's kind -> the position groups it draws from (awards.Pool._group); a few kinds add a rule of their own below
+_OUTLOOK_GROUPS = {
+    "mvp": ("QB", "RB", "WR", "TE", "EDGE", "DT", "LB", "DB"), "mvp_team": ("QB", "RB", "WR", "TE", "EDGE", "DT", "LB", "DB"),
+    "qb": ("QB",), "qb_upper": ("QB",), "rb": ("RB",), "wr": ("WR",), "te": ("TE",), "interior": ("OL", "DT"), "c": ("OL",),
+    "front": ("OL", "EDGE", "DT", "LB"), "dpoy": ("EDGE", "DT", "LB", "DB"), "dpoy_alt": ("EDGE", "DT", "LB", "DB"),
+    "lb": ("LB",), "db": ("DB",), "edge": ("EDGE",), "k": ("K",), "p": ("P",), "rs": ("RB", "WR", "DB"),
+    "versatile": ("RB", "WR", "DB"), "freshman": ("QB", "RB", "WR", "TE", "EDGE", "DT", "LB", "DB"),
+}
+
+
+def awards_outlook(state: dict, teams: dict) -> dict:
+    """Preseason award favorites, shaped like awards.race_view, for the weeks before anyone has played enough to
+    race: the best-rated starters at each award's positions, lifted by their team's poll position. The Heisman
+    watch splits a full ballot's points by the same score. A view only: no award is decided from it."""
+    ps = state.get("polls", {})
+    ap: dict[str, int] = {}
+    for w in range(state["current_week"], -1, -1):
+        p = ps.get(str(w)) or {}
+        if p.get("ap"):
+            ap = {e["team"]: e["rank"] for e in p["ap"]}
+            break
+    rec = _records(state)
+    pool = []
+    for slug, t in teams.items():
+        if t["fictional"]:
+            continue
+        returners = {t.get("kick_returner"), t.get("punt_returner")}
+        for p in t["offense"] + t["defense"]:
+            group = awards.Pool._group(p["position"], p.get("role"), {})
+            if not group or not (p.get("in_game") or p.get("depth") == 1):
+                continue
+            pool.append({"p": p, "team": slug, "t": t, "group": group, "returner": p.get("slug") in returners,
+                         "bonus": OUTLOOK_TEAM * awards._rank_bonus(ap.get(slug))})
+
+    def card(x: dict, score: float) -> dict:
+        p, t = x["p"], x["t"]
+        return {"name": p["name"], "position": p["position"], "role": p.get("role"), "class": p.get("class"), "team": x["team"],
+                "team_name": t["name"], "conference": t["conference"], "games": 0,
+                "line": " · ".join(b for b in (CLASS_NAMES.get(p.get("class") or "", p.get("class")), p.get("archetype")) if b),
+                "headline": f"{shown_overall(p)} OVR", "score": round(score, 2)}
+
+    def ranked(kind: str, team_weight: float) -> list[tuple[float, dict]]:
+        cross = kind in ("mvp", "mvp_team", "freshman")
+        rows = []
+        for x in pool:
+            p = x["p"]
+            if x["group"] not in _OUTLOOK_GROUPS.get(kind, ()):
+                continue
+            if kind == "qb_upper" and p.get("class") not in awards.UPPERCLASS:
+                continue
+            if kind == "freshman" and p.get("class") not in awards.FRESHMAN:
+                continue
+            if kind == "c" and p.get("role") != "C":
+                continue
+            if kind == "rs" and not x["returner"]:
+                continue
+            base = float(p.get("return_rating") or 0) if kind == "rs" else float(p.get("ovr") or 0)
+            if kind == "versatile":
+                base = 0.6 * base + 0.4 * float(p.get("return_rating") or 0)
+            if cross:
+                base *= 0.7 + 0.3 * awards.POSITION_PRIOR.get(x["group"], 0.5)
+            rows.append((base + team_weight * x["bonus"], x))
+        rows.sort(key=lambda r: -r[0])
+        return rows
+
+    out_awards = []
+    for name, kind, tw, honors in awards.NATIONAL_AWARDS:
+        race = [card(x, s) for s, x in ranked(kind, tw)[:OUTLOOK_HOPEFULS]]
+        out_awards.append({"name": name, "kind": kind, "honors": honors, "winner": None, "finalists": [], "race": race})
+    top = ranked("mvp", 1.0)[:OUTLOOK_HEISMAN]
+    heisman = None
+    if top:
+        ballots = 871
+        possible = 3 * ballots
+        best = top[0][0]
+        weights = [math.exp((s - best) / 9.0) for s, _ in top]   # *tune* the divisor: larger spreads the points wider
+        total = sum(weights)
+        rows = []
+        for (s, x), wgt in zip(top, weights):
+            pts = int(round(0.92 * possible * wgt / total))
+            first, second = pts // 5, pts // 6
+            c = card(x, s)
+            r = rec[x["team"]]
+            c.update({"first": first, "second": second, "third": max(0, pts - 3 * first - 2 * second), "points": pts,
+                      "region": next((rg for rg, sts in awards.REGIONS.items() if x["t"].get("state") in sts), "South"),
+                      "record": f"{r['wins']}-{r['losses']}", "rank": ap.get(x["team"])})
+            rows.append(c)
+        heisman = {"candidates": rows, "winner": rows[0], "finalists": rows[:4], "ballots": ballots, "possible": possible,
+                   "share": round(100 * rows[0]["points"] / possible, 1)}
+    return {"live": True, "preseason": True, "heisman": heisman, "awards": out_awards, "coach_awards": [], "conference": {}}
+
+
+def bowl_projection(state: dict, early: bool = False) -> Optional[dict]:
     """Projected bowl lineup from the current committee ranking: each team's record is
     carried to the end of the regular season with rating-based win odds, the playoff
     field is the projected bracket (current conference leaders as champions), and the
     bowls then pick as they will on selection day. None until the first CFP ranking."""
-    if state.get("bowls") or state["current_week"] < min(CFP_WEEKS):
+    if state.get("bowls"):
         return None
-    polls_state = state.get("polls", {})
-    weeks = [w for w in range(state["current_week"], 0, -1) if polls_state.get(str(w), {}).get("cfp")]
-    if not weeks:
-        return None
-    pw = weeks[0]
-    p = polls_state[str(pw)]
-    order = p.get("cfp_full") or [e["team"] for e in p["cfp"]]
+    if early:
+        # the outlook: the AP poll stands in until the committee ranks (`early`; the page tags it a projection)
+        got = _projection_order(state)
+        if not got:
+            return None
+        order, _source, pw = got
+    else:
+        if state["current_week"] < min(CFP_WEEKS):
+            return None
+        polls_state = state.get("polls", {})
+        weeks = [w for w in range(state["current_week"], 0, -1) if polls_state.get(str(w), {}).get("cfp")]
+        if not weeks:
+            return None
+        pw = weeks[0]
+        p = polls_state[str(pw)]
+        order = p.get("cfp_full") or [e["team"] for e in p["cfp"]]
     teams = load_teams()
     rec = _records(state)
     ratings = {slug: t["team_ratings"]["overall"] for slug, t in teams.items()}

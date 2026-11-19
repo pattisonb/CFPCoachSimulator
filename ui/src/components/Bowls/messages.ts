@@ -8,6 +8,10 @@ export const messages = {
     "Built from the committee's latest ranking: records carried to the end of the regular season, the playoff field set aside, then the bowls pick as they will on selection day.",
   set: "Bowl Season",
   sample: "Sample",
+  projectedEarly: (poll: string) => `Projected · AP Poll, ${poll}`,
+  preseasonPoll: "Preseason",
+  earlyTip:
+    "The committee's first ranking comes after Week 9. Until then this lineup is projected from the AP poll, with each conference's leader as its champion.",
   sampleTip:
     "Bowl projections start with the committee's first ranking, after Week 9. Until then this is a sample lineup, so you can see how the page works.",
 

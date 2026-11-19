@@ -1,0 +1,310 @@
+/* A recruit's file: what goes inside the shared panels on his four tabs. */
+.recruit-file__soft {
+  color: var(--ink-soft);
+}
+
+.recruit-file__kicker {
+  margin-top: var(--s1);
+  color: var(--ink-soft);
+}
+
+.recruit-file__tag {
+  flex: none;
+  padding: 0 6px;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.recruit-file__warn {
+  margin: 4px 0;
+  padding: 6px 10px;
+  border: var(--line) dashed var(--ink);
+}
+
+/* a bar or a row of blocks, then its word, on one line of a row */
+.recruit-file__inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s2);
+}
+
+dd.recruit-file__inline {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+/* ----- Overview: the battle. A school on one line: its place, its name and tags, its pull as a bar, its word ----- */
+.recruit-file__commit {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0;
+  padding: var(--s2);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.recruit-file__commit b {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.recruit-file__battle {
+  display: grid;
+  list-style: none;
+}
+
+.recruit-file__battle li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(56px, 28%) 78px;
+  align-items: center;
+  gap: var(--s2);
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.recruit-file__battle--moves li {
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+}
+
+.recruit-file__battle li.is-you {
+  font-weight: 700;
+}
+
+.recruit-file__place {
+  display: grid;
+  place-items: center;
+  height: 22px;
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.recruit-file__battle li.is-you .recruit-file__place {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.recruit-file__school {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+}
+
+.recruit-file__word {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.recruit-file__move {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+/* ----- a report: the verdict, then strengths and areas to develop side by side ----- */
+.recruit-file__verdict {
+  line-height: 1.5;
+}
+
+.recruit-file__lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s3);
+  padding-bottom: 6px;
+}
+
+.recruit-file__lists ul,
+.recruit-file__notes {
+  display: grid;
+  gap: 2px;
+  padding-left: 16px;
+}
+
+.recruit-file__lists li {
+  font-weight: 700;
+}
+
+/* ----- Scouting: the report's lead. Looks as blocks at the left, his potential at the right ----- */
+.recruit-file__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.recruit-file__looks {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+.recruit-file__looks .recruit-file__soft {
+  font-size: var(--t-xs);
+}
+
+.recruit-file__potential {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.recruit-file__potential .label,
+.recruit-file__potential .recruit-file__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.recruit-file__big {
+  font-size: var(--t-lg);
+  line-height: 1.1;
+}
+
+.recruit-file__acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) 0 var(--s1);
+  border-top: 1px solid var(--line-soft);
+}
+
+.recruit-file__acts .btn {
+  gap: 8px;
+}
+
+/* a rating on one line: its name, its range as a bar, its numbers; a hairline between them */
+.recruit-file__ratings {
+  display: grid;
+}
+
+.recruit-file__rating {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(64px, 34%) 116px; /* *tune* the last is wide enough for "Solid – Strong", so every bar lines up */
+  align-items: center;
+  gap: var(--s2);
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.recruit-file__rating:first-child {
+  border-top: 0;
+}
+
+.recruit-file__num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.recruit-file__foot {
+  color: var(--ink-soft);
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-xs);
+}
+
+/* ----- Profile: his traits as cards, like a player's badges; one not known yet is dashed and soft ----- */
+.recruit-file__traits {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s2);
+  padding: var(--s2) 0 var(--s1);
+  list-style: none;
+}
+
+.recruit-file__trait {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--paper);
+  border: var(--line) solid var(--line-soft);
+}
+
+.recruit-file__trait.is-unknown {
+  border-style: dashed;
+}
+
+.recruit-file__trait-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.recruit-file__trait.is-unknown .recruit-file__trait-icon {
+  background: transparent;
+  color: var(--ink-soft);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.recruit-file__trait-what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recruit-file__trait-what .label {
+  color: var(--ink-soft);
+}
+
+.recruit-file__trait-what b {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.recruit-file__trait.is-unknown b {
+  color: var(--ink-soft);
+}
+
+.recruit-file__trait-what .recruit-file__soft {
+  font-size: var(--t-xs);
+}
+
+/* ----- History ----- */
+.recruit-file__timeline {
+  display: grid;
+  list-style: none;
+}
+
+.recruit-file__timeline li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--s2);
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.recruit-file__timeline svg {
+  margin-top: 2px;
+}
+
+.recruit-file__notes {
+  gap: 6px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* the first row of a list has its panel's rule over it already */
+.recruit-file__battle li:first-child,
+.recruit-file__timeline li:first-child {
+  border-top: 0;
+}

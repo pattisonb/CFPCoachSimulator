@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Chat, House, Phone, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
+import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Conversation from "../Conversation/index.tsx";
 import Face from "../Face/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
+import { HistoryTab, OverviewTab, ProfileTab, ScoutingTab } from "../RecruitFile/index.tsx";
+import Panel from "../Panel/index.tsx";
+import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
+import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
 import { setOnBoard } from "../../board.ts";
-import { cachedTeams } from "../../teams.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, pullOf, standingOf, statusOf } from "../../standing.ts";
-import type { BoardRow, RecruitingBoard, Scene } from "../../types.ts";
+import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -28,6 +32,8 @@ interface Props {
   onFindProspects: () => void;
   /** your coach, beside your lines on a call or visit */
   coach?: { name: string; face: FaceSpec } | null;
+  /** a recruit to pick (asked for from another section); he shows if he is on the board */
+  pick?: string | null;
 }
 
 /** *tune* How many recommended prospects an empty board's one click adds. */
@@ -59,10 +65,17 @@ export default function Recruiting({
   reload,
   onFindProspects,
   coach = null,
+  pick = null,
 }: Props) {
   const [stage, setStage] = useState<StageKey>("all");
   const [sort, setSort] = useState<"chance" | "rank">("chance");
   const [picked, setPicked] = useState<string | null>(null);
+  // another section asked for him: show every stage (he may not be in the one filtered to) and pick him
+  useEffect(() => {
+    if (!pick) return;
+    setStage("all");
+    setPicked(pick);
+  }, [pick]);
 
   const rows = useMemo(() => board?.board ?? [], [board]);
   const counts = useMemo(() => {
@@ -242,7 +255,15 @@ export default function Recruiting({
   );
 }
 
-/** A recruit's panel: where you stand, his list, your offer, what he wants, and the week's actions. */
+/** His panel's tabs (the old board's pane): what you do on Overview, what you know on the other three. */
+const TABS = ["overview", "scouting", "profile", "history"] as const;
+type Tab = (typeof TABS)[number];
+
+/**
+ * A recruit's panel: his head, then four tabs. Overview: your chance, the Recruiting Battle, the Recruit Snapshot and
+ * the Scout's Summary beside the week's actions. Scouting: your staff's report and his ratings. Profile: his traits and
+ * background. History: the timeline, notes and who moved on his list.
+ */
 function RecruitPanel({
   r,
   board,
@@ -261,6 +282,15 @@ function RecruitPanel({
   coach: { name: string; face: FaceSpec } | null;
 }) {
   const sd = standingOf(r, team);
+  const stage = stageOf(r, team);
+  // his list: your place on it, or why you have none
+  const race = r.list.filter((x) => x.bar != null);
+  const mine = race.find((x) => x.you || x.school === team);
+  const listPlace = mine
+    ? m.listPlace(mine.rank ?? race.indexOf(mine) + 1, Math.max(r.standing.of, race.length))
+    : r.offered && !(r.signed || r.committed)
+      ? m.outside
+      : m.notOnIt;
   const known = r.priorities_known;
   const best = known[0] ?? Object.entries(r.strength).sort((a, b) => b[1] - a[1])[0]?.[0] ?? board.pitches[0];
   const [pitch, setPitch] = useState(best);
@@ -268,15 +298,31 @@ function RecruitPanel({
   const [nil, setNil] = useState(r.offered ? r.nil + 5 : askDefault);
   const openWeeks = r.visit_weeks.filter((w) => !w.taken_by && w.week > board.week);
   const [visitWeek, setVisitWeek] = useState<number | null>(openWeeks[0]?.week ?? null);
+  // an offer can carry the promise of a starting role (once per recruit)
+  const [promiseJob, setPromiseJob] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   // the call or visit in its window: the one just opened, or the open one Finish brings back
   const [talk, setTalk] = useState<Scene | null>(null);
+  const [tab, setTab] = useState<Tab>("overview");
+  // his file (the report, his traits, his background): read again whenever the board loads, since a look, an offer
+  // or a call changes it; the last one stays up while the next arrives
+  const [detail, setDetail] = useState<ProspectDetail | null>(null);
+  useEffect(() => {
+    let live = true;
+    api<ProspectDetail>(`/api/season/${seasonId}/prospect/${encodeURIComponent(r.id)}`)
+      .then((d) => live && setDetail(d))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [seasonId, r.id, board]);
 
   useEffect(() => {
     setNil(r.offered ? r.nil + 5 : askDefault);
   }, [r.offered, r.nil, askDefault]);
 
+  const weekName = (w: number) => weekLabels[String(w)] ?? m.week(Math.max(0, w - 1));
   const left = board.hours_left;
   const cost = (a: string) => board.hours_cost[a] ?? 0;
   const done = (a: string) => r.done_this_week.includes(a);
@@ -287,7 +333,11 @@ function RecruitPanel({
     setBusy(true);
     setNote(null);
     try {
-      const out = await api<{ revealed?: string | null; scene?: Scene }>(`/api/season/${seasonId}/recruit`, {
+      const out = await api<{
+        revealed?: string | null;
+        scene?: Scene;
+        money_owed?: { nil: number; by_week: number } | null;
+      }>(`/api/season/${seasonId}/recruit`, {
         method: "POST",
         body: { pid: r.id, action, ...extra },
       });
@@ -297,8 +347,16 @@ function RecruitPanel({
         await reload();
         return;
       }
-      const said = m.said[action]?.(r.name, Number(extra.nil ?? cost(action))) ?? "";
-      setNote(out.revealed ? `${said} ${m.revealed(PITCH_NAMES[out.revealed] ?? out.revealed)}` : said);
+      const n = action === "scout" ? (detail?.scout_cost ?? 0) : Number(extra.nil ?? cost(action));
+      const said = [
+        m.said[action]?.(r.name, n) ?? "",
+        extra.answer === "promise" ? m.promisedRole : "",
+        out.revealed ? m.revealed(PITCH_NAMES[out.revealed] ?? out.revealed) : "",
+        // talking money is a promise: say so plainly
+        out.money_owed ? m.moneyOwed(out.money_owed.nil, weekName(out.money_owed.by_week)) : "",
+      ];
+      setNote(said.filter(Boolean).join(" "));
+      if (action === "offer") setPromiseJob(false);
       await reload();
     } catch (e) {
       setNote(m.failed((e as Error).message));
@@ -334,233 +392,212 @@ function RecruitPanel({
 
   return (
     <article className="recruit" aria-label={r.name}>
-      <header className="recruit__head">
-        <span className="face-tile recruit__face">
-          <Face face={playerFace(r.id, r.display_pos)} scale={3} label="" />
-        </span>
-        <div className="recruit__who">
-          <h2 className="recruit__name">{r.name}</h2>
-          <Stars n={r.stars} />
-          <span className="recruiting__soft">
-            {[r.display_pos, r.height_display, r.weight_display, `${r.hometown.city}, ${r.hometown.state}`].join(" · ")}
-          </span>
-          <span className="recruit__ranks">{m.ranks(r.national_rank, r.pos_rank, r.display_pos)}</span>
+      {/* the head: who he is, your offer and your place on his list, and your chance in the square */}
+      <ProfileHead
+        face={<Face face={playerFace(r.id, r.display_pos)} scale={6} label="" />}
+        name={r.name}
+        beside={`${r.display_pos} · ${m.ranks(r.national_rank, r.pos_rank, r.display_pos)}`}
+        line={[r.height_display, r.weight_display, `${r.hometown.city}, ${r.hometown.state}`].join(" · ")}
+        tags={
+          <>
+            <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
+            <Stars n={r.stars} />
+            {r.job_promised && (
+              <HeadTag tip={{ title: m.jobPromised, text: m.jobPromisedTip }}>{m.jobPromised}</HeadTag>
+            )}
+          </>
+        }
+        cells={[
+          { label: m.offer, value: r.offered ? m.nilAmount(r.nil) : m.noOffer },
+          { label: m.hisList, value: listPlace },
+          { label: m.hisAsk, value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact) },
+        ]}
+        tile={{
+          label: m.chance,
+          value:
+            sd.pct != null ? (
+              <>
+                {Math.round(100 * sd.pct)}
+                <small>%</small>
+              </>
+            ) : (
+              sd.word
+            ),
+          word: sd.pct == null,
+          aria: `${m.chance}: ${pct(sd.pct) ?? sd.word}`,
+          tip: { title: sd.odds ?? sd.word, text: sd.text },
+        }}
+      />
+
+      {/* his tabs, what your last action did, and Off My Board, on one row */}
+      <div className="recruit__bar">
+        <div className="recruit__tabs" role="tablist" aria-label={m.about}>
+          {TABS.map((k) => (
+            <Chip key={k} role="tab" on={tab === k} onClick={() => setTab(k)}>
+              {m.tabs[k]}
+            </Chip>
+          ))}
         </div>
-        <button type="button" className="recruit__off" title={m.offBoard} aria-label={m.offBoard} onClick={offBoard}>
-          <X size={16} weight="bold" aria-hidden="true" />
-        </button>
-      </header>
+        <p className="recruit__note" role="status">
+          {note}
+        </p>
+        <Tooltip title={m.offBoard} text={m.offBoardTip}>
+          <button type="button" className="recruit__off" aria-label={m.offBoard} onClick={offBoard}>
+            <X size={16} weight="bold" aria-hidden="true" />
+          </button>
+        </Tooltip>
+      </div>
 
-      <div className="recruit__cols">
-        <div className="recruit__col">
-          <section className={`recruit__chance is-${sd.tone}`}>
-            <span className="label">{m.chance}</span>
-            <div className="recruit__chance-row">
-              {sd.pct != null ? (
-                <b className="recruit__big">{pct(sd.pct)}</b>
-              ) : (
-                <b className="recruit__word-big">{sd.word}</b>
-              )}
-              <span>
-                <b>{sd.odds ?? sd.word}</b>
-                <span className="recruiting__soft"> {sd.text}</span>
-              </span>
-            </div>
-          </section>
-
+      {tab === "overview" && (
+        <div className="recruit__overview" role="tabpanel" aria-label={m.tabs.overview}>
           {r.cooled && <p className="recruit__warn">{m.cooled(r.cooled_why)}</p>}
+          {r.money_owed && (
+            <p className="recruit__warn">{m.moneyOwed(r.money_owed.nil, weekName(r.money_owed.by_week))}</p>
+          )}
           {r.pestering && <p className="recruit__warn">{m.pestering}</p>}
 
-          <section className="recruit__block">
-            <h3 className="label recruit__kicker">{m.hisList}</h3>
-            {r.list.length ? (
-              <ol className="recruit__list">
-                {r.list.slice(0, 6).map((s) => (
-                  <li key={s.school} className={s.you || s.school === team ? "is-you" : undefined}>
-                    <span className="recruit__school">
-                      {s.name}
-                      {s.offered && <span className="recruit__tag">{m.offered}</span>}
-                      {s.visit && (
-                        <span className="recruit__tag">
-                          {s.visit.done
-                            ? m.visited
-                            : m.visit(weekLabels[String(s.visit.week)] ?? m.week(s.visit.week - 1))}
-                        </span>
-                      )}
-                    </span>
-                    <span className="recruit__bar" aria-hidden="true">
-                      <i style={{ width: `${Math.round(100 * (s.bar ?? 0))}%` }} />
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="recruiting__soft">{m.noList}</p>
-            )}
-          </section>
+          <div className="recruit__cols">
+            <div className="recruit__col">
+              <OverviewTab r={r} detail={detail} team={team} weekLabels={weekLabels} />
+            </div>
 
-          <div className="recruit__pair">
-            <section className="recruit__block">
-              <h3 className="label recruit__kicker">{m.offer}</h3>
-              <b>{r.offered ? m.nilAmount(r.nil) : m.noOffer}</b>
-              <span className="recruiting__soft">{m.ask(r.ask.lo, r.ask.hi, r.ask.exact)}</span>
-            </section>
-            <section className="recruit__block">
-              <h3 className="label recruit__kicker" title={m.wantsTip}>
-                {m.wants}
-              </h3>
-              <ul className="recruit__wants">
-                {[0, 1, 2].map((i) => (
-                  <li key={i} className={known[i] ? undefined : "is-unknown"}>
-                    {known[i] ? (PITCH_NAMES[known[i]] ?? known[i]) : m.unknown}
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <div className="recruit__col">
+              {!closed && (
+                <Panel title={m.work} aside={m.hoursLeft(Math.round(left))} className="recruit__work">
+                  <label className="recruit__pitch">
+                    <span className="label">{m.pitch}</span>
+                    <select value={pitch} onChange={(e) => setPitch(e.target.value)}>
+                      {board.pitches.map((p) => (
+                        <option key={p} value={p}>
+                          {PITCH_NAMES[p] ?? p}
+                          {known.includes(p) ? " ★" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="recruiting__soft">{m.pitchFit(fit)}</span>
+                  </label>
+                  {r.scene && (
+                    <div className="recruit__open">
+                      <span>{m.openTalk[r.scene.action]}</span>
+                      <Button
+                        onClick={() => {
+                          setTalk(r.scene);
+                        }}
+                      >
+                        {m.finishTalk[r.scene.action]}
+                      </Button>
+                    </div>
+                  )}
+                  <div className="recruit__acts">
+                    {timed("message", m.message, Chat)}
+                    {timed("call", m.call, Phone)}
+                    {timed("hc_visit", m.hcVisit, House)}
+                  </div>
+
+                  <div className="recruit__offer">
+                    <input
+                      type="number"
+                      min={0}
+                      step={5}
+                      value={nil}
+                      aria-label={m.offer}
+                      onChange={(e) => setNil(Math.max(0, Number(e.target.value) || 0))}
+                    />
+                    {r.offered ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          disabled={busy || nil <= r.nil}
+                          onClick={() => act("raise_nil", { nil })}
+                        >
+                          {m.raise}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => window.confirm(m.pullConfirm(r.name)) && act("pull_offer")}
+                        >
+                          {m.pull}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        disabled={busy || board.offers_left <= 0}
+                        onClick={() => act("offer", { pitch, nil, ...(promiseJob ? { answer: "promise" } : {}) })}
+                      >
+                        {m.makeOffer(nil)}
+                      </Button>
+                    )}
+                  </div>
+
+                  {!r.offered && !r.job_promised && (
+                    <label className="recruit__promise">
+                      <input type="checkbox" checked={promiseJob} onChange={(e) => setPromiseJob(e.target.checked)} />
+                      <span>
+                        <b>{m.promiseRole}</b>
+                        <span className="recruiting__soft">{m.promiseRoleHelp}</span>
+                      </span>
+                    </label>
+                  )}
+
+                  {!r.visit && openWeeks.length > 0 && (
+                    <div className="recruit__visit">
+                      <span className="label">{m.officialVisit}</span>
+                      <select
+                        aria-label={m.pickWeekend}
+                        value={visitWeek ?? ""}
+                        onChange={(e) => setVisitWeek(Number(e.target.value))}
+                      >
+                        {openWeeks.map((w) => (
+                          <option key={w.week} value={w.week}>
+                            {w.label} · {w.opponent_name}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        variant="outline"
+                        disabled={busy || !r.offered || left < cost("official_visit") || visitWeek == null}
+                        onClick={() => act("official_visit", { week: visitWeek })}
+                      >
+                        {m.invite(cost("official_visit"))}
+                      </Button>
+                    </div>
+                  )}
+                </Panel>
+              )}
+            </div>
           </div>
         </div>
-
-        <div className="recruit__col">
-          {!closed && (
-            <section className="recruit__block recruit__work">
-              <h3 className="label recruit__kicker">{m.work}</h3>
-              <label className="recruit__pitch">
-                <span className="label">{m.pitch}</span>
-                <select value={pitch} onChange={(e) => setPitch(e.target.value)}>
-                  {board.pitches.map((p) => (
-                    <option key={p} value={p}>
-                      {PITCH_NAMES[p] ?? p}
-                      {known.includes(p) ? " ★" : ""}
-                    </option>
-                  ))}
-                </select>
-                <span className="recruiting__soft">{m.pitchFit(fit)}</span>
-              </label>
-              {r.scene && (
-                <div className="recruit__open">
-                  <span>{m.openTalk[r.scene.action]}</span>
-                  <Button
-                    onClick={() => {
-                      setTalk(r.scene);
-                    }}
-                  >
-                    {m.finishTalk[r.scene.action]}
-                  </Button>
-                </div>
-              )}
-              <div className="recruit__acts">
-                {timed("message", m.message, Chat)}
-                {timed("call", m.call, Phone)}
-                {timed("hc_visit", m.hcVisit, House)}
-              </div>
-
-              <div className="recruit__offer">
-                <input
-                  type="number"
-                  min={0}
-                  step={5}
-                  value={nil}
-                  aria-label={m.offer}
-                  onChange={(e) => setNil(Math.max(0, Number(e.target.value) || 0))}
-                />
-                {r.offered ? (
-                  <>
-                    <Button variant="outline" disabled={busy || nil <= r.nil} onClick={() => act("raise_nil", { nil })}>
-                      {m.raise}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => window.confirm(m.pullConfirm(r.name)) && act("pull_offer")}
-                    >
-                      {m.pull}
-                    </Button>
-                  </>
-                ) : (
-                  <Button disabled={busy || board.offers_left <= 0} onClick={() => act("offer", { pitch, nil })}>
-                    {m.makeOffer(nil)}
-                  </Button>
-                )}
-              </div>
-
-              {!r.visit && openWeeks.length > 0 && (
-                <div className="recruit__visit">
-                  <span className="label">{m.officialVisit}</span>
-                  <select
-                    aria-label={m.pickWeekend}
-                    value={visitWeek ?? ""}
-                    onChange={(e) => setVisitWeek(Number(e.target.value))}
-                  >
-                    {openWeeks.map((w) => (
-                      <option key={w.week} value={w.week}>
-                        {w.label} · {w.opponent_name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    variant="outline"
-                    disabled={busy || !r.offered || left < cost("official_visit") || visitWeek == null}
-                    onClick={() => act("official_visit", { week: visitWeek })}
-                  >
-                    {m.invite(cost("official_visit"))}
-                  </Button>
-                </div>
-              )}
-            </section>
+      )}
+      {tab !== "overview" && (
+        <div role="tabpanel" aria-label={m.tabs[tab]}>
+          {tab === "scouting" && (
+            <ScoutingTab r={r} detail={detail} team={team} busy={busy} onScout={() => act("scout")} />
           )}
-
-          <p className="recruit__note" role="status">
-            {note}
-          </p>
-
-          {talk && (
-            <Conversation
-              key={talk.id}
-              open
-              onClose={() => {
-                setTalk(null);
-                void reload();
-              }}
-              seasonId={seasonId}
-              r={r}
-              scene={talk}
-              pitches={board.pitches}
-              coach={coach}
-              onChange={() => void reload()}
-            />
-          )}
-
-          {r.history.length > 0 && (
-            <section className="recruit__block">
-              <h3 className="label recruit__kicker">{m.recent}</h3>
-              <ul className="recruit__history">
-                {r.history.slice(0, 6).map((h, i) => (
-                  <li key={i}>
-                    <span className="recruit__when">{m.week(Math.max(0, h.week - 1))}</span>
-                    <span>{historyLine(h, team)}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {tab === "profile" && <ProfileTab r={r} detail={detail} />}
+          {tab === "history" && <HistoryTab r={r} detail={detail} team={team} />}
         </div>
-      </div>
+      )}
+
+      {talk && (
+        <Conversation
+          key={talk.id}
+          open
+          onClose={() => {
+            setTalk(null);
+            void reload();
+          }}
+          seasonId={seasonId}
+          r={r}
+          scene={talk}
+          pitches={board.pitches}
+          coach={coach}
+          onChange={() => void reload()}
+        />
+      )}
     </article>
   );
 }
 
 /** A call or in-home visit is a conversation: it opens with no pitch (you choose one in its window). */
 const talks = (action: string) => action === "call" || action === "hc_visit";
-
-/** One line of his recruitment, in words. */
-function historyLine(h: BoardRow["history"][number], team: string): string {
-  if (h.line) return h.line;
-  const who =
-    h.school === team ? m.you : (cachedTeams()?.find((t) => t.slug === h.school)?.name ?? h.school ?? m.aSchool);
-  if (h.kind === "offer") return m.hist.offer(who, h.nil);
-  if (h.kind === "contact") return m.hist.contact(who, h.action);
-  if (h.kind === "hung_up") return m.hist.hung_up(who);
-  if (h.kind === "commit") return m.hist.commit(who);
-  if (h.kind === "decommit") return m.hist.decommit(who);
-  return `${who}: ${h.kind.replace(/_/g, " ")}.`;
-}

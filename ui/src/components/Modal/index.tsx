@@ -15,6 +15,8 @@ interface Props {
   footer?: ReactNode;
   /** sm: a small window for a short choice; talk: a conversation's width (the default fits a map) */
   size?: "sm" | "md" | "talk";
+  /** always as tall as the screen allows, so its size holds when what's inside changes (tabs) */
+  tall?: boolean;
   children: ReactNode;
 }
 
@@ -22,7 +24,7 @@ interface Props {
  * A window over the page, on the browser's own dialog (so Escape closes it, focus stays inside and the page behind
  * dims and waits). A click on the dimmed page closes it too. Framed like every other card: ink edge, hard shadow.
  */
-export default function Modal({ open, onClose, title, lede, head, footer, size = "md", children }: Props) {
+export default function Modal({ open, onClose, title, lede, head, footer, size = "md", tall, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function Modal({ open, onClose, title, lede, head, footer, size =
   return (
     <dialog
       ref={ref}
-      className={`modal modal--${size}`}
+      className={`modal modal--${size}${tall ? " modal--tall" : ""}`}
       aria-label={title}
       onClose={onClose}
       onCancel={(e) => {

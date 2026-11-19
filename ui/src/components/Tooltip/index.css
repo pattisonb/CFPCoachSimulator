@@ -3,6 +3,11 @@
   display: inline-flex;
 }
 
+.tooltip--block {
+  display: block;
+  min-width: 0;
+}
+
 .tooltip__tip {
   --nudge: 0px; /* how far the notch sits from the tip's middle, when the tip was held off the window's edge */
 
