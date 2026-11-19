@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pocket-faces/0.2.0/face.schema.json",
+  "title": "A pocket-faces face",
+  "description": "A player's look: one id per field (null: none). Made by createFaces().random(id) or resolve(spec).",
+  "type": "object",
+  "required": [
+    "faceShape",
+    "skinTone",
+    "hairColor"
+  ],
+  "properties": {
+    "faceShape": {
+      "description": "the head (its width picks the hair, beard and ears to fit it)",
+      "enum": [
+        "face_shape_00",
+        "face_shape_01",
+        "face_shape_02",
+        "face_shape_03",
+        "face_shape_04",
+        "face_shape_05",
+        "face_shape_06",
+        "face_shape_07"
+      ]
+    },
+    "skinTone": {
+      "description": "skin and its shadow",
+      "enum": [
+        "porcelain",
+        "light",
+        "tan",
+        "brown",
+        "dark",
+        "deep"
+      ]
+    },
+    "hairColor": {
+      "description": "the hair, facial hair and brow colour",
+      "enum": [
+        "black",
+        "darkbrown",
+        "brown",
+        "blond",
+        "red",
+        "auburn"
+      ]
+    },
+    "eyeColor": {
+      "description": "the iris colour (left out: brown)",
+      "enum": [
+        "brown",
+        "dark",
+        "hazel",
+        "green",
+        "blue",
+        "gray"
+      ]
+    },
+    "ears": {
+      "description": "Ears (left out: ears_00)",
+      "enum": [
+        "ears_00",
+        "ears_01",
+        "ears_02",
+        "ears_03"
+      ]
+    },
+    "chin": {
+      "description": "Chin; null: none (left out: none)",
+      "enum": [
+        null,
+        "chin_01"
+      ]
+    },
+    "nose": {
+      "description": "Nose (left out: nose_00)",
+      "enum": [
+        "nose_00",
+        "nose_01",
+        "nose_02",
+        "nose_03",
+        "nose_04"
+      ]
+    },
+    "beard": {
+      "description": "Facial hair; null: none (left out: none)",
+      "enum": [
+        null,
+        "beard_01",
+        "beard_02",
+        "beard_03",
+        "beard_04"
+      ]
+    },
+    "mouth": {
+      "description": "Mouth (left out: mouth_00)",
+      "enum": [
+        "mouth_00",
+        "mouth_01",
+        "mouth_02",
+        "mouth_03",
+        "mouth_04"
+      ]
+    },
+    "brows": {
+      "description": "Brows (left out: brows_00)",
+      "enum": [
+        "brows_00"
+      ]
+    },
+    "hair": {
+      "description": "Hair; null: none (left out: none)",
+      "enum": [
+        null,
+        "hair_00",
+        "hair_01",
+        "hair_02",
+        "hair_03",
+        "hair_04",
+        "hair_05",
+        "hair_06",
+        "hair_07",
+        "hair_08",
+        "hair_09",
+        "hair_10",
+        "hair_11",
+        "hair_12",
+        "hair_14",
+        "hair_17",
+        "hair_19",
+        "hair_20",
+        "hair_23",
+        "hair_24",
+        "hair_25",
+        "hair_26",
+        "hair_27"
+      ]
+    },
+    "hairFade": {
+      "type": "boolean",
+      "description": "a faded style's temples in the lighter stroke (only styles with a fade change; left out: false)"
+    },
+    "flip": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "nose",
+          "beard",
+          "mouth",
+          "hair"
+        ]
+      },
+      "description": "layers drawn mirrored (only asymmetric parts change; left out: none)"
+    }
+  }
+}

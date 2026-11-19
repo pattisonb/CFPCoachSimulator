@@ -2,6 +2,10 @@
 already know; decoys (a topic that is not his) only while he is sizing you up, never once he trusts you (CUE_TRUST_CONTACTS
 contacts, or your offer); his personality's line still names what landed; a lead you already made in your opening is
 noticed."""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # a word-mode test: the conversations it reads are the ones Clear Mode replaces (coach_career/clear.py)
+
 import sys as _sys
 from pathlib import Path as _Path
 

@@ -1,5 +1,9 @@
 """Coach Career recruiting (recruiting.py): the class and every school's pull on a prospect,
 then actions, hours and points, then the weekly step. (Run as a file: multiprocessing on Windows.)"""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # a word-mode test: the calls and visits it walks are the scenes Clear Mode replaces (coach_career/clear.py)
+
 import sys as _sys
 from pathlib import Path as _Path
 
@@ -253,7 +257,7 @@ if __name__ == "__main__":
     for x in crowd:
         rc["lists"][two].pop(x)
     cold = next(q for q, p in rc["prospects"].items() if p["stars"] == 2 and q not in (pid, two) and not rc["status"][q]["committed"] and q not in rc["contacts"])
-    warm_pts = recruiting._contact_points(st, "ohio-state", rc["prospects"][cold], "offer", rc["prospects"][cold]["priorities"][0])
+    warm_pts = recruiting._grade_points(st, "ohio-state", rc["prospects"][cold], "offer")     # your offer by hand carries no pitch: your grades on what he cares about
     recruiting.act(st, "ohio-state", cold, "offer", pitch=rc["prospects"][cold]["priorities"][0], nil=0)
     assert rc["status"][cold]["committed"] is None
     assert abs(recruiting.points_now(st, "ohio-state", cold) - warm_pts / 2) < 1e-6, (recruiting.points_now(st, "ohio-state", cold), warm_pts)

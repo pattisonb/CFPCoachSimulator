@@ -4,6 +4,10 @@ winner", never "winning right away"; at six and one the confident lines come bac
 (a long way from his home) is said honestly in your opening and your lead. An in-home visit's note on his
 family's NIL ask uses numerals and the game's NIL words and says where your NIL stands. Native; the engine's `act`
 path, a North Texas career with its record forced. (Run as a file.)"""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # a word-mode test: the conversations it reads are the ones Clear Mode replaces (coach_career/clear.py)
+
 import shutil
 import sys as _sys
 import tempfile

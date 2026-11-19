@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.7",
-    "pocket-faces": "file:../../sprite-test/packages/pocket-faces",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },

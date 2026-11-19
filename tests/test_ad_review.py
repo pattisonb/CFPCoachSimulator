@@ -79,6 +79,11 @@ if __name__ == "__main__":
         pass
     offseason.choose_job(st, car["openings"][0])
     offseason.advance(st)
+    assert off["stage"] == "conferences"            # then Change Conferences and Edit Schedule, before the recap
+    offseason.advance(st)
+    assert off["stage"] == "schedule" and off["next_schedule"]["games"]
+    offseason.advance(st)
+    assert off["stage"] == "ready"
     new = offseason.next_season(st)
     assert new["team"] == car["openings"][0]
     assert any(c["team"] == "ohio-state" and c["reason"] == "fired" for c in off["coaching_changes"])

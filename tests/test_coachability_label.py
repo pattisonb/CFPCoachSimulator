@@ -79,7 +79,17 @@ def check_league_mix(st: dict) -> dict:
 
 
 if __name__ == "__main__":
+    import shutil
+    import tempfile
     from coach_career import league
+    # the first season's Potential comes from the precomputed base league (league.base_development); a checkout has
+    # none until the site is built (data/base_league.json is not in the repository), so write one to a temporary folder
+    base_files, base_tmp = (league.BASE_LEAGUE_FILE, league.BASE_META_FILE), None
+    if not league.BASE_LEAGUE_FILE.exists():
+        base_tmp = Path(tempfile.mkdtemp(prefix="cfp-coachability-base-"))
+        league.BASE_LEAGUE_FILE, league.BASE_META_FILE = base_tmp / "base_league.json", base_tmp / "base_meta.json"
+        league.write_base_files()
+        league.base_meta.cache_clear(); league.base_slugs.cache_clear()
     fresh = season.new_season(TEAM, "full", seed=31, career=True)
     first = check_reads(fresh, "2026")
     st = season.new_season(TEAM, "full", seed=32, career=True)
@@ -97,4 +107,8 @@ if __name__ == "__main__":
     league.forget(sid)
     season.use_league(None)
     season.close_pool()
+    if base_tmp is not None:
+        league.BASE_LEAGUE_FILE, league.BASE_META_FILE = base_files
+        league.base_meta.cache_clear(); league.base_slugs.cache_clear()
+        shutil.rmtree(base_tmp, ignore_errors=True)
     print(f"coachability label ok: 2026 roster {dict(first)}; 2028 roster {dict(later)}; league {mix}")

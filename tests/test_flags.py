@@ -15,7 +15,9 @@ from coach_career import recruiting
 from sim import season
 
 SEEDS = (("smu", 62), ("ohio-state", 8))
-BAND = (0.02, 0.05)                 # gems of the prospects looked at FIND_LOOKS times; bust risks of the four- and five-stars among them
+BAND = (0.02, 0.05)                 # gems of the prospects looked at FIND_LOOKS times
+BUST_BAND = (0.015, 0.05)           # bust risks: the cut is the tier's BUST_PERCENTILE (1.75%), and a seed has about 240 four- and five-stars, so
+                                    # one prospect is 0.4 points: 4 to 7 of them flag across seeds since the overall became the card's weighted sum
 PRECISION = 0.5                     # at least this share of the gems are truly top-decile for their star tier
 
 
@@ -118,7 +120,7 @@ if __name__ == "__main__":
         print(f"{team} seed {seed}: {r['looked']} complete reports ({recruiting.FIND_LOOKS} looks); gems {r['gems']} ({r['gem_rate']:.1%}),"
               f" precision {r['precision']:.2f}; bust risks {r['busts']} of {r['high']} four- and five-stars ({r['bust_rate']:.1%})")
         assert BAND[0] <= r["gem_rate"] <= BAND[1], r
-        assert BAND[0] <= r["bust_rate"] <= BAND[1], r
+        assert BUST_BAND[0] <= r["bust_rate"] <= BUST_BAND[1], r
         assert r["precision"] >= PRECISION, r
         assert r["high_star_gems"] == 0, "a gem is a three-star or less"
         assert all(f["flag"] in ("gem", "bust", "generational", "likes") for f in prospects.scouting_view(st)["flags"])
