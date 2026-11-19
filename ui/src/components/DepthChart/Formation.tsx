@@ -1,5 +1,14 @@
-import { useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import Face from "../Face/index.tsx";
+import Helmet from "../Helmet/index.tsx";
+import { inkOn } from "../../colors.ts";
 import { lookOf, titleCase } from "../../faces.ts";
 import { firstNames, formatClass, lastName } from "../../format.ts";
 import type { DepthCard, DepthRow } from "../../types.ts";
@@ -15,6 +24,8 @@ interface Props {
   onOpen: (role: string, slug: string) => void;
   /** swap two players at one role (drag one card onto the other); leave out for a chart you cannot edit */
   onSwap?: (role: string, a: string, b: string) => void;
+  /** the school whose field this is: its end zone is painted at the end away from the line of scrimmage */
+  school?: { abbreviation: string; name: string; colors: { primary: string; secondary: string } };
 }
 
 /** *tune* How far a press must move before it is a drag and not a click, in px. */
@@ -33,7 +44,11 @@ type DragProps = (
 };
 
 /** *tune* The most the board grows past its natural size on a big screen. */
-const MAX_SCALE = 1.25;
+const MAX_SCALE = 1.45;
+/** *tune* The most the formation spreads sideways to fill a wide field (1: never; the cards keep their size). */
+const MAX_SPREAD = 1.7;
+/** *tune* The end zone's depth, in px. */
+const ZONE = 56;
 /** Room around the board for the cards' shadows, in px. */
 const PAD = 16;
 
@@ -45,23 +60,35 @@ const PAD = 16;
  * Any card drags: pick up a backup and drop him on the starter (or on another backup) at the same role and the two
  * trade places. While a card is in the air, the cards it can land on are outlined and the rest fade.
  */
-export default function Formation({ unit, rows, kick, onOpen, onSwap }: Props) {
+export default function Formation({ unit, rows, kick, onOpen, onSwap, school }: Props) {
   const board = useMemo(() => boardOf(rows, unit, kick), [rows, unit, kick]);
   const returners = (["KR", "PR"] as const).map((role) => ({ role, r: rows.get(role) }));
 
   const box = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [spread, setSpread] = useState(1);
+  const zone = school ? ZONE : 0;
   const w = board.width + 2 * PAD;
   const h = board.height + 2 * PAD;
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
-    const fit = () => setScale(Math.min(MAX_SCALE, el.clientWidth / w, el.clientHeight / h) || 1);
+    // the end zone keeps its own strip of the field: the board fits in what is left, so no card stands on it
+    const fit = () => {
+      const s = Math.min(MAX_SCALE, el.clientWidth / w, (el.clientHeight - zone) / h) || 1;
+      setScale(s);
+      // a field wider than the formation needs: the cards keep their size and spread out across it
+      setSpread(Math.max(1, Math.min(MAX_SPREAD, el.clientWidth / (w * s))));
+    };
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [w, h]);
+  }, [w, h, zone]);
+  const zoneAtTop = board.los > board.height / 2;
+  // spread: the board is `spread` times as wide, the leftmost card still at its left edge and the rightmost at its right
+  const wide = w * spread;
+  const stretch = board.width > CARD_W ? (wide - 2 * PAD - CARD_W) / (board.width - CARD_W) : 1;
 
   // the card in the air (its role and player), and whether the press that just ended was a drag (so it opens nothing)
   const [lift, setLift] = useState<{ role: string; slug: string; p: DepthCard; tag: string } | null>(null);
@@ -138,13 +165,42 @@ export default function Formation({ unit, rows, kick, onOpen, onSwap }: Props) {
   return (
     <>
       <div className={`formation__field${onSwap ? " is-editable" : ""}`} ref={box}>
-        <div className="board" style={{ width: w, height: h, transform: `translate(-50%, -50%) scale(${scale})` }}>
+        {/* the school's end zone, painted across the end of the field away from the line of scrimmage: its name
+            between two helmets, in its colors */}
+        {school && (
+          <div
+            className={`formation__zone${zoneAtTop ? " is-top" : ""}`}
+            aria-hidden="true"
+            style={
+              {
+                height: zone,
+                "--c": school.colors.primary,
+                "--c2": school.colors.secondary,
+                "--on": inkOn(school.colors.primary),
+              } as CSSProperties
+            }
+          >
+            <Helmet color={school.colors.primary} className="formation__helmet" />
+            <b>{school.name}</b>
+            <Helmet color={school.colors.primary} className="formation__helmet" flip />
+          </div>
+        )}
+        <div
+          className="board"
+          style={{
+            width: wide,
+            height: h,
+            top: `calc(50% ${zoneAtTop ? "+" : "-"} ${zone / 2}px)`,
+            transform: `translate(-50%, -50%) scale(${scale})`,
+            ...({ "--board-scale": scale } as CSSProperties),
+          }}
+        >
           <span className="board__los" style={{ top: PAD + board.los }} aria-hidden="true" />
           {board.slots.map((s) => (
             <section
               key={`${s.label}-${s.p.slug}`}
               className="board__slot"
-              style={{ left: PAD + s.left, top: PAD + s.top, width: CARD_W }}
+              style={{ left: PAD + s.left * stretch, top: PAD + s.top, width: CARD_W }}
               aria-label={s.label}
             >
               <h3 className="board__label">{s.label}</h3>

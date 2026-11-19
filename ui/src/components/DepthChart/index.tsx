@@ -5,7 +5,8 @@ import FolderTabs from "../FolderTabs/index.tsx";
 import Modal from "../Modal/index.tsx";
 import PlayerView from "../PlayerView/index.tsx";
 import { api } from "../../api.ts";
-import { inkOn } from "../../colors.ts";
+import { cachedTeams } from "../../teams.ts";
+import { contrast, inkOn } from "../../colors.ts";
 import { lookOf, titleCase } from "../../faces.ts";
 import { navigate } from "../../router.ts";
 import { formatClass } from "../../format.ts";
@@ -24,6 +25,12 @@ const VIEWS: View[] = ["formation", "list"];
 const UNITS: UnitKey[] = ["offense", "defense", "special"];
 /** The most players the chart sends for a role (sim/season.py depth_chart_view). */
 const SHOWN = 6;
+
+/** *tune* A team color this close to black (its contrast with black) counts as near-black for the cards. */
+const DARK_CARD = 1.9;
+/** *tune* How much white the light behind a card's face mixes into the team color: on a near-black color, and on any other. */
+const SPOT_DARK = "46%";
+const SPOT = "14%";
 
 interface Props {
   seasonId: string;
@@ -273,6 +280,8 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
                 "--c": colors?.primary ?? "var(--ink)",
                 "--c2": colors?.secondary ?? "var(--ink-soft)",
                 "--on": colors ? inkOn(colors.primary) : "var(--paper-hi)",
+                // the light behind each face: strong on a near-black color (dark hair and skin were lost on it)
+                "--spot": colors && contrast(colors.primary, "#000000") < DARK_CARD ? SPOT_DARK : SPOT,
               } as CSSProperties
             }
           >
@@ -295,6 +304,7 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
               unit={unit}
               rows={allRows}
               kick={kick}
+              school={cachedTeams()?.find((t) => t.slug === team)}
               onSwap={swap}
               onOpen={(role, slug) => {
                 choose(role, slug);

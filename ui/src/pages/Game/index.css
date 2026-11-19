@@ -67,6 +67,16 @@
 
 /* the window the sections show in: a frame that never changes (no padding of its own, so switching sections
    can't move anything); every section opened sits stacked in it, filling it */
+.game__body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  height: 4px;
+  background: var(--team-stripe, none); /* your three colors along the window's top edge */
+  pointer-events: none;
+}
+
 .game__body {
   position: relative;
   min-height: 0;

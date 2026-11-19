@@ -482,7 +482,7 @@ function GameCard({
         <Side
           team={g.opponent ? teams.get(g.opponent) : undefined}
           name={g.opponent_name}
-          line={m.sideLine(g.opponent_rank, g.opponent_record ?? "0-0")}
+          line={m.sideLine(g.opponent_rank, g.opponent_record ?? "")}
         />
       </div>
       {played && onBox && g.event_id && g.has_box !== false && (

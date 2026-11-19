@@ -35,6 +35,8 @@ interface Props {
   onToggleTheme: () => void;
   mode: NavMode;
   onMode: (mode: NavMode) => void;
+  /** sections left off the list for now (the Offseason, until the season is over) */
+  hide?: string[];
 }
 
 /** *tune* How long a peeking sidebar waits after the pointer leaves before it slides away. */
@@ -166,7 +168,7 @@ function Tool({
  * - hidden: it slides away; the pointer at the window's left edge (or focus moving into it) brings it back over
  *   the page until the pointer leaves, with Keep Sidebar Open at its top. The page shows its own Open button.
  */
-export default function GameNav({ team, active, onSection, theme, onToggleTheme, mode, onMode }: Props) {
+export default function GameNav({ team, active, onSection, theme, onToggleTheme, mode, onMode, hide }: Props) {
   const [leagueOpen, setLeagueOpen] = useState(true);
   const [peeking, setPeeking] = useState(false);
   const leaveTimer = useRef<number | undefined>(undefined);
@@ -264,7 +266,7 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
           <p className="game-nav__group label">
             <span className="game-nav__text">{m.career}</span>
           </p>
-          <ul className="game-nav__list">{CAREER_SECTIONS.map(item)}</ul>
+          <ul className="game-nav__list">{CAREER_SECTIONS.filter((s) => !hide?.includes(s.key)).map(item)}</ul>
 
           <button
             type="button"

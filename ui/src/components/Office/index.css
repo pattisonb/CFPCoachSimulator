@@ -222,8 +222,8 @@
 }
 
 .office__action.is-main {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
   box-shadow: 4px 4px 0 var(--shadow-soft);
 }
 

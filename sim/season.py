@@ -2700,7 +2700,7 @@ def resume(state: dict, after_week: Optional[int] = None, team: Optional[str] = 
             r = rec.get(o, {"wins": 0, "losses": 0})
             games[me].append({"opp": o, "opp_name": g[f"{opp}_display"], "won": pf > pa, "pf": pf, "pa": pa, "week": g["week"],
                               "venue": _venue(g, side == "home"),
-                              "rank_then": before.get(o), "rank_now": now.get(o), "opp_record": _record_str(r),
+                              "rank_then": before.get(o), "rank_now": now.get(o), "opp_record": _record_str(r) if o in real else "",   # an FCS stand-in's record means nothing: never shown
                               "opp_pct": _wl_pct(r["wins"], r["losses"]), "fcs": o not in real, "event_id": eid,
                               "title": g.get("title"), "conference_game": g["conference_game"]})
     # strength of schedule: two thirds the opponents' record, one third their opponents'
@@ -3344,7 +3344,7 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
                          "won": (g["home_score"] > g["away_score"]) == home if g["played"] else None,
                          "points_for": pf, "points_against": pa,
                          "overtime": g["overtime"], "real": g["real"], "has_box": has_box(state, g),
-                         "opponent_record": _record_str(all_rec[opp]), "date": g.get("date"),
+                         "opponent_record": "" if load_teams().get(opp, {}).get("fictional") else _record_str(all_rec[opp]), "date": g.get("date"),
                          "rivalry": game_rivalry(state, g, after=g["played"])})   # a played game: the series with it
     played_weeks = {g["week"] for g in schedule}
     for w in range(1, LAST_REGULAR_WEEK + 1):
@@ -4006,7 +4006,7 @@ def season_review(state: dict) -> dict:
         orank = ap_before(g["week"]).get(opp)
         orec = all_rec[opp] if opp in teams else None
         line = {"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "opponent": opp,
-                "opponent_name": team_display(opp, teams), "opponent_rank": orank, "opponent_record": _record_str(orec) if orec else None,
+                "opponent_name": team_display(opp, teams), "opponent_rank": orank, "opponent_record": _record_str(orec) if orec and not teams[opp].get("fictional") else None,
                 "venue": _venue(g, home), "won": won, "points_for": pf, "points_against": pa,
                 "margin": pf - pa, "overtime": g.get("overtime", 0), "has_box": has_box(state, g),
                 "conference_game": bool(g.get("conference_game"))}

@@ -18,8 +18,8 @@
 }
 
 .chip--on {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper));
 }
 
 .chip--on .chip__count {

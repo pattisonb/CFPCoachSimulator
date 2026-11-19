@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CaretDown, Check } from "@phosphor-icons/react";
 import "./index.css";
 
@@ -28,6 +28,10 @@ interface Props {
   disabled?: boolean;
   className?: string;
 }
+
+/** *tune* The room kept between an open menu and the screen's edge, and between the menu and its button, in px. */
+const EDGE = 8;
+const GAP = 6;
 
 /**
  * A small button that names a setting and its value (or just an icon), and opens a menu to change it. The menu drops from under the
@@ -60,6 +64,24 @@ export default function Dropdown({
     (Array.from(items ?? []).find((b) => b.getAttribute("aria-checked") === "true") ?? items?.[0])?.focus();
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
+
+  // where the menu goes: under the button when it fits there, over it when there is more room above (a button at the
+  // foot of a window), never taller than the room it has, and slid sideways if it would run off the screen's edge
+  const [place, setPlace] = useState<{ up: boolean; maxHeight: number; shift: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open) return setPlace(null);
+    const btn = root.current?.getBoundingClientRect();
+    const menu = list.current;
+    if (!btn || !menu) return;
+    const below = window.innerHeight - btn.bottom - EDGE - GAP;
+    const above = btn.top - EDGE - GAP;
+    const want = menu.scrollHeight;
+    const up = want > below && above > below;
+    const r = menu.getBoundingClientRect();
+    const shift =
+      r.right > window.innerWidth - EDGE ? window.innerWidth - EDGE - r.right : r.left < EDGE ? EDGE - r.left : 0;
+    setPlace({ up, maxHeight: Math.max(120, Math.floor(up ? above : below)), shift: Math.round(shift) });
+  }, [open, options.length]);
 
   const close = (refocus: boolean) => {
     setOpen(false);
@@ -110,7 +132,19 @@ export default function Dropdown({
         )}
       </button>
       {open && (
-        <div className="dropdown__menu" id={id} role="menu" aria-label={label} ref={list} onKeyDown={onKey}>
+        <div
+          className={`dropdown__menu${place?.up ? " is-up" : ""}`}
+          id={id}
+          role="menu"
+          aria-label={label}
+          ref={list}
+          onKeyDown={onKey}
+          style={
+            place
+              ? ({ "--menu-max": `${place.maxHeight}px`, "--menu-shift": `${place.shift}px` } as CSSProperties)
+              : undefined
+          }
+        >
           {icon && <p className="dropdown__title label">{label}</p>}
           {options.map((o) => (
             <button

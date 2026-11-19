@@ -165,7 +165,16 @@
 }
 
 /* ---------- your team: a raised card; minimized, the swatch alone ---------- */
+.game-nav__team::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--team-stripe, none); /* your three colors under your team's card */
+}
+
 .game-nav__team {
+  position: relative;
   display: flex;
   flex: none;
   align-items: center;

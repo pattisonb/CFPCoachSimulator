@@ -85,7 +85,7 @@
 }
 
 .coach-badge__bar span.is-on {
-  background: var(--ink);
+  background: var(--team, var(--ink));
 }
 
 .coach-badge__value {

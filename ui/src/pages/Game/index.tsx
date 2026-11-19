@@ -82,6 +82,9 @@ const PANE: Record<string, string> = {
  * rewrites the address (?section=) in place, so Back still leaves the game. The sidebar is open, minimized or
  * hidden (GameNav); hidden, an Open button leads the top row, and ⌘\\ / Ctrl+\\ hides and shows it.
  */
+/** *tune* How much of your team's color the hard shadows under cards and buttons take, in percent. */
+const SHADOW_TINT = 34;
+
 export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Props) {
   const [section, setSection] = useState(() => sectionOf(sectionKey));
   // Recruiting's tab: the Board, or Prospects (?tab=; an old ?section=prospects link opens it, sectionOf maps it)
@@ -193,12 +196,22 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   // your team's colors for the whole game: the primary, or the secondary when the primary would vanish against this
   // theme's page; the text on it black or white, whichever reads
   const accent = myTeam ? teamAccent(myTeam.colors, theme) : null;
+  // the other two colors are for trim only (a stripe, a marker, a tint): words never sit on them without --team-2-on
+  const second =
+    myTeam && accent ? (accent === myTeam.colors.primary ? myTeam.colors.secondary : myTeam.colors.primary) : null;
+  const third = myTeam?.colors.accent ?? second;
   const teamVars =
-    myTeam && accent
+    myTeam && accent && second && third
       ? ({
           "--team": accent,
-          "--team-2": accent === myTeam.colors.primary ? myTeam.colors.secondary : myTeam.colors.primary,
+          "--team-2": second,
+          "--team-3": third,
           "--team-on": inkOn(accent),
+          "--team-2-on": inkOn(second),
+          // the three colors as one stripe: mostly yours, then the second, a touch of the third
+          "--team-stripe": `linear-gradient(90deg, ${accent} 0 64%, ${second} 64% 88%, ${third} 88%)`,
+          // the hard pixel shadows lean toward your color
+          "--shadow": `color-mix(in srgb, ${accent} ${SHADOW_TINT}%, ${theme === "dark" ? "#0f0f0f" : "#37352f"})`,
         } as CSSProperties)
       : undefined;
   // while a sim runs, the week strip and your record follow it: each result lands on its tile as the week is played
@@ -317,6 +330,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
         team={navTeam}
         active={section.key}
         onSection={open}
+        // the Offseason joins the list when the season is over (it stays while you are on it, an address typed by hand)
+        hide={season && !season.done && section.key !== "offseason" ? ["offseason"] : undefined}
         theme={theme}
         onToggleTheme={onToggleTheme}
         mode={navMode}

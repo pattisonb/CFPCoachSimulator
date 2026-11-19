@@ -35,6 +35,7 @@
   margin: 0 calc(-1 * var(--s3)) 4px;
   padding: var(--s2) var(--s3);
   border-bottom: var(--line) solid var(--ink);
+  box-shadow: inset 4px 0 0 var(--team, transparent); /* a marker in your color down every panel's heading */
 }
 
 .panel__head h3 {

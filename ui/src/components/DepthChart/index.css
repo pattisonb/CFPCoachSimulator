@@ -187,6 +187,44 @@
   border: var(--line) solid var(--ink);
 }
 
+/* the school's end zone: a band in its color across the end of the field away from the line of scrimmage, its name
+   between two helmets (each ringed in white so it stands off its own color) */
+.formation__zone {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s4);
+  overflow: hidden;
+  background: repeating-linear-gradient(-60deg, transparent 0 14px, rgb(255 255 255 / 7%) 14px 17px), var(--c);
+  color: var(--on);
+  border-top: 4px solid #fff;
+  pointer-events: none;
+}
+
+.formation__zone.is-top {
+  inset: 0 0 auto;
+  border-top: 0;
+  border-bottom: 4px solid #fff;
+}
+
+.formation__zone b {
+  font-size: clamp(18px, 3.6vh, 34px);
+  font-style: italic;
+  letter-spacing: 8px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.formation__helmet {
+  flex: none;
+  width: auto;
+  height: 70%;
+  filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff);
+}
+
 /* the board: natural size in px (formation.ts boardOf), scaled to fit the field in Formation.tsx */
 .board {
   position: absolute;
@@ -212,14 +250,18 @@
   gap: 6px;
 }
 
+/* a card's position: sized against the board's scale, so it reads the same on a board shrunk to fit (it was 7px on
+   the kicking units) */
 .board__label {
   height: 16px;
   color: #fff;
-  font-size: var(--t-xs);
+  font-size: min(19px, calc(13px / var(--board-scale, 1)));
   font-weight: 700;
   letter-spacing: 1px;
   line-height: 16px;
   text-align: center;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 55%);
+  white-space: nowrap;
 }
 
 .board__card {
@@ -246,7 +288,13 @@
   display: grid;
   place-items: end center;
   overflow: hidden;
-  background: var(--c);
+
+  /* a soft light behind his face, so he stands off the team color (strong on a near-black one, --spot) */
+  background: radial-gradient(
+    ellipse 70% 78% at 50% 72%,
+    color-mix(in srgb, #fff var(--spot, 14%), var(--c)) 0 38%,
+    var(--c) 100%
+  );
   border-bottom: var(--line) solid var(--ink);
   color: var(--on);
 }

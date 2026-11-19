@@ -139,8 +139,9 @@ export function formationOf(rows: Map<string, DepthRow>, unit: Unit, kick: Kick)
       ],
       "W",
     );
-    place(next(["P", "QB"], 1), [[50, 62]], "H");
-    place(next(["K"], 1), [[62, 84]]);
+    // the holder and the kicker close behind the line (a deeper pair made the board tall and every card small)
+    place(next(["P", "QB"], 1), [[50, 52]], "H");
+    place(next(["K"], 1), [[62, 60]]);
     return { los: 26, spots };
   }
 
@@ -163,8 +164,9 @@ export function formationOf(rows: Map<string, DepthRow>, unit: Unit, kick: Kick)
     ],
     "G",
   );
-  place(next(["SS", "FS", "FB", "HB"], 1), [[50, 54]], "PP");
-  place(next(["P"], 1), [[50, 86]]);
+  // the protector off to one side and the punter a step deeper beside him, so the two share a row of the board
+  place(next(["SS", "FS", "FB", "HB"], 1), [[36, 50]], "PP");
+  place(next(["P"], 1), [[54, 60]]);
   return { los: 22, spots };
 }
 
@@ -187,6 +189,8 @@ export interface Board {
   los: number;
 }
 
+/** The kicking units' own men: the only cards there with the next ones up under them. */
+const SPECIALISTS = new Set(["K", "P"]);
 /** *tune* How many backups each card shows. */
 export const BACKUPS_SHOWN = 2;
 
@@ -235,7 +239,10 @@ export function boardOf(rows: Map<string, DepthRow>, unit: Unit, kick: Kick): Bo
     .forEach((s) => {
       const mates = spots.filter((o) => o.row.role === s.row.role);
       const same = spots.filter((o) => o.tag === s.tag && o.row.role === s.row.role);
-      const backups = s.row.players
+      // a kicking unit shows the next man up for its specialists only: a lineman's backups there are the offense's
+      // depth, and listing them under every blocker made the board twice as tall
+      const lists = unit !== "special" || SPECIALISTS.has(s.tag);
+      const backups = (lists ? s.row.players : [])
         .filter((p) => !onField.has(p.slug))
         .filter((_, i) => i % mates.length === mates.indexOf(s))
         .slice(0, BACKUPS_SHOWN);

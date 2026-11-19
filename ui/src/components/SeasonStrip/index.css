@@ -90,8 +90,8 @@
 
 .season-strip__tag {
   padding: 0 4px;
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 .season-strip__opp {
