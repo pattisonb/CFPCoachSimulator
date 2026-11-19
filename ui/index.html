@@ -2,6 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- the app's own folder as the base for every relative file: a career's address is several folders deep
+         (dynasty/app-state/recruiting), and without this ./favicon.svg and the built ./assets would be looked for there.
+         A deep link a static host could not find (404.html sent it here) is put back in the address bar. -->
+    <script>
+      (function () {
+        var root = location.pathname
+          .replace(/(dynasty\/.*|play|coach\/edit|program\/edit|player\/edit)\/?$/, "")
+          .replace(/[^/]*$/, "");
+        try {
+          var deep = sessionStorage.getItem("cfp.deep");
+          if (deep) {
+            sessionStorage.removeItem("cfp.deep");
+            if (deep.indexOf(location.origin + root) === 0) history.replaceState(null, "", deep);
+          }
+        } catch (e) {}
+        document.write('<base href="' + root + '" />');
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Pocket College Football</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />

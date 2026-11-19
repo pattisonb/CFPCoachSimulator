@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pocket College Football</title>
+    <!-- A static host (GitHub Pages) has no file at a career's address (dynasty/app-state/recruiting): it serves this
+         page instead. The address is kept and the app is opened at its own folder, which puts it back (index.html). -->
+    <script>
+      (function () {
+        var root = location.pathname
+          .replace(/(dynasty\/.*|play|coach\/edit|program\/edit|player\/edit)\/?$/, "")
+          .replace(/[^/]*$/, "");
+        try {
+          sessionStorage.setItem("cfp.deep", location.href);
+        } catch (e) {}
+        location.replace(root);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

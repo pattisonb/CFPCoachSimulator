@@ -30,7 +30,7 @@ import { useTab } from "../../tab.ts";
 import { faces, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
 import { inkOn, teamAccent } from "../../colors.ts";
-import { hrefFor, navigate, replaceParams } from "../../router.ts";
+import { currentParams, hrefFor, navigate, rememberDynasty, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
@@ -89,9 +89,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const [section, setSection] = useState(() => sectionOf(sectionKey));
   // Recruiting's tab: the Board, or Prospects (?tab=; an old ?section=prospects link opens it, sectionOf maps it)
   const [hubTab, setHubTab] = useState<HubTab>(() =>
-    sectionKey === "classes" || new URLSearchParams(location.search).get("tab") === "classes"
+    sectionKey === "classes" || currentParams().get("tab") === "classes"
       ? "classes"
-      : sectionKey === "prospects" || new URLSearchParams(location.search).get("tab") === "prospects"
+      : sectionKey === "prospects" || currentParams().get("tab") === "prospects"
         ? "prospects"
         : "board",
   );
@@ -285,7 +285,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
 
   // the address names the section and, in Recruiting, the Prospects tab; the rest of it (?id=) stays
   const writeAddress = (key: string, tab: HubTab) => {
-    const params = new URLSearchParams(location.search);
+    const params = currentParams();
     params.set("section", key);
     if (key === "recruiting" && tab !== "board") params.set("tab", tab);
     else params.delete("tab");
@@ -312,6 +312,14 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     open("recruiting");
     openTab(onBoard ? "board" : "prospects");
   };
+
+  // the address names the school once the career has loaded (dynasty/app-state/office), whatever link opened it
+  const seasonKey = season ? `${season.id}:${season.team}` : "";
+  useEffect(() => {
+    if (!season) return;
+    rememberDynasty(season.id, season.team);
+    writeAddress(section.key, hubTab);
+  }, [seasonKey]);
 
   // finds can land when a week passes, an offseason stage turns, or a look comes back on someone on your board
   const looks = recruiting?.board.reduce((n, b) => n + (b.looks ?? 0), 0) ?? 0;

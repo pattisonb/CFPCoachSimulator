@@ -222,7 +222,7 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
       <nav className={navClass} aria-label={m.navLabel} {...hiddenEvents} {...railTip.handlers}>
         <div className="game-nav__brand">
           <span className="game-nav__mark">
-            <BallLogo color={team?.primary} />
+            <BallLogo />
           </span>
           <span className="game-nav__name">{m.brand}</span>
           {mode === "open" && (

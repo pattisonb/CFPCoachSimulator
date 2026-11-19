@@ -4,7 +4,7 @@ import Header from "../../components/Header/index.tsx";
 import TeamSelect from "../../components/TeamSelect/index.tsx";
 import { api } from "../../api.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
-import { navigate } from "../../router.ts";
+import { navigate, rememberDynasty } from "../../router.ts";
 import type { Theme } from "../../theme.ts";
 import type { SeasonCard, SeasonsResponse, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -52,6 +52,7 @@ export default function Home({ theme, onToggleTheme }: Props) {
     if (mode !== "load" || seasons !== null) return;
     api<SeasonsResponse>("/api/seasons")
       .then((d) => {
+        for (const s of d.seasons) rememberDynasty(s.id, s.team); // so each career's address names its school
         setSeasons(d.seasons);
         setError(null);
       })

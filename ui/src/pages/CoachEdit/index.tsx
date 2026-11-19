@@ -6,7 +6,7 @@ import Field from "../../components/Field/index.tsx";
 import EditorPage from "../../components/EditorPage/index.tsx";
 import FaceEditor from "../../components/FaceEditor/index.tsx";
 import { api } from "../../api.ts";
-import { navigate } from "../../router.ts";
+import { navigate, rememberDynasty } from "../../router.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
 import { randomFace, type Face as FaceSpec } from "../../faces.ts";
 import type { Theme } from "../../theme.ts";
@@ -97,6 +97,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
           method: "POST",
           body: { team: teamSlug, coach: coach.id },
         });
+        if (teamSlug) rememberDynasty(season.id, teamSlug);
         navigate("game", { id: season.id });
       } catch (e) {
         setStatus({ kind: "error", msg: m.startError((e as Error).message) });
