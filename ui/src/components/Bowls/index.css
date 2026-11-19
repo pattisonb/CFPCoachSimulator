@@ -82,7 +82,7 @@
   grid-template-columns: minmax(220px, 1fr) minmax(0, 2.6fr);
   gap: var(--s4);
   align-items: start;
-  height: 116px; /* *tune* fits four lines of facts */
+  min-height: 116px; /* *tune* fits four lines of facts; a fifth makes it taller instead of being cut off */
   padding: var(--s2) var(--s3);
   overflow: hidden;
   border-top: var(--line) solid var(--ink);

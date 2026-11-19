@@ -442,3 +442,14 @@
     transition: none;
   }
 }
+
+/* a favorite's heart after his name on the list, and the heart button filled once he is one */
+.recruiting__fav {
+  margin-left: 6px;
+  vertical-align: baseline;
+}
+
+.recruit__off.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+}

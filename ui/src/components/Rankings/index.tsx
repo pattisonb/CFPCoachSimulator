@@ -15,6 +15,10 @@ interface Props {
   teams: Map<string, TeamCard>;
   /** open the Bracket (the committee's ranking is what it is built from) */
   onBracket: () => void;
+  /** open a played game's box score */
+  onBox?: (eventId: string) => void;
+  /** open a team's resume */
+  onTeam?: (slug: string) => void;
 }
 
 type Tab = "ap" | "coaches" | "cfp";
@@ -22,6 +26,8 @@ const OTHERS: Record<Tab, keyof WeekPolls | null> = { ap: "ap_others", coaches: 
 
 /** A game on a week's slate (GET /week/{n} → games[]). */
 interface SlateGame {
+  event_id?: string | null;
+  has_box?: boolean;
   week: number;
   home: string;
   away: string;
@@ -40,10 +46,11 @@ function gameFor(team: string, g: SlateGame | undefined) {
   const home = g.home === team;
   const rank = home ? g.away_rank : g.home_rank;
   const foe = `${g.neutral ? m.vs : home ? m.vs : m.at} ${rank ? `#${rank} ` : ""}${home ? g.away_name : g.home_name}`;
-  if (!g.played || g.home_score == null || g.away_score == null) return { foe, won: null, score: "" };
+  const box = g.played && g.has_box !== false ? (g.event_id ?? null) : null;
+  if (!g.played || g.home_score == null || g.away_score == null) return { foe, won: null, score: "", box };
   const pf = home ? g.home_score : g.away_score;
   const pa = home ? g.away_score : g.home_score;
-  return { foe, won: pf > pa, score: `${pf}–${pa}` };
+  return { foe, won: pf > pa, score: `${pf}–${pa}`, box };
 }
 
 /**
@@ -53,7 +60,7 @@ function gameFor(team: string, g: SlateGame | undefined) {
  * the teams that dropped out. The committee ranks from Week 10: until
  * then its tab says so, and the Bracket shows where the field would stand from the AP poll.
  */
-export default function Rankings({ season, teams, onBracket }: Props) {
+export default function Rankings({ season, teams, onBracket, onBox, onTeam }: Props) {
   const [tab, setTab] = useState<Tab>("ap");
   const [week, setWeek] = useState<number | null>(null);
   const polls = season.polls ?? {};
@@ -114,7 +121,13 @@ export default function Rankings({ season, teams, onBracket }: Props) {
       render: (r) => (
         <span className="rankings__team">
           <Swatch team={teams.get(r.team)} size={16} />
-          {r.name}
+          {onTeam ? (
+            <button type="button" className="rankings__box" title={m.openResume(r.name)} onClick={() => onTeam(r.team)}>
+              {r.name}
+            </button>
+          ) : (
+            r.name
+          )}
         </span>
       ),
       sort: (r) => r.name,
@@ -127,6 +140,14 @@ export default function Rankings({ season, teams, onBracket }: Props) {
       label: m.last,
       render: (r) => {
         const g = last(r.team);
+        if (g && g.box && onBox) {
+          const id = g.box;
+          return (
+            <button type="button" className="rankings__game rankings__box" title={m.boxScore} onClick={() => onBox(id)}>
+              <b>{g.won ? m.win : m.loss}</b> {g.score} <span className="rankings__soft">{g.foe}</span>
+            </button>
+          );
+        }
         return g ? (
           <span className="rankings__game">
             <b>{g.won ? m.win : m.loss}</b> {g.score} <span className="rankings__soft">{g.foe}</span>

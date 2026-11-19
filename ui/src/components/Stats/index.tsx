@@ -48,7 +48,19 @@ interface TeamLine {
   sacks: number;
 }
 
-type Tab = "players" | "teams";
+type Tab = "players" | "teams" | "injuries";
+
+/** One player on the injury list (GET /injuries → injuries[]). */
+interface Injury {
+  name: string;
+  position: string;
+  type: string;
+  weeks_left: number;
+  team: string;
+  team_name: string;
+  conference: string;
+  returns_week: number;
+}
 type Scope = "all" | "conference" | "team";
 
 /** *tune* How many leaders each category lists. */
@@ -106,6 +118,53 @@ export default function Stats({ season, teams }: Props) {
       live = false;
     };
   }, [tab, lines, season.id]);
+
+  // the injury list: the whole league, read when the tab opens and again each week
+  const [hurt, setHurt] = useState<Injury[] | null>(null);
+  useEffect(() => {
+    if (tab !== "injuries") return;
+    let live = true;
+    api<{ injuries: Injury[] }>(`/api/season/${season.id}/injuries`)
+      .then((v) => live && setHurt(v.injuries))
+      .catch((e: Error) => live && setError(e.message));
+    return () => {
+      live = false;
+    };
+  }, [tab, season.id, season.current_week]);
+  const hurtShown = (hurt ?? []).filter((i) =>
+    scope === "all" ? true : scope === "team" ? i.team === season.team : i.conference === season.conference,
+  );
+  const lastWeek = Math.max(...Object.keys(season.week_labels).map(Number), 0);
+  const hurtColumns: Column<Injury>[] = [
+    {
+      key: "player",
+      label: m.injuryCols.player,
+      render: (i) => (
+        <span>
+          <b>{i.name}</b> <span className="stats__soft">{i.position}</span>
+        </span>
+      ),
+      sort: (i) => i.name,
+    },
+    { key: "team", label: m.injuryCols.team, render: (i) => team(i.team, i.team_name), sort: (i) => i.team_name },
+    { key: "type", label: m.injuryCols.injury, render: (i) => m.injuryType(i.type), sort: (i) => i.type },
+    {
+      key: "out",
+      label: m.injuryCols.out,
+      num: true,
+      render: (i) => m.weeksOut(i.weeks_left),
+      sort: (i) => i.weeks_left,
+    },
+    {
+      key: "back",
+      label: m.injuryCols.back,
+      render: (i) =>
+        i.returns_week > lastWeek
+          ? m.nextSeason
+          : (season.week_labels[String(i.returns_week)] ?? m.week(i.returns_week)),
+      sort: (i) => -i.returns_week,
+    },
+  ];
 
   const any = !!leaders && Object.values(leaders).some((l) => l.length > 0);
   const weekName = season.week_labels[String(season.current_week)] ?? m.week(season.current_week);
@@ -195,6 +254,7 @@ export default function Stats({ season, teams }: Props) {
         tabs={[
           { key: "players", label: m.tabs.players },
           { key: "teams", label: m.tabs.teams },
+          { key: "injuries", label: m.tabs.injuries, count: hurt?.length || undefined },
         ]}
         aside={<SectionStatus>{any ? m.through(weekName) : m.preseason}</SectionStatus>}
       />
@@ -264,6 +324,40 @@ export default function Stats({ season, teams }: Props) {
                 rowKey={(t) => t.team}
                 mine={(t) => t.team === season.team}
                 sortBy="margin"
+              />
+            </Panel>
+          )}
+        </div>
+      </SectionPane>
+      <SectionPane shown={tab === "injuries"}>
+        <div className="stats">
+          <div className="stats__bar" role="group" aria-label={m.scopeLabel}>
+            <Chip on={scope === "all"} onClick={() => setScope("all")}>
+              {m.scopes.all}
+            </Chip>
+            <Chip on={scope === "conference"} onClick={() => setScope("conference")}>
+              {season.conference}
+            </Chip>
+            <Chip on={scope === "team"} onClick={() => setScope("team")}>
+              {season.team_name}
+            </Chip>
+          </div>
+          {!hurt ? (
+            <p className="stats__soft">{error ? m.loadError(error) : m.loading}</p>
+          ) : !hurtShown.length ? (
+            <div className="stats__empty">
+              <h2>{m.noInjuries}</h2>
+              <p>{m.noInjuriesText}</p>
+            </div>
+          ) : (
+            <Panel title={m.injuries} aside={m.injuryCount(hurtShown.length)} className="stats__table">
+              <DataTable
+                label={m.injuries}
+                columns={hurtColumns}
+                rows={hurtShown}
+                rowKey={(r) => `${r.team}-${r.name}`}
+                mine={(r) => r.team === season.team}
+                sortBy="out"
               />
             </Panel>
           )}

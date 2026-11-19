@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
+import Dropdown from "../Dropdown/index.tsx";
 import Matchup, { type MatchupSide } from "../Matchup/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
@@ -20,6 +21,8 @@ import "./index.css";
 interface Props {
   season: SeasonSummary;
   teams: Map<string, TeamCard>;
+  /** open a played game's full box score */
+  onBox?: (eventId: string) => void;
 }
 
 type Phase = "all" | "regular" | "post";
@@ -45,7 +48,7 @@ interface SideInfo extends MatchupSide {
  * every week as a list; pick a row (or move with the arrow keys) to put it up top. Any FBS opponent's own season is
  * one click away, and Back returns to yours.
  */
-export default function Schedule({ season, teams }: Props) {
+export default function Schedule({ season, teams, onBox }: Props) {
   const [view, setView] = useState(season.team);
   const [other, setOther] = useState<{ key: string; data: TeamScheduleView } | { key: string; error: string } | null>(
     null,
@@ -147,6 +150,18 @@ export default function Schedule({ season, teams }: Props) {
     list.current?.querySelector<HTMLElement>(`[data-key="${keyOf(to)}"]`)?.focus();
   };
 
+  // every FBS team, yours first, for the picker in the header
+  const teamOptions = useMemo(
+    () => [
+      { value: season.team, label: season.team_name, hint: m.yourTeam },
+      ...[...teams.values()]
+        .filter((t) => !t.fictional && t.subdivision === "FBS" && t.slug !== season.team)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((t) => ({ value: t.slug, label: t.name, hint: t.conference })),
+    ],
+    [teams, season.team, season.team_name],
+  );
+
   const weekName = (g: ScheduleGame) => g.title ?? season.week_labels[g.week] ?? m.week(g.week);
   const loading = !mine && !shown;
   const error = shown && "error" in shown ? shown.error : null;
@@ -182,7 +197,8 @@ export default function Schedule({ season, teams }: Props) {
         )}
         <span className="sched-bar__team">
           <Swatch team={teams.get(view)} size={18} />
-          <b>{viewName}</b>
+          {/* whose schedule: yours, or any FBS team's */}
+          <Dropdown label={m.teamLabel} hideLabel size="md" value={view} options={teamOptions} onChange={setView} />
           {viewRecord && (
             <span className="sched-bar__soft">
               {m.record(viewRecord.wins, viewRecord.losses)} ·{" "}
@@ -211,6 +227,7 @@ export default function Schedule({ season, teams }: Props) {
             weeksAway={!current.played ? current.week - (week + 1) : 0}
             preview={thisWeek && preview?.key === previewKey ? preview.data : null}
             box={box?.id === boxId ? box.data : undefined}
+            onBox={boxId && onBox ? () => onBox(boxId) : undefined}
             onView={canView ? () => setView(current.opponent!) : undefined}
           />
         ) : (
@@ -332,6 +349,7 @@ function Banner({
   weeksAway,
   preview,
   box,
+  onBox,
   onView,
 }: {
   g: ScheduleGame;
@@ -343,12 +361,15 @@ function Banner({
   preview: GamePreview | null;
   /** undefined while it loads; null when there's none */
   box: BoxScore | null | undefined;
+  onBox?: () => void;
   onView?: () => void;
 }) {
   const played = g.played && g.won !== null;
   const venue = g.venue === "away" ? m.away : g.venue === "neutral" ? m.neutral : m.home;
   const kicker = played ? (g.overtime ? m.finalOt(g.overtime) : m.final) : thisWeek ? m.thisWeek : m.upcoming;
-  const named = g.title ?? g.rivalry?.name ?? null;
+  // a titled game (a bowl, a championship) has its name in the line above already: only a rivalry's name is added
+  const named = g.rivalry?.name && g.rivalry.name !== g.title ? g.rivalry.name : null;
+  const where = g.site ? `${venue} · ${g.site}` : venue;
   return (
     <section className="sched-banner" aria-label={m.matchupLabel}>
       <Matchup
@@ -381,11 +402,22 @@ function Banner({
       <div className="sched-banner__info">
         <div className="sched-banner__when">
           <span className="label sched-banner__kicker">{kicker}</span>
-          <b>{when}</b>
+          <b title={when}>{when}</b>
           {named && <span className="sched-banner__named">{named}</span>}
-          <span className="sched-banner__chip">{g.site ? `${venue} · ${g.site}` : venue}</span>
+          <span className="sched-banner__chip" title={where}>
+            {where}
+          </span>
         </div>
-        <Detail g={g} left={left} right={right} thisWeek={thisWeek} weeksAway={weeksAway} preview={preview} box={box} />
+        <Detail
+          g={g}
+          left={left}
+          right={right}
+          thisWeek={thisWeek}
+          weeksAway={weeksAway}
+          preview={preview}
+          box={box}
+          onBox={onBox}
+        />
       </div>
     </section>
   );
@@ -400,6 +432,7 @@ function Detail({
   weeksAway,
   preview,
   box,
+  onBox,
 }: {
   g: ScheduleGame;
   left: SideInfo;
@@ -408,6 +441,7 @@ function Detail({
   weeksAway: number;
   preview: GamePreview | null;
   box: BoxScore | null | undefined;
+  onBox?: () => void;
 }) {
   const rivalry = g.rivalry && (g.rivalry.headline || g.rivalry.series) && (
     <div className="sched-detail__cell">
@@ -432,6 +466,12 @@ function Detail({
       <div className="sched-detail">
         <LineScore rows={[a, b]} teams={[left.team, right.team]} />
         <Stats a={a} b={b} />
+        {onBox && (
+          <button type="button" className="sched-detail__box" onClick={onBox}>
+            {m.boxScore}
+            <ArrowRight size={14} weight="bold" aria-hidden="true" />
+          </button>
+        )}
         {rivalry}
       </div>
     );

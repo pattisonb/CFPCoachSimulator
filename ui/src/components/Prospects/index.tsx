@@ -6,6 +6,7 @@ import {
   MagnifyingGlass,
   SortAscending,
   SortDescending,
+  Heart,
   Star,
   X,
 } from "@phosphor-icons/react";
@@ -16,7 +17,7 @@ import Modal from "../Modal/index.tsx";
 import ProspectCard, { Stars, statusOf } from "../ProspectCard/index.tsx";
 import TileMap from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
-import { setOnBoard } from "../../board.ts";
+import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import type { ProspectRow, ProspectsView } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -49,6 +50,7 @@ const VIEW_STATUS: Record<View, string | null> = {
   all: null,
   recommended: "recommended",
   board: "board",
+  favorites: "favorites",
   interested: "interested",
   open: "open",
 };
@@ -190,6 +192,19 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
       );
       setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
       load();
+      onBoardChange?.();
+    } catch (e) {
+      setNote(m.boardError((e as Error).message));
+    }
+  };
+
+  // your favorites (♥): marked or cleared in place
+  const setFav = async (r: ProspectRow, on: boolean) => {
+    try {
+      await setFavorite(seasonId, r.id, on);
+      setData((d) => d && { ...d, rows: d.rows.map((x) => (x.id === r.id ? { ...x, favorite: on } : x)) });
+      setNote(on ? m.favOn(r.name) : m.favOff(r.name));
+      if (view === "favorites") load();
       onBoardChange?.();
     } catch (e) {
       setNote(m.boardError((e as Error).message));
@@ -421,7 +436,20 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                         <span className="prospects__soft">{m.unscouted}</span>
                       )}
                     </td>
-                    <td>
+                    <td className="prospects__marks">
+                      <button
+                        type="button"
+                        className={`prospects__star${r.favorite ? " is-on" : ""}`}
+                        aria-pressed={!!r.favorite}
+                        aria-label={r.favorite ? m.removeFav(r.name) : m.addFav(r.name)}
+                        title={r.favorite ? m.removeFav(r.name) : m.addFav(r.name)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFav(r, !r.favorite);
+                        }}
+                      >
+                        <Heart size={18} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
+                      </button>
                       <button
                         type="button"
                         className={`prospects__star${r.on_board ? " is-on" : ""}`}

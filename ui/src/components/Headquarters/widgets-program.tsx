@@ -804,76 +804,114 @@ function NextDepth({ d, ctx }: P) {
 }
 
 // ---------- Promises: every promise you have out, to your players and to recruits ----------
-function Promises({ d, ctx }: P) {
-  const players: (DepthPlayer & { pos: string })[] = [];
+/** A promise as a row: who, what was promised and where it stands. */
+interface PromiseRow {
+  key: string;
+  /** a recruit's id (his name opens his file) */
+  pid?: string;
+  name: string;
+  pos: string;
+  what: string;
+  status: string;
+}
+/**
+ * The game's own tracker (coach_career/headquarters.py promises_tracker): a starting role, a start over a named
+ * player, ahead of another recruit, an offer to his teammate, NIL by a week; each Open, Kept, Broken, Due or Owed Next
+ * Season. A game that does not send it yet falls back to what the depth chart and the board show.
+ */
+function promiseRows(d: P["d"], ctx: Ctx): { players: PromiseRow[]; recruits: PromiseRow[] } {
+  const t = d.hq?.promises;
+  if (t)
+    return {
+      players: t.players.map((p) => ({
+        key: p.slug,
+        name: p.name,
+        pos: p.position,
+        what: m.promiseWhat.role,
+        status: p.status,
+      })),
+      recruits: t.recruits.map((r) => ({
+        key: r.key,
+        pid: r.pid,
+        name: r.name,
+        pos: r.position ?? "",
+        what: r.what,
+        status: r.status,
+      })),
+    };
+  const players: PromiseRow[] = [];
   const seen = new Set<string>();
   for (const u of d.depth?.units ?? [])
     for (const r of u.rows ?? [])
       for (const p of r.players ?? [])
         if (p.promise && !seen.has(p.slug ?? p.name)) {
           seen.add(p.slug ?? p.name);
-          players.push({ ...p, pos: p.position ?? r.role ?? "" });
+          players.push({
+            key: p.slug ?? p.name,
+            name: p.name,
+            pos: p.position ?? r.role ?? "",
+            what: m.promiseWhat.role,
+            status: p.promise,
+          });
         }
-  const recruits: { key: string; b: HqRow; what: string; status: string }[] = [];
+  const recruits: PromiseRow[] = [];
   for (const b of d.board?.board ?? []) {
     const school = b.signed || b.committed;
     if (school && school !== ctx.team) continue; // closed: he went elsewhere
+    const who = { pid: b.id, name: b.name, pos: posOf(b) };
     if (b.job_promised)
       recruits.push({
+        ...who,
         key: `${b.id}-job`,
-        b,
         what: m.promiseWhat.role,
         status: b.signed ? m.promiseStatus.owed : m.promiseStatus.open,
       });
     if (b.money_owed)
       recruits.push({
+        ...who,
         key: `${b.id}-nil`,
-        b,
         what: m.promiseWhat.nil(b.money_owed.nil),
         status: m.promiseStatus.due(wkLong(b.money_owed.by_week)),
       });
   }
+  return { players, recruits };
+}
+
+function Promises({ d, ctx }: P) {
+  const { players, recruits } = promiseRows(d, ctx);
   if (!players.length && !recruits.length) return <Empty>{m.noPromises}</Empty>;
+  const good = (s: string) => s === "On Track" || s === "Kept";
+  const group = (title: string, rows: PromiseRow[]) =>
+    rows.length > 0 && (
+      <div>
+        <h4 className="label hq-kicker">{title}</h4>
+        <List>
+          {rows.slice(0, rowsFor(ctx.size)).map((r) => (
+            <li key={r.key}>
+              {r.pid ? (
+                <RName ctx={ctx} pid={r.pid}>
+                  {r.name}
+                </RName>
+              ) : (
+                <PName ctx={ctx}>{r.name}</PName>
+              )}
+              <span className="hq-sub">{r.pos}</span>
+              {ctx.size !== "S" && <span className="hq-sub">{r.what}</span>}
+              <Tag solid={good(r.status)} soft={r.status === "Broken"}>
+                {r.status}
+              </Tag>
+            </li>
+          ))}
+        </List>
+      </div>
+    );
   return (
     <div className="hq-stack">
-      {players.length > 0 && (
-        <div>
-          <h4 className="label hq-kicker">{m.yourPlayers}</h4>
-          <List>
-            {players.slice(0, rowsFor(ctx.size)).map((p) => (
-              <li key={p.slug ?? p.name}>
-                <PName ctx={ctx}>{p.name}</PName>
-                <span className="hq-sub">{p.pos}</span>
-                {ctx.size !== "S" && <span className="hq-sub">{m.promiseWhat.role}</span>}
-                <Tag solid={p.promise === "On Track" || p.promise === "Kept"} soft={p.promise === "Broken"}>
-                  {p.promise}
-                </Tag>
-              </li>
-            ))}
-          </List>
-        </div>
-      )}
-      {recruits.length > 0 && (
-        <div>
-          <h4 className="label hq-kicker">{m.recruits}</h4>
-          <List>
-            {recruits.slice(0, rowsFor(ctx.size)).map((r) => (
-              <li key={r.key}>
-                <RName ctx={ctx} pid={r.b.id}>
-                  {r.b.name}
-                </RName>
-                <span className="hq-sub">{posOf(r.b)}</span>
-                {ctx.size !== "S" && <span className="hq-sub">{r.what}</span>}
-                <Tag>{r.status}</Tag>
-              </li>
-            ))}
-          </List>
-        </div>
-      )}
+      {group(m.yourPlayers, players)}
+      {group(m.recruits, recruits)}
     </div>
   );
 }
-
 export const PROGRAM_WIDGETS: Widget[] = [
   {
     id: "alerts",
@@ -1047,7 +1085,8 @@ export const PROGRAM_WIDGETS: Widget[] = [
     category: "program",
     sizes: ["S", "M", "L"],
     size: "M",
-    sources: ["depth", "board"],
+    sources: ["hq", "depth", "board"],
+    want: ["promises"],
     viewAll: "recruiting",
     sample: { depth: SAMPLE_DEPTH, board: SAMPLE_BOARD },
     Draw: Promises,

@@ -2000,7 +2000,7 @@ def apply_depth(team: dict, overrides: Optional[dict]) -> dict:
         group = sorted((p for p in players if p.get("role") == role), key=lambda p: (p.get("depth") or 99, p["name"]))
         for i, p in enumerate(group):
             p["depth"] = i + 1
-            p["in_game"] = i < starters.get(role, 1 if role in ROLE_POSITION else 0)
+            p["in_game"] = i < starters.get(role, 0)   # a role the base formation leaves out (a fullback in the spread) stays out
             new_pos = ROLE_POSITION.get(role, p["position"])
             if new_pos != p["position"]:
                 p["position"] = new_pos

@@ -1,0 +1,174 @@
+/* Scores: a week's games as a grid of small cards; Rivalries as wider ones. */
+.scores {
+  flex: 1;
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.scores__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--s3);
+}
+
+.scores__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+.scores__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s2);
+  list-style: none;
+}
+
+/* a game: its status over the two teams, away first */
+.scores__game {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--line-soft);
+  font: inherit;
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
+.scores__game.is-link {
+  cursor: pointer;
+}
+
+.scores__game.is-link:hover,
+.scores__grid li.is-mine .scores__game {
+  border-color: var(--ink);
+}
+
+.scores__grid li.is-mine .scores__game {
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.scores__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.scores__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scores__side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scores__side.is-lost {
+  color: var(--ink-soft);
+}
+
+.scores__rank {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.scores__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scores__side.is-won .scores__name {
+  font-weight: 700;
+}
+
+.scores__record {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.scores__pts {
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.scores__rivals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--s3);
+  list-style: none;
+}
+
+.scores__rival {
+  display: grid;
+  align-content: start;
+  gap: var(--s2);
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+}
+
+.scores__rival header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scores__rival-name {
+  display: grid;
+  margin-left: 4px;
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.scores__rival-name .scores__soft {
+  text-transform: none;
+}
+
+.scores__rival dl {
+  display: grid;
+  gap: 6px;
+}
+
+.scores__rival dt {
+  color: var(--ink-soft);
+}
+
+.scores__link {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 var(--s2);
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.scores__link:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+}

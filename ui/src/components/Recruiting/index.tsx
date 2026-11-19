@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Chat, House, Phone, Star, X } from "@phosphor-icons/react";
+import { Chat, ChatsCircle, Heart, House, Phone, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
@@ -12,7 +12,7 @@ import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
-import { setOnBoard } from "../../board.ts";
+import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, pullOf, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
@@ -41,7 +41,8 @@ const STARTER_BOARD = 10;
 
 /** The board's groups, in order: where each recruit stands in his recruitment. */
 const STAGES = ["committed", "visited", "top", "contact", "cold", "gone"] as const;
-type StageKey = (typeof STAGES)[number] | "all";
+/** the filter: every stage, one stage, or your favorites (♥), which cut across the stages */
+type StageKey = (typeof STAGES)[number] | "all" | "favorites";
 
 /** Committed to you counts as committed; committed or signed elsewhere is "gone". */
 const stageOf = (r: BoardRow, me: string): (typeof STAGES)[number] => {
@@ -81,6 +82,7 @@ export default function Recruiting({
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: rows.length };
     for (const r of rows) c[stageOf(r, team)] = (c[stageOf(r, team)] ?? 0) + 1;
+    c.favorites = rows.filter((r) => r.favorite).length;
     return c;
   }, [rows, team]);
   const order = useMemo(
@@ -89,8 +91,11 @@ export default function Recruiting({
   );
   const groups = useMemo(
     () =>
-      STAGES.filter((s) => stage === "all" || stage === s)
-        .map((s) => ({ key: s, rows: rows.filter((r) => stageOf(r, team) === s).sort(order) }))
+      STAGES.filter((s) => stage === "all" || stage === "favorites" || stage === s)
+        .map((s) => ({
+          key: s,
+          rows: rows.filter((r) => stageOf(r, team) === s && (stage !== "favorites" || r.favorite)).sort(order),
+        }))
         .filter((g) => g.rows.length),
     [rows, stage, team, order],
   );
@@ -171,7 +176,7 @@ export default function Recruiting({
             size="md"
             value={stage}
             // a stage with no one in it is left out (unless it is the one you are on)
-            options={(["all", ...STAGES] as StageKey[])
+            options={(["all", ...STAGES, "favorites"] as StageKey[])
               .filter((s) => s === "all" || s === stage || counts[s])
               .map((s) => ({
                 value: s,
@@ -195,7 +200,7 @@ export default function Recruiting({
           {groups.length === 0 && <p className="recruiting__soft">{m.noneAtStage}</p>}
           {groups.map((g) => (
             <section key={g.key} className="recruiting__group" aria-label={m.stageNames[g.key]}>
-              {stage === "all" && (
+              {(stage === "all" || stage === "favorites") && (
                 <h2 className="label recruiting__group-title">
                   {m.stageNames[g.key]} <span>{g.rows.length}</span>
                 </h2>
@@ -215,7 +220,12 @@ export default function Recruiting({
                           <Face face={playerFace(r.id, r.display_pos)} scale={2} label="" />
                         </span>
                         <span className="recruiting__who">
-                          <b>{r.name}</b>
+                          <b>
+                            {r.name}
+                            {r.favorite && (
+                              <Heart className="recruiting__fav" size={11} weight="fill" aria-label={m.favorite} />
+                            )}
+                          </b>
                           <span className="recruiting__soft recruiting__facts">
                             {r.display_pos}
                             <Stars n={r.stars} size={10} />
@@ -246,6 +256,11 @@ export default function Recruiting({
             weekLabels={weekLabels}
             reload={reload}
             coach={coach}
+            onBoard={(id) => rows.some((x) => x.id === id)}
+            onPick={(id) => {
+              setStage("all");
+              setPicked(id);
+            }}
           />
         ) : (
           <p className="recruiting__soft">{m.pickOne}</p>
@@ -272,6 +287,8 @@ function RecruitPanel({
   weekLabels,
   reload,
   coach,
+  onBoard,
+  onPick,
 }: {
   r: BoardRow;
   board: RecruitingBoard;
@@ -280,6 +297,10 @@ function RecruitPanel({
   weekLabels: Record<string, string>;
   reload: () => Promise<void>;
   coach: { name: string; face: FaceSpec } | null;
+  /** whether a prospect is on your board */
+  onBoard: (id: string) => boolean;
+  /** open another recruit on the board (his Package Deal teammate) */
+  onPick: (id: string) => void;
 }) {
   const sd = standingOf(r, team);
   const stage = stageOf(r, team);
@@ -349,7 +370,7 @@ function RecruitPanel({
       }
       const n = action === "scout" ? (detail?.scout_cost ?? 0) : Number(extra.nil ?? cost(action));
       const said = [
-        m.said[action]?.(r.name, n) ?? "",
+        extra.answer === "quick" ? m.quickCalled(r.name, cost("call")) : (m.said[action]?.(r.name, n) ?? ""),
         extra.answer === "promise" ? m.promisedRole : "",
         out.revealed ? m.revealed(PITCH_NAMES[out.revealed] ?? out.revealed) : "",
         // talking money is a promise: say so plainly
@@ -364,28 +385,45 @@ function RecruitPanel({
       setBusy(false);
     }
   };
+  const toggleFavorite = async () => {
+    try {
+      await setFavorite(seasonId, r.id, !r.favorite);
+      await reload();
+    } catch (e) {
+      setNote(m.failed((e as Error).message));
+    }
+  };
+  // his Package Deal: open his teammate, putting him on your board first if he is not there
+  const openMate = async (id: string) => {
+    if (!onBoard(id)) {
+      await setOnBoard(seasonId, [id], true);
+      await reload();
+    }
+    onPick(id);
+  };
   const offBoard = async () => {
     if (r.offered && !window.confirm(m.offBoardConfirm(r.name))) return;
     await setOnBoard(seasonId, [r.id], false);
     await reload();
   };
 
-  const timed = (action: string, label: string, Icon: typeof Chat) => {
+  const timed = (action: string, label: string, Icon: typeof Chat, extra?: Record<string, unknown>, tip?: string) => {
     const c = cost(action);
-    const hcSoon = action === "hc_visit" && r.hc_week != null && board.week - r.hc_week < 4;
+    // your head coach visits a recruit once
+    const hcSoon = action === "hc_visit" && r.hc_week != null;
     const off = busy || closed || !!r.scene || done(action) || hcSoon || left < c;
-    const why = done(action) || hcSoon ? m.doneThisWeek : left < c ? m.notEnough : undefined;
+    const why = hcSoon ? m.hcOnce : done(action) ? m.doneThisWeek : left < c ? m.notEnough : (tip ?? undefined);
     return (
       <button
         type="button"
         className="recruit__act"
         disabled={off}
         title={why}
-        onClick={() => act(action, talks(action) ? {} : { pitch })}
+        onClick={() => act(action, extra ?? (talks(action) ? {} : { pitch }))}
       >
         <Icon size={18} weight="bold" aria-hidden="true" />
         <b>{label}</b>
-        <span>{done(action) || hcSoon ? m.done : m.hours(c)}</span>
+        <span>{hcSoon ? m.visited : done(action) ? m.done : m.hours(c)}</span>
       </button>
     );
   };
@@ -441,6 +479,17 @@ function RecruitPanel({
         <p className="recruit__note" role="status">
           {note}
         </p>
+        <Tooltip title={m.favorite} text={r.favorite ? m.favoriteOnTip : m.favoriteTip}>
+          <button
+            type="button"
+            className={`recruit__off${r.favorite ? " is-on" : ""}`}
+            aria-label={r.favorite ? m.removeFavorite(r.name) : m.addFavorite(r.name)}
+            aria-pressed={!!r.favorite}
+            onClick={toggleFavorite}
+          >
+            <Heart size={16} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
+          </button>
+        </Tooltip>
         <Tooltip title={m.offBoard} text={m.offBoardTip}>
           <button type="button" className="recruit__off" aria-label={m.offBoard} onClick={offBoard}>
             <X size={16} weight="bold" aria-hidden="true" />
@@ -490,7 +539,16 @@ function RecruitPanel({
                   )}
                   <div className="recruit__acts">
                     {timed("message", m.message, Chat)}
-                    {timed("call", m.call, Phone)}
+                    {/* after his first call, Call is a quick check-in (the hours, a slight boost, no conversation) and
+                        Call and Pitch talks again */}
+                    {(r.calls ?? 0) > 0 ? (
+                      <>
+                        {timed("call", m.quickCall, Phone, { answer: "quick" }, m.quickCallTip)}
+                        {timed("call", m.callAndPitch, ChatsCircle, undefined, m.callAndPitchTip)}
+                      </>
+                    ) : (
+                      timed("call", m.call, Phone)
+                    )}
                     {timed("hc_visit", m.hcVisit, House)}
                   </div>
 
@@ -574,7 +632,9 @@ function RecruitPanel({
           {tab === "scouting" && (
             <ScoutingTab r={r} detail={detail} team={team} busy={busy} onScout={() => act("scout")} />
           )}
-          {tab === "profile" && <ProfileTab r={r} detail={detail} />}
+          {tab === "profile" && (
+            <ProfileTab r={r} detail={detail} onMate={(id) => void openMate(id)} mateOnBoard={onBoard} />
+          )}
           {tab === "history" && <HistoryTab r={r} detail={detail} team={team} />}
         </div>
       )}

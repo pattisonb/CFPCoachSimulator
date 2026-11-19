@@ -627,3 +627,181 @@
     transition: none;
   }
 }
+
+/* ---------- the second pass: the national table, the coaches, the honor teams ---------- */
+.aw-table {
+  margin-bottom: 0;
+  overflow-x: auto;
+}
+
+.aw-table__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.aw-table__who {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aw-table__award {
+  display: grid;
+}
+
+/* a coach award: its card at the left, the rest of the race in a table beside it */
+.aw-coaches {
+  display: grid;
+  gap: var(--s3);
+}
+
+.aw-coaches__row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--s3);
+}
+
+.aw-teams {
+  display: grid;
+  gap: var(--s2);
+}
+
+.aw-teams__head,
+.aw-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.aw-teams__count {
+  margin-left: auto;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+/* an honor team on the field: the depth chart's grass, a line of small cards for each line of the formation */
+.aw-field {
+  --grass: #3f8a3a;
+  --grass-hi: #47963f;
+
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s3);
+  background: repeating-linear-gradient(180deg, var(--grass) 0 60px, var(--grass-hi) 60px 120px);
+  border: var(--line) solid var(--ink);
+}
+
+.aw-field__line {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+}
+
+/* a unit's first line carries its name, over a chalk line */
+.aw-field__line.is-first {
+  margin-top: var(--s2);
+  padding-top: 26px;
+  border-top: 2px solid rgb(255 255 255 / 55%);
+}
+
+.aw-field__line.is-first:first-child {
+  margin-top: 0;
+  border-top: 0;
+}
+
+.aw-field__unit {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  color: #fff;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.aw-man {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 124px;
+  padding: 6px 6px 8px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+  font-size: var(--t-xs);
+  text-align: center;
+}
+
+.aw-man.is-mine {
+  outline: 3px solid #ffd84a;
+  outline-offset: 1px;
+}
+
+.aw-man__slot {
+  color: var(--ink-soft);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.aw-man__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--t-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aw-man__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-soft);
+}
+
+.aw-man__votes {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px;
+  border: 1px solid var(--ink-soft);
+}
+
+.aw-man__votes.is-all {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.aw-waiting {
+  display: grid;
+  gap: var(--s2);
+  max-width: 640px;
+  padding: var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) dashed var(--ink-soft);
+}
+
+.aw-waiting h2 {
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.aw-waiting p {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+@media (width <= 900px) {
+  .aw-coaches__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

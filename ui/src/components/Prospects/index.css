@@ -183,7 +183,7 @@
 }
 
 .prospects__col-board {
-  width: 60px;
+  width: 84px;
 }
 
 /* the head: sticky, small caps; each header sits over its cells (centered, or left over the text columns) */
@@ -353,12 +353,18 @@
   background: linear-gradient(90deg, var(--ink) 50%, transparent 50%);
 }
 
+/* the two marks in a row's last cell: your favorite (a heart), then your board (a star) */
+.prospects__marks {
+  white-space: nowrap;
+}
+
 .prospects__star {
-  display: grid;
+  display: inline-grid;
   place-items: center;
   width: 32px;
   height: 32px;
-  margin: 0 auto;
+  margin: 0 1px;
+  vertical-align: middle;
   padding: 0;
   background: none;
   color: var(--ink-soft);
@@ -529,7 +535,7 @@
 }
 
 .prospects.is-narrow .prospects__col-board {
-  width: 52px;
+  width: 76px;
 }
 
 @media (prefers-reduced-motion: reduce) {

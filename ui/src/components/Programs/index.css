@@ -1,0 +1,337 @@
+/* Programs: Your Program (hero, school grades as bars, pro potential, the AD's goal), then Every Program. */
+.programs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.programs__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+/* a grade in a word: the top words in bold ink, the bottom ones soft */
+.programs__word {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.programs__word.is-high {
+  font-weight: 700;
+}
+
+.programs__word.is-low {
+  color: var(--ink-soft);
+}
+
+.programs__moved {
+  display: inline-grid;
+}
+
+.programs__tag {
+  padding: 1px 8px;
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.programs__tag.is-solid {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.programs__kicker {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+/* the hero: the team's colors and name at the left, three headline readings at the right */
+.programs__hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+/* folded: just the headline, no rule under it */
+.programs__yours {
+  flex: none;
+}
+
+.programs__yours.is-folded .programs__hero {
+  padding-bottom: var(--s1);
+  border-bottom: 0;
+}
+
+.programs__head-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.programs__fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 0 8px;
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.programs__fold:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.programs__names {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.programs__names h2 {
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.programs__stats {
+  display: flex;
+}
+
+.programs__stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 var(--s4);
+  border-left: 1px solid var(--line-soft);
+}
+
+.programs__stats dt {
+  color: var(--ink-soft);
+}
+
+.programs__stats dd {
+  font-size: var(--t-xl);
+  font-weight: 700;
+}
+
+.programs__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s4);
+  padding: var(--s3) 0;
+}
+
+.programs__col {
+  display: grid;
+  align-content: start;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.programs__col + .programs__col {
+  padding-left: var(--s4);
+  border-left: 1px solid var(--line-soft);
+}
+
+.programs__group {
+  display: grid;
+  gap: 6px;
+}
+
+.programs__group-name {
+  color: var(--ink-soft);
+}
+
+/* the grades, two to a row: the measure, its bar and its word */
+.programs__bars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px var(--s3);
+}
+
+.programs__bar {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 76px;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-sm);
+}
+
+.programs__bar .programs__word {
+  justify-content: flex-end;
+}
+
+.programs__track {
+  height: 8px;
+  background: var(--tile);
+}
+
+.programs__track i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+
+/* a location's setting, climate and region, under its bar */
+.programs__tags {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2 / -1;
+  gap: 4px;
+}
+
+.programs__pros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+  list-style: none;
+}
+
+.programs__pros li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.programs__job {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--line-soft);
+}
+
+.programs__job .programs__tag {
+  margin-left: auto;
+}
+
+/* Every Program fills what is left of the screen: its filters stay put, the table scrolls in its own box */
+.programs__table {
+  display: flex;
+  flex: 1 0 480px; /* never squeezed to a sliver while Your Program is open: the page scrolls to it instead */
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.programs__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* every column in its own lane: a hairline between each and the words centered under their header; the header row
+   and the programs' names stay in view while the rest scrolls under them (a pinned cell loses its border, so those
+   edges are drawn as shadows) */
+.programs__scroll th,
+.programs__scroll td {
+  padding: 6px 12px;
+  border-left: 1px solid var(--line-soft);
+  text-align: center;
+}
+
+.programs__scroll th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-hi);
+  box-shadow: inset 0 calc(-1 * var(--line)) 0 var(--ink);
+}
+
+.programs__scroll td:first-child,
+.programs__scroll th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: 0;
+  background: var(--paper-hi);
+  border-left: 0;
+  text-align: left;
+}
+
+.programs__scroll td:first-child {
+  box-shadow: inset calc(-1 * var(--line)) 0 0 var(--ink);
+}
+
+.programs__scroll th:first-child {
+  z-index: 2;
+  box-shadow:
+    inset calc(-1 * var(--line)) 0 0 var(--ink),
+    inset 0 calc(-1 * var(--line)) 0 var(--ink);
+}
+
+/* every other row tinted, so a row reads across; yours tinted darker */
+.programs__scroll tbody tr:nth-child(even) td {
+  background: var(--paper);
+}
+
+.programs__scroll tbody tr.is-mine td {
+  background: color-mix(in srgb, var(--ink) 10%, var(--paper-hi));
+}
+
+.programs__bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--s2);
+}
+
+.programs__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+/* a program's name that opens its resume: plain text until pointed at */
+.programs__link {
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.programs__link:hover {
+  text-decoration: underline;
+}
+
+@media (width <= 1100px) {
+  .programs__body,
+  .programs__bars {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .programs__col + .programs__col {
+    padding-left: 0;
+    border-left: 0;
+  }
+}

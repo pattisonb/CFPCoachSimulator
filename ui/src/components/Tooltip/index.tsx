@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { tipLayer } from "./titleTips.ts";
 import "./index.css";
 
 interface Props {
@@ -21,7 +22,8 @@ const FLIP_UNDER = 90;
 
 /**
  * The game's own tooltip on anything: point at (or tab to) the children and an ink label with a pixel notch shows over
- * them, at once. It is drawn on the page itself, so a scrolling list never clips it.
+ * them, at once. It is drawn on the page itself, so a scrolling list never clips it; inside an open window it is drawn
+ * in that window, which sits over the whole page.
  */
 export default function Tooltip({ title, text, children, block, className }: Props) {
   const [place, setPlace] = useState<{ left: number; top: number; under: boolean; nudge: number } | null>(null);
@@ -60,7 +62,7 @@ export default function Tooltip({ title, text, children, block, className }: Pro
             {title && <b className="tooltip__title">{title}</b>}
             {text}
           </span>,
-          document.body,
+          tipLayer(ref.current),
         )}
     </span>
   );

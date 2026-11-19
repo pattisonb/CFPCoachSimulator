@@ -1,5 +1,7 @@
 export const messages = {
   title: "Schedule",
+  teamLabel: "Team",
+  yourTeam: "Your team",
   phaseLabel: "Which games to list",
   phases: { all: "All", regular: "Regular Season", post: "Postseason" } as Record<string, string>,
   listLabel: (team: string) => `${team} schedule`,
@@ -53,5 +55,6 @@ export const messages = {
   turnovers: "Turnovers",
   series: "The Series",
   noBox: "No box score was kept for this game.",
+  boxScore: "Full Box Score",
   team: "Team",
 } as const;

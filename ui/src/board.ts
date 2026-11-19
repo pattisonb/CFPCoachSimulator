@@ -7,3 +7,8 @@ import { api } from "./api.ts";
 export async function setOnBoard(seasonId: string, pids: string[], on: boolean): Promise<void> {
   for (const pid of pids) await api(`/api/season/${seasonId}/board`, { method: "POST", body: { pid, on } });
 }
+
+/** Mark a prospect as one of your favorites (♥) or clear the mark: your own list, a filter on the Board and on Prospects. */
+export async function setFavorite(seasonId: string, pid: string, on: boolean): Promise<void> {
+  await api(`/api/season/${seasonId}/favorite`, { method: "POST", body: { pid, on } });
+}

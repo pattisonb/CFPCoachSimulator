@@ -1,0 +1,51 @@
+const ordinal = (k: number) => {
+  const s = k % 100 >= 11 && k % 100 <= 13 ? "th" : (["th", "st", "nd", "rd"][k % 10] ?? "th");
+  return `${k}${s}`;
+};
+
+export const messages = {
+  title: (team: string) => `${team} Resume`,
+  loading: "Loading the resume…",
+  loadError: (msg: string) => `Couldn't load the resume: ${msg}.`,
+  none: "no resume for this team",
+  unranked: "Unranked",
+  week: (w: number) => `Week ${w}`,
+  sheet: "The Committee's Sheet",
+  marks: "Best and Worst",
+  games: "Games",
+  gamesNote: "Click a Result for Its Box Score",
+  noGames: "No games played yet.",
+  rows: {
+    record: "Record",
+    conference: "Conference",
+    sos: "Schedule Strength",
+    sosTip: "How hard the schedule has been, ranked against every FBS team.",
+    top25: "Against the Top 25",
+    winning: "Against Winning Teams",
+    road: "Road Wins",
+    margin: "Average Margin",
+    bestWin: "Best Win",
+    worstLoss: "Worst Loss",
+    fcs: "FCS Wins",
+    fcsTip: "Wins over FCS teams count for little with the committee.",
+  },
+  sosRank: (n: number) => `${ordinal(n)} Hardest`,
+  noWins: "No Wins Yet",
+  noLosses: "No Losses",
+  won: "Won",
+  lost: "Lost",
+  w: "W",
+  l: "L",
+  vs: "vs",
+  at: "at",
+  boxScore: "Open the box score",
+  cols: {
+    week: "Week",
+    opponent: "Opponent",
+    result: "Result",
+    then: "Then",
+    thenTip: "The opponent's rank when they played.",
+    now: "Now",
+    nowTip: "The opponent's rank today.",
+  },
+} as const;

@@ -1,11 +1,12 @@
+import Classes from "../Classes/index.tsx";
 import Prospects from "../Prospects/index.tsx";
 import Recruiting from "../Recruiting/index.tsx";
 import SectionTabs, { SectionPane } from "../SectionTabs/index.tsx";
 import type { Face } from "../../faces.ts";
-import type { RecruitingBoard } from "../../types.ts";
+import type { RecruitingBoard, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 
-export type HubTab = "board" | "prospects";
+export type HubTab = "board" | "prospects" | "classes";
 
 interface Props {
   seasonId: string;
@@ -22,6 +23,8 @@ interface Props {
   coach: { name: string; face: Face } | null;
   /** a recruit to open on the Board (asked for from another section) */
   pick?: string | null;
+  /** the real teams by slug, for the class rankings' colors */
+  teams: Map<string, TeamCard>;
 }
 
 /**
@@ -42,6 +45,7 @@ export default function RecruitingHub({
   weekKey,
   coach,
   pick,
+  teams,
 }: Props) {
   return (
     <div className="section-tabs__wrap">
@@ -52,6 +56,7 @@ export default function RecruitingHub({
         tabs={[
           { key: "board", label: m.board },
           { key: "prospects", label: m.prospects },
+          { key: "classes", label: m.classes },
         ]}
       />
       <SectionPane shown={tab === "board"}>
@@ -76,6 +81,9 @@ export default function RecruitingHub({
           boardSize={board?.board.length}
           onBoardChange={() => void reload()}
         />
+      </SectionPane>
+      <SectionPane shown={tab === "classes"}>
+        <Classes key={weekKey} seasonId={seasonId} team={team} teams={teams} active={tab === "classes"} />
       </SectionPane>
     </div>
   );

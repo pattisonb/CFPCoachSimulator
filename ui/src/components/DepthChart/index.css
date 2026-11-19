@@ -183,7 +183,6 @@
     ),
     repeating-linear-gradient(180deg, var(--grass) 0 10%, var(--grass-hi) 10% 20%);
   border: var(--line) solid var(--ink);
-  box-shadow: 6px 6px 0 var(--shadow);
 }
 
 /* the board: natural size in px (formation.ts boardOf), scaled to fit the field in Formation.tsx */
@@ -215,10 +214,10 @@
   height: 16px;
   color: #fff;
   font-size: var(--t-xs);
+  font-weight: 700;
   letter-spacing: 1px;
   line-height: 16px;
   text-align: center;
-  text-shadow: 0 1px 0 rgb(0 0 0 / 60%);
 }
 
 .board__card {
@@ -230,7 +229,7 @@
   background: var(--paper-hi);
   color: var(--ink);
   border: var(--line) solid var(--ink);
-  box-shadow: 4px 4px 0 rgb(0 0 0 / 40%);
+  box-shadow: 3px 3px 0 var(--shadow);
   text-align: left;
   cursor: pointer;
   transition: transform 100ms ease-out;
@@ -245,8 +244,8 @@
   display: grid;
   place-items: end center;
   overflow: hidden;
-  background: repeating-linear-gradient(-60deg, transparent 0 10px, rgb(255 255 255 / 7%) 10px 12px),
-    linear-gradient(160deg, var(--c) 50%, color-mix(in srgb, var(--c) 60%, #000));
+  background: var(--c);
+  border-bottom: var(--line) solid var(--ink);
   color: var(--on);
 }
 
@@ -369,7 +368,7 @@
 }
 
 .board__backup:hover {
-  box-shadow: 2px 2px 0 rgb(0 0 0 / 40%);
+  box-shadow: 2px 2px 0 var(--shadow);
 }
 
 .board__backup-face {
@@ -461,5 +460,117 @@
 @media (prefers-reduced-motion: reduce) {
   .board__card {
     transition: none;
+  }
+}
+
+/* ---------- dragging: a card in the air, the cards it can land on outlined, the rest faded ---------- */
+.formation__field.is-editable .board__card,
+.formation__field.is-editable .board__backup {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.formation__field .is-lifted {
+  opacity: 0.3;
+}
+
+.formation__field .is-dim {
+  opacity: 0.45;
+}
+
+.formation__field .is-target {
+  outline: 3px dashed #ffd84a;
+  outline-offset: 2px;
+}
+
+.formation__field .is-target.is-over {
+  outline-style: solid;
+  transform: translate(-2px, -2px);
+}
+
+/* the card that follows the pointer: a full starter's card, growing out of a backup's as he is picked up */
+.board__ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  transform-origin: top left;
+  pointer-events: none;
+  animation: board-lift 120ms ease-out;
+}
+
+.board__ghost > button {
+  width: 100%;
+  box-shadow: 8px 8px 0 var(--shadow);
+}
+
+@keyframes board-lift {
+  from {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+.formation__error {
+  padding: 6px var(--s2);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+/* ---------- edits: the picked player's actions, and the chart's reset ---------- */
+.depth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.depth__view > .depth-actions {
+  padding-bottom: var(--s2);
+}
+
+.depth-actions__set {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.depth-actions__btn,
+.depth__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 var(--s2);
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.depth-actions__btn:disabled,
+.depth__reset:disabled {
+  color: var(--ink-soft);
+  border-color: var(--line-soft);
+  cursor: default;
+}
+
+.depth-actions__btn:hover:enabled,
+.depth__reset:hover:enabled,
+.depth-actions__btn.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+@media (width <= 700px) {
+  .depth-actions__btn,
+  .depth__reset {
+    min-height: 44px;
   }
 }

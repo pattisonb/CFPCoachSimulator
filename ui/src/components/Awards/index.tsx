@@ -4,6 +4,7 @@ import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
 import SectionTabs, { SampleNote, SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import { AllAmericaTeams, Coaches, Conferences, NationalTable } from "./More.tsx";
 import { SAMPLE } from "./sample.ts";
 import { api } from "../../api.ts";
 import { inkOn } from "../../colors.ts";
@@ -23,7 +24,7 @@ import type {
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
-type Tab = "overview" | "heisman" | "team";
+type Tab = "overview" | "heisman" | "national" | "coaches" | "allAmerica" | "conferences" | "team";
 type Group = "all" | "poy" | "offense" | "defense" | "special";
 const GROUPS: Group[] = ["all", "poy", "offense", "defense", "special"];
 
@@ -135,6 +136,19 @@ export default function Awards({ season, teams, coach }: Props) {
   const national = useMemo(() => (nat ? [...nat.awards, ...extra] : []), [nat, extra]);
   const honors = useMemo(() => (nat ? honorsOf(nat, extra, season.team, live) : []), [nat, extra, season.team, live]);
 
+  // each conference's honors: the results once given, else the race in your own conference
+  const conferences = useMemo(() => {
+    const given = view?.conference ?? {};
+    return Object.keys(given).length ? given : ((sample ? {} : view?.race?.conference) ?? {});
+  }, [view, sample]);
+  const confLive = !Object.keys(view?.conference ?? {}).length;
+  const shared = {
+    teams,
+    mine: season.team,
+    live,
+    face: (p: AwardPlayer) => <PlayerFace p={p} teams={teams} />,
+  };
+
   const weekName = season.week_labels[season.current_week] ?? `Week ${season.current_week}`;
   const status = !view ? null : sample ? (
     <SectionStatus sample tip={m.sampleTip}>
@@ -159,6 +173,10 @@ export default function Awards({ season, teams, coach }: Props) {
           tabs={[
             { key: "overview", label: m.tabs.overview },
             { key: "heisman", label: m.tabs.heisman, count: nat?.heisman?.candidates.length || undefined },
+            { key: "national", label: m.tabs.national },
+            { key: "coaches", label: m.tabs.coaches },
+            { key: "allAmerica", label: m.tabs.allAmerica },
+            { key: "conferences", label: m.tabs.conferences },
             { key: "team", label: season.team_name, count: honors.length || undefined },
           ]}
         />
@@ -208,6 +226,39 @@ export default function Awards({ season, teams, coach }: Props) {
                     )}
                   </div>
                 </div>
+              </div>
+            </SectionPane>
+            <SectionPane shown={tab === "national"}>
+              <div className="aw__scroll">
+                <NationalTable awards={national} {...shared} />
+              </div>
+            </SectionPane>
+            <SectionPane shown={tab === "coaches"}>
+              <div className="aw__scroll">
+                <Coaches
+                  awards={nat.coach_awards}
+                  teams={teams}
+                  mine={season.team}
+                  live={live}
+                  card={(a) => <CoachCard a={a} live={live} teams={teams} mine={season.team} />}
+                />
+              </div>
+            </SectionPane>
+            <SectionPane shown={tab === "allAmerica"}>
+              <div className="aw__scroll">
+                <AllAmericaTeams aa={sample ? null : nat.all_america} {...shared} />
+              </div>
+            </SectionPane>
+            <SectionPane shown={tab === "conferences"}>
+              <div className="aw__scroll">
+                <Conferences
+                  all={conferences}
+                  start={view?.my_conference ?? season.conference}
+                  {...shared}
+                  live={confLive}
+                  award={(a) => <AwardCard a={a} live={confLive} teams={teams} mine={season.team} />}
+                  coach={(a) => <CoachCard a={a} live={confLive} teams={teams} mine={season.team} />}
+                />
               </div>
             </SectionPane>
             <SectionPane shown={tab === "team"}>

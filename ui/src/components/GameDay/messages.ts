@@ -1,0 +1,17 @@
+export const messages = {
+  live: "Live",
+  kickoff: "Kickoff",
+  over: "That's the game.",
+  ball: (situation: string, team: string) => `${situation} · ${team} Ball`,
+  speedLabel: "Speed",
+  speeds: { slow: "Slow", normal: "Normal", fast: "Fast" },
+  skip: "Skip to Final",
+  boxScore: "Box Score",
+  drive: (n: number, team: string) => `Drive ${n} · ${team}`,
+  plays: "Plays",
+  scoring: "Scoring",
+  noScore: "No score yet.",
+  drives: "Drives",
+  noDrives: "The first drive is under way.",
+  title: (away: string, home: string) => `${away} at ${home}`,
+} as const;

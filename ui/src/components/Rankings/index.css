@@ -88,3 +88,17 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* a result that opens its box score: plain text until pointed at */
+.rankings__box {
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.rankings__box:hover {
+  text-decoration: underline;
+}

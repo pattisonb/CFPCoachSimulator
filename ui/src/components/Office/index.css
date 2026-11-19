@@ -611,3 +611,30 @@
     transition: none;
   }
 }
+
+/* to a played game's box score: the Final beside a result, and a button under your own */
+.office__box {
+  padding: 0 4px;
+  background: none;
+  color: var(--ink);
+  border: 1px solid var(--ink-soft);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.office__box:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+.office__box--game {
+  justify-self: start;
+  min-height: 30px;
+  padding: 0 var(--s2);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}

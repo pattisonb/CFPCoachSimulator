@@ -1,6 +1,8 @@
 const ORDINALS = ["First", "Second", "Third"];
 
 export const messages = {
+  openMate: "See His Teammate",
+  addMate: "Add His Teammate to Your Board",
   loading: "Loading his file…",
   tabs: { scouting: "Scouting", profile: "Profile", history: "History" },
   unknown: "Not Known Yet",

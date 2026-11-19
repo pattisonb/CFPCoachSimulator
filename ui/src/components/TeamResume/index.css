@@ -1,0 +1,37 @@
+/* A team's resume: the committee's sheet and its best and worst side by side, then every game. */
+.resume {
+  display: grid;
+  gap: var(--s3);
+  font-size: var(--t-sm);
+}
+
+.resume__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.resume__games {
+  margin-bottom: 0;
+  overflow-x: auto;
+}
+
+.resume__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* a result that opens its box score: plain text until pointed at */
+.resume__box {
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.resume__box:hover {
+  text-decoration: underline;
+}

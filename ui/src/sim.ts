@@ -25,7 +25,7 @@ export interface Sim {
  * The season's sim for one page. `onDone` runs when a job finishes (or fails), so the page reloads the season. A job
  * already running when the page opens (a reload mid-sim) is picked up and followed.
  */
-export function useSim(seasonId: string | null, onDone: () => void): Sim {
+export function useSim(seasonId: string | null, onDone: (last?: SimStatus) => void): Sim {
   const [status, setStatus] = useState<SimStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const timer = useRef<number | undefined>(undefined);
@@ -44,7 +44,7 @@ export function useSim(seasonId: string | null, onDone: () => void): Sim {
         }
         setStatus(null);
         if (s.status === "error") setError(s.error ?? "the sim stopped");
-        done.current();
+        done.current(s);
       })
       .catch((e: Error) => {
         setStatus(null);

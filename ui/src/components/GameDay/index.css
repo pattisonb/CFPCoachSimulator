@@ -1,0 +1,241 @@
+/* Game Day: the scoreboard, the situation and the controls, the field, then the drive in progress beside the scoring. */
+.gameday {
+  display: grid;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+}
+
+.gameday__soft {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.gameday__live {
+  padding: 0 6px;
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.gameday__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.gameday__situation {
+  flex: 1;
+  min-width: 200px;
+  min-height: 20px;
+  font-weight: 700;
+  white-space: pre;
+}
+
+.gameday__speeds {
+  display: flex;
+  gap: 6px;
+}
+
+.gameday__skip {
+  min-height: 30px;
+  padding: 0 var(--s2);
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gameday__skip:hover,
+.gameday__skip.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+/* the field: grass in mowed stripes (the depth chart's), an end zone in each team's color */
+.gameday__field {
+  --grass: #3f8a3a;
+  --grass-hi: #47963f;
+
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  height: 120px;
+  border: var(--line) solid var(--ink);
+}
+
+.gameday__zone {
+  display: grid;
+  place-items: center;
+  background: var(--c);
+  color: var(--on);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 2px;
+  writing-mode: vertical-rl;
+}
+
+.gameday__grass {
+  position: relative;
+  overflow: hidden;
+  background: repeating-linear-gradient(90deg, var(--grass) 0 10%, var(--grass-hi) 10% 20%);
+}
+
+.gameday__yard {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: rgb(255 255 255 / 45%);
+}
+
+.gameday__yard i {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  color: rgb(255 255 255 / 80%);
+  font-size: var(--t-xs);
+  font-style: normal;
+  font-weight: 700;
+  transform: translateX(-50%);
+}
+
+/* the last play: a pale band over the ground it gained, dark over ground it lost */
+.gameday__gain {
+  position: absolute;
+  top: 30%;
+  bottom: 30%;
+  background: rgb(255 255 255 / 55%);
+  transition:
+    left 250ms ease-out,
+    width 250ms ease-out;
+}
+
+.gameday__gain.is-loss {
+  background: rgb(0 0 0 / 40%);
+}
+
+.gameday__sticks {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  margin-left: -2px;
+  background: #ffd84a;
+  transition: left 250ms ease-out;
+}
+
+/* the ball: a marker in the color of the team that has it, pointing the way it is going */
+.gameday__ball {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  background: var(--c);
+  border: var(--line) solid #fff;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 45%);
+  transition: left 250ms ease-out;
+}
+
+.gameday__ball::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin: -6px 0 0 3px;
+  border: 6px solid transparent;
+  border-left-color: #fff;
+}
+
+.gameday__ball.is-away::after {
+  right: 100%;
+  left: auto;
+  margin: -6px 3px 0 0;
+  border-right-color: #fff;
+  border-left-color: transparent;
+}
+
+.gameday__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--s3);
+}
+
+.gameday__side {
+  display: grid;
+  gap: var(--s2);
+}
+
+.gameday__panel {
+  min-width: 0;
+}
+
+.gameday__head {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+.gameday__plays,
+.gameday__drives {
+  display: grid;
+  list-style: none;
+}
+
+.gameday__drives li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* a play: when and the situation over the sentence; an edge in the color of the team with the ball */
+.gameday__plays li {
+  display: grid;
+  gap: 1px;
+  padding: 5px 8px;
+  border-top: 1px solid var(--line-soft);
+  border-left: 4px solid var(--c);
+}
+
+.gameday__plays li:first-child {
+  background: var(--paper);
+}
+
+.gameday__plays li.is-big {
+  font-weight: 700;
+}
+
+.gameday__plays li.is-score {
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+
+.gameday__when {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.gameday__plays li:first-child,
+.gameday__drives li:first-child {
+  border-top: 0;
+}
+
+@media (width <= 800px) {
+  .gameday__cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gameday__skip {
+    min-height: 44px;
+  }
+}

@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   ArrowDown,
   ArrowUp,
   Binoculars,
@@ -403,7 +404,19 @@ const TRAIT_ICON: Record<string, Icon> = {
 };
 
 /** Profile: who he is, a card a trait (one not known yet says how it shows itself), and his background. */
-export function ProfileTab({ r, detail }: { r: BoardRow; detail: ProspectDetail | null }) {
+export function ProfileTab({
+  r,
+  detail,
+  onMate,
+  mateOnBoard,
+}: {
+  r: BoardRow;
+  detail: ProspectDetail | null;
+  /** open his Package Deal teammate */
+  onMate?: (id: string) => void;
+  /** whether a prospect is on your board already (opening one who is not adds him) */
+  mateOnBoard?: (id: string) => boolean;
+}) {
   if (!detail) return <p className="recruit-file__soft">{m.loading}</p>;
   const tr = detail.traits;
   const hints = detail.trait_hints;
@@ -444,6 +457,12 @@ export function ProfileTab({ r, detail }: { r: BoardRow; detail: ProspectDetail 
                   <span className="label">{m.traitNames[k]}</span>
                   <b>{v ?? m.unknown}</b>
                   {!v && hints[k] && <span className="recruit-file__soft">{hints[k]}</span>}
+                  {k === "story" && tr.story_key === "package" && tr.story_mate && onMate && (
+                    <button type="button" className="recruit-file__mate" onClick={() => onMate(tr.story_mate!)}>
+                      {mateOnBoard?.(tr.story_mate) ? m.openMate : m.addMate}
+                      <ArrowRight size={12} weight="bold" aria-hidden="true" />
+                    </button>
+                  )}
                   {/* what a story or a way of committing means for recruiting him */}
                   {v && tips[k] && <span className="recruit-file__soft">{tips[k]}</span>}
                 </div>

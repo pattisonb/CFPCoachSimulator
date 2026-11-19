@@ -331,6 +331,8 @@ export interface NewsItem {
 }
 
 export interface ConferenceGame {
+  /** the game's id, for its box score */
+  event_id?: string | null;
   away: string;
   home: string;
   away_name: string;
@@ -373,6 +375,8 @@ export interface SimStatus {
   games_total: number | null;
   progress: number | null;
   error: string | null;
+  /** Game Day: your game's id once it has been played, for the playback */
+  gameday_event?: string | null;
 }
 
 /** A player as the depth chart shows him (sim/season.py _depth_card): GET /api/season/{id}/depth/{team} */
@@ -541,6 +545,8 @@ export interface ProspectRow {
   school_name: string | null;
   leaning_fcs: boolean;
   pro: boolean;
+  /** one of your favorites (♥) */
+  favorite?: boolean;
   on_board: boolean;
   offered: boolean;
   /** your staff's looks at him (a full report at 3) */
@@ -643,6 +649,8 @@ export interface RecruitTraits {
   style_key: string | null;
   /** his story names your school (a legacy whose family played for you) */
   story_yours?: boolean;
+  /** a Package Deal: the teammate he comes with (a prospect id) */
+  story_mate?: string | null;
 }
 
 /** One rating as your staff reads it: an estimate inside a range, and how sure they are. */
@@ -733,7 +741,12 @@ export interface BoardRow {
   /** your program's pull on each topic, 0 to 1 */
   strength: Record<string, number>;
   done_this_week: string[];
+  /** the week your head coach visited him (he visits a recruit once) */
   hc_week: number | null;
+  /** your finished calls with him: after the first, Call is a quick check-in */
+  calls?: number;
+  /** one of your favorites (♥): your own mark, a filter and nothing more */
+  favorite?: boolean;
   visit: { week: number; done: boolean } | null;
   visit_weeks: { week: number; label: string; opponent_name: string; taken_by: string | null }[];
   cooled: boolean;
@@ -957,7 +970,8 @@ export interface AwardCoach {
   /** an assistant's award (the Broyles): his role */
   role?: string;
   wins: number;
-  losses: number;
+  /** an assistant's row (the Broyles) carries his team's wins only */
+  losses?: number;
   champion?: boolean;
   rank?: number | null;
   preseason_rank?: number | null;
@@ -982,11 +996,45 @@ export interface CoachAward {
   assistant?: boolean;
 }
 
+/** A player named to an honor team (sim/awards.py select_team): the slot he fills and which team (1 first, 2 second) */
+export interface TeamPick extends AwardPlayer {
+  slot: string;
+  level: number;
+}
+
+/** A consensus All-American: first team on at least three of the five selectors' lists */
+export interface ConsensusPick extends TeamPick {
+  first_teams: string[];
+  second_teams: string[];
+  /** first team on all five */
+  unanimous: boolean;
+  /** how many selectors had him first team */
+  selectors: number;
+}
+
+/** The All-America teams (sim/awards.py all_america): each selector's first and second teams, and the consensus */
+export interface AllAmerica {
+  selectors: Record<string, TeamPick[]>;
+  consensus: ConsensusPick[];
+  unanimous: ConsensusPick[];
+}
+
+/** One conference's honors (sim/awards.py conference_awards): its awards and its all-conference teams */
+export interface ConferenceAwards {
+  /** a coach award has kind "coach" and coaches in place of players */
+  awards: (PlayerAward | (CoachAward & { kind: string }))[];
+  teams?: { selectors?: Record<string, TeamPick[]>; levels?: number };
+}
+
 /** The national awards: the live race, or the results once given */
 export interface NationalAwards {
   heisman: HeismanVote | null;
   awards: PlayerAward[];
   coach_awards: CoachAward[];
+  /** named with the national awards (Week 15) */
+  all_america?: AllAmerica | null;
+  /** the live race: your conference's awards as they stand */
+  conference?: Record<string, ConferenceAwards>;
 }
 
 /** One of your team's honors once given (sim/awards.py my_awards) */
@@ -1003,6 +1051,8 @@ export interface MyHonor {
 export interface AwardsView {
   /** the last week whose awards are given (0: none yet) */
   given_through: number;
+  /** every conference's awards and all-conference teams, once given (Week 14) */
+  conference?: Record<string, ConferenceAwards>;
   national: NationalAwards | null;
   /** the live race, until the national awards are given */
   race?: NationalAwards & { live: boolean };

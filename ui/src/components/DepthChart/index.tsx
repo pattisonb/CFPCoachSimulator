@@ -10,6 +10,7 @@ import { lookOf, titleCase } from "../../faces.ts";
 import { navigate } from "../../router.ts";
 import { formatClass } from "../../format.ts";
 import type { DepthCard, DepthChart as Chart, DepthRow, PlayerProfile } from "../../types.ts";
+import Actions from "./Actions.tsx";
 import Formation from "./Formation.tsx";
 import type { Kick } from "./formation.ts";
 import { messages as m } from "./messages.ts";
@@ -21,6 +22,8 @@ type View = "formation" | "list";
 const VIEWS: View[] = ["formation", "list"];
 /** The chart's units come in this order (sim/season.py DEPTH_ROWS). */
 const UNITS: UnitKey[] = ["offense", "defense", "special"];
+/** The most players the chart sends for a role (sim/season.py depth_chart_view). */
+const SHOWN = 6;
 
 interface Props {
   seasonId: string;
@@ -83,6 +86,9 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
   const picked = useMemo(() => {
     for (const r of [...rows, ...allRows.values()])
       for (const p of r.players) if (keyOf(r.role, p.slug) === pick) return { row: r, p };
+    // a move to another role lands him past the six a role shows: keep him picked by name
+    const s = pick?.split("|")[1];
+    if (s) for (const r of allRows.values()) for (const p of r.players) if (p.slug === s) return { row: r, p };
     const r = rows[0];
     return r?.players[0] ? { row: r, p: r.players[0] } : null;
   }, [rows, allRows, pick]);
@@ -105,6 +111,90 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
 
   const choose = (role: string, s: string) => setPick(keyOf(role, s));
 
+  // ---------- edits: each is saved to the game, and the chart it sends back is shown ----------
+  const [busy, setBusy] = useState(false);
+  const chartUrl = `/api/season/${seasonId}/depth/${team}`;
+  /** one change: run it, then show the chart (the one it returned, or a fresh one); say why if the game refuses */
+  const edit = (run: () => Promise<Chart | unknown>, fresh = false) => {
+    setBusy(true);
+    setSaveError(null);
+    run()
+      .then((v) => (fresh ? api<Chart>(chartUrl) : (v as Chart)))
+      .then((chart) => setLoad({ kind: "ready", chart }))
+      .catch((e: Error) => setSaveError(e.message))
+      .finally(() => setBusy(false));
+  };
+  const post = (body: object) => api<Chart>(chartUrl, { method: "POST", body });
+  const move = (role: string, player: string, to: "up" | "down" | "top") =>
+    edit(() => post({ role, player, move: to }));
+  /** play him at another role of his position: he goes to the end of it, and the pick follows him there */
+  const toRole = (role: string, player: string) => {
+    edit(() => post({ role, player, move: "down" }));
+    setPick(keyOf(role, player));
+  };
+  const redshirt = (player: string, on: boolean) =>
+    edit(() => api(`/api/season/${seasonId}/redshirt`, { method: "POST", body: { team, player, on } }), true);
+  /** a new position: his card and his ratings change with it, so his profile is asked for again */
+  const toPosition = (player: string, pos: string) => {
+    edit(() => api(`/api/season/${seasonId}/position`, { method: "POST", body: { team, player, pos } }), true);
+    asked.current.delete(player);
+    setProfiles((prev) => {
+      const next = new Map(prev);
+      next.delete(player);
+      return next;
+    });
+    setPick(null);
+    setCard(false);
+  };
+  const reset = () => edit(() => post({ reset: true }));
+
+  // two players at one role trade places: shown at once, saved to the game, put back if the game refuses
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const swap = (role: string, a: string, b: string) => {
+    if (load.kind !== "ready") return;
+    const before = load.chart;
+    const order = (allRows.get(role)?.players ?? []).map((p) => p.slug);
+    const i = order.indexOf(a);
+    const j = order.indexOf(b);
+    if (i < 0 || j < 0) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    setSaveError(null);
+    setLoad({
+      kind: "ready",
+      chart: {
+        ...before,
+        units: before.units.map((u) => ({
+          ...u,
+          rows: u.rows.map((r) =>
+            r.role === role ? { ...r, players: order.flatMap((s) => r.players.find((p) => p.slug === s) ?? []) } : r,
+          ),
+        })),
+      },
+    });
+    // the chart shows a role's first six; the game wants the whole role, so anyone deeper keeps his place behind them
+    const whole =
+      order.length < SHOWN
+        ? Promise.resolve(order)
+        : api<{ players: { slug: string; role: string | null; depth: number | null }[] }>(
+            `/api/season/${seasonId}/depth/${team}/roster`,
+          ).then((v) => [
+            ...order,
+            ...v.players
+              .filter((p) => p.role === role && !order.includes(p.slug))
+              .sort((p, q) => (p.depth ?? 99) - (q.depth ?? 99))
+              .map((p) => p.slug),
+          ]);
+    whole
+      .then((all) =>
+        api<Chart>(`/api/season/${seasonId}/depth/${team}`, { method: "POST", body: { role, order: all } }),
+      )
+      .then((chart) => setLoad({ kind: "ready", chart }))
+      .catch((e: Error) => {
+        setLoad({ kind: "ready", chart: before });
+        setSaveError(e.message);
+      });
+  };
+
   // ↑ ↓ walk the list
   const onKey = (e: KeyboardEvent) => {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
@@ -126,6 +216,29 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
   }
 
   const profile = slug ? profiles.get(slug) : undefined;
+  // what the picked player can do: his moves, the other roles of his position, his redshirt and his position
+  const actions = picked && (
+    <Actions
+      seasonId={seasonId}
+      team={team}
+      row={picked.row}
+      p={picked.p}
+      roles={[...allRows.values()]
+        .filter(
+          (r) =>
+            r.role !== picked.row.role &&
+            !["KR", "PR"].includes(r.role) &&
+            !["KR", "PR"].includes(picked.row.role) &&
+            r.players[0]?.position === picked.p.position,
+        )
+        .map((r) => ({ role: r.role, label: titleCase(r.label) }))}
+      busy={busy}
+      onMove={(to) => move(picked.row.role, picked.p.slug, to)}
+      onRole={(role) => toRole(role, picked.p.slug)}
+      onRedshirt={(on) => redshirt(picked.p.slug, on)}
+      onPosition={(pos) => toPosition(picked.p.slug, pos)}
+    />
+  );
   return (
     <FolderTabs
       label={m.units}
@@ -138,6 +251,11 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
       panelClassName={view === "list" ? "depth" : "depth depth--formation"}
       aside={
         <div className="depth__views" role="group" aria-label={m.viewLabel}>
+          {load.chart.overridden && (
+            <button type="button" className="depth__reset" disabled={busy} title={m.resetTip} onClick={reset}>
+              {m.reset}
+            </button>
+          )}
           {VIEWS.map((v) => (
             <Chip key={v} on={view === v} onClick={() => setView(v)}>
               {m.views[v]}
@@ -168,10 +286,16 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
                 </Chip>
               </div>
             )}
+            {saveError && (
+              <p className="formation__error" role="alert">
+                {m.saveError(saveError)}
+              </p>
+            )}
             <Formation
               unit={unit}
               rows={allRows}
               kick={kick}
+              onSwap={swap}
               onOpen={(role, slug) => {
                 choose(role, slug);
                 setCard(true);
@@ -183,6 +307,7 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
             onClose={() => setCard(false)}
             title={picked?.p.name ?? ""}
             head={<span />}
+            footer={actions || undefined}
             tall
           >
             {picked && (
@@ -225,6 +350,12 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
             ))}
           </div>
           <div className="depth__view" aria-live="polite">
+            {saveError && (
+              <p className="formation__error" role="alert">
+                {m.saveError(saveError)}
+              </p>
+            )}
+            {actions}
             {picked ? (
               <PlayerView
                 key={picked.p.slug}

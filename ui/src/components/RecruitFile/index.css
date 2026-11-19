@@ -308,3 +308,24 @@ dd.recruit-file__inline {
 .recruit-file__timeline li:first-child {
   border-top: 0;
 }
+
+/* a Package Deal: to the teammate he comes with */
+.recruit-file__mate {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: none;
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.recruit-file__mate:hover {
+  background: var(--ink);
+  color: var(--paper-hi);
+}

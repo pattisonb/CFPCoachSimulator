@@ -96,6 +96,8 @@ export const messages = {
   aroundThe: (conf: string) => `Around the ${conf}`,
   noScores: "No results yet. The scores show here after the first games.",
   finalOt: "Final/OT",
+  boxScore: "Box Score",
+  boxScoreOf: (away: string, home: string) => `Open the box score: ${away} at ${home}`,
   loading: "Loading…",
   loadError: (msg: string) => `Couldn't load this: ${msg}.`,
 } as const;

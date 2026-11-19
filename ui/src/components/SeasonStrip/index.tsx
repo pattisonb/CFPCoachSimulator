@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import type { ScheduleGame, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -10,7 +10,16 @@ interface Props {
   teams: Map<string, TeamCard>;
   /** the game's names for its weeks ("Week 3", "Championship Week") */
   weekLabels: Record<string, string>;
+  /** the last week played (the season's current week): the week after it is the one you are in */
+  week: number;
+  /** open a played game's box score */
+  onBox?: (eventId: string) => void;
 }
+
+/** *tune* The season's last week (sim/season.py: the national championship). */
+const LAST_WEEK = 20;
+/** *tune* The first week after the regular season: the weeks from here get a placeholder until a game is set. */
+const FIRST_POST_WEEK = 15;
 
 /** *tune* How many tiles one press of an arrow scrolls. */
 const PAGE_TILES = 3;
@@ -23,12 +32,22 @@ const shortName = (g: ScheduleGame, team: TeamCard | undefined) =>
 
 /**
  * The season across the top of the game: one tile per week, played games with their result, the rest with their
- * date. The next game is raised and scrolled into view; arrows page through the rest.
+ * date. The week you are in (a game or a bye) is raised and scrolled into view; arrows page through the rest.
  */
-export default function SeasonStrip({ games, teams, weekLabels }: Props) {
+export default function SeasonStrip({ games: schedule, teams, weekLabels, week, onBox }: Props) {
+  // the postseason weeks you have no game in yet (championship week, the bowls, the playoff) hold their place
+  const games = useMemo(() => {
+    const out = [...schedule];
+    for (let w = FIRST_POST_WEEK; w <= LAST_WEEK; w++)
+      if (!schedule.some((g) => g.week === w)) out.push({ week: w, kind: "open" } as ScheduleGame);
+    return out.sort((a, b) => a.week - b.week);
+  }, [schedule]);
   const list = useRef<HTMLOListElement>(null);
   const [ends, setEnds] = useState({ start: true, end: true });
-  const next = games.find((g) => g.kind !== "bye" && !g.played);
+  // the week you are in, an open date included; past the schedule's end, the next game still to play
+  const next =
+    games.find((g) => g.week === week + 1 && !g.played) ??
+    games.find((g) => g.kind !== "bye" && g.kind !== "open" && !g.played);
 
   const measure = () => {
     const el = list.current;
@@ -69,24 +88,29 @@ export default function SeasonStrip({ games, teams, weekLabels }: Props) {
       <ol className="season-strip__list" ref={list} aria-label={m.label} onScroll={measure}>
         {games.map((g) => {
           const team = g.opponent ? teams.get(g.opponent) : undefined;
-          const bye = g.kind === "bye";
+          const open = g.kind === "open";
+          const bye = g.kind === "bye" || open;
           const isNext = g === next;
+          const box = onBox && g.played && g.event_id && g.has_box !== false ? g.event_id : null;
           const cls = [
             "season-strip__game",
             bye && "is-bye",
             g.played && (g.won ? "is-won" : "is-lost"),
             isNext && "is-next",
+            box && "is-link",
           ]
             .filter(Boolean)
             .join(" ");
           return (
             <li key={`${g.week}-${g.event_id ?? g.kind}`} className={cls} aria-current={isNext ? "true" : undefined}>
               <span className="season-strip__week label">
-                <span className="season-strip__week-name">{g.title ?? weekLabels[g.week] ?? m.week(g.week)}</span>
+                <span className="season-strip__week-name" title={g.title ?? weekLabels[g.week] ?? undefined}>
+                  {g.title ?? weekLabels[g.week] ?? m.week(g.week)}
+                </span>
                 {isNext && <span className="season-strip__tag">{m.next}</span>}
               </span>
               {bye ? (
-                <span className="season-strip__opp season-strip__opp--bye">{m.bye}</span>
+                <span className="season-strip__opp season-strip__opp--bye">{open ? m.open(g.week) : m.bye}</span>
               ) : (
                 <span className="season-strip__opp" title={g.opponent_name}>
                   <span
@@ -106,14 +130,25 @@ export default function SeasonStrip({ games, teams, weekLabels }: Props) {
                 </span>
               )}
               <span className="season-strip__line">
-                {bye
-                  ? ""
-                  : g.played && g.won !== null
-                    ? m.result(g.won, g.points_for ?? 0, g.points_against ?? 0, g.overtime)
-                    : g.date
-                      ? DATE.format(new Date(g.date))
-                      : m.tbd}
+                {open
+                  ? m.toBeSet
+                  : bye
+                    ? ""
+                    : g.played && g.won !== null
+                      ? m.result(g.won, g.points_for ?? 0, g.points_against ?? 0, g.overtime)
+                      : g.date
+                        ? DATE.format(new Date(g.date))
+                        : m.tbd}
               </span>
+              {box && (
+                <button
+                  type="button"
+                  className="season-strip__box"
+                  aria-label={m.boxScore(g.opponent_name)}
+                  title={m.boxScore(g.opponent_name)}
+                  onClick={() => onBox?.(box)}
+                />
+              )}
             </li>
           );
         })}

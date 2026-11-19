@@ -42,7 +42,9 @@
 
 /* one week: its name, the opponent, the result or the date */
 .season-strip__game {
+  position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a long week name is cut short, never wider than its tile */
   flex: none;
   align-content: center;
   gap: 2px;
@@ -57,7 +59,10 @@
   border-style: dashed;
 }
 
+/* the week you are in: raised, and solid even when it is an open date */
 .season-strip__game.is-next {
+  background: var(--paper-hi);
+  border-style: solid;
   border-color: var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
 }
@@ -67,11 +72,13 @@
   justify-content: space-between;
   gap: 4px;
   color: var(--ink-soft);
+  min-width: 0;
   font-size: 10px;
   white-space: nowrap;
 }
 
 .season-strip__week-name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -93,7 +100,10 @@
 }
 
 .season-strip__opp--bye {
+  display: block;
+  overflow: hidden;
   color: var(--ink-soft);
+  text-overflow: ellipsis;
 }
 
 .season-strip__swatch {
@@ -131,4 +141,18 @@
 
 .season-strip__game.is-lost .season-strip__line {
   color: var(--ink-soft);
+}
+
+/* a played game opens its box score: the whole tile is the button */
+.season-strip__box {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.season-strip__game.is-link:hover {
+  border-color: var(--ink);
 }

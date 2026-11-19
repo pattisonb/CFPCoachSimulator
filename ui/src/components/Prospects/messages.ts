@@ -7,6 +7,7 @@ export const messages = {
     all: "Everyone",
     recommended: "Recommended",
     board: "My Board",
+    favorites: "Favorites",
     interested: "Interested in You",
     open: "Uncommitted",
   },
@@ -39,6 +40,10 @@ export const messages = {
   removeBoard: (name: string) => `Take ${name} off your board`,
   pullsOffer: (name: string) =>
     `${name} holds your offer. Taking him off your board pulls it (and a soft commit to you ends). Go ahead?`,
+  addFav: (name: string) => `Add ${name} to your favorites`,
+  removeFav: (name: string) => `Take ${name} off your favorites`,
+  favOn: (name: string) => `${name} is one of your favorites.`,
+  favOff: (name: string) => `${name} is off your favorites.`,
   boardOn: (name: string) => `${name} is on your board.`,
   boardOff: (name: string) => `${name} is off your board.`,
   boardError: (msg: string) => `Couldn't change your board: ${msg}.`,

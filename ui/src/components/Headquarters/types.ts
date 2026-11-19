@@ -212,6 +212,19 @@ export interface HqView {
     };
   };
   next_year?: { groups: NextGroup[] };
+  /** every promise you have out (promises_tracker): to your players, and to recruits */
+  promises?: {
+    players: { slug: string; name: string; position: string; status: string }[];
+    recruits: {
+      key: string;
+      pid: string;
+      name: string;
+      position?: string;
+      stars?: number;
+      what: string;
+      status: string;
+    }[];
+  };
   goals?: Goal[];
   tasks?: Task[];
   whatif?: WhatIf;

@@ -1,0 +1,103 @@
+/* Class Rankings: every school's class in a table, the picked school's recruits beside it. */
+.classes {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 380px; /* the table needs the room: its Points column is the last */
+  align-items: start;
+  gap: var(--s3);
+  min-height: 0;
+  padding: var(--s3) var(--s4) var(--s4);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.classes__note {
+  padding: var(--s4);
+}
+
+.classes__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.classes__table,
+.classes__class {
+  margin-bottom: 0;
+}
+
+.classes__table {
+  overflow-x: auto;
+}
+
+/* the picked school's class stays in view while the table scrolls */
+.classes__class {
+  position: sticky;
+  top: 0;
+}
+
+/* a school's name: picks its class */
+.classes__school {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.classes__school:hover,
+.classes__school.is-on {
+  text-decoration: underline;
+}
+
+.classes__list {
+  display: grid;
+  list-style: none;
+}
+
+.classes__list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.classes__list li:first-child {
+  border-top: 0;
+}
+
+.classes__who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.classes__tag {
+  padding: 0 6px;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.classes__tag.is-signed {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+@media (width <= 1100px) {
+  .classes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .classes__class {
+    position: static;
+  }
+}

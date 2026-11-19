@@ -3,7 +3,15 @@ const n = (v: number | undefined) => (v ?? 0).toLocaleString("en-US");
 
 export const messages = {
   title: "Stats",
-  tabs: { players: "Players", teams: "Teams" },
+  tabs: { players: "Players", teams: "Teams", injuries: "Injuries" },
+  injuries: "Injury Report",
+  injuryCount: (n: number) => `${n} ${n === 1 ? "Player" : "Players"} Out`,
+  injuryCols: { player: "Player", team: "Team", injury: "Injury", out: "Out", back: "Back" },
+  injuryType: (t: string) => t.replace(/\b[a-z]/g, (c) => c.toUpperCase()),
+  weeksOut: (n: number) => (n === 1 ? "1 Week" : `${n} Weeks`),
+  nextSeason: "Next Season",
+  noInjuries: "Nobody Is Out",
+  noInjuriesText: "No injuries on this list right now.",
   through: (week: string) => `Through ${week}`,
   preseason: "Preseason",
   week: (w: number) => `Week ${w}`,

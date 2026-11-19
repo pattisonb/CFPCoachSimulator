@@ -4,10 +4,14 @@ import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
 import Dropdown from "../../components/Dropdown/index.tsx";
 import Bracket from "../../components/Bracket/index.tsx";
+import GameWindow from "../../components/GameWindow/index.tsx";
 import Headquarters from "../../components/Headquarters/index.tsx";
+import Programs from "../../components/Programs/index.tsx";
 import Rankings from "../../components/Rankings/index.tsx";
 import Recap from "../../components/Recap/index.tsx";
+import Scores from "../../components/Scores/index.tsx";
 import Stats from "../../components/Stats/index.tsx";
+import TeamResume from "../../components/TeamResume/index.tsx";
 import DepthChart from "../../components/DepthChart/index.tsx";
 import Office from "../../components/Office/index.tsx";
 import Awards from "../../components/Awards/index.tsx";
@@ -62,6 +66,8 @@ const PANE: Record<string, string> = {
   stats: "",
   bracket: "",
   recap: "",
+  scores: "",
+  programs: "",
 };
 
 /**
@@ -74,9 +80,11 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const [section, setSection] = useState(() => sectionOf(sectionKey));
   // Recruiting's tab: the Board, or Prospects (?tab=; an old ?section=prospects link opens it, sectionOf maps it)
   const [hubTab, setHubTab] = useState<HubTab>(() =>
-    sectionKey === "prospects" || new URLSearchParams(location.search).get("tab") === "prospects"
-      ? "prospects"
-      : "board",
+    sectionKey === "classes" || new URLSearchParams(location.search).get("tab") === "classes"
+      ? "classes"
+      : sectionKey === "prospects" || new URLSearchParams(location.search).get("tab") === "prospects"
+        ? "prospects"
+        : "board",
   );
   // every section opened stays mounted (hidden when not shown): going back is instant and keeps its filters,
   // page, picks and scroll
@@ -132,7 +140,16 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     await api(`/api/season/${seasonId}/settings`, { method: "POST", body: { auto_recruit: mode } });
     await reloadRecruiting();
   };
-  const sim = useSim(seasonId, refresh);
+  // a game in a window: a played game's box score, or your game played back after Game Day. The page behind keeps the
+  // week as it was until the playback is over, so the score is not given away
+  const [game, setGame] = useState<{ id: string; live: boolean } | null>(null);
+  const sim = useSim(seasonId, (last) => {
+    if (last?.status !== "error" && last?.gameday_event) setGame({ id: last.gameday_event, live: true });
+    else refresh();
+  });
+  const openBox = (id: string) => setGame({ id, live: false });
+  /** a team's resume in a window (from Rankings and Programs) */
+  const [resume, setResume] = useState<string | null>(null);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
 
   const season = load.kind === "ready" ? load.season : null;
@@ -180,7 +197,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const writeAddress = (key: string, tab: HubTab) => {
     const params = new URLSearchParams(location.search);
     params.set("section", key);
-    if (key === "recruiting" && tab === "prospects") params.set("tab", tab);
+    if (key === "recruiting" && tab !== "board") params.set("tab", tab);
     else params.delete("tab");
     replaceParams("game", Object.fromEntries(params));
   };
@@ -233,7 +250,15 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
               <SidebarSimple size={20} weight="bold" aria-hidden="true" />
             </button>
           )}
-          {season && <SeasonStrip games={season.schedule} teams={bySlug} weekLabels={season.week_labels} />}
+          {season && (
+            <SeasonStrip
+              games={season.schedule}
+              teams={bySlug}
+              weekLabels={season.week_labels}
+              week={season.current_week}
+              onBox={openBox}
+            />
+          )}
           {season && coach && face && (
             <CoachBadge
               name={coachName(coach)}
@@ -276,9 +301,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                   aria-hidden={key !== section.key}
                 >
                   {key === "office" ? (
-                    <Office season={season} recruiting={recruiting} teams={bySlug} sim={sim} onSection={open} />
+                    <Office
+                      season={season}
+                      recruiting={recruiting}
+                      teams={bySlug}
+                      sim={sim}
+                      onSection={open}
+                      onBox={openBox}
+                    />
                   ) : key === "recruiting" ? (
                     <RecruitingHub
+                      teams={bySlug}
                       seasonId={season.id}
                       team={season.team}
                       year={season.year}
@@ -310,13 +343,23 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       onBoardChange={() => void reloadRecruiting()}
                     />
                   ) : key === "rankings" ? (
-                    <Rankings season={season} teams={bySlug} onBracket={() => open("bracket")} />
+                    <Rankings
+                      season={season}
+                      teams={bySlug}
+                      onBracket={() => open("bracket")}
+                      onBox={openBox}
+                      onTeam={setResume}
+                    />
                   ) : key === "stats" ? (
                     <Stats key={season.current_week} season={season} teams={bySlug} />
                   ) : key === "bracket" ? (
                     <Bracket season={season} teams={bySlug} />
                   ) : key === "recap" ? (
                     <Recap season={season} teams={bySlug} />
+                  ) : key === "scores" ? (
+                    <Scores key={season.current_week} season={season} teams={bySlug} onBox={openBox} />
+                  ) : key === "programs" ? (
+                    <Programs season={season} teams={bySlug} onTeam={setResume} />
                   ) : key === "standings" ? (
                     <Standings season={season} teams={bySlug} />
                   ) : key === "bowls" ? (
@@ -336,7 +379,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       onBoardChange={() => void reloadRecruiting()}
                     />
                   ) : key === "schedule" ? (
-                    <Schedule season={season} teams={bySlug} />
+                    <Schedule season={season} teams={bySlug} onBox={openBox} />
                   ) : key === "depth" ? (
                     <DepthChart
                       key={season.current_week}
@@ -381,6 +424,28 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           </section>
         )}
       </main>
+      {season && (
+        <TeamResume
+          seasonId={season.id}
+          team={resume}
+          teams={bySlug}
+          weekLabels={season.week_labels}
+          onBox={openBox}
+          onClose={() => setResume(null)}
+        />
+      )}
+      {season && (
+        <GameWindow
+          seasonId={season.id}
+          eventId={game?.id ?? null}
+          live={game?.live}
+          teams={bySlug}
+          mine={season.team}
+          weekLabels={season.week_labels}
+          onFinal={refresh}
+          onClose={() => setGame(null)}
+        />
+      )}
     </div>
   );
 }

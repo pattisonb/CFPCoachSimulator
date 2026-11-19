@@ -51,6 +51,8 @@ interface Props {
   sim: Sim;
   /** open another section (a to-do opens Recruiting, Scouting or the Depth Chart) */
   onSection: (key: string) => void;
+  /** open a played game's box score */
+  onBox?: (eventId: string) => void;
 }
 
 /** *tune* The week of the early signing period (selection week) and of national signing day (sim/season.py). */
@@ -103,7 +105,7 @@ interface Todo {
  * move the season on; the middle, the week's to-do list as a checked timeline; the right, Program News and the
  * conference's scores. The top row (schedule, coach, Energy) is the game's own, above it.
  */
-export default function Office({ season: s, recruiting: v, teams, sim, onSection }: Props) {
+export default function Office({ season: s, recruiting: v, teams, sim, onSection, onBox }: Props) {
   const [office, setOffice] = useState<OfficeView | null>(null);
   const [officeError, setOfficeError] = useState<string | null>(null);
   const [preview, setPreview] = useState<GamePreview | null>(null);
@@ -228,7 +230,15 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         {s.done ? (
           <WrapCard s={s} teams={teams} />
         ) : (
-          <GameCard s={s} thisWeek={thisWeek} next={next} teams={teams} preview={preview} weekName={weekName} />
+          <GameCard
+            s={s}
+            thisWeek={thisWeek}
+            next={next}
+            teams={teams}
+            preview={preview}
+            weekName={weekName}
+            onBox={onBox}
+          />
         )}
         <Actions
           s={s}
@@ -358,7 +368,18 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
                       <TeamTag slug={g.away} name={g.away_name} teams={teams} won={awayWon} />
                       <b className="office__res-score">{m.score(g.away_score, g.home_score)}</b>
                       <TeamTag slug={g.home} name={g.home_name} teams={teams} won={!awayWon} />
-                      <span className="office__when">{g.overtime ? m.finalOt : m.final}</span>
+                      {onBox && g.event_id ? (
+                        <button
+                          type="button"
+                          className="office__when office__box"
+                          title={m.boxScoreOf(g.away_name, g.home_name)}
+                          onClick={() => onBox(g.event_id!)}
+                        >
+                          {g.overtime ? m.finalOt : m.final}
+                        </button>
+                      ) : (
+                        <span className="office__when">{g.overtime ? m.finalOt : m.final}</span>
+                      )}
                     </li>
                   );
                 })}
@@ -407,8 +428,10 @@ function GameCard({
   teams,
   preview,
   weekName,
+  onBox,
 }: {
   s: SeasonSummary;
+  onBox?: (eventId: string) => void;
   thisWeek: ScheduleGame | null;
   next: ScheduleGame | null;
   teams: Map<string, TeamCard>;
@@ -461,6 +484,11 @@ function GameCard({
           line={m.sideLine(g.opponent_rank, g.opponent_record ?? "0-0")}
         />
       </div>
+      {played && onBox && g.event_id && g.has_box !== false && (
+        <button type="button" className="office__box office__box--game" onClick={() => onBox(g.event_id!)}>
+          {m.boxScore}
+        </button>
+      )}
       {thisWeek && !played && (
         <div className="office__odds">
           {mine !== null && p ? (

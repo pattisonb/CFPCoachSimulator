@@ -1,0 +1,322 @@
+/* A box score: the scoreboard, a row of tabs, then the open tab's tables. */
+.box {
+  display: grid;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+}
+
+.box__soft {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* the scoreboard: away at the left, home at the right, the status and line score between */
+.box__board {
+  display: grid;
+  grid-template-areas: "away mid home";
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.box__side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.box__side--away {
+  grid-area: away;
+}
+
+.box__side--home {
+  grid-area: home;
+  flex-direction: row-reverse;
+}
+
+.box__side.is-lost {
+  color: var(--ink-soft);
+}
+
+.box__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: var(--t-lg);
+  text-transform: uppercase;
+}
+
+.box__name b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* a small ink square after your own team's name */
+.box__you {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+}
+
+.box__score {
+  font-size: var(--t-2xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.box__mid {
+  display: grid;
+  grid-area: mid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.box__status {
+  font-weight: 700;
+}
+
+.box__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.box__pane {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.box__quarter {
+  grid-column: 1 / -1;
+  padding: var(--s2) 0 4px;
+  color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
+  font-weight: 700;
+}
+
+/* a score: when, what (in the team's color), who and how, and the score after it */
+.box__scoring {
+  display: grid;
+  list-style: none;
+}
+
+.box__scoring li {
+  display: grid;
+  grid-template-columns: 64px 68px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.box__scoring li.is-first {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.box__scoring li.is-first .box__quarter {
+  margin-bottom: 6px;
+}
+
+.box__when {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.box__kind {
+  padding: 1px 4px;
+  border: 1px solid var(--ink);
+  border-left: 6px solid var(--c);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.box__running {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.box__groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  gap: 0 var(--s4);
+}
+
+/* a table wider than its column scrolls inside it instead of running under its neighbor */
+.box__group {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* ---------- the tables: the line score, the two teams compared, and the players' and drives' tables ----------
+   (grouped by how specific each rule is, so one table's rule never undoes another's) */
+.box__line {
+  border-collapse: collapse;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.box__compare {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.box__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.box__line th,
+.box__line td {
+  min-width: 26px;
+  padding: 1px 6px;
+  text-align: right;
+}
+
+.box__line th {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* team stats: away's number, the stat's name, home's number; the better one in bold */
+.box__compare th,
+.box__compare td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.box__table th,
+.box__table td {
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.box__compare .is-better,
+.box__table .is-score {
+  font-weight: 700;
+}
+
+.box__line tbody th,
+.box__table tbody th {
+  text-align: left;
+}
+
+.box__table tbody th {
+  white-space: normal;
+}
+
+.box__compare tbody th {
+  color: var(--ink-soft);
+  font-weight: 400;
+  text-align: center;
+}
+
+.box__compare thead th {
+  border-bottom: var(--line) solid var(--ink);
+  text-transform: uppercase;
+}
+
+.box__table thead th {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.box__table tfoot th,
+.box__table tfoot td {
+  border-top: var(--line) solid var(--ink);
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.box__compare td:first-child,
+.box__table th:first-child {
+  text-align: left;
+}
+
+.box__compare td:last-child {
+  text-align: right;
+}
+
+.box__compare thead th:first-child {
+  text-align: left;
+}
+
+.box__compare thead th:last-child {
+  text-align: right;
+}
+
+.box__hurt {
+  margin-left: 6px;
+  padding: 0 4px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+/* a drive's stretch of the field */
+.box__bar {
+  position: relative;
+  display: block;
+  width: 140px;
+  height: 10px;
+  margin-left: auto;
+  background: var(--tile);
+  border: 1px solid var(--line-soft);
+}
+
+.box__bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+@media (width <= 700px) {
+  .box__board {
+    grid-template-areas:
+      "away"
+      "home"
+      "mid";
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .box__side--home {
+    flex-direction: row;
+  }
+}
+
+/* a player's name that opens his card: plain text until pointed at */
+.box__player {
+  padding: 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.box__player:hover {
+  text-decoration: underline;
+}

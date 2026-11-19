@@ -4,10 +4,12 @@ import {
   CalendarBlank,
   ChartBar,
   Football,
+  GraduationCap,
   Handshake,
   ListNumbers,
   Newspaper,
   Ranking,
+  SquaresFour,
   Table,
   TreeStructure,
   UsersThree,
@@ -41,12 +43,19 @@ export const CAREER_SECTIONS = [
 ] as const satisfies readonly Section[];
 
 export const LEAGUE_SECTIONS = [
+  { key: "scores", label: "Scores", icon: SquaresFour, blurb: "Every game, week by week, and your rivalries." },
   { key: "standings", label: "Standings", icon: Table, blurb: "Every conference's table." },
   { key: "rankings", label: "Rankings", icon: Ranking, blurb: "The AP Poll and the playoff rankings." },
   { key: "stats", label: "Stats", icon: ChartBar, blurb: "The season's leaders." },
   { key: "bracket", label: "Bracket", icon: TreeStructure, blurb: "The playoff, round by round." },
   { key: "bowls", label: "Bowls", icon: Football, blurb: "Every bowl and who's in it." },
   { key: "awards", label: "Awards", icon: Trophy, blurb: "The season's honors." },
+  {
+    key: "programs",
+    label: "Programs",
+    icon: GraduationCap,
+    blurb: "Every program's standing and what it is built on.",
+  },
   { key: "recap", label: "Season Recap", icon: Newspaper, blurb: "The season, told after it's done." },
 ] as const satisfies readonly Section[];
 
@@ -58,7 +67,12 @@ const ALL: readonly Section[] = [...CAREER_SECTIONS, ...LEAGUE_SECTIONS];
 export const DEFAULT_SECTION: SectionKey = "office";
 
 /** Old section keys and where they live now: Prospects is a Recruiting tab; Scouting became Staff. */
-const MOVED: Record<string, string> = { prospects: "recruiting", scouting: "staff" };
+const MOVED: Record<string, string> = {
+  prospects: "recruiting",
+  classes: "recruiting",
+  scouting: "staff",
+  games: "scores",
+};
 
 /** The section for an address's ?section=, or the default for a missing or unknown one. */
 export const sectionOf = (key: string | null): Section =>
