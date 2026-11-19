@@ -1,6 +1,8 @@
 import { trackSlow } from "./busy.ts";
+import { gameFetch } from "./gameClient.ts";
 
-// The one way to the game: fetch, which the Vite dev server proxies to the Python game server (tools/dev_server.py).
+// The one way to the game (gameClient.ts): a fetch the Vite dev server hands to the Python game server
+// (tools/dev_server.py), or on the published site a message to the game running in this browser.
 
 export interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;
@@ -21,7 +23,7 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     init.body = isRaw ? (body as BodyInit) : JSON.stringify(body);
     if (!isRaw) init.headers = { "Content-Type": "application/json", ...(headers as Record<string, string>) };
   }
-  const res = await fetch(path, init);
+  const res = await gameFetch(path, init);
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || data?.detail || `Request failed (${res.status})`);
   return data as T;
