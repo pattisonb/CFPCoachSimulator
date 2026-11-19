@@ -1135,6 +1135,7 @@ def with_positions(team: dict, moves: dict) -> dict:
         if p.get("skills"):
             p["ovr"], p["skills"] = position_fit.season_move(p, p.get("role") or p["position"], role)
         p["position"], p["role"], p["depth"], p["in_game"] = pos, role, None, False
+        p["source_position"] = role                   # his card is scored where he plays now (game_scale.card_position)
         if crossing:
             p["stats"] = {k: 0 for k in stat_keys}    # a player crossing units needs every box-score key
     if not touched:
@@ -4752,7 +4753,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     from teamdata import game_scale
     next_tiers = ability_goals.upgrades_view(state, team, f"{name}|{position}", {x["key"]: x["tier"] for x in p.get("traits") or []
                                                                                   if isinstance(x, dict)}) if ability_goals.on() else {}
-    built_on = (game_scale.card_formula(p.get("source_position") or position) or {}).get("w") or {}
+    built_on = (game_scale.card_formula(game_scale.card_position(p)) or {}).get("w") or {}
     built_total = sum(built_on.get(k, 0.0) for k in (p.get("attributes") or {})) or 1.0
     return {
         "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
