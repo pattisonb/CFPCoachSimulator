@@ -163,7 +163,7 @@ LOOSE = {
     "Washington State", "Arkansas State", "Jacksonville State", "Sacramento State", "North Dakota State",
     "Coastal Carolina", "Central Michigan", "Eastern Michigan", "Western Michigan", "Western Kentucky",
     "East Carolina", "Florida Atlantic", "Georgia Southern", "Middle Tennessee", "Northern Illinois", "Old Dominion",
-    "Southern Miss", "UL Monroe", "Miami (OH)", "Northwestern", "Clemson", "Auburn",
+    "Southern Miss", "UL Monroe", "Miami (OH)", "Northwestern", "Clemson",      # not "Auburn": it is also a hair color
 }
 # The fields of the data that name a team: a place-named school is swapped here and nowhere else.
 TEAM_KEYS = {"team", "name", "winner", "loser", "short_name", "home", "away", "opponent", "school", "alma_mater"}

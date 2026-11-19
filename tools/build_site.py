@@ -70,6 +70,7 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
     shutil.copy2(ROOT / "data" / "history" / "polls.json", root / "data" / "history" / "polls.json")
     if ui:
         shutil.copytree(ROOT / "ui", root / "ui", ignore=shutil.ignore_patterns(*UI_SKIP))
+        shutil.copytree(ROOT / "pocket-faces", root / "pocket-faces", ignore=shutil.ignore_patterns(*UI_SKIP))   # the app reads it as source
     if generic:
         from tools.generic import scrub
         scrub.run(root)

@@ -439,11 +439,11 @@ def run(root: Path) -> Maps:
     m = Maps(root)
     _fields(root, m)
     for path in sorted(root.rglob("*.json")):
-        if "node_modules" in path.parts or "ui" in path.relative_to(root).parts[:1]:
+        if "node_modules" in path.parts or "pocket-faces" in path.parts or "ui" in path.relative_to(root).parts[:1]:
             continue                                       # the app's own files (package.json, tsconfig)
         _write(path, m.walk(_read(path), DROP_KEYS))
     for path in sorted(root.rglob("*")):
-        if path.suffix in TEXT_SUFFIXES and path.is_file() and "node_modules" not in path.parts:
+        if path.suffix in TEXT_SUFFIXES and path.is_file() and "node_modules" not in path.parts and "pocket-faces" not in path.parts:
             old = path.read_text(encoding="utf-8")
             new = m.source(old, sample=path.stem in ("sample", "samples"))
             if new != old:

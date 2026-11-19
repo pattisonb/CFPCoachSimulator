@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "cd ui && npm ci --install-links",
+  "installCommand": "cd ui && npm ci",
   "buildCommand": "python3 tools/build_site.py --generic",
   "outputDirectory": "ui/dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],

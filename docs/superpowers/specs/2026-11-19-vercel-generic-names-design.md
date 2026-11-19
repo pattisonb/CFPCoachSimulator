@@ -44,6 +44,6 @@ on everything the page sends back.
 - Every team's slug follows its new name (the slug shows in the address bar).
 - Coaches' alma maters outside the league are blanked; a last job outside the league reads without the employer.
 
-## Open
-- `pocket-faces` is a `file:` dependency outside this repository. Vercel cannot install it until it is in the
-  repository or published.
+## pocket-faces
+The package is in the repository (`pocket-faces/`) and the app reads its source through an alias, so there is
+nothing to install or build for it.
