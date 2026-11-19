@@ -42,9 +42,14 @@ def main():
     for slug, t in maps.real_teams.items():
         new = maps.team[slug]
         assert new["mascot"] != t["mascot"], f"{slug} keeps its real mascot"
+        assert new["short"] != t["short_name"] and new["slug"] != slug, f"{slug} keeps its real name"
+        assert new["abbr"] != t["abbreviation"], f"{slug} keeps its real abbreviation"
         assert new["stadium"] != t["stadium"]["name"], f"{slug} keeps its real stadium"
-    fulls = [f"{v['short']} {v['mascot']}" for v in maps.team.values()]
-    assert len(set(fulls)) == len(fulls), "two schools share a lookalike name"
+    for field in ("short", "abbr", "slug"):
+        values = [v[field] for v in maps.team.values()]
+        assert len(set(values)) == len(values), f"two schools share a lookalike {field}"
+    real_shorts = {t["short_name"] for t in maps.real_teams.values()} | {t["abbreviation"] for t in maps.real_teams.values()}
+    assert not real_shorts & ({v["short"] for v in maps.team.values()} | {v["abbr"] for v in maps.team.values()}), "a lookalike is another school's real name"
     for real, new in maps.person.items():
         first_real, last_real, _ = scrub.Names._parts(real)
         assert new != real and initial(new.split()[0]) == initial(first_real), (real, new)
@@ -58,11 +63,14 @@ def main():
         assert not found, "real names in the generic build: " + json.dumps({k: dict(list(v.items())[:12]) for k, v in found.items()}, ensure_ascii=False)
         assert not (root / "cfb_sim_data" / "teams" / "notre-dame.json").exists()
         team = json.loads((root / "cfb_sim_data" / "teams" / "north-dome.json").read_text(encoding="utf-8"))
-        assert team["short_name"] == "North Dome" and team["abbreviation"] == "ND", team["short_name"]
+        assert team["short_name"] == "North Dome" and team["abbreviation"] == "NDM", team["short_name"]
         real = json.loads((ROOT / "cfb_sim_data" / "teams" / "notre-dame.json").read_text(encoding="utf-8"))
         assert team["colors"]["primary"]["hex"] != real["colors"]["primary"]["hex"]          # a protected shade: moved a hair
         assert abs(int(team["colors"]["primary"]["hex"][1:3], 16) - int(real["colors"]["primary"]["hex"][1:3], 16)) <= tables.COLOR_NUDGE
-        kept = json.loads((root / "cfb_sim_data" / "teams" / "iowa.json").read_text(encoding="utf-8"))
+        kept = json.loads((root / "cfb_sim_data" / "teams" / "iowa-city.json").read_text(encoding="utf-8"))
+        assert kept["short_name"] == "Iowa City" and kept["state"] == "IA"
+        scenes = (root / "coach_career" / "scenes.py").read_text(encoding="utf-8")
+        assert '"TX": "Texas"' in scenes, "a state lost its name to a school's swap"
         assert kept["colors"] == json.loads((ROOT / "cfb_sim_data" / "teams" / "iowa.json").read_text(encoding="utf-8"))["colors"]
         assert len(team["roster"]) == len(real["roster"])
         assert [p["overall"] for p in team["roster"]] == [p["overall"] for p in real["roster"]]   # only the names change

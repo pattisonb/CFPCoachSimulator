@@ -121,11 +121,10 @@ class Maps:
 
         self.team: dict[str, dict] = {}      # slug -> the lookalike identity
         for slug, t in self.real_teams.items():
-            short, school, mascot = tables.TEAMS[slug]
-            new_short = short or t["short_name"]
+            new_short, abbr, mascot = tables.TEAMS[slug]
             self.team[slug] = {
-                "slug": slugify(new_short) if short else slug, "short": new_short,
-                "school": school or f"{new_short} College", "mascot": mascot,
+                "slug": slugify(new_short), "short": new_short, "abbr": abbr,
+                "school": f"{new_short} University", "mascot": mascot,
                 "stadium": self._stadium(slug, t, mascot),
             }
         new_slugs = [v["slug"] for v in self.team.values()]
@@ -172,9 +171,10 @@ class Maps:
         self.exact.update(self.player_slug)
         self.exact.update(self.slug)
         self.exact.update(tables.CONFERENCES_EXACT)
-        for slug, t in self.real_teams.items():
-            if t["short_name"] != self.team[slug]["short"]:
-                self.exact[t["short_name"]] = self.team[slug]["short"]
+        self.team_exact = {t["short_name"]: self.team[s]["short"] for s, t in self.real_teams.items()}
+        for old, new in self.team_exact.items():
+            if old in tables.LOOSE:
+                self.exact[old] = new
         # phrases, swapped wherever they stand as whole words
         ph: dict[str, str] = {}
         ph.update(tables.MARKS)
@@ -200,14 +200,24 @@ class Maps:
                 ph[stadium.replace("-", "–")] = new["stadium"]
             if t["mascot"] in tables.DISTINCT_MASCOTS:
                 ph[t["mascot"]] = new["mascot"]
-            if t["short_name"] != new["short"] and t["short_name"] not in tables.EXACT_ONLY:
+            if t["short_name"] in tables.LOOSE:
                 ph[t["short_name"]] = new["short"]
         for old, new in self.fcs_names.items():
             ph[old] = new
+        # the FCS schools the game's own code lists by their bare name ("Duquesne"), unless that name opens a real
+        # team's ("North Dakota" and North Dakota State)
+        real_names = [t["short_name"] for t in self.real_teams.values()] + [t["school_name"] for t in self.real_teams.values()]
+        self.fcs_places = {old: new for old, new in self.fcs_locations.items()
+                           if old not in ph and len(old) > 4 and not any(n == old or n.startswith(old + " ") for n in real_names)}
+        ph.update({k: v for k, v in self.fcs_places.items() if " " in k})
         for c in coaches:
             ph[c] = self.person[c]
         ph.pop("", None)
         self.phrases = ph
+        src = {**ph, **self.fcs_places}
+        src.pop("", None)
+        self.source_phrases = src
+        self._source_re = re.compile(r"(?<![A-Za-z0-9_])(?:" + "|".join(re.escape(k) for k in sorted(src, key=len, reverse=True)) + r")(?![A-Za-z0-9_])")
         keys = sorted(ph, key=len, reverse=True)
         self._phrase_re = re.compile(r"(?<![A-Za-z0-9_])(?:" + "|".join(re.escape(k) for k in keys) + r")(?![A-Za-z0-9_])")
         slugs = sorted(self.slug, key=len, reverse=True)
@@ -230,20 +240,28 @@ class Maps:
         self.fcs_names: dict[str, str] = {}
         taken: set[str] = set()
         ids = sorted(set(sched.get("fcs", {})) | set(fmap), key=str)
+        self.fcs_locations = {v["location"]: "" for v in sched.get("fcs", {}).values() if v.get("location")}
+        real_places = {t["short_name"] for t in self.real_teams.values()} | {t.get("city") or "" for t in self.real_teams.values()}
+        real_places |= {x for v in self.fcs_locations for x in v.split()}
+        real_names = {t["short_name"] for t in self.real_teams.values()} | set(self.fcs_locations)
         for i in ids:
             old = (sched.get("fcs", {}).get(i) or {}).get("name") or (fmap.get(i) or {}).get("name") or ""
             state = (fmap.get(i) or {}).get("state") or ""
-            places = [c[0] for c in cities.get(state, []) if isinstance(c, list)] or ["Riverside", "Fairview", "Lakewood"]
+            avoid = real_places | set(self.fcs_locations)
+            places = [c[0] for c in cities.get(state, []) if isinstance(c, list) and c[0] not in avoid] or ["Riverside", "Fairview", "Lakewood"]
             for attempt in range(100):
                 rng = _seed("fcs", str(i), old, str(attempt))
                 location = rng.choice(places) + rng.choice(tables.FCS_SUFFIXES)
-                if location not in taken:
+                if location not in taken and location not in real_names:
                     break
             taken.add(location)
             name = f"{location} {rng.choice(tables.FCS_MASCOTS)}"
             out[i] = {"name": name, "location": location}
             if old:
                 self.fcs_names[old] = name
+            old_loc = (sched.get("fcs", {}).get(i) or {}).get("location")
+            if old_loc:
+                self.fcs_locations[old_loc] = location
         return out
 
     # ---- the swap ----
@@ -265,27 +283,30 @@ class Maps:
                 self._cache[s] = out
         return out
 
-    def walk(self, node, drop: frozenset = frozenset()):
+    def walk(self, node, drop: frozenset = frozenset(), key: str | None = None):
         if isinstance(node, dict):
-            return {self.text(k): self.walk(v, drop) for k, v in node.items() if k not in drop}
+            return {self.text(k): self.walk(v, drop, k) for k, v in node.items() if k not in drop}
         if isinstance(node, list):
-            return [self.walk(v, drop) for v in node]
+            return [self.walk(v, drop, key) for v in node]
         if isinstance(node, str):
+            if key in tables.TEAM_KEYS and node in self.team_exact:
+                return self.team_exact[node]
             return self.text(node)
         return node
 
     _QUOTED = re.compile(r"""(["'`])((?:(?!\1)[^\\\n]){1,80})\1""")
 
-    def source(self, code: str) -> str:
-        """Python or TypeScript source: quoted strings by the whole-string lookup, then phrases across the text."""
+    def source(self, code: str, sample: bool = False) -> str:
+        """Python or TypeScript source: quoted strings by the whole-string lookup, then phrases across the text.
+        `sample`: the app's stand-in data, where a quoted place name is a team."""
         def quoted(m: re.Match) -> str:
             inner = m.group(2)
-            hit = self.exact.get(inner)
+            hit = self.exact.get(inner) or (self.team_exact.get(inner) if sample else None)
             if hit is None or m.group(1) in hit:
                 return self._slug_re.sub(lambda s: self.slug[s.group(1)], m.group(0))
             return f"{m.group(1)}{hit}{m.group(1)}"
         code = self._QUOTED.sub(quoted, code)
-        return self._phrase_re.sub(lambda m: self.phrases[m.group(0)], code)
+        return self._source_re.sub(lambda m: self.source_phrases[m.group(0)], code)
 
 
 # ---- by field -------------------------------------------------------------------------------------------------
@@ -328,7 +349,7 @@ def _coach(c: dict, m: Maps, shorts: list[str], old_shorts: dict[str, str]) -> N
 
 def _fields(root: Path, m: Maps) -> None:
     """The edits a lookup cannot make: identities, colors, stadiums, coaches' histories, bowl sites, FCS names."""
-    old_shorts = {t["short_name"]: m.team[s]["short"] for s, t in m.real_teams.items()}
+    old_shorts = dict(m.team_exact)
     shorts = sorted(set(old_shorts.values()), key=len, reverse=True)
     teams_dir = root / "cfb_sim_data" / "teams"
     for slug, t in m.real_teams.items():
@@ -339,7 +360,7 @@ def _fields(root: Path, m: Maps) -> None:
         for p in t.get("roster", []):
             p["team"] = DONE + new["short"]
         t["short_name"], t["school_name"], t["mascot"] = DONE + new["short"], DONE + new["school"], DONE + new["mascot"]
-        t["stadium"]["name"] = DONE + new["stadium"]
+        t["stadium"]["name"], t["abbreviation"] = DONE + new["stadium"], DONE + new["abbr"]
         if slug in tables.CITIES:
             t["city"] = DONE + tables.CITIES[slug]
         for c in t["colors"].values():
@@ -424,7 +445,7 @@ def run(root: Path) -> Maps:
     for path in sorted(root.rglob("*")):
         if path.suffix in TEXT_SUFFIXES and path.is_file() and "node_modules" not in path.parts:
             old = path.read_text(encoding="utf-8")
-            new = m.source(old)
+            new = m.source(old, sample=path.stem in ("sample", "samples"))
             if new != old:
                 path.write_text(new, encoding="utf-8")
     return m
@@ -436,6 +457,8 @@ def terms(root: Path) -> dict[str, set[str]]:
     m = Maps(Path(root))
     phrases = {k for k, v in m.phrases.items() if k != v and k not in m.coaches}
     phrases |= {t["city"] for s, t in m.real_teams.items() if s in tables.CITIES}
+    phrases |= {t["school_name"] for t in m.real_teams.values()}
+    phrases |= {k for k in m.fcs_places if " " in k}
     phrases -= {"AP", "MAC", "SEC", "ACC", "CFP", "NFL", "ESPN", "NCAA", "CUSA", "Nielsen"}      # checked as whole words below
     return {
         "people": {n for n in m.real_people if n not in set(m.person.values())},

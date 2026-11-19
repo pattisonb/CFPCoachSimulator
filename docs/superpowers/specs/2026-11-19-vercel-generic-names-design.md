@@ -8,7 +8,7 @@ published carries a name someone else owns, while the game run on a developer's 
 - `v0` is the old `main` (the `web/` site), `v1` is the old `clear-mode`; `main` is the React app (`ui-clear-mode`).
 - A merge to `main` publishes the React app on Vercel.
 - The published build swaps every real school, mascot, stadium, bowl, conference, trophy, award, player and coach.
-  Abbreviations stay (TCU is Texas City University), colors stay except a small move on protected shades, and a
+  Colors stay except a small move on protected shades, and a
   person keeps their initials.
 
 ## Non-Goals
@@ -37,9 +37,11 @@ on everything the page sends back.
 - `vercel.json`: install in `ui/`, build generic, serve `ui/dist`, every path falls back to `index.html`.
 
 ## Calls Made Along the Way
-- A school named only for a place keeps the place name ("Texas", "Ohio State") and gets a new mascot, stadium and
-  full name; a school named for anything else gets a lookalike.
-- Team slugs change only where the short name does (the slug shows in the address bar).
+- No school keeps its real name, abbreviation, mascot or stadium. A school named for its state or city goes by its
+  home town or the town's nickname (Texas is Austin, Houston is Space City); a school named for anything else gets
+  a lookalike (Notre Dame is North Dome). A place name is swapped only in the fields that name a team, so states
+  and cities keep theirs.
+- Every team's slug follows its new name (the slug shows in the address bar).
 - Coaches' alma maters outside the league are blanked; a last job outside the league reads without the employer.
 
 ## Open
