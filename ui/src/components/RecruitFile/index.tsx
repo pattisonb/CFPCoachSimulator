@@ -135,11 +135,14 @@ export function OverviewTab({
   detail,
   team,
   weekLabels,
+  wide,
 }: {
   r: BoardRow;
   detail: ProspectDetail | null;
   team: string;
   weekLabels: Record<string, string>;
+  /** his recruitment is over: the Overview has the whole width, the battle and the scout's summary side by side */
+  wide?: boolean;
 }) {
   const rows = raceOf(r);
   const flip = Object.fromEntries((detail?.flip?.rivals ?? []).map((x) => [x.school, x.word]));
@@ -149,7 +152,7 @@ export function OverviewTab({
   const known = r.priorities_known;
   const rep = detail?.report;
   return (
-    <Panels stack>
+    <Panels stack className={wide ? "recruit-file__pair" : undefined}>
       <Panel title={m.battle} aside={rows.length ? m.schools(rows.length) : undefined}>
         <CommitBanner r={r} d={detail} />
         {rows.length ? (
@@ -188,36 +191,39 @@ export function OverviewTab({
         )}
       </Panel>
 
-      <Panel title={m.snapshot}>
-        <PanelRows>
-          <PanelRow label={m.standing} value={sd.odds ?? sd.word} hint={sd.text} />
-          <div className="panel__row">
-            <dt>{m.scouted}</dt>
-            <dd className="recruit-file__inline">
-              <Blocks have={looks} need={3} />
-              <b>{looks ? m.looksOf(fmtLooks(looks)) : m.notYet}</b>
-            </dd>
-          </div>
-          {[0, 1, 2].map((i) => {
-            const t = known[i];
-            if (!t) return <PanelRow key={i} label={m.priority(i)} unknown={m.unknown} hint={m.priorityHint} />;
-            const word = m.pulls[pullOf(r.strength[t])];
-            const name = PITCH_NAMES[t] ?? t;
-            return (
-              <div key={i} className="panel__row">
-                <dt>{name}</dt>
-                <dd>
-                  <Tooltip title={name} text={m.pullTip(name, word)} block className="recruit-file__inline">
-                    <RangeBar lo={0} hi={Math.round(100 * (r.strength[t] ?? 0))} />
-                    <b>{word}</b>
-                  </Tooltip>
-                </dd>
-              </div>
-            );
-          })}
-        </PanelRows>
-        {r.no_room && <p className="recruit-file__warn">{r.no_room.tip}</p>}
-      </Panel>
+      {/* his recruitment is over: where you stand and what to do next no longer apply, so the snapshot is left out */}
+      {!wide && (
+        <Panel title={m.snapshot}>
+          <PanelRows>
+            <PanelRow label={m.standing} value={sd.odds ?? sd.word} hint={sd.text} />
+            <div className="panel__row">
+              <dt>{m.scouted}</dt>
+              <dd className="recruit-file__inline">
+                <Blocks have={looks} need={3} />
+                <b>{looks ? m.looksOf(fmtLooks(looks)) : m.notYet}</b>
+              </dd>
+            </div>
+            {[0, 1, 2].map((i) => {
+              const t = known[i];
+              if (!t) return <PanelRow key={i} label={m.priority(i)} unknown={m.unknown} hint={m.priorityHint} />;
+              const word = m.pulls[pullOf(r.strength[t])];
+              const name = PITCH_NAMES[t] ?? t;
+              return (
+                <div key={i} className="panel__row">
+                  <dt>{name}</dt>
+                  <dd>
+                    <Tooltip title={name} text={m.pullTip(name, word)} block className="recruit-file__inline">
+                      <RangeBar lo={0} hi={Math.round(100 * (r.strength[t] ?? 0))} />
+                      <b>{word}</b>
+                    </Tooltip>
+                  </dd>
+                </div>
+              );
+            })}
+          </PanelRows>
+          {r.no_room && <p className="recruit-file__warn">{r.no_room.tip}</p>}
+        </Panel>
+      )}
 
       <Panel title={m.summary}>
         {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{detail ? m.noSummary : m.loading}</p>}
@@ -673,7 +679,7 @@ export function HistoryTab({ r, detail, team }: { r: BoardRow; detail: ProspectD
     <Panels label={m.tabs.history}>
       <Panel title={m.timeline} aside={items.length ? m.entries(items.length) : undefined}>
         {items.length ? (
-          <ul className="recruit-file__timeline">
+          <ul className="recruit-file__timeline" tabIndex={0}>
             {items.map((x, i) => {
               const Mark = KIND_ICON[x.kind] ?? Newspaper;
               return (

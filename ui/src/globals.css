@@ -142,12 +142,15 @@ input {
    Recruiting panel). The scroller says how much top padding it has (--pin-pad) and what it is painted with (--pin-bg),
    so the pinned part covers that padding and nothing shows above or through it. */
 .pin-top {
+  /* the scroller's top padding as a length even when it sets none (a bare 0 is not a length inside calc) */
+  --pin: var(--pin-pad, calc(0 * 1px));
+
   position: sticky;
-  top: calc(-1 * var(--pin-pad, 0px));
+  top: calc(-1 * var(--pin));
   z-index: 3;
   display: grid;
   gap: var(--s2);
-  margin-top: calc(-1 * var(--pin-pad, 0px));
-  padding: var(--pin-pad, 0px) 0 var(--s2);
+  margin-top: calc(-1 * var(--pin));
+  padding: var(--pin) 0 var(--s2);
   background: var(--pin-bg, var(--paper-hi));
 }

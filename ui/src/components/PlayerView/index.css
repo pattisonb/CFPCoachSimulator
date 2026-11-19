@@ -319,3 +319,19 @@
 .player-view__table tbody tr:last-child td {
   border-bottom: 0;
 }
+
+/* an ability's next tier: what it takes, then how far along he is */
+.player-view__next {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-xs);
+}
+
+.player-view__next-at {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

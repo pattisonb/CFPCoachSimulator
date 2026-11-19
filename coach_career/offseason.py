@@ -1687,11 +1687,14 @@ def rv2_tier(ab: str) -> int:
     return rv2.TRAIT_TIERS.get(ab.split("|")[-1], 0)
 
 
-def _overall_weights(pos: str) -> dict:
-    """The ratings our overall formula reads at a position, with their weights (teamdata/game_scale.py overall)."""
-    from teamdata import game_scale
-    table = game_scale.data()["overall"]
-    return (table.get(pos) or table[game_scale._FIRST.get(game_scale.group(pos), "QB")])["w"]
+def _card_growth(was: list, now: list, attrs: list, pos: str) -> list[dict]:
+    """Each attribute on his card that moved over the offseason: where it was and is, its name, and its weight in his
+    position's overall (teamdata/game_scale.py card_formula: the weight times the change is what it added)."""
+    from teamdata import game_scale, ratings as rv2
+    a, b = game_scale.card_attributes(dict(zip(attrs, was)), pos), game_scale.card_attributes(dict(zip(attrs, now)), pos)
+    weights = (game_scale.card_formula(pos) or {}).get("w") or {}
+    return [{"key": k, "label": rv2.ATTRIBUTES[k][0], "from": a[k], "to": v, "w": round(weights.get(k, 0.0), 4)}
+            for k, v in b.items() if k in a and v != a[k]]
 
 
 def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starter: bool = False) -> int:
@@ -1973,11 +1976,8 @@ def _develop_all(state: dict) -> dict:
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
-                # each rating that moved, with where it was and is (the Development card): a view of the growth, never read back
-                # `w`: the rating's weight in his position's overall formula (w times the change is what it added to his overall)
-                weights = _overall_weights(p["pos"])
-                grew = [{"key": k, "from": a, "to": b, "w": round(weights.get(k, 0.0), 4)}
-                        for k, a, b in zip(attrs, was or [], p["r"]) if b != a]
+                # each card attribute that moved, with where it was and is (the Development card): a view, never read back
+                grew = _card_growth(was or p["r"], p["r"], attrs, p["pos"])
                 mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why, "grew": grew,
                              "transfer": p.get("transfer") if _new_transfer(state["offseason"], p, slug) else None})
     mine.sort(key=lambda r: -r["gain"])
@@ -2315,6 +2315,15 @@ def _apply_staff(state: dict) -> list[dict]:
     return out
 
 
+def _your_jobs(off: dict) -> set:
+    """The jobs you can take right now (offers, or openings after you were fired), while the Staff step is open; and,
+    after it, the one you took (its earlier hire never happened)."""
+    car = off.get("carousel") or {}
+    if off.get("stage") == "staff":
+        return set(car.get("offers") or []) | set(car.get("openings") or [])
+    return {off["move_to"]} if off.get("move_to") else set()
+
+
 def choose_job(state: dict, slug: Optional[str]) -> dict:
     """Take a job offer (or, fired, an opening); None stays (or lets Auto pick the best opening)."""
     off = state.get("offseason") or {}
@@ -2530,7 +2539,19 @@ def schedule_view(state: dict) -> dict:
     mine = sorted((g for g in shim["games"].values() if me in (g["home"], g["away"])), key=lambda g: g["week"])
     open_ = off["stage"] == "schedule"
     editable = [dict(g, options=season.schedule_options(shim, g["event_id"], teams)) for g in season.schedule_editable(shim)] if open_ else []
-    return {"team": me, "games": mine, "editable": editable, "changes": shim["schedule_changes"], "open": open_}
+    from sim import schedule_gen
+    return {"team": me, "games": mine, "editable": editable, "changes": shim["schedule_changes"], "open": open_,
+            # the regular season's weeks (a week without a game of yours is a bye), and where each game could move
+            "weeks": list(range(1, schedule_gen.LAST_WEEK + 1)), "moves": season.schedule_moves(shim, teams) if open_ else {}}
+
+
+def schedule_move(state: dict, event_id: str, week: int) -> dict:
+    """Move one of next season's games to another week (into your bye, or trading weeks with another of your games)."""
+    from sim import season
+    if state["offseason"]["stage"] != "schedule" or not state["offseason"].get("next_schedule"):
+        raise season.ScheduleError(409, "The schedule can be edited only at the Edit Schedule step.")
+    season.schedule_move(_schedule_shim(state), event_id, int(week), next_teams(state))
+    return schedule_view(state)
 
 
 def schedule_trade(state: dict, event_id: str, slug: str) -> dict:
@@ -2995,9 +3016,12 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
         "staff": None,
         "review": {k: v for k, v in (off.get("review") or {}).items() if k != "verdict"} or None,
         "fired": bool(off.get("fired")),
-        "your_staff": [{"id": x["id"], "role": x["role"], "name": x["name"], "contract_until": x.get("contract_until")}
+        "your_staff": [{"id": x["id"], "role": x["role"], "name": x["name"], "contract_until": x.get("contract_until"),
+                        "evaluation": x.get("evaluation"), "recruiting": x.get("recruiting"), "area": x.get("area")}     # his card on the Staff step
                        for x in (state.get("career") or {}).get("staff", [])],
-        "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"][:60],
+        # a job that is yours to take is not shown as filled while you decide (the league's pick steps in only if you pass)
+        "coaching_changes": [c for c in off.get("coaching_changes", []) if c["role"] == "head_coach"
+                             and not (c.get("new") and c["new"] != "You" and c["team"] in _your_jobs(off))][:60],
         "history": (state.get("career") or {}).get("history", []),
     }
     if out["review"] is not None:            # the pool's math for your school: left + reward (+ fund) = pool

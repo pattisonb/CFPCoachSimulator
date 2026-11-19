@@ -460,6 +460,8 @@ export interface PlayerAttribute {
   value: number;
   potential: number;
   boost: number;
+  /** how much of his overall it is, in percent */
+  weight?: number;
 }
 
 export interface PlayerTrait {
@@ -471,6 +473,8 @@ export interface PlayerTrait {
   tier_name: string;
   built_on: { label: string; value: number }[];
   earned: boolean;
+  /** what its next tier takes and how far along he is (none at Platinum, or when it is his goal) */
+  next?: { tier: number; tier_name: string; have: number; need: number; text: string };
 }
 
 /** GET /api/season/{id}/player?team=&slug= (the parts the new UI uses) */
@@ -576,6 +580,8 @@ export interface ProspectRow {
   generational: boolean;
   /** a full report's flag: gem, bust */
   find: string | null;
+  /** your coordinator vouches for him (his report is complete and the read says he would start) */
+  likes?: { who: string; text?: string } | null;
   /** Recommended only: why he fits ("from a state you sign from", "a position you need: QB 2 left") */
   why?: string[];
 }
@@ -727,6 +733,10 @@ export interface BoardRow {
   id: string;
   name: string;
   stars: number;
+  /** your staff's flags (RecruitFlags): found once his report is complete */
+  generational?: boolean;
+  find?: string | null;
+  likes?: { who: string; text?: string } | null;
   display_pos: string;
   national_rank: number;
   pos_rank: number;

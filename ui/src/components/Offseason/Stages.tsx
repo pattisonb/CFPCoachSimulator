@@ -3,7 +3,7 @@ import { ArrowRight } from "@phosphor-icons/react";
 import Dropdown from "../Dropdown/index.tsx";
 import Modal from "../Modal/index.tsx";
 import Face from "../Face/index.tsx";
-import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
+import Panel from "../Panel/index.tsx";
 import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { inkOn } from "../../colors.ts";
@@ -55,6 +55,16 @@ const TeamTag = ({ children, team }: { children: ReactNode; team: TeamCard | und
 const Empty = ({ children }: { children: ReactNode }) => <p className="off__soft">{children}</p>;
 const teamName = (teams: P["teams"], slug: string) => teams.get(slug)?.name ?? slug;
 
+/** One of a stage's headline numbers. */
+const Stat = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div>
+    <dt className="label">{label}</dt>
+    <dd>{children}</dd>
+  </div>
+);
+/** A stage's own colors on a card: your team's. */
+const MINE = { "--c": "var(--team, var(--ink))", "--on": "var(--team-on, var(--paper-hi))" } as CSSProperties;
+
 /** Your meeting with the AD: what he made of the year, and (when the job is in question) what you say to him. */
 function ReviewPanel({ v, busy, live, act }: P) {
   const r = v.review;
@@ -64,11 +74,6 @@ function ReviewPanel({ v, busy, live, act }: P) {
   return (
     <Panel title={m.review.title} aside={<Tag solid={r.met}>{r.mood}</Tag>}>
       <p className="off__lede">{r.words}</p>
-      <PanelRows>
-        <PanelRow label={m.review.goal} value={r.goal} />
-        <PanelRow label={m.review.record} value={`${r.record[0]}-${r.record[1]}`} />
-        <PanelRow label={m.review.nil} value={m.review.nilLine(r.nil_now, r.nil_next)} tip={m.review.nilTip} />
-      </PanelRows>
       {live && !r.decided && r.options.length > 0 && (
         <div className="off__say">
           <span className="label">{m.review.say}</span>
@@ -104,24 +109,29 @@ function ReviewPanel({ v, busy, live, act }: P) {
 
 // ---------- Your meeting with the AD: the offseason's first step ----------
 
+/** The year in four numbers, then what he said (and what you say back, when the job is in question). */
 function Meeting(p: P) {
   const r = p.v.review;
   if (!r) return <Empty>{m.review.none}</Empty>;
   return (
-    <div className="off__meeting">
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.review.record}>
+          {r.record[0]}-{r.record[1]}
+        </Stat>
+        <Stat label={m.review.result}>
+          {r.met ? m.review.met : m.review.missed} <small>{r.goal}</small>
+        </Stat>
+        <Stat label={m.review.standing}>{r.mood}</Stat>
+        <Stat label={m.review.nil}>
+          {r.nil_next} <small>{m.review.nilSmall(r.nil_now, r.nil_next)}</small>
+        </Stat>
+      </dl>
       <ReviewPanel {...p} />
-      <Panel title={m.review.next}>
-        <PanelRows>
-          <PanelRow label={m.review.goal} value={r.goal} />
-          <PanelRow label={m.review.result} value={r.met ? m.review.met : m.review.missed} />
-          <PanelRow label={m.review.standing} value={r.mood} tip={m.review.standingTip} />
-        </PanelRows>
-        <p className="off__soft">{r.must && !r.decided ? m.review.mustText : m.review.afterText}</p>
-      </Panel>
+      <p className="off__soft">{r.must && !r.decided ? m.review.mustText : m.review.afterText}</p>
     </div>
   );
 }
-
 // ---------- Keep Them Home ----------
 
 /** *tune* A released card's fade, and the slide of the cards that close up after it, in ms. */
@@ -545,60 +555,132 @@ function Departures(p: P) {
 
 // ---------- the transfer portal, a week at a time ----------
 
-function Portal({ v, teams, onSection, live, season }: P) {
+/**
+ * A portal week at a glance: four numbers, the way to the Recruiting board (where the portal is worked), your whole
+ * board as a side-scrolling row of cards with where each stands (a name opens his file on the Recruiting board, with
+ * his scouting and ratings), then who has come and gone as two columns. The ones who went elsewhere
+ * are folded.
+ */
+function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
   const pt = v.portal;
+  const rows = [...(pt.board?.rows ?? [])].sort((a, b) => b.overall - a.overall);
+  const sides = [
+    { key: "in", name: m.portal.in, list: pt.moves_mine.filter((x) => x.to === season.team) },
+    { key: "out", name: m.portal.out, list: pt.moves_mine.filter((x) => x.to !== season.team) },
+  ].filter((s) => s.list.length);
+  const max = Math.max(...pt.moves_mine.map((x) => x.overall), 1);
   return (
-    <Panels>
-      <Panel title={m.portal.title} aside={pt.week ? m.portal.week(pt.week, pt.weeks) : undefined}>
-        <PanelRows>
-          <PanelRow label={m.portal.entrants} value={pt.entrants.toLocaleString("en-US")} />
-          <PanelRow label={m.portal.signed} value={pt.signed.toLocaleString("en-US")} />
-          <PanelRow
-            label={m.portal.spots}
-            value={String(v.open_spots)}
-            tip={m.portal.spotsTip(v.roster, v.roster_limit)}
-          />
-          <PanelRow label={m.portal.offers} value={m.portal.offersLine(pt.offers.length, pt.offers_left)} />
-        </PanelRows>
-        {live && (
-          <>
-            <p className="off__soft">{m.portal.how}</p>
-            <button type="button" className="off__next" onClick={() => onSection("recruiting")}>
-              {m.portal.open}
-              <ArrowRight size={16} weight="bold" aria-hidden="true" />
-            </button>
-          </>
-        )}
-      </Panel>
-      <Panel title={m.portal.board} aside={pt.board ? m.portal.onBoard(pt.board.count) : undefined}>
-        {pt.board?.rows.length ? (
-          <ul className="off__list">
-            {pt.board.rows.map((x) => (
-              <li key={x.id}>
-                <span className="off__who">
-                  <b>{x.name}</b>
-                  <span className="off__soft">{x.pos}</span>
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.portal.weekLabel}>
+          {pt.week || m.portal.done} {pt.week ? <small>{m.portal.of(pt.weeks)}</small> : null}
+        </Stat>
+        <Stat label={m.portal.spots}>
+          {v.open_spots} <small>{m.portal.rosterSmall(v.roster, v.roster_limit)}</small>
+        </Stat>
+        <Stat label={m.portal.offers}>
+          {pt.offers.length} <small>{m.portal.left(pt.offers_left)}</small>
+        </Stat>
+        <Stat label={m.portal.entrants}>
+          {pt.entrants.toLocaleString("en-US")} <small>{m.portal.signedSmall(pt.signed)}</small>
+        </Stat>
+      </dl>
+      {live && (
+        <div className="off__cta">
+          <p className="off__soft">{m.portal.how}</p>
+          <button type="button" className="off__next" onClick={() => onSection("recruiting")}>
+            {m.portal.open}
+            <ArrowRight size={16} weight="bold" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      <section aria-label={m.portal.board}>
+        <h3 className="label dev__kicker">
+          {m.portal.board}
+          {pt.board ? ` · ${m.portal.onBoard(pt.board.count)}` : ""}
+        </h3>
+        {rows.length ? (
+          <ul className="off__cards" tabIndex={0}>
+            {rows.map((x) => (
+              <li key={x.id} className="dev-card portal-card" style={MINE}>
+                <header className="dev-card__top">
+                  <span className="face-tile dev-card__face">
+                    <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                  </span>
+                  <b className="dev-card__gain">{x.overall}</b>
+                </header>
+                <button
+                  type="button"
+                  className="off-card__open dev-card__name"
+                  title={m.portal.openFile(x.name)}
+                  onClick={() => onRecruit(x.id)}
+                >
+                  {x.name}
+                </button>
+                <span className="off__soft">{x.pos}</span>
+                <span className="dev-card__line">
+                  {x.signed || x.committed ? (
+                    <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
+                      {x.signed
+                        ? m.portal.signedWith(teamName(teams, x.signed))
+                        : m.portal.committedTo(teamName(teams, x.committed ?? ""))}
+                    </TeamTag>
+                  ) : (
+                    <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
+                  )}
                 </span>
-                <b className="off__num">{x.overall}</b>
-                {x.signed || x.committed ? (
-                  <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
-                    {x.signed
-                      ? m.portal.signedWith(teamName(teams, x.signed))
-                      : m.portal.committedTo(teamName(teams, x.committed ?? ""))}
-                  </TeamTag>
-                ) : (
-                  <Tag>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
-                )}
               </li>
             ))}
           </ul>
         ) : (
           <Empty>{m.portal.noBoard}</Empty>
         )}
-      </Panel>
-      <Moves v={v} teams={teams} me={season.team} />
+      </section>
+
+      {/* who has come and gone: a column each way, the other school on each line */}
+      {sides.length > 0 && (
+        <section className="dev__chart" aria-label={m.portal.moves}>
+          <header className="dev__chart-head">
+            <h3 className="label dev__kicker">{m.portal.moves}</h3>
+          </header>
+          <div className="gone">
+            {sides.map((s) => (
+              <section key={s.key} className="gone__col">
+                <h4 className="gone__head">
+                  <b>{s.name}</b>
+                  <span className="off__tag is-solid">{s.list.length}</span>
+                </h4>
+                <ol className="gone__list">
+                  {s.list.map((x) => {
+                    const other = s.key === "in" ? x.from : x.to;
+                    return (
+                      <li key={x.id}>
+                        <span className="dev__who gone__who">
+                          <b>{x.name}</b>
+                          <span className="off__soft off__move">
+                            {x.pos} · {s.key === "in" ? m.portal.from : m.portal.to}
+                            <Swatch team={teams.get(other)} size={12} />
+                            {teams.get(other)?.abbreviation ?? teamName(teams, other)}
+                            {x.walk_on ? ` · ${m.portal.walkOn}` : ""}
+                          </span>
+                        </span>
+                        <span className="dev__track" aria-hidden="true">
+                          <i className="dev__gain" style={{ left: 0, width: `${(100 * x.overall) / max}%` }} />
+                        </span>
+                        <b className="dev__now">{x.overall}</b>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ))}
+          </div>
+        </section>
+      )}
+
       {pt.away.length > 0 && (
-        <Panel title={m.portal.away}>
+        <Panel title={m.portal.away} aside={m.portal.players(pt.away.length)} collapsible defaultOpen={false}>
           <ul className="off__list">
             {pt.away.map((x) => (
               <li key={x.id}>
@@ -611,40 +693,9 @@ function Portal({ v, teams, onSection, live, season }: P) {
           </ul>
         </Panel>
       )}
-    </Panels>
+    </div>
   );
 }
-
-/** The portal moves in and out of your program so far. */
-function Moves({ v, teams, me }: Pick<P, "v" | "teams"> & { me: string }) {
-  if (!v.portal.moves_mine.length) return null;
-  return (
-    <Panel title={m.portal.moves}>
-      <ul className="off__list">
-        {v.portal.moves_mine.map((x) => (
-          <li key={x.id}>
-            <span className="off__who">
-              <b>{x.name}</b>
-              <span className="off__soft">{x.pos}</span>
-            </span>
-            <b className="off__num">{x.overall}</b>
-            {/* where he came from and where he went, each in its colors; In or Out is from your side */}
-            <span className="off__move">
-              <Swatch team={teams.get(x.from)} size={14} />
-              {teams.get(x.from)?.abbreviation ?? teamName(teams, x.from)}
-              <ArrowRight size={12} weight="bold" aria-hidden="true" />
-              <Swatch team={teams.get(x.to)} size={14} />
-              {teams.get(x.to)?.abbreviation ?? teamName(teams, x.to)}
-              {x.walk_on && <span className="off__soft">{m.portal.walkOn}</span>}
-            </span>
-            {x.to === me ? <TeamTag team={teams.get(me)}>{m.portal.in}</TeamTag> : <Tag>{m.portal.out}</Tag>}
-          </li>
-        ))}
-      </ul>
-    </Panel>
-  );
-}
-
 // ---------- Development ----------
 
 type Unit = "all" | "offense" | "defense" | "special";
@@ -724,7 +775,7 @@ function Development({ v, teams }: P) {
         </div>
         <div>
           <dt className="label">{m.dev.average}</dt>
-          <dd>{signed(Math.round(avg * 10) / 10)}</dd>
+          <dd>{signed(Math.round(avg))}</dd>
         </div>
         {rec && (
           <div>
@@ -879,7 +930,7 @@ const ratingName = (key: string) =>
  */
 function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSProperties; onClose: () => void }) {
   const rows = (who?.grew ?? [])
-    .map((g) => ({ ...g, label: ratingName(g.key), lift: (g.w ?? 0) * (g.to - g.from) }))
+    .map((g) => ({ ...g, label: g.label ?? ratingName(g.key), lift: (g.w ?? 0) * (g.to - g.from) }))
     .sort((a, b) => b.lift - a.lift || b.to - b.from - (a.to - a.from));
   const main = rows.filter((r) => Math.abs(r.w ?? 0) >= MAIN_WEIGHT);
   const rest = rows.filter((r) => Math.abs(r.w ?? 0) < MAIN_WEIGHT).sort((a, b) => b.to - b.from - (a.to - a.from));
@@ -980,39 +1031,63 @@ function Notes({ why }: { why: string[] }) {
 
 // ---------- Staff, and the jobs ----------
 
+/**
+ * Your staff at a glance: four numbers, your coaches as tiles (let one go from his tile), each opening with its
+ * candidates as cards to pick from, then any job offers. How your coaches grew and the league's carousel are folded.
+ */
 function Staff({ v, teams, busy, live, act, season }: P) {
   const st = v.staff;
   const job = v.job;
   const leaving = new Set(st?.leaving.map((s) => s.id) ?? []);
-  const jobRow = (j: JobRow, taking: boolean) => (
-    <li key={j.team}>
-      <Swatch team={teams.get(j.team)} size={16} />
-      <span className="off__who">
-        <b>{j.name}</b>
-        <span className="off__soft">
-          {j.conference} · {j.goal}
-        </span>
-      </span>
-      {live && (
-        <Btn on={taking} disabled={busy} onClick={() => act("/job", { team: taking ? null : j.team })}>
-          {taking ? m.staff.taking : m.staff.take}
-        </Btn>
-      )}
-    </li>
-  );
+  const jobs = job ? [...job.offers, ...job.openings] : [];
+  const filled = st ? st.leaving.filter((s) => st.hired[s.id] != null).length : 0;
+  const role = (r: string) => m.staff.roles[r] ?? r;
   return (
-    <Panels>
-      <Panel title={m.staff.yours} aside={season.team_name}>
-        <ul className="off__list">
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.staff.openingsLabel}>
+          {st?.leaving.length ?? 0} <small>{m.staff.filled(filled)}</small>
+        </Stat>
+        <Stat label={job?.offers.length ? m.staff.offers : m.staff.openings}>{jobs.length}</Stat>
+        <Stat label={m.staff.grewLabel}>{st?.developed.length ?? 0}</Stat>
+        <Stat label={m.staff.changesLabel}>{v.coaching_changes.length}</Stat>
+      </dl>
+
+      <section aria-label={m.staff.yours}>
+        <h3 className="label dev__kicker">
+          {m.staff.yours} · {season.team_name}
+        </h3>
+        <ul className="dev__jumps">
           {v.your_staff.map((s) => (
-            <li key={s.id}>
-              <span className="off__who">
-                <b>{s.name}</b>
-                <span className="off__soft">
-                  {m.staff.roles[s.role] ?? s.role}
-                  {st?.contract[s.id]?.until ? ` · ${m.staff.through(st.contract[s.id].until!)}` : ""}
-                </span>
+            <li key={s.id} className="dev-card cand" style={MINE}>
+              <header className="dev-card__top">
+                <b className="cand__name">{s.name}</b>
+              </header>
+              <span className="off__soft">
+                {[
+                  role(s.role),
+                  s.area ? m.staff.area(s.area) : "",
+                  st?.contract[s.id]?.until ? m.staff.through(st.contract[s.id].until!) : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </span>
+              {(s.evaluation != null || s.recruiting != null) && (
+                <dl className="cand__ratings">
+                  {s.evaluation != null && (
+                    <div>
+                      <dt className="label">{m.staff.evaluation}</dt>
+                      <dd>{s.evaluation}</dd>
+                    </div>
+                  )}
+                  {s.recruiting != null && (
+                    <div>
+                      <dt className="label">{m.staff.recruiting}</dt>
+                      <dd>{s.recruiting}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
               {leaving.has(s.id) ? (
                 <Tag>{m.staff.leaving}</Tag>
               ) : (
@@ -1026,41 +1101,43 @@ function Staff({ v, teams, busy, live, act, season }: P) {
           ))}
         </ul>
         {st && st.renewed.length > 0 && (
-          <p className="off__soft">{m.staff.renewed(st.renewed.map((r) => `${r.name} (${r.through})`).join(", "))}</p>
+          <p className="off__soft off__more">
+            {m.staff.renewed(st.renewed.map((r) => `${r.name} (${r.through})`).join(", "))}
+          </p>
         )}
-      </Panel>
+      </section>
 
+      {/* an opening: who left and why, then the candidates as cards */}
       {st?.leaving.map((s) => (
-        <Panel
-          key={s.id}
-          title={m.staff.opening(m.staff.roles[s.role] ?? s.role)}
-          aside={m.staff.reason(s.name, st.reasons[s.id] ?? "")}
-        >
-          <ul className="off__cands">
+        <section key={s.id} aria-label={m.staff.opening(role(s.role))}>
+          <h3 className="label dev__kicker">
+            {m.staff.opening(role(s.role))} · {m.staff.reason(s.name, st.reasons[s.id] ?? "")}
+          </h3>
+          <ul className="dev__jumps">
             {(st.candidates[s.id] ?? []).map((c: Candidate, i) => {
               const picked = st.hired[s.id] === i;
               return (
-                <li key={`${c.name}-${i}`} className={picked ? "is-picked" : undefined}>
-                  <span className="off__who">
-                    <b>{c.name}</b>
-                    <span className="off__soft">
-                      {[c.age ? m.staff.age(c.age) : "", c.previous_job, c.years ? m.staff.years(c.years) : ""]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
+                <li key={`${c.name}-${i}`} className={`dev-card cand${picked ? " is-picked" : ""}`} style={MINE}>
+                  <header className="dev-card__top">
+                    <b className="cand__name">{c.name}</b>
+                  </header>
+                  <span className="off__soft">
+                    {[c.age ? m.staff.age(c.age) : "", c.previous_job, c.years ? m.staff.years(c.years) : ""]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
-                  <dl className="off__ratings">
+                  <dl className="cand__ratings">
                     <div>
-                      <dt>{m.staff.evaluation}</dt>
+                      <dt className="label">{m.staff.evaluation}</dt>
                       <dd>{c.evaluation}</dd>
                     </div>
                     <div>
-                      <dt>{m.staff.recruiting}</dt>
+                      <dt className="label">{m.staff.recruiting}</dt>
                       <dd>{c.recruiting}</dd>
                     </div>
                     {c.play_calling != null && (
                       <div>
-                        <dt>{m.staff.playCalling}</dt>
+                        <dt className="label">{m.staff.playCalling}</dt>
                         <dd>{c.play_calling}</dd>
                       </div>
                     )}
@@ -1076,25 +1153,48 @@ function Staff({ v, teams, busy, live, act, season }: P) {
               );
             })}
           </ul>
-          <p className="off__soft">{m.staff.auto}</p>
-        </Panel>
+          <p className="off__soft off__more">{m.staff.auto}</p>
+        </section>
       ))}
 
-      {job && (job.offers.length > 0 || job.openings.length > 0) && (
-        <Panel title={job.offers.length ? m.staff.offers : m.staff.openings} aside={m.staff.jobNote}>
-          <ul className="off__list">{[...job.offers, ...job.openings].map((j) => jobRow(j, job.choice === j.team))}</ul>
-        </Panel>
+      {jobs.length > 0 && job && (
+        <section aria-label={job.offers.length ? m.staff.offers : m.staff.openings}>
+          <h3 className="label dev__kicker">
+            {job.offers.length ? m.staff.offers : m.staff.openings} · {m.staff.jobNote}
+          </h3>
+          <ul className="shirts">
+            {jobs.map((j: JobRow) => {
+              const taking = job.choice === j.team;
+              return (
+                <li key={j.team} className={`shirt${taking ? " is-on" : ""}`}>
+                  <Swatch team={teams.get(j.team)} size={20} />
+                  <span className="shirt__who">
+                    <b>{j.name}</b>
+                    <span className="off__soft">
+                      {j.conference} · {j.goal}
+                    </span>
+                  </span>
+                  {live && (
+                    <Btn on={taking} disabled={busy} onClick={() => act("/job", { team: taking ? null : j.team })}>
+                      {taking ? m.staff.taking : m.staff.take}
+                    </Btn>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       {st && st.developed.length > 0 && (
-        <Panel title={m.staff.developed}>
+        <Panel title={m.staff.developed} aside={m.staff.coaches(st.developed.length)} collapsible defaultOpen={false}>
           <ul className="off__list">
             {st.developed.map((d) => (
               <li key={d.id} className="off__stack">
                 <span className="off__who">
                   <b>{d.name}</b>
                   <span className="off__soft">
-                    {m.staff.roles[d.role] ?? d.role}
+                    {role(d.role)}
                     {d.why.length ? ` · ${d.why.join(", ")}` : ""}
                   </span>
                 </span>
@@ -1108,7 +1208,12 @@ function Staff({ v, teams, busy, live, act, season }: P) {
       )}
 
       {v.coaching_changes.length > 0 && (
-        <Panel title={m.staff.carousel} aside={m.staff.carouselCount(v.coaching_changes.length)}>
+        <Panel
+          title={m.staff.carousel}
+          aside={m.staff.carouselCount(v.coaching_changes.length)}
+          collapsible
+          defaultOpen={false}
+        >
           <ul className="off__list">
             {v.coaching_changes.map((c, i) => (
               <li key={i}>
@@ -1117,8 +1222,8 @@ function Staff({ v, teams, busy, live, act, season }: P) {
                   <b>{teamName(teams, c.team)}</b>
                   <span className="off__soft">
                     {c.new
-                      ? m.staff.hiredLine(c.new, m.staff.roles[c.role] ?? c.role, c.from)
-                      : m.staff.changeLine(c.old ?? "", m.staff.roles[c.role] ?? c.role, c.reason)}
+                      ? m.staff.hiredLine(c.new, role(c.role), c.from)
+                      : m.staff.changeLine(c.old ?? "", role(c.role), c.reason)}
                   </span>
                 </span>
               </li>
@@ -1126,13 +1231,17 @@ function Staff({ v, teams, busy, live, act, season }: P) {
           </ul>
         </Panel>
       )}
-    </Panels>
+    </div>
   );
 }
 
 // ---------- Change Conferences ----------
 
-function Conferences({ v, teams, busy, live, act, get }: P) {
+/**
+ * Three numbers, the tool that moves a program, then a bar for each conference: yours and any with a program that
+ * moved are open, the rest folded (a hundred and thirty-odd names at once was too much to read).
+ */
+function Conferences({ v, teams, busy, live, act, get, season }: P) {
   const [view, setView] = useState<ConferencesView | null>(null);
   const [team, setTeam] = useState("");
   const [tick, setTick] = useState(0);
@@ -1148,14 +1257,21 @@ function Conferences({ v, teams, busy, live, act, get }: P) {
   if (!view) return <Empty>{m.loading}</Empty>;
   const all = view.conferences.flatMap((c) => c.teams.map((t) => ({ ...t, conf: c.name })));
   const picked = all.find((t) => t.team === team);
+  const mine = all.find((t) => t.team === season.team)?.conf;
+  const moved = all.filter((t) => t.moved_from).length;
   const open = live && view.open;
   const move = async (conference: string) => {
     if (await act("/conference", { team, conference })) setTick((n) => n + 1);
   };
   return (
-    <>
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.conf.yours}>{mine ?? m.conf.none}</Stat>
+        <Stat label={m.conf.confsLabel}>{view.conferences.length}</Stat>
+        <Stat label={m.conf.movedLabel}>{moved}</Stat>
+      </dl>
       {open && (
-        <div className="off__tool">
+        <div className="off__cta">
           <span className="off__soft">{m.conf.how}</span>
           <Dropdown
             label={m.conf.team}
@@ -1185,31 +1301,45 @@ function Conferences({ v, teams, busy, live, act, get }: P) {
           )}
         </div>
       )}
-      <div className="off__confs">
-        {view.conferences.map((c) => (
-          <Panel key={c.name} title={c.name} aside={m.conf.count(c.teams.length)}>
-            <ul className="off__teams">
-              {c.teams.map((t) => (
-                <li
-                  key={t.team}
-                  className={t.moved_from ? "is-moved" : undefined}
-                  title={t.moved_from ? m.conf.movedFrom(t.moved_from) : undefined}
-                >
-                  <Swatch team={teams.get(t.team)} size={12} />
-                  {t.name}
-                  {t.moved_from && <Tag>{m.conf.moved}</Tag>}
-                </li>
-              ))}
-            </ul>
-          </Panel>
-        ))}
+      <div className="off__stackup">
+        {view.conferences.map((c) => {
+          const changed = c.teams.filter((t) => t.moved_from).length;
+          return (
+            <Panel
+              key={`${c.name}-${changed}`}
+              title={c.name}
+              aside={changed ? m.conf.countMoved(c.teams.length, changed) : m.conf.count(c.teams.length)}
+              collapsible
+              defaultOpen={c.name === mine || changed > 0}
+            >
+              <ul className="off__teams">
+                {c.teams.map((t) => (
+                  <li
+                    key={t.team}
+                    className={t.moved_from ? "is-moved" : undefined}
+                    title={t.moved_from ? m.conf.movedFrom(t.moved_from) : undefined}
+                  >
+                    <Swatch team={teams.get(t.team)} size={12} />
+                    {t.name}
+                    {t.moved_from && <Tag>{m.conf.moved}</Tag>}
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          );
+        })}
       </div>
-    </>
+    </div>
   );
 }
 
 // ---------- Edit Schedule ----------
 
+/**
+ * Next season's schedule: how it splits in four numbers, then every week in order, a tile a game and a tile a bye.
+ * On a game: a trade for another opponent (non-conference games), and a move to another Saturday (into your bye, or
+ * trading weeks with another of your games) when everyone in it is free then.
+ */
 function Schedule({ v, teams, busy, live, act, get, season }: P) {
   const [view, setView] = useState<NextSchedule | null>(null);
   const [tick, setTick] = useState(0);
@@ -1225,31 +1355,68 @@ function Schedule({ v, teams, busy, live, act, get, season }: P) {
   if (!view) return <Empty>{m.loading}</Empty>;
   const me = view.team ?? season.team;
   const editable = new Map(view.editable.map((g) => [g.event_id, g]));
+  const canTrade = live && view.open;
   const trade = async (event_id: string, slug: string) => {
     if (await act("/schedule", { event_id, slug })) setTick((n) => n + 1);
   };
+  const move = async (event_id: string, week: number) => {
+    if (await act("/schedule/move", { event_id, week })) setTick((n) => n + 1);
+  };
+  const weekName = (w: number) => season.week_labels[String(w)] ?? m.sched.week(w);
+  // every week of the regular season in order: a game, or the bye it leaves (an older game sends no week list)
+  const byWeek = new Map(view.games.map((g) => [g.week, g]));
+  const weeks = [...new Set([...(view.weeks ?? []), ...view.games.map((g) => g.week)])].sort((a, b) => a - b);
+  if (!view.games.length) return <Empty>{m.sched.none}</Empty>;
+  const home = view.games.filter((g) => !g.neutral && g.home === me).length;
+  const away = view.games.filter((g) => !g.neutral && g.home !== me).length;
+  const conf = view.games.filter((g) => g.conference_game).length;
   return (
-    <Panel title={m.sched.title(v.year)} aside={live && view.open ? m.sched.note : undefined} className="off__wide">
-      {!view.games.length ? (
-        <Empty>{m.sched.none}</Empty>
-      ) : (
-        <ol className="off__games">
-          {view.games.map((g) => {
-            const home = g.home === me;
-            const opp = home ? g.away : g.home;
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.sched.games}>{view.games.length}</Stat>
+        <Stat label={m.sched.homeAway}>
+          {home} <small>{m.sched.awayNeutral(away, view.games.length - home - away)}</small>
+        </Stat>
+        <Stat label={m.sched.conference}>
+          {conf} <small>{m.sched.nonCount(view.games.length - conf)}</small>
+        </Stat>
+        {canTrade && (
+          <Stat label={m.sched.tradable}>{view.games.filter((g) => editable.get(g.event_id)?.options).length}</Stat>
+        )}
+      </dl>
+      <section aria-label={m.sched.title(v.year)}>
+        <h3 className="label dev__kicker">
+          {m.sched.title(v.year)}
+          {canTrade ? ` · ${m.sched.note}` : ""}
+          {canTrade && view.moves && Object.keys(view.moves).length ? ` · ${m.sched.moveNote}` : ""}
+        </h3>
+        <ol className="next-games">
+          {weeks.map((w) => {
+            const g = byWeek.get(w);
+            if (!g)
+              return (
+                <li key={`bye-${w}`} className="next-game is-bye">
+                  <span className="label next-game__week">{weekName(w)}</span>
+                  <b className="off__soft">{w === 1 ? m.sched.noGame : m.sched.bye}</b>
+                </li>
+              );
+            const moves = canTrade ? (view.moves?.[g.event_id] ?? []) : [];
+            const atHome = g.home === me;
+            const opp = atHome ? g.away : g.home;
             const e = editable.get(g.event_id);
             return (
-              <li key={g.event_id}>
-                <span className="off__week">{season.week_labels[String(g.week)] ?? m.sched.week(g.week)}</span>
-                <span className="off__soft">{g.neutral ? m.sched.neutral : home ? m.sched.vs : m.sched.at}</span>
-                <Swatch team={teams.get(opp)} size={14} />
-                <b className="off__grow">{home ? g.away_display : g.home_display}</b>
-                <Tag>{g.conference_game ? m.sched.conference : m.sched.nonConference}</Tag>
-                {live && view.open && e?.options && (
+              <li key={g.event_id} className={`next-game${g.conference_game ? "" : " is-non"}`}>
+                <span className="label next-game__week">{weekName(g.week)}</span>
+                <span className="next-game__opp">
+                  <span className="off__soft">{g.neutral ? m.sched.neutral : atHome ? m.sched.vs : m.sched.at}</span>
+                  <Swatch team={teams.get(opp)} size={16} />
+                  <b>{atHome ? g.away_display : g.home_display}</b>
+                </span>
+                {!g.conference_game && <Tag>{m.sched.nonConference}</Tag>}
+                {canTrade && e?.options && (
                   <Dropdown
                     label={m.sched.trade}
                     size="md"
-                    align="right"
                     disabled={busy}
                     value=""
                     options={[
@@ -1261,37 +1428,65 @@ function Schedule({ v, teams, busy, live, act, get, season }: P) {
                     onChange={(slug) => slug && void trade(g.event_id, slug)}
                   />
                 )}
+                {/* another Saturday for this game: your bye, or the week of another game of yours (they trade) */}
+                {moves.length > 0 && (
+                  <Dropdown
+                    label={m.sched.move}
+                    size="md"
+                    disabled={busy}
+                    value=""
+                    options={[
+                      { value: "", label: m.sched.stay },
+                      ...moves.map((o) => ({
+                        value: String(o.week),
+                        label: weekName(o.week),
+                        hint: o.swap_name
+                          ? m.sched.swapWith(o.swap_name)
+                          : o.week === 1
+                            ? m.sched.openWeek
+                            : m.sched.yourBye,
+                      })),
+                    ]}
+                    onChange={(w) => w && void move(g.event_id, Number(w))}
+                  />
+                )}
               </li>
             );
           })}
         </ol>
-      )}
-    </Panel>
+      </section>
+    </div>
   );
 }
 
 // ---------- Ready ----------
 
+/** The roster you take into the season in four numbers, the AD's goal, and what starting the season does. */
 function Ready({ v, season }: P) {
   const lost = v.departures.mine.length;
   const gained = v.portal.moves_mine.filter((x) => x.to === season.team).length;
+  const goal = v.goal_next ?? v.review?.goal;
   return (
-    <Panels>
-      <Panel title={m.ready.title(v.year)}>
-        <PanelRows>
-          <PanelRow label={m.ready.goal} value={v.goal_next ?? v.review?.goal} />
-          <PanelRow label={m.ready.roster} value={m.ready.rosterLine(v.roster, v.roster_limit)} />
-          <PanelRow label={m.ready.signed} value={String(v.signed)} />
-          <PanelRow label={m.ready.portalIn} value={String(gained)} />
-          <PanelRow label={m.ready.left} value={String(lost)} />
-        </PanelRows>
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.ready.roster}>
+          {v.roster} <small>{m.ready.ofLimit(v.roster_limit)}</small>
+        </Stat>
+        <Stat label={m.ready.signed}>{v.signed}</Stat>
+        <Stat label={m.ready.portalIn}>{gained}</Stat>
+        <Stat label={m.ready.left}>{lost}</Stat>
+      </dl>
+      <Panel
+        title={m.ready.title(v.year)}
+        aside={v.review ? <Tag solid={v.review.met}>{v.review.mood}</Tag> : undefined}
+      >
+        {goal && (
+          <p className="off__lede">
+            <span className="label">{m.ready.goal}</span> {goal}
+          </p>
+        )}
         <p className="off__soft">{m.ready.text}</p>
       </Panel>
-      {v.review && (
-        <Panel title={m.review.title} aside={<Tag solid={v.review.met}>{v.review.mood}</Tag>}>
-          <p className="off__lede">{v.review.words}</p>
-        </Panel>
-      )}
-    </Panels>
+    </div>
   );
 }

@@ -443,7 +443,8 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, ve
     carrier_rating += _slider_points(sliders.running_ability)
 
     # ratings v2: inside or outside, and the attributes that read differently in each
-    power_style = (_attr(carrier, "power_running") + _attr(carrier, "tackle_breaking") + _attr(carrier, "strength")) / 3
+    power_style = (_attr(carrier, "power_running") + _attr(carrier, "tackle_breaking") + _attr(carrier, "strength")
+                   + _attr(carrier, "stiff_arm", _attr(carrier, "tackle_breaking"))) / 4      # a stiff arm is a power back's (his tackle breaking, for a carrier without one)
     speed_style = (_attr(carrier, "burst") + _attr(carrier, "agility") + _attr(carrier, "elusiveness")) / 3
     outside_share = max(0.15, min(0.75, cfg.RUN_OUTSIDE_SHARE + (speed_style - power_style) * cfg.RUN_STYLE_TILT
                                   + cfg.SCHEME_STYLE.get(tendencies.get("offense_scheme"), {}).get("outside", 0.0)))
@@ -470,6 +471,14 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, ve
     yards_style += _tr_points(line, cfg.LINE_RUN_TRAITS) * fx["line_run"] - _tr_points(front_players, cfg.TACKLE_TRAITS) * fx["tackle"]
     carry_keys = ("run_vision", "elusiveness", "power_running", "tackle_breaking", "ball_security")
     yards_style += (_attr(carrier, "run_vision") - _attr_mean(carrier, carry_keys)) * cfg.RUN_VISION_EFFECT
+    # blocks finished (every run) and blockers out in front (an outside run): the linemen, and a fullback leading
+    if line:
+        yards_style += (_static(line, "finish_block", lambda ps: sum(_attr(p, "finish_block", cfg.ATTR_LEAGUE_AVG) for p in ps) / len(ps))
+                        - cfg.ATTR_LEAGUE_AVG) * cfg.FINISH_BLOCK_EFFECT
+    if outside:
+        leads = [p for p in _members(offense, ('OL', 'FB', 'RB')) if p is not carrier and p.attrs and "lead_block" in p.attrs]
+        if leads:
+            yards_style += (sum(_attr(p, "lead_block") for p in leads) / len(leads) - cfg.ATTR_LEAGUE_AVG) * cfg.LEAD_BLOCK_EFFECT
 
     yards = random.gauss(*cfg.RUSH_BASE_YARDS)
     yards += yards_style
@@ -705,13 +714,16 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
     if covers and random.random() < cfg.CONTESTED_SHARE[depth]:
         # a defender on him at the catch point: hands in traffic, leaping and height against his
         defender = random.choices(covers, weights=[max(1, p.coverage or 1) for p in covers], k=1)[0]
-        edge = (_attr(target, "contested_catch") - _attr(defender, "ball_skills")) / 2 \
+        catch = _attr(target, "contested_catch")     # with his highlight catches in it, when his position has them
+        catch += (_attr(target, "highlight_catch", catch) - catch) * cfg.HIGHLIGHT_CATCH_SHARE
+        edge = (catch - _attr(defender, "ball_skills")) / 2 \
             + (_attr(target, "leaping") - _attr(defender, "leaping")) / 2 \
             + (target.height_in - defender.height_in) * cfg.CONTESTED_HEIGHT_POINTS
         completion += edge * cfg.CONTESTED_EFFECT
         last_play["contested"] = True
     if pressured:
-        completion += cfg.PRESSURE_COMPLETION + (_attr(qb, "pocket_poise") - cfg.ATTR_LEAGUE_AVG) * cfg.POISE_EFFECT
+        completion += cfg.PRESSURE_COMPLETION + (_attr(qb, "pocket_poise") - cfg.ATTR_LEAGUE_AVG) * cfg.POISE_EFFECT \
+            + (_attr(qb, "throw_on_move", cfg.ATTR_LEAGUE_AVG) - cfg.ATTR_LEAGUE_AVG) * cfg.THROW_ON_MOVE_EFFECT
         completion += _tr(qb, "unflappable") * cfg.TRAIT_FX["unflappable"] \
             + _tr(qb, "accurate_on_the_run", "poised_on_the_run", "off_platform") * cfg.TRAIT_FX["on_the_move"]
     else:

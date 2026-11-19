@@ -4666,5 +4666,432 @@
 "WR:strength": 35.9,
 "WR:vision": 60.6,
 "returners:return_rating": 77.5
+},
+"card_overall": {
+"C": {
+"const": -30.8968,
+"w": {
+"top_speed": 0.02,
+"burst": 0.08554,
+"agility": 0.02,
+"strength": 0.14158,
+"leaping": 0.02,
+"stamina": 0.04181,
+"durability": 0.12097,
+"football_iq": 0.28644,
+"drive_block": 0.09916,
+"reach_block": 0.06486,
+"pass_anchor": 0.15933,
+"pass_footwork": 0.25047,
+"lead_block": 0.04383,
+"finish_block": 0.18402
+}
+},
+"CB": {
+"const": -33.2173,
+"w": {
+"top_speed": 0.1099,
+"burst": 0.13117,
+"agility": 0.08244,
+"strength": 0.02,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.02,
+"football_iq": 0.291,
+"man_coverage": 0.31045,
+"zone_coverage": 0.11121,
+"press": 0.15236,
+"ball_skills": 0.02,
+"diagnosis": 0.20823,
+"tackling": 0.06105,
+"pursuit": 0.03544,
+"hit_power": 0.02,
+"return_skill": 0.02
+}
+},
+"DT": {
+"const": -43.943,
+"w": {
+"top_speed": 0.02,
+"burst": 0.08467,
+"agility": 0.02,
+"strength": 0.2596,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.10978,
+"football_iq": 0.26955,
+"power_rush": 0.30529,
+"speed_rush": 0.13712,
+"block_shedding": 0.2762,
+"tackling": 0.15482,
+"hit_power": 0.12255,
+"pursuit": 0.0266,
+"diagnosis": 0.02
+}
+},
+"FB": {
+"const": -24.7123,
+"w": {
+"top_speed": 0.02,
+"burst": 0.02,
+"agility": 0.02,
+"strength": 0.02,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.25023,
+"football_iq": 0.42138,
+"run_vision": 0.02,
+"ball_security": 0.02,
+"elusiveness": 0.10928,
+"power_running": 0.02,
+"stiff_arm": 0.02,
+"tackle_breaking": 0.02,
+"hands": 0.22457,
+"short_routes": 0.02,
+"pass_footwork": 0.05753,
+"return_skill": 0.02
+}
+},
+"FS": {
+"const": -30.4468,
+"w": {
+"top_speed": 0.06902,
+"burst": 0.0811,
+"agility": 0.04346,
+"strength": 0.03102,
+"leaping": 0.0207,
+"stamina": 0.02,
+"durability": 0.02,
+"football_iq": 0.21573,
+"zone_coverage": 0.02,
+"man_coverage": 0.10595,
+"diagnosis": 0.26037,
+"tackling": 0.24584,
+"hit_power": 0.10505,
+"pursuit": 0.18915,
+"ball_skills": 0.02,
+"block_shedding": 0.06628,
+"return_skill": 0.02
+}
+},
+"HB": {
+"const": -22.8322,
+"w": {
+"top_speed": 0.039,
+"burst": 0.06983,
+"agility": 0.10609,
+"strength": 0.04211,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.0242,
+"football_iq": 0.19274,
+"run_vision": 0.16725,
+"ball_security": 0.17571,
+"elusiveness": 0.24807,
+"power_running": 0.03855,
+"stiff_arm": 0.04642,
+"tackle_breaking": 0.12287,
+"hands": 0.03573,
+"short_routes": 0.02,
+"pass_footwork": 0.02,
+"return_skill": 0.02
+}
+},
+"K": {
+"const": -19.1519,
+"w": {
+"kick_power": 0.44442,
+"kick_accuracy": 0.34352,
+"football_iq": 0.59696,
+"stamina": 0.02
+}
+},
+"LEDG": {
+"const": -47.693,
+"w": {
+"top_speed": 0.19154,
+"burst": 0.23696,
+"agility": 0.02,
+"strength": 0.22188,
+"leaping": 0.04369,
+"stamina": 0.02,
+"durability": 0.06852,
+"football_iq": 0.23027,
+"power_rush": 0.0514,
+"speed_rush": 0.16015,
+"block_shedding": 0.16733,
+"tackling": 0.1731,
+"hit_power": 0.11212,
+"pursuit": 0.11303,
+"diagnosis": 0.05918
+}
+},
+"LG": {
+"const": -31.0545,
+"w": {
+"top_speed": 0.02,
+"burst": 0.04865,
+"agility": 0.02,
+"strength": 0.11695,
+"leaping": 0.02,
+"stamina": 0.04773,
+"durability": 0.14378,
+"football_iq": 0.32621,
+"drive_block": 0.10267,
+"reach_block": 0.12034,
+"pass_anchor": 0.07841,
+"pass_footwork": 0.22131,
+"lead_block": 0.11708,
+"finish_block": 0.22287
+}
+},
+"LT": {
+"const": -29.4653,
+"w": {
+"top_speed": 0.02,
+"burst": 0.05899,
+"agility": 0.02,
+"strength": 0.12631,
+"leaping": 0.03114,
+"stamina": 0.02,
+"durability": 0.128,
+"football_iq": 0.35624,
+"drive_block": 0.05354,
+"reach_block": 0.14941,
+"pass_anchor": 0.10681,
+"pass_footwork": 0.20063,
+"lead_block": 0.09728,
+"finish_block": 0.211
+}
+},
+"MIKE": {
+"const": -30.4186,
+"w": {
+"top_speed": 0.03923,
+"burst": 0.07972,
+"agility": 0.04585,
+"strength": 0.12605,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.02,
+"football_iq": 0.31302,
+"tackling": 0.27462,
+"hit_power": 0.02,
+"pursuit": 0.1737,
+"diagnosis": 0.22923,
+"block_shedding": 0.07928,
+"power_rush": 0.02,
+"speed_rush": 0.02,
+"man_coverage": 0.02,
+"zone_coverage": 0.0846,
+"ball_skills": 0.02
+}
+},
+"P": {
+"const": -11.8705,
+"w": {
+"punt_power": 0.33317,
+"punt_accuracy": 0.32233,
+"football_iq": 0.51932,
+"stamina": 0.02
+}
+},
+"QB": {
+"const": -32.7555,
+"w": {
+"top_speed": 0.14665,
+"burst": 0.06133,
+"agility": 0.0385,
+"strength": 0.04867,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.02171,
+"football_iq": 0.36126,
+"arm_strength": 0.09554,
+"short_accuracy": 0.08508,
+"mid_accuracy": 0.13965,
+"deep_accuracy": 0.13717,
+"throw_on_move": 0.02,
+"pocket_poise": 0.05917,
+"play_action": 0.05663,
+"sack_escape": 0.04571,
+"decision_making": 0.02,
+"run_vision": 0.02,
+"ball_security": 0.08893,
+"elusiveness": 0.13737
+}
+},
+"REDG": {
+"const": -48.3763,
+"w": {
+"top_speed": 0.07839,
+"burst": 0.27481,
+"agility": 0.12926,
+"strength": 0.20554,
+"leaping": 0.02281,
+"stamina": 0.02,
+"durability": 0.07869,
+"football_iq": 0.26135,
+"power_rush": 0.10322,
+"speed_rush": 0.22017,
+"block_shedding": 0.08362,
+"tackling": 0.181,
+"hit_power": 0.06941,
+"pursuit": 0.0836,
+"diagnosis": 0.05157
+}
+},
+"RG": {
+"const": -28.889,
+"w": {
+"top_speed": 0.02609,
+"burst": 0.04102,
+"agility": 0.02,
+"strength": 0.11054,
+"leaping": 0.02,
+"stamina": 0.06314,
+"durability": 0.1203,
+"football_iq": 0.29925,
+"drive_block": 0.11775,
+"reach_block": 0.08314,
+"pass_anchor": 0.10125,
+"pass_footwork": 0.17939,
+"lead_block": 0.12453,
+"finish_block": 0.25271
+}
+},
+"RT": {
+"const": -29.523,
+"w": {
+"top_speed": 0.02,
+"burst": 0.05613,
+"agility": 0.02,
+"strength": 0.12815,
+"leaping": 0.02,
+"stamina": 0.04595,
+"durability": 0.1477,
+"football_iq": 0.31969,
+"drive_block": 0.06384,
+"reach_block": 0.18066,
+"pass_anchor": 0.10615,
+"pass_footwork": 0.18484,
+"lead_block": 0.08703,
+"finish_block": 0.20371
+}
+},
+"SAM": {
+"const": -29.8351,
+"w": {
+"top_speed": 0.03522,
+"burst": 0.06281,
+"agility": 0.07872,
+"strength": 0.12177,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.02,
+"football_iq": 0.2351,
+"tackling": 0.34276,
+"hit_power": 0.02,
+"pursuit": 0.13961,
+"diagnosis": 0.28864,
+"block_shedding": 0.05144,
+"power_rush": 0.02,
+"speed_rush": 0.02,
+"man_coverage": 0.0209,
+"zone_coverage": 0.08279,
+"ball_skills": 0.02
+}
+},
+"SS": {
+"const": -30.1795,
+"w": {
+"top_speed": 0.0759,
+"burst": 0.06916,
+"agility": 0.04875,
+"strength": 0.02,
+"leaping": 0.04001,
+"stamina": 0.02,
+"durability": 0.02286,
+"football_iq": 0.33123,
+"zone_coverage": 0.16964,
+"man_coverage": 0.11068,
+"diagnosis": 0.28213,
+"tackling": 0.1893,
+"hit_power": 0.03662,
+"pursuit": 0.08256,
+"ball_skills": 0.02217,
+"block_shedding": 0.02497,
+"return_skill": 0.02
+}
+},
+"TE": {
+"const": -40.7355,
+"w": {
+"top_speed": 0.08398,
+"burst": 0.09074,
+"agility": 0.02,
+"strength": 0.0572,
+"leaping": 0.10678,
+"stamina": 0.02,
+"durability": 0.03461,
+"football_iq": 0.28576,
+"hands": 0.11959,
+"contested_catch": 0.1302,
+"short_routes": 0.10816,
+"mid_routes": 0.15857,
+"release": 0.26118,
+"drive_block": 0.04066,
+"reach_block": 0.07367,
+"pass_anchor": 0.08698,
+"tackle_breaking": 0.07603
+}
+},
+"WILL": {
+"const": -29.679,
+"w": {
+"top_speed": 0.02594,
+"burst": 0.06693,
+"agility": 0.07467,
+"strength": 0.12187,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.02,
+"football_iq": 0.31692,
+"tackling": 0.26847,
+"hit_power": 0.02,
+"pursuit": 0.15453,
+"diagnosis": 0.22316,
+"block_shedding": 0.07689,
+"power_rush": 0.02,
+"speed_rush": 0.02,
+"man_coverage": 0.03191,
+"zone_coverage": 0.08539,
+"ball_skills": 0.02
+}
+},
+"WR": {
+"const": -26.1771,
+"w": {
+"top_speed": 0.04702,
+"burst": 0.02758,
+"agility": 0.1147,
+"strength": 0.04275,
+"leaping": 0.02,
+"stamina": 0.02,
+"durability": 0.03841,
+"football_iq": 0.19522,
+"hands": 0.18635,
+"contested_catch": 0.06433,
+"highlight_catch": 0.08152,
+"short_routes": 0.02943,
+"mid_routes": 0.154,
+"deep_routes": 0.04679,
+"release": 0.05315,
+"elusiveness": 0.22776,
+"tackle_breaking": 0.08902,
+"reach_block": 0.02841,
+"return_skill": 0.02
+}
+}
 }
 }

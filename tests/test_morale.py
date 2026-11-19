@@ -21,12 +21,12 @@ def record_trend(r: dict) -> str:
 
 if __name__ == "__main__":
     base = fingerprint()
-    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 210dc1a30d1c708c)")
+    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 3f214b0e3112df73)")
     # re-recorded when the FCS stand-ins were renamed for their regions: the fingerprint picks teams by
     # sorted slug and hashes their names; with the old order and names it is the same games as before
     from engine import game_config
     # Clear Mode's engine (game_config.EXTRA_TRAITS: the abilities the engine never read now act) has its own
-    assert base == ("05dcb4c15a369667" if game_config.EXTRA_TRAITS else "210dc1a30d1c708c")
+    assert base == ("f4e6be51d8a68f80" if game_config.EXTRA_TRAITS else "3f214b0e3112df73")
 
     # in-game momentum changes a game and leaves the flag off afterwards
     season._init(str(season.TEAMS_FILE))

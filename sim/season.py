@@ -2643,6 +2643,7 @@ def load_season(season_id: str) -> Optional[dict]:
         pass
     elif state.get("recruiting") and state["recruiting"].get("grades") != "game":
         recruiting.upgrade_grades(state)   # careers saved when grades were class percentiles
+    game_scale.upgrade_overalls(state)     # careers saved before the overall was built on the card's attributes
     if state.get("recruiting"):
         recruiting.upgrade_asks(state)     # careers saved before prospects had NIL asks
         recruiting.upgrade_generational(state)   # careers saved before generational prospects
@@ -3123,6 +3124,68 @@ def schedule_swap(state: dict, event_id: str, slug: str, teams: Optional[dict] =
         other["home_display"], other["away_display"] = team_display(other["home"], teams), team_display(other["away"], teams)
         other["conference_game"] = teams[other["home"]]["conference"] == teams[other["away"]]["conference"] and not teams[other["home"]].get("fictional")
     state.setdefault("schedule_changes", []).append({"week": g["week"], "from": old, "to": slug, "venue": o["venue"], "event_id": event_id})
+    return g
+
+
+def _movable(g: dict) -> bool:
+    """A game whose week can change: a regular-season game not yet played, outside the rivalry finale's weekend and
+    Army-Navy's (those dates are the game's own)."""
+    from sim import schedule_gen
+    return g.get("kind") == "regular" and not g["played"] and g["week"] < schedule_gen.FINALE_WEEK
+
+
+def schedule_moves(state: dict, teams: Optional[dict] = None) -> dict[str, list[dict]]:
+    """Your games that can move to another week, and where: event id -> [{"week", "swap": the event id of your game
+    that week (it takes this game's week) or None when that week is your bye, "swap_name": that game's opponent}].
+    A move needs every team in it to be idle on its new Saturday: your opponent on the week you move to, and, when
+    you already play that week, that game's opponent on the week you leave. An FCS stand-in is always free."""
+    from sim import schedule_gen
+    teams = teams or load_teams()
+    me = state["team"]
+    busy: dict = {}
+    for g in state["games"].values():
+        for t in (g["home"], g["away"]):
+            if not teams.get(t, {}).get("fictional"):
+                busy[(t, g["week"])] = g
+    free = lambda t, w: teams.get(t, {}).get("fictional") or (t, w) not in busy
+    other = lambda g: g["away"] if g["home"] == me else g["home"]
+    out: dict[str, list[dict]] = {}
+    for g in sorted((g for g in state["games"].values() if me in (g["home"], g["away"]) and _movable(g)), key=lambda g: g["week"]):
+        rows = []
+        for w in range(1, schedule_gen.FINALE_WEEK):
+            if w == g["week"] or not free(other(g), w):
+                continue
+            there = busy.get((me, w))
+            if there is None:
+                rows.append({"week": w, "swap": None, "swap_name": None})
+            elif _movable(there) and free(other(there), g["week"]):
+                rows.append({"week": w, "swap": there["event_id"], "swap_name": team_display(other(there), teams)})
+        if rows:
+            out[g["event_id"]] = rows
+    return out
+
+
+def schedule_move(state: dict, event_id: str, week: int, teams: Optional[dict] = None) -> dict:
+    """Move one of your games to `week`: into your bye, or trading weeks with the game you play then (schedule_moves
+    lists what is possible). Each game keeps its teams and its site; only its Saturday changes."""
+    from datetime import datetime, timedelta
+    pick = next((r for r in schedule_moves(state, teams).get(event_id, []) if r["week"] == week), None)
+    if pick is None:
+        raise ScheduleError(409, "That game cannot move to that week: someone in it already plays then.")
+    g = state["games"][event_id]
+    was = g["week"]
+
+    def shift(x: dict, to: int) -> None:
+        try:
+            d = datetime.strptime(x["date"], "%Y-%m-%dT%H:%MZ") + timedelta(days=7 * (to - x["week"]))
+            x["date"] = d.strftime("%Y-%m-%dT%H:%MZ")
+        except (KeyError, TypeError, ValueError):
+            pass                                              # a game without a kickoff time keeps none
+        x["week"] = to
+
+    if pick["swap"]:
+        shift(state["games"][pick["swap"]], was)
+    shift(g, week)               # not logged in schedule_changes: that list is the trades (old opponent, new opponent)
     return g
 
 
@@ -4757,6 +4820,11 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
     from coach_career import promises, ability_goals
     promise = promises.chips_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
+    from teamdata import game_scale
+    next_tiers = ability_goals.upgrades_view(state, team, f"{name}|{position}", {x["key"]: x["tier"] for x in p.get("traits") or []
+                                                                                  if isinstance(x, dict)}) if ability_goals.on() else {}
+    built_on = (game_scale.card_formula(p.get("source_position") or position) or {}).get("w") or {}
+    built_total = sum(built_on.get(k, 0.0) for k in (p.get("attributes") or {})) or 1.0
     return {
         "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
         "face": player_faces(state, team).get(p.get("slug")),
@@ -4772,7 +4840,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
                         "about": ratings_v2.ATTRIBUTES[k][2], "value": v,
                         "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0,
                         # Clear Mode, your own player: his ceiling there (the bar's unfilled part shows it)
-                        **({"potential": min(99, v + ceil[k])} if k in ceil else {})}
+                        **({"potential": min(99, v + ceil[k])} if k in ceil else {}),
+                        # how much of his overall it is, in percent (game_scale.card_formula's weights)
+                        "weight": round(100 * built_on.get(k, 0.0) / built_total, 1)}
                        for k, v in (p.get("attributes") or {}).items() if k in ratings_v2.ATTRIBUTES],
         "height_in": p.get("height_in"), "archetype": p.get("archetype"),
         "traits": [{"key": tr["key"], "name": ratings_v2.TRAIT_INFO.get(tr["key"], (tr["key"], ""))[0],
@@ -4781,7 +4851,9 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
                     # the attributes it rests on, with his values (the ones his position carries)
                     "built_on": [{"label": ratings_v2.ATTRIBUTES[k][0], "value": (p.get("attributes") or {})[k]}
                                  for k in ratings_v2.TRAIT_KEYS.get(tr["key"], []) if k in (p.get("attributes") or {})],
-                    "intangible": not ratings_v2.TRAIT_KEYS.get(tr["key"]), "earned": bool(tr.get("earned"))}
+                    "intangible": not ratings_v2.TRAIT_KEYS.get(tr["key"]), "earned": bool(tr.get("earned")),
+                    # Clear Mode: what its next tier takes and how far along he is ({tier, tier_name, have, need, text})
+                    **({"next": next_tiers[tr["key"]]} if tr["key"] in next_tiers else {})}
                    for tr in ability_goals.merged_traits(state, team, f"{name}|{position}", p.get("traits") or [])],
         # Clear Mode: the ability he works toward and how far along he is
         "ability_goal": ability_goals.goal_view(state, team, f"{name}|{position}", position,

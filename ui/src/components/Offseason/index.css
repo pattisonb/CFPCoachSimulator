@@ -630,8 +630,11 @@
 }
 
 /* ---------- Development: headline numbers, the biggest jumps as cards, then a growth chart ---------- */
+
+/* one column that never grows past its box: a wide row inside (the portal's cards) scrolls in place */
 .dev {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s3);
 }
 
@@ -1152,4 +1155,118 @@
   .off__btn {
     min-height: 44px;
   }
+}
+
+/* ---------- the stages rebuilt in Development's shape: a call to act, candidates, the schedule ---------- */
+
+/* what to do at this stage, and the control that does it, on one line */
+.off__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.off__cta > .off__soft {
+  flex: 1 1 320px;
+  margin: 0;
+}
+
+.off__more {
+  margin-top: 6px;
+}
+
+/* the conferences, one bar under another (side by side, opening one moved the rest) */
+.off__stackup {
+  display: grid;
+  gap: var(--s2);
+}
+
+.off__stackup .off__teams {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2px var(--s3);
+}
+
+/* a coaching candidate: his name on your color, his ratings as three numbers, the pick under them */
+.cand {
+  gap: 8px;
+  justify-items: start; /* his tag or button its own width, not the card's */
+}
+
+.cand__name {
+  font-size: var(--t-md);
+  text-transform: uppercase;
+}
+
+.cand__ratings {
+  display: flex;
+  gap: var(--s3);
+}
+
+.cand__ratings dd {
+  font-size: var(--t-xl);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dev-card.is-picked {
+  box-shadow: 4px 4px 0 var(--team, var(--ink));
+}
+
+/* next season's games: a tile a game, the week over the opponent */
+.next-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--s2);
+  list-style: none;
+}
+
+.next-game {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.next-game.is-non {
+  border-style: dashed;
+}
+
+/* a week without a game: quiet, so the games stand out */
+.next-game.is-bye {
+  background: transparent;
+  border-color: var(--line-soft);
+}
+
+.next-game__week {
+  color: var(--ink-soft);
+}
+
+.next-game__opp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* a portal board card in the side-scrolling row: a fixed width, his name a link to his file */
+.portal-card {
+  flex: none;
+  width: 208px;
+}
+
+.portal-card .off-card__open {
+  text-align: left;
+  cursor: pointer;
+}
+
+.portal-card .off-card__open:hover {
+  text-decoration: underline;
 }

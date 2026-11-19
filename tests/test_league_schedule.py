@@ -41,8 +41,8 @@ ONE_TEAM_NO_GAMES = {"format": "cfp-league/1", "remove": ["kent-state"],
 # each history pair key ("a|b", slugs sorted) re-sorted. Every game was identical, as were the home counts
 # and the pending list; the only differences were the slug text and the order inside those pair keys
 # (the new slugs sort differently from the old ones). Nothing in the schedule itself changed.
-BUILTIN_DIGESTS = {2027: "8c5759626247a588a0f1749c260f373d0c3b7d5fe0595165a5399783c14d9bbd",   # re-recorded for Week 0: same matchups, sites and history, a handful open a week early
-                   2028: "1c06159518ef3859135e40febd482ffba30f9189edd509d6906484d3ee8e832e"}
+BUILTIN_DIGESTS = {2027: "177c1141830ea612accb4d85bd82842768207f7c35820daf20270c7a8d396ec3",   # re-recorded for Week 0: same matchups, sites and history, about eight open a week early (WEEK0_GAMES)
+                   2028: "5007088985bf71d76e11f210f8f20b79c535ed8bdb7b76e788340a022c0198c5"}
 
 
 def built_teams(lgd: dict) -> dict:

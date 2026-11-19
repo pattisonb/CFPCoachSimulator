@@ -77,6 +77,10 @@ export interface StaffMember {
   role: string;
   name: string;
   contract_until?: number | null;
+  evaluation?: number | null;
+  recruiting?: number | null;
+  /** where he recruits */
+  area?: string | null;
 }
 
 export interface JobRow {
@@ -92,7 +96,13 @@ export interface Grown extends OffPlayer {
   why: string[];
   transfer: string | null;
   /** every rating that changed, where it was and is; missing on a report made before the game kept them */
-  grew?: { key: string; from: number; to: number; /** its weight in his position's overall formula */ w?: number }[];
+  grew?: {
+    key: string;
+    label?: string;
+    from: number;
+    to: number;
+    /** its weight in his position's overall formula */ w?: number;
+  }[];
 }
 
 export interface OffView {
@@ -227,4 +237,8 @@ export interface NextSchedule {
   editable: NextGame[];
   changes: unknown[];
   open: boolean;
+  /** the regular season's weeks: one without a game of yours is a bye */
+  weeks?: number[];
+  /** where each game could move: its event id to the weeks, with the game of yours it would trade weeks with */
+  moves?: Record<string, { week: number; swap: string | null; swap_name: string | null }[]>;
 }

@@ -18,7 +18,7 @@ interface Props {
   tab: HubTab;
   onTab: (tab: HubTab) => void;
   /** the week's season key: a sim remounts both */
-  weekKey: number;
+  weekKey: number | string;
   /** your coach: his face and name beside your lines on a call or visit */
   coach: { name: string; face: Face } | null;
   /** a recruit to open on the Board (asked for from another section) */

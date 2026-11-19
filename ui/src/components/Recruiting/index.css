@@ -178,6 +178,7 @@
 
   --pin-pad: var(--s4); /* a pinned head covers this panel's top padding, in its own paper */
   --pin-bg: var(--paper);
+
   container: recruit-side / inline-size;
 }
 
@@ -287,7 +288,7 @@
 }
 
 @container recruit-side (width >= 760px) {
-  .recruit__cols {
+  .recruit__cols:not(.is-closed) {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
 

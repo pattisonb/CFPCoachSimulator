@@ -1,0 +1,32 @@
+/* What your staff has flagged about a recruit: small icons on one line, in the text's own color unless boxed. */
+.recruit-flags {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.recruit-flags__flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.recruit-flags__flag.is-bust {
+  color: var(--ink-soft);
+}
+
+/* in a profile's head: each icon in a small box, the good finds solid */
+.recruit-flags.is-boxed .recruit-flags__flag {
+  width: 26px;
+  height: 26px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.recruit-flags.is-boxed .is-generational,
+.recruit-flags.is-boxed .is-gem {
+  background: var(--ink);
+  color: var(--paper-hi);
+}

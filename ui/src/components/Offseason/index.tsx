@@ -14,6 +14,10 @@ interface Props {
   teams: Map<string, TeamCard>;
   /** open another section (the Recruiting board, where the portal is worked) */
   onSection: (key: string) => void;
+  /** open a recruit or transfer on the Recruiting board (his file: scouting, ratings, your offer) */
+  onRecruit: (pid: string) => void;
+  /** the stage the offseason is at, when it loads and each time it moves on */
+  onStage?: (stage: string) => void;
   /** the next season has begun: open it */
   onNextSeason: (seasonId: string) => void;
 }
@@ -32,6 +36,7 @@ export interface StageProps {
   /** GET something under /offseason */
   get: <T>(path: string) => Promise<T>;
   onSection: (key: string) => void;
+  onRecruit: (pid: string) => void;
 }
 
 /**
@@ -41,7 +46,7 @@ export interface StageProps {
  * portal (worked on the Recruiting board), Development, Staff and job offers, Change Conferences, Edit Schedule, and
  * Ready, which starts the next season.
  */
-export default function Offseason({ season, teams, onSection, onNextSeason }: Props) {
+export default function Offseason({ season, teams, onSection, onRecruit, onStage, onNextSeason }: Props) {
   const [v, setV] = useState<OffView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -82,6 +87,9 @@ export default function Offseason({ season, teams, onSection, onNextSeason }: Pr
   }, [season.done, load]);
 
   const stage = v?.stage ?? "";
+  useEffect(() => {
+    if (stage) onStage?.(stage);
+  }, [stage, onStage]);
   /** one action: saved with the stage it was drawn for (a click queued behind an advance is refused, not misapplied) */
   const act = async (path: string, body: object) => {
     setBusy(true);
@@ -224,6 +232,7 @@ export default function Offseason({ season, teams, onSection, onNextSeason }: Pr
               act={act}
               get={get}
               onSection={onSection}
+              onRecruit={onRecruit}
             />
           </>
         )}

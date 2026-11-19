@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
 import CoachBadge from "../../components/CoachBadge/index.tsx";
@@ -138,6 +138,18 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       .catch(() => {});
     reloadRecruiting().catch(() => {});
   }, [seasonId, reloadRecruiting]);
+  // the offseason moved to another stage (the portal opened, a portal week passed): the board and the Prospects list
+  // are a different pool now, so they load again (they are keyed by the week, which an offseason stage does not change)
+  const [offStage, setOffStage] = useState("");
+  const offStageWas = useRef("");
+  const onOffStage = useCallback(
+    (stage: string) => {
+      if (offStageWas.current && offStageWas.current !== stage) refresh();
+      offStageWas.current = stage;
+      setOffStage(stage);
+    },
+    [refresh],
+  );
   // Auto-Recruit (your staff works the board for you): Off, This Week or All Season, from the coach card
   const setAutoRecruit = async (mode: string) => {
     await api(`/api/season/${seasonId}/settings`, { method: "POST", body: { auto_recruit: mode } });
@@ -263,6 +275,14 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     setVisited((v) => (v.includes(next.key) ? v : [...v, next.key]));
     writeAddress(next.key, hubTab);
   };
+  // a recruit or transfer named in another section: on your board, open him there; not on it, the class list, where
+  // you can find and star him
+  const openRecruit = (pid: string) => {
+    const onBoard = !!recruiting?.board.some((b) => b.id === pid);
+    if (onBoard) setRecruitPick(pid);
+    open("recruiting");
+    openTab(onBoard ? "board" : "prospects");
+  };
 
   const toMenu = (
     <Button variant="outline" onClick={() => navigate("play")}>
@@ -369,7 +389,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       reload={reloadRecruiting}
                       tab={hubTab}
                       onTab={openTab}
-                      weekKey={season.current_week}
+                      weekKey={`${season.current_week}-${offStage}`}
                       coach={coach && face ? { name: coachName(coach), face } : null}
                       pick={recruitPick}
                     />
@@ -382,13 +402,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         open("recruiting");
                         openTab("prospects");
                       }}
-                      onRecruit={(pid) => {
-                        // on your board: open him there; not on it: the class list, where you can find and star him
-                        const onBoard = !!recruiting?.board.some((b) => b.id === pid);
-                        if (onBoard) setRecruitPick(pid);
-                        open("recruiting");
-                        openTab(onBoard ? "board" : "prospects");
-                      }}
+                      onRecruit={openRecruit}
                       onBoardChange={() => void reloadRecruiting()}
                     />
                   ) : key === "rankings" ? (
@@ -410,6 +424,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       season={season}
                       teams={bySlug}
                       onSection={open}
+                      onStage={onOffStage}
+                      onRecruit={openRecruit}
                       onNextSeason={(id) => location.assign(hrefFor("game", { id, section: "office" }))}
                     />
                   ) : key === "scores" ? (

@@ -25,13 +25,19 @@ GOALS = ((1.2, "playoff", 10, "Make the College Football Playoff"), (0.5, "wins"
          (-0.3, "wins", 7, "Win seven games and go bowling"), (-10, "wins", 6, "Reach a bowl game"))
 G5_TITLE_FROM = 0.0              # a Group of 5 program this strong expects to win its conference
 START_SECURITY = 70
-STANDING = (35, 85)              # a sitting coach's unknown standing when the career starts (third season on) *tune*
+STANDING = (33, 90)              # a sitting coach's unknown standing when the career starts (third season on) *tune*
+MAX_DROP = 45                    # *tune* the most security one season can cost a coach at a top program (DROP_TIER)
+DROP_TIER = 2                    # *tune* programs of this tier or better are the ones MAX_DROP protects
 HONEYMOON = 2                    # a new coach's first seasons count half against him
 WIN_STEP = 8                     # security per win over or under the goal
 BONUS = {"conference": 10, "playoff": 12, "title": 25}
-FIRE_BELOW, FIRE_CHANCE, MUST_FIRE = 25, 0.7, 8
-RETIRE = 0.03                    # a year, more after 12 seasons in the job and past 60 (an age drawn when unknown)
-NFL_CHANCE = 0.12                # a 80+ head coach after 10 wins
+FIRE_BELOW, FIRE_CHANCE, MUST_FIRE = 25, 0.7, 8    # your own job: at risk under FIRE_BELOW
+LEAGUE_FIRE_BELOW = 40           # *tune* the other head coaches are at risk under this (higher than yours: about twenty jobs turn over a year, most of them firings)
+RETIRE = 0.06                    # a year from RETIRE_FROM on, more after 12 seasons in the job and with every year past it (an age drawn when unknown)
+RETIRE_FROM = 60                 # *tune* the age retirement starts at: a younger coach steps away only at RETIRE_YOUNG
+RETIRE_YOUNG = 0.015             # *tune* a year, for a head coach under RETIRE_FROM
+NFL_CHANCE = 0.05                # *tune* a 80+ head coach after 10 wins
+STAY_TIER = 1                    # *tune* a head coach at a program of this tier or better is not hired away by another college; one tier below it leaves only for a better tier
 COORD_MOVE = 0.13                # coordinators leaving for other jobs on their own
 HC_MOVE_PCT = 0.55               # a sitting head coach with this winning share over three years is a candidate elsewhere
 MOVE_UP = 3                      # a sitting head coach takes an opening this much more attractive than his own job
@@ -117,6 +123,8 @@ def judge(team: dict, slug: str, res: dict, year: int, state: Optional[dict] = N
         delta *= 3 / a["patience"]                      # an impatient AD feels a bad year more
         if tenure <= HONEYMOON:
             delta /= 2
+        if programs.base(slug)["tier"] <= DROP_TIER:      # the top jobs: a single bad year puts him on the hot seat, it rarely fires him
+            delta = max(delta, -MAX_DROP)
     a["security"] = int(max(0, min(100, a["security"] + delta)))
     met = res["wins"] >= g["wins"] and (g["kind"] != "playoff" or res["playoff"]) and (g["kind"] != "conference" or res["conference"])
     return {"goal": g, "met": met, "security": a["security"], "delta": int(round(delta)), "tenure": tenure, "patience": a["patience"]}
@@ -402,11 +410,12 @@ def run(state: dict) -> dict:
         hc, v = t["coaches"]["head_coach"], verdicts[slug]
         sec = v["security"]
         r = res.get(slug, {})
-        if (sec < FIRE_BELOW and v["tenure"] >= 2 and rng.random() < FIRE_CHANCE) or sec < MUST_FIRE:
+        if (sec < LEAGUE_FIRE_BELOW and v["tenure"] >= 2 and rng.random() < FIRE_CHANCE) or sec < MUST_FIRE:
             leave(slug, "fired", _fired_why(slug, r))
         elif _rating(hc) >= 80 and r.get("wins", 0) >= 10 and rng.random() < NFL_CHANCE:
             leave(slug, "left for the NFL")
-        elif rng.random() < RETIRE * (1 + max(0, v["tenure"] - 12) / 8) * (1 + max(0, _age(hc, year) - 60) / 5):
+        elif rng.random() < (RETIRE * (1 + max(0, v["tenure"] - 12) / 8) * (1 + max(0, _age(hc, year) - RETIRE_FROM) / 5)
+                             if _age(hc, year) >= RETIRE_FROM else RETIRE_YOUNG):
             leave(slug, "retired")
     you = verdicts.get(me, {})
     if rv:                                                       # decided in your meeting with the AD
@@ -520,15 +529,18 @@ def _pick_head_coach(state: dict, slug: str, verdicts: dict, res: dict, filled: 
     hist = (state.get("career") or {}).get("league_records", {})
     cands = []
     taken = taken or set()
+    tier = programs.get(state, slug)["tier"]
     for s, t in lgd["teams"].items():
         if s == slug or s in filled:
             continue
         hc = t["coaches"]["head_coach"]
+        his = programs.get(state, s)["tier"]
+        stays = his <= STAY_TIER or (his == STAY_TIER + 1 and tier >= his)      # the top jobs are not left for another college job
         recs = hist.get(s, [])[-2:] + [[res.get(s, {}).get("wins", 0), res.get(s, {}).get("losses", 0)]]
         w = sum(r[0] for r in recs)
         pct = w / max(1, sum(r[0] + r[1] for r in recs))
         # you are never hired away behind your back (your offers come in step 4); your coordinators are fair game
-        if s != me and hc["name"] not in taken and attract(state, s) + MOVE_UP <= a and pct >= HC_MOVE_PCT and verdicts[s]["tenure"] >= 2:
+        if s != me and not stays and hc["name"] not in taken and attract(state, s) + MOVE_UP <= a and pct >= HC_MOVE_PCT and verdicts[s]["tenure"] >= 2:
             cands.append((_rating(hc) + HC_PROVEN + 20 * (pct - HC_MOVE_PCT) + rng.gauss(0, 3), hc, {"kind": "head_coach", "team": s,
                           "text": f"head coach at {_name(s)}"}))
         for role in COORD_ROLES:

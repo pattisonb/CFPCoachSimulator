@@ -42,6 +42,7 @@ def write_scale(out: dict) -> None:
     import sys
     FILE.write_text(json.dumps(out, indent=0), encoding="utf-8")
     data.cache_clear()
+    _card_overall.cache_clear()
     for name in ("teamdata.game_scale", "game_scale", "__main__"):
         mod = sys.modules.get(name)
         if mod is not None and getattr(mod, "FILE", None) == FILE and hasattr(getattr(mod, "data", None), "cache_clear"):
@@ -99,10 +100,87 @@ def has_overall() -> bool:
     return bool(FILE.exists() and data().get("overall"))
 
 
+OVERALL_FLOOR = 0.02             # *tune* the least any attribute on a position's card counts toward its overall (fit_card_overall)
+
+
+def card_formula(pos: str) -> Optional[dict]:
+    """The overall formula at EA position `pos` (or his engine position's group): {"pos": the position it is for,
+    "const", "w": {card attribute: weight}}. On the player card's attributes, the ones the sim plays with."""
+    f = data().get("card_overall") or {}
+    at = pos if pos in f else _FIRST.get(group(pos), "QB")
+    return {"pos": at, **f[at]} if at in f else None
+
+
+def card_attributes(ours: dict, pos: str) -> dict[str, int]:
+    """His player card's attributes (the sim's) from his skills, at EA position `pos`."""
+    from coach_career import prospects
+    return prospects.card_attributes(ours, {"ea_position": pos, "position": pos})
+
+
 def overall(ours: dict, pos: str) -> int:
-    """Our overall for a player at EA position `pos` (or his engine position's group)."""
-    f = data()["overall"].get(pos) or data()["overall"][_FIRST.get(group(pos), "QB")]
+    """Our overall for a player at EA position `pos` (or his engine position's group): a weighted sum of his card's
+    attributes, the same ones the sim plays with and the card shows (card_formula). Every attribute on his position's
+    card counts (OVERALL_FLOOR at the least); some count for much more (football IQ, a position's main skills)."""
+    f = card_formula(pos)
+    if f:
+        return _card_overall(f["pos"], tuple(ours.get(k, 50) for k in keys()))
+    f = data()["overall"].get(pos) or data()["overall"][_FIRST.get(group(pos), "QB")]     # a scale file from before
     return int(round(max(1, min(99, f["const"] + sum(w * ours.get(k, 50) for k, w in f["w"].items())))))
+
+
+@lru_cache(maxsize=400_000)          # the same players are asked again and again (the base league is 12,000 of them)
+def _card_overall(pos: str, skills: tuple) -> int:
+    f = data()["card_overall"][pos]
+    card = card_attributes(dict(zip(keys(), skills)), pos)
+    return int(round(max(1, min(99, f["const"] + sum(w * card.get(k, 50) for k, w in f["w"].items())))))
+
+
+def fit_card_overall(players: list[tuple[dict, str, int]]) -> dict:
+    """The overall formula on the card's attributes, fit once: for each EA position, the weights (none below
+    OVERALL_FLOOR, none negative) that come closest to the overall those players had. `players`: (skills, EA position,
+    overall). Run by tools/refit_card_overall.py, which also rewrites every stored overall."""
+    import numpy as np
+    from scipy.optimize import nnls
+    rows: dict = {}
+    for ours, pos, o in players:
+        rows.setdefault(pos, []).append((card_attributes(ours, pos), o))
+    out = {}
+    for pos, rs in sorted(rows.items()):
+        ks = list(rs[0][0])
+        x = np.array([[r[0].get(k, 50) for k in ks] for r in rs], float)
+        y = np.array([r[1] for r in rs], float) - OVERALL_FLOOR * x.sum(1)
+        w, _ = nnls(np.hstack([x, np.ones((len(rs), 1)), -np.ones((len(rs), 1))]), y)
+        out[pos] = {"const": round(float(w[-2] - w[-1]), 4), "w": {k: round(float(v) + OVERALL_FLOOR, 5) for k, v in zip(ks, w)}}
+    return out
+
+
+def upgrade_overalls(state: dict) -> bool:
+    """A career saved before the overall was built on the card's attributes: every stored overall recomputed (the
+    league's players, the portal's, the recruits' now and at their potential). Returns whether anything changed."""
+    version = (data().get("card_overall") and 2) or 1
+    changed = False
+    lg = state.get("league")
+    if lg and lg.get("scale") == "ours" and lg.get("overall_v", 1) != version:
+        attrs = lg["attrs"]
+        players = [c for t in lg["teams"].values() for c in t["roster"]]
+        players += [e["player"] for e in ((state.get("offseason") or {}).get("portal") or {}).get("players", {}).values()]
+        for c in players:
+            c["o"] = overall(dict(zip(attrs, c["r"])), c["pos"])
+        lg["overall_v"] = version
+        from coach_career import league
+        league.forget(state["id"])
+        changed = True
+    rc = state.get("recruiting")
+    if rc and rc.get("scale") == "ours" and rc.get("prospects") and rc.get("overall_v", 1) != version:
+        attrs = rc["attrs"]
+        for p in rc["prospects"].values():
+            if p.get("ratings") and p.get("ea_position"):
+                p["ovr"] = overall(dict(zip(attrs, p["ratings"])), p["ea_position"])
+                if p.get("potential"):
+                    p["pot_ovr"] = overall(dict(zip(attrs, p["potential"])), p["ea_position"])
+        rc["overall_v"] = version
+        changed = True
+    return changed
 
 
 _FIRST = {"QB": "QB", "RB": "HB", "WR": "WR", "TE": "TE", "OL": "LG", "DL": "DT", "LB": "MIKE", "CB": "CB", "S": "FS", "K": "K", "P": "P"}

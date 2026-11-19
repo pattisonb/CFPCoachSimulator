@@ -17,6 +17,7 @@ import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, pullOf, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -229,6 +230,7 @@ export default function Recruiting({
                           <span className="recruiting__soft recruiting__facts">
                             {r.display_pos}
                             <Stars n={r.stars} size={10} />
+                            <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={11} />
                           </span>
                         </span>
                         <span className="recruiting__standing">
@@ -442,6 +444,7 @@ function RecruitPanel({
             <>
               <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
               <Stars n={r.stars} />
+              <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={15} boxed />
               {r.job_promised && (
                 <HeadTag tip={{ title: m.jobPromised, text: m.jobPromisedTip }}>{m.jobPromised}</HeadTag>
               )}
@@ -508,9 +511,10 @@ function RecruitPanel({
           )}
           {r.pestering && <p className="recruit__warn">{m.pestering}</p>}
 
-          <div className="recruit__cols">
+          {/* his recruitment is over: there is nothing to do beside the Overview, so it takes the whole width */}
+          <div className={`recruit__cols${closed ? " is-closed" : ""}`}>
             <div className="recruit__col">
-              <OverviewTab r={r} detail={detail} team={team} weekLabels={weekLabels} />
+              <OverviewTab r={r} detail={detail} team={team} weekLabels={weekLabels} wide={closed} />
             </div>
 
             <div className="recruit__col">

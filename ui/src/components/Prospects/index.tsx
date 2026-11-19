@@ -21,6 +21,7 @@ import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import type { ProspectRow, ProspectsView } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -405,12 +406,14 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                           <Face face={playerFace(r.id, r.display_pos)} scale={1} label="" />
                         </span>
                         <span className="prospects__name">
-                          <b>{r.name}</b>
+                          <b>
+                            {r.name}{" "}
+                            <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={12} />
+                          </b>
                           <span className="prospects__soft" title={r.why?.length ? whyText(r.why) : undefined}>
                             {r.why?.length ? whyText(r.why) : `${r.hometown.city}, ${r.hometown.state}`}
                           </span>
                         </span>
-                        {r.find && <span className="prospects__flag">{r.find}</span>}
                       </button>
                     </td>
                     <td>{r.display_pos}</td>

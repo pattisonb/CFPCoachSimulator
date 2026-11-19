@@ -60,8 +60,7 @@ export const messages = {
   loadError: (msg: string) => `Couldn't load his ratings: ${msg}.`,
 
   // Ratings
-  broad: "Ratings",
-  keyNote: (pos: string) => `Bold: What a ${pos} Leans On`,
+  builds: "What Builds His Overall",
   noRatings: "No ratings to show.",
   everywhere: "At Every Position",
   returner: "Kick Returner",
@@ -90,6 +89,7 @@ export const messages = {
   earned: "Earned",
   nextUp: (tier: string) => `Working Toward ${tier}`,
   builtOn: "Built On",
+  nextTier: (tier: string, text: string) => `${tier} with ${text}.`,
   tierKey: "Tiers:",
   tierNames: ["Bronze", "Silver", "Gold", "Platinum"],
 

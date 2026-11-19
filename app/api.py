@@ -1548,6 +1548,18 @@ def offseason_schedule_trade(p: Params) -> dict:
     return out
 
 
+@route("POST", "/api/season/{season_id}/offseason/schedule/move")
+def offseason_schedule_move(p: Params) -> dict:
+    """Move one of next season's games to another week: into your bye, or trading weeks with another of your games."""
+    st = _offseason_state(p.path["season_id"], p)
+    try:
+        out = offseason.schedule_move(st, _field(p, "event_id", str), _field(p, "week", int))
+    except season.ScheduleError as e:
+        raise ApiError(e.code, str(e)) from e
+    _save_loaded()
+    return out
+
+
 @route("POST", "/api/season/{season_id}/offseason/open_role")
 def offseason_open_role(p: Params) -> dict:
     """Let one of your own coaches go at the Staff step: he joins the market, his job gets candidates."""

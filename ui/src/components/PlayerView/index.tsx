@@ -70,7 +70,7 @@ function Bar({
   value: number;
   ceiling?: number;
   tip?: string;
-  /** a key rating for his position: its name in bold */
+  /** a main part of his overall: its name in bold */
   mark?: boolean;
   /** in place of the number at the row's end */
   trail?: ReactNode;
@@ -245,15 +245,13 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
 
       {pr && tab === "ratings" && (
         <Panels label={m.tabs.ratings}>
-          <Panel title={m.broad} aside={m.keyNote(p.position)}>
-            {pr.ratings?.length ? (
-              [...pr.ratings]
-                .sort((a, b) => Number(isKey(pr, b.key)) - Number(isKey(pr, a.key)))
-                .map((r) => <Bar key={r.key} label={r.label} value={r.value} mark={isKey(pr, r.key)} />)
-            ) : (
-              <p className="player-view__soft">{m.noRatings}</p>
-            )}
+          {/* the same attributes the Overview shows and the sim plays with: his overall is built from these */}
+          <Panel title={m.builds}>
+            {pr.attributes.map((a) => (
+              <Bar key={a.key} label={a.label} value={a.value} ceiling={a.potential} tip={a.about} />
+            ))}
           </Panel>
+
           <Panel title={m.everywhere}>
             <Bar label={GROUP_NAME[own] ?? own} value={p.overall} mark />
             {others.map(([g, v]) => (
@@ -355,6 +353,16 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
                               {x.label} <b>{x.value}</b>
                             </span>
                           ))}
+                        </span>
+                      )}
+                      {/* what its next tier takes, and how far along he is */}
+                      {t.next && (
+                        <span className="player-view__next">
+                          <span>{m.nextTier(t.next.tier_name, t.next.text)}</span>
+                          <span className="player-view__next-at">
+                            <Progress have={t.next.have} need={t.next.need} />
+                            <b>{m.progress(t.next.have, t.next.need)}</b>
+                          </span>
                         </span>
                       )}
                     </div>
@@ -483,4 +491,3 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
 }
 
 /** One of the ratings his position leans on. */
-const isKey = (pr: PlayerProfile, key: string) => !!pr.key_ratings?.includes(key);

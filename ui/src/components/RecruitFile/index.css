@@ -279,9 +279,15 @@ dd.recruit-file__inline {
 }
 
 /* ----- History ----- */
+
+/* a long history scrolls inside its panel (about eight entries show), so the notes beside it stay in view */
 .recruit-file__timeline {
   display: grid;
+  max-height: 300px;
+  padding-right: 6px;
+  overflow-y: auto;
   list-style: none;
+  scrollbar-gutter: stable;
 }
 
 .recruit-file__timeline li {
@@ -328,4 +334,10 @@ dd.recruit-file__inline {
 .recruit-file__mate:hover {
   background: var(--ink);
   color: var(--paper-hi);
+}
+
+/* a finished recruitment: the battle and the scout's summary side by side, each whole (stacked when narrow) */
+.recruit-file__pair {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  align-items: start;
 }

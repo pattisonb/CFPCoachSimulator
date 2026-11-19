@@ -1,7 +1,8 @@
 """Ability goals (Clear Mode; the player's ask): every player always works toward one ability that fits his position, a
 plain goal per tier ("Breakaway Speed (Bronze): 3 runs of 20+ yards"). Progress lands after every game; reaching the goal
-unlocks the ability (or its next tier) mid-season, and the engine uses it from the next game on. One goal at a time: the
-next is the same ability's next tier, or once it is Platinum, another that fits.
+unlocks the ability (or its next tier) mid-season, and the engine uses it from the next game on. One goal at a time (a
+seeded draw of the abilities that fit, next_goal); beside it, every ability he already holds moves toward its own next
+tier (UPGRADES_ALONGSIDE, state["ability_upgrades"][team][key] = {trait: {"tier", "have"}}).
 
 Three kinds of goal:
 - "season": a running total of one of his stats since the goal began (it carries across seasons),
@@ -19,6 +20,7 @@ from __future__ import annotations
 from typing import Optional
 
 TIER_NAMES = {1: "Bronze", 2: "Silver", 3: "Gold", 4: "Platinum"}
+UPGRADES_ALONGSIDE = True       # *tune* an ability he already holds also moves toward its next tier while he works on his goal
 
 # trait -> (kind, metric, needs by tier [Bronze, Silver, Gold, Platinum], per-game threshold or None, the goal in words
 # with {n} its count). Positions are the engine's groups a trait suits (season.SCALE_GROUP).
@@ -217,26 +219,68 @@ def after_game(state: dict, g: dict, lines: dict, moments: dict, base_traits: di
                 mo["home_start" if side == "home" and not g.get("neutral") else "road_start" if side == "away" and not g.get("neutral") else "_"] = 1
             base = (base_traits.get(team) or {}).get(key) or {}
             mine = goals.setdefault(team, {})
+            held = _held(state, team, key, base)     # before this game: an ability earned today starts its next tier next game
             cur = mine.get(key)
             if not cur:
-                nxt = next_goal(pl["position"], _held(state, team, key, base), key)
-                if not nxt:
-                    continue
-                cur = mine[key] = {"trait": nxt[0], "tier": nxt[1], "have": 0, "since": [year, g["week"]]}
-            kind, metric, needs, per, words = GOALS[cur["trait"]]
-            cur["have"] += _counts(kind, metric, per, stats, mo)
-            need = needs[cur["tier"] - 1]
-            if cur["have"] < need:
+                nxt = next_goal(pl["position"], held, key)
+                if nxt:
+                    cur = mine[key] = {"trait": nxt[0], "tier": nxt[1], "have": 0, "since": [year, g["week"]]}
+
+            def reach(trait: str, tier: int, need: int, words: str) -> None:
+                got = earned.setdefault(team, {}).setdefault(key, {})
+                got[trait] = max(got.get(trait, 0), tier)
+                name = rv2.TRAIT_INFO.get(trait, (trait, ""))[0]
+                ev = {"week": g["week"], "year": year, "team": team, "player": pl["name"], "position": pl["position"], "trait": trait,
+                      "name": name, "tier": tier, "tier_name": TIER_NAMES[tier], "how": words.format(n=need, s="" if need == 1 else "s"), "event_id": g.get("event_id")}
+                events.append(ev)
+                made.append(ev)
+
+            if cur:
+                kind, metric, needs, per, words = GOALS[cur["trait"]]
+                cur["have"] += _counts(kind, metric, per, stats, mo)
+                need = needs[cur["tier"] - 1]
+                if cur["have"] >= need:
+                    reach(cur["trait"], cur["tier"], need, words)
+                    del mine[key]                    # the next goal starts with his next game (next_goal)
+            if not UPGRADES_ALONGSIDE:
                 continue
-            got = earned.setdefault(team, {}).setdefault(key, {})
-            got[cur["trait"]] = max(got.get(cur["trait"], 0), cur["tier"])
-            name = rv2.TRAIT_INFO.get(cur["trait"], (cur["trait"], ""))[0]
-            ev = {"week": g["week"], "year": year, "team": team, "player": pl["name"], "position": pl["position"], "trait": cur["trait"],
-                  "name": name, "tier": cur["tier"], "tier_name": TIER_NAMES[cur["tier"]], "how": words.format(n=need, s="" if need == 1 else "s"), "event_id": g.get("event_id")}
-            events.append(ev)
-            made.append(ev)
-            del mine[key]                        # the next goal starts with his next game (next_goal)
+            # every ability he already holds moves toward its next tier too, beside the one goal above
+            ups = state.setdefault("ability_upgrades", {}).setdefault(team, {}).setdefault(key, {})
+            for trait, tier in held.items():
+                if trait not in GOALS or tier >= 4 or (cur and trait == cur["trait"]):
+                    continue
+                kind, metric, needs, per, words = GOALS[trait]
+                up = ups.get(trait)
+                if not up or up["tier"] != tier + 1:
+                    up = ups[trait] = {"tier": tier + 1, "have": 0}
+                up["have"] += _counts(kind, metric, per, stats, mo)
+                need = needs[tier]
+                if up["have"] >= need:
+                    reach(trait, tier + 1, need, words)
+                    del ups[trait]
+            if not ups:
+                del state["ability_upgrades"][team][key]
     return made
+
+
+def upgrades_view(state: dict, team: str, key: str, base: dict) -> dict:
+    """{trait: {tier, tier_name, have, need, text}} for each ability he holds below Platinum: what its next tier takes and
+    how far along he is (the one he is working toward as his goal is in goal_view, not here)."""
+    if not UPGRADES_ALONGSIDE:
+        return {}
+    goal = ((state.get("ability_goals") or {}).get(team) or {}).get(key) or {}
+    ups = ((state.get("ability_upgrades") or {}).get(team) or {}).get(key) or {}
+    out = {}
+    for trait, tier in _held(state, team, key, base).items():
+        if trait not in GOALS or tier >= 4 or trait == goal.get("trait"):
+            continue
+        kind, metric, needs, per, words = GOALS[trait]
+        need = needs[tier]
+        up = ups.get(trait) or {}
+        have = up.get("have", 0) if up.get("tier") == tier + 1 else 0
+        out[trait] = {"tier": tier + 1, "tier_name": TIER_NAMES[tier + 1], "have": min(have, need), "need": need,
+                      "text": words.format(n=need, s="" if need == 1 else "s")}
+    return out
 
 
 def traits_for_game(state: dict, team: str) -> dict:
@@ -282,6 +326,7 @@ def carry_over(state: dict, lgd: dict) -> int:
     many abilities were written."""
     earned = state.pop("abilities_earned", None) or {}
     state.pop("ability_goals", None)
+    state.pop("ability_upgrades", None)
     if not on() or not earned:
         return 0
     from sim import season

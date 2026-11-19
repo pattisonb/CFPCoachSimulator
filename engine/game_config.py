@@ -253,6 +253,7 @@ SACK_ESCAPE_EFFECT = 0.0024       # sack rate x (1 - this per point of Sack Esca
 PRESSURE_PER_SACK_RATE = 2.5     # pressure chance = this x the sack rate (at most 0.6)
 PRESSURE_COMPLETION = -0.08      # completion change when pressured
 POISE_EFFECT = 0.0015            # ... back by this per point of Pocket Poise over 50
+THROW_ON_MOVE_EFFECT = 0.0010    # *tune* ... and by this per point of Throwing on the Move over the league average (a pressured throw is off platform)
 SACK_YARDS = (7.5, 2.0)         # gauss mean, sd (loss)
 SACK_FUMBLE_CHANCE = 0.13
 COMPLETION_BASE = 0.652         # equal QB, receiver and coverage (0.641 before pressure cost completions)
@@ -323,6 +324,9 @@ RUN_WEIGHT_EFFECT = 0.015        # inside runs: yards per pound of line weight o
 LINE_WEIGHT_GAP = 52             # the usual gap: FBS starting linemen 312 lb, starting fronts 260
 RUN_CARRIER_STYLE_EFFECT = 0.020 # yards per point: power style inside, speed style outside, over his own average
 RUN_VISION_EFFECT = 0.015        # yards per point of Running Vision over his ball-carrying average
+FINISH_BLOCK_EFFECT = 0.010      # *tune* yards per point of the line's Finishing Blocks over the league average, every run
+LEAD_BLOCK_EFFECT = 0.010        # *tune* yards per point of the lead blockers' Lead Blocking (linemen and a fullback) over the league average, outside runs
+HIGHLIGHT_CATCH_SHARE = 0.3      # *tune* how much of a contested catch is Highlight Catches (the rest Contested Catches)
 SHORT_YARDAGE_STYLE_EFFECT = 0.0024   # conversion chance per point of power running and drive blocking over shedding
 RUSH_GUESSED = -0.9
 RUSH_NOT_GUESSED = 0.5
