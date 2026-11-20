@@ -673,7 +673,7 @@ function Actions({
             <i style={{ width: `${pct}%` }} />
           </span>
           {st.total - st.done > 1 && (
-            <button type="button" className="office__link" onClick={sim.stop}>
+            <button type="button" className="office__link" onClick={sim.stop} data-sim-allow>
               <StopCircle size={16} weight="bold" aria-hidden="true" />
               {m.stop}
             </button>

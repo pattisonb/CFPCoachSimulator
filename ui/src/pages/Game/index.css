@@ -175,3 +175,28 @@
     transition: none;
   }
 }
+
+/* the league's crawl along the window's bottom (components/Ticker): every section stops above it */
+.game__body.has-ticker {
+  --ticker-h: var(--control);
+}
+
+.game__body.has-ticker .game__pane {
+  bottom: var(--ticker-h);
+}
+
+/* a sim is running: the page is to watch (pages/Game swallows the clicks); what can still be pressed says so */
+.game.is-simming {
+  cursor: progress;
+}
+
+.game.is-simming button:not([data-sim-allow]),
+.game.is-simming a:not([data-sim-allow]),
+.game.is-simming input,
+.game.is-simming select {
+  cursor: not-allowed;
+}
+
+.game.is-simming [data-sim-allow] {
+  cursor: pointer;
+}
