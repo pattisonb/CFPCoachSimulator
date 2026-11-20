@@ -375,32 +375,6 @@
   padding-bottom: var(--s3);
 }
 
-.recruit__pitch {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 4px var(--s2);
-}
-
-.recruit__pitch .label {
-  color: var(--ink-soft);
-}
-
-.recruit__pitch select,
-.recruit__visit select {
-  min-width: 0;
-  min-height: 36px;
-  padding: 0 8px;
-  background: var(--paper-hi);
-  border: var(--line) solid var(--ink);
-  font-weight: 700;
-}
-
-.recruit__pitch .recruiting__soft {
-  grid-column: 2;
-  font-size: var(--t-xs);
-}
-
 /* a call or visit you stepped out of: finish it this week */
 .recruit__open {
   display: flex;
@@ -508,6 +482,12 @@
 
 .recruit__visit select {
   flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

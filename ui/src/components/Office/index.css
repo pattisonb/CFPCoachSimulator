@@ -22,8 +22,11 @@
   padding: var(--s4);
 }
 
+/* a little tighter than the other columns, so the game and all five actions fit without a scroll bar */
 .office__left {
   grid-area: left;
+  gap: var(--s3);
+  padding-block: var(--s3);
   background: var(--paper);
   border-right: var(--line) solid var(--line-soft);
 }
@@ -86,22 +89,20 @@
   text-transform: uppercase;
 }
 
-/* the matchup, stacked: you, then vs/at (or the final), then them */
+/* the matchup on one row: you, vs/at (or the final), them; each side its swatch and short name over its record */
 .office__match {
   display: grid;
-  gap: var(--s1);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s2);
   padding-block: var(--s1);
 }
 
 .office__side {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  min-width: 0;
-}
-
-.office__side-text {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 8px;
   min-width: 0;
 }
 
@@ -113,27 +114,27 @@
   white-space: nowrap;
 }
 
-/* the line between the two sides: the word, with a rule running out from it */
+.office__side-line {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* between the two sides: the word, or the final (W or L over the score) */
 .office__vs,
 .office__final {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  padding-left: 12px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
   color: var(--ink-soft);
   font-weight: 700;
 }
 
-.office__vs::after,
-.office__final::after {
-  content: "";
-  flex: 1;
-  border-top: var(--line) dashed var(--line-soft);
-}
-
 .office__final {
   color: var(--ink);
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
+  white-space: nowrap;
 }
 
 .office__result {
@@ -246,6 +247,13 @@
   display: grid;
   flex: 1;
   min-width: 0;
+}
+
+/* an action's name stays on one line (a long one is cut short), so the tiles are all one height */
+.office__action-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .office__action-sub {
@@ -598,6 +606,23 @@
   .office__right {
     padding-top: 0;
     border-left: 0;
+  }
+}
+
+/* a short window: the actions lose their second line and sit closer, so the column still fits without a scroll bar */
+@media (height <= 780px) {
+  .office__action-sub {
+    display: none;
+  }
+
+  .office__action {
+    min-height: 36px;
+    padding-block: 2px;
+  }
+
+  .office__action-icon {
+    width: 28px;
+    height: 28px;
   }
 }
 

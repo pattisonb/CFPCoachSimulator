@@ -72,8 +72,6 @@ export const messages = {
   pestering: "He feels pestered. Ease off until a visit or an offer changes things.",
 
   work: "Work Him",
-  pitch: "Pitch",
-  pitchFit: (word: string) => `Your Pull: ${word}`,
   pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
   message: "Message",
   call: "Call",

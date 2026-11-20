@@ -15,7 +15,7 @@ import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
-import { PITCH_NAMES, byChance, pullOf, standingOf, statusOf } from "../../standing.ts";
+import { PITCH_NAMES, byChance, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
@@ -401,9 +401,6 @@ function RecruitPanel({
     : r.offered && !(r.signed || r.committed)
       ? m.outside
       : m.notOnIt;
-  const known = r.priorities_known;
-  const best = known[0] ?? Object.entries(r.strength).sort((a, b) => b[1] - a[1])[0]?.[0] ?? board.pitches[0];
-  const [pitch, setPitch] = useState(best);
   const askDefault = r.ask.exact ?? r.ask.hi ?? r.ask.lo ?? 0;
   const [nil, setNil] = useState(r.offered ? r.nil + 5 : askDefault);
   const openWeeks = r.visit_weeks.filter((w) => !w.taken_by && w.week > board.week);
@@ -440,7 +437,6 @@ function RecruitPanel({
   const left = board.hours_left;
   const cost = (a: string) => board.hours_cost[a] ?? 0;
   const done = (a: string) => r.done_this_week.includes(a);
-  const fit = m.pulls[pullOf(r.strength[pitch])];
   const closed = !!(r.signed || (r.committed && r.committed !== team && r.hard));
 
   const act = async (action: string, extra: Record<string, unknown> = {}) => {
@@ -512,7 +508,7 @@ function RecruitPanel({
         className="recruit__act"
         disabled={off}
         title={why}
-        onClick={() => act(action, extra ?? (talks(action) ? {} : { pitch }))}
+        onClick={() => act(action, extra ?? {})}
       >
         <Icon size={18} weight="bold" aria-hidden="true" />
         <b>{label}</b>
@@ -604,18 +600,6 @@ function RecruitPanel({
             <div className="recruit__col">
               {!closed && (
                 <Panel title={m.work} aside={m.hoursLeft(Math.round(left))} className="recruit__work">
-                  <label className="recruit__pitch">
-                    <span className="label">{m.pitch}</span>
-                    <select value={pitch} onChange={(e) => setPitch(e.target.value)}>
-                      {board.pitches.map((p) => (
-                        <option key={p} value={p}>
-                          {PITCH_NAMES[p] ?? p}
-                          {known.includes(p) ? " ★" : ""}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="recruiting__soft">{m.pitchFit(fit)}</span>
-                  </label>
                   {r.scene && (
                     <div className="recruit__open">
                       <span>{m.openTalk[r.scene.action]}</span>
@@ -672,7 +656,7 @@ function RecruitPanel({
                     ) : (
                       <Button
                         disabled={busy || board.offers_left <= 0}
-                        onClick={() => act("offer", { pitch, nil, ...(promiseJob ? { answer: "promise" } : {}) })}
+                        onClick={() => act("offer", { nil, ...(promiseJob ? { answer: "promise" } : {}) })}
                       >
                         {m.makeOffer(nil)}
                       </Button>
@@ -749,6 +733,3 @@ function RecruitPanel({
     </article>
   );
 }
-
-/** A call or in-home visit is a conversation: it opens with no pitch (you choose one in its window). */
-const talks = (action: string) => action === "call" || action === "hc_visit";

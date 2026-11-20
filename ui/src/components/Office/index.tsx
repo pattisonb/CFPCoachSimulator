@@ -419,15 +419,13 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   );
 }
 
-/** One side of the matchup: swatch, name, rank and record. */
+/** One side of the matchup: swatch and short name ("CCU"; the full name on hover), its rank and record under them. */
 function Side({ team, name, line }: { team: TeamCard | undefined; name: string; line: string }) {
   return (
-    <div className="office__side">
-      <Swatch team={team} size={40} />
-      <span className="office__side-text">
-        <b className="office__side-name">{name}</b>
-        <span className="office__soft">{line}</span>
-      </span>
+    <div className="office__side" title={name}>
+      <Swatch team={team} size={36} />
+      <b className="office__side-name">{team?.abbreviation ?? name.split(" ")[0].slice(0, 6).toUpperCase()}</b>
+      <span className="office__soft office__side-line">{line}</span>
     </div>
   );
 }
