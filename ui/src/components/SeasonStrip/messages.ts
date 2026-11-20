@@ -22,5 +22,7 @@ export const messages = {
     20: "Title Wk",
   } as Record<number, string>,
   toBeSet: "To Be Set",
+  /** a postseason week that came and went, or will, with no game of yours */
+  noGame: "No Game",
   boxScore: (opponent: string) => `Open the box score: ${opponent}`,
 } as const;

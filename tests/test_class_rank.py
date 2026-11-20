@@ -42,9 +42,20 @@ if __name__ == "__main__":
         hidden_schools = {rc["status"][pid]["committed"] for pid in quiet}
         seen = prospects.class_table(st, ME)
         everyone = prospects.class_table(st)
+        comp = lambda pid: rc["prospects"][pid]["composite"]
+        worth = lambda pid: comp(pid) * 100 > prospects.CLASS_FLOOR      # class_points: a commit rated at or under the floor adds nothing
+        lower = 0
         for s in hidden_schools:
             if s in seen:
-                assert seen[s]["points"] < everyone[s]["points"] and not set(seen[s]["pids"]) & set(quiet), s
+                theirs = [pid for pid in quiet if rc["status"][pid]["committed"] == s]
+                assert theirs and not set(seen[s]["pids"]) & set(quiet), s
+                assert sorted(seen[s]["pids"] + theirs) == sorted(everyone[s]["pids"]), s      # the row is the class less its hidden commits, no one else
+                assert seen[s]["points"] == prospects.class_points(comp(pid) for pid in seen[s]["pids"]), s
+                # the points drop exactly when a hidden commit was worth points (one rated under the floor was worth none)
+                assert (seen[s]["points"] < everyone[s]["points"]) == any(worth(pid) for pid in theirs), s
+                assert seen[s]["points"] <= everyone[s]["points"], s
+                lower += seen[s]["points"] < everyone[s]["points"]
+        assert lower, "some school's row loses points to a commit hidden from you"
         # a school ranks its own Quiet Commits: each school's rank is its own row on its own Classes tab
         for s in sorted(hidden_schools)[:3]:
             own = next(r for r in prospects.national_classes(st, s)["schools"] if r["school"] == s)

@@ -21,8 +21,10 @@ def career():
 
 
 def test_display_pos() -> None:
-    want = {"LEDG": "EDGE", "REDG": "EDGE", "DT": "DT", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
-            "HB": "RB", "FB": "RB", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "FS": "S", "SS": "S", "QB": "QB", "CB": "CB",
+    # the positions the recruiting pages count by (recruiting.SPOTS): guards together, the center, each linebacker
+    # spot and each safety their own
+    want = {"LEDG": "EDGE", "REDG": "EDGE", "DT": "DT", "LT": "OT", "RT": "OT", "LG": "OG", "RG": "OG", "C": "C",
+            "HB": "RB", "FB": "RB", "SAM": "WILL", "MIKE": "MIKE", "WILL": "WILL", "FS": "FS", "SS": "SS", "QB": "QB", "CB": "CB",
             "WR": "WR", "TE": "TE", "K": "K", "P": "P"}
     for ea, shown in want.items():
         assert prospects.display_pos(ea) == shown, (ea, prospects.display_pos(ea), shown)

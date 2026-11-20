@@ -39,6 +39,14 @@ if __name__ == "__main__":
     assert any(e["kind"] == "hard" and e["pid"] == quiet for e in rc.get("events", [])) or True
     # a hard commit never flips and his offer stands
     assert recruiting.flip_weekly(st, quiet, 5.0) == 0.0 and recruiting.flip_by_signing(st, quiet, 5.0, 10) == 0.0
+    assert recruiting.closed(st)                       # week 19: the dead period (Championship Week to the last Signing Day)
+    try:
+        recruiting.act(st, me, quiet, "pull_offer")
+        raise AssertionError("an offer was pulled while recruiting is closed")
+    except recruiting.RecruitingError as e:
+        assert recruiting.CLOSED_TEXT in str(e), str(e)
+    st["current_week"] = recruiting.close_week() - 1   # the last week recruiting is open: his offer still cannot be pulled
+    assert not recruiting.closed(st)
     try:
         recruiting.act(st, me, quiet, "pull_offer")
         raise AssertionError("a hard commit's offer was pulled")
