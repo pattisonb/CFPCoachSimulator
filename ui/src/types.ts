@@ -545,6 +545,57 @@ export interface PlayerProfile {
     games: number;
     honors: { kind: string; name: string }[];
   }[];
+  /** his home state (a career's league row) */
+  hometown?: string | null;
+  /** how he was recruited out of high school (coach_career/offseason.py _recruit_stories); null for a player who was
+   *  on the roster before your first class */
+  recruitment?: {
+    year?: number;
+    stars?: number;
+    rank?: number;
+    pos?: string;
+    pos_rank?: number;
+    state_rank?: number;
+    city?: string;
+    state?: string;
+    school: string;
+    school_name: string;
+    /** how many schools offered him */
+    offers: number;
+    /** the other schools on his list at the end */
+    others: { slug: string; name: string }[];
+    week?: number;
+    early?: boolean;
+    flips: number;
+    /** the NIL his school had on its offer */
+    nil?: number;
+    /** his overall when he arrived */
+    overall?: number;
+    promised?: boolean;
+    /** yours only: what he cared about, and his History as the recruiting page showed it */
+    priorities?: string[];
+    log?: RecruitEvent[];
+  } | null;
+  /** what has happened to him since, oldest first (offseason.life): `year` is the season it came after */
+  story?: {
+    year: number;
+    kind: "progress" | "promise" | "stayed" | "transfer";
+    gain?: number;
+    overall?: number;
+    why?: string[];
+    band?: string;
+    benched_big?: boolean;
+    intent?: string;
+    nil?: number;
+    promised?: boolean;
+    met?: boolean;
+    from?: string;
+    to?: string;
+    from_name?: string;
+    to_name?: string;
+    walk_on?: boolean;
+    log?: RecruitEvent[];
+  }[];
 }
 
 /** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */

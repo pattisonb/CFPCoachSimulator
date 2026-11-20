@@ -216,9 +216,14 @@
   text-transform: uppercase;
 }
 
+/* "0-0 · Week 0" then the week's date: one line when they fit, the date under it when they do not */
 .game-nav__team-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
   color: var(--ink-soft);
   font-size: var(--t-xs);
+  white-space: nowrap;
 }
 
 /* ---------- the sections ---------- */

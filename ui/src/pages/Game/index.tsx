@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
-import CoachBadge, { Energy, type CoachWord } from "../../components/CoachBadge/index.tsx";
+import { dateYearText } from "../../format.ts";
+import CoachBadge, { Energy, type CoachRatings, type CoachWord } from "../../components/CoachBadge/index.tsx";
 import Dropdown from "../../components/Dropdown/index.tsx";
 import Bracket from "../../components/Bracket/index.tsx";
 import GameWindow from "../../components/GameWindow/index.tsx";
@@ -292,6 +293,14 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     accent ?? "#f5b942",
     myTeam?.colors,
   );
+  // the date under your team's name: the one the Office's headline shows (your game this week, else the week's main
+  // day), with its year. The schedule's dates are one calendar's, so a later season moves only the year
+  const dateWeek = (simWeek ?? season?.current_week ?? 0) + 1;
+  const dateIso =
+    season?.schedule.find((g) => g.week === dateWeek && g.opponent)?.date ??
+    season?.week_dates[String(dateWeek)]?.main ??
+    season?.week_dates[String(dateWeek - 1)]?.main;
+  const calendarYear = Number(season?.week_dates["1"]?.main?.slice(0, 4)) || season?.year || 0;
   const navTeam: NavTeam | null = season && {
     name: season.team_name,
     primary: myTeam?.colors.primary ?? "var(--ink)",
@@ -299,6 +308,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     // a running sim moves the record and the week as it goes
     record: `${(simRecord ?? season.record).wins}-${(simRecord ?? season.record).losses}`,
     week: simWeek ?? season.current_week,
+    date: dateYearText(dateIso, season.year - calendarYear),
   };
 
   // ⌘\\ / Ctrl+\\: hide the sidebar, or show it again as it was before
@@ -358,11 +368,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const looks = recruiting?.board.reduce((n, b) => n + (b.looks ?? 0), 0) ?? 0;
   // your word (how well you keep promises), on your coach's card: read again when a week passes
   const [word, setWord] = useState<CoachWord | null>(null);
+  // ... and your ratings as a head coach, in the part that drops under the card
+  const [ratings, setRatings] = useState<CoachRatings | null>(null);
   useEffect(() => {
     if (!season?.id) return;
     let on = true;
-    api<{ word?: CoachWord }>(`/api/season/${season.id}/office`)
-      .then((v) => on && setWord(v.word ?? null))
+    api<{ word?: CoachWord; coach?: { ratings?: CoachRatings } }>(`/api/season/${season.id}/office`)
+      .then((v) => {
+        if (!on) return;
+        setWord(v.word ?? null);
+        setRatings(v.coach?.ratings ?? null);
+      })
       .catch(() => {});
     return () => {
       on = false;
@@ -425,14 +441,13 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       {autoMenu}
     </>
   );
-  const toasts = (rise: boolean) =>
+  const toasts = () =>
     season && (
       <NoticeToasts
         items={notices.toasts}
         weekLabels={season.week_labels}
         onOpen={openNotice}
         onDismiss={notices.dismiss}
-        rise={rise}
       />
     );
 
@@ -461,7 +476,15 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
             setNavMode(next);
           }}
         />
-        <main className={`game__main${bare && navMode !== "hidden" ? " is-bare" : ""}`}>
+        <main
+          className={[
+            "game__main",
+            bare && navMode !== "hidden" && "is-bare",
+            section.key === "recruiting" && "is-recruiting",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {/* the season so far and to come, then you */}
           <div className="game__top">
             {navMode === "hidden" && (
@@ -484,27 +507,20 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                 onBox={openBox}
               />
             )}
-            {season && coach && face && !bare && (
-              <CoachBadge
-                name={coachName(coach)}
-                team={season.team_name}
-                face={face}
-                word={word}
-                corner={corner}
-                below={toasts(false)}
-              />
-            )}
           </div>
-          {/* Recruiting has no top row: you are a face in the window's bottom right corner, the card on hover */}
-          {season && coach && face && section.key === "recruiting" && (
+          {/* you, in the window's top right corner on every screen but the Offseason: your face alone, the card when
+              you point at it. In Recruiting (no top row) it is a smaller face in the window's tab bar */}
+          {season && coach && face && section.key !== "offseason" && (
             <CoachBadge
-              floating
+              compact={section.key === "recruiting"}
               name={coachName(coach)}
               team={season.team_name}
               face={face}
               word={word}
+              budgets={budgets}
+              ratings={ratings}
               corner={corner}
-              below={toasts(true)}
+              below={toasts()}
               alert={notices.unread}
             />
           )}

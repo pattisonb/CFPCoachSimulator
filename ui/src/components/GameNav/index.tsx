@@ -25,6 +25,8 @@ export interface NavTeam {
   secondary: string;
   record: string;
   week: number;
+  /** the week's date with its year ("Sep 5, 2026"); "" when the week has none */
+  date?: string;
 }
 
 interface Props {
@@ -258,7 +260,12 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
           />
           <span className="game-nav__who">
             <span className="game-nav__team-name">{team?.name ?? m.noTeam}</span>
-            {team && <span className="game-nav__team-line">{m.teamLine(team.record, team.week)}</span>}
+            {team && (
+              <span className="game-nav__team-line">
+                <span>{m.teamLine(team.record, team.week)}</span>
+                {team.date && <span>{team.date}</span>}
+              </span>
+            )}
           </span>
         </div>
 

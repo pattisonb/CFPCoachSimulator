@@ -6,6 +6,7 @@
 }
 
 .game__main {
+  position: relative; /* your coach's card hangs in its top right corner */
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: var(--s4);
@@ -22,10 +23,31 @@
   align-items: stretch;
   gap: var(--s3);
   min-width: 0;
+  min-height: 94px; /* your coach's tile and the room under it for its shadow: the strip's tiles stretch to it */
+  padding-right: calc(88px + var(--s3)); /* your coach's face sits here, out of the row: the strip has the rest */
 }
 
 .game__top .season-strip {
   flex: 1;
+  margin-bottom: 6px;
+}
+
+/* your coach: the window's top right corner, over the page (its card slides out over the strip) */
+.game__main > .coach-badge {
+  position: absolute;
+  top: var(--s3);
+  right: var(--s5);
+  z-index: 11;
+}
+
+/* Recruiting has no top row: the smaller face sits in the window's tab bar, and the bar's budgets make room */
+.game__main.is-recruiting > .coach-badge {
+  top: calc(var(--s3) + 2px); /* level with the tab bar, inside the window's edge */
+  right: calc(var(--s5) + 10px);
+}
+
+.game__main.is-recruiting .section-tabs__aside {
+  padding-right: 56px;
 }
 
 /* a section with no top row (the Offseason): the section takes the whole height */
@@ -35,13 +57,6 @@
 
 .game__main.is-bare .game__top {
   display: none;
-}
-
-/* the strip's tiles stretch to the card's height; both leave the same room below for their shadows, so their
-   bottom edges line up */
-.game__top .coach-badge {
-  margin-left: auto;
-  margin-bottom: 6px;
 }
 
 .game__open {
@@ -150,6 +165,14 @@
 @media (width <= 1100px) {
   .game__main {
     padding: var(--s3) var(--s4);
+  }
+
+  .game__main > .coach-badge {
+    right: var(--s4);
+  }
+
+  .game__main.is-recruiting > .coach-badge {
+    right: calc(var(--s4) + 10px);
   }
 }
 

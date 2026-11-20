@@ -34,6 +34,16 @@ export const dateText = (d: string | null | undefined) => {
   const t = dayOf(d);
   return Number.isNaN(t) ? "" : DAY.format(t);
 };
+/** "Sep 5, 2026" (the year moved on by `years`); "" when there is no date */
+const DAY_YEAR = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: ET });
+export const dateYearText = (d: string | null | undefined, years = 0) => {
+  const t = dayOf(d);
+  if (Number.isNaN(t)) return "";
+  // `years` later, the same month and day: every season runs on one calendar, so a later one moves only the year
+  const at = new Date(t);
+  at.setUTCFullYear(at.getUTCFullYear() + years);
+  return DAY_YEAR.format(at);
+};
 /** "Sat 12:30 PM" with a kickoff, else the day */
 export const kickoffText = (d: string | null | undefined) => {
   const t = timeOf(d);

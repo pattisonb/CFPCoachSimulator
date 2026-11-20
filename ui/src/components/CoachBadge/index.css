@@ -1,17 +1,23 @@
-/* Your coach at the game's top right: a raised card, the face in a tile, then name, role and energy. */
+/* Your coach at the game's top right, on every screen: your face alone in a raised tile. Pointed at, tabbed to or with
+   its menu open, the card slides out to the left (your name, team and your word come in beside your face) and the
+   rest drops under it (the week's budgets, your ratings). It lies over the page: nothing else moves. */
 .coach-badge {
+  --badge-slide: 220ms; /* *tune* how long the card takes to slide out and back */
+  --badge-ease: cubic-bezier(0.3, 0, 0.2, 1); /* one curve for every part, so the card opens as one thing */
+  --badge-face: 72px; /* the face at 2x (66 x 68), pixel-sharp */
+
   position: relative;
   display: flex;
   flex: none;
   align-items: center;
-  gap: var(--s2);
-  padding: 6px var(--s2) 6px 6px;
+  gap: 0;
+  padding: 6px;
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
-/* a small control inside the card's top right corner */
+/* a small control inside the card's top right corner: there once the card is out */
 .coach-badge__corner {
   position: absolute;
   top: 4px;
@@ -19,16 +25,29 @@
   z-index: 2;
   display: flex;
   gap: 2px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 120ms linear,
+    visibility 0s linear 120ms;
 }
 
 .coach-badge__face {
   display: grid;
   place-items: center;
   flex: none;
-  width: 72px; /* the face at 2x (66 x 68), pixel-sharp */
-  height: 72px;
+  width: var(--badge-face);
+  height: var(--badge-face);
   overflow: hidden;
   background: var(--tile);
+  transition:
+    width var(--badge-slide) var(--badge-ease),
+    height var(--badge-slide) var(--badge-ease);
+}
+
+.coach-badge__face .face {
+  width: 91.67%; /* 66 of the tile's 72: its own size at full, half of it when compact */
+  height: auto;
 }
 
 /* dark: a step lighter than the tile, so the face stands off the card without a frame */
@@ -36,10 +55,25 @@
   background: #5a5a5a;
 }
 
+/* compact (Recruiting: it sits in the window's tab bar): half the face while shut, the whole of it once out */
+.coach-badge--compact:not(:hover, :focus-within, :has([aria-expanded="true"])) {
+  --badge-face: 36px;
+
+  padding: 2px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+/* your name and your word are there all along, behind the card's edge: the slide uncovers them (nothing fades in) */
 .coach-badge__who {
   display: grid;
   gap: 2px;
   min-width: 0;
+  max-width: 0;
+  max-height: 72px; /* never taller than your face, so the card is one height shut, sliding and open */
+  overflow: hidden;
+  transition:
+    max-width var(--badge-slide) var(--badge-ease),
+    margin var(--badge-slide) var(--badge-ease);
 }
 
 .coach-badge__name {
@@ -75,7 +109,7 @@
 .coach-badge__energy-label {
   color: var(--ink-soft);
   font-size: 10px;
-  white-space: nowrap; /* "Your Word" on one line even while the floating card is shut: two lines made the card taller shut than open */
+  white-space: nowrap; /* "Your Word" on one line even while the card is shut: two lines made the card taller shut than open */
 }
 
 .coach-badge__bar {
@@ -101,35 +135,7 @@
   font-weight: 700;
 }
 
-/* floating (Recruiting, which has no top row): your face alone in the window's bottom right corner. Pointed at, tabbed
-   to or with its menu open, the card slides out from the right: it grows to the left, carrying your face over to its
-   place as your name and the week's energy come in beside it. */
-.coach-badge--float {
-  --badge-slide: 360ms; /* *tune* how long the card takes to slide out and back */
-
-  position: fixed;
-  right: calc(var(--s5) + 16px);
-  bottom: calc(var(--s4) + 16px);
-  z-index: 6;
-  gap: 0;
-  padding: 6px;
-}
-
-/* your name and energy are there all along, behind the card's edge: the slide uncovers them (nothing fades in) */
-.coach-badge--float .coach-badge__who {
-  max-width: 0;
-  max-height: 72px; /* never taller than your face, so the card is one height shut, sliding and open */
-  overflow: hidden;
-  transition:
-    max-width var(--badge-slide) cubic-bezier(0.22, 1, 0.36, 1),
-    margin var(--badge-slide) cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.coach-badge--float .coach-badge__corner {
-  visibility: hidden;
-}
-
-/* floating: how many notices are new, on your face's corner until the card is out (the bell says it then) */
+/* how many notices are new, on your face's corner until the card is out (the bell says it then) */
 .coach-badge__alert {
   position: absolute;
   top: -8px;
@@ -146,24 +152,141 @@
   text-align: center;
 }
 
-.coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__alert {
+/* ---------- the part that drops under the card: this week's budgets, then your ratings ---------- */
+.coach-badge__more {
+  position: absolute;
+  top: 100%;
+  right: calc(-1 * var(--line));
+  z-index: 26; /* over a notice that has just landed under the card */
+  width: max(
+    100% + 2 * var(--line),
+    320px
+  ); /* one width from the first frame: it does not stretch as the card slides */
+
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+
+  /* shut: rolled up under the card's edge. It unrolls as the card slides, and rolls back the same way */
+  clip-path: inset(0 -8px 100% -8px);
+  visibility: hidden;
+  transition:
+    clip-path var(--badge-slide) var(--badge-ease),
+    visibility 0s linear var(--badge-slide);
+}
+
+.coach-badge__part {
+  display: grid;
+  gap: 4px;
+}
+
+.coach-badge__part + .coach-badge__part {
+  padding-top: var(--s2);
+  border-top: 1px solid var(--line-soft);
+}
+
+.coach-badge__part h4 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--ink-soft);
+}
+
+.coach-badge__overall {
+  color: var(--ink);
+}
+
+.coach-badge__overall b {
+  margin-left: 4px;
+  padding: 0 6px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  font-size: var(--t-sm);
+}
+
+/* in this part the bars line up: every label one width, every bar starting at the same place */
+.coach-badge__more .coach-badge__energy {
+  margin-top: 0;
+}
+
+.coach-badge__more .coach-badge__energy-label {
+  width: 72px;
+}
+
+/* a rating: its name, a bar in your color, its number */
+.coach-badge__ratings {
+  display: grid;
+  gap: 3px;
+}
+
+.coach-badge__ratings > div {
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+}
+
+.coach-badge__ratings dt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-badge__ratings dd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 6px;
+  text-align: right;
+}
+
+.coach-badge__meter {
+  height: 8px;
+  background: var(--line-soft);
+}
+
+.coach-badge__meter span {
+  display: block;
+  height: 100%;
+  background: var(--team, var(--ink));
+}
+
+/* ---------- out: pointed at, tabbed to, or with a menu of its own open ---------- */
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__alert {
   display: none;
 }
 
-.coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__who {
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__who {
   max-width: 300px; /* *tune* wider than the longest name and team */
   margin: 0 4px 0 var(--s2);
 }
 
-/* the corner's control shows once the card is out */
-.coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__corner {
+/* the corner's controls come up as the card lands; the part under it unrolls with the slide */
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__corner {
+  opacity: 1;
   visibility: visible;
-  transition: visibility 0s linear var(--badge-slide);
+  transition:
+    opacity 120ms linear calc(var(--badge-slide) - 60ms),
+    visibility 0s;
+}
+
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__more {
+  clip-path: inset(0 -8px -8px -8px); /* room for its shadow */
+  visibility: visible;
+  transition:
+    clip-path var(--badge-slide) var(--badge-ease),
+    visibility 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .coach-badge--float .coach-badge__who,
-  .coach-badge--float .coach-badge__corner {
+  .coach-badge__who,
+  .coach-badge__face,
+  .coach-badge__corner,
+  .coach-badge__more {
     transition: none !important;
   }
 }

@@ -123,4 +123,8 @@ def conference_view(state: dict) -> dict:
 
 def office_view(state: dict) -> dict:
     from coach_career import word
-    return {"news": program_news(state), "conference": conference_view(state), "word": word.view(state)}
+    from sim import season
+    hc = ((season.team_data(state, state["team"]).get("coaches") or {}).get("head_coach")) or {}
+    # you, for your coach's card: your ratings as a head coach (the league's in a later season, the teams file's before)
+    return {"news": program_news(state), "conference": conference_view(state), "word": word.view(state),
+            "coach": {"ratings": {k: int(v) for k, v in (hc.get("ratings") or {}).items() if isinstance(v, (int, float))}}}

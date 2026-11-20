@@ -367,3 +367,127 @@
 .player-view__promise.is-bad svg {
   color: var(--warn);
 }
+
+/* ---------- History: his recruitment, then his seasons with what came after each ---------- */
+
+/* the numbers of his recruitment, a tile each: as many to a row as fit */
+.player-view__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  padding: var(--s2) 0;
+}
+
+.player-view__tile {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px var(--s2);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.player-view__tile .label {
+  overflow: hidden;
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-view__tile dd {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: var(--t-lg);
+  font-weight: 700;
+}
+
+.player-view__gold {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--gold);
+}
+
+.player-view__note {
+  padding: var(--s2) 0 4px;
+}
+
+/* a school: its colors, then its name */
+.player-view__school {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.player-view__schools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px var(--s2);
+}
+
+/* his seasons, newest first: the year in a tab on a rule, then the lines of what happened */
+.player-view__years {
+  display: grid;
+  gap: var(--s2);
+  max-height: 420px; /* *tune* about three seasons before it scrolls */
+  padding: var(--s2) 6px var(--s1) 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-gutter: stable;
+}
+
+.player-view__year {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  border-bottom: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+}
+
+.player-view__year b {
+  padding: 2px 8px;
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.player-view__events {
+  display: grid;
+  list-style: none;
+}
+
+.player-view__event {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s2);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.player-view__event:last-child {
+  border-bottom: 0;
+}
+
+.player-view__mark {
+  margin-top: 2px;
+}
+
+.player-view__event > span {
+  display: grid;
+  gap: 2px;
+}
+
+.player-view__mark--good {
+  color: var(--good);
+}
+
+.player-view__mark--bad {
+  color: var(--warn);
+}
+
+.player-view__mark--gold {
+  color: var(--gold);
+}

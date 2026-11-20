@@ -648,6 +648,8 @@ def _resolve_retention(state: dict) -> None:
                 if e.get("broken_promise"):
                     p["promised_again"] = year                # his second chance: break this one and there is no third
             spent += e["offers"].get("nil", 0)
+            life(p, year - 1, "stayed", intent=e.get("intent"), nil=e["offers"].get("nil") or None, promised=True if _keeps_promise(e) else None,
+                 met=True if e.get("met") else None)
         elif p is not None:
             leaving.add(p["id"])
             ev = {"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": e["cls"], "team": me, "team_name": lg.team_meta(state.get("league"), me)["short_name"],
@@ -892,6 +894,11 @@ def _departures(state: dict, lgd: dict, usage: dict, shifts: Optional[dict] = No
     my_promises = promises.bands(state, _season.season_year(state))   # the season just played: your promises, judged week by week
     from coach_career import word
     word.apply_bands(state, _season.season_year(state), my_promises)   # ... and they move Keeps His Word, once a year
+    if my_promises:                                                    # each goes into his story: kept, bent or broken
+        mine_rows = {c["id"]: c for c in lgd["teams"][state["team"]]["roster"]}
+        for pslug, b in my_promises.items():
+            if pslug in mine_rows:
+                life(mine_rows[pslug], _season.season_year(state), "promise", band=b["band"], benched_big=True if b.get("benched_big") else None)
     games = _games_played(state)
     # the draft board: seniors and the underclassmen who declare, ranked by draft score (the picks
     # are projections until the draft runs after Keep Them Home)
@@ -1306,8 +1313,76 @@ def _jersey(roster: list[dict], pos: str, rng: random.Random) -> Optional[str]:
     return rng.choice(free) if free else None
 
 
+# ----- his story: how he was recruited and what has happened since (the player card's History) -----
+STORY_OTHERS = 4       # *tune* the other schools on his list that his card names
+LIFE_KEEP = 30         # *tune* the events kept on a player (a career is at most six seasons)
+
+
+def life(p: dict, season_year: int, kind: str, **extra) -> None:
+    """A line in a player's story, kept on his league row (`life`) so it follows him through the rollover and a
+    transfer: {"year": the season it came after, "kind": promise | stayed | transfer | progress, ...}. Never read
+    back by the game: his card's History shows it."""
+    rows = p.setdefault("life", [])
+    rows.append({"year": season_year, "kind": kind, **{k: v for k, v in extra.items() if v is not None}})
+    del rows[:-LIFE_KEEP]
+
+
+def _recruit_stories(state: dict) -> dict[str, dict]:
+    """Each signed prospect's recruitment, for his league row's `rec`: his class, stars, where he ranked (the nation,
+    his position, his state), his hometown, the schools that offered and the others on his list at the end, when he
+    signed (and whether early), how many times he flipped, the NIL his school put on its offer. One pass over the
+    log. Yours also carry their History as the recruiting page showed it (`log`, prospects.history_index) and what
+    he cared about."""
+    from coach_career import prospects, recruiting
+    rc = state["recruiting"]
+    ps, status = rc["prospects"], rc["status"]
+    order = sorted(ps, key=lambda q: ps[q].get("rank") or 10 ** 6)
+    at_pos: dict[str, int] = {}
+    in_state: dict[str, int] = {}
+    place: dict[str, tuple[int, int]] = {}
+    for q in order:
+        pos, home = ps[q].get("position"), (ps[q].get("hometown") or {}).get("state")
+        at_pos[pos] = at_pos.get(pos, 0) + 1
+        in_state[home] = in_state.get(home, 0) + 1
+        place[q] = (at_pos[pos], in_state[home])
+    offered: dict[str, set] = {}
+    week: dict[str, int] = {}
+    flips: dict[str, int] = {}
+    nil: dict[str, int] = {}
+    for e in rc.get("log") or ():
+        q, kind = e["pid"], e["kind"]
+        if kind == "offer" and e.get("school"):
+            offered.setdefault(q, set()).add(e["school"])
+        elif kind == "flip":
+            flips[q] = flips.get(q, 0) + 1
+        elif kind == "signed":
+            week[q] = e["week"]
+        if kind in ("offer", "raise_nil") and e.get("school") == (status.get(q) or {}).get("signed") and e.get("nil") is not None:
+            nil[q] = e["nil"]
+    me = state.get("team")
+    mine = prospects.history_index(state, me) if me else {}
+    early = recruiting.early_signing_week()
+    out = {}
+    for q, st_ in status.items():
+        slug = st_.get("signed")
+        if not slug or slug == "FCS" or q not in ps:
+            continue
+        pr = ps[q]
+        home = pr.get("hometown") or {}
+        others = [s_ for s_, _ in sorted((rc["lists"].get(q) or {}).items(), key=lambda kv: -kv[1]) if s_ != slug][:STORY_OTHERS]
+        rec = {"year": pr.get("class_of"), "stars": pr.get("stars"), "rank": pr.get("rank"), "pos": pr.get("position"),
+               "pos_rank": place[q][0], "state_rank": place[q][1], "city": home.get("city"), "state": home.get("state"),
+               "school": slug, "offers": len(offered.get(q, ())), "others": others, "week": week.get(q),
+               "early": week.get(q) is not None and week[q] <= early, "flips": flips.get(q, 0), "nil": nil.get(q)}
+        if slug == me:
+            rec["priorities"] = list(pr.get("priorities") or ())
+            rec["log"] = mine.get(q) or []
+        out[q] = {k: v for k, v in rec.items() if v is not None}
+    return out
+
+
 def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
-    """Every school's signed high school class joins its roster as freshmen."""
+    """Every school's signed high school class joins its roster as freshmen, each with his recruitment (`rec`)."""
     from coach_career import recruiting
     rc = state.get("recruiting")
     if not rc:
@@ -1315,6 +1390,7 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
     rng = _rng(state, "jerseys")
     attrs = _attrs(lgd)
     out: dict[str, int] = {}
+    stories = _recruit_stories(state)
     for pid, s in rc["status"].items():
         slug = s.get("signed")
         if not slug or slug == "FCS" or slug not in lgd["teams"]:
@@ -1323,10 +1399,14 @@ def _sign_classes(state: dict, lgd: dict) -> dict[str, int]:
         c = _compact_prospect(state, rc["prospects"][pid], attrs)
         c["j"] = _jersey(team["roster"], c["pos"], rng)
         c["signed"] = True
+        if pid in stories:
+            c["rec"] = dict(stories[pid], overall=house(c["pos"], c["o"]))     # how he was recruited, and what he was when he arrived
         contact = (rc.get("contacts") or {}).get(pid, {}).get(slug) or {}
         if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
             from coach_career import persona, promises     # told the job was his: the retention step's promise, graded on the personality you met
             promises.mark_promised(c, lgd["year"], persona.of(state, pid)["personality"])
+            if "rec" in c:
+                c["rec"]["promised"] = True
         team["roster"].append(c)
         out[slug] = out.get(slug, 0) + 1
     return out
@@ -1519,6 +1599,8 @@ def _close_portal(state: dict) -> None:
     rng = _rng(state, "portal-jerseys")
     me, auto = state.get("team"), bool(off.get("auto")) or recruiting.auto_mode(state) != "off"
     yours = set(rc.get("board") or []) | set(rc["offers"].get(me, []))      # the entrants you recruited: where each went is logged
+    from coach_career import prospects
+    told = prospects.history_index(state, me) if me else {}                # your signees' portal History, for their story
     for pid, e in portal["players"].items():
         st_ = rc["status"].get(pid) or {}
         school = st_.get("signed")
@@ -1549,6 +1631,11 @@ def _close_portal(state: dict) -> None:
         if any(pr["kind"] == "roster" for pr in contact.get("promises") or ()):
             from coach_career import persona, promises     # told the job was his in the portal: the same promise a signed recruit carries
             promises.mark_promised(p, lgd["year"], persona.of(state, pid)["personality"])
+        if p.get("life"):
+            p["life"] = list(p["life"])                                 # his own list: the portal's copy of him shares the old row's
+        life(p, (off.get("year") or lgd["year"]) - 1, "transfer", to=school, overall=house(p["pos"], p["o"]), **{"from": e["from"]},
+             walk_on=True if not st_.get("signed") else None, promised=True if p.get("promised") == lgd["year"] else None,
+             log=(told.get(pid) or None) if school == me else None)
         if not st_.get("signed"):
             p["walk_on"] = p["preferred"] = True
             st_["signed"] = school
@@ -2022,6 +2109,7 @@ def _develop_all(state: dict) -> dict:
             if slug == state["team"]:
                 # each card attribute that moved, with where it was and is (the Development card): a view, never read back
                 grew = _card_growth(was or p["r"], p["r"], attrs, p["pos"])
+                life(p, year - 1, "progress", gain=g, overall=house(p["pos"], p["o"]), why=list(why) or None)
                 mine.append({"id": p["id"], "name": p["n"], "pos": p["pos"], "cls": p["cls"], "gain": g, "overall": p["o"], "why": why, "grew": grew,
                              "transfer": p.get("transfer") if _new_transfer(state["offseason"], p, slug) else None})
     mine.sort(key=lambda r: -r["gain"])

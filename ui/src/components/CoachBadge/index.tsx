@@ -11,19 +11,26 @@ export interface CoachWord {
   recent: string[];
 }
 
+/** Your head coach's ratings by key (GET /api/season/{id}/office → coach.ratings): overall, offense, recruiting… */
+export type CoachRatings = Record<string, number>;
+
 interface Props {
   name: string;
   team: string;
   face: FaceSpec;
   /** your word: how well you keep promises, in a word, with the position it is weakest at and the latest lines */
   word?: CoachWord | null;
+  /** the week's budgets as bars (`Energy`), in the part that drops under the card; left out when there are none */
+  budgets?: ReactNode;
+  /** your ratings as a head coach, in the part that drops under the card */
+  ratings?: CoachRatings | null;
   /** a small control inside the card's top right corner (a Dropdown, say) */
   corner?: ReactNode;
-  /** floating in the window's bottom right corner as your face alone; pointing at it (or tabbing to it) opens the card */
-  floating?: boolean;
-  /** hangs from under the card's right edge (over it when floating): the notices that have just landed */
+  /** a smaller face while the card is shut (Recruiting, where it sits in the window's tab bar) */
+  compact?: boolean;
+  /** hangs from under the card's right edge: the notices that have just landed */
   below?: ReactNode;
-  /** floating: a count on your face's corner (the notices not looked at yet) */
+  /** a count on your face's corner while the card is shut (the notices not looked at yet) */
   alert?: number;
 }
 
@@ -92,24 +99,64 @@ export function Word({ word }: { word: CoachWord | null | undefined }) {
   );
 }
 
-/** You, at the game's top right: your face, name and team, and your word as a bar of blocks. */
-export default function CoachBadge({ name, team, face, word, corner, floating, below, alert }: Props) {
+/** The ratings the card lists, in this order (the overall has the head's tile). */
+const RATED = ["offense", "defense", "recruiting", "player_development", "game_management", "motivation", "discipline"];
+
+/**
+ * You, at the game's top right on every screen: your face alone until you point at it (or tab to it, or open its
+ * menu), then the card slides out to the left with your name, team and your word, and the rest drops under it: the
+ * week's Energy and Scouting, and your ratings as a head coach, each a bar and its number. Nothing else on the page
+ * moves: the card lies over what is beside and below it.
+ */
+export default function CoachBadge({ name, team, face, word, budgets, ratings, corner, compact, below, alert }: Props) {
+  const rated = ratings ? RATED.filter((k) => typeof ratings[k] === "number") : [];
   return (
-    <div
-      className={`coach-badge${floating ? " coach-badge--float" : ""}`}
-      tabIndex={floating ? 0 : undefined}
-      aria-label={floating ? name : undefined}
-    >
+    <div className={`coach-badge${compact ? " coach-badge--compact" : ""}`} tabIndex={0} aria-label={name}>
       {corner && <div className="coach-badge__corner">{corner}</div>}
       <span className="coach-badge__face">
         <Face face={face} scale={2} label={name} />
       </span>
-      {floating && !!alert && <span className="coach-badge__alert">{alert > 9 ? "9+" : alert}</span>}
+      {!!alert && <span className="coach-badge__alert">{alert > 9 ? "9+" : alert}</span>}
       <span className="coach-badge__who">
         <span className="coach-badge__name">{name}</span>
         <span className="coach-badge__role">{m.role(team)}</span>
         <Word word={word} />
       </span>
+      {(budgets || rated.length > 0) && (
+        <div className="coach-badge__more">
+          {budgets && (
+            <section className="coach-badge__part" aria-label={m.thisWeek}>
+              <h4 className="label">{m.thisWeek}</h4>
+              {budgets}
+            </section>
+          )}
+          {ratings && rated.length > 0 && (
+            <section className="coach-badge__part" aria-label={m.ratings}>
+              <h4 className="label">
+                {m.ratings}
+                {typeof ratings.overall === "number" && (
+                  <span className="coach-badge__overall">
+                    {m.overall} <b>{ratings.overall}</b>
+                  </span>
+                )}
+              </h4>
+              <dl className="coach-badge__ratings">
+                {rated.map((k) => (
+                  <div key={k}>
+                    <dt>{m.rated[k] ?? k}</dt>
+                    <dd>
+                      <span className="coach-badge__meter" aria-hidden="true">
+                        <span style={{ width: `${Math.max(0, Math.min(100, ratings[k]))}%` }} />
+                      </span>
+                      <b>{ratings[k]}</b>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+        </div>
+      )}
       {below}
     </div>
   );

@@ -4749,6 +4749,15 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
     from coach_career import promises, ability_goals
     promise = promises.tags_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
+    # his story (offseason._recruit_stories, offseason.life): how he was recruited and what has happened since, with
+    # every school named. Only your players carry the recruiting History and the life events' detail
+    name_of = lambda s_: (teams.get(s_) or {}).get("name") or ("a smaller school" if s_ == "FCS" else s_)
+    recruitment = None
+    if (entry or {}).get("rec"):
+        r_ = entry["rec"]
+        recruitment = dict(r_, school_name=name_of(r_.get("school")), others=[{"slug": s_, "name": name_of(s_)} for s_ in r_.get("others") or ()])
+    story = [dict(e, **({"from_name": name_of(e["from"]), "to_name": name_of(e["to"])} if e["kind"] == "transfer" else {}))
+             for e in (entry or {}).get("life") or ()]
     from teamdata import game_scale
     next_tiers = ability_goals.upgrades_view(state, team, f"{name}|{position}", {x["key"]: x["tier"] for x in p.get("traits") or []
                                                                                   if isinstance(x, dict)}) if ability_goals.on() else {}
@@ -4756,6 +4765,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     built_total = sum(built_on.get(k, 0.0) for k in (p.get("attributes") or {})) or 1.0
     return {
         "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
+        "recruitment": recruitment, "story": story, "hometown": (entry or {}).get("home"),
         "face": player_faces(state, team).get(p.get("slug")),
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),

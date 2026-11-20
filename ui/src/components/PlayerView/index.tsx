@@ -9,6 +9,7 @@ import Tooltip from "../Tooltip/index.tsx";
 import { lookOf } from "../../faces.ts";
 import { formatClass, ordinal } from "../../format.ts";
 import type { DepthCard, PlayerProfile } from "../../types.ts";
+import { Career, RecruitedHow, Recruitment } from "./History.tsx";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -403,6 +404,10 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
 
       {pr && tab === "history" && (
         <Panels split label={m.tabs.history}>
+          {/* where he came from, how you got him, and his seasons with what came after each */}
+          <Recruitment pr={pr} />
+          <RecruitedHow pr={pr} />
+          <Career pr={pr} />
           <Panel title={m.thisSeason} aside={pr.team.record ? `${pr.team.name} · ${pr.team.record}` : pr.team.name}>
             <p className="player-view__lead">{season}</p>
             {pr.ranks?.length ? (
@@ -468,36 +473,6 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
               </ul>
             ) : (
               <p className="player-view__soft">{m.noHonors}</p>
-            )}
-          </Panel>
-          <Panel title={m.career}>
-            {pr.history?.length ? (
-              <table className="player-view__table">
-                <thead>
-                  <tr>
-                    <th scope="col">{m.year}</th>
-                    <th scope="col">{m.team}</th>
-                    <th scope="col">{m.classYear}</th>
-                    <th scope="col">{m.gamesCol}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pr.history.map((h) => (
-                    <tr key={h.year}>
-                      <th scope="row">
-                        <Tip text={h.honors.map((x) => x.name).join(", ")} title={m.honors}>
-                          {h.year}
-                        </Tip>
-                      </th>
-                      <td>{h.team_name}</td>
-                      <td>{[h.position, formatClass(h.class)].filter(Boolean).join(" · ")}</td>
-                      <td>{h.games}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="player-view__soft">{m.noCareer}</p>
             )}
           </Panel>
         </Panels>

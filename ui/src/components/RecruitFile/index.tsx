@@ -694,6 +694,31 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
   );
 }
 
+/**
+ * A recruit's History as a scrolling list, newest first: an icon, the week and what happened, the kind as a tag. The
+ * recruiting page's History tab shows it, and a signed player's card keeps it (PlayerView's History).
+ */
+export function RecruitTimeline({ events, team }: { events: RecruitEvent[]; team: string }) {
+  const items = historyItems(events, team);
+  if (!items.length) return <p className="recruit-file__soft">{m.noHistory}</p>;
+  return (
+    <ul className="recruit-file__timeline" tabIndex={0}>
+      {items.map((x, i) => {
+        const Mark = KIND_ICON[x.kind] ?? Newspaper;
+        return (
+          <li key={i}>
+            <Mark size={16} weight="bold" aria-hidden="true" />
+            <span>
+              <b>{m.week(Math.max(0, x.week - 1))}</b> · {x.text}
+            </span>
+            <span className="recruit-file__tag">{m.chips[x.kind] ?? m.news}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /** What you know about him and where you stand this week, as plain sentences. */
 function notesOf(r: BoardRow, d: ProspectDetail | null, team: string): string[] {
   const out: string[] = [];
@@ -721,24 +746,7 @@ export function HistoryTab({ r, detail, team }: { r: BoardRow; detail: ProspectD
   return (
     <Panels label={m.tabs.history}>
       <Panel title={m.timeline} aside={items.length ? m.entries(items.length) : undefined}>
-        {items.length ? (
-          <ul className="recruit-file__timeline" tabIndex={0}>
-            {items.map((x, i) => {
-              const Mark = KIND_ICON[x.kind] ?? Newspaper;
-              return (
-                <li key={i}>
-                  <Mark size={16} weight="bold" aria-hidden="true" />
-                  <span>
-                    <b>{m.week(Math.max(0, x.week - 1))}</b> · {x.text}
-                  </span>
-                  <span className="recruit-file__tag">{m.chips[x.kind] ?? m.news}</span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="recruit-file__soft">{m.noHistory}</p>
-        )}
+        <RecruitTimeline events={r.history} team={team} />
       </Panel>
 
       <Panel title={m.notes}>
