@@ -81,6 +81,7 @@ export const messages = {
       : `${school} is working him hard: a real chance he flips.`,
   pestering: "He feels pestered. Ease off until a visit or an offer changes things.",
 
+  fromSchool: (school: string) => `From ${school}`,
   work: "Work Him",
   deadPeriod: (signing: string) =>
     `Recruiting is closed until Signing Day${signing ? `, after the ${signing}` : ""}. No offers, messages, calls, visits or scouting. He is deciding among the offers he holds, and he can still commit or flip.`,

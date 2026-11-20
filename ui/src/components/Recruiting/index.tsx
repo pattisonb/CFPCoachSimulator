@@ -18,6 +18,7 @@ import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { useKept } from "../../kept.ts";
+import { formatClass } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags, { type RecruitAlert } from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -605,11 +606,21 @@ function RecruitPanel({
           face={<Face face={playerFace(r.id, r.display_pos)} scale={6} label="" />}
           name={r.name}
           beside={`${r.display_pos} · ${m.ranks(r.national_rank, r.pos_rank, r.display_pos)}`}
-          line={[r.height_display, r.weight_display, `${r.hometown.city}, ${r.hometown.state}`].join(" · ")}
+          // a transfer: the school he left where a recruit has his hometown (a transfer's town is often not on file)
+          line={[
+            r.height_display,
+            r.weight_display,
+            r.portal && r.from_name
+              ? m.fromSchool(r.from_name)
+              : [r.hometown.city, r.hometown.state].filter(Boolean).join(", "),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
           tags={
             <>
               <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
-              <Stars n={r.stars} />
+              {/* a transfer has a class, not stars */}
+              {r.portal ? r.cls && <HeadTag>{formatClass(r.cls)}</HeadTag> : <Stars n={r.stars} />}
               <RecruitFlags
                 generational={r.generational}
                 find={r.find}

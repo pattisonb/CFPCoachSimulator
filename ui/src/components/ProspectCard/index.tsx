@@ -50,8 +50,9 @@ export function transferLine(r: {
   return r.line?.games ? m.games(r.line.games) : "";
 }
 
-/** A prospect's stars as pixel stars (the font has none). */
+/** A prospect's stars as pixel stars (the font has none); nothing for a player with none (a transfer). */
 export function Stars({ n, size = 12 }: { n: number; size?: number }) {
+  if (!n) return null; // a transfer has no stars: five empty ones say nothing
   return (
     <span className="prospect-stars" aria-label={`${n}-star`}>
       {Array.from({ length: 5 }, (_, k) => (

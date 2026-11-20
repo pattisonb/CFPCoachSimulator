@@ -1181,6 +1181,14 @@
   border: var(--line) solid var(--ink);
 }
 
+/* the week's hours and scouting points, between the box's words and its button */
+.off__budgets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+}
+
 .off__cta > .off__soft {
   flex: 1 1 320px;
   margin: 0;
@@ -1279,4 +1287,17 @@
 
 .portal-card .off-card__open:hover {
   text-decoration: underline;
+}
+
+/* a portal card's tag never runs past the card: cut short if it must be */
+.portal-card .dev-card__line {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.portal-card .dev-card__line > * {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

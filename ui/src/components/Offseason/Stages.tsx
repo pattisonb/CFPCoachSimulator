@@ -564,7 +564,7 @@ function Departures(p: P) {
  * his scouting and ratings), then who has come and gone as two columns. The ones who went elsewhere
  * are folded.
  */
-function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
+function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
   const pt = v.portal;
   const rows = [...(pt.board?.rows ?? [])].sort((a, b) => b.overall - a.overall);
   const sides = [
@@ -591,6 +591,8 @@ function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
       {live && (
         <div className="off__cta">
           <p className="off__soft">{m.portal.how}</p>
+          {/* what you have left to work it with this week */}
+          {budgets && <div className="off__budgets">{budgets}</div>}
           <button type="button" className="off__next" onClick={() => onSection("recruiting")}>
             {m.portal.open}
             <ArrowRight size={16} weight="bold" aria-hidden="true" />
@@ -622,12 +624,23 @@ function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
                   {x.name}
                 </button>
                 <span className="off__soft">{x.pos}</span>
-                <span className="dev-card__line">
+                {/* the school by its short name, so the tag fits the card; the whole line is its tooltip */}
+                <span
+                  className="dev-card__line"
+                  title={
+                    x.signed
+                      ? m.portal.signedWith(teamName(teams, x.signed))
+                      : x.committed
+                        ? m.portal.committedTo(teamName(teams, x.committed))
+                        : undefined
+                  }
+                >
                   {x.signed || x.committed ? (
                     <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
-                      {x.signed
-                        ? m.portal.signedWith(teamName(teams, x.signed))
-                        : m.portal.committedTo(teamName(teams, x.committed ?? ""))}
+                      {(x.signed ? m.portal.signedShort : m.portal.committedShort)(
+                        teams.get(x.signed ?? x.committed ?? "")?.abbreviation ??
+                          teamName(teams, x.signed ?? x.committed ?? ""),
+                      )}
                     </TeamTag>
                   ) : (
                     <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>

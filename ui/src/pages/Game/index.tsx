@@ -390,6 +390,19 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   );
   // a notice opens what it is about: a recruit's file, or your team's injury report (Stats, Injuries)
   const [statsOpen, setStatsOpen] = useState<{ tab: "injuries"; team: string; at: number } | null>(null);
+  // the week's two budgets as bars (hours and scouting points): in Recruiting's tab bar and the Offseason's portal
+  // box. The dead period has neither to spend, so they are left out
+  const budgets =
+    recruiting && !recruiting.closed ? (
+      <>
+        <Energy energy={energy || null} />
+        <Energy
+          energy={{ left: recruiting.points_left, total: recruiting.points_week }}
+          label={m.scouting}
+          hint={m.scoutingHint}
+        />
+      </>
+    ) : undefined;
   const openNotice = (n: Notice) => {
     if (n.kind === "injury") {
       if (season) setStatsOpen({ tab: "injuries", team: season.team, at: Date.now() });
@@ -520,19 +533,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       />
                     ) : key === "recruiting" ? (
                       <RecruitingHub
-                        // the dead period has no hours or scouting points to spend: the bars are left out
-                        aside={
-                          recruiting?.closed ? undefined : (
-                            <>
-                              <Energy energy={energy} />
-                              <Energy
-                                energy={recruiting && { left: recruiting.points_left, total: recruiting.points_week }}
-                                label={m.scouting}
-                                hint={m.scoutingHint}
-                              />
-                            </>
-                          )
-                        }
+                        aside={budgets}
                         teams={bySlug}
                         seasonId={season.id}
                         team={season.team}
@@ -579,6 +580,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         onSection={open}
                         onStage={onOffStage}
                         onRecruit={openRecruit}
+                        budgets={budgets}
                         onNextSeason={(id) => location.assign(hrefFor("game", { id, section: "office" }))}
                       />
                     ) : key === "scores" ? (
