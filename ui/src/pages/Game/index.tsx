@@ -214,6 +214,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   );
 
   const bySlug = useMemo(() => new Map(teams.map((t) => [t.slug, t])), [teams]);
+  // whose depth chart is open: yours (null), or another FBS team's to look at
+  const [depthTeam, setDepthTeam] = useState<string | null>(null);
   const myTeam = season ? bySlug.get(season.team) : undefined;
   // your team's colors for the whole game: the primary, or the secondary when the primary would vanish against this
   // theme's page; the text on it black or white, whichever reads
@@ -627,11 +629,14 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       <Schedule season={season} teams={bySlug} onBox={openBox} />
                     ) : key === "depth" ? (
                       <DepthChart
-                        key={season.current_week}
+                        key={`${season.current_week}-${depthTeam ?? season.team}`}
                         seasonId={season.id}
-                        team={season.team}
+                        team={depthTeam ?? season.team}
+                        mine={season.team}
+                        teams={bySlug}
+                        onTeam={setDepthTeam}
                         weekLabels={season.week_labels}
-                        colors={myTeam?.colors}
+                        colors={(depthTeam ? bySlug.get(depthTeam) : myTeam)?.colors}
                       />
                     ) : (
                       // the sidebar names the open section, so the section's screen takes the whole space

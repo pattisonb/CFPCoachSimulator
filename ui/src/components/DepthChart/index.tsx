@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import Face from "../Face/index.tsx";
+import { ArrowLeft } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
+import Dropdown from "../Dropdown/index.tsx";
+import Swatch from "../Swatch/index.tsx";
 import FolderTabs from "../FolderTabs/index.tsx";
 import Modal from "../Modal/index.tsx";
 import PlayerView from "../PlayerView/index.tsx";
@@ -10,7 +13,7 @@ import { contrast, inkOn } from "../../colors.ts";
 import { lookOf, titleCase } from "../../faces.ts";
 import { navigate } from "../../router.ts";
 import { formatClass } from "../../format.ts";
-import type { DepthCard, DepthChart as Chart, DepthRow, PlayerProfile } from "../../types.ts";
+import type { DepthCard, DepthChart as Chart, DepthRow, PlayerProfile, TeamCard } from "../../types.ts";
 import Actions from "./Actions.tsx";
 import Formation, { PromiseMark } from "./Formation.tsx";
 import type { Kick } from "./formation.ts";
@@ -34,8 +37,14 @@ const SPOT = "14%";
 
 interface Props {
   seasonId: string;
-  /** the team's slug (yours) */
+  /** the team whose chart this is: yours, or another FBS team's to look at */
   team: string;
+  /** your team: only its chart can be changed */
+  mine: string;
+  /** every team by slug, for the picker; with onTeam, the bar offers any FBS team's chart */
+  teams?: Map<string, TeamCard>;
+  /** pick a team's chart; null goes back to yours */
+  onTeam?: (slug: string | null) => void;
   weekLabels: Record<string, string>;
   /** the team's colors, for the lineup's cards */
   colors?: { primary: string; secondary: string };
@@ -53,7 +62,20 @@ const keyOf = (role: string, slug: string) => `${role}|${slug}`;
  * view (the first one) shows each starter as a card with his backups under him; the Formation view lines the starters
  * up on a field. Special Teams shows the field goal or the punt unit in both.
  */
-export default function DepthChart({ seasonId, team, weekLabels, colors }: Props) {
+export default function DepthChart({ seasonId, team, mine, teams, onTeam, weekLabels, colors }: Props) {
+  const yours = team === mine;
+  // every FBS team, yours first, for the picker in the bar
+  const teamOptions = useMemo(() => {
+    const all = teams ? [...teams.values()].filter((t) => !t.fictional && t.subdivision === "FBS") : [];
+    const me = all.find((t) => t.slug === mine);
+    return [
+      ...(me ? [{ value: me.slug, label: me.name, hint: m.yourTeam }] : []),
+      ...all
+        .filter((t) => t.slug !== mine)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((t) => ({ value: t.slug, label: t.name, hint: t.conference })),
+    ];
+  }, [teams, mine]);
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const [unit, setUnit] = useState<UnitKey>("offense");
   const [view, setView] = useState<View>("formation");
@@ -224,7 +246,8 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
 
   const profile = slug ? profiles.get(slug) : undefined;
   // what the picked player can do: his moves, the other roles of his position, his redshirt and his position
-  const actions = picked && (
+  // another team's chart is to look at: no moves, no redshirts, no reset
+  const actions = yours && picked && (
     <Actions
       seasonId={seasonId}
       team={team}
@@ -258,6 +281,25 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
       panelClassName={view === "list" ? "depth" : "depth depth--formation"}
       aside={
         <div className="depth__views" role="group" aria-label={m.viewLabel}>
+          {onTeam && teamOptions.length > 1 && (
+            <span className="depth__whose">
+              {!yours && (
+                <button type="button" className="depth__back" onClick={() => onTeam(null)}>
+                  <ArrowLeft size={16} weight="bold" aria-hidden="true" />
+                  {m.backToYours}
+                </button>
+              )}
+              <Swatch team={teams?.get(team)} size={32} />
+              <Dropdown
+                label={m.teamLabel}
+                hideLabel
+                size="md"
+                value={team}
+                options={teamOptions}
+                onChange={(slug) => onTeam(slug === mine ? null : slug)}
+              />
+            </span>
+          )}
           {load.chart.ratings && (
             <dl className="depth__team" aria-label={m.teamRatings}>
               {(["overall", "offense", "defense"] as const).map((k) => (
@@ -268,16 +310,18 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
               ))}
             </dl>
           )}
-          {load.chart.overridden && (
+          {yours && load.chart.overridden && (
             <button type="button" className="depth__reset" disabled={busy} title={m.resetTip} onClick={reset}>
               {m.reset}
             </button>
           )}
-          {VIEWS.map((v) => (
-            <Chip key={v} on={view === v} onClick={() => setView(v)}>
-              {m.views[v]}
-            </Chip>
-          ))}
+          <span className="depth__chips">
+            {VIEWS.map((v) => (
+              <Chip key={v} on={view === v} onClick={() => setView(v)}>
+                {m.views[v]}
+              </Chip>
+            ))}
+          </span>
         </div>
       }
     >
@@ -315,7 +359,7 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
               rows={allRows}
               kick={kick}
               school={cachedTeams()?.find((t) => t.slug === team)}
-              onSwap={swap}
+              onSwap={yours ? swap : undefined}
               onOpen={(role, slug) => {
                 choose(role, slug);
                 setCard(true);
