@@ -307,7 +307,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* every column after the first is numbers: centered, heading and all */
+.player-view__table :is(th, td):not(:first-child) {
+  padding-right: 4px;
+  padding-left: 4px;
+  text-align: center;
+}
+
 .player-view__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper-hi);
   color: var(--ink-soft);
   font-size: var(--t-xs);
   font-weight: 400;

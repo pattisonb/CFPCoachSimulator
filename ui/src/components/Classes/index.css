@@ -3,12 +3,12 @@
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr) 380px; /* the table needs the room: its Points column is the last */
+  grid-template-rows: minmax(0, 1fr); /* one row as tall as the window: each panel scrolls inside itself */
   align-items: start;
   gap: var(--s3);
   min-height: 0;
   padding: var(--s3) var(--s4) var(--s4);
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  overflow: hidden;
 }
 
 .classes__note {
@@ -21,19 +21,13 @@
   font-weight: 400;
 }
 
+/* the table scrolls inside its panel, so its header row stays at the panel's top; the picked school's class beside it
+   scrolls on its own */
 .classes__table,
 .classes__class {
+  max-height: calc(100% - 8px); /* the panel's shadow shows under it */
   margin-bottom: 0;
-}
-
-.classes__table {
-  overflow-x: auto;
-}
-
-/* the picked school's class stays in view while the table scrolls */
-.classes__class {
-  position: sticky;
-  top: 0;
+  overflow: auto;
 }
 
 /* a school's name: picks its class */

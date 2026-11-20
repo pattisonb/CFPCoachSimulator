@@ -381,6 +381,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       weekLabels={season.week_labels}
       onOpen={openNotice}
       onRead={notices.readAll}
+      onShow={notices.clearToasts}
     />
   );
   const corner = (

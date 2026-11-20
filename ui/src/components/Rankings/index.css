@@ -2,6 +2,9 @@
 .rankings {
   flex: 1;
   min-height: 0;
+
+  --table-pad: var(--s3); /* the poll's header sticks at the very top, over this padding */
+
   padding: var(--s3) var(--s4) var(--s4);
   overflow-y: auto;
   scrollbar-gutter: stable;

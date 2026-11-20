@@ -543,9 +543,14 @@
 }
 
 .aw-vote__table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 8px var(--s2);
+  background: var(--paper-hi);
   color: var(--ink-soft);
-  border-bottom: var(--line) solid var(--ink);
+  border-bottom: 0;
+  box-shadow: inset 0 calc(-1 * var(--line)) 0 var(--ink);
   font-size: var(--t-xs);
   letter-spacing: 1px;
   text-align: center;

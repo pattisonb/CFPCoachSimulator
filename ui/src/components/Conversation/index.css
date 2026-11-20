@@ -364,9 +364,10 @@
   transform: translate(-2px, -2px);
 }
 
+/* picked: in your team's color, its words in the ink that reads on it */
 .talk__topic.is-on {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
   box-shadow: 4px 4px 0 var(--shadow-soft);
   transform: translate(-2px, -2px);
 }
@@ -567,7 +568,7 @@
 }
 
 .talk__slots i.is-on {
-  background: var(--ink);
+  background: var(--team, var(--ink));
   animation: talk-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -673,4 +674,9 @@
   .talk-steps__box {
     transition: none;
   }
+}
+
+/* a topic he is known to care about: its star in gold (on a picked topic it takes the topic's own ink, to read) */
+.talk__topic:not(.is-on) .talk__star {
+  color: var(--gold);
 }

@@ -1,4 +1,4 @@
-/* A table of rows: soft headers, hairlines, numbers set right; your own row on a tint, the sorted column in bold. */
+/* A table of rows: soft headers that stay put, hairlines, number columns centered under their headings; your own row on a tint, the sorted column in bold. */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -13,9 +13,18 @@
   white-space: nowrap;
 }
 
+/* the header row stays put while the rows scroll under it (its rule drawn as a shadow: a collapsed border scrolls away) */
 .data-table th {
+  position: sticky;
+  top: calc(
+    -1 * var(--table-pad, 0px)
+  ); /* a scroller with top padding says how much, so no row shows above the header */
+
+  z-index: 1;
+  background: var(--table-bg, var(--paper-hi));
   color: var(--ink-soft);
-  border-bottom: var(--line) solid var(--ink);
+  border-bottom: 0;
+  box-shadow: inset 0 calc(-1 * var(--line)) 0 var(--ink);
   font-size: var(--t-xs);
   font-weight: 400;
   letter-spacing: 1px;
@@ -46,9 +55,31 @@
   font-weight: 700;
 }
 
+/* a number column: its heading and its numbers on one center line, the same room either side */
 .data-table .is-num {
-  text-align: right;
+  padding-right: 5px;
+  padding-left: 5px;
+  text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+/* the sort arrow's place in a heading, kept whether or not it is showing */
+.data-table__arrow {
+  display: inline-flex;
+  flex: none;
+  width: 10px;
+}
+
+/* a sortable number heading: the label is centered, its arrow hangs off its right so it never pushes the label */
+.data-table th.is-num button {
+  position: relative;
+}
+
+.data-table th.is-num .data-table__arrow {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 2px);
+  transform: translateY(-50%);
 }
 
 /* fixed columns: each as wide as its heading says, so nothing moves when the rows change */
@@ -70,24 +101,7 @@
   font-weight: 700;
 }
 
-/* the header row stays put while the rows scroll under it (its rule drawn as a shadow: a collapsed border scrolls away) */
-.data-table--sticky th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--paper-hi);
-  border-bottom: 0;
-  box-shadow: inset 0 calc(-1 * var(--line)) 0 var(--ink);
-}
-
 .data-table tr.is-mine td:first-child {
   padding-left: 8px;
   box-shadow: inset 3px 0 0 var(--ink);
-}
-
-/* the sort arrow's place in a heading, kept whether or not it is showing */
-.data-table__arrow {
-  display: inline-flex;
-  flex: none;
-  width: 10px;
 }

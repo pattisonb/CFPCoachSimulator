@@ -61,13 +61,15 @@ interface Props {
   onOpen: (n: Notice) => void;
   /** the list has been looked at: nothing in it is new any more */
   onRead: () => void;
+  /** the list was opened: the cards that had just dropped are in it, so they can go */
+  onShow?: () => void;
 }
 
 /**
  * The bell: a small icon button with how many notices are new, and the list they are kept in, dropping from under it
  * (over it when it sits at the foot of the window). Closing the list marks them read.
  */
-export default function Notifications({ items, unread, team, weekLabels, onOpen, onRead }: Props) {
+export default function Notifications({ items, unread, team, weekLabels, onOpen, onRead, onShow }: Props) {
   const [open, setOpen] = useState(false);
   const [up, setUp] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -99,11 +101,14 @@ export default function Notifications({ items, unread, team, weekLabels, onOpen,
         type="button"
         className="notifications__bell"
         aria-label={m.bell(unread)}
-        title={open ? undefined : m.bell(unread)}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          if (open) return close();
+          onShow?.();
+          setOpen(true);
+        }}
       >
         <Bell size={16} weight={unread > 0 ? "fill" : "bold"} aria-hidden="true" />
         {unread > 0 && <span className="notifications__count">{unread > 9 ? "9+" : unread}</span>}

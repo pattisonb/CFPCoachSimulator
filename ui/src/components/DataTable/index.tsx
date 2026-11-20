@@ -40,7 +40,7 @@ const HEAD_ROOM = 30;
 const TEXT_MIN = 180;
 
 /**
- * A table of rows: soft headers, hairlines, numbers set right. Click a sortable header to sort by it (largest first,
+ * A table of rows: soft headers that stay put as the rows scroll, hairlines, number columns centered under their headings. Click a sortable header to sort by it (largest first,
  * again for smallest first): the column it is sorted by is the one in bold. Your own row is tinted.
  */
 export default function DataTable<T>({ label, columns, rows, rowKey, mine, sortBy, sticky, limit }: Props<T>) {

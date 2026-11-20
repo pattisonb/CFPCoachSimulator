@@ -110,6 +110,7 @@ export function useNotices(
     });
   }, [base]);
 
+  const clearToasts = useCallback(() => setToasts([]), []);
   const dismiss = useCallback((id: string) => setToasts((t) => t.filter((x) => x !== id)), []);
 
   // your class: who is in it now against who was the last time this browser looked
@@ -188,5 +189,6 @@ export function useNotices(
     add,
     readAll,
     dismiss,
+    clearToasts,
   };
 }
