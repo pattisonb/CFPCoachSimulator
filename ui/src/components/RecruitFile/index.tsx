@@ -14,6 +14,7 @@ import {
   Minus,
   Newspaper,
   PenNib,
+  Plus,
   Phone,
   Scroll,
   Star,
@@ -102,30 +103,28 @@ function CommitBanner({ r, d }: { r: BoardRow; d: ProspectDetail | null }) {
 
 /** A report's verdict, then what he does well and what he has to work on. */
 function Summary({ rep }: { rep: NonNullable<ProspectDetail["report"]> }) {
+  const list = (title: string, items: string[], good: boolean) =>
+    items.length > 0 && (
+      <div className="recruit-file__marked">
+        <h4 className="label">{title}</h4>
+        <ul className={`recruit-file__marks ${good ? "is-good" : "is-work"}`}>
+          {items.map((t) => (
+            <li key={t}>
+              <span className="recruit-file__mark" aria-hidden="true">
+                {good ? <Plus size={10} weight="bold" /> : <Minus size={10} weight="bold" />}
+              </span>
+              {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   return (
     <>
       <p className="recruit-file__verdict">{rep.verdict}</p>
       <div className="recruit-file__lists">
-        {rep.strengths.length > 0 && (
-          <div>
-            <h4 className="label recruit-file__kicker">{m.strengths}</h4>
-            <ul>
-              {rep.strengths.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {rep.develop.length > 0 && (
-          <div>
-            <h4 className="label recruit-file__kicker">{m.develop}</h4>
-            <ul>
-              {rep.develop.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {list(m.strengths, rep.strengths, true)}
+        {list(m.develop, rep.develop, false)}
       </div>
     </>
   );
@@ -304,9 +303,10 @@ export function ScoutingTab({
       <Panel title={m.report}>
         {/* the report's lead: how many looks, and his potential as your staff reads it */}
         <div className="recruit-file__lead">
-          <div className="recruit-file__looks">
+          <div className="recruit-file__tile recruit-file__looks">
+            <span className="label">{m.scouted}</span>
+            <b className="recruit-file__big">{m.looks(fmtLooks(looks))}</b>
             <Meter value={looks / 3} label={m.scouted} />
-            <b>{m.looks(fmtLooks(looks))}</b>
             <span className="recruit-file__soft">
               {looks >= 3
                 ? m.complete
@@ -318,7 +318,7 @@ export function ScoutingTab({
             </span>
           </div>
           {rep && (
-            <div className="recruit-file__potential">
+            <div className="recruit-file__tile recruit-file__potential">
               <span className="label">{pot ? pot.label : m.potential}</span>
               {pot ? (
                 <>
@@ -339,15 +339,13 @@ export function ScoutingTab({
           )}
         </div>
         {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{m.looksLine.none}</p>}
-        <PanelRows>
-          <PanelRow
-            label={m.comp}
-            value={compText ?? (looks >= 3 ? m.compNone : undefined)}
-            unknown={m.unknown}
-            hint={comp || looks >= 3 ? null : m.compLater}
-            wide={!!comp}
-          />
-        </PanelRows>
+        {/* who he compares to, on a line of its own under the summary */}
+        <div className="recruit-file__comp">
+          <span className="label">{m.comp}</span>
+          <b className="recruit-file__comp-line">
+            {compText ?? <span className="recruit-file__comp-rest">{looks >= 3 ? m.compNone : m.compLater}</span>}
+          </b>
+        </div>
         {/* a finished report has nothing left to send for: the lead above already says Report Complete */}
         {!yours && looks < 3 && (
           <div className="recruit-file__acts">
@@ -475,6 +473,13 @@ export function ProfileTab({
     ["story", story],
     ["commit_style", tr.commit_style],
   ];
+  // what has happened to him this cycle (a grades scare, a coaching change): part of his story, in its card
+  const twist = detail.twist;
+  const twistHead = twist
+    ? twist.weeks_left
+      ? `${twist.label} · ${m.weeksLeft(twist.weeks_left)}`
+      : twist.label
+    : null;
   const known = traits.filter(([, v]) => v).length;
   const tips: Record<string, string | undefined> = {
     story: tr.story_key ? m.storyTips[tr.story_key]?.(tr.story_detail, !!tr.story_yours) : undefined,
@@ -487,7 +492,7 @@ export function ProfileTab({
           {traits.map(([k, v]) => {
             const Mark = TRAIT_ICON[k] ?? User;
             return (
-              <li key={k} className={`recruit-file__trait${v ? "" : " is-unknown"}`}>
+              <li key={k} className={`recruit-file__trait${v || (k === "story" && twist) ? "" : " is-unknown"}`}>
                 <Tooltip
                   title={v ? `${m.traitNames[k]}: ${v}` : m.traitNames[k]}
                   text={v ? (tips[k] ?? m.traitAbout[k]) : (hints[k] ?? m.traitAbout[k])}
@@ -498,8 +503,10 @@ export function ProfileTab({
                 </Tooltip>
                 <div className="recruit-file__trait-what">
                   <span className="label">{m.traitNames[k]}</span>
-                  <b>{v ?? m.unknown}</b>
-                  {!v && hints[k] && <span className="recruit-file__soft">{hints[k]}</span>}
+                  {(v || !(k === "story" && twist)) && <b>{v ?? m.unknown}</b>}
+                  {!v && hints[k] && !(k === "story" && twist) && (
+                    <span className="recruit-file__soft">{hints[k]}</span>
+                  )}
                   {k === "story" && tr.story_key === "package" && tr.story_mate && onMate && (
                     <button type="button" className="recruit-file__mate" onClick={() => onMate(tr.story_mate!)}>
                       {mateOnBoard?.(tr.story_mate) ? m.openMate : m.addMate}
@@ -508,24 +515,18 @@ export function ProfileTab({
                   )}
                   {/* what a story or a way of committing means for recruiting him */}
                   {v && tips[k] && <span className="recruit-file__soft">{tips[k]}</span>}
+                  {k === "story" && twist && (
+                    <>
+                      {v && <span className="label recruit-file__twist">{m.happened}</span>}
+                      <b>{twistHead}</b>
+                      <span className="recruit-file__soft">{twist.line}</span>
+                    </>
+                  )}
                 </div>
               </li>
             );
           })}
         </ul>
-        {detail.twist && (
-          <PanelRows>
-            <PanelRow
-              label={m.happened}
-              value={
-                detail.twist.weeks_left
-                  ? `${detail.twist.label} · ${m.weeksLeft(detail.twist.weeks_left)}`
-                  : detail.twist.label
-              }
-              hint={detail.twist.line}
-            />
-          </PanelRows>
-        )}
       </Panel>
       <Panel title={m.background}>
         <PanelRows>

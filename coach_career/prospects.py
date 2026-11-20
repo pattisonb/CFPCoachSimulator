@@ -811,8 +811,8 @@ def row(state: dict, pid: str, viewer: str) -> dict:
     }
 
 
-def _role(playing_time: float) -> str:
-    return "Would Start" if playing_time >= 0.9 else "Next in Line" if playing_time >= 0.5 else "Depth"
+def _role(place: str) -> str:
+    return {"start": "Would Start", "next": "Next in Line", "depth": "Depth"}[place]
 
 
 def _stage_move(state: dict, pid: str, viewer: str) -> Optional[str]:
@@ -893,7 +893,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                hard=bool(seen.get("hard")) and not seen["signed"],
                can_scout=can_scout(state, viewer, pid),
                scout_cost=recruiting.look_cost(state, viewer, pid),
-               role=_role(recruiting.pull(state, viewer, pid)["playing_time"]),
+               role=_role(recruiting.depth_place(state, viewer, pid)),
                standing=standing(state, pid, viewer),
                no_room=recruiting.no_room(state, viewer, pid),
                history=history.get(pid, []))

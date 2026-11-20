@@ -63,10 +63,10 @@
   font-weight: 400;
 }
 
-/* the list's tools on one even grid: the search across it, then three filters a third each, then your needs */
+/* the list's tools on one even grid: the search across it, then three filters on a row, then your needs */
 .recruiting__tools {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) auto auto; /* position as wide as its words, Sort an icon, the stage filter the rest */
   gap: 6px;
 }
 
@@ -78,10 +78,20 @@
 
 .recruiting__tools > .dropdown > .dropdown__button {
   justify-content: space-between;
+  gap: 4px;
   width: 100%;
-  padding: 0 8px;
+  padding: 0 6px;
   overflow: hidden;
   font-size: var(--t-xs);
+}
+
+/* Sort is its icon in a square, framed like the filters beside it */
+.recruiting__tools > .dropdown > .dropdown__button--icon {
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+  background: var(--paper-hi);
+  border-color: var(--ink);
 }
 
 /* search your board: a field the row's full width, a glass at its start */

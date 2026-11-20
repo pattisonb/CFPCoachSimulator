@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Chat, ChatsCircle, Heart, House, MagnifyingGlass, Phone, Star, X } from "@phosphor-icons/react";
+import { ArrowsDownUp, Chat, ChatsCircle, Heart, House, MagnifyingGlass, Phone, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
@@ -255,7 +255,7 @@ export default function Recruiting({
           />
           <Dropdown
             label={m.sort}
-            hideLabel
+            icon={<ArrowsDownUp size={16} weight="bold" aria-hidden="true" />}
             size="md"
             align="right"
             value={sort}

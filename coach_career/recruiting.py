@@ -685,6 +685,19 @@ def _ahead(state: dict, slug: str, group: str, ovr: float) -> int:
     return sum(1 for o in _returning(slug, group) if o >= ovr)
 
 
+NEXT_IN_LINE = 2          # *tune* this many past a group's starters are "next in line"; anyone behind them is depth
+
+
+def depth_place(state: dict, slug: str, pid: str) -> str:
+    """Where he would line up there in a word: "start" when fewer players at his group are rated at least as high as
+    him than the group starts (STARTERS: the second and third receiver start, as the fifth lineman does), "next" for
+    the NEXT_IN_LINE behind them, else "depth". A word for the page and the scenes: the pull itself is `pull`'s."""
+    group = _group(state["recruiting"]["prospects"][pid]["ea_position"])
+    ahead = _ahead(state, slug, group, state["recruiting"]["prospects"][pid]["ovr"])
+    starters = STARTERS.get(group, 2)
+    return "start" if ahead < starters else "next" if ahead < starters + NEXT_IN_LINE else "depth"
+
+
 def ahead_of(state: dict, slug: str, pid: str) -> Optional[dict]:
     """The best returning player at his position group on that roster rated at least as high as him
     (`_ahead`'s test, the one player it names): {name, position, cls, ovr, slug}, or None. In the

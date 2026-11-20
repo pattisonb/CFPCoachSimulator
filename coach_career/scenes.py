@@ -817,8 +817,8 @@ def words(n: int) -> str:
 
 
 def _role(state: dict, slug: str, pid: str) -> str:
-    pt = recruiting.strengths(state, slug, pid)["playing_time"]
-    return "start" if pt >= 0.9 else "compete" if pt >= 0.5 else "wait"
+    # by his place among the group's starters, not the pull's size: a second receiver starts
+    return {"start": "start", "next": "compete", "depth": "wait"}[recruiting.depth_place(state, slug, pid)]
 
 
 def _record(state: dict, slug: str) -> str:

@@ -170,49 +170,99 @@ dd.recruit-file__inline {
   line-height: 1.5;
 }
 
+/* strengths and areas to develop: a kicker each, its lines beside one another, each led by a small mark in its color */
 .recruit-file__lists {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s3);
-  padding-bottom: 6px;
+  gap: 6px;
+  padding: var(--s1) 0 var(--s2);
 }
 
-.recruit-file__lists ul,
-.recruit-file__notes {
+.recruit-file__marked {
   display: grid;
-  gap: 2px;
-  padding-left: 16px;
+  grid-template-columns: 140px minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--s2);
 }
 
-.recruit-file__lists li {
+.recruit-file__marked .label {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* a tile inside a panel: a kicker, then what it holds */
+.recruit-file__tile {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px var(--s2);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.recruit-file__tile .label {
+  color: var(--ink-soft);
+}
+
+.recruit-file__marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--s3);
+  list-style: none;
+}
+
+.recruit-file__marks li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 700;
 }
 
-/* ----- Scouting: the report's lead. Looks as blocks at the left, his potential at the right ----- */
-.recruit-file__lead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2) var(--s4);
-  padding: var(--s2) 0;
-  border-bottom: 1px solid var(--line-soft);
+.recruit-file__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: #fff;
 }
 
-.recruit-file__looks {
+.recruit-file__marks.is-good .recruit-file__mark {
+  background: var(--good);
+}
+
+.recruit-file__marks.is-work .recruit-file__mark {
+  background: var(--warn);
+}
+
+/* a comp: its kicker, then his name, school, position and overall on one line */
+.recruit-file__comp {
   display: grid;
-  justify-items: start;
-  gap: 4px;
+  gap: 2px;
+  padding: var(--s2) 0 var(--s1);
+  border-top: 1px solid var(--line-soft);
+}
+
+.recruit-file__comp .label {
+  color: var(--ink-soft);
+}
+
+.recruit-file__comp-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ----- Scouting: the report's lead. How far he is scouted in one tile, his potential in a wider one ----- */
+.recruit-file__lead {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2);
+  padding: var(--s2) 0 var(--s1);
 }
 
 .recruit-file__looks .recruit-file__soft {
   font-size: var(--t-xs);
-}
-
-.recruit-file__potential {
-  display: grid;
-  flex: 1;
-  gap: 4px;
-  min-width: 200px;
 }
 
 .recruit-file__potential .label,
@@ -357,6 +407,8 @@ dd.recruit-file__inline {
 }
 
 .recruit-file__notes {
+  display: grid;
+  padding-left: 16px;
   gap: 6px;
   padding-top: 6px;
   padding-bottom: 6px;
@@ -398,4 +450,9 @@ dd.recruit-file__inline {
 .recruit-file__comp-rest {
   color: var(--ink-soft);
   font-weight: 400;
+}
+
+/* what has happened to him this cycle, under his story in the same card */
+.recruit-file__twist {
+  margin-top: 6px;
 }
