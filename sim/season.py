@@ -2168,7 +2168,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         units.append({"name": unit, "rows": out_rows})
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
-            "ratings": t.get("team_ratings", {}), "roster_size": len(players), "units": units,
+            "ratings": _shown.team_ratings(t.get("team_ratings", {})), "roster_size": len(players), "units": units,
             "overridden": bool(overrides), "editable": True}
 
 
@@ -2206,7 +2206,7 @@ def playlink_team(state: dict, slug: str) -> dict:
         for key, field in (("cls", "class"), ("arch", "archetype"), ("dev", "dev_trait")):
             if p.get(field):
                 out[key] = p[field]
-        out["ovr"] = shown_overall(p)
+        out["ovr"] = page_overall(p)          # what his card shows
         earned = [[ratings_v2.TRAIT_INFO[x["key"]][0], _TIER_NAMES[x["tier"]]] for x in p.get("traits") or []
                   if x.get("key") in ratings_v2.TRAIT_INFO and x.get("tier") in _TIER_NAMES]
         if earned:
@@ -3389,7 +3389,7 @@ def _unit_overalls(team: Optional[dict]) -> Optional[dict]:
     r = (team or {}).get("team_ratings") or {}
     if team is None or team.get("fictional") or not all(isinstance(r.get(k), (int, float)) for k in ("overall", "offense", "defense")):
         return None
-    return {k: int(round(r[k])) for k in ("overall", "offense", "defense")}
+    return {k: _shown.team(r[k], k) for k in ("overall", "offense", "defense")}     # as the page shows a team rating
 
 
 def game_preview(state: dict, slug: str, sims: int = 20) -> dict:

@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from coach_career import programs, recruits
+from teamdata import shown
 
 # goals, by the program's recruiting baseline (about -2 to +2): (from, kind, wins, words) *tune*
 GOALS = ((1.2, "playoff", 10, "Make the College Football Playoff"), (0.5, "wins", 9, "Win nine games"),
@@ -345,7 +346,7 @@ def market_rows(state: dict, role: Optional[str] = None) -> list[dict]:
         if role and role not in e["roles"]:
             continue
         rows.append({"id": e["id"], "name": e["name"], "roles": [ROLE_WORDS[r] for r in e["roles"]], "age": e["age"] + (mk["year"] - e["year"]),
-                     "why": e["why"], "previous_job": _previous_job(e), "rating": int(_rating({"ratings": e["ratings"]})),
+                     "why": e["why"], "previous_job": _previous_job(e), "rating": shown.coach(_rating({"ratings": e["ratings"]})),
                      "history": [dict(h, team_name=_name(h["team"])) for h in e["history"]],
                      "sits_out": e.get("sits_out") == mk["year"] and e["last_role"] == "head_coach"})
     rows.sort(key=lambda r: -r["rating"])
@@ -604,4 +605,4 @@ def job_rows(state: dict, slugs: list[str]) -> list[dict]:
     teams = season.load_teams()
     return [{"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "goal": goal(s, state)["text"],
              "tier": programs.get(state, s)["tier"], "program_rating": programs.get(state, s)["rating"],
-             "rating": teams[s]["team_ratings"]["overall"]} for s in slugs]
+             "rating": shown.team(teams[s]["team_ratings"]["overall"])} for s in slugs]

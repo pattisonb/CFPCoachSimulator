@@ -3091,7 +3091,7 @@ def page(obj):
     """A view's players as the page shows a rating (teamdata/shown.py): a copy of `obj` in which every player row (a
     dict with an `overall` and a position) has its overall on the shown scale, its `gain` as the difference of the
     shown overalls before and after, and its `grew` attributes at his card's group. The stored rows keep the game's
-    own scale (an event written last year reads the same as one written today); a coach's ratings are left alone."""
+    own scale (an event written last year reads the same as one written today)."""
     from teamdata import shown, ratings as rv2
     if isinstance(obj, list):
         return [page(x) for x in obj]
@@ -3099,6 +3099,12 @@ def page(obj):
         return obj
     out = {k: page(v) for k, v in obj.items()}
     pos = obj.get("pos") or obj.get("position")
+    if not pos:                     # a staff member's ratings go on the coaches' line (shown.coach)
+        if "evaluation" in obj:                                        # a staff member or a candidate for his job
+            for k in ("evaluation", "recruiting"):
+                out[k] = shown.coach(obj.get(k))
+        if isinstance(obj.get("rating"), str) and "from" in obj and "to" in obj:     # a staff rating that moved
+            out["from"], out["to"] = shown.coach(obj["from"]), shown.coach(obj["to"])
     o = obj.get("overall")
     if pos and isinstance(o, (int, float)) and not isinstance(o, bool):
         out["overall"] = shown.overall(o)

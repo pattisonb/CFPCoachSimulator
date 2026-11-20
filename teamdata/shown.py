@@ -10,6 +10,10 @@ taken back off it. So a save from before shows on this scale the moment it loads
 - A skill (Speed, Catching, Throw Power): the skill itself, not where he stands among his own position. A receiver's
   Throw Power reads low, as it is, where our stored scale grades it against other receivers.
 - A card attribute (Hands, Pass Pro: Anchor): what it is built from, on the same footing as a skill.
+- A team's overall, offense, defense and special teams: TEAM_KNOTS, each by where the team stands among FBS teams at
+  it (the worst in the mid 60s, the middle one a 77, the top handful in the 90s). A unit's stored rating spreads wider
+  than an overall's, so each has its own line: the ninth-best offense reads 87, not 91.
+- A coach's or a staff member's rating: COACH_KNOTS, the average coach a 70.
 """
 from __future__ import annotations
 
@@ -22,6 +26,15 @@ from functools import lru_cache
 OVERALL_KNOTS = ((0, 40), (3, 41), (9, 50), (15, 57), (22, 62), (25, 64), (30, 67), (36, 71), (43, 76), (54, 81),
                  (61, 84), (77, 89), (93, 94), (99, 99))
 LOW, HIGH = 1, 99
+# *tune* (a team rating of ours, the one shown), a line for each kind: the 2026 FBS teams' lowest, 5th, 25th, 50th, 75th,
+# 90th and 97th percentile and highest land on 66, 69, 73, 77, 81, 85, 89 and 93-94 (about four teams at 90 or better)
+TEAM_KNOTS = {
+    "overall": ((35, 50), (49.8, 66), (50.5, 69), (53.9, 73), (57.8, 77), (63.5, 81), (68.1, 85), (73.4, 89), (75.7, 93), (90, 99)),
+    "unit": ((35, 50), (48.5, 66), (50.4, 69), (54.0, 73), (58.7, 77), (64.4, 81), (70.7, 85), (74.8, 89), (79.7, 94), (92, 99)),
+    "special_teams": ((25, 50), (39.0, 62), (45.0, 67), (48.5, 72), (53.0, 76), (57.5, 80), (62.5, 84), (68.0, 88), (77.5, 94), (90, 99)),
+}
+# *tune* (a coach's or staff member's rating, the one shown): the league's coaches run 15 to 99 with the middle at 49
+COACH_KNOTS = ((15, 45), (30, 56), (40, 63), (50, 70), (60, 76), (70, 82), (80, 88), (90, 94), (99, 99))
 
 
 def _line(knots: tuple, x: float) -> float:
@@ -50,6 +63,34 @@ def overall(ours) -> int:
 def overall_back(shown: float) -> float:
     """The inverse: a shown overall (one typed on the page) on our scale."""
     return _line(tuple((y, x) for x, y in OVERALL_KNOTS), float(shown))
+
+
+def team(ours, kind: str = "overall") -> int:
+    """A team rating as the page shows it: `kind` is "overall", "offense", "defense" or "special_teams"."""
+    if not isinstance(ours, (int, float)) or isinstance(ours, bool):
+        return ours
+    return int(round(_line(TEAM_KNOTS.get(kind) or TEAM_KNOTS["unit"], float(ours))))
+
+
+def team_ratings(r: dict) -> dict:
+    """A team's ratings for the page: its units on the team line, its roster and position-group averages (averages of
+    players' overalls) on the players' line."""
+    out = dict(r or {})
+    for k in ("overall", "offense", "defense", "special_teams"):
+        if k in out:
+            out[k] = team(out[k], k)
+    if "roster_avg" in out:
+        out["roster_avg"] = overall(out["roster_avg"])
+    if isinstance(out.get("position_groups"), dict):
+        out["position_groups"] = {k: overall(v) for k, v in out["position_groups"].items()}
+    return out
+
+
+def coach(ours) -> int:
+    """A coach's or staff member's rating as the page shows it. The game's rules keep reading the stored one."""
+    if not isinstance(ours, (int, float)) or isinstance(ours, bool):
+        return ours
+    return int(round(_line(COACH_KNOTS, float(ours))))
 
 
 def gain(before, after) -> int:
