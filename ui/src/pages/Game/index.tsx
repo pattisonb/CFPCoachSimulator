@@ -288,7 +288,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   // still: the score is not given away before the playback
   useEffect(() => {
     if (!seasonId || !simWeek) return;
-    api<SeasonSummary>(`/api/season/${seasonId}`)
+    api<SeasonSummary>(`/api/season/${seasonId}`, { quiet: true })
       .then((next) =>
         setLoad((was) => (was.kind === "ready" && was.season.id === next.id ? { kind: "ready", season: next } : was)),
       )

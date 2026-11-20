@@ -133,7 +133,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
     if (officeAsk.current.season !== s.id) officeAsk.current = { season: s.id, asked: 0, shown: 0 };
     const mine = ++officeAsk.current.asked;
     const current = () => officeAsk.current.season === s.id && mine > officeAsk.current.shown;
-    api<OfficeView>(`/api/season/${s.id}/office`)
+    api<OfficeView>(`/api/season/${s.id}/office`, { quiet: sim.running })
       .then((o) => {
         if (!current()) return;
         officeAsk.current.shown = mine;
