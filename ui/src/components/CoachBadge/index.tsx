@@ -74,6 +74,8 @@ export function Energy({
 
 /** The game's grade words, weakest first (coach_career/programs.py WORD_FLOORS): a word's place fills the bar. */
 const WORDS = ["Weak", "Thin", "Fair", "Solid", "Good", "Strong", "Excellent", "Elite"];
+/** *tune* How many words under your overall word a position group must be before the tooltip names it. */
+const WEAKEST_GAP = 2;
 
 /**
  * Your word on its own: the label, a bar of blocks filled by where the word sits from Weak to Elite, and the word
@@ -81,10 +83,11 @@ const WORDS = ["Weak", "Thin", "Fair", "Solid", "Good", "Strong", "Excellent", "
  */
 export function Word({ word }: { word: CoachWord | null | undefined }) {
   const at = word ? WORDS.indexOf(word.text) + 1 : 0;
+  // a position group is named only when your word there is well under the rest (WEAKEST_GAP words or more): one word
+  // off ("Elite", but "Excellent" with one group) is no weakness, and read as a mistake
+  const low = word?.weakest && at - (WORDS.indexOf(word.weakest.text) + 1) >= WEAKEST_GAP ? word.weakest : null;
   const tip = word
-    ? [m.wordHint(word.text), word.weakest ? m.wordWeakest(word.weakest.name, word.weakest.text) : null, ...word.recent]
-        .filter(Boolean)
-        .join(" ")
+    ? [m.wordHint(word.text), low ? m.wordWeakest(low.name, low.text) : null, ...word.recent].filter(Boolean).join(" ")
     : undefined;
   return (
     <span className="coach-badge__energy" title={tip}>

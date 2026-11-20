@@ -126,18 +126,21 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const w = s.current_week + 1;
 
   // the office's own read, again after every sim (the week moves on)
+  // (while a sim runs the weeks pass faster than the game answers: an answer is shown unless a later one already is,
+  // so the news follows the sim a week or two behind instead of waiting for its end)
+  const officeAsk = useRef({ season: "", asked: 0, shown: 0 });
   useEffect(() => {
-    let live = true;
-    api<OfficeView>(`/api/season/${s.id}/office`)
+    if (officeAsk.current.season !== s.id) officeAsk.current = { season: s.id, asked: 0, shown: 0 };
+    const mine = ++officeAsk.current.asked;
+    const current = () => officeAsk.current.season === s.id && mine > officeAsk.current.shown;
+    api<OfficeView>(`/api/season/${s.id}/office`, { quiet: sim.running })
       .then((o) => {
-        if (!live) return;
+        if (!current()) return;
+        officeAsk.current.shown = mine;
         setOffice(o);
         setOfficeError(null);
       })
-      .catch((e: Error) => live && setOfficeError(e.message));
-    return () => {
-      live = false;
-    };
+      .catch((e: Error) => current() && setOfficeError(e.message));
   }, [s.id, s.current_week, s.record.wins, s.record.losses]);
 
   // the Win Chance, when your game this week is still to play
@@ -670,7 +673,7 @@ function Actions({
             <i style={{ width: `${pct}%` }} />
           </span>
           {st.total - st.done > 1 && (
-            <button type="button" className="office__link" onClick={sim.stop}>
+            <button type="button" className="office__link" onClick={sim.stop} data-sim-allow>
               <StopCircle size={16} weight="bold" aria-hidden="true" />
               {m.stop}
             </button>

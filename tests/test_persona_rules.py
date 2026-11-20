@@ -123,8 +123,19 @@ if __name__ == "__main__":
         st["current_week"] = wk
         force(st, pid, "guarded")
         reset(st, pid)
-        recruiting.act(st, ME, pid, "call", t)
+        assert not persona.call_reveals(st, ME, pid), wk      # the week's roll itself, every week of the year
+        if recruiting.closed(st):                 # the dead period (Championship Week to the last Signing Day): no call at all
+            try:
+                recruiting.act(st, ME, pid, "call", t)
+                raise AssertionError(f"a call went through in the dead period (week {wk})")
+            except recruiting.RecruitingError as e:
+                assert e.code == 409 and recruiting.CLOSED_TEXT in str(e), (wk, str(e))
+            assert not rc["contacts"].get(pid, {}).get(ME) and rc["hours"][ME] == 1000, wk
+        else:
+            recruiting.act(st, ME, pid, "call", t)
+            assert rc["contacts"][pid][ME]["calls"] == 1, wk
         assert not rc["revealed"].get(ME, {}).get(pid), wk
+        assert recruiting.closed(st) == (wk >= recruiting.close_week()), wk
     st["current_week"] = 1
     force(st, pid, "guarded")
     reset(st, pid)

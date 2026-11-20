@@ -11,6 +11,7 @@ import Offseason from "../../components/Offseason/index.tsx";
 import Programs from "../../components/Programs/index.tsx";
 import Rankings from "../../components/Rankings/index.tsx";
 import Recap from "../../components/Recap/index.tsx";
+import Ticker from "../../components/Ticker/index.tsx";
 import Scores from "../../components/Scores/index.tsx";
 import Stats from "../../components/Stats/index.tsx";
 import TeamResume from "../../components/TeamResume/index.tsx";
@@ -181,6 +182,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   // the Offseason has the screen to itself: the season is over, so its week strip and the week's Energy say nothing
   // Recruiting has it too, for the room: your coach's card floats in the window's corner there instead
   const bare = section.key === "offseason" || section.key === "recruiting";
+  /** the league's crawl along the window's bottom: through the season, not the Offseason (no games to report) */
+  const ticker = section.key !== "offseason";
   /** a team's resume in a window (from Rankings and Programs) */
   const [resume, setResume] = useState<string | null>(null);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
@@ -282,6 +285,50 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   if (!simAt.current.week) heldRecord.current = liveRecord ?? null;
   const simRecord = liveRecord ?? heldRecord.current ?? undefined;
   const simWeek = sim.status?.kind === "gameday" ? undefined : sim.status?.current_week;
+  // a sim of several weeks: every week it finishes, the season is read again, so the page behind (your next game, the
+  // program's news, the standings) follows the sim instead of holding the week it started in. Game Day keeps its page
+  // still: the score is not given away before the playback
+  useEffect(() => {
+    if (!seasonId || !simWeek) return;
+    api<SeasonSummary>(`/api/season/${seasonId}`, { quiet: true })
+      .then((next) =>
+        setLoad((was) => (was.kind === "ready" && was.season.id === next.id ? { kind: "ready", season: next } : was)),
+      )
+      .catch(() => {});
+  }, [seasonId, simWeek]);
+  // while a sim runs the page is to watch, not to work: every click and key is swallowed except on what is marked
+  // data-sim-allow (Stop After This Week). Pointing still works, so the tooltips do
+  useEffect(() => {
+    if (!sim.running) return;
+    const allowed = (e: Event) => e.target instanceof Element && !!e.target.closest("[data-sim-allow]");
+    const block = (e: Event) => {
+      if (allowed(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const key = (e: KeyboardEvent) => {
+      // the browser's own keys (reload, find, the function keys) and Tab are left alone
+      if (e.ctrlKey || e.metaKey || e.altKey || e.key === "Tab" || /^F\d+$/.test(e.key)) return;
+      block(e);
+    };
+    const kinds = [
+      "click",
+      "dblclick",
+      "mousedown",
+      "pointerdown",
+      "touchstart",
+      "contextmenu",
+      "submit",
+      "input",
+      "change",
+    ];
+    kinds.forEach((k) => document.addEventListener(k, block, true));
+    document.addEventListener("keydown", key, true);
+    return () => {
+      kinds.forEach((k) => document.removeEventListener(k, block, true));
+      document.removeEventListener("keydown", key, true);
+    };
+  }, [sim.running]);
   // the browser tab: "Toledo Dynasty", and the sim's progress, your record and the week while one runs
   useTab(
     season?.team_name ?? null,
@@ -349,6 +396,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     setVisited((v) => (v.includes(next.key) ? v : [...v, next.key]));
     writeAddress(next.key, hubTab);
   };
+  // the season ending while you watch (the last week played) takes you to its recap; a season already over when the
+  // page opens stays where the address says
+  const wasDone = useRef<{ season: string; done: boolean } | null>(null);
+  useEffect(() => {
+    if (!season) return;
+    const key = `${season.id}-${season.year}`;
+    const before = wasDone.current;
+    wasDone.current = { season: key, done: season.done };
+    if (before && before.season === key && !before.done && season.done) open("recap");
+  });
+
   // a recruit or transfer named in another section: on your board, open him there; not on it, the class list, where
   // you can find and star him
   const openRecruit = (pid: string) => {
@@ -461,7 +519,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   );
 
   return (
-    <div className="game" style={teamVars}>
+    <div className={sim.running ? "game is-simming" : "game"} style={teamVars}>
       {/* any player's name on any screen opens his card: one window for the whole career (PlayerLink) */}
       <PlayerLinks seasonId={season?.id} weekLabels={season?.week_labels}>
         <GameNav
@@ -531,7 +589,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
 
           {season ? (
             // one window for every section: it never changes; the sections stack in it and cross-fade (Game/index.css)
-            <section className="game__body" aria-label={section.label}>
+            <section className={ticker ? "game__body has-ticker" : "game__body"} aria-label={section.label}>
               {visited.map((key) => {
                 const sec = sectionOf(key);
                 return (
@@ -650,6 +708,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                   </div>
                 );
               })}
+              {ticker && season && (
+                <Ticker
+                  seasonId={season.id}
+                  week={stripWeek}
+                  teams={bySlug}
+                  live={sim.running}
+                  onBox={openBox}
+                  onTeam={setResume}
+                  onRecruit={openRecruit}
+                />
+              )}
             </section>
           ) : (
             <section className="game__body">

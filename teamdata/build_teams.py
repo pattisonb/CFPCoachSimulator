@@ -217,11 +217,13 @@ RETURN_ATTR = "return_rating"
 # stretching by SPREAD_SCALE turns an ordinary raw value into an extreme one when the
 # position's starters bunch: linemen got coverage of 90-99 and a few starting receivers
 # route running of 1. A skill a position does not use is held to OFF_SKILL_RANGE; a core
-# skill (CORE_SKILLS, below) of an established player (our overall CORE_FLOOR_OVR or more)
-# keeps CORE_FLOOR. Speed, strength, intelligence and endurance are left alone.
+# skill (CORE_SKILLS, below) of an established player (CORE_FLOOR_OVR or more by the overall as
+# first fit, game_scale.legacy_overall: never the card's overall, whose formula and constants are
+# refit and recentered, and must not move an engine rating) keeps CORE_FLOOR. Speed, strength,
+# intelligence and endurance are left alone.
 PHYSICAL = ("speed", "strength", "intelligence", "endurance")   # every position uses these
 OFF_SKILL_RANGE = (25, 85)
-CORE_FLOOR, CORE_FLOOR_OVR = 20, 9    # 9: every player EA rated 60 or more (the rule as first set) is over it
+CORE_FLOOR, CORE_FLOOR_OVR = 20, 9    # *tune* 9: every player EA rated 60 or more (the rule as first set) is over it
 CLAMP_EXTREMES = not os.environ.get("BUILD_NO_CLAMP")   # BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 
@@ -576,19 +578,30 @@ def depth_sort(t: dict) -> None:
     t["players"].sort(key=lambda p: (p.get("depth") or 99, p.get("order") or 99, -(p.get("overall") or 0)))
 
 
+def established(p: dict) -> bool:
+    """Whether the core-skill floor is his (CORE_FLOOR_OVR): read off his skills by the overall as first fit, at the
+    position they were made for. The card's overall ("ovr") is not asked: the engine never reads it."""
+    if not p.get("skills"):
+        return False                  # a player added by hand carries his template's ratings as they are
+    return (game_scale.legacy_overall(dict(zip(game_scale.keys(), p["skills"])), p["source_position"]) or 0) >= CORE_FLOOR_OVR
+
+
 def clamp_extremes(p: dict) -> None:
     """Hold normalized attributes inside sensible bounds (see CORE_SKILLS)."""
     if not CLAMP_EXTREMES:
         return
     core = CORE_SKILLS.get(p.get("position"), ())
     lo, hi = OFF_SKILL_RANGE
+    floored = None                    # asked once, and only of a player with a core skill under the floor
     for a in ATTRS:
         v = p.get(a)
         if not isinstance(v, (int, float)) or a in PHYSICAL and a not in core:
             continue
         if a in core:
-            if (p.get("ovr") or 0) >= CORE_FLOOR_OVR and v < CORE_FLOOR:
-                p[a] = CORE_FLOOR
+            if v < CORE_FLOOR:
+                floored = established(p) if floored is None else floored
+                if floored:
+                    p[a] = CORE_FLOOR
         else:
             p[a] = max(lo, min(hi, v))
 
@@ -798,7 +811,7 @@ def engine_roster(t: dict) -> tuple[list[dict], list[dict]]:
     """Split a converted team into the engine's offense and defense player lists."""
     offense, defense = [], []
     for p in t["players"]:
-        d = {k: v for k, v in p.items() if k not in ("starter", "overall", "source_position", "_attr_raw")}
+        d = {k: v for k, v in p.items() if k not in ("starter", "overall", "_attr_raw")}   # "source_position" stays: game_scale.card_position
         d["in_game"] = p["starter"]
         d["fatigue"] = 0
         if p["position"] in OFFENSE:

@@ -1,0 +1,190 @@
+/* The crawl along the bottom of the game's window: a label block, then the news and scores sliding by. */
+.ticker {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 5;
+  display: flex;
+  align-items: stretch;
+  height: var(--ticker-h);
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  border-top: var(--line) solid var(--ink);
+}
+
+.ticker__label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  color: var(--paper-hi);
+  white-space: nowrap;
+  background: var(--ink);
+}
+
+.ticker__dot {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+}
+
+.ticker.is-live .ticker__dot {
+  background: var(--hot);
+  animation: ticker-blink 1s steps(2, jump-none) infinite;
+}
+
+.ticker__window {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ticker__run {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: ticker-crawl 60s linear infinite;
+}
+
+/* it holds still under the pointer or the keyboard, so an item can be read and opened */
+.ticker__window:hover .ticker__run,
+.ticker__window:focus-within .ticker__run {
+  animation-play-state: paused;
+}
+
+.ticker__list {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+}
+
+.ticker__item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 18px;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: inherit;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  border-right: var(--line) solid var(--line-soft);
+}
+
+.ticker__item--link {
+  cursor: pointer;
+}
+
+.ticker__item--link:hover,
+.ticker__item--link:focus-visible {
+  background: var(--paper-hi);
+  outline: none;
+  box-shadow: inset 0 -4px 0 var(--ink);
+}
+
+.ticker__tag {
+  padding: 1px 6px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: var(--line) solid var(--ink);
+}
+
+.ticker__tag--upset,
+.ticker__tag--loud {
+  color: var(--paper-hi);
+  background: var(--warn);
+  border-color: var(--warn);
+}
+
+.ticker__tag--recruiting {
+  border-color: var(--gold);
+}
+
+.ticker__tag--injury {
+  border-color: var(--warn);
+}
+
+.ticker__side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+}
+
+.ticker__side.is-won {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ticker__rank {
+  font-size: var(--t-xs);
+}
+
+.ticker__score {
+  min-width: 18px;
+  text-align: right;
+}
+
+.ticker__face {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  background: var(--tile);
+  border: var(--line) solid var(--ink);
+}
+
+.ticker__face .face {
+  width: 26px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.ticker__empty {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 14px;
+  overflow: hidden;
+  font-size: var(--t-sm);
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes ticker-crawl {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ticker-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* no motion: the crawl stands still and scrolls by hand */
+@media (prefers-reduced-motion: reduce) {
+  .ticker__run,
+  .ticker.is-live .ticker__dot {
+    animation: none;
+  }
+
+  .ticker__window {
+    overflow-x: auto;
+  }
+
+  .ticker__list[aria-hidden="true"] {
+    display: none;
+  }
+}

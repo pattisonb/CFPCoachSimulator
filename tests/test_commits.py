@@ -39,6 +39,14 @@ if __name__ == "__main__":
     assert any(e["kind"] == "hard" and e["pid"] == quiet for e in rc.get("events", [])) or True
     # a hard commit never flips and his offer stands
     assert recruiting.flip_weekly(st, quiet, 5.0) == 0.0 and recruiting.flip_by_signing(st, quiet, 5.0, 10) == 0.0
+    assert recruiting.closed(st)                       # week 19: the dead period (Championship Week to the last Signing Day)
+    try:
+        recruiting.act(st, me, quiet, "pull_offer")
+        raise AssertionError("an offer was pulled while recruiting is closed")
+    except recruiting.RecruitingError as e:
+        assert recruiting.CLOSED_TEXT in str(e), str(e)
+    st["current_week"] = recruiting.close_week() - 1   # the last week recruiting is open: his offer still cannot be pulled
+    assert not recruiting.closed(st)
     try:
         recruiting.act(st, me, quiet, "pull_offer")
         raise AssertionError("a hard commit's offer was pulled")
@@ -60,10 +68,13 @@ if __name__ == "__main__":
     rc["status"][quiet]["signed"] = me
     prof = prospects.profile(st, quiet, me)
     p = rc["prospects"][quiet]
-    assert prof["ratings"]["overall"] == p["ovr"] and prof["ratings"]["potential_overall"] == p["pot_ovr"]
+    from teamdata import shown          # a signed recruit's ratings are on the scale the page shows
+    assert prof["ratings"]["overall"] == shown.overall(p["ovr"]) and prof["ratings"]["potential_overall"] == shown.overall(p["pot_ovr"])
     rows = prof["ratings"]["attributes"]
     assert len(rows) == len(p["ratings"]) and all({"key", "label", "value", "potential"} <= set(r) for r in rows)
-    assert [r["value"] for r in rows] == list(p["ratings"]) and prof["public"]["hard"] is False
+    from teamdata import game_scale
+    grp = game_scale.group(p["ea_position"])
+    assert [r["value"] for r in rows] == [shown.skill(v, grp, k) for k, v in zip(game_scale.keys(), p["ratings"])] and prof["public"]["hard"] is False
     assert prospects.profile(st, quiet, "georgia")["ratings"] is None
     print(f"commits ok: quiet verbal hard after {weeks_quiet} weeks, with contact after {weeks_touched}; "
           f"hard commit keeps his offer and never flips; signee shows {len(rows)} ratings")

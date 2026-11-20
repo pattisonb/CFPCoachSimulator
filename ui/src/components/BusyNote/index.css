@@ -30,6 +30,11 @@
   animation: busy-spin 900ms steps(8) infinite;
 }
 
+/* over the game's window the notice sits above the league's crawl (components/Ticker), never on it */
+body:has(.ticker) .busy-note {
+  bottom: calc(var(--s4) + var(--control) + 12px);
+}
+
 @keyframes busy-in {
   from {
     opacity: 0;

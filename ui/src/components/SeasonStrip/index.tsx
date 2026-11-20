@@ -58,6 +58,12 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
     games.find((g) => g.week === week + 1 && !g.played) ??
     games.find((g) => g.kind !== "bye" && g.kind !== "open" && !g.played);
 
+  // a postseason week with no game of yours is settled once it has been played, and so is every one after it once
+  // the field is set and you have no game left (your bowl is played, or you were not picked)
+  const SELECTION_WEEK = 16;
+  const noneLeft = week >= SELECTION_WEEK && !games.some((g) => g.kind !== "bye" && g.kind !== "open" && !g.played);
+  const settled = (g: ScheduleGame) => g.week <= week || noneLeft;
+
   const measure = () => {
     const el = list.current;
     if (!el) return;
@@ -205,7 +211,9 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
                   })}
                 </span>
               ) : bye ? (
-                <span className="season-strip__opp season-strip__opp--bye">{open ? m.open(g.week) : m.bye}</span>
+                <span className="season-strip__opp season-strip__opp--bye">
+                  {!open ? m.bye : settled(g) && g.week !== SELECTION_WEEK ? m.noGame : m.open(g.week)}
+                </span>
               ) : (
                 <span className="season-strip__opp" title={g.opponent_name}>
                   <span
@@ -230,7 +238,9 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
                     ? m.score(title.away_score ?? 0, title.home_score ?? 0)
                     : m.titleGame
                   : open
-                    ? m.toBeSet
+                    ? settled(g)
+                      ? ""
+                      : m.toBeSet
                     : bye
                       ? ""
                       : g.played && g.won !== null
