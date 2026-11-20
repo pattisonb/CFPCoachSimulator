@@ -75,12 +75,15 @@ const SORTS: Partial<Record<Col, string>> = {
 /** the groups in roster order (the needs' keys come in this order too) */
 const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
 
-/** What a position chip counts: spots left, or your commits, board or offers there against the spots to fill. */
+/** What a position chip counts: spots left, or your commits, board or offers there against the spots the class set out to fill. */
 type ChipShow = "need" | "commits" | "board" | "offers";
 const chipCount = (n: NeedGroup, show: ChipShow): string | null => {
   if (show === "need") return n.need > 0 ? String(n.need) : null;
-  if (show === "commits") return `${n.commits}/${n.commits + Math.max(0, n.need)}`;
-  return `${(show === "board" ? n.board : n.offers) ?? 0}/${Math.max(0, n.need)}`;
+  // the need after the slash is always the one the class started with (what is left plus your commits), so it
+  // never shrinks as commits come in
+  const start = n.commits + Math.max(0, n.need);
+  if (show === "commits") return `${n.commits}/${start}`;
+  return `${(show === "board" ? n.board : n.offers) ?? 0}/${start}`;
 };
 
 /**

@@ -63,8 +63,8 @@ export const messages = {
   chipHints: {
     need: "Spots left to fill at the position.",
     commits: "Your commits against the spots you set out to fill.",
-    board: "Recruits on your board against the spots left.",
-    offers: "Your open offers against the spots left.",
+    board: "Recruits on your board against the spots you set out to fill.",
+    offers: "Your open offers against the spots you set out to fill.",
   },
   needs: "Your Needs",
   needsTip: "Spots to fill at each position; pick one to list only those prospects.",
