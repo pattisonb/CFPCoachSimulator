@@ -169,6 +169,7 @@ def outlook(state: dict) -> dict:
             draft = "Likely" if ovr >= DRAFT_LIKELY else "Possible" if ovr >= DRAFT_POSSIBLE else None
         grad = cls in ("SR", "SRRS")
         group = offseason.GROUP.get(p.get("role")) or offseason.GROUP.get(p.get("position")) or p.get("position")
+        group = recruiting.spot_of_player(p.get("role"), group)      # by position, as Recruiting counts (OT, OG, C, EDGE, DT, MIKE, WILL, FS, SS)
         players.append({"slug": p.get("slug"), "name": p.get("name"), "position": p.get("position"), "group": group, "class": cls,
                         "overall": ovr, "starter": bool(p.get("starter")), "use": use,
                         "leaving": "graduation" if grad else None, "draft": draft,
@@ -202,7 +203,7 @@ def _replacements(state: dict, players: list) -> None:
         if status is None:
             continue
         p = rc["prospects"][pid]
-        pool.setdefault(recruiting._group_of(p), []).append((REPLACE_ORDER.index(status), p["rank"], pid, status))
+        pool.setdefault(recruiting.spot_of(p), []).append((REPLACE_ORDER.index(status), p["rank"], pid, status))
     for g in pool:
         pool[g].sort()
     for p in players:
@@ -224,7 +225,7 @@ def next_year(state: dict) -> dict:
     with `kind`, the most he is to you: offered, on your board, or contacted; one signed or committed elsewhere is left out."""
     from coach_career import offseason, prospects
     me = state["team"]
-    detail = recruiting.needs_detail(state, me)
+    detail = recruiting.needs_by_spot(state, me)                 # by position, as the board's Class Needs
     groups = {g: {"group": g, "target": int(d.get("target") or 0), "players": [], "commits": []} for g, d in detail.items()}
     for p in outlook(state)["players"]:
         if p["leaving"] or p["group"] not in groups:
@@ -237,7 +238,7 @@ def next_year(state: dict) -> dict:
         if (st["signed"] or st["committed"]) != me:
             continue
         q = rc["prospects"][pid]
-        g = recruiting._group_of(q)
+        g = recruiting.spot_of(q)
         if g in groups:
             groups[g]["commits"].append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
                                          "signed": st["signed"] == me, "hard": bool(st.get("hard")), "rank": q["rank"]})
@@ -251,7 +252,7 @@ def next_year(state: dict) -> dict:
         if kind is None:
             continue
         q = rc["prospects"][pid]
-        g = recruiting._group_of(q)
+        g = recruiting.spot_of(q)
         if g in groups:
             groups[g].setdefault("targets", []).append({"pid": pid, "name": q["name"], "position": q["position"], "stars": q["stars"],
                                                         "rank": q["rank"], "kind": kind})
@@ -344,8 +345,8 @@ def what_if(state: dict, pid: str) -> dict:
     st = rc["status"][pid]
     mine = (st["signed"] or st["committed"]) == me
     p = rc["prospects"][pid]
-    group = recruiting._group_of(p)
-    need = int(recruiting.needs(state, me).get(group, 0))
+    group = recruiting.spot_of(p)                                # his position, and its need as the board counts it
+    need = int((recruiting.needs_by_spot(state, me).get(group) or {}).get("need", 0))
     rank_now = table[me]["rank"]
     if mine:
         rank_if = rank_now
@@ -403,7 +404,7 @@ def _task_check(state: dict, t: dict) -> tuple[bool, Optional[str]]:
     kind, pid = do["kind"], do.get("pid")
     if kind == "need":
         g = do.get("group")
-        return any(recruiting._group_of(rc["prospects"][q]) == g for q in rc.get("board") or () if q in rc["prospects"]), None
+        return any(recruiting.spot_matches(rc["prospects"][q], g) for q in rc.get("board") or () if q in rc["prospects"]), None    # a position, or a group from an older task
     p, st_ = rc["prospects"].get(pid), rc["status"].get(pid)
     if p is None or st_ is None:
         return False, None

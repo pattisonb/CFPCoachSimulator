@@ -919,6 +919,15 @@ def spot_of(p: dict) -> str:
             else SPOTS[g][0][0]) if g in SPOTS else g
 
 
+def spot_of_player(role: Optional[str], group: Optional[str]) -> Optional[str]:
+    """A roster player's position as your pages count him, from his depth-chart role (LT, MIKE, FS) and his roster
+    group: the same positions a recruit is counted at (spot_of); a lineman with no role is counted at his group's first."""
+    if group not in SPOTS:
+        return group
+    s = SPOT_OF.get(role or "")
+    return s if s in SPOT_GROUP and SPOT_GROUP[s] == group else SPOTS[group][0][0]
+
+
 def spot_matches(p: dict, key: Optional[str]) -> bool:
     """A page's position filter: a position (OT, MIKE) or a whole group (OL, LB), whichever it is given."""
     return not key or key == spot_of(p) or key == _group_of(p)
