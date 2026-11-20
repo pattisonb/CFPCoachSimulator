@@ -87,7 +87,8 @@ export function PanelRows({ children }: { children: ReactNode }) {
 
 /**
  * A label and its value on one row, a hairline between rows. A value not given reads `unknown` in the soft color; a
- * `hint` sits under the value; a `tip` shows on hover.
+ * `hint` sits under the value; a `tip` shows on hover. `wide` gives the value the whole row beside its label, on one
+ * line at the row's right edge (a long value that must not wrap: a comp's name, school, position and overall).
  */
 export function PanelRow({
   label,
@@ -95,16 +96,18 @@ export function PanelRow({
   unknown,
   hint,
   tip,
+  wide,
 }: {
   label: string;
   value?: ReactNode;
   unknown?: string;
   hint?: string | null;
   tip?: string | null;
+  wide?: boolean;
 }) {
   const shown = value ? <b>{value}</b> : <span className="panel__soft">{unknown ?? "–"}</span>;
   return (
-    <div className="panel__row">
+    <div className={`panel__row${wide ? " panel__row--wide" : ""}`}>
       <dt>{label}</dt>
       <dd>
         {tip ? (

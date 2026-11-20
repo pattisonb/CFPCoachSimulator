@@ -345,6 +345,7 @@ export function ScoutingTab({
             value={compText ?? (looks >= 3 ? m.compNone : undefined)}
             unknown={m.unknown}
             hint={comp || looks >= 3 ? null : m.compLater}
+            wide={!!comp}
           />
         </PanelRows>
         {/* a finished report has nothing left to send for: the lead above already says Report Complete */}
@@ -538,6 +539,7 @@ export function ProfileTab({
             value={compText ?? (looks >= 3 ? m.compNone : undefined)}
             unknown={m.unknown}
             hint={comp || looks >= 3 ? null : m.compLater}
+            wide={!!comp}
           />
         </PanelRows>
       </Panel>

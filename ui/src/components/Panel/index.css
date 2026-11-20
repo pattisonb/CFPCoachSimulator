@@ -95,6 +95,21 @@
   min-width: 0;
 }
 
+/* a long value on one line: it takes the row beside its label, set at the right edge, cut short only if it must be */
+.panel__row--wide {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.panel__row--wide dd {
+  text-align: right;
+}
+
+.panel__row--wide dd > b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* a panel that folds: its name is the button; shut, it is just its head */
 .panel__toggle {
   display: inline-flex;
