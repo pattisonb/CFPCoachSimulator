@@ -5,6 +5,7 @@ export const messages = {
   dash: "–",
 
   projected: (source: string, week: string) => `Projected · ${source}, ${week}`,
+  projectedLabel: "Projected: Why",
   apPoll: "AP Poll",
   cfpRanking: "CFP Rankings",
   set: "Set on Selection Day",
@@ -21,19 +22,14 @@ export const messages = {
   quarterWinner: "QF Winner",
   semiWinner: "SF Winner",
 
-  youIn: (team: string, seed: number) => `${team} is in the playoff as the ${seed} seed.`,
-  youInProjected: (team: string, seed: number) => `${team} would be in the playoff as the ${seed} seed.`,
-  youJustOut: (team: string) => `${team} is among the first four out.`,
-  youOut: (team: string) => `${team} is not in the playoff.`,
-  youOutProjected: (team: string) => `${team} is outside the projected field for now.`,
-  champion: (team: string) => `${team} are the national champions.`,
+  championKicker: "National Champions",
+  titleScore: (won: number, lost: number, loser: string) => `${won}–${lost} over ${loser}`,
 
   field: "The Field",
   fieldNote: "How Each Got In",
   /** the engine's reason, as a label: "SEC champion" → "SEC Champion" */
   bid: (bid: string) =>
     bid === "at-large" ? "At-Large" : bid.replace(/\b[a-z]/g, (c) => c.toUpperCase()).replace(/\bOf\b/g, "of"),
-  bye: "Bye",
-  byeTip: "The top four seeds skip the first round.",
+  byeTip: "A bye: the top four seeds skip the first round.",
   firstFourOut: "First Four Out",
 } as const;

@@ -1,11 +1,11 @@
 /* The Bracket: four rounds across, each matchup a small card; the field and the first four out beside them. */
 .bracket {
-  display: grid;
+  display: flex;
   flex: 1;
-  align-content: start;
+  flex-direction: column;
   gap: var(--s2);
   min-height: 0;
-  padding: var(--s3) var(--s4) var(--s4);
+  padding: var(--s2) var(--s4) var(--s3);
   overflow-y: auto;
   scrollbar-gutter: stable;
   container: bracket / inline-size;
@@ -20,34 +20,69 @@
   font-size: var(--t-xs);
 }
 
-/* where you stand, in a sentence */
-.bracket__standing {
+/* a projection's one mark in the bar's corner: its why is the mark's tip */
+.bracket__info {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--ink-soft);
+  cursor: help;
+}
+
+/* the champion, once there is one: a band in its color with the trophy, its name and the title game's score */
+.bracket__champ {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex: none;
+  gap: var(--s3);
+  padding: var(--s1) var(--s3);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+.bracket__champ-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bracket__champ-text b {
+  overflow: hidden;
+  font-size: var(--t-xl);
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bracket__champ-score {
+  margin-left: auto;
   font-size: var(--t-md);
   font-weight: 700;
+  white-space: nowrap;
 }
 
+/* the tree across the page, taking the height the field and the first four out under it leave: one screen, no scroll */
 .bracket__cols {
   display: grid;
-  align-items: start;
-  gap: var(--s3);
-}
-
-@container bracket (width >= 1000px) {
-  .bracket__cols {
-    grid-template-columns: minmax(0, 1fr) 300px;
-  }
-}
-
-/* the rounds side by side: each round's games spread down its column, so a game sits between the two that feed it */
-.bracket__tree {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  flex: 1;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--s2);
-  min-height: 520px;
-  padding: var(--s3);
+  min-height: 0;
+}
+
+/* the rounds side by side; a round's games share its height evenly, so a game sits between the two that feed it */
+.bracket__tree {
+  --gap: 36px; /* between rounds: the lines from one round to the next cross it */
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
+  gap: 0 var(--gap);
+  min-height: 380px; /* four games of two lines under a bowl's strip: a shorter window scrolls the page */
+  padding: 6px var(--s4);
   overflow-x: auto;
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
@@ -56,7 +91,7 @@
 .bracket__round {
   display: flex;
   flex-direction: column;
-  gap: var(--s2);
+  gap: 4px;
   min-width: 0;
 }
 
@@ -68,29 +103,67 @@
 }
 
 .bracket__games {
-  display: flex;
+  display: grid;
   flex: 1;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: var(--s2);
+  grid-template-rows: repeat(var(--n), 1fr);
 }
 
-/* a matchup: two lines in a frame, a notch at its right edge pointing to the next round */
-.bracket__game {
+/* a game's share of the column, the game in its middle; the lines to the next round are drawn from its edges */
+.bracket__cell {
   position: relative;
   display: grid;
-  background: var(--paper);
-  border: var(--line) solid var(--ink);
-  font-size: var(--t-sm);
+  align-content: center;
+  padding: 2px 0;
 }
 
-.bracket__round:not(:last-child) .bracket__game::after {
+/* straight on: a first-round game to the seed it meets */
+.bracket__round--straight .bracket__cell::after {
   content: "";
   position: absolute;
   top: 50%;
-  right: calc(-1 * var(--s2) - var(--line));
-  width: var(--s2);
+  left: 100%;
+  width: var(--gap);
   border-top: var(--line) solid var(--ink);
+}
+
+/* two into one: the upper game's line turns down and the lower one's up, meeting at the game they feed */
+.bracket__round--pairs .bracket__cell::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  width: calc(var(--gap) / 2);
+  border-right: var(--line) solid var(--ink);
+}
+
+.bracket__round--pairs .bracket__cell:nth-child(odd)::after {
+  top: 50%;
+  bottom: 0;
+  border-top: var(--line) solid var(--ink);
+}
+
+.bracket__round--pairs .bracket__cell:nth-child(even)::after {
+  top: 0;
+  bottom: 50%;
+  border-bottom: var(--line) solid var(--ink);
+}
+
+.bracket__round--pairs + .bracket__round .bracket__cell::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: calc(var(--gap) / 2);
+  border-top: var(--line) solid var(--ink);
+}
+
+/* a matchup: the bowl over two lines in a frame */
+.bracket__game {
+  display: grid;
+  min-width: 0;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+  font-size: var(--t-md);
 }
 
 .bracket__line {
@@ -98,12 +171,21 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  min-height: 32px;
-  padding: 4px 8px 4px 4px;
+  min-height: 27px;
+  padding: 1px 6px;
 }
 
 .bracket__line + .bracket__line {
   border-top: 1px solid var(--line-soft);
+}
+
+/* a team's name in a slot */
+.bracket__team {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bracket__line.is-pending {
@@ -126,31 +208,32 @@
   font-weight: 700;
 }
 
-.bracket__grow {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bracket__grow b,
-.bracket__grow .bracket__soft {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* the score in a box at the line's end: the winner's in ink */
 .bracket__score {
+  flex: none;
+  min-width: 34px;
+  padding: 2px 4px;
+  border: 1px solid var(--line-soft);
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
-/* the bowl hosting the game, under its two lines */
+.bracket__line.is-won .bracket__score {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+/* the bowl hosting the game, over its two lines */
 .bracket__bowl {
-  padding: 2px 8px;
+  padding: 1px 8px;
+  background: var(--tile);
   color: var(--ink-soft);
-  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
   font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 /* a seed in a small box; a top-four seed (a bye) in ink; a place with no seed, empty and soft */
@@ -179,7 +262,26 @@
 
 .bracket__side {
   display: grid;
+  align-items: start;
   gap: var(--s3);
+}
+
+@container bracket (width >= 900px) {
+  .bracket__side {
+    grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+  }
+
+  /* the field in three columns, reading down each: the byes, then seeds 5 to 8 and 9 to 12 */
+  .bracket__side .panel:first-child .bracket__field {
+    grid-template-rows: repeat(4, auto);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    column-gap: var(--s3);
+  }
+
+  .bracket__side .panel:first-child .bracket__field li:nth-child(4n + 1) {
+    border-top: 0;
+  }
 }
 
 .bracket__side .panel {
@@ -195,17 +297,24 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 4px;
+  min-width: 0;
+  padding: 3px 4px;
   border-top: 1px solid var(--line-soft);
+}
+
+.bracket__field .bracket__team {
+  flex: 0 1 auto;
+}
+
+/* how he got in, after his name on the same line */
+.bracket__bid {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bracket__field li:first-child {
   border-top: 0;
-}
-
-.bracket__tag {
-  padding: 0 6px;
-  color: var(--ink-soft);
-  border: 1px solid var(--ink-soft);
-  font-size: var(--t-xs);
 }
