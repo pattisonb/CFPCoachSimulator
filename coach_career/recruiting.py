@@ -3138,12 +3138,42 @@ def _pair_ok(state: dict, slug: str, pid: str, offered: dict, room) -> bool:
     return ok
 
 
+def _last_quarterbacks(state: dict, room, win, offered: dict) -> None:
+    """The last Signing Day, before everyone else picks: each school with no quarterback in its class (QB_EVERY_CLASS;
+    never yours, whose class is your own to fill) takes the uncommitted quarterback most interested in it, when he
+    would rather come than play FCS (it need not have offered him: a late call to a quarterback with nowhere to go). Recruiting closes after Championship Week, so a
+    school short a quarterback then has no weeks left to find one. Schools go in name order, each taking one."""
+    rc = state["recruiting"]
+    free = [pid for pid, p in rc["prospects"].items() if _group_of(p) == "QB" and not rc["status"][pid]["committed"]
+            and not rc["status"][pid]["signed"]]
+    if not free:
+        return
+    for s in sorted(rc["boards"]):
+        if s == state.get("team") or commits_by_group(state, s)["QB"] > 0:
+            continue
+        best = max(((interest(state, s, pid, win), pid) for pid in free
+                    if room(s, pid) and _pair_ok(state, s, pid, offered, room)),
+                   default=None)
+        if best and best[0] >= FCS_LINE:
+            pair = _commit(state, best[1], s)
+            room.took(s, best[1])
+            free.remove(best[1])
+            if pair:
+                if pair[1]:
+                    room.took(pair[1], pair[0], -1)
+                room.took(s, pair[0])
+                if pair[0] in free:
+                    free.remove(pair[0])
+
+
 def _sign(state: dict, final: bool) -> None:
     """The early Signing Day (as recruiting closes): every committed prospect signs. The last one (final, after the
     last game): whoever committed since signs, and the rest go to their leader with room, or to an FCS program."""
     rc = state["recruiting"]
     if final:
         room, win, offered = _Room(state, flier=True), _winning(state), _offers_by_prospect(state)
+        if QB_EVERY_CLASS:                 # first, a school still without a quarterback takes the best one left who would come
+            _last_quarterbacks(state, room, win, offered)
         for pid in sorted(rc["prospects"], key=lambda q: rc["prospects"][q]["rank"]):
             st = rc["status"][pid]
             if st["committed"]:

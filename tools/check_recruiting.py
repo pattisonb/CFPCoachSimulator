@@ -75,7 +75,7 @@ def measure(state: dict) -> dict:
     for e in rc["log"]:
         if e["kind"] in ("commit", "flip") and e["pid"] not in first_commit:
             first_commit[e["pid"]] = e["week"]
-        if e["kind"] == "signed" and e["school"] != "FCS" and e["week"] == season.SELECTION_WEEK:
+        if e["kind"] == "signed" and e["school"] != "FCS" and e["week"] == recruiting.early_signing_week():
             early.add(e["pid"])
         if e["kind"] == "decommit":
             decommitted.add(e["pid"])
