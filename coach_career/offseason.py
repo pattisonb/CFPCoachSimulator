@@ -543,6 +543,7 @@ def _retention_view(state: dict) -> Optional[dict]:
         row["chance_word"] = _chance_word(stay_chance(e, state)) if (e["met"] or e["offers"].get("nil") or e["offers"].get("promise")) else None
         row["role_now_name"], row["role_next_name"] = ROLE_NAMES[e["role_now"]], ROLE_NAMES[e["role_next"]]
         players.append(row)
+    players.sort(key=lambda r: -r["overall"])     # the page's order: your best players first (the stored list keeps its own)
     return {"players": players, "results": ret.get("results"), "spent": ret.get("spent", 0), "budget": budget,
             "left": budget - ret.get("spent", 0), "elite_stay": ELITE_STAY}
 

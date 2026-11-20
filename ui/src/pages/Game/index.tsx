@@ -280,6 +280,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   if (!simAt.current.week) heldRecord.current = liveRecord ?? null;
   const simRecord = liveRecord ?? heldRecord.current ?? undefined;
   const simWeek = sim.status?.kind === "gameday" ? undefined : sim.status?.current_week;
+  // a sim of several weeks: every week it finishes, the season is read again, so the page behind (your next game, the
+  // program's news, the standings) follows the sim instead of holding the week it started in. Game Day keeps its page
+  // still: the score is not given away before the playback
+  useEffect(() => {
+    if (!seasonId || !simWeek) return;
+    api<SeasonSummary>(`/api/season/${seasonId}`)
+      .then((next) =>
+        setLoad((was) => (was.kind === "ready" && was.season.id === next.id ? { kind: "ready", season: next } : was)),
+      )
+      .catch(() => {});
+  }, [seasonId, simWeek]);
   // the browser tab: "Toledo Dynasty", and the sim's progress, your record and the week while one runs
   useTab(
     season?.team_name ?? null,
@@ -347,6 +358,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     setVisited((v) => (v.includes(next.key) ? v : [...v, next.key]));
     writeAddress(next.key, hubTab);
   };
+  // the season ending while you watch (the last week played) takes you to its recap; a season already over when the
+  // page opens stays where the address says
+  const wasDone = useRef<{ season: string; done: boolean } | null>(null);
+  useEffect(() => {
+    if (!season) return;
+    const key = `${season.id}-${season.year}`;
+    const before = wasDone.current;
+    wasDone.current = { season: key, done: season.done };
+    if (before && before.season === key && !before.done && season.done) open("recap");
+  });
+
   // a recruit or transfer named in another section: on your board, open him there; not on it, the class list, where
   // you can find and star him
   const openRecruit = (pid: string) => {

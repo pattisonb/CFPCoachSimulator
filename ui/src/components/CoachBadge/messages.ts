@@ -21,5 +21,5 @@ export const messages = {
   word: "Your Word",
   wordHint: (text: string) =>
     `How well you keep your promises: ${text}. Recruits weigh it when you promise a starting role, and a poor one makes them doubt you.`,
-  wordWeakest: (group: string, text: string) => `It is weaker with ${group}: ${text}.`,
+  wordWeakest: (group: string, text: string) => `Your lowest is with ${group}, where it is ${text}.`,
 } as const;
