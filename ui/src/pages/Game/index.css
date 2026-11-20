@@ -40,14 +40,11 @@
   z-index: 11;
 }
 
-/* Recruiting has no top row: the smaller face sits in the window's tab bar, and the bar's budgets make room */
-.game__main.is-recruiting > .coach-badge {
-  top: calc(var(--s3) + 2px); /* level with the tab bar, inside the window's edge */
-  right: calc(var(--s5) + 10px);
-}
-
-.game__main.is-recruiting .section-tabs__aside {
-  padding-right: 56px;
+/* Recruiting has no top row: your face is the same size in the same place, so it sits on the window's top right
+   corner. The window's tab bar is as tall as your face there and stops short of it, so nothing lies under it */
+.game__main.is-recruiting .section-tabs {
+  min-height: 84px; /* with the window's edge and the bar's rule, your face's 88 */
+  padding-right: calc(88px + var(--s3));
 }
 
 /* a section with no top row (the Offseason): the section takes the whole height */
@@ -169,10 +166,6 @@
 
   .game__main > .coach-badge {
     right: var(--s4);
-  }
-
-  .game__main.is-recruiting > .coach-badge {
-    right: calc(var(--s4) + 10px);
   }
 }
 

@@ -509,10 +509,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
             )}
           </div>
           {/* you, in the window's top right corner on every screen but the Offseason: your face alone, the card when
-              you point at it. In Recruiting (no top row) it is a smaller face in the window's tab bar */}
+              you point at it. Recruiting has no top row: its tab bar is as tall as your face and leaves it the corner */}
           {season && coach && face && section.key !== "offseason" && (
             <CoachBadge
-              compact={section.key === "recruiting"}
               name={coachName(coach)}
               team={season.team_name}
               face={face}

@@ -26,8 +26,6 @@ interface Props {
   ratings?: CoachRatings | null;
   /** a small control inside the card's top right corner (a Dropdown, say) */
   corner?: ReactNode;
-  /** a smaller face while the card is shut (Recruiting, where it sits in the window's tab bar) */
-  compact?: boolean;
   /** hangs from under the card's right edge: the notices that have just landed */
   below?: ReactNode;
   /** a count on your face's corner while the card is shut (the notices not looked at yet) */
@@ -108,10 +106,10 @@ const RATED = ["offense", "defense", "recruiting", "player_development", "game_m
  * week's Energy and Scouting, and your ratings as a head coach, each a bar and its number. Nothing else on the page
  * moves: the card lies over what is beside and below it.
  */
-export default function CoachBadge({ name, team, face, word, budgets, ratings, corner, compact, below, alert }: Props) {
+export default function CoachBadge({ name, team, face, word, budgets, ratings, corner, below, alert }: Props) {
   const rated = ratings ? RATED.filter((k) => typeof ratings[k] === "number") : [];
   return (
-    <div className={`coach-badge${compact ? " coach-badge--compact" : ""}`} tabIndex={0} aria-label={name}>
+    <div className="coach-badge" tabIndex={0} aria-label={name}>
       {corner && <div className="coach-badge__corner">{corner}</div>}
       <span className="coach-badge__face">
         <Face face={face} scale={2} label={name} />
@@ -124,37 +122,39 @@ export default function CoachBadge({ name, team, face, word, budgets, ratings, c
       </span>
       {(budgets || rated.length > 0) && (
         <div className="coach-badge__more">
-          {budgets && (
-            <section className="coach-badge__part" aria-label={m.thisWeek}>
-              <h4 className="label">{m.thisWeek}</h4>
-              {budgets}
-            </section>
-          )}
-          {ratings && rated.length > 0 && (
-            <section className="coach-badge__part" aria-label={m.ratings}>
-              <h4 className="label">
-                {m.ratings}
-                {typeof ratings.overall === "number" && (
-                  <span className="coach-badge__overall">
-                    {m.overall} <b>{ratings.overall}</b>
-                  </span>
-                )}
-              </h4>
-              <dl className="coach-badge__ratings">
-                {rated.map((k) => (
-                  <div key={k}>
-                    <dt>{m.rated[k] ?? k}</dt>
-                    <dd>
-                      <span className="coach-badge__meter" aria-hidden="true">
-                        <span style={{ width: `${Math.max(0, Math.min(100, ratings[k]))}%` }} />
-                      </span>
-                      <b>{ratings[k]}</b>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          )}
+          <div className="coach-badge__more-in">
+            {budgets && (
+              <section className="coach-badge__part" aria-label={m.thisWeek}>
+                <h4 className="label">{m.thisWeek}</h4>
+                {budgets}
+              </section>
+            )}
+            {ratings && rated.length > 0 && (
+              <section className="coach-badge__part" aria-label={m.ratings}>
+                <h4 className="label">
+                  {m.ratings}
+                  {typeof ratings.overall === "number" && (
+                    <span className="coach-badge__overall">
+                      {m.overall} <b>{ratings.overall}</b>
+                    </span>
+                  )}
+                </h4>
+                <dl className="coach-badge__ratings">
+                  {rated.map((k) => (
+                    <div key={k}>
+                      <dt>{m.rated[k] ?? k}</dt>
+                      <dd>
+                        <span className="coach-badge__meter" aria-hidden="true">
+                          <span style={{ width: `${Math.max(0, Math.min(100, ratings[k]))}%` }} />
+                        </span>
+                        <b>{ratings[k]}</b>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
+          </div>
         </div>
       )}
       {below}
