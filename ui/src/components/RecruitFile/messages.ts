@@ -85,6 +85,13 @@ export const messages = {
   confidence: (word: string) => `${word} Confidence`,
   uncertainty: (word: string) => `${word} Uncertainty`,
   range: (est: number, lo: number, hi: number) => `${est} (${lo}–${hi})`,
+  fineTitle: "Plus and Minus",
+  fineShort: "Plus and Minus Read",
+  coarseShort: "Letter Only",
+  fineOn: (eye: number) =>
+    `Your best evaluator is a ${eye}, sharp enough to read a plus or a minus: a third of a letter's range.`,
+  fineOff: (eye: number, needed: number) =>
+    `A plus or a minus is a finer read than the letter. It takes an evaluator at ${needed} or better on your staff, or your own player development; your best is ${eye}.`,
   rangeLabel: (label: string, est: number, lo: number, hi: number) =>
     `${label}: about ${est}, between ${lo} and ${hi}.`,
   wordsLabel: (label: string, lo: string, hi: string) =>

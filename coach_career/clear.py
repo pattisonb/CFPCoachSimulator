@@ -150,6 +150,11 @@ def ratings(state: dict, pid: str) -> Optional[dict]:
     pos_label = pr.display_pos(p["ea_position"])
     pot = row("potential", f"Potential at {pos_label}", float(p["pot_ovr"]), "potential")   # his projected overall at his position
     pot["position"] = pos_label
+    if pot["lo"] is not None:                         # the page shows his potential as letters (grades.py), not these numbers
+        from coach_career import grades
+        sharp = grades.fine(state)
+        ends = (pot["est"], pot["est"]) if complete else (pot["lo"], pot["hi"])     # a complete report settles on one grade
+        pot.update(grade=grades.span(*ends, sharp), fine=sharp, eye=grades.eye(state), eye_needed=grades.PLUS_MINUS_EYE)
     coach = confidence(state, pid, "coachability") if _raw_half(state, pid, "coachability") is not None else None
     return {"complete": complete, "looks": recruiting.report_looks(read), "rows": rows, "potential": pot,
             "coach_confidence": coach}                # the Coachability row's confidence (its read stays one word)

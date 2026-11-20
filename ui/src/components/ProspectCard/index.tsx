@@ -1,3 +1,4 @@
+import { GradeRange } from "../Grade/index.tsx";
 import { useEffect, useState } from "react";
 import { Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
@@ -180,8 +181,7 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
               {r?.our_potential && (
                 <span className="prospect-card__soft">
                   {" · "}
-                  {m.potential}{" "}
-                  {r.our_potential[0] === r.our_potential[1] ? r.our_potential[0] : r.our_potential.join("–")}
+                  {m.potential} <GradeRange read={r.our_potential} size="sm" />
                 </span>
               )}
             </p>

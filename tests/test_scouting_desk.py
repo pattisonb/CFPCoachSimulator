@@ -196,7 +196,7 @@ if __name__ == "__main__":
         assert qb["queue"] and all(r["position"] == "QB" for r in qb["queue"])
         assert qb["queue_total"] == sum(1 for pid in rc["prospects"] if scoutable(st, pid) and rc["prospects"][pid]["position"] == "QB")
         ol = G(sid, "scouting?sort=board&group=OL&limit=5")
-        assert len(ol["queue"]) == 5 and all(r["group"] == "OL" for r in ol["queue"])
+        assert len(ol["queue"]) == 5 and all(r["group"] in ("OT", "OG", "C") for r in ol["queue"])     # a group filter still works; rows carry the position the pages count by
         assert G(sid, "scouting?sort=board&q=zzzzzz")["queue"] == [] and G(sid, "scouting?sort=board&q=zzzzzz")["queue_total"] == 0
 
         # a scouting trip: the action's response carries the look entry (by "trip"), logged when it changed something
@@ -244,10 +244,10 @@ if __name__ == "__main__":
         assert all(r["pid"] in rc["board"] for r in rows[:i + 1]) and all(r["looks"] < 3 for r in rows[:i]), [r["pid"] for r in rows[:i + 1]]
         assert rows[i]["looks"] == 3 and rows[i]["can_send"] is False and rows[i]["why"] == prospects.REPORT_COMPLETE, rows[i]
         final = rows[i]["potential"]
-        if clear.on():      # Clear Mode: a complete report's potential is a narrow range of numbers (recruiting.shown_range), never a word
-            half = max(2.0, recruiting.read_spread(st, target["pid"], "potential")[1])
-            assert final == recruiting.shown_range(st, target["pid"], "potential") and all(x.isdigit() for x in final), final
-            assert 1 <= int(final[0]) < int(final[1]) <= 99 and int(final[1]) - int(final[0]) <= 2 * half + 1, (final, half)
+        if clear.on():      # Clear Mode: a complete report's potential is letter grades, low then high (recruiting.shown_range, grades.py), never a word or a number
+            from coach_career import grades
+            assert final == recruiting.shown_range(st, target["pid"], "potential") and all(x in grades.ORDER for x in final), final
+            assert grades.place(final[0]) <= grades.place(final[1]), final
         else:
             assert final[0] == final[1] in recruiting.WORDS, final
         assert all(r["can_send"] and r["looks"] < 3 for r in rows[i + 1:] if r["pid"] != yours)

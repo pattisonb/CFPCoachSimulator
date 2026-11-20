@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
+from coach_career import grades
 from coach_career import offseason, recruiting, recruits   # noqa: E402
 from sim import season   # noqa: E402
 from test_offseason import finished   # noqa: E402
@@ -41,7 +42,7 @@ def check_reads(st: dict, label: str) -> collections.Counter:
         assert r["coachability"] in LEVELS and r["coach_level"] == LEVELS.index(r["coachability"]) + 1, (label, slug, r)
         from coach_career import clear
         pw = r.get("potential_word")
-        assert (pw is not None and pw.isdigit() and 1 <= int(pw) <= 99) if clear.on() else pw in recruiting.WORDS, (label, slug, r)   # Clear Mode: the number
+        assert pw in grades.ORDER if clear.on() else pw in recruiting.WORDS, (label, slug, r)   # Clear Mode: a letter grade, with its plus or minus (your own players)
     other = "michigan"
     assert season.development_reads(st, other) == {}, "another team's coachability leaked"
     them = season.load_teams()[other]

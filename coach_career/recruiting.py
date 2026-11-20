@@ -901,6 +901,101 @@ def needs_detail(state: dict, slug: str) -> dict[str, dict]:
     return out
 
 
+# ----- the recruiting pages' positions: four groups shown as the positions in them (the player's ask) -----------------
+# The schools still recruit by roster group (needs, a group's cap, "no room"): this is how your pages count and filter.
+SPOTS = {"OL": (("OT", 2), ("OG", 2), ("C", 1)), "DL": (("EDGE", 2), ("DT", 2)),
+         "LB": (("MIKE", 1), ("WILL", 2)), "S": (("FS", 1), ("SS", 1))}   # *tune* a group's positions, each with its starters (the group's spots are shared out by them)
+SPOT_OF = {"LT": "OT", "RT": "OT", "LG": "OG", "RG": "OG", "C": "C", "LEDG": "EDGE", "REDG": "EDGE", "DT": "DT",
+           "MIKE": "MIKE", "MLB": "MIKE", "WILL": "WILL", "SAM": "WILL", "ROLB": "WILL", "LOLB": "WILL", "FS": "FS", "SS": "SS"}
+SPOT_ORDER = ("QB", "RB", "WR", "TE", "OT", "OG", "C", "EDGE", "DT", "MIKE", "WILL", "CB", "FS", "SS", "K", "P")
+SPOT_GROUP = {name: g for g, parts in SPOTS.items() for name, _ in parts}
+
+
+def spot_of(p: dict) -> str:
+    """A prospect's position as the recruiting pages count him: OT, OG or C for a lineman, EDGE or DT, MIKE or WILL (a
+    SAM is a WILL: the depth chart has two linebacker roles), FS or SS; his roster group anywhere else."""
+    g = _group_of(p)
+    return (SPOT_OF.get(p.get("ea_position")) if SPOT_OF.get(p.get("ea_position")) in SPOT_GROUP and SPOT_GROUP[SPOT_OF[p["ea_position"]]] == g
+            else SPOTS[g][0][0]) if g in SPOTS else g
+
+
+def spot_matches(p: dict, key: Optional[str]) -> bool:
+    """A page's position filter: a position (OT, MIKE) or a whole group (OL, LB), whichever it is given."""
+    return not key or key == spot_of(p) or key == _group_of(p)
+
+
+def _share(total: int, weights: list[float]) -> list[int]:
+    """`total` shared out by `weights` in whole numbers that add up to it (largest remainders)."""
+    w = sum(weights) or 1.0
+    raw = [total * x / w for x in weights]
+    out = [int(x) for x in raw]
+    for i in sorted(range(len(raw)), key=lambda i: raw[i] - out[i], reverse=True)[:total - sum(out)]:
+        out[i] += 1
+    return out
+
+
+_SPOT_NEEDS: tuple = (None, {})
+
+
+def needs_by_spot(state: dict, slug: str) -> dict[str, dict]:
+    """needs_detail for your pages, with OL, DL, LB and S as their positions (SPOTS): a group's spots (`target`) are
+    shared out by its starters, the players coming back (`back`) by where the returning roster plays, and your commits,
+    board and offers are counted where each recruit plays; `need` is what is left of each position's spots. In
+    SPOT_ORDER. A view only: the game's own needs stay by group (needs)."""
+    global _SPOT_NEEDS
+    rc = state["recruiting"]
+    key = (state.get("id"), slug, _ck(rc), rc.get("commits_v", 0), len(rc.get("board") or ()), len(rc["offers"].get(slug, [])),
+           state.get("current_week"), rc.get("week"))
+    if _SPOT_NEEDS[0] == key:
+        return {k: dict(v) for k, v in _SPOT_NEEDS[1].items()}
+    by_group = needs_detail(state, slug)
+    # the returning roster by position, for sharing out `back`
+    here: dict[str, float] = {}
+    if is_portal(state):
+        roster = [c["pos"] for c in state["league"]["teams"][slug]["roster"]]
+    else:
+        from sim import season
+        t = season.load_teams()[slug]
+        roster = [p.get("role") or p["position"] for p in t["offense"] + t["defense"] if p.get("class") not in LEAVING]
+    for pos in roster:
+        if SPOT_OF.get(pos) in SPOT_GROUP:
+            here[SPOT_OF[pos]] = here.get(SPOT_OF[pos], 0) + 1
+    count = {k: {} for k in ("commits", "firm", "board", "offers")}
+    bump = lambda what, pid: count[what].__setitem__(spot_of(rc["prospects"][pid]), count[what].get(spot_of(rc["prospects"][pid]), 0) + 1)
+    for pid, st in rc["status"].items():
+        if (st["signed"] or st["committed"]) == slug:
+            bump("commits", pid)
+            if st["signed"] or st.get("hard"):
+                bump("firm", pid)
+    for pid in rc["board"] if slug == state["team"] else []:
+        st = rc["status"][pid]
+        if (st["signed"] or st["committed"]) in (None, slug):
+            bump("board", pid)
+    for pid in rc["offers"].get(slug, []):
+        st = rc["status"][pid]
+        if not st["signed"] and st["committed"] is None:
+            bump("offers", pid)
+    out: dict[str, dict] = {}
+    for g, d in by_group.items():
+        if g not in SPOTS:
+            out[g] = dict(d, group=g)
+            continue
+        names = [n for n, _ in SPOTS[g]]
+        weights = [float(w) for _, w in SPOTS[g]]
+        targets = _share(int(d["target"]), weights)
+        backs = _share(int(d["back"]), [here.get(n, 0) for n in names] if any(here.get(n) for n in names) else weights)
+        signees = _share(int(d.get("signees") or 0), weights)
+        for n, target, back, sg in zip(names, targets, backs, signees):
+            c = count["commits"].get(n, 0)
+            firm = min(c, count["firm"].get(n, 0))
+            out[n] = {"target": target, "back": back, "commits": c, "firm": firm, "soft": c - firm, "board": count["board"].get(n, 0),
+                      "offers": count["offers"].get(n, 0), "need": target - back - c, "group": g,
+                      **({"portal": True, "signees": min(back, sg)} if d.get("portal") else {})}
+    out = {k: out[k] for k in SPOT_ORDER if k in out}
+    _SPOT_NEEDS = (key, {k: dict(v) for k, v in out.items()})
+    return out
+
+
 RECOMMENDED_WHY = {"home": "from a state you sign from", "near": "close to campus", "national": "a national target for a program like yours",
                    "stars": "the star level you usually sign", "need": "a position you need", "position": "a position you sign every class"}
 
@@ -3557,9 +3652,10 @@ def read_interval(state: dict, pid: str, group: str) -> Optional[tuple[float, fl
     return mean - half, mean + half
 
 
-def shown_range(state: dict, pid: str, group: str) -> Optional[list]:
+def shown_range(state: dict, pid: str, group: str, sharp: Optional[bool] = None) -> Optional[list]:
     """A read as the page shows it: grade_range's words, or in Clear Mode (coach_career/clear.py) the read's numbers
-    (one number twice once his report is complete). Only for display: code that ranks reads uses grade_range."""
+    (a narrow range once his report is complete). His potential is letter grades there (grades.py: low, high; the same
+    letter twice once the read sits in one grade). Only for display: code that ranks reads uses grade_range."""
     from coach_career import clear
     if not clear.on():
         r = grade_range(state, pid, group)
@@ -3568,9 +3664,12 @@ def shown_range(state: dict, pid: str, group: str) -> Optional[list]:
     clamp = lambda x: str(max(1, min(99, int(round(x)))))         # the game's 1-99 scale (a read's points can stray past it)
     if not iv:
         return None
+    if group == "potential":                                      # his overall potential is a letter grade (grades.py), never a number
+        from coach_career import grades                           # a complete report settles on one grade: the letter is range enough
+        return grades.span(iv[0], iv[1], grades.fine(state) if sharp is None else sharp)   # `sharp`: a caller reading many passes it once
     if iv[0] == iv[1]:                                            # a complete report: a narrow range, never one number
         half = max(2.0, read_spread(state, pid, group)[1])
-        return [clamp(iv[0] - half), clamp(iv[0] + half)]
+        iv = (iv[0] - half, iv[0] + half)
     return [clamp(iv[0]), clamp(iv[1])]
 
 

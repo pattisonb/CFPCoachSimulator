@@ -22,6 +22,7 @@ import {
   UsersThree,
   X,
 } from "@phosphor-icons/react";
+import { GradeRange, GradeScale } from "../Grade/index.tsx";
 import Meter from "../Meter/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import Button from "../Button/index.tsx";
@@ -320,7 +321,24 @@ export function ScoutingTab({
           {rep && (
             <div className="recruit-file__tile recruit-file__potential">
               <span className="label">{pot ? pot.label : m.potential}</span>
-              {pot ? (
+              {pot?.grade ? (
+                <>
+                  {/* his potential is a letter grade, never a number: the read's low and high ends, then the whole
+                      scale with the letters it covers lit */}
+                  <b className="recruit-file__big">
+                    <GradeRange read={pot.grade} size="lg" />
+                  </b>
+                  <GradeScale read={pot.grade} />
+                  <Tooltip
+                    title={m.fineTitle}
+                    text={pot.fine ? m.fineOn(pot.eye ?? 0) : m.fineOff(pot.eye ?? 0, pot.eye_needed ?? 0)}
+                  >
+                    <span className="recruit-file__soft">
+                      {m.confidence(pot.confidence)} · {pot.fine ? m.fineShort : m.coarseShort}
+                    </span>
+                  </Tooltip>
+                </>
+              ) : pot ? (
                 <>
                   <b className="recruit-file__big">{m.range(pot.est, pot.lo, pot.hi)}</b>
                   <RangeBar

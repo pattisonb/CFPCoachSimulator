@@ -11,6 +11,7 @@
   --logo-bg: #fff; /* behind the spinning ball, in both themes */
   --tile: #f1f1ef; /* behind faces and sprites */
   --good: #3f8a3a; /* progress made: a meter's fill (the field's green) */
+  --grade-b: #9ccc65; /* a B: a lighter green than an A's (Grade) */
   --gold: #e0a800; /* stars, and a generational talent */
   --cold: #2f7fd1; /* he has cooled on you */
   --hot: #f76707; /* fire: a pitch that lit him up */

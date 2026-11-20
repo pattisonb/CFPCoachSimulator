@@ -34,7 +34,26 @@ const flipAlert = (r: BoardRow): { key: RecruitAlert; tip: string } | null =>
 type NeedShow = "commits" | "board" | "offers";
 
 /** The roster groups in order (the keys a need is counted under). */
-const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
+// the line, linebackers and safeties as their positions (coach_career/recruiting.py SPOTS), in depth-chart order
+const GROUP_ORDER = [
+  "QB",
+  "RB",
+  "WR",
+  "TE",
+  "OT",
+  "OG",
+  "C",
+  "EDGE",
+  "DT",
+  "MIKE",
+  "WILL",
+  "CB",
+  "FS",
+  "SS",
+  "K",
+  "P",
+  "ATH",
+];
 const groupOf = (r: BoardRow) => r.group ?? r.display_pos;
 
 interface Props {

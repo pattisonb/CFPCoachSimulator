@@ -236,7 +236,8 @@ def replacements(sid: str) -> None:
     assert leaving, "a roster always has seniors"
     g = leaving[0]["group"]
     rows = api.call("GET", f"/api/season/{sid}/prospects?limit=400")["rows"]
-    pick = next(r for r in rows if r["group"] == g and not r["committed"] and not r["on_board"])
+    from coach_career import recruiting as _rc     # a row carries his position (OT, MIKE); the outlook is by roster group
+    pick = next(r for r in rows if _rc.SPOT_GROUP.get(r["group"], r["group"]) == g and not r["committed"] and not r["on_board"])
     api.call("POST", f"/api/season/{sid}/board", {"pid": pick["id"], "on": True})
     o = GET(sid, "?want=outlook")["outlook"]
     reps = [p["replacement"] for p in o["players"] if p["leaving"] and p["group"] == g and p["replacement"]]
@@ -255,10 +256,12 @@ def next_year_roster(sid: str) -> None:
     ny = GET(sid, "?want=next_year")["next_year"]
     groups = {g["group"]: g for g in ny["groups"]}
     rv = api.call("GET", f"/api/season/{sid}/recruiting")
-    assert set(groups) == set(rv["needs_detail"]), (sorted(groups), sorted(rv["needs_detail"]))
+    from coach_career import recruiting as _rc     # the board counts by position (OT, MIKE); this roster view stays by group
+    assert set(groups) == {_rc.SPOT_GROUP.get(k, k) for k in rv["needs_detail"]}, (sorted(groups), sorted(rv["needs_detail"]))
+    by_group = _rc.needs_detail(api.loaded_state(), ME)      # the game's own needs, by group
     for g in groups.values():
-        assert g["target"] == rv["needs_detail"][g["group"]]["target"], g["group"]
-        assert g["filled"] == len(g["players"]) + len(g["commits"]) and g["need"] == rv["needs_detail"][g["group"]]["need"], g
+        assert g["target"] == by_group[g["group"]]["target"], g["group"]
+        assert g["filled"] == len(g["players"]) + len(g["commits"]) and g["need"] == by_group[g["group"]]["need"], g
         for p in g["players"]:
             assert p["class_now"] not in ("SR", "SRRS"), f"a senior graduates: {p}"
             assert p["class_next"] == offseason.NEXT_CLASS.get(p["class_now"], p["class_now"]), p

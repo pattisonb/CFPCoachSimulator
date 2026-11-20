@@ -1,0 +1,89 @@
+/* A letter grade: a small tile in its letter's color, the letter in white or near black (whichever reads on it). */
+.grade {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 26px;
+  height: 20px;
+  padding: 0 4px;
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.grade--sm {
+  min-width: 22px;
+  height: 18px;
+  padding: 0 3px;
+  border-width: 1px;
+}
+
+.grade--lg {
+  min-width: 44px;
+  height: 34px;
+  padding: 0 8px;
+  font-size: var(--t-xl);
+}
+
+.grade--a {
+  background: var(--good);
+  color: #fff;
+}
+
+.grade--b {
+  background: var(--grade-b);
+  color: #111;
+}
+
+.grade--c {
+  background: var(--gold);
+  color: #111;
+}
+
+.grade--d {
+  background: var(--hot);
+  color: #111;
+}
+
+.grade--f {
+  background: var(--warn);
+  color: #fff;
+}
+
+/* a read across two grades: its low end, "to", its high end */
+.grade-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.grade-range__to {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+/* the whole scale, F to A: the letters a read covers are lit, the rest are quiet outlines */
+.grade-scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.grade-scale__step {
+  display: grid;
+  place-items: center;
+  height: 14px;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-soft);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.grade-scale__step.is-on {
+  border-color: var(--ink);
+}

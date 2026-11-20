@@ -16,7 +16,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-from coach_career import clear, persona, recruiting
+from coach_career import clear, grades, persona, recruiting
 
 ROOT = Path(__file__).resolve().parents[1]   # the project root
 EVALUATED = 300                    # the top 300 get a written evaluation and a public comp
@@ -257,10 +257,11 @@ def staff_likes(state: dict, pid: str, viewer: str) -> Optional[dict]:
 # ----- the profile ---------------------------------------------------------------------------------
 
 # ----- what the page shows of him: the game's position, his size, the staff's write-up ----------------
-DISPLAY_POS = {"LEDG": "EDGE", "REDG": "EDGE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
-               "HB": "RB", "FB": "RB", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "FS": "S", "SS": "S"}
+DISPLAY_POS = {"LEDG": "EDGE", "REDG": "EDGE", "LT": "OT", "RT": "OT", "LG": "OG", "RG": "OG",
+               "HB": "RB", "FB": "RB", "SAM": "WILL"}   # the positions the recruiting pages count by (recruiting.SPOTS): C, MIKE, WILL, FS and SS are their own
 POS_NOUNS = {"QB": "quarterback", "RB": "running back", "WR": "receiver", "TE": "tight end", "OT": "offensive tackle",
-             "IOL": "interior lineman", "EDGE": "edge rusher", "DT": "defensive tackle", "LB": "linebacker",
+             "IOL": "interior lineman", "OG": "guard", "C": "center", "MIKE": "middle linebacker", "WILL": "outside linebacker",
+             "FS": "free safety", "SS": "strong safety", "EDGE": "edge rusher", "DT": "defensive tackle", "LB": "linebacker",
              "CB": "cornerback", "S": "safety", "K": "kicker", "P": "punter", "ATH": "athlete"}
 REPORT_LABELS = {"athleticism": "Athleticism", "football_iq": "Football IQ", "technique": "Technique",
                  "size_strength": "Size / Strength", "coachability": "Coachability", "potential": "Upside"}
@@ -750,7 +751,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "traits": traits,
         "trait_hints": trait_hints(traits),
         "report": report(state, pid),
-        "need": recruiting.needs(state, viewer)[recruiting._group_of(p)],
+        "need": recruiting.needs_by_spot(state, viewer)[recruiting.spot_of(p)]["need"],     # at his position, as your pages count it
         "row": board_row(state, pid, viewer),          # the board's own line for him: the popup draws the board's pane from it
         "twist": persona.twist_view(state, viewer, pid),
         "flip": flip_view(state, pid, viewer),
@@ -803,7 +804,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "favorite": pid in (rc.get("favorites") or ()),          # your own mark (♥): a filter, nothing more
         # your offer is out but he hasn't read it yet: it lands at the week step (contact_week moves past it then)
         "offer_landing": pid in rc["offers"].get(viewer, []) and (rc.get("offer_landing") or {}).get(pid) == recruiting.contact_week(state),
-        "group": recruiting._group_of(p),
+        "group": recruiting.spot_of(p),              # his position as your pages count and filter him (recruiting.SPOTS)
         "looks": looks_out(read), "scouted": recruiting.report_complete(read), "likes": staff_likes(state, pid, viewer),
         "trips": ((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("scouted", 0),
         "our_potential": recruiting.shown_range(state, pid, "potential") if read else None,
@@ -892,7 +893,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == recruiting.contact_week(state)],
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
-               need=recruiting.needs(state, viewer)[recruiting._group_of(rc["prospects"][pid])],
+               need=recruiting.needs_by_spot(state, viewer)[recruiting.spot_of(rc["prospects"][pid])]["need"],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
                money_owed=recruiting.money_owed(state, viewer, pid),
                cooled_why=persona.cooled_why(state, viewer, pid) if recruiting.cooled(state, viewer, pid) else None,
@@ -1038,9 +1039,16 @@ def _sort_key(state: dict, viewer: str, key: str, keen: dict):
     if key == "sc":
         return lambda pid: -recruiting.report_looks(rc["reads"].get(pid))
     if key == "pot":
+        sharp = grades.fine(state) if clear.on() else None           # once, not once a prospect
+
         def pot(pid):
-            iv = recruiting.read_interval(state, pid, "potential") if rc["reads"].get(pid) else None
-            return -(iv[0] + iv[1]) / 2 if iv else float("inf")     # unscouted last
+            # by the letters the page shows (best first), never the number behind them: two B's tie, and rank breaks it
+            shown = recruiting.shown_range(state, pid, "potential", sharp) if rc["reads"].get(pid) else None
+            if not shown:
+                return float("inf")                                 # unscouted last
+            if clear.on():
+                return grades.sort_key(shown)
+            return -(recruiting.WORDS.index(shown[1]) * 10 + recruiting.WORDS.index(shown[0]))
         return pot
     return lambda pid: P[pid]["rank"]
 
@@ -1061,7 +1069,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
         p, st = rc["prospects"][pid], seen_status(state, pid, viewer)
         if position and position not in (p["position"], p["ea_position"]):
             continue
-        if group and recruiting._group_of(p) != group:
+        if not recruiting.spot_matches(p, group):
             continue
         if status == "recommended" and pid not in recs:
             continue
@@ -1108,7 +1116,7 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
             r["why"] = recs[pid]["why"]
         r["offers_n"] = sum(1 for pids in rc["offers"].values() if pid in pids)     # how many schools have offered him
         rows.append(r)
-    needs = recruiting.needs_detail(state, viewer)
+    needs = recruiting.needs_by_spot(state, viewer)                   # by position: OT, OG and C, EDGE and DT, MIKE and WILL, FS and SS
     return {"total": len(out), "rows": rows, "needs": needs, "recommended_ids": list(recs),
             "summary": class_summary(state, viewer, visible, needs)}
 
@@ -1248,8 +1256,8 @@ def recruiting_view(state: dict) -> dict:
                 "pool": nil["budget"] if rc.get("portal") else None,            # the portal: the pool less what keeping players home cost
                 "carry": None if rc.get("portal") else int(nil.get("carry") or 0)},   # the class: last year's portal NIL carried over
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
-        "needs": recruiting.needs(state, me),
-        "needs_detail": recruiting.needs_detail(state, me),
+        "needs": {k: d["need"] for k, d in recruiting.needs_by_spot(state, me).items()},     # by position, as the board counts
+        "needs_detail": recruiting.needs_by_spot(state, me),
         "report": recruiting.latest_report(state),
         "portal": {"week": rc.get("week"), "weeks": rc.get("weeks", 4), "entrants": len(rc["prospects"]),
                    "signed": sum(1 for s_ in rc["status"].values() if s_["signed"])} if rc.get("portal") else None,
@@ -1367,7 +1375,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     last_week = [e for e in log if e["week"] == week - 1]
     hours_left = recruiting._hours(state, me)
     points_left = recruiting.scout_points_left(state, me)
-    need = recruiting.needs(state, me)
+    need = {k: d["need"] for k, d in recruiting.needs_by_spot(state, me).items()}
     live = {pid for pid, st in rc["status"].items() if not st["signed"] and st["committed"] != me}
     scouts = []
     for m in staff.values():
@@ -1383,7 +1391,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     want_pos, want_group = (position or "").upper() or None, (group or "").upper() or None
 
     def fits(p: dict) -> bool:
-        if want_pos and p["position"].upper() != want_pos or want_group and recruiting._group_of(p) != want_group:
+        if want_pos and p["position"].upper() != want_pos or not recruiting.spot_matches(p, want_group):
             return False
         if scouted and p["id"] not in rc["reads"] or on_board and p["id"] not in rc["board"]:
             return False
@@ -1395,11 +1403,15 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     board.sort(key=lambda pid: 2 if complete(pid) else 0 if recruiting.looks_left(rc["reads"].get(pid)) <= recruiting.SEND_LOOK else 1)
     seen = [pid for pid in recruiting.visible(state) if pid in rc["status"]]
     rank_of = lambda pid: rc["prospects"][pid]["rank"] or 10 ** 6
-    need_of = lambda pid: need[recruiting._group_of(rc["prospects"][pid])]
+    need_of = lambda pid: need[recruiting.spot_of(rc["prospects"][pid])]
+    sharp = grades.fine(state) if clear.on() else None               # once, not once a prospect
+
     def potential_of(pid: str) -> int:
         # the read's high word then its low word (best first); no read sorts last
         if pid not in rc["reads"]:
             return -1
+        if clear.on():                               # by the letters shown; a tie is broken by rank (below)
+            return -grades.sort_key(recruiting.shown_range(state, pid, "potential", sharp))
         lo, hi = recruiting.grade_range(state, pid, "potential")
         return recruiting.WORDS.index(hi) * 10 + recruiting.WORDS.index(lo)
     sort = sort if sort in QUEUE_SORTS else "rank"
@@ -1429,7 +1441,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
         status = rc["status"][pid]
         gone = SIGNED if status["signed"] else COMMITTED_TO_YOU if status["committed"] == me else None
         queue.append({"pid": pid, "name": p["name"], "position": p["position"], "display_pos": display_pos(p["ea_position"]), "stars": p["stars"],
-                      "group": recruiting._group_of(p), "need": need[recruiting._group_of(p)], "national_rank": p["rank"],
+                      "group": recruiting.spot_of(p), "need": need[recruiting.spot_of(p)], "national_rank": p["rank"],
                       "looks": looks_out(read), "trips": trips, "cost": cost,
                       "potential": recruiting.shown_range(state, pid, "potential") if read else None,
                       "can_send": not short and not done and not gone,

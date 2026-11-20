@@ -3,6 +3,7 @@ import { Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Blocks from "../Blocks/index.tsx";
 import Face from "../Face/index.tsx";
+import Grade, { isGrade } from "../Grade/index.tsx";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
 import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
@@ -248,7 +249,13 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
           <Panel title={m.other}>
             <PanelRows>
               {coachability && <PanelRow label={m.coachability} value={coachability} tip={m.coachTip} />}
-              {potential && <PanelRow label={m.potential} value={potential} tip={m.potentialTip} />}
+              {potential && (
+                <PanelRow
+                  label={m.potential}
+                  value={isGrade(potential) ? <Grade grade={potential} /> : potential}
+                  tip={m.potentialTip}
+                />
+              )}
               {p.promise && <PanelRow label={m.promise} value={p.promise} tip={m.promiseTip} />}
               {goalLine && <PanelRow label={m.goal} value={goalLine} tip={goal?.text} />}
               {pr.traits.length > 0 && (
@@ -311,7 +318,13 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
             <PanelRows>
               <PanelRow label={m.classYear} value={pr.class_name ?? formatClass(p.class) ?? m.none} />
               {coachability && <PanelRow label={m.coachability} value={coachability} tip={m.coachTip} />}
-              {potential && <PanelRow label={m.potential} value={potential} tip={m.potentialTip} />}
+              {potential && (
+                <PanelRow
+                  label={m.potential}
+                  value={isGrade(potential) ? <Grade grade={potential} /> : potential}
+                  tip={m.potentialTip}
+                />
+              )}
               {pr.redshirt && (
                 <PanelRow
                   label={m.redshirt}

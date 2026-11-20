@@ -1,3 +1,4 @@
+import { GradeRange, isGrade } from "../Grade/index.tsx";
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Binoculars, CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
@@ -543,6 +544,9 @@ const FLAG_WORDS: Record<string, string> = { generational: m.flagGenerational, g
 const ROLE_SHORT: Record<string, string> = { "Offensive Coordinator": "OC", "Defensive Coordinator": "DC" };
 const potentialOf = (p?: string[]) =>
   !p?.length ? null : p[0] === p[p.length - 1] ? p[0] : m.range(p[0], p[p.length - 1]);
+/** A potential read in a row: letter grades as their tiles, anything else (a grade word) in a tag as before. */
+const potentialTag = (p?: string[]) =>
+  !p?.length ? null : isGrade(p[0]) ? <GradeRange read={p} size="sm" /> : <Tag>{potentialOf(p)}</Tag>;
 
 // ---------- Scouting Queue ----------
 function ScoutQueue({ d, ctx }: P) {
@@ -551,7 +555,7 @@ function ScoutQueue({ d, ctx }: P) {
   return (
     <List>
       {rows.map((r) => {
-        const pot = ctx.size === "L" ? potentialOf(r.potential) : null;
+        const pot = ctx.size === "L" ? potentialTag(r.potential) : null;
         return (
           <li key={r.pid}>
             <RName ctx={ctx} pid={r.pid}>
@@ -560,7 +564,7 @@ function ScoutQueue({ d, ctx }: P) {
             <span className="hq-sub">{posOf(r)}</span>
             <Stars n={r.stars ?? 0} size={10} />
             <span className="hq-sub">{m.looks(r.looks || 0)}</span>
-            {pot && <Tag>{pot}</Tag>}
+            {pot}
             {r.can_send && <ScoutButton ctx={ctx} who={{ pid: r.pid, name: r.name }} />}
             <AddButton ctx={ctx} who={{ pid: r.pid, name: r.name }} on={!!r.on_board} />
           </li>
@@ -740,7 +744,7 @@ function Scouted({ d, ctx }: P) {
             <Stars n={r.stars ?? 0} size={10} />
           </span>
           <span className="hq-tile__line">
-            {potentialOf(r.potential) && <Tag>{potentialOf(r.potential)}</Tag>}
+            {potentialTag(r.potential)}
             {short(r) && <span className="hq-sub">{m.looks(r.looks || 0)}</span>}
           </span>
           {tag(r) && <Tag solid>{tag(r)}</Tag>}

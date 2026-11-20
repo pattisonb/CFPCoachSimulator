@@ -716,7 +716,17 @@ export interface ProspectDetail {
     complete: boolean;
     looks: number;
     rows: RatingRead[];
-    potential: (RatingRead & { position: string }) | null;
+    potential:
+      | (RatingRead & {
+          position: string;
+          /** his potential as letter grades, low then high (coach_career/grades.py): what the page shows, not the numbers */
+          grade?: string[];
+          /** your reads carry a plus or minus: your best evaluator (`eye`) is at `eye_needed` or better */
+          fine?: boolean;
+          eye?: number;
+          eye_needed?: number;
+        })
+      | null;
   } | null;
   /** the roster player he compares to, once his report is complete */
   our_comp: { name: string; school: string; team: string; position: string; overall?: number } | null;

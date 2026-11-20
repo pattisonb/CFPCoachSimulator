@@ -4439,9 +4439,10 @@ def development_reads(state: dict, slug: str) -> dict[str, dict]:
     once it has one, else the real 2026 players' seeded values (league.base_development)."""
     if not slug or slug != state.get("team"):
         return {}
-    from coach_career import league as lg, recruits
+    from coach_career import grades, league as lg, recruits
     from teamdata import game_scale
     levels = [name for name, _, _ in recruits.COACHABILITY]
+    sharp = True                                 # your own players: you coach them every day, so a plus or minus always shows
     lgd = state.get("league") or {}
     roster = ((lgd.get("teams") or {}).get(slug) or {}).get("roster")
     if roster:
@@ -4453,7 +4454,7 @@ def development_reads(state: dict, slug: str) -> dict[str, dict]:
     for p in load_teams()[slug]["offense"] + load_teams()[slug]["defense"]:
         c, pot = pairs.get(p.get("slug"), (None, 0))
         if c in levels:
-            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": str(int(round(pot))) if _clear_on() else recruiting.word(pot)} if pot else {})}   # Clear Mode: the number
+            out[p["slug"]] = {"coachability": c, "coach_level": levels.index(c) + 1, **({"potential_word": grades.letter(pot, sharp) if _clear_on() else recruiting.word(pot)} if pot else {})}   # Clear Mode: a letter grade (grades.py)
     return out
 
 

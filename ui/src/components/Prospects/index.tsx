@@ -22,6 +22,7 @@ import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import type { NeedGroup, ProspectRow, ProspectsView } from "../../types.ts";
+import { GradeRange } from "../Grade/index.tsx";
 import { useKept } from "../../kept.ts";
 import { formatClass } from "../../format.ts";
 import { messages as m } from "./messages.ts";
@@ -77,7 +78,26 @@ const SORTS: Partial<Record<Col, string>> = {
   pot: "pot",
 };
 /** the groups in roster order (the needs' keys come in this order too) */
-const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
+// the line, linebackers and safeties as their positions (coach_career/recruiting.py SPOTS), in depth-chart order
+const GROUP_ORDER = [
+  "QB",
+  "RB",
+  "WR",
+  "TE",
+  "OT",
+  "OG",
+  "C",
+  "EDGE",
+  "DT",
+  "MIKE",
+  "WILL",
+  "CB",
+  "FS",
+  "SS",
+  "K",
+  "P",
+  "ATH",
+];
 
 /** What a position chip counts: spots left, or your commits, board or offers there against the spots the class set out to fill. */
 type ChipShow = "need" | "commits" | "board" | "offers";
@@ -459,11 +479,7 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                     <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : <span className="prospects__soft">–</span>}</td>
                     <td className="prospects__pot">
                       {r.our_potential ? (
-                        r.our_potential[0] === r.our_potential[1] ? (
-                          r.our_potential[0]
-                        ) : (
-                          r.our_potential.join("–")
-                        )
+                        <GradeRange read={r.our_potential} size="sm" />
                       ) : (
                         <span className="prospects__soft">{m.unscouted}</span>
                       )}

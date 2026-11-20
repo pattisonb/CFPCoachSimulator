@@ -517,6 +517,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
               face={face}
               word={word}
               budgets={budgets}
+              nil={recruiting ? { left: recruiting.nil.left, total: recruiting.nil.budget } : null}
               ratings={ratings}
               corner={corner}
               below={toasts()}

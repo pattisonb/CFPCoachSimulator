@@ -125,7 +125,7 @@
 .recruiting__needs {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)); /* four to a row: "EDGE 0/4" and "MIKE 0/1" need the width */
   gap: 4px;
   padding-top: 4px;
 }
@@ -138,7 +138,7 @@
   gap: var(--s2);
 }
 
-/* the chips are flat tiles, so ten of them read as one quiet block; the one you filter by takes your color */
+/* the chips are flat tiles, so sixteen of them read as one quiet block; the one you filter by takes your color */
 .recruiting__needs .chip {
   justify-content: center;
   gap: 4px;

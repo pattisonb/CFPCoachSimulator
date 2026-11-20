@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+import Face from "../Face/index.tsx";
 import { usePlayerHover } from "../PlayerCard/index.tsx";
+import { lookOf } from "../../faces.ts";
 import { formatClass } from "../../format.ts";
 import { byOverall } from "../../positions.ts";
 import type { RosterPlayer, TeamCard } from "../../types.ts";
@@ -60,6 +62,10 @@ export default function TeamOverview({ team, players }: Props) {
               {u.top.map((p, i) => (
                 <li key={`${p.slug ?? p.name}-${i}`} className={hovered === p ? "is-hovered" : undefined} {...bind(p)}>
                   <span className="unit__rank">{i + 1}</span>
+                  {/* his face, as his card and the depth chart draw it */}
+                  <span className="unit__face">
+                    <Face face={lookOf(null, p.slug ?? p.name, p.position)} scale={1} label="" />
+                  </span>
                   <b className="unit__player">{p.name}</b>
                   <small className="unit__pos">
                     {p.position} · {formatClass(p.class)}

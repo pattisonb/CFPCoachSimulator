@@ -22,6 +22,8 @@ interface Props {
   word?: CoachWord | null;
   /** the week's budgets as bars (`Energy`), in the part that drops under the card; left out when there are none */
   budgets?: ReactNode;
+  /** your NIL: what is left of the year's budget */
+  nil?: { left: number; total: number } | null;
   /** your ratings as a head coach, in the part that drops under the card */
   ratings?: CoachRatings | null;
   /** a small control inside the card's top right corner (a Dropdown, say) */
@@ -106,7 +108,7 @@ const RATED = ["offense", "defense", "recruiting", "player_development", "game_m
  * week's Energy and Scouting, and your ratings as a head coach, each a bar and its number. Nothing else on the page
  * moves: the card lies over what is beside and below it.
  */
-export default function CoachBadge({ name, team, face, word, budgets, ratings, corner, below, alert }: Props) {
+export default function CoachBadge({ name, team, face, word, budgets, nil, ratings, corner, below, alert }: Props) {
   const rated = ratings ? RATED.filter((k) => typeof ratings[k] === "number") : [];
   return (
     <div className="coach-badge" tabIndex={0} aria-label={name}>
@@ -120,13 +122,14 @@ export default function CoachBadge({ name, team, face, word, budgets, ratings, c
         <span className="coach-badge__role">{m.role(team)}</span>
         <Word word={word} />
       </span>
-      {(budgets || rated.length > 0) && (
+      {(budgets || nil || rated.length > 0) && (
         <div className="coach-badge__more">
           <div className="coach-badge__more-in">
-            {budgets && (
+            {(budgets || nil) && (
               <section className="coach-badge__part" aria-label={m.thisWeek}>
-                <h4 className="label">{m.thisWeek}</h4>
+                {budgets && <h4 className="label">{m.thisWeek}</h4>}
                 {budgets}
+                {nil && <Energy energy={nil} label={m.bank} hint={m.bankHint(Math.round(nil.left), nil.total)} />}
               </section>
             )}
             {ratings && rated.length > 0 && (

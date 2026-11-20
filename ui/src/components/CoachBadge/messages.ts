@@ -5,6 +5,8 @@ export const messages = {
   energyHint: (left: number, total: number) =>
     `${left} of ${total} recruiting hours left this week. They refill when the week ends.`,
   thisWeek: "This Week",
+  bank: "NIL",
+  bankHint: (left: number, total: number) => `${left} of ${total} NIL left of this year's budget for offers.`,
   ratings: "Your Ratings",
   overall: "Overall",
   rated: {

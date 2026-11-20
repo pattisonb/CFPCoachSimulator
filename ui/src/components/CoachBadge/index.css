@@ -209,6 +209,21 @@
   width: 72px;
 }
 
+/* ... and each bar runs the card's full width: its blocks share the room between the label and the number */
+.coach-badge__more .coach-badge__bar {
+  flex: 1;
+}
+
+.coach-badge__more .coach-badge__bar > * {
+  flex: 1;
+  width: auto;
+}
+
+.coach-badge__more .coach-badge__value {
+  min-width: 0;
+  text-align: right;
+}
+
 /* a rating: its name, a bar in your color, its number */
 .coach-badge__ratings {
   display: grid;
