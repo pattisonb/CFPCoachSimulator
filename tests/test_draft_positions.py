@@ -21,6 +21,7 @@ from sim import season   # noqa: E402
 from test_offseason import finished   # noqa: E402
 
 ELIGIBLE = {"SR", "SRRS"} | offseason.UNDERCLASS_ELIGIBLE
+SPLIT = 2                           # card points inside which the scouts can take one prospect over another at his position (top_pick)
 
 
 def pool_of(lgd: dict) -> dict:
@@ -59,16 +60,18 @@ def check_round(r1: collections.Counter, where: str) -> None:
 
 
 def top_pick(drafted: dict, by_id: dict, where: str) -> None:
-    """The first pick is a top-graded player: one of the two best at his position, rated 80 or better,
-    in the top 2% of the draft-eligible players (a year's best quarterback can go first over a 99 at
-    a position the NFL values less, as the real drafts do)."""
+    """The first pick is a top-graded player: one of the two best at his position or within SPLIT card
+    points of them (the scouts disagree by about a point each, offseason.DRAFT_NOISE, so in a year whose
+    best three receivers read 81, 81 and 79 the third can go first), rated 80 or better less the same
+    split, in the top 2% of the draft-eligible players (a year's best quarterback can go first over a 99
+    at a position the NFL values less, as the real drafts do)."""
     first = min(drafted, key=drafted.get)
     p = by_id[first]
     group = offseason.DRAFT_GROUP[p["pos"]]
     same = sorted((q["o"] for q in by_id.values() if offseason.DRAFT_GROUP[q["pos"]] == group), reverse=True)
     everyone = sorted((q["o"] for q in by_id.values()), reverse=True)
-    assert p["o"] >= same[1], ("the first pick is not among his position's best two", where, p["pos"], p["o"], same[:5])
-    assert p["o"] >= 80 and p["o"] >= everyone[len(everyone) // 50], ("the first pick is not a top player", where, p["o"], everyone[:5])
+    assert p["o"] >= same[1] - SPLIT, ("the first pick is not among his position's best two", where, p["pos"], p["o"], same[:5])
+    assert p["o"] >= 80 - SPLIT and p["o"] >= everyone[len(everyone) // 50], ("the first pick is not a top player", where, p["o"], everyone[:5])
     assert group not in ("K", "P", "RB", "S", "IOL", "TE"), ("the first pick at a position the NFL takes later", where, p["pos"])
 
 

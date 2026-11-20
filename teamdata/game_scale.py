@@ -124,8 +124,25 @@ def overall(ours: dict, pos: str) -> int:
     f = card_formula(pos)
     if f:
         return _card_overall(f["pos"], tuple(ours.get(k, 50) for k in keys()))
-    f = data()["overall"].get(pos) or data()["overall"][_FIRST.get(group(pos), "QB")]     # a scale file from before
+    return legacy_overall(ours, pos) or 1                                                 # a scale file from before
+
+
+def legacy_overall(ours: dict, pos: str) -> Optional[int]:
+    """The overall as first fit, on the skills themselves (the scale file's "overall"; fit() writes it once and nothing
+    refits it). The build's core-skill floor is gated on this one (build_teams.clamp_extremes), so the card's formula and
+    its constants can be refit and recentered without moving an engine rating. None when the scale has no formula yet."""
+    fs = data().get("overall") or {}
+    f = fs.get(pos) or fs.get(_FIRST.get(group(pos), "QB"))
+    if not f:
+        return None
     return int(round(max(1, min(99, f["const"] + sum(w * ours.get(k, 50) for k, w in f["w"].items())))))
+
+
+def card_position(p: dict) -> str:
+    """The EA position a built player's card is scored at: the one his skills were made for (the build keeps it as
+    "source_position"), else his depth-chart role, else his engine position (which only names the group, so card_formula
+    falls back to the group's first formula: a tackle scored as a guard)."""
+    return p.get("source_position") or p.get("role") or p["position"]
 
 
 @lru_cache(maxsize=400_000)          # the same players are asked again and again (the base league is 12,000 of them)

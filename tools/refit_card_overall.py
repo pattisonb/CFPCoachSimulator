@@ -1,6 +1,7 @@
 """Refit the overall formula onto the player card's attributes (game_scale.fit_card_overall) and bring every stored
 overall onto it: data/game_scale.json ("card_overall"), data/base_league.json when there is one (each player's "o") and
-data/engine_teams.json (each player's "ovr"). Nothing the engine reads changes. A career already saved is brought over
+data/engine_teams.json (each player's "ovr"). Nothing the engine reads changes (the build's core-skill floor is gated on
+game_scale.legacy_overall, not on this overall). A career already saved is brought over
 when it is next opened (game_scale.upgrade_overalls).
 
 Usage:  python tools/refit_card_overall.py
@@ -35,7 +36,7 @@ def recenter() -> dict:
             continue
         for q in t["offense"] + t["defense"]:
             if q.get("in_game") and q.get("skills"):
-                pos = q.get("source_position") or q["position"]
+                pos = game_scale.card_position(q)
                 by.setdefault(game_scale.group(pos), []).append(game_scale.overall(dict(zip(keys, q["skills"])), pos))
     moved = {}
     for grp, vals in by.items():
@@ -76,7 +77,7 @@ def main() -> None:
     for t in built["teams"].values():
         for p in t["offense"] + t["defense"]:
             if isinstance(p.get("ovr"), (int, float)) and p.get("skills"):
-                p["ovr"] = game_scale.overall(dict(zip(keys, p["skills"])), p.get("source_position") or p["position"])
+                p["ovr"] = game_scale.overall(dict(zip(keys, p["skills"])), game_scale.card_position(p))
                 m += 1
     path.write_text(json.dumps(built), encoding="utf-8")
     print(f"engine teams: {m} players' overall rewritten")
