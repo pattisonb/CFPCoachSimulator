@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { Handshake } from "@phosphor-icons/react";
 import Face from "../Face/index.tsx";
 import Helmet from "../Helmet/index.tsx";
 import { inkOn } from "../../colors.ts";
@@ -229,6 +230,7 @@ export default function Formation({ unit, rows, kick, onOpen, onSwap, school }: 
                           <span>{firstNames(b.name)}</span>
                           <b>{lastName(b.name)}</b>
                         </span>
+                        {b.promise && <PromiseMark status={b.promise} />}
                         {b.injury && <span className="depth__flag depth__flag--out">{m.out}</span>}
                         <span className="board__backup-ovr">
                           <b>{b.overall}</b>
@@ -272,6 +274,21 @@ export default function Formation({ unit, rows, kick, onOpen, onSwap, school }: 
   );
 }
 
+/** A start you promised him: a handshake (gold; red once it slips or breaks), where it stands on hover. */
+export function PromiseMark({ status }: { status: string }) {
+  const bad = status === "Slipping" || status === "Broken";
+  return (
+    <span
+      className={`depth__promise${bad ? " is-bad" : ""}`}
+      role="img"
+      aria-label={m.promised(status)}
+      title={m.promised(status)}
+    >
+      <Handshake size={14} weight="fill" aria-hidden="true" />
+    </span>
+  );
+}
+
 /** A starter's card: the team-colored top with his overall, position and face; his name and his line below. */
 function StarterCard({
   p,
@@ -305,6 +322,11 @@ function StarterCard({
         <span className="board__face">
           <Face face={lookOf(p.face, p.slug, p.position)} scale={2} label="" />
         </span>
+        {p.promise && (
+          <span className="board__promise">
+            <PromiseMark status={p.promise} />
+          </span>
+        )}
         {p.injury && <span className="board__out">{m.out}</span>}
         {p.redshirt?.on && <span className="board__rs">{m.rs}</span>}
       </span>

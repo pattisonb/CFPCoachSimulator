@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Medal, PencilSimple, Star } from "@phosphor-icons/react";
+import { Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Blocks from "../Blocks/index.tsx";
 import Face from "../Face/index.tsx";
@@ -119,6 +119,9 @@ function Progress({ have, need }: { have: number; need: number }) {
   return <Blocks have={have} need={need} />;
 }
 
+/** a promise going wrong: its tag reads in red */
+const BAD_PROMISE = new Set(["Slipping", "Broken"]);
+
 /**
  * One player, everything the game knows about him: a head (his face, who he is, his overall, how he's doing), a strip
  * of facts, then four tabs. Overview: every attribute by group, and what else there is to know. Ratings: the broad
@@ -180,6 +183,15 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
               >
                 {spot ?? m.notOnChart}
               </HeadTag>
+              {/* a start you promised him, and where it stands (red once it slips or breaks) */}
+              {p.promise && (
+                <HeadTag tip={{ title: m.promised, text: m.promisedTip(p.promise) }}>
+                  <span className={`player-view__promise${BAD_PROMISE.has(p.promise) ? " is-bad" : ""}`}>
+                    <Handshake size={14} weight="fill" aria-hidden="true" />
+                    {p.promise}
+                  </span>
+                </HeadTag>
+              )}
               {p.archetype && <span>{p.archetype}</span>}
               {pr?.stars ? (
                 <Tooltip text={m.starsTip} title={m.stars(pr.stars)}>

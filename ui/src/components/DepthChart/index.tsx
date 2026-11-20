@@ -12,7 +12,7 @@ import { navigate } from "../../router.ts";
 import { formatClass } from "../../format.ts";
 import type { DepthCard, DepthChart as Chart, DepthRow, PlayerProfile } from "../../types.ts";
 import Actions from "./Actions.tsx";
-import Formation from "./Formation.tsx";
+import Formation, { PromiseMark } from "./Formation.tsx";
 import type { Kick } from "./formation.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -415,6 +415,7 @@ function PlayerRow({ p, spot, starter, lastStarter, on, onPick }: RowProps) {
           {[p.jersey && `#${p.jersey}`, p.position, formatClass(p.class)].filter(Boolean).join(" · ")}
         </span>
       </span>
+      {p.promise && <PromiseMark status={p.promise} />}
       {p.injury && <span className="depth__flag depth__flag--out">{m.out}</span>}
       {p.redshirt?.on && <span className="depth__flag">{m.rs}</span>}
       <span className="depth__ovr" title={m.overall(p.overall)}>

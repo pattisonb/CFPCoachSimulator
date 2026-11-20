@@ -6,6 +6,7 @@ export const messages = {
   starters: (n: number) => (n === 0 ? "Not in the Base Formation" : `${n} ${n === 1 ? "Starter" : "Starters"}`),
   out: "Out",
   rs: "RS",
+  promised: (status: string) => `Start Promised: ${status}`,
   pickHint: "Pick a player to see his card.",
   loading: "Loading the depth chart…",
   loadError: (msg: string) => `Couldn't load the depth chart: ${msg}.`,

@@ -2097,7 +2097,7 @@ def _depth_card(state: dict, slug: str):
     looks = player_faces(state, slug)                        # faces drawn this season (Edit Player Look)
 
     from coach_career import promises
-    chips = promises.chips_now(state) if state.get("career") and slug == state.get("team") else {}   # a promised start: On Track, Slipping, Broken
+    chips = promises.tags_now(state) if state.get("career") and slug == state.get("team") else {}   # a promised start: On Track, Slipping, Broken, Not Judged Yet, Next Season
     def card(p: dict, role: str) -> dict:
         inj = injured.get(f"{p['name']}|{p['position']}")
         rec = ss.get(f"{p['name']}|{p['position']}")
@@ -4748,7 +4748,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     for h in (entry or {}).get("hist") or []:
         history.append(dict(h, team_name=(teams.get(h["team"]) or {}).get("name") or h["team"]))
     from coach_career import promises, ability_goals
-    promise = promises.chips_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
+    promise = promises.tags_now(state).get(p.get("slug")) if state.get("career") and team == state.get("team") else None
     from teamdata import game_scale
     next_tiers = ability_goals.upgrades_view(state, team, f"{name}|{position}", {x["key"]: x["tier"] for x in p.get("traits") or []
                                                                                   if isinstance(x, dict)}) if ability_goals.on() else {}

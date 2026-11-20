@@ -346,3 +346,19 @@
   align-items: center;
   gap: 8px;
 }
+
+/* a start you promised him: a handshake and where it stands, gold; red once it slips */
+.player-view__promise {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.player-view__promise svg {
+  color: var(--gold);
+}
+
+.player-view__promise.is-bad,
+.player-view__promise.is-bad svg {
+  color: var(--warn);
+}

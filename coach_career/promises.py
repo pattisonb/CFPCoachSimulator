@@ -223,6 +223,17 @@ def chips_now(state: dict) -> dict[str, str]:
     return out
 
 
+def tags_now(state: dict) -> dict[str, str]:
+    """Every player of yours with a start promised, by slug, and where it stands (his card's and the depth chart's
+    tag): this season's chip, Not Judged Yet before a week counts, Next Season for one made at Keep Them Home."""
+    from sim import season
+    year = season.season_year(state)
+    chips = chips_now(state)
+    roster = (((state.get("league") or {}).get("teams") or {}).get(state.get("team")) or {}).get("roster") or ()
+    return {c["id"]: "Next Season" if c["promised"] > year else chips.get(c["id"]) or "Not Judged Yet"
+            for c in roster if c.get("promised") is not None and c["promised"] >= year}
+
+
 def news(state: dict) -> list[dict]:
     """One Program News item per promised player: the first week (NEWS_AFTER weeks counted or more) his promise read
     Slipping or Broken, in his words."""

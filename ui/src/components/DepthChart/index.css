@@ -142,6 +142,18 @@
   text-transform: uppercase;
 }
 
+/* a start you promised him: a gold handshake, red once it slips */
+.depth__promise {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--gold);
+}
+
+.depth__promise.is-bad {
+  color: var(--warn);
+}
+
 .depth__ovr {
   flex: none;
   width: 28px;
@@ -353,6 +365,17 @@
   font-size: var(--t-xs);
   font-weight: 700;
   text-transform: uppercase;
+}
+
+/* on a starter's card the handshake sits on paper in the corner under his overall, so it reads on any team color */
+.board__promise {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: grid;
+  padding: 1px 3px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
 }
 
 .board__out {

@@ -50,6 +50,8 @@ export const messages = {
   coachTip: "How fast he grows toward his potential each offseason, from Coach's Dream down to Set in His Ways.",
   potentialTip: "How good he can become: his projected rating at his ceiling, in the scouting report's words.",
   promiseTip: "You promised him a starting role.",
+  promised: "Start Promised",
+  promisedTip: (status: string) => `You promised him a starting role. Where it stands: ${status}.`,
 
   // Overview
   other: "Other Information",
