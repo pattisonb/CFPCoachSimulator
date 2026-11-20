@@ -175,6 +175,10 @@ export interface OffView {
     lost: (OffPlayer & { to_name: string; reason: string })[];
     entrants: number;
     signed_league: number;
+    /** the league's biggest moves: the best players who changed schools */
+    moves?: (OffPlayer & { from: string; from_name: string; to: string; to_name: string })[];
+    /** the roster groups still under a healthy make-up */
+    short?: { group: string; have: number; target: number }[];
   } | null;
   report: {
     mine: Grown[];

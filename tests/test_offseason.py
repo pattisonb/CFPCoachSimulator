@@ -116,6 +116,8 @@ if __name__ == "__main__":
     assert 0 < signed_w3 < entrants, signed_w3
     before_dev = {p["id"]: p["o"] for t in lg["teams"].values() for p in t["roster"]}
     offseason.advance(st)
+    assert off["stage"] == "portal_recap"          # the portal is shut: its recap has the screen first
+    offseason.advance(st)
     assert off["stage"] == "development"
     # development is not cookie-cutter: teams have good and bad years (a team-year shock on top of
     # the program and the coaches), players boom and bust

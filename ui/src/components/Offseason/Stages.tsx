@@ -22,6 +22,7 @@ export function Stage({ stage, ...p }: P & { stage: string }) {
   if (stage === "review") return <Meeting {...p} />;
   if (stage === "retention") return <Retention {...p} />;
   if (stage === "departures") return <Departures {...p} />;
+  if (stage === "portal_recap") return <PortalRecap {...p} />;
   if (stage.startsWith("portal")) return <Portal {...p} />;
   if (stage === "development") return <Development {...p} />;
   if (stage === "staff") return <Staff {...p} />;
@@ -712,6 +713,132 @@ function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
     </div>
   );
 }
+// ---------- Portal Recap ----------
+
+/**
+ * Portal Recap: the portal is shut. Four numbers up top (who you signed, who you lost, the net, the league's count),
+ * then a column each for your additions, your losses and the biggest moves around the country (each scrolls on its
+ * own), and the positions your roster is still short at.
+ */
+function PortalRecap({ v, teams }: P) {
+  const rec = v.portal_recap;
+  if (!rec) return <Empty>{m.recap.none}</Empty>;
+  const moves = rec.moves ?? [];
+  const short = rec.short ?? [];
+  const school = (slug: string | null | undefined, name: string) => (
+    <>
+      <Swatch team={teams.get(slug ?? "")} size={12} />
+      {name}
+    </>
+  );
+  return (
+    <div className="dev recap">
+      <dl className="dev__stats">
+        <Stat label={m.recap.signed}>{rec.signed.length}</Stat>
+        <Stat label={m.recap.lost}>{rec.lost.length}</Stat>
+        <Stat label={m.recap.net}>
+          {m.recap.netLine(rec.signed.length - rec.lost.length)} <small>{m.recap.netSmall}</small>
+        </Stat>
+        <Stat label={m.recap.league}>
+          {m.recap.leagueLine(rec.signed_league, rec.entrants)} <small>{m.recap.leagueSmall}</small>
+        </Stat>
+      </dl>
+
+      <div className="recap__cols">
+        <section className="recap__col" aria-label={m.recap.youSigned(rec.signed.length)}>
+          <h3 className="gone__head">
+            <b>{m.recap.signed}</b>
+            <span className="off__tag is-solid">{rec.signed.length}</span>
+          </h3>
+          {rec.signed.length ? (
+            <ol className="recap__list">
+              {rec.signed.map((x) => (
+                <li key={x.id} className="recap__row">
+                  <span className="recap__who">
+                    <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
+                  </span>
+                  <b className="recap__ovr">{x.overall}</b>
+                  <span className="recap__move">
+                    {school((x as { from?: string }).from, m.recap.from(x.from_name ?? ""))}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <Empty>{m.recap.nobodyIn}</Empty>
+          )}
+        </section>
+
+        <section className="recap__col" aria-label={m.recap.youLost(rec.lost.length)}>
+          <h3 className="gone__head">
+            <b>{m.recap.lost}</b>
+            <span className="off__tag is-solid">{rec.lost.length}</span>
+          </h3>
+          {rec.lost.length ? (
+            <ol className="recap__list">
+              {rec.lost.map((x) => (
+                <li key={x.id} className="recap__row" title={x.reason || undefined}>
+                  <span className="recap__who">
+                    <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
+                  </span>
+                  <b className="recap__ovr">{x.overall}</b>
+                  <span className="recap__move">
+                    {(x as { to?: string | null }).to
+                      ? school((x as { to?: string }).to, m.recap.to(x.to_name))
+                      : m.recap.outOfFbs}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <Empty>{m.recap.nobodyOut}</Empty>
+          )}
+        </section>
+
+        {moves.length > 0 && (
+          <section className="recap__col" aria-label={m.recap.moves}>
+            <h3 className="gone__head">
+              <b>{m.recap.moves}</b>
+            </h3>
+            <ol className="recap__list">
+              {moves.map((x) => (
+                <li key={x.id} className="recap__row">
+                  <span className="recap__who">
+                    <b>{x.name}</b> <span className="off__soft">{x.pos}</span>
+                  </span>
+                  <b className="recap__ovr">{x.overall}</b>
+                  <span className="recap__move">
+                    {school(x.from, x.from_name)}
+                    <ArrowRight size={12} weight="bold" aria-hidden="true" />
+                    {school(x.to, x.to_name)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </div>
+
+      <section aria-label={m.recap.short}>
+        <h3 className="label dev__kicker" title={m.recap.shortTip}>
+          {m.recap.short}
+        </h3>
+        {short.length ? (
+          <ul className="recap__short">
+            {short.map((x) => (
+              <li key={x.group}>
+                <Tag>{m.recap.shortLine(x.group, x.have, x.target)}</Tag>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Empty>{m.recap.full}</Empty>
+        )}
+      </section>
+    </div>
+  );
+}
+
 // ---------- Development ----------
 
 type Unit = "all" | "offense" | "defense" | "special";
@@ -727,12 +854,14 @@ function notesOf(why: string[]) {
   const helped: string[] = [];
   const despite: string[] = [];
   const changed: string[] = [];
+  const back: string[] = [];
   for (const w of why) {
     if (/^struggled/i.test(w)) despite.push(w);
+    else if (/^(lost a step|went backward)/i.test(w)) back.push(w);
     else if (/^now an? /i.test(w)) changed.push(w);
     else helped.push(w);
   }
-  return { helped, despite, changed };
+  return { helped, despite, changed, back };
 }
 /** The notes as one sentence, for a bar's hover. */
 const notesLine = (why: string[]) => {
@@ -740,6 +869,7 @@ const notesLine = (why: string[]) => {
   return [
     n.helped.length ? m.dev.helped(n.helped.join(", ")) : "",
     n.despite.length ? m.dev.despite(n.despite.join(", ")) : "",
+    ...n.back.map((w) => `${w}.`),
     ...n.changed,
   ]
     .filter(Boolean)
@@ -754,7 +884,7 @@ const TOP_JUMPS = 5;
  * where he was and the part in your color what he gained, sorted by the gain and filtered by unit. Under it, the
  * portal's ins and outs as chips in each school's colors.
  */
-function Development({ v, teams }: P) {
+function Development({ v }: P) {
   const [unit, setUnit] = useState<Unit>("all");
   /** the player whose growth is open in a window */
   const [open, setOpen] = useState<Grown | null>(null);
@@ -796,7 +926,10 @@ function Development({ v, teams }: P) {
         {rec && (
           <div>
             <dt className="label">{m.dev.portalNet}</dt>
-            <dd>{m.dev.portalNetLine(rec.signed.length, rec.lost.length)}</dd>
+            <dd>
+              {m.recap.netLine(rec.signed.length - rec.lost.length)}{" "}
+              <small>{m.dev.portalNetLine(rec.signed.length, rec.lost.length)}</small>
+            </dd>
           </div>
         )}
       </dl>
@@ -891,43 +1024,6 @@ function Development({ v, teams }: P) {
         )}
       </section>
 
-      {rec && (rec.signed.length > 0 || rec.lost.length > 0) && (
-        <section className="dev__portal" aria-label={m.dev.portal}>
-          <div>
-            <h3 className="label dev__kicker">{m.dev.got(rec.signed.length)}</h3>
-            <ul className="dev__chips">
-              {rec.signed.map((x) => (
-                <li key={x.id} className="dev__chip is-in">
-                  <b>{x.name}</b>
-                  <span className="off__soft">
-                    {x.pos} · {x.overall}
-                  </span>
-                </li>
-              ))}
-              {!rec.signed.length && <li className="off__soft">{m.dev.nobody}</li>}
-            </ul>
-          </div>
-          <div>
-            <h3 className="label dev__kicker">{m.dev.lost(rec.lost.length)}</h3>
-            <ul className="dev__chips">
-              {rec.lost.map((x) => (
-                <li key={x.id} className="dev__chip" title={x.reason}>
-                  <b>{x.name}</b>
-                  <span className="off__soft">
-                    {x.pos} · {x.overall}
-                  </span>
-                  <span className="off__move">
-                    <ArrowRight size={12} weight="bold" aria-hidden="true" />
-                    <Swatch team={teams.get((x as { to?: string }).to ?? "")} size={12} />
-                    {x.to_name}
-                  </span>
-                </li>
-              ))}
-              {!rec.lost.length && <li className="off__soft">{m.dev.nobody}</li>}
-            </ul>
-          </div>
-        </section>
-      )}
       <GrowthWindow who={open} style={cardStyle} onClose={() => setOpen(null)} />
     </div>
   );
@@ -1035,6 +1131,7 @@ function Notes({ why }: { why: string[] }) {
     <span className="dev-card__why">
       {line(m.dev.helpedLabel, n.helped)}
       {line(m.dev.despiteLabel, n.despite)}
+      {line(m.dev.backLabel, n.back)}
       {line(m.dev.changedLabel, n.changed)}
     </span>
   );

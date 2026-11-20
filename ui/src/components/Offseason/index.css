@@ -52,7 +52,7 @@
 
 .off__steps li {
   flex: 1 1 0;
-  min-width: 84px;
+  min-width: 0; /* thirteen steps share the row: none is pushed off its end */
 }
 
 /* a step: its number over its name, so a dozen fit across with their names whole */
@@ -61,8 +61,9 @@
   justify-items: start;
   gap: 3px;
   width: 100%;
+  min-width: 0;
   min-height: 48px;
-  padding: 5px 8px;
+  padding: 5px 6px;
   background: var(--paper-hi);
   color: var(--ink-soft);
   border: var(--line) solid var(--line-soft);
@@ -102,7 +103,9 @@
 }
 
 .off__step-name {
+  max-width: 100%;
   overflow: hidden;
+  font-size: 10px; /* "Progression" whole in a thirteenth of the row */
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -672,10 +675,15 @@
   white-space: nowrap;
 }
 
+/* the small words sit under the number, so neither is cut short */
 .dev__stats small {
+  display: block;
+  overflow: hidden;
   color: var(--ink-soft);
   font-size: var(--t-sm);
   font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* a jump: his face on your color with the gain large beside it, then who he is and where he went from and to */
@@ -1308,4 +1316,62 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ----- Portal Recap: a column each for who came, who went and the league's biggest moves ----- */
+.recap__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: start;
+  gap: var(--s3);
+}
+
+.recap__col {
+  min-width: 0;
+}
+
+/* a long column scrolls on its own, so the three stay one block */
+.recap__list {
+  max-height: 340px; /* *tune* about eight players */
+  padding-right: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* a player: his name and position over where he came from or went, his overall at the right */
+.recap .recap__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.recap__who,
+.recap__move {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recap__ovr {
+  grid-row: span 2;
+  font-size: var(--t-md);
+}
+
+.recap__move {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.recap__short {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
 }

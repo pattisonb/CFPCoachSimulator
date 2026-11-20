@@ -132,6 +132,8 @@ if __name__ == "__main__":
         recruiting._nil(st, s).update(budget=10000, held={})
     recruiting._nil(st, small).update(budget=5, held={})
     offseason.advance(st)
+    assert off["stage"] == "portal_recap"          # the portal is shut: its recap has the screen first
+    offseason.advance(st)
     assert off["stage"] == "development"
     carry = st["nil_carry"]
     assert set(carry) == set(pools)

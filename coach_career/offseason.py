@@ -24,12 +24,12 @@ from teamdata import game_scale
 
 # Keep Them Home first, then Departures: who wants out is decided at the start, the draft runs after your
 # answers (and the AI schools'), so Departures shows only what happened. Saves from the older order: migrate()
-STAGES = ("retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "development", "staff", "conferences", "schedule", "ready")
+STAGES = ("retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "portal_recap", "development", "staff", "conferences", "schedule", "ready")
 PORTAL_STAGES = ("portal_w1", "portal_w2", "portal_w3", "portal_w4")
 OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from the two-round portal
 STAGE_NAMES = {"departures": "Departures", "retention": "Keep Them Home", "portal_w1": "Transfer Portal, Week 1", "portal_w2": "Transfer Portal, Week 2",
                "portal_w3": "Transfer Portal, Week 3", "portal_w4": "Transfer Portal, Week 4",
-               "portal_1": "Transfer Portal, Round 1", "portal_2": "Transfer Portal, Round 2",
+               "portal_recap": "Portal Recap", "portal_1": "Transfer Portal, Round 1", "portal_2": "Transfer Portal, Round 2",
                "development": "Progression", "staff": "Staff", "conferences": "Change Conferences", "schedule": "Edit Schedule",
                "ready": "Ready for Next Season"}
 ROSTER_LIMIT = 85          # EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
@@ -1724,6 +1724,43 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starte
     return p["o"] - before
 
 
+REGRESS_Z = -1.0                 # *tune* a starter this far under the average starter at his group had a hard year
+REGRESS_STRUGGLE = 0.5           # *tune* ... and he loses a step this often
+REGRESS_RUST = 0.3               # *tune* an upperclassman buried on the depth chart who is slow to learn goes backward this often
+REGRESS_YEARS = 2                # *tune* seasons in the program before rust can set in
+REGRESS_RATINGS = 3              # *tune* how many of his ratings slip (never the physical ones)
+REGRESS_POINTS = (1, 2)          # *tune* the points each of them loses
+REGRESS_NOTES = {"struggle": "Lost a step after a hard year as a starter", "rust": "Went backward buried on the depth chart"}
+
+
+def regress(p: dict, attrs: list[str], perf: Optional[dict], benched: bool, year: int) -> Optional[str]:
+    """A player can go backward over an offseason (the player's ask): a starter who had a hard year (his production
+    REGRESS_Z under the average starter's) loses a step REGRESS_STRUGGLE of the time, and an upperclassman buried on
+    the depth chart who is slow to learn (clear.SLOW_LEVELS) goes backward REGRESS_RUST of the time. REGRESS_RATINGS of
+    his skill and football IQ ratings (never the physical ones) lose REGRESS_POINTS each, and the points go back into
+    his room, so he can earn them again. Its own stream (`regress-{year}-{id}`): no other draw moves. Returns the
+    note for his report, or None when he held."""
+    z = (perf or {}).get("z")
+    if z is not None and z <= REGRESS_Z:
+        case, odds = "struggle", REGRESS_STRUGGLE
+    elif benched and int(p.get("yrs") or 0) >= REGRESS_YEARS and p.get("c") in clear.SLOW_LEVELS:
+        case, odds = "rust", REGRESS_RUST
+    else:
+        return None
+    rng = random.Random(f"regress-{year}-{p['id']}")
+    if rng.random() >= odds:
+        return None
+    able = [i for i, k in enumerate(attrs) if k not in PHYSICAL and p["r"][i] > 1]
+    if not able:
+        return None
+    for i in rng.sample(able, min(REGRESS_RATINGS, len(able))):
+        n = min(rng.randint(*REGRESS_POINTS), p["r"][i] - 1)
+        p["r"][i] -= n
+        p["g"][i] += n
+    p["o"] = lg.overall(p, attrs)
+    return REGRESS_NOTES[case]
+
+
 def age_factor(age: int) -> float:
     """A coach's pace by age (COACH_AGE); 0 from 63: he no longer gains."""
     for upto, f in COACH_AGE:
@@ -1972,6 +2009,14 @@ def _develop_all(state: dict) -> dict:
                 why.append(f"Started as a {'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore'}")
             was = list(p["r"]) if slug == state["team"] else None          # your players' ratings before, for the report
             g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng, starter)
+            # ... and a step back for some (regress: its own stream, after every other draw). The report's gain is the net
+            g_ = GROUP[p["pos"]]
+            buried = depth is not None and sum(1 for v in depth[g_] if v > p["o"]) >= STARTERS[g_] + 2
+            now = p["o"]
+            slipped = regress(p, attrs, perf.get(p["id"]), buried, year)
+            if slipped:
+                why.append(slipped)
+                g += p["o"] - now
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
@@ -2367,10 +2412,12 @@ def advance(state: dict) -> dict:
             state["recruiting"]["week"] = week + 1
             off["stage"] = PORTAL_STAGES[week]
         else:
-            _close_portal(state)
-            off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
-            off["report"]["coaches"] = _develop_coaches(state)
-            off["stage"] = "development"
+            _close_portal(state)                     # the portal is shut: its recap has the screen before anyone develops
+            off["stage"] = "portal_recap"
+    elif stage == "portal_recap":
+        off["report"] = {"development": _develop_all(state), **_fill_rosters(state)}
+        off["report"]["coaches"] = _develop_coaches(state)
+        off["stage"] = "development"
     elif stage == "portal_1":
         resolve_round(state)
         off["portal"]["round"] = 2
@@ -2809,7 +2856,8 @@ def portal_rows(state: dict, position: Optional[str] = None, status: Optional[st
     return rows[:limit]
 
 
-RECAP_STAGES = ("development", "staff", "conferences", "schedule", "ready")
+RECAP_MOVES = 12          # *tune* the Portal Recap lists this many of the league's biggest moves
+RECAP_STAGES = ("portal_recap", "development", "staff", "conferences", "schedule", "ready")
 
 
 def _school_name(state: dict, slug: Optional[str]) -> str:
@@ -2905,8 +2953,20 @@ def _portal_recap(state: dict) -> Optional[dict]:
                          "reason": reasons.get(pid)})
     signed.sort(key=lambda r: -r["overall"])
     lost.sort(key=lambda r: -r["overall"])
+    # the portal's biggest moves, the best players who changed schools (yours among them)
+    moves = sorted(({"id": pid, "name": e["player"]["n"], "pos": e["player"]["pos"], "overall": house(e["player"]["pos"], e["player"]["o"]),
+                     "from": e["from"], "from_name": e.get("from_name") or _school_name(state, e["from"]),
+                     "to": e["signed"], "to_name": _school_name(state, e["signed"])}
+                    for pid, e in players.items() if e.get("signed")), key=lambda r: (-r["overall"], r["name"]))[:RECAP_MOVES]
+    # where your roster is still under a healthy make-up (walk-ons fill the floor at Progression)
+    have: dict[str, int] = {}
+    for c in roster:
+        g = GROUP.get(c["pos"])
+        if g:
+            have[g] = have.get(g, 0) + 1
+    short = [{"group": g, "have": have.get(g, 0), "target": n} for g, n in TARGET.items() if have.get(g, 0) < n]
     return {"signed": signed, "lost": lost, "away": portal_away(state), "entrants": len(players),
-            "signed_league": sum(1 for e in players.values() if e.get("signed"))}
+            "signed_league": sum(1 for e in players.values() if e.get("signed")), "moves": moves, "short": short}
 
 
 def _stayed(off: dict, roster: list[dict]) -> list[dict]:
@@ -2990,7 +3050,9 @@ def view(state: dict, position: Optional[str] = None, status: Optional[str] = No
                    "board": portal_board(state) if new_portal and off["stage"] in PORTAL_STAGES else None,
                    "rows": portal_rows(state, position, status) if off["stage"] in ("portal_1", "portal_2") else []},
         "portal_recap": _portal_recap(state),
-        "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25],
+        # the 25 biggest gains, and everyone who went backward (regress): a step back is news whatever the rest did
+        "report": off.get("report") and {"mine": off["report"]["development"]["mine"][:25]
+                                         + [r for r in off["report"]["development"]["mine"][25:] if r["gain"] < 0],
                                          "transfers": (off["report"]["development"].get("transfers")
                                                        or [r for r in off["report"]["development"]["mine"] if r.get("transfer")]),
                                          "mean_gain_ea": off["report"]["development"]["mean_gain_ea"],
