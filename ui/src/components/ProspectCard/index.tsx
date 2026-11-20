@@ -33,7 +33,7 @@ const TRANSFER_STATS = 3;
 
 /**
  * A transfer in one line, where a recruit has his stars: what he did last season ("1,204 Rush Yds · 9 TD") when he
- * played, else the games he got into, else the school he left.
+ * played, else the school he left.
  */
 export function transferLine(r: {
   from_name?: string;
@@ -45,8 +45,9 @@ export function transferLine(r: {
       .slice(0, TRANSFER_STATS)
       .map(([k, v]) => `${v.toLocaleString("en-US")} ${m.stat[k]}`)
       .join(" · ");
-  if (r.line?.games) return m.games(r.line.games);
-  return r.from_name ? m.from(r.from_name) : "";
+  // no numbers worth a line (he barely played): the school he left says more than "1 Game"
+  if (r.from_name) return m.from(r.from_name);
+  return r.line?.games ? m.games(r.line.games) : "";
 }
 
 /** A prospect's stars as pixel stars (the font has none). */

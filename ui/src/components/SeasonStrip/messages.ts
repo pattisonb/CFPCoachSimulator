@@ -11,8 +11,16 @@ export const messages = {
     `${won ? "W" : "L"} ${pf}-${pa}${ot ? (ot > 1 ? ` ${ot}OT` : " OT") : ""}`,
   tbd: "Date TBD",
   /** a postseason week with no game of yours set yet */
-  open: (week: number) =>
-    week === 15 ? "Conf. Title" : week === 16 ? "Field Is Set" : week === 20 ? "Natl. Title" : "Bowl or CFP",
+  open: (week: number) => (week === 16 ? "Field Set" : week === 15 || week === 20 ? "Title Game" : "Bowl / CFP"),
+  /** the postseason weeks' names, short enough for a tile */
+  short: {
+    15: "Champ Wk",
+    16: "Selection",
+    17: "Bowl Wk 1",
+    18: "Bowl Wk 2",
+    19: "Bowl Wk 3",
+    20: "Title Wk",
+  } as Record<number, string>,
   toBeSet: "To Be Set",
   boxScore: (opponent: string) => `Open the box score: ${opponent}`,
 } as const;

@@ -549,6 +549,10 @@ export interface PlayerProfile {
 
 /** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */
 export interface ProspectRow {
+  /** his NIL ask of you as you know it: the number after a call or visit, a range before */
+  ask?: { lo?: number; hi?: number; exact?: number };
+  /** a transfer's class (FR, SORS, ...) */
+  cls?: string;
   /** a hard commit (not yet signed), and where you stand with him: cold, contact, top, visited, committed */
   hard?: boolean;
   stage?: string;
@@ -887,6 +891,9 @@ export interface SceneReaction {
 
 /** GET /api/season/{id}/recruiting (the parts the board reads) */
 export interface RecruitingBoard extends RecruitingWeek {
+  /** the dead period (after Championship Week, until Signing Day): nobody can work a recruit; `signing` names the week */
+  closed?: boolean;
+  signing?: string;
   /** spots still to fill this class, by roster group */
   needs?: Record<string, number>;
   week: number;

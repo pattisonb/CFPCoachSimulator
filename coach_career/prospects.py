@@ -740,7 +740,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     read = rc["reads"].get(pid)
     our_grades = {g: list(recruiting.grade_range(state, pid, g)) for g in recruiting.GROUPS} if read else None
     our_comp = None
-    if read and recruiting.report_looks(read) >= OUR_COMP_LOOKS:
+    if read and recruiting.report_looks(read) >= OUR_COMP_LOOKS and not p.get("portal"):       # a transfer is who he is: no comp
         ours = {g: read["g"][g][0] for g in recruiting.GROUPS}
         our_comp = comp(projection(state, p, ours), p["ea_position"], player_pool(), key=f"ours-{pid}")
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
@@ -758,7 +758,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "evaluation": _evaluation(p, public_grades) if top else None,
         # Clear Mode: the abilities he arrives with, once your staff has looked at him
         "abilities": _abilities_seen(p) if read else None,
-        "public_comp": comp(projection(state, p, public_grades), p["ea_position"], player_pool(), key=f"public-{pid}") if top else None,
+        "public_comp": comp(projection(state, p, public_grades), p["ea_position"], player_pool(), key=f"public-{pid}") if top and not p.get("portal") else None,
         "our_grades": our_grades,
         "clear": clear.ratings(state, pid) if clear.on() else None,      # Clear Mode: his key ratings in numbers
         "looks": looks_out(read),
@@ -794,6 +794,7 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "height": p["height"], "weight": p["weight"], "home": p["home"], **shown(state, p),
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
+        "ask": recruiting.ask_view(state, viewer, pid, peek=True),     # his NIL ask of you as you know it: the number, or a range
         "hard": bool(st.get("hard")) and not st["signed"],          # a hard commit: the Status column says so, and sorts it over a verbal one
         "stage": recruiting.stage(state, viewer, pid),              # where you stand with him: cold, contact, top, visited, committed
         "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (season.team_display(school, teams) if school else None),
@@ -1000,7 +1001,7 @@ STATUS_ORDER = {"signed": 0, "hard": 1, "committed": 2, "visited": 3, "top": 4, 
 
 def _sort_key(state: dict, viewer: str, key: str, keen: dict):
     """A Prospects column's sort key (best or first on top; ties by national rank): rank, interest, name, pos, ht, wt,
-    stars, status, offers (the schools that have offered), sc (your looks), pot (your potential read; unscouted last)."""
+    stars, status, offers (the schools that have offered), ask (his NIL ask of you), sc (your looks), pot (your potential read; unscouted last)."""
     rc = state["recruiting"]
     P = rc["prospects"]
     if key == "interest" or key == "int":
@@ -1023,6 +1024,11 @@ def _sort_key(state: dict, viewer: str, key: str, keen: dict):
                 return STATUS_ORDER["signed" if x["signed"] else "hard" if x.get("hard") else "committed"]
             return STATUS_ORDER["leaning_fcs" if x["fcs"] else recruiting.stage(state, viewer, pid)]
         return st
+    if key == "ask":                          # his NIL ask of you as you know it (a range by its middle), biggest first
+        def ask(pid):
+            a = recruiting.ask_view(state, viewer, pid, peek=True)
+            return -(a["exact"] if "exact" in a else (a["lo"] + a["hi"]) / 2)
+        return ask
     if key == "offers":                       # the schools that have offered him, most first
         n: dict = {}
         for pids in rc["offers"].values():
@@ -1215,6 +1221,11 @@ def class_detail(state: dict, slug: str, viewer: str) -> list[dict]:
     return rows
 
 
+def season_week_label(week: int) -> str:
+    from sim import season
+    return season.week_label(week)
+
+
 def recruiting_view(state: dict) -> dict:
     """The Recruiting tab: your week's hours and NIL points, your board and last week's news."""
     rc, me = state["recruiting"], state["team"]
@@ -1228,7 +1239,9 @@ def recruiting_view(state: dict) -> dict:
     recap = [e for e in rc["log"] if e["week"] == week and (e.get("school") == me or e.get("from") == me or e["pid"] in mine)
              and e["kind"] not in ("leaning_fcs",) + recruiting.HISTORY_ONLY and persona.shown_to(e, me)]
     return {
-        "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": recruiting._hours(state, me),
+        # the dead period: recruiting is closed until Signing Day (no hours to spend; the page says so)
+        "closed": recruiting.closed(state), "signing": season_week_label(recruiting.signing_week()),
+        "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": 0 if recruiting.closed(state) else recruiting._hours(state, me),
         "points_left": recruiting.scout_points_left(state, me), "points_week": recruiting.scout_points(state, me),
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me),
                 "base": recruiting.nil_budget(state, me),                      # the year's budget alone (the class: budget = base + carry)
@@ -1500,7 +1513,8 @@ def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int
     from sim import season
     rivals = [s for s in offered if s != school]
     mine = recruiting.interest(state, school, pid)
-    weeks_left = max(0, season.SELECTION_WEEK - week)          # the early signing period ends it for most
+    # the early Signing Day ends it for a commit made before it; one made in the dead period can flip until the last
+    weeks_left = max(0, (recruiting.early_signing_week() if week < recruiting.early_signing_week() else recruiting.signing_week()) - week)
     if rivals:
         gap = max(recruiting.interest(state, s, pid) for s in rivals) - mine
         flip = recruiting.flip_by_signing(state, pid, gap, weeks_left)

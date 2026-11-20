@@ -166,8 +166,9 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
           return (
             <li key={`${g.week}-${g.event_id ?? g.kind}`} className={cls} aria-current={isNext ? "true" : undefined}>
               <span className="season-strip__week label">
+                {/* a postseason week has a short name that fits the tile; its full name (or the bowl's) is the tooltip */}
                 <span className="season-strip__week-name" title={g.title ?? weekLabels[g.week] ?? undefined}>
-                  {g.title ?? weekLabels[g.week] ?? m.week(g.week)}
+                  {m.short[g.week] ?? g.title ?? weekLabels[g.week] ?? m.week(g.week)}
                 </span>
                 {isNext && <span className="season-strip__tag">{m.next}</span>}
               </span>

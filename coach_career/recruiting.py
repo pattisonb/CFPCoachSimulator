@@ -511,6 +511,34 @@ def _ck(rc: dict):
     return rc.get("cache_key") or rc["year"]
 
 
+CLOSED_TEXT = "Recruiting is closed until Signing Day."
+
+
+def close_week() -> int:
+    """The last week recruiting is worked: after Championship Week's step nobody offers, contacts, hosts or scouts."""
+    from sim import season
+    return season.CCG_WEEK
+
+
+def early_signing_week() -> int:
+    """The early Signing Day: the week recruiting closes, before the bowls. Every recruit committed by then signs."""
+    return close_week()
+
+
+def signing_week() -> int:
+    """The last Signing Day: after the last game. Whoever committed during the dead period signs then and the
+    rest take their leader."""
+    from sim import season
+    return season.FINAL_WEEK
+
+
+def closed(state: dict) -> bool:
+    """The dead period: the regular season and its title games are over and Signing Day has not come. Recruits still
+    decide among the offers they hold (the weekly draws go on); no school, yours included, can work one. The portal
+    weeks are their own recruiting and are never closed."""
+    return not is_portal(state) and bool(state.get("recruiting")) and state.get("current_week", 0) >= close_week()
+
+
 def is_portal(state: dict) -> bool:
     return bool((state.get("recruiting") or {}).get("portal"))
 
@@ -1542,6 +1570,8 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
     (`_answer`); `pitch` with the scene's id finishes it and returns his reaction. `week`: the home
     weekend an official visit is for (none: his first free one). Raises RecruitingError."""
     rc = state["recruiting"]
+    if closed(state):
+        raise RecruitingError(409, CLOSED_TEXT)
     if action == "answer":
         return _answer(state, slug, pid, scene, answer)
     if action == "promise_job":
@@ -1561,10 +1591,11 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
             _event(state, "pitch", pid, slug, action=sc["action"], pitch=pitch, reaction=said["kind"])
         return {"hours_left": rc["hours"][slug], "reaction": {**said, "revealed": revealed},
                 "money_owed": money_owed(state, slug, pid) if pitch == "nil" else None}
-    # a quick call (the player's ask): after his first call, Call just spends the hours for a slight boost; Call and Pitch
-    # opens the conversation as before
+    # a quick call (the player's ask): after his first call, or once your head coach has visited him, Call just spends
+    # the hours for a slight boost; Call and Pitch opens the conversation as before
     quick = slug == state.get("team") and action == "call" and answer == "quick"
-    if quick and not _contact(state, slug, pid).get("calls"):
+    met = _contact(state, slug, pid)
+    if quick and not (met.get("calls") or met.get("hc_week") is not None):
         raise RecruitingError(409, "Call and pitch him first: a quick call follows a first conversation.")
     opens = slug == state.get("team") and action in SCENES and pitch is None and not quick
     manual = slug == state.get("team") and action in ("message", "offer")
@@ -2959,7 +2990,7 @@ def _draws(state: dict, week: int, rng: random.Random) -> None:
                     del hats[pid]                      # none of his finalists can take him: he opens it back up
             continue
         if style == "signing_day":
-            if week >= season.SELECTION_WEEK:          # Signing Day: no one until signing day, then his leader, no roll (persona.waits, signs_now)
+            if week >= early_signing_week():           # Signing Day: no one until the early signing day, then his leader, no roll (persona.waits, signs_now)
                 took(leader, pid, _commit(state, pid, leader))
             continue
         if roll < odds:
@@ -2975,8 +3006,7 @@ def _hat(state: dict, pid: str, week: int, finalists: list) -> None:
     from sim import season
     rc = state["recruiting"]
     day = week + persona.HAT_LEAD
-    if week < season.SELECTION_WEEK:
-        day = min(day, season.SELECTION_WEEK)
+    day = min(day, early_signing_week() if week < early_signing_week() else signing_week())
     rc.setdefault("hats", {})[pid] = [day, finalists]
     names = [persona._school_name(s) for s in finalists]
     said = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}" if len(names) == 2 else f"{', '.join(names[:-1])}, and {names[-1]}"
@@ -3004,8 +3034,8 @@ def _pair_ok(state: dict, slug: str, pid: str, offered: dict, room) -> bool:
 
 
 def _sign(state: dict, final: bool) -> None:
-    """Early signing period: every committed prospect signs. Signing day (final): the rest go to
-    their leader with room, or to an FCS program."""
+    """The early Signing Day (as recruiting closes): every committed prospect signs. The last one (final, after the
+    last game): whoever committed since signs, and the rest go to their leader with room, or to an FCS program."""
     rc = state["recruiting"]
     if final:
         room, win, offered = _Room(state, flier=True), _winning(state), _offers_by_prospect(state)
@@ -3103,38 +3133,46 @@ def _weekly_step(state: dict, week: int, auto_user: bool) -> list[dict]:
     rc = state["recruiting"]
     start_log = len(rc["log"])
     rng = random.Random(f"recruiting-{rc['seed']}-{'portal-' if rc.get('portal') else ''}{week}")
+    # the dead period (after Championship Week, until Signing Day): no school works a recruit, so nothing of a
+    # working week runs. The recruits go on deciding among the offers they hold (the draws below)
+    dead = not rc.get("portal") and week > close_week()
     _flush(state, week)                # your week's actions land
-    persona.cool_quiet(state, week)    # a recruit who loves the attention cools on a school gone quiet
+    if not dead:
+        persona.cool_quiet(state, week)    # a recruit who loves the attention cools on a school gone quiet
     if not rc.get("portal"):
-        persona.bloom(state, week)     # a Late Bloomer's jump: public, and the AI boards that fit him add him
+        if not dead:
+            persona.bloom(state, week)     # a Late Bloomer's jump: public, and the AI boards that fit him add him
         persona.twist_week(state, week)    # his twist: a game he watched plays out; the ones run out end
-    if not rc.get("portal"):
+    if not rc.get("portal") and not dead:
         _visits(state, week)
         persona.learn_styles(state, week)  # an official visit or four weeks holding your offer: his commit style
-    scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
-    spend_leftover(state, week + 1 if rc.get("portal") else week)   # what you didn't spend, your staff does: half looks on your board
+    if not dead:
+        scout_week(state, week + 1 if rc.get("portal") else week)   # the portal's week counter moves after the step
+        spend_leftover(state, week + 1 if rc.get("portal") else week)   # what you didn't spend, your staff does: half looks on your board
     mine = state.get("team")
     mode = auto_mode(state)
     auto_mine = auto_user or mode != "off"
-    _asks_for_more(state, week)
-    commits = _commits(state)          # AI weeks change offers and interest, not commitments
-    for slug in fbs_schools(state):
-        if slug != mine or auto_mine:
-            auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
-    _flush(state, week)                # the other schools' week lands with yours
+    if not dead:
+        _asks_for_more(state, week)
+        commits = _commits(state)          # AI weeks change offers and interest, not commitments
+        for slug in fbs_schools(state):
+            if slug != mine or auto_mine:
+                auto_recruit(state, slug, random.Random(f"auto-{rc['seed']}-{slug}-{week}"), commits, yours=slug == mine)
+        _flush(state, week)                # the other schools' week lands with yours
     _forgive_pesters(state)
     if rc.get("portal"):
         _portal_draws(state, week, rng)
     else:
         _promises(state, week)         # the recruit you promised him over committed too: he remembers
         _firm_up(state, week)
-        if week < season.FINAL_WEEK:
+        if week < signing_week():
             _draws(state, week, rng)
-        if week == season.SELECTION_WEEK:
+        if week == early_signing_week():   # the early Signing Day, as recruiting closes: everyone committed signs
             _sign(state, final=False)
-        if week >= season.FINAL_WEEK:
+        if week >= signing_week():         # the last Signing Day, after the last game: the dead period's commits sign, the rest take their leader
             _sign(state, final=True)
-        persona.roll_twists(state, week)   # the week's twists (their own stream, after every other draw)
+        if not dead:
+            persona.roll_twists(state, week)   # the week's twists (their own stream, after every other draw)
     _snapshot_ranks(state, week)
     _report(state, week)
     rc["hours"] = {}

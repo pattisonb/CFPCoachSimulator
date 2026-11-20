@@ -52,7 +52,7 @@ const STALE_WEEKS = 3;
 /** *tune* From this week, many unused offers is worth a word; and how many. */
 const LATE_WEEK = 8;
 const UNUSED_OFFERS = 10;
-const SIGNING: Record<number, string> = { 16: m.earlySigning, 20: m.signingDay };
+const SIGNING: Record<number, string> = { 15: m.earlySigning, 20: m.signingDay };
 /** offseason.ROSTER_LIMIT */
 const ROSTER_LIMIT = 85;
 

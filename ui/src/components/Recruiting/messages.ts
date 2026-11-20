@@ -82,6 +82,8 @@ export const messages = {
   pestering: "He feels pestered. Ease off until a visit or an offer changes things.",
 
   work: "Work Him",
+  deadPeriod: (signing: string) =>
+    `Recruiting is closed until Signing Day${signing ? `, after the ${signing}` : ""}. No offers, messages, calls, visits or scouting. He is deciding among the offers he holds, and he can still commit or flip.`,
   pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
   message: "Message",
   call: "Call",
@@ -127,7 +129,7 @@ export const messages = {
     pull_offer: (name: string) => `Offer to ${name} pulled.`,
   } as Record<string, (name: string, n: number) => string>,
   revealed: (topic: string) => `He told you he cares about ${topic}.`,
-  failed: (msg: string) => `Couldn't do that: ${msg}.`,
+  failed: (msg: string) => `Couldn't do that: ${msg.replace(/[.\s]+$/, "")}.`,
 
   week: (n: number) => `Week ${n}`,
 } as const;

@@ -143,7 +143,7 @@
 
 .prospects__table {
   width: 100%;
-  min-width: 760px;
+  min-width: 1080px; /* the fixed columns and about 240 px for the prospect's name: narrower than this, the table scrolls sideways */
   table-layout: fixed;
   border-collapse: collapse;
   font-size: var(--t-sm);
@@ -158,8 +158,13 @@
   width: 56px;
 }
 
+/* height and weight: a column each */
 .prospects__col-size {
-  width: 104px;
+  width: 64px;
+}
+
+.prospects__col-ask {
+  width: 84px;
 }
 
 .prospects__col-stars {
@@ -507,6 +512,12 @@
 }
 
 /* a narrow table (the sidebar open, or a smaller window): slimmer columns, and no Size column (the script) */
+
+/* narrow: no Ht or Wt, so less is needed before the name is squeezed */
+.prospects.is-narrow .prospects__table {
+  min-width: 920px;
+}
+
 .prospects.is-narrow .prospects__col-rank {
   width: 40px;
 }

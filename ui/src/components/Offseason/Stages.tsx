@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import PlayerLink from "../PlayerLink/index.tsx";
 import { ArrowRight } from "@phosphor-icons/react";
 import Dropdown from "../Dropdown/index.tsx";
 import Modal from "../Modal/index.tsx";
@@ -471,7 +472,9 @@ function Departures(p: P) {
                       {list.map((x) => (
                         <li key={x.id}>
                           <span className="dev__who gone__who">
-                            <b>{x.name}</b>
+                            <b>
+                              <PlayerLink team={season.team} name={x.name} position={x.pos} />
+                            </b>
                             <span className="off__soft">{x.pos}</span>
                           </span>
                           <span className="dev__track" aria-hidden="true">

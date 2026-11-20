@@ -43,6 +43,9 @@ import type {
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
+/** A line kept at its height while it has nothing to say. */
+const NBSP = "\u00a0";
+
 interface Props {
   season: SeasonSummary;
   /** the week's recruiting read (already loaded for Energy), or null while it loads */
@@ -55,8 +58,9 @@ interface Props {
   onBox?: (eventId: string) => void;
 }
 
-/** *tune* The week of the early signing period (selection week) and of national signing day (sim/season.py). */
-const SIGNING_WEEK = 16;
+/** *tune* Recruiting closes once Championship Week is played (recruiting.close_week), and Signing Day comes after the
+ *  last game (sim/season.py FINAL_WEEK): between the two nobody can work a recruit. */
+const CLOSE_WEEK = 15;
 const FINAL_WEEK = 20;
 /** *tune* Selection day: Sim to Selection Day shows before it. */
 const SELECTION_WEEK = 15;
@@ -153,7 +157,8 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   // ---------- the week's to-dos ----------
   const todos: Todo[] = [];
   if (!s.done) {
-    if (v) {
+    // the dead period: there is no recruiting or scouting to do until Signing Day
+    if (v && s.current_week < CLOSE_WEEK) {
       const auto = v.auto_recruit && v.auto_recruit !== "off";
       const spent = !!auto || v.hours_left < MIN_ACTION_HOURS;
       todos.push({
@@ -226,7 +231,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
 
   const conf = confShort(office?.conference.name ?? s.conference);
   const st = office?.conference.standing;
-  const signing = s.current_week >= SIGNING_WEEK;
+  const signing = s.current_week >= CLOSE_WEEK;
   const title = s.done ? m.seasonComplete(s.year) : m.thisWeek;
   const subtitle = s.done
     ? s.champion_name
@@ -305,8 +310,8 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
 
         {signing && (
           <p className="office__notice" role="status">
-            <b>{s.current_week >= FINAL_WEEK ? m.nationalSigning : m.earlySigning}</b>
-            <span>{s.current_week >= FINAL_WEEK ? m.nationalText : m.earlyText}</span>
+            <b>{s.current_week >= FINAL_WEEK ? m.nationalSigning : m.recruitingClosed}</b>
+            <span>{s.current_week >= FINAL_WEEK ? m.nationalText : m.closedText}</span>
           </p>
         )}
 
@@ -501,28 +506,29 @@ function GameCard({
       )}
       {thisWeek && !played && (
         <div className="office__odds">
-          {mine !== null && p ? (
-            <>
-              <div className="office__odds-top">
-                <span className="label office__kicker">{m.winChance}</span>
-                <span className="office__soft">
-                  {m.projected(m.score(Math.round(p.points_for), Math.round(p.points_against)))}
-                </span>
-              </div>
-              <div
-                className="office__odds-row"
-                role="img"
-                aria-label={m.odds(s.team_name, mine, g.opponent_name, 100 - mine)}
-              >
-                <b className="office__odds-big">{mine}%</b>
-                <span className="office__odds-bar" aria-hidden="true">
-                  <i style={{ width: `${mine}%` }} />
-                </span>
-              </div>
-            </>
-          ) : (
-            <span className="office__soft">{preview ? "" : m.scouting}</span>
-          )}
+          {/* the same two rows whether the read is in or still coming, so the actions under the card never move */}
+          <div className="office__odds-top">
+            <span className="label office__kicker">{m.winChance}</span>
+            <span className="office__soft">
+              {mine !== null && p
+                ? m.projected(m.score(Math.round(p.points_for), Math.round(p.points_against)))
+                : preview
+                  ? ""
+                  : m.scouting}
+            </span>
+          </div>
+          <div
+            className="office__odds-row"
+            role="img"
+            aria-label={mine !== null && p ? m.odds(s.team_name, mine, g.opponent_name, 100 - mine) : m.scouting}
+          >
+            <b className={`office__odds-big${mine !== null && p ? "" : " is-waiting"}`}>
+              {mine !== null && p ? `${mine}%` : m.noOdds}
+            </b>
+            <span className="office__odds-bar" aria-hidden="true">
+              <i style={{ width: `${mine !== null && p ? mine : 0}%` }} />
+            </span>
+          </div>
         </div>
       )}
     </section>
@@ -655,10 +661,11 @@ function Actions({
       <section className="office__actions" aria-label={m.actions}>
         <h2 className="office__panel-title">{m.actions}</h2>
         <div className="office__sim" role="status">
-          <b>{st.stage ?? m.simming}</b>
-          {st.games_total ? (
-            <span className="office__soft">{m.progress(st.games_done ?? 0, st.games_total)}</span>
-          ) : null}
+          <b className="office__sim-stage">{st.stage ?? m.simming}</b>
+          {/* its line is always there (empty between stages), so the bar under it never moves */}
+          <span className="office__soft office__sim-count">
+            {st.games_total ? m.progress(st.games_done ?? 0, st.games_total) : NBSP}
+          </span>
           <span className="office__sim-bar" aria-hidden="true">
             <i style={{ width: `${pct}%` }} />
           </span>

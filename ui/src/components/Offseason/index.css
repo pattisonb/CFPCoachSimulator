@@ -945,6 +945,9 @@
 }
 
 .gone__list {
+  max-height: 300px; /* *tune* about eleven names: a longer column scrolls on its own, so the three stay one block */
+  padding-right: 4px;
+  overflow-y: auto;
   list-style: none;
 }
 
@@ -970,7 +973,7 @@
 .shirts,
 .picks {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 6px;
   list-style: none;
 }
@@ -995,6 +998,13 @@
   display: grid;
   flex: 1;
   min-width: 0;
+}
+
+/* a redshirt tile's facts stay on one line (cut short before they wrap) */
+.shirt__who .off__soft {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .picks {

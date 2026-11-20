@@ -17,7 +17,7 @@ export const messages = {
   tabs: {
     overview: "Overview",
     ratings: "Ratings",
-    development: "Development",
+    development: "Progression",
     abilities: "Abilities",
     history: "History",
   },
@@ -74,7 +74,7 @@ export const messages = {
   atCeiling: "Max",
   atCeilingTip: "He is at his ceiling here: this is as good as he gets.",
   noCeilings: "His ceilings show for players on your own roster.",
-  develops: "How He Develops",
+  develops: "How He Progresses",
   classYear: "Class",
   redshirt: "Redshirt",
   redshirtOn: (games: number, limit: number) => `Redshirting · ${games} of ${limit} Games Used`,

@@ -1001,15 +1001,15 @@ def start_firmness(state: dict, pid: str, firmness: int) -> int:
 
 
 def waits(state: dict, pid: str, week: int) -> bool:
-    """A Signing Day recruit commits to no one before signing day (the early signing period)."""
-    from sim import season
-    return week < season.SELECTION_WEEK and style(state, pid) == "signing_day"
+    """A Signing Day recruit commits to no one before the early signing day."""
+    from coach_career import recruiting
+    return week < recruiting.early_signing_week() and style(state, pid) == "signing_day"
 
 
 def signs_now(state: dict, pid: str, week: int) -> bool:
     """A Signing Day recruit on signing day: he takes his leader, no roll."""
-    from sim import season
-    return week >= season.SELECTION_WEEK and style(state, pid) == "signing_day"
+    from coach_career import recruiting
+    return week >= recruiting.early_signing_week() and style(state, pid) == "signing_day"
 
 
 def is_quiet(state: dict, pid: str) -> bool:

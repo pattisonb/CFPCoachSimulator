@@ -23,6 +23,7 @@ import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import type { NeedGroup, ProspectRow, ProspectsView } from "../../types.ts";
 import { useKept } from "../../kept.ts";
+import { formatClass } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -69,6 +70,8 @@ const SORTS: Partial<Record<Col, string>> = {
   stars: "stars",
   status: "status",
   offers: "offers",
+  ask: "ask",
+  cls: "stars", // a transfer has a class where a recruit has stars: the same server sort
   int: "int",
   sc: "sc",
   pot: "pot",
@@ -174,6 +177,8 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
   }, [page, view, q, group, stars, home, sort]);
 
   const rows = useMemo(() => data?.rows ?? [], [data]);
+  // the transfer portal's list: its rows are transfers (a class where a recruit has stars)
+  const portal = !!rows[0]?.portal;
   const classTotal = data?.summary.total;
   useEffect(() => {
     if (classTotal != null) onClassSize?.(classTotal);
@@ -373,9 +378,11 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                 <col />
                 <col className="prospects__col-pos" />
                 {!narrow && <col className="prospects__col-size" />}
+                {!narrow && <col className="prospects__col-size" />}
                 <col className="prospects__col-stars" />
                 <col className="prospects__col-status" />
                 <col className="prospects__col-offers" />
+                <col className="prospects__col-ask" />
                 <col className="prospects__col-int" />
                 <col className="prospects__col-sc" />
                 <col className="prospects__col-pot" />
@@ -387,9 +394,12 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                   <Th col="who" className="left" />
                   <Th col="pos" />
                   {!narrow && <Th col="ht" />}
-                  <Th col="stars" />
+                  {!narrow && <Th col="wt" />}
+                  {/* the portal: a transfer's class where a recruit has his stars */}
+                  <Th col={portal ? "cls" : "stars"} />
                   <Th col="status" className="left" />
                   <Th col="offers" />
+                  <Th col="ask" />
                   <Th col="int" />
                   <Th col="sc" />
                   <Th col="pot" />
@@ -429,17 +439,21 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                       </button>
                     </td>
                     <td>{r.display_pos}</td>
-                    {!narrow && (
-                      <td className="prospects__soft">
-                        {r.height_display} · {r.weight_display.replace(" lbs", "")}
-                      </td>
-                    )}
-                    <td>
-                      <Stars n={r.stars} size={10} />
-                    </td>
+                    {!narrow && <td className="prospects__soft">{r.height_display}</td>}
+                    {!narrow && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
+                    <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
                     <td className="left prospects__status">{statusOf(r)}</td>
                     <td className="prospects__offers">
                       {r.offers_n ? r.offers_n : <span className="prospects__soft">–</span>}
+                    </td>
+                    <td className="prospects__ask">
+                      {r.ask?.exact != null ? (
+                        r.ask.exact
+                      ) : r.ask?.hi ? (
+                        m.askRange(r.ask.lo ?? 0, r.ask.hi)
+                      ) : (
+                        <span className="prospects__soft">–</span>
+                      )}
                     </td>
                     <td className={`prospects__int is-${r.interest_level.toLowerCase()}`}>{r.interest_level}</td>
                     <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : <span className="prospects__soft">–</span>}</td>

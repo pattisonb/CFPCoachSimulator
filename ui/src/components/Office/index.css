@@ -35,8 +35,10 @@
   grid-area: mid;
 }
 
+/* the news column keeps its scroll bar's room, so a longer feed after a week does not narrow every line in it */
 .office__right {
   grid-area: right;
+  scrollbar-gutter: stable;
   border-left: var(--line) solid var(--line-soft);
 }
 
@@ -177,6 +179,11 @@
   line-height: 1;
 }
 
+/* the read is still coming: a soft dash where the number will be */
+.office__odds-big.is-waiting {
+  color: var(--ink-soft);
+}
+
 .office__odds-bar {
   flex: 1;
   height: 12px;
@@ -286,6 +293,14 @@
   padding: var(--s3);
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
+}
+
+/* one line each, cut short if it must be: a longer stage name never makes the box taller */
+.office__sim-stage,
+.office__sim-count {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .office__sim-bar {

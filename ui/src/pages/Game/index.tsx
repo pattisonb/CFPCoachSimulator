@@ -272,7 +272,12 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   if (liveResults && sim.status?.current_week) simAt.current.week = sim.status.current_week;
   if ((season?.current_week ?? 0) >= simAt.current.week) simAt.current.week = 0;
   const stripWeek = Math.max(season?.current_week ?? 0, simAt.current.week);
-  const simRecord = sim.status?.kind === "gameday" ? undefined : sim.status?.record;
+  // your record is held the same way: without it the sidebar and the tab read last week's record for a moment
+  const liveRecord = sim.status?.kind === "gameday" ? undefined : sim.status?.record;
+  const heldRecord = useRef<{ wins: number; losses: number } | null>(null);
+  if (liveRecord) heldRecord.current = liveRecord;
+  if (!simAt.current.week) heldRecord.current = liveRecord ?? null;
+  const simRecord = liveRecord ?? heldRecord.current ?? undefined;
   const simWeek = sim.status?.kind === "gameday" ? undefined : sim.status?.current_week;
   // the browser tab: "Toledo Dynasty", and the sim's progress, your record and the week while one runs
   useTab(
@@ -515,15 +520,18 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                       />
                     ) : key === "recruiting" ? (
                       <RecruitingHub
+                        // the dead period has no hours or scouting points to spend: the bars are left out
                         aside={
-                          <>
-                            <Energy energy={energy} />
-                            <Energy
-                              energy={recruiting && { left: recruiting.points_left, total: recruiting.points_week }}
-                              label={m.scouting}
-                              hint={m.scoutingHint}
-                            />
-                          </>
+                          recruiting?.closed ? undefined : (
+                            <>
+                              <Energy energy={energy} />
+                              <Energy
+                                energy={recruiting && { left: recruiting.points_left, total: recruiting.points_week }}
+                                label={m.scouting}
+                                hint={m.scoutingHint}
+                              />
+                            </>
+                          )
                         }
                         teams={bySlug}
                         seasonId={season.id}

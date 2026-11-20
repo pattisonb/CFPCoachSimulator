@@ -167,7 +167,7 @@ export const messages = {
   openReport: (name: string) => `Open ${name}'s Report`,
 
   // ----- outlook widgets -----
-  earlySigning: "Early Signing Period",
+  earlySigning: "Early Signing Day",
   signingDay: "National Signing Day",
   alertKinds: {
     promise: "Promise",

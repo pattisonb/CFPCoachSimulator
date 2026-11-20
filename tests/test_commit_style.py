@@ -104,10 +104,10 @@ def test_signing_day(st, used):
     pid = plain(st, used)
     force(st, pid, "signing_day")
     race(st, pid)
-    for w in (4, 9, 15):
+    for w in (4, 9, 14):
         draws(st, w)
         assert rc["status"][pid]["committed"] is None, (w, rc["status"][pid])
-    draws(st, season.SELECTION_WEEK)
+    draws(st, recruiting.early_signing_week())
     assert rc["status"][pid]["committed"] == RIVALS[0], rc["status"][pid]
     # the same race for a prospect without the style commits at the first draw
     q = plain(st, used)
@@ -148,8 +148,8 @@ def test_hat(st, used):
     q = plain(st, used)
     force(st, q, "hat")
     race(st, q)
-    draws(st, season.SELECTION_WEEK - 1)
-    assert rc["hats"][q][0] == season.SELECTION_WEEK
+    draws(st, recruiting.early_signing_week() - 1)
+    assert rc["hats"][q][0] == recruiting.early_signing_week()
     print("  hat ceremony ok")
 
 
@@ -267,7 +267,7 @@ def test_season():
             first[e["pid"]] = e
     by = {k: [q for q in first if persona.style(st, q) == k] for k in persona.STYLES}
     pairs = {q for q in rc["prospects"] if persona.mate(st, q)}          # a Package Deal's mate commits with him, whatever his style
-    early = [q for q in by["signing_day"] if q not in pairs and first[q]["week"] < season.SELECTION_WEEK]
+    early = [q for q in by["signing_day"] if q not in pairs and first[q]["week"] < recruiting.early_signing_week()]
     assert not early, early[:5]
     assert by["signing_day"], "signing day recruits commit on signing day"
     for q in by["hat"]:

@@ -23,6 +23,7 @@ export const messages = {
   odds: (team: string, mine: number, opp: string, theirs: number) => `Win chance: ${team} ${mine}%, ${opp} ${theirs}%`,
   projected: (score: string) => `Projected ${score}`,
   scouting: "Scouting the matchup…",
+  noOdds: "–",
 
   actions: "Actions",
   playGame: "Play Game Day",
@@ -35,7 +36,7 @@ export const messages = {
   simWeekLast: "The season ends.",
   selection: "Sim to Selection Day",
   signing: "Sim to Signing Day",
-  signingSub: "Title game and signing day.",
+  signingSub: "Through the bowls to Signing Day.",
   simThrough: "Sim Through a Week…",
   simThroughSub: "Stop after any week.",
   autoNote: "The recruiting weeks in between run on Auto.",
@@ -76,9 +77,10 @@ export const messages = {
   soon: "Coming soon to the new game.",
   offseasonSub: "Who stays, who goes, the portal and next year.",
 
-  earlySigning: "The Early Signing Period Is Done",
-  nationalSigning: "National Signing Day Is Done",
-  earlyText: "Commitments signed in December.",
+  recruitingClosed: "Recruiting Is Closed Until Signing Day",
+  nationalSigning: "Signing Day Is Done",
+  closedText:
+    "Everyone committed has signed. Nobody can offer, contact, host or scout a recruit now: the rest are deciding among the offers they hold, and they sign after the National Championship.",
   nationalText: "Every class is signed.",
 
   rank: "Rank",

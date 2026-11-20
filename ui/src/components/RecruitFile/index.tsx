@@ -339,13 +339,15 @@ export function ScoutingTab({
           )}
         </div>
         {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{m.looksLine.none}</p>}
-        {/* who he compares to, on a line of its own under the summary */}
-        <div className="recruit-file__comp">
-          <span className="label">{m.comp}</span>
-          <b className="recruit-file__comp-line">
-            {compText ?? <span className="recruit-file__comp-rest">{looks >= 3 ? m.compNone : m.compLater}</span>}
-          </b>
-        </div>
+        {/* who he compares to, on a line of its own under the summary (a transfer has no comp: he is who he is) */}
+        {!r.portal && (
+          <div className="recruit-file__comp">
+            <span className="label">{m.comp}</span>
+            <b className="recruit-file__comp-line">
+              {compText ?? <span className="recruit-file__comp-rest">{looks >= 3 ? m.compNone : m.compLater}</span>}
+            </b>
+          </div>
+        )}
         {/* a finished report has nothing left to send for: the lead above already says Report Complete */}
         {!yours && looks < 3 && (
           <div className="recruit-file__acts">
@@ -535,13 +537,15 @@ export function ProfileTab({
           <PanelRow label={m.rankings} value={m.ranks(p.national_rank, r.pos_rank, r.display_pos, p.state_rank, st)} />
           {p.composite != null && <PanelRow label={m.composite} value={p.composite.toFixed(4)} />}
           <PanelRow label={m.status} value={statusText(r, detail)} />
-          <PanelRow
-            label={m.comp}
-            value={compText ?? (looks >= 3 ? m.compNone : undefined)}
-            unknown={m.unknown}
-            hint={comp || looks >= 3 ? null : m.compLater}
-            wide={!!comp}
-          />
+          {!r.portal && (
+            <PanelRow
+              label={m.comp}
+              value={compText ?? (looks >= 3 ? m.compNone : undefined)}
+              unknown={m.unknown}
+              hint={comp || looks >= 3 ? null : m.compLater}
+              wide={!!comp}
+            />
+          )}
         </PanelRows>
       </Panel>
     </Panels>

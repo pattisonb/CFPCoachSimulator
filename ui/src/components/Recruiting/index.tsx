@@ -6,7 +6,7 @@ import Dropdown from "../Dropdown/index.tsx";
 import Conversation from "../Conversation/index.tsx";
 import Face from "../Face/index.tsx";
 import ScoutMark from "../ScoutMark/index.tsx";
-import { Stars, transferLine } from "../ProspectCard/index.tsx";
+import { Stars } from "../ProspectCard/index.tsx";
 import { HistoryTab, OverviewTab, ProfileTab, ScoutingTab } from "../RecruitFile/index.tsx";
 import Panel from "../Panel/index.tsx";
 import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
@@ -357,7 +357,8 @@ export default function Recruiting({
                           </b>
                           <span className="recruiting__soft recruiting__facts">
                             {r.display_pos}
-                            {r.portal ? <span>{transferLine(r)}</span> : <Stars n={r.stars} size={10} />}
+                            {/* a transfer: the school he left (his season's numbers are on his file; they do not fit a card) */}
+                            {r.portal ? <span>{r.from_name ?? ""}</span> : <Stars n={r.stars} size={10} />}
                             <ScoutMark looks={r.looks} size={12} />
                             <RecruitFlags
                               generational={r.generational}
@@ -685,7 +686,13 @@ function RecruitPanel({
             </div>
 
             <div className="recruit__col">
-              {!closed && (
+              {/* the dead period: nobody can work a recruit until Signing Day */}
+              {!closed && board.closed && (
+                <Panel title={m.work} className="recruit__work">
+                  <p className="recruiting__soft">{m.deadPeriod(board.signing ?? "")}</p>
+                </Panel>
+              )}
+              {!closed && !board.closed && (
                 <Panel title={m.work} aside={m.hoursLeft(Math.round(left))} className="recruit__work">
                   {r.scene && (
                     <div className="recruit__open">
@@ -703,7 +710,7 @@ function RecruitPanel({
                     {timed("message", m.message, Chat)}
                     {/* after his first call, Call is a quick check-in (the hours, a slight boost, no conversation) and
                         Call and Pitch talks again */}
-                    {(r.calls ?? 0) > 0 ? (
+                    {(r.calls ?? 0) > 0 || r.hc_week != null ? (
                       <>
                         {timed("call", m.quickCall, Phone, { answer: "quick" }, m.quickCallTip)}
                         {timed("call", m.callAndPitch, ChatsCircle, undefined, m.callAndPitchTip)}

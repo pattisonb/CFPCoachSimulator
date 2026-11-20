@@ -288,10 +288,13 @@ if __name__ == "__main__":
         _rc._act(st_, "michigan", a, "message", pitch="winning")
         assert [(x["kind"], x["school"]) for x in hist(a)[:2]] == [("offer", "michigan"), ("raise_nil", "ohio-state")], hist(a)[:2]
         # a long career: the last 40 entries for him, newest first
+        _close = _rc.close_week
+        _rc.close_week = lambda: 99          # fifty working weeks on end: the dead period (recruiting closes after Championship Week) is not what this counts
         for w in range(1, 51):
             st_["current_week"] = w
             st_["recruiting"]["hours"] = {}
             R(logc, "recruit", {"pid": a, "action": "message", "pitch": "coach"})
+        _rc.close_week = _close
         h = hist(a)
         assert len(h) == 40 and h[0]["week"] == 50 and h[-1]["week"] >= 11, (len(h), h[0], h[-1])
         assert [x["week"] for x in h] == sorted((x["week"] for x in h), reverse=True)
