@@ -545,6 +545,8 @@ export interface PlayerProfile {
     games: number;
     honors: { kind: string; name: string }[];
   }[];
+  /** every rating he has, by group (General, Ballcarrier, Receiving, Blocking, Passing, Defense, Kicking) */
+  skills?: { group: string; rows: { key: string; label: string; value: number }[] }[];
   /** his home state (a career's league row) */
   hometown?: string | null;
   /** how he was recruited out of high school (coach_career/offseason.py _recruit_stories); null for a player who was

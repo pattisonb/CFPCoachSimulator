@@ -120,6 +120,10 @@ export const messages = {
   year: "Year",
   gamesCol: "Games",
   noCareer: "This is his first season on record.",
+  passerTips: {
+    release_speed: "How fast the ball leaves his hand once he decides to throw.",
+  } as Record<string, string>,
+  ratingCount: (n: number) => (n === 1 ? "1 Rating" : `${n} Ratings`),
   h: {
     recruitment: "Recruitment",
     before: "He was on the roster before your first signing class.",

@@ -27,10 +27,6 @@ interface Props {
   onEditLook?: () => void;
 }
 
-/** The profile's position groups (ratings_at): the three linebacker spots share one rating. */
-const GROUP_OF: Record<string, string> = { LOLB: "MLB", ROLB: "MLB", OLB: "MLB" };
-const GROUP_NAME: Record<string, string> = { MLB: "LB" };
-
 const TABS = ["overview", "ratings", "development", "abilities", "history"] as const;
 type Tab = (typeof TABS)[number];
 
@@ -121,6 +117,44 @@ function Progress({ have, need }: { have: number; need: number }) {
   return <Blocks have={have} need={need} />;
 }
 
+/**
+ * The rating group that is a position's own, by the positions and roster groups the game uses: on the Ratings tab it
+ * sits beside General, first on the right (a lineman opens on Blocking, a corner on Defense).
+ */
+const OWN_GROUP: Record<string, string> = {
+  QB: "Passing",
+  ...Object.fromEntries(["RB", "HB", "FB"].map((k) => [k, "Ballcarrier"])),
+  ...Object.fromEntries(["WR", "TE"].map((k) => [k, "Receiving"])),
+  ...Object.fromEntries(["OL", "OT", "OG", "IOL", "LT", "LG", "C", "RG", "RT"].map((k) => [k, "Blocking"])),
+  ...Object.fromEntries(
+    [
+      "DL",
+      "DT",
+      "DE",
+      "EDGE",
+      "LEDG",
+      "REDG",
+      "LB",
+      "MLB",
+      "OLB",
+      "LOLB",
+      "ROLB",
+      "MIKE",
+      "WILL",
+      "SAM",
+      "CB",
+      "S",
+      "FS",
+      "SS",
+    ].map((k) => [k, "Defense"]),
+  ),
+  K: "Kicking",
+  P: "Punting",
+};
+
+/** the group a passer's ratings sit in, on his card and in the full list */
+const PASSING = "Passing";
+
 /** a promise going wrong: its tag reads in red */
 const BAD_PROMISE = new Set(["Slipping", "Broken"]);
 
@@ -143,15 +177,18 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
   const spot = p.role && p.depth ? m.spot(p.role, p.depth) : null;
   const season = p.headline || (p.games ? m.games(p.games) : m.noGames);
 
-  const own = GROUP_OF[p.position] ?? p.position;
-  const others = pr
-    ? Object.entries(pr.ratings_at)
-        .filter(([g]) => g !== own && g !== "KR")
-        .sort((a, b) => b[1] - a[1])
-    : [];
   const goal = pr?.ability_goal;
   const goalLine = goal ? m.goalLine(goal.name, goal.tier_name, goal.have, goal.need) : null;
   const groups = pr ? [...new Set(pr.attributes.map((a) => a.group))] : [];
+  const passing = pr?.skills?.find((g) => g.group === PASSING)?.rows ?? [];
+  // General first, then his position's own group beside it, then the rest in their usual order
+  const ownGroup = OWN_GROUP[p.role ?? ""] ?? OWN_GROUP[p.position];
+  const skillGroups = [...(pr?.skills ?? [])].sort(
+    (a, b) =>
+      Number(b.group === "General") * 2 +
+      Number(b.group === ownGroup) -
+      (Number(a.group === "General") * 2 + Number(a.group === ownGroup)),
+  );
   const coachability = pr?.coachability ?? p.coachability;
   const potential = pr?.potential_word ?? p.potential_word;
 
@@ -241,9 +278,19 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
                     label={a.label}
                     value={a.value}
                     ceiling={a.potential}
-                    tip={a.potential != null ? `${a.about} ${m.ceiling(a.potential)}.` : a.about}
+                    tip={
+                      a.potential != null
+                        ? `${a.about}.
+${m.ceiling(a.potential)}.`
+                        : a.about
+                    }
                   />
                 ))}
+              {/* a passer's rating that is ours (Release Speed), with the rest of his passing */}
+              {g === PASSING &&
+                passing
+                  .filter((x) => x.key in m.passerTips)
+                  .map((x) => <Bar key={x.key} label={x.label} value={x.value} tip={m.passerTips[x.key]} />)}
             </Panel>
           ))}
           <Panel title={m.other}>
@@ -269,20 +316,14 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
 
       {pr && tab === "ratings" && (
         <Panels split label={m.tabs.ratings}>
-          {/* the same attributes the Overview shows and the sim plays with: his overall is built from these */}
-          <Panel title={m.builds}>
-            {pr.attributes.map((a) => (
-              <Bar key={a.key} label={a.label} value={a.value} ceiling={a.potential} tip={a.about} />
-            ))}
-          </Panel>
-
-          <Panel title={m.everywhere}>
-            <Bar label={GROUP_NAME[own] ?? own} value={p.overall} mark />
-            {others.map(([g, v]) => (
-              <Bar key={g} label={GROUP_NAME[g] ?? g} value={v} />
-            ))}
-            {pr.ratings_at.KR != null && <Bar label={m.returner} value={pr.ratings_at.KR} />}
-          </Panel>
+          {/* every rating he has, whatever he plays: a panel a group, General then his position's own, then the rest */}
+          {skillGroups.map((g) => (
+            <Panel key={g.group} title={g.group} aside={m.ratingCount(g.rows.length)}>
+              {g.rows.map((x) => (
+                <Bar key={x.key} label={x.label} value={x.value} />
+              ))}
+            </Panel>
+          ))}
         </Panels>
       )}
 

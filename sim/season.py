@@ -4701,6 +4701,95 @@ def recruit_stars(p: dict) -> int:
     return 2
 
 
+# ----- every rating a player has, for his card's Ratings tab (the player's ask) ----------------------------------------
+# game_scale's skills (the EA ratings on our scale) by the groups EA shows them in, each with its name; then the ones
+# that are ours alone. Every player carries all of them, whatever he plays. A view: the sim reads skills as it always has.
+SKILL_GROUPS = (
+    ("General", (("speed", "Speed"), ("acceleration", "Acceleration"), ("strength", "Strength"), ("agility", "Agility"),
+                 ("awareness", "Awareness"), ("jumping", "Jumping"), ("injury", "Injury"), ("stamina", "Stamina"), ("toughness", "Toughness"),
+                 ("durability", "Durability"), ("balance", "Balance"))),
+    ("Ballcarrier", (("carrying", "Carrying"), ("break_tackle", "Break Tackle"), ("trucking", "Trucking"),
+                     ("change_of_direction", "Change of Direction"), ("bc_vision", "BC Vision"), ("stiff_arm", "Stiff Arm"),
+                     ("spin_move", "Spin Move"), ("juke_move", "Juke Move"), ("break_sack", "Break Sack"),
+                     ("elusiveness", "Elusiveness"), ("yards_after_contact", "Yards After Contact"))),
+    ("Receiving", (("catching", "Catching"), ("spectacular_catch", "Spectacular Catch"), ("catch_in_traffic", "Catch in Traffic"),
+                   ("short_route_running", "Short Route Running"), ("medium_route_running", "Medium Route Running"),
+                   ("deep_route_running", "Deep Route Running"), ("release", "Release"), ("separation", "Separation"),
+                   ("yards_after_catch", "Yards After Catch"), ("catch_radius", "Catch Radius"), ("body_control", "Body Control"))),
+    ("Blocking", (("run_block", "Run Block"), ("pass_block", "Pass Block"), ("impact_blocking", "Impact Blocking"),
+                  ("run_block_power", "Run Block Power"), ("run_block_finesse", "Run Block Finesse"),
+                  ("pass_block_power", "Pass Block Power"), ("pass_block_finesse", "Pass Block Finesse"), ("lead_block", "Lead Block"),
+                  ("second_level", "Second-Level Blocking"), ("blitz_pickup", "Blitz Pickup"), ("hand_technique", "Hand Technique"))),
+    ("Passing", (("throw_power", "Throw Power"), ("throw_under_pressure", "Throw Under Pressure"),
+                 ("throw_accuracy_short", "Throw Accuracy Short"), ("throw_accuracy_mid", "Throw Accuracy Mid"),
+                 ("throw_accuracy_deep", "Throw Accuracy Deep"), ("throw_on_the_run", "Throw on the Run"),
+                 ("play_action", "Play Action"), ("release_speed", "Release Speed"), ("pocket_poise", "Pocket Poise"),
+                 ("decision_making", "Decision Making"), ("touch", "Touch"))),
+    ("Defense", (("tackle", "Tackle"), ("power_moves", "Power Moves"), ("finesse_moves", "Finesse Moves"),
+                 ("block_shedding", "Block Shedding"), ("pursuit", "Pursuit"), ("play_recognition", "Play Recognition"),
+                 ("man_coverage", "Man Coverage"), ("zone_coverage", "Zone Coverage"), ("hit_power", "Hit Power"), ("press", "Press"),
+                 ("ball_skills", "Ball Skills"))),
+    # the kicking game: three groups of their own, each as long as it is
+    ("Kicking", (("kick_power", "Kick Power"), ("kick_accuracy", "Kick Accuracy"), ("long_snap", "Long Snap"))),
+    ("Punting", (("punt_power", "Punt Power"), ("punt_accuracy", "Punt Accuracy"))),
+    ("Returning", (("kick_return", "Kick Return"), ("punt_return", "Punt Return"))),
+)
+EVEN_GROUPS = ("General", "Ballcarrier", "Receiving", "Blocking", "Passing", "Defense")   # these carry the same number of ratings (the player's ask)
+assert len({len(rows) for g, rows in SKILL_GROUPS if g in EVEN_GROUPS}) == 1, "the six position groups must be one length"
+# The ratings that are ours, not game_scale's skills (the player's ask): each is read off the skills that go with it,
+# with a little of the player's own in it (a seeded draw of its own, by his slug). Where his card already carries the
+# rating (anyone's Durability, a quarterback's Pocket Poise, a punter's Punt Power), the card's number is the one shown.
+OUR_RATINGS = {     # *tune* key: (what it is read from, the card attribute that is the same thing or None)
+    "durability": ({"injury": 0.5, "toughness": 0.5}, "durability"),
+    "balance": ({"agility": 0.4, "strength": 0.3, "change_of_direction": 0.3}, None),
+    "elusiveness": ({"juke_move": 0.5, "spin_move": 0.5}, "elusiveness"),
+    "yards_after_contact": ({"trucking": 0.4, "break_tackle": 0.4, "strength": 0.2}, None),
+    "separation": ({"short_route_running": 0.2, "medium_route_running": 0.2, "deep_route_running": 0.2, "agility": 0.2, "acceleration": 0.2}, None),
+    "yards_after_catch": ({"juke_move": 0.3, "break_tackle": 0.3, "speed": 0.2, "acceleration": 0.2}, None),
+    "catch_radius": ({"jumping": 0.5, "spectacular_catch": 0.5}, None),
+    "body_control": ({"spectacular_catch": 0.4, "agility": 0.3, "awareness": 0.3}, None),
+    "second_level": ({"run_block_finesse": 0.5, "agility": 0.25, "speed": 0.25}, None),
+    "blitz_pickup": ({"pass_block": 0.5, "awareness": 0.5}, None),
+    "hand_technique": ({"pass_block_finesse": 0.4, "run_block_finesse": 0.3, "strength": 0.3}, None),
+    "release_speed": ({"throw_accuracy_short": 0.35, "throw_under_pressure": 0.30, "throw_on_the_run": 0.20, "awareness": 0.15}, None),
+    # Pocket Poise is one rating (the player's call: pocket presence is the same thing): his feel for the rush and his
+    # calm under it, the card's own number for a quarterback
+    "pocket_poise": ({"throw_under_pressure": 0.50, "awareness": 0.30, "break_sack": 0.20}, "pocket_poise"),
+    "touch": ({"throw_accuracy_mid": 0.4, "throw_accuracy_deep": 0.3, "throw_accuracy_short": 0.3}, None),   # taking something off it: layering a throw over a defender
+    "decision_making": ({"awareness": 0.60, "throw_under_pressure": 0.40}, "decision_making"),
+    "ball_skills": ({"catching": 0.5, "play_recognition": 0.3, "jumping": 0.2}, "ball_skills"),
+    "punt_power": ({"kick_power": 1.0}, "punt_power"),
+    "punt_accuracy": ({"kick_accuracy": 1.0}, "punt_accuracy"),
+    "punt_return": ({"kick_return": 0.6, "agility": 0.2, "catching": 0.2}, None),
+}
+OUR_SPREAD = 4                   # *tune* points either way that are the player's own
+
+
+def our_rating(key: str, skills: dict, slug: Optional[str], card: Optional[dict] = None) -> int:
+    """One of OUR_RATINGS, 1-99: his card's own number when the card carries it, else the blend of his skills moved up
+    to OUR_SPREAD points either way by a draw that is always the same for him. Shown on his card; the sim reads none."""
+    blend, same = OUR_RATINGS[key]
+    if same and isinstance((card or {}).get(same), (int, float)):
+        return int(round(card[same]))
+    base = sum(skills.get(k, 50) * w for k, w in blend.items()) / sum(blend.values())
+    own = random.Random(f"{key}-{slug}").uniform(-OUR_SPREAD, OUR_SPREAD)
+    return max(1, min(99, int(round(base + own))))
+
+
+def all_skills(p: dict) -> list[dict]:
+    """Every rating he has, by group: [{"group", "rows": [{key, label, value}]}] in SKILL_GROUPS' order ([] for a
+    player with no skills on file)."""
+    from teamdata import game_scale
+    skills = dict(zip(game_scale.keys(), p.get("skills") or []))
+    if not skills:
+        return []
+    who = p.get("slug") or p.get("name")
+    for key in OUR_RATINGS:
+        skills[key] = our_rating(key, skills, who, p.get("attributes"))
+    return [{"group": g, "rows": [{"key": k, "label": label, "value": int(round(skills[k]))} for k, label in rows if k in skills]}
+            for g, rows in SKILL_GROUPS]
+
+
 def player_profile(state: dict, team: str, name: Optional[str] = None, position: Optional[str] = None,
                    slug: Optional[str] = None) -> Optional[dict]:
     """One player's page. `team` None with a `slug`, or a team he is not on: the first team in the teams file whose
@@ -4768,6 +4857,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     return {
         "history": history, "redshirt": redshirt_status(state, team, p), "promise": promise,
         "recruitment": recruitment, "story": story, "hometown": (entry or {}).get("home"),
+        "skills": all_skills(p),                 # every rating he has, by group (the card's Ratings tab)
         "face": player_faces(state, team).get(p.get("slug")),
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
