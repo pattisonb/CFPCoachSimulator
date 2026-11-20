@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowBendUpRight,
   ChatCenteredText,
+  Ear,
   Fire,
   Handshake,
   HouseLine,
@@ -39,6 +40,7 @@ const QUESTION_INTRO = ["Can I ask you something?", "He has a question."];
 
 const REACTION_ICON: Record<string, Icon> = {
   hit: Fire,
+  fair: Ear,
   polite: ThumbsUp,
   quiet: SmileyMeh,
   tired: MoonStars,

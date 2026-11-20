@@ -24,7 +24,7 @@
   flex: none;
   align-items: stretch;
   min-height: 44px; /* *tune* the bar's height, with tabs or without (Bowls) */
-  gap: var(--s2);
+  gap: 6px; /* seven tabs and a status fit one line (Awards) */
   padding: 0 var(--s4);
   border-bottom: var(--line) solid var(--ink);
 }
@@ -50,9 +50,11 @@
 
 .section-tabs__tab {
   display: inline-flex;
+  flex: none; /* a tab's name stays on one line: the status at the bar's end gives way first */
   align-items: center;
   align-self: center;
   gap: 8px;
+  white-space: nowrap;
   min-height: 30px;
   padding: 0 var(--s2);
   background: none;
@@ -82,9 +84,12 @@
 
 .section-tabs__aside {
   display: flex;
+  flex: 0 1 auto;
   align-items: center;
   gap: var(--s2);
+  min-width: 0;
   margin-left: auto;
+  overflow: hidden;
 }
 
 /* a status at the bar's end: live, final, projected; a sample's dashed */
@@ -99,6 +104,9 @@
   letter-spacing: 1px;
   text-transform: uppercase;
   white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .section-tabs__status.is-sample {

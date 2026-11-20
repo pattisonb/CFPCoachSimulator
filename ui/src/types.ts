@@ -811,7 +811,7 @@ export interface BoardRow {
   history: RecruitEvent[];
   need: number | null;
   looks: number;
-  /** what he said about each topic you pitched him: hit, weak, not_his, no_read */
+  /** what he said about each topic you pitched him: hit, fair, weak, not_his, no_read */
   pitch_marks: Record<string, { mark: string; week?: number; action?: string }>;
   /** you already promised him the starting job */
   job_promised: boolean;
@@ -828,7 +828,7 @@ export interface RecruitEvent {
   school?: string;
   /** a contact's or pitch's action: message, call, hc_visit, official_visit */
   action?: string;
-  /** the topic pitched, and how he took it: hit, polite, quiet, tired, guarded */
+  /** the topic pitched, and how he took it: hit, fair, polite, quiet, tired, guarded */
   pitch?: string;
   reaction?: string;
   /** an opening's topics, and how many landed (null: he gave nothing away) */
@@ -884,7 +884,7 @@ export interface Scene {
 
 /** POST /recruit action "pitch": how he took what you led with */
 export interface SceneReaction {
-  kind: "hit" | "polite" | "quiet" | "tired" | "guarded";
+  kind: "hit" | "fair" | "polite" | "quiet" | "tired" | "guarded";
   text: string;
   /** your line */
   you: string;

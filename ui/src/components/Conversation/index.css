@@ -514,6 +514,11 @@
   color: var(--good);
 }
 
+/* listening: one of his, your case fair. Gold, between the fire and the quiet */
+.talk__result.is-fair .talk__stamp {
+  color: var(--gold);
+}
+
 .talk__result.is-tired .talk__stamp {
   color: var(--cold);
 }

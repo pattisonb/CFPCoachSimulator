@@ -30,7 +30,7 @@ OLD_PORTAL = {"portal_1": "portal_w1", "portal_2": "portal_w2"}     # saves from
 STAGE_NAMES = {"departures": "Departures", "retention": "Keep Them Home", "portal_w1": "Transfer Portal, Week 1", "portal_w2": "Transfer Portal, Week 2",
                "portal_w3": "Transfer Portal, Week 3", "portal_w4": "Transfer Portal, Week 4",
                "portal_1": "Transfer Portal, Round 1", "portal_2": "Transfer Portal, Round 2",
-               "development": "Development", "staff": "Staff", "conferences": "Change Conferences", "schedule": "Edit Schedule",
+               "development": "Progression", "staff": "Staff", "conferences": "Change Conferences", "schedule": "Edit Schedule",
                "ready": "Ready for Next Season"}
 ROSTER_LIMIT = 85          # EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
 FILL_TO = 80               # walk-ons and lower-level transfers top a roster up to this

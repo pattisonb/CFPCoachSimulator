@@ -85,7 +85,7 @@ def test_losing(st: dict) -> None:
     assert (fx["w"], fx["l"]) == (2, 5) and fx["form"] == "losing" and fx["last_won"] is False and fx["streak"] == -5, fx
     for pid in recruits(st, 6):
         sc, re = call(st, pid, ["winning", "nil", "coach"])
-        assert re["kind"] == "hit", re                                  # a Fair case on his priority still lands
+        assert re["kind"] == "fair", re                                 # a Fair case on his priority: he is listening (lit up takes a strong one)
         f = scenes._fields(st, ME, st["recruiting"]["prospects"][pid])
         doubt = {x.format(**f) for v in scenes.WIN_DOUBT.values() for x in v}
         assert scenes.bare_reaction(re["text"]) in doubt, re   # the skeptical variant, every time (he may note you said it already)

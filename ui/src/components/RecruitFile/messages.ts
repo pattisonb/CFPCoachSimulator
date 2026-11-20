@@ -222,6 +222,7 @@ export const messages = {
   } as Record<string, string>,
   reactions: {
     hit: "He Lit Up",
+    fair: "He Was Listening",
     polite: "Polite",
     quiet: "He Went Quiet",
     tired: "He Is Tired of This",

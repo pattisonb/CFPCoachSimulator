@@ -17,8 +17,9 @@ export const messages = {
 
   rounds: { first: "First Round", quarters: "Quarterfinals", semis: "Semifinals", final: "National Championship" },
   winnerOf: (pair: string) => `Winner of ${pair}`,
-  quarterWinner: "Quarterfinal Winner",
-  semiWinner: "Semifinal Winner",
+  // short enough for a bracket slot
+  quarterWinner: "QF Winner",
+  semiWinner: "SF Winner",
 
   youIn: (team: string, seed: number) => `${team} is in the playoff as the ${seed} seed.`,
   youInProjected: (team: string, seed: number) => `${team} would be in the playoff as the ${seed} seed.`,

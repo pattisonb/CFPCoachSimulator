@@ -1162,8 +1162,9 @@ def _present_clear(state: dict, slug: str, pid: str, sc: dict, topics: list[str]
         answer = "No answer: he is tired of your contact this week."
         sc["turns"].append(_turn("him", answer))
     else:
-        kind = "hit" if hits else "polite"
         st_ = recruiting.strengths(state, slug, pid)
+        # the best of his that you pitched decides it: lit up on a strong case, listening on a fair one, quiet on a weak one
+        kind = case_kind(max(st_[t] for t in hits)) if hits else "polite"
         answer = " · ".join(f"{_TOPIC_NAME.get(t, t)}: {'Yes' if t in hits else 'No'}" for t in topics)
         sc["turns"].append(_turn("him", answer))
         if hits:                                     # your program's grade on each Yes: where you stand on what he wants
@@ -1190,11 +1191,23 @@ def _reaction_clear(state: dict, slug: str, pid: str, pitch: str, tired: bool) -
     if tired:
         return {"kind": "tired", "text": "No answer: he is tired of your contact this week.", "you": you}
     if persona.counts_as_priority(state, pid, pitch):
-        kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
+        kind = case_kind(recruiting.strengths(state, slug, pid)[pitch])
         text = f"{name}: Yes, one of his priorities. Your case there: {_case_word(recruiting.strengths(state, slug, pid)[pitch])}."
     else:
         kind, text = "polite", f"{name}: No, not one of his priorities."
     return {"kind": kind, "text": text, "you": you}
+
+
+def case_kind(sv: float) -> str:
+    """How he takes a pitch on one of his priorities, by your case there: "hit" (he lights up: strong), "fair" (he is
+    listening: fair) or "quiet" (he goes quiet: weak). The same cuts as the page's Strong, Fair and Weak."""
+    return "hit" if sv >= recruiting.STRONG_CASE else "quiet" if sv < recruiting.BACKFIRE else "fair"
+
+
+# he cares about it and your case is fair: neither lit up nor gone quiet
+FAIR_LINES = ["{Topic}. Okay. I'm listening, Coach.",
+              "{Topic} matters to me. Show me more of it.",
+              "That's one of my things. I'd want to see it for myself."]
 
 
 def _case_word(sv: float) -> str:
@@ -1267,9 +1280,14 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
         best = max(hits, key=lambda t: st_[t])
         phrase = said_phrase(tr, best)                              # he echoes what you said
         kind, text = "hit", rng.choice(PRESENT_LINES["hit"]).format(topic=phrase, Topic=phrase[0].upper() + phrase[1:], **f)
+        fair = st_[best] < recruiting.STRONG_CASE                   # his, and your case is fair: he is listening, not lit up
         mine = _persona_line(state, pid, sc["id"], "hit", f, always=not tells_)     # a call that tells nothing names no topic
         if mine:                                                    # his tone, still naming which of your three landed
             text = f"{phrase[0].upper()}{phrase[1:]}? {mine}" if tells_ else mine
+        if fair:
+            kind = "fair"
+            if tells_:                                              # he names what he cares about, and no more than that
+                text = FAIR_LINES[sum(map(ord, sc["id"])) % len(FAIR_LINES)].format(Topic=phrase[0].upper() + phrase[1:], **f)
     elif back:
         kind, text = "quiet", true_line(tr, back[0], "quiet", rng.choice(LINES[back[0]]["quiet"]), f"{sc['id']}-present")[0].format(**f)
         text = _persona_line(state, pid, sc["id"], "quiet", f, always=not tells_) or text
@@ -1429,16 +1447,22 @@ def reaction(state: dict, slug: str, pid: str, action: str, pitch: str, p: dict,
     if tired:
         return {"kind": "tired", "text": rng.choice(TIRED).format(**f), "you": you}
     if persona.counts_as_priority(state, pid, pitch):
-        kind = "hit" if recruiting.strengths(state, slug, pid)[pitch] >= recruiting.BACKFIRE else "quiet"
+        kind = case_kind(recruiting.strengths(state, slug, pid)[pitch])
     else:
         kind = "polite"
     sid = f"{action}-{p['id']}-{state['current_week']}"          # the scene's id: its personality line, keyed apart from every other draw
-    line, fixed = true_line(tr, pitch, kind, rng.choice(LINES[pitch][kind]), sid)     # a claim the facts do not back gives way
+    # the draw is made from the lit-up or quiet lines either way (a fair case draws as a hit did), so the stream is as it was
+    line, fixed = true_line(tr, pitch, "hit" if kind == "fair" else kind, rng.choice(LINES[pitch]["hit" if kind == "fair" else kind]), sid)     # a claim the facts do not back gives way
     text = line.format(**f)
+    if kind == "fair" and not fixed:                              # he is listening: his own line, chosen by the scene (no draw). His doubt about a record the facts do not back stands
+        phrase = PHRASES[pitch]
+        text = FAIR_LINES[sum(map(ord, sid)) % len(FAIR_LINES)].format(Topic=phrase[0].upper() + phrase[1:], **f)
     if fixed and tells and pitch == "winning" and kind == "hit":
         pass                                                      # his doubt about the record stands: his personality's line would hide it
-    elif kind in ("hit", "quiet"):
-        mine = _persona_line(state, p["id"], sid, kind, f, always=not tells, salt="react")
+    elif kind == "fair" and tells:
+        pass                                                      # his listening line stands as it is
+    elif kind in ("hit", "quiet", "fair"):                        # (a fair case on a call that tells nothing: his personality's line, as a hit's)
+        mine = _persona_line(state, p["id"], sid, "hit" if kind == "fair" else kind, f, always=not tells, salt="react")
         if mine:                                                  # his personality's tone, still naming what landed (a guarded call names nothing)
             text = f"{PHRASES[pitch][0].upper()}{PHRASES[pitch][1:]}? {mine}" if tells else mine
     elif not tells:                                               # the topic's polite line would say it is none of his

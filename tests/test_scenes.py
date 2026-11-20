@@ -156,7 +156,7 @@ def test_present(st: dict, pid: str, sc: dict) -> None:
     assert e["topics"] == topics and e["hit"] == 0 and e["action"] == "call" and e["school"] == ME
     r = act(st, pid, "pitch", pitch=sc2["cue"]["topics"][0], scene=sc["id"])
     re = r["reaction"]
-    assert re["kind"] in ("hit", "polite", "quiet") and re["you"] == scenes.lead_line(scenes.truth(st, ME, pid), sc2["cue"]["topics"][0]).format(**scenes._fields(st, ME, p))
+    assert re["kind"] in ("hit", "fair", "polite", "quiet") and re["you"] == scenes.lead_line(scenes.truth(st, ME, pid), sc2["cue"]["topics"][0]).format(**scenes._fields(st, ME, p))
     assert pid not in rc["scenes"][ME]
 
 

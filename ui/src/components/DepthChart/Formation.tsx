@@ -285,7 +285,8 @@ function StarterCard({
   drag?: ReturnType<DragProps>;
   onOpen?: () => void;
 }) {
-  const size = [p.height, p.weight].filter(Boolean).join(" · ");
+  // the weight as a bare number: the card is narrow, and "lbs" pushed it past the edge
+  const size = [p.height, p.weight ? String(p.weight).replace(/ ?lbs?$/i, "") : null].filter(Boolean).join(" · ");
   return (
     <button
       type="button"

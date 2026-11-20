@@ -14,7 +14,7 @@ export const messages = {
   loadError: (msg: string) => `Couldn't load the awards: ${msg}.`,
 
   // the status at the bar's end
-  live: (week: string) => `Live Race · Through ${week}`,
+  live: (week: string) => `Live · ${week}`,
   final: "Final",
   sample: "Sample",
   preseason: "Preseason Favorites",

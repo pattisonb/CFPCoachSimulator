@@ -92,6 +92,7 @@ ASK_NARROW = (0.85, 1.15)                  # the ask range after a call; the num
 BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
 PITCH_PRIORITY = (1.0, 3.0)                # a pitch on one of his three priorities: 1 + 3 * your strength on it (1x weak, 4x strong) *tune*
 PITCH_OTHER = (0.3, 0.4)                   # any other topic: 0.3 + 0.4 * strength
+STRONG_CASE = 0.6                          # a priority pitched at a strength from this lights him up; under it (and not under BACKFIRE) he is listening: your case is fair *tune*
 BACKFIRE = 0.25                            # a priority pitched at a strength under this backfires (he isn't buying it) ...
 BACKFIRE_COST = 0.5                        # ... and costs this much of the action's base points
 PRESENT_HIT = 0.25                         # your opening on a call or visit (scenes.present): each of the three things that is one of his
@@ -1703,7 +1704,7 @@ def _answer(state: dict, slug: str, pid: str, scene: Optional[str], answer: Opti
     return {"scene": sc, "points": points, "truthful": truthful, "revealed": revealed, "hours_left": rc["hours"].get(slug, _hours(state, slug))}
 
 
-PITCH_MARK = {"hit": "hit", "quiet": "weak", "polite": "not_his", "guarded": "no_read", "tired": "no_read"}   # his reaction -> the mark the page shows
+PITCH_MARK = {"hit": "hit", "fair": "fair", "quiet": "weak", "polite": "not_his", "guarded": "no_read", "tired": "no_read"}   # his reaction -> the mark the page shows
 
 
 _MARKS: dict = {}          # (career, school, log identity, log length) -> {pid: marks}: one pass over the log per view

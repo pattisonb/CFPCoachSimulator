@@ -36,7 +36,7 @@ export const messages = {
   simWeekLast: "The season ends.",
   selection: "Sim to Selection Day",
   signing: "Sim to Signing Day",
-  signingSub: "Through the bowls to Signing Day.",
+  signingSub: "Bowls, then signing.",
   simThrough: "Sim Through a Week…",
   simThroughSub: "Stop after any week.",
   autoNote: "The recruiting weeks in between run on Auto.",

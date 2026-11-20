@@ -951,12 +951,12 @@ function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSPr
   const main = rows.filter((r) => Math.abs(r.w ?? 0) >= MAIN_WEIGHT);
   const rest = rows.filter((r) => Math.abs(r.w ?? 0) < MAIN_WEIGHT).sort((a, b) => b.to - b.from - (a.to - a.from));
   const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
-  const bars = (list: typeof rows, lifts: boolean) => (
+  const bars = (list: typeof rows) => (
     <ol className="growth__bars">
       {list.map((r) => {
         const lo = Math.min(r.from, r.to);
         return (
-          <li key={r.key} className={lifts ? "has-lift" : undefined}>
+          <li key={r.key}>
             <span className="growth__label">{r.label}</span>
             <span className="dev__track" aria-hidden="true">
               <i className="dev__was" style={{ width: `${lo}%` }} />
@@ -968,11 +968,6 @@ function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSPr
             <span className="growth__from">{r.from}</span>
             <b className="dev__now">{r.to}</b>
             <span className={`dev__delta${r.to > r.from ? " is-up" : ""}`}>{signed(r.to - r.from)}</span>
-            {lifts && (
-              <span className="growth__lift" title={m.dev.liftTip}>
-                {m.dev.lift(Math.round(r.lift * 10) / 10)}
-              </span>
-            )}
           </li>
         );
       })}
@@ -1010,11 +1005,11 @@ function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSPr
             <>
               <section>
                 <h4 className="label dev__kicker">{m.dev.lifted(main.length)}</h4>
-                {main.length ? bars(main, true) : <p className="off__soft">{m.dev.noLift}</p>}
+                {main.length ? bars(main) : <p className="off__soft">{m.dev.noLift}</p>}
               </section>
               {rest.length > 0 && (
                 <Panel title={m.dev.also(rest.length)} collapsible defaultOpen={false} className="growth__rest">
-                  <div className="growth__cols">{bars(rest, false)}</div>
+                  <div className="growth__cols">{bars(rest)}</div>
                 </Panel>
               )}
             </>

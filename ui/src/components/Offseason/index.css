@@ -889,7 +889,7 @@
 }
 
 .dev__delta.is-up {
-  color: var(--ink);
+  color: var(--good); /* a gain, in green */
   font-weight: 700;
 }
 
@@ -1220,9 +1220,17 @@
   text-transform: uppercase;
 }
 
+/* nothing on a candidate's card is wider than the card: a long line wraps, a third rating drops to the next row */
+.cand > * {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .cand__ratings {
   display: flex;
-  gap: var(--s3);
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s3);
 }
 
 .cand__ratings dd {

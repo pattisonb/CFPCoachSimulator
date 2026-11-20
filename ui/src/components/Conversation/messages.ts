@@ -34,13 +34,20 @@ export const messages = {
   pullTip: (topic: string, word: string) => `Your program's case on ${topic}: ${word.toLowerCase()}.`,
   known: "He told you he cares about this.",
   cue: "He just brought this up.",
-  marks: { hit: "Lit Up", weak: "Weak Case", not_his: "Not His Thing", no_read: "No Read" } as Record<string, string>,
+  marks: {
+    hit: "Lit Up",
+    fair: "Listening",
+    weak: "Weak Case",
+    not_his: "Not His Thing",
+    no_read: "No Read",
+  } as Record<string, string>,
   markTip: "How he took it last time.",
   cueLine: "His Cue",
 
   // how the pitch went: the big word, and a line on what it means
   reactions: {
     hit: "He Lit Up",
+    fair: "He's Listening",
     polite: "Polite Nod",
     quiet: "He Went Quiet",
     tired: "Tired of the Calls",
@@ -48,6 +55,7 @@ export const messages = {
   } as Record<string, string>,
   meaning: {
     hit: "That's one of his. Keep pushing it.",
+    fair: "That's one of his, and your case there is fair. Build it up.",
     polite: "Not his thing. Try another angle next time.",
     quiet: "He cares about it, but your case there is weak.",
     tired: "Too many calls. Give him some room.",
