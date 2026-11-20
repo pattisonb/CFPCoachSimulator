@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Robot, SidebarSimple } from "@phosphor-icons/react";
 import Button from "../../components/Button/index.tsx";
-import CoachBadge, { Energy } from "../../components/CoachBadge/index.tsx";
+import CoachBadge, { Energy, type CoachWord } from "../../components/CoachBadge/index.tsx";
 import Dropdown from "../../components/Dropdown/index.tsx";
 import Bracket from "../../components/Bracket/index.tsx";
 import GameWindow from "../../components/GameWindow/index.tsx";
@@ -351,6 +351,19 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
 
   // finds can land when a week passes, an offseason stage turns, or a look comes back on someone on your board
   const looks = recruiting?.board.reduce((n, b) => n + (b.looks ?? 0), 0) ?? 0;
+  // your word (how well you keep promises), on your coach's card: read again when a week passes
+  const [word, setWord] = useState<CoachWord | null>(null);
+  useEffect(() => {
+    if (!season?.id) return;
+    let on = true;
+    api<{ word?: CoachWord }>(`/api/season/${season.id}/office`)
+      .then((v) => on && setWord(v.word ?? null))
+      .catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, [season?.id, season?.current_week, offStage]);
+
   // what happened while time passed (a commit, a decommit, an injury, a staff find): the bell on your coach's card
   const notices = useNotices(season?.id, season?.year, season?.team, season?.current_week, recruiting?.board);
   const finds = useFinds(
@@ -458,7 +471,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                 name={coachName(coach)}
                 team={season.team_name}
                 face={face}
-                energy={energy}
+                word={word}
                 corner={corner}
                 below={toasts(false)}
               />
@@ -471,7 +484,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
               name={coachName(coach)}
               team={season.team_name}
               face={face}
-              energy={energy}
+              word={word}
               corner={corner}
               below={toasts(true)}
               alert={notices.unread}
