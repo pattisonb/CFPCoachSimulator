@@ -2,6 +2,10 @@
 small talk that knows the week, you present your program (three things), he reacts, you ask, he
 answers with the cue; a visit adds the room and his dad's ask; his question is introduced. Every
 line in every table formats with the full field set. Native; the engine's `act` path. (Run as a file.)"""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # a word-mode test: the conversations it reads are the ones Clear Mode replaces (coach_career/clear.py)
+
 import random
 import sys as _sys
 from pathlib import Path as _Path

@@ -164,11 +164,15 @@ def upgrade_overalls(state: dict) -> bool:
         attrs = lg["attrs"]
         players = [c for t in lg["teams"].values() for c in t["roster"]]
         players += [e["player"] for e in ((state.get("offseason") or {}).get("portal") or {}).get("players", {}).values()]
+        moved = False
         for c in players:
-            c["o"] = overall(dict(zip(attrs, c["r"])), c["pos"])
+            o = overall(dict(zip(attrs, c["r"])), c["pos"])
+            moved = moved or o != c["o"]
+            c["o"] = o
         lg["overall_v"] = version
-        from coach_career import league
-        league.forget(state["id"])
+        if moved:                      # a new career is already on this formula: its teams files stand
+            from coach_career import league
+            league.forget(state["id"])
         changed = True
     rc = state.get("recruiting")
     if rc and rc.get("scale") == "ours" and rc.get("prospects") and rc.get("overall_v", 1) != version:

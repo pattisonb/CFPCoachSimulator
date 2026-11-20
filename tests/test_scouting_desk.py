@@ -11,6 +11,7 @@ import urllib.parse
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 
 from app import api
+from coach_career import clear
 from coach_career import prospects
 from coach_career import recruiting
 from sim import season
@@ -19,7 +20,7 @@ from tests.test_offseason import finished
 ME = "ohio-state"
 ENTRY_KEYS = {"week", "pid", "by", "before", "after", "flags"}
 FLAGS = {"gem", "bust", "generational", "likes"}      # "likes": prospects.staff_likes, the Flags list's fourth kind
-VIEW_KEYS = {"hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week", "board_size", "board_scouted"}
+VIEW_KEYS = {"hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "full_reports", "trips_this_week", "board_size", "board_scouted", "areas"}   # areas: the Staff section's coverage map (area -> its states)
 SCOUT_KEYS = {"id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"}
 QUEUE_KEYS = {"cost", "pid", "name", "position", "display_pos", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
               "can_send", "why", "state", "likes", "on_board", "flags"}
@@ -88,6 +89,7 @@ if __name__ == "__main__":
         v = G(sid, "scouting?sort=board")
         assert set(v) == VIEW_KEYS, set(v)
         assert v["board_size"] == len(rc["board"]) and v["board_scouted"] == sum(1 for q in rc["board"] if recruiting.report_looks(rc["reads"].get(q)) > 0), (v["board_size"], v["board_scouted"])
+        assert {a: list(codes) for a, codes in v["areas"].items()} == {a: list(codes) for a, codes in recruiting.AREAS.items()}, v["areas"]
         assert v["hours"] == v["hours_left"] > 0
         assert v["reports"] == {"this_week": [], "last_week": []}
         assert [s["id"] for s in v["scouts"]] == [m["id"] for m in staff]
@@ -176,7 +178,7 @@ if __name__ == "__main__":
         keys = [(-r["need"], r["national_rank"]) for r in rest]
         assert keys == sorted(keys)
         seen = next(r for r in rest if rc["reads"].get(r["pid"]))
-        assert seen["looks"] == rc["reads"][seen["pid"]]["looks"] and seen["potential"] == list(recruiting.grade_range(st, seen["pid"], "potential"))
+        assert seen["looks"] == rc["reads"][seen["pid"]]["looks"] and seen["potential"] == recruiting.shown_range(st, seen["pid"], "potential")   # as the page shows it: words, or Clear Mode's numbers
         assert all(r["state"] == rc["prospects"][r["pid"]]["hometown"]["state"] for r in rest)
         # paging and filters: offset and limit (capped), a name or state search, position, group
         page2 = G(sid, "scouting?sort=board&offset=120&limit=10")
@@ -233,7 +235,7 @@ if __name__ == "__main__":
         why = {r["pid"]: r["why"] for r in v["queue"] if not r["can_send"]}
         assert why == {target["pid"]: prospects.REPORT_COMPLETE, yours: prospects.COMMITTED_TO_YOU}, why
         # on your board his complete report stays in the queue (nothing to send: the Complete tag's text as `why`), after
-        # the board's open reports, his potential one final grade word; off the board again he stays, no Send
+        # the board's open reports, his potential one final grade word (Clear Mode: a narrow range of numbers); off the board again he stays, no Send
         R(sid, "board", {"pid": target["pid"], "on": True})
         v = G(sid, "scouting?sort=board&limit=400")
         rows = v["queue"]
@@ -241,7 +243,13 @@ if __name__ == "__main__":
         i = next(i for i, r in enumerate(rows) if r["pid"] == target["pid"])
         assert all(r["pid"] in rc["board"] for r in rows[:i + 1]) and all(r["looks"] < 3 for r in rows[:i]), [r["pid"] for r in rows[:i + 1]]
         assert rows[i]["looks"] == 3 and rows[i]["can_send"] is False and rows[i]["why"] == prospects.REPORT_COMPLETE, rows[i]
-        assert rows[i]["potential"][0] == rows[i]["potential"][1] in recruiting.WORDS, rows[i]["potential"]
+        final = rows[i]["potential"]
+        if clear.on():      # Clear Mode: a complete report's potential is a narrow range of numbers (recruiting.shown_range), never a word
+            half = max(2.0, recruiting.read_spread(st, target["pid"], "potential")[1])
+            assert final == recruiting.shown_range(st, target["pid"], "potential") and all(x.isdigit() for x in final), final
+            assert 1 <= int(final[0]) < int(final[1]) <= 99 and int(final[1]) - int(final[0]) <= 2 * half + 1, (final, half)
+        else:
+            assert final[0] == final[1] in recruiting.WORDS, final
         assert all(r["can_send"] and r["looks"] < 3 for r in rows[i + 1:] if r["pid"] != yours)
         R(sid, "board", {"pid": target["pid"], "on": False})
         off = next(r for r in G(sid, "scouting?sort=board&limit=400")["queue"] if r["pid"] == target["pid"])

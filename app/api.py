@@ -731,7 +731,7 @@ def create_season(p: Params) -> dict:
         season.save_season(state)
     _mark_changed()
     _hold(state)
-    return season.summary(state)
+    return _show_conferences(season.summary(state), _conference_names(state))   # no season id in the path: call() does not rename these
 
 
 @route("GET", "/api/season/{season_id}/export")
@@ -769,7 +769,7 @@ def import_career(p: Params) -> dict:
         _cards.pop(sid, None)
         state = season.load_season(sid)
     _hold(state)
-    return season.summary(state)
+    return _show_conferences(season.summary(state), _conference_names(state))   # no season id in the path: call() does not rename these
 
 
 @route("GET", "/api/season/{season_id}/status")

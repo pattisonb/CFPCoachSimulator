@@ -13,6 +13,10 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "skipLibCheck": true,
+    "paths": {
+      "pocket-faces": ["../pocket-faces/src/index.ts"],
+      "pocket-faces/data": ["../pocket-faces/src/data.ts"]
+    },
     "types": ["vite/client", "node"]
   },
   "include": ["src", "vite.config.ts"]

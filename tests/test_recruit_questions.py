@@ -2,6 +2,10 @@
 in-home visit a recruit who cares about playing time asks about a named player (the one ahead of him
 on your roster, or another recruit you offered at his position); you answer Straight, Promise or
 Deflect; promises are remembered. Through app.api as the page asks. (Run as a file.)"""
+import os
+
+os.environ["CFP_CLEAR"] = "0"   # a word-mode test: the conversations it reads are the ones Clear Mode replaces (coach_career/clear.py)
+
 import sys as _sys
 from pathlib import Path as _Path
 

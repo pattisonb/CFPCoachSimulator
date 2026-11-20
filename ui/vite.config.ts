@@ -55,9 +55,14 @@ function gameServer(): Plugin {
 export default defineConfig({
   plugins: [react(), gameServer()],
   base: "./",
-  // pocket-faces is installed from a local folder and reinstalled when it changes: served as is, so a new version
-  // shows up without clearing Vite's pre-bundle cache (it is plain ESM with no dependencies)
-  optimizeDeps: { exclude: ["pocket-faces"] },
+  // pocket-faces lives in this repository (../pocket-faces) and is read as source: nothing to install or build,
+  // and an edit there shows up at once (tsconfig.json "paths" says the same to the type checker)
+  resolve: {
+    alias: [
+      { find: /^pocket-faces\/data$/, replacement: `${REPO_ROOT}pocket-faces/src/data.ts` },
+      { find: /^pocket-faces$/, replacement: `${REPO_ROOT}pocket-faces/src/index.ts` },
+    ],
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,

@@ -70,10 +70,18 @@ def test_next_season_pending_redshirt(st):
     """Before the redshirt calls land (they apply leaving Departures), a candidate reads the class he will have."""
     rs = st["offseason"]["redshirts"]
     assert not rs["decided"] and rs["players"], rs
-    for r in rs["players"][:6]:
+    # a candidate who wants out at Keep Them Home reads that first (test_next_season_wants_to_leave), in the class
+    # he has: his redshirt call only counts if he stays. Which candidates want out differs with the mode and seed
+    leaving = {e["id"] for e in (st["offseason"].get("retention") or {}).get("players") or ()}
+    staying = [r for r in rs["players"] if r["id"] not in leaving]
+    assert len(staying) >= 6 and {r["redshirt"] for r in staying[:6]} == {True, False}, [(r["name"], r["redshirt"]) for r in staying[:6]]
+    for r in staying[:6]:
         want = r["cls"] + "RS" if r["redshirt"] else offseason.NEXT_CLASS.get(r["cls"], r["cls"])
         n = offseason.player_next(st, r["id"])
-        assert n["class"] == want, (r["name"], r["cls"], r["redshirt"], n["class"])
+        assert n["status"] == "returning" and n["class"] == want, (r["name"], r["cls"], r["redshirt"], n["status"], n["class"])
+    for r in [r for r in rs["players"] if r["id"] in leaving][:6]:
+        n = offseason.player_next(st, r["id"])
+        assert n["status"] == "leaving" and n["class"] == r["cls"], (r["name"], r["cls"], n["status"], n["class"])
 
 
 def test_next_season_wants_to_leave(st):
