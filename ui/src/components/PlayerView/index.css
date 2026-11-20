@@ -348,10 +348,15 @@
 }
 
 /* a start you promised him: a handshake and where it stands, gold; red once it slips */
+
+/* the tag keeps the height of the ones beside it: the handshake is set into the line, not on top of it */
 .player-view__promise {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  height: 14px;
+  line-height: 14px;
+  vertical-align: top;
 }
 
 .player-view__promise svg {

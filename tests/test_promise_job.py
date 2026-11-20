@@ -51,6 +51,18 @@ def nobody_ahead(st, n=1, group=None):
     raise AssertionError("no prospect with nobody ahead")
 
 
+def two_at_one_group(st):
+    """Two prospects at one position group, neither with anyone ahead of him (the first group that has two)."""
+    by = {}
+    for q in ranked(st):
+        if recruiting.ahead_of(st, ME, q) is None:
+            pair = by.setdefault(recruiting._group_of(st["recruiting"]["prospects"][q]), [])
+            pair.append(q)
+            if len(pair) == 2:
+                return pair
+    raise AssertionError("no two prospects at one group with nobody ahead")
+
+
 def roster_promises(st, pid):
     return [pr for pr in (st["recruiting"]["contacts"].get(pid, {}).get(ME, {}).get("promises") or []) if pr["kind"] == "roster"]
 
@@ -113,9 +125,7 @@ def test_promise_over_a_better_player_holds():
 
 def test_crowd_and_strain():
     st = fresh()
-    a = nobody_ahead(st)[0]
-    group = recruiting._group_of(st["recruiting"]["prospects"][a])
-    b = next(q for q in nobody_ahead(st, 10, group) if q != a)
+    a, b = two_at_one_group(st)
     for q in (a, b):
         setup(st, q)
     saved = recruiting.JOB_CROWD_DOUBT
@@ -167,9 +177,7 @@ def test_ai_no_job_promise():
 
 def test_heard_rival_line():
     st = fresh()
-    a = nobody_ahead(st)[0]
-    group = recruiting._group_of(st["recruiting"]["prospects"][a])
-    b = next(q for q in nobody_ahead(st, 10, group) if q != a)
+    a, b = two_at_one_group(st)
     for q in (a, b):
         setup(st, q)
     sc = open_call(st, a)

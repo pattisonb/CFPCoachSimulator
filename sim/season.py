@@ -2134,7 +2134,7 @@ def _players_by_role(t: dict, players: list[dict]) -> dict[str, list[dict]]:
 
 
 def depth_chart_view(state: dict, slug: str) -> dict:
-    """A team's depth chart: every role in formation order, players in depth order, with
+    """A team's depth chart: every role in formation order, every player at it in depth order, with
     class, size, rating and the player's season headline."""
     check_fbs(slug)
     overrides = (state.get("depth") or {}).get(slug)
@@ -2150,7 +2150,7 @@ def depth_chart_view(state: dict, slug: str) -> dict:
             group = by_role.get(role, [])
             if not group:
                 continue
-            out_rows.append({"role": role, "label": label, "starters": role_starters(t, role), "players": [card(p, role) for p in group[:6]]})
+            out_rows.append({"role": role, "label": label, "starters": role_starters(t, role), "players": [card(p, role) for p in group]})     # everyone at the role: a cap of six hid a seventh receiver, and a player moved back to a deep room
         units.append({"name": unit, "rows": out_rows})
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
