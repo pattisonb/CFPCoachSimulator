@@ -88,6 +88,8 @@ export interface GameBox extends BoxScore {
   away: GameSide;
   winner: SideKey | null;
   overtime_periods: number;
+  /** each side's team overall, as the page shows a team rating; null for an FCS stand-in */
+  overalls?: { home: number | null; away: number | null };
   scoring_plays: ScoringPlay[];
   drives: Drive[];
 }

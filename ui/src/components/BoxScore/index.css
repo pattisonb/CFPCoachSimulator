@@ -58,6 +58,15 @@
   white-space: nowrap;
 }
 
+/* the team's overall after its name */
+.box__ovr {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
 /* a small ink square after your own team's name */
 .box__you {
   flex: none;

@@ -3295,6 +3295,9 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
         schedule.append({"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"),
                          "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"],
                          "opponent_rank": ap.get(opp), "my_rank": ap.get(slug),
+                         "my_ratings": _unit_overalls(load_teams().get(slug)), "opponent_ratings": _unit_overalls(load_teams().get(opp)),
+                         "opponent_conf_record": (f"{all_rec[opp].get('conf_wins', 0)}-{all_rec[opp].get('conf_losses', 0)}"
+                                                  if opp in all_rec and not load_teams().get(opp, {}).get("fictional") else None),
                          "venue": _venue(g, home), "played": g["played"],
                          "won": (g["home_score"] > g["away_score"]) == home if g["played"] else None,
                          "points_for": pf, "points_against": pa,
@@ -3381,6 +3384,11 @@ def _preview_prediction(state: dict, g: dict, sims: int) -> dict:
                              "rusher": watch(side, "rush_yards", ["carries", "rush_yards", "rushing_touchdowns"]),
                              "receiver": watch(side, "receiving_yards", ["receptions", "receiving_yards", "receiving_touchdowns"])} for side in ("home", "away")}}
     return pred
+
+
+def team_overall(slug: Optional[str]) -> Optional[int]:
+    """A team's overall as the page shows it (the schedule's banner, a box score); None for an FCS stand-in."""
+    return (_unit_overalls(load_teams().get(slug)) or {}).get("overall")
 
 
 def _unit_overalls(team: Optional[dict]) -> Optional[dict]:

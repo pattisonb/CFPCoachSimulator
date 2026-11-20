@@ -105,6 +105,11 @@ export interface ScheduleGame {
   rivalry?: Rivalry | null;
   /** the AP rank you held going into the week */
   my_rank?: number | null;
+  /** each side's overall, offense and defense, as the page shows a team rating; null for an FCS stand-in */
+  my_ratings?: { overall: number; offense: number; defense: number } | null;
+  opponent_ratings?: { overall: number; offense: number; defense: number } | null;
+  /** the opponent's conference record ("4-4"); null for an FCS stand-in */
+  opponent_conf_record?: string | null;
   /** a box score exists (GET /api/season/{id}/game/{event_id}) */
   has_box?: boolean;
 }
@@ -447,6 +452,8 @@ export interface DepthChart {
   name: string;
   head_coach: string | null;
   roster_size: number;
+  /** the team's overall, offense and defense, as the page shows a team rating */
+  ratings?: { overall: number; offense: number; defense: number };
   overridden: boolean;
   units: { name: string; rows: DepthRow[] }[];
 }

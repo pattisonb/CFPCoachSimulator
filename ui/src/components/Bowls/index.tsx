@@ -17,13 +17,12 @@ interface Props {
 /** The bowl weeks, in order: each one a window of the bowl season. */
 const WINDOWS = [17, 18, 19];
 
-const sideOf = (b: Bowl, which: "away" | "home", teams: Map<string, TeamCard>, me: string): MatchupSide => {
+const sideOf = (b: Bowl, which: "away" | "home", teams: Map<string, TeamCard>): MatchupSide => {
   const slug = b[which];
   return {
     team: slug ? teams.get(slug) : undefined,
     name: (which === "away" ? b.away_name : b.home_name) ?? m.tbd,
     record: (which === "away" ? b.away_record : b.home_record) ?? "",
-    mine: !!slug && slug === me,
   };
 };
 
@@ -171,8 +170,8 @@ function Banner({ b, teams, me, yours }: { b: Bowl; teams: Map<string, TeamCard>
         <div className="bowls-banner__unfilled">{m.unfilled}</div>
       ) : (
         <Matchup
-          left={sideOf(b, "away", teams, me)}
-          right={sideOf(b, "home", teams, me)}
+          left={sideOf(b, "away", teams)}
+          right={sideOf(b, "home", teams)}
           result={mineWon === null ? null : mineWon ? "won" : "lost"}
           mid={
             played ? (
