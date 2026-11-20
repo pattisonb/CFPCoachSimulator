@@ -155,6 +155,19 @@ export type SeasonCoach =
   | { existing: true; name: string }
   | { existing: false; id: string; first_name: string; last_name: string };
 
+/** The national championship game (sim/season.py _game_line). */
+export interface TitleGame {
+  event_id: string;
+  home: string;
+  away: string;
+  home_name: string;
+  away_name: string;
+  home_score: number | null;
+  away_score: number | null;
+  played: boolean;
+  has_box: boolean;
+}
+
 /** GET /api/season/{id} (the parts the new UI uses) */
 export interface SeasonSummary {
   id: string;
@@ -174,6 +187,8 @@ export interface SeasonSummary {
   /** your job with the AD: the season's goal and how secure you are (0-100) */
   job: { goal: string; security: number; mood: string; ultimatum: boolean } | null;
   champion_name: string | null;
+  /** the national championship once its two teams are known; its score once played */
+  title_game?: TitleGame | null;
   offseason_stage: string | null;
   /** your team's injury report */
   injuries: unknown[];

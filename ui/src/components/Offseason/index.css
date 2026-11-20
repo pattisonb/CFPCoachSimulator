@@ -63,7 +63,7 @@
   width: 100%;
   min-width: 0;
   min-height: 48px;
-  padding: 5px 6px;
+  padding: 5px 4px; /* "Keep Home" whole with your face in the bar's corner */
   background: var(--paper-hi);
   color: var(--ink-soft);
   border: var(--line) solid var(--line-soft);

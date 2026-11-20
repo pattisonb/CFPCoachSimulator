@@ -22,6 +22,7 @@ export const messages = {
   quarterWinner: "QF Winner",
   semiWinner: "SF Winner",
 
+  boxScore: (a: string, b: string) => `Open the box score: ${a} vs ${b}`,
   championKicker: "National Champions",
   titleScore: (won: number, lost: number, loser: string) => `${won}–${lost} over ${loser}`,
 

@@ -4,6 +4,7 @@ import Panel from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
+import Wordmark from "../Wordmark/index.tsx";
 import { api } from "../../api.ts";
 import { inkOn } from "../../colors.ts";
 import type { Bracket as Field, BracketSeed, SeasonSummary, TeamCard } from "../../types.ts";
@@ -13,6 +14,8 @@ import "./index.css";
 interface Props {
   season: SeasonSummary;
   teams: Map<string, TeamCard>;
+  /** open a played game's box score */
+  onBox?: (eventId: string) => void;
 }
 
 /** A playoff game as the season's review reports it (GET /review → rounds[].games[], title_game). */
@@ -28,6 +31,8 @@ interface PlayoffGame {
   home_seed?: number | null;
   away_seed?: number | null;
   bowl?: string | null;
+  event_id?: string;
+  has_box?: boolean;
 }
 interface Review {
   rounds: { round: string; week: number; games: PlayoffGame[] }[];
@@ -50,12 +55,15 @@ interface Match {
   bottom: Side;
   /** the bowl that hosts it, when the game is set */
   note?: string | null;
+  /** the played game's id when it has a box score to open */
+  box?: string | null;
 }
 
 /** a name as the review writes it carries its seed ("(1) Texas"): the slot has the seed in its own box */
 const bare = (name: string) => name.replace(/^\(\d+\)\s*/, "");
 const sideOf = (s: BracketSeed): Side => ({ seed: s.seed, team: s.team, name: s.name });
 const waiting = (text: string): Side => ({ name: text, pending: true });
+const boxOf = (g?: PlayoffGame) => (g?.played && g.has_box && g.event_id ? g.event_id : null);
 
 /**
  * The Bracket: the 12-team playoff, round by round. Before selection day it is a projection: the field as it would be
@@ -64,7 +72,7 @@ const waiting = (text: string): Side => ({ name: text, pending: true });
  * scores. Under it, on the same screen: the field with how each team got in, and the first four out. A projection
  * says so with one mark in the bar's corner, its why in the mark's tip.
  */
-export default function Bracket({ season, teams }: Props) {
+export default function Bracket({ season, teams, onBox }: Props) {
   const real = season.bracket?.seeds?.length ? season.bracket : null;
   const field: Field | null = real ?? season.bracket_projection ?? null;
   const [review, setReview] = useState<Review | null>(null);
@@ -127,20 +135,32 @@ export default function Bracket({ season, teams }: Props) {
     const fr =
       field.first_round.find((g) => `${g.home.seed} vs ${g.away.seed}` === q.winner_of) ?? field.first_round[0];
     const g = played("first", fr.home.team, fr.away.team);
-    return { key: q.winner_of, top: scored(sideOf(fr.home), g), bottom: scored(sideOf(fr.away), g), note: g?.bowl };
+    return {
+      key: q.winner_of,
+      top: scored(sideOf(fr.home), g),
+      bottom: scored(sideOf(fr.away), g),
+      note: g?.bowl,
+      box: boxOf(g),
+    };
   });
   const quarters: Match[] = field.quarterfinals.map((q, i) => {
     const frGame = played("first", first[i].top.team, first[i].bottom.team);
     const g = played("quarter", q.bye.team);
     const foe = winnerOf(frGame, waiting(m.winnerOf(q.winner_of)));
-    return { key: `q${q.bye.seed}`, top: scored(sideOf(q.bye), g), bottom: scored(foe, g), note: g?.bowl };
+    return {
+      key: `q${q.bye.seed}`,
+      top: scored(sideOf(q.bye), g),
+      bottom: scored(foe, g),
+      note: g?.bowl,
+      box: boxOf(g),
+    };
   });
   const quarterGames = field.quarterfinals.map((q) => played("quarter", q.bye.team));
   const semis: Match[] = [0, 1].map((k) => {
     const a = winnerOf(quarterGames[2 * k], waiting(m.quarterWinner));
     const b = winnerOf(quarterGames[2 * k + 1], waiting(m.quarterWinner));
     const g = a.team && b.team ? played("semi", a.team, b.team) : undefined;
-    return { key: `s${k}`, top: scored(a, g), bottom: scored(b, g), note: g?.bowl };
+    return { key: `s${k}`, top: scored(a, g), bottom: scored(b, g), note: g?.bowl, box: boxOf(g) };
   });
   const semiGames = semis.map((s) =>
     s.top.team && s.bottom.team ? played("semi", s.top.team, s.bottom.team) : undefined,
@@ -148,7 +168,7 @@ export default function Bracket({ season, teams }: Props) {
   const title = review?.title_game ?? undefined;
   const finalA = winnerOf(semiGames[0], waiting(m.semiWinner));
   const finalB = winnerOf(semiGames[1], waiting(m.semiWinner));
-  const final: Match = { key: "final", top: scored(finalA, title), bottom: scored(finalB, title) };
+  const final: Match = { key: "final", top: scored(finalA, title), bottom: scored(finalB, title), box: boxOf(title) };
 
   // each round with how its games reach the next: one to one (a first-round winner meets a seed), or two into one
   const rounds: [string, Match[], "straight" | "pairs" | "end"][] = [
@@ -176,15 +196,7 @@ export default function Bracket({ season, teams }: Props) {
               <span className="label">{m.championKicker}</span>
               <b>{bare(season.champion_name)}</b>
             </span>
-            {title?.played && (
-              <span className="bracket__champ-score">
-                {m.titleScore(
-                  Math.max(title.home_score ?? 0, title.away_score ?? 0),
-                  Math.min(title.home_score ?? 0, title.away_score ?? 0),
-                  bare(title.winner === title.home ? title.away_name : title.home_name),
-                )}
-              </span>
-            )}
+            {title?.played && <TitleGame g={title} teams={teams} />}
           </div>
         )}
         <div className="bracket__cols">
@@ -195,11 +207,7 @@ export default function Bracket({ season, teams }: Props) {
                 <div className="bracket__games" style={{ "--n": games.length } as CSSProperties}>
                   {games.map((g) => (
                     <div key={g.key} className="bracket__cell">
-                      <div className="bracket__game">
-                        {g.note && <span className="bracket__bowl">{g.note}</span>}
-                        <Line s={g.top} teams={teams} me={season.team} />
-                        <Line s={g.bottom} teams={teams} me={season.team} />
-                      </div>
+                      <Game g={g} teams={teams} me={season.team} onBox={onBox} />
                     </div>
                   ))}
                 </div>
@@ -239,6 +247,65 @@ export default function Bracket({ season, teams }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** A matchup's card: the bowl over its two lines; a played game with a box score is a button that opens it. */
+function Game({
+  g,
+  teams,
+  me,
+  onBox,
+}: {
+  g: Match;
+  teams: Map<string, TeamCard>;
+  me: string;
+  onBox?: (eventId: string) => void;
+}) {
+  const body = (
+    <>
+      {g.note && <span className="bracket__bowl">{g.note}</span>}
+      <Line s={g.top} teams={teams} me={me} />
+      <Line s={g.bottom} teams={teams} me={me} />
+    </>
+  );
+  const box = onBox && g.box;
+  return box ? (
+    <button
+      type="button"
+      className="bracket__game is-link"
+      title={m.boxScore(bare(g.top.name), bare(g.bottom.name))}
+      onClick={() => onBox(box)}
+    >
+      {body}
+    </button>
+  ) : (
+    <div className="bracket__game">{body}</div>
+  );
+}
+
+/**
+ * The title game on the champion's band: the winner's letters in its colors, the score, the loser's letters in its
+ * colors. A side whose team the page does not know (no card) falls back to the score and the loser's name.
+ */
+function TitleGame({ g, teams }: { g: PlayoffGame; teams: Map<string, TeamCard> }) {
+  const homeWon = g.winner === g.home;
+  const won = { team: teams.get(homeWon ? g.home : g.away), score: (homeWon ? g.home_score : g.away_score) ?? 0 };
+  const lost = {
+    team: teams.get(homeWon ? g.away : g.home),
+    score: (homeWon ? g.away_score : g.home_score) ?? 0,
+    name: bare(homeWon ? g.away_name : g.home_name),
+  };
+  if (!won.team || !lost.team)
+    return <span className="bracket__champ-game">{m.titleScore(won.score, lost.score, lost.name)}</span>;
+  return (
+    <span className="bracket__champ-game" aria-label={m.titleScore(won.score, lost.score, lost.name)}>
+      <Wordmark team={won.team} framed />
+      <b>{won.score}</b>
+      <i aria-hidden="true">{m.dash}</i>
+      <b className="is-lost">{lost.score}</b>
+      <Wordmark team={lost.team} framed />
+    </span>
   );
 }
 

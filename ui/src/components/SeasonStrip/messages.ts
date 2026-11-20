@@ -11,7 +11,8 @@ export const messages = {
     `${won ? "W" : "L"} ${pf}-${pa}${ot ? (ot > 1 ? ` ${ot}OT` : " OT") : ""}`,
   tbd: "Date TBD",
   /** a postseason week with no game of yours set yet */
-  open: (week: number) => (week === 16 ? "Field Set" : week === 15 || week === 20 ? "Title Game" : "Bowl / CFP"),
+  open: (week: number) =>
+    week === 16 ? "Field Set" : week === 15 ? "Champ Game" : week === 20 ? "Title Game" : "Bowl / CFP",
   /** the postseason weeks' names, short enough for a tile */
   short: {
     15: "Champ Wk",
@@ -24,5 +25,8 @@ export const messages = {
   toBeSet: "To Be Set",
   /** a postseason week that came and went, or will, with no game of yours */
   noGame: "No Game",
+  titleGame: "Title Game",
+  score: (a: number, b: number) => `${a}-${b}`,
+  titleTip: (away: string, home: string) => `${away} vs ${home}`,
   boxScore: (opponent: string) => `Open the box score: ${opponent}`,
 } as const;

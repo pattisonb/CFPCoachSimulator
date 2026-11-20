@@ -47,6 +47,12 @@
   padding-right: calc(88px + var(--s3));
 }
 
+/* the Offseason has no top row either: its bar (the steps, then the stage's name and the way on) stops short of your face */
+.game__main.is-offseason .section-tabs,
+.game__main.is-offseason .off__top {
+  padding-right: calc(88px + var(--s3));
+}
+
 /* a section with no top row (the Offseason): the section takes the whole height */
 .game__main.is-bare {
   grid-template-rows: minmax(0, 1fr);

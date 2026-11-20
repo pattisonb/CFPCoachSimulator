@@ -111,6 +111,11 @@
   text-overflow: ellipsis;
 }
 
+/* the title game: two wordmarks with "vs" between, a little closer so two four-letter marks fit */
+.season-strip__opp--title {
+  gap: 3px;
+}
+
 .season-strip__swatch {
   flex: none;
   width: 14px;

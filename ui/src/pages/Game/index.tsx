@@ -539,6 +539,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
             "game__main",
             bare && navMode !== "hidden" && "is-bare",
             section.key === "recruiting" && "is-recruiting",
+            section.key === "offseason" && "is-offseason",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -559,6 +560,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
             {season && !bare && (
               <SeasonStrip
                 games={stripGames}
+                titleGame={season.title_game}
                 teams={bySlug}
                 weekLabels={season.week_labels}
                 week={stripWeek}
@@ -566,9 +568,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
               />
             )}
           </div>
-          {/* you, in the window's top right corner on every screen but the Offseason: your face alone, the card when
-              you point at it. Recruiting has no top row: its tab bar is as tall as your face and leaves it the corner */}
-          {season && coach && face && section.key !== "offseason" && (
+          {/* you, in the window's top right corner on every screen: your face alone, the card when you point at it.
+              Recruiting and the Offseason have no top row: their top bars stop short of your face and leave it the corner */}
+          {season && coach && face && (
             <CoachBadge
               name={coachName(coach)}
               team={season.team_name}
@@ -644,7 +646,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                     ) : key === "stats" ? (
                       <Stats key={season.current_week} season={season} teams={bySlug} show={statsOpen} />
                     ) : key === "bracket" ? (
-                      <Bracket season={season} teams={bySlug} />
+                      <Bracket season={season} teams={bySlug} onBox={openBox} />
                     ) : key === "recap" ? (
                       <Recap season={season} teams={bySlug} />
                     ) : key === "offseason" ? (
