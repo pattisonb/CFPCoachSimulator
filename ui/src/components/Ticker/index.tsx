@@ -81,8 +81,10 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
     }
     const mine = ++asked.current.n;
     Promise.all([
-      api<{ items: NewsItem[] }>(`/api/season/${seasonId}/news?since_week=${Math.max(0, week - NEWS_WEEKS)}`),
-      api<{ games: WeekGame[] }>(`/api/season/${seasonId}/week/${week}`),
+      api<{ items: NewsItem[] }>(`/api/season/${seasonId}/news?since_week=${Math.max(0, week - NEWS_WEEKS)}`, {
+        quiet: true,
+      }),
+      api<{ games: WeekGame[] }>(`/api/season/${seasonId}/week/${week}`, { quiet: true }),
     ])
       .then(([n, w]) => {
         if (asked.current.season !== seasonId || mine < asked.current.shown) return;
