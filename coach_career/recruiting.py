@@ -866,7 +866,7 @@ def needs(state: dict, slug: str) -> dict[str, int]:
 
 def needs_detail(state: dict, slug: str) -> dict[str, dict]:
     """Needs for the page, per roster group: the healthy make-up (target), who comes back, the
-    school's commits (firm: FIRM_VISIT and up; soft below), its board and open offers there, and
+    school's commits (firm: FIRM_VISIT and up; soft below), its board (yours to get, and the ones you got) and open offers there, and
     what is left (`need`, as needs())."""
     from coach_career import offseason
     rc = state["recruiting"]
@@ -880,7 +880,7 @@ def needs_detail(state: dict, slug: str) -> dict[str, dict]:
             firm[_group_of(rc["prospects"][pid])] += 1
     for pid in rc["board"] if slug == state["team"] else []:
         st = rc["status"][pid]
-        if not st["signed"] and st["committed"] in (None, slug):
+        if (st["signed"] or st["committed"]) in (None, slug):       # everyone on your board still yours to get, and the ones you got
             board[_group_of(rc["prospects"][pid])] += 1
     # in the portal your high school class has signed and sits on next year's roster (so in `back`): `signees` names
     # them apart, so the page never reads "0 committed" with a class signed
