@@ -1313,7 +1313,7 @@ def reset_caches() -> None:
     _STATIC.clear()
     _PULLS.clear()
     _ASKS.clear()
-    _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT = (None, {}), (None, {}, None), (None, {}), (None, 0)
+    _WINNING, _FITS, _GROUP_COUNTS, _LEAVER_CUT = (None, {}), (None, {}, None, None, {}), (None, {}), (None, 0)
     _returning.cache_clear()
     _open_spots.cache_clear()
 _WINNING: tuple = (None, {})   # (career and week, this week's on-field standing of every school)
@@ -2086,8 +2086,12 @@ def _snapshot_ranks(state: dict, week: int) -> None:
     win = _winning(state)
     ranks = rc.setdefault("ranks", {})
     changed = 0
+    offered: dict[str, set] = {}             # each prospect's offers, turned round once (asking every school about every prospect took a quarter second)
+    for s, pids in rc["offers"].items():
+        for pid in pids:
+            offered.setdefault(pid, set()).add(s)
     for pid, lst in rc["lists"].items():
-        schools = set(lst) | {s for s, pids in rc["offers"].items() if pid in pids}
+        schools = set(lst) | offered.get(pid, set())
         if not schools:
             continue
         order = sorted(schools, key=lambda s: -interest(state, s, pid, win))
@@ -2450,10 +2454,12 @@ def _event(state: dict, kind: str, pid: str, school: Optional[str] = None, **ext
     return e
 
 
-def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
+def _fit_all(slug: str, prospects: dict, pool: dict, only: Optional[set] = None, out: Optional[dict] = None) -> dict[str, float]:
     """How well each prospect fits a school's usual recruiting: its states (each state's real share
     of its signees spread over that state's prospects in this class; the rest over everyone else,
-    nearer first), a blue-chip program's national reach, its star level and its positions."""
+    nearer first), a blue-chip program's national reach, its star level and its positions.
+    With `only` and `out`: the same sum for those prospects alone, written into `out` (a school's
+    fits kept from before, after a few stars moved)."""
     tm = _team_model(slug)
     shares = dict(tm.get("top_states") or [])
     rest = pool["total"] - sum(pool["states"].get(s, 0) for s in shares)
@@ -2465,9 +2471,9 @@ def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
     loc = tm.get("location")
     lat0, lon0 = (math.radians(loc[0]), math.radians(loc[1])) if loc else (None, None)
     cos0 = math.cos(lat0) if loc else 0.0
-    out = {}
-    tiers = {pid: tier_of(p) for pid, p in prospects.items()}
-    for pid, p in prospects.items():
+    out = {} if out is None else out
+    todo = prospects.items() if only is None else [(pid, prospects[pid]) for pid in only]
+    for pid, p in todo:
         home = p["hometown"]["state"]
         if home in shares:
             w = shares[home] / pool["states"][home]
@@ -2477,7 +2483,7 @@ def _fit_all(slug: str, prospects: dict, pool: dict) -> dict[str, float]:
             w = rest_w * REST_NEAR * math.exp(-3958.8 * 2 * math.asin(math.sqrt(h)) / REST_MILES)
         else:
             w = rest_w
-        tier = tiers[pid]
+        tier = tier_of(p)
         if tier >= 4:
             w += reach
         pos = per_class.get(POS_247.get(p["position"], p["position"]), 1.0)
@@ -2501,17 +2507,34 @@ def _national_share(stars: int) -> float:
     return int(counts.get(str(stars), 1)) / sum(int(v) for v in counts.values())
 
 
-_FITS: tuple = (None, {}, None)   # (career and class, each school's fit for every prospect, the pool)
+# (career and class, each school's fit for every prospect, the pool, the class's star version, every prospect's tier then)
+_FITS: tuple = (None, {}, None, None, {})
 
 
 def _fits(state: dict, slug: str) -> dict[str, float]:
-    """A school's fit for every prospect in the class (fixed all season), cached for one career."""
+    """A school's fit for every prospect in the class, cached for one career. A fit is fixed all season but for a
+    star that moves (a Late Bloomer's jump, rc["class_v"]): then only what the jump touches is worked out again,
+    his own fit at every school, and every blue chip's when the jump changed how many there are (their national
+    reach is shared out among them). Working every school's whole class out again cost three seconds a jump."""
     global _FITS
     rc = state["recruiting"]
-    key = (state["id"], _ck(rc), rc.get("class_v", 0))      # a Late Bloomer's jump changes his star lift
+    key = (state["id"], _ck(rc))
+    version = rc.get("class_v", 0)
     cached = _FITS
     if cached[0] != key:
-        cached = _FITS = (key, {}, _pool(state))
+        cached = _FITS = (key, {}, _pool(state), version, {pid: tier_of(p) for pid, p in rc["prospects"].items()})
+    elif cached[3] != version:
+        pool, tiers = _pool(state), {pid: tier_of(p) for pid, p in rc["prospects"].items()}
+        old_pool, old_tiers = cached[2], cached[4]
+        if tiers.keys() != old_tiers.keys() or pool["states"] != old_pool["states"]:     # another class of prospects: start over
+            cached = _FITS = (key, {}, pool, version, tiers)
+        else:
+            redo = {pid for pid, t in tiers.items() if t != old_tiers[pid]}
+            if pool["blue_chips"] != old_pool["blue_chips"]:
+                redo |= {pid for pid, t in tiers.items() if t >= 4}
+            for school, kept in cached[1].items():
+                _fit_all(school, rc["prospects"], pool, only=redo, out=kept)
+            cached = _FITS = (key, cached[1], pool, version, tiers)
     fits = cached[1].get(slug)
     if fits is None:
         fits = cached[1][slug] = _fit_all(slug, rc["prospects"], cached[2])
