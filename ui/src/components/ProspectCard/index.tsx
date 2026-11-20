@@ -22,9 +22,10 @@ interface Props {
 export function statusOf(r: ProspectRow): string {
   if (r.pro) return m.goingPro;
   if (r.signed && r.school_name) return m.signedWith(r.school_name);
-  if (r.committed && r.school_name) return m.committedTo(r.school_name);
+  if (r.committed && r.school_name) return r.hard ? m.hardCommit(r.school_name) : m.committedTo(r.school_name);
   if (r.leaning_fcs) return m.leaningFcs;
-  return m.open;
+  // uncommitted: where you stand with him, when you stand anywhere
+  return m.openAt[r.stage ?? ""] ?? m.open;
 }
 
 /** *tune* How many of a transfer's numbers his one-line season shows. */

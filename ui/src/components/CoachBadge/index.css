@@ -75,6 +75,7 @@
 .coach-badge__energy-label {
   color: var(--ink-soft);
   font-size: 10px;
+  white-space: nowrap; /* "Your Word" on one line even while the floating card is shut: two lines made the card taller shut than open */
 }
 
 .coach-badge__bar {
@@ -117,6 +118,7 @@
 /* your name and energy are there all along, behind the card's edge: the slide uncovers them (nothing fades in) */
 .coach-badge--float .coach-badge__who {
   max-width: 0;
+  max-height: 72px; /* never taller than your face, so the card is one height shut, sliding and open */
   overflow: hidden;
   transition:
     max-width var(--badge-slide) cubic-bezier(0.22, 1, 0.36, 1),

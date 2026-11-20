@@ -794,6 +794,8 @@ def row(state: dict, pid: str, viewer: str) -> dict:
         "height": p["height"], "weight": p["weight"], "home": p["home"], **shown(state, p),
         "hometown": {"city": p["hometown"]["city"], "state": p["hometown"]["state"]},
         "committed": st["committed"], "signed": st["signed"], "leaning_fcs": bool(st["fcs"]),
+        "hard": bool(st.get("hard")) and not st["signed"],          # a hard commit: the Status column says so, and sorts it over a verbal one
+        "stage": recruiting.stage(state, viewer, pid),              # where you stand with him: cold, contact, top, visited, committed
         "school_name": PRO if st.get("pro") else "FCS" if school == "FCS" else (season.team_display(school, teams) if school else None),
         "pro": bool(st.get("pro")),
         "on_board": pid in rc["board"], "offered": pid in rc["offers"].get(viewer, []),
@@ -991,7 +993,9 @@ def _height_in(h) -> int:
         return 0
 
 
-STATUS_ORDER = {"open": 0, "leaning_fcs": 1, "committed": 2, "signed": 3}
+# the Status column's order, furthest along first: signed, a hard commit, a verbal one, then where you stand with the
+# uncommitted (recruiting.stage: visited, his top group, in contact, cold), the FCS leaners last
+STATUS_ORDER = {"signed": 0, "hard": 1, "committed": 2, "visited": 3, "top": 4, "contact": 5, "cold": 6, "leaning_fcs": 7}
 
 
 def _sort_key(state: dict, viewer: str, key: str, keen: dict):
@@ -1015,7 +1019,9 @@ def _sort_key(state: dict, viewer: str, key: str, keen: dict):
     if key == "status":
         def st(pid):
             x = seen_status(state, pid, viewer)
-            return STATUS_ORDER["signed" if x["signed"] else "committed" if x["committed"] else "leaning_fcs" if x["fcs"] else "open"]
+            if x["signed"] or x["committed"]:
+                return STATUS_ORDER["signed" if x["signed"] else "hard" if x.get("hard") else "committed"]
+            return STATUS_ORDER["leaning_fcs" if x["fcs"] else recruiting.stage(state, viewer, pid)]
         return st
     if key == "offers":                       # the schools that have offered him, most first
         n: dict = {}

@@ -549,6 +549,9 @@ export interface PlayerProfile {
 
 /** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */
 export interface ProspectRow {
+  /** a hard commit (not yet signed), and where you stand with him: cold, contact, top, visited, committed */
+  hard?: boolean;
+  stage?: string;
   /** how many schools have offered him */
   offers_n?: number;
   /** the transfer portal: he is a transfer, with the school he left and what he did there last season */
