@@ -395,9 +395,10 @@ KICKOFF_BIG_RETURN_CHANCE = 0.06
 KICKOFF_RETURN_TD_CHANCE = 0.004
 
 # ----- Usage shares (calibrated against 2026 box scores, see calibrate_players.py) -----
-TARGET_WEIGHT_POWER = 3.5       # receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
-                                # full-season receiving leaders 17% over 2023-2025)
-TARGET_MULT_MAX = 2.0           # cap on a receiver's real-usage target weight (data/real_adjustments.json)
+TARGET_WEIGHT_POWER = 2.5       # receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
+                                # full-season receiving leaders 17% over 2023-2025, 3.5 15% over: tools/realism.py)
+TARGET_MULT_MAX = 1.5           # cap on a receiver's real-usage target weight (data/real_adjustments.json); 2.0 fed the
+                                # top receivers too much (the leader had 2,100 yards where real leaders have 1,500)
 
 # ----- Who gets the defensive stats (tools/realism.py: season leaders against real seasons) -----
 # Tackle weight per player on the field: (dl, lb, olb, s, cb) for runs of 2 yards or less,
