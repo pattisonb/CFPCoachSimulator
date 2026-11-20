@@ -857,7 +857,7 @@ function notesOf(why: string[]) {
   const back: string[] = [];
   for (const w of why) {
     if (/^struggled/i.test(w)) despite.push(w);
-    else if (/^(lost a step|went backward)/i.test(w)) back.push(w);
+    else if (/^(lost a step|lost some of his ceiling|went backward)/i.test(w)) back.push(w);
     else if (/^now an? /i.test(w)) changed.push(w);
     else helped.push(w);
   }

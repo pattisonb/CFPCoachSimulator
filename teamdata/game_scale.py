@@ -138,6 +138,13 @@ def legacy_overall(ours: dict, pos: str) -> Optional[int]:
     return int(round(max(1, min(99, f["const"] + sum(w * ours.get(k, 50) for k, w in f["w"].items())))))
 
 
+def position_skills(pos: str) -> set:
+    """The skills a position is graded on: the ones the overall as first fit weighs (legacy_overall's formula)."""
+    fs = data().get("overall") or {}
+    f = fs.get(pos) or fs.get(_FIRST.get(group(pos), "QB")) or {}
+    return {k for k, w in (f.get("w") or {}).items() if w > 0}
+
+
 def card_position(p: dict) -> str:
     """The EA position a built player's card is scored at: the one his skills were made for (the build keeps it as
     "source_position"), else his depth-chart role, else his engine position (which only names the group, so card_formula

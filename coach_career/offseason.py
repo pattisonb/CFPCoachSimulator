@@ -1816,8 +1816,9 @@ REGRESS_Z = -1.0                 # *tune* a starter this far under the average s
 REGRESS_STRUGGLE = 0.5           # *tune* ... and he loses a step this often
 REGRESS_RUST = 0.3               # *tune* an upperclassman buried on the depth chart who is slow to learn goes backward this often
 REGRESS_YEARS = 2                # *tune* seasons in the program before rust can set in
-REGRESS_RATINGS = 3              # *tune* how many of his ratings slip (never the physical ones)
-REGRESS_POINTS = (1, 2)          # *tune* the points each of them loses
+REGRESS_RATINGS = 4              # *tune* how many of his ratings slip (never the physical ones)
+REGRESS_POINTS = (2, 4)          # *tune* the points each of them loses
+CEILING_NOTE = "Lost some of his ceiling after a hard year as a starter"   # his potential fell (clear.CEIL_STRUGGLE)
 REGRESS_NOTES = {"struggle": "Lost a step after a hard year as a starter", "rust": "Went backward buried on the depth chart"}
 
 
@@ -1825,8 +1826,9 @@ def regress(p: dict, attrs: list[str], perf: Optional[dict], benched: bool, year
     """A player can go backward over an offseason (the player's ask): a starter who had a hard year (his production
     REGRESS_Z under the average starter's) loses a step REGRESS_STRUGGLE of the time, and an upperclassman buried on
     the depth chart who is slow to learn (clear.SLOW_LEVELS) goes backward REGRESS_RUST of the time. REGRESS_RATINGS of
-    his skill and football IQ ratings (never the physical ones) lose REGRESS_POINTS each, and the points go back into
-    his room, so he can earn them again. Its own stream (`regress-{year}-{id}`): no other draw moves. Returns the
+    the skill and football IQ ratings his position is graded on (never the physical ones) lose REGRESS_POINTS each, and
+    the points go back into his room, so he can earn them again. The year's own growth in skill and football IQ is
+    taken back by the caller (_develop_all): a step back is the whole year. Its own stream (`regress-{year}-{id}`): no other draw moves. Returns the
     note for his report, or None when he held."""
     z = (perf or {}).get("z")
     if z is not None and z <= REGRESS_Z:
@@ -1839,6 +1841,9 @@ def regress(p: dict, attrs: list[str], perf: Optional[dict], benched: bool, year
     if rng.random() >= odds:
         return None
     able = [i for i, k in enumerate(attrs) if k not in PHYSICAL and p["r"][i] > 1]
+    from teamdata import game_scale
+    matter = game_scale.position_skills(p["pos"])      # what slips is his own game (the skills his position is graded on): it shows
+    able = [i for i in able if attrs[i] in matter] or able
     if not able:
         return None
     for i in rng.sample(able, min(REGRESS_RATINGS, len(able))):
@@ -2075,7 +2080,9 @@ def _develop_all(state: dict) -> dict:
                 p["g"] = [min(g, 99 - v) for g, v in zip(p["g"], p["r"])]
                 breakouts += 1
             if clear.on():                 # Clear Mode: ceilings move both ways (a struggling year, a slow learner, a drift)
-                clear.ceiling_drift(p, attrs, perf.get(p["id"]), year, PHYSICAL)
+                fell = clear.ceiling_drift(p, attrs, perf.get(p["id"]), year, PHYSICAL)
+                if fell < 0 and clear.struggled(perf.get(p["id"])):
+                    why.append(CEILING_NOTE)
             if level_up and rng.random() < LEVEL_UP and p.get("c") in levels[1:]:
                 p["c"] = levels[levels.index(p["c"]) - 1]
                 why.append(coachability_note(p["c"], "award"))
@@ -2096,15 +2103,23 @@ def _develop_all(state: dict) -> dict:
             if starter and year_pace(p, True) > year_pace(p):
                 why.append(f"Started as a {'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore'}")
             was = list(p["r"]) if slug == state["team"] else None          # your players' ratings before, for the report
+            r0, g0, o0 = list(p["r"]), list(p["g"]), p["o"]                # ... and everyone's, for a step back (below)
             g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng, starter)
             # ... and a step back for some (regress: its own stream, after every other draw). The report's gain is the net
             g_ = GROUP[p["pos"]]
             buried = depth is not None and sum(1 for v in depth[g_] if v > p["o"]) >= STARTERS[g_] + 2
-            now = p["o"]
+            grown = list(p["r"])
             slipped = regress(p, attrs, perf.get(p["id"]), buried, year)
             if slipped:
+                # a step back is the whole year (the player's ask): his skill and football IQ do not grow at all, and
+                # what slipped comes off where he started, the points back in his room; his body still fills out
+                for i, k in enumerate(attrs):
+                    if k not in PHYSICAL:
+                        p["r"][i] = max(1, r0[i] + (p["r"][i] - grown[i]))
+                        p["g"][i] = g0[i] + (r0[i] - p["r"][i])
+                p["o"] = lg.overall(p, attrs)
                 why.append(slipped)
-                g += p["o"] - now
+                g = p["o"] - o0
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:
