@@ -1,0 +1,27 @@
+/* A team's letters on its own color, the words in whichever of black or white reads on it. */
+.wordmark {
+  display: inline-block;
+  flex: none;
+  padding: 0 8px;
+  background: var(--c);
+  color: var(--on);
+  border: var(--line) solid var(--c);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
+/* on a band of a team's own color: framed in the band's ink */
+.wordmark--framed {
+  border-color: var(--team-on, var(--paper-hi));
+}
+
+/* two to a small tile */
+.wordmark--small {
+  padding: 0 2px;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  letter-spacing: 0;
+}

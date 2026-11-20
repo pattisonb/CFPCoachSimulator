@@ -58,11 +58,26 @@
   white-space: nowrap;
 }
 
-.bracket__champ-score {
+/* the title game at the band's end: each side's letters on its own color, the score between them */
+.bracket__champ-game {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
-  font-size: var(--t-md);
+  font-size: var(--t-lg);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.bracket__champ-game i {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.bracket__champ-game .is-lost {
+  opacity: 0.75;
 }
 
 /* the tree across the page, taking the height the field and the first four out under it leave: one screen, no scroll */
@@ -177,6 +192,25 @@
 
 .bracket__line + .bracket__line {
   border-top: 1px solid var(--line-soft);
+}
+
+/* a played game is a button to its box score: it lifts a step under the pointer */
+button.bracket__game {
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+button.bracket__game:hover,
+button.bracket__game:focus-visible {
+  box-shadow: 5px 5px 0 var(--shadow);
+  transform: translate(-2px, -2px);
 }
 
 /* a team's name in a slot */

@@ -2147,6 +2147,20 @@ def _players_by_role(t: dict, players: list[dict]) -> dict[str, list[dict]]:
     return by_role
 
 
+def depth_changed(state: dict, slug: str) -> bool:
+    """Whether the team's depth chart differs from the one it started with (the Reset Chart button): moves that put
+    everyone back where he was leave it unchanged, whatever is stored."""
+    overrides = (state.get("depth") or {}).get(slug)
+    if not overrides:
+        return False
+
+    def chart(t: dict) -> dict:
+        return {role: [p["slug"] for p in group] for role, group in _players_by_role(t, t["offense"] + t["defense"]).items() if group}
+
+    base = team_data(state, slug)
+    return chart(apply_depth(base, overrides)) != chart(base)
+
+
 def depth_chart_view(state: dict, slug: str) -> dict:
     """A team's depth chart: every role in formation order, every player at it in depth order, with
     class, size, rating and the player's season headline."""
@@ -2168,8 +2182,8 @@ def depth_chart_view(state: dict, slug: str) -> dict:
         units.append({"name": unit, "rows": out_rows})
     hc = (t.get("coaches") or {}).get("head_coach") or {}
     return {"team": slug, "name": t["name"], "conference": t["conference"], "head_coach": hc.get("name"),
-            "ratings": _shown.team_ratings(t.get("team_ratings", {})), "roster_size": len(players), "units": units,
-            "overridden": bool(overrides), "editable": True}
+            "ratings": _unit_overalls(state, slug) or {}, "roster_size": len(players), "units": units,
+            "overridden": depth_changed(state, slug), "editable": True}
 
 
 # the trait tiers by name, for a roster link's abilities (teamdata/ratings.py TRAIT_TIERS)
@@ -3295,7 +3309,7 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
         schedule.append({"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"),
                          "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"],
                          "opponent_rank": ap.get(opp), "my_rank": ap.get(slug),
-                         "my_ratings": _unit_overalls(load_teams().get(slug)), "opponent_ratings": _unit_overalls(load_teams().get(opp)),
+                         "my_ratings": _unit_overalls(state, slug), "opponent_ratings": _unit_overalls(state, opp),
                          "opponent_conf_record": (f"{all_rec[opp].get('conf_wins', 0)}-{all_rec[opp].get('conf_losses', 0)}"
                                                   if opp in all_rec and not load_teams().get(opp, {}).get("fictional") else None),
                          "venue": _venue(g, home), "played": g["played"],
@@ -3386,18 +3400,52 @@ def _preview_prediction(state: dict, g: dict, sims: int) -> dict:
     return pred
 
 
-def team_overall(slug: Optional[str]) -> Optional[int]:
-    """A team's overall as the page shows it (the schedule's banner, a box score); None for an FCS stand-in."""
-    return (_unit_overalls(load_teams().get(slug)) or {}).get("overall")
+_RATINGS_NOW: dict = {}
 
 
-def _unit_overalls(team: Optional[dict]) -> Optional[dict]:
-    """A team's overall, offense and defense rounded to whole numbers (team_ratings: each unit weighted toward its
-    starters, as the unit overalls are everywhere); None for a team without ratings (an FCS stand-in)."""
-    r = (team or {}).get("team_ratings") or {}
-    if team is None or team.get("fictional") or not all(isinstance(r.get(k), (int, float)) for k in ("overall", "offense", "defense")):
+def team_ratings_now(state: dict, slug: Optional[str]) -> Optional[dict]:
+    """A team's ratings as it would line up today (the player's ask): its depth chart as it is set, anyone hurt stepping
+    aside for the next man, every edit to a player in. The same sum as the ratings built with the team
+    (coach_career/league.team_ratings: the starters' mean overall through TEAM_FIT), so an untouched, healthy team
+    reads exactly as it was built. None for an FCS stand-in. On the game's own scale: the page's is _unit_overalls."""
+    base = load_teams().get(slug) if slug else None
+    if base is None or base.get("fictional"):
         return None
-    return {k: _shown.team(r[k], k) for k in ("overall", "offense", "defense")}     # as the page shows a team rating
+    hurt = (state.get("injuries") or {}).get(slug) or {}
+    depth = (state.get("depth") or {}).get(slug)
+    sig = (season_year(state), state.get("current_week"), json.dumps(depth, sort_keys=True) if depth else "", tuple(sorted(hurt)),
+           json.dumps((state.get("player_edits") or {}).get(slug) or {}, sort_keys=True), id(base))
+    hit = _RATINGS_NOW.get((state.get("id"), slug))
+    if hit and hit[0] == sig:
+        return hit[1]
+    from coach_career import league
+    t = apply_depth(team_data(state, slug), depth)
+    units: dict[str, list] = {"offense": [], "defense": [], "special_teams": []}
+    for role, group in _players_by_role(t, t["offense"] + t["defense"]).items():
+        if role in ("KR", "PR"):
+            continue
+        fit = [p for p in group if f"{p['name']}|{p['position']}" not in hurt]
+        unit = "special_teams" if role in ("K", "P") else "offense" if role in league.OFFENSE_ROLES else "defense"
+        units[unit] += [shown_overall(p) for p in fit[:role_starters(t, role)]]
+    out = {}
+    for unit, vals in units.items():
+        a, b = league.TEAM_FIT[unit]
+        out[unit] = round(max(1.0, min(99.0, a * sum(vals) / len(vals) + b)), 1) if vals else 40.0
+    out["overall"] = round(0.45 * out["offense"] + 0.45 * out["defense"] + 0.1 * out["special_teams"], 1)
+    _RATINGS_NOW[(state.get("id"), slug)] = (sig, out)
+    return out
+
+
+def team_overall(state: dict, slug: Optional[str]) -> Optional[int]:
+    """A team's overall as the page shows it (a box score's scoreboard); None for an FCS stand-in."""
+    return (_unit_overalls(state, slug) or {}).get("overall")
+
+
+def _unit_overalls(state: dict, slug: Optional[str]) -> Optional[dict]:
+    """A team's overall, offense and defense as the page shows a team rating, as it lines up today
+    (team_ratings_now); None for a team without ratings (an FCS stand-in)."""
+    r = team_ratings_now(state, slug)
+    return {k: _shown.team(r[k], k) for k in ("overall", "offense", "defense")} if r else None
 
 
 def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
@@ -3423,7 +3471,7 @@ def game_preview(state: dict, slug: str, sims: int = 20) -> dict:
                  "opponent_record": _record_str(rec[opp]) if opp in rec and not teams.get(opp, {}).get("fictional") else "",
                  "my_rank": ranks.get(slug), "my_record": _record_str(rec[slug]),
                  "venue": _venue(g, home), "rivalry": game_rivalry(state, g, after=g["played"])})
-    game["ratings"] = {"mine": _unit_overalls(teams.get(slug)), "theirs": _unit_overalls(teams.get(opp))}   # the Office's matchup: each side's overall, offense, defense
+    game["ratings"] = {"mine": _unit_overalls(state, slug), "theirs": _unit_overalls(state, opp)}   # the Office's matchup: each side's overall, offense, defense
     if g["played"]:
         # game day is done: the result, not a prediction
         pf, pa = _scores_for(g, home)
@@ -3527,6 +3575,8 @@ def summary(state: dict) -> dict:
         "offseason_stage": (state.get("offseason") or {}).get("stage"),
         "job": _job(state) if state.get("career") else None,
         "champion_name": teams[state["champion"]]["name"] if state.get("champion") else None,
+        # the national championship once its two teams are known (the season strip's Title Wk tile), with its score once played
+        "title_game": _game_line(state["games"]["cfp-final"], teams, state) if state["games"].get("cfp-final") else None,
         "record": rec, "schedule": schedule, "weeks": weeks, "my_rank": current_rank(state),
         "coach": _coach_line(state, teams[state["team"]]),
         "week_labels": {**{w: week_name(w) for w in range(1, LAST_REGULAR_WEEK + 1)}, CCG_WEEK: "Championship Week",

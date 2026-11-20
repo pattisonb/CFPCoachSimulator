@@ -1178,7 +1178,7 @@ def season_game(p: Params) -> dict:
         if riv is not None:
             box = dict(box, rivalry=riv)
     # each side's overall for the scoreboard, as the page shows a team rating (not stored with the box)
-    return dict(box, overalls={s: season.team_overall(box.get(f"{s}_slug")) for s in ("home", "away")})
+    return dict(box, overalls={s: season.team_overall(state, box.get(f"{s}_slug")) for s in ("home", "away")})
 
 
 @route("GET", "/api/season/{season_id}/settings")
@@ -1667,7 +1667,7 @@ def season_depth_roster(p: Params) -> dict:
     out = season.depth_roster_view(state, p.path["slug"])
     t = season.team_data(state, p.path["slug"])
     hc = ((t.get("coaches") or {}).get("head_coach") or {}).get("name")
-    return dict(out, name=t["name"], conference=t.get("conference"), head_coach=hc, ratings=season._shown.team_ratings(t.get("team_ratings") or {}))
+    return dict(out, name=t["name"], conference=t.get("conference"), head_coach=hc, ratings=season._unit_overalls(state, p.path["slug"]) or {})
 
 
 @route("GET", "/api/season/{season_id}/depth/{slug}/position/{role}")
