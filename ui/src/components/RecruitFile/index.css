@@ -393,3 +393,9 @@ dd.recruit-file__inline {
 .recruit-file__pair {
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
 }
+
+/* a comp's school, position and overall: on his name's line, soft */
+.recruit-file__comp-rest {
+  color: var(--ink-soft);
+  font-weight: 400;
+}

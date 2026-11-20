@@ -13,11 +13,26 @@
   color: var(--ink);
 }
 
-.recruit-flags__flag.is-bust {
-  color: var(--ink-soft);
+/* each flag in its own color: a green gem, a gold crown, a blue snowflake, green money, a risk in red */
+.recruit-flags__flag.is-gem,
+.recruit-flags__flag.is-owed {
+  color: var(--good);
 }
 
-/* in a profile's head: each icon in a small box, the good finds solid */
+.recruit-flags__flag.is-generational {
+  color: var(--gold);
+}
+
+.recruit-flags__flag.is-cooled {
+  color: var(--cold);
+}
+
+.recruit-flags__flag.is-bust,
+.recruit-flags__flag.is-pestered {
+  color: var(--warn);
+}
+
+/* in a profile's head: each icon in a small box, filled with its color */
 .recruit-flags.is-boxed .recruit-flags__flag {
   width: 26px;
   height: 26px;
@@ -25,8 +40,24 @@
   border: var(--line) solid var(--ink);
 }
 
-.recruit-flags.is-boxed .is-generational,
-.recruit-flags.is-boxed .is-gem {
-  background: var(--ink);
-  color: var(--paper-hi);
+.recruit-flags.is-boxed .is-gem,
+.recruit-flags.is-boxed .is-owed {
+  background: var(--good);
+  color: #fff;
+}
+
+.recruit-flags.is-boxed .is-generational {
+  background: var(--gold);
+  color: #37352f;
+}
+
+.recruit-flags.is-boxed .is-cooled {
+  background: var(--cold);
+  color: #fff;
+}
+
+.recruit-flags.is-boxed .is-bust,
+.recruit-flags.is-boxed .is-pestered {
+  background: var(--warn);
+  color: #fff;
 }

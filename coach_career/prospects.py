@@ -3,8 +3,9 @@ section 6): a prospect's public page (the national rankings' read of him, with i
 written evaluation for the top 300, comps only to real starters and only when close, and your
 staff's grades and comp once they have seen enough of him.
 
-A comp compares the prospect's projected ceiling (his potential ratings) with a starter's
-ratings over the attributes that matter most at his EA position."""
+A comp compares where the prospect projects to (his ratings now, grown the way a player of his
+coachability grows over COMP_YEARS offseasons toward his potential) with a player's ratings over
+the attributes that matter most at his EA position."""
 from __future__ import annotations
 
 import json
@@ -22,6 +23,7 @@ EVALUATED = 300                    # the top 300 get a written evaluation and a 
 COMP_PERCENTILE = 0.50             # COMP_MAX_DISTANCE: this percentile of starter-to-starter distances *tune*
 COMP_ATTRIBUTES = 10               # the attributes compared: those that track a starter's overall most at the position
 COMP_CHOICES = 6                   # a comp is one of this many nearest players, picked by the recruit's own seed, so a class's best do not all share one comp *tune*
+COMP_YEARS = 4                     # a comp is who he projects to be after this many offseasons of average growth *tune*
 OUR_COMP_LOOKS = 3                 # looks before your staff offer their own comp
 READ_SHIFT = 0.5                   # rating points an attribute moves per grade point a read is off *tune*
 PUBLIC_SD = 3.0                    # the national rankings' error on his grades, in grade points *tune*
@@ -154,6 +156,41 @@ def _shifted(state: dict, p: dict, grades: dict[str, float], field: str = "poten
         off = READ_SHIFT * (grades[g] - p["truth"][g]) + READ_SHIFT / 2 * (grades["potential"] - p["truth"]["potential"])
         out[k] = max(0, min(99, v + off))
     return out
+
+
+def _dev_rate(points: float) -> float:
+    """A coachability grade (recruiting.COACHABILITY_POINTS' scale) as a yearly development rate
+    (recruits.RATE), read between the levels on either side of it."""
+    from coach_career import recruits
+    pts = sorted((v, recruits.RATE[k]) for k, v in recruiting.COACHABILITY_POINTS.items())
+    if points <= pts[0][0]:
+        return pts[0][1]
+    for (a, ra), (b, rb) in zip(pts, pts[1:]):
+        if points <= b:
+            return ra + (rb - ra) * (points - a) / (b - a)
+    return pts[-1][1]
+
+
+def growth_share(points: float) -> float:
+    """How much of the room between his ratings and his potential a player of this coachability
+    grade closes over COMP_YEARS offseasons at the game's own average pace (offseason.develop: his
+    rate, DEV_RATE and the year's curve, no more than DEV_YEAR_CAP a year)."""
+    from coach_career import offseason
+    left = 1.0
+    for y in range(COMP_YEARS):
+        pace = offseason.YEAR_CURVE[min(len(offseason.YEAR_CURVE) - 1, y)]
+        left *= 1 - min(offseason.DEV_YEAR_CAP, _dev_rate(points) * offseason.DEV_RATE * pace)
+    return 1 - left
+
+
+def projection(state: dict, p: dict, grades: dict[str, float]) -> dict:
+    """Who a read says he becomes, for a comp: his skills now as the read sees them, each grown by
+    growth_share of its room to his potential (as the read sees that). The read's coachability
+    sets the share: a Coach's Dream nearly reaches his ceiling, a player Set in His Ways stays
+    close to what he is, so two recruits of one ceiling do not project to the same player."""
+    now, top = _shifted(state, p, grades, "ratings"), _shifted(state, p, grades, "potential")
+    share = growth_share(grades.get("coachability", recruiting.COACHABILITY_POINTS["Steady Grinder"]))
+    return {k: v + max(0.0, top.get(k, v) - v) * share for k, v in now.items()}
 
 
 # ----- "OC likes him": a coordinator vouches for a recruit the read says would start -------------------
@@ -705,7 +742,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
     our_comp = None
     if read and recruiting.report_looks(read) >= OUR_COMP_LOOKS:
         ours = {g: read["g"][g][0] for g in recruiting.GROUPS}
-        our_comp = comp(_shifted(state, p, ours), p["ea_position"], player_pool(), key=f"ours-{pid}")
+        our_comp = comp(projection(state, p, ours), p["ea_position"], player_pool(), key=f"ours-{pid}")
     details = {g: grade_detail(state, p, g, *recruiting.read_interval(state, pid, g)) for g in recruiting.GROUPS} if read else None
     traits = persona.view(state, viewer, pid)
     return {
@@ -721,7 +758,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "evaluation": _evaluation(p, public_grades) if top else None,
         # Clear Mode: the abilities he arrives with, once your staff has looked at him
         "abilities": _abilities_seen(p) if read else None,
-        "public_comp": comp(_shifted(state, p, public_grades), p["ea_position"], player_pool(), key=f"public-{pid}") if top else None,
+        "public_comp": comp(projection(state, p, public_grades), p["ea_position"], player_pool(), key=f"public-{pid}") if top else None,
         "our_grades": our_grades,
         "clear": clear.ratings(state, pid) if clear.on() else None,      # Clear Mode: his key ratings in numbers
         "looks": looks_out(read),

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chat, ChatsCircle, Heart, House, MagnifyingGlass, Phone, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
@@ -18,8 +18,11 @@ import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { messages as m } from "./messages.ts";
-import RecruitFlags from "../RecruitFlags/index.tsx";
+import RecruitFlags, { type RecruitAlert } from "../RecruitFlags/index.tsx";
 import "./index.css";
+
+/** *tune* How long what your last action did, and a warning that has just started, stay written out, in ms. */
+const NOTE_MS = 6000;
 
 /** The roster groups in order (the keys a need is counted under). */
 const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
@@ -409,6 +412,32 @@ function RecruitPanel({
   const [promiseJob, setPromiseJob] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // what your last action did is said for a moment, then the row is clear again
+  useEffect(() => {
+    if (!note) return;
+    const t = setTimeout(() => setNote(null), NOTE_MS);
+    return () => clearTimeout(t);
+  }, [note]);
+  // what needs your attention with him: an icon in his head for as long as it holds, and a full line for a moment
+  // when it starts while his file is open (your offer just cooled him)
+  const weekOf = (w: number) => weekLabels[String(w)] ?? m.week(Math.max(0, w - 1));
+  const alerts: { key: RecruitAlert; tip: string }[] = [];
+  if (r.cooled) alerts.push({ key: "cooled", tip: m.cooled(r.cooled_why) });
+  if (r.money_owed) alerts.push({ key: "owed", tip: m.moneyOwed(r.money_owed.nil, weekOf(r.money_owed.by_week)) });
+  if (r.pestering) alerts.push({ key: "pestered", tip: m.pestering });
+  const alertKeys = alerts.map((a) => a.key).join(",");
+  const alertsWere = useRef({ id: "", keys: "" });
+  const [flash, setFlash] = useState<string[]>([]);
+  useEffect(() => {
+    const was = alertsWere.current;
+    alertsWere.current = { id: r.id, keys: alertKeys };
+    if (was.id !== r.id) return setFlash([]);
+    const fresh = alertKeys.split(",").filter((k) => k && !was.keys.split(",").includes(k));
+    if (!fresh.length) return;
+    setFlash((f) => [...new Set([...f, ...fresh])]);
+    const t = setTimeout(() => setFlash((f) => f.filter((k) => !fresh.includes(k))), NOTE_MS);
+    return () => clearTimeout(t);
+  }, [r.id, alertKeys]);
   // the call or visit in its window: the one just opened, or the open one Finish brings back
   const [talk, setTalk] = useState<Scene | null>(null);
   const [tab, setTabState] = useState<Tab>(() => lastTab);
@@ -531,7 +560,14 @@ function RecruitPanel({
             <>
               <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
               <Stars n={r.stars} />
-              <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={15} boxed />
+              <RecruitFlags
+                generational={r.generational}
+                find={r.find}
+                likes={r.likes}
+                alerts={alerts}
+                size={15}
+                boxed
+              />
               {r.job_promised && (
                 <HeadTag tip={{ title: m.jobPromised, text: m.jobPromisedTip }}>{m.jobPromised}</HeadTag>
               )}
@@ -585,11 +621,13 @@ function RecruitPanel({
 
       {tab === "overview" && (
         <div className="recruit__overview" role="tabpanel" aria-label={m.tabs.overview}>
-          {r.cooled && <p className="recruit__warn">{m.cooled(r.cooled_why)}</p>}
-          {r.money_owed && (
-            <p className="recruit__warn">{m.moneyOwed(r.money_owed.nil, weekName(r.money_owed.by_week))}</p>
-          )}
-          {r.pestering && <p className="recruit__warn">{m.pestering}</p>}
+          {alerts
+            .filter((a) => flash.includes(a.key))
+            .map((a) => (
+              <p key={a.key} className="recruit__warn" role="status">
+                {a.tip}
+              </p>
+            ))}
 
           {/* his recruitment is over: there is nothing to do beside the Overview, so it takes the whole width */}
           <div className={`recruit__cols${closed ? " is-closed" : ""}`}>

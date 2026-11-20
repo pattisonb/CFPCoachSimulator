@@ -135,10 +135,11 @@
   font-weight: 700;
 }
 
-/* stars in the font's absence: pixel icons, the empty ones soft */
+/* stars in the font's absence: pixel icons in gold, the empty ones soft */
 .prospect-stars {
   display: inline-flex;
   gap: 1px;
+  color: var(--gold);
 }
 
 .prospect-stars__empty {

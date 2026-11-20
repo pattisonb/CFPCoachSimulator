@@ -898,3 +898,7 @@ button.hq-link:hover {
     min-height: 44px;
   }
 }
+
+.hq-stars svg {
+  color: var(--gold);
+}

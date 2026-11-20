@@ -75,7 +75,6 @@ export const messages = {
     one: "One More Finishes It",
     more: (looks: string) => `${looks} More to Finish`,
   },
-  softKey: "Gray: A Rough Read",
   ratingTip: (est: number, lo: number, hi: number, confidence: string) =>
     `About ${est}, somewhere between ${lo} and ${hi}. ${confidence} confidence.`,
   coachTip: (lo: string, hi: string, confidence: string) =>
@@ -106,6 +105,7 @@ export const messages = {
     more: (looks: string) => `${looks} more looks finish his report.`,
     done: "His report is complete: these are your staff's final grades. A read can still be wrong; the truth shows once he is on your roster.",
   },
+  finalGrade: "A final grade: it can still be wrong.",
   comp: "Comp",
   compRest: (school: string, pos: string, ovr?: number) =>
     [school, pos, ovr ? `${ovr} OVR` : null].filter(Boolean).join(" · "),

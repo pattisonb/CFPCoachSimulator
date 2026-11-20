@@ -499,6 +499,23 @@
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
+/* the stamp's icon in its own color: fire for a hit, green for polite, blue for tired, red for guarded */
+.talk__result.is-hit .talk__stamp {
+  color: var(--hot);
+}
+
+.talk__result.is-polite .talk__stamp {
+  color: var(--good);
+}
+
+.talk__result.is-tired .talk__stamp {
+  color: var(--cold);
+}
+
+.talk__result.is-guarded .talk__stamp {
+  color: var(--warn);
+}
+
 .talk__result-text {
   display: grid;
   gap: 4px;

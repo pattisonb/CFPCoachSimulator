@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowDown,
@@ -244,6 +245,9 @@ export function OverviewTab({
 const CONFIDENCE_OF: Record<string, string> = { Low: "High", Medium: "Medium", High: "Low" };
 
 /** Scouting: your staff's report on him, his ratings as ranges, and Send a Scout. */
+/** *tune* How long "His report is complete" stays written out after the look that finishes it, in ms. */
+const DONE_MS = 7000;
+
 export function ScoutingTab({
   r,
   detail,
@@ -277,8 +281,24 @@ export function ScoutingTab({
             ? m.cantScout
             : undefined;
   const comp = detail.our_comp;
-  const compText = comp ? <PlayerLink team={comp.team} name={comp.name} /> : null;
+  const compText = comp ? (
+    <>
+      <PlayerLink team={comp.team} name={comp.name} />
+      <span className="recruit-file__comp-rest"> · {m.compRest(comp.school, comp.position, comp.overall)}</span>
+    </>
+  ) : null;
   const coach = rep?.attributes.find((a) => a.group === "coachability");
+  // his report finishing while his file is open is said for a moment; after that each rating's tooltip says it
+  const looksWere = useRef({ id: r.id, looks });
+  const [justDone, setJustDone] = useState(false);
+  useEffect(() => {
+    const was = looksWere.current;
+    looksWere.current = { id: r.id, looks };
+    if (was.id !== r.id || !(looks >= 3 && was.looks < 3)) return setJustDone(false);
+    setJustDone(true);
+    const t = setTimeout(() => setJustDone(false), DONE_MS);
+    return () => clearTimeout(t);
+  }, [r.id, looks]);
   return (
     <Panels label={m.tabs.scouting}>
       <Panel title={m.report}>
@@ -324,7 +344,7 @@ export function ScoutingTab({
             label={m.comp}
             value={compText ?? (looks >= 3 ? m.compNone : undefined)}
             unknown={m.unknown}
-            hint={comp ? m.compRest(comp.school, comp.position, comp.overall) : looks >= 3 ? null : m.compLater}
+            hint={comp || looks >= 3 ? null : m.compLater}
           />
         </PanelRows>
         {/* a finished report has nothing left to send for: the lead above already says Report Complete */}
@@ -339,14 +359,14 @@ export function ScoutingTab({
         )}
       </Panel>
 
-      <Panel title={clear ? m.keyRatings : m.attributes} aside={rep || clear ? m.softKey : undefined}>
+      <Panel title={clear ? m.keyRatings : m.attributes}>
         {clear ? (
           <div className="recruit-file__ratings">
             {clear.rows.map((x) => (
               <Tooltip
                 key={x.key}
                 title={x.label}
-                text={m.ratingTip(x.est, x.lo, x.hi, x.confidence)}
+                text={m.ratingTip(x.est, x.lo, x.hi, x.confidence) + (looks >= 3 ? ` ${m.finalGrade}` : "")}
                 block
                 className="recruit-file__rating"
               >
@@ -380,7 +400,7 @@ export function ScoutingTab({
               <Tooltip
                 key={x.group}
                 title={x.label}
-                text={m.wordsTip(x.words[0], x.words[1], x.uncertainty)}
+                text={m.wordsTip(x.words[0], x.words[1], x.uncertainty) + (looks >= 3 ? ` ${m.finalGrade}` : "")}
                 block
                 className="recruit-file__rating"
               >
@@ -393,7 +413,11 @@ export function ScoutingTab({
         ) : (
           <p className="recruit-file__soft">{m.noRatings}</p>
         )}
-        {looks >= 3 && <p className="recruit-file__foot">{m.looksLine.done}</p>}
+        {justDone && (
+          <p className="recruit-file__foot" role="status">
+            {m.looksLine.done}
+          </p>
+        )}
       </Panel>
     </Panels>
   );
@@ -436,7 +460,12 @@ export function ProfileTab({
   const p = detail.public;
   const looks = looksOf(r, detail);
   const comp = detail.our_comp;
-  const compText = comp ? <PlayerLink team={comp.team} name={comp.name} /> : null;
+  const compText = comp ? (
+    <>
+      <PlayerLink team={comp.team} name={comp.name} />
+      <span className="recruit-file__comp-rest"> · {m.compRest(comp.school, comp.position, comp.overall)}</span>
+    </>
+  ) : null;
   const st = p.hometown.state === "DC" ? "D.C." : p.hometown.state;
   const story = tr.story ? (tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story) : null;
   const traits: [string, string | null][] = [
@@ -508,7 +537,7 @@ export function ProfileTab({
             label={m.comp}
             value={compText ?? (looks >= 3 ? m.compNone : undefined)}
             unknown={m.unknown}
-            hint={comp ? m.compRest(comp.school, comp.position, comp.overall) : looks >= 3 ? null : m.compLater}
+            hint={comp || looks >= 3 ? null : m.compLater}
           />
         </PanelRows>
       </Panel>

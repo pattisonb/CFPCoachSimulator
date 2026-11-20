@@ -110,10 +110,25 @@
   color: var(--ink);
 }
 
-/* new: the icon on your color until the list has been looked at */
-.notifications__row.is-new .notifications__icon {
-  background: var(--team, var(--ink));
-  color: var(--team-on, var(--paper-hi));
+/* each kind in its own color, whether new or read */
+.notifications__row:is(.is-gem, .is-commit) .notifications__icon {
+  background: var(--good);
+  color: #fff;
+}
+
+.notifications__row.is-generational .notifications__icon {
+  background: var(--gold);
+  color: #37352f;
+}
+
+.notifications__row:is(.is-decommit, .is-injury) .notifications__icon {
+  background: var(--warn);
+  color: #fff;
+}
+
+/* new: its heading in bold ink; read, it goes soft */
+.notifications__row:not(.is-new) .notifications__head b {
+  color: var(--ink-soft);
 }
 
 .notifications__text {

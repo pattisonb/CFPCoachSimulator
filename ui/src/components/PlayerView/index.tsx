@@ -127,7 +127,11 @@ function Progress({ have, need }: { have: number; need: number }) {
  * parts fill in when it comes.
  */
 export default function PlayerView({ card: p, profile: pr, error, weekLabels, onEditLook }: Props) {
-  const [tab, setTab] = useState<Tab>("overview");
+  const [picked, setTab] = useState<Tab>("overview");
+  // another team's player: his ceilings are not yours to see, so Development is not offered
+  const theirs = !!pr && !pr.attributes.some((x) => x.potential != null);
+  const tabs = TABS.filter((k) => k !== "development" || !theirs);
+  const tab = tabs.includes(picked) ? picked : "overview";
   const back = p.injury ? (weekLabels?.[String(p.injury.returns_week)] ?? m.week(p.injury.returns_week)) : null;
   // an injury names itself and when he is back (the whole line is the cell's tooltip when it is cut short)
   const status = p.injury ? m.injured(p.injury.type, back!) : p.redshirt?.on ? m.redshirting : m.healthy;
@@ -200,7 +204,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
         />
 
         <div className="player-view__tabs" role="tablist" aria-label={m.about}>
-          {TABS.map((k) => (
+          {tabs.map((k) => (
             <Chip key={k} role="tab" on={tab === k} onClick={() => setTab(k)}>
               {m.tabs[k]}
             </Chip>
