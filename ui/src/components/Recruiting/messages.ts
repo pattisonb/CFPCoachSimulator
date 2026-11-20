@@ -26,14 +26,9 @@ export const messages = {
   allPositions: "Any Pos",
   needs: "Class Needs",
   needsTip:
-    "Your commits at each position, of the spots your class set out to fill there. Pick one to list only those recruits.",
+    "Your commits, board or offers at each position (the menu picks which), of the spots your class set out to fill there. Pick a position to list only those recruits.",
   needShow: "Count",
   needShows: { commits: "Committed", board: "On Board", offers: "Offered" },
-  needHints: {
-    commits: "Your commits against the spots you set out to fill.",
-    board: "Recruits on your board against the spots you set out to fill.",
-    offers: "Your open offers against the spots you set out to fill.",
-  },
   filledShort: (have: number, of: number) => `${have}/${of}`,
   filledOf: (have: number, of: number) => `${have} of ${of} Spots Filled`,
   onBoardN: (n: number) => `${n} on Your Board`,

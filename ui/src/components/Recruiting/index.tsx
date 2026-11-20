@@ -308,7 +308,6 @@ export default function Recruiting({
                   options={(Object.keys(m.needShows) as NeedShow[]).map((k) => ({
                     value: k,
                     label: m.needShows[k],
-                    hint: m.needHints[k],
                   }))}
                   onChange={(k) => setNeedShow(k as NeedShow)}
                 />
