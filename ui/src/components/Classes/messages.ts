@@ -12,7 +12,8 @@ export const messages = {
     points: "Points",
   },
   stars: (k: string) => `${k}★`,
-  pointsTip: "The class's score: what the rankings are ordered by.",
+  pointsTip:
+    "The class's score, and what the rankings are ordered by. Each commit adds his recruiting grade, the best commit in full and each one after him worth a little less, so a few top recruits beat a pile of average ones.",
   aClass: "The Class",
   classOf: (school: string) => `${school}'s Class`,
   classLine: (rank: number, count: number) => `#${rank} · ${count} ${count === 1 ? "Commit" : "Commits"}`,

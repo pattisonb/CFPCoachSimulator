@@ -63,7 +63,7 @@ export default function Classes({ seasonId, team, teams, active }: Props) {
     key: `s${k}`,
     label: m.stars(k),
     num: true,
-    render: (s) => s.stars[k] || "",
+    render: (s) => s.stars[k] ?? 0,
     sort: (s) => s.stars[k] ?? 0,
   });
   const columns: Column<SchoolClass>[] = [
@@ -86,7 +86,7 @@ export default function Classes({ seasonId, team, teams, active }: Props) {
     },
     { key: "conf", label: m.cols.conference, render: (s) => s.conference, sort: (s) => s.conference },
     { key: "count", label: m.cols.commits, num: true, render: (s) => s.count, sort: (s) => s.count },
-    { key: "signed", label: m.cols.signed, num: true, render: (s) => s.signed || "", sort: (s) => s.signed },
+    { key: "signed", label: m.cols.signed, num: true, render: (s) => s.signed ?? 0, sort: (s) => s.signed },
     star("5"),
     star("4"),
     star("3"),
@@ -95,7 +95,7 @@ export default function Classes({ seasonId, team, teams, active }: Props) {
       label: m.cols.points,
       num: true,
       tip: m.pointsTip,
-      render: (s) => Math.round(s.points).toLocaleString("en-US"),
+      render: (s) => s.points.toFixed(2),
       sort: (s) => s.points,
     },
   ];
