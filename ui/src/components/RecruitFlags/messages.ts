@@ -8,5 +8,5 @@ export const messages = {
   bustTip: "Even the high end of his potential read sits under what his stars promise.",
   likes: (who: string) => `${who} Likes Him`,
   likesTip: "Your coordinator's read says he would start for you.",
-  alerts: { cooled: "Cooled on You", owed: "NIL Owed", pestered: "Feels Pestered" },
+  alerts: { cooled: "Cooled on You", owed: "NIL Owed", pestered: "Feels Pestered", flip: "Flip Risk" },
 };

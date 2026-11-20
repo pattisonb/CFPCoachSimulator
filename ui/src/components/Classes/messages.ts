@@ -13,7 +13,7 @@ export const messages = {
   },
   stars: (k: string) => `${k}★`,
   pointsTip:
-    "The class's score, and what the rankings are ordered by. Each commit adds his recruiting grade, the best commit in full and each one after him worth a little less, so a few top recruits beat a pile of average ones.",
+    "The class's score, counted the way 247Sports counts a class: each commit adds his rating over 70, the best commit in full and each one after him worth less down a bell curve. A top class lands a little over 300.",
   aClass: "The Class",
   classOf: (school: string) => `${school}'s Class`,
   classLine: (rank: number, count: number) => `#${rank} · ${count} ${count === 1 ? "Commit" : "Commits"}`,

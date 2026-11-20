@@ -739,6 +739,8 @@ export interface ListSchool {
 
 /** One recruit on your board (GET /api/season/{id}/recruiting → board[], coach_career/prospects.py board_row) */
 export interface BoardRow {
+  /** your commit, with a rival working him: how likely a flip is (Slim, Real, Likely) and the school nearest to it */
+  flip?: { word: string; school: string } | null;
   /** his roster group (QB, RB, WR, TE, OL, DL, LB, CB, S, K, P, ATH): what a need is counted in */
   group?: string;
   /** the transfer portal: he is a transfer, with the school he left and what he did there last season */

@@ -70,6 +70,10 @@ export const messages = {
   promiseRoleHelp:
     "Counts for more if playing time is one of his priorities. It is judged through his first season, and a broken promise costs you.",
   promisedRole: "You promised him a starting role.",
+  flipRisk: (word: string, school: string) =>
+    word === "Likely"
+      ? `${school} is close to flipping him.`
+      : `${school} is working him hard: a real chance he flips.`,
   pestering: "He feels pestered. Ease off until a visit or an offer changes things.",
 
   work: "Work Him",

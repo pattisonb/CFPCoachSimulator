@@ -24,6 +24,10 @@ import "./index.css";
 /** *tune* How long what your last action did, and a warning that has just started, stay written out, in ms. */
 const NOTE_MS = 6000;
 
+/** Your commit with a rival near to flipping him (a real chance or better): the alert his line and his head show. */
+const flipAlert = (r: BoardRow): { key: RecruitAlert; tip: string } | null =>
+  r.flip && r.flip.word !== "Slim" ? { key: "flip", tip: m.flipRisk(r.flip.word, r.flip.school) } : null;
+
 /** The roster groups in order (the keys a need is counted under). */
 const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
 const groupOf = (r: BoardRow) => r.group ?? r.display_pos;
@@ -318,7 +322,13 @@ export default function Recruiting({
                             {r.display_pos}
                             {r.portal ? <span>{transferLine(r)}</span> : <Stars n={r.stars} size={10} />}
                             <ScoutMark looks={r.looks} size={12} />
-                            <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={11} />
+                            <RecruitFlags
+                              generational={r.generational}
+                              find={r.find}
+                              likes={r.likes}
+                              alerts={flipAlert(r) ? [flipAlert(r)!] : undefined}
+                              size={11}
+                            />
                           </span>
                           {rank != null && <span className="recruiting__soft recruiting__place">{m.onList(rank)}</span>}
                         </span>
@@ -426,6 +436,7 @@ function RecruitPanel({
   if (r.cooled) alerts.push({ key: "cooled", tip: m.cooled(r.cooled_why) });
   if (r.money_owed) alerts.push({ key: "owed", tip: m.moneyOwed(r.money_owed.nil, weekOf(r.money_owed.by_week)) });
   if (r.pestering) alerts.push({ key: "pestered", tip: m.pestering });
+  if (flipAlert(r)) alerts.push(flipAlert(r)!);
   const alertKeys = alerts.map((a) => a.key).join(",");
   const alertsWere = useRef({ id: "", keys: "" });
   const [flash, setFlash] = useState<string[]>([]);

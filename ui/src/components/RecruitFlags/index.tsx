@@ -1,10 +1,20 @@
-import { Crown, CurrencyDollar, Diamond, HandPalm, Snowflake, ThumbsUp, Warning } from "@phosphor-icons/react";
+import {
+  ArrowsLeftRight,
+  Crown,
+  CurrencyDollar,
+  Diamond,
+  HandPalm,
+  Snowflake,
+  ThumbsUp,
+  Warning,
+} from "@phosphor-icons/react";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
-/** Where you stand with him that needs your attention: he has cooled on you, you owe him NIL, he feels pestered. */
-export type RecruitAlert = "cooled" | "owed" | "pestered";
-const ALERT_ICONS = { cooled: Snowflake, owed: CurrencyDollar, pestered: HandPalm };
+/** Where you stand with him that needs your attention: he has cooled on you, you owe him NIL, he feels pestered,
+ *  or he is your commit and a rival is close to flipping him. */
+export type RecruitAlert = "cooled" | "owed" | "pestered" | "flip";
+const ALERT_ICONS = { cooled: Snowflake, owed: CurrencyDollar, pestered: HandPalm, flip: ArrowsLeftRight };
 
 interface Props {
   /** what needs your attention with him, each with the sentence its tooltip gives */

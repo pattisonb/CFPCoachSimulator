@@ -811,6 +811,15 @@ def row(state: dict, pid: str, viewer: str) -> dict:
     }
 
 
+def _flip_risk(state: dict, pid: str, viewer: str) -> Optional[dict]:
+    """Your commit's chance to flip, for the board's line: {"word" (Slim, Real, Likely), "school": the rival
+    nearest to flipping him}, or None when nobody is working him (or he is locked in)."""
+    f = flip_view(state, pid, viewer)
+    if not f or not f["rivals"] or f["word"] in ("None", "Locked In"):
+        return None
+    return {"word": f["word"], "school": f["rivals"][0]["name"]}
+
+
 def _role(place: str) -> str:
     return {"start": "Would Start", "next": "Next in Line", "depth": "Depth"}[place]
 
@@ -891,6 +900,7 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                list=[dict(x, you=x["school"] == viewer) for x in schools[:5]],
                firmness=seen.get("firmness") if seen["committed"] == viewer and not seen["signed"] else None,
                hard=bool(seen.get("hard")) and not seen["signed"],
+               flip=_flip_risk(state, pid, viewer) if seen["committed"] == viewer and not seen["signed"] else None,
                can_scout=can_scout(state, viewer, pid),
                scout_cost=recruiting.look_cost(state, viewer, pid),
                role=_role(recruiting.depth_place(state, viewer, pid)),
@@ -1447,7 +1457,8 @@ def _standing_word(state: dict, pid: str, me: str) -> str:
 ODDS_TEMPERATURE = 3.0             # interest points between two schools that make one e (2.7x) likelier *tune*
 FIELD = ((0, 14.0), (8, 10.0), (16, 4.0))   # interest of the schools not yet in it, fading toward signing day *tune*
 ODDS_BAND = ((0, 0.25), (8, 0.12), (13, 0.04))   # half-width of the range shown, by week *tune*
-CLASS_DECAY = 0.85
+CLASS_SIGMA = 9.0                  # class points, as 247Sports counts them: the bell curve's width, in commits (the spread of class sizes) *tune*
+CLASS_FLOOR = 70.0                 # ... and the rating (composite times 100) a commit must beat to add anything *tune*
 CERTAINTY = ((0.18, "Early Read"), (0.08, "Taking Shape"), (0.0, "Solid Read"))
 
 
@@ -1500,10 +1511,19 @@ def _committed_odds(state: dict, pid: str, school: str, offered: list, week: int
     return {"schools": rows, "field": 0.0, "band": band, "certainty": certainty, "committed": school}
 
 
+def class_points(composites) -> float:
+    """A class's points the way 247Sports' team rankings count them: the commits best first, each one's rating
+    (his composite times 100) over CLASS_FLOOR, weighted down a bell curve by his place in the class
+    (e^(-(n-1)^2 / (2 CLASS_SIGMA^2))). The best commit counts in full, the tenth about half, the twentieth
+    a tenth: a top class lands a little over 300."""
+    best = sorted(composites, reverse=True)
+    return sum(max(0.0, c * 100 - CLASS_FLOOR) * math.exp(-(i * i) / (2 * CLASS_SIGMA ** 2)) for i, c in enumerate(best))
+
+
 def class_table(state: dict, viewer: Optional[str] = None) -> dict:
     """Every FBS school's class as the viewer sees it, the one ranking the Classes tab and class_rank share:
-    {slug: {"pids" best composite first, "points", "rank"}}. Points are the composites, best first, each worth
-    CLASS_DECAY times the one before (the best recruits count most, as in the real rankings); the rank counts
+    {slug: {"pids" best composite first, "points", "rank"}}. Points are class_points (247Sports' count: the best
+    recruits count most); the rank counts
     the schools with more points. Another school's Quiet Commit is left out of the viewer's table, as the
     viewer cannot see where he went (viewer None: every commitment counts)."""
     rc = class_rc(state)
@@ -1516,7 +1536,7 @@ def class_table(state: dict, viewer: Optional[str] = None) -> dict:
     table = {}
     for slug in recruiting.fbs_schools(state):
         pids = sorted(by_school.get(slug, []), key=lambda q: -rc["prospects"][q]["composite"])
-        table[slug] = {"pids": pids, "points": sum(rc["prospects"][q]["composite"] * CLASS_DECAY ** i for i, q in enumerate(pids))}
+        table[slug] = {"pids": pids, "points": class_points(rc["prospects"][q]["composite"] for q in pids)}
     for t in table.values():
         t["rank"] = 1 + sum(1 for o in table.values() if o["points"] > t["points"])
     return table

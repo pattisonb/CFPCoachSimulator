@@ -351,7 +351,7 @@ def what_if(state: dict, pid: str) -> dict:
         rank_if = rank_now
     else:
         comps = sorted([rc["prospects"][q]["composite"] for q in table[me]["pids"] if q != pid] + [p["composite"]], reverse=True)
-        points = sum(c * prospects.CLASS_DECAY ** i for i, c in enumerate(comps))
+        points = prospects.class_points(comps)
         rank_if = 1 + sum(1 for slug, t in table.items() if slug != me and t["points"] > points)
     return {"pid": pid, "name": p["name"], "group": group, "rank_now": rank_now, "rank_if": rank_if,
             "need_now": need, "need_if": need if mine else max(0, need - 1)}

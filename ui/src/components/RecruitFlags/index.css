@@ -28,6 +28,7 @@
 }
 
 .recruit-flags__flag.is-bust,
+.recruit-flags__flag.is-flip,
 .recruit-flags__flag.is-pestered {
   color: var(--warn);
 }
@@ -57,6 +58,7 @@
 }
 
 .recruit-flags.is-boxed .is-bust,
+.recruit-flags.is-boxed .is-flip,
 .recruit-flags.is-boxed .is-pestered {
   background: var(--warn);
   color: #fff;
