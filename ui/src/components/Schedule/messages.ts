@@ -9,7 +9,6 @@ export const messages = {
   confRecord: (w: number, l: number) => `${w}-${l} Conf`,
   backTo: (team: string) => `Back to ${team}`,
   viewing: "Viewing",
-  theirSchedule: "Their Schedule",
   theirScheduleTip: (team: string) => `See ${team}'s season`,
 
   // the list's columns

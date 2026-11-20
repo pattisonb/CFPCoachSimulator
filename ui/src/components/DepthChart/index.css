@@ -650,3 +650,21 @@
     min-height: 44px;
   }
 }
+
+/* the team's overall, offense and defense, beside the view chips */
+.depth__team {
+  display: inline-flex;
+  gap: var(--s2);
+  margin-right: var(--s2);
+}
+
+.depth__team > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.depth__team dd {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

@@ -1177,7 +1177,8 @@ def season_game(p: Params) -> dict:
         riv = season.game_rivalry(state, g, after=True)
         if riv is not None:
             box = dict(box, rivalry=riv)
-    return box
+    # each side's overall for the scoreboard, as the page shows a team rating (not stored with the box)
+    return dict(box, overalls={s: season.team_overall(box.get(f"{s}_slug")) for s in ("home", "away")})
 
 
 @route("GET", "/api/season/{season_id}/settings")

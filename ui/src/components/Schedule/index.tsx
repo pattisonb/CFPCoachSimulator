@@ -172,7 +172,8 @@ export default function Schedule({ season, teams, onBox }: Props) {
     name: viewName,
     rank: current.played ? (current.my_rank ?? null) : viewRank,
     record: viewRecord ? m.record(viewRecord.wins, viewRecord.losses) : "",
-    mine,
+    confRecord: viewRecord ? m.record(viewRecord.conf_wins, viewRecord.conf_losses) : null,
+    ratings: current.my_ratings,
   };
   const oppTeam = current?.opponent ? teams.get(current.opponent) : undefined;
   const right: SideInfo | null = current && {
@@ -181,7 +182,8 @@ export default function Schedule({ season, teams, onBox }: Props) {
     name: current.opponent_name,
     rank: current.opponent_rank,
     record: current.opponent_record ?? "",
-    mine: current.opponent === season.team,
+    confRecord: current.opponent_conf_record,
+    ratings: current.opponent_ratings,
   };
   const canView = !!oppTeam && !oppTeam.fictional && oppTeam.subdivision === "FBS";
 
@@ -374,15 +376,7 @@ function Banner({
     <section className="sched-banner" aria-label={m.matchupLabel}>
       <Matchup
         left={left}
-        right={{
-          ...right,
-          action: onView && (
-            <button type="button" className="matchup__view" title={m.theirScheduleTip(right.name)} onClick={onView}>
-              {m.theirSchedule}
-              <ArrowRight size={14} weight="bold" aria-hidden="true" />
-            </button>
-          ),
-        }}
+        right={{ ...right, onName: onView, nameTip: onView && m.theirScheduleTip(right.name) }}
         result={played ? (g.won ? "won" : "lost") : null}
         mid={
           played ? (

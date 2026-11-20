@@ -73,20 +73,53 @@
   justify-items: start;
 }
 
-.matchup__tags {
+/* over the name: the record, and the conference record after it in parentheses */
+.matchup__line {
   display: inline-flex;
   gap: 8px;
   font-size: var(--t-xs);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-.matchup__tag,
+.matchup__conf {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* under the name: the team's overall, offense and defense, a small label before each number */
+.matchup__ratings {
+  display: inline-flex;
+  gap: var(--s2);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.matchup__ratings > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.matchup__ratings dt {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+.matchup__ratings dd {
+  font-size: var(--t-lg);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* a ranked team's number before its name, the way a score bug writes it */
 .matchup__rank {
-  padding: 0 6px;
-  border: var(--line) solid currentcolor;
-  text-shadow: none;
+  margin-right: 6px;
+  opacity: 0.7;
 }
 
 .matchup__school {
@@ -110,27 +143,31 @@
   white-space: nowrap;
 }
 
-.matchup__view {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 28px;
-  margin-top: 4px;
-  padding: 0 8px;
+/* the school over the mascot; a button when the name leads somewhere (the name underlines under the pointer) */
+.matchup__name {
+  display: grid;
+  gap: 2px;
+  justify-items: inherit;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
   background: none;
   color: inherit;
-  border: var(--line) solid currentcolor;
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-shadow: none;
-  cursor: pointer;
-  transition: transform 120ms ease-out;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
+  text-shadow: inherit;
 }
 
-.matchup__view:hover {
-  transform: translateX(2px);
+button.matchup__name {
+  cursor: pointer;
+}
+
+button.matchup__name:hover .matchup__mascot,
+button.matchup__name:focus-visible .matchup__mascot {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
 }
 
 /* vs, at, or the final score: a paper tile on the seam */

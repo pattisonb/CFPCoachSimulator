@@ -10,11 +10,19 @@ export interface MatchupSide {
   name: string;
   rank?: number | null;
   record?: string;
-  /** your team: a You tag */
-  mine?: boolean;
-  /** under the name: a button (Their Schedule) */
-  action?: ReactNode;
+  /** his record in conference games ("4-4"), in parentheses after his record with the conference's name */
+  confRecord?: string | null;
+  /** the team's overall, offense and defense, under its name */
+  ratings?: { overall: number; offense: number; defense: number } | null;
+  /** his name is a button (the Schedule's: on to that team's season), with what it does as its tip */
+  onName?: () => void;
+  nameTip?: string;
 }
+
+/** a team in no conference has no conference record to show */
+const INDEPENDENT = /independent/i;
+
+const RATINGS = ["overall", "offense", "defense"] as const;
 
 interface Props {
   left: MatchupSide;
@@ -47,20 +55,46 @@ function Side({ side, align }: { side: MatchupSide; align: "left" | "right" }) {
     "--c2": t?.colors.secondary ?? "var(--line-soft)",
     "--on": t ? inkOn(t.colors.primary) : "var(--ink)",
   } as CSSProperties;
+  const name = (
+    <>
+      <span className="matchup__school">
+        {side.rank ? <span className="matchup__rank">{side.rank}</span> : null}
+        {side.name}
+      </span>
+      {real && t.mascot && <b className="matchup__mascot">{t.mascot}</b>}
+    </>
+  );
   return (
     <div className={`matchup__side matchup__side--${align}`} style={style}>
       <span className="matchup__mark" aria-hidden="true">
         {real ? t.abbreviation : side.name.slice(0, 3).toUpperCase()}
       </span>
       <div className="matchup__text">
-        <span className="matchup__tags">
-          {side.mine && <span className="matchup__tag">{m.you}</span>}
-          {side.rank ? <span className="matchup__rank">{m.rank(side.rank)}</span> : null}
-          {side.record && <span>{side.record}</span>}
-        </span>
-        <span className="matchup__school">{side.name}</span>
-        {real && t.mascot && <b className="matchup__mascot">{t.mascot}</b>}
-        {side.action}
+        {side.record && (
+          <span className="matchup__line">
+            {side.record}
+            {side.confRecord && real && !INDEPENDENT.test(t.conference) && (
+              <span className="matchup__conf">{m.conference(side.confRecord, t.conference)}</span>
+            )}
+          </span>
+        )}
+        {side.onName ? (
+          <button type="button" className="matchup__name" title={side.nameTip} onClick={side.onName}>
+            {name}
+          </button>
+        ) : (
+          <span className="matchup__name">{name}</span>
+        )}
+        {side.ratings && (
+          <dl className="matchup__ratings" aria-label={m.ratings}>
+            {RATINGS.map((k) => (
+              <div key={k} title={m.ratingTips[k]}>
+                <dt>{m.ratingShort[k]}</dt>
+                <dd>{side.ratings![k]}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
     </div>
   );

@@ -258,6 +258,16 @@ export default function DepthChart({ seasonId, team, weekLabels, colors }: Props
       panelClassName={view === "list" ? "depth" : "depth depth--formation"}
       aside={
         <div className="depth__views" role="group" aria-label={m.viewLabel}>
+          {load.chart.ratings && (
+            <dl className="depth__team" aria-label={m.teamRatings}>
+              {(["overall", "offense", "defense"] as const).map((k) => (
+                <div key={k} title={m.teamTips[k]}>
+                  <dt className="label">{m.teamShort[k]}</dt>
+                  <dd>{load.chart.ratings![k]}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           {load.chart.overridden && (
             <button type="button" className="depth__reset" disabled={busy} title={m.resetTip} onClick={reset}>
               {m.reset}

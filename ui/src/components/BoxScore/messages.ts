@@ -2,6 +2,8 @@ export const messages = {
   tabsLabel: "Box Score",
   tabs: { scoring: "Scoring", team: "Team Stats", drives: "Drives" },
   final: "Final",
+  overall: (n: number) => `${n} OVR`,
+  overallTip: "Team Overall",
   finalOt: (n: number) => (n > 1 ? `Final/${n}OT` : "Final/OT"),
   total: "T",
   ot: (n: number) => (n > 1 ? `OT${n}` : "OT"),

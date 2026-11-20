@@ -103,6 +103,11 @@ export function Scoreboard({
             <span className="box__name">
               <Swatch team={teams.get(slug)} size={22} />
               <b>{side.name}</b>
+              {box.overalls?.[s] != null && (
+                <span className="box__ovr" title={m.overallTip}>
+                  {m.overall(box.overalls[s]!)}
+                </span>
+              )}
               {slug === mine && <span className="box__you" aria-hidden="true" />}
             </span>
             <b className="box__score">{score ? score[s] : side.score}</b>
