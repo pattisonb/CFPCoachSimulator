@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.ts";
 import type { Find } from "./components/FindReveal/index.tsx";
 
@@ -10,12 +10,24 @@ const BIG = new Set(["gem", "generational"]);
  * changes whenever a find could have landed (a week passed, a look came back): the staff's flags are read again and
  * any not seen before join the queue. What has been seen is kept by this browser for the career and the class; the
  * first read of a class only takes note of what is already there, so opening an old save does not replay its finds.
+ * A find that lands while time passes (`passing()` says so: a sim, a week ending, an offseason stage) is your staff's
+ * own work and is handed to `onStaff` (a notification) instead of stopping the screen; the queue is for the finds
+ * your own Scout turns up.
  */
-export function useFinds(seasonId: string | undefined, year: number | undefined, stamp: string) {
+export function useFinds(
+  seasonId: string | undefined,
+  year: number | undefined,
+  stamp: string,
+  passing: () => boolean,
+  onStaff: (finds: Find[]) => void,
+) {
   const [queue, setQueue] = useState<Find[]>([]);
+  const live = useRef({ passing, onStaff });
+  live.current = { passing, onStaff };
   useEffect(() => {
     if (!seasonId || year == null) return;
     let on = true;
+    const staff = live.current.passing();
     api<{ flags?: { pid: string; name: string; position: string; stars: number; flag: string }[] }>(
       `/api/season/${seasonId}/scouting?limit=1`,
     )
@@ -37,7 +49,9 @@ export function useFinds(seasonId: string | undefined, year: number | undefined,
         // a generational talent first; nobody twice (he can be both)
         fresh.sort((a, b) => Number(b.flag === "generational") - Number(a.flag === "generational"));
         const one = fresh.filter((f, i) => fresh.findIndex((x) => x.pid === f.pid) === i);
-        if (one.length) setQueue((q) => [...q, ...one.filter((f) => !q.some((x) => x.pid === f.pid))]);
+        if (!one.length) return;
+        if (staff) live.current.onStaff(one);
+        else setQueue((q) => [...q, ...one.filter((f) => !q.some((x) => x.pid === f.pid))]);
       })
       .catch(() => {});
     return () => {

@@ -23,10 +23,12 @@ import Staff from "../../components/Staff/index.tsx";
 import RecruitingHub, { type HubTab } from "../../components/RecruitingHub/index.tsx";
 import GameNav, { type NavTeam } from "../../components/GameNav/index.tsx";
 import SeasonStrip from "../../components/SeasonStrip/index.tsx";
+import Notifications, { NoticeToasts } from "../../components/Notifications/index.tsx";
 import FindReveal from "../../components/FindReveal/index.tsx";
 import { PlayerLinks } from "../../components/PlayerLink/index.tsx";
 import { api } from "../../api.ts";
 import { useFinds } from "../../finds.ts";
+import { useNotices, type Notice } from "../../notices.ts";
 import { useTab } from "../../tab.ts";
 import { faces, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
@@ -83,6 +85,9 @@ const PANE: Record<string, string> = {
  * rewrites the address (?section=) in place, so Back still leaves the game. The sidebar is open, minimized or
  * hidden (GameNav); hidden, an Open button leads the top row, and ⌘\\ / Ctrl+\\ hides and shows it.
  */
+/** *tune* How long after time passes (a sim, a week, an offseason stage) a new find still counts as your staff's, in ms. */
+const PASSING_MS = 8000;
+
 /** *tune* How much of your team's color the hard shadows under cards and buttons take, in percent. */
 const SHADOW_TINT = 34;
 
@@ -138,8 +143,10 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   }, [reloadRecruiting]);
 
   // after a sim: the season and the week's recruiting again, in place (no loading screen)
+  const passedAt = useRef(0);
   const refresh = useCallback(() => {
     if (!seasonId) return;
+    passedAt.current = Date.now();
     api<SeasonSummary>(`/api/season/${seasonId}`)
       .then((season) => setLoad({ kind: "ready", season }))
       .catch(() => {});
@@ -344,7 +351,55 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
 
   // finds can land when a week passes, an offseason stage turns, or a look comes back on someone on your board
   const looks = recruiting?.board.reduce((n, b) => n + (b.looks ?? 0), 0) ?? 0;
-  const finds = useFinds(season?.id, season?.year, `${season?.current_week}-${offStage}-${looks}`);
+  // what happened while time passed (a commit, a decommit, an injury, a staff find): the bell on your coach's card
+  const notices = useNotices(season?.id, season?.year, season?.team, season?.current_week, recruiting?.board);
+  const finds = useFinds(
+    season?.id,
+    season?.year,
+    `${season?.current_week}-${offStage}-${looks}`,
+    () => sim.running || Date.now() - passedAt.current < PASSING_MS,
+    (found) =>
+      notices.add(
+        found.map((f) => ({
+          id: `find:${f.pid}:${f.flag}`,
+          kind: f.flag,
+          name: f.name,
+          position: f.position,
+          pid: f.pid,
+          stars: f.stars,
+        })),
+      ),
+  );
+  const openNotice = (n: Notice) => {
+    if (n.kind !== "injury" && n.pid) openRecruit(n.pid);
+  };
+  const bell = season && (
+    <Notifications
+      items={notices.items}
+      unread={notices.unread}
+      team={season.team}
+      weekLabels={season.week_labels}
+      onOpen={openNotice}
+      onRead={notices.readAll}
+    />
+  );
+  const corner = (
+    <>
+      {bell}
+      {autoMenu}
+    </>
+  );
+  const toasts = (rise: boolean) =>
+    season && (
+      <NoticeToasts
+        items={notices.toasts}
+        team={season.team}
+        weekLabels={season.week_labels}
+        onOpen={openNotice}
+        onDismiss={notices.dismiss}
+        rise={rise}
+      />
+    );
 
   const toMenu = (
     <Button variant="outline" onClick={() => navigate("play")}>
@@ -400,7 +455,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                 team={season.team_name}
                 face={face}
                 energy={energy}
-                corner={autoMenu}
+                corner={corner}
+                below={toasts(false)}
               />
             )}
           </div>
@@ -412,7 +468,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
               team={season.team_name}
               face={face}
               energy={energy}
-              corner={autoMenu}
+              corner={corner}
+              below={toasts(true)}
+              alert={notices.unread}
             />
           )}
 

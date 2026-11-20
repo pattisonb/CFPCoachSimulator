@@ -16,6 +16,8 @@
 
 /* the top row: (Open, when the sidebar is hidden) the season strip, your coach at the right */
 .game__top {
+  position: relative;
+  z-index: 10; /* over the window below: a menu or the notices dropping from your coach's card cover its top edge */
   display: flex;
   align-items: stretch;
   gap: var(--s3);

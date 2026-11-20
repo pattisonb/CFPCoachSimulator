@@ -14,6 +14,10 @@ interface Props {
   corner?: ReactNode;
   /** floating in the window's bottom right corner as your face alone; pointing at it (or tabbing to it) opens the card */
   floating?: boolean;
+  /** hangs from under the card's right edge (over it when floating): the notices that have just landed */
+  below?: ReactNode;
+  /** floating: a count on your face's corner (the notices not looked at yet) */
+  alert?: number;
 }
 
 /** *tune* How many blocks the energy bar is drawn in. */
@@ -47,7 +51,7 @@ export function Energy({ energy, label, hint }: { energy: Props["energy"]; label
 }
 
 /** You, at the game's top right: your face, name and team, and the week's energy as a bar of blocks. */
-export default function CoachBadge({ name, team, face, energy, corner, floating }: Props) {
+export default function CoachBadge({ name, team, face, energy, corner, floating, below, alert }: Props) {
   return (
     <div
       className={`coach-badge${floating ? " coach-badge--float" : ""}`}
@@ -58,11 +62,13 @@ export default function CoachBadge({ name, team, face, energy, corner, floating 
       <span className="coach-badge__face">
         <Face face={face} scale={2} label={name} />
       </span>
+      {floating && !!alert && <span className="coach-badge__alert">{alert > 9 ? "9+" : alert}</span>}
       <span className="coach-badge__who">
         <span className="coach-badge__name">{name}</span>
         <span className="coach-badge__role">{m.role(team)}</span>
         <Energy energy={energy} />
       </span>
+      {below}
     </div>
   );
 }

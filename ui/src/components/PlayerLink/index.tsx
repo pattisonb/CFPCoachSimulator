@@ -30,6 +30,9 @@ export function PlayerLinks({
   );
 }
 
+/** The way to open a player's card from code (a row that is itself the button); null outside a career. */
+export const useOpenPlayer = () => useContext(Open);
+
 interface Props {
   /** his team's slug: without it (or outside a career) the name is plain text */
   team: string | null | undefined;

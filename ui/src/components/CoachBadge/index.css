@@ -17,6 +17,8 @@
   top: 4px;
   right: 4px;
   z-index: 2;
+  display: flex;
+  gap: 2px;
 }
 
 .coach-badge__face {
@@ -50,6 +52,10 @@
 /* the name keeps clear of a control in the corner */
 .coach-badge:has(.coach-badge__corner) .coach-badge__name {
   padding-right: 24px;
+}
+
+.coach-badge:has(.coach-badge__corner > :nth-child(2)) .coach-badge__name {
+  padding-right: 50px;
 }
 
 .coach-badge__role {
@@ -119,6 +125,27 @@
 
 .coach-badge--float .coach-badge__corner {
   visibility: hidden;
+}
+
+/* floating: how many notices are new, on your face's corner until the card is out (the bell says it then) */
+.coach-badge__alert {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 3;
+  min-width: 18px;
+  padding: 0 4px;
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__alert {
+  display: none;
 }
 
 .coach-badge--float:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__who {
