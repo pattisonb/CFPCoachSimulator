@@ -360,6 +360,9 @@ OBSERVED = ROOT / "data" / "observed_tendencies.json"
 GAME_SCRIPT_PASS = 0.10   # points of pass share credited back per point of a team's average margin
 FOURTH_PER_MARGIN = 0.013 # fourth-down tries a game added back per point of average margin (trailing teams try
                           # more: the slope across FBS teams in 2026)
+PASS_RATE_SLOPE = 2.0     # *tune* tendency points per point of observed pass share over the league's (1.67 left the sim's
+                          # pass share moving 0.82 for each real point: the pass-heaviest teams threw 3 a game too few)
+TEMPO_SLOPE = 3.8         # *tune* tendency points per play a game over the league's (3.0: the sim's plays moved 0.68 a real one)
 SCRAMBLE_SHARE = 4.0      # points of a team's rushes that are QB scrambles (the engine adds its own)
 
 
@@ -382,8 +385,8 @@ def apply_observed_tendencies(teams: list[dict], only: Optional[set] = None, sty
         # plays that out (it runs more when ahead), so the observed rate is credited back
         # GAME_SCRIPT_PASS points of pass share per point of average margin.
         margin = o.get("margin_per_game", 0.0)
-        td["pass_rate"] = clamp_tendency(50 + 1.67 * (o["pass_rate"] - league["pass_rate"] + GAME_SCRIPT_PASS * margin))
-        td["tempo"] = clamp_tendency(50 + 3.0 * (o["plays_per_game"] - league["plays_per_game"]))
+        td["pass_rate"] = clamp_tendency(50 + PASS_RATE_SLOPE * (o["pass_rate"] - league["pass_rate"] + GAME_SCRIPT_PASS * margin))
+        td["tempo"] = clamp_tendency(50 + TEMPO_SLOPE * (o["plays_per_game"] - league["plays_per_game"]))
         # Fourth-down tries: a team that trails a lot tries more out of need, not choice
         # (Sac State 99, Texas A&M 100), so the attempts expected from its margin come off.
         ratio = (o["fourth_att_per_game"] + FOURTH_PER_MARGIN * margin) / max(0.1, league["fourth_att_per_game"])
@@ -462,6 +465,10 @@ def apply_real_adjustments(teams: list[dict], means: dict) -> tuple[int, int]:
         usage = (adj.get("usage") or {}).get(t["slug"]) or {}
         if usage.get("rb_lead_feature") is not None:
             t["tendencies"]["rb_lead_feature"] = usage["rb_lead_feature"]
+        form = usage.get("pass_form") or {}       # how the team really throws beyond its ratings (tools/tune_pass_form.py)
+        if form:
+            t["tendencies"]["pass_form_completion"] = form.get("completion", 0.0)
+            t["tendencies"]["pass_form_yards"] = form.get("yards", 1.0)
         for ps, m in (usage.get("targets") or {}).items():
             if ps in by_slug:
                 by_slug[ps]["target_mult"] = m

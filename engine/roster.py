@@ -343,6 +343,9 @@ class Team:
             return
         lead = None if self._resting.get("offense") else self.lead_back()
         out_chance, return_chance = self._lead_profile(lead, backs) if lead is not None else (0.0, 0.0)
+        if lead is not None and lead.stats.get("carries", 0) >= cfg.RB_LEAD_GAME_CARRIES:
+            # a full day's work already: he shares the rest of it, whatever the team's usual split
+            out_chance, return_chance = max(out_chance, cfg.RB_LEAD_WORKLOAD[0]), return_chance * cfg.RB_LEAD_WORKLOAD[1]
         if lead is not None and not lead.in_game and lead.fatigue <= cfg.RB_LEAD_RETURN_FATIGUE \
                 and random.random() < return_chance:
             on_field = [p for p in backs if p.in_game]

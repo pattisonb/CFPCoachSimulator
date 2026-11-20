@@ -39,7 +39,8 @@ if __name__ == "__main__":
     assert {"pos", "overall"} <= set(opts[0]) and any(o["pos"] == "CB" for o in opts) and any(o["pos"] == "SAM" for o in opts)
     cb = next(o for o in opts if o["pos"] == "CB")
     offseason.change_position(st, mover["id"], "CB")
-    assert mover["pos"] == "CB" and mover["o"] == cb["overall"] and mover.get("moved_from") == "FS"
+    from teamdata import shown          # the preview is on the shown scale; the roster keeps the stored one
+    assert mover["pos"] == "CB" and shown.overall(mover["o"]) == cb["overall"] and mover.get("moved_from") == "FS"
     assert any(m["id"] == mover["id"] and m["to"] == "CB" for m in off["position_changes"])
     try:
         offseason.change_position(st, mover["id"], "XX"); raise AssertionError("a made-up position")

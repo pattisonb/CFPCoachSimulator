@@ -301,7 +301,8 @@ CONTESTED_SHARE = {"short": 0.10, "mid": 0.25, "deep": 0.45}
 CONTESTED_EFFECT = 0.0035        # per point of (Contested Catches - defender's Ball Skills) / 2 + leaping and height edge
 CONTESTED_HEIGHT_POINTS = 2.0    # an inch of height is worth this many rating points at the catch point
 PASS_YARDS_RB = (5.0, 4.0)      # gauss mean, sd for completions to running backs (receivers and tight ends: by depth above)
-PASS_SPEED_EFFECT = 0.007       # yards multiplier per point of receiver speed minus DB speed
+PASS_SPEED_EFFECT = 0.0035      # *tune* yards multiplier per point of receiver speed minus DB speed (0.007 ran the top
+                                # receivers' yards a catch over the real leaders': tools/realism.py)
 PASS_TACKLE_EFFECT = 0.006      # yards multiplier per point of the coverage players' tackling below neutral (yards after the catch)
 PASS_BIG_PLAY_YARDS = (22, 65)  # a short or intermediate catch broken for a long gain (PASS_BREAKAWAY_CHANCE)
 PASS_MIN_YARDS = -2
@@ -309,9 +310,10 @@ SCRAMBLE_CHANCE = 0.13          # of plays with no completion and no pick
 RECEPTION_FUMBLE_CHANCE = 0.010
 
 # ----- Rushing -----
-RUSH_BASE_YARDS = (3.75, 2.7)   # gauss mean, sd (3.75: official YPC counts sacks as runs; see tools/calibrate.py)
+RUSH_BASE_YARDS = (3.9, 2.7)    # *tune* gauss mean, sd (official YPC counts sacks as runs; 3.75 before the carrier's share below came down)
 RUSH_PER_LINE_POINT = 0.040     # yards per point of (run blocking - run defense)
-RUSH_PER_CARRIER_POINT = 0.035  # yards per point of carrier rating above the front seven's pursuit (speed and tackling)
+RUSH_PER_CARRIER_POINT = 0.020  # *tune* yards per point of carrier rating above the front seven's pursuit (speed and tackling);
+                                # 0.035 put the 5th and 10th rushers 10-16% over real seasons with the 50th under
 # ----- Running by direction (ratings v2, phase 3) -----
 # Each carry goes inside or outside. Blocking, the front and the carrier's style read
 # differently in each; like the pass game, the attributes add how a player differs from his
@@ -331,6 +333,8 @@ SHORT_YARDAGE_STYLE_EFFECT = 0.0024   # conversion chance per point of power run
 RUSH_GUESSED = -0.9
 RUSH_NOT_GUESSED = 0.5
 RUSH_BIG_PLAY_CHANCE = 0.045    # per carry (scaled by carrier speed)
+RUSH_BIG_PLAY_SPEED_POWER = 0.5 # *tune* ... as (speed / neutral) ** this; at 1 a fast back's long runs put the top ten rushers
+                                # about 10% over real seasons' (tools/realism.py)
 RUSH_BIG_PLAY_YARDS = (15, 45)
 RUSH_SHORT_YARDAGE_CONVERT = 0.62   # on 3rd/4th and 1-2, chance the carry reaches the line
 RUSH_MIN_YARDS = -6
@@ -395,16 +399,17 @@ KICKOFF_BIG_RETURN_CHANCE = 0.06
 KICKOFF_RETURN_TD_CHANCE = 0.004
 
 # ----- Usage shares (calibrated against 2026 box scores, see calibrate_players.py) -----
-TARGET_WEIGHT_POWER = 2.5       # receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
-                                # full-season receiving leaders 17% over 2023-2025, 3.5 15% over: tools/realism.py)
-TARGET_MULT_MAX = 1.5           # cap on a receiver's real-usage target weight (data/real_adjustments.json); 2.0 fed the
+TARGET_WEIGHT_POWER = 2.3       # *tune* receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
+                                # full-season receiving leaders 17% over 2023-2025, 3.5 15% over, 2.5 8% once pass-heavy
+                                # teams threw as much as they really do: tools/realism.py)
+TARGET_MULT_MAX = 1.3           # *tune* cap on a receiver's real-usage target weight (data/real_adjustments.json); 2.0 fed the
                                 # top receivers too much (the leader had 2,100 yards where real leaders have 1,500)
 
 # ----- Who gets the defensive stats (tools/realism.py: season leaders against real seasons) -----
 # Tackle weight per player on the field: (dl, lb, olb, s, cb) for runs of 2 yards or less,
 # 3-7 yards, and longer plays, times (skill / neutral) ** TACKLE_SKILL_POWER.
-TACKLE_WEIGHTS_SHORT = (0.18, 0.29, 0.30, 0.12, 0.05)   # DL was 0.22: linemen made 23% of tackles (real about 20%)
-TACKLE_WEIGHTS_MID = (0.065, 0.28, 0.30, 0.20, 0.10)     # DL was 0.08
+TACKLE_WEIGHTS_SHORT = (0.22, 0.29, 0.30, 0.11, 0.045)  # *tune* real 2026 (cfbstats, every FBS team): linemen and edge
+TACKLE_WEIGHTS_MID = (0.085, 0.28, 0.30, 0.19, 0.09)    # rushers 25% of tackles, linebackers 32%, backs 41%; the sim gives 23 / 33 / 43
 TACKLE_WEIGHTS_LONG = (0.02, 0.16, 0.12, 0.34, 0.30)
 TACKLE_SKILL_POWER = 0.7
 TACKLE_ASSIST_CHANCE = 0.33     # share of tackles made by two players; both get an assist (NCAA scoring),
@@ -416,7 +421,8 @@ FORCED_FUMBLE_SHARE = 0.7       # share of fumbles credited as forced (real 0.67
 SACK_SKILL_POWER = 1.3          # sack credit among the rushers: (pass rush / neutral) ** power
 DB_SACK_SHARE = 0.08            # share of sacks credited to a blitzing corner or safety at blitz_rate 50 (scales with it;
                                 # real 2026 through week 8: 158 of about 1,900); credit only, drawn from stat_rng
-INT_SKILL_POWER = 1.5           # interception credit among the defensive backs: (coverage / neutral) ** power
+INT_SKILL_POWER = 2.4           # *tune* interception credit among the defensive backs: (coverage / neutral) ** power (1.5 spread
+                                # them too evenly: 13 players a season with five or more, real 18-22; 2.4 gives about 20, 4.0 gave 36)
 QB_DESIGNED_RUN_SHARE = 0.06    # default share of carries that are designed QB runs (observed per team overrides)
 BACKUP_RB_ROTATION = 0.40       # chance the sub is the next back down rather than the best one on the bench
 SKILL_SUB_FATIGUE = 62          # fatigue level at which WR/TE starters (and backup RBs) rotate out (was 50)
@@ -448,6 +454,9 @@ SKILL_SUB_FATIGUE = 62          # fatigue level at which WR/TE starters (and bac
 RB_LEAD_SHARE_CURVE = ((0.0, 43.0), (0.125, 45.2), (0.25, 48.4), (0.375, 52.3), (0.5, 57.3),
                        (0.625, 64.1), (0.75, 68.5), (0.875, 72.8), (1.0, 74.0))   # (feature, top back's share %)
 RB_LEAD_SUB_FATIGUE = 78
+RB_LEAD_GAME_CARRIES = 24             # *tune* carries in a game after which the lead back shares the rest (a run-heavy, fast team
+                                      # gave its back 450 carries a season; real leaders top out near 370)
+RB_LEAD_WORKLOAD = (0.25, 0.25)       # *tune* ... per-snap chance he comes out, and his return chance x this
 RB_LEAD_RETURN_FATIGUE = 40
 RB_LEAD_OUT_CHANCE = 0.14             # committee: per-snap chance the fresh lead back comes out for a series (workhorse 0)
 RB_LEAD_OUT_CURVE = 2                 # series rotation fades as (1 - feature) ** this

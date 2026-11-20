@@ -492,7 +492,7 @@ def get_run_yards(offense, defense, down, first_down, guessed_play, yardline, ve
         if CLUTCH_NOW[0]:
             yards += _tr(carrier, "closer") * cfg.TRAIT_FX["closer"] * 40
 
-    big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL) * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
+    big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * (carrier.speed / cfg.NEUTRAL) ** cfg.RUSH_BIG_PLAY_SPEED_POWER * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
     if not guessed_play:
         big_play_chance *= 1.3
     if tendencies.get("conservative"):
@@ -767,6 +767,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
         completion += cfg.COMPLETION_CHECKDOWN_BONUS
     if tendencies.get("prevent"):
         completion += cfg.PREVENT_COMPLETION
+    completion += tendencies.get("pass_form_completion", 0.0)    # the team's real passing game beyond its ratings (tools/tune_pass_form.py)
     # red zone: a short field squeezes the coverage
     to_goal = 100 - yardline
     completion += next((adj for inside, adj in cfg.REDZONE_COMPLETION if to_goal <= inside), 0.0)
@@ -782,6 +783,7 @@ def get_pass_yards(offense, defense, down, first_down, guessed_play, yardline, v
             yards = random.randint(*cfg.PASS_YARDS_DEEP)
         else:
             yards = random.gauss(*(cfg.PASS_YARDS_SHORT if depth == "short" else cfg.PASS_YARDS_MID))
+        yards *= tendencies.get("pass_form_yards", 1.0)
         yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT \
             - (_group_rating(defense, db_positions, ('tackling',)) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT
         # a short or intermediate catch broken for a long gain (deep throws have their own yards)

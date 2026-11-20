@@ -10978,6 +10978,10 @@
    "targets": {
     "simon-kibbee": 1.08,
     "matt-long": 1.082
+   },
+   "pass_form": {
+    "completion": -0.068,
+    "yards": 1.0984
    }
   },
   "akron": {
@@ -10993,6 +10997,10 @@
     "luke-sivon": 0.944,
     "jean-louis-iii": 0.912,
     "paul-davis": 0.945
+   },
+   "pass_form": {
+    "completion": 0.0339,
+    "yards": 0.9454
    }
   },
   "alabama": {
@@ -11009,6 +11017,10 @@
     "rico-scott": 1.5,
     "marshall-pritchett": 1.276,
     "mack-sutter": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0553,
+    "yards": 1.0128
    }
   },
   "app-st": {
@@ -11025,6 +11037,10 @@
     "dillon-galloway": 0.894,
     "sam-pickett-iii": 1.5,
     "jackson-grier": 0.944
+   },
+   "pass_form": {
+    "completion": 0.0479,
+    "yards": 0.933
    }
   },
   "arizona-state": {
@@ -11039,6 +11055,10 @@
     "derek-eusebio": 1.33,
     "jalen-moss": 0.847,
     "jaren-hamilton": 0.884
+   },
+   "pass_form": {
+    "completion": -0.0283,
+    "yards": 1.0213
    }
   },
   "arizona": {
@@ -11058,6 +11078,10 @@
     "r-j-mosley": 0.87,
     "brandon-phelps": 1.434,
     "arthur-ban": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0288,
+    "yards": 1.1362
    }
   },
   "arkansas-state": {
@@ -11070,6 +11094,10 @@
     "joshua-burrell": 0.878,
     "jaylen-bonelli": 1.5,
     "ezra-burgess": 0.891
+   },
+   "pass_form": {
+    "completion": 0.0338,
+    "yards": 0.8458
    }
   },
   "arkansas": {
@@ -11083,12 +11111,20 @@
     "cj-brown": 0.941,
     "jelani-watkins": 0.888,
     "courtney-crutchfield": 0.93
+   },
+   "pass_form": {
+    "completion": 0.025,
+    "yards": 0.9299
    }
   },
   "army": {
    "rb_lead_feature": 0.0,
    "targets": {
     "brady-anderson": 1.16
+   },
+   "pass_form": {
+    "completion": 0.0206,
+    "yards": 0.8747
    }
   },
   "auburn": {
@@ -11104,6 +11140,10 @@
     "christian-neptune": 1.053,
     "sam-turner": 0.931,
     "brian-williams-jr-auburn": 1.08
+   },
+   "pass_form": {
+    "completion": 0.002,
+    "yards": 0.9163
    }
   },
   "ball-state": {
@@ -11117,6 +11157,10 @@
     "eli-hohlt": 0.918,
     "elisha-durham": 0.941,
     "sean-ward": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0061,
+    "yards": 0.8516
    }
   },
   "baylor": {
@@ -11131,6 +11175,10 @@
     "taz-williams-jr": 0.876,
     "parker-almanza": 0.935,
     "jadon-porter": 1.157
+   },
+   "pass_form": {
+    "completion": -0.0198,
+    "yards": 0.9287
    }
   },
   "boise-state": {
@@ -11149,6 +11197,10 @@
     "qumonte-williams-jr": 0.891,
     "aj-jones-boise-state": 0.936,
     "rasean-jones": 1.5
+   },
+   "pass_form": {
+    "completion": 0.0273,
+    "yards": 1.0489
    }
   },
   "boston-college": {
@@ -11162,6 +11214,10 @@
     "reed-swanson": 0.931,
     "jackson-wade": 0.924,
     "cameron-kossmann": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0258,
+    "yards": 1.1447
    }
   },
   "bowling-green": {
@@ -11179,6 +11235,10 @@
     "trey-johnson": 0.902,
     "pauly-sadler": 0.93,
     "austin-clay": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0551,
+    "yards": 1.0251
    }
   },
   "buffalo": {
@@ -11192,6 +11252,10 @@
     "chance-morrow": 1.5,
     "dwayne-early-jr": 1.212,
     "phillip-folmar": 0.888
+   },
+   "pass_form": {
+    "completion": -0.0729,
+    "yards": 1.0061
    }
   },
   "byu": {
@@ -11205,6 +11269,10 @@
     "keayen-nead": 0.937,
     "reggie-frischknecht": 0.912,
     "real-legend-glasker": 1.331
+   },
+   "pass_form": {
+    "completion": -0.0686,
+    "yards": 1.1848
    }
   },
   "c-carolina": {
@@ -11219,6 +11287,10 @@
     "colton-hinton": 1.472,
     "krosse-johnson": 0.93,
     "nathan-schuessler": 0.939
+   },
+   "pass_form": {
+    "completion": -0.019,
+    "yards": 1.1233
    }
   },
   "c-michigan": {
@@ -11232,6 +11304,10 @@
     "tayte-vanderleest": 0.924,
     "tommy-mcintosh": 0.3,
     "landon-swanson": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0556,
+    "yards": 0.8242
    }
   },
   "california": {
@@ -11247,6 +11323,10 @@
     "trevor-rogers": 0.909,
     "quaron-adams": 0.941,
     "tyree-sams": 1.5
+   },
+   "pass_form": {
+    "completion": -0.0202,
+    "yards": 0.82
    }
   },
   "charlotte": {
@@ -11262,6 +11342,10 @@
     "brody-dawyot": 1.142,
     "jaylen-hampton": 1.5,
     "lane-wadle": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0308,
+    "yards": 0.8714
    }
   },
   "cincinnati": {
@@ -11277,6 +11361,10 @@
     "larenzo-fenner": 1.187,
     "devyn-zahursky": 0.935,
     "giyahni-kontosis": 0.899
+   },
+   "pass_form": {
+    "completion": 0.0384,
+    "yards": 1.0243
    }
   },
   "clemson": {
@@ -11291,6 +11379,10 @@
     "tristan-smith": 0.867,
     "juju-preston": 1.171,
     "gordon-sellars-iii": 0.864
+   },
+   "pass_form": {
+    "completion": 0.0098,
+    "yards": 0.8233
    }
   },
   "colorado-state": {
@@ -11308,6 +11400,10 @@
     "daven-amos": 0.94,
     "terrence-smith-jr": 1.5,
     "jordan-mosley": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0173,
+    "yards": 1.0815
    }
   },
   "colorado": {
@@ -11322,6 +11418,10 @@
     "quanell-farrakhan-jr": 1.45,
     "quentin-gibson": 1.101,
     "charlie-williams": 1.344
+   },
+   "pass_form": {
+    "completion": 0.0417,
+    "yards": 0.9155
    }
   },
   "delaware": {
@@ -11338,6 +11438,10 @@
     "matthew-mckinley-daniels": 0.914,
     "taesean-robinson": 0.865,
     "jaxson-bowman": 0.3
+   },
+   "pass_form": {
+    "completion": -0.039,
+    "yards": 0.9364
    }
   },
   "duke": {
@@ -11352,6 +11456,10 @@
     "paxon-kettering": 0.948,
     "kavon-simmons": 1.126,
     "kavon-conciauro": 0.948
+   },
+   "pass_form": {
+    "completion": -0.0062,
+    "yards": 1.0632
    }
   },
   "e-michigan": {
@@ -11368,6 +11476,10 @@
     "dalin-wilkins": 0.946,
     "real-joshua-long": 1.153,
     "luke-grant": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0161,
+    "yards": 0.82
    }
   },
   "east-carolina": {
@@ -11382,6 +11494,10 @@
     "dillon-lorick": 0.907,
     "kyler-pearson": 0.932,
     "jason-dickerson": 1.191
+   },
+   "pass_form": {
+    "completion": -0.0029,
+    "yards": 0.8704
    }
   },
   "fiu": {
@@ -11396,6 +11512,10 @@
     "eric-nelson": 0.835,
     "tyson-carter": 1.227,
     "amari-isaac": 0.935
+   },
+   "pass_form": {
+    "completion": -0.0004,
+    "yards": 0.9956
    }
   },
   "fla-atlantic": {
@@ -11409,6 +11529,10 @@
     "owen-pollock": 0.9,
     "antojuan-woody": 0.924,
     "brooks-johnson": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0036,
+    "yards": 0.9066
    }
   },
   "florida-state": {
@@ -11422,6 +11546,10 @@
     "jasen-lopez": 1.264,
     "chase-loftin": 0.906,
     "devin-carter": 0.933
+   },
+   "pass_form": {
+    "completion": 0.0004,
+    "yards": 1.1806
    }
   },
   "florida": {
@@ -11436,6 +11564,10 @@
     "evan-chieca": 0.943,
     "kahleil-jackson": 0.903,
     "justin-williams-florida": 0.925
+   },
+   "pass_form": {
+    "completion": 0.0666,
+    "yards": 0.8961
    }
   },
   "fresno-state": {
@@ -11451,6 +11583,10 @@
     "harold-duvall": 0.903,
     "jayon-farrar": 0.896,
     "jaylen-garrison": 0.916
+   },
+   "pass_form": {
+    "completion": 0.0081,
+    "yards": 0.9851
    }
   },
   "ga-southern": {
@@ -11466,6 +11602,10 @@
     "cam-king": 0.89,
     "king-phillips": 0.926,
     "jeremiah-ware": 1.368
+   },
+   "pass_form": {
+    "completion": 0.0701,
+    "yards": 0.8819
    }
   },
   "georgia-state": {
@@ -11482,6 +11622,10 @@
     "jamari-miller": 0.918,
     "keron-milton": 0.937,
     "matt-buron": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0555,
+    "yards": 0.9502
    }
   },
   "georgia-tech": {
@@ -11495,6 +11639,10 @@
     "kevin-roche-jr": 1.5,
     "debron-gatling": 0.852,
     "rahkeem-smith": 0.917
+   },
+   "pass_form": {
+    "completion": 0.0517,
+    "yards": 0.9344
    }
   },
   "georgia": {
@@ -11509,6 +11657,10 @@
     "talyn-taylor": 1.5,
     "cj-wiley": 0.927,
     "tyler-williams": 0.925
+   },
+   "pass_form": {
+    "completion": 0.0361,
+    "yards": 1.1331
    }
   },
   "hawai-i": {
@@ -11524,6 +11676,10 @@
     "nick-delgadillo": 0.942,
     "kainoa-carvalho": 1.5,
     "tre-griffiths": 0.933
+   },
+   "pass_form": {
+    "completion": -0.0448,
+    "yards": 1.0004
    }
   },
   "houston": {
@@ -11535,6 +11691,10 @@
     "koby-young": 1.13,
     "jaquise-martin": 0.923,
     "kaleb-thomas": 0.918
+   },
+   "pass_form": {
+    "completion": -0.0518,
+    "yards": 1.0398
    }
   },
   "illinois": {
@@ -11548,6 +11708,10 @@
     "brayden-trimble": 1.198,
     "jershaun-newton": 0.945,
     "alex-perry": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0326,
+    "yards": 1.0426
    }
   },
   "indiana": {
@@ -11561,6 +11725,10 @@
     "davion-chandler": 1.132,
     "trevor-gibbs": 0.934,
     "jackson-wasserstrom": 0.946
+   },
+   "pass_form": {
+    "completion": -0.08,
+    "yards": 1.2
    }
   },
   "iowa-state": {
@@ -11573,6 +11741,10 @@
     "christian-greenlaw": 0.936,
     "carter-pabst": 0.926,
     "jamal-polite-jr": 1.5
+   },
+   "pass_form": {
+    "completion": 0.0079,
+    "yards": 1.0802
    }
   },
   "iowa": {
@@ -11588,6 +11760,10 @@
     "thomas-meyer": 0.864,
     "dayton-howard": 0.895,
     "mason-woods": 0.89
+   },
+   "pass_form": {
+    "completion": 0.0441,
+    "yards": 0.9782
    }
   },
   "james-madison": {
@@ -11601,6 +11777,10 @@
     "corey-scott": 1.5,
     "kylan-billiot": 0.3,
     "brian-hnat": 0.3
+   },
+   "pass_form": {
+    "completion": 0.021,
+    "yards": 1.0133
    }
   },
   "jax-state": {
@@ -11615,6 +11795,10 @@
     "dylan-gentry": 0.91,
     "franklin-baret-jr": 0.922,
     "colton-pitchford": 0.933
+   },
+   "pass_form": {
+    "completion": 0.0396,
+    "yards": 1.0597
    }
   },
   "kansas-state": {
@@ -11628,6 +11812,10 @@
     "adonis-moise": 0.918,
     "will-anciaux": 0.903,
     "derrick-salley-jr": 1.369
+   },
+   "pass_form": {
+    "completion": -0.0224,
+    "yards": 0.8943
    }
   },
   "kansas": {
@@ -11638,6 +11826,10 @@
     "leyton-cure": 0.878,
     "jailen-butler": 0.908,
     "bryson-hayes": 0.936
+   },
+   "pass_form": {
+    "completion": -0.0311,
+    "yards": 1.1329
    }
   },
   "kennesaw-st": {
@@ -11652,6 +11844,10 @@
     "brayden-munroe": 1.5,
     "keon-davis": 0.886,
     "navelle-dean": 1.171
+   },
+   "pass_form": {
+    "completion": 0.0655,
+    "yards": 0.8791
    }
   },
   "kent-state": {
@@ -11669,6 +11865,10 @@
     "brendyn-smith": 1.366,
     "jared-kelley": 0.95,
     "dakota-taylor": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0561,
+    "yards": 1.0258
    }
   },
   "kentucky": {
@@ -11683,6 +11883,10 @@
     "kenny-darby": 1.5,
     "ja-kayden-ferguson": 0.875,
     "brock-coffman": 0.888
+   },
+   "pass_form": {
+    "completion": 0.0406,
+    "yards": 0.9042
    }
   },
   "liberty": {
@@ -11694,6 +11898,10 @@
     "rashawn-cunningham": 0.884,
     "darius-copeland": 1.146,
     "bryce-randolph": 1.109
+   },
+   "pass_form": {
+    "completion": -0.012,
+    "yards": 1.1689
    }
   },
   "louisiana-tech": {
@@ -11707,6 +11915,10 @@
     "dedrick-latulas": 0.872,
     "jalen-mickens": 1.5,
     "david-pierro": 0.924
+   },
+   "pass_form": {
+    "completion": 0.08,
+    "yards": 0.9716
    }
   },
   "louisiana": {
@@ -11724,6 +11936,10 @@
     "trenton-chaney": 1.5,
     "rahji-dennis": 0.943,
     "kristion-brooks": 1.281
+   },
+   "pass_form": {
+    "completion": 0.0274,
+    "yards": 1.0359
    }
   },
   "louisville": {
@@ -11736,6 +11952,10 @@
     "treyshun-hurry": 1.5,
     "jackson-voth": 0.869,
     "terrance-mcwilliams-jr": 0.927
+   },
+   "pass_form": {
+    "completion": 0.0372,
+    "yards": 1.177
    }
   },
   "lsu": {
@@ -11753,6 +11973,10 @@
     "corey-barber-jr": 1.073,
     "josh-jackson": 0.942,
     "malachi-thomas": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0072,
+    "yards": 0.9948
    }
   },
   "marshall": {
@@ -11766,6 +11990,10 @@
     "xayvion-turner-bradshaw": 1.5,
     "sherone-white-jr": 0.933,
     "owen-sweeney": 1.5
+   },
+   "pass_form": {
+    "completion": -0.029,
+    "yards": 0.82
    }
   },
   "maryland": {
@@ -11782,6 +12010,10 @@
     "jordan-scott": 0.903,
     "ejani-shakir": 0.886,
     "jayden-kitchens": 1.088
+   },
+   "pass_form": {
+    "completion": -0.0281,
+    "yards": 0.9509
    }
   },
   "memphis": {
@@ -11799,6 +12031,10 @@
     "stonka-burnside": 1.5,
     "joshua-joseph": 0.915,
     "garrett-essner": 0.3
+   },
+   "pass_form": {
+    "completion": 0.039,
+    "yards": 1.1332
    }
   },
   "miami-oh": {
@@ -11813,6 +12049,10 @@
     "maleek-huggins": 1.429,
     "scoop-smith": 1.167,
     "keith-reynolds": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0013,
+    "yards": 1.2
    }
   },
   "miami": {
@@ -11830,6 +12070,10 @@
     "daylyn-upshaw": 1.5,
     "milan-parris": 0.886,
     "luka-gilbert": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0338,
+    "yards": 1.088
    }
   },
   "michigan-state": {
@@ -11844,6 +12088,10 @@
     "braylon-collier": 0.901,
     "samson-gash": 0.882,
     "charles-taplin": 0.94
+   },
+   "pass_form": {
+    "completion": 0.0709,
+    "yards": 0.9239
    }
   },
   "michigan": {
@@ -11857,6 +12105,10 @@
     "mason-bonner": 0.935,
     "zack-marshall": 0.3,
     "jaime-ffrench": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0363,
+    "yards": 0.9575
    }
   },
   "minnesota": {
@@ -11871,6 +12123,10 @@
     "bradley-martino": 0.928,
     "noah-jennings": 1.5,
     "hayden-moore-minnesota": 0.937
+   },
+   "pass_form": {
+    "completion": -0.0239,
+    "yards": 0.9745
    }
   },
   "mississippi-st": {
@@ -11887,6 +12143,10 @@
     "camden-capehart": 0.94,
     "ayden-williams": 0.3,
     "zayion-cotton": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0592,
+    "yards": 0.9734
    }
   },
   "missouri-state": {
@@ -11901,6 +12161,10 @@
     "witt-edwards": 0.876,
     "isaiah-mcmorris": 0.894,
     "brendon-mcqueen": 0.938
+   },
+   "pass_form": {
+    "completion": 0.0404,
+    "yards": 0.9467
    }
   },
   "missouri": {
@@ -11914,6 +12178,10 @@
     "kenric-lanier-ii": 0.858,
     "jude-james": 0.932,
     "naeshaun-montgomery": 1.277
+   },
+   "pass_form": {
+    "completion": -0.0113,
+    "yards": 1.0257
    }
   },
   "mtsu": {
@@ -11927,10 +12195,18 @@
     "hogan-wasson": 0.944,
     "brody-benke": 0.897,
     "neo-clifton": 1.497
+   },
+   "pass_form": {
+    "completion": -0.0169,
+    "yards": 0.8682
    }
   },
   "navy": {
-   "rb_lead_feature": 1.0
+   "rb_lead_feature": 1.0,
+   "pass_form": {
+    "completion": -0.0475,
+    "yards": 1.2
+   }
   },
   "nc-state": {
    "rb_lead_feature": 1.0,
@@ -11943,6 +12219,10 @@
     "hunter-provience": 1.236,
     "amiri-acker": 0.886,
     "chance-robinson": 1.248
+   },
+   "pass_form": {
+    "completion": -0.0108,
+    "yards": 0.9787
    }
   },
   "ndsu": {
@@ -11959,6 +12239,10 @@
     "logan-conklin": 0.9,
     "cade-osterman": 0.91,
     "cj-anderson": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0211,
+    "yards": 1.0188
    }
   },
   "nebraska": {
@@ -11972,6 +12256,10 @@
     "cortez-mills-jr": 0.871,
     "janiran-bonner": 0.864,
     "larry-miles": 0.938
+   },
+   "pass_form": {
+    "completion": -0.0388,
+    "yards": 0.9709
    }
   },
   "nevada": {
@@ -11984,6 +12272,10 @@
     "damien-morgan": 1.5,
     "perrion-williams": 0.891,
     "kola-babalola": 0.3
+   },
+   "pass_form": {
+    "completion": -0.047,
+    "yards": 0.9635
    }
   },
   "new-mexico-st": {
@@ -11994,6 +12286,10 @@
     "carson-suesue": 0.911,
     "brodie-malone-bradford": 1.078,
     "aj-williams-iii": 1.5
+   },
+   "pass_form": {
+    "completion": -0.0379,
+    "yards": 0.9333
    }
   },
   "new-mexico": {
@@ -12009,6 +12305,10 @@
     "kader-diop": 0.946,
     "bailen-george": 1.5,
     "shawn-miller": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0124,
+    "yards": 1.1195
    }
   },
   "niu": {
@@ -12027,6 +12327,10 @@
     "zaire-mckinney": 1.071,
     "afy-ibekwe": 0.93,
     "caleb-haack": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0202,
+    "yards": 0.8613
    }
   },
   "north-carolina": {
@@ -12040,6 +12344,10 @@
     "carson-sneed": 0.907,
     "mason-humphrey": 0.855,
     "nyqir-helton": 0.917
+   },
+   "pass_form": {
+    "completion": 0.012,
+    "yards": 0.891
    }
   },
   "north-texas": {
@@ -12053,6 +12361,10 @@
     "tj-chukwurah": 0.872,
     "grayson-obara": 0.884,
     "kyle-koch": 1.5
+   },
+   "pass_form": {
+    "completion": 0.0592,
+    "yards": 1.0552
    }
   },
   "northwestern": {
@@ -12063,6 +12375,10 @@
     "alex-honig": 1.333,
     "drew-wagner": 1.308,
     "ricky-ahumaraeze": 0.814
+   },
+   "pass_form": {
+    "completion": 0.0169,
+    "yards": 1.1799
    }
   },
   "notre-dame": {
@@ -12081,6 +12397,10 @@
     "bubba-frazier": 0.925,
     "jerome-bettis-jr": 1.075,
     "devin-fitzgerald": 0.898
+   },
+   "pass_form": {
+    "completion": -0.0529,
+    "yards": 1.0599
    }
   },
   "ohio-state": {
@@ -12098,6 +12418,10 @@
     "maxence-leblanc": 0.921,
     "jerquaden-guilford": 0.933,
     "brock-boyd": 1.167
+   },
+   "pass_form": {
+    "completion": -0.0124,
+    "yards": 1.0726
    }
   },
   "ohio": {
@@ -12113,6 +12437,10 @@
     "delaney-crawford": 0.923,
     "blake-guffey": 0.927,
     "zach-hackleman": 0.938
+   },
+   "pass_form": {
+    "completion": 0.0114,
+    "yards": 1.0661
    }
   },
   "oklahoma-state": {
@@ -12128,6 +12456,10 @@
     "kam-powell": 0.896,
     "terrence-lewis": 1.5,
     "jabarie-thornton": 0.948
+   },
+   "pass_form": {
+    "completion": -0.038,
+    "yards": 1.2
    }
   },
   "oklahoma": {
@@ -12143,6 +12475,10 @@
     "ivan-carreon": 0.917,
     "jer-michael-carter": 0.904,
     "jacob-jordan": 1.091
+   },
+   "pass_form": {
+    "completion": 0.01,
+    "yards": 0.9078
    }
   },
   "old-dominion": {
@@ -12157,6 +12493,10 @@
     "bj-bedgood": 0.943,
     "joshua-rodriguez": 1.5,
     "sidney-mbanasor": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0395,
+    "yards": 0.9278
    }
   },
   "ole-miss": {
@@ -12171,6 +12511,10 @@
     "horatio-fields": 1.442,
     "traylon-ray": 1.226,
     "samari-reed": 0.922
+   },
+   "pass_form": {
+    "completion": -0.0652,
+    "yards": 0.8839
    }
   },
   "oregon-state": {
@@ -12186,6 +12530,10 @@
     "malachi-durant": 0.855,
     "jesse-legree": 1.5,
     "jameson-powell": 0.89
+   },
+   "pass_form": {
+    "completion": 0.0654,
+    "yards": 1.0541
    }
   },
   "oregon": {
@@ -12201,6 +12549,10 @@
     "gatlin-bair": 0.85,
     "messiah-hampton": 1.374,
     "hudson-lewis": 1.101
+   },
+   "pass_form": {
+    "completion": -0.0002,
+    "yards": 1.0803
    }
   },
   "penn-state": {
@@ -12212,6 +12564,10 @@
     "zay-robinson": 1.062,
     "finn-furmanek": 0.926,
     "karon-brookins": 0.945
+   },
+   "pass_form": {
+    "completion": -0.0505,
+    "yards": 1.0057
    }
   },
   "pittsburgh": {
@@ -12227,6 +12583,10 @@
     "bryan-hamilton": 0.928,
     "dylan-wester": 0.933,
     "max-hunt": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0357,
+    "yards": 1.0797
    }
   },
   "purdue": {
@@ -12244,6 +12604,10 @@
     "jaylan-hornsby": 0.912,
     "brandon-kinsey": 0.933,
     "kylan-fox": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0301,
+    "yards": 1.0659
    }
   },
   "rice": {
@@ -12257,6 +12621,10 @@
     "michael-sifford": 0.938,
     "jake-renda": 0.3,
     "james-falk": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0127,
+    "yards": 1.0992
    }
   },
   "rutgers": {
@@ -12269,6 +12637,10 @@
     "dyzier-carter": 1.268,
     "jourdin-houston": 1.472,
     "dj-howerton": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0331,
+    "yards": 1.042
    }
   },
   "sac-state": {
@@ -12280,6 +12652,10 @@
     "jace-wilson": 0.897,
     "cedric-anton": 0.921,
     "onterrio-smith-jr": 1.5
+   },
+   "pass_form": {
+    "completion": -0.006,
+    "yards": 0.8356
    }
   },
   "sam-houston": {
@@ -12293,6 +12669,10 @@
     "tim-burns-jr": 1.187,
     "kamari-maxwell": 0.917,
     "shane-wilder": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0313,
+    "yards": 0.8995
    }
   },
   "san-diego-st": {
@@ -12308,6 +12688,10 @@
     "jaylon-hawkins": 1.5,
     "will-cianfrini": 0.944,
     "kime-fangupo": 0.3
+   },
+   "pass_form": {
+    "completion": -0.027,
+    "yards": 0.9554
    }
   },
   "san-jose-state": {
@@ -12320,6 +12704,10 @@
     "jordan-anderson": 0.836,
     "cooper-hoch": 1.168,
     "carson-clark": 1.5
+   },
+   "pass_form": {
+    "completion": 0.0158,
+    "yards": 0.9217
    }
   },
   "smu": {
@@ -12336,6 +12724,10 @@
     "aljour-miles-ii": 0.89,
     "jakai-anderson": 0.929,
     "jordyn-adams": 0.944
+   },
+   "pass_form": {
+    "completion": 0.0317,
+    "yards": 1.0486
    }
   },
   "south-alabama": {
@@ -12348,6 +12740,10 @@
     "trae-stevenson": 0.936,
     "rod-gibbs": 1.245,
     "noah-toster": 0.935
+   },
+   "pass_form": {
+    "completion": 0.0041,
+    "yards": 1.0451
    }
   },
   "south-carolina": {
@@ -12363,6 +12759,10 @@
     "dj-black": 1.06,
     "malik-clark": 0.89,
     "charly-mullaly": 0.912
+   },
+   "pass_form": {
+    "completion": -0.0195,
+    "yards": 0.998
    }
   },
   "southern-miss": {
@@ -12379,6 +12779,10 @@
     "eeli-singleton": 0.864,
     "mj-johnson": 1.092,
     "javery-mayberry": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0523,
+    "yards": 1.0738
    }
   },
   "stanford": {
@@ -12392,6 +12796,10 @@
     "marcus-brown": 0.92,
     "liam-thorpe": 0.876,
     "langdon-horace": 0.937
+   },
+   "pass_form": {
+    "completion": 0.0022,
+    "yards": 1.0288
    }
   },
   "syracuse": {
@@ -12406,6 +12814,10 @@
     "tyshawn-russell": 0.859,
     "real-umari-hatcher": 1.5,
     "real-calvin-russell-iii": 1.239
+   },
+   "pass_form": {
+    "completion": -0.0371,
+    "yards": 0.9998
    }
   },
   "tcu": {
@@ -12421,6 +12833,10 @@
     "real-kari-ashley": 1.2,
     "lafayette-kaiuway": 0.3,
     "dorian-exum": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0161,
+    "yards": 0.9855
    }
   },
   "temple": {
@@ -12432,6 +12848,10 @@
     "reis-stocksdale": 0.938,
     "jayce-freeman": 1.5,
     "demonte-greene": 0.931
+   },
+   "pass_form": {
+    "completion": -0.0442,
+    "yards": 0.9946
    }
   },
   "tennessee": {
@@ -12443,6 +12863,10 @@
     "dasaahn-brame": 1.166,
     "tk-keys": 0.863,
     "travis-smith-jr": 0.886
+   },
+   "pass_form": {
+    "completion": 0.0359,
+    "yards": 0.8982
    }
   },
   "texas-a-m": {
@@ -12459,6 +12883,10 @@
     "aaron-gregory": 1.222,
     "jayden-warren": 0.902,
     "tk-norman": 1.29
+   },
+   "pass_form": {
+    "completion": -0.0565,
+    "yards": 0.983
    }
   },
   "texas-state": {
@@ -12474,6 +12902,10 @@
     "dameon-crowe": 0.945,
     "lakeyleon-graves": 0.938,
     "tucker-cusano": 1.153
+   },
+   "pass_form": {
+    "completion": 0.0234,
+    "yards": 1.0033
    }
   },
   "texas-tech": {
@@ -12489,6 +12921,10 @@
     "donte-lee-jr": 0.857,
     "chase-campbell": 0.936,
     "bryson-jones": 0.92
+   },
+   "pass_form": {
+    "completion": -0.0306,
+    "yards": 1.089
    }
   },
   "texas": {
@@ -12504,6 +12940,10 @@
     "ryan-niblett": 0.917,
     "jermaine-bishop-jr": 1.481,
     "sterling-berkhalter": 0.886
+   },
+   "pass_form": {
+    "completion": -0.015,
+    "yards": 0.9428
    }
   },
   "toledo": {
@@ -12520,6 +12960,10 @@
     "bryson-hammer": 1.5,
     "cooper-rusk": 0.901,
     "ethan-malafa": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0584,
+    "yards": 0.8815
    }
   },
   "troy": {
@@ -12532,6 +12976,10 @@
     "fabian-rogosch": 1.11,
     "tk-keyes": 1.378,
     "jywon-boyd": 0.884
+   },
+   "pass_form": {
+    "completion": -0.0733,
+    "yards": 1.0379
    }
   },
   "tulane": {
@@ -12545,6 +12993,10 @@
     "gabriel-lovorn": 0.941,
     "ty-thompson": 0.927,
     "bredell-richardson": 1.214
+   },
+   "pass_form": {
+    "completion": -0.0209,
+    "yards": 0.9562
    }
   },
   "tulsa": {
@@ -12560,6 +13012,10 @@
     "javon-ross": 1.5,
     "jackson-shockley": 0.938,
     "grayson-tempest": 0.911
+   },
+   "pass_form": {
+    "completion": 0.0227,
+    "yards": 0.938
    }
   },
   "uab": {
@@ -12574,6 +13030,10 @@
     "kj-daniels": 0.935,
     "lamar-white": 0.912,
     "ej-reid": 1.5
+   },
+   "pass_form": {
+    "completion": -0.024,
+    "yards": 1.0164
    }
   },
   "ucf": {
@@ -12589,6 +13049,10 @@
     "tyren-hornes": 1.5,
     "josh-derry": 1.5,
     "caleb-rollerson": 0.896
+   },
+   "pass_form": {
+    "completion": 0.0232,
+    "yards": 0.9898
    }
   },
   "ucla": {
@@ -12604,6 +13068,10 @@
     "semaj-morgan": 1.5,
     "kenneth-moore-iii": 0.947,
     "giancarlo-cereghino": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0246,
+    "yards": 1.198
    }
   },
   "uconn": {
@@ -12618,6 +13086,10 @@
     "jediyah-willoughby": 1.442,
     "julian-allen": 1.131,
     "emanuel-ross": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0317,
+    "yards": 1.1068
    }
   },
   "ul-monroe": {
@@ -12629,6 +13101,10 @@
     "brandon-buckhaulter": 0.821,
     "cade-callahan": 0.883,
     "marcellus-jackson": 1.5
+   },
+   "pass_form": {
+    "completion": 0.0073,
+    "yards": 0.9187
    }
   },
   "umass": {
@@ -12641,6 +13117,10 @@
     "max-dowling": 1.19,
     "matthew-ogunniyi": 0.869,
     "jax-markovich": 0.921
+   },
+   "pass_form": {
+    "completion": 0.0074,
+    "yards": 0.9453
    }
   },
   "unlv": {
@@ -12654,6 +13134,10 @@
     "deangelo-irvin-jr": 0.878,
     "kayden-mcgee": 1.5,
     "vincent-carner": 1.17
+   },
+   "pass_form": {
+    "completion": -0.0507,
+    "yards": 1.0369
    }
   },
   "usc": {
@@ -12668,6 +13152,10 @@
     "walter-matthews": 0.935,
     "ethan-feaster": 0.929,
     "corey-simms": 1.058
+   },
+   "pass_form": {
+    "completion": -0.0316,
+    "yards": 1.1131
    }
   },
   "usf": {
@@ -12678,6 +13166,10 @@
     "bryson-rodgers": 1.5,
     "kade-caton": 0.942,
     "joshua-porter": 1.5
+   },
+   "pass_form": {
+    "completion": -0.0118,
+    "yards": 0.8932
    }
   },
   "utah-state": {
@@ -12692,6 +13184,10 @@
     "eli-wood": 1.5,
     "rex-haynes": 0.929,
     "l-j-johnson-jr": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0218,
+    "yards": 1.0907
    }
   },
   "utah": {
@@ -12706,6 +13202,10 @@
     "mana-carvalho": 0.912,
     "ricky-johnson": 1.432,
     "hunter-andrews": 1.233
+   },
+   "pass_form": {
+    "completion": -0.0094,
+    "yards": 0.9969
    }
   },
   "utep": {
@@ -12721,6 +13221,10 @@
     "rafeald-campbell": 0.942,
     "marcus-torres": 0.932,
     "jeremiah-nash": 1.232
+   },
+   "pass_form": {
+    "completion": 0.0768,
+    "yards": 0.8546
    }
   },
   "utsa": {
@@ -12736,6 +13240,10 @@
     "dj-allen-jr": 1.373,
     "mekhi-anderson-utsa": 1.5,
     "ty-rupe": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0294,
+    "yards": 0.839
    }
   },
   "vanderbilt": {
@@ -12748,6 +13256,10 @@
     "brycen-coleman": 0.859,
     "tristen-brown": 1.182,
     "maurice-veney": 0.929
+   },
+   "pass_form": {
+    "completion": 0.0161,
+    "yards": 0.9362
    }
   },
   "virginia-tech": {
@@ -12763,6 +13275,10 @@
     "marlion-jackson": 0.908,
     "keylen-adams": 0.9,
     "chanz-wiggins": 0.931
+   },
+   "pass_form": {
+    "completion": 0.0762,
+    "yards": 0.8819
    }
   },
   "virginia": {
@@ -12778,6 +13294,10 @@
     "dillon-newton-short": 0.923,
     "willem-thurber": 0.943,
     "tylyric-coleman": 1.197
+   },
+   "pass_form": {
+    "completion": 0.0055,
+    "yards": 0.9588
    }
   },
   "w-kentucky": {
@@ -12794,6 +13314,10 @@
     "jyzaiah-rockwell": 0.882,
     "nigel-johnson": 0.925,
     "jonathan-stafford-jr": 1.5
+   },
+   "pass_form": {
+    "completion": 0.0024,
+    "yards": 0.8752
    }
   },
   "w-michigan": {
@@ -12806,6 +13330,10 @@
     "keivin-boone-nelson-ii": 0.929,
     "terence-marshall": 0.904,
     "emazon-littlejohn": 0.918
+   },
+   "pass_form": {
+    "completion": 0.0181,
+    "yards": 0.9308
    }
   },
   "wake-forest": {
@@ -12821,6 +13349,10 @@
     "bryce-kania": 0.913,
     "walker-bryson": 0.93,
     "wondame-davis-jr": 0.3
+   },
+   "pass_form": {
+    "completion": 0.036,
+    "yards": 1.1562
    }
   },
   "washington-st": {
@@ -12835,6 +13367,10 @@
     "branden-ganashamoorthy": 1.5,
     "jay-porter": 0.927,
     "tony-freeman": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0256,
+    "yards": 0.82
    }
   },
   "washington": {
@@ -12850,6 +13386,10 @@
     "trez-davis": 0.942,
     "justice-williams-washington": 0.885,
     "christian-moss": 0.3
+   },
+   "pass_form": {
+    "completion": -0.0049,
+    "yards": 1.0266
    }
   },
   "west-virginia": {
@@ -12862,6 +13402,10 @@
     "ryan-ward": 1.141,
     "kedrick-triplett": 0.933,
     "cameron-ball": 0.3
+   },
+   "pass_form": {
+    "completion": -0.032,
+    "yards": 1.2
    }
   },
   "wisconsin": {
@@ -12876,6 +13420,10 @@
     "ryan-schwendeman": 0.924,
     "tyrell-henry": 1.5,
     "jaylon-domingeaux": 1.129
+   },
+   "pass_form": {
+    "completion": -0.0517,
+    "yards": 1.0826
    }
   },
   "wyoming": {
@@ -12892,6 +13440,10 @@
     "bricen-brantley": 0.95,
     "landon-pace": 0.947,
     "nathan-curry": 0.3
+   },
+   "pass_form": {
+    "completion": 0.0179,
+    "yards": 0.9876
    }
   }
  },

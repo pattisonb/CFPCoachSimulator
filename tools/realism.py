@@ -141,6 +141,8 @@ def report(ends: list[dict], snaps: list[dict], teams: dict, data: dict | None =
         reals = {y: real_values(hist, y, cat) for y in YEARS}
         cells, errs = [], []
         for r in RANKS:
+            if r > 50 and not isinstance(cat[3], str):
+                continue    # a column read off another's table (the top 100 by yards): its 100th row is not the 100th in attempts or catches
             sim = st.mean(at(x[name], r) for x in sp)
             real = st.mean(at(reals[y], r) for y in YEARS)
             gap = sim / real - 1 if real else 0.0
@@ -169,7 +171,7 @@ def report(ends: list[dict], snaps: list[dict], teams: dict, data: dict | None =
                 shares[grp] = shares.get(grp, 0) + p["stats"].get("solo_tackles", 0) + p["stats"].get("assisted_tackles", 0)
     tot = sum(shares.values()) or 1
     data["tackle_shares"] = {k: v / tot for k, v in shares.items() if v}
-    lines.append("  Tackles by position (real FBS is roughly DL 20%, LB 40%, DB 40%): "
+    lines.append("  Tackles by position (real 2026, every FBS team: DL and edge 25%, LB 32%, DB 41%): "
                  + ", ".join(f"{k} {100 * v / tot:.0f}%" for k, v in sorted(shares.items(), key=lambda kv: -kv[1]) if v))
     punters = [sorted(((p["stats"].get("punt_net_yards", 0) / p["stats"]["punts"], p["stats"]["punt_yards"] / p["stats"]["punts"])
                        for slug, t in e.items() if not teams[slug]["fictional"] for p in t["players"].values()
