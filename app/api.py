@@ -537,7 +537,7 @@ def get_team(p: Params) -> dict:
     card["punt_returner"] = t.get("punt_returner")
     card["players"] = [
         {"name": pl["name"], "slug": pl.get("slug"), "position": pl["position"], "unit": unit,
-         "starter": bool(pl.get("in_game")), "overall": season.player_overall(pl),
+         "starter": bool(pl.get("in_game")), "overall": season.page_overall(pl),     # his card's overall, as the page shows a rating
          "return_rating": pl.get("return_rating"), "class": pl.get("class"), "height": pl.get("height"),
          "weight": pl.get("weight"), "jersey": pl.get("jersey"), "role": pl.get("role")}
         for unit in ("offense", "defense") for pl in t[unit]

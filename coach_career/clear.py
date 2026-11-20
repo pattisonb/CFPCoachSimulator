@@ -144,16 +144,24 @@ def ratings(state: dict, pid: str) -> Optional[dict]:
         est = max(1, min(99, int(round(truth + err))))
         half = max(2.0, half)                        # never a single number: the read's own width, at least a couple of points
         lo, hi = max(1, int(round(est - half))), min(99, int(round(est + half)))
-        return {"key": key, "label": label, "est": est, "lo": lo, "hi": hi, "confidence": confidence(state, pid, group)}
+        # as the page shows a rating (teamdata/shown.py): a card attribute at his card's group, his potential as an overall
+        put = (lambda v: shown.overall(v)) if key == "potential" else (lambda v: shown.attribute(v, card_grp, key))
+        out = {"key": key, "label": label, "est": put(est), "lo": put(lo), "hi": put(hi), "confidence": confidence(state, pid, group)}
+        if key == "potential":
+            out["ours"] = (est, lo, hi)              # the game's own scale: the letter grades are cut from these
+        return out
 
+    from teamdata import shown
+    card_grp = rv2.card_group(pos, pos)
     rows = [row(k, rv2.ATTRIBUTES[k][0], cards[k], _group_of_key(p, k)) for k in keys]
     pos_label = pr.display_pos(p["ea_position"])
     pot = row("potential", f"Potential at {pos_label}", float(p["pot_ovr"]), "potential")   # his projected overall at his position
     pot["position"] = pos_label
-    if pot["lo"] is not None:                         # the page shows his potential as letters (grades.py), not these numbers
+    if pot.get("ours"):                               # the page shows his potential as letters (grades.py), not these numbers
         from coach_career import grades
         sharp = grades.fine(state)
-        ends = (pot["est"], pot["est"]) if complete else (pot["lo"], pot["hi"])     # a complete report settles on one grade
+        est_, lo_, hi_ = pot.pop("ours")
+        ends = (est_, est_) if complete else (lo_, hi_)     # a complete report settles on one grade
         pot.update(grade=grades.span(*ends, sharp), fine=sharp, eye=grades.eye(state), eye_needed=grades.PLUS_MINUS_EYE)
     coach = confidence(state, pid, "coachability") if _raw_half(state, pid, "coachability") is not None else None
     return {"complete": complete, "looks": recruiting.report_looks(read), "rows": rows, "potential": pot,

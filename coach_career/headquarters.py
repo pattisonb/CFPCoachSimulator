@@ -110,7 +110,8 @@ def movers(state: dict) -> dict:
 
 
 # ----- round 2: the reads behind the planned widgets (spec "Round 2") ----------------------------------------
-
+
+from teamdata import shown as _shown
 DRAFT_LIKELY = 90        # *tune* a draft-eligible underclassman rated this (card overall) or better is likely to declare
 DRAFT_POSSIBLE = 84      # *tune* ... and this or better might
 TRANSFER_HIGH = 0.15     # *tune* a projected portal chance this high reads "High"
@@ -166,7 +167,8 @@ def outlook(state: dict) -> dict:
         ovr = int(p.get("overall") or 0)
         draft = None
         if cls in offseason.UNDERCLASS_ELIGIBLE:
-            draft = "Likely" if ovr >= DRAFT_LIKELY else "Possible" if ovr >= DRAFT_POSSIBLE else None
+            # the view's overall is as the page shows it (teamdata/shown.py); the cuts are on the game's own scale
+            draft = "Likely" if ovr >= _shown.overall(DRAFT_LIKELY) else "Possible" if ovr >= _shown.overall(DRAFT_POSSIBLE) else None
         grad = cls in ("SR", "SRRS")
         group = offseason.GROUP.get(p.get("role")) or offseason.GROUP.get(p.get("position")) or p.get("position")
         group = recruiting.spot_of_player(p.get("role"), group)      # by position, as Recruiting counts (OT, OG, C, EDGE, DT, MIKE, WILL, FS, SS)

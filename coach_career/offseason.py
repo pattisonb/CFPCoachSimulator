@@ -1198,7 +1198,9 @@ def position_options(state: dict, pid: str) -> list[dict]:
     if c is None:
         raise RosterError(404, "not on your roster")
     origin, r = (c["moved_from"], c["moved_attrs"]) if c.get("moved_attrs") else (c["pos"], c["r"])
-    return position_fit.options(dict(zip(lgd["attrs"], r)), c.get("ht"), c.get("wt"), origin, c["pos"], GROUP)
+    from teamdata import shown
+    out = position_fit.options(dict(zip(lgd["attrs"], r)), c.get("ht"), c.get("wt"), origin, c["pos"], GROUP)
+    return [dict(o, overall=shown.overall(o["overall"])) for o in out]      # as the page shows an overall
 
 
 def move_row(c: dict, pos: str, attrs: list[str]) -> None:
@@ -2863,6 +2865,11 @@ def recruiting_spots(state: dict, slug: str) -> int:
 
 
 def player_next(state: dict, slug: str) -> Optional[dict]:
+    """_player_next, with his overall as the page shows a rating (page)."""
+    return page(_player_next(state, slug))
+
+
+def _player_next(state: dict, slug: str) -> Optional[dict]:
     """Where a player is now, for his player page in a career's offseason: next year's team, position,
     class and overall from the league (`status` returning / transfer_in / signee), or where he went
     (`status` the departure's kind: graduated, portal, quit, declared, draft, undrafted; team None).
@@ -3080,7 +3087,37 @@ def _new_transfer(off: dict, c: dict, me: str) -> bool:
     return any(m.get("id") == c["id"] and m.get("to") == me for m in (off.get("portal") or {}).get("moves") or ())
 
 
+def page(obj):
+    """A view's players as the page shows a rating (teamdata/shown.py): a copy of `obj` in which every player row (a
+    dict with an `overall` and a position) has its overall on the shown scale, its `gain` as the difference of the
+    shown overalls before and after, and its `grew` attributes at his card's group. The stored rows keep the game's
+    own scale (an event written last year reads the same as one written today); a coach's ratings are left alone."""
+    from teamdata import shown, ratings as rv2
+    if isinstance(obj, list):
+        return [page(x) for x in obj]
+    if not isinstance(obj, dict):
+        return obj
+    out = {k: page(v) for k, v in obj.items()}
+    pos = obj.get("pos") or obj.get("position")
+    o = obj.get("overall")
+    if pos and isinstance(o, (int, float)) and not isinstance(o, bool):
+        out["overall"] = shown.overall(o)
+        g = obj.get("gain")
+        if isinstance(g, (int, float)) and not isinstance(g, bool):
+            out["gain"] = shown.gain(o - g, o)
+        if isinstance(obj.get("grew"), list):
+            grp = rv2.card_group(pos, pos)
+            out["grew"] = [dict(x, **{"from": shown.attribute(x["from"], grp, x["key"]), "to": shown.attribute(x["to"], grp, x["key"])})
+                           if isinstance(x, dict) and "key" in x else x for x in obj["grew"]]
+    return out
+
+
 def view(state: dict, position: Optional[str] = None, status: Optional[str] = None) -> dict:
+    """The Offseason screen, with every player's rating as the page shows it (page)."""
+    return page(_view(state, position, status))
+
+
+def _view(state: dict, position: Optional[str] = None, status: Optional[str] = None) -> dict:
     """The Offseason screen: where the offseason stands and what it means for your program."""
     from coach_career import recruiting
     migrate(state)

@@ -142,7 +142,8 @@ def comp(profile_vector: dict, position: str, pool, key: Optional[str] = None) -
     best = random.Random(f"comp-{key}").choice(near) if key else near[0]
     out = {k: best[k] for k in ("name", "slug", "school", "team")}
     out["position"] = display_pos(best["position"])
-    out["overall"] = best.get("overall")
+    from teamdata import shown
+    out["overall"] = shown.overall(best.get("overall"))     # as the page shows an overall
     return out
 
 
@@ -933,9 +934,11 @@ def signed_ratings(state: dict, p: dict) -> dict:
     from teamdata import game_scale
     from teamdata import ratings as rv2
     keys = list(game_scale.keys())
+    from teamdata import shown
+    grp = game_scale.group(p["ea_position"])            # every number as the page shows it (teamdata/shown.py)
     rows = [{"key": k, "label": rv2.ATTRIBUTES[k][0] if k in rv2.ATTRIBUTES else k.replace("_", " ").title(),
-             "value": v, "potential": q} for k, v, q in zip(keys, p["ratings"], p["potential"])]
-    return {"overall": p["ovr"], "potential_overall": p["pot_ovr"], "attributes": rows}
+             "value": shown.skill(v, grp, k), "potential": shown.skill(q, grp, k)} for k, v, q in zip(keys, p["ratings"], p["potential"])]
+    return {"overall": shown.overall(p["ovr"]), "potential_overall": shown.overall(p["pot_ovr"]), "attributes": rows}
 
 
 def standing(state: dict, pid: str, viewer: str) -> dict:

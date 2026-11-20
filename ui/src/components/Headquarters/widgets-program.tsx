@@ -254,7 +254,8 @@ function OfferEfficiency({ d, ctx }: P) {
 
 // ---------- Position Battle Board ----------
 const battleWord = (a: number, b?: number) =>
-  b == null ? m.battles.none : a - b >= 5 ? m.battles.secure : a - b >= 2 ? m.battles.close : m.battles.open;
+  // *tune* overall points apart on the shown scale (its middle is tighter than the old scale's)
+  b == null ? m.battles.none : a - b >= 3 ? m.battles.secure : a - b >= 1 ? m.battles.close : m.battles.open;
 function PositionBattles({ d, ctx }: P) {
   const rows: { unit: string; pos: string; a: DepthPlayer; b?: DepthPlayer; word: string }[] = [];
   for (const u of d.depth?.units ?? [])

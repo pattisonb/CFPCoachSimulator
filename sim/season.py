@@ -37,6 +37,7 @@ from typing import Any, Callable, Iterator, Optional
 
 from sim import awards
 from teamdata import ratings as ratings_v2
+from teamdata import shown as _shown     # the scale ratings are shown on (a view's last step)
 from sim import coaches
 from sim import fcs_names
 from sim import bowls
@@ -283,6 +284,18 @@ def shown_overall(p: dict, base: Optional[dict] = None) -> int:
     if base is not None and base is not p and base["position"] == p["position"]:   # a position change recomputes "ovr" itself
         out += house_value(p["position"], "overall", player_overall(p)) - house_value(base["position"], "overall", player_overall(base))
     return int(max(1, min(99, out)))
+
+
+def page_attribute(p: dict, key: str, value) -> int:
+    """One of his card's attributes as the page shows it (teamdata/shown.py), at his card's position group."""
+    return _shown.attribute(value, ratings_v2.card_group(p["position"], p.get("role")), key)
+
+
+def page_overall(p: dict, base: Optional[dict] = None) -> int:
+    """His overall as the page shows it: shown_overall on the scale ratings are shown on (teamdata/shown.py, where the
+    average player is about a 70). Every view sends this; the game's own rules read shown_overall."""
+    from teamdata import shown
+    return shown.overall(shown_overall(p, base))
 
 
 def same_group(a: str, b: str) -> bool:
@@ -1173,8 +1186,9 @@ def position_options(state: dict, slug: str, player_slug: str) -> list[dict]:
     p = _roster_player(state, slug, player_slug)
     t = load_teams()[slug]
     base = next(x for x in t["offense"] + t["defense"] if x.get("slug") == player_slug)
-    return position_fit.options(_skills(base), base.get("height_in"), base.get("weight"), base.get("role") or base["position"],
-                                p.get("role") or p["position"], lg.GROUP_OF)
+    out = position_fit.options(_skills(base), base.get("height_in"), base.get("weight"), base.get("role") or base["position"],
+                               p.get("role") or p["position"], lg.GROUP_OF)
+    return [dict(o, overall=_shown.overall(o["overall"])) for o in out]      # as the page shows an overall
 
 
 def _rekey_player(state: dict, slug: str, name: str, old_pos: str, new_pos: str) -> None:
@@ -1237,7 +1251,7 @@ def change_position(state: dict, slug: str, player_slug: str, pos: str) -> dict:
         from coach_career import offseason
         offseason.move_row(row, pos, lgd["attrs"])
     q = _roster_player(state, slug, player_slug)
-    return {"slug": player_slug, "position": q.get("role") or q["position"], "overall": shown_overall(q),
+    return {"slug": player_slug, "position": q.get("role") or q["position"], "overall": page_overall(q),
             "moved_from": (position_changes(state, slug).get(player_slug) or {}).get("from")}
 
 
@@ -2010,19 +2024,19 @@ def position_candidates(state: dict, slug: str, role: str) -> dict:
     for p in team["offense"] + team["defense"]:
         if pos == "KR" and p["position"] in RETURN_POSITIONS_OUT and p["slug"] not in current:
             continue                                  # linemen, quarterbacks and kickers never return (the engine agrees)
-        rating = (house_value("KR", "return_rating", return_value(p)) if pos == "KR"
-                  else shown_overall(p) if same_group(pos, p["position"]) else house_value(pos, "overall", overall_at(p, pos)))
+        rating = _shown.overall(house_value("KR", "return_rating", return_value(p)) if pos == "KR"
+                                else shown_overall(p) if same_group(pos, p["position"]) else house_value(pos, "overall", overall_at(p, pos)))
         rec = ss.get(f"{p['name']}|{p['position']}")
         st = rec["stats"] if rec else {}
         group = awards.Pool._group(p["position"], p.get("role"), st) or p["position"]
         rows.append({"name": p["name"], "slug": p["slug"], "position": p["position"], "role": p.get("role"), "depth": p.get("depth"),
                      "class": p.get("class"), "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"),
-                     "rating": rating, "natural": shown_overall(p), "starter": bool(p.get("in_game")),
+                     "rating": rating, "natural": page_overall(p), "starter": bool(p.get("in_game")),
                      "in_role": p["slug"] in current, "spot": (current.index(p["slug"]) + 1) if p["slug"] in current else None,
                      "games": rec["games"] if rec else 0, "headline": awards.headline({"stats": st}, group) if st else "",
                      **dev.get(p["slug"], {}), "archetype": p.get("archetype"),
                      "moved_from": (moves.get(p.get("slug")) or {}).get("from"),
-                     "attrs": {k: (p.get("attributes") or {}).get(k) for k in columns},
+                     "attrs": {k: page_attribute(p, k, (p.get("attributes") or {}).get(k)) for k in columns},
                      "injury": {"type": inj["type"], "weeks_left": inj["weeks_left"]} if (inj := injured.get(f"{p['name']}|{p['position']}")) else None,
                      **({"redshirt": redshirt_status(state, slug, p)} if yours else {})})
     rows.sort(key=lambda r: (-r["rating"], r["name"]))
@@ -2107,7 +2121,7 @@ def _depth_card(state: dict, slug: str):
             group = "RS"
         return {"name": p["name"], "slug": p.get("slug"), "position": p["position"], "role": p.get("role"), "depth": p.get("depth"), "class": p.get("class"),
                 "promise": chips.get(p.get("slug")),
-                "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": shown_overall(p, base_by_slug.get(p.get("slug"))),
+                "height": p.get("height"), "weight": p.get("weight"), "jersey": p.get("jersey"), "overall": page_overall(p, base_by_slug.get(p.get("slug"))),
                 "starter": bool(p.get("in_game")), "games": rec["games"] if rec else 0,
                 **dev.get(p.get("slug"), {}), "archetype": p.get("archetype"),
                 "form": round(player_form(state, slug, p["name"], p["position"]), 2) if morale_on(state) else 0.0,
@@ -3628,7 +3642,7 @@ def awards_outlook(state: dict, teams: dict) -> dict:
         return {"name": p["name"], "position": p["position"], "role": p.get("role"), "class": p.get("class"), "team": x["team"],
                 "team_name": t["name"], "conference": t["conference"], "games": 0,
                 "line": " · ".join(b for b in (CLASS_NAMES.get(p.get("class") or "", p.get("class")), p.get("archetype")) if b),
-                "headline": f"{shown_overall(p)} OVR", "score": round(score, 2)}
+                "headline": f"{page_overall(p)} OVR", "score": round(score, 2)}
 
     def ranked(kind: str, team_weight: float) -> list[tuple[float, dict]]:
         cross = kind in ("mvp", "mvp_team", "freshman")
@@ -4770,7 +4784,7 @@ def our_rating(key: str, skills: dict, slug: Optional[str], card: Optional[dict]
     blend, same = OUR_RATINGS[key]
     if same and isinstance((card or {}).get(same), (int, float)):
         return int(round(card[same]))
-    base = sum(skills.get(k, 50) * w for k, w in blend.items()) / sum(blend.values())
+    base = sum(skills.get(k, 60) * w for k, w in blend.items()) / sum(blend.values())
     own = random.Random(f"{key}-{slug}").uniform(-OUR_SPREAD, OUR_SPREAD)
     return max(1, min(99, int(round(base + own))))
 
@@ -4782,9 +4796,14 @@ def all_skills(p: dict) -> list[dict]:
     skills = dict(zip(game_scale.keys(), p.get("skills") or []))
     if not skills:
         return []
+    # onto the scale ratings are shown on (teamdata/shown.py): a skill is the skill itself there, not where he stands
+    # among his own position, so a receiver's Throw Power reads low; ours are read off those, and his card's are the card's
+    grp = game_scale.group(p.get("role") or p["position"])
+    skills = {k: _shown.skill(v, grp, k) for k, v in skills.items()}
+    card = {k: page_attribute(p, k, v) for k, v in (p.get("attributes") or {}).items()}
     who = p.get("slug") or p.get("name")
     for key in OUR_RATINGS:
-        skills[key] = our_rating(key, skills, who, p.get("attributes"))
+        skills[key] = our_rating(key, skills, who, card)
     return [{"group": g, "rows": [{"key": k, "label": label, "value": int(round(skills[k]))} for k, label in rows if k in skills]}
             for g, rows in SKILL_GROUPS]
 
@@ -4845,9 +4864,19 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
     recruitment = None
     if (entry or {}).get("rec"):
         r_ = entry["rec"]
-        recruitment = dict(r_, school_name=name_of(r_.get("school")), others=[{"slug": s_, "name": name_of(s_)} for s_ in r_.get("others") or ()])
-    story = [dict(e, **({"from_name": name_of(e["from"]), "to_name": name_of(e["to"])} if e["kind"] == "transfer" else {}))
-             for e in (entry or {}).get("life") or ()]
+        recruitment = dict(r_, school_name=name_of(r_.get("school")), others=[{"slug": s_, "name": name_of(s_)} for s_ in r_.get("others") or ()],
+                           **({"overall": _shown.overall(r_["overall"])} if isinstance(r_.get("overall"), (int, float)) else {}))
+
+    def told(e: dict) -> dict:
+        # his overall then, and a gain, as the page shows a rating (the stored event keeps the game's own scale)
+        o, g = e.get("overall"), e.get("gain")
+        out = dict(e, **({"from_name": name_of(e["from"]), "to_name": name_of(e["to"])} if e["kind"] == "transfer" else {}))
+        if isinstance(o, (int, float)):
+            out["overall"] = _shown.overall(o)
+            if isinstance(g, (int, float)):
+                out["gain"] = _shown.gain(o - g, o)
+        return out
+    story = [told(e) for e in (entry or {}).get("life") or ()]
     from teamdata import game_scale
     next_tiers = ability_goals.upgrades_view(state, team, f"{name}|{position}", {x["key"]: x["tier"] for x in p.get("traits") or []
                                                                                   if isinstance(x, dict)}) if ability_goals.on() else {}
@@ -4861,16 +4890,16 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "name": name, "slug": p.get("slug"), "position": position, "role": p.get("role"), "depth": p.get("depth"),
         "class": p.get("class"), "class_name": CLASS_NAMES.get(p.get("class") or "", p.get("class")), "height": p.get("height"),
         "weight": p.get("weight"), "jersey": p.get("jersey"), "dev_trait": p.get("dev_trait"), "starter": bool(p.get("in_game")),
-        "injured": injured, "overall": shown_overall(p, base_p), "stars": recruit_stars(base_p), "ratings": ratings,
+        "injured": injured, "overall": page_overall(p, base_p), "stars": recruit_stars(base_p), "ratings": ratings,
         "edited": sorted(player_edits(state, team).get(p.get("slug"), {}).keys()), "editable_classes": list(CLASS_NAMES),
         **development_reads(state, team).get(p.get("slug"), {}),
         "key_ratings": key_ratings,
         # ratings v2: the position's attributes, the measurables, play style and traits
         "attributes": [{"key": k, "label": ratings_v2.ATTRIBUTES[k][0], "group": ratings_v2.ATTRIBUTES[k][1],
-                        "about": ratings_v2.ATTRIBUTES[k][2], "value": v,
-                        "boost": max(1, min(99, round(v * mf))) - v if mf != 1.0 else 0,
+                        "about": ratings_v2.ATTRIBUTES[k][2], "value": page_attribute(p, k, v),
+                        "boost": page_attribute(p, k, max(1, min(99, round(v * mf)))) - page_attribute(p, k, v) if mf != 1.0 else 0,
                         # Clear Mode, your own player: his ceiling there (the bar's unfilled part shows it)
-                        **({"potential": min(99, v + ceil[k])} if k in ceil else {}),
+                        **({"potential": page_attribute(p, k, min(99, v + ceil[k]))} if k in ceil else {}),
                         # how much of his overall it is, in percent (game_scale.card_formula's weights)
                         "weight": round(100 * built_on.get(k, 0.0) / built_total, 1)}
                        for k, v in (p.get("attributes") or {}).items() if k in ratings_v2.ATTRIBUTES],
@@ -4879,7 +4908,7 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
                     "about": ratings_v2.TRAIT_INFO.get(tr["key"], ("", ""))[1], "tier": tr["tier"],
                     "tier_name": ratings_v2.TIER_NAMES.get(tr["tier"], ""),
                     # the attributes it rests on, with his values (the ones his position carries)
-                    "built_on": [{"label": ratings_v2.ATTRIBUTES[k][0], "value": (p.get("attributes") or {})[k]}
+                    "built_on": [{"label": ratings_v2.ATTRIBUTES[k][0], "value": page_attribute(p, k, (p.get("attributes") or {})[k])}
                                  for k in ratings_v2.TRAIT_KEYS.get(tr["key"], []) if k in (p.get("attributes") or {})],
                     "intangible": not ratings_v2.TRAIT_KEYS.get(tr["key"]), "earned": bool(tr.get("earned")),
                     # Clear Mode: what its next tier takes and how far along he is ({tier, tier_name, have, need, text})
@@ -4891,8 +4920,8 @@ def player_profile(state: dict, team: str, name: Optional[str] = None, position:
         "edited_attributes": sorted((player_edits(state, team).get(p.get("slug"), {}).get("attributes") or {}).keys()),
         "morale": morale_view(state, team, name, position),
         # rated at every position; at his own position it is the card's overall
-        "ratings_at": {k: (shown_overall(p, base_p) if k != "KR" and same_group(RATING_KEY.get(k, k), position)
-                           else house_value(RATING_KEY.get(k, k) if k != "KR" else "KR", "return_rating" if k == "KR" else "overall", int(v)))
+        "ratings_at": {k: _shown.overall(shown_overall(p, base_p) if k != "KR" and same_group(RATING_KEY.get(k, k), position)
+                                         else house_value(RATING_KEY.get(k, k) if k != "KR" else "KR", "return_rating" if k == "KR" else "overall", int(v)))
                        for k, v in (p.get("ratings_at") or {}).items() if isinstance(v, (int, float))},
         "team": {"slug": team, "name": t["name"], "conference": t["conference"], "coach": hc.get("name"),
                  "record": f"{rec['wins']}-{rec['losses']}", "rank": awards.Pool(state, teams, _records(state)).rank_of(team) if ss else None},
