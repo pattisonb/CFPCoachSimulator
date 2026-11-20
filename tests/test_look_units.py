@@ -91,9 +91,12 @@ if __name__ == "__main__":
     kept = next(r for r in prospects.scouting_view(st, sort="board")["queue"] if r["pid"] == inside)
     assert kept["can_send"] is False and kept["why"] == prospects.REPORT_COMPLETE == "His report is complete: 3 of 3 looks", kept
     from coach_career import clear
-    if clear.on():                        # Clear Mode: always a range of numbers (a complete report's is a few points wide)
-        lo, hi = (int(x) for x in kept["potential"])
-        assert kept["looks"] == 3 and 1 <= lo <= hi <= 99 and hi - lo <= 12, kept["potential"]
+    if clear.on():                        # Clear Mode: his potential is letter grades (grades.py), low then high; a complete report settles on one
+        from coach_career import grades
+        point = recruiting.read_interval(st, inside, "potential")
+        assert point[0] == point[1], point
+        assert kept["looks"] == 3 and kept["potential"] == recruiting.shown_range(st, inside, "potential"), kept["potential"]
+        assert kept["potential"] == [grades.letter(point[0], grades.fine(st))] * 2 and kept["potential"][0] in grades.ORDER, kept["potential"]
     else:
         assert kept["looks"] == 3 and kept["potential"][0] == kept["potential"][1] in recruiting.WORDS, kept["potential"]
     if not clear.on():                    # Clear Mode shows the read's numbers, not its grade words
@@ -170,13 +173,20 @@ if __name__ == "__main__":
     assert prospects.row(st, old, ME)["scouted"] is True and prospects.row(st, old, ME)["looks"] == 3
     assert prospects.profile(st, old, ME)["looks"] == 3 and prospects.can_scout(st, ME, old) is False
     assert prospects.find(st, old) in (None, "gem", "bust")
-    week_of_looks(st, 15)
+    week_of_looks(st, recruiting.close_week() - 1)      # the last working week: from Championship Week recruiting is closed (the dead period), and a Send says that instead
     assert rc["reads"][old]["looks"] in (7, 3) and rc["reads"][old]["g"]["potential"] == [70.0, 0.5], "no re-look at a complete report"
     try:
         send(st, old)
         raise AssertionError("a Send on an old complete report")
     except recruiting.RecruitingError as e:
         assert e.code == 409 and "complete" in str(e)
+    st["current_week"] = recruiting.close_week()        # the dead period: nobody can be worked, complete report or not
+    try:
+        send(st, old)
+        raise AssertionError("a Send in the dead period")
+    except recruiting.RecruitingError as e:
+        assert recruiting.closed(st) and e.code == 409 and str(e) == recruiting.CLOSED_TEXT, str(e)
+    st["current_week"] = recruiting.close_week() - 1
     rc["board"] = [old]
     v = prospects.scouting_view(st, sort="board")
     kept = next(r for r in v["queue"] if r["pid"] == old)

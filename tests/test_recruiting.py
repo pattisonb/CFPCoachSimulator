@@ -115,7 +115,18 @@ if __name__ == "__main__":
     rc["status"][qb]["committed"] = None; recruiting.reset_caches()
     assert recruiting.need_factor(2) > recruiting.need_factor(1) > recruiting.need_factor(0) > recruiting.need_factor(-1)
     v = prospects.recruiting_view(st)
-    assert v["needs"] == nd and all("need" in b for b in v["board"]), list(v)[:5]
+    # the page counts by position (recruiting.SPOTS: OL, DL, LB and S as the positions in them); the game's own needs
+    # stay by group, and a group's positions add up to it
+    sp = recruiting.needs_by_spot(st, "ohio-state")
+    assert v["closed"] is False, "week 1 is a working week, not the dead period"
+    assert v["needs"] == {k: d["need"] for k, d in sp.items()} and v["needs_detail"] == sp, list(v)[:5]
+    assert list(sp) == list(recruiting.SPOT_ORDER) and all(isinstance(n, int) for n in v["needs"].values()), list(sp)
+    for g in offseason.TARGET:
+        parts = [n for n, _ in recruiting.SPOTS[g]] if g in recruiting.SPOTS else [g]
+        assert sum(v["needs"][n] for n in parts) == nd[g] and all(sp[n]["group"] == g for n in parts), (g, parts, nd[g])
+        assert sum(sp[n]["target"] for n in parts) == offseason.TARGET[g], g
+    rows = v["board"] + [prospects.board_row(st, q, "ohio-state") for q in list(rc["prospects"])[:40]]      # your board as it stands (it may be empty here), and forty rows more
+    assert all(b["need"] == v["needs"][recruiting.spot_of(rc["prospects"][b["id"]])] for b in rows), "a board row's need is his position's"
     # NIL asks: every prospect has one from his stars and position; what he wants from you grows when you trail him
     five = next(p for p in rc["prospects"].values() if p["stars"] == 5 and p["ea_position"] == "QB")
     assert five["nil_ask"] > 40 and tx["nil_ask"] <= 20 and all("nil_ask" in p for p in rc["prospects"].values()), (five["nil_ask"], tx["nil_ask"])
