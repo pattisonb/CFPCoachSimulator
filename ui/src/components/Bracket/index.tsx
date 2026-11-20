@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { Trophy } from "@phosphor-icons/react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { Info, Trophy } from "@phosphor-icons/react";
 import Panel from "../Panel/index.tsx";
-import SectionTabs, { SampleNote, SectionStatus } from "../SectionTabs/index.tsx";
+import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
+import { inkOn } from "../../colors.ts";
 import type { Bracket as Field, BracketSeed, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -51,6 +52,8 @@ interface Match {
   note?: string | null;
 }
 
+/** a name as the review writes it carries its seed ("(1) Texas"): the slot has the seed in its own box */
+const bare = (name: string) => name.replace(/^\(\d+\)\s*/, "");
 const sideOf = (s: BracketSeed): Side => ({ seed: s.seed, team: s.team, name: s.name });
 const waiting = (text: string): Side => ({ name: text, pending: true });
 
@@ -58,7 +61,8 @@ const waiting = (text: string): Side => ({ name: text, pending: true });
  * The Bracket: the 12-team playoff, round by round. Before selection day it is a projection: the field as it would be
  * seeded today, from the committee's ranking once it ranks (Week 10) and from the AP poll before that, with each
  * conference's leader as its champion. After selection day it is the real bracket, filling in with each round's
- * scores. Beside it: the field with how each team got in, and the first four out.
+ * scores. Under it, on the same screen: the field with how each team got in, and the first four out. A projection
+ * says so with one mark in the bar's corner, its why in the mark's tip.
  */
 export default function Bracket({ season, teams }: Props) {
   const real = season.bracket?.seeds?.length ? season.bracket : null;
@@ -81,9 +85,14 @@ export default function Bracket({ season, teams }: Props) {
   const status = !field ? null : real ? (
     <SectionStatus>{season.champion_name ? m.final : m.set}</SectionStatus>
   ) : (
-    <SectionStatus sample tip={field.source === "ap" ? m.apTip : m.cfpTip}>
-      {m.projected(field.source === "ap" ? m.apPoll : m.cfpRanking, weekName(field.week ?? 0))}
-    </SectionStatus>
+    <Tooltip
+      title={m.projected(field.source === "ap" ? m.apPoll : m.cfpRanking, weekName(field.week ?? 0))}
+      text={field.source === "ap" ? m.apTip : m.cfpTip}
+    >
+      <span className="bracket__info" role="img" aria-label={m.projectedLabel}>
+        <Info size={20} weight="bold" aria-hidden="true" />
+      </span>
+    </Tooltip>
   );
 
   if (!field)
@@ -108,7 +117,7 @@ export default function Bracket({ season, teams }: Props) {
     const home = g.winner === g.home;
     return {
       team: g.winner,
-      name: home ? g.home_name : g.away_name,
+      name: bare(home ? g.home_name : g.away_name),
       seed: (home ? g.home_seed : g.away_seed) ?? undefined,
     };
   };
@@ -141,46 +150,56 @@ export default function Bracket({ season, teams }: Props) {
   const finalB = winnerOf(semiGames[1], waiting(m.semiWinner));
   const final: Match = { key: "final", top: scored(finalA, title), bottom: scored(finalB, title) };
 
-  const mine = field.seeds.find((s) => s.team === season.team);
-  const justOut = field.first_four_out.find((s) => s.team === season.team);
-  const standing = mine
-    ? (real ? m.youIn : m.youInProjected)(season.team_name, mine.seed)
-    : justOut
-      ? m.youJustOut(season.team_name)
-      : (real ? m.youOut : m.youOutProjected)(season.team_name);
-
-  const rounds: [string, Match[]][] = [
-    [m.rounds.first, first],
-    [m.rounds.quarters, quarters],
-    [m.rounds.semis, semis],
-    [m.rounds.final, [final]],
+  // each round with how its games reach the next: one to one (a first-round winner meets a seed), or two into one
+  const rounds: [string, Match[], "straight" | "pairs" | "end"][] = [
+    [m.rounds.first, first, "straight"],
+    [m.rounds.quarters, quarters, "pairs"],
+    [m.rounds.semis, semis, "pairs"],
+    [m.rounds.final, [final], "end"],
   ];
+  const champSlug = title?.played ? title.winner : null;
+  const champ = champSlug ? teams.get(champSlug) : undefined;
 
   return (
     <div className="section-tabs__wrap">
       <SectionTabs title={m.title} value="all" onChange={() => {}} tabs={[]} aside={status} />
       <div className="bracket">
-        {!real && <SampleNote>{field.source === "ap" ? m.apTip : m.cfpTip}</SampleNote>}
-        <p className="bracket__standing">
-          {season.champion_name ? (
-            <>
-              <Trophy size={18} weight="fill" aria-hidden="true" /> {m.champion(season.champion_name)}
-            </>
-          ) : (
-            standing
-          )}
-        </p>
+        {season.champion_name && (
+          <div
+            className="bracket__champ"
+            style={
+              champ && ({ "--team": champ.colors.primary, "--team-on": inkOn(champ.colors.primary) } as CSSProperties)
+            }
+          >
+            <Trophy size={30} weight="fill" aria-hidden="true" />
+            <span className="bracket__champ-text">
+              <span className="label">{m.championKicker}</span>
+              <b>{bare(season.champion_name)}</b>
+            </span>
+            {title?.played && (
+              <span className="bracket__champ-score">
+                {m.titleScore(
+                  Math.max(title.home_score ?? 0, title.away_score ?? 0),
+                  Math.min(title.home_score ?? 0, title.away_score ?? 0),
+                  bare(title.winner === title.home ? title.away_name : title.home_name),
+                )}
+              </span>
+            )}
+          </div>
+        )}
         <div className="bracket__cols">
           <div className="bracket__tree" role="group" aria-label={m.title}>
-            {rounds.map(([name, games]) => (
-              <section key={name} className="bracket__round" aria-label={name}>
+            {rounds.map(([name, games, link]) => (
+              <section key={name} className={`bracket__round bracket__round--${link}`} aria-label={name}>
                 <h2 className="label bracket__round-name">{name}</h2>
-                <div className="bracket__games">
+                <div className="bracket__games" style={{ "--n": games.length } as CSSProperties}>
                   {games.map((g) => (
-                    <div key={g.key} className="bracket__game">
-                      <Line s={g.top} teams={teams} me={season.team} />
-                      <Line s={g.bottom} teams={teams} me={season.team} />
-                      {g.note && <span className="bracket__bowl">{g.note}</span>}
+                    <div key={g.key} className="bracket__cell">
+                      <div className="bracket__game">
+                        {g.note && <span className="bracket__bowl">{g.note}</span>}
+                        <Line s={g.top} teams={teams} me={season.team} />
+                        <Line s={g.bottom} teams={teams} me={season.team} />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -193,17 +212,12 @@ export default function Bracket({ season, teams }: Props) {
               <ol className="bracket__field">
                 {field.seeds.map((s) => (
                   <li key={s.team} className={s.team === season.team ? "is-mine" : undefined}>
-                    <span className={`bracket__seed${s.bye ? " is-bye" : ""}`}>{s.seed}</span>
-                    <Swatch team={teams.get(s.team)} size={14} />
-                    <span className="bracket__grow">
-                      <b>{s.name}</b>
-                      <span className="bracket__soft">{m.bid(s.bid)}</span>
+                    <span className={`bracket__seed${s.bye ? " is-bye" : ""}`} title={s.bye ? m.byeTip : undefined}>
+                      {s.seed}
                     </span>
-                    {s.bye && (
-                      <Tooltip title={m.bye} text={m.byeTip}>
-                        <span className="bracket__tag">{m.bye}</span>
-                      </Tooltip>
-                    )}
+                    <Swatch team={teams.get(s.team)} size={14} />
+                    <b className="bracket__team">{s.name}</b>
+                    <span className="bracket__soft bracket__bid">{m.bid(s.bid)}</span>
                   </li>
                 ))}
               </ol>
@@ -215,9 +229,7 @@ export default function Bracket({ season, teams }: Props) {
                     <li key={s.team} className={s.team === season.team ? "is-mine" : undefined}>
                       <span className="bracket__seed is-out">{s.rank ?? m.dash}</span>
                       <Swatch team={teams.get(s.team)} size={14} />
-                      <span className="bracket__grow">
-                        <b>{s.name}</b>
-                      </span>
+                      <b className="bracket__team">{s.name}</b>
                     </li>
                   ))}
                 </ol>
@@ -236,7 +248,7 @@ function Line({ s, teams, me }: { s: Side; teams: Map<string, TeamCard>; me: str
     return (
       <div className="bracket__line is-pending">
         <span className="bracket__seed is-out" />
-        <span className="bracket__grow">{s.name}</span>
+        <span className="bracket__team">{s.name}</span>
       </div>
     );
   return (
@@ -244,8 +256,8 @@ function Line({ s, teams, me }: { s: Side; teams: Map<string, TeamCard>; me: str
       className={`bracket__line${s.won ? " is-won" : ""}${s.won === false ? " is-lost" : ""}${s.team === me ? " is-mine" : ""}`}
     >
       <span className="bracket__seed">{s.seed ?? ""}</span>
-      <Swatch team={s.team ? teams.get(s.team) : undefined} size={14} />
-      <span className="bracket__grow">{s.name}</span>
+      <Swatch team={s.team ? teams.get(s.team) : undefined} size={16} />
+      <span className="bracket__team">{bare(s.name)}</span>
       {s.score != null && <b className="bracket__score">{s.score}</b>}
     </div>
   );
