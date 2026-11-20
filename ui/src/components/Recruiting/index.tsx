@@ -50,9 +50,10 @@ const STARTER_BOARD = 10;
 
 /** The board's groups, in order: where each recruit stands in his recruitment. */
 const STAGES = ["committed", "visited", "top", "contact", "cold", "gone"] as const;
-/** the filters that cut across the stages: your favorites (♥), and whether your staff's report on him is complete */
+/** the filters that cut across the stages: your favorites (♥), the recruits holding your offer, and whether your staff's report on him is complete */
 const ACROSS = {
   favorites: (r: BoardRow) => !!r.favorite,
+  offered: (r: BoardRow) => r.offered,
   scouted: (r: BoardRow) => (r.looks ?? 0) >= FULL_REPORT,
   unscouted: (r: BoardRow) => (r.looks ?? 0) < FULL_REPORT,
 } as const;
@@ -228,7 +229,7 @@ export default function Recruiting({
             size="md"
             value={stage}
             // a stage with no one in it is left out (unless it is the one you are on)
-            options={(["all", ...STAGES, "favorites", "scouted", "unscouted"] as StageKey[])
+            options={(["all", ...STAGES, "favorites", "offered", "scouted", "unscouted"] as StageKey[])
               .filter((s) => s === "all" || s === stage || counts[s])
               .map((s) => ({
                 value: s,

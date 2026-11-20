@@ -11,6 +11,7 @@ export const messages = {
   stageNames: {
     all: "All",
     favorites: "Favorites",
+    offered: "Offered",
     scouted: "Scouted",
     unscouted: "Unscouted",
     committed: "Committed",
