@@ -49,7 +49,7 @@ SKILL_RATE = 1.08                # *tune* technique and mental ratings at this s
 
 
 # potential that moves both ways each offseason (the player's ask; Clear Mode only): a year's ceilings can fall too
-CEIL_STRUGGLE = 2                # *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
+CEIL_STRUGGLE = 5                # *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
 CEIL_SOLID = 2                   # *tune* a solid year (production CEIL_SOLID_Z over the average starter, short of a breakout) adds this
 CEIL_SOLID_Z = 0.0               # *tune* ... from this production score up (about a starter's top fifth; a breakout is 1.0)
 CEIL_STRUGGLE_Z = -2.0           # *tune* a struggling year: this production score or under (about a starter's bottom fifth)
@@ -57,6 +57,12 @@ CEIL_SLOW = 1                    # *tune* the slow coachability levels lose this
 CEIL_DRIFT_SD = 1.5              # *tune* every player's ceilings drift this much either way a year (one draw a player)
 SLOW_LEVELS = ("Slow to Click", "Set in His Ways")
 FAST_LEVELS = ("Coach's Dream", "Film Junkie", "Quick Study")   # as many players as SLOW_LEVELS (about 30% each), so it nets out
+
+
+def struggled(perf: Optional[dict]) -> bool:
+    """A starter's hard year by his production (CEIL_STRUGGLE_Z): the one that costs him room."""
+    z = (perf or {}).get("z")
+    return z is not None and z <= CEIL_STRUGGLE_Z
 
 
 def ceiling_drift(p: dict, attrs: list[str], perf: Optional[dict], year: int, physical: set) -> int:
