@@ -45,7 +45,8 @@ export default function RangeBar({ lo, hi, mid, soft, color, label }: Props) {
           background: color,
         }}
       />
-      {mid != null && !meter && <i className="range-bar__mid" style={{ left: `${clamp(mid)}%` }} />}
+      {/* the best guess: a tooltip around the bar points here (Tooltip's `data-tip-at`) */}
+      {mid != null && !meter && <i className="range-bar__mid" data-tip-at="" style={{ left: `${clamp(mid)}%` }} />}
     </span>
   );
 }
