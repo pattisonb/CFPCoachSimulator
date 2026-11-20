@@ -651,20 +651,66 @@
   }
 }
 
-/* the team's overall, offense and defense, beside the view chips */
+/* the bar's right side: whose chart, its ratings, the views; each a framed piece of one height, evenly apart */
+.depth__views {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.depth__chips {
+  display: inline-flex;
+  gap: 4px;
+}
+
+/* the team's overall, offense and defense: one framed strip as tall as the picker and the view chips beside it */
 .depth__team {
   display: inline-flex;
-  gap: var(--s2);
-  margin-right: var(--s2);
+  align-items: stretch;
+  min-height: 32px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
 }
 
 .depth__team > div {
   display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--s2);
+}
+
+.depth__team > div + div {
+  border-left: 1px solid var(--line-soft);
+}
+
+.depth__team dt {
+  color: var(--ink-soft);
 }
 
 .depth__team dd {
+  font-size: var(--t-md);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* whose chart: a team picker in the bar, and the way back to yours while another team's is open */
+.depth__whose {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+
+.depth__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  background: var(--ink);
+  color: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  cursor: pointer;
 }
