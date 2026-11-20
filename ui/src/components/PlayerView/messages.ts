@@ -40,7 +40,9 @@ export const messages = {
   spot: (role: string, depth: number) => `${role}${depth}`,
   healthy: "Healthy",
   redshirting: "Redshirting",
-  injured: (type: string, back: string) => `${type} · Back ${back}`,
+  // the Status cell is narrow: when he is back goes there, the injury's name on his Out tag
+  injured: (back: string) => `Back ${back}`,
+  outWith: (type: string) => `Out · ${type.replace(/\b[a-z]/g, (c) => c.toUpperCase())}`,
   week: (n: number) => `Week ${n}`,
   noGames: "Has Not Played",
   games: (n: number) => `${n} ${n === 1 ? "Game" : "Games"}`,

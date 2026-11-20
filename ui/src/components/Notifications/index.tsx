@@ -1,6 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Bell, Crown, Diamond, FirstAid, HeartBreak, Signature, X, type Icon } from "@phosphor-icons/react";
-import { useOpenPlayer } from "../PlayerLink/index.tsx";
 import type { Notice, NoticeKind } from "../../notices.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -18,24 +17,18 @@ const SHOWN = 3;
 
 interface RowProps {
   notice: Notice;
-  /** your team's slug: an injured player's line opens his card */
-  team?: string;
   weekLabels?: Record<string, string>;
   onOpen: (n: Notice) => void;
 }
 
 /** One notice: its icon, what it is, the sentence and the week. The whole line opens who it is about. */
-function Row({ notice: n, team, weekLabels, onOpen }: RowProps) {
+function Row({ notice: n, weekLabels, onOpen }: RowProps) {
   const Mark = ICONS[n.kind];
-  const openPlayer = useOpenPlayer();
   return (
     <button
       type="button"
       className={`notifications__row is-${n.kind}${n.read ? "" : " is-new"}`}
-      onClick={() => {
-        onOpen(n);
-        if (n.kind === "injury" && team) openPlayer?.({ team, name: n.name, position: n.position });
-      }}
+      onClick={() => onOpen(n)}
     >
       <span className="notifications__icon" aria-hidden="true">
         <Mark size={18} weight="fill" />
@@ -55,9 +48,8 @@ interface Props {
   /** every notice kept, newest first */
   items: Notice[];
   unread: number;
-  team?: string;
   weekLabels?: Record<string, string>;
-  /** a notice was picked: open the recruit it is about (an injured player's card opens by itself) */
+  /** a notice was picked: open what it is about (a recruit's file, your injury report) */
   onOpen: (n: Notice) => void;
   /** the list has been looked at: nothing in it is new any more */
   onRead: () => void;
@@ -69,7 +61,7 @@ interface Props {
  * The bell: a small icon button with how many notices are new, and the list they are kept in, dropping from under it
  * (over it when it sits at the foot of the window). Closing the list marks them read.
  */
-export default function Notifications({ items, unread, team, weekLabels, onOpen, onRead, onShow }: Props) {
+export default function Notifications({ items, unread, weekLabels, onOpen, onRead, onShow }: Props) {
   const [open, setOpen] = useState(false);
   const [up, setUp] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -124,7 +116,6 @@ export default function Notifications({ items, unread, team, weekLabels, onOpen,
                 <Row
                   key={n.id}
                   notice={n}
-                  team={team}
                   weekLabels={weekLabels}
                   onOpen={(x) => {
                     close();
@@ -143,7 +134,6 @@ export default function Notifications({ items, unread, team, weekLabels, onOpen,
 interface ToastsProps {
   /** the notices that have just landed, newest first */
   items: Notice[];
-  team?: string;
   weekLabels?: Record<string, string>;
   onOpen: (n: Notice) => void;
   onDismiss: (id: string) => void;
@@ -152,7 +142,7 @@ interface ToastsProps {
 }
 
 /** The notices that have just landed, as cards dropping one under another from under your coach. */
-export function NoticeToasts({ items, team, weekLabels, onOpen, onDismiss, rise }: ToastsProps) {
+export function NoticeToasts({ items, weekLabels, onOpen, onDismiss, rise }: ToastsProps) {
   if (!items.length) return null;
   return (
     <div className={`notifications__toasts${rise ? " is-rise" : ""}`} role="status">
@@ -160,7 +150,6 @@ export function NoticeToasts({ items, team, weekLabels, onOpen, onDismiss, rise 
         <div className="notifications__toast" key={n.id}>
           <Row
             notice={n}
-            team={team}
             weekLabels={weekLabels}
             onOpen={(x) => {
               onDismiss(x.id);

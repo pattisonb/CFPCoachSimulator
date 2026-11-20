@@ -133,8 +133,8 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
   const tabs = TABS.filter((k) => k !== "development" || !theirs);
   const tab = tabs.includes(picked) ? picked : "overview";
   const back = p.injury ? (weekLabels?.[String(p.injury.returns_week)] ?? m.week(p.injury.returns_week)) : null;
-  // an injury names itself and when he is back (the whole line is the cell's tooltip when it is cut short)
-  const status = p.injury ? m.injured(p.injury.type, back!) : p.redshirt?.on ? m.redshirting : m.healthy;
+  // hurt: the Status cell says when he is back, and his Out tag names the injury
+  const status = p.injury ? m.injured(back!) : p.redshirt?.on ? m.redshirting : m.healthy;
   const spot = p.role && p.depth ? m.spot(p.role, p.depth) : null;
   const season = p.headline || (p.games ? m.games(p.games) : m.noGames);
 
@@ -191,7 +191,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
                 </Tooltip>
               ) : null}
               {p.moved_from && <HeadTag tip={{ text: m.wasTitle(p.moved_from) }}>{m.was(p.moved_from)}</HeadTag>}
-              {p.injury && <HeadTag solid>{m.out}</HeadTag>}
+              {p.injury && <HeadTag solid>{m.outWith(p.injury.type)}</HeadTag>}
               {p.redshirt?.on && <HeadTag>{m.rs}</HeadTag>}
             </>
           }

@@ -515,11 +515,11 @@ function Topics({
               .join(" ")}
             onClick={() => !full && onPick(t)}
           >
-            {multi && on ? (
-              <span className="talk__num">{at + 1}</span>
-            ) : known || isCue ? (
+            {/* its place in your opening sits on the corner, over the frame: picking one never changes its width */}
+            {multi && on && <span className="talk__num">{at + 1}</span>}
+            {(known || isCue) && (
               <Star className="talk__star" size={14} weight={known ? "fill" : "bold"} aria-hidden="true" />
-            ) : null}
+            )}
             <span className="talk__topic-name">{PITCH_NAMES[t] ?? t}</span>
             <span className="talk__pull" aria-label={m.pull[pull]}>
               {[1, 2, 3].map((k) => (

@@ -370,14 +370,18 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
         })),
       ),
   );
+  // a notice opens what it is about: a recruit's file, or your team's injury report (Stats, Injuries)
+  const [statsOpen, setStatsOpen] = useState<{ tab: "injuries"; team: string; at: number } | null>(null);
   const openNotice = (n: Notice) => {
-    if (n.kind !== "injury" && n.pid) openRecruit(n.pid);
+    if (n.kind === "injury") {
+      if (season) setStatsOpen({ tab: "injuries", team: season.team, at: Date.now() });
+      open("stats");
+    } else if (n.pid) openRecruit(n.pid);
   };
   const bell = season && (
     <Notifications
       items={notices.items}
       unread={notices.unread}
-      team={season.team}
       weekLabels={season.week_labels}
       onOpen={openNotice}
       onRead={notices.readAll}
@@ -394,7 +398,6 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
     season && (
       <NoticeToasts
         items={notices.toasts}
-        team={season.team}
         weekLabels={season.week_labels}
         onOpen={openNotice}
         onDismiss={notices.dismiss}
@@ -543,7 +546,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         onTeam={setResume}
                       />
                     ) : key === "stats" ? (
-                      <Stats key={season.current_week} season={season} teams={bySlug} />
+                      <Stats key={season.current_week} season={season} teams={bySlug} show={statsOpen} />
                     ) : key === "bracket" ? (
                       <Bracket season={season} teams={bySlug} />
                     ) : key === "recap" ? (

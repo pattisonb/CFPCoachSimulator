@@ -17,6 +17,7 @@ import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
+import { useKept } from "../../kept.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags, { type RecruitAlert } from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -27,6 +28,9 @@ const NOTE_MS = 6000;
 /** Your commit with a rival near to flipping him (a real chance or better): the alert his line and his head show. */
 const flipAlert = (r: BoardRow): { key: RecruitAlert; tip: string } | null =>
   r.flip && r.flip.word !== "Slim" ? { key: "flip", tip: m.flipRisk(r.flip.word, r.flip.school) } : null;
+
+/** What a Class Needs chip counts against the spots the class set out to fill. */
+type NeedShow = "commits" | "board" | "offers";
 
 /** The roster groups in order (the keys a need is counted under). */
 const GROUP_ORDER = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "CB", "S", "K", "P", "ATH"];
@@ -90,11 +94,12 @@ export default function Recruiting({
   coach = null,
   pick = null,
 }: Props) {
-  const [stage, setStage] = useState<StageKey>("all");
-  const [sort, setSort] = useState<"chance" | "rank">("chance");
+  // the board's filters and sort are kept for the career, so another page and back finds them as you left them
+  const [stage, setStage] = useKept<StageKey>(`board.${seasonId}.stage`, "all");
+  const [sort, setSort] = useKept<"chance" | "rank">(`board.${seasonId}.sort`, "chance");
   // the list narrowed to a name (or a hometown) and to one position group
   const [q, setQ] = useState("");
-  const [pos, setPos] = useState("all");
+  const [pos, setPos] = useKept(`board.${seasonId}.pos`, "all");
   const [picked, setPicked] = useState<string | null>(null);
   // another section asked for him: show every stage (he may not be in the one filtered to) and pick him
   useEffect(() => {
@@ -116,8 +121,24 @@ export default function Recruiting({
     ...GROUP_ORDER.filter((g) => posCounts[g]),
     ...Object.keys(posCounts).filter((g) => !GROUP_ORDER.includes(g)),
   ];
-  // what your class still needs: the groups with spots to fill
-  const needs = GROUP_ORDER.filter((g) => (board?.needs?.[g] ?? 0) > 0);
+  // your class's needs, said one way everywhere: how many of the spots the class set out to fill are filled
+  // (your commits there, of your commits plus what is still open)
+  const filled = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const r of all) if (r.committed === team || r.signed === team) c[groupOf(r)] = (c[groupOf(r)] ?? 0) + 1;
+    return c;
+  }, [all, team]);
+  // what a need chip counts before the slash: your commits there, the recruits on your board, or your open offers
+  const [needShow, setNeedShow] = useKept<NeedShow>(`board.${seasonId}.needShow`, "commits");
+  const offeredAt = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const r of all) if (r.offered) c[groupOf(r)] = (c[groupOf(r)] ?? 0) + 1;
+    return c;
+  }, [all]);
+  const before = (g: string) =>
+    (needShow === "commits" ? filled[g] : needShow === "board" ? posCounts[g] : offeredAt[g]) ?? 0;
+  const spots = (g: string) => (filled[g] ?? 0) + Math.max(0, board?.needs?.[g] ?? 0);
+  const needs = GROUP_ORDER.filter((g) => spots(g) > 0);
   const rows = useMemo(() => {
     const text = q.trim().toLowerCase();
     return all.filter(
@@ -252,8 +273,10 @@ export default function Recruiting({
               ...positions.map((g) => ({
                 value: g,
                 label: g,
-                count: posCounts[g],
-                hint: (board?.needs?.[g] ?? 0) > 0 ? m.needN(board?.needs?.[g] ?? 0) : undefined,
+                // one line under the position: who is on your board there, and the class's spots there
+                hint: [m.onBoardN(posCounts[g]), spots(g) > 0 ? m.filledOf(filled[g] ?? 0, spots(g)) : null]
+                  .filter(Boolean)
+                  .join(" · "),
               })),
             ]}
             onChange={setPos}
@@ -270,15 +293,30 @@ export default function Recruiting({
             ]}
             onChange={(v) => setSort(v as "chance" | "rank")}
           />
-          {/* your class's needs: a chip a position with spots to fill, each one a filter */}
+          {/* your class's needs: a chip a position the class set out to fill, with how many are filled; each one a filter */}
           {needs.length > 0 && (
             <div className="recruiting__needs" role="group" aria-label={m.needs}>
-              <span className="label recruiting__soft recruiting__needs-title" title={m.needsTip}>
-                {m.needs}
-              </span>
+              <div className="recruiting__needs-title">
+                <span className="label recruiting__soft" title={m.needsTip}>
+                  {m.needs}
+                </span>
+                <Dropdown
+                  label={m.needShow}
+                  hideLabel
+                  align="right"
+                  value={needShow}
+                  options={(Object.keys(m.needShows) as NeedShow[]).map((k) => ({
+                    value: k,
+                    label: m.needShows[k],
+                    hint: m.needHints[k],
+                  }))}
+                  onChange={(k) => setNeedShow(k as NeedShow)}
+                />
+              </div>
               {needs.map((g) => (
-                <Chip key={g} on={pos === g} count={board?.needs?.[g]} onClick={() => setPos(pos === g ? "all" : g)}>
+                <Chip key={g} on={pos === g} onClick={() => setPos(pos === g ? "all" : g)}>
                   {g}
+                  <span className="chip__count">{m.filledShort(before(g), spots(g))}</span>
                 </Chip>
               ))}
             </div>

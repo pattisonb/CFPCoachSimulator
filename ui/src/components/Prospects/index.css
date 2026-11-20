@@ -228,6 +228,17 @@
   cursor: pointer;
 }
 
+.prospects__sort-label {
+  position: relative;
+}
+
+.prospects__sort-label svg {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 3px);
+  transform: translateY(-50%);
+}
+
 .prospects__sort:hover {
   color: var(--ink);
 }

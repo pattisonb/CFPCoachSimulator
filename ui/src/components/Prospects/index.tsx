@@ -22,6 +22,7 @@ import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import type { NeedGroup, ProspectRow, ProspectsView } from "../../types.ts";
+import { useKept } from "../../kept.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -93,8 +94,9 @@ const chipCount = (n: NeedGroup, show: ChipShow): string | null => {
  * uncommitted. A row opens his file (ProspectCard) over the side column.
  */
 export default function Prospects({ seasonId, year, onBoardChange, active = true, boardSize, onClassSize }: Props) {
-  const [view, setView] = useState<View>("all");
-  const [chips, setChips] = useState<ChipShow>("need");
+  // the filters and the sort are kept for the career: going to another page and back finds them as you left them
+  const [view, setView] = useKept<View>(`prospects.${seasonId}.view`, "all");
+  const [chips, setChips] = useKept<ChipShow>(`prospects.${seasonId}.chips`, "need");
   // a narrow table (a smaller window, or the sidebar open): the Size column goes and the rest slim down, so the
   // prospect column keeps its room; measured on the table's own box, not the window's
   const [narrow, setNarrow] = useState(false);
@@ -113,10 +115,10 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
   const [mapOpen, setMapOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [q, setQ] = useState("");
-  const [group, setGroup] = useState<string | null>(null);
-  const [stars, setStars] = useState<number | null>(null);
-  const [home, setHome] = useState<string | null>(null);
-  const [sort, setSort] = useState("rank");
+  const [group, setGroup] = useKept<string | null>(`prospects.${seasonId}.group`, null);
+  const [stars, setStars] = useKept<number | null>(`prospects.${seasonId}.stars`, null);
+  const [home, setHome] = useKept<string | null>(`prospects.${seasonId}.home`, null);
+  const [sort, setSort] = useKept(`prospects.${seasonId}.sort`, "rank");
   const [page, setPage] = useState(0);
   const [data, setData] = useState<ProspectsView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -229,7 +231,7 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
   const sortBy = (col: Col) => {
     const key = SORTS[col];
     if (!key) return;
-    setSort((cur) => (cur === key ? `-${key}` : key));
+    setSort(sort === key ? `-${key}` : key);
   };
   const sortIcon = (col: Col) => {
     const key = SORTS[col];
@@ -259,8 +261,11 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
     <th className={className} aria-sort={ariaSort(col)} scope="col">
       {SORTS[col] ? (
         <button type="button" className="prospects__sort" title={m.sortBy(m.cols[col])} onClick={() => sortBy(col)}>
-          {m.cols[col]}
-          {sortIcon(col)}
+          {/* the sort's arrow hangs off the label, so the label stays where it is, sorted or not */}
+          <span className="prospects__sort-label">
+            {m.cols[col]}
+            {sortIcon(col)}
+          </span>
         </button>
       ) : (
         m.cols[col]

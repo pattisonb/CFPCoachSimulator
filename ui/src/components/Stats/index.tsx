@@ -13,6 +13,8 @@ import "./index.css";
 interface Props {
   season: SeasonSummary;
   teams: Map<string, TeamCard>;
+  /** asked for from elsewhere (an injury notice): open on this tab, narrowed to this team; `at` changes with each ask */
+  show?: { tab: Tab; team: string; at: number } | null;
 }
 
 /** One player's line in a category (GET /stats/players?cat= → players[]) */
@@ -75,13 +77,19 @@ const one = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
  * team. Teams: every team's season line in one table you can sort
  * by any column, yours marked. Before anyone has played, the page says so.
  */
-export default function Stats({ season, teams }: Props) {
-  const [tab, setTab] = useState<Tab>("players");
+export default function Stats({ season, teams, show }: Props) {
+  const [tab, setTab] = useState<Tab>(show?.tab ?? "players");
   const [cat, setCat] = useState<Category>("passing");
   const [allRows, setAllRows] = useState(false);
   // whose numbers: every conference and team to start (the whole league), narrowed by either dropdown
   const [conf, setConf] = useState("");
-  const [only, setOnly] = useState(""); // one team's slug, or all
+  const [only, setOnly] = useState(show?.team ?? ""); // one team's slug, or all
+  useEffect(() => {
+    if (!show) return;
+    setTab(show.tab);
+    setConf("");
+    setOnly(show.team);
+  }, [show?.at]);
   const fbs = useMemo(
     () => [...teams.values()].filter((t) => !t.fictional).sort((a, b) => a.name.localeCompare(b.name)),
     [teams],
@@ -176,6 +184,7 @@ export default function Stats({ season, teams }: Props) {
       key: "out",
       label: m.injuryCols.out,
       num: true,
+      width: 112, // "20 Weeks" in bold when it is the sorted column: wider than its heading
       render: (i) => m.weeksOut(i.weeks_left),
       sort: (i) => i.weeks_left,
     },
