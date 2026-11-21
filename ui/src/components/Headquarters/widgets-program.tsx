@@ -740,22 +740,26 @@ function NextDepth({ d, ctx }: P) {
           </Chip>
         ))}
       </div>
-      {/* the groups side by side in one row that scrolls sideways */}
-      <div className="hq-groups" role="region" aria-label={m.nextDepthLabel} tabIndex={0}>
+      {/* a lane a position: its name and need at the left, its players in one line that scrolls sideways. Every lane
+          is one height and the lanes' window never changes size, so picking positions with more or fewer players
+          cannot move the card (the player's ask) */}
+      <div className="hq-lanes" role="region" aria-label={m.nextDepthLabel} tabIndex={0}>
         {shown.map((g) => (
-          <section key={g.group} className="hq-group">
-            <header className="hq-group__head">
-              <b>{g.group}</b>
-              <span className="hq-sub hq-grow">
+          <section key={g.group} className="hq-lane">
+            <header className="hq-lane__head">
+              <span className="hq-lane__name">
+                <b>{g.group}</b>
+                <Tag solid={g.need <= 0}>{g.need > 0 ? m.needN(g.need) : m.full}</Tag>
+              </span>
+              <span className="hq-sub hq-lane__sub">
                 {m.returning(g.players.length)}
                 {g.commits.length ? ` · ${plural(g.commits.length, m.commit)}` : ""}
               </span>
-              <Tag solid={g.need <= 0}>{g.need > 0 ? m.needN(g.need) : m.full}</Tag>
             </header>
-            <List>
+            <ul className="hq-lane__strip">
               {show.includes("commits") &&
                 g.commits.map((c) => (
-                  <li key={`c-${c.pid}`}>
+                  <li className="hq-lane__item" key={`c-${c.pid}`}>
                     <Tag solid>{c.signed ? m.signed : m.commit}</Tag>
                     <RName ctx={ctx} pid={c.pid}>
                       {c.name}
@@ -767,7 +771,7 @@ function NextDepth({ d, ctx }: P) {
               {(g.targets ?? [])
                 .filter((c) => show.includes(c.kind))
                 .map((c) => (
-                  <li key={`t-${c.kind}-${c.pid}`}>
+                  <li className="hq-lane__item" key={`t-${c.kind}-${c.pid}`}>
                     <Tag soft>{m.kindTags[c.kind]}</Tag>
                     <RName ctx={ctx} pid={c.pid}>
                       {c.name}
@@ -777,14 +781,14 @@ function NextDepth({ d, ctx }: P) {
                   </li>
                 ))}
               {g.players.map((p, i) => (
-                <li key={`p-${i}-${p.name}`}>
+                <li className="hq-lane__item" key={`p-${i}-${p.name}`}>
                   <Tag>{p.class_next}</Tag>
                   <PName ctx={ctx} name={p.name} />
                   {p.draft && <span className="hq-sub">{m.draft(p.draft)}</span>}
                   <b className="hq-num">{p.overall}</b>
                 </li>
               ))}
-            </List>
+            </ul>
           </section>
         ))}
       </div>

@@ -3070,12 +3070,22 @@ def _portal_recap(state: dict) -> Optional[dict]:
                      "to": e["signed"], "to_name": _school_name(state, e["signed"])}
                     for pid, e in players.items() if e.get("signed")), key=lambda r: (-r["overall"], r["name"]))[:RECAP_MOVES]
     # where your roster is still under a healthy make-up (walk-ons fill the floor at Progression)
+    # by position, as your pages name them (the player's ask): OL, DL, LB and S are shared out to their positions by
+    # their starters (recruiting.SPOTS). A view only: walk-ons still fill the floor by group
+    from coach_career import recruiting as _rec
+    target: dict[str, int] = {}
+    for g, n in TARGET.items():
+        parts = _rec.SPOTS.get(g) or ((g, 1),)
+        left, total = n, sum(k for _, k in parts)
+        for i, (name, k) in enumerate(parts):
+            target[name] = left if i == len(parts) - 1 else round(n * k / total)
+            left -= target[name]
     have: dict[str, int] = {}
     for c in roster:
-        g = GROUP.get(c["pos"])
+        g = _rec.SPOT_OF.get(c["pos"]) or GROUP.get(c["pos"])
         if g:
             have[g] = have.get(g, 0) + 1
-    short = [{"group": g, "have": have.get(g, 0), "target": n} for g, n in TARGET.items() if have.get(g, 0) < n]
+    short = [{"group": g, "have": have.get(g, 0), "target": target[g]} for g in _rec.SPOT_ORDER if g in target and have.get(g, 0) < target[g]]
     return {"signed": signed, "lost": lost, "away": portal_away(state), "entrants": len(players),
             "signed_league": sum(1 for e in players.values() if e.get("signed")), "moves": moves, "short": short}
 

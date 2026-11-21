@@ -666,34 +666,76 @@ button.hq-link:hover {
   border-bottom: 0;
 }
 
-/* Next Year's Depth Chart: the groups side by side in one row that scrolls sideways */
-.hq-groups {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--s2);
-  padding-bottom: 6px;
-  overflow-x: auto;
+/* Next Year's Depth Chart: a lane a position, its players in one line that scrolls sideways. The lanes' window is one
+   height whatever is picked (it scrolls when there are more), so the card never changes size */
+.hq-lanes {
+  --hq-lane-h: 52px; /* *tune* a lane's height */
+  --hq-lanes-shown: 4; /* *tune* how many lanes the window shows before it scrolls */
+
+  display: grid;
+  grid-auto-rows: var(--hq-lane-h);
+  align-content: start;
+  gap: 6px;
+  height: calc(var(--hq-lanes-shown) * (var(--hq-lane-h) + 6px) - 6px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.hq-group {
-  flex: 0 0 250px;
+.hq-lane {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
   min-width: 0;
-  padding: 0 var(--s2) 4px;
   background: var(--paper);
   border: var(--line) solid var(--line-soft);
 }
 
-.hq-group__head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 calc(-1 * var(--s2));
-  padding: 6px var(--s2);
-  border-bottom: 1px solid var(--line-soft);
+/* the position, in your color's stripe: its name and need, then who is back */
+.hq-lane__head {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 var(--s2);
+  border-right: 1px solid var(--line-soft);
+  box-shadow: inset 4px 0 0 var(--team, var(--ink));
 }
 
-.hq-group__head b {
+.hq-lane__name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.hq-lane__name b {
   font-size: var(--t-md);
+}
+
+.hq-lane__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hq-lane__strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: auto hidden;
+  list-style: none;
+}
+
+/* a player: his class or his standing with you, his name, his overall or his stars */
+.hq-lane__item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--paper-hi);
+  border: 1px solid var(--line-soft);
+  white-space: nowrap;
 }
 
 /* Scouted Players: a tile a prospect; a tile opens his report in the card */

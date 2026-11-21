@@ -734,6 +734,11 @@ function PortalRecap({ v, teams }: P) {
       {name}
     </>
   );
+  const face = (x: { id: string; pos: string }) => (
+    <span className="face-tile recap__face">
+      <Face face={playerFace(x.id, x.pos)} scale={1} label="" />
+    </span>
+  );
   return (
     <div className="dev recap">
       <dl className="dev__stats">
@@ -745,99 +750,93 @@ function PortalRecap({ v, teams }: P) {
         <Stat label={m.recap.league}>
           {m.recap.leagueLine(rec.signed_league, rec.entrants)} <small>{m.recap.leagueSmall}</small>
         </Stat>
+        {/* the positions still under a healthy count, a tile beside the numbers (it was a row of its own under the
+            panels, which made the page scroll) */}
+        <div className="recap__short-tile" title={m.recap.shortTip}>
+          <dt className="label">{m.recap.short}</dt>
+          <dd>
+            {short.length ? (
+              <ul className="recap__short">
+                {short.map((x) => (
+                  <li key={x.group}>
+                    <Tag>{m.recap.shortLine(x.group, x.have, x.target)}</Tag>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <small>{m.recap.full}</small>
+            )}
+          </dd>
+        </div>
       </dl>
 
+      {/* three panels, one height: your additions, your losses, the country's biggest moves (each scrolls on its own) */}
       <div className="recap__cols">
-        <section className="recap__col" aria-label={m.recap.youSigned(rec.signed.length)}>
-          <h3 className="gone__head">
-            <b>{m.recap.signed}</b>
-            <span className="off__tag is-solid">{rec.signed.length}</span>
-          </h3>
+        <Panel className="recap__col" title={m.recap.signed} aside={m.portal.players(rec.signed.length)}>
           {rec.signed.length ? (
             <ol className="recap__list">
               {rec.signed.map((x) => (
                 <li key={x.id} className="recap__row">
+                  {face(x)}
                   <span className="recap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
                   <span className="recap__move">
                     {school((x as { from?: string }).from, m.recap.from(x.from_name ?? ""))}
                   </span>
+                  <b className="recap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
           ) : (
             <Empty>{m.recap.nobodyIn}</Empty>
           )}
-        </section>
+        </Panel>
 
-        <section className="recap__col" aria-label={m.recap.youLost(rec.lost.length)}>
-          <h3 className="gone__head">
-            <b>{m.recap.lost}</b>
-            <span className="off__tag is-solid">{rec.lost.length}</span>
-          </h3>
+        <Panel className="recap__col" title={m.recap.lost} aside={m.portal.players(rec.lost.length)}>
           {rec.lost.length ? (
             <ol className="recap__list">
               {rec.lost.map((x) => (
                 <li key={x.id} className="recap__row" title={x.reason || undefined}>
+                  {face(x)}
                   <span className="recap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
                   <span className="recap__move">
                     {(x as { to?: string | null }).to
                       ? school((x as { to?: string }).to, m.recap.to(x.to_name))
                       : m.recap.outOfFbs}
                   </span>
+                  <b className="recap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
           ) : (
             <Empty>{m.recap.nobodyOut}</Empty>
           )}
-        </section>
+        </Panel>
 
         {moves.length > 0 && (
-          <section className="recap__col" aria-label={m.recap.moves}>
-            <h3 className="gone__head">
-              <b>{m.recap.moves}</b>
-            </h3>
+          <Panel className="recap__col" title={m.recap.moves}>
             <ol className="recap__list">
               {moves.map((x) => (
                 <li key={x.id} className="recap__row">
+                  {face(x)}
                   <span className="recap__who">
                     <b>{x.name}</b> <span className="off__soft">{x.pos}</span>
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
                   <span className="recap__move">
                     {school(x.from, x.from_name)}
                     <ArrowRight size={12} weight="bold" aria-hidden="true" />
                     {school(x.to, x.to_name)}
                   </span>
+                  <b className="recap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
-          </section>
+          </Panel>
         )}
       </div>
-
-      <section aria-label={m.recap.short}>
-        <h3 className="label dev__kicker" title={m.recap.shortTip}>
-          {m.recap.short}
-        </h3>
-        {short.length ? (
-          <ul className="recap__short">
-            {short.map((x) => (
-              <li key={x.group}>
-                <Tag>{m.recap.shortLine(x.group, x.have, x.target)}</Tag>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty>{m.recap.full}</Empty>
-        )}
-      </section>
     </div>
   );
 }

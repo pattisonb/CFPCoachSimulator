@@ -1358,36 +1358,65 @@
 
 /* ----- Portal Recap: a column each for who came, who went and the league's biggest moves ----- */
 .recap__cols {
+  --recap-h: clamp(
+    260px,
+    100vh - 510px,
+    420px
+  ); /* *tune* the three panels' height: what the window has left under the numbers, so the page itself never scrolls */
+
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  align-items: start;
+  align-items: stretch;
   gap: var(--s3);
 }
 
+/* a panel a column, all three one height whatever they hold: the list takes what the head leaves and scrolls */
 .recap__col {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
   min-width: 0;
+  height: var(--recap-h);
+  margin-bottom: 0;
 }
 
-/* a long column scrolls on its own, so the three stay one block */
-.recap__list {
-  max-height: 340px; /* *tune* about eight players */
-  padding-right: 4px;
-  overflow-y: auto;
+.recap .recap__list {
+  display: block; /* its rows keep their own height: a short list sits at the top, never spread down the panel */
+  min-height: 0;
+  margin: 0 calc(-1 * var(--s3));
+  overflow: hidden auto;
   list-style: none;
 }
 
-/* a player: his name and position over where he came from or went, his overall at the right */
+/* a player: his face, his name and position over where he came from or went, his overall in a box at the right */
 .recap .recap__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 2px 8px;
-  padding: 6px 0;
+  gap: 2px 10px;
+  padding: 8px var(--s3);
   border-bottom: 1px solid var(--line-soft);
+}
+
+.recap__row:nth-child(even) {
+  background: var(--paper);
+}
+
+.recap__row:last-child {
+  border-bottom: 0;
+}
+
+.recap__face {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
 }
 
 .recap__who,
 .recap__move {
+  grid-column: 2;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1395,8 +1424,14 @@
 }
 
 .recap__ovr {
-  grid-row: span 2;
+  grid-area: 1 / 3 / span 2;
+  min-width: 40px;
+  padding: 4px 6px;
+  background: var(--ink);
+  color: var(--paper-hi);
   font-size: var(--t-md);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .recap__move {
@@ -1405,6 +1440,13 @@
   gap: 6px;
   color: var(--ink-soft);
   font-size: var(--t-xs);
+}
+
+/* Still Short, a tile in the numbers' row: its tags wrap, in the tile's own type size */
+.dev__stats .recap__short-tile dd {
+  overflow: visible;
+  font-size: var(--t-sm);
+  white-space: normal;
 }
 
 .recap__short {
