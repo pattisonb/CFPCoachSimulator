@@ -8,13 +8,13 @@ published carries a real school, bowl, player or coach name. Nothing in the repo
 app are copied to a scratch folder, the names are swapped there, and the build reads the copy.
 
 What lands in `ui/dist/`: the app (vite build, with VITE_GAME=browser so it talks to the worker instead of a
-server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `game.zip` (the Python game and the data a
+server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `game.tar.xz` (the Python game and the data a
 career reads), `boot/` (the team picker's answers worked out ahead, so the first screen shows before Python has
 loaded: `boot/teams.json` and one `boot/teams/<slug>.json` a team) and `version.json` (the commit).
 
 The first offseason's league comes precomputed (league.write_base_files writes data/base_league.json and
 data/base_meta.json, and data/base_development.json for the Depth Chart's first read), so the 146 source rosters
-stay out of the zip; only the fictional teams' files ship.
+stay out of the archive; only the fictional teams' files ship.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import zipfile
+import tarfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +44,8 @@ DATA_FILES = (
 )
 GENERATED = ("data/engine_teams.json", "data/player_potential.json", "data/base_league.json", "data/base_meta.json",
              "data/base_development.json")
+ARCHIVE = "game.tar.xz"   # what ui/public/worker.js downloads and unpacks
+ARCHIVE_PRESET = 6      # *tune* how hard xz packs the game, 0 to 9: higher is a slightly smaller download and a slower build
 UI_SKIP = ("node_modules", "dist")      # never copied with the app's source
 
 
@@ -85,7 +87,7 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
 
 
 def game_files(root: Path) -> list[str]:
-    """Every path game.zip holds, relative to the staged project root."""
+    """Every path the game archive holds, relative to the staged project root."""
     files = []
     for pkg in PACKAGES:
         files += sorted(p.relative_to(root).as_posix() for p in (root / pkg).rglob("*.py"))
@@ -99,11 +101,13 @@ def game_files(root: Path) -> list[str]:
     return files
 
 
-def write_zip(root: Path, dest: Path) -> list[str]:
+def write_archive(root: Path, dest: Path) -> list[str]:
+    """The game as one xz-packed tar: a little over half the size a zip of the same files is (the rosters are mostly
+    numbers, which xz packs far better), for about half a second more unpacking in the browser."""
     files = game_files(root)
-    with zipfile.ZipFile(dest, "w", compression=zipfile.ZIP_DEFLATED) as z:
+    with tarfile.open(dest, "w:xz", preset=ARCHIVE_PRESET) as z:
         for f in files:
-            z.write(root / f, f)
+            z.add(root / f, f)
     return files
 
 
@@ -132,7 +136,7 @@ def write_boot(root: Path, dest: Path, scratch: Path) -> int:
 
 
 def build(out: Path = ROOT / "ui" / "dist", generic: bool = False) -> dict:
-    """Write the site to `out` (wiped first): {"zip_bytes": game.zip's size, "files": its paths}."""
+    """Write the site to `out` (wiped first): {"archive_bytes": the game archive's size, "files": its paths}."""
     out = Path(out)
     commit = _commit()
     with tempfile.TemporaryDirectory(prefix="cfp-site-") as tmp:
@@ -146,10 +150,10 @@ def build(out: Path = ROOT / "ui" / "dist", generic: bool = False) -> dict:
         _run([npx, "vite", "build"], ui, {"VITE_GAME": "browser", "VITE_GAME_VERSION": commit})
         shutil.rmtree(out, ignore_errors=True)
         shutil.copytree(ui / "dist", out)
-        files = write_zip(root, out / "game.zip")
+        files = write_archive(root, out / ARCHIVE)
         write_boot(root, out / "boot", Path(tmp))
     (out / "version.json").write_text(json.dumps({"commit": commit, "generic": generic}), encoding="utf-8")
-    return {"zip_bytes": (out / "game.zip").stat().st_size, "files": files}
+    return {"archive_bytes": (out / ARCHIVE).stat().st_size, "files": files}
 
 
 if __name__ == "__main__":
@@ -158,5 +162,5 @@ if __name__ == "__main__":
                     help="swap every real name for a lookalike (always on when Vercel builds)")
     args = ap.parse_args()
     info = build(generic=args.generic)
-    print(f"ui/dist/: game.zip {info['zip_bytes'] / 1e6:.1f} MB, {len(info['files'])} files, "
+    print(f"ui/dist/: {ARCHIVE} {info['archive_bytes'] / 1e6:.1f} MB, {len(info['files'])} files, "
           f"{'generic' if args.generic else 'real'} names")

@@ -1,5 +1,5 @@
 /* The game in a Web Worker: Pyodide (CPython on WebAssembly) runs the dispatcher (app/api.py)
-   from game.zip, unpacked into the worker's in-memory filesystem; the seasons and coaches
+   from game.tar.xz, unpacked into the worker's in-memory filesystem; the seasons and coaches
    folders are IDBFS mounts, persisted to IndexedDB after every call that wrote a file.
    Messages from the page (ui/src/gameClient.ts): first {kind: "init", version, breakStorage,
    breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes, background}, answered with {id, ok,
@@ -14,6 +14,7 @@
 "use strict";
 
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+const ARCHIVE = "game.tar.xz";   // the game and its data, xz-packed (tools/build_site.py write_archive)
 const HOME = "/home/pyodide";
 const STORES = [HOME + "/data/seasons", HOME + "/data/coaches"];   // what IndexedDB keeps
 
@@ -105,8 +106,8 @@ async function claimStore() {
 
 // `loud`: the download's progress is posted only once it answers true (until then Python's loading has the notice).
 async function fetchZip(version, loud) {
-  const res = await fetch(`./game.zip?v=${encodeURIComponent(version || "dev")}`);
-  if (!res.ok) throw new Error(`game.zip: HTTP ${res.status}`);
+  const res = await fetch(`./${ARCHIVE}?v=${encodeURIComponent(version || "dev")}`);
+  if (!res.ok) throw new Error(`${ARCHIVE}: HTTP ${res.status}`);
   const total = Number(res.headers.get("Content-Length")) || 0;
   if (!res.body) return res.arrayBuffer();
   const reader = res.body.getReader();
@@ -140,9 +141,11 @@ async function start(init) {
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
   pythonUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
-  const zip = await zipping;
+  const [zip] = await Promise.all([zipping, pyodide.loadPackage("lzma")]);   // Python's xz reader is an add-on (70 KB)
   loading("Unpacking the game");
-  pyodide.unpackArchive(zip, "zip", { extractDir: HOME });
+  // by tarfile itself: Pyodide's own unpackArchive learned its formats before the xz reader was loaded
+  pyodide.FS.writeFile("/tmp/" + ARCHIVE, new Uint8Array(zip));
+  pyodide.runPython(`import os, tarfile\nwith tarfile.open("/tmp/${ARCHIVE}") as t:\n    t.extractall(${JSON.stringify(HOME)}, filter="data")\nos.remove("/tmp/${ARCHIVE}")`);
   for (const dir of STORES) {
     pyodide.FS.mkdirTree(dir);
     pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, {}, dir);

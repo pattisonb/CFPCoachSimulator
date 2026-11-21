@@ -7,7 +7,7 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
-      "source": "/(game.zip|version.json|worker.js)",
+      "source": "/(game.tar.xz|version.json|worker.js)",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     }
   ],

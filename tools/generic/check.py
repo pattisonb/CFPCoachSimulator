@@ -24,7 +24,7 @@ def _strings(node, out: set[str]) -> None:
 
 
 def shipped(root: Path, files: list[str] | None = None) -> list[Path]:
-    """The files a build ships from the staged project: `files` (game.zip's paths) and the app's source."""
+    """The files a build ships from the staged project: `files` (the game archive's paths) and the app's source."""
     root = Path(root)
     if files is None:
         files = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.suffix in SOURCE | {".json"}
