@@ -52,6 +52,7 @@
   "jordan-faison": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
   "joseph-vinci": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []},
   "kahanu-kia": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_17", "hairFade": false, "flip": []},
+  "kaleb-perine": {"faceShape": "face_shape_06", "skinTone": "porcelain", "hairColor": "blond", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_03", "hairFade": false, "flip": []},
   "kaydon-finley": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
   "kedren-young": {"faceShape": "face_shape_04", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "keon-keeley": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
@@ -77,6 +78,7 @@
   "spencer-porath": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "blond", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_17", "hairFade": false, "flip": []},
   "styles-prescod": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_06", "hairFade": false, "flip": []},
   "sullivan-absher": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": false, "flip": []},
+  "t-j-mobley": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []},
   "teddy-jarrard": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_04", "hairFade": false, "flip": []},
   "teddy-rezac": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []},
   "thomas-davis-jr": {"faceShape": "face_shape_03", "skinTone": "deep", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
@@ -90,7 +92,5 @@
   "Chris Ash": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "rolled": {
-  "kaleb-perine": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_17", "hairFade": false, "flip": []},
-  "t-j-mobley": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  }
 }

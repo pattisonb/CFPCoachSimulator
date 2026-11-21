@@ -61,6 +61,7 @@
   "logan-george": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_02", "hairFade": false, "flip": []},
   "lowen-colman-brusa": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
   "mason-james": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_03", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_01", "hairFade": false, "flip": []},
+  "nate-bloomfield": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
   "omar-khan": {"faceShape": "face_shape_06", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": false, "flip": []},
   "paul-mencke-jr": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": false, "flip": []},
   "quaid-carr": {"faceShape": "face_shape_03", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
@@ -90,6 +91,5 @@
   "Ryan Walters": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  },
  "rolled": {
-  "nate-bloomfield": {"faceShape": "face_shape_03", "skinTone": "porcelain", "hairColor": "red", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  }
 }
