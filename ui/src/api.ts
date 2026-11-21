@@ -6,7 +6,10 @@ import { gameFetch } from "./gameClient.ts";
 
 export interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;
-  /** a read in the background (the ticker, the page following a sim): it never raises the "Loading…" notice */
+  /**
+   * a read in the background (the ticker, the page following a sim): it never raises the "Loading…" notice, and in the
+   * browser it waits behind the reads a screen is showing
+   */
   quiet?: boolean;
 }
 
@@ -36,13 +39,13 @@ export function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
     const hit = kept.get(path);
     if (hit && Date.now() - hit.at < KEEP_MS) return hit.data as Promise<T>;
     const mine = era;
-    work = request<T>(path, options);
+    work = request<T>(path, options, quiet);
     kept.set(path, { at: Date.now(), data: work });
     const drop = () => kept.get(path)?.data === work && kept.delete(path);
     // an answer that crossed a write may be the old one: it serves who asked, and is not kept
     work.then(() => mine !== era && drop(), drop);
   } else if (read) {
-    work = request<T>(path, options);
+    work = request<T>(path, options, quiet);
     if (isStatus)
       void work.then(
         (s) => {
@@ -53,13 +56,13 @@ export function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
       );
   } else {
     forgetReads();
-    work = request<T>(path, options);
+    work = request<T>(path, options, quiet);
     void work.then(forgetReads, forgetReads);
   }
   return quiet ? work : trackSlow(work, options.method && options.method !== "GET" ? "Working…" : "Loading…");
 }
 
-async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
+async function request<T>(path: string, options: ApiOptions, quiet: boolean): Promise<T> {
   const { body, headers, quiet: _quiet, ...rest } = options;
   const init: RequestInit = { ...rest, headers };
   if (body !== undefined) {
@@ -68,7 +71,7 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     init.body = isRaw ? (body as BodyInit) : JSON.stringify(body);
     if (!isRaw) init.headers = { "Content-Type": "application/json", ...(headers as Record<string, string>) };
   }
-  const res = await gameFetch(path, init);
+  const res = await gameFetch(path, init, quiet);
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || data?.detail || `Request failed (${res.status})`);
   return data as T;

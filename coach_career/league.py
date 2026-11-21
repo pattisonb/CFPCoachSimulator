@@ -49,6 +49,7 @@ CACHE_DIR = ROOT / "data" / "leagues"
 # bundle never reads the 146 source rosters; without them both are computed from the source files
 BASE_LEAGUE_FILE = ROOT / "data" / "base_league.json"
 BASE_META_FILE = ROOT / "data" / "base_meta.json"
+BASE_DEVELOPMENT_NAME = "base_development.json"   # base_development()'s answer, written beside BASE_LEAGUE_FILE
 FIRST_YEAR = 2026
 # The coaches' own judgment in a depth chart, in overall points (one draw per player a year): real
 # 2026 usage starts players well below the top overall at most positions (rotations, fits, what
@@ -152,7 +153,10 @@ def write_base_files() -> None:
     BASE_LEAGUE_FILE.parent.mkdir(parents=True, exist_ok=True)
     BASE_LEAGUE_FILE.write_text(json.dumps(lgd, separators=(",", ":")), encoding="utf-8")
     BASE_META_FILE.write_text(json.dumps(meta, separators=(",", ":")), encoding="utf-8")
+    # every player's development read, worked out here once: in the browser it cost the first Depth Chart two seconds
+    BASE_LEAGUE_FILE.with_name(BASE_DEVELOPMENT_NAME).write_text(json.dumps(_development_of(lgd), separators=(",", ":")), encoding="utf-8")
     _meta_file.cache_clear()
+    base_development.cache_clear()
 
 
 @lru_cache(maxsize=1)
@@ -160,16 +164,23 @@ def _potentials() -> dict:
     return json.loads(recruits.POTENTIAL_FILE.read_text(encoding="utf-8")) if recruits.POTENTIAL_FILE.exists() else {}
 
 
+def _development_of(lgd: dict) -> dict[str, list]:
+    """slug -> [coachability, projected overall at his potential] for every player of a base league."""
+    attrs = lgd["attrs"]
+    return {c["id"]: [c.get("c") or "Steady Grinder", game_scale.overall(potential(c, attrs), c["pos"])]
+            for t in lgd["teams"].values() for c in t["roster"]}
+
+
 @lru_cache(maxsize=1)
 def base_development() -> dict[str, tuple[str, int]]:
-    """slug -> (coachability, projected overall at his potential) for every real 2026 player, from
-    BASE_LEAGUE_FILE (the first season has no league of its own yet), read once. Without the file,
-    the seeded coachability alone (no projection: 0)."""
+    """slug -> (coachability, projected overall at his potential) for every real 2026 player, read once: from the
+    file write_base_files keeps beside BASE_LEAGUE_FILE, else worked out from BASE_LEAGUE_FILE (the first season has
+    no league of its own yet). Without either, the seeded coachability alone (no projection: 0)."""
+    ready = BASE_LEAGUE_FILE.with_name(BASE_DEVELOPMENT_NAME)
+    if ready.exists():
+        return {s: (v[0], v[1]) for s, v in json.loads(ready.read_text(encoding="utf-8")).items()}
     if BASE_LEAGUE_FILE.exists():
-        lgd = json.loads(BASE_LEAGUE_FILE.read_text(encoding="utf-8"))
-        attrs = lgd["attrs"]
-        return {c["id"]: (c.get("c") or "Steady Grinder", game_scale.overall(potential(c, attrs), c["pos"]))
-                for t in lgd["teams"].values() for c in t["roster"]}
+        return {s: (v[0], v[1]) for s, v in _development_of(json.loads(BASE_LEAGUE_FILE.read_text(encoding="utf-8"))).items()}
     return {s: (v["coachability"], 0) for s, v in _potentials().items() if v.get("coachability")}
 
 

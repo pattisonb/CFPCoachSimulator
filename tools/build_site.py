@@ -12,7 +12,8 @@ server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `game.zip
 career reads) and `version.json` (the commit).
 
 The first offseason's league comes precomputed (league.write_base_files writes data/base_league.json and
-data/base_meta.json), so the 146 source rosters stay out of the zip; only the fictional teams' files ship.
+data/base_meta.json, and data/base_development.json for the Depth Chart's first read), so the 146 source rosters
+stay out of the zip; only the fictional teams' files ship.
 """
 from __future__ import annotations
 
@@ -37,10 +38,11 @@ DATA_FILES = (
     "data/fcs_map.json", "data/game_scale.json", "data/observed_tendencies.json", "data/manual_ratings.json",
     "data/scheme_overrides.json", "data/poll_params.json", "data/program_history.json", "data/program_market.json",
     "data/program_profile.json", "data/real_adjustments.json", "data/coach_birth_years.json", "data/draft_targets.json",
-    "data/major_cities.json", "data/base_league.json", "data/base_meta.json",
+    "data/major_cities.json", "data/base_league.json", "data/base_meta.json", "data/base_development.json",
     "cfb_sim_data/coaches.json", "cfb_sim_data/league.json",
 )
-GENERATED = ("data/engine_teams.json", "data/player_potential.json", "data/base_league.json", "data/base_meta.json")
+GENERATED = ("data/engine_teams.json", "data/player_potential.json", "data/base_league.json", "data/base_meta.json",
+             "data/base_development.json")
 UI_SKIP = ("node_modules", "dist")      # never copied with the app's source
 
 

@@ -102,14 +102,14 @@ function start(): Promise<void> {
   });
 }
 
-async function viaWorker(path: string, init: RequestInit): Promise<Response> {
+async function viaWorker(path: string, init: RequestInit, background: boolean): Promise<Response> {
   ready ??= start();
   await ready;
   if (dead) throw dead;
   const method = (init.method || "GET").toUpperCase();
   const quick = fromSnapshot(method, path);
   if (quick) return quick;
-  const msg = { id: nextId++, method, path, bodyJson: null, bodyBytes: null, ...(await bodyOf(init.body)) };
+  const msg = { id: nextId++, method, path, bodyJson: null, bodyBytes: null, background, ...(await bodyOf(init.body)) };
   const reply = await new Promise<Reply>((resolve, reject) => {
     pending.set(msg.id, { resolve, reject });
     worker!.postMessage(msg, msg.bodyBytes ? [msg.bodyBytes.buffer] : []);
@@ -119,7 +119,10 @@ async function viaWorker(path: string, init: RequestInit): Promise<Response> {
   return jsonResponse(reply.result);
 }
 
-/** One call to the game, answered like fetch answers. */
-export function gameFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  return IN_BROWSER ? viaWorker(path, init) : fetch(path, init);
+/**
+ * One call to the game, answered like fetch answers. `background`: a read nobody is waiting on (the ticker, the page
+ * following a sim); in the browser the game answers one call at a time, and these wait behind the screen's own reads.
+ */
+export function gameFetch(path: string, init: RequestInit = {}, background = false): Promise<Response> {
+  return IN_BROWSER ? viaWorker(path, init, background) : fetch(path, init);
 }
