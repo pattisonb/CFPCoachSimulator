@@ -24,6 +24,7 @@ let api = null;            // the app.api module
 let breakStorage = false;  // a test hook: every persist fails
 let breakRestore = false;  // a test hook: reading the saves at start fails
 let breakStep = false;     // a test hook: the next sim step throws (a failure after ready)
+let warmed = false;        // the league has been read once, ahead of the first call that needs it
 let restoreError = null;   // the saves could not be read at start: told to the page once ready
 
 const LOCK_TRIES = 16;      // *tune* how many times the store's lock is asked for before another tab is blamed...
@@ -102,7 +103,8 @@ async function claimStore() {
   channel.onmessage = (e) => { if ((e.data || {}).kind === "who") channel.postMessage({ kind: "here", token }); };
 }
 
-async function fetchZip(version) {
+// `loud`: the download's progress is posted only once it answers true (until then Python's loading has the notice).
+async function fetchZip(version, loud) {
   const res = await fetch(`./game.zip?v=${encodeURIComponent(version || "dev")}`);
   if (!res.ok) throw new Error(`game.zip: HTTP ${res.status}`);
   const total = Number(res.headers.get("Content-Length")) || 0;
@@ -115,7 +117,7 @@ async function fetchZip(version) {
     if (done) break;
     chunks.push(value);
     loaded += value.length;
-    loading("Downloading the game", loaded, total);
+    if (loud()) loading("Downloading the game", loaded, total);
   }
   const out = new Uint8Array(loaded);
   let at = 0;
@@ -128,11 +130,17 @@ async function start(init) {
   breakRestore = !!init.breakRestore;
   breakStep = !!init.breakStep;
   loading("Loading Python");
+  // the game's download starts now and runs beside Python's (they were one after the other); a failure waits for
+  // the await below
+  let pythonUp = false;
+  const zipping = fetchZip(init.version, () => pythonUp);
+  zipping.catch(() => {});
   await claimStore();
   importScripts(PYODIDE_URL + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
+  pythonUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
-  const zip = await fetchZip(init.version);
+  const zip = await zipping;
   loading("Unpacking the game");
   pyodide.unpackArchive(zip, "zip", { extractDir: HOME });
   for (const dir of STORES) {
@@ -195,7 +203,12 @@ async function main() {
     for (;;) {
       if (queue.length) await handle(queue.splice(nextIndex(), 1)[0]);
       else if (api.running()) await step();
-      else await untilMessage();
+      else {
+        // nothing asked yet: read the league now (the first call's wait, a second or two), while the player is
+        // still looking at the team picker
+        if (!warmed) { warmed = true; try { api.call_js("GET", "/api/teams", null, null); } catch (err) { console.error(err); } }
+        if (!queue.length) await untilMessage();
+      }
     }
   } catch (err) {                 // a crash in the pump: the page hears it instead of hanging
     console.error(err);

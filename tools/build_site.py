@@ -9,7 +9,8 @@ app are copied to a scratch folder, the names are swapped there, and the build r
 
 What lands in `ui/dist/`: the app (vite build, with VITE_GAME=browser so it talks to the worker instead of a
 server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `game.zip` (the Python game and the data a
-career reads) and `version.json` (the commit).
+career reads), `boot/` (the team picker's answers worked out ahead, so the first screen shows before Python has
+loaded: `boot/teams.json` and one `boot/teams/<slug>.json` a team) and `version.json` (the commit).
 
 The first offseason's league comes precomputed (league.write_base_files writes data/base_league.json and
 data/base_meta.json, and data/base_development.json for the Depth Chart's first read), so the 146 source rosters
@@ -106,6 +107,30 @@ def write_zip(root: Path, dest: Path) -> list[str]:
     return files
 
 
+BOOT = """
+import json, sys
+from pathlib import Path
+from app import api
+out = Path(sys.argv[1])
+(out / "teams").mkdir(parents=True)
+teams = api.call("GET", "/api/teams")
+(out / "teams.json").write_text(json.dumps(teams, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+for t in teams["teams"]:
+    detail = api.call("GET", "/api/teams/" + t["slug"])
+    (out / "teams" / (t["slug"] + ".json")).write_text(json.dumps(detail, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+"""
+
+
+def write_boot(root: Path, dest: Path, scratch: Path) -> int:
+    """The team picker's answers, asked of the staged game once and written as plain files (`dest`/teams.json and
+    `dest`/teams/<slug>.json): the page reads these until the game in the browser is up (ui/src/gameClient.ts), and a
+    game just started gives the same answers. Returns how many teams were written."""
+    shutil.rmtree(dest, ignore_errors=True)
+    _run([sys.executable, "-c", BOOT, str(dest)], root,
+         {"CFP_SEASONS_DIR": str(scratch / "boot-seasons"), "SIM_WORKERS": "1", "PYTHONPATH": str(root)})
+    return len(list((dest / "teams").glob("*.json")))
+
+
 def build(out: Path = ROOT / "ui" / "dist", generic: bool = False) -> dict:
     """Write the site to `out` (wiped first): {"zip_bytes": game.zip's size, "files": its paths}."""
     out = Path(out)
@@ -122,6 +147,7 @@ def build(out: Path = ROOT / "ui" / "dist", generic: bool = False) -> dict:
         shutil.rmtree(out, ignore_errors=True)
         shutil.copytree(ui / "dist", out)
         files = write_zip(root, out / "game.zip")
+        write_boot(root, out / "boot", Path(tmp))
     (out / "version.json").write_text(json.dumps({"commit": commit, "generic": generic}), encoding="utf-8")
     return {"zip_bytes": (out / "game.zip").stat().st_size, "files": files}
 
