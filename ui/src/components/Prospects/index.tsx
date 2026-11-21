@@ -155,6 +155,8 @@ export default function Prospects({
     });
     measure.current.observe(el);
   }, []);
+  // the map's column folded to a rail at the side (kept for good, not for one career); a prospect's file still opens
+  const [sideShut, setSideShut] = useKept<boolean>("prospects.side-shut", false);
   // the big labeled map, in a window over the page
   const [mapOpen, setMapOpen] = useState(false);
   /** the big map's own pick: the list behind it is filtered only when the window closes, so looking round the map
@@ -366,7 +368,7 @@ export default function Prospects({
   );
 
   return (
-    <div className={`prospects${narrow ? " is-narrow" : ""}`}>
+    <div className={`prospects${narrow ? " is-narrow" : ""}${sideShut && !picked ? " is-side-shut" : ""}`}>
       {/* ---------- the list ---------- */}
       <section className="prospects__main" aria-label={m.title}>
         <header className="prospects__head">
@@ -687,14 +689,37 @@ export default function Prospects({
               load();
             }}
           />
+        ) : sideShut ? (
+          <button
+            type="button"
+            className="prospects__rail"
+            title={m.showSideTip}
+            aria-expanded={false}
+            onClick={() => setSideShut(false)}
+          >
+            <CaretLeft size={16} weight="bold" aria-hidden="true" />
+            <span>{m.showSide}</span>
+          </button>
         ) : (
           <>
             <section className="prospects__panel">
               <h2 className="prospects__panel-title">
                 {m.map}
-                <button type="button" className="prospects__panel-link" onClick={openMap}>
-                  {m.bigMap}
-                </button>
+                <span className="prospects__panel-links">
+                  <button type="button" className="prospects__panel-link" onClick={openMap}>
+                    {m.bigMap}
+                  </button>
+                  <button
+                    type="button"
+                    className="prospects__panel-link"
+                    title={m.hideSideTip}
+                    aria-expanded
+                    onClick={() => setSideShut(true)}
+                  >
+                    {m.hideSide}
+                    <CaretRight size={12} weight="bold" aria-hidden="true" />
+                  </button>
+                </span>
               </h2>
               {s && (
                 <TileMap

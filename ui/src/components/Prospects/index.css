@@ -530,6 +530,57 @@
   color: var(--ink);
 }
 
+.prospects__panel-links {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.prospects__panel-links svg {
+  margin-left: 2px;
+  vertical-align: -1px;
+}
+
+/* the column folded away: a rail down the side that opens it again, and the list takes the room */
+.prospects.is-side-shut {
+  --prospects-side: 40px;
+}
+
+.prospects.is-side-shut .prospects__side {
+  scrollbar-gutter: auto;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
+  overflow: hidden;
+  padding: 0;
+}
+
+.prospects__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  height: 100%;
+  padding: var(--s4) 0;
+  background: none;
+  color: var(--ink-soft);
+  border: 0;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.prospects__rail span {
+  writing-mode: vertical-rl;
+}
+
+.prospects__rail:hover {
+  background: var(--paper-hi);
+  color: var(--ink);
+}
+
 .prospects__top {
   display: grid;
   gap: 2px;
