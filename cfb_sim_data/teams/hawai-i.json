@@ -273,7 +273,7 @@
    "eric-mcfall",
    "fapiano-hehea",
    "kawika-hallums",
-   "joshua-tavui"
+   "josh-tavui"
   ],
   "C": [
    "ethan-spencer",
@@ -9436,12 +9436,12 @@
    }
   },
   {
-   "slug": "joshua-tavui",
+   "slug": "josh-tavui",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/joshua-tavui/",
-   "name": "Joshua Tavui",
+   "url": null,
+   "name": "Josh Tavui",
    "position_name": "Left Guard",
    "jersey": "72",
    "team": "Hawai'i",

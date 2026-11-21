@@ -293,7 +293,7 @@
   ],
   "LEDG": [
    "malachi-davis",
-   "wydeek-collier-johnson",
+   "wydeek-collier",
    "farell-gnago",
    "robbie-johnson-jr"
   ],
@@ -12097,12 +12097,12 @@
    }
   },
   {
-   "slug": "wydeek-collier-johnson",
+   "slug": "wydeek-collier",
    "position": "LEDG",
    "class": "SO",
    "team_slug": "rutgers",
-   "url": "https://collegefootball.gg/players/wydeek-collier-johnson/",
-   "name": "Wydeek Collier-Johnson",
+   "url": null,
+   "name": "Wydeek Collier",
    "position_name": "Left Edge",
    "jersey": "8",
    "team": "Rutgers",

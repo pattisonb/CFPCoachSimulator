@@ -204,7 +204,7 @@
    "CB": [
     "dyson-mccutcheon",
     "jackson-lowe",
-    "quantaves-gaskins"
+    "gumbo-gaskins"
    ],
    "FS": [
     "kalen-woods"
@@ -325,7 +325,7 @@
   "CB": [
    "dyson-mccutcheon",
    "jackson-lowe",
-   "quantaves-gaskins",
+   "gumbo-gaskins",
    "chris-ragans",
    "jason-hardy",
    "ricky-lee",
@@ -18414,12 +18414,12 @@
    }
   },
   {
-   "slug": "quantaves-gaskins",
+   "slug": "gumbo-gaskins",
    "position": "CB",
    "class": "SRRS",
    "team_slug": "mtsu",
-   "url": "https://collegefootball.gg/players/quantaves-gaskins/",
-   "name": "Quantaves Gaskins",
+   "url": null,
+   "name": "Gumbo Gaskins",
    "position_name": "Cornerback",
    "jersey": "22",
    "team": "MTSU",

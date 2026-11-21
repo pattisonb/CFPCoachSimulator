@@ -252,7 +252,7 @@
    "matthew-auau",
    "dezmyn-hardy",
    "kenyon-shabazz",
-   "guy-fernandez-iii",
+   "tre-fernandez-iii",
    "jaxon-fresques"
   ],
   "TE": [
@@ -330,7 +330,7 @@
    "adam-taylor",
    "dionte-thornton",
    "caleb-reese",
-   "lagarion-wilson"
+   "lj-wilson-jr"
   ],
   "FS": [
    "boogsie-silvera",
@@ -5483,12 +5483,12 @@
    }
   },
   {
-   "slug": "guy-fernandez-iii",
+   "slug": "tre-fernandez-iii",
    "position": "WR",
    "class": "FRRS",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/guy-fernandez-iii/",
-   "name": "Guy Fernandez III",
+   "url": null,
+   "name": "Tre Fernandez III",
    "position_name": "Wide Receiver",
    "jersey": "19",
    "team": "Sac State",
@@ -19870,12 +19870,12 @@
    }
   },
   {
-   "slug": "lagarion-wilson",
+   "slug": "lj-wilson-jr",
    "position": "CB",
    "class": "FR",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/lagarion-wilson/",
-   "name": "Lagarion Wilson",
+   "url": null,
+   "name": "LJ Wilson Jr.",
    "position_name": "Cornerback",
    "jersey": "13",
    "team": "Sac State",
