@@ -284,7 +284,7 @@
   "RT": [
    "sully-burns",
    "eric-perkins",
-   "tory-moulton",
+   "aidin-rhodes",
    "cameron-schultz"
   ],
   "LEDG": [
@@ -325,7 +325,7 @@
   "WILL": [
    "ayden-jones",
    "javante-mackey",
-   "courtney-white"
+   "darius-davis"
   ],
   "CB": [
    "dexter-ricks-jr",
@@ -10827,14 +10827,14 @@
    }
   },
   {
-   "slug": "tory-moulton",
+   "slug": "aidin-rhodes",
    "position": "RT",
    "class": "JR",
    "team_slug": "texas-state",
-   "url": "https://collegefootball.gg/players/tory-moulton/",
-   "name": "Tory Moulton",
+   "url": null,
+   "name": "Aidin Rhodes",
    "position_name": "Right Tackle",
-   "jersey": "63",
+   "jersey": "58",
    "team": "Texas State",
    "class_year": "Junior",
    "height": "6'4\"",
@@ -18905,14 +18905,14 @@
    }
   },
   {
-   "slug": "courtney-white",
+   "slug": "darius-davis",
    "position": "WILL",
    "class": "FR",
    "team_slug": "texas-state",
-   "url": "https://collegefootball.gg/players/courtney-white/",
-   "name": "Courtney White",
+   "url": null,
+   "name": "Darius Davis",
    "position_name": "Will Linebacker",
-   "jersey": "93",
+   "jersey": "23",
    "team": "Texas State",
    "class_year": "Freshman",
    "height": "6'3\"",

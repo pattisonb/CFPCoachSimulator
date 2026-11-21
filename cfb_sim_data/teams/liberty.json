@@ -253,7 +253,7 @@
    "refeno-vangates",
    "nasir-newkirk",
    "eric-smith-liberty",
-   "brandon-payne"
+   "jakobe-dejesus"
   ],
   "TE": [
    "lakelsey-johnson-jr",
@@ -272,17 +272,17 @@
    "joep-engbers",
    "blake-martin",
    "daniel-schiffert",
-   "glenn-martino"
+   "carlton-hall"
   ],
   "C": [
    "aaron-fenimore",
    "gabe-smith",
-   "bret-yoder"
+   "curtis-doirilus"
   ],
   "RG": [
    "alex-birchmeier",
    "val-erickson",
-   "dan-woods"
+   "joseph-morris"
   ],
   "RT": [
    "christian-williams",
@@ -348,11 +348,11 @@
   ],
   "K": [
    "tyler-black",
-   "dalton-byrd"
+   "sam-crossan"
   ],
   "P": [
    "chase-reeves",
-   "j-r-hall"
+   "anthony-saget"
   ]
  },
  "roster_size": 85,
@@ -5661,14 +5661,14 @@
    }
   },
   {
-   "slug": "brandon-payne",
+   "slug": "jakobe-dejesus",
    "position": "WR",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/brandon-payne/",
-   "name": "Brandon Payne",
+   "url": null,
+   "name": "Jakobe DeJesus",
    "position_name": "Wide Receiver",
-   "jersey": "86",
+   "jersey": "81",
    "team": "Liberty",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -9350,12 +9350,12 @@
    }
   },
   {
-   "slug": "glenn-martino",
+   "slug": "carlton-hall",
    "position": "LG",
    "class": "SO",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/glenn-martino/",
-   "name": "Glenn Martino",
+   "url": null,
+   "name": "Carlton Hall",
    "position_name": "Left Guard",
    "jersey": "77",
    "team": "Liberty",
@@ -10171,14 +10171,14 @@
    }
   },
   {
-   "slug": "bret-yoder",
+   "slug": "curtis-doirilus",
    "position": "C",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/bret-yoder/",
-   "name": "Bret Yoder",
+   "url": null,
+   "name": "Curtis Doirilus",
    "position_name": "Center",
-   "jersey": "69",
+   "jersey": "73",
    "team": "Liberty",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -10992,12 +10992,12 @@
    }
   },
   {
-   "slug": "dan-woods",
+   "slug": "joseph-morris",
    "position": "RG",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/dan-woods/",
-   "name": "Dan Woods",
+   "url": null,
+   "name": "Joseph Morris",
    "position_name": "Right Guard",
    "jersey": "78",
    "team": "Liberty",
@@ -23188,14 +23188,14 @@
    }
   },
   {
-   "slug": "dalton-byrd",
+   "slug": "sam-crossan",
    "position": "K",
    "class": "JR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/dalton-byrd/",
-   "name": "Dalton Byrd",
+   "url": null,
+   "name": "Sam Crossan",
    "position_name": "Kicker",
-   "jersey": "24",
+   "jersey": "49",
    "team": "Liberty",
    "class_year": "Junior",
    "height": "6'0\"",
@@ -23699,14 +23699,14 @@
    }
   },
   {
-   "slug": "j-r-hall",
+   "slug": "anthony-saget",
    "position": "P",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/j-r-hall/",
-   "name": "J.R. Hall",
+   "url": null,
+   "name": "Anthony Saget",
    "position_name": "Punter",
-   "jersey": "32",
+   "jersey": "36",
    "team": "Liberty",
    "class_year": "Freshman",
    "height": "6'0\"",

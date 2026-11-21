@@ -194,7 +194,7 @@
     "tirrell-johnson"
    ],
    "DT": [
-    "josh-thurman",
+    "rodney-hunter",
     "tre-brown-south-alabama"
    ],
    "LB": [
@@ -240,7 +240,7 @@
    "julyon-jordan",
    "pj-martin",
    "trae-von-dunbar",
-   "kyle-graham-harris",
+   "donovan-crow",
    "lavonte-cole",
    "caleb-wynn"
   ],
@@ -250,7 +250,7 @@
    "micah-woods",
    "brendan-jenkins",
    "trae-stevenson",
-   "tyree-short",
+   "miguel-camboia",
    "khatori-marion",
    "dominic-white",
    "jerrian-graham",
@@ -295,7 +295,7 @@
    "andrew-hines"
   ],
   "DT": [
-   "josh-thurman",
+   "rodney-hunter",
    "tre-brown-south-alabama",
    "stephen-johnson",
    "andrew-washburn"
@@ -318,7 +318,7 @@
   "WILL": [
    "caleb-dozier",
    "perry-hand",
-   "kerry-cheeks",
+   "donnie-arnold",
    "zech-hall",
    "parker-shattuck"
   ],
@@ -2281,14 +2281,14 @@
    }
   },
   {
-   "slug": "kyle-graham-harris",
+   "slug": "donovan-crow",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "south-alabama",
-   "url": "https://collegefootball.gg/players/kyle-graham-harris/",
-   "name": "Kyle Graham-Harris",
+   "url": null,
+   "name": "Donovan Crow",
    "position_name": "Halfback",
-   "jersey": "48",
+   "jersey": "26",
    "team": "South Alabama",
    "class_year": "Freshman (RS)",
    "height": "5'10\"",
@@ -4510,12 +4510,12 @@
    }
   },
   {
-   "slug": "tyree-short",
+   "slug": "miguel-camboia",
    "position": "WR",
    "class": "SO",
    "team_slug": "south-alabama",
-   "url": "https://collegefootball.gg/players/tyree-short/",
-   "name": "Tyree Short",
+   "url": null,
+   "name": "Miguel Camboia",
    "position_name": "Wide Receiver",
    "jersey": "81",
    "team": "South Alabama",
@@ -12717,14 +12717,14 @@
    }
   },
   {
-   "slug": "josh-thurman",
+   "slug": "rodney-hunter",
    "position": "DT",
    "class": "JR",
    "team_slug": "south-alabama",
-   "url": "https://collegefootball.gg/players/josh-thurman/",
-   "name": "Josh Thurman",
+   "url": null,
+   "name": "Rodney Hunter",
    "position_name": "Defensive Tackle",
-   "jersey": "73",
+   "jersey": "39",
    "team": "South Alabama",
    "class_year": "Junior",
    "height": "6'4\"",
@@ -17165,14 +17165,14 @@
    }
   },
   {
-   "slug": "kerry-cheeks",
+   "slug": "donnie-arnold",
    "position": "WILL",
    "class": "SORS",
    "team_slug": "south-alabama",
-   "url": "https://collegefootball.gg/players/kerry-cheeks/",
-   "name": "Kerry Cheeks",
+   "url": null,
+   "name": "Donnie Arnold",
    "position_name": "Will Linebacker",
-   "jersey": "95",
+   "jersey": "44",
    "team": "South Alabama",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",

@@ -181,7 +181,7 @@
     "jayden-tuia"
    ],
    "C": [
-    "tyreek-mellon"
+    "kentez-allen"
    ],
    "RG": [
     "berlin-lillard"
@@ -225,7 +225,7 @@
     "nathan-sutcliffe"
    ],
    "KR": [
-    "oliver-lundberg-coleman"
+    "oliver-lundberg"
    ],
    "PR": [
     "jordan-mosley"
@@ -242,7 +242,7 @@
   ],
   "HB": [
    "mel-brown",
-   "oliver-lundberg-coleman",
+   "oliver-lundberg",
    "durell-robinson",
    "damian-moore-jr",
    "cedric-ross",
@@ -259,7 +259,7 @@
    "makih-johnson",
    "jaivyn-moore",
    "isaiah-watson",
-   "anfernee-reed",
+   "hudson-cocchiara",
    "daven-amos",
    "troy-foster",
    "terrence-smith-jr"
@@ -283,7 +283,7 @@
    "sione-netane"
   ],
   "C": [
-   "tyreek-mellon",
+   "kentez-allen",
    "phillip-ocon",
    "braden-hales"
   ],
@@ -335,7 +335,7 @@
    "caleb-presley",
    "cj-blocker",
    "elijah-brown-colorado-state",
-   "richard-mosley-iii",
+   "jayden-cortell",
    "jordan-lessard",
    "thomas-cook-jr"
   ],
@@ -2359,12 +2359,12 @@
    }
   },
   {
-   "slug": "oliver-lundberg-coleman",
+   "slug": "oliver-lundberg",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/oliver-lundberg-coleman/",
-   "name": "Oliver Lundberg Coleman",
+   "url": null,
+   "name": "Oliver Lundberg",
    "position_name": "Halfback",
    "jersey": "44",
    "team": "Colorado State",
@@ -6046,14 +6046,14 @@
    }
   },
   {
-   "slug": "anfernee-reed",
+   "slug": "hudson-cocchiara",
    "position": "WR",
    "class": "FR",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/anfernee-reed/",
-   "name": "Anfernee Reed",
+   "url": null,
+   "name": "Hudson Cocchiara",
    "position_name": "Wide Receiver",
-   "jersey": "36",
+   "jersey": "28",
    "team": "Colorado State",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -10856,14 +10856,14 @@
    }
   },
   {
-   "slug": "tyreek-mellon",
+   "slug": "kentez-allen",
    "position": "C",
    "class": "FR",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/tyreek-mellon/",
-   "name": "Tyreek Mellon",
+   "url": null,
+   "name": "Kentez Allen",
    "position_name": "Center",
-   "jersey": "64",
+   "jersey": "52",
    "team": "Colorado State",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -19851,14 +19851,14 @@
    }
   },
   {
-   "slug": "richard-mosley-iii",
+   "slug": "jayden-cortell",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/richard-mosley-iii/",
-   "name": "Richard Mosley III",
+   "url": null,
+   "name": "Jayden Cortell",
    "position_name": "Cornerback",
-   "jersey": "1",
+   "jersey": "20",
    "team": "Colorado State",
    "class_year": "Junior (RS)",
    "height": "6'2\"",

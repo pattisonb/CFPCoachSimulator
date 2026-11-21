@@ -242,8 +242,8 @@
    "jamarian-samuel",
    "taeo-todd",
    "tyrese-woodgett",
-   "j-j-bradley",
-   "donte-gamble"
+   "ty-cummings",
+   "bre-lan-mareus"
   ],
   "FB": [],
   "WR": [
@@ -2859,14 +2859,14 @@
    }
   },
   {
-   "slug": "donte-gamble",
+   "slug": "bre-lan-mareus",
    "position": "HB",
    "class": "FR",
    "team_slug": "ga-southern",
-   "url": "https://collegefootball.gg/players/donte-gamble/",
-   "name": "Donte Gamble",
+   "url": null,
+   "name": "Bre'Lan Mareus",
    "position_name": "Halfback",
-   "jersey": "3",
+   "jersey": "29",
    "team": "Ga Southern",
    "class_year": "Freshman",
    "height": "5'9\"",
@@ -3114,14 +3114,14 @@
    }
   },
   {
-   "slug": "j-j-bradley",
+   "slug": "ty-cummings",
    "position": "HB",
    "class": "FR",
    "team_slug": "ga-southern",
-   "url": "https://collegefootball.gg/players/j-j-bradley/",
-   "name": "J.J. Bradley",
+   "url": null,
+   "name": "Ty Cummings",
    "position_name": "Halfback",
-   "jersey": "25",
+   "jersey": "20",
    "team": "Ga Southern",
    "class_year": "Freshman",
    "height": "5'8\"",

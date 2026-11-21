@@ -369,6 +369,11 @@ def _fields(root: Path, m: Maps) -> None:
                 c["hex"] = _nudge(c["hex"], slug)
         (teams_dir / f"{slug}.json").unlink()
         _write(teams_dir / f"{new['slug']}.json", t)
+        # the team's preset faces follow it to its lookalike name (the keys inside, player ids and coach names, are
+        # swapped with every other JSON file in run())
+        faces = root / "cfb_sim_data" / "faces" / f"{slug}.json"
+        if faces.is_file() and new["slug"] != slug:
+            faces.rename(faces.with_name(f"{new['slug']}.json"))
     path = root / "cfb_sim_data" / "coaches.json"
     coaches = _read(path)
     for c in coaches:
@@ -441,6 +446,15 @@ def run(root: Path) -> Maps:
     for path in sorted(root.rglob("*.json")):
         if "node_modules" in path.parts or "pocket-faces" in path.parts or "ui" in path.relative_to(root).parts[:1]:
             continue                                       # the app's own files (package.json, tsconfig)
+        if path.parent.name == "faces" and path.parent.parent.name == "cfb_sim_data":
+            # a team's preset faces: only who each face belongs to is a name (a player's id, a coach's name; "coach:"
+            # before a rolled coach's). The face itself is parts from the face library, and one of its hair colors
+            # is spelled like a school, so the parts are never run through the swap
+            doc = _read(path)
+            who = lambda k: ("coach:" + m.text(k[6:])) if k.startswith("coach:") else m.text(k)   # noqa: E731
+            _write(path, {group: ({who(k): v for k, v in faces.items()} if isinstance(faces, dict) else faces)
+                          for group, faces in doc.items()})
+            continue
         _write(path, m.walk(_read(path), DROP_KEYS))
     for path in sorted(root.rglob("*")):
         if path.suffix in TEXT_SUFFIXES and path.is_file() and "node_modules" not in path.parts and "pocket-faces" not in path.parts:

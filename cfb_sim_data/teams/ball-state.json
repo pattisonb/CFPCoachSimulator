@@ -249,7 +249,7 @@
    "jamarion-mcdougle",
    "cj-nelson",
    "isaiah-thacker",
-   "juan-mcdougal",
+   "tayshon-bardo",
    "corey-thompson-jr",
    "ace-cooper",
    "dj-young",
@@ -315,7 +315,7 @@
    "ben-marsh",
    "sam-feeney",
    "jamar-birden",
-   "matthew-meekins"
+   "mason-holbrook"
   ],
   "SAM": [],
   "MIKE": [
@@ -4313,14 +4313,14 @@
    }
   },
   {
-   "slug": "juan-mcdougal",
+   "slug": "tayshon-bardo",
    "position": "WR",
    "class": "SORS",
    "team_slug": "ball-state",
-   "url": "https://collegefootball.gg/players/juan-mcdougal/",
-   "name": "Juan McDougal",
+   "url": null,
+   "name": "Tayshon Bardo",
    "position_name": "Wide Receiver",
-   "jersey": "32",
+   "jersey": "15",
    "team": "Ball State",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
@@ -17687,14 +17687,14 @@
    }
   },
   {
-   "slug": "matthew-meekins",
+   "slug": "mason-holbrook",
    "position": "REDG",
    "class": "FR",
    "team_slug": "ball-state",
-   "url": "https://collegefootball.gg/players/matthew-meekins/",
-   "name": "Matthew Meekins",
+   "url": null,
+   "name": "Mason Holbrook",
    "position_name": "Right Edge",
-   "jersey": "76",
+   "jersey": "93",
    "team": "Ball State",
    "class_year": "Freshman",
    "height": "6'2\"",

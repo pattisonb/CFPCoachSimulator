@@ -266,7 +266,7 @@
   "LT": [
    "braydon-nelson",
    "shaun-torgeson",
-   "dallas-hammonds",
+   "eli-holbrook",
    "kole-seaton"
   ],
   "LG": [
@@ -314,7 +314,7 @@
    "billy-walton-iii"
   ],
   "SAM": [
-   "caleb-traylor"
+   "cooper-mailand"
   ],
   "MIKE": [
    "isaiah-chisom",
@@ -7539,14 +7539,14 @@
    }
   },
   {
-   "slug": "dallas-hammonds",
+   "slug": "eli-holbrook",
    "position": "LT",
    "class": "FR",
    "team_slug": "oklahoma-state",
-   "url": "https://collegefootball.gg/players/dallas-hammonds/",
-   "name": "Dallas Hammonds",
+   "url": null,
+   "name": "Eli Holbrook",
    "position_name": "Left Tackle",
-   "jersey": "64",
+   "jersey": "74",
    "team": "Oklahoma State",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -16309,14 +16309,14 @@
    }
   },
   {
-   "slug": "caleb-traylor",
+   "slug": "cooper-mailand",
    "position": "SAM",
    "class": "FRRS",
    "team_slug": "oklahoma-state",
-   "url": "https://collegefootball.gg/players/caleb-traylor/",
-   "name": "Caleb Traylor",
+   "url": null,
+   "name": "Cooper Mailand",
    "position_name": "Sam Linebacker",
-   "jersey": "51",
+   "jersey": "40",
    "team": "Oklahoma State",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",

@@ -289,13 +289,13 @@
   "RT": [
    "hudson-chasko",
    "cecil-wilson",
-   "bret-rollins"
+   "david-iannini"
   ],
   "LEDG": [
    "garrett-dial",
    "bryce-griffin",
    "antonio-bottiggi",
-   "aaron-gunter"
+   "carlos-shird"
   ],
   "DT": [
    "thomas-aden",
@@ -319,7 +319,7 @@
    "quan-rhodes-mckee",
    "sayed-abuhamdeh",
    "rafael-terrero-jr",
-   "marco-brackins",
+   "matthew-sollberger",
    "tanner-mintz"
   ],
   "WILL": [
@@ -335,7 +335,7 @@
    "ezekiel-castex",
    "tyler-bivens",
    "lennox-lemon",
-   "jamello-buckner"
+   "jeremiah-johnson-kent-state"
   ],
   "FS": [
    "derrick-jackson-iii",
@@ -351,7 +351,7 @@
   "K": [
    "sean-leonard",
    "eli-tucker",
-   "nathan-wentz"
+   "tommy-newcomb"
   ],
   "P": [
    "jake-stoeckel"
@@ -11885,14 +11885,14 @@
    }
   },
   {
-   "slug": "bret-rollins",
+   "slug": "david-iannini",
    "position": "RT",
    "class": "FR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/bret-rollins/",
-   "name": "Bret Rollins",
+   "url": null,
+   "name": "David Iannini",
    "position_name": "Right Tackle",
-   "jersey": "63",
+   "jersey": "64",
    "team": "Kent State",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -13023,14 +13023,14 @@
    }
   },
   {
-   "slug": "aaron-gunter",
+   "slug": "carlos-shird",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/aaron-gunter/",
-   "name": "Aaron Gunter",
+   "url": null,
+   "name": "Carlos Shird",
    "position_name": "Left Edge",
-   "jersey": "64",
+   "jersey": "56",
    "team": "Kent State",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -17492,12 +17492,12 @@
    }
   },
   {
-   "slug": "marco-brackins",
+   "slug": "matthew-sollberger",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/marco-brackins/",
-   "name": "Marco Brackins",
+   "url": null,
+   "name": "Matthew Sollberger",
    "position_name": "Mike Linebacker",
    "jersey": "30",
    "team": "Kent State",
@@ -20885,14 +20885,14 @@
    }
   },
   {
-   "slug": "jamello-buckner",
+   "slug": "jeremiah-johnson-kent-state",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/jamello-buckner/",
-   "name": "Jamello Buckner",
+   "url": null,
+   "name": "Jeremiah Johnson",
    "position_name": "Cornerback",
-   "jersey": "37",
+   "jersey": "29",
    "team": "Kent State",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -23645,14 +23645,14 @@
    }
   },
   {
-   "slug": "nathan-wentz",
+   "slug": "tommy-newcomb",
    "position": "K",
    "class": "JR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/nathan-wentz/",
-   "name": "Nathan Wentz",
+   "url": null,
+   "name": "Tommy Newcomb",
    "position_name": "Kicker",
-   "jersey": "42",
+   "jersey": "49",
    "team": "Kent State",
    "class_year": "Junior",
    "height": "6'3\"",

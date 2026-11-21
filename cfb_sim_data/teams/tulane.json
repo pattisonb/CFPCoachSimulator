@@ -255,7 +255,7 @@
    "bredell-richardson",
    "oliver-mitchell-jr",
    "antwaun-parham",
-   "jett-toussaint",
+   "walker-davis",
    "kellen-tasby"
   ],
   "TE": [
@@ -341,7 +341,7 @@
    "kevin-adams-iii",
    "chase-green",
    "joshua-moore-tulane",
-   "owen-banner"
+   "carson-klein"
   ],
   "SS": [
    "jack-tchienchou",
@@ -349,7 +349,7 @@
   ],
   "K": [
    "jackson-courville",
-   "ray-knott",
+   "zach-marini",
    "cooper-helmke"
   ],
   "P": [
@@ -5501,14 +5501,14 @@
    }
   },
   {
-   "slug": "jett-toussaint",
+   "slug": "walker-davis",
    "position": "WR",
    "class": "SO",
    "team_slug": "tulane",
-   "url": "https://collegefootball.gg/players/jett-toussaint/",
-   "name": "Jett Toussaint",
+   "url": null,
+   "name": "Walker Davis",
    "position_name": "Wide Receiver",
-   "jersey": "36",
+   "jersey": "26",
    "team": "Tulane",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -22106,14 +22106,14 @@
    }
   },
   {
-   "slug": "owen-banner",
+   "slug": "carson-klein",
    "position": "FS",
    "class": "FR",
    "team_slug": "tulane",
-   "url": "https://collegefootball.gg/players/owen-banner/",
-   "name": "Owen Banner",
+   "url": null,
+   "name": "Carson Klein",
    "position_name": "Free Safety",
-   "jersey": "29",
+   "jersey": "31",
    "team": "Tulane",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -23190,14 +23190,14 @@
    }
   },
   {
-   "slug": "ray-knott",
+   "slug": "zach-marini",
    "position": "K",
    "class": "SR",
    "team_slug": "tulane",
-   "url": "https://collegefootball.gg/players/ray-knott/",
-   "name": "Ray Knott",
+   "url": null,
+   "name": "Zach Marini",
    "position_name": "Kicker",
-   "jersey": "19",
+   "jersey": "46",
    "team": "Tulane",
    "class_year": "Senior",
    "height": "6'0\"",

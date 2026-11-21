@@ -233,12 +233,12 @@
   "QB": [
    "jayden-denegal",
    "stone-saunders",
-   "jelani-canady"
+   "brady-campbell"
   ],
   "HB": [
    "lucky-sutton",
    "christian-washington",
-   "sterling-westmoreland",
+   "josiah-lucas",
    "javion-kinnard",
    "jordin-thomas"
   ],
@@ -263,7 +263,7 @@
    "kime-fangupo",
    "jackson-ford-san-diego-st",
    "ryan-wolfer",
-   "bruce-sheldon"
+   "jack-ellis"
   ],
   "LT": [
    "joseph-borjon",
@@ -272,7 +272,7 @@
   ],
   "LG": [
    "evan-lawrence",
-   "chris-mcbride",
+   "koi-taiese",
    "ikbahl-kassim"
   ],
   "C": [
@@ -283,7 +283,7 @@
   "RG": [
    "kalan-ellis",
    "isaac-lucas",
-   "taj-abraham"
+   "jarvis-williams"
   ],
   "RT": [
    "dennis-jones",
@@ -350,7 +350,7 @@
   "K": [
    "cooper-dileva",
    "noah-serna",
-   "alexander-gage"
+   "tyler-prasuhn"
   ],
   "P": [
    "tashi-dorje"
@@ -910,14 +910,14 @@
    }
   },
   {
-   "slug": "jelani-canady",
+   "slug": "brady-campbell",
    "position": "QB",
    "class": "FR",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/jelani-canady/",
-   "name": "Jelani Canady",
+   "url": null,
+   "name": "Brady Campbell",
    "position_name": "Quarterback",
-   "jersey": "3",
+   "jersey": "41",
    "team": "San Diego St.",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -1729,14 +1729,14 @@
    }
   },
   {
-   "slug": "sterling-westmoreland",
+   "slug": "josiah-lucas",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/sterling-westmoreland/",
-   "name": "Sterling Westmoreland",
+   "url": null,
+   "name": "Josiah Lucas",
    "position_name": "Halfback",
-   "jersey": "36",
+   "jersey": "23",
    "team": "San Diego St.",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
@@ -7423,14 +7423,14 @@
    }
   },
   {
-   "slug": "bruce-sheldon",
+   "slug": "jack-ellis",
    "position": "TE",
    "class": "SO",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/bruce-sheldon/",
-   "name": "Bruce Sheldon",
+   "url": null,
+   "name": "Jack Ellis",
    "position_name": "Tight End",
-   "jersey": "80",
+   "jersey": "87",
    "team": "San Diego St.",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -8818,14 +8818,14 @@
    }
   },
   {
-   "slug": "chris-mcbride",
+   "slug": "koi-taiese",
    "position": "LG",
    "class": "SO",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/chris-mcbride/",
-   "name": "Chris McBride",
+   "url": null,
+   "name": "Koi Taiese",
    "position_name": "Left Guard",
-   "jersey": "62",
+   "jersey": "52",
    "team": "San Diego St.",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -10757,14 +10757,14 @@
    }
   },
   {
-   "slug": "taj-abraham",
+   "slug": "jarvis-williams",
    "position": "RG",
    "class": "SO",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/taj-abraham/",
-   "name": "Taj Abraham",
+   "url": null,
+   "name": "Jarvis Williams",
    "position_name": "Right Guard",
-   "jersey": "53",
+   "jersey": "62",
    "team": "San Diego St.",
    "class_year": "Sophomore",
    "height": "6'6\"",
@@ -23523,14 +23523,14 @@
    }
   },
   {
-   "slug": "alexander-gage",
+   "slug": "tyler-prasuhn",
    "position": "K",
    "class": "FR",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/alexander-gage/",
-   "name": "Alexander Gage",
+   "url": null,
+   "name": "Tyler Prasuhn",
    "position_name": "Kicker",
-   "jersey": "28",
+   "jersey": "80",
    "team": "San Diego St.",
    "class_year": "Freshman",
    "height": "6'1\"",

@@ -310,18 +310,18 @@
    "camron-cooper",
    "eddy-smith",
    "jacob-lopez-veasey",
-   "kaseem-hopkins"
+   "hudson-pickett"
   ],
   "SAM": [
    "bryce-grays",
-   "thurman-sharp",
+   "caleb-barrow",
    "james-walley-jr"
   ],
   "MIKE": [
    "brandon-tucker",
    "archie-chambers",
    "eze-osondu",
-   "russell-weldon",
+   "tysan-breaux",
    "braeden-lott"
   ],
   "WILL": [
@@ -16097,14 +16097,14 @@
    }
   },
   {
-   "slug": "kaseem-hopkins",
+   "slug": "hudson-pickett",
    "position": "REDG",
    "class": "FR",
    "team_slug": "utsa",
-   "url": "https://collegefootball.gg/players/kaseem-hopkins/",
-   "name": "Kaseem Hopkins",
+   "url": null,
+   "name": "Hudson Pickett",
    "position_name": "Right Edge",
-   "jersey": "79",
+   "jersey": "49",
    "team": "UTSA",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -16636,14 +16636,14 @@
    }
   },
   {
-   "slug": "thurman-sharp",
+   "slug": "caleb-barrow",
    "position": "SAM",
    "class": "FRRS",
    "team_slug": "utsa",
-   "url": "https://collegefootball.gg/players/thurman-sharp/",
-   "name": "Thurman Sharp",
+   "url": null,
+   "name": "Caleb Barrow",
    "position_name": "Sam Linebacker",
-   "jersey": "0",
+   "jersey": "46",
    "team": "UTSA",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -18053,14 +18053,14 @@
    }
   },
   {
-   "slug": "russell-weldon",
+   "slug": "tysan-breaux",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "utsa",
-   "url": "https://collegefootball.gg/players/russell-weldon/",
-   "name": "Russell Weldon",
+   "url": null,
+   "name": "Tysan Breaux",
    "position_name": "Mike Linebacker",
-   "jersey": "3",
+   "jersey": "57",
    "team": "UTSA",
    "class_year": "Freshman",
    "height": "6'1\"",

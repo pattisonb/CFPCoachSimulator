@@ -244,7 +244,7 @@
    "kewan-lacy",
    "makhi-frazier",
    "jt-lindsey",
-   "mitch-sanderson",
+   "ja-michael-jones",
    "shekai-mills-knight",
    "joshua-dye"
   ],
@@ -268,18 +268,18 @@
    "caleb-odom",
    "michael-smith",
    "brady-prieskorn",
-   "matthew-davidson",
+   "jack-harper",
    "hayden-bradley"
   ],
   "LT": [
    "terez-davis",
-   "david-benwood",
+   "connor-howes",
    "enoch-wangoy"
   ],
   "LG": [
    "troy-everett",
    "delano-townsend",
-   "dalvin-bradford"
+   "kane-mankins"
   ],
   "C": [
    "brycen-sanders",
@@ -293,8 +293,8 @@
   ],
   "RT": [
    "tommy-kinsler-iv",
-   "ramsay-griffen",
-   "charlie-howell"
+   "trey-nightingale",
+   "carius-curne"
   ],
   "LEDG": [
    "kam-franklin",
@@ -311,7 +311,7 @@
   "REDG": [
    "jonathan-maldonado",
    "landon-barnes",
-   "quamel-james"
+   "carmelow-reed"
   ],
   "SAM": [
    "keaton-thomas",
@@ -321,11 +321,11 @@
   "MIKE": [
    "luke-ferrelli",
    "tah-j-butler",
-   "alex-robertson"
+   "raymond-collins"
   ],
   "WILL": [
    "suntarine-perkins",
-   "charles-cleveland",
+   "ant-davis-jr",
    "talib-graham"
   ],
   "CB": [
@@ -2565,14 +2565,14 @@
    }
   },
   {
-   "slug": "mitch-sanderson",
+   "slug": "ja-michael-jones",
    "position": "HB",
    "class": "SORS",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/mitch-sanderson/",
-   "name": "Mitch Sanderson",
+   "url": null,
+   "name": "Ja'Michael Jones",
    "position_name": "Halfback",
-   "jersey": "38",
+   "jersey": "36",
    "team": "Ole Miss",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
@@ -7938,14 +7938,14 @@
    }
   },
   {
-   "slug": "matthew-davidson",
+   "slug": "jack-harper",
    "position": "TE",
    "class": "JR",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/matthew-davidson/",
-   "name": "Matthew Davidson",
+   "url": null,
+   "name": "Jack Harper",
    "position_name": "Tight End",
-   "jersey": "46",
+   "jersey": "42",
    "team": "Ole Miss",
    "class_year": "Junior",
    "height": "6'2\"",
@@ -8754,14 +8754,14 @@
    }
   },
   {
-   "slug": "david-benwood",
+   "slug": "connor-howes",
    "position": "LT",
    "class": "JR",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/david-benwood/",
-   "name": "David Benwood",
+   "url": null,
+   "name": "Connor Howes",
    "position_name": "Left Tackle",
-   "jersey": "73",
+   "jersey": "65",
    "team": "Ole Miss",
    "class_year": "Junior",
    "height": "6'7\"",
@@ -9842,14 +9842,14 @@
    }
   },
   {
-   "slug": "dalvin-bradford",
+   "slug": "kane-mankins",
    "position": "LG",
    "class": "FR",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/dalvin-bradford/",
-   "name": "Dalvin Bradford",
+   "url": null,
+   "name": "Kane Mankins",
    "position_name": "Left Guard",
-   "jersey": "68",
+   "jersey": "67",
    "team": "Ole Miss",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -12011,12 +12011,12 @@
    }
   },
   {
-   "slug": "ramsay-griffen",
+   "slug": "trey-nightingale",
    "position": "RT",
    "class": "FR",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/ramsay-griffen/",
-   "name": "Ramsay Griffen",
+   "url": null,
+   "name": "Trey Nightingale",
    "position_name": "Right Tackle",
    "jersey": "53",
    "team": "Ole Miss",
@@ -12269,14 +12269,14 @@
    }
   },
   {
-   "slug": "charlie-howell",
+   "slug": "carius-curne",
    "position": "RT",
    "class": "FR",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/charlie-howell/",
-   "name": "Charlie Howell",
+   "url": null,
+   "name": "Carius Curne",
    "position_name": "Right Tackle",
-   "jersey": "78",
+   "jersey": "57",
    "team": "Ole Miss",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -15163,14 +15163,14 @@
    }
   },
   {
-   "slug": "quamel-james",
+   "slug": "carmelow-reed",
    "position": "REDG",
    "class": "FR",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/quamel-james/",
-   "name": "Quamel James",
+   "url": null,
+   "name": "Carmelow Reed",
    "position_name": "Right Edge",
-   "jersey": "79",
+   "jersey": "99",
    "team": "Ole Miss",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -16825,14 +16825,14 @@
    }
   },
   {
-   "slug": "alex-robertson",
+   "slug": "raymond-collins",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/alex-robertson/",
-   "name": "Alex Robertson",
+   "url": null,
+   "name": "Raymond Collins",
    "position_name": "Mike Linebacker",
-   "jersey": "98",
+   "jersey": "22",
    "team": "Ole Miss",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -17344,14 +17344,14 @@
    }
   },
   {
-   "slug": "charles-cleveland",
+   "slug": "ant-davis-jr",
    "position": "WILL",
    "class": "SORS",
    "team_slug": "ole-miss",
-   "url": "https://collegefootball.gg/players/charles-cleveland/",
-   "name": "Charles Cleveland",
+   "url": null,
+   "name": "Ant Davis Jr.",
    "position_name": "Will Linebacker",
-   "jersey": "99",
+   "jersey": "26",
    "team": "Ole Miss",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",

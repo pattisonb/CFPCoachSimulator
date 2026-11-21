@@ -194,8 +194,8 @@
     "dejon-roney"
    ],
    "DT": [
-    "gordon-sims",
-    "calvin-essex"
+    "star-taimani",
+    "ian-shewell"
    ],
    "LB": [
     "ethan-powell",
@@ -240,7 +240,7 @@
    "sir-autry",
    "tyler-jacklich",
    "isaiah-carlson",
-   "zeke-clay",
+   "courshawn-hill",
    "viliami-teu"
   ],
   "FB": [],
@@ -252,7 +252,7 @@
    "cooper-hoch",
    "carson-clark",
    "ryker-ruelas",
-   "khaleb-barnett",
+   "jase-nix",
    "trace-hernandez",
    "jeremiah-fung",
    "devin-olmande",
@@ -280,8 +280,8 @@
   ],
   "RG": [
    "tyler-chen",
-   "sean-lidge",
-   "jimmy-garrard",
+   "keenan-parks",
+   "kamuela-wilhelm",
    "nathan-balestrieri"
   ],
   "RT": [
@@ -291,13 +291,13 @@
   ],
   "LEDG": [
    "nate-lewis",
-   "sterling-westbrook",
-   "melvin-wagner",
+   "auma-jennings",
+   "bronx-letuligasenoa",
    "etu-finau"
   ],
   "DT": [
-   "gordon-sims",
-   "calvin-essex",
+   "star-taimani",
+   "ian-shewell",
    "noa-siaosi",
    "colton-thomas",
    "solomone-langi"
@@ -305,7 +305,7 @@
   "REDG": [
    "dejon-roney",
    "justin-stearns",
-   "trevante-carruthers"
+   "russell-devany"
   ],
   "SAM": [
    "ethan-powell",
@@ -2566,14 +2566,14 @@
    }
   },
   {
-   "slug": "zeke-clay",
+   "slug": "courshawn-hill",
    "position": "HB",
    "class": "FR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/zeke-clay/",
-   "name": "Zeke Clay",
+   "url": null,
+   "name": "Courshawn Hill",
    "position_name": "Halfback",
-   "jersey": "37",
+   "jersey": "26",
    "team": "San Jose State",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -5080,14 +5080,14 @@
    }
   },
   {
-   "slug": "khaleb-barnett",
+   "slug": "jase-nix",
    "position": "WR",
    "class": "FRRS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/khaleb-barnett/",
-   "name": "Khaleb Barnett",
+   "url": null,
+   "name": "Jase Nix",
    "position_name": "Wide Receiver",
-   "jersey": "49",
+   "jersey": "9",
    "team": "San Jose State",
    "class_year": "Freshman (RS)",
    "height": "5'8\"",
@@ -10026,14 +10026,14 @@
    }
   },
   {
-   "slug": "sean-lidge",
+   "slug": "keenan-parks",
    "position": "RG",
    "class": "SORS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/sean-lidge/",
-   "name": "Sean Lidge",
+   "url": null,
+   "name": "Keenan Parks",
    "position_name": "Right Guard",
-   "jersey": "79",
+   "jersey": "67",
    "team": "San Jose State",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
@@ -10274,12 +10274,12 @@
    }
   },
   {
-   "slug": "jimmy-garrard",
+   "slug": "kamuela-wilhelm",
    "position": "RG",
    "class": "FR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/jimmy-garrard/",
-   "name": "Jimmy Garrard",
+   "url": null,
+   "name": "Kamuela Wilhelm",
    "position_name": "Right Guard",
    "jersey": "66",
    "team": "San Jose State",
@@ -11913,12 +11913,12 @@
    }
   },
   {
-   "slug": "sterling-westbrook",
+   "slug": "auma-jennings",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/sterling-westbrook/",
-   "name": "Sterling Westbrook",
+   "url": null,
+   "name": "Auma Jennings",
    "position_name": "Left Edge",
    "jersey": "91",
    "team": "San Jose State",
@@ -12180,14 +12180,14 @@
    }
   },
   {
-   "slug": "melvin-wagner",
+   "slug": "bronx-letuligasenoa",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/melvin-wagner/",
-   "name": "Melvin Wagner",
+   "url": null,
+   "name": "Bronx Letuligasenoa",
    "position_name": "Left Edge",
-   "jersey": "55",
+   "jersey": "41",
    "team": "San Jose State",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -12722,14 +12722,14 @@
    }
   },
   {
-   "slug": "gordon-sims",
+   "slug": "star-taimani",
    "position": "DT",
    "class": "SORS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/gordon-sims/",
-   "name": "Gordon Sims",
+   "url": null,
+   "name": "Star Taimani",
    "position_name": "Defensive Tackle",
-   "jersey": "46",
+   "jersey": "50",
    "team": "San Jose State",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
@@ -12970,14 +12970,14 @@
    }
   },
   {
-   "slug": "calvin-essex",
+   "slug": "ian-shewell",
    "position": "DT",
    "class": "SR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/calvin-essex/",
-   "name": "Calvin Essex",
+   "url": null,
+   "name": "Ian Shewell",
    "position_name": "Defensive Tackle",
-   "jersey": "73",
+   "jersey": "42",
    "team": "San Jose State",
    "class_year": "Senior",
    "height": "6'5\"",
@@ -14581,14 +14581,14 @@
    }
   },
   {
-   "slug": "trevante-carruthers",
+   "slug": "russell-devany",
    "position": "REDG",
    "class": "FRRS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/trevante-carruthers/",
-   "name": "Trevante Carruthers",
+   "url": null,
+   "name": "Russell Devany",
    "position_name": "Right Edge",
-   "jersey": "47",
+   "jersey": "94",
    "team": "San Jose State",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",

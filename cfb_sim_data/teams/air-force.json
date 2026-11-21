@@ -166,7 +166,7 @@
    ],
    "WR": [
     "matt-long",
-    "jonathan-thierry",
+    "astin-hange",
     "owen-chambers"
    ],
    "TE": [
@@ -217,7 +217,7 @@
   },
   "special_teams": {
    "K": [
-    "stephen-snider"
+    "carter-cremascoli"
    ],
    "P": [
     "will-duncan"
@@ -240,7 +240,7 @@
   "HB": [
    "rocco-conti",
    "keegan-sack",
-   "kentrell-duval",
+   "oswaldo-morales",
    "jalen-rashad-turner",
    "mason-lowe"
   ],
@@ -251,7 +251,7 @@
   ],
   "WR": [
    "matt-long",
-   "jonathan-thierry",
+   "astin-hange",
    "owen-chambers",
    "adam-hrynciw",
    "mason-hayes",
@@ -269,7 +269,7 @@
    "nathan-elwood",
    "alex-boyd",
    "brandon-nazworth",
-   "shamir-booth"
+   "justus-perales"
   ],
   "LG": [
    "alec-falk",
@@ -303,7 +303,7 @@
    "andrew-tillett",
    "jayden-oquendo",
    "christian-krietzer",
-   "lionel-harris"
+   "noah-daniels"
   ],
   "REDG": [
    "jaylin-reese",
@@ -314,13 +314,13 @@
    "isaac-hubert",
    "brody-bujnoch",
    "jake-kepler",
-   "tommy-forney"
+   "bryce-braden"
   ],
   "MIKE": [
    "dallas-daley",
    "vinnie-canosa",
    "brodie-mitchell",
-   "brendan-caldwell"
+   "andrew-jurasek"
   ],
   "WILL": [
    "blake-fletcher",
@@ -353,7 +353,7 @@
    "ethan-stannard"
   ],
   "K": [
-   "stephen-snider"
+   "carter-cremascoli"
   ],
   "P": [
    "will-duncan"
@@ -2284,14 +2284,14 @@
    }
   },
   {
-   "slug": "kentrell-duval",
+   "slug": "oswaldo-morales",
    "position": "HB",
    "class": "JRRS",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/kentrell-duval/",
-   "name": "Kentrell Duval",
+   "url": null,
+   "name": "Oswaldo Morales",
    "position_name": "Halfback",
-   "jersey": "15",
+   "jersey": "34",
    "team": "Air Force",
    "class_year": "Junior (RS)",
    "height": "5'10\"",
@@ -3650,14 +3650,14 @@
    }
   },
   {
-   "slug": "jonathan-thierry",
+   "slug": "astin-hange",
    "position": "WR",
    "class": "SR",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/jonathan-thierry/",
-   "name": "Jonathan Thierry",
+   "url": null,
+   "name": "Astin Hange",
    "position_name": "Wide Receiver",
-   "jersey": "83",
+   "jersey": "36",
    "team": "Air Force",
    "class_year": "Senior",
    "height": "6'2\"",
@@ -7984,12 +7984,12 @@
    }
   },
   {
-   "slug": "shamir-booth",
+   "slug": "justus-perales",
    "position": "LT",
    "class": "FR",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/shamir-booth/",
-   "name": "Shamir Booth",
+   "url": null,
+   "name": "Justus Perales",
    "position_name": "Left Tackle",
    "jersey": "54",
    "team": "Air Force",
@@ -13933,14 +13933,14 @@
    }
   },
   {
-   "slug": "lionel-harris",
+   "slug": "noah-daniels",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/lionel-harris/",
-   "name": "Lionel Harris",
+   "url": null,
+   "name": "Noah Daniels",
    "position_name": "Defensive Tackle",
-   "jersey": "56",
+   "jersey": "95",
    "team": "Air Force",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -15844,14 +15844,14 @@
    }
   },
   {
-   "slug": "tommy-forney",
+   "slug": "bryce-braden",
    "position": "SAM",
    "class": "FR",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/tommy-forney/",
-   "name": "Tommy Forney",
+   "url": null,
+   "name": "Bryce Braden",
    "position_name": "Sam Linebacker",
-   "jersey": "96",
+   "jersey": "35",
    "team": "Air Force",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -16941,14 +16941,14 @@
    }
   },
   {
-   "slug": "brendan-caldwell",
+   "slug": "andrew-jurasek",
    "position": "MIKE",
    "class": "SORS",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/brendan-caldwell/",
-   "name": "Brendan Caldwell",
+   "url": null,
+   "name": "Andrew Jurasek",
    "position_name": "Mike Linebacker",
-   "jersey": "46",
+   "jersey": "32",
    "team": "Air Force",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
@@ -23298,14 +23298,14 @@
    }
   },
   {
-   "slug": "stephen-snider",
+   "slug": "carter-cremascoli",
    "position": "K",
    "class": "SO",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/stephen-snider/",
-   "name": "Stephen Snider",
+   "url": null,
+   "name": "Carter Cremascoli",
    "position_name": "Kicker",
-   "jersey": "15",
+   "jersey": "90",
    "team": "Air Force",
    "class_year": "Sophomore",
    "height": "6'1\"",

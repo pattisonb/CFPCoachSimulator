@@ -200,7 +200,7 @@
     "dillan-botts"
    ],
    "LB": [
-    "jesus-machado-jr",
+    "jayden-cupitt",
     "stone-combs"
    ],
    "CB": [
@@ -242,7 +242,7 @@
    "d-andre-hardeman-jr",
    "tyvonn-byars",
    "colin-leahey",
-   "jason-curtis",
+   "justin-powell",
    "carson-morgan"
   ],
   "FB": [],
@@ -277,7 +277,7 @@
   "LG": [
    "cole-principe",
    "colter-alberding",
-   "roman-livingston"
+   "clay-mitchell"
   ],
   "C": [
    "scott-becker",
@@ -287,17 +287,17 @@
    "patrick-valent",
    "leo-bluhm",
    "cullen-witt",
-   "levi-berry"
+   "leyonte-chandler"
   ],
   "RT": [
    "luke-miller",
    "ian-bothwell",
    "peyton-farmer",
-   "daniel-rhodes"
+   "bennett-eivens"
   ],
   "LEDG": [
    "joseph-mutombo",
-   "dereyon-jenkins-jr",
+   "dj-jenkins",
    "luca-akirtava"
   ],
   "DT": [
@@ -317,10 +317,10 @@
   ],
   "SAM": [],
   "MIKE": [
-   "jesus-machado-jr",
+   "jayden-cupitt",
    "stone-combs",
    "beau-barton",
-   "ty-thames"
+   "seth-clarke"
   ],
   "WILL": [
    "austin-harnetiaux",
@@ -351,7 +351,7 @@
   ],
   "K": [
    "enock-gota",
-   "dane-colbert"
+   "tommy-bauchiero"
   ],
   "P": [
    "charlie-durkin"
@@ -2566,14 +2566,14 @@
    }
   },
   {
-   "slug": "jason-curtis",
+   "slug": "justin-powell",
    "position": "HB",
    "class": "SO",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/jason-curtis/",
-   "name": "Jason Curtis",
+   "url": null,
+   "name": "Justin Powell",
    "position_name": "Halfback",
-   "jersey": "21",
+   "jersey": "33",
    "team": "Rice",
    "class_year": "Sophomore",
    "height": "5'9\"",
@@ -10073,14 +10073,14 @@
    }
   },
   {
-   "slug": "roman-livingston",
+   "slug": "clay-mitchell",
    "position": "LG",
    "class": "FR",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/roman-livingston/",
-   "name": "Roman Livingston",
+   "url": null,
+   "name": "Clay Mitchell",
    "position_name": "Left Guard",
-   "jersey": "66",
+   "jersey": "74",
    "team": "Rice",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -11784,14 +11784,14 @@
    }
   },
   {
-   "slug": "levi-berry",
+   "slug": "leyonte-chandler",
    "position": "RG",
    "class": "FR",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/levi-berry/",
-   "name": "Levi Berry",
+   "url": null,
+   "name": "Leyonte Chandler",
    "position_name": "Right Guard",
-   "jersey": "51",
+   "jersey": "57",
    "team": "Rice",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -12642,14 +12642,14 @@
    }
   },
   {
-   "slug": "daniel-rhodes",
+   "slug": "bennett-eivens",
    "position": "RT",
    "class": "SO",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/daniel-rhodes/",
-   "name": "Daniel Rhodes",
+   "url": null,
+   "name": "Bennett Eivens",
    "position_name": "Right Tackle",
-   "jersey": "69",
+   "jersey": "70",
    "team": "Rice",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -13453,12 +13453,12 @@
    }
   },
   {
-   "slug": "dereyon-jenkins-jr",
+   "slug": "dj-jenkins",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/dereyon-jenkins-jr/",
-   "name": "DeReyon Jenkins Jr.",
+   "url": null,
+   "name": "DJ Jenkins",
    "position_name": "Left Edge",
    "jersey": "42",
    "team": "Rice",
@@ -17028,14 +17028,14 @@
    }
   },
   {
-   "slug": "jesus-machado-jr",
+   "slug": "jayden-cupitt",
    "position": "MIKE",
    "class": "SRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/jesus-machado-jr/",
-   "name": "Jesus Machado Jr.",
+   "url": null,
+   "name": "Jayden Cupitt",
    "position_name": "Mike Linebacker",
-   "jersey": "99",
+   "jersey": "40",
    "team": "Rice",
    "class_year": "Senior (RS)",
    "height": "6'1\"",
@@ -17874,14 +17874,14 @@
    }
   },
   {
-   "slug": "ty-thames",
+   "slug": "seth-clarke",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/ty-thames/",
-   "name": "Ty Thames",
+   "url": null,
+   "name": "Seth Clarke",
    "position_name": "Mike Linebacker",
-   "jersey": "47",
+   "jersey": "56",
    "team": "Rice",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -23866,14 +23866,14 @@
    }
   },
   {
-   "slug": "dane-colbert",
+   "slug": "tommy-bauchiero",
    "position": "K",
    "class": "FRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/dane-colbert/",
-   "name": "Dane Colbert",
+   "url": null,
+   "name": "Tommy Bauchiero",
    "position_name": "Kicker",
-   "jersey": "22",
+   "jersey": "49",
    "team": "Rice",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",

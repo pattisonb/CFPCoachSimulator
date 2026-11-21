@@ -241,7 +241,7 @@
   "HB": [
    "ja-kyrian-turner",
    "la-vell-wright",
-   "tyriek-ballard",
+   "ethan-shine",
    "synkwan-smith",
    "jaylin-brown",
    "damon-ferguson",
@@ -266,7 +266,7 @@
    "carson-kent",
    "max-hunt",
    "elijah-lagg",
-   "jaylen-burris",
+   "adam-howanitz",
    "justin-schmidt",
    "wyatt-villarreal"
   ],
@@ -281,8 +281,8 @@
   ],
   "C": [
    "ryan-carretta",
-   "jaiden-randall",
-   "toby-kerry"
+   "josh-nindl",
+   "sean-franklin"
   ],
   "RG": [
    "bj-williams",
@@ -313,7 +313,7 @@
   ],
   "SAM": [
    "cameron-lindsey",
-   "gerquan-sanders"
+   "marcus-jennings"
   ],
   "MIKE": [
    "braylan-lovelace",
@@ -342,7 +342,7 @@
   ],
   "FS": [
    "cruce-brookins",
-   "gage-drummond",
+   "valdez-stuvaints",
    "cole-woodson"
   ],
   "SS": [
@@ -2325,14 +2325,14 @@
    }
   },
   {
-   "slug": "tyriek-ballard",
+   "slug": "ethan-shine",
    "position": "HB",
    "class": "JR",
    "team_slug": "pittsburgh",
-   "url": "https://collegefootball.gg/players/tyriek-ballard/",
-   "name": "Tyriek Ballard",
+   "url": null,
+   "name": "Ethan Shine",
    "position_name": "Halfback",
-   "jersey": "7",
+   "jersey": "34",
    "team": "Pittsburgh",
    "class_year": "Junior",
    "height": "5'7\"",
@@ -8001,14 +8001,14 @@
    }
   },
   {
-   "slug": "jaylen-burris",
+   "slug": "adam-howanitz",
    "position": "TE",
    "class": "SR",
    "team_slug": "pittsburgh",
-   "url": "https://collegefootball.gg/players/jaylen-burris/",
-   "name": "Jaylen Burris",
+   "url": null,
+   "name": "Adam Howanitz",
    "position_name": "Tight End",
-   "jersey": "30",
+   "jersey": "44",
    "team": "Pittsburgh",
    "class_year": "Senior",
    "height": "6'5\"",
@@ -10504,12 +10504,12 @@
    }
   },
   {
-   "slug": "jaiden-randall",
+   "slug": "josh-nindl",
    "position": "C",
    "class": "JR",
    "team_slug": "pittsburgh",
-   "url": "https://collegefootball.gg/players/jaiden-randall/",
-   "name": "Jaiden Randall",
+   "url": null,
+   "name": "Josh Nindl",
    "position_name": "Center",
    "jersey": "64",
    "team": "Pittsburgh",
@@ -10767,14 +10767,14 @@
    }
   },
   {
-   "slug": "toby-kerry",
+   "slug": "sean-franklin",
    "position": "C",
    "class": "FR",
    "team_slug": "pittsburgh",
-   "url": "https://collegefootball.gg/players/toby-kerry/",
-   "name": "Toby Kerry",
+   "url": null,
+   "name": "Sean Franklin",
    "position_name": "Center",
-   "jersey": "57",
+   "jersey": "61",
    "team": "Pittsburgh",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -15867,14 +15867,14 @@
    }
   },
   {
-   "slug": "gerquan-sanders",
+   "slug": "marcus-jennings",
    "position": "SAM",
    "class": "FR",
    "team_slug": "pittsburgh",
-   "url": "https://collegefootball.gg/players/gerquan-sanders/",
-   "name": "Gerquan Sanders",
+   "url": null,
+   "name": "Marcus Jennings",
    "position_name": "Sam Linebacker",
-   "jersey": "96",
+   "jersey": "34",
    "team": "Pittsburgh",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -21825,14 +21825,14 @@
    }
   },
   {
-   "slug": "gage-drummond",
+   "slug": "valdez-stuvaints",
    "position": "FS",
    "class": "SO",
    "team_slug": "pittsburgh",
-   "url": "https://collegefootball.gg/players/gage-drummond/",
-   "name": "Gage Drummond",
+   "url": null,
+   "name": "Valdez Stuvaints",
    "position_name": "Free Safety",
-   "jersey": "42",
+   "jersey": "43",
    "team": "Pittsburgh",
    "class_year": "Sophomore",
    "height": "6'0\"",

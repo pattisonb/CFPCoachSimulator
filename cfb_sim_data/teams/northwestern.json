@@ -260,7 +260,7 @@
   "TE": [
    "blake-van-buren",
    "alex-honig",
-   "james-black",
+   "tyler-kielmeyer",
    "tom-mcglinchey",
    "jack-florentine",
    "evan-boutorwick"
@@ -272,13 +272,13 @@
   ],
   "LG": [
    "ezomo-oratokhai",
-   "simon-silva",
+   "hayden-flavin",
    "dennis-rahouski"
   ],
   "C": [
    "jackson-carsello",
    "trey-boyd",
-   "colt-gallery"
+   "jace-borcherding"
   ],
   "RG": [
    "idrys-cotton",
@@ -314,7 +314,7 @@
   ],
   "SAM": [
    "jason-reynolds-ii",
-   "keith-saunders-mason",
+   "lincoln-creager",
    "matthew-smith"
   ],
   "MIKE": [
@@ -326,7 +326,7 @@
   "WILL": [
    "braydon-brus",
    "nigel-glover",
-   "brian-grant-kingston",
+   "parker-maiers",
    "payton-roth"
   ],
   "CB": [
@@ -334,7 +334,7 @@
    "braden-turner",
    "brenden-deasfernandes",
    "ore-adeyi",
-   "bradley-brackett",
+   "jalen-lewis",
    "marquet-dorsey-jr",
    "montae-pate"
   ],
@@ -346,7 +346,7 @@
   "SS": [
    "damon-walters",
    "alijah-jones",
-   "lloyd-singleton",
+   "timi-oke",
    "sean-martin"
   ],
   "K": [
@@ -6494,14 +6494,14 @@
    }
   },
   {
-   "slug": "james-black",
+   "slug": "tyler-kielmeyer",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/james-black/",
-   "name": "James Black",
+   "url": null,
+   "name": "Tyler Kielmeyer",
    "position_name": "Tight End",
-   "jersey": "1",
+   "jersey": "48",
    "team": "Northwestern",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
@@ -8707,14 +8707,14 @@
    }
   },
   {
-   "slug": "simon-silva",
+   "slug": "hayden-flavin",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/simon-silva/",
-   "name": "Simon Silva",
+   "url": null,
+   "name": "Hayden Flavin",
    "position_name": "Left Guard",
-   "jersey": "63",
+   "jersey": "60",
    "team": "Northwestern",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -9814,12 +9814,12 @@
    }
   },
   {
-   "slug": "colt-gallery",
+   "slug": "jace-borcherding",
    "position": "C",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/colt-gallery/",
-   "name": "Colt Gallery",
+   "url": null,
+   "name": "Jace Borcherding",
    "position_name": "Center",
    "jersey": "67",
    "team": "Northwestern",
@@ -16454,14 +16454,14 @@
    }
   },
   {
-   "slug": "keith-saunders-mason",
+   "slug": "lincoln-creager",
    "position": "SAM",
    "class": "FR",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/keith-saunders-mason/",
-   "name": "Keith Saunders-Mason",
+   "url": null,
+   "name": "Lincoln Creager",
    "position_name": "Sam Linebacker",
-   "jersey": "58",
+   "jersey": "46",
    "team": "Northwestern",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -18622,14 +18622,14 @@
    }
   },
   {
-   "slug": "brian-grant-kingston",
+   "slug": "parker-maiers",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/brian-grant-kingston/",
-   "name": "Brian Grant-Kingston",
+   "url": null,
+   "name": "Parker Maiers",
    "position_name": "Will Linebacker",
-   "jersey": "28",
+   "jersey": "39",
    "team": "Northwestern",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -20240,14 +20240,14 @@
    }
   },
   {
-   "slug": "bradley-brackett",
+   "slug": "jalen-lewis",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/bradley-brackett/",
-   "name": "Bradley Brackett",
+   "url": null,
+   "name": "Jalen Lewis",
    "position_name": "Cornerback",
-   "jersey": "46",
+   "jersey": "26",
    "team": "Northwestern",
    "class_year": "Junior (RS)",
    "height": "5'11\"",
@@ -22456,14 +22456,14 @@
    }
   },
   {
-   "slug": "lloyd-singleton",
+   "slug": "timi-oke",
    "position": "SS",
    "class": "SO",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/lloyd-singleton/",
-   "name": "Lloyd Singleton",
+   "url": null,
+   "name": "Timi Oke",
    "position_name": "Strong Safety",
-   "jersey": "48",
+   "jersey": "28",
    "team": "Northwestern",
    "class_year": "Sophomore",
    "height": "5'10\"",

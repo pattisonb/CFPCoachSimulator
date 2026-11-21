@@ -195,7 +195,7 @@
    ],
    "DT": [
     "luther-mccoy",
-    "tui-jackson-mageo"
+    "iosefa-letuli"
    ],
    "LB": [
     "jamih-otis",
@@ -218,7 +218,7 @@
     "hudson-borsari"
    ],
    "P": [
-    "logan-ostrowski"
+    "gehrig-heil"
    ],
    "KR": [
     "cam-barfield"
@@ -232,13 +232,13 @@
   "QB": [
    "micah-alejado",
    "bjorn-jurgensen",
-   "maika-eugenio"
+   "isaac-jaramilla-phe"
   ],
   "HB": [
    "cam-barfield",
    "devon-rice",
    "titan-lacaden",
-   "pellam-liu",
+   "tj-fo-ilefutu",
    "sitani-mikaele"
   ],
   "FB": [],
@@ -272,8 +272,8 @@
    "lipe-moala",
    "eric-mcfall",
    "fapiano-hehea",
-   "marco-togia-johnson",
-   "joshua-tavui"
+   "kawika-hallums",
+   "josh-tavui"
   ],
   "C": [
    "ethan-spencer",
@@ -288,18 +288,18 @@
   "RT": [
    "khalil-walker",
    "lautaimi-manuma",
-   "artie-jarrett"
+   "jordan-kernaghan"
   ],
   "LEDG": [
    "ka-eo-akana",
    "adam-tomczyk",
    "spencer-elliott",
-   "jamel-savea",
-   "glen-tasi"
+   "josh-sagapolutele",
+   "geoffrey-speight-jr"
   ],
   "DT": [
    "luther-mccoy",
-   "tui-jackson-mageo",
+   "iosefa-letuli",
    "ozzy-pollard",
    "zoram-petelo",
    "jordan-lynch"
@@ -312,19 +312,19 @@
   "SAM": [
    "aisiah-paogofie",
    "uluaki-taukiuvea",
-   "akeem-henson",
+   "ben-hudson",
    "matteus-ioane"
   ],
   "MIKE": [
    "wynden-ho-ohuli",
    "zaden-mariteragi",
    "tasi-tadio",
-   "tyrique-tate",
+   "kolo-kaululaau",
    "nazaiah-caravallo"
   ],
   "WILL": [
    "jamih-otis",
-   "richard-castro",
+   "kingston-costales",
    "junior-fiaui",
    "alika-cavaco-amoy"
   ],
@@ -333,7 +333,7 @@
    "caleb-brown",
    "jeremiah-hughes",
    "jaylon-edmond",
-   "lawrence-leiato",
+   "brayton-correa",
    "makana-meyer",
    "avin-houston"
   ],
@@ -353,7 +353,7 @@
    "sean-olvera-harle"
   ],
   "P": [
-   "logan-ostrowski"
+   "gehrig-heil"
   ]
  },
  "roster_size": 85,
@@ -933,12 +933,12 @@
    }
   },
   {
-   "slug": "maika-eugenio",
+   "slug": "isaac-jaramilla-phe",
    "position": "QB",
    "class": "FR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/maika-eugenio/",
-   "name": "Maika Eugenio",
+   "url": null,
+   "name": "Isaac Jaramilla-Phe",
    "position_name": "Quarterback",
    "jersey": "14",
    "team": "Hawai'i",
@@ -2044,14 +2044,14 @@
    }
   },
   {
-   "slug": "pellam-liu",
+   "slug": "tj-fo-ilefutu",
    "position": "HB",
    "class": "FR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/pellam-liu/",
-   "name": "Pellam Liu",
+   "url": null,
+   "name": "TJ Fo'ilefutu",
    "position_name": "Halfback",
-   "jersey": "47",
+   "jersey": "28",
    "team": "Hawai'i",
    "class_year": "Freshman",
    "height": "5'8\"",
@@ -9154,14 +9154,14 @@
    }
   },
   {
-   "slug": "marco-togia-johnson",
+   "slug": "kawika-hallums",
    "position": "LG",
    "class": "FR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/marco-togia-johnson/",
-   "name": "Marco Togia-Johnson",
+   "url": null,
+   "name": "Kawika Hallums",
    "position_name": "Left Guard",
-   "jersey": "69",
+   "jersey": "53",
    "team": "Hawai'i",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -9436,12 +9436,12 @@
    }
   },
   {
-   "slug": "joshua-tavui",
+   "slug": "josh-tavui",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/joshua-tavui/",
-   "name": "Joshua Tavui",
+   "url": null,
+   "name": "Josh Tavui",
    "position_name": "Left Guard",
    "jersey": "72",
    "team": "Hawai'i",
@@ -11894,14 +11894,14 @@
    }
   },
   {
-   "slug": "artie-jarrett",
+   "slug": "jordan-kernaghan",
    "position": "RT",
    "class": "FR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/artie-jarrett/",
-   "name": "Artie Jarrett",
+   "url": null,
+   "name": "Jordan Kernaghan",
    "position_name": "Right Tackle",
-   "jersey": "70",
+   "jersey": "54",
    "team": "Hawai'i",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -12947,14 +12947,14 @@
    }
   },
   {
-   "slug": "glen-tasi",
+   "slug": "geoffrey-speight-jr",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/glen-tasi/",
-   "name": "Glen Tasi",
+   "url": null,
+   "name": "Geoffrey Speight Jr.",
    "position_name": "Left Edge",
-   "jersey": "32",
+   "jersey": "95",
    "team": "Hawai'i",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
@@ -13189,14 +13189,14 @@
    }
   },
   {
-   "slug": "jamel-savea",
+   "slug": "josh-sagapolutele",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/jamel-savea/",
-   "name": "Jamel Savea",
+   "url": null,
+   "name": "Josh Sagapolutele",
    "position_name": "Left Edge",
-   "jersey": "46",
+   "jersey": "91",
    "team": "Hawai'i",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -13748,14 +13748,14 @@
    }
   },
   {
-   "slug": "tui-jackson-mageo",
+   "slug": "iosefa-letuli",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/tui-jackson-mageo/",
-   "name": "Tui Jackson-Mageo",
+   "url": null,
+   "name": "Iosefa Letuli",
    "position_name": "Defensive Tackle",
-   "jersey": "94",
+   "jersey": "96",
    "team": "Hawai'i",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -16243,14 +16243,14 @@
    }
   },
   {
-   "slug": "akeem-henson",
+   "slug": "ben-hudson",
    "position": "SAM",
    "class": "FR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/akeem-henson/",
-   "name": "Akeem Henson",
+   "url": null,
+   "name": "Ben Hudson",
    "position_name": "Sam Linebacker",
-   "jersey": "41",
+   "jersey": "17",
    "team": "Hawai'i",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -17581,14 +17581,14 @@
    }
   },
   {
-   "slug": "tyrique-tate",
+   "slug": "kolo-kaululaau",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/tyrique-tate/",
-   "name": "Tyrique Tate",
+   "url": null,
+   "name": "Kolo Kaululaau",
    "position_name": "Mike Linebacker",
-   "jersey": "36",
+   "jersey": "48",
    "team": "Hawai'i",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -18397,14 +18397,14 @@
    }
   },
   {
-   "slug": "richard-castro",
+   "slug": "kingston-costales",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/richard-castro/",
-   "name": "Richard Castro",
+   "url": null,
+   "name": "Kingston Costales",
    "position_name": "Will Linebacker",
-   "jersey": "23",
+   "jersey": "47",
    "team": "Hawai'i",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
@@ -20330,14 +20330,14 @@
    }
   },
   {
-   "slug": "lawrence-leiato",
+   "slug": "brayton-correa",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/lawrence-leiato/",
-   "name": "Lawrence Leiato",
+   "url": null,
+   "name": "Brayton Correa",
    "position_name": "Cornerback",
-   "jersey": "28",
+   "jersey": "34",
    "team": "Hawai'i",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -23669,14 +23669,14 @@
    }
   },
   {
-   "slug": "logan-ostrowski",
+   "slug": "gehrig-heil",
    "position": "P",
    "class": "JR",
    "team_slug": "hawai-i",
-   "url": "https://collegefootball.gg/players/logan-ostrowski/",
-   "name": "Logan Ostrowski",
+   "url": null,
+   "name": "Gehrig Heil",
    "position_name": "Punter",
-   "jersey": "92",
+   "jersey": "47",
    "team": "Hawai'i",
    "class_year": "Junior",
    "height": "6'3\"",

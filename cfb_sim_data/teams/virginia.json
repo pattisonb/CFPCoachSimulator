@@ -268,7 +268,7 @@
   "LT": [
    "mckale-boley",
    "ben-york",
-   "matthew-peck"
+   "luke-hatfield"
   ],
   "LG": [
    "noah-josey",
@@ -312,7 +312,7 @@
    "evan-ward"
   ],
   "SAM": [
-   "jameel-mcallister"
+   "cayden-cook-cash"
   ],
   "MIKE": [
    "kam-robinson",
@@ -350,7 +350,7 @@
   ],
   "K": [
    "will-bettridge",
-   "joshua-rudolph"
+   "tim-hamann"
   ],
   "P": [
    "daniel-sparks",
@@ -8217,14 +8217,14 @@
    }
   },
   {
-   "slug": "matthew-peck",
+   "slug": "luke-hatfield",
    "position": "LT",
    "class": "FR",
    "team_slug": "virginia",
-   "url": "https://collegefootball.gg/players/matthew-peck/",
-   "name": "Matthew Peck",
+   "url": null,
+   "name": "Luke Hatfield",
    "position_name": "Left Tackle",
-   "jersey": "70",
+   "jersey": "57",
    "team": "Virginia",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -15945,14 +15945,14 @@
    }
   },
   {
-   "slug": "jameel-mcallister",
+   "slug": "cayden-cook-cash",
    "position": "SAM",
    "class": "SO",
    "team_slug": "virginia",
-   "url": "https://collegefootball.gg/players/jameel-mcallister/",
-   "name": "Jameel McAllister",
+   "url": null,
+   "name": "Cayden Cook-Cash",
    "position_name": "Sam Linebacker",
-   "jersey": "48",
+   "jersey": "49",
    "team": "Virginia",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -23084,14 +23084,14 @@
    }
   },
   {
-   "slug": "joshua-rudolph",
+   "slug": "tim-hamann",
    "position": "K",
    "class": "SORS",
    "team_slug": "virginia",
-   "url": "https://collegefootball.gg/players/joshua-rudolph/",
-   "name": "Joshua Rudolph",
+   "url": null,
+   "name": "Tim Hamann",
    "position_name": "Kicker",
-   "jersey": "34",
+   "jersey": "14",
    "team": "Virginia",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",

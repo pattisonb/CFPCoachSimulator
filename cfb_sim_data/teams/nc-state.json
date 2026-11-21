@@ -265,7 +265,7 @@
   ],
   "LT": [
    "jimarion-mccrimon",
-   "jai-lun-hampton",
+   "brady-sakowitz",
    "trent-mitchell"
   ],
   "LG": [
@@ -345,17 +345,17 @@
   "SS": [
    "tristan-teasdell",
    "ronnie-royal-iii",
-   "chad-bolling",
+   "tristen-hill",
    "koby-sarkodie"
   ],
   "K": [
    "kanoah-vinesett",
-   "donald-hilbers",
+   "drew-lovelace",
    "nick-konieczynski"
   ],
   "P": [
    "jackson-waller",
-   "billy-hallsdale"
+   "cristian-harthan"
   ]
  },
  "roster_size": 85,
@@ -6963,14 +6963,14 @@
    }
   },
   {
-   "slug": "jai-lun-hampton",
+   "slug": "brady-sakowitz",
    "position": "LT",
    "class": "SRRS",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/jai-lun-hampton/",
-   "name": "Jai'Lun Hampton",
+   "url": null,
+   "name": "Brady Sakowitz",
    "position_name": "Left Tackle",
-   "jersey": "74",
+   "jersey": "73",
    "team": "NC State",
    "class_year": "Senior (RS)",
    "height": "6'8\"",
@@ -21994,14 +21994,14 @@
    }
   },
   {
-   "slug": "chad-bolling",
+   "slug": "tristen-hill",
    "position": "SS",
    "class": "FR",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/chad-bolling/",
-   "name": "Chad Bolling",
+   "url": null,
+   "name": "Tristen Hill",
    "position_name": "Strong Safety",
-   "jersey": "23",
+   "jersey": "36",
    "team": "NC State",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -22825,14 +22825,14 @@
    }
   },
   {
-   "slug": "donald-hilbers",
+   "slug": "drew-lovelace",
    "position": "K",
    "class": "JR",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/donald-hilbers/",
-   "name": "Donald Hilbers",
+   "url": null,
+   "name": "Drew Lovelace",
    "position_name": "Kicker",
-   "jersey": "38",
+   "jersey": "98",
    "team": "NC State",
    "class_year": "Junior",
    "height": "5'9\"",
@@ -23570,14 +23570,14 @@
    }
   },
   {
-   "slug": "billy-hallsdale",
+   "slug": "cristian-harthan",
    "position": "P",
    "class": "SR",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/billy-hallsdale/",
-   "name": "Billy Hallsdale",
+   "url": null,
+   "name": "Cristian Harthan",
    "position_name": "Punter",
-   "jersey": "64",
+   "jersey": "97",
    "team": "NC State",
    "class_year": "Senior",
    "height": "6'4\"",

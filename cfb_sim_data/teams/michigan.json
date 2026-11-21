@@ -222,10 +222,10 @@
     "trey-butkowski"
    ],
    "P": [
-    "brett-sykes"
+    "hunter-robertson"
    ],
    "KR": [
-    "taylor-tatum"
+    "nico-andrighetto"
    ],
    "PR": [
     "i-marion-stewart"
@@ -238,7 +238,7 @@
    "brayden-fowler-nicolosi",
    "tommy-carr",
    "brady-smigiel",
-   "colin-hurley"
+   "chase-herbstreit"
   ],
   "HB": [
    "jordan-marshall",
@@ -256,7 +256,7 @@
    "jj-buchanan",
    "travis-johnson",
    "salesi-moa",
-   "lucky-chambers",
+   "channing-goodwin",
    "kendrick-bell",
    "jamar-browder",
    "jacob-washington",
@@ -273,7 +273,7 @@
   "LT": [
    "andrew-babalola",
    "blake-frazier",
-   "lamar-terry"
+   "peter-donini"
   ],
   "LG": [
    "evan-link",
@@ -316,7 +316,7 @@
    "benny-patterson-iii"
   ],
   "SAM": [
-   "demarion-maxie"
+   "adam-bazzi"
   ],
   "MIKE": [
    "troy-bowles",
@@ -346,18 +346,18 @@
   ],
   "SS": [
    "chris-bracy",
-   "taylor-tatum",
+   "nico-andrighetto",
    "jordan-deck",
    "kainoa-winston",
    "mason-curtis"
   ],
   "K": [
    "trey-butkowski",
-   "jake-saturday",
+   "stuart-blake",
    "jacob-baggett"
   ],
   "P": [
-   "brett-sykes",
+   "hunter-robertson",
    "cameron-brown"
   ]
  },
@@ -1463,14 +1463,14 @@
    }
   },
   {
-   "slug": "colin-hurley",
+   "slug": "chase-herbstreit",
    "position": "QB",
    "class": "FRRS",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/colin-hurley/",
-   "name": "Colin Hurley",
+   "url": null,
+   "name": "Chase Herbstreit",
    "position_name": "Quarterback",
-   "jersey": "18",
+   "jersey": "15",
    "team": "Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -4754,14 +4754,14 @@
    }
   },
   {
-   "slug": "lucky-chambers",
+   "slug": "channing-goodwin",
    "position": "WR",
    "class": "JR",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/lucky-chambers/",
-   "name": "Lucky Chambers",
+   "url": null,
+   "name": "Channing Goodwin",
    "position_name": "Wide Receiver",
-   "jersey": "43",
+   "jersey": "9",
    "team": "Michigan",
    "class_year": "Junior",
    "height": "5'7\"",
@@ -8563,14 +8563,14 @@
    }
   },
   {
-   "slug": "lamar-terry",
+   "slug": "peter-donini",
    "position": "LT",
    "class": "SO",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/lamar-terry/",
-   "name": "Lamar Terry",
+   "url": null,
+   "name": "Peter Donini",
    "position_name": "Left Tackle",
-   "jersey": "73",
+   "jersey": "72",
    "team": "Michigan",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -15863,14 +15863,14 @@
    }
   },
   {
-   "slug": "demarion-maxie",
+   "slug": "adam-bazzi",
    "position": "SAM",
    "class": "JR",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/demarion-maxie/",
-   "name": "Demarion Maxie",
+   "url": null,
+   "name": "Adam Bazzi",
    "position_name": "Sam Linebacker",
-   "jersey": "31",
+   "jersey": "49",
    "team": "Michigan",
    "class_year": "Junior",
    "height": "6'0\"",
@@ -21445,14 +21445,14 @@
    }
   },
   {
-   "slug": "taylor-tatum",
+   "slug": "nico-andrighetto",
    "position": "SS",
    "class": "JR",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/taylor-tatum/",
-   "name": "Taylor Tatum",
+   "url": null,
+   "name": "Nico Andrighetto",
    "position_name": "Strong Safety",
-   "jersey": "26",
+   "jersey": "31",
    "team": "Michigan",
    "class_year": "Junior",
    "height": "5'10\"",
@@ -22616,14 +22616,14 @@
    }
   },
   {
-   "slug": "jake-saturday",
+   "slug": "stuart-blake",
    "position": "K",
    "class": "FRRS",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/jake-saturday/",
-   "name": "Jake Saturday",
+   "url": null,
+   "name": "Stuart Blake",
    "position_name": "Kicker",
-   "jersey": "92",
+   "jersey": "35",
    "team": "Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
@@ -23384,14 +23384,14 @@
    }
   },
   {
-   "slug": "brett-sykes",
+   "slug": "hunter-robertson",
    "position": "P",
    "class": "SORS",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/brett-sykes/",
-   "name": "Brett Sykes",
+   "url": null,
+   "name": "Hunter Robertson",
    "position_name": "Punter",
-   "jersey": "21",
+   "jersey": "93",
    "team": "Michigan",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",

@@ -239,7 +239,7 @@
    "kirby-vorhees",
    "leo-pulalasi",
    "maxwell-woods",
-   "tay-hobbs",
+   "cj-toney",
    "marquez-wimberly",
    "erimus-wright",
    "tremayne-hill"
@@ -273,8 +273,8 @@
   "LG": [
    "jonny-lester",
    "sone-falealo",
-   "drew-braswell",
-   "isaiah-lyons"
+   "grayson-campbell",
+   "aj-olerich"
   ],
   "C": [
    "kyle-martin",
@@ -315,7 +315,7 @@
   ],
   "SAM": [
    "gage-jones",
-   "russell-hardesty"
+   "gavin-fugate"
   ],
   "MIKE": [
    "nylan-brown",
@@ -325,7 +325,7 @@
   "WILL": [
    "keith-brown",
    "carsten-reynolds",
-   "jojo-ivey",
+   "ben-beatty",
    "isaiah-hung"
   ],
   "CB": [
@@ -2032,14 +2032,14 @@
    }
   },
   {
-   "slug": "tay-hobbs",
+   "slug": "cj-toney",
    "position": "HB",
    "class": "FR",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/tay-hobbs/",
-   "name": "Tay Hobbs",
+   "url": null,
+   "name": "CJ Toney",
    "position_name": "Halfback",
-   "jersey": "40",
+   "jersey": "21",
    "team": "Washington St.",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -9100,14 +9100,14 @@
    }
   },
   {
-   "slug": "drew-braswell",
+   "slug": "grayson-campbell",
    "position": "LG",
    "class": "SO",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/drew-braswell/",
-   "name": "Drew Braswell",
+   "url": null,
+   "name": "Grayson Campbell",
    "position_name": "Left Guard",
-   "jersey": "65",
+   "jersey": "76",
    "team": "Washington St.",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -9350,14 +9350,14 @@
    }
   },
   {
-   "slug": "isaiah-lyons",
+   "slug": "aj-olerich",
    "position": "LG",
    "class": "FR",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/isaiah-lyons/",
-   "name": "Isaiah Lyons",
+   "url": null,
+   "name": "AJ Olerich",
    "position_name": "Left Guard",
-   "jersey": "61",
+   "jersey": "73",
    "team": "Washington St.",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -16777,14 +16777,14 @@
    }
   },
   {
-   "slug": "russell-hardesty",
+   "slug": "gavin-fugate",
    "position": "SAM",
    "class": "SO",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/russell-hardesty/",
-   "name": "Russell Hardesty",
+   "url": null,
+   "name": "Gavin Fugate",
    "position_name": "Sam Linebacker",
-   "jersey": "57",
+   "jersey": "59",
    "team": "Washington St.",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -18396,14 +18396,14 @@
    }
   },
   {
-   "slug": "jojo-ivey",
+   "slug": "ben-beatty",
    "position": "WILL",
    "class": "FR",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/jojo-ivey/",
-   "name": "Jojo Ivey",
+   "url": null,
+   "name": "Ben Beatty",
    "position_name": "Will Linebacker",
-   "jersey": "47",
+   "jersey": "51",
    "team": "Washington St.",
    "class_year": "Freshman",
    "height": "6'1\"",

@@ -234,17 +234,17 @@
    "cale-hellums",
    "bryson-luter",
    "ethan-washington",
-   "brennan-dalton"
+   "santiago-fernandez"
   ],
   "HB": [
    "godspower-nwawuihe",
    "aden-self",
    "samari-howard",
    "zach-mundell",
-   "hugo-smallwood",
+   "gavin-madigan",
    "tim-kloska",
    "brady-mott",
-   "jay-stanton"
+   "brennan-fisher"
   ],
   "FB": [
    "jake-rendina",
@@ -254,7 +254,7 @@
    "brady-anderson",
    "tobi-olawole",
    "david-clerk",
-   "steven-suggs",
+   "stratton-fuller",
    "lloyd-benson-iii",
    "kavon-pointer",
    "kurt-thompson"
@@ -264,27 +264,27 @@
    "tex-brannan",
    "brian-dyer",
    "noah-prior",
-   "zaire-holt-spencer",
-   "myles-wright"
+   "jackson-blanchard",
+   "ronan-boyle"
   ],
   "LT": [
    "henry-appleton",
-   "wade-joiner"
+   "xzavier-grabher"
   ],
   "LG": [
    "kyle-kloska",
    "lane-parks",
-   "phil-timmerman",
-   "duane-walker"
+   "braeden-helmkamp",
+   "kyle-baltazar"
   ],
   "C": [
    "brady-small",
-   "matt-board"
+   "ben-britton"
   ],
   "RG": [
    "brandon-wraalstad",
    "sam-waters",
-   "dremont-smith"
+   "carter-glab"
   ],
   "RT": [
    "teddy-williams",
@@ -294,7 +294,7 @@
    "noah-nixon",
    "christian-yousefzadeh",
    "grayson-baker",
-   "jaycee-randolph"
+   "jacob-cotterill"
   ],
   "DT": [
    "kody-harris-miller",
@@ -316,17 +316,17 @@
   "MIKE": [
    "bryson-banks",
    "jaquavious-moss",
-   "reggie-ogden",
-   "joseph-benson",
-   "matt-crocker",
-   "anthony-hudgins",
-   "aaron-martin"
+   "elijah-easley",
+   "jared-anthony",
+   "samuel-hayward",
+   "phillip-goodrich",
+   "brendan-foley"
   ],
   "WILL": [
    "caden-brungard",
    "elijah-walton",
-   "charles-milloy",
-   "chase-good"
+   "jacob-hinton",
+   "jacob-mainord"
   ],
   "CB": [
    "jaydan-mayes",
@@ -336,26 +336,26 @@
    "julian-porter",
    "robert-houston",
    "zane-tallman",
-   "alphonso-north",
-   "eli-walker"
+   "taps-hananda",
+   "louis-blakely"
   ],
   "FS": [
    "stephen-nnadozie",
    "larry-pickett-jr",
-   "erick-rose",
-   "ryan-grooms"
+   "owen-madden",
+   "brian-barton"
   ],
   "SS": [
    "caleb-williams",
    "christopher-williams",
-   "brendan-owens"
+   "gerritt-gray"
   ],
   "K": [
    "dawson-jones"
   ],
   "P": [
    "james-wagenseller",
-   "gordon-ellington"
+   "andrew-astone"
   ]
  },
  "roster_size": 85,
@@ -1180,14 +1180,14 @@
    }
   },
   {
-   "slug": "brennan-dalton",
+   "slug": "santiago-fernandez",
    "position": "QB",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/brennan-dalton/",
-   "name": "Brennan Dalton",
+   "url": null,
+   "name": "Santiago Fernandez",
    "position_name": "Quarterback",
-   "jersey": "14",
+   "jersey": "9",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -2577,14 +2577,14 @@
    }
   },
   {
-   "slug": "hugo-smallwood",
+   "slug": "gavin-madigan",
    "position": "HB",
    "class": "SR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/hugo-smallwood/",
-   "name": "Hugo Smallwood",
+   "url": null,
+   "name": "Gavin Madigan",
    "position_name": "Halfback",
-   "jersey": "88",
+   "jersey": "37",
    "team": "Army",
    "class_year": "Senior",
    "height": "5'9\"",
@@ -3431,12 +3431,12 @@
    }
   },
   {
-   "slug": "jay-stanton",
+   "slug": "brennan-fisher",
    "position": "HB",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/jay-stanton/",
-   "name": "Jay Stanton",
+   "url": null,
+   "name": "Brennan Fisher",
    "position_name": "Halfback",
    "jersey": "30",
    "team": "Army",
@@ -5082,14 +5082,14 @@
    }
   },
   {
-   "slug": "steven-suggs",
+   "slug": "stratton-fuller",
    "position": "WR",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/steven-suggs/",
-   "name": "Steven Suggs",
+   "url": null,
+   "name": "Stratton Fuller",
    "position_name": "Wide Receiver",
-   "jersey": "46",
+   "jersey": "43",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -7437,14 +7437,14 @@
    }
   },
   {
-   "slug": "myles-wright",
+   "slug": "ronan-boyle",
    "position": "TE",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/myles-wright/",
-   "name": "Myles Wright",
+   "url": null,
+   "name": "Ronan Boyle",
    "position_name": "Tight End",
-   "jersey": "28",
+   "jersey": "88",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -7722,14 +7722,14 @@
    }
   },
   {
-   "slug": "zaire-holt-spencer",
+   "slug": "jackson-blanchard",
    "position": "TE",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/zaire-holt-spencer/",
-   "name": "Zaire Holt-Spencer",
+   "url": null,
+   "name": "Jackson Blanchard",
    "position_name": "Tight End",
-   "jersey": "8",
+   "jersey": "47",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -8260,14 +8260,14 @@
    }
   },
   {
-   "slug": "wade-joiner",
+   "slug": "xzavier-grabher",
    "position": "LT",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/wade-joiner/",
-   "name": "Wade Joiner",
+   "url": null,
+   "name": "Xzavier Grabher",
    "position_name": "Left Tackle",
-   "jersey": "68",
+   "jersey": "50",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -9033,14 +9033,14 @@
    }
   },
   {
-   "slug": "phil-timmerman",
+   "slug": "braeden-helmkamp",
    "position": "LG",
    "class": "JR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/phil-timmerman/",
-   "name": "Phil Timmerman",
+   "url": null,
+   "name": "Braeden Helmkamp",
    "position_name": "Left Guard",
-   "jersey": "62",
+   "jersey": "70",
    "team": "Army",
    "class_year": "Junior",
    "height": "6'3\"",
@@ -9294,12 +9294,12 @@
    }
   },
   {
-   "slug": "duane-walker",
+   "slug": "kyle-baltazar",
    "position": "LG",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/duane-walker/",
-   "name": "Duane Walker",
+   "url": null,
+   "name": "Kyle Baltazar",
    "position_name": "Left Guard",
    "jersey": "57",
    "team": "Army",
@@ -9813,12 +9813,12 @@
    }
   },
   {
-   "slug": "matt-board",
+   "slug": "ben-britton",
    "position": "C",
    "class": "SR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/matt-board/",
-   "name": "Matt Board",
+   "url": null,
+   "name": "Ben Britton",
    "position_name": "Center",
    "jersey": "63",
    "team": "Army",
@@ -10644,14 +10644,14 @@
    }
   },
   {
-   "slug": "dremont-smith",
+   "slug": "carter-glab",
    "position": "RG",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/dremont-smith/",
-   "name": "Dremont Smith",
+   "url": null,
+   "name": "Carter Glab",
    "position_name": "Right Guard",
-   "jersey": "79",
+   "jersey": "55",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -12256,14 +12256,14 @@
    }
   },
   {
-   "slug": "jaycee-randolph",
+   "slug": "jacob-cotterill",
    "position": "LEDG",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/jaycee-randolph/",
-   "name": "Jaycee Randolph",
+   "url": null,
+   "name": "Jacob Cotterill",
    "position_name": "Left Edge",
-   "jersey": "76",
+   "jersey": "90",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -16106,14 +16106,14 @@
    }
   },
   {
-   "slug": "reggie-ogden",
+   "slug": "elijah-easley",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/reggie-ogden/",
-   "name": "Reggie Ogden",
+   "url": null,
+   "name": "Elijah Easley",
    "position_name": "Mike Linebacker",
-   "jersey": "21",
+   "jersey": "39",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -16361,14 +16361,14 @@
    }
   },
   {
-   "slug": "anthony-hudgins",
+   "slug": "phillip-goodrich",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/anthony-hudgins/",
-   "name": "Anthony Hudgins",
+   "url": null,
+   "name": "Phillip Goodrich",
    "position_name": "Mike Linebacker",
-   "jersey": "98",
+   "jersey": "5",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -16624,14 +16624,14 @@
    }
   },
   {
-   "slug": "joseph-benson",
+   "slug": "jared-anthony",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/joseph-benson/",
-   "name": "Joseph Benson",
+   "url": null,
+   "name": "Jared Anthony",
    "position_name": "Mike Linebacker",
-   "jersey": "41",
+   "jersey": "51",
    "team": "Army",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -16922,14 +16922,14 @@
    }
   },
   {
-   "slug": "matt-crocker",
+   "slug": "samuel-hayward",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/matt-crocker/",
-   "name": "Matt Crocker",
+   "url": null,
+   "name": "Samuel Hayward",
    "position_name": "Mike Linebacker",
-   "jersey": "29",
+   "jersey": "43",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -17182,14 +17182,14 @@
    }
   },
   {
-   "slug": "aaron-martin",
+   "slug": "brendan-foley",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/aaron-martin/",
-   "name": "Aaron Martin",
+   "url": null,
+   "name": "Brendan Foley",
    "position_name": "Mike Linebacker",
-   "jersey": "90",
+   "jersey": "57",
    "team": "Army",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -17998,14 +17998,14 @@
    }
   },
   {
-   "slug": "charles-milloy",
+   "slug": "jacob-hinton",
    "position": "WILL",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/charles-milloy/",
-   "name": "Charles Milloy",
+   "url": null,
+   "name": "Jacob Hinton",
    "position_name": "Will Linebacker",
-   "jersey": "38",
+   "jersey": "58",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -18275,14 +18275,14 @@
    }
   },
   {
-   "slug": "chase-good",
+   "slug": "jacob-mainord",
    "position": "WILL",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/chase-good/",
-   "name": "Chase Good",
+   "url": null,
+   "name": "Jacob Mainord",
    "position_name": "Will Linebacker",
-   "jersey": "50",
+   "jersey": "55",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -20495,12 +20495,12 @@
    }
   },
   {
-   "slug": "alphonso-north",
+   "slug": "taps-hananda",
    "position": "CB",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/alphonso-north/",
-   "name": "Alphonso North",
+   "url": null,
+   "name": "Taps Hananda",
    "position_name": "Cornerback",
    "jersey": "16",
    "team": "Army",
@@ -20759,14 +20759,14 @@
    }
   },
   {
-   "slug": "eli-walker",
+   "slug": "louis-blakely",
    "position": "CB",
    "class": "FR",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/eli-walker/",
-   "name": "Eli Walker",
+   "url": null,
+   "name": "Louis Blakely",
    "position_name": "Cornerback",
-   "jersey": "35",
+   "jersey": "32",
    "team": "Army",
    "class_year": "Freshman",
    "height": "5'8\"",
@@ -21593,12 +21593,12 @@
    }
   },
   {
-   "slug": "erick-rose",
+   "slug": "owen-madden",
    "position": "FS",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/erick-rose/",
-   "name": "Erick Rose",
+   "url": null,
+   "name": "Owen Madden",
    "position_name": "Free Safety",
    "jersey": "37",
    "team": "Army",
@@ -21887,14 +21887,14 @@
    }
   },
   {
-   "slug": "ryan-grooms",
+   "slug": "brian-barton",
    "position": "FS",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/ryan-grooms/",
-   "name": "Ryan Grooms",
+   "url": null,
+   "name": "Brian Barton",
    "position_name": "Free Safety",
-   "jersey": "43",
+   "jersey": "28",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "5'10\"",
@@ -22699,12 +22699,12 @@
    }
   },
   {
-   "slug": "brendan-owens",
+   "slug": "gerritt-gray",
    "position": "SS",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/brendan-owens/",
-   "name": "Brendan Owens",
+   "url": null,
+   "name": "Gerritt Gray",
    "position_name": "Strong Safety",
    "jersey": "39",
    "team": "Army",
@@ -23491,14 +23491,14 @@
    }
   },
   {
-   "slug": "gordon-ellington",
+   "slug": "andrew-astone",
    "position": "P",
    "class": "SO",
    "team_slug": "army",
-   "url": "https://collegefootball.gg/players/gordon-ellington/",
-   "name": "Gordon Ellington",
+   "url": null,
+   "name": "Andrew Astone",
    "position_name": "Punter",
-   "jersey": "0",
+   "jersey": "93",
    "team": "Army",
    "class_year": "Sophomore",
    "height": "6'0\"",

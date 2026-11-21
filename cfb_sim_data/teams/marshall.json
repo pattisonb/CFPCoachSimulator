@@ -190,7 +190,7 @@
   },
   "defense": {
    "LEDG": [
-    "melvin-rose"
+    "simeon-john"
    ],
    "REDG": [
     "braydin-ward"
@@ -241,7 +241,7 @@
    "jo-shon-barbie",
    "tj-lester",
    "josiah-mclaurin",
-   "forrest-meadows",
+   "brysen-davies",
    "anthony-quinn-jr",
    "judah-price"
   ],
@@ -292,7 +292,7 @@
    "william-sandfoss"
   ],
   "LEDG": [
-   "melvin-rose",
+   "simeon-john",
    "jacarius-clayton",
    "keydel-painter"
   ],
@@ -306,7 +306,7 @@
   "REDG": [
    "braydin-ward",
    "cole-funderburk",
-   "donte-beard"
+   "jaxson-cunningham"
   ],
   "SAM": [
    "javae-gilmore",
@@ -2583,14 +2583,14 @@
    }
   },
   {
-   "slug": "forrest-meadows",
+   "slug": "brysen-davies",
    "position": "HB",
    "class": "FR",
    "team_slug": "marshall",
-   "url": "https://collegefootball.gg/players/forrest-meadows/",
-   "name": "Forrest Meadows",
+   "url": null,
+   "name": "Brysen Davies",
    "position_name": "Halfback",
-   "jersey": "48",
+   "jersey": "31",
    "team": "Marshall",
    "class_year": "Freshman",
    "height": "5'9\"",
@@ -12024,14 +12024,14 @@
    }
   },
   {
-   "slug": "melvin-rose",
+   "slug": "simeon-john",
    "position": "LEDG",
    "class": "SRRS",
    "team_slug": "marshall",
-   "url": "https://collegefootball.gg/players/melvin-rose/",
-   "name": "Melvin Rose",
+   "url": null,
+   "name": "Simeon John",
    "position_name": "Left Edge",
-   "jersey": "65",
+   "jersey": "99",
    "team": "Marshall",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
@@ -14750,14 +14750,14 @@
    }
   },
   {
-   "slug": "donte-beard",
+   "slug": "jaxson-cunningham",
    "position": "REDG",
    "class": "JR",
    "team_slug": "marshall",
-   "url": "https://collegefootball.gg/players/donte-beard/",
-   "name": "Donte Beard",
+   "url": null,
+   "name": "Jaxson Cunningham",
    "position_name": "Right Edge",
-   "jersey": "94",
+   "jersey": "51",
    "team": "Marshall",
    "class_year": "Junior",
    "height": "6'3\"",

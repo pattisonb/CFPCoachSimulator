@@ -32,7 +32,7 @@ import { api } from "../../api.ts";
 import { useFinds } from "../../finds.ts";
 import { useNotices, type Notice } from "../../notices.ts";
 import { useTab } from "../../tab.ts";
-import { faces, type Face as FaceSpec } from "../../faces.ts";
+import { faces, presetCoachFace, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
 import { inkOn, teamAccent } from "../../colors.ts";
 import { currentParams, hrefFor, navigate, rememberDynasty, replaceParams } from "../../router.ts";
@@ -223,7 +223,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const coach = season?.coach ?? null;
   const createdId = coach && !coach.existing ? coach.id : null;
 
-  // your created coach's own face; the team's own coach gets one rolled from his name
+  // your created coach's own face; the team's own coach gets his preset face, else one rolled from his name
   useEffect(() => {
     if (!createdId) return;
     api<SavedCoach>(`/api/coaches/${createdId}`)
@@ -231,8 +231,10 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       .catch(() => setSavedFace(null));
   }, [createdId]);
   const face = useMemo(
-    () => savedFace ?? (coach ? faces.random(`coach-${coachName(coach)}`) : null),
-    [savedFace, coach],
+    () =>
+      savedFace ?? (coach ? (presetCoachFace(coachName(coach)) ?? faces.random(`coach-${coachName(coach)}`)) : null),
+    // the presets arrive with the teams
+    [savedFace, coach, teams],
   );
 
   const bySlug = useMemo(() => new Map(teams.map((t) => [t.slug, t])), [teams]);

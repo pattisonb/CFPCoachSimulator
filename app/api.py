@@ -560,7 +560,7 @@ def _team_card(t: dict) -> dict:
 def list_teams(p: Params) -> dict:
     # alphabetical (FBS first, then the FCS stand-ins): every team drop-down follows this order
     cards = sorted((_team_card(t) for t in _all_teams().values()), key=lambda c: (c["fictional"], c["name"].casefold()))
-    return {"teams": cards}
+    return {"teams": cards, "faces": season.all_preset_faces()}       # the players and coaches with a preset face
 
 
 @route("GET", "/api/teams/{slug}")

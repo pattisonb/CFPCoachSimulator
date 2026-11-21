@@ -221,7 +221,7 @@
     "eli-ozick"
    ],
    "P": [
-    "mav-richmond"
+    "boston-everitt"
    ],
    "KR": [
     "jackson-naeve"
@@ -242,7 +242,7 @@
    "lendon-phillips-jr",
    "brevin-doll",
    "nathan-mcneil",
-   "jamir-yates"
+   "o-lontae-dean"
   ],
   "FB": [],
   "WR": [
@@ -280,7 +280,7 @@
   ],
   "C": [
    "kade-pieper",
-   "jared-dalton"
+   "george-nahas"
   ],
   "RG": [
    "trent-wilson",
@@ -291,14 +291,14 @@
   "RT": [
    "jack-dotzler",
    "cannon-leonard",
-   "ethan-boyle"
+   "hudson-parliament"
   ],
   "LEDG": [
    "kenneth-merrieweather",
    "joseph-anderson",
    "chima-chineke",
-   "stu-lutz",
-   "malik-major"
+   "will-lockhart",
+   "drew-campbell"
   ],
   "DT": [
    "bryce-hawthorne",
@@ -329,7 +329,7 @@
    "jayden-montgomery",
    "landyn-van-kekerix",
    "derek-weisskopf",
-   "roddy-orr"
+   "brayton-alford"
   ],
   "CB": [
    "deshaun-lee",
@@ -355,7 +355,7 @@
    "caden-buhr"
   ],
   "P": [
-   "mav-richmond",
+   "boston-everitt",
    "tanner-philpott"
   ]
  },
@@ -2270,14 +2270,14 @@
    }
   },
   {
-   "slug": "jamir-yates",
+   "slug": "o-lontae-dean",
    "position": "HB",
    "class": "FR",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/jamir-yates/",
-   "name": "Jamir Yates",
+   "url": null,
+   "name": "O'Lontae Dean",
    "position_name": "Halfback",
-   "jersey": "29",
+   "jersey": "15",
    "team": "Iowa",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -9773,12 +9773,12 @@
    }
   },
   {
-   "slug": "jared-dalton",
+   "slug": "george-nahas",
    "position": "C",
    "class": "SO",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/jared-dalton/",
-   "name": "Jared Dalton",
+   "url": null,
+   "name": "George Nahas",
    "position_name": "Center",
    "jersey": "77",
    "team": "Iowa",
@@ -11597,12 +11597,12 @@
    }
   },
   {
-   "slug": "ethan-boyle",
+   "slug": "hudson-parliament",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/ethan-boyle/",
-   "name": "Ethan Boyle",
+   "url": null,
+   "name": "Hudson Parliament",
    "position_name": "Right Tackle",
    "jersey": "70",
    "team": "Iowa",
@@ -12684,14 +12684,14 @@
    }
   },
   {
-   "slug": "malik-major",
+   "slug": "drew-campbell",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/malik-major/",
-   "name": "Malik Major",
+   "url": null,
+   "name": "Drew Campbell",
    "position_name": "Left Edge",
-   "jersey": "93",
+   "jersey": "13",
    "team": "Iowa",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -12941,14 +12941,14 @@
    }
   },
   {
-   "slug": "stu-lutz",
+   "slug": "will-lockhart",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/stu-lutz/",
-   "name": "Stu Lutz",
+   "url": null,
+   "name": "Will Lockhart",
    "position_name": "Left Edge",
-   "jersey": "55",
+   "jersey": "50",
    "team": "Iowa",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -18744,12 +18744,12 @@
    }
   },
   {
-   "slug": "roddy-orr",
+   "slug": "brayton-alford",
    "position": "WILL",
    "class": "FR",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/roddy-orr/",
-   "name": "Roddy Orr",
+   "url": null,
+   "name": "Brayton Alford",
    "position_name": "Will Linebacker",
    "jersey": "37",
    "team": "Iowa",
@@ -23135,14 +23135,14 @@
    }
   },
   {
-   "slug": "mav-richmond",
+   "slug": "boston-everitt",
    "position": "P",
    "class": "SR",
    "team_slug": "iowa",
-   "url": "https://collegefootball.gg/players/mav-richmond/",
-   "name": "Mav Richmond",
+   "url": null,
+   "name": "Boston Everitt",
    "position_name": "Punter",
-   "jersey": "41",
+   "jersey": "49",
    "team": "Iowa",
    "class_year": "Senior",
    "height": "6'6\"",

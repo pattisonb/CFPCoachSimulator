@@ -233,13 +233,13 @@
  "depth_chart": {
   "QB": [
    "maalik-murphy",
-   "david-afalava",
+   "danny-leary",
    "braden-atkinson",
    "brady-jones"
   ],
   "HB": [
    "cornell-hatcher-jr",
-   "jaymar-mcmillan",
+   "skyler-jackson",
    "jake-reichle",
    "aj-newberry",
    "kourdey-glass",
@@ -269,11 +269,11 @@
   "LT": [
    "kwan-johnson",
    "ben-hartman",
-   "demarvin-brimm"
+   "tanu-a-aitui"
   ],
   "LG": [
    "carter-guillaume",
-   "chase-meadows"
+   "maddox-conway"
   ],
   "C": [
    "nathan-elu",
@@ -287,7 +287,7 @@
    "josiah-timoteo",
    "jack-wagner",
    "teko-shoats",
-   "donovan-maine"
+   "michael-langi"
   ],
   "LEDG": [
    "takari-hickle",
@@ -347,12 +347,12 @@
    "tyjai-hopper",
    "milan-clark",
    "sean-craig",
-   "christian-mckenna"
+   "jaheim-patterson"
   ],
   "K": [
    "caleb-ojeda",
    "jadyn-oh",
-   "phillip-kaye"
+   "cameron-smith"
   ],
   "P": [
    "aj-winsor"
@@ -933,14 +933,14 @@
    }
   },
   {
-   "slug": "david-afalava",
+   "slug": "danny-leary",
    "position": "QB",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/david-afalava/",
-   "name": "David Afalava",
+   "url": null,
+   "name": "Danny Leary",
    "position_name": "Quarterback",
-   "jersey": "11",
+   "jersey": "13",
    "team": "Oregon State",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -1816,14 +1816,14 @@
    }
   },
   {
-   "slug": "jaymar-mcmillan",
+   "slug": "skyler-jackson",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/jaymar-mcmillan/",
-   "name": "Jaymar McMillan",
+   "url": null,
+   "name": "Skyler Jackson",
    "position_name": "Halfback",
-   "jersey": "31",
+   "jersey": "33",
    "team": "Oregon State",
    "class_year": "Freshman (RS)",
    "height": "5'10\"",
@@ -8283,14 +8283,14 @@
    }
   },
   {
-   "slug": "demarvin-brimm",
+   "slug": "tanu-a-aitui",
    "position": "LT",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/demarvin-brimm/",
-   "name": "DeMarvin Brimm",
+   "url": null,
+   "name": "Tanu A'aitui",
    "position_name": "Left Tackle",
-   "jersey": "53",
+   "jersey": "52",
    "team": "Oregon State",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -8812,14 +8812,14 @@
    }
   },
   {
-   "slug": "chase-meadows",
+   "slug": "maddox-conway",
    "position": "LG",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/chase-meadows/",
-   "name": "Chase Meadows",
+   "url": null,
+   "name": "Maddox Conway",
    "position_name": "Left Guard",
-   "jersey": "77",
+   "jersey": "51",
    "team": "Oregon State",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -11066,12 +11066,12 @@
    }
   },
   {
-   "slug": "donovan-maine",
+   "slug": "michael-langi",
    "position": "RT",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/donovan-maine/",
-   "name": "Donovan Maine",
+   "url": null,
+   "name": "Michael Langi",
    "position_name": "Right Tackle",
    "jersey": "70",
    "team": "Oregon State",
@@ -22628,14 +22628,14 @@
    }
   },
   {
-   "slug": "christian-mckenna",
+   "slug": "jaheim-patterson",
    "position": "SS",
    "class": "SO",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/christian-mckenna/",
-   "name": "Christian McKenna",
+   "url": null,
+   "name": "Jaheim Patterson",
    "position_name": "Strong Safety",
-   "jersey": "46",
+   "jersey": "6",
    "team": "Oregon State",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -23418,14 +23418,14 @@
    }
   },
   {
-   "slug": "phillip-kaye",
+   "slug": "cameron-smith",
    "position": "K",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/phillip-kaye/",
-   "name": "Phillip Kaye",
+   "url": null,
+   "name": "Cameron Smith",
    "position_name": "Kicker",
-   "jersey": "93",
+   "jersey": "37",
    "team": "Oregon State",
    "class_year": "Freshman",
    "height": "6'1\"",

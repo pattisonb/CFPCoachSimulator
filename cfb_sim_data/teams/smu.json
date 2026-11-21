@@ -249,7 +249,7 @@
    "jalen-cooper",
    "jalen-hale",
    "daylon-singleton",
-   "darrell-galloway",
+   "siler-cooke",
    "carterrious-brown",
    "aljour-miles-ii",
    "link-rhodes",
@@ -271,7 +271,7 @@
   "LT": [
    "dramodd-odoms",
    "max-wright",
-   "gabe-hawkins"
+   "paxton-briggle"
   ],
   "LG": [
    "andrew-chamblee",
@@ -282,18 +282,18 @@
   "C": [
    "joshua-bates",
    "graham-uter",
-   "daniel-mcdowell"
+   "sam-utu"
   ],
   "RG": [
    "addison-nichols",
    "alex-woods",
    "abel-hoopii",
-   "antonio-mccullough"
+   "evan-goodwin"
   ],
   "RT": [
    "pj-williams",
-   "sheldon-goodrich",
-   "brendan-mullen"
+   "hunter-ryan",
+   "bennett-johnson-v"
   ],
   "LEDG": [
    "marques-white",
@@ -3650,14 +3650,14 @@
    }
   },
   {
-   "slug": "darrell-galloway",
+   "slug": "siler-cooke",
    "position": "WR",
    "class": "SRRS",
    "team_slug": "smu",
-   "url": "https://collegefootball.gg/players/darrell-galloway/",
-   "name": "Darrell Galloway",
+   "url": null,
+   "name": "Siler Cooke",
    "position_name": "Wide Receiver",
-   "jersey": "86",
+   "jersey": "27",
    "team": "SMU",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
@@ -8822,12 +8822,12 @@
    }
   },
   {
-   "slug": "gabe-hawkins",
+   "slug": "paxton-briggle",
    "position": "LT",
    "class": "SO",
    "team_slug": "smu",
-   "url": "https://collegefootball.gg/players/gabe-hawkins/",
-   "name": "Gabe Hawkins",
+   "url": null,
+   "name": "Paxton Briggle",
    "position_name": "Left Tackle",
    "jersey": "70",
    "team": "SMU",
@@ -10718,14 +10718,14 @@
    }
   },
   {
-   "slug": "daniel-mcdowell",
+   "slug": "sam-utu",
    "position": "C",
    "class": "FR",
    "team_slug": "smu",
-   "url": "https://collegefootball.gg/players/daniel-mcdowell/",
-   "name": "Daniel McDowell",
+   "url": null,
+   "name": "Sam Utu",
    "position_name": "Center",
-   "jersey": "68",
+   "jersey": "55",
    "team": "SMU",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -11830,14 +11830,14 @@
    }
   },
   {
-   "slug": "antonio-mccullough",
+   "slug": "evan-goodwin",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "smu",
-   "url": "https://collegefootball.gg/players/antonio-mccullough/",
-   "name": "Antonio McCullough",
+   "url": null,
+   "name": "Evan Goodwin",
    "position_name": "Right Guard",
-   "jersey": "61",
+   "jersey": "60",
    "team": "SMU",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -12366,14 +12366,14 @@
    }
   },
   {
-   "slug": "sheldon-goodrich",
+   "slug": "hunter-ryan",
    "position": "RT",
    "class": "JRRS",
    "team_slug": "smu",
-   "url": "https://collegefootball.gg/players/sheldon-goodrich/",
-   "name": "Sheldon Goodrich",
+   "url": null,
+   "name": "Hunter Ryan",
    "position_name": "Right Tackle",
-   "jersey": "72",
+   "jersey": "66",
    "team": "SMU",
    "class_year": "Junior (RS)",
    "height": "6'7\"",
@@ -12619,14 +12619,14 @@
    }
   },
   {
-   "slug": "brendan-mullen",
+   "slug": "bennett-johnson-v",
    "position": "RT",
    "class": "FR",
    "team_slug": "smu",
-   "url": "https://collegefootball.gg/players/brendan-mullen/",
-   "name": "Brendan Mullen",
+   "url": null,
+   "name": "Bennett Johnson V",
    "position_name": "Right Tackle",
-   "jersey": "73",
+   "jersey": "65",
    "team": "SMU",
    "class_year": "Freshman",
    "height": "6'7\"",

@@ -181,7 +181,7 @@
     "brody-bolyn"
    ],
    "RG": [
-    "cade-williams"
+    "john-kolarchick"
    ],
    "RT": [
     "james-thomas-jr"
@@ -204,7 +204,7 @@
    ],
    "CB": [
     "jojo-johnson",
-    "jace-hicks",
+    "jayt-jackson",
     "nick-sawyer"
    ],
    "FS": [
@@ -219,7 +219,7 @@
     "travis-kenner"
    ],
    "P": [
-    "mark-carvey"
+    "alex-jenkins-bowling-green"
    ],
    "KR": [
     "austyn-dendy"
@@ -254,7 +254,7 @@
    "pierce-st-geme",
    "joseph-saffold",
    "trey-johnson",
-   "easton-weaver",
+   "reddik-pillarelli",
    "pauly-sadler"
   ],
   "TE": [
@@ -270,25 +270,25 @@
   ],
   "LT": [
    "maddux-murphy",
-   "will-gibson",
+   "travis-robertson",
    "alex-harris",
-   "sheldon-bradfield"
+   "zane-panchula"
   ],
   "LG": [
    "alexis-sanchez",
-   "jerry-tucker"
+   "caden-campbell"
   ],
   "C": [
    "brody-bolyn",
    "masyn-zahursky"
   ],
   "RG": [
-   "cade-williams",
+   "john-kolarchick",
    "ethan-kraatz"
   ],
   "RT": [
    "james-thomas-jr",
-   "adrian-curtis",
+   "pete-pendergest",
    "gabe-funk",
    "vincent-giordano"
   ],
@@ -310,9 +310,9 @@
   ],
   "REDG": [
    "myles-bradley",
-   "colin-harris",
+   "trent-merrell",
    "samuel-dossous",
-   "garrison-mcneal"
+   "jonathan-hendrix"
   ],
   "SAM": [],
   "MIKE": [
@@ -329,7 +329,7 @@
   ],
   "CB": [
    "jojo-johnson",
-   "jace-hicks",
+   "jayt-jackson",
    "nick-sawyer",
    "josira-andrews",
    "garrison-blair",
@@ -353,7 +353,7 @@
    "ethan-warner"
   ],
   "P": [
-   "mark-carvey",
+   "alex-jenkins-bowling-green",
    "ryan-kingston"
   ]
  },
@@ -4866,14 +4866,14 @@
    }
   },
   {
-   "slug": "easton-weaver",
+   "slug": "reddik-pillarelli",
    "position": "WR",
    "class": "SORS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/easton-weaver/",
-   "name": "Easton Weaver",
+   "url": null,
+   "name": "Reddik Pillarelli",
    "position_name": "Wide Receiver",
-   "jersey": "49",
+   "jersey": "87",
    "team": "Bowling Green",
    "class_year": "Sophomore (RS)",
    "height": "6'0\"",
@@ -8725,14 +8725,14 @@
    }
   },
   {
-   "slug": "will-gibson",
+   "slug": "travis-robertson",
    "position": "LT",
    "class": "JR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/will-gibson/",
-   "name": "Will Gibson",
+   "url": null,
+   "name": "Travis Robertson",
    "position_name": "Left Tackle",
-   "jersey": "62",
+   "jersey": "71",
    "team": "Bowling Green",
    "class_year": "Junior",
    "height": "6'7\"",
@@ -9260,14 +9260,14 @@
    }
   },
   {
-   "slug": "sheldon-bradfield",
+   "slug": "zane-panchula",
    "position": "LT",
    "class": "FR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/sheldon-bradfield/",
-   "name": "Sheldon Bradfield",
+   "url": null,
+   "name": "Zane Panchula",
    "position_name": "Left Tackle",
-   "jersey": "60",
+   "jersey": "66",
    "team": "Bowling Green",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -9802,14 +9802,14 @@
    }
   },
   {
-   "slug": "jerry-tucker",
+   "slug": "caden-campbell",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/jerry-tucker/",
-   "name": "Jerry Tucker",
+   "url": null,
+   "name": "Caden Campbell",
    "position_name": "Left Guard",
-   "jersey": "64",
+   "jersey": "73",
    "team": "Bowling Green",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -10621,12 +10621,12 @@
    }
   },
   {
-   "slug": "cade-williams",
+   "slug": "john-kolarchick",
    "position": "RG",
    "class": "SORS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/cade-williams/",
-   "name": "Cade Williams",
+   "url": null,
+   "name": "John Kolarchick",
    "position_name": "Right Guard",
    "jersey": "59",
    "team": "Bowling Green",
@@ -11423,14 +11423,14 @@
    }
   },
   {
-   "slug": "adrian-curtis",
+   "slug": "pete-pendergest",
    "position": "RT",
    "class": "JRRS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/adrian-curtis/",
-   "name": "Adrian Curtis",
+   "url": null,
+   "name": "Pete Pendergest",
    "position_name": "Right Tackle",
-   "jersey": "51",
+   "jersey": "61",
    "team": "Bowling Green",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
@@ -15876,14 +15876,14 @@
    }
   },
   {
-   "slug": "colin-harris",
+   "slug": "trent-merrell",
    "position": "REDG",
    "class": "JR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/colin-harris/",
-   "name": "Colin Harris",
+   "url": null,
+   "name": "Trent Merrell",
    "position_name": "Right Edge",
-   "jersey": "67",
+   "jersey": "93",
    "team": "Bowling Green",
    "class_year": "Junior",
    "height": "6'4\"",
@@ -16432,14 +16432,14 @@
    }
   },
   {
-   "slug": "garrison-mcneal",
+   "slug": "jonathan-hendrix",
    "position": "REDG",
    "class": "FR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/garrison-mcneal/",
-   "name": "Garrison McNeal",
+   "url": null,
+   "name": "Jonathan Hendrix",
    "position_name": "Right Edge",
-   "jersey": "73",
+   "jersey": "95",
    "team": "Bowling Green",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -19251,14 +19251,14 @@
    }
   },
   {
-   "slug": "jace-hicks",
+   "slug": "jayt-jackson",
    "position": "CB",
    "class": "SRRS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/jace-hicks/",
-   "name": "Jace Hicks",
+   "url": null,
+   "name": "JayT Jackson",
    "position_name": "Cornerback",
-   "jersey": "34",
+   "jersey": "14",
    "team": "Bowling Green",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
@@ -23780,14 +23780,14 @@
    }
   },
   {
-   "slug": "mark-carvey",
+   "slug": "alex-jenkins-bowling-green",
    "position": "P",
    "class": "SO",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/mark-carvey/",
-   "name": "Mark Carvey",
+   "url": null,
+   "name": "Alex Jenkins",
    "position_name": "Punter",
-   "jersey": "97",
+   "jersey": "91",
    "team": "Bowling Green",
    "class_year": "Sophomore",
    "height": "6'3\"",

@@ -241,7 +241,7 @@
    "marcellous-hawkins",
    "bill-davis",
    "jeffrey-overton-jr",
-   "spencer-frazier"
+   "john-buetow"
   ],
   "FB": [],
   "WR": [
@@ -250,7 +250,7 @@
    "tyseer-denmark",
    "takye-heath",
    "shamarius-peterkin",
-   "brian-craver",
+   "drew-hube",
    "davion-brown",
    "marlion-jackson",
    "luke-stuewe",
@@ -276,12 +276,12 @@
   ],
   "LG": [
    "layth-ghannam",
-   "jake-hainz"
+   "gavin-crawford"
   ],
   "C": [
    "kyle-altuner",
    "benjamin-eziuka",
-   "garrett-heenan"
+   "elijah-haughawout"
   ],
   "RG": [
    "brody-meadows",
@@ -355,7 +355,7 @@
   ],
   "P": [
    "nathan-totten",
-   "erik-zimmerman"
+   "luke-jones"
   ]
  },
  "roster_size": 85,
@@ -2325,14 +2325,14 @@
    }
   },
   {
-   "slug": "spencer-frazier",
+   "slug": "john-buetow",
    "position": "HB",
    "class": "SORS",
    "team_slug": "virginia-tech",
-   "url": "https://collegefootball.gg/players/spencer-frazier/",
-   "name": "Spencer Frazier",
+   "url": null,
+   "name": "John Buetow",
    "position_name": "Halfback",
-   "jersey": "25",
+   "jersey": "35",
    "team": "Virginia Tech",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
@@ -3945,14 +3945,14 @@
    }
   },
   {
-   "slug": "brian-craver",
+   "slug": "drew-hube",
    "position": "WR",
    "class": "JR",
    "team_slug": "virginia-tech",
-   "url": "https://collegefootball.gg/players/brian-craver/",
-   "name": "Brian Craver",
+   "url": null,
+   "name": "Drew Hube",
    "position_name": "Wide Receiver",
-   "jersey": "4",
+   "jersey": "28",
    "team": "Virginia Tech",
    "class_year": "Junior",
    "height": "6'0\"",
@@ -9648,14 +9648,14 @@
    }
   },
   {
-   "slug": "jake-hainz",
+   "slug": "gavin-crawford",
    "position": "LG",
    "class": "JR",
    "team_slug": "virginia-tech",
-   "url": "https://collegefootball.gg/players/jake-hainz/",
-   "name": "Jake Hainz",
+   "url": null,
+   "name": "Gavin Crawford",
    "position_name": "Left Guard",
-   "jersey": "69",
+   "jersey": "71",
    "team": "Virginia Tech",
    "class_year": "Junior",
    "height": "6'5\"",
@@ -10460,14 +10460,14 @@
    }
   },
   {
-   "slug": "garrett-heenan",
+   "slug": "elijah-haughawout",
    "position": "C",
    "class": "JR",
    "team_slug": "virginia-tech",
-   "url": "https://collegefootball.gg/players/garrett-heenan/",
-   "name": "Garrett Heenan",
+   "url": null,
+   "name": "Elijah Haughawout",
    "position_name": "Center",
-   "jersey": "73",
+   "jersey": "51",
    "team": "Virginia Tech",
    "class_year": "Junior",
    "height": "6'2\"",
@@ -23690,12 +23690,12 @@
    }
   },
   {
-   "slug": "erik-zimmerman",
+   "slug": "luke-jones",
    "position": "P",
    "class": "FRRS",
    "team_slug": "virginia-tech",
-   "url": "https://collegefootball.gg/players/erik-zimmerman/",
-   "name": "Erik Zimmerman",
+   "url": null,
+   "name": "Luke Jones",
    "position_name": "Punter",
    "jersey": "97",
    "team": "Virginia Tech",

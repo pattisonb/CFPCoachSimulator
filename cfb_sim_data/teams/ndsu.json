@@ -217,7 +217,7 @@
     "drew-klein"
    ],
    "P": [
-    "rashad-west"
+    "caleb-mcgrath"
    ],
    "KR": [
     "jackson-williams"
@@ -265,9 +265,9 @@
   ],
   "LT": [
    "ryan-babatz",
-   "alex-jenkins",
-   "ezekiel-scott",
-   "mason-everett"
+   "jack-hansen",
+   "noah-stommes",
+   "james-nellis"
   ],
   "LG": [
    "griffin-empey",
@@ -276,7 +276,7 @@
   ],
   "C": [
    "gage-schmidt",
-   "victor-gores"
+   "earl-brown"
   ],
   "RG": [
    "nate-tastad",
@@ -285,14 +285,14 @@
   ],
   "RT": [
    "josh-magin",
-   "peyton-nicholls",
-   "jaren-steel"
+   "austin-schultz",
+   "trey-mcpartland"
   ],
   "LEDG": [
    "matthew-stenbroten",
    "allante-burley",
    "thomas-roberts",
-   "dylan-bowie"
+   "daniel-devine"
   ],
   "DT": [
    "keenan-wilson",
@@ -306,7 +306,7 @@
    "kelton-mccaslin",
    "victor-isele",
    "anthony-okes",
-   "dallas-griffith"
+   "blake-schiltz"
   ],
   "SAM": [
    "peder-haugo",
@@ -322,14 +322,14 @@
   "WILL": [
    "keith-williams",
    "oliver-lucht",
-   "hunter-parkinson"
+   "carter-appl"
   ],
   "CB": [
    "chance-tucker",
    "dj-voltz",
    "ej-davis",
    "najee-nelson",
-   "jalon-tate",
+   "evrett-tait",
    "marion-moore",
    "kendrick-carter",
    "kegan-huber"
@@ -351,7 +351,7 @@
    "drew-klein"
   ],
   "P": [
-   "rashad-west",
+   "caleb-mcgrath",
    "aaron-bickerton"
   ]
  },
@@ -7836,14 +7836,14 @@
    }
   },
   {
-   "slug": "alex-jenkins",
+   "slug": "jack-hansen",
    "position": "LT",
    "class": "SORS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/alex-jenkins/",
-   "name": "Alex Jenkins",
+   "url": null,
+   "name": "Jack Hansen",
    "position_name": "Left Tackle",
-   "jersey": "77",
+   "jersey": "98",
    "team": "NDSU",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
@@ -8342,12 +8342,12 @@
    }
   },
   {
-   "slug": "ezekiel-scott",
+   "slug": "noah-stommes",
    "position": "LT",
    "class": "JR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/ezekiel-scott/",
-   "name": "Ezekiel Scott",
+   "url": null,
+   "name": "Noah Stommes",
    "position_name": "Left Tackle",
    "jersey": "78",
    "team": "NDSU",
@@ -8599,12 +8599,12 @@
    }
   },
   {
-   "slug": "mason-everett",
+   "slug": "james-nellis",
    "position": "LT",
    "class": "FR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/mason-everett/",
-   "name": "Mason Everett",
+   "url": null,
+   "name": "James Nellis",
    "position_name": "Left Tackle",
    "jersey": "59",
    "team": "NDSU",
@@ -9984,14 +9984,14 @@
    }
   },
   {
-   "slug": "victor-gores",
+   "slug": "earl-brown",
    "position": "C",
    "class": "SORS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/victor-gores/",
-   "name": "Victor Gores",
+   "url": null,
+   "name": "Earl Brown",
    "position_name": "Center",
-   "jersey": "70",
+   "jersey": "67",
    "team": "NDSU",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
@@ -11315,14 +11315,14 @@
    }
   },
   {
-   "slug": "peyton-nicholls",
+   "slug": "austin-schultz",
    "position": "RT",
    "class": "SO",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/peyton-nicholls/",
-   "name": "Peyton Nicholls",
+   "url": null,
+   "name": "Austin Schultz",
    "position_name": "Right Tackle",
-   "jersey": "79",
+   "jersey": "77",
    "team": "NDSU",
    "class_year": "Sophomore",
    "height": "6'6\"",
@@ -11560,14 +11560,14 @@
    }
   },
   {
-   "slug": "jaren-steel",
+   "slug": "trey-mcpartland",
    "position": "RT",
    "class": "FR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/jaren-steel/",
-   "name": "Jaren Steel",
+   "url": null,
+   "name": "Trey McPartland",
    "position_name": "Right Tackle",
-   "jersey": "50",
+   "jersey": "63",
    "team": "NDSU",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -12647,14 +12647,14 @@
    }
   },
   {
-   "slug": "dylan-bowie",
+   "slug": "daniel-devine",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/dylan-bowie/",
-   "name": "Dylan Bowie",
+   "url": null,
+   "name": "Daniel Devine",
    "position_name": "Left Edge",
-   "jersey": "91",
+   "jersey": "92",
    "team": "NDSU",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -15359,14 +15359,14 @@
    }
   },
   {
-   "slug": "dallas-griffith",
+   "slug": "blake-schiltz",
    "position": "REDG",
    "class": "FRRS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/dallas-griffith/",
-   "name": "Dallas Griffith",
+   "url": null,
+   "name": "Blake Schiltz",
    "position_name": "Right Edge",
-   "jersey": "69",
+   "jersey": "48",
    "team": "NDSU",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -18185,14 +18185,14 @@
    }
   },
   {
-   "slug": "hunter-parkinson",
+   "slug": "carter-appl",
    "position": "WILL",
    "class": "FR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/hunter-parkinson/",
-   "name": "Hunter Parkinson",
+   "url": null,
+   "name": "Carter Appl",
    "position_name": "Will Linebacker",
-   "jersey": "34",
+   "jersey": "44",
    "team": "NDSU",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -19336,12 +19336,12 @@
    }
   },
   {
-   "slug": "jalon-tate",
+   "slug": "evrett-tait",
    "position": "CB",
    "class": "SORS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/jalon-tate/",
-   "name": "Jalon Tate",
+   "url": null,
+   "name": "Evrett Tait",
    "position_name": "Cornerback",
    "jersey": "26",
    "team": "NDSU",
@@ -23523,14 +23523,14 @@
    }
   },
   {
-   "slug": "rashad-west",
+   "slug": "caleb-mcgrath",
    "position": "P",
    "class": "JR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/rashad-west/",
-   "name": "Rashad West",
+   "url": null,
+   "name": "Caleb McGrath",
    "position_name": "Punter",
-   "jersey": "77",
+   "jersey": "51",
    "team": "NDSU",
    "class_year": "Junior",
    "height": "6'3\"",

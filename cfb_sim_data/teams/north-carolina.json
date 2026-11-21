@@ -205,7 +205,7 @@
    "CB": [
     "kaleb-cost",
     "jaiden-patterson",
-    "dorian-green"
+    "reggie-love-ii"
    ],
    "FS": [
     "jakob-weatherspoon"
@@ -225,7 +225,7 @@
     "trech-kekahuna"
    ],
    "PR": [
-    "kevin-womack"
+    "dayton-sneed"
    ]
   }
  },
@@ -248,7 +248,7 @@
    "jordan-shipp",
    "trech-kekahuna",
    "nathan-leacock",
-   "kevin-womack",
+   "dayton-sneed",
    "cj-sadler",
    "shanard-clower",
    "mason-humphrey",
@@ -273,12 +273,12 @@
   "LG": [
    "aidan-banfield",
    "trey-blue",
-   "nate-houston"
+   "rowan-byrne"
   ],
   "C": [
    "christo-kelly",
    "will-conroy",
-   "sevin-wentworth"
+   "nick-fiumara"
   ],
   "RG": [
    "jonah-rodriguez",
@@ -287,7 +287,7 @@
   "RT": [
    "jacqawn-mcroy",
    "andrew-threatt",
-   "jalen-warner"
+   "cristian-alvarez"
   ],
   "LEDG": [
    "donovan-hoilette",
@@ -299,7 +299,7 @@
    "isaiah-johnson",
    "leroy-jackson",
    "xavier-lewis",
-   "quinten-bishop",
+   "jimmy-phrisco-alo-suliafu",
    "viliami-moala",
    "david-jackson",
    "peter-pesansky"
@@ -307,8 +307,8 @@
   "REDG": [
    "melkart-abou-jaoude",
    "jaylen-harvey",
-   "vincent-talley",
-   "aric-daniels",
+   "tarvorise-brown",
+   "emmanuel-nwaiwu",
    "daniel-anderson"
   ],
   "SAM": [],
@@ -316,7 +316,7 @@
    "derek-mcdonald",
    "dq-forkpa",
    "timir-hickman-collins",
-   "jon-murray-shipp",
+   "tyler-houser",
    "jordan-avinger"
   ],
   "WILL": [
@@ -328,7 +328,7 @@
   "CB": [
    "kaleb-cost",
    "jaiden-patterson",
-   "dorian-green",
+   "reggie-love-ii",
    "kenton-dopson-iii",
    "ade-willie",
    "ty-adams",
@@ -349,8 +349,8 @@
   ],
   "K": [
    "aeron-burrell",
-   "brendan-kirby",
-   "eric-foote"
+   "rece-verhoff",
+   "david-green"
   ],
   "P": [
    "jacob-horvath"
@@ -3736,14 +3736,14 @@
    }
   },
   {
-   "slug": "kevin-womack",
+   "slug": "dayton-sneed",
    "position": "WR",
    "class": "SR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/kevin-womack/",
-   "name": "Kevin Womack",
+   "url": null,
+   "name": "Dayton Sneed",
    "position_name": "Wide Receiver",
-   "jersey": "32",
+   "jersey": "6",
    "team": "North Carolina",
    "class_year": "Senior",
    "height": "5'10\"",
@@ -9154,14 +9154,14 @@
    }
   },
   {
-   "slug": "nate-houston",
+   "slug": "rowan-byrne",
    "position": "LG",
    "class": "FR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/nate-houston/",
-   "name": "Nate Houston",
+   "url": null,
+   "name": "Rowan Byrne",
    "position_name": "Left Guard",
-   "jersey": "64",
+   "jersey": "52",
    "team": "North Carolina",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -9678,14 +9678,14 @@
    }
   },
   {
-   "slug": "sevin-wentworth",
+   "slug": "nick-fiumara",
    "position": "C",
    "class": "FR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/sevin-wentworth/",
-   "name": "Sevin Wentworth",
+   "url": null,
+   "name": "Nick Fiumara",
    "position_name": "Center",
-   "jersey": "78",
+   "jersey": "74",
    "team": "North Carolina",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -11351,12 +11351,12 @@
    }
   },
   {
-   "slug": "jalen-warner",
+   "slug": "cristian-alvarez",
    "position": "RT",
    "class": "FR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/jalen-warner/",
-   "name": "Jalen Warner",
+   "url": null,
+   "name": "Cristian Alvarez",
    "position_name": "Right Tackle",
    "jersey": "60",
    "team": "North Carolina",
@@ -13458,14 +13458,14 @@
    }
   },
   {
-   "slug": "quinten-bishop",
+   "slug": "jimmy-phrisco-alo-suliafu",
    "position": "DT",
    "class": "SR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/quinten-bishop/",
-   "name": "Quinten Bishop",
+   "url": null,
+   "name": "Jimmy-Phrisco Alo-Suliafu",
    "position_name": "Defensive Tackle",
-   "jersey": "65",
+   "jersey": "92",
    "team": "North Carolina",
    "class_year": "Senior",
    "height": "6'5\"",
@@ -15058,14 +15058,14 @@
    }
   },
   {
-   "slug": "vincent-talley",
+   "slug": "tarvorise-brown",
    "position": "REDG",
    "class": "SO",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/vincent-talley/",
-   "name": "Vincent Talley",
+   "url": null,
+   "name": "Tarvorise Brown",
    "position_name": "Right Edge",
-   "jersey": "99",
+   "jersey": "14",
    "team": "North Carolina",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -15310,14 +15310,14 @@
    }
   },
   {
-   "slug": "aric-daniels",
+   "slug": "emmanuel-nwaiwu",
    "position": "REDG",
    "class": "FR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/aric-daniels/",
-   "name": "Aric Daniels",
+   "url": null,
+   "name": "Emmanuel Nwaiwu",
    "position_name": "Right Edge",
-   "jersey": "47",
+   "jersey": "89",
    "team": "North Carolina",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -16722,14 +16722,14 @@
    }
   },
   {
-   "slug": "jon-murray-shipp",
+   "slug": "tyler-houser",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/jon-murray-shipp/",
-   "name": "Jon Murray-Shipp",
+   "url": null,
+   "name": "Tyler Houser",
    "position_name": "Mike Linebacker",
-   "jersey": "53",
+   "jersey": "33",
    "team": "North Carolina",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -18971,14 +18971,14 @@
    }
   },
   {
-   "slug": "dorian-green",
+   "slug": "reggie-love-ii",
    "position": "CB",
    "class": "JR",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/dorian-green/",
-   "name": "Dorian Green",
+   "url": null,
+   "name": "Reggie Love II",
    "position_name": "Cornerback",
-   "jersey": "36",
+   "jersey": "19",
    "team": "North Carolina",
    "class_year": "Junior",
    "height": "5'11\"",
@@ -23244,14 +23244,14 @@
    }
   },
   {
-   "slug": "brendan-kirby",
+   "slug": "rece-verhoff",
    "position": "K",
    "class": "SO",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/brendan-kirby/",
-   "name": "Brendan Kirby",
+   "url": null,
+   "name": "Rece Verhoff",
    "position_name": "Kicker",
-   "jersey": "68",
+   "jersey": "90",
    "team": "North Carolina",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -23488,14 +23488,14 @@
    }
   },
   {
-   "slug": "eric-foote",
+   "slug": "david-green",
    "position": "K",
    "class": "FRRS",
    "team_slug": "north-carolina",
-   "url": "https://collegefootball.gg/players/eric-foote/",
-   "name": "Eric Foote",
+   "url": null,
+   "name": "David Green",
    "position_name": "Kicker",
-   "jersey": "67",
+   "jersey": "97",
    "team": "North Carolina",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",

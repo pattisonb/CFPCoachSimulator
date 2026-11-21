@@ -205,7 +205,7 @@
    "CB": [
     "joshua-franklin",
     "jarvarius-sims",
-    "cordale-slate"
+    "jordon-thomas"
    ],
    "FS": [
     "micah-davis"
@@ -249,7 +249,7 @@
    "kordell-gouldsby",
    "baylin-brooks",
    "aveion-chenault",
-   "courtland-barnett",
+   "egypt-nelson",
    "harper-hughes",
    "angelo-chapman",
    "keivin-boone-nelson-ii",
@@ -267,15 +267,15 @@
   "LT": [
    "ben-roebuck",
    "jacob-krause",
-   "eric-roseman"
+   "jake-chellman"
   ],
   "LG": [
    "hunter-whitenack",
-   "donovan-jones-w-michigan"
+   "nolan-miller"
   ],
   "C": [
    "jeremy-schleicher",
-   "sean-moore",
+   "jacob-bailey",
    "liam-vaughan"
   ],
   "RG": [
@@ -285,16 +285,16 @@
   ],
   "RT": [
    "chad-schuster",
-   "doug-lacey",
+   "alex-poholik",
    "spencer-beckeman"
   ],
   "LEDG": [
    "scoop-gardner-jr",
    "austin-alexander-w-michigan",
    "will-gerig",
-   "steve-hatcher",
-   "phillip-dillon",
-   "kareem-calloway"
+   "chris-stewart-w-michigan",
+   "cody-haworth",
+   "max-baker"
   ],
   "DT": [
    "dakari-frazier",
@@ -303,7 +303,7 @@
    "zavian-tibbs",
    "ahmed-tounkara",
    "blair-alexander",
-   "justin-whittington",
+   "angelo-pugliano",
    "august-johanningsmeier"
   ],
   "REDG": [
@@ -314,13 +314,13 @@
   ],
   "SAM": [
    "brenden-anes",
-   "kirk-bryan"
+   "teegan-haines"
   ],
   "MIKE": [
    "domanick-moon",
    "justyce-betts",
    "freddy-brown",
-   "markus-mclaurin"
+   "breck-mallory"
   ],
   "WILL": [
    "dillon-moore",
@@ -331,16 +331,16 @@
   "CB": [
    "joshua-franklin",
    "jarvarius-sims",
-   "cordale-slate",
-   "john-peters",
+   "jordon-thomas",
+   "carlos-mitchell-jr",
    "camron-barber-w-michigan"
   ],
   "FS": [
    "micah-davis",
    "braden-steely",
-   "von-crisp",
+   "keegan-mccue",
    "amarian-louis",
-   "damien-robinson"
+   "camari-patterson"
   ],
   "SS": [
    "joey-pope",
@@ -351,7 +351,7 @@
   ],
   "K": [
    "palmer-domschke",
-   "nate-hancock"
+   "dieter-kelly"
   ],
   "P": [
    "ryan-millmore"
@@ -4002,14 +4002,14 @@
    }
   },
   {
-   "slug": "courtland-barnett",
+   "slug": "egypt-nelson",
    "position": "WR",
    "class": "JR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/courtland-barnett/",
-   "name": "Courtland Barnett",
+   "url": null,
+   "name": "Egypt Nelson",
    "position_name": "Wide Receiver",
-   "jersey": "20",
+   "jersey": "8",
    "team": "W. Michigan",
    "class_year": "Junior",
    "height": "6'4\"",
@@ -8107,14 +8107,14 @@
    }
   },
   {
-   "slug": "eric-roseman",
+   "slug": "jake-chellman",
    "position": "LT",
    "class": "SO",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/eric-roseman/",
-   "name": "Eric Roseman",
+   "url": null,
+   "name": "Jake Chellman",
    "position_name": "Left Tackle",
-   "jersey": "59",
+   "jersey": "57",
    "team": "W. Michigan",
    "class_year": "Sophomore",
    "height": "6'7\"",
@@ -8650,14 +8650,14 @@
    }
   },
   {
-   "slug": "donovan-jones-w-michigan",
+   "slug": "nolan-miller",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/donovan-jones-w-michigan/",
-   "name": "Donovan Jones",
+   "url": null,
+   "name": "Nolan Miller",
    "position_name": "Left Guard",
-   "jersey": "56",
+   "jersey": "64",
    "team": "W. Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -9158,14 +9158,14 @@
    }
   },
   {
-   "slug": "sean-moore",
+   "slug": "jacob-bailey",
    "position": "C",
    "class": "FRRS",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/sean-moore/",
-   "name": "Sean Moore",
+   "url": null,
+   "name": "Jacob Bailey",
    "position_name": "Center",
-   "jersey": "63",
+   "jersey": "55",
    "team": "W. Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -10769,14 +10769,14 @@
    }
   },
   {
-   "slug": "doug-lacey",
+   "slug": "alex-poholik",
    "position": "RT",
    "class": "SO",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/doug-lacey/",
-   "name": "Doug Lacey",
+   "url": null,
+   "name": "Alex Poholik",
    "position_name": "Right Tackle",
-   "jersey": "51",
+   "jersey": "54",
    "team": "W. Michigan",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -11856,14 +11856,14 @@
    }
   },
   {
-   "slug": "steve-hatcher",
+   "slug": "chris-stewart-w-michigan",
    "position": "LEDG",
    "class": "SR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/steve-hatcher/",
-   "name": "Steve Hatcher",
+   "url": null,
+   "name": "Chris Stewart",
    "position_name": "Left Edge",
-   "jersey": "68",
+   "jersey": "43",
    "team": "W. Michigan",
    "class_year": "Senior",
    "height": "6'2\"",
@@ -12396,14 +12396,14 @@
    }
   },
   {
-   "slug": "phillip-dillon",
+   "slug": "cody-haworth",
    "position": "LEDG",
    "class": "SO",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/phillip-dillon/",
-   "name": "Phillip Dillon",
+   "url": null,
+   "name": "Cody Haworth",
    "position_name": "Left Edge",
-   "jersey": "66",
+   "jersey": "40",
    "team": "W. Michigan",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -12656,14 +12656,14 @@
    }
   },
   {
-   "slug": "kareem-calloway",
+   "slug": "max-baker",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/kareem-calloway/",
-   "name": "Kareem Calloway",
+   "url": null,
+   "name": "Max Baker",
    "position_name": "Left Edge",
-   "jersey": "52",
+   "jersey": "46",
    "team": "W. Michigan",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -14568,14 +14568,14 @@
    }
   },
   {
-   "slug": "justin-whittington",
+   "slug": "angelo-pugliano",
    "position": "DT",
    "class": "FR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/justin-whittington/",
-   "name": "Justin Whittington",
+   "url": null,
+   "name": "Angelo Pugliano",
    "position_name": "Defensive Tackle",
-   "jersey": "57",
+   "jersey": "91",
    "team": "W. Michigan",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -16519,14 +16519,14 @@
    }
   },
   {
-   "slug": "kirk-bryan",
+   "slug": "teegan-haines",
    "position": "SAM",
    "class": "FRRS",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/kirk-bryan/",
-   "name": "Kirk Bryan",
+   "url": null,
+   "name": "Teegan Haines",
    "position_name": "Sam Linebacker",
-   "jersey": "32",
+   "jersey": "39",
    "team": "W. Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -17638,14 +17638,14 @@
    }
   },
   {
-   "slug": "markus-mclaurin",
+   "slug": "breck-mallory",
    "position": "MIKE",
    "class": "FRRS",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/markus-mclaurin/",
-   "name": "Markus McLaurin",
+   "url": null,
+   "name": "Breck Mallory",
    "position_name": "Mike Linebacker",
-   "jersey": "33",
+   "jersey": "38",
    "team": "W. Michigan",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
@@ -19591,14 +19591,14 @@
    }
   },
   {
-   "slug": "cordale-slate",
+   "slug": "jordon-thomas",
    "position": "CB",
    "class": "JR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/cordale-slate/",
-   "name": "Cordale Slate",
+   "url": null,
+   "name": "Jordon Thomas",
    "position_name": "Cornerback",
-   "jersey": "43",
+   "jersey": "13",
    "team": "W. Michigan",
    "class_year": "Junior",
    "height": "6'0\"",
@@ -19853,14 +19853,14 @@
    }
   },
   {
-   "slug": "john-peters",
+   "slug": "carlos-mitchell-jr",
    "position": "CB",
    "class": "SO",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/john-peters/",
-   "name": "John Peters",
+   "url": null,
+   "name": "Carlos Mitchell Jr.",
    "position_name": "Cornerback",
-   "jersey": "25",
+   "jersey": "37",
    "team": "W. Michigan",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -20975,12 +20975,12 @@
    }
   },
   {
-   "slug": "von-crisp",
+   "slug": "keegan-mccue",
    "position": "FS",
    "class": "SO",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/von-crisp/",
-   "name": "Von Crisp",
+   "url": null,
+   "name": "Keegan McCue",
    "position_name": "Free Safety",
    "jersey": "30",
    "team": "W. Michigan",
@@ -21534,14 +21534,14 @@
    }
   },
   {
-   "slug": "damien-robinson",
+   "slug": "camari-patterson",
    "position": "FS",
    "class": "JR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/damien-robinson/",
-   "name": "Damien Robinson",
+   "url": null,
+   "name": "Camari Patterson",
    "position_name": "Free Safety",
-   "jersey": "40",
+   "jersey": "24",
    "team": "W. Michigan",
    "class_year": "Junior",
    "height": "6'0\"",
@@ -23433,14 +23433,14 @@
    }
   },
   {
-   "slug": "nate-hancock",
+   "slug": "dieter-kelly",
    "position": "K",
    "class": "FR",
    "team_slug": "w-michigan",
-   "url": "https://collegefootball.gg/players/nate-hancock/",
-   "name": "Nate Hancock",
+   "url": null,
+   "name": "Dieter Kelly",
    "position_name": "Kicker",
-   "jersey": "90",
+   "jersey": "32",
    "team": "W. Michigan",
    "class_year": "Freshman",
    "height": "6'0\"",

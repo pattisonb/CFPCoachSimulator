@@ -204,7 +204,7 @@
    ],
    "CB": [
     "josiah-charles",
-    "justin-guy",
+    "elijah-gutierrez",
     "izzy-clark-white"
    ],
    "FS": [
@@ -253,7 +253,7 @@
    "lyndon-ravare",
    "myles-libman",
    "brodie-malone-bradford",
-   "antoine-bozeman",
+   "kaden-trevino",
    "jadarius-sanders",
    "aj-williams-iii",
    "terrione-graves",
@@ -266,7 +266,7 @@
    "ray-lotten",
    "braydyn-sage",
    "duke-frye",
-   "braxton-may"
+   "josiah-thomas"
   ],
   "LT": [
    "makyi-lee",
@@ -289,7 +289,7 @@
   ],
   "RT": [
    "armond-owens",
-   "maxwell-beason"
+   "jr-hecklinski"
   ],
   "LEDG": [
    "gabe-peterson",
@@ -308,7 +308,7 @@
   ],
   "REDG": [
    "obinna-okeke",
-   "derek-widmer",
+   "latrell-treadwell",
    "jamaun-thompson",
    "joey-banegas",
    "bradley-vislisel",
@@ -329,7 +329,7 @@
   ],
   "CB": [
    "josiah-charles",
-   "justin-guy",
+   "elijah-gutierrez",
    "izzy-clark-white",
    "javon-gillespie",
    "amaurey-brooks",
@@ -5310,14 +5310,14 @@
    }
   },
   {
-   "slug": "antoine-bozeman",
+   "slug": "kaden-trevino",
    "position": "WR",
    "class": "JRRS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/antoine-bozeman/",
-   "name": "Antoine Bozeman",
+   "url": null,
+   "name": "Kaden Trevino",
    "position_name": "Wide Receiver",
-   "jersey": "35",
+   "jersey": "29",
    "team": "New Mexico St.",
    "class_year": "Junior (RS)",
    "height": "5'9\"",
@@ -8203,14 +8203,14 @@
    }
   },
   {
-   "slug": "braxton-may",
+   "slug": "josiah-thomas",
    "position": "TE",
    "class": "SO",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/braxton-may/",
-   "name": "Braxton May",
+   "url": null,
+   "name": "Josiah Thomas",
    "position_name": "Tight End",
-   "jersey": "38",
+   "jersey": "15",
    "team": "New Mexico St.",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -11858,14 +11858,14 @@
    }
   },
   {
-   "slug": "maxwell-beason",
+   "slug": "jr-hecklinski",
    "position": "RT",
    "class": "SORS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/maxwell-beason/",
-   "name": "Maxwell Beason",
+   "url": null,
+   "name": "JR Hecklinski",
    "position_name": "Right Tackle",
-   "jersey": "73",
+   "jersey": "67",
    "team": "New Mexico St.",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",
@@ -15400,14 +15400,14 @@
    }
   },
   {
-   "slug": "derek-widmer",
+   "slug": "latrell-treadwell",
    "position": "REDG",
    "class": "SRRS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/derek-widmer/",
-   "name": "Derek Widmer",
+   "url": null,
+   "name": "Latrell Treadwell",
    "position_name": "Right Edge",
-   "jersey": "67",
+   "jersey": "93",
    "team": "New Mexico St.",
    "class_year": "Senior (RS)",
    "height": "6'2\"",
@@ -19393,14 +19393,14 @@
    }
   },
   {
-   "slug": "justin-guy",
+   "slug": "elijah-gutierrez",
    "position": "CB",
    "class": "SORS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/justin-guy/",
-   "name": "Justin Guy",
+   "url": null,
+   "name": "Elijah Gutierrez",
    "position_name": "Cornerback",
-   "jersey": "31",
+   "jersey": "32",
    "team": "New Mexico St.",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",

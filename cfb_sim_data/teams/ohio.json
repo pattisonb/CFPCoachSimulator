@@ -167,7 +167,7 @@
    "WR": [
     "preston-bowman",
     "eian-pugh",
-    "paul-hodges"
+    "simon-smith"
    ],
    "TE": [
     "andrew-metzger"
@@ -190,7 +190,7 @@
   },
   "defense": {
    "LEDG": [
-    "carson-vogel"
+    "tyler-stearman"
    ],
    "REDG": [
     "tyler-gillison"
@@ -248,7 +248,7 @@
   "WR": [
    "preston-bowman",
    "eian-pugh",
-   "paul-hodges",
+   "simon-smith",
    "max-rodarte",
    "dom-dorwart",
    "riley-neer",
@@ -281,7 +281,7 @@
   "C": [
    "bryce-parson",
    "job-mavrick",
-   "rashawn-dockery"
+   "danny-fortson"
   ],
   "RG": [
    "cj-dawson-ii",
@@ -294,7 +294,7 @@
    "sandro-malicevic"
   ],
   "LEDG": [
-   "carson-vogel",
+   "tyler-stearman",
    "ike-ackerman"
   ],
   "DT": [
@@ -341,12 +341,12 @@
    "jt-haskins",
    "darren-james-hamilton",
    "dj-morton",
-   "john-zeigler"
+   "caleb-chamberlin"
   ],
   "SS": [
    "dj-walker",
-   "antonio-elliott",
-   "ben-linton",
+   "andrew-vera",
+   "malachi-taylor",
    "brandon-jenkins",
    "ryan-miller"
   ],
@@ -3726,14 +3726,14 @@
    }
   },
   {
-   "slug": "paul-hodges",
+   "slug": "simon-smith",
    "position": "WR",
    "class": "SRRS",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/paul-hodges/",
-   "name": "Paul Hodges",
+   "url": null,
+   "name": "Simon Smith",
    "position_name": "Wide Receiver",
-   "jersey": "43",
+   "jersey": "39",
    "team": "Ohio",
    "class_year": "Senior (RS)",
    "height": "5'8\"",
@@ -10604,14 +10604,14 @@
    }
   },
   {
-   "slug": "rashawn-dockery",
+   "slug": "danny-fortson",
    "position": "C",
    "class": "FR",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/rashawn-dockery/",
-   "name": "Rashawn Dockery",
+   "url": null,
+   "name": "Danny Fortson",
    "position_name": "Center",
-   "jersey": "62",
+   "jersey": "78",
    "team": "Ohio",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -12529,14 +12529,14 @@
    }
   },
   {
-   "slug": "carson-vogel",
+   "slug": "tyler-stearman",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/carson-vogel/",
-   "name": "Carson Vogel",
+   "url": null,
+   "name": "Tyler Stearman",
    "position_name": "Left Edge",
-   "jersey": "64",
+   "jersey": "96",
    "team": "Ohio",
    "class_year": "Sophomore (RS)",
    "height": "6'5\"",
@@ -21796,14 +21796,14 @@
    }
   },
   {
-   "slug": "john-zeigler",
+   "slug": "caleb-chamberlin",
    "position": "FS",
    "class": "FR",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/john-zeigler/",
-   "name": "John Zeigler",
+   "url": null,
+   "name": "Caleb Chamberlin",
    "position_name": "Free Safety",
-   "jersey": "40",
+   "jersey": "17",
    "team": "Ohio",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -22317,12 +22317,12 @@
    }
   },
   {
-   "slug": "antonio-elliott",
+   "slug": "andrew-vera",
    "position": "SS",
    "class": "SO",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/antonio-elliott/",
-   "name": "Antonio Elliott",
+   "url": null,
+   "name": "Andrew Vera",
    "position_name": "Strong Safety",
    "jersey": "48",
    "team": "Ohio",
@@ -22584,14 +22584,14 @@
    }
   },
   {
-   "slug": "ben-linton",
+   "slug": "malachi-taylor",
    "position": "SS",
    "class": "FR",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/ben-linton/",
-   "name": "Ben Linton",
+   "url": null,
+   "name": "Malachi Taylor",
    "position_name": "Strong Safety",
-   "jersey": "32",
+   "jersey": "36",
    "team": "Ohio",
    "class_year": "Freshman",
    "height": "6'2\"",

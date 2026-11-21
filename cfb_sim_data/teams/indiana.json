@@ -267,7 +267,7 @@
   "LT": [
    "carter-smith",
    "baylor-wilkin",
-   "donald-griffin"
+   "cj-scifres"
   ],
   "LG": [
    "drew-evans",
@@ -276,7 +276,7 @@
   "C": [
    "bray-lynch",
    "matt-marek",
-   "lucas-schaub"
+   "luke-graham"
   ],
   "RG": [
    "joe-brunner",
@@ -286,7 +286,7 @@
   "RT": [
    "adedamola-ajani",
    "austin-leibfried",
-   "lance-morrison"
+   "chance-johnson"
   ],
   "LEDG": [
    "chiddi-obiazor",
@@ -8341,14 +8341,14 @@
    }
   },
   {
-   "slug": "donald-griffin",
+   "slug": "cj-scifres",
    "position": "LT",
    "class": "FR",
    "team_slug": "indiana",
-   "url": "https://collegefootball.gg/players/donald-griffin/",
-   "name": "Donald Griffin",
+   "url": null,
+   "name": "CJ Scifres",
    "position_name": "Left Tackle",
-   "jersey": "54",
+   "jersey": "60",
    "team": "Indiana",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -9724,12 +9724,12 @@
    }
   },
   {
-   "slug": "lucas-schaub",
+   "slug": "luke-graham",
    "position": "C",
    "class": "FR",
    "team_slug": "indiana",
-   "url": "https://collegefootball.gg/players/lucas-schaub/",
-   "name": "Lucas Schaub",
+   "url": null,
+   "name": "Luke Graham",
    "position_name": "Center",
    "jersey": "73",
    "team": "Indiana",
@@ -11374,14 +11374,14 @@
    }
   },
   {
-   "slug": "lance-morrison",
+   "slug": "chance-johnson",
    "position": "RT",
    "class": "FR",
    "team_slug": "indiana",
-   "url": "https://collegefootball.gg/players/lance-morrison/",
-   "name": "Lance Morrison",
+   "url": null,
+   "name": "Chance Johnson",
    "position_name": "Right Tackle",
-   "jersey": "51",
+   "jersey": "64",
    "team": "Indiana",
    "class_year": "Freshman",
    "height": "6'6\"",

@@ -189,7 +189,7 @@
   },
   "defense": {
    "LEDG": [
-    "adrian-williams"
+    "gabriel-iniguez-jr"
    ],
    "REDG": [
     "tyree-morris"
@@ -205,7 +205,7 @@
    "CB": [
     "d-angelo-mayes",
     "antonio-bluiett",
-    "marcus-mckenzie"
+    "dontae-dyson"
    ],
    "FS": [
     "chapman-lewis"
@@ -232,14 +232,14 @@
  "depth_chart": {
   "QB": [
    "mccae-hillstead",
-   "nathan-childress",
+   "brady-goodman",
    "kaleb-maryland",
-   "chris-clinton"
+   "crew-cacciacarne"
   ],
   "HB": [
    "javen-jacobs",
    "sesi-vailahi",
-   "amari-spriggs",
+   "tre-kofe",
    "noah-white",
    "nehemiah-washington"
   ],
@@ -266,19 +266,19 @@
    "john-randle-jr",
    "evan-nesmith",
    "chewy-wade",
-   "jamal-foster",
-   "brett-mann"
+   "cole-keele",
+   "sam-brousseau"
   ],
   "LG": [
    "george-maile",
    "kadin-lynch",
-   "mick-burrell",
+   "kaholi-krau",
    "kauasi-hansen"
   ],
   "C": [
    "jimmy-liston",
    "jarvis-griffiths",
-   "dwight-parker"
+   "clay-jacobson"
   ],
   "RG": [
    "tavo-motu-apuaka",
@@ -287,22 +287,22 @@
   "RT": [
    "seth-wilfred",
    "jackson-nelson",
-   "randy-novick",
-   "greg-talbott"
+   "elia-migao",
+   "easton-hammond"
   ],
   "LEDG": [
-   "adrian-williams",
+   "gabriel-iniguez-jr",
    "carson-tujague",
-   "dakota-broiles",
-   "george-stewart",
-   "jamie-cramer",
+   "tanner-jolley",
+   "kasen-long",
+   "bo-maile",
    "paxton-naegle"
   ],
   "DT": [
    "ta-avili-tuitama",
    "quincy-wright",
    "tyler-masdea",
-   "xavier-turner",
+   "kone-aumua-uiagalelei",
    "joshua-papu"
   ],
   "REDG": [
@@ -315,8 +315,8 @@
   "SAM": [
    "jeremiah-holmes",
    "adonis-jackson",
-   "kyle-pendleton",
-   "mike-ross"
+   "dakota-howell",
+   "john-mcclellan"
   ],
   "MIKE": [
    "harrison-taggart",
@@ -327,12 +327,12 @@
   "WILL": [
    "chris-joe",
    "asher-cunningham",
-   "elias-guerrero"
+   "ryker-lotulelei"
   ],
   "CB": [
    "d-angelo-mayes",
    "antonio-bluiett",
-   "marcus-mckenzie",
+   "dontae-dyson",
    "kye-stokes",
    "john-shepard",
    "markie-grant"
@@ -354,7 +354,7 @@
   ],
   "P": [
    "landon-rehkow",
-   "phillip-josephsen"
+   "will-evans"
   ]
  },
  "roster_size": 85,
@@ -649,12 +649,12 @@
    }
   },
   {
-   "slug": "nathan-childress",
+   "slug": "brady-goodman",
    "position": "QB",
    "class": "SO",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/nathan-childress/",
-   "name": "Nathan Childress",
+   "url": null,
+   "name": "Brady Goodman",
    "position_name": "Quarterback",
    "jersey": "2",
    "team": "Utah State",
@@ -1222,14 +1222,14 @@
    }
   },
   {
-   "slug": "chris-clinton",
+   "slug": "crew-cacciacarne",
    "position": "QB",
    "class": "FR",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/chris-clinton/",
-   "name": "Chris Clinton",
+   "url": null,
+   "name": "Crew Cacciacarne",
    "position_name": "Quarterback",
-   "jersey": "19",
+   "jersey": "17",
    "team": "Utah State",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -2023,14 +2023,14 @@
    }
   },
   {
-   "slug": "amari-spriggs",
+   "slug": "tre-kofe",
    "position": "HB",
    "class": "SO",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/amari-spriggs/",
-   "name": "Amari Spriggs",
+   "url": null,
+   "name": "Tre Kofe",
    "position_name": "Halfback",
-   "jersey": "22",
+   "jersey": "20",
    "team": "Utah State",
    "class_year": "Sophomore",
    "height": "5'8\"",
@@ -7752,12 +7752,12 @@
    }
   },
   {
-   "slug": "jamal-foster",
+   "slug": "cole-keele",
    "position": "LT",
    "class": "SO",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/jamal-foster/",
-   "name": "Jamal Foster",
+   "url": null,
+   "name": "Cole Keele",
    "position_name": "Left Tackle",
    "jersey": "59",
    "team": "Utah State",
@@ -7999,12 +7999,12 @@
    }
   },
   {
-   "slug": "brett-mann",
+   "slug": "sam-brousseau",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/brett-mann/",
-   "name": "Brett Mann",
+   "url": null,
+   "name": "Sam Brousseau",
    "position_name": "Left Tackle",
    "jersey": "79",
    "team": "Utah State",
@@ -8770,12 +8770,12 @@
    }
   },
   {
-   "slug": "mick-burrell",
+   "slug": "kaholi-krau",
    "position": "LG",
    "class": "SO",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/mick-burrell/",
-   "name": "Mick Burrell",
+   "url": null,
+   "name": "Kaholi Krau",
    "position_name": "Left Guard",
    "jersey": "69",
    "team": "Utah State",
@@ -9587,12 +9587,12 @@
    }
   },
   {
-   "slug": "dwight-parker",
+   "slug": "clay-jacobson",
    "position": "C",
    "class": "FRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/dwight-parker/",
-   "name": "Dwight Parker",
+   "url": null,
+   "name": "Clay Jacobson",
    "position_name": "Center",
    "jersey": "52",
    "team": "Utah State",
@@ -11232,12 +11232,12 @@
    }
   },
   {
-   "slug": "randy-novick",
+   "slug": "elia-migao",
    "position": "RT",
    "class": "SORS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/randy-novick/",
-   "name": "Randy Novick",
+   "url": null,
+   "name": "Elia Migao",
    "position_name": "Right Tackle",
    "jersey": "73",
    "team": "Utah State",
@@ -11484,14 +11484,14 @@
    }
   },
   {
-   "slug": "greg-talbott",
+   "slug": "easton-hammond",
    "position": "RT",
    "class": "FR",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/greg-talbott/",
-   "name": "Greg Talbott",
+   "url": null,
+   "name": "Easton Hammond",
    "position_name": "Right Tackle",
-   "jersey": "64",
+   "jersey": "51",
    "team": "Utah State",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -11738,14 +11738,14 @@
    }
   },
   {
-   "slug": "adrian-williams",
+   "slug": "gabriel-iniguez-jr",
    "position": "LEDG",
    "class": "SRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/adrian-williams/",
-   "name": "Adrian Williams",
+   "url": null,
+   "name": "Gabriel Iniguez Jr.",
    "position_name": "Left Edge",
-   "jersey": "62",
+   "jersey": "10",
    "team": "Utah State",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
@@ -12274,12 +12274,12 @@
    }
   },
   {
-   "slug": "dakota-broiles",
+   "slug": "tanner-jolley",
    "position": "LEDG",
    "class": "JRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/dakota-broiles/",
-   "name": "Dakota Broiles",
+   "url": null,
+   "name": "Tanner Jolley",
    "position_name": "Left Edge",
    "jersey": "77",
    "team": "Utah State",
@@ -12535,12 +12535,12 @@
    }
   },
   {
-   "slug": "george-stewart",
+   "slug": "kasen-long",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/george-stewart/",
-   "name": "George Stewart",
+   "url": null,
+   "name": "Kasen Long",
    "position_name": "Left Edge",
    "jersey": "76",
    "team": "Utah State",
@@ -12801,14 +12801,14 @@
    }
   },
   {
-   "slug": "jamie-cramer",
+   "slug": "bo-maile",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/jamie-cramer/",
-   "name": "Jamie Cramer",
+   "url": null,
+   "name": "Bo Maile",
    "position_name": "Left Edge",
-   "jersey": "60",
+   "jersey": "44",
    "team": "Utah State",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -14151,14 +14151,14 @@
    }
   },
   {
-   "slug": "xavier-turner",
+   "slug": "kone-aumua-uiagalelei",
    "position": "DT",
    "class": "JRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/xavier-turner/",
-   "name": "Xavier Turner",
+   "url": null,
+   "name": "Kone Aumua-Uiagalelei",
    "position_name": "Defensive Tackle",
-   "jersey": "85",
+   "jersey": "94",
    "team": "Utah State",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
@@ -16614,14 +16614,14 @@
    }
   },
   {
-   "slug": "kyle-pendleton",
+   "slug": "dakota-howell",
    "position": "SAM",
    "class": "SO",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/kyle-pendleton/",
-   "name": "Kyle Pendleton",
+   "url": null,
+   "name": "Dakota Howell",
    "position_name": "Sam Linebacker",
-   "jersey": "47",
+   "jersey": "31",
    "team": "Utah State",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -16875,12 +16875,12 @@
    }
   },
   {
-   "slug": "mike-ross",
+   "slug": "john-mcclellan",
    "position": "SAM",
    "class": "FR",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/mike-ross/",
-   "name": "Mike Ross",
+   "url": null,
+   "name": "John McClellan",
    "position_name": "Sam Linebacker",
    "jersey": "49",
    "team": "Utah State",
@@ -18807,12 +18807,12 @@
    }
   },
   {
-   "slug": "elias-guerrero",
+   "slug": "ryker-lotulelei",
    "position": "WILL",
    "class": "FR",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/elias-guerrero/",
-   "name": "Elias Guerrero",
+   "url": null,
+   "name": "Ryker Lotulelei",
    "position_name": "Will Linebacker",
    "jersey": "46",
    "team": "Utah State",
@@ -19642,12 +19642,12 @@
    }
   },
   {
-   "slug": "marcus-mckenzie",
+   "slug": "dontae-dyson",
    "position": "CB",
    "class": "SORS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/marcus-mckenzie/",
-   "name": "Marcus McKenzie",
+   "url": null,
+   "name": "Dontae Dyson",
    "position_name": "Cornerback",
    "jersey": "35",
    "team": "Utah State",
@@ -23500,12 +23500,12 @@
    }
   },
   {
-   "slug": "phillip-josephsen",
+   "slug": "will-evans",
    "position": "P",
    "class": "JR",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/phillip-josephsen/",
-   "name": "Phillip Josephsen",
+   "url": null,
+   "name": "Will Evans",
    "position_name": "Punter",
    "jersey": "48",
    "team": "Utah State",

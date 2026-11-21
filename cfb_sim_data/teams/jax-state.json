@@ -218,7 +218,7 @@
     "garrison-rippa"
    ],
    "P": [
-    "sam-o-lennon"
+    "carter-lewis"
    ],
    "KR": [
     "dylan-gentry"
@@ -240,7 +240,7 @@
    "andrew-paul",
    "justus-savage",
    "jalen-likely",
-   "jordan-savage",
+   "jamarious-acklin",
    "lucas-farrington",
    "cedric-kouemi"
   ],
@@ -268,7 +268,7 @@
    "amarii-atchison",
    "lance-johnson",
    "cameron-stancil",
-   "tj-mcduffie"
+   "storm-fain"
   ],
   "LG": [
    "caleb-holmes",
@@ -314,7 +314,7 @@
   ],
   "SAM": [
    "devin-pettway",
-   "mark-winters-smith"
+   "peyton-consaul"
   ],
   "MIKE": [
    "mac-sanders",
@@ -353,7 +353,7 @@
    "garrison-rippa"
   ],
   "P": [
-   "sam-o-lennon"
+   "carter-lewis"
   ]
  },
  "roster_size": 85,
@@ -2565,14 +2565,14 @@
    }
   },
   {
-   "slug": "jordan-savage",
+   "slug": "jamarious-acklin",
    "position": "HB",
    "class": "FR",
    "team_slug": "jax-state",
-   "url": "https://collegefootball.gg/players/jordan-savage/",
-   "name": "Jordan Savage",
+   "url": null,
+   "name": "Jamarious Acklin",
    "position_name": "Halfback",
-   "jersey": "39",
+   "jersey": "38",
    "team": "Jax State",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -8507,14 +8507,14 @@
    }
   },
   {
-   "slug": "tj-mcduffie",
+   "slug": "storm-fain",
    "position": "LT",
    "class": "FR",
    "team_slug": "jax-state",
-   "url": "https://collegefootball.gg/players/tj-mcduffie/",
-   "name": "TJ McDuffie",
+   "url": null,
+   "name": "Storm Fain",
    "position_name": "Left Tackle",
-   "jersey": "65",
+   "jersey": "52",
    "team": "Jax State",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -16884,14 +16884,14 @@
    }
   },
   {
-   "slug": "mark-winters-smith",
+   "slug": "peyton-consaul",
    "position": "SAM",
    "class": "SO",
    "team_slug": "jax-state",
-   "url": "https://collegefootball.gg/players/mark-winters-smith/",
-   "name": "Mark Winters-Smith",
+   "url": null,
+   "name": "Peyton Consaul",
    "position_name": "Sam Linebacker",
-   "jersey": "14",
+   "jersey": "48",
    "team": "Jax State",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -23881,12 +23881,12 @@
    }
   },
   {
-   "slug": "sam-o-lennon",
+   "slug": "carter-lewis",
    "position": "P",
    "class": "JR",
    "team_slug": "jax-state",
-   "url": "https://collegefootball.gg/players/sam-o-lennon/",
-   "name": "Sam O'Lennon",
+   "url": null,
+   "name": "Carter Lewis",
    "position_name": "Punter",
    "jersey": "41",
    "team": "Jax State",

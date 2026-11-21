@@ -235,7 +235,7 @@
    "john-mateer",
    "bowe-bentley",
    "whitt-newbauer",
-   "hunter-silverman"
+   "jett-niu"
   ],
   "HB": [
    "tory-blaylock",
@@ -268,7 +268,7 @@
   ],
   "LT": [
    "michael-fasusi",
-   "jhermane-smith"
+   "sean-hutton"
   ],
   "LG": [
    "eddy-pierre-louis",
@@ -284,7 +284,7 @@
   "RG": [
    "ryan-fodje",
    "heath-ozaeta",
-   "jamar-dobbins"
+   "ace-hodges"
   ],
   "RT": [
    "e-marion-harris",
@@ -311,7 +311,7 @@
    "adepoju-adebawore",
    "jake-kreul",
    "danny-okoye",
-   "daunte-hills"
+   "alex-shieldnight"
   ],
   "SAM": [
    "kristan-moore"
@@ -341,7 +341,7 @@
   "FS": [
    "michael-boganowski",
    "omarion-robinson",
-   "edward-garcia"
+   "preston-mickens"
   ],
   "SS": [
    "peyton-bowen",
@@ -1167,14 +1167,14 @@
    }
   },
   {
-   "slug": "hunter-silverman",
+   "slug": "jett-niu",
    "position": "QB",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/hunter-silverman/",
-   "name": "Hunter Silverman",
+   "url": null,
+   "name": "Jett Niu",
    "position_name": "Quarterback",
-   "jersey": "4",
+   "jersey": "15",
    "team": "Oklahoma",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -7932,14 +7932,14 @@
    }
   },
   {
-   "slug": "jhermane-smith",
+   "slug": "sean-hutton",
    "position": "LT",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/jhermane-smith/",
-   "name": "Jhermane Smith",
+   "url": null,
+   "name": "Sean Hutton",
    "position_name": "Left Tackle",
-   "jersey": "67",
+   "jersey": "64",
    "team": "Oklahoma",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -10701,14 +10701,14 @@
    }
   },
   {
-   "slug": "jamar-dobbins",
+   "slug": "ace-hodges",
    "position": "RG",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/jamar-dobbins/",
-   "name": "Jamar Dobbins",
+   "url": null,
+   "name": "Ace Hodges",
    "position_name": "Right Guard",
-   "jersey": "63",
+   "jersey": "65",
    "team": "Oklahoma",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -15874,14 +15874,14 @@
    }
   },
   {
-   "slug": "daunte-hills",
+   "slug": "alex-shieldnight",
    "position": "REDG",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/daunte-hills/",
-   "name": "Daunte Hills",
+   "url": null,
+   "name": "Alex Shieldnight",
    "position_name": "Right Edge",
-   "jersey": "78",
+   "jersey": "97",
    "team": "Oklahoma",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -21554,14 +21554,14 @@
    }
   },
   {
-   "slug": "edward-garcia",
+   "slug": "preston-mickens",
    "position": "FS",
    "class": "SO",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/edward-garcia/",
-   "name": "Edward Garcia",
+   "url": null,
+   "name": "Preston Mickens",
    "position_name": "Free Safety",
-   "jersey": "26",
+   "jersey": "27",
    "team": "Oklahoma",
    "class_year": "Sophomore",
    "height": "6'0\"",

@@ -291,7 +291,7 @@
    "josh-lukusa",
    "dylan-brooks",
    "caden-wiest",
-   "bryson-reader"
+   "maurice-jones-jr"
   ],
   "DT": [
    "markell-chapman",
@@ -312,7 +312,7 @@
   "SAM": [
    "cooper-roy",
    "austin-yelder",
-   "bam-booker"
+   "jedrick-russell-jr"
   ],
   "MIKE": [
    "jared-lloyd",
@@ -334,7 +334,7 @@
    "joel-kpassou",
    "floyd-williams",
    "gionni-mcbride",
-   "rudy-randolph",
+   "joseph-arnold",
    "darryon-taylor",
    "malik-ganaway"
   ],
@@ -12145,14 +12145,14 @@
    }
   },
   {
-   "slug": "bryson-reader",
+   "slug": "maurice-jones-jr",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "missouri-state",
-   "url": "https://collegefootball.gg/players/bryson-reader/",
-   "name": "Bryson Reader",
+   "url": null,
+   "name": "Maurice Jones Jr.",
    "position_name": "Left Edge",
-   "jersey": "74",
+   "jersey": "59",
    "team": "Missouri State",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -16296,14 +16296,14 @@
    }
   },
   {
-   "slug": "bam-booker",
+   "slug": "jedrick-russell-jr",
    "position": "SAM",
    "class": "FR",
    "team_slug": "missouri-state",
-   "url": "https://collegefootball.gg/players/bam-booker/",
-   "name": "Bam Booker",
+   "url": null,
+   "name": "Jedrick Russell Jr.",
    "position_name": "Sam Linebacker",
-   "jersey": "46",
+   "jersey": "48",
    "team": "Missouri State",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -21089,14 +21089,14 @@
    }
   },
   {
-   "slug": "rudy-randolph",
+   "slug": "joseph-arnold",
    "position": "CB",
    "class": "SO",
    "team_slug": "missouri-state",
-   "url": "https://collegefootball.gg/players/rudy-randolph/",
-   "name": "Rudy Randolph",
+   "url": null,
+   "name": "Joseph Arnold",
    "position_name": "Cornerback",
-   "jersey": "43",
+   "jersey": "28",
    "team": "Missouri State",
    "class_year": "Sophomore",
    "height": "5'9\"",

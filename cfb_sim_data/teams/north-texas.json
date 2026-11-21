@@ -241,7 +241,7 @@
    "jahiem-white",
    "brendon-haygood",
    "nick-osho",
-   "kingsley-alexander",
+   "adarion-nettles",
    "keenan-jackson-north-texas",
    "colin-page"
   ],
@@ -278,7 +278,7 @@
   ],
   "C": [
    "chandler-strong",
-   "andrew-cunningham",
+   "drew-cunningham-north-texas",
    "amarion-berry"
   ],
   "RG": [
@@ -288,7 +288,7 @@
   ],
   "RT": [
    "neto-umeozulu",
-   "maurice-horne",
+   "francisco-adams",
    "jahzari-priester"
   ],
   "LEDG": [
@@ -324,7 +324,7 @@
   "WILL": [
    "aaron-alexander",
    "chantz-johnson",
-   "ben-woodyard"
+   "kailer-pettijohn"
   ],
   "CB": [
    "caden-jenkins",
@@ -335,7 +335,7 @@
    "zach-johnson-north-texas",
    "jaden-allen",
    "anthony-benford-ii",
-   "erron-burks"
+   "aaden-little"
   ],
   "FS": [
    "taye-seymore",
@@ -353,7 +353,7 @@
   ],
   "K": [
    "dominic-de-freitas",
-   "lucas-fischer"
+   "michael-taylor-ii"
   ],
   "P": [
    "ian-ratliff"
@@ -2307,14 +2307,14 @@
    }
   },
   {
-   "slug": "kingsley-alexander",
+   "slug": "adarion-nettles",
    "position": "HB",
    "class": "FR",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/kingsley-alexander/",
-   "name": "Kingsley Alexander",
+   "url": null,
+   "name": "Adarion Nettles",
    "position_name": "Halfback",
-   "jersey": "37",
+   "jersey": "20",
    "team": "North Texas",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -9333,12 +9333,12 @@
    }
   },
   {
-   "slug": "andrew-cunningham",
+   "slug": "drew-cunningham-north-texas",
    "position": "C",
    "class": "SORS",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/andrew-cunningham/",
-   "name": "Andrew Cunningham",
+   "url": null,
+   "name": "Drew Cunningham",
    "position_name": "Center",
    "jersey": "61",
    "team": "North Texas",
@@ -10990,14 +10990,14 @@
    }
   },
   {
-   "slug": "maurice-horne",
+   "slug": "francisco-adams",
    "position": "RT",
    "class": "JR",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/maurice-horne/",
-   "name": "Maurice Horne",
+   "url": null,
+   "name": "Francisco Adams",
    "position_name": "Right Tackle",
-   "jersey": "59",
+   "jersey": "74",
    "team": "North Texas",
    "class_year": "Junior",
    "height": "6'5\"",
@@ -17376,14 +17376,14 @@
    }
   },
   {
-   "slug": "ben-woodyard",
+   "slug": "kailer-pettijohn",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/ben-woodyard/",
-   "name": "Ben Woodyard",
+   "url": null,
+   "name": "Kailer Pettijohn",
    "position_name": "Will Linebacker",
-   "jersey": "58",
+   "jersey": "40",
    "team": "North Texas",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -20214,14 +20214,14 @@
    }
   },
   {
-   "slug": "erron-burks",
+   "slug": "aaden-little",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/erron-burks/",
-   "name": "Erron Burks",
+   "url": null,
+   "name": "Aaden Little",
    "position_name": "Cornerback",
-   "jersey": "40",
+   "jersey": "31",
    "team": "North Texas",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -23619,14 +23619,14 @@
    }
   },
   {
-   "slug": "lucas-fischer",
+   "slug": "michael-taylor-ii",
    "position": "K",
    "class": "FR",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/lucas-fischer/",
-   "name": "Lucas Fischer",
+   "url": null,
+   "name": "Michael Taylor II",
    "position_name": "Kicker",
-   "jersey": "92",
+   "jersey": "48",
    "team": "North Texas",
    "class_year": "Freshman",
    "height": "5'11\"",

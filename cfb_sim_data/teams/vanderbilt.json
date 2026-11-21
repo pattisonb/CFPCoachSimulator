@@ -171,7 +171,7 @@
     "cole-spence"
    ],
    "LT": [
-    "nathan-butler"
+    "beau-johnson"
    ],
    "LG": [
     "cade-mcconnell"
@@ -218,7 +218,7 @@
     "brock-taylor"
    ],
    "P": [
-    "peyton-west"
+    "conor-weasler"
    ],
    "KR": [
     "cole-adams"
@@ -266,10 +266,10 @@
    "kaden-schickel"
   ],
   "LT": [
-   "nathan-butler",
-   "jalen-murrell",
+   "beau-johnson",
+   "max-fisher",
    "cj-williams",
-   "jason-ash"
+   "nate-fleming"
   ],
   "LG": [
    "cade-mcconnell",
@@ -352,7 +352,7 @@
    "justin-dewers"
   ],
   "P": [
-   "peyton-west",
+   "conor-weasler",
    "tyler-ebel"
   ]
  },
@@ -7789,14 +7789,14 @@
    }
   },
   {
-   "slug": "nathan-butler",
+   "slug": "beau-johnson",
    "position": "LT",
    "class": "JR",
    "team_slug": "vanderbilt",
-   "url": "https://collegefootball.gg/players/nathan-butler/",
-   "name": "Nathan Butler",
+   "url": null,
+   "name": "Beau Johnson",
    "position_name": "Left Tackle",
-   "jersey": "76",
+   "jersey": "75",
    "team": "Vanderbilt",
    "class_year": "Junior",
    "height": "6'7\"",
@@ -8042,14 +8042,14 @@
    }
   },
   {
-   "slug": "jalen-murrell",
+   "slug": "max-fisher",
    "position": "LT",
    "class": "JRRS",
    "team_slug": "vanderbilt",
-   "url": "https://collegefootball.gg/players/jalen-murrell/",
-   "name": "Jalen Murrell",
+   "url": null,
+   "name": "Max Fisher",
    "position_name": "Left Tackle",
-   "jersey": "63",
+   "jersey": "57",
    "team": "Vanderbilt",
    "class_year": "Junior (RS)",
    "height": "6'6\"",
@@ -8556,12 +8556,12 @@
    }
   },
   {
-   "slug": "jason-ash",
+   "slug": "nate-fleming",
    "position": "LT",
    "class": "FR",
    "team_slug": "vanderbilt",
-   "url": "https://collegefootball.gg/players/jason-ash/",
-   "name": "Jason Ash",
+   "url": null,
+   "name": "Nate Fleming",
    "position_name": "Left Tackle",
    "jersey": "60",
    "team": "Vanderbilt",
@@ -23466,14 +23466,14 @@
    }
   },
   {
-   "slug": "peyton-west",
+   "slug": "conor-weasler",
    "position": "P",
    "class": "SR",
    "team_slug": "vanderbilt",
-   "url": "https://collegefootball.gg/players/peyton-west/",
-   "name": "Peyton West",
+   "url": null,
+   "name": "Conor Weasler",
    "position_name": "Punter",
-   "jersey": "46",
+   "jersey": "79",
    "team": "Vanderbilt",
    "class_year": "Senior",
    "height": "6'3\"",

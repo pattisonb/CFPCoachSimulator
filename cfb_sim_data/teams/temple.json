@@ -241,7 +241,7 @@
    "hunter-smith",
    "samuel-brown-v",
    "keveun-mason",
-   "josh-forbes",
+   "johnny-martin",
    "r-j-blount",
    "ameir-morrow"
   ],
@@ -273,7 +273,7 @@
    "eric-king",
    "john-watkins",
    "mausa-palu",
-   "clint-clements"
+   "logan-king"
   ],
   "C": [
    "grayson-mains",
@@ -288,7 +288,7 @@
   "RT": [
    "luke-watson",
    "ransom-mcdermott",
-   "alex-wood"
+   "khalif-mcnear"
   ],
   "LEDG": [
    "jamair-diaz",
@@ -354,7 +354,7 @@
   ],
   "P": [
    "dante-atton",
-   "morris-jones"
+   "luke-sword"
   ]
  },
  "roster_size": 85,
@@ -2655,14 +2655,14 @@
    }
   },
   {
-   "slug": "josh-forbes",
+   "slug": "johnny-martin",
    "position": "HB",
    "class": "FR",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/josh-forbes/",
-   "name": "Josh Forbes",
+   "url": null,
+   "name": "Johnny Martin",
    "position_name": "Halfback",
-   "jersey": "8",
+   "jersey": "22",
    "team": "Temple",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -9178,14 +9178,14 @@
    }
   },
   {
-   "slug": "clint-clements",
+   "slug": "logan-king",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/clint-clements/",
-   "name": "Clint Clements",
+   "url": null,
+   "name": "Logan King",
    "position_name": "Left Guard",
-   "jersey": "60",
+   "jersey": "58",
    "team": "Temple",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -11417,14 +11417,14 @@
    }
   },
   {
-   "slug": "alex-wood",
+   "slug": "khalif-mcnear",
    "position": "RT",
    "class": "SO",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/alex-wood/",
-   "name": "Alex Wood",
+   "url": null,
+   "name": "Khalif McNear",
    "position_name": "Right Tackle",
-   "jersey": "79",
+   "jersey": "53",
    "team": "Temple",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -23835,14 +23835,14 @@
    }
   },
   {
-   "slug": "morris-jones",
+   "slug": "luke-sword",
    "position": "P",
    "class": "SORS",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/morris-jones/",
-   "name": "Morris Jones",
+   "url": null,
+   "name": "Luke Sword",
    "position_name": "Punter",
-   "jersey": "5",
+   "jersey": "91",
    "team": "Temple",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",

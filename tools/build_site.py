@@ -62,6 +62,8 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
     root = work / "project"
     for pkg in PACKAGES:
         shutil.copytree(ROOT / pkg, root / pkg, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # the preset faces go with the rosters (the player's ask): a face file holds face parts only, keyed by player id
+    # and coach name, and a generic build's scrub renames those keys and the file with everything else
     shutil.copytree(ROOT / "cfb_sim_data", root / "cfb_sim_data")
     (root / "data" / "history").mkdir(parents=True)
     for p in sorted((ROOT / "data").glob("*.json")):
@@ -90,6 +92,7 @@ def game_files(root: Path) -> list[str]:
     files += DATA_FILES
     meta = json.loads((root / "data" / "base_meta.json").read_text(encoding="utf-8"))
     files += [f"cfb_sim_data/teams/{s}.json" for s in sorted(meta) if meta[s].get("fictional")]
+    files += sorted(p.relative_to(root).as_posix() for p in (root / "cfb_sim_data" / "faces").glob("*.json"))
     return files
 
 

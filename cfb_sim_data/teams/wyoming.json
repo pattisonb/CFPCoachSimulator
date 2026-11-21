@@ -266,7 +266,7 @@
   ],
   "LT": [
    "rex-johnsen",
-   "rudy-bartlett",
+   "nathan-geiger",
    "josiah-petaia"
   ],
   "LG": [
@@ -277,7 +277,7 @@
   ],
   "C": [
    "chandler-donaway",
-   "hugh-barnes",
+   "tariq-miller",
    "johnathan-bush"
   ],
   "RG": [
@@ -320,7 +320,7 @@
   "WILL": [
    "karson-butts",
    "gary-rutherford",
-   "tyrone-phelps"
+   "dante-bruley"
   ],
   "CB": [
    "logan-mackey",
@@ -329,7 +329,7 @@
    "junus-mcgraw",
    "bj-inmon",
    "david-leonard",
-   "kendrick-mcalister",
+   "dainsus-miller",
    "therman-williams",
    "kendall-griffin"
   ],
@@ -7920,14 +7920,14 @@
    }
   },
   {
-   "slug": "rudy-bartlett",
+   "slug": "nathan-geiger",
    "position": "LT",
    "class": "JR",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/rudy-bartlett/",
-   "name": "Rudy Bartlett",
+   "url": null,
+   "name": "Nathan Geiger",
    "position_name": "Left Tackle",
-   "jersey": "78",
+   "jersey": "65",
    "team": "Wyoming",
    "class_year": "Junior",
    "height": "6'7\"",
@@ -9814,14 +9814,14 @@
    }
   },
   {
-   "slug": "hugh-barnes",
+   "slug": "tariq-miller",
    "position": "C",
    "class": "FRRS",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/hugh-barnes/",
-   "name": "Hugh Barnes",
+   "url": null,
+   "name": "Tariq Miller",
    "position_name": "Center",
-   "jersey": "58",
+   "jersey": "74",
    "team": "Wyoming",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -17501,14 +17501,14 @@
    }
   },
   {
-   "slug": "tyrone-phelps",
+   "slug": "dante-bruley",
    "position": "WILL",
    "class": "FR",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/tyrone-phelps/",
-   "name": "Tyrone Phelps",
+   "url": null,
+   "name": "Dante Bruley",
    "position_name": "Will Linebacker",
-   "jersey": "48",
+   "jersey": "40",
    "team": "Wyoming",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -19478,14 +19478,14 @@
    }
   },
   {
-   "slug": "kendrick-mcalister",
+   "slug": "dainsus-miller",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/kendrick-mcalister/",
-   "name": "Kendrick McAlister",
+   "url": null,
+   "name": "Dainsus Miller",
    "position_name": "Cornerback",
-   "jersey": "31",
+   "jersey": "20",
    "team": "Wyoming",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",

@@ -241,7 +241,7 @@
    "maurki-james",
    "trey-hall",
    "charles-jackson",
-   "michael-hillhouse"
+   "troy-marquez"
   ],
   "FB": [],
   "WR": [
@@ -253,7 +253,7 @@
    "bj-bedgood",
    "zialis-blackmon",
    "joshua-rodriguez",
-   "xavier-goodwin",
+   "steven-bengu",
    "brayden-myovela"
   ],
   "TE": [
@@ -267,26 +267,26 @@
    "raykwon-goldthwaite",
    "keegan-parker",
    "braden-ellis",
-   "matthew-patton"
+   "omar-bender"
   ],
   "LG": [
    "brayden-walker",
-   "dean-hurns"
+   "bubba-craig"
   ],
   "C": [
    "khi-len-gates",
    "demorrsion-brown",
-   "kevin-bass",
+   "wesley-lattus",
    "dory-lewis-wilson"
   ],
   "RG": [
    "logan-cox",
    "connor-drake",
-   "jason-carson"
+   "jack-sheehan"
   ],
   "RT": [
    "kendrick-hall",
-   "martez-curry",
+   "joey-mcgowan",
    "carson-bradley"
   ],
   "LEDG": [
@@ -297,9 +297,9 @@
    "chris-forbes",
    "deandre-lynch",
    "bucci-farmer",
-   "glen-colvin",
+   "malachi-harris",
    "lorenzo-mcfadden-pressley",
-   "andrew-sutherland",
+   "chris-hilliard",
    "hunter-malecki"
   ],
   "REDG": [
@@ -315,7 +315,7 @@
    "koa-naotala",
    "ja-mez-drummer",
    "aj-ashworth",
-   "ramon-gold",
+   "ladarius-adams-ii",
    "de-veion-mclilley-bulo"
   ],
   "WILL": [
@@ -330,7 +330,7 @@
    "jed-olotu-judah",
    "jorian-haynes",
    "justin-watts",
-   "kenan-albury",
+   "eddie-guerra",
    "daniel-pickens"
   ],
   "FS": [
@@ -338,10 +338,10 @@
    "kollin-collier",
    "shaquille-leaks",
    "asher-horn",
-   "jameel-madison",
+   "greg-johnson-old-dominion",
    "jehahj-sherrill",
-   "derek-beasley",
-   "jace-coats"
+   "chris-boykins",
+   "martrez-chavious-fenner"
   ],
   "SS": [
    "daevon-iles",
@@ -2946,14 +2946,14 @@
    }
   },
   {
-   "slug": "michael-hillhouse",
+   "slug": "troy-marquez",
    "position": "HB",
    "class": "SORS",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/michael-hillhouse/",
-   "name": "Michael Hillhouse",
+   "url": null,
+   "name": "Troy Marquez",
    "position_name": "Halfback",
-   "jersey": "47",
+   "jersey": "28",
    "team": "Old Dominion",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
@@ -5782,12 +5782,12 @@
    }
   },
   {
-   "slug": "xavier-goodwin",
+   "slug": "steven-bengu",
    "position": "WR",
    "class": "SO",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/xavier-goodwin/",
-   "name": "Xavier Goodwin",
+   "url": null,
+   "name": "Steven Bengu",
    "position_name": "Wide Receiver",
    "jersey": "21",
    "team": "Old Dominion",
@@ -8362,12 +8362,12 @@
    }
   },
   {
-   "slug": "matthew-patton",
+   "slug": "omar-bender",
    "position": "LT",
    "class": "JR",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/matthew-patton/",
-   "name": "Matthew Patton",
+   "url": null,
+   "name": "Omar Bender",
    "position_name": "Left Tackle",
    "jersey": "56",
    "team": "Old Dominion",
@@ -8889,12 +8889,12 @@
    }
   },
   {
-   "slug": "dean-hurns",
+   "slug": "bubba-craig",
    "position": "LG",
    "class": "SORS",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/dean-hurns/",
-   "name": "Dean Hurns",
+   "url": null,
+   "name": "Bubba Craig",
    "position_name": "Left Guard",
    "jersey": "76",
    "team": "Old Dominion",
@@ -10014,14 +10014,14 @@
    }
   },
   {
-   "slug": "kevin-bass",
+   "slug": "wesley-lattus",
    "position": "C",
    "class": "FR",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/kevin-bass/",
-   "name": "Kevin Bass",
+   "url": null,
+   "name": "Wesley Lattus",
    "position_name": "Center",
-   "jersey": "65",
+   "jersey": "77",
    "team": "Old Dominion",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -10854,14 +10854,14 @@
    }
   },
   {
-   "slug": "jason-carson",
+   "slug": "jack-sheehan",
    "position": "RG",
    "class": "SO",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/jason-carson/",
-   "name": "Jason Carson",
+   "url": null,
+   "name": "Jack Sheehan",
    "position_name": "Right Guard",
-   "jersey": "52",
+   "jersey": "71",
    "team": "Old Dominion",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -11386,14 +11386,14 @@
    }
   },
   {
-   "slug": "martez-curry",
+   "slug": "joey-mcgowan",
    "position": "RT",
    "class": "SR",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/martez-curry/",
-   "name": "Martez Curry",
+   "url": null,
+   "name": "Joey McGowan",
    "position_name": "Right Tackle",
-   "jersey": "68",
+   "jersey": "62",
    "team": "Old Dominion",
    "class_year": "Senior",
    "height": "6'3\"",
@@ -13276,14 +13276,14 @@
    }
   },
   {
-   "slug": "glen-colvin",
+   "slug": "malachi-harris",
    "position": "DT",
    "class": "JRRS",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/glen-colvin/",
-   "name": "Glen Colvin",
+   "url": null,
+   "name": "Malachi Harris",
    "position_name": "Defensive Tackle",
-   "jersey": "98",
+   "jersey": "88",
    "team": "Old Dominion",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
@@ -13800,14 +13800,14 @@
    }
   },
   {
-   "slug": "andrew-sutherland",
+   "slug": "chris-hilliard",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/andrew-sutherland/",
-   "name": "Andrew Sutherland",
+   "url": null,
+   "name": "Chris Hilliard",
    "position_name": "Defensive Tackle",
-   "jersey": "71",
+   "jersey": "93",
    "team": "Old Dominion",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -16618,14 +16618,14 @@
    }
   },
   {
-   "slug": "ramon-gold",
+   "slug": "ladarius-adams-ii",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/ramon-gold/",
-   "name": "Ramon Gold",
+   "url": null,
+   "name": "LaDarius Adams II",
    "position_name": "Mike Linebacker",
-   "jersey": "51",
+   "jersey": "35",
    "team": "Old Dominion",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -19686,14 +19686,14 @@
    }
   },
   {
-   "slug": "kenan-albury",
+   "slug": "eddie-guerra",
    "position": "CB",
    "class": "FR",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/kenan-albury/",
-   "name": "Kenan Albury",
+   "url": null,
+   "name": "Eddie Guerra",
    "position_name": "Cornerback",
-   "jersey": "37",
+   "jersey": "21",
    "team": "Old Dominion",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -21327,14 +21327,14 @@
    }
   },
   {
-   "slug": "jameel-madison",
+   "slug": "greg-johnson-old-dominion",
    "position": "FS",
    "class": "JR",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/jameel-madison/",
-   "name": "Jameel Madison",
+   "url": null,
+   "name": "Greg Johnson",
    "position_name": "Free Safety",
-   "jersey": "35",
+   "jersey": "8",
    "team": "Old Dominion",
    "class_year": "Junior",
    "height": "5'10\"",
@@ -21882,12 +21882,12 @@
    }
   },
   {
-   "slug": "derek-beasley",
+   "slug": "chris-boykins",
    "position": "FS",
    "class": "FRRS",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/derek-beasley/",
-   "name": "Derek Beasley",
+   "url": null,
+   "name": "Chris Boykins",
    "position_name": "Free Safety",
    "jersey": "28",
    "team": "Old Dominion",
@@ -22140,14 +22140,14 @@
    }
   },
   {
-   "slug": "jace-coats",
+   "slug": "martrez-chavious-fenner",
    "position": "FS",
    "class": "SO",
    "team_slug": "old-dominion",
-   "url": "https://collegefootball.gg/players/jace-coats/",
-   "name": "Jace Coats",
+   "url": null,
+   "name": "Martrez Chavious-Fenner",
    "position_name": "Free Safety",
-   "jersey": "45",
+   "jersey": "39",
    "team": "Old Dominion",
    "class_year": "Sophomore",
    "height": "5'9\"",

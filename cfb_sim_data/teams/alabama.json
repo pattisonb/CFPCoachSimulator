@@ -218,7 +218,7 @@
   },
   "special_teams": {
    "K": [
-    "mitch-king"
+    "tucker-cornelius"
    ],
    "P": [
     "adam-watford"
@@ -271,12 +271,12 @@
    "jayvin-james",
    "jackson-lloyd",
    "bryson-cooley",
-   "david-franks-wilson"
+   "jared-graham"
   ],
   "LG": [
    "william-sanders",
    "nick-brooks",
-   "chris-lucas-jr"
+   "bear-fretwell"
   ],
   "C": [
    "racin-delgatty",
@@ -291,7 +291,7 @@
   "RT": [
    "michael-carroll",
    "ty-haywood",
-   "jaquan-sullivan"
+   "jd-martin"
   ],
   "LEDG": [
    "jah-marien-latham",
@@ -312,7 +312,7 @@
    "yhonzae-pierre",
    "justin-hill",
    "desmond-umeozulu",
-   "derrick-vincent-douglas"
+   "malique-franklin"
   ],
   "SAM": [
    "cayden-jones"
@@ -333,7 +333,7 @@
    "zabien-brown",
    "dijon-lee-jr",
    "jorden-edmonds",
-   "antonio-parks-iii",
+   "griffin-hanson",
    "chuck-mcdonald-iii",
    "carmelo-oneal",
    "nick-sherman"
@@ -350,13 +350,13 @@
    "ivan-taylor"
   ],
   "K": [
-   "mitch-king",
+   "tucker-cornelius",
    "conor-talty",
-   "alex-moore-iii"
+   "lorcan-quinn"
   ],
   "P": [
    "adam-watford",
-   "noah-vallow"
+   "alex-asparuhov"
   ]
  },
  "roster_size": 85,
@@ -8385,14 +8385,14 @@
    }
   },
   {
-   "slug": "david-franks-wilson",
+   "slug": "jared-graham",
    "position": "LT",
    "class": "FR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/david-franks-wilson/",
-   "name": "David Franks-Wilson",
+   "url": null,
+   "name": "Jared Graham",
    "position_name": "Left Tackle",
-   "jersey": "61",
+   "jersey": "66",
    "team": "Alabama",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -9215,14 +9215,14 @@
    }
   },
   {
-   "slug": "chris-lucas-jr",
+   "slug": "bear-fretwell",
    "position": "LG",
    "class": "FR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/chris-lucas-jr/",
-   "name": "Chris Lucas Jr.",
+   "url": null,
+   "name": "Bear Fretwell",
    "position_name": "Left Guard",
-   "jersey": "60",
+   "jersey": "57",
    "team": "Alabama",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -11579,12 +11579,12 @@
    }
   },
   {
-   "slug": "jaquan-sullivan",
+   "slug": "jd-martin",
    "position": "RT",
    "class": "FR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/jaquan-sullivan/",
-   "name": "JaQuan Sullivan",
+   "url": null,
+   "name": "JD Martin",
    "position_name": "Right Tackle",
    "jersey": "59",
    "team": "Alabama",
@@ -15330,14 +15330,14 @@
    }
   },
   {
-   "slug": "derrick-vincent-douglas",
+   "slug": "malique-franklin",
    "position": "REDG",
    "class": "FR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/derrick-vincent-douglas/",
-   "name": "Derrick Vincent-Douglas",
+   "url": null,
+   "name": "Malique Franklin",
    "position_name": "Right Edge",
-   "jersey": "66",
+   "jersey": "93",
    "team": "Alabama",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -19179,12 +19179,12 @@
    }
   },
   {
-   "slug": "antonio-parks-iii",
+   "slug": "griffin-hanson",
    "position": "CB",
    "class": "JR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/antonio-parks-iii/",
-   "name": "Antonio Parks III",
+   "url": null,
+   "name": "Griffin Hanson",
    "position_name": "Cornerback",
    "jersey": "32",
    "team": "Alabama",
@@ -22501,14 +22501,14 @@
    }
   },
   {
-   "slug": "mitch-king",
+   "slug": "tucker-cornelius",
    "position": "K",
    "class": "JR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/mitch-king/",
-   "name": "Mitch King",
+   "url": null,
+   "name": "Tucker Cornelius",
    "position_name": "Kicker",
-   "jersey": "45",
+   "jersey": "98",
    "team": "Alabama",
    "class_year": "Junior",
    "height": "6'4\"",
@@ -22740,14 +22740,14 @@
    }
   },
   {
-   "slug": "alex-moore-iii",
+   "slug": "lorcan-quinn",
    "position": "K",
    "class": "FR",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/alex-moore-iii/",
-   "name": "Alex Moore III",
+   "url": null,
+   "name": "Lorcan Quinn",
    "position_name": "Kicker",
-   "jersey": "38",
+   "jersey": "90",
    "team": "Alabama",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -23233,14 +23233,14 @@
    }
   },
   {
-   "slug": "noah-vallow",
+   "slug": "alex-asparuhov",
    "position": "P",
    "class": "SO",
    "team_slug": "alabama",
-   "url": "https://collegefootball.gg/players/noah-vallow/",
-   "name": "Noah Vallow",
+   "url": null,
+   "name": "Alex Asparuhov",
    "position_name": "Punter",
-   "jersey": "89",
+   "jersey": "32",
    "team": "Alabama",
    "class_year": "Sophomore",
    "height": "6'2\"",

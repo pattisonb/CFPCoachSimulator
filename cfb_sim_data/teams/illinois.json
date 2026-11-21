@@ -254,7 +254,7 @@
    "ty-robinson",
    "nas-rankin",
    "brayden-trimble",
-   "jaylin-raywood",
+   "karson-kaiser",
    "kenyon-alston",
    "jershaun-newton"
   ],
@@ -315,7 +315,7 @@
   ],
   "SAM": [
    "joe-barna",
-   "kellan-dubose"
+   "kayden-bennett"
   ],
   "MIKE": [
    "grant-beerman",
@@ -4541,14 +4541,14 @@
    }
   },
   {
-   "slug": "jaylin-raywood",
+   "slug": "karson-kaiser",
    "position": "WR",
    "class": "SO",
    "team_slug": "illinois",
-   "url": "https://collegefootball.gg/players/jaylin-raywood/",
-   "name": "Jaylin Raywood",
+   "url": null,
+   "name": "Karson Kaiser",
    "position_name": "Wide Receiver",
-   "jersey": "84",
+   "jersey": "28",
    "team": "Illinois",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -16043,14 +16043,14 @@
    }
   },
   {
-   "slug": "kellan-dubose",
+   "slug": "kayden-bennett",
    "position": "SAM",
    "class": "SO",
    "team_slug": "illinois",
-   "url": "https://collegefootball.gg/players/kellan-dubose/",
-   "name": "Kellan Dubose",
+   "url": null,
+   "name": "Kayden Bennett",
    "position_name": "Sam Linebacker",
-   "jersey": "41",
+   "jersey": "28",
    "team": "Illinois",
    "class_year": "Sophomore",
    "height": "6'3\"",

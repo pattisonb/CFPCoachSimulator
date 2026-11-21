@@ -43,6 +43,8 @@ export interface TeamDetail extends TeamCard {
 
 export interface TeamsResponse {
   teams: TeamCard[];
+  /** the preset faces (cfb_sim_data/faces): players by slug, coaches by name */
+  faces?: { players?: Record<string, unknown>; coaches?: Record<string, unknown> };
 }
 
 /** GET /api/seasons → seasons[] (app/api.py list_seasons) */

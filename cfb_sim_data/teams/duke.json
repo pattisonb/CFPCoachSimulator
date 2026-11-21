@@ -198,7 +198,7 @@
    ],
    "DT": [
     "preston-watson",
-    "cliff-drummond"
+    "owen-wafle"
    ],
    "LB": [
     "luke-mergott",
@@ -289,7 +289,7 @@
   "RT": [
    "braden-miller",
    "cole-allen",
-   "daryl-milner"
+   "jamin-brown"
   ],
   "LEDG": [
    "tyshon-reed",
@@ -299,7 +299,7 @@
   ],
   "DT": [
    "preston-watson",
-   "cliff-drummond",
+   "owen-wafle",
    "bariate-kara",
    "david-anderson",
    "julius-columbus",
@@ -327,7 +327,7 @@
   "WILL": [
    "luke-mergott",
    "bradley-gompers",
-   "lorenzo-lashley"
+   "asher-wasserman"
   ],
   "CB": [
    "kimari-robinson",
@@ -353,7 +353,7 @@
   "K": [
    "cosme-salas",
    "ashton-zamani",
-   "brayden-moore"
+   "gavin-strange"
   ],
   "P": [
    "kade-reynoldson"
@@ -11241,14 +11241,14 @@
    }
   },
   {
-   "slug": "daryl-milner",
+   "slug": "jamin-brown",
    "position": "RT",
    "class": "FR",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/daryl-milner/",
-   "name": "Daryl Milner",
+   "url": null,
+   "name": "Jamin Brown",
    "position_name": "Right Tackle",
-   "jersey": "59",
+   "jersey": "71",
    "team": "Duke",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -13097,14 +13097,14 @@
    }
   },
   {
-   "slug": "cliff-drummond",
+   "slug": "owen-wafle",
    "position": "DT",
    "class": "JRRS",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/cliff-drummond/",
-   "name": "Cliff Drummond",
+   "url": null,
+   "name": "Owen Wafle",
    "position_name": "Defensive Tackle",
-   "jersey": "89",
+   "jersey": "91",
    "team": "Duke",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
@@ -18385,14 +18385,14 @@
    }
   },
   {
-   "slug": "lorenzo-lashley",
+   "slug": "asher-wasserman",
    "position": "WILL",
    "class": "FR",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/lorenzo-lashley/",
-   "name": "Lorenzo Lashley",
+   "url": null,
+   "name": "Asher Wasserman",
    "position_name": "Will Linebacker",
-   "jersey": "49",
+   "jersey": "40",
    "team": "Duke",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -23460,14 +23460,14 @@
    }
   },
   {
-   "slug": "brayden-moore",
+   "slug": "gavin-strange",
    "position": "K",
    "class": "SO",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/brayden-moore/",
-   "name": "Brayden Moore",
+   "url": null,
+   "name": "Gavin Strange",
    "position_name": "Kicker",
-   "jersey": "46",
+   "jersey": "25",
    "team": "Duke",
    "class_year": "Sophomore",
    "height": "6'2\"",

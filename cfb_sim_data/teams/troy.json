@@ -202,7 +202,7 @@
     "keno-jones"
    ],
    "CB": [
-    "andrew-clifford",
+    "antonious-steele",
     "shemar-welch",
     "marlin-odom"
    ],
@@ -277,17 +277,17 @@
   "C": [
    "tyler-cappi",
    "tyler-bell",
-   "kletus-watts"
+   "parks-glaze"
   ],
   "RG": [
    "luke-petit",
    "sharvon-pierre",
-   "justin-mills"
+   "trinton-pritchett"
   ],
   "RT": [
    "jordon-jones",
    "antwone-breland",
-   "sergio-sheard",
+   "corey-dudley",
    "caleb-ash"
   ],
   "LEDG": [
@@ -306,9 +306,9 @@
   ],
   "REDG": [
    "donnie-smith",
-   "nicholas-walton",
-   "deion-griffin",
-   "andrew-hill"
+   "kendall-roseberry",
+   "delvin-whitaker",
+   "dontaye-bush"
   ],
   "SAM": [
    "doug-nelson",
@@ -328,7 +328,7 @@
    "jeremiah-alvis"
   ],
   "CB": [
-   "andrew-clifford",
+   "antonious-steele",
    "shemar-welch",
    "marlin-odom",
    "jordan-turner",
@@ -349,11 +349,11 @@
   "K": [
    "ethan-head",
    "hayden-wolfe",
-   "justin-irons"
+   "jaden-tynes"
   ],
   "P": [
    "evan-crenshaw",
-   "case-nash"
+   "austin-lewis"
   ]
  },
  "roster_size": 85,
@@ -9968,14 +9968,14 @@
    }
   },
   {
-   "slug": "kletus-watts",
+   "slug": "parks-glaze",
    "position": "C",
    "class": "FR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/kletus-watts/",
-   "name": "Kletus Watts",
+   "url": null,
+   "name": "Parks Glaze",
    "position_name": "Center",
-   "jersey": "62",
+   "jersey": "75",
    "team": "Troy",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -10762,14 +10762,14 @@
    }
   },
   {
-   "slug": "justin-mills",
+   "slug": "trinton-pritchett",
    "position": "RG",
    "class": "SORS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/justin-mills/",
-   "name": "Justin Mills",
+   "url": null,
+   "name": "Trinton Pritchett",
    "position_name": "Right Guard",
-   "jersey": "68",
+   "jersey": "67",
    "team": "Troy",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
@@ -11537,14 +11537,14 @@
    }
   },
   {
-   "slug": "sergio-sheard",
+   "slug": "corey-dudley",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/sergio-sheard/",
-   "name": "Sergio Sheard",
+   "url": null,
+   "name": "Corey Dudley",
    "position_name": "Right Tackle",
-   "jersey": "52",
+   "jersey": "79",
    "team": "Troy",
    "class_year": "Freshman (RS)",
    "height": "6'8\"",
@@ -15039,14 +15039,14 @@
    }
   },
   {
-   "slug": "nicholas-walton",
+   "slug": "kendall-roseberry",
    "position": "REDG",
    "class": "SORS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/nicholas-walton/",
-   "name": "Nicholas Walton",
+   "url": null,
+   "name": "Kendall Roseberry",
    "position_name": "Right Edge",
-   "jersey": "97",
+   "jersey": "52",
    "team": "Troy",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
@@ -15295,14 +15295,14 @@
    }
   },
   {
-   "slug": "andrew-hill",
+   "slug": "dontaye-bush",
    "position": "REDG",
    "class": "FR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/andrew-hill/",
-   "name": "Andrew Hill",
+   "url": null,
+   "name": "Dontaye Bush",
    "position_name": "Right Edge",
-   "jersey": "76",
+   "jersey": "34",
    "team": "Troy",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -15554,12 +15554,12 @@
    }
   },
   {
-   "slug": "deion-griffin",
+   "slug": "delvin-whitaker",
    "position": "REDG",
    "class": "FR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/deion-griffin/",
-   "name": "Deion Griffin",
+   "url": null,
+   "name": "Delvin Whitaker",
    "position_name": "Right Edge",
    "jersey": "98",
    "team": "Troy",
@@ -18946,12 +18946,12 @@
    }
   },
   {
-   "slug": "andrew-clifford",
+   "slug": "antonious-steele",
    "position": "CB",
    "class": "SR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/andrew-clifford/",
-   "name": "Andrew Clifford",
+   "url": null,
+   "name": "Antonious Steele",
    "position_name": "Cornerback",
    "jersey": "16",
    "team": "Troy",
@@ -23101,14 +23101,14 @@
    }
   },
   {
-   "slug": "justin-irons",
+   "slug": "jaden-tynes",
    "position": "K",
    "class": "SO",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/justin-irons/",
-   "name": "Justin Irons",
+   "url": null,
+   "name": "Jaden Tynes",
    "position_name": "Kicker",
-   "jersey": "83",
+   "jersey": "20",
    "team": "Troy",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -23593,14 +23593,14 @@
    }
   },
   {
-   "slug": "case-nash",
+   "slug": "austin-lewis",
    "position": "P",
    "class": "JRRS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/case-nash/",
-   "name": "Case Nash",
+   "url": null,
+   "name": "Austin Lewis",
    "position_name": "Punter",
-   "jersey": "96",
+   "jersey": "49",
    "team": "Troy",
    "class_year": "Junior (RS)",
    "height": "6'2\"",

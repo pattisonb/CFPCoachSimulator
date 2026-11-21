@@ -252,7 +252,7 @@
    "collin-payne",
    "justin-ruffin-jr",
    "nasir-williams",
-   "graham-barr",
+   "da-shon-febres",
    "camden-kruisenga",
    "braylen-naves",
    "shawn-foster-ii",
@@ -318,7 +318,7 @@
   ],
   "MIKE": [
    "xavier-white",
-   "kristian-mcalister",
+   "elijah-reynolds",
    "donovan-brown-c-michigan"
   ],
   "WILL": [
@@ -4909,14 +4909,14 @@
    }
   },
   {
-   "slug": "graham-barr",
+   "slug": "da-shon-febres",
    "position": "WR",
    "class": "FRRS",
    "team_slug": "c-michigan",
-   "url": "https://collegefootball.gg/players/graham-barr/",
-   "name": "Graham Barr",
+   "url": null,
+   "name": "Da'Shon Febres",
    "position_name": "Wide Receiver",
-   "jersey": "46",
+   "jersey": "83",
    "team": "C. Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
@@ -16985,14 +16985,14 @@
    }
   },
   {
-   "slug": "kristian-mcalister",
+   "slug": "elijah-reynolds",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "c-michigan",
-   "url": "https://collegefootball.gg/players/kristian-mcalister/",
-   "name": "Kristian McAlister",
+   "url": null,
+   "name": "Elijah Reynolds",
    "position_name": "Mike Linebacker",
-   "jersey": "94",
+   "jersey": "33",
    "team": "C. Michigan",
    "class_year": "Sophomore",
    "height": "6'2\"",

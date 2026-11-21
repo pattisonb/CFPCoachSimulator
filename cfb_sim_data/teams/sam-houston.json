@@ -231,7 +231,7 @@
  "depth_chart": {
   "QB": [
    "landyn-locke",
-   "chris-blair",
+   "mason-holtzclaw",
    "dj-bailey",
    "brett-holloway"
   ],
@@ -239,7 +239,7 @@
    "alton-mccaskill",
    "landan-brown",
    "jerrian-parker-jr",
-   "jarius-moore",
+   "mj-dowdy",
    "ah-marion-gaines-smith",
    "kaden-winkfield"
   ],
@@ -259,8 +259,8 @@
   ],
   "TE": [
    "max-whisner",
-   "shane-wilder",
-   "gabriel-goodwin",
+   "london-deyon",
+   "brock-kuhl",
    "cooper-stevens",
    "carson-whitington"
   ],
@@ -280,13 +280,13 @@
   ],
   "RG": [
    "elijah-collins",
-   "savion-wells",
+   "nathan-mcclelland",
    "logan-cahill",
    "joe-warren"
   ],
   "RT": [
    "graceson-spann",
-   "dre-chambers",
+   "carter-buchheit",
    "carter-kadow"
   ],
   "LEDG": [
@@ -300,19 +300,19 @@
    "jarra-anderson",
    "she-fon-boyd",
    "uzziah-warmate",
-   "trey-winfrey",
+   "dimitry-nicolas",
    "darien-jackson"
   ],
   "REDG": [
    "jayden-fry",
    "brody-henderson",
-   "eric-bradford-vance",
+   "caius-coy",
    "bryen-spaulding"
   ],
   "SAM": [
    "ca-lub-holloway",
    "stacy-bey",
-   "zayne-langford"
+   "ray-chatham"
   ],
   "MIKE": [
    "dean-ford",
@@ -323,7 +323,7 @@
   "WILL": [
    "elijah-groves",
    "mike-king",
-   "miles-winston",
+   "kade-houston",
    "eli-wallace"
   ],
   "CB": [
@@ -331,15 +331,15 @@
    "ishmel-atkins",
    "caesar-magee",
    "lyric-smith",
-   "zyon-shell",
+   "o-kece-battle",
    "dravon-wilson",
    "octavius-henderson",
    "cj-june",
-   "jojo-robinson-jr"
+   "joseph-opara"
   ],
   "FS": [
    "jaylon-jones",
-   "cal-sawyer",
+   "marcus-bourda-jr",
    "railyn-adams",
    "braylen-wortham"
   ],
@@ -643,14 +643,14 @@
    }
   },
   {
-   "slug": "chris-blair",
+   "slug": "mason-holtzclaw",
    "position": "QB",
    "class": "FRRS",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/chris-blair/",
-   "name": "Chris Blair",
+   "url": null,
+   "name": "Mason Holtzclaw",
    "position_name": "Quarterback",
-   "jersey": "14",
+   "jersey": "16",
    "team": "Sam Houston",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -2249,14 +2249,14 @@
    }
   },
   {
-   "slug": "jarius-moore",
+   "slug": "mj-dowdy",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/jarius-moore/",
-   "name": "Jarius Moore",
+   "url": null,
+   "name": "MJ Dowdy",
    "position_name": "Halfback",
-   "jersey": "36",
+   "jersey": "20",
    "team": "Sam Houston",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
@@ -6460,14 +6460,14 @@
    }
   },
   {
-   "slug": "shane-wilder",
+   "slug": "london-deyon",
    "position": "TE",
    "class": "SORS",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/shane-wilder/",
-   "name": "Shane Wilder",
+   "url": null,
+   "name": "London Deyon",
    "position_name": "Tight End",
-   "jersey": "35",
+   "jersey": "14",
    "team": "Sam Houston",
    "class_year": "Sophomore (RS)",
    "height": "6'4\"",
@@ -6719,12 +6719,12 @@
    }
   },
   {
-   "slug": "gabriel-goodwin",
+   "slug": "brock-kuhl",
    "position": "TE",
    "class": "JR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/gabriel-goodwin/",
-   "name": "Gabriel Goodwin",
+   "url": null,
+   "name": "Brock Kuhl",
    "position_name": "Tight End",
    "jersey": "89",
    "team": "Sam Houston",
@@ -10114,14 +10114,14 @@
    }
   },
   {
-   "slug": "savion-wells",
+   "slug": "nathan-mcclelland",
    "position": "RG",
    "class": "FR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/savion-wells/",
-   "name": "Savion Wells",
+   "url": null,
+   "name": "Nathan McClelland",
    "position_name": "Right Guard",
-   "jersey": "53",
+   "jersey": "76",
    "team": "Sam Houston",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -11558,14 +11558,14 @@
    }
   },
   {
-   "slug": "dre-chambers",
+   "slug": "carter-buchheit",
    "position": "RT",
    "class": "SO",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/dre-chambers/",
-   "name": "Dre Chambers",
+   "url": null,
+   "name": "Carter Buchheit",
    "position_name": "Right Tackle",
-   "jersey": "69",
+   "jersey": "62",
    "team": "Sam Houston",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -13775,14 +13775,14 @@
    }
   },
   {
-   "slug": "trey-winfrey",
+   "slug": "dimitry-nicolas",
    "position": "DT",
    "class": "SRRS",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/trey-winfrey/",
-   "name": "Trey Winfrey",
+   "url": null,
+   "name": "Dimitry Nicolas",
    "position_name": "Defensive Tackle",
-   "jersey": "56",
+   "jersey": "99",
    "team": "Sam Houston",
    "class_year": "Senior (RS)",
    "height": "6'3\"",
@@ -15136,14 +15136,14 @@
    }
   },
   {
-   "slug": "eric-bradford-vance",
+   "slug": "caius-coy",
    "position": "REDG",
    "class": "FR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/eric-bradford-vance/",
-   "name": "Eric Bradford-Vance",
+   "url": null,
+   "name": "Caius Coy",
    "position_name": "Right Edge",
-   "jersey": "66",
+   "jersey": "91",
    "team": "Sam Houston",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -16229,14 +16229,14 @@
    }
   },
   {
-   "slug": "zayne-langford",
+   "slug": "ray-chatham",
    "position": "SAM",
    "class": "FR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/zayne-langford/",
-   "name": "Zayne Langford",
+   "url": null,
+   "name": "Ray Chatham",
    "position_name": "Sam Linebacker",
-   "jersey": "39",
+   "jersey": "44",
    "team": "Sam Houston",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -18152,14 +18152,14 @@
    }
   },
   {
-   "slug": "miles-winston",
+   "slug": "kade-houston",
    "position": "WILL",
    "class": "FR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/miles-winston/",
-   "name": "Miles Winston",
+   "url": null,
+   "name": "Kade Houston",
    "position_name": "Will Linebacker",
-   "jersey": "91",
+   "jersey": "32",
    "team": "Sam Houston",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -20135,12 +20135,12 @@
    }
   },
   {
-   "slug": "zyon-shell",
+   "slug": "o-kece-battle",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/zyon-shell/",
-   "name": "Zyon Shell",
+   "url": null,
+   "name": "O'Kece Battle",
    "position_name": "Cornerback",
    "jersey": "38",
    "team": "Sam Houston",
@@ -20691,14 +20691,14 @@
    }
   },
   {
-   "slug": "jojo-robinson-jr",
+   "slug": "joseph-opara",
    "position": "CB",
    "class": "FR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/jojo-robinson-jr/",
-   "name": "JoJo Robinson Jr.",
+   "url": null,
+   "name": "Joseph Opara",
    "position_name": "Cornerback",
-   "jersey": "41",
+   "jersey": "39",
    "team": "Sam Houston",
    "class_year": "Freshman",
    "height": "5'9\"",
@@ -21572,14 +21572,14 @@
    }
   },
   {
-   "slug": "cal-sawyer",
+   "slug": "marcus-bourda-jr",
    "position": "FS",
    "class": "FR",
    "team_slug": "sam-houston",
-   "url": "https://collegefootball.gg/players/cal-sawyer/",
-   "name": "Cal Sawyer",
+   "url": null,
+   "name": "Marcus Bourda Jr.",
    "position_name": "Free Safety",
-   "jersey": "32",
+   "jersey": "36",
    "team": "Sam Houston",
    "class_year": "Freshman",
    "height": "6'0\"",

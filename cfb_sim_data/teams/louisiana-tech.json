@@ -167,7 +167,7 @@
    "WR": [
     "talyn-shettron",
     "jay-wilkerson",
-    "trevor-ford"
+    "carter-harris"
    ],
    "TE": [
     "eli-finley"
@@ -249,7 +249,7 @@
   "WR": [
    "talyn-shettron",
    "jay-wilkerson",
-   "trevor-ford",
+   "carter-harris",
    "marcus-calwise-jr",
    "dedrick-latulas",
    "jalen-mickens",
@@ -293,7 +293,7 @@
    "bryson-weathers",
    "troy-smith-iii",
    "tye-hylton",
-   "alex-winslow"
+   "kaleb-campbell"
   ],
   "LEDG": [
    "donovan-rieman",
@@ -348,7 +348,7 @@
   "SS": [
    "sam-fongang",
    "kam-franklin-louisiana-tech",
-   "clarence-joseph"
+   "taeden-rogers"
   ],
   "K": [
    "kaegan-kent",
@@ -3755,14 +3755,14 @@
    }
   },
   {
-   "slug": "trevor-ford",
+   "slug": "carter-harris",
    "position": "WR",
    "class": "SORS",
    "team_slug": "louisiana-tech",
-   "url": "https://collegefootball.gg/players/trevor-ford/",
-   "name": "Trevor Ford",
+   "url": null,
+   "name": "Carter Harris",
    "position_name": "Wide Receiver",
-   "jersey": "38",
+   "jersey": "83",
    "team": "Louisiana Tech",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
@@ -12867,12 +12867,12 @@
    }
   },
   {
-   "slug": "alex-winslow",
+   "slug": "kaleb-campbell",
    "position": "RT",
    "class": "FR",
    "team_slug": "louisiana-tech",
-   "url": "https://collegefootball.gg/players/alex-winslow/",
-   "name": "Alex Winslow",
+   "url": null,
+   "name": "Kaleb Campbell",
    "position_name": "Right Tackle",
    "jersey": "63",
    "team": "Louisiana Tech",
@@ -23210,14 +23210,14 @@
    }
   },
   {
-   "slug": "clarence-joseph",
+   "slug": "taeden-rogers",
    "position": "SS",
    "class": "SO",
    "team_slug": "louisiana-tech",
-   "url": "https://collegefootball.gg/players/clarence-joseph/",
-   "name": "Clarence Joseph",
+   "url": null,
+   "name": "Taeden Rogers",
    "position_name": "Strong Safety",
-   "jersey": "42",
+   "jersey": "16",
    "team": "Louisiana Tech",
    "class_year": "Sophomore",
    "height": "6'2\"",

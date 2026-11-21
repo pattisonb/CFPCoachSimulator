@@ -161,7 +161,7 @@
     "caden-veltkamp"
    ],
    "HB": [
-    "tyjon-bernard"
+    "germanuel-tanelus"
    ],
    "WR": [
     "easton-messer",
@@ -238,7 +238,7 @@
    "jeremiah-daoud"
   ],
   "HB": [
-   "tyjon-bernard",
+   "germanuel-tanelus",
    "leonard-farrow",
    "kaden-shields-dutton",
    "brady-tillman-iii",
@@ -302,7 +302,7 @@
    "cj-doggette-jr",
    "enyce-sledge",
    "blake-burris",
-   "oscar-ventura",
+   "nate-lovelace",
    "earl-miller-jr",
    "lebron-edmond",
    "nimari-brantley",
@@ -1774,14 +1774,14 @@
    }
   },
   {
-   "slug": "tyjon-bernard",
+   "slug": "germanuel-tanelus",
    "position": "HB",
    "class": "SORS",
    "team_slug": "fla-atlantic",
-   "url": "https://collegefootball.gg/players/tyjon-bernard/",
-   "name": "Tyjon Bernard",
+   "url": null,
+   "name": "Germanuel Tanelus",
    "position_name": "Halfback",
-   "jersey": "42",
+   "jersey": "34",
    "team": "FLA Atlantic",
    "class_year": "Sophomore (RS)",
    "height": "5'8\"",
@@ -14428,14 +14428,14 @@
    }
   },
   {
-   "slug": "oscar-ventura",
+   "slug": "nate-lovelace",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "fla-atlantic",
-   "url": "https://collegefootball.gg/players/oscar-ventura/",
-   "name": "Oscar Ventura",
+   "url": null,
+   "name": "Nate Lovelace",
    "position_name": "Defensive Tackle",
-   "jersey": "53",
+   "jersey": "99",
    "team": "FLA Atlantic",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",

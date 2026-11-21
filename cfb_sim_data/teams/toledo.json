@@ -195,7 +195,7 @@
     "ezra-odinjor"
    ],
    "DT": [
-    "anthony-carey",
+    "adrian-love-jr",
     "nate-chandler"
    ],
    "LB": [
@@ -248,7 +248,7 @@
    "anthony-simpson",
    "terrell-crosby-jr",
    "rico-bond",
-   "terrance-white",
+   "omar-mims-jr",
    "adjatay-dabbs",
    "tashi-braceful",
    "trenton-jones",
@@ -263,7 +263,7 @@
    "ethan-malafa",
    "sam-lee",
    "peyton-strickland",
-   "phillip-mcintosh",
+   "tanner-rubinstein",
    "max-allen"
   ],
   "LT": [
@@ -297,10 +297,10 @@
    "andrew-zock",
    "tommy-huss",
    "ben-sahakian",
-   "wayne-thompson"
+   "desmond-okantey"
   ],
   "DT": [
-   "anthony-carey",
+   "adrian-love-jr",
    "nate-chandler",
    "jordin-farrow",
    "lucas-lambert-pipkin",
@@ -339,7 +339,7 @@
   "FS": [
    "kaleb-hutchinson",
    "nicholas-thompson",
-   "dennis-charles",
+   "andrew-fineske",
    "tyler-hackenbracht"
   ],
   "SS": [
@@ -352,7 +352,7 @@
   ],
   "P": [
    "emilio-duran",
-   "quincey-hodges",
+   "hunter-probst",
    "anthony-ruggles"
   ]
  },
@@ -3642,14 +3642,14 @@
    }
   },
   {
-   "slug": "terrance-white",
+   "slug": "omar-mims-jr",
    "position": "WR",
    "class": "SRRS",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/terrance-white/",
-   "name": "Terrance White",
+   "url": null,
+   "name": "Omar Mims Jr.",
    "position_name": "Wide Receiver",
-   "jersey": "34",
+   "jersey": "83",
    "team": "Toledo",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
@@ -7373,14 +7373,14 @@
    }
   },
   {
-   "slug": "phillip-mcintosh",
+   "slug": "tanner-rubinstein",
    "position": "TE",
    "class": "FR",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/phillip-mcintosh/",
-   "name": "Phillip McIntosh",
+   "url": null,
+   "name": "Tanner Rubinstein",
    "position_name": "Tight End",
-   "jersey": "45",
+   "jersey": "29",
    "team": "Toledo",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -13552,14 +13552,14 @@
    }
   },
   {
-   "slug": "wayne-thompson",
+   "slug": "desmond-okantey",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/wayne-thompson/",
-   "name": "Wayne Thompson",
+   "url": null,
+   "name": "Desmond Okantey",
    "position_name": "Left Edge",
-   "jersey": "57",
+   "jersey": "37",
    "team": "Toledo",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -13813,14 +13813,14 @@
    }
   },
   {
-   "slug": "anthony-carey",
+   "slug": "adrian-love-jr",
    "position": "DT",
    "class": "SORS",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/anthony-carey/",
-   "name": "Anthony Carey",
+   "url": null,
+   "name": "Adrian Love Jr.",
    "position_name": "Defensive Tackle",
-   "jersey": "68",
+   "jersey": "94",
    "team": "Toledo",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
@@ -21695,14 +21695,14 @@
    }
   },
   {
-   "slug": "dennis-charles",
+   "slug": "andrew-fineske",
    "position": "FS",
    "class": "FR",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/dennis-charles/",
-   "name": "Dennis Charles",
+   "url": null,
+   "name": "Andrew Fineske",
    "position_name": "Free Safety",
-   "jersey": "38",
+   "jersey": "33",
    "team": "Toledo",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -23563,14 +23563,14 @@
    }
   },
   {
-   "slug": "quincey-hodges",
+   "slug": "hunter-probst",
    "position": "P",
    "class": "SO",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/quincey-hodges/",
-   "name": "Quincey Hodges",
+   "url": null,
+   "name": "Hunter Probst",
    "position_name": "Punter",
-   "jersey": "98",
+   "jersey": "46",
    "team": "Toledo",
    "class_year": "Sophomore",
    "height": "6'2\"",

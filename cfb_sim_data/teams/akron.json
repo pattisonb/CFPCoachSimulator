@@ -261,7 +261,7 @@
    "luke-sivon",
    "jean-louis-iii",
    "paul-davis",
-   "tavares-fletcher"
+   "jeramiah-mcduffie"
   ],
   "TE": [
    "conner-cravaack",
@@ -293,7 +293,7 @@
    "allen-jones-jr",
    "jon-gould",
    "jonas-mann",
-   "alan-develin"
+   "lorvens-barthelemy"
   ],
   "LEDG": [
    "kurtis-waye",
@@ -312,7 +312,7 @@
   "REDG": [
    "cyrus-durham",
    "jahvon-frazier",
-   "jalen-taylor",
+   "brandon-tobias-ii",
    "ty-watkins"
   ],
   "SAM": [],
@@ -7471,14 +7471,14 @@
    }
   },
   {
-   "slug": "tavares-fletcher",
+   "slug": "jeramiah-mcduffie",
    "position": "WR",
    "class": "FR",
    "team_slug": "akron",
-   "url": "https://collegefootball.gg/players/tavares-fletcher/",
-   "name": "Tavares Fletcher",
+   "url": null,
+   "name": "Jeramiah McDuffie",
    "position_name": "Wide Receiver",
-   "jersey": "37",
+   "jersey": "30",
    "team": "Akron",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -13130,14 +13130,14 @@
    }
   },
   {
-   "slug": "alan-develin",
+   "slug": "lorvens-barthelemy",
    "position": "RT",
    "class": "FR",
    "team_slug": "akron",
-   "url": "https://collegefootball.gg/players/alan-develin/",
-   "name": "Alan Develin",
+   "url": null,
+   "name": "Lorvens Barthelemy",
    "position_name": "Right Tackle",
-   "jersey": "64",
+   "jersey": "77",
    "team": "Akron",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -16703,14 +16703,14 @@
    }
   },
   {
-   "slug": "jalen-taylor",
+   "slug": "brandon-tobias-ii",
    "position": "REDG",
    "class": "FR",
    "team_slug": "akron",
-   "url": "https://collegefootball.gg/players/jalen-taylor/",
-   "name": "Jalen Taylor",
+   "url": null,
+   "name": "Brandon Tobias II",
    "position_name": "Right Edge",
-   "jersey": "0",
+   "jersey": "96",
    "team": "Akron",
    "class_year": "Freshman",
    "height": "6'2\"",

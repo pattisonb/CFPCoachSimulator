@@ -256,7 +256,7 @@
    "cj-brown",
    "jelani-watkins",
    "ismael-cisse",
-   "trent-harrington",
+   "maurice-gleaton-jr",
    "courtney-crutchfield",
    "dequane-prevo",
    "blair-irvin-iii",
@@ -275,8 +275,8 @@
   ],
   "LG": [
    "malachi-breland",
-   "geno-jones",
-   "mark-lindley"
+   "carey-clayton",
+   "kaden-bramlage"
   ],
   "C": [
    "caden-kitler",
@@ -285,8 +285,8 @@
   "RG": [
    "kobe-branham",
    "brooks-edmonson",
-   "jaron-powell",
-   "ike-lawson"
+   "jonas-nantze",
+   "ben-mubenga"
   ],
   "RT": [
    "terence-roberson-jr",
@@ -315,7 +315,7 @@
    "jlynn-allen"
   ],
   "SAM": [
-   "jordan-moate"
+   "preston-davis"
   ],
   "MIKE": [
    "bradley-shaw",
@@ -354,11 +354,11 @@
   ],
   "K": [
    "max-gilbert",
-   "todd-lehmann"
+   "braeden-mcalister"
   ],
   "P": [
    "gavin-rush",
-   "warren-abraham"
+   "connor-smith"
   ]
  },
  "roster_size": 85,
@@ -4749,12 +4749,12 @@
    }
   },
   {
-   "slug": "trent-harrington",
+   "slug": "maurice-gleaton-jr",
    "position": "WR",
    "class": "SR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/trent-harrington/",
-   "name": "Trent Harrington",
+   "url": null,
+   "name": "Maurice Gleaton Jr.",
    "position_name": "Wide Receiver",
    "jersey": "86",
    "team": "Arkansas",
@@ -8390,14 +8390,14 @@
    }
   },
   {
-   "slug": "geno-jones",
+   "slug": "carey-clayton",
    "position": "LG",
    "class": "SO",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/geno-jones/",
-   "name": "Geno Jones",
+   "url": null,
+   "name": "Carey Clayton",
    "position_name": "Left Guard",
-   "jersey": "69",
+   "jersey": "55",
    "team": "Arkansas",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -8645,14 +8645,14 @@
    }
   },
   {
-   "slug": "mark-lindley",
+   "slug": "kaden-bramlage",
    "position": "LG",
    "class": "FR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/mark-lindley/",
-   "name": "Mark Lindley",
+   "url": null,
+   "name": "Kaden Bramlage",
    "position_name": "Left Guard",
-   "jersey": "72",
+   "jersey": "61",
    "team": "Arkansas",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -10010,12 +10010,12 @@
    }
   },
   {
-   "slug": "jaron-powell",
+   "slug": "jonas-nantze",
    "position": "RG",
    "class": "SO",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/jaron-powell/",
-   "name": "Jaron Powell",
+   "url": null,
+   "name": "Jonas Nantze",
    "position_name": "Right Guard",
    "jersey": "60",
    "team": "Arkansas",
@@ -10265,12 +10265,12 @@
    }
   },
   {
-   "slug": "ike-lawson",
+   "slug": "ben-mubenga",
    "position": "RG",
    "class": "FR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/ike-lawson/",
-   "name": "Ike Lawson",
+   "url": null,
+   "name": "Ben Mubenga",
    "position_name": "Right Guard",
    "jersey": "56",
    "team": "Arkansas",
@@ -15481,14 +15481,14 @@
    }
   },
   {
-   "slug": "jordan-moate",
+   "slug": "preston-davis",
    "position": "SAM",
    "class": "SO",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/jordan-moate/",
-   "name": "Jordan Moate",
+   "url": null,
+   "name": "Preston Davis",
    "position_name": "Sam Linebacker",
-   "jersey": "96",
+   "jersey": "45",
    "team": "Arkansas",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -22954,14 +22954,14 @@
    }
   },
   {
-   "slug": "todd-lehmann",
+   "slug": "braeden-mcalister",
    "position": "K",
    "class": "JRRS",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/todd-lehmann/",
-   "name": "Todd Lehmann",
+   "url": null,
+   "name": "Braeden McAlister",
    "position_name": "Kicker",
-   "jersey": "47",
+   "jersey": "39",
    "team": "Arkansas",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
@@ -23436,14 +23436,14 @@
    }
   },
   {
-   "slug": "warren-abraham",
+   "slug": "connor-smith",
    "position": "P",
    "class": "FR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/warren-abraham/",
-   "name": "Warren Abraham",
+   "url": null,
+   "name": "Connor Smith",
    "position_name": "Punter",
-   "jersey": "12",
+   "jersey": "41",
    "team": "Arkansas",
    "class_year": "Freshman",
    "height": "6'3\"",

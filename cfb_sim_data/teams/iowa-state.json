@@ -162,7 +162,7 @@
     "jaylen-raynor"
    ],
    "HB": [
-    "delvin-forrest"
+    "aj-petersen"
    ],
    "WR": [
     "omari-hayes",
@@ -220,7 +220,7 @@
     "kyle-konrardy"
    ],
    "P": [
-    "paul-eaton"
+    "jonah-dupont"
    ],
    "KR": [
     "easton-miller"
@@ -237,7 +237,7 @@
    "zane-flores"
   ],
   "HB": [
-   "delvin-forrest",
+   "aj-petersen",
    "salahadin-allah",
    "cameron-pettaway",
    "arnold-barnes-iii",
@@ -306,7 +306,7 @@
   ],
   "REDG": [
    "isaac-terrell",
-   "derrick-dumars",
+   "jack-janikowski",
    "jack-limbaugh",
    "blake-hawkins"
   ],
@@ -354,7 +354,7 @@
    "kyle-konrardy"
   ],
   "P": [
-   "paul-eaton",
+   "jonah-dupont",
    "ethan-gurney"
   ]
  },
@@ -1205,14 +1205,14 @@
    }
   },
   {
-   "slug": "delvin-forrest",
+   "slug": "aj-petersen",
    "position": "HB",
    "class": "SO",
    "team_slug": "iowa-state",
-   "url": "https://collegefootball.gg/players/delvin-forrest/",
-   "name": "Delvin Forrest",
+   "url": null,
+   "name": "AJ Petersen",
    "position_name": "Halfback",
-   "jersey": "15",
+   "jersey": "39",
    "team": "Iowa State",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -14596,14 +14596,14 @@
    }
   },
   {
-   "slug": "derrick-dumars",
+   "slug": "jack-janikowski",
    "position": "REDG",
    "class": "JR",
    "team_slug": "iowa-state",
-   "url": "https://collegefootball.gg/players/derrick-dumars/",
-   "name": "Derrick Dumars",
+   "url": null,
+   "name": "Jack Janikowski",
    "position_name": "Right Edge",
-   "jersey": "58",
+   "jersey": "93",
    "team": "Iowa State",
    "class_year": "Junior",
    "height": "6'3\"",
@@ -23519,14 +23519,14 @@
    }
   },
   {
-   "slug": "paul-eaton",
+   "slug": "jonah-dupont",
    "position": "P",
    "class": "JR",
    "team_slug": "iowa-state",
-   "url": "https://collegefootball.gg/players/paul-eaton/",
-   "name": "Paul Eaton",
+   "url": null,
+   "name": "Jonah DuPont",
    "position_name": "Punter",
-   "jersey": "28",
+   "jersey": "99",
    "team": "Iowa State",
    "class_year": "Junior",
    "height": "5'11\"",

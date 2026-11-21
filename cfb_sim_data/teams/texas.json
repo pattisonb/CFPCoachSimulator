@@ -220,7 +220,7 @@
     "gianni-spetic"
    ],
    "P": [
-    "jamie-rence"
+    "mikey-bukauskas"
    ],
    "KR": [
     "raleek-brown"
@@ -269,7 +269,7 @@
   "LT": [
    "trevor-goosby",
    "jordan-coleman",
-   "casey-ellington"
+   "robert-sweeney"
   ],
   "LG": [
    "laurence-seymore-iii",
@@ -279,7 +279,7 @@
   "C": [
    "connor-robertson",
    "jackson-christian",
-   "william-starr",
+   "john-turntine-iii",
    "kaden-scherer"
   ],
   "RG": [
@@ -325,7 +325,7 @@
    "ty-anthony-smith",
    "tyler-atkinson",
    "rocky-cummings",
-   "cristian-garcia"
+   "eric-garza"
   ],
   "CB": [
    "bo-mascoe",
@@ -341,7 +341,7 @@
    "toray-davis",
    "jonathan-cunningham",
    "jordon-johnson-rubell",
-   "justin-gary"
+   "yaheim-riley"
   ],
   "SS": [
    "jelani-mcdonald",
@@ -351,10 +351,10 @@
   ],
   "K": [
    "gianni-spetic",
-   "julian-gilbert"
+   "jake-collett"
   ],
   "P": [
-   "jamie-rence",
+   "mikey-bukauskas",
    "mac-chiumento"
   ]
  },
@@ -8110,14 +8110,14 @@
    }
   },
   {
-   "slug": "casey-ellington",
+   "slug": "robert-sweeney",
    "position": "LT",
    "class": "FR",
    "team_slug": "texas",
-   "url": "https://collegefootball.gg/players/casey-ellington/",
-   "name": "Casey Ellington",
+   "url": null,
+   "name": "Robert Sweeney",
    "position_name": "Left Tackle",
-   "jersey": "55",
+   "jersey": "64",
    "team": "Texas",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -9711,12 +9711,12 @@
    }
   },
   {
-   "slug": "william-starr",
+   "slug": "john-turntine-iii",
    "position": "C",
    "class": "FR",
    "team_slug": "texas",
-   "url": "https://collegefootball.gg/players/william-starr/",
-   "name": "William Starr",
+   "url": null,
+   "name": "John Turntine III",
    "position_name": "Center",
    "jersey": "51",
    "team": "Texas",
@@ -17895,14 +17895,14 @@
    }
   },
   {
-   "slug": "cristian-garcia",
+   "slug": "eric-garza",
    "position": "WILL",
    "class": "FR",
    "team_slug": "texas",
-   "url": "https://collegefootball.gg/players/cristian-garcia/",
-   "name": "Cristian Garcia",
+   "url": null,
+   "name": "Eric Garza",
    "position_name": "Will Linebacker",
-   "jersey": "35",
+   "jersey": "43",
    "team": "Texas",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -21174,14 +21174,14 @@
    }
   },
   {
-   "slug": "justin-gary",
+   "slug": "yaheim-riley",
    "position": "FS",
    "class": "FR",
    "team_slug": "texas",
-   "url": "https://collegefootball.gg/players/justin-gary/",
-   "name": "Justin Gary",
+   "url": null,
+   "name": "Yaheim Riley",
    "position_name": "Free Safety",
-   "jersey": "42",
+   "jersey": "31",
    "team": "Texas",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -22795,14 +22795,14 @@
    }
   },
   {
-   "slug": "julian-gilbert",
+   "slug": "jake-collett",
    "position": "K",
    "class": "FR",
    "team_slug": "texas",
-   "url": "https://collegefootball.gg/players/julian-gilbert/",
-   "name": "Julian Gilbert",
+   "url": null,
+   "name": "Jake Collett",
    "position_name": "Kicker",
-   "jersey": "39",
+   "jersey": "49",
    "team": "Texas",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -23043,14 +23043,14 @@
    }
   },
   {
-   "slug": "jamie-rence",
+   "slug": "mikey-bukauskas",
    "position": "P",
    "class": "SR",
    "team_slug": "texas",
-   "url": "https://collegefootball.gg/players/jamie-rence/",
-   "name": "Jamie Rence",
+   "url": null,
+   "name": "Mikey Bukauskas",
    "position_name": "Punter",
-   "jersey": "96",
+   "jersey": "45",
    "team": "Texas",
    "class_year": "Senior",
    "height": "6'0\"",

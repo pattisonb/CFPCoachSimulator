@@ -160,7 +160,7 @@
     "lunch-winfield"
    ],
    "HB": [
-    "lamarcus-griffin-palmore"
+    "aiden-falgout"
    ],
    "WR": [
     "shelton-sampson-jr",
@@ -221,7 +221,7 @@
     "mason-golding"
    ],
    "KR": [
-    "omarion-brown"
+    "owen-morris"
    ],
    "PR": [
     "kerynn-smith"
@@ -231,18 +231,18 @@
  "depth_chart": {
   "QB": [
    "lunch-winfield",
-   "kj-towers",
+   "alex-munoz",
    "daniel-beale",
-   "jake-roberts"
+   "coleman-carter"
   ],
   "HB": [
-   "lamarcus-griffin-palmore",
+   "aiden-falgout",
    "anthony-reagan-jr",
    "steven-blanco",
    "jj-garner",
    "darrell-smith",
    "kerynn-smith",
-   "omarion-brown"
+   "owen-morris"
   ],
   "FB": [],
   "WR": [
@@ -261,39 +261,39 @@
    "caden-jensen",
    "brock-chappell",
    "khristian-mackintrush",
-   "carson-lloyd",
+   "emiliano-soldevilla",
    "jeremiah-birdlow",
    "teddy-gawlik"
   ],
   "LT": [
    "j-marion-gooch",
    "zay-alexander",
-   "marcus-gilmore",
+   "jackson-hammond",
    "ryder-bentley"
   ],
   "LG": [
    "kaden-moreau",
    "trey-shaw",
    "jakoby-isom",
-   "noah-kirkwood"
+   "michael-bowens-jr"
   ],
   "C": [
    "cooper-fordham",
-   "cole-forbes",
+   "gunnar-goodwin",
    "jayce-mitchell",
-   "mitchell-moorman"
+   "colin-harrington"
   ],
   "RG": [
    "matthew-broussard",
    "xzavier-brown",
    "andrew-martinez",
-   "blake-harris"
+   "jai-vale-mays-hudson"
   ],
   "RT": [
    "george-jackson",
    "john-bragg",
    "baylynn-williams",
-   "matt-melvin"
+   "drake-perry"
   ],
   "LEDG": [
    "tito-chikere",
@@ -317,14 +317,14 @@
   "SAM": [
    "kailep-edwards",
    "na-tori-brown",
-   "peter-mcleod",
+   "devin-franklin",
    "princeton-malbrue"
   ],
   "MIKE": [
    "ashley-williams",
    "micah-johnson",
    "hayden-darbonne",
-   "kevin-campanaro"
+   "patrick-gosslee"
   ],
   "WILL": [
    "jake-st-andre",
@@ -346,8 +346,8 @@
   ],
   "SS": [
    "kody-jackson",
-   "gilbert-leslie",
-   "corey-hatcher"
+   "julius-harper",
+   "jayden-reed"
   ],
   "K": [
    "tony-sterner"
@@ -642,14 +642,14 @@
    }
   },
   {
-   "slug": "kj-towers",
+   "slug": "alex-munoz",
    "position": "QB",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/kj-towers/",
-   "name": "KJ Towers",
+   "url": null,
+   "name": "Alex Munoz",
    "position_name": "Quarterback",
-   "jersey": "5",
+   "jersey": "13",
    "team": "Louisiana",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
@@ -1185,14 +1185,14 @@
    }
   },
   {
-   "slug": "jake-roberts",
+   "slug": "coleman-carter",
    "position": "QB",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/jake-roberts/",
-   "name": "Jake Roberts",
+   "url": null,
+   "name": "Coleman Carter",
    "position_name": "Quarterback",
-   "jersey": "12",
+   "jersey": "3",
    "team": "Louisiana",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -1474,14 +1474,14 @@
    }
   },
   {
-   "slug": "lamarcus-griffin-palmore",
+   "slug": "aiden-falgout",
    "position": "HB",
    "class": "SRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/lamarcus-griffin-palmore/",
-   "name": "LaMarcus Griffin-Palmore",
+   "url": null,
+   "name": "Aiden Falgout",
    "position_name": "Halfback",
-   "jersey": "39",
+   "jersey": "43",
    "team": "Louisiana",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
@@ -3119,14 +3119,14 @@
    }
   },
   {
-   "slug": "omarion-brown",
+   "slug": "owen-morris",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/omarion-brown/",
-   "name": "Omarion Brown",
+   "url": null,
+   "name": "Owen Morris",
    "position_name": "Halfback",
-   "jersey": "23",
+   "jersey": "29",
    "team": "Louisiana",
    "class_year": "Freshman (RS)",
    "height": "5'7\"",
@@ -7092,12 +7092,12 @@
    }
   },
   {
-   "slug": "carson-lloyd",
+   "slug": "emiliano-soldevilla",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/carson-lloyd/",
-   "name": "Carson Lloyd",
+   "url": null,
+   "name": "Emiliano Soldevilla",
    "position_name": "Tight End",
    "jersey": "46",
    "team": "Louisiana",
@@ -8507,12 +8507,12 @@
    }
   },
   {
-   "slug": "marcus-gilmore",
+   "slug": "jackson-hammond",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/marcus-gilmore/",
-   "name": "Marcus Gilmore",
+   "url": null,
+   "name": "Jackson Hammond",
    "position_name": "Left Tackle",
    "jersey": "60",
    "team": "Louisiana",
@@ -9881,14 +9881,14 @@
    }
   },
   {
-   "slug": "noah-kirkwood",
+   "slug": "michael-bowens-jr",
    "position": "LG",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/noah-kirkwood/",
-   "name": "Noah Kirkwood",
+   "url": null,
+   "name": "Michael Bowens Jr.",
    "position_name": "Left Guard",
-   "jersey": "54",
+   "jersey": "78",
    "team": "Louisiana",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -10380,14 +10380,14 @@
    }
   },
   {
-   "slug": "cole-forbes",
+   "slug": "gunnar-goodwin",
    "position": "C",
    "class": "SO",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/cole-forbes/",
-   "name": "Cole Forbes",
+   "url": null,
+   "name": "Gunnar Goodwin",
    "position_name": "Center",
-   "jersey": "70",
+   "jersey": "53",
    "team": "Louisiana",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -10891,12 +10891,12 @@
    }
   },
   {
-   "slug": "mitchell-moorman",
+   "slug": "colin-harrington",
    "position": "C",
    "class": "SO",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/mitchell-moorman/",
-   "name": "Mitchell Moorman",
+   "url": null,
+   "name": "Colin Harrington",
    "position_name": "Center",
    "jersey": "66",
    "team": "Louisiana",
@@ -11946,14 +11946,14 @@
    }
   },
   {
-   "slug": "blake-harris",
+   "slug": "jai-vale-mays-hudson",
    "position": "RG",
    "class": "SORS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/blake-harris/",
-   "name": "Blake Harris",
+   "url": null,
+   "name": "Jai'Vale Mays-Hudson",
    "position_name": "Right Guard",
-   "jersey": "62",
+   "jersey": "69",
    "team": "Louisiana",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",
@@ -13093,12 +13093,12 @@
    }
   },
   {
-   "slug": "matt-melvin",
+   "slug": "drake-perry",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/matt-melvin/",
-   "name": "Matt Melvin",
+   "url": null,
+   "name": "Drake Perry",
    "position_name": "Right Tackle",
    "jersey": "74",
    "team": "Louisiana",
@@ -17510,14 +17510,14 @@
    }
   },
   {
-   "slug": "peter-mcleod",
+   "slug": "devin-franklin",
    "position": "SAM",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/peter-mcleod/",
-   "name": "Peter McLeod",
+   "url": null,
+   "name": "Devin Franklin",
    "position_name": "Sam Linebacker",
-   "jersey": "25",
+   "jersey": "36",
    "team": "Louisiana",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -18959,14 +18959,14 @@
    }
   },
   {
-   "slug": "kevin-campanaro",
+   "slug": "patrick-gosslee",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/kevin-campanaro/",
-   "name": "Kevin Campanaro",
+   "url": null,
+   "name": "Patrick Gosslee",
    "position_name": "Mike Linebacker",
-   "jersey": "26",
+   "jersey": "45",
    "team": "Louisiana",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -22842,12 +22842,12 @@
    }
   },
   {
-   "slug": "gilbert-leslie",
+   "slug": "julius-harper",
    "position": "SS",
    "class": "SRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/gilbert-leslie/",
-   "name": "Gilbert Leslie",
+   "url": null,
+   "name": "Julius Harper",
    "position_name": "Strong Safety",
    "jersey": "30",
    "team": "Louisiana",
@@ -23102,14 +23102,14 @@
    }
   },
   {
-   "slug": "corey-hatcher",
+   "slug": "jayden-reed",
    "position": "SS",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/corey-hatcher/",
-   "name": "Corey Hatcher",
+   "url": null,
+   "name": "Jayden Reed",
    "position_name": "Strong Safety",
-   "jersey": "32",
+   "jersey": "34",
    "team": "Louisiana",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",

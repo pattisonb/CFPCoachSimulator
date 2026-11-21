@@ -267,7 +267,7 @@
   ],
   "LT": [
    "jackson-cantwell",
-   "jared-davis"
+   "ralph-scroggins"
   ],
   "LG": [
    "samson-okunlola",
@@ -319,7 +319,7 @@
   "MIKE": [
    "chase-smith",
    "kamal-bonner",
-   "jason-rinehart",
+   "casey-rizzi",
    "kellen-wiley-jr"
   ],
   "WILL": [
@@ -331,7 +331,7 @@
    "oj-frederique-jr",
    "xavier-lucas",
    "damari-brown",
-   "russ-cotton",
+   "takai-azziz",
    "camdin-portis",
    "ja-boree-antoine",
    "chris-ewald-jr",
@@ -7920,14 +7920,14 @@
    }
   },
   {
-   "slug": "jared-davis",
+   "slug": "ralph-scroggins",
    "position": "LT",
    "class": "SO",
    "team_slug": "miami",
-   "url": "https://collegefootball.gg/players/jared-davis/",
-   "name": "Jared Davis",
+   "url": null,
+   "name": "Ralph Scroggins",
    "position_name": "Left Tackle",
-   "jersey": "75",
+   "jersey": "64",
    "team": "Miami",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -17223,14 +17223,14 @@
    }
   },
   {
-   "slug": "jason-rinehart",
+   "slug": "casey-rizzi",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "miami",
-   "url": "https://collegefootball.gg/players/jason-rinehart/",
-   "name": "Jason Rinehart",
+   "url": null,
+   "name": "Casey Rizzi",
    "position_name": "Mike Linebacker",
-   "jersey": "98",
+   "jersey": "39",
    "team": "Miami",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -19355,14 +19355,14 @@
    }
   },
   {
-   "slug": "russ-cotton",
+   "slug": "takai-azziz",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "miami",
-   "url": "https://collegefootball.gg/players/russ-cotton/",
-   "name": "Russ Cotton",
+   "url": null,
+   "name": "Takai Azziz",
    "position_name": "Cornerback",
-   "jersey": "35",
+   "jersey": "36",
    "team": "Miami",
    "class_year": "Junior (RS)",
    "height": "5'9\"",

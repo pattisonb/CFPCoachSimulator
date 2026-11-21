@@ -218,7 +218,7 @@
   },
   "special_teams": {
    "K": [
-    "michael-gentry"
+    "daniel-jackson"
    ],
    "P": [
     "tom-weston"
@@ -254,7 +254,7 @@
    "jalen-smith-minnesota",
    "zion-steptoe",
    "perry-thompson",
-   "donovan-lowry",
+   "josiah-dozier",
    "bradley-martino",
    "donielle-hayes",
    "noah-jennings",
@@ -278,7 +278,7 @@
   ],
   "LG": [
    "greg-johnson",
-   "danny-david"
+   "beckett-schreiber"
   ],
   "C": [
    "ashton-beers",
@@ -287,7 +287,7 @@
   "RG": [
    "jaden-ball",
    "tony-nelson",
-   "matthew-crowe-hills"
+   "kaveon-lee"
   ],
   "RT": [
    "bennett-warren",
@@ -323,13 +323,13 @@
    "maverick-baranowski",
    "joey-gerlach",
    "mason-carrier",
-   "mole-keller"
+   "hudson-dunn"
   ],
   "WILL": [
    "matt-kingsbury",
    "emmanuel-karmo",
    "andrew-marshall-minnesota",
-   "alfred-mcknight"
+   "angel-luciano"
   ],
   "CB": [
    "john-nestor",
@@ -351,12 +351,12 @@
    "mekhai-smith"
   ],
   "K": [
-   "michael-gentry",
+   "daniel-jackson",
    "beckham-sunderland"
   ],
   "P": [
    "tom-weston",
-   "craig-lewis-brick"
+   "zachary-robbins"
   ]
  },
  "roster_size": 85,
@@ -4837,14 +4837,14 @@
    }
   },
   {
-   "slug": "donovan-lowry",
+   "slug": "josiah-dozier",
    "position": "WR",
    "class": "JR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/donovan-lowry/",
-   "name": "Donovan Lowry",
+   "url": null,
+   "name": "Josiah Dozier",
    "position_name": "Wide Receiver",
-   "jersey": "41",
+   "jersey": "81",
    "team": "Minnesota",
    "class_year": "Junior",
    "height": "5'10\"",
@@ -10015,14 +10015,14 @@
    }
   },
   {
-   "slug": "danny-david",
+   "slug": "beckett-schreiber",
    "position": "LG",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/danny-david/",
-   "name": "Danny David",
+   "url": null,
+   "name": "Beckett Schreiber",
    "position_name": "Left Guard",
-   "jersey": "64",
+   "jersey": "66",
    "team": "Minnesota",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -11360,12 +11360,12 @@
    }
   },
   {
-   "slug": "matthew-crowe-hills",
+   "slug": "kaveon-lee",
    "position": "RG",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/matthew-crowe-hills/",
-   "name": "Matthew Crowe-Hills",
+   "url": null,
+   "name": "Kaveon Lee",
    "position_name": "Right Guard",
    "jersey": "60",
    "team": "Minnesota",
@@ -18015,14 +18015,14 @@
    }
   },
   {
-   "slug": "mole-keller",
+   "slug": "hudson-dunn",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/mole-keller/",
-   "name": "Mole Keller",
+   "url": null,
+   "name": "Hudson Dunn",
    "position_name": "Mike Linebacker",
-   "jersey": "54",
+   "jersey": "16",
    "team": "Minnesota",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -19150,14 +19150,14 @@
    }
   },
   {
-   "slug": "alfred-mcknight",
+   "slug": "angel-luciano",
    "position": "WILL",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/alfred-mcknight/",
-   "name": "Alfred McKnight",
+   "url": null,
+   "name": "Angel Luciano",
    "position_name": "Will Linebacker",
-   "jersey": "52",
+   "jersey": "32",
    "team": "Minnesota",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -22975,14 +22975,14 @@
    }
   },
   {
-   "slug": "michael-gentry",
+   "slug": "daniel-jackson",
    "position": "K",
    "class": "SO",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/michael-gentry/",
-   "name": "Michael Gentry",
+   "url": null,
+   "name": "Daniel Jackson",
    "position_name": "Kicker",
-   "jersey": "65",
+   "jersey": "36",
    "team": "Minnesota",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -23706,14 +23706,14 @@
    }
   },
   {
-   "slug": "craig-lewis-brick",
+   "slug": "zachary-robbins",
    "position": "P",
    "class": "SR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/craig-lewis-brick/",
-   "name": "Craig Lewis-Brick",
+   "url": null,
+   "name": "Zachary Robbins",
    "position_name": "Punter",
-   "jersey": "36",
+   "jersey": "37",
    "team": "Minnesota",
    "class_year": "Senior",
    "height": "6'1\"",

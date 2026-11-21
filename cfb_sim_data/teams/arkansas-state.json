@@ -200,7 +200,7 @@
    ],
    "LB": [
     "kam-moore",
-    "russ-freeman"
+    "tre-stevens"
    ],
    "CB": [
     "dontrae-henderson",
@@ -225,7 +225,7 @@
     "chauncy-cobb"
    ],
    "PR": [
-    "parris-bowden"
+    "brandon-goliday"
    ]
   }
  },
@@ -239,7 +239,7 @@
   "HB": [
    "kenyon-clay",
    "devin-spencer",
-   "trevor-hatchett",
+   "timothy-carter",
    "solomon-baggett"
   ],
   "FB": [],
@@ -248,7 +248,7 @@
    "hunter-summers",
    "nana-burris",
    "jaylen-bonelli",
-   "parris-bowden",
+   "brandon-goliday",
    "boski-barrett",
    "andre-feast",
    "romel-stevens",
@@ -275,7 +275,7 @@
   "C": [
    "mason-myers",
    "gabe-fortson",
-   "eli-hebert"
+   "jb-hoehn"
   ],
   "RG": [
    "wil-saxton",
@@ -285,7 +285,7 @@
   ],
   "RT": [
    "aleric-watson",
-   "tanner-north",
+   "cooper-sherrod",
    "cameron-ambrose",
    "tanner-welch"
   ],
@@ -293,7 +293,7 @@
    "sultan-badmus",
    "ronnie-blossom",
    "tony-carter",
-   "dom-fredrickson"
+   "mckinley-mcshan"
   ],
   "DT": [
    "shakai-woods",
@@ -319,7 +319,7 @@
    "rasheem-turner"
   ],
   "WILL": [
-   "russ-freeman",
+   "tre-stevens",
    "shaun-williams",
    "noah-hamlin",
    "keoni-denny"
@@ -2015,14 +2015,14 @@
    }
   },
   {
-   "slug": "trevor-hatchett",
+   "slug": "timothy-carter",
    "position": "HB",
    "class": "FR",
    "team_slug": "arkansas-state",
-   "url": "https://collegefootball.gg/players/trevor-hatchett/",
-   "name": "Trevor Hatchett",
+   "url": null,
+   "name": "Timothy Carter",
    "position_name": "Halfback",
-   "jersey": "37",
+   "jersey": "31",
    "team": "Arkansas State",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -3685,14 +3685,14 @@
    }
   },
   {
-   "slug": "parris-bowden",
+   "slug": "brandon-goliday",
    "position": "WR",
    "class": "SORS",
    "team_slug": "arkansas-state",
-   "url": "https://collegefootball.gg/players/parris-bowden/",
-   "name": "Parris Bowden",
+   "url": null,
+   "name": "Brandon Goliday",
    "position_name": "Wide Receiver",
-   "jersey": "46",
+   "jersey": "85",
    "team": "Arkansas State",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
@@ -9028,14 +9028,14 @@
    }
   },
   {
-   "slug": "eli-hebert",
+   "slug": "jb-hoehn",
    "position": "C",
    "class": "FR",
    "team_slug": "arkansas-state",
-   "url": "https://collegefootball.gg/players/eli-hebert/",
-   "name": "Eli Hebert",
+   "url": null,
+   "name": "JB Hoehn",
    "position_name": "Center",
-   "jersey": "57",
+   "jersey": "75",
    "team": "Arkansas State",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -10671,14 +10671,14 @@
    }
   },
   {
-   "slug": "tanner-north",
+   "slug": "cooper-sherrod",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "arkansas-state",
-   "url": "https://collegefootball.gg/players/tanner-north/",
-   "name": "Tanner North",
+   "url": null,
+   "name": "Cooper Sherrod",
    "position_name": "Right Tackle",
-   "jersey": "61",
+   "jersey": "69",
    "team": "Arkansas State",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -12301,14 +12301,14 @@
    }
   },
   {
-   "slug": "dom-fredrickson",
+   "slug": "mckinley-mcshan",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "arkansas-state",
-   "url": "https://collegefootball.gg/players/dom-fredrickson/",
-   "name": "Dom Fredrickson",
+   "url": null,
+   "name": "Mckinley Mcshan",
    "position_name": "Left Edge",
-   "jersey": "76",
+   "jersey": "34",
    "team": "Arkansas State",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -16968,14 +16968,14 @@
    }
   },
   {
-   "slug": "russ-freeman",
+   "slug": "tre-stevens",
    "position": "WILL",
    "class": "SRRS",
    "team_slug": "arkansas-state",
-   "url": "https://collegefootball.gg/players/russ-freeman/",
-   "name": "Russ Freeman",
+   "url": null,
+   "name": "Tre Stevens",
    "position_name": "Will Linebacker",
-   "jersey": "40",
+   "jersey": "23",
    "team": "Arkansas State",
    "class_year": "Senior (RS)",
    "height": "6'3\"",

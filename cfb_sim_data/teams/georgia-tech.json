@@ -166,7 +166,7 @@
    ],
    "WR": [
     "jordan-allen-georgia-tech",
-    "manuel-addison",
+    "darnell-collins",
     "isaiah-fuhrmann"
    ],
    "TE": [
@@ -220,13 +220,13 @@
     "aidan-birr"
    ],
    "P": [
-    "ian-lawrence"
+    "joshua-taylor"
    ],
    "KR": [
     "rahkeem-smith"
    ],
    "PR": [
-    "manuel-addison"
+    "darnell-collins"
    ]
   }
  },
@@ -247,13 +247,13 @@
   "FB": [],
   "WR": [
    "jordan-allen-georgia-tech",
-   "manuel-addison",
+   "darnell-collins",
    "isaiah-fuhrmann",
    "evan-haynes",
    "cal-faulkner",
    "jaiven-plummer",
    "debron-gatling",
-   "malik-shaw",
+   "wills-campbell",
    "rahkeem-smith"
   ],
   "TE": [
@@ -269,7 +269,7 @@
    "ethan-mackenny",
    "markell-samuel",
    "xavier-canales",
-   "byron-wade"
+   "eli-rickell"
   ],
   "LG": [
    "josh-petty",
@@ -288,13 +288,13 @@
    "malachi-carney",
    "jordan-floyd",
    "favour-edwin",
-   "neal-haddock"
+   "courtney-heard"
   ],
   "LEDG": [
    "a-j-hoffler",
    "jordan-boyd",
    "brayden-manley",
-   "kyle-clattenberg"
+   "derry-norris-jr"
   ],
   "DT": [
    "tawfiq-thomas",
@@ -304,7 +304,7 @@
    "blake-belin",
    "tim-griffin",
    "landen-marshall",
-   "rick-toombs"
+   "christian-speakman"
   ],
   "REDG": [
    "noah-carter",
@@ -314,15 +314,15 @@
    "andre-fuller-jr"
   ],
   "SAM": [
-   "tanner-richardson",
-   "jalen-bibby",
-   "sean-younger"
+   "lawson-pritchett",
+   "braylon-outlaw",
+   "jack-richerson"
   ],
   "MIKE": [
    "kyle-efford",
    "melvin-jordan-iv",
-   "tre-dent",
-   "keith-cornelius"
+   "drew-cohen",
+   "c-j-gamble"
   ],
   "WILL": [
    "e-j-lightsey",
@@ -346,15 +346,15 @@
   "SS": [
    "tae-harris",
    "jayden-barr",
-   "nakell-manning",
-   "lamont-newsome"
+   "kealan-jones",
+   "alex-hunt"
   ],
   "K": [
    "aidan-birr",
-   "chris-bass"
+   "landon-shaffer"
   ],
   "P": [
-   "ian-lawrence",
+   "joshua-taylor",
    "alex-bacchetta"
   ]
  },
@@ -3155,12 +3155,12 @@
    }
   },
   {
-   "slug": "manuel-addison",
+   "slug": "darnell-collins",
    "position": "WR",
    "class": "JR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/manuel-addison/",
-   "name": "Manuel Addison",
+   "url": null,
+   "name": "Darnell Collins",
    "position_name": "Wide Receiver",
    "jersey": "21",
    "team": "Georgia Tech",
@@ -4829,14 +4829,14 @@
    }
   },
   {
-   "slug": "malik-shaw",
+   "slug": "wills-campbell",
    "position": "WR",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/malik-shaw/",
-   "name": "Malik Shaw",
+   "url": null,
+   "name": "Wills Campbell",
    "position_name": "Wide Receiver",
-   "jersey": "26",
+   "jersey": "38",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -8258,14 +8258,14 @@
    }
   },
   {
-   "slug": "byron-wade",
+   "slug": "eli-rickell",
    "position": "LT",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/byron-wade/",
-   "name": "Byron Wade",
+   "url": null,
+   "name": "Eli Rickell",
    "position_name": "Left Tackle",
-   "jersey": "59",
+   "jersey": "68",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -11323,14 +11323,14 @@
    }
   },
   {
-   "slug": "neal-haddock",
+   "slug": "courtney-heard",
    "position": "RT",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/neal-haddock/",
-   "name": "Neal Haddock",
+   "url": null,
+   "name": "Courtney Heard",
    "position_name": "Right Tackle",
-   "jersey": "61",
+   "jersey": "65",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -12428,12 +12428,12 @@
    }
   },
   {
-   "slug": "kyle-clattenberg",
+   "slug": "derry-norris-jr",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/kyle-clattenberg/",
-   "name": "Kyle Clattenberg",
+   "url": null,
+   "name": "Derry Norris Jr.",
    "position_name": "Left Edge",
    "jersey": "94",
    "team": "Georgia Tech",
@@ -14589,14 +14589,14 @@
    }
   },
   {
-   "slug": "rick-toombs",
+   "slug": "christian-speakman",
    "position": "DT",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/rick-toombs/",
-   "name": "Rick Toombs",
+   "url": null,
+   "name": "Christian Speakman",
    "position_name": "Defensive Tackle",
-   "jersey": "60",
+   "jersey": "92",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -16222,14 +16222,14 @@
    }
   },
   {
-   "slug": "tanner-richardson",
+   "slug": "lawson-pritchett",
    "position": "SAM",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/tanner-richardson/",
-   "name": "Tanner Richardson",
+   "url": null,
+   "name": "Lawson Pritchett",
    "position_name": "Sam Linebacker",
-   "jersey": "93",
+   "jersey": "30",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -16485,14 +16485,14 @@
    }
   },
   {
-   "slug": "jalen-bibby",
+   "slug": "braylon-outlaw",
    "position": "SAM",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/jalen-bibby/",
-   "name": "Jalen Bibby",
+   "url": null,
+   "name": "Braylon Outlaw",
    "position_name": "Sam Linebacker",
-   "jersey": "57",
+   "jersey": "35",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -16751,14 +16751,14 @@
    }
   },
   {
-   "slug": "sean-younger",
+   "slug": "jack-richerson",
    "position": "SAM",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/sean-younger/",
-   "name": "Sean Younger",
+   "url": null,
+   "name": "Jack Richerson",
    "position_name": "Sam Linebacker",
-   "jersey": "37",
+   "jersey": "39",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -17577,14 +17577,14 @@
    }
   },
   {
-   "slug": "tre-dent",
+   "slug": "drew-cohen",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/tre-dent/",
-   "name": "Tre Dent",
+   "url": null,
+   "name": "Drew Cohen",
    "position_name": "Mike Linebacker",
-   "jersey": "46",
+   "jersey": "93",
    "team": "Georgia Tech",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -17828,14 +17828,14 @@
    }
   },
   {
-   "slug": "keith-cornelius",
+   "slug": "c-j-gamble",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/keith-cornelius/",
-   "name": "Keith Cornelius",
+   "url": null,
+   "name": "C.J. Gamble",
    "position_name": "Mike Linebacker",
-   "jersey": "98",
+   "jersey": "34",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -22271,14 +22271,14 @@
    }
   },
   {
-   "slug": "lamont-newsome",
+   "slug": "alex-hunt",
    "position": "SS",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/lamont-newsome/",
-   "name": "Lamont Newsome",
+   "url": null,
+   "name": "Alex Hunt",
    "position_name": "Strong Safety",
-   "jersey": "30",
+   "jersey": "37",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -22532,12 +22532,12 @@
    }
   },
   {
-   "slug": "nakell-manning",
+   "slug": "kealan-jones",
    "position": "SS",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/nakell-manning/",
-   "name": "Nakell Manning",
+   "url": null,
+   "name": "Kealan Jones",
    "position_name": "Strong Safety",
    "jersey": "18",
    "team": "Georgia Tech",
@@ -23058,14 +23058,14 @@
    }
   },
   {
-   "slug": "chris-bass",
+   "slug": "landon-shaffer",
    "position": "K",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/chris-bass/",
-   "name": "Chris Bass",
+   "url": null,
+   "name": "Landon Shaffer",
    "position_name": "Kicker",
-   "jersey": "19",
+   "jersey": "41",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -23296,14 +23296,14 @@
    }
   },
   {
-   "slug": "ian-lawrence",
+   "slug": "joshua-taylor",
    "position": "P",
    "class": "JR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/ian-lawrence/",
-   "name": "Ian Lawrence",
+   "url": null,
+   "name": "Joshua Taylor",
    "position_name": "Punter",
-   "jersey": "63",
+   "jersey": "40",
    "team": "Georgia Tech",
    "class_year": "Junior",
    "height": "6'5\"",

@@ -197,7 +197,7 @@
    ],
    "DT": [
     "karson-kaufusi",
-    "brock-baldwin"
+    "pupu-sepulona"
    ],
    "LB": [
     "johnathan-hall",
@@ -270,20 +270,20 @@
   "LT": [
    "zereoue-williams",
    "kelvin-obot",
-   "myron-green",
+   "mataalii-benjamin",
    "soren-shinofield"
   ],
   "LG": [
    "solatoa-moea-i",
-   "d-j-crater",
+   "will-fry",
    "reece-parmenter",
-   "anthony-fehoko"
+   "devin-entsminger"
   ],
   "C": [
    "alex-harrison",
-   "trevor-palm",
+   "moses-sparks",
    "isaiah-kema",
-   "daniel-escalante"
+   "rowdy-pearce"
   ],
   "RG": [
    "keith-olson",
@@ -301,7 +301,7 @@
   ],
   "DT": [
    "karson-kaufusi",
-   "brock-baldwin",
+   "pupu-sepulona",
    "lucas-samsula",
    "dilan-battle",
    "nicholas-igwe",
@@ -310,7 +310,7 @@
   ],
   "REDG": [
    "ethan-day",
-   "richard-tasi",
+   "stanley-raass",
    "pj-takitaki"
   ],
   "SAM": [],
@@ -324,7 +324,7 @@
    "cyrus-polu",
    "trey-reynolds",
    "preston-pitts",
-   "bailey-taylor"
+   "jed-judkins"
   ],
   "CB": [
    "elijah-davis",
@@ -8507,12 +8507,12 @@
    }
   },
   {
-   "slug": "myron-green",
+   "slug": "mataalii-benjamin",
    "position": "LT",
    "class": "JR",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/myron-green/",
-   "name": "Myron Green",
+   "url": null,
+   "name": "Mataalii Benjamin",
    "position_name": "Left Tackle",
    "jersey": "70",
    "team": "Utah",
@@ -9325,12 +9325,12 @@
    }
   },
   {
-   "slug": "d-j-crater",
+   "slug": "will-fry",
    "position": "LG",
    "class": "SR",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/d-j-crater/",
-   "name": "D.J. Crater",
+   "url": null,
+   "name": "Will Fry",
    "position_name": "Left Guard",
    "jersey": "66",
    "team": "Utah",
@@ -9846,14 +9846,14 @@
    }
   },
   {
-   "slug": "anthony-fehoko",
+   "slug": "devin-entsminger",
    "position": "LG",
    "class": "SO",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/anthony-fehoko/",
-   "name": "Anthony Fehoko",
+   "url": null,
+   "name": "Devin Entsminger",
    "position_name": "Left Guard",
-   "jersey": "53",
+   "jersey": "63",
    "team": "Utah",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -10376,14 +10376,14 @@
    }
   },
   {
-   "slug": "trevor-palm",
+   "slug": "moses-sparks",
    "position": "C",
    "class": "JR",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/trevor-palm/",
-   "name": "Trevor Palm",
+   "url": null,
+   "name": "Moses Sparks",
    "position_name": "Center",
-   "jersey": "65",
+   "jersey": "57",
    "team": "Utah",
    "class_year": "Junior",
    "height": "6'3\"",
@@ -10911,14 +10911,14 @@
    }
   },
   {
-   "slug": "daniel-escalante",
+   "slug": "rowdy-pearce",
    "position": "C",
    "class": "FR",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/daniel-escalante/",
-   "name": "Daniel Escalante",
+   "url": null,
+   "name": "Rowdy Pearce",
    "position_name": "Center",
-   "jersey": "58",
+   "jersey": "71",
    "team": "Utah",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -13618,14 +13618,14 @@
    }
   },
   {
-   "slug": "brock-baldwin",
+   "slug": "pupu-sepulona",
    "position": "DT",
    "class": "SR",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/brock-baldwin/",
-   "name": "Brock Baldwin",
+   "url": null,
+   "name": "Pupu Sepulona",
    "position_name": "Defensive Tackle",
-   "jersey": "54",
+   "jersey": "45",
    "team": "Utah",
    "class_year": "Senior",
    "height": "6'3\"",
@@ -15475,12 +15475,12 @@
    }
   },
   {
-   "slug": "richard-tasi",
+   "slug": "stanley-raass",
    "position": "REDG",
    "class": "SRRS",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/richard-tasi/",
-   "name": "Richard Tasi",
+   "url": null,
+   "name": "Stanley Raass",
    "position_name": "Right Edge",
    "jersey": "57",
    "team": "Utah",
@@ -18039,14 +18039,14 @@
    }
   },
   {
-   "slug": "bailey-taylor",
+   "slug": "jed-judkins",
    "position": "WILL",
    "class": "FR",
    "team_slug": "utah",
-   "url": "https://collegefootball.gg/players/bailey-taylor/",
-   "name": "Bailey Taylor",
+   "url": null,
+   "name": "Jed Judkins",
    "position_name": "Will Linebacker",
-   "jersey": "59",
+   "jersey": "52",
    "team": "Utah",
    "class_year": "Freshman",
    "height": "6'4\"",

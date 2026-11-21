@@ -241,7 +241,7 @@
    "cam-cook",
    "amari-latimer",
    "chris-talley",
-   "penny-thompson",
+   "lawrence-autry",
    "andre-devine"
   ],
   "FB": [
@@ -271,12 +271,12 @@
   "LT": [
    "carsten-casady",
    "deshawn-woods",
-   "kelvin-conlan"
+   "jonas-muya"
   ],
   "LG": [
    "nick-krahe",
    "josh-aisosa",
-   "phil-zohn"
+   "trevor-bigelow"
   ],
   "C": [
    "landen-livingston",
@@ -313,7 +313,7 @@
    "tobi-haastrup",
    "david-afogho",
    "darius-wiley",
-   "trevone-thomas"
+   "carter-kessler"
   ],
   "SAM": [],
   "MIKE": [
@@ -346,12 +346,12 @@
   ],
   "SS": [
    "kamari-wilson",
-   "lenox-davis",
+   "alex-adebayo",
    "da-mare-williams"
   ],
   "K": [
    "peter-notaro",
-   "sawyer-reynolds",
+   "nate-flower",
    "jack-cassidy"
   ],
   "P": [
@@ -2314,14 +2314,14 @@
    }
   },
   {
-   "slug": "penny-thompson",
+   "slug": "lawrence-autry",
    "position": "HB",
    "class": "FR",
    "team_slug": "west-virginia",
-   "url": "https://collegefootball.gg/players/penny-thompson/",
-   "name": "Penny Thompson",
+   "url": null,
+   "name": "Lawrence Autry",
    "position_name": "Halfback",
-   "jersey": "44",
+   "jersey": "28",
    "team": "West Virginia",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -8698,14 +8698,14 @@
    }
   },
   {
-   "slug": "kelvin-conlan",
+   "slug": "jonas-muya",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "west-virginia",
-   "url": "https://collegefootball.gg/players/kelvin-conlan/",
-   "name": "Kelvin Conlan",
+   "url": null,
+   "name": "Jonas Muya",
    "position_name": "Left Tackle",
-   "jersey": "66",
+   "jersey": "60",
    "team": "West Virginia",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
@@ -9516,14 +9516,14 @@
    }
   },
   {
-   "slug": "phil-zohn",
+   "slug": "trevor-bigelow",
    "position": "LG",
    "class": "FR",
    "team_slug": "west-virginia",
-   "url": "https://collegefootball.gg/players/phil-zohn/",
-   "name": "Phil Zohn",
+   "url": null,
+   "name": "Trevor Bigelow",
    "position_name": "Left Guard",
-   "jersey": "75",
+   "jersey": "61",
    "team": "West Virginia",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -16348,14 +16348,14 @@
    }
   },
   {
-   "slug": "trevone-thomas",
+   "slug": "carter-kessler",
    "position": "REDG",
    "class": "SO",
    "team_slug": "west-virginia",
-   "url": "https://collegefootball.gg/players/trevone-thomas/",
-   "name": "Trevone Thomas",
+   "url": null,
+   "name": "Carter Kessler",
    "position_name": "Right Edge",
-   "jersey": "70",
+   "jersey": "49",
    "team": "West Virginia",
    "class_year": "Sophomore",
    "height": "6'4\"",
@@ -22698,14 +22698,14 @@
    }
   },
   {
-   "slug": "lenox-davis",
+   "slug": "alex-adebayo",
    "position": "SS",
    "class": "SO",
    "team_slug": "west-virginia",
-   "url": "https://collegefootball.gg/players/lenox-davis/",
-   "name": "Lenox Davis",
+   "url": null,
+   "name": "Alex Adebayo",
    "position_name": "Strong Safety",
-   "jersey": "35",
+   "jersey": "42",
    "team": "West Virginia",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -23472,14 +23472,14 @@
    }
   },
   {
-   "slug": "sawyer-reynolds",
+   "slug": "nate-flower",
    "position": "K",
    "class": "SO",
    "team_slug": "west-virginia",
-   "url": "https://collegefootball.gg/players/sawyer-reynolds/",
-   "name": "Sawyer Reynolds",
+   "url": null,
+   "name": "Nate Flower",
    "position_name": "Kicker",
-   "jersey": "5",
+   "jersey": "48",
    "team": "West Virginia",
    "class_year": "Sophomore",
    "height": "6'1\"",

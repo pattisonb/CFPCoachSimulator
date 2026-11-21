@@ -260,8 +260,8 @@
   ],
   "TE": [
    "tanner-lemaster",
-   "luke-grant",
-   "demetris-magee",
+   "payton-kokaly",
+   "joshua-long",
    "armaad-sharp",
    "jack-kautz",
    "adon-turner",
@@ -276,12 +276,12 @@
   "LG": [
    "cole-dellinger",
    "guzzy-kayed",
-   "d-riq-davis"
+   "nathan-henry"
   ],
   "C": [
    "nicholas-gallegos",
-   "paul-hofbeck",
-   "william-king"
+   "jackson-higgins",
+   "samuel-adjin"
   ],
   "RG": [
    "tyler-mcmillan"
@@ -351,7 +351,7 @@
   "K": [
    "rudy-kessinger",
    "nathan-dibert",
-   "quinn-brown"
+   "adam-samaha"
   ],
   "P": [
    "daniel-hull"
@@ -6287,14 +6287,14 @@
    }
   },
   {
-   "slug": "luke-grant",
+   "slug": "payton-kokaly",
    "position": "TE",
    "class": "SO",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/luke-grant/",
-   "name": "Luke Grant",
+   "url": null,
+   "name": "Payton Kokaly",
    "position_name": "Tight End",
-   "jersey": "38",
+   "jersey": "43",
    "team": "E. Michigan",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -6583,14 +6583,14 @@
    }
   },
   {
-   "slug": "demetris-magee",
+   "slug": "joshua-long",
    "position": "TE",
    "class": "JR",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/demetris-magee/",
-   "name": "Demetris Magee",
+   "url": null,
+   "name": "Joshua Long",
    "position_name": "Tight End",
-   "jersey": "35",
+   "jersey": "9",
    "team": "E. Michigan",
    "class_year": "Junior",
    "height": "6'5\"",
@@ -9725,14 +9725,14 @@
    }
   },
   {
-   "slug": "d-riq-davis",
+   "slug": "nathan-henry",
    "position": "LG",
    "class": "FR",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/d-riq-davis/",
-   "name": "D'Riq Davis",
+   "url": null,
+   "name": "Nathan Henry",
    "position_name": "Left Guard",
-   "jersey": "56",
+   "jersey": "54",
    "team": "E. Michigan",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -10245,12 +10245,12 @@
    }
   },
   {
-   "slug": "paul-hofbeck",
+   "slug": "jackson-higgins",
    "position": "C",
    "class": "FRRS",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/paul-hofbeck/",
-   "name": "Paul Hofbeck",
+   "url": null,
+   "name": "Jackson Higgins",
    "position_name": "Center",
    "jersey": "79",
    "team": "E. Michigan",
@@ -10496,14 +10496,14 @@
    }
   },
   {
-   "slug": "william-king",
+   "slug": "samuel-adjin",
    "position": "C",
    "class": "FRRS",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/william-king/",
-   "name": "William King",
+   "url": null,
+   "name": "Samuel Adjin",
    "position_name": "Center",
-   "jersey": "76",
+   "jersey": "70",
    "team": "E. Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -23499,14 +23499,14 @@
    }
   },
   {
-   "slug": "quinn-brown",
+   "slug": "adam-samaha",
    "position": "K",
    "class": "FR",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/quinn-brown/",
-   "name": "Quinn Brown",
+   "url": null,
+   "name": "Adam Samaha",
    "position_name": "Kicker",
-   "jersey": "48",
+   "jersey": "33",
    "team": "E. Michigan",
    "class_year": "Freshman",
    "height": "6'0\"",

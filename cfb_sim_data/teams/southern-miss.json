@@ -193,7 +193,7 @@
     "zachariah-keith"
    ],
    "REDG": [
-    "rodd-henry"
+    "talik-parkman"
    ],
    "DT": [
     "xavier-mciver",
@@ -234,7 +234,7 @@
   "QB": [
    "ethan-hampton",
    "landry-lyddy",
-   "alex-winkler",
+   "hugh-price",
    "john-white"
   ],
   "HB": [
@@ -253,7 +253,7 @@
    "jaylen-himes",
    "davis-dalton",
    "grant-page",
-   "tucker-austin",
+   "israel-leamon",
    "trey-horne",
    "a-j-little",
    "eeli-singleton",
@@ -280,7 +280,7 @@
   "C": [
    "broderick-roman",
    "hayden-breal",
-   "gabriel-lincoln"
+   "chase-malamala"
   ],
   "RG": [
    "dante-devine",
@@ -292,7 +292,7 @@
   "RT": [
    "grant-kitchens",
    "christian-young",
-   "bryan-traylor"
+   "will-burgess"
   ],
   "LEDG": [
    "zachariah-keith",
@@ -308,7 +308,7 @@
    "jr-stegall"
   ],
   "REDG": [
-   "rodd-henry",
+   "talik-parkman",
    "kameron-cyprien",
    "will-smith"
   ],
@@ -317,8 +317,8 @@
    "melvin-spriggs",
    "wesley-edison",
    "tyler-lassiter",
-   "matthew-batch",
-   "michael-esquivel"
+   "ricky-harding",
+   "bj-mitchell"
   ],
   "WILL": [
    "mathis-haygood",
@@ -342,7 +342,7 @@
   "FS": [
    "kobi-albert",
    "landon-sylvie",
-   "bernard-yates"
+   "chauncey-davis-jr"
   ],
   "SS": [
    "laquan-robinson",
@@ -921,14 +921,14 @@
    }
   },
   {
-   "slug": "alex-winkler",
+   "slug": "hugh-price",
    "position": "QB",
    "class": "JR",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/alex-winkler/",
-   "name": "Alex Winkler",
+   "url": null,
+   "name": "Hugh Price",
    "position_name": "Quarterback",
-   "jersey": "10",
+   "jersey": "15",
    "team": "Southern Miss",
    "class_year": "Junior",
    "height": "6'3\"",
@@ -5231,12 +5231,12 @@
    }
   },
   {
-   "slug": "tucker-austin",
+   "slug": "israel-leamon",
    "position": "WR",
    "class": "SORS",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/tucker-austin/",
-   "name": "Tucker Austin",
+   "url": null,
+   "name": "Israel Leamon",
    "position_name": "Wide Receiver",
    "jersey": "86",
    "team": "Southern Miss",
@@ -10134,14 +10134,14 @@
    }
   },
   {
-   "slug": "gabriel-lincoln",
+   "slug": "chase-malamala",
    "position": "C",
    "class": "SO",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/gabriel-lincoln/",
-   "name": "Gabriel Lincoln",
+   "url": null,
+   "name": "Chase Malamala",
    "position_name": "Center",
-   "jersey": "61",
+   "jersey": "77",
    "team": "Southern Miss",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -12668,14 +12668,14 @@
    }
   },
   {
-   "slug": "bryan-traylor",
+   "slug": "will-burgess",
    "position": "RT",
    "class": "JRRS",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/bryan-traylor/",
-   "name": "Bryan Traylor",
+   "url": null,
+   "name": "Will Burgess",
    "position_name": "Right Tackle",
-   "jersey": "69",
+   "jersey": "72",
    "team": "Southern Miss",
    "class_year": "Junior (RS)",
    "height": "6'5\"",
@@ -15421,14 +15421,14 @@
    }
   },
   {
-   "slug": "rodd-henry",
+   "slug": "talik-parkman",
    "position": "REDG",
    "class": "FRRS",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/rodd-henry/",
-   "name": "Rodd Henry",
+   "url": null,
+   "name": "Talik Parkman",
    "position_name": "Right Edge",
-   "jersey": "58",
+   "jersey": "94",
    "team": "Southern Miss",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -17141,14 +17141,14 @@
    }
   },
   {
-   "slug": "matthew-batch",
+   "slug": "ricky-harding",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/matthew-batch/",
-   "name": "Matthew Batch",
+   "url": null,
+   "name": "Ricky Harding",
    "position_name": "Mike Linebacker",
-   "jersey": "57",
+   "jersey": "51",
    "team": "Southern Miss",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -17394,14 +17394,14 @@
    }
   },
   {
-   "slug": "michael-esquivel",
+   "slug": "bj-mitchell",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/michael-esquivel/",
-   "name": "Michael Esquivel",
+   "url": null,
+   "name": "BJ Mitchell",
    "position_name": "Mike Linebacker",
-   "jersey": "99",
+   "jersey": "49",
    "team": "Southern Miss",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -22393,14 +22393,14 @@
    }
   },
   {
-   "slug": "bernard-yates",
+   "slug": "chauncey-davis-jr",
    "position": "FS",
    "class": "FRRS",
    "team_slug": "southern-miss",
-   "url": "https://collegefootball.gg/players/bernard-yates/",
-   "name": "Bernard Yates",
+   "url": null,
+   "name": "Chauncey Davis Jr.",
    "position_name": "Free Safety",
-   "jersey": "32",
+   "jersey": "27",
    "team": "Southern Miss",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",

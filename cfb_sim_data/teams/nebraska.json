@@ -261,7 +261,7 @@
   "TE": [
    "luke-lindenmeyer",
    "carter-nelson",
-   "jack-posey",
+   "eric-ingwerson",
    "cayden-echternach",
    "jack-wills"
   ],
@@ -274,19 +274,19 @@
    "paul-mubenga",
    "grant-brix",
    "brock-knutson",
-   "jay-hughes"
+   "claude-mpouma"
   ],
   "C": [
    "justin-evans",
    "jake-peters",
    "landen-davidson",
-   "dom-picard"
+   "hayden-ainsworth"
   ],
   "RG": [
    "brendan-black",
    "tyler-knaak",
    "sam-sledge",
-   "morris-gregory"
+   "gibson-pyle"
   ],
   "RT": [
    "tree-babalade",
@@ -347,12 +347,12 @@
   "SS": [
    "rex-guthrie",
    "justyn-rhett",
-   "alexander-lewis-copeland"
+   "braylen-prude"
   ],
   "K": [
    "kyle-cunanan",
    "john-hohl",
-   "carlos-smith-garcia"
+   "michael-sarikizis"
   ],
   "P": [
    "archie-wilson",
@@ -5849,14 +5849,14 @@
    }
   },
   {
-   "slug": "jack-posey",
+   "slug": "eric-ingwerson",
    "position": "TE",
    "class": "JRRS",
    "team_slug": "nebraska",
-   "url": "https://collegefootball.gg/players/jack-posey/",
-   "name": "Jack Posey",
+   "url": null,
+   "name": "Eric Ingwerson",
    "position_name": "Tight End",
-   "jersey": "84",
+   "jersey": "82",
    "team": "Nebraska",
    "class_year": "Junior (RS)",
    "height": "6'7\"",
@@ -8400,14 +8400,14 @@
    }
   },
   {
-   "slug": "jay-hughes",
+   "slug": "claude-mpouma",
    "position": "LG",
    "class": "FR",
    "team_slug": "nebraska",
-   "url": "https://collegefootball.gg/players/jay-hughes/",
-   "name": "Jay Hughes",
+   "url": null,
+   "name": "Claude Mpouma",
    "position_name": "Left Guard",
-   "jersey": "67",
+   "jersey": "71",
    "team": "Nebraska",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -9228,12 +9228,12 @@
    }
   },
   {
-   "slug": "dom-picard",
+   "slug": "hayden-ainsworth",
    "position": "C",
    "class": "FR",
    "team_slug": "nebraska",
-   "url": "https://collegefootball.gg/players/dom-picard/",
-   "name": "Dom Picard",
+   "url": null,
+   "name": "Hayden Ainsworth",
    "position_name": "Center",
    "jersey": "50",
    "team": "Nebraska",
@@ -10590,14 +10590,14 @@
    }
   },
   {
-   "slug": "morris-gregory",
+   "slug": "gibson-pyle",
    "position": "RG",
    "class": "FR",
    "team_slug": "nebraska",
-   "url": "https://collegefootball.gg/players/morris-gregory/",
-   "name": "Morris Gregory",
+   "url": null,
+   "name": "Gibson Pyle",
    "position_name": "Right Guard",
-   "jersey": "53",
+   "jersey": "72",
    "team": "Nebraska",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -22123,14 +22123,14 @@
    }
   },
   {
-   "slug": "alexander-lewis-copeland",
+   "slug": "braylen-prude",
    "position": "SS",
    "class": "FRRS",
    "team_slug": "nebraska",
-   "url": "https://collegefootball.gg/players/alexander-lewis-copeland/",
-   "name": "Alexander Lewis-Copeland",
+   "url": null,
+   "name": "Braylen Prude",
    "position_name": "Strong Safety",
-   "jersey": "20",
+   "jersey": "29",
    "team": "Nebraska",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
@@ -22882,14 +22882,14 @@
    }
   },
   {
-   "slug": "carlos-smith-garcia",
+   "slug": "michael-sarikizis",
    "position": "K",
    "class": "FR",
    "team_slug": "nebraska",
-   "url": "https://collegefootball.gg/players/carlos-smith-garcia/",
-   "name": "Carlos Smith-Garcia",
+   "url": null,
+   "name": "Michael Sarikizis",
    "position_name": "Kicker",
-   "jersey": "82",
+   "jersey": "84",
    "team": "Nebraska",
    "class_year": "Freshman",
    "height": "6'0\"",

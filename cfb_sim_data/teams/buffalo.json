@@ -217,7 +217,7 @@
     "oliver-hautanen"
    ],
    "P": [
-    "melo-dodge"
+    "evan-pfeifer"
    ],
    "KR": [
     "mikey-crawford"
@@ -232,11 +232,11 @@
    "elijah-holmes",
    "jason-wright",
    "quran-mcneill",
-   "sal-brooks"
+   "jake-forburger"
   ],
   "HB": [
    "terrance-shelton-jr",
-   "laremy-burgess",
+   "devare-mathis",
    "messiah-burch",
    "nino-hill",
    "chase-enlow",
@@ -284,8 +284,8 @@
   "RT": [
    "tyrone-davis",
    "jackson-davenport",
-   "blake-mcdowell",
-   "christopher-lamb"
+   "ben-foglia-albrecht",
+   "jaden-maxey"
   ],
   "LEDG": [
    "will-clark",
@@ -344,14 +344,14 @@
    "saveon-brown",
    "zae-jennings",
    "john-keough",
-   "byron-spears"
+   "dylan-cleary"
   ],
   "K": [
    "oliver-hautanen",
-   "andrew-phillips"
+   "blake-sholder"
   ],
   "P": [
-   "melo-dodge",
+   "evan-pfeifer",
    "andrew-vanslyke"
   ]
  },
@@ -1191,14 +1191,14 @@
    }
   },
   {
-   "slug": "sal-brooks",
+   "slug": "jake-forburger",
    "position": "QB",
    "class": "SO",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/sal-brooks/",
-   "name": "Sal Brooks",
+   "url": null,
+   "name": "Jake Forburger",
    "position_name": "Quarterback",
-   "jersey": "10",
+   "jersey": "18",
    "team": "Buffalo",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -1725,14 +1725,14 @@
    }
   },
   {
-   "slug": "laremy-burgess",
+   "slug": "devare-mathis",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/laremy-burgess/",
-   "name": "Laremy Burgess",
+   "url": null,
+   "name": "Devare Mathis",
    "position_name": "Halfback",
-   "jersey": "38",
+   "jersey": "21",
    "team": "Buffalo",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",
@@ -10997,12 +10997,12 @@
    }
   },
   {
-   "slug": "blake-mcdowell",
+   "slug": "ben-foglia-albrecht",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/blake-mcdowell/",
-   "name": "Blake McDowell",
+   "url": null,
+   "name": "Ben Foglia-Albrecht",
    "position_name": "Right Tackle",
    "jersey": "58",
    "team": "Buffalo",
@@ -11252,14 +11252,14 @@
    }
   },
   {
-   "slug": "christopher-lamb",
+   "slug": "jaden-maxey",
    "position": "RT",
    "class": "FR",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/christopher-lamb/",
-   "name": "Christopher Lamb",
+   "url": null,
+   "name": "Jaden Maxey",
    "position_name": "Right Tackle",
-   "jersey": "68",
+   "jersey": "72",
    "team": "Buffalo",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -22775,14 +22775,14 @@
    }
   },
   {
-   "slug": "byron-spears",
+   "slug": "dylan-cleary",
    "position": "SS",
    "class": "FRRS",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/byron-spears/",
-   "name": "Byron Spears",
+   "url": null,
+   "name": "Dylan Cleary",
    "position_name": "Strong Safety",
-   "jersey": "40",
+   "jersey": "38",
    "team": "Buffalo",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -23304,14 +23304,14 @@
    }
   },
   {
-   "slug": "andrew-phillips",
+   "slug": "blake-sholder",
    "position": "K",
    "class": "FR",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/andrew-phillips/",
-   "name": "Andrew Phillips",
+   "url": null,
+   "name": "Blake Sholder",
    "position_name": "Kicker",
-   "jersey": "10",
+   "jersey": "39",
    "team": "Buffalo",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -23569,14 +23569,14 @@
    }
   },
   {
-   "slug": "melo-dodge",
+   "slug": "evan-pfeifer",
    "position": "P",
    "class": "SO",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/melo-dodge/",
-   "name": "Melo Dodge",
+   "url": null,
+   "name": "Evan Pfeifer",
    "position_name": "Punter",
-   "jersey": "91",
+   "jersey": "95",
    "team": "Buffalo",
    "class_year": "Sophomore",
    "height": "5'10\"",

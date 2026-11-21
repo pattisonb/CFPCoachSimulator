@@ -219,7 +219,7 @@
     "mike-baker"
    ],
    "P": [
-    "trent-clifton"
+    "spencer-sullins"
    ],
    "KR": [
     "raymond-liggins"
@@ -249,7 +249,7 @@
    "emanuel-ross",
    "ryder-treadway",
    "cam-abshire",
-   "j-c-blackshear",
+   "drew-kron",
    "ky-wilson",
    "kamren-flowers",
    "zy-marion-lang",
@@ -275,13 +275,13 @@
   "LG": [
    "tamarus-walker",
    "raphael-greene-nyarko",
-   "thomas-curtis",
-   "gordon-weston"
+   "hill-greenlee",
+   "michael-marini"
   ],
   "C": [
    "terrence-moore",
    "deron-mclaughlin",
-   "patrick-richardson"
+   "fred-johnson"
   ],
   "RG": [
    "ty-chan",
@@ -322,7 +322,7 @@
   ],
   "WILL": [
    "k-von-sherman",
-   "perry-moorehead",
+   "charlie-o-connor",
    "terris-dudley",
    "ethan-hogg"
   ],
@@ -353,7 +353,7 @@
    "mike-baker"
   ],
   "P": [
-   "trent-clifton"
+   "spencer-sullins"
   ]
  },
  "roster_size": 85,
@@ -3958,14 +3958,14 @@
    }
   },
   {
-   "slug": "j-c-blackshear",
+   "slug": "drew-kron",
    "position": "WR",
    "class": "SR",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/j-c-blackshear/",
-   "name": "J.C. Blackshear",
+   "url": null,
+   "name": "Drew Kron",
    "position_name": "Wide Receiver",
-   "jersey": "44",
+   "jersey": "85",
    "team": "UConn",
    "class_year": "Senior",
    "height": "5'11\"",
@@ -9752,14 +9752,14 @@
    }
   },
   {
-   "slug": "thomas-curtis",
+   "slug": "hill-greenlee",
    "position": "LG",
    "class": "FR",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/thomas-curtis/",
-   "name": "Thomas Curtis",
+   "url": null,
+   "name": "Hill Greenlee",
    "position_name": "Left Guard",
-   "jersey": "72",
+   "jersey": "75",
    "team": "UConn",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -10032,12 +10032,12 @@
    }
   },
   {
-   "slug": "gordon-weston",
+   "slug": "michael-marini",
    "position": "LG",
    "class": "FR",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/gordon-weston/",
-   "name": "Gordon Weston",
+   "url": null,
+   "name": "Michael Marini",
    "position_name": "Left Guard",
    "jersey": "64",
    "team": "UConn",
@@ -10841,14 +10841,14 @@
    }
   },
   {
-   "slug": "patrick-richardson",
+   "slug": "fred-johnson",
    "position": "C",
    "class": "FRRS",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/patrick-richardson/",
-   "name": "Patrick Richardson",
+   "url": null,
+   "name": "Fred Johnson",
    "position_name": "Center",
-   "jersey": "65",
+   "jersey": "55",
    "team": "UConn",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -18080,14 +18080,14 @@
    }
   },
   {
-   "slug": "perry-moorehead",
+   "slug": "charlie-o-connor",
    "position": "WILL",
    "class": "SO",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/perry-moorehead/",
-   "name": "Perry Moorehead",
+   "url": null,
+   "name": "Charlie O'Connor",
    "position_name": "Will Linebacker",
-   "jersey": "43",
+   "jersey": "39",
    "team": "UConn",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -24013,14 +24013,14 @@
    }
   },
   {
-   "slug": "trent-clifton",
+   "slug": "spencer-sullins",
    "position": "P",
    "class": "JRRS",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/trent-clifton/",
-   "name": "Trent Clifton",
+   "url": null,
+   "name": "Spencer Sullins",
    "position_name": "Punter",
-   "jersey": "47",
+   "jersey": "35",
    "team": "UConn",
    "class_year": "Junior (RS)",
    "height": "6'2\"",

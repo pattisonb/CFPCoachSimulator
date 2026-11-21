@@ -218,7 +218,7 @@
     "mateen-bhaghani"
    ],
    "P": [
-    "ridge-phillips"
+    "lennox-miller"
    ],
    "KR": [
     "semaj-morgan"
@@ -233,7 +233,7 @@
    "nico-iamaleava",
    "ty-dieffenbach",
    "colton-gumino",
-   "edward-dermott"
+   "dj-bordeaux"
   ],
   "HB": [
    "wayne-knight",
@@ -253,7 +253,7 @@
    "major-pride",
    "marcus-harris",
    "kenneth-moore-iii",
-   "jamaal-jordan",
+   "shane-rosenthal",
    "markus-kier"
   ],
   "TE": [
@@ -285,7 +285,7 @@
    "carter-sweazie",
    "derek-osman",
    "julian-armella",
-   "tremaine-bunker"
+   "lucas-hickey"
   ],
   "RT": [
    "hall-schmidt",
@@ -341,7 +341,7 @@
    "tao-johnson",
    "malik-hartford",
    "aaron-williams",
-   "tre-peerman"
+   "zeke-johnson"
   ],
   "SS": [
    "cole-martin",
@@ -349,10 +349,10 @@
   ],
   "K": [
    "mateen-bhaghani",
-   "travis-lorito"
+   "mateo-orosco"
   ],
   "P": [
-   "ridge-phillips",
+   "lennox-miller",
    "curtis-gerrand"
   ]
  },
@@ -1159,14 +1159,14 @@
    }
   },
   {
-   "slug": "edward-dermott",
+   "slug": "dj-bordeaux",
    "position": "QB",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/edward-dermott/",
-   "name": "Edward Dermott",
+   "url": null,
+   "name": "DJ Bordeaux",
    "position_name": "Quarterback",
-   "jersey": "16",
+   "jersey": "18",
    "team": "UCLA",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -5271,14 +5271,14 @@
    }
   },
   {
-   "slug": "jamaal-jordan",
+   "slug": "shane-rosenthal",
    "position": "WR",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/jamaal-jordan/",
-   "name": "Jamaal Jordan",
+   "url": null,
+   "name": "Shane Rosenthal",
    "position_name": "Wide Receiver",
-   "jersey": "8",
+   "jersey": "20",
    "team": "UCLA",
    "class_year": "Freshman",
    "height": "5'8\"",
@@ -11401,14 +11401,14 @@
    }
   },
   {
-   "slug": "tremaine-bunker",
+   "slug": "lucas-hickey",
    "position": "RG",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/tremaine-bunker/",
-   "name": "Tremaine Bunker",
+   "url": null,
+   "name": "Lucas Hickey",
    "position_name": "Right Guard",
-   "jersey": "60",
+   "jersey": "61",
    "team": "UCLA",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -22030,12 +22030,12 @@
    }
   },
   {
-   "slug": "tre-peerman",
+   "slug": "zeke-johnson",
    "position": "FS",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/tre-peerman/",
-   "name": "Tre Peerman",
+   "url": null,
+   "name": "Zeke Johnson",
    "position_name": "Free Safety",
    "jersey": "30",
    "team": "UCLA",
@@ -23087,14 +23087,14 @@
    }
   },
   {
-   "slug": "travis-lorito",
+   "slug": "mateo-orosco",
    "position": "K",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/travis-lorito/",
-   "name": "Travis Lorito",
+   "url": null,
+   "name": "Mateo Orosco",
    "position_name": "Kicker",
-   "jersey": "43",
+   "jersey": "31",
    "team": "UCLA",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -23323,14 +23323,14 @@
    }
   },
   {
-   "slug": "ridge-phillips",
+   "slug": "lennox-miller",
    "position": "P",
    "class": "FRRS",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/ridge-phillips/",
-   "name": "Ridge Phillips",
+   "url": null,
+   "name": "Lennox Miller",
    "position_name": "Punter",
-   "jersey": "33",
+   "jersey": "19",
    "team": "UCLA",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",

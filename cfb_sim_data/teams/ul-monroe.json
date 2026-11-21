@@ -197,7 +197,7 @@
    ],
    "DT": [
     "levontae-jacobs",
-    "terrelle-alexander"
+    "jaden-rowe"
    ],
    "LB": [
     "noah-flemmings",
@@ -241,9 +241,9 @@
    "derrick-jameson",
    "donald-chaney",
    "jaydon-wright",
-   "trevor-tyson",
+   "christian-ponti",
    "julian-walker-ul-monroe",
-   "j-r-westbrook",
+   "zach-palmer-smith",
    "bryson-roland",
    "trevon-kinchen"
   ],
@@ -256,8 +256,8 @@
    "marcellus-jackson",
    "gavin-howard",
    "dalen-huston",
-   "stephen-evans",
-   "joe-bazley",
+   "javon-campbell",
+   "darrion-gilliam",
    "demarcco-blanton"
   ],
   "TE": [
@@ -271,14 +271,14 @@
   "LT": [
    "bright-fagbamiye",
    "roscoe-tucker",
-   "sergio-simpson",
+   "van-martinez",
    "david-applewhite"
   ],
   "LG": [
    "kaliem-croswell",
    "reese-steele",
    "nolan-anderson-ul-monroe",
-   "kenny-fenton",
+   "ben-gehrke",
    "edarius-green"
   ],
   "C": [
@@ -299,11 +299,11 @@
    "jaeden-calender",
    "lekell-mcgowan",
    "fred-clark",
-   "taylor-mcdaniels"
+   "marvin-hall"
   ],
   "DT": [
    "levontae-jacobs",
-   "terrelle-alexander",
+   "jaden-rowe",
    "zyan-tremont",
    "colton-vatne",
    "james-smith-ul-monroe",
@@ -312,14 +312,14 @@
   "REDG": [
    "derek-omoregie",
    "cj-wilson-jr",
-   "sidney-baldwin",
+   "alexei-ramirez",
    "ethan-bailey"
   ],
   "SAM": [],
   "MIKE": [
    "noah-flemmings",
    "lazavier-amos",
-   "noah-o-malley",
+   "marcus-ross",
    "rickey-banks"
   ],
   "WILL": [
@@ -335,7 +335,7 @@
    "navarion-benson",
    "armoni-rue",
    "rj-hall",
-   "rashaud-mccormick"
+   "orlando-freemont"
   ],
   "FS": [
    "carl-fauntroy",
@@ -2356,14 +2356,14 @@
    }
   },
   {
-   "slug": "trevor-tyson",
+   "slug": "christian-ponti",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/trevor-tyson/",
-   "name": "Trevor Tyson",
+   "url": null,
+   "name": "Christian Ponti",
    "position_name": "Halfback",
-   "jersey": "82",
+   "jersey": "32",
    "team": "UL Monroe",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
@@ -2607,14 +2607,14 @@
    }
   },
   {
-   "slug": "j-r-westbrook",
+   "slug": "zach-palmer-smith",
    "position": "HB",
    "class": "FR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/j-r-westbrook/",
-   "name": "J.R. Westbrook",
+   "url": null,
+   "name": "Zach Palmer-Smith",
    "position_name": "Halfback",
-   "jersey": "81",
+   "jersey": "6",
    "team": "UL Monroe",
    "class_year": "Freshman",
    "height": "5'10\"",
@@ -5712,14 +5712,14 @@
    }
   },
   {
-   "slug": "stephen-evans",
+   "slug": "javon-campbell",
    "position": "WR",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/stephen-evans/",
-   "name": "Stephen Evans",
+   "url": null,
+   "name": "Javon Campbell",
    "position_name": "Wide Receiver",
-   "jersey": "43",
+   "jersey": "2",
    "team": "UL Monroe",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -6271,14 +6271,14 @@
    }
   },
   {
-   "slug": "joe-bazley",
+   "slug": "darrion-gilliam",
    "position": "WR",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/joe-bazley/",
-   "name": "Joe Bazley",
+   "url": null,
+   "name": "Darrion Gilliam",
    "position_name": "Wide Receiver",
-   "jersey": "41",
+   "jersey": "83",
    "team": "UL Monroe",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -8907,14 +8907,14 @@
    }
   },
   {
-   "slug": "sergio-simpson",
+   "slug": "van-martinez",
    "position": "LT",
    "class": "FR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/sergio-simpson/",
-   "name": "Sergio Simpson",
+   "url": null,
+   "name": "Van Martinez",
    "position_name": "Left Tackle",
-   "jersey": "66",
+   "jersey": "71",
    "team": "UL Monroe",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -10554,12 +10554,12 @@
    }
   },
   {
-   "slug": "kenny-fenton",
+   "slug": "ben-gehrke",
    "position": "LG",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/kenny-fenton/",
-   "name": "Kenny Fenton",
+   "url": null,
+   "name": "Ben Gehrke",
    "position_name": "Left Guard",
    "jersey": "61",
    "team": "UL Monroe",
@@ -13977,14 +13977,14 @@
    }
   },
   {
-   "slug": "taylor-mcdaniels",
+   "slug": "marvin-hall",
    "position": "LEDG",
    "class": "SR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/taylor-mcdaniels/",
-   "name": "Taylor McDaniels",
+   "url": null,
+   "name": "Marvin Hall",
    "position_name": "Left Edge",
-   "jersey": "53",
+   "jersey": "99",
    "team": "UL Monroe",
    "class_year": "Senior",
    "height": "6'5\"",
@@ -14485,14 +14485,14 @@
    }
   },
   {
-   "slug": "terrelle-alexander",
+   "slug": "jaden-rowe",
    "position": "DT",
    "class": "SRRS",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/terrelle-alexander/",
-   "name": "Terrelle Alexander",
+   "url": null,
+   "name": "Jaden Rowe",
    "position_name": "Defensive Tackle",
-   "jersey": "71",
+   "jersey": "51",
    "team": "UL Monroe",
    "class_year": "Senior (RS)",
    "height": "6'4\"",
@@ -16437,14 +16437,14 @@
    }
   },
   {
-   "slug": "sidney-baldwin",
+   "slug": "alexei-ramirez",
    "position": "REDG",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/sidney-baldwin/",
-   "name": "Sidney Baldwin",
+   "url": null,
+   "name": "Alexei Ramirez",
    "position_name": "Right Edge",
-   "jersey": "57",
+   "jersey": "94",
    "team": "UL Monroe",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -17543,14 +17543,14 @@
    }
   },
   {
-   "slug": "noah-o-malley",
+   "slug": "marcus-ross",
    "position": "MIKE",
    "class": "FRRS",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/noah-o-malley/",
-   "name": "Noah O'Malley",
+   "url": null,
+   "name": "Marcus Ross",
    "position_name": "Mike Linebacker",
-   "jersey": "36",
+   "jersey": "30",
    "team": "UL Monroe",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -21007,14 +21007,14 @@
    }
   },
   {
-   "slug": "rashaud-mccormick",
+   "slug": "orlando-freemont",
    "position": "CB",
    "class": "FR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/rashaud-mccormick/",
-   "name": "Rashaud McCormick",
+   "url": null,
+   "name": "Orlando Freemont",
    "position_name": "Cornerback",
-   "jersey": "38",
+   "jersey": "21",
    "team": "UL Monroe",
    "class_year": "Freshman",
    "height": "5'9\"",

@@ -240,9 +240,9 @@
   "HB": [
    "tavorus-jones",
    "lamar-sperling",
-   "lance-barnes",
-   "derek-sherman",
-   "isaiah-wall"
+   "elijah-mccoy",
+   "chris-hunter-utep",
+   "jaden-moore"
   ],
   "FB": [],
   "WR": [
@@ -270,15 +270,15 @@
   ],
   "LG": [
    "brian-williams-jr",
-   "julian-balmer",
+   "ryder-slaton",
    "diego-de-la-cruz",
-   "jerry-potts"
+   "eddie-lartigue-jr"
   ],
   "C": [
    "jayden-trapp",
    "rashad-smith",
    "preston-perkins",
-   "elliott-mills"
+   "wesley-dallao-kubik"
   ],
   "RG": [
    "omoruyi-aliu-otokiti",
@@ -288,7 +288,7 @@
   "RT": [
    "juan-camacho-jr",
    "grayson-johnson",
-   "tyler-christie"
+   "maddox-huber"
   ],
   "LEDG": [
    "shakaun-bowser",
@@ -321,12 +321,12 @@
    "isaiah-bogerty",
    "garrett-hawkins",
    "copelin-windfont",
-   "rudy-moreland"
+   "japrei-wafer"
   ],
   "WILL": [
    "shay-smith",
    "dylan-brown-turner",
-   "carlos-beal"
+   "jalen-hamilton"
   ],
   "CB": [
    "justin-content",
@@ -352,7 +352,7 @@
   "K": [
    "carlos-arreola",
    "cade-hechter",
-   "quentin-shields"
+   "parker-cushing"
   ],
   "P": [
    "brady-braun"
@@ -2061,14 +2061,14 @@
    }
   },
   {
-   "slug": "lance-barnes",
+   "slug": "elijah-mccoy",
    "position": "HB",
    "class": "SO",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/lance-barnes/",
-   "name": "Lance Barnes",
+   "url": null,
+   "name": "Elijah McCoy",
    "position_name": "Halfback",
-   "jersey": "39",
+   "jersey": "6",
    "team": "UTEP",
    "class_year": "Sophomore",
    "height": "6'0\"",
@@ -2348,14 +2348,14 @@
    }
   },
   {
-   "slug": "derek-sherman",
+   "slug": "chris-hunter-utep",
    "position": "HB",
    "class": "JRRS",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/derek-sherman/",
-   "name": "Derek Sherman",
+   "url": null,
+   "name": "Chris Hunter",
    "position_name": "Halfback",
-   "jersey": "80",
+   "jersey": "22",
    "team": "UTEP",
    "class_year": "Junior (RS)",
    "height": "5'10\"",
@@ -2610,14 +2610,14 @@
    }
   },
   {
-   "slug": "isaiah-wall",
+   "slug": "jaden-moore",
    "position": "HB",
    "class": "SO",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/isaiah-wall/",
-   "name": "Isaiah Wall",
+   "url": null,
+   "name": "Jaden Moore",
    "position_name": "Halfback",
-   "jersey": "27",
+   "jersey": "21",
    "team": "UTEP",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -8300,12 +8300,12 @@
    }
   },
   {
-   "slug": "julian-balmer",
+   "slug": "ryder-slaton",
    "position": "LG",
    "class": "SO",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/julian-balmer/",
-   "name": "Julian Balmer",
+   "url": null,
+   "name": "Ryder Slaton",
    "position_name": "Left Guard",
    "jersey": "78",
    "team": "UTEP",
@@ -8551,14 +8551,14 @@
    }
   },
   {
-   "slug": "jerry-potts",
+   "slug": "eddie-lartigue-jr",
    "position": "LG",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/jerry-potts/",
-   "name": "Jerry Potts",
+   "url": null,
+   "name": "Eddie Lartigue Jr.",
    "position_name": "Left Guard",
-   "jersey": "68",
+   "jersey": "62",
    "team": "UTEP",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -9692,14 +9692,14 @@
    }
   },
   {
-   "slug": "elliott-mills",
+   "slug": "wesley-dallao-kubik",
    "position": "C",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/elliott-mills/",
-   "name": "Elliott Mills",
+   "url": null,
+   "name": "Wesley Dallao-Kubik",
    "position_name": "Center",
-   "jersey": "63",
+   "jersey": "77",
    "team": "UTEP",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -11363,12 +11363,12 @@
    }
   },
   {
-   "slug": "tyler-christie",
+   "slug": "maddox-huber",
    "position": "RT",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/tyler-christie/",
-   "name": "Tyler Christie",
+   "url": null,
+   "name": "Maddox Huber",
    "position_name": "Right Tackle",
    "jersey": "70",
    "team": "UTEP",
@@ -17840,14 +17840,14 @@
    }
   },
   {
-   "slug": "rudy-moreland",
+   "slug": "japrei-wafer",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/rudy-moreland/",
-   "name": "Rudy Moreland",
+   "url": null,
+   "name": "Japrei Wafer",
    "position_name": "Mike Linebacker",
-   "jersey": "59",
+   "jersey": "48",
    "team": "UTEP",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -18670,14 +18670,14 @@
    }
   },
   {
-   "slug": "carlos-beal",
+   "slug": "jalen-hamilton",
    "position": "WILL",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/carlos-beal/",
-   "name": "Carlos Beal",
+   "url": null,
+   "name": "Jalen Hamilton",
    "position_name": "Will Linebacker",
-   "jersey": "92",
+   "jersey": "38",
    "team": "UTEP",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -23780,14 +23780,14 @@
    }
   },
   {
-   "slug": "quentin-shields",
+   "slug": "parker-cushing",
    "position": "K",
    "class": "FRRS",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/quentin-shields/",
-   "name": "Quentin Shields",
+   "url": null,
+   "name": "Parker Cushing",
    "position_name": "Kicker",
-   "jersey": "39",
+   "jersey": "33",
    "team": "UTEP",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",

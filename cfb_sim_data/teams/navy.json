@@ -170,7 +170,7 @@
     "casey-smith"
    ],
    "TE": [
-    "lamichael-cosby"
+    "drew-hall"
    ],
    "LT": [
     "connor-heater"
@@ -185,15 +185,15 @@
     "hoke-smith-ii"
    ],
    "RT": [
-    "chip-coleman"
+    "hansen-collie"
    ]
   },
   "defense": {
    "LEDG": [
-    "keenan-posey"
+    "chris-herock"
    ],
    "REDG": [
-    "arthur-gary"
+    "clancy-orie"
    ],
    "DT": [
     "griffen-willis",
@@ -220,7 +220,7 @@
     "lance-gossett"
    ],
    "P": [
-    "ron-watson"
+    "jacob-carlson"
    ],
    "KR": [
     "isaiah-bryant"
@@ -233,21 +233,21 @@
  "depth_chart": {
   "QB": [
    "braxton-woodson",
-   "james-hartman",
+   "michael-dove",
    "brennan-hall",
-   "drew-bonner",
-   "jashon-dewberry"
+   "evan-blouir",
+   "brady-carmical"
   ],
   "HB": [
    "isaiah-bryant",
    "charles-robinson",
-   "trevon-radden"
+   "braeden-george"
   ],
   "FB": [
    "vic-listorti",
    "quinton-ezzard",
-   "marshon-fraser",
-   "rock-mcmillian"
+   "chris-daley-ii",
+   "christian-cromer"
   ],
   "WR": [
    "luke-hutchison",
@@ -256,107 +256,107 @@
    "kendall-evans"
   ],
   "TE": [
-   "lamichael-cosby",
-   "joaquin-cruz",
-   "shaq-clayton",
+   "drew-hall",
+   "theo-elwell",
+   "jordan-collins",
    "rayne-fry"
   ],
   "LT": [
    "connor-heater",
-   "nick-morris",
-   "bobby-valentine",
-   "anfernee-westbrooks",
-   "duke-meadows"
+   "peter-bonnet",
+   "will-hampton",
+   "joe-alnwick",
+   "hunter-fay"
   ],
   "LG": [
    "jake-polito",
-   "richard-leno",
-   "ramon-drake",
-   "lindsey-flowers",
-   "tommy-conway"
+   "mack-taylor",
+   "john-hebert-navy",
+   "zarian-simms",
+   "jackson-deloach"
   ],
   "C": [
    "cam-nichols",
-   "josh-hofmann",
-   "justin-radovich",
-   "forrest-boyd"
+   "jack-heath",
+   "alex-brewer",
+   "gavin-dauby"
   ],
   "RG": [
    "hoke-smith-ii",
    "isaac-bunker",
-   "antwan-glass",
-   "lloyd-woodyard",
-   "tim-reed"
+   "karson-young",
+   "jace-williams",
+   "james-cardinali"
   ],
   "RT": [
-   "chip-coleman",
-   "jaxson-snider",
-   "eli-livingston"
+   "hansen-collie",
+   "drew-fontana",
+   "sean-crowley"
   ],
   "LEDG": [
-   "keenan-posey",
-   "marco-simpson",
-   "chris-vaughn"
+   "chris-herock",
+   "elysha-campbell",
+   "jaden-brock"
   ],
   "DT": [
    "griffen-willis",
    "xavyer-arrington",
    "matt-reyes",
-   "dwight-simms",
-   "tim-northgate",
-   "kadaryl-craig",
-   "eric-mays"
+   "bryce-rothwell",
+   "clinton-anyagafu",
+   "gabriel-george",
+   "todd-hammond"
   ],
   "REDG": [
-   "arthur-gary",
-   "zhaire-hoskins",
-   "blake-baldwin"
+   "clancy-orie",
+   "rhoen-breen",
+   "romane-grant"
   ],
   "SAM": [
    "job-grant",
-   "addison-gates",
-   "stephen-kitchens",
+   "seth-english",
+   "maddox-hayles",
    "jasean-mclean"
   ],
   "MIKE": [
    "coleman-cauley",
    "nolan-mccamy",
-   "harry-stafford",
-   "shamar-barber"
+   "mackenzie-ardoin",
+   "james-deyo"
   ],
   "WILL": [
-   "taylor-ortega",
-   "johnny-donaldson",
-   "andrew-swinton"
+   "noah-beck",
+   "amahd-clark",
+   "allen-anderson"
   ],
   "CB": [
    "irabonoise-oniha",
    "nicholas-bell",
    "bryce-allen",
    "maurice-parker",
-   "chad-edmonds",
-   "barry-davis",
-   "kelvin-weathersby"
+   "carson-de-avila",
+   "phillip-hamilton",
+   "garrison-edwards"
   ],
   "FS": [
    "kush-i-abraham",
-   "kahlil-francois",
-   "darius-shaw",
-   "thurman-fitzsimmons"
+   "xavier-le-jeune",
+   "gunnar-reger",
+   "jonah-cali"
   ],
   "SS": [
    "giuseppe-sessi",
    "matthew-seliga",
-   "garrison-meekins",
-   "ben-blackmon",
-   "ramon-whitfield"
+   "caiden-anku",
+   "trent-gray",
+   "maxwell-williams"
   ],
   "K": [
    "lance-gossett",
-   "charlie-rhinehart"
+   "archie-esh"
   ],
   "P": [
-   "ron-watson"
+   "jacob-carlson"
   ]
  },
  "roster_size": 85,
@@ -638,14 +638,14 @@
    }
   },
   {
-   "slug": "james-hartman",
+   "slug": "michael-dove",
    "position": "QB",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/james-hartman/",
-   "name": "James Hartman",
+   "url": null,
+   "name": "Michael Dove",
    "position_name": "Quarterback",
-   "jersey": "19",
+   "jersey": "16",
    "team": "Navy",
    "class_year": "Sophomore (RS)",
    "height": "6'1\"",
@@ -1169,14 +1169,14 @@
    }
   },
   {
-   "slug": "drew-bonner",
+   "slug": "evan-blouir",
    "position": "QB",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/drew-bonner/",
-   "name": "Drew Bonner",
+   "url": null,
+   "name": "Evan Blouir",
    "position_name": "Quarterback",
-   "jersey": "14",
+   "jersey": "15",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -1444,14 +1444,14 @@
    }
   },
   {
-   "slug": "jashon-dewberry",
+   "slug": "brady-carmical",
    "position": "QB",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/jashon-dewberry/",
-   "name": "Jashon Dewberry",
+   "url": null,
+   "name": "Brady Carmical",
    "position_name": "Quarterback",
-   "jersey": "11",
+   "jersey": "1",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -2269,14 +2269,14 @@
    }
   },
   {
-   "slug": "trevon-radden",
+   "slug": "braeden-george",
    "position": "HB",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/trevon-radden/",
-   "name": "Trevon Radden",
+   "url": null,
+   "name": "Braeden George",
    "position_name": "Halfback",
-   "jersey": "47",
+   "jersey": "24",
    "team": "Navy",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
@@ -3123,14 +3123,14 @@
    }
   },
   {
-   "slug": "marshon-fraser",
+   "slug": "chris-daley-ii",
    "position": "FB",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/marshon-fraser/",
-   "name": "Marshon Fraser",
+   "url": null,
+   "name": "Chris Daley II",
    "position_name": "Fullback",
-   "jersey": "44",
+   "jersey": "45",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "5'9\"",
@@ -3411,14 +3411,14 @@
    }
   },
   {
-   "slug": "rock-mcmillian",
+   "slug": "christian-cromer",
    "position": "FB",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/rock-mcmillian/",
-   "name": "Rock McMillian",
+   "url": null,
+   "name": "Christian Cromer",
    "position_name": "Fullback",
-   "jersey": "30",
+   "jersey": "42",
    "team": "Navy",
    "class_year": "Sophomore",
    "height": "6'0\"",
@@ -4785,14 +4785,14 @@
    }
   },
   {
-   "slug": "lamichael-cosby",
+   "slug": "drew-hall",
    "position": "TE",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/lamichael-cosby/",
-   "name": "LaMichael Cosby",
+   "url": null,
+   "name": "Drew Hall",
    "position_name": "Tight End",
-   "jersey": "83",
+   "jersey": "82",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
@@ -5061,14 +5061,14 @@
    }
   },
   {
-   "slug": "joaquin-cruz",
+   "slug": "theo-elwell",
    "position": "TE",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/joaquin-cruz/",
-   "name": "Joaquin Cruz",
+   "url": null,
+   "name": "Theo Elwell",
    "position_name": "Tight End",
-   "jersey": "29",
+   "jersey": "87",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
@@ -5349,14 +5349,14 @@
    }
   },
   {
-   "slug": "shaq-clayton",
+   "slug": "jordan-collins",
    "position": "TE",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/shaq-clayton/",
-   "name": "Shaq Clayton",
+   "url": null,
+   "name": "Jordan Collins",
    "position_name": "Tight End",
-   "jersey": "48",
+   "jersey": "84",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -6228,14 +6228,14 @@
    }
   },
   {
-   "slug": "nick-morris",
+   "slug": "peter-bonnet",
    "position": "LT",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/nick-morris/",
-   "name": "Nick Morris",
+   "url": null,
+   "name": "Peter Bonnet",
    "position_name": "Left Tackle",
-   "jersey": "63",
+   "jersey": "58",
    "team": "Navy",
    "class_year": "Sophomore (RS)",
    "height": "6'4\"",
@@ -6486,12 +6486,12 @@
    }
   },
   {
-   "slug": "bobby-valentine",
+   "slug": "will-hampton",
    "position": "LT",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/bobby-valentine/",
-   "name": "Bobby Valentine",
+   "url": null,
+   "name": "Will Hampton",
    "position_name": "Left Tackle",
    "jersey": "66",
    "team": "Navy",
@@ -6742,14 +6742,14 @@
    }
   },
   {
-   "slug": "anfernee-westbrooks",
+   "slug": "joe-alnwick",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/anfernee-westbrooks/",
-   "name": "Anfernee Westbrooks",
+   "url": null,
+   "name": "Joe Alnwick",
    "position_name": "Left Tackle",
-   "jersey": "55",
+   "jersey": "50",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",
@@ -7026,12 +7026,12 @@
    }
   },
   {
-   "slug": "duke-meadows",
+   "slug": "hunter-fay",
    "position": "LT",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/duke-meadows/",
-   "name": "Duke Meadows",
+   "url": null,
+   "name": "Hunter Fay",
    "position_name": "Left Tackle",
    "jersey": "54",
    "team": "Navy",
@@ -7563,12 +7563,12 @@
    }
   },
   {
-   "slug": "richard-leno",
+   "slug": "mack-taylor",
    "position": "LG",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/richard-leno/",
-   "name": "Richard Leno",
+   "url": null,
+   "name": "Mack Taylor",
    "position_name": "Left Guard",
    "jersey": "72",
    "team": "Navy",
@@ -7818,12 +7818,12 @@
    }
   },
   {
-   "slug": "ramon-drake",
+   "slug": "john-hebert-navy",
    "position": "LG",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/ramon-drake/",
-   "name": "Ramon Drake",
+   "url": null,
+   "name": "John Hebert",
    "position_name": "Left Guard",
    "jersey": "57",
    "team": "Navy",
@@ -8070,12 +8070,12 @@
    }
   },
   {
-   "slug": "lindsey-flowers",
+   "slug": "zarian-simms",
    "position": "LG",
    "class": "SR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/lindsey-flowers/",
-   "name": "Lindsey Flowers",
+   "url": null,
+   "name": "Zarian Simms",
    "position_name": "Left Guard",
    "jersey": "60",
    "team": "Navy",
@@ -8327,14 +8327,14 @@
    }
   },
   {
-   "slug": "tommy-conway",
+   "slug": "jackson-deloach",
    "position": "LG",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/tommy-conway/",
-   "name": "Tommy Conway",
+   "url": null,
+   "name": "Jackson DeLoach",
    "position_name": "Left Guard",
-   "jersey": "76",
+   "jersey": "52",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -8856,12 +8856,12 @@
    }
   },
   {
-   "slug": "josh-hofmann",
+   "slug": "jack-heath",
    "position": "C",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/josh-hofmann/",
-   "name": "Josh Hofmann",
+   "url": null,
+   "name": "Jack Heath",
    "position_name": "Center",
    "jersey": "53",
    "team": "Navy",
@@ -9136,14 +9136,14 @@
    }
   },
   {
-   "slug": "justin-radovich",
+   "slug": "alex-brewer",
    "position": "C",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/justin-radovich/",
-   "name": "Justin Radovich",
+   "url": null,
+   "name": "Alex Brewer",
    "position_name": "Center",
-   "jersey": "68",
+   "jersey": "69",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -9391,14 +9391,14 @@
    }
   },
   {
-   "slug": "forrest-boyd",
+   "slug": "gavin-dauby",
    "position": "C",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/forrest-boyd/",
-   "name": "Forrest Boyd",
+   "url": null,
+   "name": "Gavin Dauby",
    "position_name": "Center",
-   "jersey": "77",
+   "jersey": "59",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -10177,12 +10177,12 @@
    }
   },
   {
-   "slug": "antwan-glass",
+   "slug": "karson-young",
    "position": "RG",
    "class": "JR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/antwan-glass/",
-   "name": "Antwan Glass",
+   "url": null,
+   "name": "Karson Young",
    "position_name": "Right Guard",
    "jersey": "62",
    "team": "Navy",
@@ -10435,14 +10435,14 @@
    }
   },
   {
-   "slug": "lloyd-woodyard",
+   "slug": "jace-williams",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/lloyd-woodyard/",
-   "name": "Lloyd Woodyard",
+   "url": null,
+   "name": "Jace Williams",
    "position_name": "Right Guard",
-   "jersey": "51",
+   "jersey": "64",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -10684,12 +10684,12 @@
    }
   },
   {
-   "slug": "tim-reed",
+   "slug": "james-cardinali",
    "position": "RG",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/tim-reed/",
-   "name": "Tim Reed",
+   "url": null,
+   "name": "James Cardinali",
    "position_name": "Right Guard",
    "jersey": "74",
    "team": "Navy",
@@ -10949,12 +10949,12 @@
    }
   },
   {
-   "slug": "chip-coleman",
+   "slug": "hansen-collie",
    "position": "RT",
    "class": "SRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/chip-coleman/",
-   "name": "Chip Coleman",
+   "url": null,
+   "name": "Hansen Collie",
    "position_name": "Right Tackle",
    "jersey": "75",
    "team": "Navy",
@@ -11210,14 +11210,14 @@
    }
   },
   {
-   "slug": "jaxson-snider",
+   "slug": "drew-fontana",
    "position": "RT",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/jaxson-snider/",
-   "name": "Jaxson Snider",
+   "url": null,
+   "name": "Drew Fontana",
    "position_name": "Right Tackle",
-   "jersey": "64",
+   "jersey": "61",
    "team": "Navy",
    "class_year": "Sophomore",
    "height": "6'5\"",
@@ -11474,12 +11474,12 @@
    }
   },
   {
-   "slug": "eli-livingston",
+   "slug": "sean-crowley",
    "position": "RT",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/eli-livingston/",
-   "name": "Eli Livingston",
+   "url": null,
+   "name": "Sean Crowley",
    "position_name": "Right Tackle",
    "jersey": "73",
    "team": "Navy",
@@ -11736,14 +11736,14 @@
    }
   },
   {
-   "slug": "keenan-posey",
+   "slug": "chris-herock",
    "position": "LEDG",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/keenan-posey/",
-   "name": "Keenan Posey",
+   "url": null,
+   "name": "Chris Herock",
    "position_name": "Left Edge",
-   "jersey": "56",
+   "jersey": "99",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'5\"",
@@ -11985,14 +11985,14 @@
    }
   },
   {
-   "slug": "marco-simpson",
+   "slug": "elysha-campbell",
    "position": "LEDG",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/marco-simpson/",
-   "name": "Marco Simpson",
+   "url": null,
+   "name": "Elysha Campbell",
    "position_name": "Left Edge",
-   "jersey": "61",
+   "jersey": "72",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'3\"",
@@ -12236,12 +12236,12 @@
    }
   },
   {
-   "slug": "chris-vaughn",
+   "slug": "jaden-brock",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/chris-vaughn/",
-   "name": "Chris Vaughn",
+   "url": null,
+   "name": "Jaden Brock",
    "position_name": "Left Edge",
    "jersey": "78",
    "team": "Navy",
@@ -13264,14 +13264,14 @@
    }
   },
   {
-   "slug": "dwight-simms",
+   "slug": "bryce-rothwell",
    "position": "DT",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/dwight-simms/",
-   "name": "Dwight Simms",
+   "url": null,
+   "name": "Bryce Rothwell",
    "position_name": "Defensive Tackle",
-   "jersey": "91",
+   "jersey": "98",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'4\"",
@@ -13521,14 +13521,14 @@
    }
   },
   {
-   "slug": "tim-northgate",
+   "slug": "clinton-anyagafu",
    "position": "DT",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/tim-northgate/",
-   "name": "Tim Northgate",
+   "url": null,
+   "name": "Clinton Anyagafu",
    "position_name": "Defensive Tackle",
-   "jersey": "67",
+   "jersey": "79",
    "team": "Navy",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -13807,14 +13807,14 @@
    }
   },
   {
-   "slug": "eric-mays",
+   "slug": "todd-hammond",
    "position": "DT",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/eric-mays/",
-   "name": "Eric Mays",
+   "url": null,
+   "name": "Todd Hammond",
    "position_name": "Defensive Tackle",
-   "jersey": "50",
+   "jersey": "68",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -14098,14 +14098,14 @@
    }
   },
   {
-   "slug": "kadaryl-craig",
+   "slug": "gabriel-george",
    "position": "DT",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/kadaryl-craig/",
-   "name": "Kadaryl Craig",
+   "url": null,
+   "name": "Gabriel George",
    "position_name": "Defensive Tackle",
-   "jersey": "98",
+   "jersey": "74",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -14391,12 +14391,12 @@
    }
   },
   {
-   "slug": "arthur-gary",
+   "slug": "clancy-orie",
    "position": "REDG",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/arthur-gary/",
-   "name": "Arthur Gary",
+   "url": null,
+   "name": "Clancy Orie",
    "position_name": "Right Edge",
    "jersey": "96",
    "team": "Navy",
@@ -14654,14 +14654,14 @@
    }
   },
   {
-   "slug": "zhaire-hoskins",
+   "slug": "rhoen-breen",
    "position": "REDG",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/zhaire-hoskins/",
-   "name": "Zhaire Hoskins",
+   "url": null,
+   "name": "Rhoen Breen",
    "position_name": "Right Edge",
-   "jersey": "43",
+   "jersey": "73",
    "team": "Navy",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -14916,14 +14916,14 @@
    }
   },
   {
-   "slug": "blake-baldwin",
+   "slug": "romane-grant",
    "position": "REDG",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/blake-baldwin/",
-   "name": "Blake Baldwin",
+   "url": null,
+   "name": "Romane Grant",
    "position_name": "Right Edge",
-   "jersey": "90",
+   "jersey": "75",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -15458,12 +15458,12 @@
    }
   },
   {
-   "slug": "addison-gates",
+   "slug": "seth-english",
    "position": "SAM",
    "class": "SR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/addison-gates/",
-   "name": "Addison Gates",
+   "url": null,
+   "name": "Seth English",
    "position_name": "Sam Linebacker",
    "jersey": "1",
    "team": "Navy",
@@ -15984,12 +15984,12 @@
    }
   },
   {
-   "slug": "stephen-kitchens",
+   "slug": "maddox-hayles",
    "position": "SAM",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/stephen-kitchens/",
-   "name": "Stephen Kitchens",
+   "url": null,
+   "name": "Maddox Hayles",
    "position_name": "Sam Linebacker",
    "jersey": "34",
    "team": "Navy",
@@ -16808,14 +16808,14 @@
    }
   },
   {
-   "slug": "harry-stafford",
+   "slug": "mackenzie-ardoin",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/harry-stafford/",
-   "name": "Harry Stafford",
+   "url": null,
+   "name": "Mackenzie Ardoin",
    "position_name": "Mike Linebacker",
-   "jersey": "8",
+   "jersey": "0",
    "team": "Navy",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -17059,12 +17059,12 @@
    }
   },
   {
-   "slug": "shamar-barber",
+   "slug": "james-deyo",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/shamar-barber/",
-   "name": "Shamar Barber",
+   "url": null,
+   "name": "James Deyo",
    "position_name": "Mike Linebacker",
    "jersey": "41",
    "team": "Navy",
@@ -17347,14 +17347,14 @@
    }
   },
   {
-   "slug": "taylor-ortega",
+   "slug": "noah-beck",
    "position": "WILL",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/taylor-ortega/",
-   "name": "Taylor Ortega",
+   "url": null,
+   "name": "Noah Beck",
    "position_name": "Will Linebacker",
-   "jersey": "6",
+   "jersey": "46",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'1\"",
@@ -17619,12 +17619,12 @@
    }
   },
   {
-   "slug": "johnny-donaldson",
+   "slug": "amahd-clark",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/johnny-donaldson/",
-   "name": "Johnny Donaldson",
+   "url": null,
+   "name": "Amahd Clark",
    "position_name": "Will Linebacker",
    "jersey": "49",
    "team": "Navy",
@@ -17885,14 +17885,14 @@
    }
   },
   {
-   "slug": "andrew-swinton",
+   "slug": "allen-anderson",
    "position": "WILL",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/andrew-swinton/",
-   "name": "Andrew Swinton",
+   "url": null,
+   "name": "Allen Anderson",
    "position_name": "Will Linebacker",
-   "jersey": "36",
+   "jersey": "33",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -19268,12 +19268,12 @@
    }
   },
   {
-   "slug": "chad-edmonds",
+   "slug": "carson-de-avila",
    "position": "CB",
    "class": "SORS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/chad-edmonds/",
-   "name": "Chad Edmonds",
+   "url": null,
+   "name": "Carson de Avila",
    "position_name": "Cornerback",
    "jersey": "24",
    "team": "Navy",
@@ -19558,14 +19558,14 @@
    }
   },
   {
-   "slug": "barry-davis",
+   "slug": "phillip-hamilton",
    "position": "CB",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/barry-davis/",
-   "name": "Barry Davis",
+   "url": null,
+   "name": "Phillip Hamilton",
    "position_name": "Cornerback",
-   "jersey": "37",
+   "jersey": "6",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -19824,14 +19824,14 @@
    }
   },
   {
-   "slug": "kelvin-weathersby",
+   "slug": "garrison-edwards",
    "position": "CB",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/kelvin-weathersby/",
-   "name": "Kelvin Weathersby",
+   "url": null,
+   "name": "Garrison Edwards",
    "position_name": "Cornerback",
-   "jersey": "27",
+   "jersey": "26",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -20382,14 +20382,14 @@
    }
   },
   {
-   "slug": "kahlil-francois",
+   "slug": "xavier-le-jeune",
    "position": "FS",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/kahlil-francois/",
-   "name": "Kahlil Francois",
+   "url": null,
+   "name": "Xavier Le Jeune",
    "position_name": "Free Safety",
-   "jersey": "32",
+   "jersey": "15",
    "team": "Navy",
    "class_year": "Junior (RS)",
    "height": "6'0\"",
@@ -20646,14 +20646,14 @@
    }
   },
   {
-   "slug": "darius-shaw",
+   "slug": "gunnar-reger",
    "position": "FS",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/darius-shaw/",
-   "name": "Darius Shaw",
+   "url": null,
+   "name": "Gunnar Reger",
    "position_name": "Free Safety",
-   "jersey": "12",
+   "jersey": "33",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",
@@ -20939,14 +20939,14 @@
    }
   },
   {
-   "slug": "thurman-fitzsimmons",
+   "slug": "jonah-cali",
    "position": "FS",
    "class": "SO",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/thurman-fitzsimmons/",
-   "name": "Thurman Fitzsimmons",
+   "url": null,
+   "name": "Jonah Cali",
    "position_name": "Free Safety",
-   "jersey": "22",
+   "jersey": "11",
    "team": "Navy",
    "class_year": "Sophomore",
    "height": "5'11\"",
@@ -21748,12 +21748,12 @@
    }
   },
   {
-   "slug": "garrison-meekins",
+   "slug": "caiden-anku",
    "position": "SS",
    "class": "JRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/garrison-meekins/",
-   "name": "Garrison Meekins",
+   "url": null,
+   "name": "Caiden Anku",
    "position_name": "Strong Safety",
    "jersey": "20",
    "team": "Navy",
@@ -22047,14 +22047,14 @@
    }
   },
   {
-   "slug": "ben-blackmon",
+   "slug": "trent-gray",
    "position": "SS",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/ben-blackmon/",
-   "name": "Ben Blackmon",
+   "url": null,
+   "name": "Trent Gray",
    "position_name": "Strong Safety",
-   "jersey": "0",
+   "jersey": "17",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -22350,14 +22350,14 @@
    }
   },
   {
-   "slug": "ramon-whitfield",
+   "slug": "maxwell-williams",
    "position": "SS",
    "class": "FR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/ramon-whitfield/",
-   "name": "Ramon Whitfield",
+   "url": null,
+   "name": "Maxwell Williams",
    "position_name": "Strong Safety",
-   "jersey": "18",
+   "jersey": "22",
    "team": "Navy",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -22864,14 +22864,14 @@
    }
   },
   {
-   "slug": "charlie-rhinehart",
+   "slug": "archie-esh",
    "position": "K",
    "class": "FRRS",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/charlie-rhinehart/",
-   "name": "Charlie Rhinehart",
+   "url": null,
+   "name": "Archie Esh",
    "position_name": "Kicker",
-   "jersey": "47",
+   "jersey": "96",
    "team": "Navy",
    "class_year": "Freshman (RS)",
    "height": "5'11\"",
@@ -23103,14 +23103,14 @@
    }
   },
   {
-   "slug": "ron-watson",
+   "slug": "jacob-carlson",
    "position": "P",
    "class": "JR",
    "team_slug": "navy",
-   "url": "https://collegefootball.gg/players/ron-watson/",
-   "name": "Ron Watson",
+   "url": null,
+   "name": "Jacob Carlson",
    "position_name": "Punter",
-   "jersey": "68",
+   "jersey": "11",
    "team": "Navy",
    "class_year": "Junior",
    "height": "6'0\"",

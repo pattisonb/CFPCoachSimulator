@@ -239,7 +239,7 @@
    "joe-jackson",
    "rodney-fields-jr",
    "jay-harris",
-   "andre-holliday",
+   "lj-mcghee",
    "monterrio-elston-jr"
   ],
   "FB": [],
@@ -310,7 +310,7 @@
    "jackson-hollie"
   ],
   "SAM": [
-   "j-j-mcgregor"
+   "ashton-moore"
   ],
   "MIKE": [
    "mekhi-mason",
@@ -2295,14 +2295,14 @@
    }
   },
   {
-   "slug": "andre-holliday",
+   "slug": "lj-mcghee",
    "position": "HB",
    "class": "SR",
    "team_slug": "kansas-state",
-   "url": "https://collegefootball.gg/players/andre-holliday/",
-   "name": "Andre Holliday",
+   "url": null,
+   "name": "LJ McGhee",
    "position_name": "Halfback",
-   "jersey": "38",
+   "jersey": "21",
    "team": "Kansas State",
    "class_year": "Senior",
    "height": "5'10\"",
@@ -15727,14 +15727,14 @@
    }
   },
   {
-   "slug": "j-j-mcgregor",
+   "slug": "ashton-moore",
    "position": "SAM",
    "class": "FR",
    "team_slug": "kansas-state",
-   "url": "https://collegefootball.gg/players/j-j-mcgregor/",
-   "name": "J.J. McGregor",
+   "url": null,
+   "name": "Ashton Moore",
    "position_name": "Sam Linebacker",
-   "jersey": "27",
+   "jersey": "41",
    "team": "Kansas State",
    "class_year": "Freshman",
    "height": "6'3\"",

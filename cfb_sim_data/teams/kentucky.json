@@ -167,7 +167,7 @@
    "WR": [
     "nic-anderson",
     "shane-carr",
-    "hardley-gilmore-iv"
+    "cash-harney"
    ],
    "TE": [
     "willie-rodriguez"
@@ -248,7 +248,7 @@
   "WR": [
    "nic-anderson",
    "shane-carr",
-   "hardley-gilmore-iv",
+   "cash-harney",
    "dj-miller",
    "ashton-cozart",
    "kenny-darby",
@@ -269,18 +269,18 @@
   "LT": [
    "lance-heard",
    "jermiel-atkins",
-   "shane-barnwell",
+   "ben-myers",
    "cameron-miller-jr"
   ],
   "LG": [
    "tegra-tshabola",
    "jordan-knox",
-   "kalen-stallworth"
+   "ryan-meeker"
   ],
   "C": [
    "coleton-price",
    "hayes-johnson",
-   "willis-evans"
+   "mason-howard-kentucky"
   ],
   "RG": [
    "olaus-alinen",
@@ -320,7 +320,7 @@
   ],
   "WILL": [
    "antwan-smith",
-   "bret-greene",
+   "elijah-barnes",
    "quintavion-norman"
   ],
   "CB": [
@@ -338,7 +338,7 @@
   "FS": [
    "martels-carter-jr",
    "aaron-gates",
-   "sebastian-thompson",
+   "sam-brown-iii",
    "jesse-anderson-iii"
   ],
   "SS": [
@@ -350,7 +350,7 @@
   ],
   "K": [
    "jacob-kauwe",
-   "kellen-lyles"
+   "matthew-obermeier"
   ],
   "P": [
    "wilson-berry",
@@ -3436,14 +3436,14 @@
    }
   },
   {
-   "slug": "hardley-gilmore-iv",
+   "slug": "cash-harney",
    "position": "WR",
    "class": "JR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/hardley-gilmore-iv/",
-   "name": "Hardley Gilmore IV",
+   "url": null,
+   "name": "Cash Harney",
    "position_name": "Wide Receiver",
-   "jersey": "17",
+   "jersey": "89",
    "team": "Kentucky",
    "class_year": "Junior",
    "height": "6'1\"",
@@ -8533,14 +8533,14 @@
    }
   },
   {
-   "slug": "shane-barnwell",
+   "slug": "ben-myers",
    "position": "LT",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/shane-barnwell/",
-   "name": "Shane Barnwell",
+   "url": null,
+   "name": "Ben Myers",
    "position_name": "Left Tackle",
-   "jersey": "59",
+   "jersey": "62",
    "team": "Kentucky",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -9338,14 +9338,14 @@
    }
   },
   {
-   "slug": "kalen-stallworth",
+   "slug": "ryan-meeker",
    "position": "LG",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/kalen-stallworth/",
-   "name": "Kalen Stallworth",
+   "url": null,
+   "name": "Ryan Meeker",
    "position_name": "Left Guard",
-   "jersey": "51",
+   "jersey": "64",
    "team": "Kentucky",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -10172,12 +10172,12 @@
    }
   },
   {
-   "slug": "willis-evans",
+   "slug": "mason-howard-kentucky",
    "position": "C",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/willis-evans/",
-   "name": "Willis Evans",
+   "url": null,
+   "name": "Mason Howard",
    "position_name": "Center",
    "jersey": "60",
    "team": "Kentucky",
@@ -17112,14 +17112,14 @@
    }
   },
   {
-   "slug": "bret-greene",
+   "slug": "elijah-barnes",
    "position": "WILL",
    "class": "SO",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/bret-greene/",
-   "name": "Bret Greene",
+   "url": null,
+   "name": "Elijah Barnes",
    "position_name": "Will Linebacker",
-   "jersey": "43",
+   "jersey": "0",
    "team": "Kentucky",
    "class_year": "Sophomore",
    "height": "6'2\"",
@@ -21024,14 +21024,14 @@
    }
   },
   {
-   "slug": "sebastian-thompson",
+   "slug": "sam-brown-iii",
    "position": "FS",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/sebastian-thompson/",
-   "name": "Sebastian Thompson",
+   "url": null,
+   "name": "Sam Brown III",
    "position_name": "Free Safety",
-   "jersey": "36",
+   "jersey": "33",
    "team": "Kentucky",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -23280,14 +23280,14 @@
    }
   },
   {
-   "slug": "kellen-lyles",
+   "slug": "matthew-obermeier",
    "position": "K",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/kellen-lyles/",
-   "name": "Kellen Lyles",
+   "url": null,
+   "name": "Matthew Obermeier",
    "position_name": "Kicker",
-   "jersey": "87",
+   "jersey": "35",
    "team": "Kentucky",
    "class_year": "Freshman",
    "height": "6'0\"",

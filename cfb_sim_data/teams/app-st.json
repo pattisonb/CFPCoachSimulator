@@ -250,7 +250,7 @@
    "dazmin-james",
    "alex-sanchez",
    "kamauri-austin",
-   "denard-dyson",
+   "zalin-ingram",
    "sam-pickett-iii",
    "kabran-paul",
    "edward-coleman",
@@ -268,11 +268,11 @@
   "LT": [
    "devon-manuel",
    "kamron-burris",
-   "phillip-bennett"
+   "ben-jones"
   ],
   "LG": [
    "cayden-sweatt",
-   "trevis-crockett",
+   "eisa-evans",
    "danny-stevens"
   ],
   "C": [
@@ -4002,14 +4002,14 @@
    }
   },
   {
-   "slug": "denard-dyson",
+   "slug": "zalin-ingram",
    "position": "WR",
    "class": "SORS",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/denard-dyson/",
-   "name": "Denard Dyson",
+   "url": null,
+   "name": "Zalin Ingram",
    "position_name": "Wide Receiver",
-   "jersey": "45",
+   "jersey": "82",
    "team": "App St.",
    "class_year": "Sophomore (RS)",
    "height": "5'10\"",
@@ -8270,14 +8270,14 @@
    }
   },
   {
-   "slug": "phillip-bennett",
+   "slug": "ben-jones",
    "position": "LT",
    "class": "FR",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/phillip-bennett/",
-   "name": "Phillip Bennett",
+   "url": null,
+   "name": "Ben Jones",
    "position_name": "Left Tackle",
-   "jersey": "53",
+   "jersey": "55",
    "team": "App St.",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -9092,14 +9092,14 @@
    }
   },
   {
-   "slug": "trevis-crockett",
+   "slug": "eisa-evans",
    "position": "LG",
    "class": "SO",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/trevis-crockett/",
-   "name": "Trevis Crockett",
+   "url": null,
+   "name": "Eisa Evans",
    "position_name": "Left Guard",
-   "jersey": "51",
+   "jersey": "50",
    "team": "App St.",
    "class_year": "Sophomore",
    "height": "6'3\"",

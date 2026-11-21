@@ -168,7 +168,7 @@
    "WR": [
     "chase-sowell",
     "brett-eskildsen",
-    "nathan-judino"
+    "ethan-black"
    ],
    "TE": [
     "benjamin-brahmer"
@@ -221,7 +221,7 @@
     "ryan-barker"
    ],
    "P": [
-    "colten-bench"
+    "lucas-tenbrock"
    ],
    "KR": [
     "cam-wallace"
@@ -250,7 +250,7 @@
   "WR": [
    "chase-sowell",
    "brett-eskildsen",
-   "nathan-judino",
+   "ethan-black",
    "koby-howard",
    "zay-robinson",
    "peter-gonzalez",
@@ -275,7 +275,7 @@
   "LG": [
    "trevor-buhr",
    "chimdy-onoh",
-   "abdul-whitehead"
+   "pete-eglitis"
   ],
   "C": [
    "brock-riker",
@@ -285,7 +285,7 @@
   "RG": [
    "cooper-cousins",
    "will-tompkins",
-   "david-elliott"
+   "hunter-albright"
   ],
   "RT": [
    "anthony-donkoh",
@@ -355,7 +355,7 @@
    "cristiano-rosa"
   ],
   "P": [
-   "colten-bench",
+   "lucas-tenbrock",
    "nathan-tiyce"
   ]
  },
@@ -3670,14 +3670,14 @@
    }
   },
   {
-   "slug": "nathan-judino",
+   "slug": "ethan-black",
    "position": "WR",
    "class": "JR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/nathan-judino/",
-   "name": "Nathan Judino",
+   "url": null,
+   "name": "Ethan Black",
    "position_name": "Wide Receiver",
-   "jersey": "42",
+   "jersey": "82",
    "team": "Penn State",
    "class_year": "Junior",
    "height": "6'3\"",
@@ -9000,14 +9000,14 @@
    }
   },
   {
-   "slug": "abdul-whitehead",
+   "slug": "pete-eglitis",
    "position": "LG",
    "class": "FR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/abdul-whitehead/",
-   "name": "Abdul Whitehead",
+   "url": null,
+   "name": "Pete Eglitis",
    "position_name": "Left Guard",
-   "jersey": "62",
+   "jersey": "75",
    "team": "Penn State",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -10676,14 +10676,14 @@
    }
   },
   {
-   "slug": "david-elliott",
+   "slug": "hunter-albright",
    "position": "RG",
    "class": "FR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/david-elliott/",
-   "name": "David Elliott",
+   "url": null,
+   "name": "Hunter Albright",
    "position_name": "Right Guard",
-   "jersey": "63",
+   "jersey": "76",
    "team": "Penn State",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -23306,14 +23306,14 @@
    }
   },
   {
-   "slug": "colten-bench",
+   "slug": "lucas-tenbrock",
    "position": "P",
    "class": "FR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/colten-bench/",
-   "name": "Colten Bench",
+   "url": null,
+   "name": "Lucas Tenbrock",
    "position_name": "Punter",
-   "jersey": "14",
+   "jersey": "96",
    "team": "Penn State",
    "class_year": "Freshman",
    "height": "6'1\"",

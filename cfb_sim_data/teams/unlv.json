@@ -263,13 +263,13 @@
    "velltray-jefferson",
    "jae-beasley-ii",
    "tyson-jacobson",
-   "bryce-lange",
-   "heath-virgil"
+   "andreas-diaz-nicolaidis",
+   "aveon-williams"
   ],
   "LT": [
    "will-thomas",
-   "elton-blackwell",
-   "shamir-fowler",
+   "tevita-tausinga",
+   "chrysanthos-fetokakis",
    "jesus-garcia-ii",
    "mateo-bilaver"
   ],
@@ -279,8 +279,8 @@
   ],
   "C": [
    "griffin-scroggs",
-   "brian-bishop",
-   "devin-brenner"
+   "zach-scott",
+   "joe-metzger"
   ],
   "RG": [
    "bj-tolo",
@@ -290,11 +290,11 @@
   "RT": [
    "austin-boyd",
    "malik-white",
-   "toby-langston"
+   "fuad-maali"
   ],
   "LEDG": [
    "elias-rudolph",
-   "taylor-shields",
+   "cj-besser",
    "kenji-scanlan",
    "kal-el-togafau"
   ],
@@ -318,20 +318,20 @@
    "blesyng-alualu-tuiolemotu",
    "cam-santee",
    "dee-crayton",
-   "terrelle-joseph"
+   "alexander-green"
   ],
   "WILL": [
    "kamuela-ka-aihue",
    "mark-iheanachor",
-   "will-mooney",
-   "tavaris-heard"
+   "jacob-beza",
+   "justin-flowe"
   ],
   "CB": [
    "denver-harris",
    "avery-helm",
    "quandarius-keyes",
    "kyron-chambers",
-   "kahlil-scott",
+   "brock-defries",
    "mumu-bin-wahad",
    "tony-louis-nkuba",
    "jaylen-allen",
@@ -7694,14 +7694,14 @@
    }
   },
   {
-   "slug": "bryce-lange",
+   "slug": "andreas-diaz-nicolaidis",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/bryce-lange/",
-   "name": "Bryce Lange",
+   "url": null,
+   "name": "Andreas Diaz-Nicolaidis",
    "position_name": "Tight End",
-   "jersey": "48",
+   "jersey": "89",
    "team": "UNLV",
    "class_year": "Freshman (RS)",
    "height": "6'6\"",
@@ -7959,14 +7959,14 @@
    }
   },
   {
-   "slug": "heath-virgil",
+   "slug": "aveon-williams",
    "position": "TE",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/heath-virgil/",
-   "name": "Heath Virgil",
+   "url": null,
+   "name": "Aveon Williams",
    "position_name": "Tight End",
-   "jersey": "33",
+   "jersey": "41",
    "team": "UNLV",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -8510,12 +8510,12 @@
    }
   },
   {
-   "slug": "elton-blackwell",
+   "slug": "tevita-tausinga",
    "position": "LT",
    "class": "SO",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/elton-blackwell/",
-   "name": "Elton Blackwell",
+   "url": null,
+   "name": "Tevita Tausinga",
    "position_name": "Left Tackle",
    "jersey": "50",
    "team": "UNLV",
@@ -8770,12 +8770,12 @@
    }
   },
   {
-   "slug": "shamir-fowler",
+   "slug": "chrysanthos-fetokakis",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/shamir-fowler/",
-   "name": "Shamir Fowler",
+   "url": null,
+   "name": "Chrysanthos Fetokakis",
    "position_name": "Left Tackle",
    "jersey": "76",
    "team": "UNLV",
@@ -10436,12 +10436,12 @@
    }
   },
   {
-   "slug": "brian-bishop",
+   "slug": "zach-scott",
    "position": "C",
    "class": "JRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/brian-bishop/",
-   "name": "Brian Bishop",
+   "url": null,
+   "name": "Zach Scott",
    "position_name": "Center",
    "jersey": "57",
    "team": "UNLV",
@@ -10687,12 +10687,12 @@
    }
   },
   {
-   "slug": "devin-brenner",
+   "slug": "joe-metzger",
    "position": "C",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/devin-brenner/",
-   "name": "Devin Brenner",
+   "url": null,
+   "name": "Joe Metzger",
    "position_name": "Center",
    "jersey": "64",
    "team": "UNLV",
@@ -12335,14 +12335,14 @@
    }
   },
   {
-   "slug": "toby-langston",
+   "slug": "fuad-maali",
    "position": "RT",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/toby-langston/",
-   "name": "Toby Langston",
+   "url": null,
+   "name": "Fuad Maali",
    "position_name": "Right Tackle",
-   "jersey": "53",
+   "jersey": "61",
    "team": "UNLV",
    "class_year": "Freshman",
    "height": "6'6\"",
@@ -12846,14 +12846,14 @@
    }
   },
   {
-   "slug": "taylor-shields",
+   "slug": "cj-besser",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/taylor-shields/",
-   "name": "Taylor Shields",
+   "url": null,
+   "name": "CJ Besser",
    "position_name": "Left Edge",
-   "jersey": "69",
+   "jersey": "48",
    "team": "UNLV",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",
@@ -17495,14 +17495,14 @@
    }
   },
   {
-   "slug": "terrelle-joseph",
+   "slug": "alexander-green",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/terrelle-joseph/",
-   "name": "Terrelle Joseph",
+   "url": null,
+   "name": "Alexander Green",
    "position_name": "Mike Linebacker",
-   "jersey": "59",
+   "jersey": "51",
    "team": "UNLV",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -18313,14 +18313,14 @@
    }
   },
   {
-   "slug": "will-mooney",
+   "slug": "jacob-beza",
    "position": "WILL",
    "class": "SO",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/will-mooney/",
-   "name": "Will Mooney",
+   "url": null,
+   "name": "Jacob Beza",
    "position_name": "Will Linebacker",
-   "jersey": "46",
+   "jersey": "52",
    "team": "UNLV",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -18598,14 +18598,14 @@
    }
   },
   {
-   "slug": "tavaris-heard",
+   "slug": "justin-flowe",
    "position": "WILL",
    "class": "JR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/tavaris-heard/",
-   "name": "Tavaris Heard",
+   "url": null,
+   "name": "Justin Flowe",
    "position_name": "Will Linebacker",
-   "jersey": "37",
+   "jersey": "36",
    "team": "UNLV",
    "class_year": "Junior",
    "height": "6'2\"",
@@ -20013,14 +20013,14 @@
    }
   },
   {
-   "slug": "kahlil-scott",
+   "slug": "brock-defries",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/kahlil-scott/",
-   "name": "Kahlil Scott",
+   "url": null,
+   "name": "Brock DeFries",
    "position_name": "Cornerback",
-   "jersey": "38",
+   "jersey": "25",
    "team": "UNLV",
    "class_year": "Junior (RS)",
    "height": "6'1\"",

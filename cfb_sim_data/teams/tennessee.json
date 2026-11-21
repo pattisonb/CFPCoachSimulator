@@ -241,7 +241,7 @@
    "desean-bishop",
    "javin-gordon",
    "daune-morris",
-   "antonio-hardy",
+   "will-rajecki",
    "justin-baker"
   ],
   "FB": [],
@@ -252,7 +252,7 @@
    "radarious-jackson",
    "travis-smith-jr",
    "joakim-dodson",
-   "bennett-saturday",
+   "nathan-roberts",
    "brayden-carroll"
   ],
   "TE": [
@@ -281,18 +281,18 @@
    "jesse-perry",
    "ed-baker",
    "donovan-haslam",
-   "harrison-jackson"
+   "thomas-storm"
   ],
   "RT": [
    "ory-williams",
    "jeremias-heard",
-   "mario-moore-tennessee"
+   "jeremy-george-el"
   ],
   "LEDG": [
    "tyree-weathersby",
    "mariyon-dye",
    "kedric-golston-ii",
-   "ryan-penn"
+   "jj-finch"
   ],
   "DT": [
    "xavier-gilliam",
@@ -309,7 +309,7 @@
    "jordan-norman",
    "zach-groves",
    "christian-gass",
-   "alex-stack"
+   "carter-gooden"
   ],
   "SAM": [],
   "MIKE": [
@@ -317,8 +317,8 @@
    "edwin-spillman",
    "jeremiah-telander",
    "tj-white",
-   "carson-wise",
-   "justyn-brock"
+   "brayden-rouse",
+   "grier-short"
   ],
   "WILL": [
    "arion-carter",
@@ -334,13 +334,13 @@
    "tre-poteat-iii",
    "tim-merritt",
    "tevis-metcalf",
-   "lavar-johnson"
+   "jowell-combay"
   ],
   "FS": [
    "tj-metcalf",
    "qua-moss",
    "sidney-walton",
-   "quinn-williams",
+   "javonte-smith",
    "kj-mcclain"
   ],
   "SS": [
@@ -2006,14 +2006,14 @@
    }
   },
   {
-   "slug": "antonio-hardy",
+   "slug": "will-rajecki",
    "position": "HB",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/antonio-hardy/",
-   "name": "Antonio Hardy",
+   "url": null,
+   "name": "Will Rajecki",
    "position_name": "Halfback",
-   "jersey": "35",
+   "jersey": "34",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -3941,12 +3941,12 @@
    }
   },
   {
-   "slug": "bennett-saturday",
+   "slug": "nathan-roberts",
    "position": "WR",
    "class": "FRRS",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/bennett-saturday/",
-   "name": "Bennett Saturday",
+   "url": null,
+   "name": "Nathan Roberts",
    "position_name": "Wide Receiver",
    "jersey": "36",
    "team": "Tennessee",
@@ -9609,14 +9609,14 @@
    }
   },
   {
-   "slug": "harrison-jackson",
+   "slug": "thomas-storm",
    "position": "RG",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/harrison-jackson/",
-   "name": "Harrison Jackson",
+   "url": null,
+   "name": "Thomas Storm",
    "position_name": "Right Guard",
-   "jersey": "62",
+   "jersey": "60",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -10435,12 +10435,12 @@
    }
   },
   {
-   "slug": "mario-moore-tennessee",
+   "slug": "jeremy-george-el",
    "position": "RT",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/mario-moore-tennessee/",
-   "name": "Mario Moore",
+   "url": null,
+   "name": "Jeremy George-El",
    "position_name": "Right Tackle",
    "jersey": "63",
    "team": "Tennessee",
@@ -11490,14 +11490,14 @@
    }
   },
   {
-   "slug": "ryan-penn",
+   "slug": "jj-finch",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/ryan-penn/",
-   "name": "Ryan Penn",
+   "url": null,
+   "name": "JJ Finch",
    "position_name": "Left Edge",
-   "jersey": "91",
+   "jersey": "26",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -14703,14 +14703,14 @@
    }
   },
   {
-   "slug": "alex-stack",
+   "slug": "carter-gooden",
    "position": "REDG",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/alex-stack/",
-   "name": "Alex Stack",
+   "url": null,
+   "name": "Carter Gooden",
    "position_name": "Right Edge",
-   "jersey": "53",
+   "jersey": "36",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "6'7\"",
@@ -16382,14 +16382,14 @@
    }
   },
   {
-   "slug": "carson-wise",
+   "slug": "brayden-rouse",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/carson-wise/",
-   "name": "Carson Wise",
+   "url": null,
+   "name": "Brayden Rouse",
    "position_name": "Mike Linebacker",
-   "jersey": "31",
+   "jersey": "28",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -16634,14 +16634,14 @@
    }
   },
   {
-   "slug": "justyn-brock",
+   "slug": "grier-short",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/justyn-brock/",
-   "name": "Justyn Brock",
+   "url": null,
+   "name": "Grier Short",
    "position_name": "Mike Linebacker",
-   "jersey": "21",
+   "jersey": "57",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -19946,14 +19946,14 @@
    }
   },
   {
-   "slug": "lavar-johnson",
+   "slug": "jowell-combay",
    "position": "CB",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/lavar-johnson/",
-   "name": "Lavar Johnson",
+   "url": null,
+   "name": "Jowell Combay",
    "position_name": "Cornerback",
-   "jersey": "16",
+   "jersey": "38",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "6'1\"",
@@ -21042,14 +21042,14 @@
    }
   },
   {
-   "slug": "quinn-williams",
+   "slug": "javonte-smith",
    "position": "FS",
    "class": "FR",
    "team_slug": "tennessee",
-   "url": "https://collegefootball.gg/players/quinn-williams/",
-   "name": "Quinn Williams",
+   "url": null,
+   "name": "Javonte Smith",
    "position_name": "Free Safety",
-   "jersey": "45",
+   "jersey": "30",
    "team": "Tennessee",
    "class_year": "Freshman",
    "height": "6'1\"",

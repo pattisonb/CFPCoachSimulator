@@ -166,7 +166,7 @@
    "WR": [
     "k-d-hutchinson",
     "qua-vez-humphreys",
-    "addison-claiborne"
+    "moussa-barry"
    ],
    "TE": [
     "cc-ezirim"
@@ -200,7 +200,7 @@
    ],
    "LB": [
     "garrison-madden",
-    "angelo-bronson"
+    "makhi-brazier"
    ],
    "CB": [
     "tony-newsome-jr",
@@ -247,7 +247,7 @@
   "WR": [
    "k-d-hutchinson",
    "qua-vez-humphreys",
-   "addison-claiborne",
+   "moussa-barry",
    "cameron-flowers",
    "zion-taylor",
    "quincy-burroughs",
@@ -283,14 +283,14 @@
   "RG": [
    "rhett-larson",
    "tai-ray",
-   "antoine-manning",
+   "tyrell-scott",
    "jamier-smith"
   ],
   "RT": [
    "karsten-upchurch",
    "zach-clayton",
    "alex-lopez",
-   "enrique-smith-diaz"
+   "jordan-curll"
   ],
   "LEDG": [
    "venson-sneed-jr",
@@ -321,7 +321,7 @@
    "jordan-donald"
   ],
   "WILL": [
-   "angelo-bronson",
+   "makhi-brazier",
    "geajorm-akpaloo",
    "westen-ard",
    "josaiah-knight"
@@ -3437,14 +3437,14 @@
    }
   },
   {
-   "slug": "addison-claiborne",
+   "slug": "moussa-barry",
    "position": "WR",
    "class": "JR",
    "team_slug": "w-kentucky",
-   "url": "https://collegefootball.gg/players/addison-claiborne/",
-   "name": "Addison Claiborne",
+   "url": null,
+   "name": "Moussa Barry",
    "position_name": "Wide Receiver",
-   "jersey": "42",
+   "jersey": "8",
    "team": "W. Kentucky",
    "class_year": "Junior",
    "height": "5'9\"",
@@ -10824,14 +10824,14 @@
    }
   },
   {
-   "slug": "antoine-manning",
+   "slug": "tyrell-scott",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "w-kentucky",
-   "url": "https://collegefootball.gg/players/antoine-manning/",
-   "name": "Antoine Manning",
+   "url": null,
+   "name": "Tyrell Scott",
    "position_name": "Right Guard",
-   "jersey": "58",
+   "jersey": "56",
    "team": "W. Kentucky",
    "class_year": "Freshman (RS)",
    "height": "6'5\"",
@@ -12193,14 +12193,14 @@
    }
   },
   {
-   "slug": "enrique-smith-diaz",
+   "slug": "jordan-curll",
    "position": "RT",
    "class": "FR",
    "team_slug": "w-kentucky",
-   "url": "https://collegefootball.gg/players/enrique-smith-diaz/",
-   "name": "Enrique Smith-Diaz",
+   "url": null,
+   "name": "Jordan Curll",
    "position_name": "Right Tackle",
-   "jersey": "71",
+   "jersey": "69",
    "team": "W. Kentucky",
    "class_year": "Freshman",
    "height": "6'4\"",
@@ -17536,12 +17536,12 @@
    }
   },
   {
-   "slug": "angelo-bronson",
+   "slug": "makhi-brazier",
    "position": "WILL",
    "class": "JR",
    "team_slug": "w-kentucky",
-   "url": "https://collegefootball.gg/players/angelo-bronson/",
-   "name": "Angelo Bronson",
+   "url": null,
+   "name": "Makhi Brazier",
    "position_name": "Will Linebacker",
    "jersey": "34",
    "team": "W. Kentucky",

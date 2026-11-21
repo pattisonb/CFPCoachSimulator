@@ -239,7 +239,7 @@
   ],
   "HB": [
    "herschel-turner",
-   "barry-brown",
+   "mekai-smith",
    "janerious-jackson",
    "ky-woods",
    "dominic-kelley",
@@ -2081,14 +2081,14 @@
    }
   },
   {
-   "slug": "barry-brown",
+   "slug": "mekai-smith",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "nevada",
-   "url": "https://collegefootball.gg/players/barry-brown/",
-   "name": "Barry Brown",
+   "url": null,
+   "name": "Mekai Smith",
    "position_name": "Halfback",
-   "jersey": "47",
+   "jersey": "26",
    "team": "Nevada",
    "class_year": "Freshman (RS)",
    "height": "6'0\"",

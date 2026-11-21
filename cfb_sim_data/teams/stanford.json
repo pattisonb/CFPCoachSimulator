@@ -254,7 +254,7 @@
    "carter-shaw",
    "jordan-onovughe",
    "marcus-brown",
-   "demarcus-greenwood",
+   "dre-pollard",
    "liam-thorpe",
    "david-pantelis",
    "langdon-horace"
@@ -285,7 +285,7 @@
    "simione-pale",
    "ziron-brown",
    "charlie-hoitink",
-   "darin-johnson"
+   "jay-miller"
   ],
   "RT": [
    "kahlil-house",
@@ -307,7 +307,7 @@
   "REDG": [
    "zach-rowell",
    "adam-shovlin",
-   "joe-nelson"
+   "max-meier"
   ],
   "SAM": [
    "tevarua-tafiti",
@@ -353,8 +353,8 @@
   ],
   "K": [
    "emmet-kenney",
-   "dustin-watkins",
-   "dakota-clark"
+   "aj-seidler",
+   "london-bironas"
   ],
   "P": [
    "aidan-flintoft"
@@ -4530,14 +4530,14 @@
    }
   },
   {
-   "slug": "demarcus-greenwood",
+   "slug": "dre-pollard",
    "position": "WR",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/demarcus-greenwood/",
-   "name": "DeMarcus Greenwood",
+   "url": null,
+   "name": "Dre Pollard",
    "position_name": "Wide Receiver",
-   "jersey": "27",
+   "jersey": "14",
    "team": "Stanford",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -10391,14 +10391,14 @@
    }
   },
   {
-   "slug": "darin-johnson",
+   "slug": "jay-miller",
    "position": "RG",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/darin-johnson/",
-   "name": "Darin Johnson",
+   "url": null,
+   "name": "Jay Miller",
    "position_name": "Right Guard",
-   "jersey": "68",
+   "jersey": "65",
    "team": "Stanford",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -14161,14 +14161,14 @@
    }
   },
   {
-   "slug": "joe-nelson",
+   "slug": "max-meier",
    "position": "REDG",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/joe-nelson/",
-   "name": "Joe Nelson",
+   "url": null,
+   "name": "Max Meier",
    "position_name": "Right Edge",
-   "jersey": "61",
+   "jersey": "98",
    "team": "Stanford",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -23249,14 +23249,14 @@
    }
   },
   {
-   "slug": "dustin-watkins",
+   "slug": "aj-seidler",
    "position": "K",
    "class": "JRRS",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/dustin-watkins/",
-   "name": "Dustin Watkins",
+   "url": null,
+   "name": "AJ Seidler",
    "position_name": "Kicker",
-   "jersey": "59",
+   "jersey": "92",
    "team": "Stanford",
    "class_year": "Junior (RS)",
    "height": "6'2\"",
@@ -23499,14 +23499,14 @@
    }
   },
   {
-   "slug": "dakota-clark",
+   "slug": "london-bironas",
    "position": "K",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/dakota-clark/",
-   "name": "Dakota Clark",
+   "url": null,
+   "name": "London Bironas",
    "position_name": "Kicker",
-   "jersey": "47",
+   "jersey": "19",
    "team": "Stanford",
    "class_year": "Freshman",
    "height": "5'11\"",

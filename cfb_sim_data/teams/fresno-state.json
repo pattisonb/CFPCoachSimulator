@@ -222,7 +222,7 @@
     "manaki-watanabe"
    ],
    "P": [
-    "taylor-jacobsen"
+    "clay-lawrence"
    ],
    "KR": [
     "rayshon-luke"
@@ -269,13 +269,13 @@
   "LT": [
    "brayden-walton",
    "oscar-weigel",
-   "mason-york"
+   "ekene-ebizie"
   ],
   "LG": [
    "edward-fonua",
    "gino-quinones",
-   "conner-tunnell",
-   "spencer-fonoti"
+   "ethan-dasmann",
+   "alex-rivera"
   ],
   "C": [
    "braylan-henderson",
@@ -308,7 +308,7 @@
   "REDG": [
    "sione-noa",
    "dylan-hampsten",
-   "darrin-watkins",
+   "bryson-harrington",
    "brendan-huddleston"
   ],
   "SAM": [
@@ -322,7 +322,7 @@
   ],
   "WILL": [
    "logan-studt",
-   "gerome-granger",
+   "zephaniah-sesay",
    "justin-johnson"
   ],
   "CB": [
@@ -352,11 +352,11 @@
   ],
   "K": [
    "manaki-watanabe",
-   "gage-bloom",
-   "david-stands"
+   "connor-tripp",
+   "ryan-kobzeff"
   ],
   "P": [
-   "taylor-jacobsen",
+   "clay-lawrence",
    "nick-verdugo"
   ]
  },
@@ -7659,14 +7659,14 @@
    }
   },
   {
-   "slug": "mason-york",
+   "slug": "ekene-ebizie",
    "position": "LT",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/mason-york/",
-   "name": "Mason York",
+   "url": null,
+   "name": "Ekene Ebizie",
    "position_name": "Left Tackle",
-   "jersey": "59",
+   "jersey": "68",
    "team": "Fresno State",
    "class_year": "Freshman",
    "height": "6'5\"",
@@ -8490,14 +8490,14 @@
    }
   },
   {
-   "slug": "conner-tunnell",
+   "slug": "ethan-dasmann",
    "position": "LG",
    "class": "SO",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/conner-tunnell/",
-   "name": "Conner Tunnell",
+   "url": null,
+   "name": "Ethan Dasmann",
    "position_name": "Left Guard",
-   "jersey": "74",
+   "jersey": "79",
    "team": "Fresno State",
    "class_year": "Sophomore",
    "height": "6'3\"",
@@ -8743,14 +8743,14 @@
    }
   },
   {
-   "slug": "spencer-fonoti",
+   "slug": "alex-rivera",
    "position": "LG",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/spencer-fonoti/",
-   "name": "Spencer Fonoti",
+   "url": null,
+   "name": "Alex Rivera",
    "position_name": "Left Guard",
-   "jersey": "77",
+   "jersey": "59",
    "team": "Fresno State",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -14419,12 +14419,12 @@
    }
   },
   {
-   "slug": "darrin-watkins",
+   "slug": "bryson-harrington",
    "position": "REDG",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/darrin-watkins/",
-   "name": "Darrin Watkins",
+   "url": null,
+   "name": "Bryson Harrington",
    "position_name": "Right Edge",
    "jersey": "93",
    "team": "Fresno State",
@@ -16637,14 +16637,14 @@
    }
   },
   {
-   "slug": "gerome-granger",
+   "slug": "zephaniah-sesay",
    "position": "WILL",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/gerome-granger/",
-   "name": "Gerome Granger",
+   "url": null,
+   "name": "Zephaniah Sesay",
    "position_name": "Will Linebacker",
-   "jersey": "90",
+   "jersey": "45",
    "team": "Fresno State",
    "class_year": "Freshman",
    "height": "6'3\"",
@@ -22716,14 +22716,14 @@
    }
   },
   {
-   "slug": "gage-bloom",
+   "slug": "connor-tripp",
    "position": "K",
    "class": "SORS",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/gage-bloom/",
-   "name": "Gage Bloom",
+   "url": null,
+   "name": "Connor Tripp",
    "position_name": "Kicker",
-   "jersey": "30",
+   "jersey": "45",
    "team": "Fresno State",
    "class_year": "Sophomore (RS)",
    "height": "5'11\"",
@@ -22954,14 +22954,14 @@
    }
   },
   {
-   "slug": "david-stands",
+   "slug": "ryan-kobzeff",
    "position": "K",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/david-stands/",
-   "name": "David Stands",
+   "url": null,
+   "name": "Ryan Kobzeff",
    "position_name": "Kicker",
-   "jersey": "15",
+   "jersey": "40",
    "team": "Fresno State",
    "class_year": "Freshman",
    "height": "5'11\"",
@@ -23201,14 +23201,14 @@
    }
   },
   {
-   "slug": "taylor-jacobsen",
+   "slug": "clay-lawrence",
    "position": "P",
    "class": "SR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/taylor-jacobsen/",
-   "name": "Taylor Jacobsen",
+   "url": null,
+   "name": "Clay Lawrence",
    "position_name": "Punter",
-   "jersey": "40",
+   "jersey": "49",
    "team": "Fresno State",
    "class_year": "Senior",
    "height": "6'1\"",
