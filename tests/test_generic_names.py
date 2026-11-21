@@ -1,5 +1,6 @@
 """The published site carries no real names (tools/build_site.py --generic, tools/generic): a staged copy of the
-game and the app's source with the names swapped holds none of the real schools that change, mascots, stadiums,
+game and the app's source with the names swapped holds none of the real schools that change (one named for its
+state or city goes by that place), mascots, stadiums,
 bowls, conferences, awards, players or coaches; every real team has a lookalike; the swap is the same every time;
 and a career at a renamed school starts and plays a week on the swapped data. The repository itself is untouched.
 `python3 tests/test_generic_names.py`"""
@@ -42,14 +43,21 @@ def main():
     for slug, t in maps.real_teams.items():
         new = maps.team[slug]
         assert new["mascot"] != t["mascot"], f"{slug} keeps its real mascot"
-        assert new["short"] != t["short_name"] and new["slug"] != slug, f"{slug} keeps its real name"
-        assert new["abbr"] != t["abbreviation"], f"{slug} keeps its real abbreviation"
+        assert new["slug"] != slug, f"{slug} keeps its real slug"
+        assert new["school"] != t["school_name"], f"{slug} keeps its real full name"
+        if slug in tables.PLACES:                 # named for its state or city: it goes by the place
+            assert new["short"] == t["short_name"], f"{slug} is listed as a place but does not go by it"
+        else:
+            assert new["short"] != t["short_name"], f"{slug} keeps its real name"
+            assert new["abbr"] != t["abbreviation"], f"{slug} keeps its real abbreviation"
         assert new["stadium"] != t["stadium"]["name"], f"{slug} keeps its real stadium"
     for field in ("short", "abbr", "slug"):
         values = [v[field] for v in maps.team.values()]
         assert len(set(values)) == len(values), f"two schools share a lookalike {field}"
-    real_shorts = {t["short_name"] for t in maps.real_teams.values()} | {t["abbreviation"] for t in maps.real_teams.values()}
-    assert not real_shorts & ({v["short"] for v in maps.team.values()} | {v["abbr"] for v in maps.team.values()}), "a lookalike is another school's real name"
+    for slug, new in maps.team.items():
+        others = {x for s, t in maps.real_teams.items() if s != slug for x in (t["short_name"], t["abbreviation"])}
+        assert not {new["short"], new["abbr"]} & others, f"{slug}'s lookalike is another school's real name"
+    assert set(tables.SLUGS) == tables.PLACES, "every place-named school keeps the slug it had"
     for real, new in maps.person.items():
         first_real, last_real, _ = scrub.Names._parts(real)
         assert new != real and initial(new.split()[0]) == initial(first_real), (real, new)
@@ -67,10 +75,12 @@ def main():
         real = json.loads((ROOT / "cfb_sim_data" / "teams" / "notre-dame.json").read_text(encoding="utf-8"))
         assert team["colors"]["primary"]["hex"] != real["colors"]["primary"]["hex"]          # a protected shade: moved a hair
         assert abs(int(team["colors"]["primary"]["hex"][1:3], 16) - int(real["colors"]["primary"]["hex"][1:3], 16)) <= tables.COLOR_NUDGE
-        kept = json.loads((root / "cfb_sim_data" / "teams" / "iowa-city.json").read_text(encoding="utf-8"))
-        assert kept["short_name"] == "Iowa City" and kept["state"] == "IA"
+        kept = json.loads((root / "cfb_sim_data" / "teams" / "iowa-city.json").read_text(encoding="utf-8"))     # its old slug
+        assert kept["short_name"] == "Iowa" and kept["state"] == "IA" and kept["mascot"] == "Kernels", kept["short_name"]
+        assert kept["school_name"] == "Iowa University" and kept["abbreviation"] == "IOWA"
         scenes = (root / "coach_career" / "scenes.py").read_text(encoding="utf-8")
-        assert '"TX": "Texas"' in scenes, "a state lost its name to a school's swap"
+        assert '"TX": "Texas"' in scenes and '"MT": "Montana"' in scenes and '"RI": "Rhode Island"' in scenes, "a state lost its name to a school's swap"
+        assert '"Montana": "MT"' not in (root / "sim" / "season.py").read_text(encoding="utf-8"), "an FCS school kept its state's name"
         assert kept["colors"] == json.loads((ROOT / "cfb_sim_data" / "teams" / "iowa.json").read_text(encoding="utf-8"))["colors"]
         assert len(team["roster"]) == len(real["roster"])
         assert [p["overall"] for p in team["roster"]] == [p["overall"] for p in real["roster"]]   # only the names change

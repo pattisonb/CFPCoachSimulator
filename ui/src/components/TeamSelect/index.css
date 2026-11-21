@@ -140,6 +140,20 @@
   scrollbar-gutter: stable;
 }
 
+/* By State: a state's teams sit in the grid's own columns under its name, which takes a row to itself */
+.chooser__group {
+  display: contents;
+}
+
+.chooser__group-name {
+  grid-column: 1 / -1;
+  margin-top: var(--s2);
+}
+
+.chooser__group:first-child .chooser__group-name {
+  margin-top: 0;
+}
+
 .chooser__none {
   flex: 1;
   color: var(--ink-soft);
@@ -432,6 +446,17 @@
   .team-banner__helmet {
     animation: none;
   }
+}
+
+/* the team's state in the tile's top right corner, in the ink that reads on its color */
+.chooser__state {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1;
 }
 
 /* a team's ratings in the tile's bottom right corner: three small cards, the overall solid */

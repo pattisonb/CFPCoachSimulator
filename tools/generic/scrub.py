@@ -3,8 +3,9 @@
     scrub.run(root)      # `root`: a copy made by tools/build_site.py (never the repository itself)
 
 What changes (tables.py holds the hand-written names):
-  - schools: short name, full name, mascot, stadium, the slug the address bar shows, colors where the shade or its
-    name is a school's own
+  - schools: full name, mascot, stadium, colors where the shade or its name is a school's own; and the short name,
+    abbreviation and the slug the address bar shows, except that a school named for its state or city keeps that
+    place name (tables.PLACES)
   - players and coaches: a drawn name with the same initials ("Julian Sayin" may become "Jalen Shaw"), the same
     for every build (seeded by the real name), and their slugs with it
   - bowls, conferences, rivalry games and trophies, FCS opponents, awards, leagues and networks
@@ -123,8 +124,8 @@ class Maps:
         for slug, t in self.real_teams.items():
             new_short, abbr, mascot = tables.TEAMS[slug]
             self.team[slug] = {
-                "slug": slugify(new_short), "short": new_short, "abbr": abbr,
-                "school": f"{new_short} University", "mascot": mascot,
+                "slug": tables.SLUGS.get(slug) or slugify(new_short), "short": new_short, "abbr": abbr,
+                "school": self._school(new_short), "mascot": mascot,
                 "stadium": self._stadium(slug, t, mascot),
             }
         new_slugs = [v["slug"] for v in self.team.values()]
@@ -207,8 +208,12 @@ class Maps:
         # the FCS schools the game's own code lists by their bare name ("Duquesne"), unless that name opens a real
         # team's ("North Dakota" and North Dakota State)
         real_names = [t["short_name"] for t in self.real_teams.values()] + [t["school_name"] for t in self.real_teams.values()]
-        self.fcs_places = {old: new for old, new in self.fcs_locations.items()
-                           if old not in ph and len(old) > 4 and not any(n == old or n.startswith(old + " ") for n in real_names)}
+        places = {old: new for old, new in self.fcs_locations.items()
+                  if old not in ph and len(old) > 4 and not any(n == old or n.startswith(old + " ") for n in real_names)}
+        # one that goes by its state alone ("Montana"): swapped only as a quoted school in the code (source()), so
+        # the state keeps its name in a list of states and in a sentence
+        self.fcs_places = {old: new for old, new in places.items() if old not in tables.STATES}
+        self.fcs_state_places = {old: new for old, new in places.items() if old in tables.STATES}
         ph.update({k: v for k, v in self.fcs_places.items() if " " in k})
         for c in coaches:
             ph[c] = self.person[c]
@@ -223,6 +228,13 @@ class Maps:
         slugs = sorted(self.slug, key=len, reverse=True)
         self._slug_re = re.compile(r"(?<![a-z0-9-])(" + "|".join(re.escape(s) for s in slugs) + r")(?=:)")
         self._cache: dict[str, str] = {}
+
+    def _school(self, short: str) -> str:
+        """The full name: "<short> University", unless a real school has it (a school that goes by its place name:
+        Syracuse, Ohio); then "University of <short>", then "<short> College" (Miami, where both are real)."""
+        real = [t["school_name"].removeprefix("The ") for t in self.real_teams.values()]
+        forms = (f"{short} University", f"University of {short}", f"{short} College")
+        return next(f for f in forms if not any(r.startswith(f) for r in real))
 
     def _stadium(self, slug: str, t: dict, mascot: str) -> str:
         kinds = ("{m} Stadium", "{m} Field", "{m} Memorial Stadium", "{m} Bowl")
@@ -294,6 +306,7 @@ class Maps:
             return self.text(node)
         return node
 
+    _STATE_VALUE = re.compile(r"""[A-Z]{2}["']?:\s*$""")      # what stands before a state's name in a list of states
     _QUOTED = re.compile(r"""(["'`])((?:(?!\1)[^\\\n]){1,80})\1""")
 
     def source(self, code: str, sample: bool = False) -> str:
@@ -302,6 +315,8 @@ class Maps:
         def quoted(m: re.Match) -> str:
             inner = m.group(2)
             hit = self.exact.get(inner) or (self.team_exact.get(inner) if sample else None)
+            if hit is None and inner in self.fcs_state_places and not self._STATE_VALUE.search(code, max(0, m.start() - 8), m.start()):
+                hit = self.fcs_state_places[inner]      # "Montana": "MT" names the school; "MT": "Montana" the state
             if hit is None or m.group(1) in hit:
                 return self._slug_re.sub(lambda s: self.slug[s.group(1)], m.group(0))
             return f"{m.group(1)}{hit}{m.group(1)}"
