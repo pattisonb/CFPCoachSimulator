@@ -1,6 +1,6 @@
 {
  "games": 99,
- "recruiting_sha256": "e3eb281d142aea86f284866e15e4b11689771cb5c418ceb435204ddfe1373755",
+ "recruiting_sha256": "a5fae914f8d86796bd59fcd0d2ec8bce3f67202693ae21013dff6381a07fcd8e",
  "scores": {
   "401856634": [
    27,
@@ -298,7 +298,7 @@
    0
   ],
   "401860879": [
-   80,
+   84,
    3,
    0
   ],
@@ -498,5 +498,5 @@
    0
   ]
  },
- "stats_sha256": "f25c76c134dbe0744d689dab7e6ee172e83f6f63493a4e349b96bf2840cbdc0c"
+ "stats_sha256": "46e587ca573559afa2f28f8d3d342aa07fe32ec2f9dd185dc81213e8bffa2aac"
 }
