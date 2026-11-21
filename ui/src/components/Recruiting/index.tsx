@@ -664,17 +664,27 @@ function RecruitPanel({
     }
   };
   // his Package Deal: open his teammate, putting him on your board first if he is not there
+  // (either may be refused: a sim is running, or he left the pool when the portal closed. The game's reason is said,
+  // never left as an error nobody sees: the stress run's find)
   const openMate = async (id: string) => {
-    if (!onBoard(id)) {
-      await setOnBoard(seasonId, [id], true);
-      await reload();
+    try {
+      if (!onBoard(id)) {
+        await setOnBoard(seasonId, [id], true);
+        await reload();
+      }
+      onPick(id);
+    } catch (e) {
+      setNote(m.failed((e as Error).message));
     }
-    onPick(id);
   };
   const offBoard = async () => {
     if (r.offered && !window.confirm(m.offBoardConfirm(r.name))) return;
-    await setOnBoard(seasonId, [r.id], false);
-    await reload();
+    try {
+      await setOnBoard(seasonId, [r.id], false);
+      await reload();
+    } catch (e) {
+      setNote(m.failed((e as Error).message));
+    }
   };
 
   // what waits for your offer: your head coach's visit (once a month, by how far he lives) and the starting job (free)
