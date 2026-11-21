@@ -270,6 +270,8 @@ export const messages = {
   >,
   kindTags: { offered: "Offered", board: "Board", contacted: "Contact" } as Record<string, string>,
   nextDepthLabel: "Next year's depth chart by position",
+  sortByNeed: "Sort by Need",
+  viewVertical: "Vertical",
   returning: (n: number) => `${n} Returning`,
   needN: (n: number) => `Need ${n}`,
   full: "Full",

@@ -62,6 +62,8 @@ export default function Actions({
   const returner = row.role === "KR" || row.role === "PR";
   const rs = p.redshirt;
   const here = options?.find((o) => o.current);
+  /** what he would be at a spot of his own position (LT, RG), when the game rates him there */
+  const ovrAt = (role: string) => options?.find((o) => o.pos === role)?.overall;
 
   return (
     <div className="depth-actions" role="group" aria-label={m.actions(p.name)}>
@@ -99,9 +101,18 @@ export default function Actions({
           value={row.role}
           size="md"
           disabled={busy}
+          // each spot with the overall he would be there, as the Position menu has it (the player's ask)
           options={[
-            { value: row.role, label: row.role, hint: m.hereNow },
-            ...roles.map((r) => ({ value: r.role, label: r.role, hint: r.label })),
+            {
+              value: row.role,
+              label: row.role,
+              hint: ovrAt(row.role) != null ? m.hereNowOvr(ovrAt(row.role)!) : m.hereNow,
+            },
+            ...roles.map((r) => ({
+              value: r.role,
+              label: r.role,
+              hint: ovrAt(r.role) != null ? m.roleOvr(r.label, ovrAt(r.role)!) : r.label,
+            })),
           ]}
           onChange={(v) => v !== row.role && onRole(v)}
         />

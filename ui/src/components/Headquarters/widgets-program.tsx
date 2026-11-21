@@ -687,6 +687,7 @@ function ProgramCompare({ d, ctx }: P) {
 /** this browser's own: the positions picked to show, and which recruits show besides your commits */
 const NEXT_KEY = "cfp-hq-next-groups";
 const SHOW_KEY = "cfp-hq-next-show";
+const OPTS_KEY = "cfp-hq-next-opts";
 const SHOW = ["commits", "offered", "board", "contacted"] as const;
 const stored = (key: string, fallback: string[]): string[] => {
   try {
@@ -707,6 +708,8 @@ function NextDepth({ d, ctx }: P) {
   const groups = d.hq?.next_year?.groups ?? [];
   const [picked, setPicked] = useState<string[]>(() => stored(NEXT_KEY, []));
   const [show, setShow] = useState<string[]>(() => stored(SHOW_KEY, ["commits"]));
+  /** how it is laid out: "need" puts the positions that need the most first, "vertical" stands each one up as a column */
+  const [opts, setOpts] = useState<string[]>(() => stored(OPTS_KEY, []));
   if (!groups.length) return <Empty>{m.noRoster}</Empty>;
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const pickGroup = (g: string) => {
@@ -720,7 +723,15 @@ function NextDepth({ d, ctx }: P) {
     setShow(next);
     store(SHOW_KEY, next);
   };
-  const shown = groups.filter((g) => !picked.length || picked.includes(g.group));
+  const pickOpt = (k: string) => {
+    const next = toggle(opts, k);
+    setOpts(next);
+    store(OPTS_KEY, next);
+  };
+  const listed = groups.filter((g) => !picked.length || picked.includes(g.group));
+  // by need: the most players short first, the rest in the depth chart's order
+  const shown = opts.includes("need") ? [...listed].sort((a, b) => b.need - a.need) : listed;
+  const vertical = opts.includes("vertical");
   return (
     <div className="hq-stack">
       <div className="hq-row" role="group" aria-label={m.positionsToShow}>
@@ -739,11 +750,24 @@ function NextDepth({ d, ctx }: P) {
             {m.showNames[k]}
           </Chip>
         ))}
+        <span className="hq-grow" />
+        <Chip on={opts.includes("need")} onClick={() => pickOpt("need")}>
+          {m.sortByNeed}
+        </Chip>
+        <Chip on={vertical} onClick={() => pickOpt("vertical")}>
+          {m.viewVertical}
+        </Chip>
       </div>
       {/* a lane a position: its name and need at the left, its players in one line that scrolls sideways. Every lane
           is one height and the lanes' window never changes size, so picking positions with more or fewer players
-          cannot move the card (the player's ask) */}
-      <div className="hq-lanes" role="region" aria-label={m.nextDepthLabel} tabIndex={0}>
+          cannot move the card (the player's ask). Vertical stands each position up as a column in the same window,
+          its players down it */}
+      <div
+        className={vertical ? "hq-lanes is-vertical" : "hq-lanes"}
+        role="region"
+        aria-label={m.nextDepthLabel}
+        tabIndex={0}
+      >
         {shown.map((g) => (
           <section key={g.group} className="hq-lane">
             <header className="hq-lane__head">

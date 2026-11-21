@@ -738,6 +738,52 @@ button.hq-link:hover {
   white-space: nowrap;
 }
 
+/* Vertical: the same window, a column a position that scrolls sideways; each column's players run down it */
+.hq-lanes.is-vertical {
+  display: flex;
+  gap: 8px;
+  overflow: auto hidden;
+}
+
+.hq-lanes.is-vertical .hq-lane {
+  flex: 0 0 230px;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--paper-hi);
+}
+
+.hq-lanes.is-vertical .hq-lane__head {
+  padding: 10px var(--s2) 6px;
+  background: var(--paper);
+  border-right: 0;
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: inset 0 4px 0 var(--team, var(--ink));
+}
+
+.hq-lanes.is-vertical .hq-lane__strip {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden auto;
+}
+
+.hq-lanes.is-vertical .hq-lane__item {
+  padding: 6px var(--s2);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.hq-lanes.is-vertical .hq-lane__item:nth-child(even) {
+  background: var(--paper);
+}
+
+/* his overall or his stars, at the column's right edge */
+.hq-lanes.is-vertical .hq-lane__item > :last-child {
+  margin-left: auto;
+}
+
 /* Scouted Players: a tile a prospect; a tile opens his report in the card */
 .hq-tiles {
   display: grid;

@@ -40,6 +40,7 @@ export const messages = {
   hereNow: "Where he is now",
   hereNowOvr: (ovr: number) => `Where he is now · ${ovr} overall`,
   wouldBe: (ovr: number) => `He would be ${ovr} overall`,
+  roleOvr: (name: string, ovr: number) => `${name} · ${ovr} overall`,
   redshirt: "Redshirt",
   pullRedshirt: "Pull Redshirt",
   redshirtTip: (games: number, limit: number) =>
