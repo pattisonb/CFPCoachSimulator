@@ -689,6 +689,11 @@ const NEXT_KEY = "cfp-hq-next-groups";
 const SHOW_KEY = "cfp-hq-next-show";
 const OPTS_KEY = "cfp-hq-next-opts";
 const SHOW = ["commits", "offered", "board", "contacted"] as const;
+/** the positions of each side of the ball, for the chips that pick a whole side */
+const SIDES = [
+  ["offense", ["QB", "RB", "WR", "TE", "OT", "OG", "C", "OL"]],
+  ["defense", ["EDGE", "DT", "DL", "MIKE", "WILL", "LB", "CB", "FS", "SS", "S"]],
+] as const;
 const stored = (key: string, fallback: string[]): string[] => {
   try {
     const v: unknown = JSON.parse(localStorage.getItem(key) ?? "null");
@@ -718,6 +723,17 @@ function NextDepth({ d, ctx }: P) {
     setPicked(next);
     store(NEXT_KEY, next);
   };
+  // a side's positions among the ones this roster has; picked again, it goes back to All
+  const sideOf = (of: readonly string[]) => groups.map((g) => g.group).filter((g) => of.includes(g));
+  const isSide = (of: readonly string[]) => {
+    const side = sideOf(of);
+    return side.length > 0 && side.length === picked.length && side.every((g) => picked.includes(g));
+  };
+  const pickSide = (of: readonly string[]) => {
+    const next = isSide(of) ? [] : sideOf(of);
+    setPicked(next);
+    store(NEXT_KEY, next);
+  };
   const pickShow = (k: string) => {
     const next = toggle(show, k);
     setShow(next);
@@ -738,6 +754,12 @@ function NextDepth({ d, ctx }: P) {
         <Chip on={!picked.length} onClick={() => pickGroup("")}>
           {m.all}
         </Chip>
+        {/* a whole side at once: its positions picked together */}
+        {SIDES.map(([key, of]) => (
+          <Chip key={key} on={isSide(of)} onClick={() => pickSide(of)}>
+            {m.sides[key]}
+          </Chip>
+        ))}
         {groups.map((g) => (
           <Chip key={g.group} on={picked.includes(g.group)} onClick={() => pickGroup(g.group)}>
             {g.group}

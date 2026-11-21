@@ -124,6 +124,12 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const games = s.schedule.filter((g) => g.opponent);
   const thisWeek = s.done ? null : (games.find((g) => g.week === s.current_week + 1) ?? null);
   const next = s.done ? null : (games.find((g) => !g.played && g.week >= s.current_week + 1) ?? null);
+  // the game card, held while a sim runs: it stays as it was when the sim began instead of chasing the weeks (its Win
+  // Chance ran a week behind the sim; the player's ask)
+  const cardNow = { s, thisWeek, next, preview };
+  const cardHeld = useRef(cardNow);
+  if (!sim.running) cardHeld.current = cardNow;
+  const card = sim.running ? cardHeld.current : cardNow;
   const w = s.current_week + 1;
 
   // the office's own read, again after every sim (the week moves on)
@@ -250,16 +256,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         {s.done ? (
           <WrapCard s={s} teams={teams} />
         ) : (
-          <GameCard
-            s={s}
-            thisWeek={thisWeek}
-            next={next}
-            teams={teams}
-            preview={preview}
-            weekName={weekName}
-            onBox={onBox}
-            simming={sim.running}
-          />
+          <GameCard {...card} teams={teams} weekName={weekName} onBox={onBox} simming={sim.running} />
         )}
         <Actions
           s={s}
@@ -470,7 +467,8 @@ function GameCard({
       </section>
     );
   const played = !!thisWeek?.played;
-  const kicker = played ? m.final : thisWeek ? m.upcoming : m.nextGame;
+  // a sim running: the card is held as it was when the sim began, and says so (the player's ask)
+  const kicker = simming ? m.simming : played ? m.final : thisWeek ? m.upcoming : m.nextGame;
   const when = [weekName(g.week), kickoffText(g.date)].filter(Boolean).join(" · ");
   const venue = g.venue === "away" ? m.away : g.venue === "neutral" ? m.neutral : m.home;
   const named = g.title ?? g.rivalry?.name ?? null;
