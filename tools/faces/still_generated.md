@@ -2,21 +2,11 @@
 
 Every line starts with the id to copy back exactly.
 
-## A. Real players, photo not reachable (11)
+## A. Real players, photo not reachable (0)
 
 id | name | school | position | jersey | class | height weight | note
 
-taveon-robinson | TaVeon Robinson | Colorado State | DT | #99 | JR | 6'4" 310 lb | on the school roster with a placeholder photo
-tyrese-cathey | Tyrese Cathey | Georgia State | DT | #91 | SORS | 6'3" 275 lb | on ESPN (DL #91), no headshot
-balint-vorosmarty | Balint Vorosmarty | Georgia State | K | #26 | FR | 5'8" 185 lb | on the school roster with a photo
-joshua-tavui | Joshua Tavui | Hawaiʻi | LG | #72 | FRRS | 6'2" 300 lb | his school lists him as Josh Tavui (OL)
-tim-anthony | Tim Anthony | Jacksonville State | CB | #21 | FR | 6'1" 180 lb | on the school roster with a placeholder photo
-nico-wiedmann | Nico Wiedmann | Marshall | WR | #84 | SORS | 6'2" 202 lb | on ESPN at Marshall, no headshot there
-quantaves-gaskins | Quantaves Gaskins | Middle Tennessee | CB | #22 | SRRS | 6'1" 191 lb | may be the player listed as Gumbo Gaskins (S #22); confirm before using
-jamaun-thompson | Jamaun Thompson | New Mexico State | REDG | #29 | FR | 6'2" 230 lb | on ESPN's roster, no headshot there
-wydeek-collier-johnson | Wydeek Collier-Johnson | Rutgers | LEDG | #8 | SO | 6'7" 225 lb | his school lists him as Wydeek Collier
-guy-fernandez-iii | Guy Fernandez III | Sacramento State | WR | #19 | FRRS | 6'0" 171 lb | his school lists him as Tre Fernandez
-lagarion-wilson | Lagarion Wilson | Sacramento State | CB | #13 | FR | 5'10" 162 lb | on the 2026 roster (#13, CB)
+
 
 ## B. Real players given a made-up player's spot, no photo found (25)
 
