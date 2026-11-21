@@ -77,11 +77,11 @@
  },
  "coaches": {
   "Eric Kiesau": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
-  "Adam Clark": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []}
+  "Adam Clark": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
+  "Alonzo Carter": {"faceShape": "face_shape_07", "skinTone": "deep", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
   "braxton-craver": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
-  "coach:Alonzo Carter": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
   "guy-fernandez-iii": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "darkbrown", "eyeColor": "hazel", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
   "javion-ford": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "blond", "eyeColor": "hazel", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
   "jayson-moses": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
