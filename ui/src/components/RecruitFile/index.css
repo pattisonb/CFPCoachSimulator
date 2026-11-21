@@ -39,9 +39,9 @@ dd.recruit-file__inline {
 /* his priorities: three tiles side by side under their heading, each naming the priority, the topic and your pull */
 .recruit-file__snap {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-  padding: var(--s2) 0 var(--s1);
+  grid-template-columns: repeat(6, minmax(0, 1fr)); /* where you stand and Scouted over his three priorities */
+  gap: 4px;
+  padding: 6px 0 2px;
 }
 
 /* a tile: its name small, its value under it, and for a priority your program's word on it at the foot */
@@ -50,15 +50,26 @@ dd.recruit-file__inline {
   align-content: start;
   gap: 2px;
   min-width: 0;
-  padding: 6px var(--s2);
+  grid-column: span 2;
+  padding: 4px var(--s2);
   background: var(--tile);
 }
 
+/* a priority's name, and your program's word on it at the line's end */
+.recruit-file__snap-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 6px;
+}
+
+.recruit-file__snap-cell--wide {
+  grid-column: span 4;
+}
+
 .recruit-file__snap-cell .label {
-  overflow: hidden;
   color: var(--ink-soft);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* a long value (Playing Time, Not Known) takes a second line before it is cut */
@@ -90,15 +101,15 @@ dd.recruit-file__inline {
 .recruit-file__commit {
   display: grid;
   gap: 2px;
-  margin: 6px 0;
-  padding: var(--s2);
+  margin: 4px 0;
+  padding: 4px var(--s2);
   background: var(--ink);
   color: var(--paper-hi);
   border: var(--line) solid var(--ink);
 }
 
 .recruit-file__commit b {
-  font-size: var(--t-md);
+  font-size: var(--t-sm);
   text-transform: uppercase;
 }
 
@@ -109,10 +120,10 @@ dd.recruit-file__inline {
 
 .recruit-file__battle li {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) minmax(56px, 22%) 78px;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(56px, 22%) 96px; /* the word's column holds "Flip: Likely" */
   align-items: center;
   gap: var(--s2);
-  padding: 6px 0;
+  padding: 4px 0;
   border-top: 1px solid var(--line-soft);
 }
 

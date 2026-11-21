@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Star } from "@phosphor-icons/react";
+import { ListBullets, SquaresFour, Star } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
@@ -8,6 +8,7 @@ import PlayerLink from "../PlayerLink/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { formatClass } from "../../format.ts";
+import { useKept } from "../../kept.ts";
 import type {
   AllAmerica,
   AwardCoach,
@@ -156,63 +157,186 @@ export function Coaches({
   );
 }
 
-/** Where each slot lines up on the field: three lines of offense, three of defense, then the specialists. */
-const LINES: { unit: "offense" | "defense" | "special"; slots: string[] }[] = [
-  { unit: "offense", slots: ["WR", "TE", "AP"] },
-  { unit: "offense", slots: ["T", "G", "C", "OL"] },
-  { unit: "offense", slots: ["QB", "RB"] },
-  { unit: "defense", slots: ["EDGE", "DT", "DL"] },
-  { unit: "defense", slots: ["LB"] },
-  { unit: "defense", slots: ["CB", "S", "DB"] },
+/** Where each slot lines up on the field, as a depth chart sets a team out. Offense: the line (tackles outside the
+ * guards, the center between them, a tight end at its right end) with the receivers split out, half to each side; the
+ * quarterback behind it with the backs beside him (two rows, as the defense has, so the field is one height). Defense, the depth chart's two rows: up front the line with an edge at each end
+ * and a corner out wide on each side; behind it the linebackers with a safety outside them on each side (a team picked
+ * as plain defensive backs sends its first two out as corners, the rest back as safeties). Then the specialists. `wide` names the slot split to the two sides;
+ * `ends` the slot whose men bookend the rest (one at the left end, the others at the right). */
+const LINES: { unit: "offense" | "defense" | "special"; slots: string[]; wide?: string; ends?: string[] }[] = [
+  { unit: "offense", slots: ["C", "OL", "TE"], wide: "WR", ends: ["G", "T"] },
+  { unit: "offense", slots: ["QB", "RB", "AP"] },
+  { unit: "defense", slots: ["DT", "DL"], wide: "CB", ends: ["EDGE"] },
+  { unit: "defense", slots: ["LB", "DB"], ends: ["S"] },
   { unit: "special", slots: ["K", "P", "RS"] },
 ];
+
+/** Every slot a line holds. */
+const slotsOf = (l: (typeof LINES)[number]) => [...(l.wide ? [l.wide] : []), ...(l.ends ?? []), ...l.slots];
 
 /**
  * A team of honorees lined up on a field: the offense in its three lines, the defense in its three, the specialists
  * along the bottom. Each man as a small card in his team's color; a consensus pick shows how many selectors named him.
  */
-function HonorField({ picks, teams, mine, face }: Shared & { picks: (TeamPick | ConsensusPick)[] }) {
+function HonorField({
+  picks,
+  teams,
+  mine,
+  face,
+  only,
+}: Shared & { picks: (TeamPick | ConsensusPick)[]; /** just this unit's lines (its tab is up) */ only?: string }) {
   if (!picks.length) return <p className="aw__empty">{m.noTeam}</p>;
   let unit = "";
+  // where a man lines up: his own slot, but a plain defensive back is a corner until the corners are two, then a safety
+  const corners = picks.filter((p) => p.slot === "CB").length;
+  const backs = picks.filter((p) => p.slot === "DB");
+  const spotOf = (p: TeamPick | ConsensusPick) =>
+    p.slot === "DB" ? (backs.indexOf(p) < 2 - corners ? "CB" : "S") : p.slot;
+  const at = (slot: string) => picks.filter((p) => spotOf(p) === slot);
   return (
     <div className="aw-field">
       {LINES.map((line) => {
-        const men = line.slots.flatMap((s) => picks.filter((p) => p.slot === s));
-        if (!men.length) return null;
+        // the middle, with each bookend slot wrapped round it: half its men at the left end, half at the right (a
+        // tight end stays at the line's right end, outside the tackle)
+        let mid = line.slots.filter((s) => s !== "TE").flatMap(at);
+        for (const e of line.ends ?? []) {
+          const men = at(e);
+          const half = Math.ceil(men.length / 2);
+          mid = [...men.slice(0, half), ...mid, ...men.slice(half)];
+        }
+        if (line.slots.includes("TE")) mid = [...mid, ...at("TE")];
+        const out = line.wide ? at(line.wide) : [];
+        const split = Math.ceil(out.length / 2);
+        if ((!mid.length && !out.length) || (only && line.unit !== only)) return null;
         const head = line.unit !== unit;
         unit = line.unit;
+        // left of the line, on it, right of it: each man keeps the group he stands in
+        const groups = [out.slice(0, split), mid, out.slice(split)];
+        const man = (p: TeamPick | ConsensusPick) => {
+          const votes = "selectors" in p ? p : null;
+          return (
+            <article
+              key={`${p.team}-${p.name}-${p.slot}`}
+              className={`aw-man${p.team === mine ? " is-mine" : ""}`}
+              title={`${p.name} · ${who(p)} · ${p.line}`}
+            >
+              <span className="aw-man__slot">{m.slots[p.slot] ?? p.slot}</span>
+              {face(p)}
+              <b className="aw-man__name">
+                <PlayerLink team={p.team} name={p.name} position={p.position} />
+              </b>
+              <span className="aw-man__team">
+                <Swatch team={teams.get(p.team)} size={12} />
+                {teams.get(p.team)?.abbreviation ?? p.team_name}
+              </span>
+              {votes && (
+                <span className={`aw-man__votes${votes.unanimous ? " is-all" : ""}`}>
+                  {votes.unanimous && <Star size={10} weight="fill" aria-hidden="true" />}
+                  {votes.unanimous ? m.unanimous : m.selectors(votes.selectors)}
+                </span>
+              )}
+            </article>
+          );
+        };
         return (
-          <div key={line.slots.join()} className={`aw-field__line${head ? " is-first" : ""}`}>
+          <div
+            key={line.slots.join()}
+            className={`aw-field__line${head ? " is-first" : ""}${line.wide ? " is-split" : ""}`}
+          >
             {head && <span className="aw-field__unit">{m.units[line.unit]}</span>}
-            {men.map((p) => {
-              const votes = "selectors" in p ? p : null;
-              return (
-                <article
-                  key={`${p.team}-${p.name}-${p.slot}`}
-                  className={`aw-man${p.team === mine ? " is-mine" : ""}`}
-                  title={`${p.name} · ${who(p)} · ${p.line}`}
-                >
-                  <span className="aw-man__slot">{m.slots[p.slot] ?? p.slot}</span>
-                  {face(p)}
-                  <b className="aw-man__name">
-                    <PlayerLink team={p.team} name={p.name} position={p.position} />
-                  </b>
-                  <span className="aw-man__team">
-                    <Swatch team={teams.get(p.team)} size={12} />
-                    {teams.get(p.team)?.abbreviation ?? p.team_name}
-                  </span>
-                  {votes && (
-                    <span className={`aw-man__votes${votes.unanimous ? " is-all" : ""}`}>
-                      {votes.unanimous && <Star size={10} weight="fill" aria-hidden="true" />}
-                      {votes.unanimous ? m.unanimous : m.selectors(votes.selectors)}
-                    </span>
-                  )}
-                </article>
-              );
-            })}
+            {line.wide
+              ? groups.map((g, i) => (
+                  <div key={i} className="aw-field__group">
+                    {g.map(man)}
+                  </div>
+                ))
+              : mid.map(man)}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** A team of honorees two ways: lined up on the field, or as a list (a line a man: his spot, his school, his season). */
+function HonorTeam(props: Shared & { picks: (TeamPick | ConsensusPick)[] }) {
+  const [view, setView] = useKept<"field" | "list">("awards.teamView", "field");
+  /** the field shows a unit at a time (the player's ask: tabs in place of scrolling) */
+  const [unit, setUnit] = useState<"offense" | "defense" | "special">("offense");
+  const { picks, teams, mine } = props;
+  if (!picks.length) return <p className="aw__empty">{m.noTeam}</p>;
+  const order = LINES.flatMap(slotsOf);
+  const unitOf = (slot: string) => LINES.find((l) => slotsOf(l).includes(slot))?.unit ?? "special";
+  const sorted = [...picks].sort((a, b) => order.indexOf(a.slot) - order.indexOf(b.slot));
+  // the unit up, or the first one this team has anyone in
+  const shownUnit = picks.some((p) => unitOf(p.slot) === unit) ? unit : unitOf(sorted[0].slot);
+  return (
+    <div className="aw-team">
+      <div className="aw-team__bar">
+        {/* a unit at a time, on the field and in the list */}
+        <div className="aw__chips" role="tablist" aria-label={m.unitLabel}>
+          {(["offense", "defense", "special"] as const)
+            .filter((u) => picks.some((p) => unitOf(p.slot) === u))
+            .map((u) => (
+              <Chip key={u} on={shownUnit === u} onClick={() => setUnit(u)}>
+                {m.units[u]}
+              </Chip>
+            ))}
+        </div>
+        <div className="aw__chips aw-team__views" role="group" aria-label={m.viewLabel}>
+          {(["field", "list"] as const).map((v) => (
+            <Chip key={v} on={view === v} onClick={() => setView(v)}>
+              {v === "field" ? (
+                <SquaresFour size={14} weight="bold" aria-hidden="true" />
+              ) : (
+                <ListBullets size={14} weight="bold" aria-hidden="true" />
+              )}
+              {m.views[v]}
+            </Chip>
+          ))}
+        </div>
+      </div>
+      {view === "field" ? (
+        <HonorField {...props} only={shownUnit} />
+      ) : (
+        <div className="aw-list">
+          {([shownUnit] as const).map((u) => {
+            const men = sorted.filter((p) => unitOf(p.slot) === u);
+            if (!men.length) return null;
+            return (
+              <section key={u} className="aw-list__unit">
+                <h3 className="label aw-list__title">{m.units[u]}</h3>
+                <ol>
+                  {men.map((p) => {
+                    const votes = "selectors" in p ? p : null;
+                    return (
+                      <li key={`${p.team}-${p.name}-${p.slot}`} className={p.team === mine ? "is-mine" : undefined}>
+                        <span className="aw-list__slot">{m.slots[p.slot] ?? p.slot}</span>
+                        <b className="aw-list__name">
+                          <PlayerLink team={p.team} name={p.name} position={p.position} />
+                        </b>
+                        <span className="aw-list__line" title={p.line}>
+                          {p.line}
+                        </span>
+                        <span className="aw-list__team">
+                          <Swatch team={teams.get(p.team)} size={12} />
+                          {teams.get(p.team)?.abbreviation ?? p.team_name}
+                        </span>
+                        {votes && (
+                          <span className={`aw-man__votes${votes.unanimous ? " is-all" : ""}`}>
+                            {votes.unanimous && <Star size={10} weight="fill" aria-hidden="true" />}
+                            {votes.unanimous ? m.unanimous : m.selectors(votes.selectors)}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -293,7 +417,7 @@ export function AllAmericaTeams({ aa, ...shared }: Shared & { aa: AllAmerica | n
             : m.teamCount(picks.length)}
         </span>
       </div>
-      <HonorField picks={picks} {...shared} />
+      <HonorTeam picks={picks} {...shared} />
     </div>
   );
 }
@@ -358,7 +482,7 @@ export function Conferences({
               setLevel(l);
             }}
           />
-          <HonorField picks={picks} {...shared} />
+          <HonorTeam picks={picks} {...shared} />
         </>
       ) : (
         <p className="aw__empty">{shared.live ? m.allConferenceWaiting : m.noTeam}</p>

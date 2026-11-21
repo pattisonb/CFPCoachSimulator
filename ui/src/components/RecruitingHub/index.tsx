@@ -15,6 +15,8 @@ interface Props {
   year: number;
   weekLabels: Record<string, string>;
   board: RecruitingBoard | null;
+  /** the page goes by Transfer Portal (from the portal's opening until the new season) */
+  portalNamed?: boolean;
   reload: (quiet?: boolean, stale?: () => boolean) => Promise<void>;
   /** change the board at once, ahead of the server (a quick action ticked) */
   patch?: (change: (b: RecruitingBoard) => RecruitingBoard) => void;
@@ -44,6 +46,7 @@ export default function RecruitingHub({
   year,
   weekLabels,
   board,
+  portalNamed,
   reload,
   patch,
   tab,
@@ -57,7 +60,7 @@ export default function RecruitingHub({
   return (
     <div className="section-tabs__wrap">
       <SectionTabs
-        title={m.label}
+        title={portalNamed || board?.portal ? m.portalLabel : m.label}
         value={tab}
         onChange={onTab}
         tabs={[

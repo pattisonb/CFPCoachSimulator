@@ -92,12 +92,12 @@ function CommitBanner({ r, d }: { r: BoardRow; d: ProspectDetail | null }) {
   return (
     <div
       className="recruit-file__commit"
+      title={sub}
       style={
         colors ? { background: colors.primary, color: inkOn(colors.primary), borderColor: colors.secondary } : undefined
       }
     >
       <b>{r.signed ? m.commit.signed(school) : r.hard ? m.commit.hard(school) : m.commit.verbal(school)}</b>
-      <span>{sub}</span>
     </div>
   );
 }
@@ -198,11 +198,11 @@ export function OverviewTab({
           {/* one row of five tiles: where you stand, how far he is scouted, then what he cares about, first to
               third, each with your program's case on it as a word (so his priority is never read as your strength) */}
           <div className="recruit-file__snap">
-            <div className="recruit-file__snap-cell" title={sd.text}>
-              <span className="label">{m.standingShort}</span>
+            <div className="recruit-file__snap-cell recruit-file__snap-cell--wide" title={sd.text}>
+              <span className="label">{m.standing}</span>
               <b>{sd.odds ?? sd.word}</b>
             </div>
-            <div className="recruit-file__snap-cell">
+            <div className="recruit-file__snap-cell recruit-file__snap-cell--end">
               <span className="label">{m.scouted}</span>
               <b>{m.looksCount(looks)}</b>
               <Meter value={looks / 3} label={m.scouted} />
@@ -217,9 +217,11 @@ export function OverviewTab({
                   className={`recruit-file__snap-cell${t ? "" : " is-unknown"}`}
                   title={t ? m.pullTip(word ?? "") : m.priorityHint}
                 >
-                  <span className="label">{m.priorityShort(i)}</span>
-                  <b className={t ? undefined : "recruit-file__snap-unknown"}>{name ?? m.unknown}</b>
-                  {t && <span className="recruit-file__snap-pull">{word}</span>}
+                  <span className="label">{m.priority(i)}</span>
+                  <span className="recruit-file__snap-line">
+                    <b className={t ? undefined : "recruit-file__snap-unknown"}>{name ?? m.unknown}</b>
+                    {t && <span className="recruit-file__snap-pull">{word}</span>}
+                  </span>
                 </div>
               );
             })}

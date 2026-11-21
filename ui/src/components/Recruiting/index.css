@@ -472,12 +472,22 @@
 }
 
 @container recruit-side (width >= 760px) {
-  .recruit__cols:not(.is-closed) {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  }
-
   .recruit__col + .recruit__col {
     order: 0;
+  }
+
+  .recruit__cols:not(.is-closed) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: stretch; /* side by side, the two columns end on one line (the app's rule): the shorter one's last
+       panel takes up the difference */
+  }
+
+  .recruit__cols:not(.is-closed) > .recruit__col {
+    display: grid;
+  }
+
+  .recruit__cols:not(.is-closed) > .recruit__col > .panels {
+    grid-template-rows: auto minmax(0, 1fr);
   }
 }
 

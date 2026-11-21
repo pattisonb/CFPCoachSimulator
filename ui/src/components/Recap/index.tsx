@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Trophy } from "@phosphor-icons/react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { ArrowDown, ArrowUp, Trophy } from "@phosphor-icons/react";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
+import { inkOn } from "../../colors.ts";
 import type { PollEntry, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import PlayerLink from "../PlayerLink/index.tsx";
@@ -12,6 +13,11 @@ import "./index.css";
 interface Props {
   season: SeasonSummary;
   teams: Map<string, TeamCard>;
+  /** open the Bracket (the champion's banner links to it: the playoff's rounds are told there) */
+  onBracket?: () => void;
+  /** a panel's name opens the page that tells it in full: your schedule, the stats (yours, or everyone's), the
+   * rankings, the standings */
+  onOpen?: (to: "schedule" | "stats-mine" | "stats" | "rankings" | "standings") => void;
 }
 
 /** One of your games, as the review tells it. */
@@ -121,7 +127,8 @@ const NATIONAL: [string, (s: Record<string, number>) => string][] = [
  * the playoff's rounds, the conference champions, the top of the poll, the national leaders, and the teams that
  * surprised or disappointed.
  */
-export default function Recap({ season, teams }: Props) {
+export default function Recap({ season, teams, onBracket, onOpen }: Props) {
+  const go = (to: Parameters<NonNullable<Props["onOpen"]>>[0]) => (onOpen ? () => onOpen(to) : undefined);
   const [view, setView] = useState<Review | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,27 +150,32 @@ export default function Recap({ season, teams }: Props) {
       {name}
     </span>
   );
-  const game = (g: GameLine | null) =>
-    g
-      ? `${g.won ? m.won : m.lost} ${g.points_for}–${g.points_against} ${g.venue === "away" ? m.at : m.vs} ${
-          g.opponent_rank ? `#${g.opponent_rank} ` : ""
-        }${g.opponent_name}`
-      : undefined;
-  const result = (g: Result) => (
-    <li key={`${g.home}-${g.away}`}>
-      <span className={`recap__side${g.winner === g.away ? " is-won" : ""}`}>
-        {team(g.away, g.away_name)} <b>{g.away_score ?? ""}</b>
-      </span>
-      <span className={`recap__side${g.winner === g.home ? " is-won" : ""}`}>
-        {team(g.home, g.home_name)} <b>{g.home_score ?? ""}</b>
-      </span>
-      {(g.bowl || g.title) && <span className="recap__soft">{g.bowl ?? g.title}</span>}
-    </li>
+  /** One of your games as a card: won or lost on a tab in its color, the score large, who and where under it. */
+  const gameCard = (label: string, g: GameLine | null, none: string) => (
+    <div key={label} className={`recap__game${g ? (g.won ? " is-won" : " is-lost") : " is-none"}`}>
+      <span className="label">{label}</span>
+      {g ? (
+        <>
+          <b className="recap__game-score">
+            <span className="recap__game-tab">{g.won ? m.w : m.l}</span>
+            {g.points_for}–{g.points_against}
+          </b>
+          <span className="recap__game-who">
+            <Swatch team={teams.get(g.opponent)} size={14} />
+            {g.venue === "away" ? m.at : m.vs} {g.opponent_rank ? `#${g.opponent_rank} ` : ""}
+            {g.opponent_name}
+          </span>
+        </>
+      ) : (
+        <span className="recap__soft">{none}</span>
+      )}
+    </div>
   );
-
   const me = view?.mine;
   const played = !!me && me.wins + me.losses > 0;
   const poll = view?.final_cfp.length ? view.final_cfp : (view?.final_ap ?? []);
+  const champ = view?.champion ? teams.get(view.champion) : undefined;
+  const mineCard = teams.get(season.team);
 
   return (
     <div className="section-tabs__wrap">
@@ -173,68 +185,127 @@ export default function Recap({ season, teams }: Props) {
           <p className="recap__soft">{error ? m.loadError(error) : m.loading}</p>
         ) : (
           <>
-            {/* the headline: the champion once there is one, else where your season stands */}
-            <header className="recap__lead">
-              {view.champion_name ? (
-                <>
-                  <Trophy size={28} weight="fill" aria-hidden="true" />
-                  <div>
-                    <h2>{m.champion(view.champion_name)}</h2>
-                    <p>{me.finish ? m.yourFinish(season.team_name, me.finish) : ""}</p>
+            {/* the headline, two banners side by side and the same height: the champion in its colors (once there is
+                one), and your season in yours with the AD's grade stamped on it */}
+            <header className={`recap__heroes${champ ? "" : " is-solo"}`}>
+              {champ && (
+                <div
+                  className="recap__hero recap__hero--champ"
+                  style={{ "--c": champ.colors.primary, "--on": inkOn(champ.colors.primary) } as CSSProperties}
+                >
+                  <span className="recap__hero-mark" aria-hidden="true">
+                    {champ.abbreviation}
+                  </span>
+                  <span className="recap__hero-kicker">
+                    <Trophy size={16} weight="fill" aria-hidden="true" />
+                    {m.champions(view.year)}
+                  </span>
+                  <h2>{view.champion_name}</h2>
+                  {view.title_game && (
+                    <p>
+                      {m.titleLine(
+                        Math.max(view.title_game.home_score ?? 0, view.title_game.away_score ?? 0),
+                        Math.min(view.title_game.home_score ?? 0, view.title_game.away_score ?? 0),
+                        view.title_game.winner === view.title_game.home
+                          ? view.title_game.away_name
+                          : view.title_game.home_name,
+                      )}
+                    </p>
+                  )}
+                  {/* the whole playoff is on the Bracket: a small bracket, drawn in the banner's own ink, opens it */}
+                  {onBracket && (
+                    <button type="button" className="recap__bracket" title={m.seeBracket} onClick={onBracket}>
+                      <svg viewBox="0 0 44 32" width="44" height="32" aria-hidden="true">
+                        {/* four teams, two games, one winner */}
+                        <path d="M2 5h10M2 13h10M12 5v8M12 9h10M2 19h10M2 27h10M12 19v8M12 23h10M22 9v14M22 16h9" />
+                        <rect x="31" y="11" width="11" height="10" />
+                      </svg>
+                      {m.bracket}
+                    </button>
+                  )}
+                </div>
+              )}
+              <div
+                className="recap__hero recap__hero--you"
+                style={
+                  mineCard
+                    ? ({ "--c": mineCard.colors.primary, "--on": inkOn(mineCard.colors.primary) } as CSSProperties)
+                    : undefined
+                }
+              >
+                <span className="recap__hero-mark" aria-hidden="true">
+                  {mineCard?.abbreviation}
+                </span>
+                <span className="recap__hero-kicker">{season.team_name}</span>
+                <h2>
+                  {me.wins}-{me.losses}
+                </h2>
+                <p>{me.finish ?? (played ? m.soFar(weekName) : m.notStarted)}</p>
+                {view.grade && (
+                  <div className="recap__grade" title={view.grade.line}>
+                    <span className="label">{m.grade}</span>
+                    <b>{view.grade.grade}</b>
                   </div>
-                </>
-              ) : (
-                <div>
-                  <h2>{m.record(season.team_name, me.wins, me.losses)}</h2>
-                  <p>{played ? m.soFar(weekName) : m.notStarted}</p>
-                </div>
-              )}
-              {view.grade && (
-                <div className="recap__grade">
-                  <span className="label">{m.grade}</span>
-                  <b>{view.grade.grade}</b>
-                </div>
-              )}
+                )}
+              </div>
             </header>
             {view.grade && <p className="recap__gradeline">{view.grade.line}</p>}
 
-            <Panels>
-              <Panel title={m.yourSeason} aside={season.team_name}>
-                <PanelRows>
-                  <PanelRow label={m.rows.record} value={`${me.wins}-${me.losses}`} />
-                  <PanelRow
-                    label={m.rows.conference}
-                    value={m.confLine(me.conf_wins, me.conf_losses, me.conf_rank, season.conference, me.conf_champion)}
-                  />
-                  <PanelRow label={m.rows.nonConf} value={`${me.non_conf_wins}-${me.non_conf_losses}`} />
-                  {played && (
-                    <PanelRow label={m.rows.scoring} value={m.scoring(me.points_per_game, me.allowed_per_game)} />
-                  )}
-                  {(me.final_cfp ?? me.final_ap) != null && (
-                    <PanelRow label={m.rows.ranked} value={`#${me.final_cfp ?? me.final_ap}`} />
-                  )}
-                  {me.finish && <PanelRow label={m.rows.finish} value={me.finish} />}
-                  {played && <PanelRow label={m.rows.streak} value={m.streak(me.longest_streak)} />}
-                </PanelRows>
-              </Panel>
+            {/* your season in numbers: a tile each, the number large */}
+            {played && (
+              <dl className="recap__nums">
+                <div>
+                  <dt className="label">{m.rows.conference}</dt>
+                  <dd>
+                    {me.conf_wins}-{me.conf_losses}
+                  </dd>
+                  <span className="recap__soft">
+                    {me.conf_champion ? m.confChamp : me.conf_rank ? m.confPlace(me.conf_rank, season.conference) : ""}
+                  </span>
+                </div>
+                <div>
+                  <dt className="label">{m.rows.nonConf}</dt>
+                  <dd>
+                    {me.non_conf_wins}-{me.non_conf_losses}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="label">{m.ppg}</dt>
+                  <dd>{me.points_per_game}</dd>
+                </div>
+                <div>
+                  <dt className="label">{m.allowed}</dt>
+                  <dd>{me.allowed_per_game}</dd>
+                </div>
+                <div>
+                  <dt className="label">{view.done ? m.finalRanking : m.rows.ranked}</dt>
+                  <dd>{(me.final_cfp ?? me.final_ap) != null ? `#${me.final_cfp ?? me.final_ap}` : m.dash}</dd>
+                  {(me.final_cfp ?? me.final_ap) == null && <span className="recap__soft">{m.unranked}</span>}
+                </div>
+                <div>
+                  <dt className="label">{m.rows.streak}</dt>
+                  <dd>{me.longest_streak}</dd>
+                  <span className="recap__soft">{m.inARow}</span>
+                </div>
+              </dl>
+            )}
 
-              <Panel title={m.yourGames}>
+            <Panels>
+              <Panel title={m.yourGames} onTitle={go("schedule")}>
                 {played ? (
-                  <PanelRows>
-                    <PanelRow label={m.rows.bestWin} value={game(me.best_win)} unknown={m.noWins} />
-                    <PanelRow label={m.rows.biggestWin} value={game(me.biggest_win)} unknown={m.noWins} />
-                    <PanelRow label={m.rows.worstLoss} value={game(me.worst_loss)} unknown={m.noLosses} />
-                    <PanelRow label={m.rows.closestLoss} value={game(me.closest_loss)} unknown={m.noLosses} />
-                    {me.postseason.map((g) => (
-                      <PanelRow key={g.week} label={g.title ?? m.rows.postseason} value={game(g)} />
-                    ))}
-                  </PanelRows>
+                  <div className="recap__games">
+                    {gameCard(m.rows.bestWin, me.best_win, m.noWins)}
+                    {gameCard(m.rows.biggestWin, me.biggest_win, m.noWins)}
+                    {gameCard(m.rows.worstLoss, me.worst_loss, m.noLosses)}
+                    {gameCard(m.rows.closestLoss, me.closest_loss, m.noLosses)}
+                    {me.postseason.map((g) => gameCard(g.title ?? m.rows.postseason, g, ""))}
+                  </div>
                 ) : (
                   <p className="recap__soft">{m.noGames}</p>
                 )}
               </Panel>
 
-              <Panel title={m.yourLeaders}>
+              <Panel title={m.yourLeaders} onTitle={go("stats-mine")}>
                 {MY_LEADERS.some(([k]) => me.leaders[k]) ? (
                   <PanelRows>
                     {MY_LEADERS.map(([k, line]) => {
@@ -258,32 +329,14 @@ export default function Recap({ season, teams }: Props) {
                 )}
               </Panel>
 
-              {(view.title_game || view.rounds.length > 0) && (
-                <Panel title={m.playoff}>
-                  {view.title_game && (
-                    <>
-                      <h3 className="label recap__kicker">{m.titleGame}</h3>
-                      <ul className="recap__results">{result(view.title_game)}</ul>
-                    </>
-                  )}
-                  {[...view.rounds]
-                    .reverse()
-                    .filter((r) => !view.title_game || !/championship/i.test(r.round))
-                    .map((r) => (
-                      <div key={r.round}>
-                        <h3 className="label recap__kicker">{r.round}</h3>
-                        <ul className="recap__results">{r.games.map(result)}</ul>
-                      </div>
-                    ))}
-                </Panel>
-              )}
-
               {view.champions.length > 0 && (
-                <Panel title={m.confChampions}>
+                <Panel title={m.confChampions} onTitle={go("standings")}>
                   <ul className="recap__list">
                     {view.champions.map((c) => (
                       <li key={c.conference} className={c.team === season.team ? "is-mine" : undefined}>
-                        <span className="recap__soft recap__grow">{c.conference}</span>
+                        <span className="recap__soft recap__grow" title={c.conference}>
+                          {m.confShort[c.conference] ?? c.conference}
+                        </span>
                         <b>{team(c.team, c.name)}</b>
                       </li>
                     ))}
@@ -291,12 +344,16 @@ export default function Recap({ season, teams }: Props) {
                 </Panel>
               )}
 
-              <Panel title={view.final_cfp.length ? m.topCfp : m.topAp} aside={view.done ? m.finalPoll : m.latestPoll}>
+              <Panel
+                title={view.final_cfp.length ? m.topCfp : m.topAp}
+                aside={view.done ? m.finalPoll : m.latestPoll}
+                onTitle={go("rankings")}
+              >
                 {poll.length ? (
                   <ol className="recap__list">
                     {poll.slice(0, 10).map((e) => (
                       <li key={e.team} className={e.team === season.team ? "is-mine" : undefined}>
-                        <span className="recap__place">{e.rank}</span>
+                        <span className={`recap__place${e.rank <= 3 ? " is-top" : ""}`}>{e.rank}</span>
                         <span className="recap__grow">
                           <b>{team(e.team, e.name)}</b>
                         </span>
@@ -309,7 +366,7 @@ export default function Recap({ season, teams }: Props) {
                 )}
               </Panel>
 
-              <Panel title={m.nationalLeaders}>
+              <Panel title={m.nationalLeaders} onTitle={go("stats")}>
                 {NATIONAL.some(([k]) => view.national_leaders[k]) ? (
                   <PanelRows>
                     {NATIONAL.map(([k, line]) => {
@@ -338,6 +395,7 @@ export default function Recap({ season, teams }: Props) {
                   <ul className="recap__list">
                     {view.surprises.map((s) => (
                       <li key={s.team}>
+                        <ArrowUp size={14} weight="bold" className="recap__up" aria-hidden="true" />
                         <span className="recap__grow">
                           <b>{team(s.team, s.name)}</b>
                         </span>
@@ -349,6 +407,7 @@ export default function Recap({ season, teams }: Props) {
                   <ul className="recap__list">
                     {view.disappointments.map((s) => (
                       <li key={s.team}>
+                        <ArrowDown size={14} weight="bold" className="recap__down" aria-hidden="true" />
                         <span className="recap__grow">
                           <b>{team(s.team, s.name)}</b>
                         </span>

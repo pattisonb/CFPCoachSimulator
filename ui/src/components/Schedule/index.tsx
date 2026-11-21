@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import WinBar from "../WinBar/index.tsx";
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
@@ -485,10 +486,8 @@ function Detail({
               role="img"
               aria-label={m.odds(left.name, mine, right.name, 100 - mine)}
             >
-              <b className="sched-detail__big">{mine}%</b>
-              <span className="sched-detail__bar" aria-hidden="true">
-                <i style={{ width: `${mine}%` }} />
-              </span>
+              <b className={`sched-detail__big ${mine >= 50 ? "is-ahead" : "is-behind"}`}>{mine}%</b>
+              <WinBar mine={mine} myColor={left.team?.colors.primary} theirColor={right.team?.colors.primary} />
               <span className="sched-banner__soft">
                 {m.projected(Math.round(p.points_for), Math.round(p.points_against))}
               </span>

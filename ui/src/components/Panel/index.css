@@ -133,3 +133,18 @@
   margin-bottom: 0;
   border-bottom: 0;
 }
+
+/* a name that is a way on: its arrow is soft until the name is pointed at */
+.panel__go {
+  cursor: pointer;
+}
+
+.panel__go svg {
+  color: var(--ink-soft);
+  transition: transform 120ms ease-out;
+}
+
+.panel__go:hover svg {
+  color: var(--ink);
+  transform: translate(2px, -2px);
+}

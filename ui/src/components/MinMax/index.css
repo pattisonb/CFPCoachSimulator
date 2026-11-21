@@ -1,0 +1,42 @@
+/* A column's low and high end: its name over a pair of small fields. One with a bound set is framed in ink. */
+.min-max {
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 4px;
+  min-width: 0;
+}
+
+.min-max__label {
+  grid-column: 1 / -1;
+  color: var(--ink-soft);
+}
+
+.min-max__to {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+.min-max input,
+.min-max select {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 6px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.min-max.is-set input,
+.min-max.is-set select {
+  border-color: var(--ink);
+}
+
+.min-max input:focus-visible,
+.min-max select:focus-visible {
+  outline: var(--line) solid currentcolor;
+  outline-offset: 2px;
+}

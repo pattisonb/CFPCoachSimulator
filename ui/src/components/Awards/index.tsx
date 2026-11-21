@@ -5,6 +5,7 @@ import Face from "../Face/index.tsx";
 import SectionTabs, { SampleNote, SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import Wordmark from "../Wordmark/index.tsx";
 import { AllAmericaTeams, Coaches, Conferences, NationalTable } from "./More.tsx";
 import { SAMPLE } from "./sample.ts";
 import { api } from "../../api.ts";
@@ -16,6 +17,8 @@ import type {
   AwardPlayer,
   AwardsView,
   CoachAward,
+  ConferenceAwards,
+  TeamPick,
   HeismanVote,
   NationalAwards,
   PlayerAward,
@@ -80,8 +83,16 @@ interface Honor {
   coach?: AwardCoach;
 }
 
-/** Your team's honors from the races (or results): the Heisman's top ten, then every player and coach award. */
-function honorsOf(nat: NationalAwards, extra: PlayerAward[], team: string, live: boolean): Honor[] {
+/** Your team's honors from the races (or results): the Heisman's top ten, every national player and coach award, your
+ * consensus All-Americans, then your conference's awards and its first all-conference team (the player's report: a
+ * conference award you won was missing here). */
+function honorsOf(
+  nat: NationalAwards,
+  extra: PlayerAward[],
+  team: string,
+  live: boolean,
+  conferences: Record<string, ConferenceAwards> = {},
+): Honor[] {
   const out: Honor[] = [];
   nat.heisman?.candidates.slice(0, 10).forEach((c, i) => {
     if (c.team === team)
@@ -93,14 +104,47 @@ function honorsOf(nat: NationalAwards, extra: PlayerAward[], team: string, live:
       });
   });
   const place = (i: number) => (i === 0 ? (live ? m.leader : m.winner) : live ? ordinal(i + 1) : m.finalist);
-  for (const a of [...nat.awards, ...extra])
+  for (const a of [...nat.awards, ...extra]) {
+    if (a.kind === "ol_unit") continue; // a line's award has no one man to show
+    if (a.kind === "coach") {
+      (a as unknown as CoachAward).finalists.forEach((c, i) => {
+        if (c.team === team) out.push({ award: a.name, rank: i + 1, place: place(i), coach: c });
+      });
+      continue;
+    }
     (live ? (a.race ?? a.finalists) : a.finalists).forEach((p, i) => {
       if (p.team === team) out.push({ award: a.name, rank: i + 1, place: place(i), player: p });
     });
+  }
   for (const a of nat.coach_awards)
     a.finalists.forEach((c, i) => {
       if (c.team === team) out.push({ award: a.name, rank: i + 1, place: place(i), coach: c });
     });
+  for (const p of nat.all_america?.consensus ?? [])
+    if (p.team === team)
+      out.push({ award: p.unanimous ? m.unanimousAa : m.consensusAa, rank: 1, place: m.allAmerican, player: p });
+  for (const [conf, entry] of Object.entries(conferences)) {
+    for (const a of entry.awards) {
+      if (a.kind === "coach")
+        (a as unknown as CoachAward).finalists.forEach((c, i) => {
+          if (c.team === team) out.push({ award: m.confAward(conf, a.name), rank: i + 1, place: place(i), coach: c });
+        });
+      else {
+        const pa = a as PlayerAward;
+        (live ? (pa.race ?? pa.finalists) : pa.finalists).forEach((p, i) => {
+          if (p.team === team) out.push({ award: m.confAward(conf, a.name), rank: i + 1, place: place(i), player: p });
+        });
+      }
+    }
+    // the first all-conference team, a man once (whichever selector named him)
+    const seen = new Set<string>();
+    for (const list of Object.values(entry.teams?.selectors ?? {}) as TeamPick[][])
+      for (const p of list)
+        if (p.team === team && p.level === 1 && !seen.has(p.name)) {
+          seen.add(p.name);
+          out.push({ award: m.allConf(conf), rank: 1, place: m.firstTeam, player: p });
+        }
+  }
   return out.sort((a, b) => a.rank - b.rank);
 }
 
@@ -135,13 +179,16 @@ export default function Awards({ season, teams, coach }: Props) {
   const nat = sample ? SAMPLE : real;
   const extra = useMemo(() => (!live && view?.postseason ? view.postseason.awards : []), [live, view]);
   const national = useMemo(() => (nat ? [...nat.awards, ...extra] : []), [nat, extra]);
-  const honors = useMemo(() => (nat ? honorsOf(nat, extra, season.team, live) : []), [nat, extra, season.team, live]);
 
   // each conference's honors: the results once given, else the race in your own conference
   const conferences = useMemo(() => {
     const given = view?.conference ?? {};
     return Object.keys(given).length ? given : ((sample ? {} : view?.race?.conference) ?? {});
   }, [view, sample]);
+  const honors = useMemo(
+    () => (nat ? honorsOf(nat, extra, season.team, live, sample ? {} : conferences) : []),
+    [nat, extra, season.team, live, sample, conferences],
+  );
   const confLive = !Object.keys(view?.conference ?? {}).length;
   const shared = {
     teams,
@@ -173,7 +220,7 @@ export default function Awards({ season, teams, coach }: Props) {
           aside={status}
           tabs={[
             { key: "overview", label: m.tabs.overview },
-            { key: "heisman", label: m.tabs.heisman, count: nat?.heisman?.candidates.length || undefined },
+            { key: "heisman", label: m.tabs.heisman },
             { key: "national", label: m.tabs.national },
             { key: "coaches", label: m.tabs.coaches },
             { key: "allAmerica", label: m.tabs.allAmerica },
@@ -208,9 +255,22 @@ export default function Awards({ season, teams, coach }: Props) {
                       <div className="aw__cards">
                         {national
                           .filter((a) => group === "all" || groupOf(a.kind) === group)
-                          .map((a) => (
-                            <AwardCard key={a.name} a={a} live={live} teams={teams} mine={season.team} />
-                          ))}
+                          .map((a) =>
+                            // an award after the playoff may go to a coach or to a team's line, not to a player
+                            a.kind === "coach" ? (
+                              <CoachCard
+                                key={a.name}
+                                a={a as unknown as CoachAward}
+                                live={live}
+                                teams={teams}
+                                mine={season.team}
+                              />
+                            ) : a.kind === "ol_unit" ? (
+                              <UnitCard key={a.name} a={a} teams={teams} mine={season.team} />
+                            ) : (
+                              <AwardCard key={a.name} a={a} live={live} teams={teams} mine={season.team} />
+                            ),
+                          )}
                       </div>
                     ) : (
                       <p className="aw__empty">{m.noAwards}</p>
@@ -385,6 +445,55 @@ function Hero({
         </button>
       </div>
     </section>
+  );
+}
+
+/** An award that goes to a team's unit (the best offensive line): the school in its letters and colors, its numbers,
+ * then the next two. */
+function UnitCard({ a, teams, mine }: { a: PlayerAward; teams: Map<string, TeamCard>; mine: string }) {
+  const list = a.finalists as unknown as {
+    team: string;
+    team_name: string;
+    rush_ypg?: number;
+    ypc?: number;
+    sack_rate?: number;
+  }[];
+  const w = list[0];
+  const line = (u: (typeof list)[number]) => m.unitLine(u.rush_ypg ?? 0, u.ypc ?? 0, u.sack_rate ?? 0);
+  const card = w ? teams.get(w.team) : undefined;
+  return (
+    <article className={`aw-card${w?.team === mine ? " is-mine" : ""}`} aria-label={a.name}>
+      <header className="aw-card__head">
+        <b className="aw-card__name">{a.name}</b>
+        {a.honors && <span className="aw-card__honors">{sentence(a.honors)}</span>}
+      </header>
+      {!w ? (
+        <p className="aw__empty">{m.noRace}</p>
+      ) : (
+        <>
+          <div className="aw-card__lead">
+            {card && <Wordmark team={card} />}
+            <span className="aw-who">
+              <span className="aw-card__tag">{m.winner}</span>
+              <b className="aw-card__winner">{w.team_name}</b>
+              <span className="aw-card__headline">{line(w)}</span>
+            </span>
+          </div>
+          {list.length > 1 && (
+            <ol className="aw-card__rest" start={2}>
+              {list.slice(1, 3).map((u, i) => (
+                <li key={u.team}>
+                  <span className="aw-card__n">{i + 2}</span>
+                  <Swatch team={teams.get(u.team)} size={12} />
+                  <span className="aw-card__rest-name">{u.team_name}</span>
+                  <span className="aw-card__rest-line">{m.unitShort(u.rush_ypg ?? 0)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
+      )}
+    </article>
   );
 }
 

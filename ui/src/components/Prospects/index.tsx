@@ -9,6 +9,7 @@ import {
   Heart,
   Star,
   X,
+  Funnel,
 } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
@@ -17,6 +18,7 @@ import Modal from "../Modal/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import ScoutMark from "../ScoutMark/index.tsx";
 import ProspectCard, { Stars, statusOf, transferLine } from "../ProspectCard/index.tsx";
+import MinMax from "../MinMax/index.tsx";
 import TileMap from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
@@ -112,6 +114,12 @@ const chipCount = (n: NeedGroup, show: ChipShow): string | null => {
   return `${(show === "board" ? n.board : n.offers) ?? 0}/${start}`;
 };
 
+/** *tune* The heights a Height filter offers, in inches (5'6" to 6'10"). */
+const HEIGHTS = Array.from({ length: 17 }, (_, i) => 66 + i).map((n) => ({
+  value: n,
+  label: `${Math.floor(n / 12)}'${n % 12}"`,
+}));
+
 /**
  * The Prospects section: the whole class, to find who to recruit. A table you can search, filter (view, position,
  * stars, a state from the map) and sort by any column, 50 a page; the board star on every row. Beside it the pixel
@@ -168,6 +176,21 @@ export default function Prospects({
   /** what the map's dots show: one value for the small map and the big one */
   const [mapShow, setMapShow] = useKept(`prospects.${seasonId}.mapShow`, "none");
   const [sort, setSort] = useKept(`prospects.${seasonId}.sort`, "rank");
+  /** the columns' own filters (a word for Status, Interest, Scouted and Potential; a low and a high end for the rest) */
+  const [cols, setCols] = useKept<Record<string, string | number>>(`prospects.${seasonId}.cols`, {});
+  const [colsOpen, setColsOpen] = useKept(`prospects.${seasonId}.colsOpen`, false);
+  const colsKey = JSON.stringify(cols);
+  const colsOn = Object.keys(cols).length;
+  /** set or clear one of them */
+  const setCol = (changes: Record<string, string | number | null>) => {
+    const next = { ...cols };
+    for (const [k, v] of Object.entries(changes)) {
+      if (v === null || v === "") delete next[k];
+      else next[k] = v;
+    }
+    setCols(next);
+  };
+  const colNum = (k: string) => (typeof cols[k] === "number" ? (cols[k] as number) : null);
   const [page, setPage] = useState(0);
   const [data, setData] = useState<ProspectsView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -186,7 +209,7 @@ export default function Prospects({
   // a new filter starts at the first page
   useEffect(() => {
     setPage(0);
-  }, [view, q, group, stars, home, sort]);
+  }, [view, q, group, stars, home, sort, colsKey]);
 
   const load = useCallback(() => {
     const token = ++seq.current;
@@ -197,6 +220,7 @@ export default function Prospects({
     if (group) params.set("group", group);
     if (stars) params.set("stars", String(stars));
     if (home) params.set("state", home);
+    for (const [k, v] of Object.entries(cols)) params.set(k, String(v));
     setLoading(true);
     api<ProspectsView>(`/api/season/${seasonId}/prospects?${params}`)
       .then((d) => {
@@ -206,7 +230,7 @@ export default function Prospects({
       })
       .catch((e: Error) => token === seq.current && setError(e.message))
       .finally(() => token === seq.current && setLoading(false));
-  }, [seasonId, view, q, group, stars, home, sort, page]);
+  }, [seasonId, view, q, group, stars, home, sort, page, colsKey]);
 
   // the class is read once this tab has been opened (the Board tab does not pay for it), and from then on whenever
   // a filter changes
@@ -404,6 +428,49 @@ export default function Prospects({
               </option>
             ))}
           </select>
+          {/* the columns' own filters open under this row; the button counts the ones set */}
+          <Chip on={colsOpen || colsOn > 0} count={colsOn || undefined} onClick={() => setColsOpen(!colsOpen)}>
+            <Funnel size={14} weight="bold" aria-hidden="true" />
+            {m.filters}
+          </Chip>
+          {colsOpen && (
+            <div className="prospects__cols" role="group" aria-label={m.filters}>
+              {(["commit", "interest", "scouted", "pot"] as const).map((k) => (
+                <label key={k} className={`prospects__col${cols[k] ? " is-set" : ""}`}>
+                  <span className="label">{m.colNames[k]}</span>
+                  <select value={String(cols[k] ?? "")} onChange={(e) => setCol({ [k]: e.target.value })}>
+                    <option value="">{m.any}</option>
+                    {Object.entries(m.colWords[k]).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              <MinMax
+                label={m.colNames.ht}
+                min={colNum("ht_min")}
+                max={colNum("ht_max")}
+                options={HEIGHTS}
+                onChange={(a, b) => setCol({ ht_min: a, ht_max: b })}
+              />
+              {(["wt", "offers", "ask"] as const).map((k) => (
+                <MinMax
+                  key={k}
+                  label={m.colNames[k]}
+                  min={colNum(`${k}_min`)}
+                  max={colNum(`${k}_max`)}
+                  onChange={(a, b) => setCol({ [`${k}_min`]: a, [`${k}_max`]: b })}
+                />
+              ))}
+              {colsOn > 0 && (
+                <button type="button" className="prospects__panel-link" onClick={() => setCols({})}>
+                  {m.clearFilters}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="prospects__chips prospects__groups" role="group" aria-label={m.group}>

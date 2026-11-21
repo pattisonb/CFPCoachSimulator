@@ -1062,11 +1062,60 @@ def _sort_key(state: dict, viewer: str, key: str, keen: dict):
 
 def search(state: dict, viewer: str, position: Optional[str] = None, stars: Optional[int] = None,
            home: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None,
-           offset: int = 0, limit: int = 50, sort: str = "rank", group: Optional[str] = None) -> dict:
+           offset: int = 0, limit: int = 50, sort: str = "rank", group: Optional[str] = None,
+           cols: Optional[dict] = None) -> dict:
     """The class you can see, filtered and paged, by national rank or any column (`sort`: _sort_key's names, "-" first to
     reverse; "interest" is interest in your school). `status="interested"` keeps those graded High: the prospects your
-    school appeals to most among recruits of their star rating."""
+    school appeals to most among recruits of their star rating. `cols` filters by the table's columns (the player's
+    ask): `commit` (open, committed, signed), `interest` (High, Medium, Low), `scouted` (none, partly, fully), `pot` (a
+    letter: your read's best grade starts with it), and a low and a high end for ht (inches), wt, offers (the schools
+    that have offered) and ask (his NIL ask of you as you know it, a range by its middle): ht_min, ht_max and so on."""
     rc = state["recruiting"]
+    cols = {k: v for k, v in (cols or {}).items() if v not in (None, "")}
+    span = {k: (cols.get(f"{k}_min"), cols.get(f"{k}_max")) for k in ("ht", "wt", "offers", "ask")}
+    span = {k: v for k, v in span.items() if v != (None, None)}
+    offers_n: dict = {}
+    if "offers" in span:
+        for pids in rc["offers"].values():
+            for x in pids:
+                offers_n[x] = offers_n.get(x, 0) + 1
+    sharp = grades.fine(state) if cols.get("pot") and clear.on() else None
+
+    def within(k: str, v: float) -> bool:
+        lo, hi = span[k]
+        return (lo is None or v >= lo) and (hi is None or v <= hi)
+
+    def col_ok(pid: str, p: dict, st: dict) -> bool:
+        c = cols.get("commit")
+        if c == "open" and (st["committed"] or st["signed"]):
+            return False
+        if c == "committed" and not (st["committed"] and not st["signed"]):
+            return False
+        if c == "signed" and not st["signed"]:
+            return False
+        if cols.get("interest") and _level(keen[pid], p["stars"], cuts) != cols["interest"]:
+            return False
+        if cols.get("scouted"):
+            read = rc["reads"].get(pid)
+            n = recruiting.report_looks(read)
+            if cols["scouted"] != ("fully" if recruiting.report_complete(read) else "partly" if n else "none"):
+                return False
+        if cols.get("pot"):
+            shown = recruiting.shown_range(state, pid, "potential", sharp) if rc["reads"].get(pid) else None
+            if not shown or not str(shown[-1]).startswith(cols["pot"]):
+                return False
+        if "ht" in span and not within("ht", _height_in(p["height"])):
+            return False
+        if "wt" in span and not within("wt", p["weight"] or 0):
+            return False
+        if "offers" in span and not within("offers", offers_n.get(pid, 0)):
+            return False
+        if "ask" in span:
+            a = recruiting.ask_view(state, viewer, pid, peek=True)
+            if not within("ask", a["exact"] if "exact" in a else (a["lo"] + a["hi"]) / 2):
+                return False
+        return True
+
     q = (q or "").strip().lower()
     out = []
     visible = recruiting.prospect_list(state)
@@ -1101,6 +1150,8 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
         if status == "board" and pid not in rc["board"]:
             continue
         if status == "interested" and (_level(keen[pid], p["stars"], cuts) != "High" or st["signed"]):
+            continue
+        if cols and not col_ok(pid, p, st):
             continue
         out.append(pid)
     # the sort you picked holds whatever the filter (the player's report: Interested in You forced its own order); a

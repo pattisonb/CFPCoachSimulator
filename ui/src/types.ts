@@ -1004,6 +1004,8 @@ export interface SceneReaction {
 
 /** GET /api/season/{id}/recruiting (the parts the board reads) */
 export interface RecruitingBoard extends RecruitingWeek {
+  /** the offseason's transfer portal is open (its week and how far along it is); null in the high school class */
+  portal?: { week: number; weeks: number; entrants: number; signed: number } | null;
   /** the dead period (after Championship Week, until Signing Day): nobody can work a recruit; `signing` names the week */
   closed?: boolean;
   signing?: string;

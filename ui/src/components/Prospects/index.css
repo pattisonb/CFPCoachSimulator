@@ -67,6 +67,45 @@
   gap: var(--s2);
 }
 
+/* the columns' own filters, a line of their own under the tools: eight matching fields on one even grid (a name over
+   its field), four pickers then four low-to-high pairs, and Clear at the end */
+.prospects__cols {
+  display: grid;
+  flex-basis: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) repeat(4, minmax(0, 1.5fr)) auto;
+  align-items: end;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.prospects__col {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prospects__col .label {
+  color: var(--ink-soft);
+}
+
+.prospects__col select {
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 6px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+}
+
+.prospects__col.is-set select {
+  border-color: var(--ink);
+}
+
 .prospects__search {
   display: flex;
   align-items: center;

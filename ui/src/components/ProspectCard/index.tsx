@@ -1,10 +1,14 @@
 import { GradeRange } from "../Grade/index.tsx";
 import { useEffect, useState } from "react";
-import { Star, X } from "@phosphor-icons/react";
+import { EnvelopeSimple, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
+import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
+import Meter from "../Meter/index.tsx";
+import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace } from "../../faces.ts";
+import { cachedTeams } from "../../teams.ts";
 import type { ProspectDetail, ProspectRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -28,6 +32,9 @@ export function statusOf(r: ProspectRow): string {
   // uncommitted: where you stand with him, when you stand anywhere
   return m.openAt[r.stage ?? ""] ?? m.open;
 }
+
+/** *tune* How many of the schools after him the card names (the rest are counted). */
+const SCHOOLS = 5;
 
 /** *tune* How many of a transfer's numbers his one-line season shows. */
 const TRANSFER_STATS = 3;
@@ -78,6 +85,9 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
   const [detail, setDetail] = useState<ProspectDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  /** which of the scouting service's lists is up */
+  const [side, setSide] = useState<"strengths" | "weaknesses">("strengths");
+  const [point, setPoint] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -103,6 +113,10 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
   const pos = p?.display_pos ?? r?.display_pos ?? "";
   const looks = r?.looks ?? detail?.looks ?? 0;
   const ev = detail?.evaluation;
+  const points = (side === "strengths" ? ev?.strengths : ev?.weaknesses) ?? [];
+  const at = Math.min(point, Math.max(0, points.length - 1));
+
+  const schoolOf = (slug: string) => cachedTeams()?.find((t) => t.slug === slug);
 
   return (
     <aside className="prospect-card" aria-label={name}>
@@ -110,9 +124,10 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
         <X size={18} weight="bold" aria-hidden="true" />
       </button>
 
+      {/* who he is: his picture, his name and stars, his position and size */}
       <header className="prospect-card__head">
         <span className="prospect-card__face">
-          <Face face={playerFace(pid, pos)} scale={3} label="" />
+          <Face face={playerFace(pid, pos)} scale={2} label="" />
         </span>
         <div className="prospect-card__who">
           <h2 className="prospect-card__name">{name}</h2>
@@ -120,13 +135,26 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
           <span className="prospect-card__soft">
             {[pos, r?.height_display, r?.weight_display].filter(Boolean).join(" · ")}
           </span>
+          {p?.archetype && <b className="prospect-card__type">{p.archetype}</b>}
         </div>
       </header>
 
+      {/* where he ranks: in the country, at his position, in his state */}
       {p && (
-        <p className="prospect-card__ranks">
-          {m.ranks(p.national_rank, p.position_rank, p.state_rank, pos, p.hometown.state)}
-        </p>
+        <dl className="prospect-card__tiles prospect-card__tiles--3 prospect-card__tiles--line">
+          <div>
+            <dt className="label">{m.rankNat}</dt>
+            <dd>#{p.national_rank}</dd>
+          </div>
+          <div>
+            <dt className="label">{pos}</dt>
+            <dd>#{p.position_rank}</dd>
+          </div>
+          <div>
+            <dt className="label">{p.hometown.state}</dt>
+            <dd>#{p.state_rank}</dd>
+          </div>
+        </dl>
       )}
 
       {r && (
@@ -143,91 +171,134 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
       {error && <p className="prospect-card__soft">{m.loadError(error)}</p>}
       {!detail && !error && <p className="prospect-card__soft">{m.loading}</p>}
 
+      {/* the facts, a tile each: his status, your pull and your need on one row, where he is from on the next, then
+          your scouting */}
       {p && (
-        <dl className="prospect-card__facts">
+        <dl className="prospect-card__tiles prospect-card__tiles--3">
           <div>
             <dt className="label">{m.status}</dt>
             <dd>{r ? statusOf(r) : "–"}</dd>
           </div>
-          <div>
-            <dt className="label">{m.interest}</dt>
+          <div title={m.interest}>
+            <dt className="label">{m.interestShort}</dt>
             <dd>{r?.interest_level ?? "–"}</dd>
           </div>
-          <div>
-            <dt className="label">{m.hometown}</dt>
-            <dd>{`${p.hometown.city}, ${p.hometown.state}`}</dd>
-          </div>
-          <div>
-            <dt className="label">{m.highSchool}</dt>
-            <dd>{p.high_school}</dd>
-          </div>
-          <div>
-            <dt className="label">{m.archetype}</dt>
-            <dd>{p.archetype}</dd>
-          </div>
-          <div>
-            <dt className="label">{m.need}</dt>
+          <div title={m.need}>
+            <dt className="label">{m.needShort}</dt>
             <dd>{m.needWord(detail?.need ?? null)}</dd>
+          </div>
+          <div className="prospect-card__wide">
+            <dt className="label">{m.from_}</dt>
+            <dd>{[`${p.hometown.city}, ${p.hometown.state}`, p.high_school].filter(Boolean).join(" · ")}</dd>
+          </div>
+          <div className="prospect-card__half" title={looks ? undefined : m.unscoutedTip}>
+            <dt className="label">{m.scouted}</dt>
+            <dd>{looks ? m.looksShort(looks) : m.unscouted}</dd>
+            <Meter value={looks / 3} label={m.scouted} />
+          </div>
+          <div className="prospect-card__half">
+            <dt className="label">{m.potential}</dt>
+            <dd>
+              {r?.our_potential && looks > 0 ? (
+                <GradeRange read={r.our_potential} size="sm" />
+              ) : (
+                <span className="prospect-card__soft">{m.unknown}</span>
+              )}
+            </dd>
           </div>
         </dl>
       )}
 
-      {p && (
-        <section className="prospect-card__block">
-          <h3 className="label prospect-card__kicker">{m.scouting}</h3>
-          {looks > 0 ? (
-            <p>
-              <b>{m.looks(looks)}</b>
-              {r?.our_potential && (
-                <span className="prospect-card__soft">
-                  {" · "}
-                  {m.potential} <GradeRange read={r.our_potential} size="sm" />
-                </span>
-              )}
-            </p>
-          ) : (
-            <p className="prospect-card__soft" title={m.unscoutedTip}>
-              {m.unscouted}
-            </p>
-          )}
-        </section>
-      )}
-
+      {/* the scouting service: its read, then what he does well beside what he must work on */}
       {ev && (
         <section className="prospect-card__block">
           <h3 className="label prospect-card__kicker">{m.evaluation}</h3>
           <p className="prospect-card__outlook">{ev.outlook}</p>
-          {ev.strengths.length > 0 && (
-            <ul className="prospect-card__list">
-              {ev.strengths.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          )}
-          {ev.weaknesses.length > 0 && (
+          {/* one list at a time, the card's full width, so each point reads as a sentence: a switch picks which */}
+          {(ev.strengths.length > 0 || ev.weaknesses.length > 0) && (
             <>
-              <h4 className="label prospect-card__kicker">{m.weaknesses}</h4>
-              <ul className="prospect-card__list">
-                {ev.weaknesses.map((t) => (
-                  <li key={t}>{t}</li>
+              <div className="prospect-card__switch" role="tablist">
+                {(
+                  [
+                    ["strengths", m.strengths, ev.strengths.length],
+                    ["weaknesses", m.weaknesses, ev.weaknesses.length],
+                  ] as const
+                ).map(([key, title, n]) => (
+                  <Chip
+                    key={key}
+                    on={side === key}
+                    count={n}
+                    onClick={() => {
+                      setSide(key);
+                      setPoint(0);
+                    }}
+                  >
+                    {title}
+                  </Chip>
                 ))}
-              </ul>
+              </div>
+              {/* its points one at a time (the player's ask), in one box: the point, and in the box's foot its
+                  numbered tabs, on their own line so they never sit on the words */}
+              <div className="prospect-card__point">
+                {/* every point of both lists shares the one cell, only the one up showing: the box is as tall as the
+                    longest, so it never changes height between them */}
+                {[...(ev.strengths ?? []), ...(ev.weaknesses ?? [])].map((t) => (
+                  <p key={t} className={t === points[at] ? undefined : "is-off"} aria-hidden={t !== points[at]}>
+                    {t}
+                  </p>
+                ))}
+                {points.length > 1 && (
+                  <div className="prospect-card__pips" role="tablist" aria-label={m[side]}>
+                    {points.map((t, i) => (
+                      <button
+                        key={t}
+                        type="button"
+                        role="tab"
+                        aria-selected={i === at}
+                        className={`prospect-card__pip${i === at ? " is-on" : ""}`}
+                        onClick={() => setPoint(i)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </section>
       )}
 
+      {/* who is after him: each school in its colors, in order */}
       {p && (
         <section className="prospect-card__block">
           <h3 className="label prospect-card__kicker">{m.recruiting}</h3>
           {p.schools.length ? (
             <ol className="prospect-card__schools">
-              {p.schools.map((s) => (
+              {p.schools.slice(0, SCHOOLS).map((s, i) => (
                 <li key={s.school}>
-                  <span>{s.name}</span>
-                  {s.offered && <span className="prospect-card__tag">{m.offered}</span>}
+                  <span className="prospect-card__place">{i + 1}</span>
+                  <Swatch team={schoolOf(s.school)} size={16} />
+                  <b title={s.name}>{schoolOf(s.school)?.abbreviation ?? s.name}</b>
+                  {s.offered && (
+                    <span className="prospect-card__offered" role="img" aria-label={m.offered} title={m.offered}>
+                      <EnvelopeSimple size={14} weight="fill" aria-hidden="true" />
+                    </span>
+                  )}
                 </li>
               ))}
+              {/* the rest, counted: their names are the tile's tip */}
+              {p.schools.length > SCHOOLS && (
+                <li
+                  className="prospect-card__more"
+                  title={p.schools
+                    .slice(SCHOOLS)
+                    .map((x) => x.name)
+                    .join(", ")}
+                >
+                  {m.more(p.schools.length - SCHOOLS)}
+                </li>
+              )}
             </ol>
           ) : (
             <p className="prospect-card__soft">{m.nobody}</p>

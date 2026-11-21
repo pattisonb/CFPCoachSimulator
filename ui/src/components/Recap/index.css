@@ -12,41 +12,130 @@
   font-size: var(--t-sm);
 }
 
-/* the headline: the champion (or your record), and the AD's grade at the far end once the season is graded */
-.recap__lead {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  margin-bottom: var(--s3);
-  padding: var(--s3);
-  background: var(--paper-hi);
-  border: var(--line) solid var(--ink);
-}
-
-.recap__lead > div:first-of-type {
+/* the headline: two banners side by side, the same height (the app's rule): the champion in its colors, and your
+   season in yours. Each has its team's letters huge and faint behind the words */
+.recap__heroes {
   display: grid;
-  flex: 1;
-  gap: 4px;
-  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--s3);
+  margin-bottom: var(--s2);
 }
 
-.recap__lead h2 {
-  font-size: var(--t-xl);
-  line-height: 1.1;
+.recap__heroes.is-solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.recap__hero {
+  --c: var(--ink);
+  --on: var(--paper-hi);
+
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-height: 132px;
+  overflow: hidden;
+  padding: var(--s3) var(--s4);
+  background: var(--c);
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.recap__hero > * {
+  position: relative;
+}
+
+/* the team's letters, huge, slanted and faint, off the banner's right edge */
+.recap__hero > .recap__hero-mark {
+  position: absolute;
+  right: -12px;
+  bottom: -34px;
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -6px;
+  opacity: 0.14;
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
+
+.recap__hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-.recap__lead p {
-  color: var(--ink-soft);
-  font-size: var(--t-sm);
+.recap__hero h2 {
+  font-size: var(--t-2xl);
+  line-height: 1;
+  text-transform: uppercase;
 }
 
-.recap__grade {
+.recap__hero--you h2 {
+  font-size: 56px; /* your record: the banner's one big number */
+}
+
+.recap__hero p {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+/* the way to the Bracket: a small drawn bracket and its name, framed in the banner's own ink, at its right */
+.recap__hero > .recap__bracket {
+  position: absolute;
+  top: 50%;
+  right: var(--s4);
   display: grid;
   justify-items: center;
-  min-width: 96px;
-  background: var(--paper);
+  gap: 4px;
+  padding: 8px 10px 6px;
+  background: color-mix(in srgb, var(--on) 12%, transparent);
+  color: var(--on);
+  border: var(--line) solid var(--on);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+.recap__bracket:hover {
+  background: color-mix(in srgb, var(--on) 28%, transparent);
+}
+
+.recap__bracket path {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: square;
+  shape-rendering: crispedges;
+}
+
+.recap__bracket rect {
+  fill: currentcolor;
+}
+
+/* the AD's grade: a stamp set askew on your banner's corner */
+.recap__grade {
+  position: absolute;
+  top: 50%;
+  right: 112px; /* clear of your coach's picture in the window's corner (it may sit on the faint letters) */
+  display: grid;
+  justify-items: center;
+  min-width: 92px;
+  background: var(--paper-hi);
+  color: var(--ink);
   border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 35%);
+  transform: translateY(-50%) rotate(6deg);
 }
 
 .recap__grade .label {
@@ -58,15 +147,103 @@
 }
 
 .recap__grade b {
-  padding: 6px var(--s2);
-  font-size: var(--t-2xl);
+  padding: 4px var(--s2) 6px;
+  font-size: 44px;
   line-height: 1;
 }
 
 .recap__gradeline {
-  margin: calc(-1 * var(--s2)) 0 var(--s3);
+  margin: 0 0 var(--s2);
   font-size: var(--t-sm);
   font-weight: 700;
+}
+
+/* your season in numbers: six flat tiles, the number large */
+.recap__nums {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: var(--s3);
+}
+
+.recap__nums > div {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s2);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.recap__nums .label {
+  color: var(--ink-soft);
+}
+
+.recap__nums dd {
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* your games worth telling: a card each, a W or an L on a tab in its color, the score large */
+.recap__games {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: var(--s2) 0 var(--s1);
+}
+
+.recap__game {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px var(--s2);
+  background: var(--tile);
+}
+
+.recap__game .label {
+  color: var(--ink-soft);
+}
+
+.recap__game-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-lg);
+  line-height: 1.1;
+}
+
+.recap__game-tab {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: var(--good);
+  color: #fff;
+  font-size: var(--t-xs);
+}
+
+.recap__game.is-lost .recap__game-tab {
+  background: var(--warn);
+}
+
+.recap__game-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+}
+
+.recap__up {
+  flex: none;
+  color: var(--good);
+}
+
+.recap__down {
+  flex: none;
+  color: var(--warn);
 }
 
 .recap__team {
@@ -100,11 +277,21 @@
 }
 
 .recap__place {
-  min-width: 20px;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
   color: var(--ink-soft);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
-  text-align: right;
+}
+
+/* the top three stand on ink */
+.recap__place.is-top {
+  background: var(--ink);
+  color: var(--paper-hi);
+  font-weight: 700;
 }
 
 .recap__grow {

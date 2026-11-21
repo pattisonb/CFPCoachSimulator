@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { CaretDown, CaretRight } from "@phosphor-icons/react";
+import { ArrowUpRight, CaretDown, CaretRight } from "@phosphor-icons/react";
 import Tooltip from "../Tooltip/index.tsx";
 import "./index.css";
 
@@ -11,6 +11,7 @@ export default function Panel({
   className,
   collapsible,
   defaultOpen = true,
+  onTitle,
 }: {
   title: string;
   /** at the head's far end, soft: a count, a note */
@@ -21,6 +22,8 @@ export default function Panel({
   collapsible?: boolean;
   /** a collapsible panel's state to start */
   defaultOpen?: boolean;
+  /** its name is a way on (to the page that tells this in full): an arrow beside it, and it is a button */
+  onTitle?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const shown = !collapsible || open;
@@ -39,6 +42,13 @@ export default function Panel({
                 <CaretRight size={14} weight="bold" aria-hidden="true" />
               )}
               {title}
+            </button>
+          </h3>
+        ) : onTitle ? (
+          <h3>
+            <button type="button" className="panel__toggle panel__go" onClick={onTitle}>
+              {title}
+              <ArrowUpRight size={14} weight="bold" aria-hidden="true" />
             </button>
           </h3>
         ) : (

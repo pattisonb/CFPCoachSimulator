@@ -184,17 +184,13 @@
   color: var(--ink-soft);
 }
 
-.office__odds-bar {
-  flex: 1;
-  height: 12px;
-  border: var(--line) solid var(--ink);
+/* the number in green when the game leans your way, in the risk color when it leans theirs */
+.office__odds-big.is-ahead {
+  color: var(--good);
 }
 
-.office__odds-bar i {
-  display: block;
-  height: 100%;
-  background: var(--ink);
-  transition: width 400ms ease-out;
+.office__odds-big.is-behind {
+  color: var(--warn);
 }
 
 /* ---------- left: the actions, as tiles ---------- */
@@ -287,12 +283,19 @@
 }
 
 /* a sim running: what it's on, a bar, Stop */
+
+/* while a sim runs the page behind is to watch, not to work: the box throws a gray tint over everything else in the
+   window (a shadow spread past its edges, clipped by the window, so the sidebar and the top bar stay clear) and sits
+   above it */
 .office__sim {
+  position: relative;
+  z-index: 3;
   display: grid;
   gap: var(--s1);
   padding: var(--s3);
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
+  box-shadow: 0 0 0 4000px color-mix(in srgb, var(--ink) 30%, transparent); /* *tune* the tint */
 }
 
 /* one line each, cut short if it must be: a longer stage name never makes the box taller */
@@ -642,7 +645,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .office__odds-bar i,
   .office__sim-bar i,
   .office__action,
   .office__action-trail,

@@ -15,8 +15,6 @@ export const messages = {
   battle: "Recruiting Battle",
   schools: (n: number) => `${n} ${n === 1 ? "School" : "Schools"}`,
   standing: "Where You Stand",
-  standingShort: "You Stand",
-  priorityShort: (i: number) => `Priority ${i + 1}`,
   noList: "No school is on his list yet.",
   raceOver: "His race is over.",
   offered: "Offered",

@@ -936,14 +936,14 @@ def spot_of_player(role: Optional[str], group: Optional[str]) -> Optional[str]:
     return s if s in SPOT_GROUP and SPOT_GROUP[s] == group else SPOTS[group][0][0]
 
 
-STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "CB": 2, "K": 1, "P": 1,
+SPOT_STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "CB": 2, "K": 1, "P": 1,
             **{name: n for parts in SPOTS.values() for name, n in parts}}     # *tune* how many start at each of your pages' positions
 
 
 def need_levels(state: dict, slug: str) -> dict[str, dict]:
     """How pressing each position's need is, for the board's Triage colors: 0 covered (the class needs no one there),
     1 depth (spots to fill, every starter back), 2 a starter leaves, 3 every starter leaves. A position's starters are
-    its best players now (STARTERS of them, by overall); one leaves when he is a senior (LEAVING). Each carries
+    its best players now (SPOT_STARTERS of them, by overall); one leaves when he is a senior (LEAVING). Each carries
     `leaving` and `starters` for the chip's tip. In the portal next year's roster is the roster, so no one leaves."""
     from sim import season
     need = {k: d["need"] for k, d in needs_by_spot(state, slug).items()}
@@ -955,7 +955,7 @@ def need_levels(state: dict, slug: str) -> dict[str, dict]:
             at.setdefault(spot_of_player(p.get("role"), g) or g, []).append(p)
     out = {}
     for k, n in need.items():
-        first = sorted(at.get(k, []), key=lambda p: -(p.get("ovr") or 0))[:STARTERS.get(k, 1)]
+        first = sorted(at.get(k, []), key=lambda p: -(p.get("ovr") or 0))[:SPOT_STARTERS.get(k, 1)]
         leaving = sum(1 for p in first if p.get("class") in LEAVING)
         level = 0 if n <= 0 else 1 if not leaving else 3 if leaving >= len(first) else 2
         out[k] = {"level": level, "leaving": leaving, "starters": len(first)}

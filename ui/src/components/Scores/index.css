@@ -30,8 +30,10 @@
 /* a game: its status over the two teams, away first */
 .scores__game {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* its lines keep to the card's width */
   gap: 4px;
   width: 100%;
+  min-width: 0;
   padding: 8px 10px;
   background: var(--paper-hi);
   color: var(--ink);
@@ -62,10 +64,10 @@
   font-size: var(--t-xs);
 }
 
+/* a named game's long name (the title game's) wraps inside its card, never past its edge */
 .scores__title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .scores__side {

@@ -40,16 +40,21 @@
   z-index: 11;
 }
 
-/* Recruiting has no top row: your face is the same size in the same place, so it sits on the window's top right
-   corner. The window's tab bar is as tall as your face there and stops short of it, so nothing lies under it */
-.game__main.is-recruiting .section-tabs {
+/* a page with no top row (every one but the Office and Headquarters): your face is the same size in the same place,
+   on the window's top right corner. The page's own top bar (its tabs, the Schedule's bar, the Depth Chart's folder
+   tabs) is as tall as your face there and stops short of it, so nothing lies under it */
+.game__main.is-bare .section-tabs,
+.game__main.is-bare .sched-bar,
+.game__main.is-bare .folder-tabs__bar {
   min-height: 84px; /* with the window's edge and the bar's rule, your face's 88 */
   padding-right: calc(88px + var(--s3));
 }
 
-/* the Offseason has no top row either: its bar (the steps, then the stage's name and the way on) stops short of your face */
-.game__main.is-offseason .section-tabs,
-.game__main.is-offseason .off__top {
+.game__main.is-bare .folder-tabs__bar {
+  align-items: flex-end; /* the folder's tabs stay on the panel's top edge */
+}
+
+.game__main.is-bare .off__top {
   padding-right: calc(88px + var(--s3));
 }
 

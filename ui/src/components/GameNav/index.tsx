@@ -37,6 +37,8 @@ interface Props {
   onToggleTheme: () => void;
   mode: NavMode;
   onMode: (mode: NavMode) => void;
+  /** a section under another name for now (Recruiting reads Transfer Portal while the portal is open) */
+  names?: Record<string, string>;
   /** sections left off the list for now (the Offseason, until the season is over) */
   hide?: string[];
 }
@@ -170,7 +172,7 @@ function Tool({
  * - hidden: it slides away; the pointer at the window's left edge (or focus moving into it) brings it back over
  *   the page until the pointer leaves, with Keep Sidebar Open at its top. The page shows its own Open button.
  */
-export default function GameNav({ team, active, onSection, theme, onToggleTheme, mode, onMode, hide }: Props) {
+export default function GameNav({ team, active, onSection, theme, onToggleTheme, mode, onMode, hide, names }: Props) {
   const [leagueOpen, setLeagueOpen] = useState(true);
   const [peeking, setPeeking] = useState(false);
   const leaveTimer = useRef<number | undefined>(undefined);
@@ -205,7 +207,7 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
     <li key={s.key}>
       <Item
         icon={s.icon}
-        label={s.label}
+        label={names?.[s.key] ?? s.label}
         rail={rail}
         filled={s.key === active}
         aria-current={s.key === active ? "page" : undefined}

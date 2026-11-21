@@ -12,9 +12,11 @@ export const messages = {
 
   advance: "Advance",
   working: "Working…",
-  movingTo: (stage: string) => `On to ${stage}…`,
+  movingTo: (stage: string) => `Advancing to ${stage.replace(/^Transfer Portal, /, "Portal ")}…`,
   starting: (year: number) => `Starting the ${year} Season…`,
-  onTo: (stage: string) => `On to ${stage}`,
+  // the way on says it moves time ("Advance to Portal Week 2"): "On to Transfer Portal, Week 2" read as a link to the
+  // portal (the player's report)
+  onTo: (stage: string) => `Advance to ${stage.replace(/^Transfer Portal, /, "Portal ")}`,
   backTo: (stage: string) => `Back to ${stage}`,
   startSeason: (year: number) => `Start the ${year} Season`,
   meetingName: "Your Meeting With the AD",
@@ -151,8 +153,9 @@ export const messages = {
     spotsTip: (roster: number, limit: number) => `Your roster is ${roster} of ${limit}.`,
     offers: "Your Offers",
     offersLine: (out: number, left: number) => `${out} out, ${left} left`,
-    how: "The portal is worked on the Recruiting board.",
-    open: "Open the Recruiting Board",
+    how: "Work the Portal",
+    howSub: (week: number, weeks: number) => `Week ${week} of ${weeks}: offers, calls and visits.`,
+    open: "Open Transfer Portal",
     board: "Your Portal Board",
     onBoard: (n: number) => `${n} on Your Board`,
     noBoard: "Nobody from the portal is on your board yet.",

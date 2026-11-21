@@ -590,8 +590,11 @@ function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
         </Stat>
       </dl>
       {live && (
-        <div className="off__cta">
-          <p className="off__soft">{m.portal.how}</p>
+        <div className="off__cta off__cta--portal">
+          <div className="off__cta-words">
+            <b>{m.portal.how}</b>
+            <span>{m.portal.howSub(pt.week || pt.weeks, pt.weeks)}</span>
+          </div>
           {/* what you have left to work it with this week */}
           {budgets && <div className="off__budgets">{budgets}</div>}
           <button type="button" className="off__next" onClick={() => onSection("recruiting")}>

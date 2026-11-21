@@ -6,6 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
+import WinBar from "../WinBar/index.tsx";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -257,6 +258,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
             preview={preview}
             weekName={weekName}
             onBox={onBox}
+            simming={sim.running}
           />
         )}
         <Actions
@@ -447,6 +449,7 @@ function GameCard({
   preview,
   weekName,
   onBox,
+  simming,
 }: {
   s: SeasonSummary;
   onBox?: (eventId: string) => void;
@@ -455,6 +458,8 @@ function GameCard({
   teams: Map<string, TeamCard>;
   preview: GamePreview | null;
   weekName: (w: number) => string;
+  /** a sim is running: the read on the next game waits for it, and says nothing meanwhile */
+  simming?: boolean;
 }) {
   const g = thisWeek ?? next;
   if (!g)
@@ -515,7 +520,7 @@ function GameCard({
             <span className="office__soft">
               {mine !== null && p
                 ? m.projected(m.score(Math.round(p.points_for), Math.round(p.points_against)))
-                : preview
+                : preview || simming
                   ? ""
                   : m.scouting}
             </span>
@@ -525,12 +530,16 @@ function GameCard({
             role="img"
             aria-label={mine !== null && p ? m.odds(s.team_name, mine, g.opponent_name, 100 - mine) : m.scouting}
           >
-            <b className={`office__odds-big${mine !== null && p ? "" : " is-waiting"}`}>
+            <b
+              className={`office__odds-big${mine !== null && p ? (mine >= 50 ? " is-ahead" : " is-behind") : " is-waiting"}`}
+            >
               {mine !== null && p ? `${mine}%` : m.noOdds}
             </b>
-            <span className="office__odds-bar" aria-hidden="true">
-              <i style={{ width: `${mine !== null && p ? mine : 0}%` }} />
-            </span>
+            <WinBar
+              mine={mine !== null && p ? mine : null}
+              myColor={teams.get(s.team)?.colors.primary}
+              theirColor={g.opponent ? teams.get(g.opponent)?.colors.primary : undefined}
+            />
           </div>
         </div>
       )}

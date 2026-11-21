@@ -284,6 +284,11 @@
   margin-bottom: var(--s3);
 }
 
+/* a card in a wrapper (a conference's awards) fills its cell too, so every card in a row is the same height */
+.aw__cards > div {
+  display: grid;
+}
+
 /* a trophy card: the award, the leader up front, the next two under him */
 .aw-card {
   display: flex;
@@ -693,7 +698,9 @@
   --grass-hi: #47963f;
 
   display: grid;
+  align-content: start;
   gap: var(--s2);
+  min-height: 420px; /* *tune* two rows of men: the field is one height on Offense, Defense and Specialists */
   padding: var(--s3);
   background: repeating-linear-gradient(180deg, var(--grass) 0 60px, var(--grass-hi) 60px 120px);
   border: var(--line) solid var(--ink);
@@ -705,6 +712,29 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--s2);
+}
+
+/* a line with men split out wide (the receivers, the corners): one to the left edge, the line in the middle, the rest
+   to the right edge, as a depth chart sets them */
+.aw-field__line.is-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.aw-field__group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+}
+
+.aw-field__group:first-of-type {
+  justify-content: flex-start;
+}
+
+.aw-field__group:last-of-type {
+  justify-content: flex-end;
 }
 
 /* a unit's first line carries its name, over a chalk line */
@@ -756,12 +786,12 @@
   text-transform: uppercase;
 }
 
+/* his whole name, on two lines when it needs them (never cut short) */
 .aw-man__name {
   max-width: 100%;
-  overflow: hidden;
   font-size: var(--t-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .aw-man__team {
@@ -809,4 +839,91 @@
   .aw-coaches__row {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ---------- an honor team's two views: the field, or a list ---------- */
+.aw-team {
+  display: grid;
+  gap: var(--s2);
+}
+
+/* the unit's tabs at the left, the two views at the right */
+.aw-team__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.aw-team__views {
+  margin-left: auto;
+}
+
+.aw-team__views .chip {
+  min-height: 28px;
+  font-size: var(--t-xs);
+}
+
+/* the list: a unit a column, a man a line (his spot, his name, his school, his season, his votes) */
+.aw-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a unit a block, the full width: a man's whole season fits his line */
+  align-items: stretch;
+  gap: var(--s3);
+}
+
+.aw-list__unit {
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.aw-list__title {
+  padding: 6px var(--s2) 8px;
+  background: var(--team-stripe, none) bottom / 100% 3px no-repeat;
+  color: var(--ink-soft);
+}
+
+.aw-list ol {
+  display: grid;
+  list-style: none;
+}
+
+.aw-list li {
+  display: grid;
+  grid-template-columns: 76px auto minmax(0, 1fr) auto auto; /* his spot, his name, his season, his school, his votes */
+  align-items: baseline;
+  gap: var(--s2);
+  padding: 6px var(--s2);
+  border-top: 1px solid var(--line-soft);
+  font-size: var(--t-sm);
+}
+
+.aw-list li.is-mine {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 3px 0 0 var(--ink);
+}
+
+.aw-list__slot {
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.aw-list__team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+}
+
+/* his season on the same line as his name, never wrapped */
+.aw-list__line {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  text-overflow: clip;
+  white-space: nowrap;
 }

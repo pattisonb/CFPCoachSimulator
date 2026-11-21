@@ -1202,6 +1202,44 @@
   margin: 0;
 }
 
+/* the portal's way in: a banner in your color (its words in the ink that reads on it), the week's budgets on a paper
+   inset, and the button in paper so it stands off the color */
+.off__cta--portal {
+  padding: var(--s3);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.off__cta-words {
+  display: grid;
+  flex: 1 1 240px;
+  gap: 2px;
+}
+
+.off__cta-words b {
+  font-size: var(--t-xl);
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.off__cta-words span {
+  font-size: var(--t-sm);
+}
+
+.off__cta--portal .off__budgets {
+  padding: 6px var(--s2);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+}
+
+.off__cta--portal .off__next {
+  background: var(--paper-hi);
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
 .off__more {
   margin-top: 6px;
 }

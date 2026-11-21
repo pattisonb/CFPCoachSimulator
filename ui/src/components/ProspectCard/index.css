@@ -1,15 +1,21 @@
 /* A prospect's file: a raised panel beside the list, scrolling on its own. */
 .prospect-card {
   position: relative;
-  display: grid;
-  align-content: start;
-  gap: var(--s3);
+  display: flex; /* a column that keeps to its height: the scouting service's lists take what is left and scroll on
+     their own, so the card itself does not */
+  flex-direction: column;
+  gap: 6px;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--s3);
+  padding: 10px var(--s3);
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
   box-shadow: 6px 6px 0 var(--shadow);
+}
+
+/* every part keeps its own height; only the scouting service's block gives (below) */
+.prospect-card > * {
+  flex: none;
 }
 
 .prospect-card__close {
@@ -42,106 +48,242 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 108px; /* the face at 3x (99 x 102) */
-  height: 108px;
+  width: 60px; /* the face at 2x, cropped a little */
+  height: 60px;
   overflow: hidden;
   background: var(--tile);
-  border: var(--line) solid var(--ink);
 }
 
 .prospect-card__who {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
+.prospect-card__type {
+  font-size: var(--t-xs);
+}
+
 .prospect-card__name {
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
   line-height: 1.15;
-  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .prospect-card__soft {
   color: var(--ink-soft);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
 }
 
-.prospect-card__ranks {
-  font-size: var(--t-sm);
-  font-weight: 700;
-}
-
-.prospect-card__board {
-  justify-self: start;
-}
-
-.prospect-card__facts {
+/* flat tiles, two to a row (three for his ranks): a small name over its value, as the board's meters are */
+.prospect-card__tiles {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s2) var(--s3);
-  padding-block: var(--s2);
-  border-block: var(--line) solid var(--line-soft);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.prospect-card__facts dt {
+.prospect-card__tiles--3 {
+  grid-template-columns: repeat(6, minmax(0, 1fr)); /* three to a row; a half tile is three of the six */
+}
+
+.prospect-card__tiles--3 > div {
+  grid-column: span 2;
+}
+
+.prospect-card__tiles--3 > .prospect-card__half {
+  grid-column: span 3;
+}
+
+.prospect-card__tiles > div {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  min-width: 0;
+  padding: 4px var(--s2);
+  background: var(--tile);
+}
+
+/* a tile on one line: its name at the left, its value at the right (his three ranks) */
+.prospect-card__tiles--line > div {
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.prospect-card__tiles--line dd {
+  white-space: nowrap; /* a rank is one number: never broken a digit a line */
+}
+
+.prospect-card__tiles .prospect-card__wide {
+  grid-column: 1 / -1;
+}
+
+.prospect-card__tiles .label {
   color: var(--ink-soft);
 }
 
-.prospect-card__facts dd {
+.prospect-card__tiles dd,
+.prospect-card__tiles b {
   font-size: var(--t-sm);
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
+/* the looks are counted beside it: the bar alone */
+.prospect-card__tiles .meter {
+  display: block;
+}
+
+.prospect-card__tiles .meter__pct {
+  display: none;
+}
+
+.prospect-card__board {
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+}
+
+/* a section: its name over your three colors, as a group's name on the board */
 .prospect-card__block {
   display: grid;
-  gap: var(--s1);
-  font-size: var(--t-sm);
+  flex: none;
+  gap: 6px;
 }
 
 .prospect-card__kicker {
   color: var(--ink-soft);
 }
 
+.prospect-card__block > .prospect-card__kicker {
+  padding-bottom: 5px;
+  background: var(--team-stripe, none) bottom / 100% 3px no-repeat;
+}
+
 .prospect-card__outlook {
+  font-size: var(--t-sm);
   font-weight: 700;
 }
 
-.prospect-card__list {
+/* Strengths or To Develop: a switch, then that side's points one at a time */
+.prospect-card__switch {
   display: grid;
-  gap: 4px;
-  padding-left: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
+.prospect-card__switch .chip {
+  justify-content: center;
+  min-height: 26px;
+  font-size: var(--t-xs);
+}
+
+/* its points as numbered tabs: small squares, the one up filled in your color */
+
+.prospect-card__point > p {
+  grid-area: 1 / 1;
+}
+
+.prospect-card__point > .is-off {
+  visibility: hidden;
+}
+
+/* (they sit faint in the box's bottom corner, over nothing they could hide for long, and come up solid when the box
+   is pointed at or one has the keyboard) */
+.prospect-card__pips {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  gap: 3px;
+  opacity: 0.35;
+  transition: opacity 120ms ease-out;
+}
+
+.prospect-card__pips:focus-within {
+  opacity: 1;
+}
+
+.prospect-card__point:hover .prospect-card__pips {
+  opacity: 1;
+}
+
+.prospect-card__pip {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prospect-card__pip.is-on {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border-color: var(--team, var(--ink));
+}
+
+/* the point that is up: a tile tall enough for the longest, so the card does not jump between them */
+.prospect-card__point {
+  position: relative;
+  display: grid;
+  min-height: 48px;
+  padding: 6px var(--s2);
+  background: var(--tile);
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+
+/* who is after him: a place, the school's colors and name, a tag when it has offered */
 .prospect-card__schools {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* two to a row, so eight schools are four lines */
+  gap: 2px;
   list-style: none;
 }
 
 .prospect-card__schools li {
   display: flex;
-  justify-content: space-between;
-  gap: var(--s2);
-  padding: 4px 0;
-}
-
-.prospect-card__schools li + li {
-  border-top: var(--line) solid var(--line-soft);
-}
-
-.prospect-card__tag {
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
   padding: 0 6px;
-  border: var(--line) solid var(--ink);
+  background: var(--tile);
   font-size: var(--t-xs);
+}
+
+.prospect-card__schools b {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the tile that counts the rest */
+.prospect-card__schools .prospect-card__more {
+  justify-content: center;
+  background: none;
+  color: var(--ink-soft);
+  border: var(--line) dashed var(--ink-soft);
   font-weight: 700;
 }
 
-/* stars in the font's absence: pixel icons in gold, the empty ones soft */
-.prospect-stars {
-  display: inline-flex;
-  gap: 1px;
-  color: var(--gold);
+.prospect-card__place {
+  flex: none;
+  width: 16px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  text-align: right;
 }
 
-.prospect-stars__empty {
-  color: var(--ink-soft);
+.prospect-card__offered {
+  display: grid;
+  flex: none;
 }

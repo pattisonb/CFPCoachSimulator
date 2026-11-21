@@ -1356,7 +1356,9 @@ def recruiting_reports(p: Params) -> dict:
 def prospect_search(p: Params) -> dict:
     st = _career_state(p.path["season_id"], change=True)
     return prospects.search(st, st["team"], p.q("position"), p.q("stars", int), p.q("state"), p.q("status"), p.q("q"),
-                            max(0, p.q("offset", int, 0)), p.q("limit", int, 50), p.q("sort", str, "rank"), p.q("group"))
+                            max(0, p.q("offset", int, 0)), p.q("limit", int, 50), p.q("sort", str, "rank"), p.q("group"),
+                            cols={**{k: p.q(k) for k in ("commit", "interest", "scouted", "pot")},
+                                  **{f"{k}_{end}": p.q(f"{k}_{end}", int) for k in ("ht", "wt", "offers", "ask") for end in ("min", "max")}})
 
 
 @route("GET", "/api/season/{season_id}/classes")

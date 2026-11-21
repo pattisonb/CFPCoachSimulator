@@ -90,6 +90,9 @@ const PANE: Record<string, string> = {
 /** *tune* How long after time passes (a sim, a week, an offseason stage) a new find still counts as your staff's, in ms. */
 const PASSING_MS = 8000;
 
+/** The offseason's stages before the portal opens (coach_career/offseason.py STAGES). */
+const BEFORE_PORTAL = ["retention", "departures"];
+
 /** *tune* How much of your team's color the hard shadows under cards and buttons take, in percent. */
 const SHADOW_TINT = 34;
 
@@ -191,7 +194,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   const openBox = (id: string) => setGame({ id, live: false });
   // the Offseason has the screen to itself: the season is over, so its week strip and the week's Energy say nothing
   // Recruiting has it too, for the room: your coach's card floats in the window's corner there instead
-  const bare = section.key === "offseason" || section.key === "recruiting";
+  // (the player's ask: only the Office and Headquarters keep the season strip; every other page has the window to
+  // itself, its own top bar stopping short of your coach's picture in the corner)
+  const bare = section.key !== "office" && section.key !== "headquarters";
   /** the league's crawl along the window's bottom: on the Office only (the player's ask), where the week is read */
   const ticker = section.key === "office";
   /** a team's resume in a window (from Rankings and Programs) */
@@ -211,6 +216,10 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   );
 
   const season = load.kind === "ready" ? load.season : null;
+  // Recruiting goes by Transfer Portal from the moment the portal opens until the new season starts (the player's
+  // ask): while it is open, and through the offseason's stages after it
+  const portalNamed =
+    !!recruiting?.portal || (!!season?.offseason_stage && !BEFORE_PORTAL.includes(season.offseason_stage));
   const coach = season?.coach ?? null;
   const createdId = coach && !coach.existing ? coach.id : null;
 
@@ -475,7 +484,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
       ),
   );
   // a notice opens what it is about: a recruit's file, or your team's injury report (Stats, Injuries)
-  const [statsOpen, setStatsOpen] = useState<{ tab: "injuries"; team: string; at: number } | null>(null);
+  const [statsOpen, setStatsOpen] = useState<{ tab: "injuries" | "players"; team: string; at: number } | null>(null);
   // the week's two budgets as bars (hours and scouting points): in Recruiting's tab bar and the Offseason's portal
   // box. The dead period has neither to spend, so they are left out
   const budgets =
@@ -536,6 +545,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
           team={navTeam}
           active={section.key}
           onSection={open}
+          // the offseason's portal: the same page works the portal, so it goes by that name (the player's ask)
+          names={portalNamed ? { recruiting: m.portal } : undefined}
           // the Offseason joins the list when the season is over (it stays while you are on it, an address typed by hand)
           hide={season && !season.done && section.key !== "offseason" ? ["offseason"] : undefined}
           theme={theme}
@@ -627,6 +638,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         team={season.team}
                         year={season.year}
                         weekLabels={season.week_labels}
+                        portalNamed={portalNamed}
                         board={recruiting}
                         reload={reloadRecruiting}
                         patch={patchRecruiting}
@@ -661,7 +673,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                     ) : key === "bracket" ? (
                       <Bracket season={season} teams={bySlug} onBox={openBox} />
                     ) : key === "recap" ? (
-                      <Recap season={season} teams={bySlug} />
+                      <Recap
+                        season={season}
+                        teams={bySlug}
+                        onBracket={() => open("bracket")}
+                        onOpen={(to) => {
+                          // the stats open on the players, yours alone or the whole league's
+                          if (to === "stats" || to === "stats-mine")
+                            setStatsOpen({ tab: "players", team: to === "stats" ? "" : season.team, at: Date.now() });
+                          open(to === "stats-mine" ? "stats" : to);
+                        }}
+                      />
                     ) : key === "offseason" ? (
                       <Offseason
                         season={season}
