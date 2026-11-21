@@ -21,7 +21,7 @@
 
 ## Published site
 - Vercel builds `main` with `python3 tools/build_site.py --generic` (vercel.json): the app in `ui/` plus the Python game packed to run in the browser (`ui/public/worker.js`, `ui/src/gameClient.ts`). `npm run dev` is unchanged and keeps the real rosters.
-- Nothing published carries a real name: `tools/generic/tables.py` holds the lookalikes (schools, mascots, bowls, conferences, trophies, awards) and `tools/generic/scrub.py` draws same-initial names for players and coaches. A new real name in the data or in the game's words needs a lookalike there; `python3 tests/test_generic_names.py` is the gate.
+- Nothing published carries a real name, with one exception the player chose: a school named for its state or city goes by that place (Alabama, Texas, Houston: `PLACES` in `tools/generic/tables.py`), its mascot, stadium and full name still swapped. `tools/generic/tables.py` holds the lookalikes (schools, mascots, bowls, conferences, trophies, awards) and `tools/generic/scrub.py` draws same-initial names for players and coaches. A new real name in the data or in the game's words needs a lookalike there; `python3 tests/test_generic_names.py` is the gate.
 - The preset faces (`cfb_sim_data/faces/`) are published: only who a face belongs to is a name, so the scrub renames those keys and the file and never touches the face parts.
 - Branches: `main` is the React app; `v0` (the old `web/` site), `v1` (Clear Mode before React) and `v2` (the React app with the old rosters and ratings: before the 70-average scale, the real-player rosters and the preset faces) are kept as they were.
 

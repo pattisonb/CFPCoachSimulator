@@ -4,6 +4,7 @@ import Button from "../Button/index.tsx";
 import Helmet from "../Helmet/index.tsx";
 import { contrast, inkOn } from "../../colors.ts";
 import { navigate, replaceParams } from "../../router.ts";
+import { stateName } from "../../states.ts";
 import type { TeamCard } from "../../types.ts";
 import Details from "./Details.tsx";
 import { messages as m } from "./messages.ts";
@@ -30,11 +31,16 @@ const SORTS: Record<Sort, (a: TeamCard, b: TeamCard) => number> = {
   name: (a, b) => a.name.localeCompare(b.name),
   overall: (a, b) => b.ratings.overall - a.ratings.overall || a.name.localeCompare(b.name),
   prestige: (a, b) => b.prestige - a.prestige || b.ratings.overall - a.ratings.overall,
+  // a team with no state (a custom program can have none) goes last
+  state: (a, b) =>
+    Number(!a.state) - Number(!b.state) ||
+    stateName(a.state).localeCompare(stateName(b.state)) ||
+    a.name.localeCompare(b.name),
 };
 
 /** Everything a search can match on a team. */
 const haystack = (t: TeamCard) =>
-  [t.name, t.school, t.mascot, t.abbreviation, t.city, t.state, t.conference, short(t.conference)]
+  [t.name, t.school, t.mascot, t.abbreviation, t.city, t.state, stateName(t.state), t.conference, short(t.conference)]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -51,8 +57,8 @@ function glowOn(colors: TeamCard["colors"]): string {
 }
 
 /**
- * Play's New Season window: every team as a tile of its letters in its colors (search, conference and sort above),
- * and the picked team at the right, its helmet and ratings in a team-banner of its colors over its Overview and Roster.
+ * Play's New Season window: every team as a tile of its letters and its state in its colors (search, conference and
+ * sort above; By State puts the teams under their states' names), and the picked team at the right, its helmet and ratings in a team-banner of its colors over its Overview and Roster.
  * In the grid the arrows move and Enter plays; / jumps to the search, R picks a team at random.
  */
 export default function TeamSelect({ teams }: Props) {
@@ -76,6 +82,18 @@ export default function TeamSelect({ teams }: Props) {
   }, [teams, conf, sort, query]);
   // the pick follows the filters: when it's filtered out, the first team shown takes its place
   const team = shown.find((t) => t.slug === slug) ?? shown[0] ?? teams.find((t) => t.slug === slug) ?? teams[0];
+
+  // By State: the teams shown under their states' names; any other sort is one run with no heading
+  const groups = useMemo(() => {
+    if (sort !== "state") return [{ label: "", teams: shown }];
+    const out: { label: string; teams: TeamCard[] }[] = [];
+    for (const t of shown) {
+      const label = stateName(t.state) || m.noState;
+      if (out[out.length - 1]?.label === label) out[out.length - 1].teams.push(t);
+      else out.push({ label, teams: [t] });
+    }
+    return out;
+  }, [shown, sort]);
 
   // the address follows the pick
   useEffect(() => {
@@ -122,7 +140,6 @@ export default function TeamSelect({ teams }: Props) {
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: 0, ArrowDown: 0, Home: 0, End: 0 }[e.key];
     if (step === undefined || !shown.length) return;
     e.preventDefault();
-    const cols = grid.current ? getComputedStyle(grid.current).gridTemplateColumns.split(" ").length : 1;
     const at = Math.max(
       0,
       shown.findIndex((t) => t.slug === team?.slug),
@@ -132,8 +149,29 @@ export default function TeamSelect({ teams }: Props) {
         ? 0
         : e.key === "End"
           ? shown.length - 1
-          : at + (e.key === "ArrowUp" ? -cols : e.key === "ArrowDown" ? cols : step);
+          : e.key === "ArrowUp" || e.key === "ArrowDown"
+            ? rowStep(at, e.key === "ArrowDown")
+            : at + step;
     setSlug(shown[Math.min(shown.length - 1, Math.max(0, to))].slug);
+  };
+
+  // up or down a row, by where the tiles sit: a state's heading or a short last row never throws the count off
+  // (half a tile is the slack: the picked tile sits a couple of pixels off its row)
+  const rowStep = (at: number, down: boolean) => {
+    const boxes = [...(grid.current?.querySelectorAll<HTMLElement>(".chooser__tile") ?? [])].map((el) =>
+      el.getBoundingClientRect(),
+    );
+    const from = boxes[at];
+    if (!from) return at;
+    const slack = from.height / 2;
+    const beyond = boxes
+      .map((b, i) => ({ b, i }))
+      .filter(({ b }) => (down ? b.top > from.top + slack : b.top < from.top - slack));
+    if (!beyond.length) return at;
+    const row = down ? Math.min(...beyond.map((x) => x.b.top)) : Math.max(...beyond.map((x) => x.b.top));
+    return beyond
+      .filter((x) => Math.abs(x.b.top - row) < slack)
+      .reduce((best, x) => (Math.abs(x.b.left - from.left) < Math.abs(best.b.left - from.left) ? x : best)).i;
   };
 
   const onSearchKey = (e: KeyboardEvent) => {
@@ -146,6 +184,39 @@ export default function TeamSelect({ teams }: Props) {
       grid.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
     }
   };
+
+  const tile = (t: TeamCard) => (
+    <button
+      key={t.slug}
+      type="button"
+      role="option"
+      aria-selected={t.slug === team?.slug}
+      tabIndex={t.slug === team?.slug ? 0 : -1}
+      className="chooser__tile"
+      style={tileColors(t.colors) as CSSProperties}
+      title={stateName(t.state) && stateName(t.state) !== t.name ? `${t.name}, ${stateName(t.state)}` : t.name}
+      onClick={() => setSlug(t.slug)}
+      onDoubleClick={() => play(t)}
+    >
+      <span className="chooser__abbr">{t.abbreviation}</span>
+      {t.state && <span className="chooser__state">{t.state}</span>}
+      {/* his program at a glance, in the corner: overall, offense, defense */}
+      <span className="chooser__nums" aria-hidden="true">
+        {(
+          [
+            ["ovr", t.ratings.overall],
+            ["off", t.ratings.offense],
+            ["def", t.ratings.defense],
+          ] as const
+        ).map(([k, v]) => (
+          <span key={k} className={`chooser__num${k === "ovr" ? " is-main" : ""}`}>
+            <b>{Math.round(v)}</b>
+            <small>{m[k]}</small>
+          </span>
+        ))}
+      </span>
+    </button>
+  );
 
   return (
     <div className="chooser">
@@ -200,37 +271,18 @@ export default function TeamSelect({ teams }: Props) {
         </span>
         {shown.length ? (
           <div className="chooser__grid" ref={grid} role="listbox" aria-label={m.teamsLabel} onKeyDown={onGridKey}>
-            {shown.map((t) => (
-              <button
-                key={t.slug}
-                type="button"
-                role="option"
-                aria-selected={t.slug === team?.slug}
-                tabIndex={t.slug === team?.slug ? 0 : -1}
-                className="chooser__tile"
-                style={tileColors(t.colors) as CSSProperties}
-                title={t.name}
-                onClick={() => setSlug(t.slug)}
-                onDoubleClick={() => play(t)}
-              >
-                <span className="chooser__abbr">{t.abbreviation}</span>
-                {/* his program at a glance, in the corner: overall, offense, defense */}
-                <span className="chooser__nums" aria-hidden="true">
-                  {(
-                    [
-                      ["ovr", t.ratings.overall],
-                      ["off", t.ratings.offense],
-                      ["def", t.ratings.defense],
-                    ] as const
-                  ).map(([k, v]) => (
-                    <span key={k} className={`chooser__num${k === "ovr" ? " is-main" : ""}`}>
-                      <b>{Math.round(v)}</b>
-                      <small>{m[k]}</small>
-                    </span>
-                  ))}
-                </span>
-              </button>
-            ))}
+            {groups.map((g) =>
+              g.label ? (
+                <div key={g.label} role="group" aria-label={g.label} className="chooser__group">
+                  <span className="label chooser__group-name" aria-hidden="true">
+                    {g.label}
+                  </span>
+                  {g.teams.map(tile)}
+                </div>
+              ) : (
+                g.teams.map(tile)
+              ),
+            )}
           </div>
         ) : (
           <p className="chooser__none">{m.noMatch(query.trim())}</p>
