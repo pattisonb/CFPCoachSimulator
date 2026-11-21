@@ -85,7 +85,8 @@
   "zay-parks": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []}
  },
  "coaches": {
-  "Tim Harris Jr.": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []}
+  "Tim Harris Jr.": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
+  "Tony White": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
  }

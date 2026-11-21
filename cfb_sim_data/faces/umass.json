@@ -2,7 +2,7 @@
  "players": {
   "aedan-mccarthy": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_02", "hairFade": false, "flip": []},
   "aitor-urionabarrenechea": {"faceShape": "face_shape_06", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
-  "aj-azuakolam-jr": {"faceShape": "face_shape_01", "skinTone": "brown", "hairColor": "darkbrown", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
+  "aj-azuakolam-jr": {"faceShape": "face_shape_02", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "andrew-depaepe": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_26", "hairFade": true, "flip": []},
   "aubrey-melvin": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "brock-taylor-umass": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_12", "hairFade": false, "flip": []},
@@ -82,6 +82,9 @@
   "zeraun-daniel": {"faceShape": "face_shape_04", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  },
  "coaches": {
+  "Joe Harasymiak": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
+  "Max Warner": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "brown", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
+  "Jared Keyte": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "black", "eyeColor": "hazel", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
  }

@@ -85,7 +85,9 @@
   "zymear-smith": {"faceShape": "face_shape_03", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []}
  },
  "coaches": {
-  "Clint Trickett": {"faceShape": "face_shape_02", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []}
+  "Clint Trickett": {"faceShape": "face_shape_02", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []},
+  "Mike Locksley": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
+  "Ted Monachino": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []}
  },
  "rolled": {
  }

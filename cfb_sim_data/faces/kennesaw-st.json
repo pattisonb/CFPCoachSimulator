@@ -82,6 +82,9 @@
   "zion-booker": {"faceShape": "face_shape_05", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  },
  "coaches": {
+  "Jerry Mack": {"faceShape": "face_shape_05", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
+  "Mitch Militello": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
+  "Marc Mattioli": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []}
  },
  "rolled": {
  }

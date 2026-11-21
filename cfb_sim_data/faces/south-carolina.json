@@ -82,6 +82,9 @@
   "zyon-guiles": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  },
  "coaches": {
+  "Shane Beamer": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
+  "Kendal Briles": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
+  "Clayton White": {"faceShape": "face_shape_04", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []}
  },
  "rolled": {
  }

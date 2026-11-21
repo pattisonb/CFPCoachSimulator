@@ -74,6 +74,8 @@
   "zoram-petelo": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_02", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_04", "hairFade": false, "flip": []}
  },
  "coaches": {
+  "Anthony Arceneaux": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
+  "Dennis Thurman": {"faceShape": "face_shape_05", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
  }

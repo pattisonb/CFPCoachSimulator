@@ -87,7 +87,8 @@
  },
  "coaches": {
   "Jake Spavital": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
-  "Joe Klanderman": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []}
+  "Joe Klanderman": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
+  "Dave Aranda": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
  }
