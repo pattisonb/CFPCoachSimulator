@@ -95,13 +95,20 @@
   min-width: 0;
 }
 
-/* a long value on one line: it takes the row beside its label, set at the right edge, cut short only if it must be */
+/* a long value on one line: it starts where every other row's value starts when it fits there (the player's find: it
+   sat at the row's right edge, out of line with the rest); when it does not, the label gives up its spare room first,
+   and the value is cut short only if it still must be */
 .panel__row--wide {
-  grid-template-columns: auto minmax(0, 1fr);
+  display: flex;
+}
+
+.panel__row--wide dt {
+  flex: 0 1000 calc((100% - var(--s2)) * 0.4); /* the other rows' 2fr of 5 */
+  min-width: max-content;
 }
 
 .panel__row--wide dd {
-  text-align: right;
+  flex: 1 1 auto;
 }
 
 .panel__row--wide dd > b {

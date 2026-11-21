@@ -863,6 +863,13 @@ function notesOf(why: string[]) {
     else if (/^now an? /i.test(w)) changed.push(w);
     else helped.push(w);
   }
+  // a hard year told once (the player's find: "Struggled as a starter. Lost some of his ceiling after a hard year as
+  // a starter. Lost a step after a hard year as a starter." said one thing three times): a step back already says he
+  // struggled, and a lost step with a lost ceiling is one sentence
+  if (back.length) despite.length = 0;
+  const hard = back.filter((w) => /after a hard year as a starter$/i.test(w));
+  if (hard.length > 1)
+    return { helped, despite, changed, back: [m.dev.hardYear, ...back.filter((w) => !hard.includes(w))] };
   return { helped, despite, changed, back };
 }
 /** The notes as one sentence, for a bar's hover. */

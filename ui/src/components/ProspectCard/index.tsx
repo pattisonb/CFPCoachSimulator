@@ -8,6 +8,7 @@ import Meter from "../Meter/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace } from "../../faces.ts";
+import { formatClass } from "../../format.ts";
 import { cachedTeams } from "../../teams.ts";
 import type { ProspectDetail, ProspectRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -142,7 +143,10 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
           <h2 className="prospect-card__name">{name}</h2>
           {r && <Stars n={r.stars} />}
           <span className="prospect-card__soft">
-            {[pos, r?.height_display, r?.weight_display].filter(Boolean).join(" · ")}
+            {/* a transfer's year leads: they are not all coming in as freshmen */}
+            {[r?.portal && r.cls && formatClass(r.cls), pos, r?.height_display, r?.weight_display]
+              .filter(Boolean)
+              .join(" · ")}
           </span>
           {p?.archetype && <b className="prospect-card__type">{p.archetype}</b>}
         </div>

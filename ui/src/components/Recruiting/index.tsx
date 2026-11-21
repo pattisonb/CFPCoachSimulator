@@ -431,8 +431,12 @@ export default function Recruiting({
                           </b>
                           <span className="recruiting__soft recruiting__facts">
                             {r.display_pos}
-                            {/* a transfer: the school he left (his season's numbers are on his file; they do not fit a card) */}
-                            {r.portal ? <span>{r.from_name ?? ""}</span> : <Stars n={r.stars} size={10} />}
+                            {/* a transfer: his year (they are not all freshmen) and the school he left (his season's numbers are on his file; they do not fit a card) */}
+                            {r.portal ? (
+                              <span>{[r.cls && formatClass(r.cls), r.from_name].filter(Boolean).join(" · ")}</span>
+                            ) : (
+                              <Stars n={r.stars} size={10} />
+                            )}
                             <ScoutMark looks={r.looks} size={12} />
                             <RecruitFlags
                               generational={r.generational}

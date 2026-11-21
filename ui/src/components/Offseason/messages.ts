@@ -243,6 +243,7 @@ export const messages = {
     backLabel: "A Step Back",
     helped: (what: string) => `Helped by: ${what}.`,
     despite: (what: string) => `In spite of: ${what}.`,
+    hardYear: "Lost a step and some of his ceiling after a hard year as a starter",
     unitLabel: "Which unit",
     units: { all: "All", offense: "Offense", defense: "Defense", special: "Special Teams" },
     was: "Where He Was",
