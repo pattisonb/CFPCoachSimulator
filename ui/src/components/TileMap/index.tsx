@@ -19,6 +19,38 @@ type Cell = [number, number];
 export const at = (c: number, r: number) =>
   r < 0 || r >= PIXEL_ROWS || c < 0 || c >= PIXEL_COLS ? ".." : PIXEL_ROWS_DATA[r].slice(c * 2, c * 2 + 2);
 
+/** *tune* how many of the map's cells make one pixel of the small mark */
+const MARK_STEP = 3;
+/** The country as a small pixel silhouette (a button's icon): the big map's own grid, every third cell. */
+const MARK = (() => {
+  let d = "";
+  for (let r = 0; r * MARK_STEP < PIXEL_ROWS; r++)
+    for (let c = 0; c * MARK_STEP < PIXEL_COLS; c++) {
+      // a pixel is land when most of the cells under it are
+      let land = 0;
+      for (let y = 0; y < MARK_STEP; y++)
+        for (let x = 0; x < MARK_STEP; x++) if (at(c * MARK_STEP + x, r * MARK_STEP + y) !== "..") land++;
+      if (land * 2 > MARK_STEP * MARK_STEP) d += `M${c} ${r}h1v1h-1z`;
+    }
+  return { d, w: Math.ceil(PIXEL_COLS / MARK_STEP), h: Math.ceil(PIXEL_ROWS / MARK_STEP) };
+})();
+
+/** The map as an icon, in the ink of whatever holds it. */
+export function MapMark({ width = 26 }: { width?: number }) {
+  return (
+    <svg
+      className="tile-map-mark"
+      viewBox={`0 0 ${MARK.w} ${MARK.h}`}
+      width={width}
+      height={(width * MARK.h) / MARK.w}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <path d={MARK.d} fill="currentColor" />
+    </svg>
+  );
+}
+
 interface StateShape {
   /** its pixels as one path of unit squares */
   fill: string;

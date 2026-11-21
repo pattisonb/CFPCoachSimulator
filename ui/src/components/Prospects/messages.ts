@@ -61,6 +61,9 @@ export const messages = {
 
   map: "Where They Are",
   bigMap: "Big Map",
+  hideSide: "Hide",
+  hideSideTip: "Fold the map and the list under it to the side.",
+  showSide: "Show the Map and Top Uncommitted",
   topOpen: "Top Uncommitted",
   topIn: (st: string) => `Top Uncommitted in ${st}`,
   state: "State",
