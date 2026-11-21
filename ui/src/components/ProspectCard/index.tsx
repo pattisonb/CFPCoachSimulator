@@ -21,7 +21,12 @@ interface Props {
   onClose: () => void;
   /** add or remove him; his file reloads after */
   onBoard: (row: ProspectRow, on: boolean) => Promise<void>;
+  /** he is not in the pool any more (the portal closed, the class signed and left): the card has nothing to show */
+  onGone?: () => void;
 }
+
+/** the game's answer for a player who has left the pool */
+const GONE = /unknown prospect/;
 
 /** "Open", "Committed: Texas", "Signed: SMU", "Leaning FCS", "Going Pro" */
 export function statusOf(r: ProspectRow): string {
@@ -81,7 +86,7 @@ export function Stars({ n, size = 12 }: { n: number; size?: number }) {
  * is and where he ranks, who's recruiting him, your scouting so far and the scouting service's read, and the board
  * toggle. Shared by Prospects now; Scouting and Recruiting add their own tabs later.
  */
-export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: Props) {
+export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onGone }: Props) {
   const [detail, setDetail] = useState<ProspectDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
@@ -94,7 +99,11 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
     setError(null);
     api<ProspectDetail>(`/api/season/${seasonId}/prospect/${encodeURIComponent(pid)}`)
       .then((d) => live && setDetail(d))
-      .catch((e: Error) => live && setError(e.message));
+      .catch((e: Error) => {
+        if (!live) return;
+        if (onGone && GONE.test(e.message)) onGone();
+        else setError(e.message);
+      });
     return () => {
       live = false;
     };

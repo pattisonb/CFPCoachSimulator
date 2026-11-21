@@ -31,6 +31,8 @@ export interface NavTeam {
 
 interface Props {
   team: NavTeam | null;
+  /** the career is still being read (the game starting up): the team's place says so instead of "No Team" */
+  loading?: boolean;
   active: string;
   onSection: (key: string) => void;
   theme: Theme;
@@ -172,7 +174,18 @@ function Tool({
  * - hidden: it slides away; the pointer at the window's left edge (or focus moving into it) brings it back over
  *   the page until the pointer leaves, with Keep Sidebar Open at its top. The page shows its own Open button.
  */
-export default function GameNav({ team, active, onSection, theme, onToggleTheme, mode, onMode, hide, names }: Props) {
+export default function GameNav({
+  team,
+  active,
+  onSection,
+  theme,
+  onToggleTheme,
+  mode,
+  onMode,
+  hide,
+  names,
+  loading,
+}: Props) {
   const [leagueOpen, setLeagueOpen] = useState(true);
   const [peeking, setPeeking] = useState(false);
   const leaveTimer = useRef<number | undefined>(undefined);
@@ -261,7 +274,7 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
             aria-hidden="true"
           />
           <span className="game-nav__who">
-            <span className="game-nav__team-name">{team?.name ?? m.noTeam}</span>
+            <span className="game-nav__team-name">{team?.name ?? (loading ? m.loadingTeam : m.noTeam)}</span>
             {team && (
               <span className="game-nav__team-line">
                 <span>{m.teamLine(team.record, team.week)}</span>

@@ -86,6 +86,29 @@
   transform: translate(2px, 2px);
 }
 
+/* the sidebar hidden, on a page with no top row: Open sits on the corner of the page's own top bar, as your face does
+   on the other corner, and the bar starts clear of it */
+.game__main.is-bare > .game__open {
+  position: absolute;
+  top: calc(var(--s3) + 22px); /* centered in the bar's 84 */
+  left: calc(var(--s5) + var(--s3));
+  z-index: 11;
+}
+
+/* the Offseason's bar is a short one: a smaller button, centered in it */
+.game__main.is-bare.is-offseason > .game__open {
+  top: calc(var(--s3) + 7px);
+  width: 32px;
+  height: 32px;
+}
+
+.game__main.is-bare.is-navless .section-tabs,
+.game__main.is-bare.is-navless .sched-bar,
+.game__main.is-bare.is-navless .folder-tabs__bar,
+.game__main.is-bare.is-navless .off__top {
+  padding-left: calc(40px + 2 * var(--s3));
+}
+
 .game__blurb {
   color: var(--ink-soft);
 }

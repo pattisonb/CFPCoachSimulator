@@ -4,6 +4,7 @@ export const messages = {
   career: "Your Program",
   league: "League",
   noTeam: "No Team",
+  loadingTeam: "Loading…",
   teamLine: (record: string, week: number) => `${record} · Week ${week}`,
   settings: "Settings",
   settingsSoon: "Settings: Coming Soon",

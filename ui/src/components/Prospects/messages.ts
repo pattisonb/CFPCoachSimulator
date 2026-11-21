@@ -50,6 +50,7 @@ export const messages = {
   boardOn: (name: string) => `${name} is on your board.`,
   boardOff: (name: string) => `${name} is off your board.`,
   boardError: (msg: string) => `Couldn't change your board: ${msg}.`,
+  gone: "He is no longer in this pool.",
   none: "Nobody matches. Clear the search or a filter.",
   loading: "Loading the class…",
   loadError: (msg: string) => `Couldn't load the class: ${msg}.`,

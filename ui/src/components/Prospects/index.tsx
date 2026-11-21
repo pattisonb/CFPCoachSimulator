@@ -680,6 +680,12 @@ export default function Prospects({
             row={rows.find((r) => r.id === picked)}
             onClose={() => setPicked(null)}
             onBoard={setBoard}
+            // a file left open when the pool changed under it (the portal closed): it shuts, and the list is read again
+            onGone={() => {
+              setPicked(null);
+              setNote(m.gone);
+              load();
+            }}
           />
         ) : (
           <>

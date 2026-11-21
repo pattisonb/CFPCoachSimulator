@@ -542,6 +542,19 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
       />
     );
 
+  // the sidebar hidden: the button that brings it back
+  const openNav = navMode === "hidden" && (
+    <button
+      type="button"
+      className="game__open"
+      aria-label={m.openNav(NAV_SHORTCUT)}
+      title={m.openNav(NAV_SHORTCUT)}
+      onClick={() => setNavMode(lastShown)}
+    >
+      <SidebarSimple size={20} weight="bold" aria-hidden="true" />
+    </button>
+  );
+
   const toMenu = (
     <Button variant="outline" onClick={() => navigate("play")}>
       <ArrowLeft size={18} weight="bold" aria-hidden="true" />
@@ -555,6 +568,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
       <PlayerLinks seasonId={season?.id} weekLabels={season?.week_labels}>
         <GameNav
           team={navTeam}
+          loading={load.kind === "loading"}
           active={section.key}
           onSection={open}
           // the offseason's portal: the same page works the portal, so it goes by that name (the player's ask)
@@ -572,7 +586,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
         <main
           className={[
             "game__main",
-            bare && navMode !== "hidden" && "is-bare",
+            bare && "is-bare",
+            navMode === "hidden" && "is-navless",
             section.key === "recruiting" && "is-recruiting",
             section.key === "offseason" && "is-offseason",
           ]
@@ -580,18 +595,11 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
             .join(" ")}
         >
           {/* the season so far and to come, then you */}
+          {/* the sidebar hidden, on a page with no top row: Open sits in the corner of the page's own top bar, which
+              starts clear of it, so the page keeps the whole window (the player's ask) */}
+          {bare && openNav}
           <div className="game__top">
-            {navMode === "hidden" && (
-              <button
-                type="button"
-                className="game__open"
-                aria-label={m.openNav(NAV_SHORTCUT)}
-                title={m.openNav(NAV_SHORTCUT)}
-                onClick={() => setNavMode(lastShown)}
-              >
-                <SidebarSimple size={20} weight="bold" aria-hidden="true" />
-              </button>
-            )}
+            {!bare && openNav}
             {season && !bare && (
               <SeasonStrip
                 games={stripGames}

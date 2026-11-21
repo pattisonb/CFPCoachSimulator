@@ -41,6 +41,13 @@ const H_MAX = 1600;
 const SNAP_PX = 14;
 /** *tune* How long a card takes to slide to its new place. */
 const PACK_MS = 170;
+/** *tune* A dragged card this close (px) to the board's top or bottom edge scrolls the board. */
+const DRAG_EDGE = 72;
+/** *tune* The most the board scrolls in a tick while a card is held at its edge (px), and how long a tick is. */
+const DRAG_SPEED = 18;
+const DRAG_TICK_MS = 16;
+/** *tune* How far the pointer travels (px) after the cards make room before they can make room again. */
+const DRAG_SETTLE = 8;
 /** *tune* How long Removed… Undo stays up. */
 const UNDO_MS = 6000;
 /** *tune* The layout Start With the Recommended Layout builds: the week's work first, then the class, then next year. */
@@ -376,25 +383,70 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
       height: `${r0.height}px`,
     });
     setDrag({ id: c.id, at, h: r0.height, size: c.size });
-    const moveTo = (ev: PointerEvent) => {
+    // the pointer, kept: the board scrolling under a still pointer moves the card and its landing spot too
+    let px = e.clientX;
+    let py = e.clientY;
+    const scroller = g.closest<HTMLElement>(".hq__page");
+    let movedAt = { x: -DRAG_SETTLE, y: -DRAG_SETTLE }; // the pointer (in the board's own space) at the last reorder
+    const place = () => {
       const gr = g.getBoundingClientRect();
-      node.style.left = `${ev.clientX - dx - gr.left}px`;
-      node.style.top = `${ev.clientY - dy - gr.top}px`;
+      node.style.left = `${px - dx - gr.left}px`;
+      node.style.top = `${py - dy - gr.top}px`;
+      // a card just made room: the pointer has to travel a little before the next one does, so a card that slid
+      // under a still pointer cannot send the landing spot back again
+      const sy = py + (scroller?.scrollTop ?? 0);
+      if (Math.hypot(px - movedAt.x, sy - movedAt.y) < DRAG_SETTLE) return;
+      // where each card sits in the layout, not where it is drawn: a card still sliding to its new place is
+      // measured at that place, or the landing spot flickers while the others move
+      const box = (n: HTMLElement) => {
+        const left = gr.left + n.offsetLeft;
+        const top = gr.top + n.offsetTop;
+        return { left, top, right: left + n.offsetWidth, bottom: top + n.offsetHeight };
+      };
       const others = [...g.querySelectorAll<HTMLElement>("[data-card]")].filter((n) => n.dataset.card !== c.id);
       const over = others.find((n) => {
-        const r = n.getBoundingClientRect();
-        return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+        const r = box(n);
+        return px >= r.left && px <= r.right && py >= r.top && py <= r.bottom;
       });
       if (!over) return;
-      const r = over.getBoundingClientRect();
-      const before = columnsOf(g) > 1 ? ev.clientX < r.left + r.width / 2 : ev.clientY < r.top + r.height / 2;
+      const r = box(over);
+      // a card that fills its row is passed going up or down; one that shares its row, going left or right
+      const fills = over.offsetWidth > gr.width - GAP;
+      const before = fills ? py < (r.top + r.bottom) / 2 : px < (r.left + r.right) / 2;
       const to = others.indexOf(over) + (before ? 0 : 1);
       if (to === at) return;
       at = to;
+      movedAt = { x: px, y: sy };
       flip();
       setDrag((d) => d && { ...d, at: to });
     };
+    // near the board's top or bottom edge the board scrolls, faster the closer the pointer is: most of a full board
+    // is below the fold, and a card has to be able to get there
+    const creep = () => {
+      if (!scroller) return;
+      const sr = scroller.getBoundingClientRect();
+      const up = sr.top + DRAG_EDGE - py;
+      const down = py - (sr.bottom - DRAG_EDGE);
+      const by = up > 0 ? -up : down > 0 ? down : 0;
+      if (!by) return;
+      // never past the last row: the lifted card hangs below the board and would stretch the page for ever
+      if (by > 0 && g.getBoundingClientRect().bottom <= sr.bottom - GAP) return;
+      const was = scroller.scrollTop;
+      scroller.scrollTop += (Math.min(DRAG_EDGE, Math.abs(by)) / DRAG_EDGE) * DRAG_SPEED * Math.sign(by);
+      if (scroller.scrollTop !== was) place();
+    };
+    const creeping = window.setInterval(creep, DRAG_TICK_MS);
+    const moveTo = (ev: PointerEvent) => {
+      px = ev.clientX;
+      py = ev.clientY;
+      place();
+    };
+    // the wheel turned mid-drag: the card stays under the pointer
+    const scrolled = () => place();
+    scroller?.addEventListener("scroll", scrolled);
     const finish = (cancel: boolean) => {
+      window.clearInterval(creeping);
+      scroller?.removeEventListener("scroll", scrolled);
       window.removeEventListener("pointermove", moveTo);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
