@@ -310,8 +310,8 @@ WARNING_BELOW = 40               # security under this: a warning from the AD
 CASE_GAIN = (2, 10)              # security a good case earns *tune*
 CHANGE_GAIN = 10                 # security for letting a coordinator go *tune*
 REVIEW_STAGES = ("retention", "departures")   # the AD's meeting is open until the portal does (the Overview shows it)
-REVIEW_OPTIONS = {"case": "Make your case", "change": "Offer a change on your staff", "year": "Ask for one more year",
-                  "nothing": "Say nothing"}
+REVIEW_OPTIONS = {"case": "Make Your Case", "change": "Offer a Change on Your Staff", "year": "Ask for One More Year",
+                  "nothing": "Say Nothing"}
 
 
 def _review(state: dict, lgd: dict) -> dict:
@@ -366,7 +366,7 @@ def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> d
     off = state.get("offseason") or {}
     rv = off.get("review")
     if off.get("stage") not in REVIEW_STAGES or not rv:
-        raise ReviewError(409, "the review is before the transfer portal opens")
+        raise ReviewError(409, "the meeting with the AD closes once the transfer portal opens")
     if rv["decided"]:
         raise ReviewError(409, "the AD has already decided")
     if action not in rv["options"]:
@@ -379,7 +379,7 @@ def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> d
     if action == "case":
         gain = rng.randint(*CASE_GAIN)
         a["security"] = min(100, a["security"] + gain)
-        said = f"You made your case for {gain} points of goodwill."
+        said = "You made your case, and the AD heard you out."
     elif action == "change":
         s = next((x for x in state["career"]["staff"] if x["id"] == staff_id and x["role"] in STAFF_ROLES), None)
         if s is None:
@@ -387,18 +387,20 @@ def review_decide(state: dict, action: str, staff_id: Optional[str] = None) -> d
         key = STAFF_ROLES[s["role"]]
         if t["coaches"].get(key) and t["coaches"][key].get("name") == s["name"]:
             carousel.market_add(state, t["coaches"][key], key, me, f"Let go by {carousel._name(me)} after the season", year)
-        off.setdefault("staff_open", {})[s["id"]] = "let go after the season"
+        off.setdefault("staff_open", {})[s["id"]] = "was let go after the season"
         a["security"] = min(100, a["security"] + CHANGE_GAIN)
         said = f"You let {s['role']} {s['name']} go."
     elif action == "year":
         a["ultimatum"] = year + 1
-        said = "He gives you one more year: an ultimatum, the goal must be met next season."
+        said = "He gives you one more year, with an ultimatum: meet the goal next season."
     else:
         said = "You said nothing."
     if not fired and action != "year" and a["security"] < carousel.FIRE_BELOW and rv["verdict"]["tenure"] >= 2:
         fired = rng.random() < carousel.FIRE_CHANCE
     rv.update(decided=True, fired=bool(fired), action=action, security=a["security"], mood=carousel.mood(a["security"]),
               outcome=said + (" The AD lets you go." if fired else " You keep your job." if rv["risk"] == "fire" else ""))
+    # the page shows `words`: once it is decided they say how it came out, not that the AD is still deciding
+    rv["words"] = rv["words"].split(". ")[0] + ". " + ("You met the goal. " if rv["verdict"]["met"] else "You fell short of the goal. ") + rv["outcome"]
     if fired:
         off["fired"] = True
         off["auto"] = True
@@ -426,8 +428,8 @@ class RetentionError(Exception):
 
 
 REASONS = {"buried": "Buried on the depth chart behind {ahead}", "snaps": "Wants more than a rotation role",
-           "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Restless: no starting role in sight",
-           "deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a bigger stage", "fresh_start": "Wants a fresh start",
+           "losing": "A losing year", "move_up": "A Power 4 program is calling", "restless": "Tired of waiting his turn",
+           "deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a change", "fresh_start": "Wants a fresh start",
            "draft": "Projects as a round {round} pick", "declared": "Believes he is ready for the NFL",
            "better_coach": "Wants a better coach", "slipping": "The program is slipping",
            "promised": "Was promised a starting role and did not get it"}
@@ -598,12 +600,12 @@ def retain(state: dict, pid: str, action: str, nil: int = 0) -> dict:
     from coach_career import recruiting
     off = state.get("offseason") or {}
     if off.get("stage") != "retention":
-        raise RetentionError(409, "this is not the retention step")
+        raise RetentionError(409, "this is not the Keep Them Home step")
     if off.get("fired"):
         raise RetentionError(409, "you have been let go: the program's new coach decides")
     e = next((x for x in off["retention"]["players"] if x["id"] == pid), None)
     if e is None:
-        raise RetentionError(404, "he is not on your leavers")
+        raise RetentionError(404, "he is not one of the players thinking of leaving")
     if action == "meet":
         e["met"] = True
         e["ask"]["known"] = True
@@ -756,11 +758,11 @@ def _performance(state: dict) -> dict[str, dict]:
     nat = aw.get("national") or {}
     h = nat.get("heisman") or {}
     for i, c in enumerate((h.get("finalists") or [])[:4]):
-        honor(c, "heisman" if i == 0 else "national_finalist", "Heisman Trophy" if i == 0 else "Heisman finalist")
+        honor(c, "heisman" if i == 0 else "national_finalist", "Heisman Trophy" if i == 0 else "Heisman Finalist")
     for a in (nat.get("awards") or []) + ((aw.get("postseason") or {}).get("awards") or []):
         honor(a.get("winner"), "national", a["name"])
         for c in (a.get("finalists") or [])[1:]:
-            honor(c, "national_finalist", f"{a['name']} finalist")
+            honor(c, "national_finalist", f"{a['name']} Finalist")
     for row in ((nat.get("all_america") or {}).get("consensus") or []):
         honor(row, f"all_america_{min(2, row.get('level', 1))}", HONOR_NAMES[f"all_america_{min(2, row.get('level', 1))}"])
     for conf in (aw.get("conference") or {}).values():
@@ -778,6 +780,11 @@ def _performance(state: dict) -> dict[str, dict]:
     return out
 
 
+STRUGGLED_NOTE = "Struggled as a starter"
+HARD_YEAR_NOTE = "Lost a step and some of his ceiling after a hard year as a starter"
+STARTED_AS = {"SO": "freshman", "SORS": "redshirt freshman", "JR": "sophomore", "JRRS": "redshirt sophomore"}
+
+
 def growth_terms(perf: Optional[dict]) -> tuple[float, int, list[str], bool]:
     """(development rate multiplier, EA points added to his room in skill and football IQ, the
     reasons, whether he may move up a coachability level) from a season's production and honors."""
@@ -791,7 +798,7 @@ def growth_terms(perf: Optional[dict]) -> tuple[float, int, list[str], bool]:
             room += BREAKOUT_ROOM * (z - 0.5)
             why.append("Breakout season")
         elif z <= -0.75:
-            why.append("Struggled as a starter")
+            why.append(STRUGGLED_NOTE)
     kinds = [k for k, _ in perf.get("honors", [])]
     pts = sorted((HONOR_ROOM.get(k, 0) for k in kinds), reverse=True)
     if pts:
@@ -1755,7 +1762,8 @@ COACH_NOTES = {"award": "A National Honor", "breakout": "A Breakout Year", "deve
 
 def coachability_note(level: str, case: str, coach: str = "His Coaches") -> str:
     """The Who Improved tag for a move: "Now a Film Junkie: A Breakout Year"."""
-    return f"Now a {level}: {COACH_NOTES[case].format(coach=coach)}"
+    # "a" only before a level that is a noun ("a Film Junkie"; never "a Slow to Click")
+    return f"Now {'' if level in clear.SLOW_LEVELS else 'a '}{level}: {COACH_NOTES[case].format(coach=coach)}"
 
 
 def _coach_title(coaches: dict, pos: str) -> str:
@@ -1968,8 +1976,8 @@ def _league_marks(state: dict) -> dict[str, dict[str, int]]:
 def _why(age: int, unit: str, m: dict, gained: bool) -> list[str]:
     words = {"O": "offense", "D": "defense", "W": "record"}
     out = []
-    if age >= COACH_AGE[-1][0]:
-        out.append("Age")
+    if age >= COACH_AGE[-1][0] and not gained:
+        out.append("Slowing with age")
     elif age < COACH_AGE[0][0] and gained:
         out.append("Young and improving")
     if unit in words and m.get(unit) == STAFF_MARK:
@@ -2103,7 +2111,8 @@ def _develop_all(state: dict) -> dict:
                     moves["down" if case == "benched" else "up"] += 1
             starter = (perf.get(p["id"]) or {}).get("z") is not None
             if starter and year_pace(p, True) > year_pace(p):
-                why.append(f"Started as a {'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore'}")
+                # the class he played it in: p["cls"] is already next year's (a redshirt freshman is not a sophomore)
+                why.append(f"Started as a {STARTED_AS.get(p.get('cls'), 'freshman' if int(p.get('yrs') or 0) == 0 else 'sophomore')}")
             was = list(p["r"]) if slug == state["team"] else None          # your players' ratings before, for the report
             r0, g0, o0 = list(p["r"]), list(p["g"]), p["o"]                # ... and everyone's, for a step back (below)
             g = develop(p, attrs, coach_factor(t["coaches"], p["pos"]) * mult * program_factor(state, slug), rng, starter)
@@ -2122,6 +2131,13 @@ def _develop_all(state: dict) -> dict:
                 p["o"] = lg.overall(p, attrs)
                 why.append(slipped)
                 g = p["o"] - o0
+            # a hard year is told once: the step back (or the lost ceiling) already says he struggled, and both together
+            # are one line (the player's find: three notes saying one thing)
+            if (slipped or CEILING_NOTE in why) and STRUGGLED_NOTE in why:
+                why.remove(STRUGGLED_NOTE)
+            if slipped == REGRESS_NOTES["struggle"] and CEILING_NOTE in why:
+                why.remove(CEILING_NOTE)
+                why[why.index(slipped)] = HARD_YEAR_NOTE
             p["yrs"] = p.get("yrs", 0) + 1
             gains.append(g)
             if slug == state["team"]:

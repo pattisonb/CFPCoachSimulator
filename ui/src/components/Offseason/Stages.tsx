@@ -745,7 +745,8 @@ function PortalRecap({ v, teams }: P) {
         <Stat label={m.recap.signed}>{rec.signed.length}</Stat>
         <Stat label={m.recap.lost}>{rec.lost.length}</Stat>
         <Stat label={m.recap.net}>
-          {m.recap.netLine(rec.signed.length - rec.lost.length)} <small>{m.recap.netSmall}</small>
+          {m.recap.netLine(rec.signed.length - rec.lost.length)}{" "}
+          <small>{m.recap.netSmall(rec.signed.length - rec.lost.length)}</small>
         </Stat>
         <Stat label={m.recap.league}>
           {m.recap.leagueLine(rec.signed_league, rec.entrants)} <small>{m.recap.leagueSmall}</small>
@@ -860,7 +861,7 @@ function notesOf(why: string[]) {
   for (const w of why) {
     if (/^struggled/i.test(w)) despite.push(w);
     else if (/^(lost a step|lost some of his ceiling|went backward)/i.test(w)) back.push(w);
-    else if (/^now an? /i.test(w)) changed.push(w);
+    else if (/^now /i.test(w)) changed.push(w);
     else helped.push(w);
   }
   // a hard year told once (the player's find: "Struggled as a starter. Lost some of his ceiling after a hard year as
@@ -879,7 +880,7 @@ const notesLine = (why: string[]) => {
     n.helped.length ? m.dev.helped(n.helped.join(", ")) : "",
     n.despite.length ? m.dev.despite(n.despite.join(", ")) : "",
     ...n.back.map((w) => `${w}.`),
-    ...n.changed,
+    ...n.changed.map((w) => `${w.replace(/[.\s]+$/, "")}.`),
   ]
     .filter(Boolean)
     .join(" ");

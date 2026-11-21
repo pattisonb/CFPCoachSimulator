@@ -91,10 +91,10 @@ export const messages = {
   fineTitle: "Plus and Minus",
   fineShort: "Plus and Minus Read",
   coarseShort: "Letter Only",
-  fineOn: (eye: number) =>
-    `Your best evaluator is a ${eye}, sharp enough to read a plus or a minus: a third of a letter's range.`,
-  fineOff: (eye: number, needed: number) =>
-    `A plus or a minus is a finer read than the letter. It takes an evaluator at ${needed} or better on your staff, or your own player development; your best is ${eye}.`,
+  // no numbers here: an evaluator's eye is a word everywhere else, and "a 85" read wrong
+  fineOn: "Your best evaluator is sharp enough to read a plus or a minus: a third of a letter's range.",
+  fineOff:
+    "A plus or a minus is a finer read than the letter. It takes a sharper evaluator on your staff, or your own player development.",
   rangeLabel: (label: string, est: number, lo: number, hi: number) =>
     `${label}: about ${est}, between ${lo} and ${hi}.`,
   wordsLabel: (label: string, lo: string, hi: string) =>
@@ -108,7 +108,7 @@ export const messages = {
   noPoints: "Not enough scouting points left this week.",
   cantScout: "Your staff can't get to him this week.",
   finishFirst: "Finish your call or visit with him first.",
-  pointsLeft: (n: number) => `${n} scouting points left this week.`,
+  pointsLeft: (n: number) => `${n} scouting ${n === 1 ? "point" : "points"} left this week.`,
   looksLine: {
     none: "No look yet: send a scout, or put a staff member on his area.",
     one: "One more look finishes his report.",
@@ -241,22 +241,22 @@ export const messages = {
   } as Record<string, string>,
   reactions: {
     hit: "He Lit Up",
-    fair: "He Was Listening",
-    polite: "Polite",
+    fair: "He's Listening",
+    polite: "Polite Nod",
     quiet: "He Went Quiet",
-    tired: "He Is Tired of This",
-    guarded: "He Gave Nothing Away",
+    tired: "Tired of the Calls",
+    guarded: "Poker Face",
   } as Record<string, string>,
   h: {
     nil: (n?: number) => (n != null ? `${n} NIL` : null),
     offeredBy: (school: string) => `Offered by ${school}`,
-    visitUnfinished: "Visit Left Unfinished",
-    callUnfinished: "Call Left Unfinished",
-    askedMore: "He asked for more NIL",
-    notBuying: "He isn't buying your pitch",
-    tunedOut: (what: string) => `He tuned out your ${what}`,
+    visitUnfinished: "You left the visit unfinished.",
+    callUnfinished: "You left the call unfinished.",
+    askedMore: "He asked for more NIL.",
+    notBuying: "He isn't buying your pitch.",
+    tunedOut: (what: string) => `He tuned out your ${what}.`,
     presented: (topics: string) => `Presented ${topics}`,
-    nothing: "He gave nothing away",
+    nothing: "He gave nothing away.",
     landed: (n: number) => `${["None", "One", "Two", "Three"][n] ?? n} landed`,
     promisedOffer: (who: string) => `Promised an offer to ${who}`,
     sidestepped: (who: string) => `Sidestepped his question about ${who}`,
@@ -266,7 +266,7 @@ export const messages = {
       `Promised him the job${who ? ` over ${who}` : ""}${doubted ? " (he did not buy it)" : ""}`,
     brokenPackage: (who: string) => `${who} never got the offer you promised`,
     brokenSpot: (who: string) => `He heard you promised the same spot to ${who}`,
-    leaningFcs: "Leaning toward an FCS program",
+    leaningFcs: "He is leaning toward an FCS program.",
     moves: {
       commit: (school: string) => `Committed to ${school}`,
       hard: (school: string) => `Hard commit to ${school}`,

@@ -35,7 +35,7 @@ STRENGTH_TEXT = {
     "athleticism": "Rare athleticism for {a_noun}: burst, change of direction and speed to separate.",
     "size_strength": "His size and strength are already at a college level; he wins with power.",
     "technique": "Polished technique: he plays like a coached, refined {noun}.",
-    "football_iq": "A high football IQ: he reads it fast and is rarely out of position.",
+    "football_iq": "A high football IQ: he reads the game fast and is rarely out of position.",
     "potential": "Real upside: the frame and tools to keep climbing for years.",
 }
 WEAKNESS_TEXT = {
@@ -196,7 +196,7 @@ def projection(state: dict, p: dict, grades: dict[str, float]) -> dict:
 
 # ----- "OC likes him": a coordinator vouches for a recruit the read says would start -------------------
 
-LIKES_TEXT = "Your {role} thinks he starts for you next year"
+LIKES_TEXT = "Your {role} thinks he starts for you next year."
 COORDINATORS = {"OC": "offensive coordinator", "DC": "defensive coordinator"}
 OFFENSE_GROUPS = ("QB", "RB", "WR", "TE", "OL")
 KICKING_GROUPS = ("K", "P")
@@ -271,15 +271,25 @@ GOOD_FROM, SOLID_FROM = 65, 50     # a read's midpoint: Strong and up is green, 
 OPENING = {      # the verdict's first sentence, by the potential read's midpoint word
     "All-American": "A rare {noun} with first-round NFL upside.",
     "Elite": "A gifted {noun} with early-round NFL upside.",
-    "Strong": "A {noun} who projects as a multi-year starter at a Power 4 program.",
+    "Strong": "{A_noun} who projects as a multi-year starter at a Power 4 program.",
     "Solid": "A developmental {noun} who could start by his third year.",
     "Fair": "A depth {noun} with a path to the field through development.",
-    "Weak": "A long-term project at {pos} who needs years of development.",
+    "Weak": "A long-term {noun} project who needs years of development.",
+}
+# a transfer's: he is here for a year or two, so nothing about "multi-year" or "years of development" (the text sweep's
+# find: a fifth-year senior "who projects as a multi-year starter")
+OPENING_PORTAL = {
+    "All-American": "A proven {noun} ready to start from day one.",
+    "Elite": "A proven {noun} ready to start from day one.",
+    "Strong": "A capable {noun} who can compete for a starting job right away.",
+    "Solid": "A rotation {noun} who can help right away.",
+    "Fair": "A depth {noun} for the back of the roster.",
+    "Weak": "A depth {noun} for the back of the roster.",
 }
 STRENGTH_LINE = {
     "athleticism": "His athleticism stands out: burst, change of direction and speed to separate.",
     "football_iq": "He reads the game fast and is rarely out of position.",
-    "technique": "His technique is polished; he plays like a coached, refined {pos}.",
+    "technique": "His technique is polished; he plays like a coached, refined {noun}.",
     "size_strength": "He already has college size and strength and wins with power.",
     "coachability": "Coaches love him: he takes teaching and puts it on the field.",
 }
@@ -364,9 +374,10 @@ def report(state: dict, pid: str) -> Optional[dict]:
     develop = [g for g in reversed(order) if mid[g] < SOLID_FROM and g not in strengths][:3]
     skills = [g for g in order if g in ATTRIBUTE_GROUPS]
     best, worst = skills[0], skills[-1]
-    lines = [OPENING[recruiting.word(mid["potential"])].format(noun=noun, pos=pos)]
+    a_noun = f"{'An' if noun[:1].lower() in 'aeiou' else 'A'} {noun}"
+    lines = [(OPENING_PORTAL if p.get("portal") else OPENING)[recruiting.word(mid["potential"])].format(noun=noun, pos=pos, A_noun=a_noun)]
     if mid[best] >= GOOD_FROM:
-        lines.append(STRENGTH_LINE[best].format(pos=pos))
+        lines.append(STRENGTH_LINE[best].format(pos=pos, noun=noun))
     lines.append(CONCERN_LINE[worst] if mid[worst] < SOLID_FROM else NO_CONCERN)
     clamp = lambda x: round(max(0.0, min(100.0, x)), 1)
     tone = lambda m: "good" if m >= GOOD_FROM else "warn" if m >= recruiting.WORD_FLOORS[4] else "bad"
@@ -566,9 +577,10 @@ def _middle(vals: list) -> list[int]:
     return [int(round(max(0, min(99, pick(0.25))))), int(round(max(0, min(99, pick(0.75)))))]
 
 
-def _high_school(p: dict) -> str:
+def _high_school(p: dict) -> Optional[str]:
     kind = random.Random(f"school-{p['id']}").choice(SCHOOL_KINDS)
-    return f"{p['hometown']['city']} {kind}"
+    city = p["hometown"].get("city")
+    return f"{city} {kind}" if city else None          # a transfer has no town on file: no school, not " Academy"
 
 
 def seen_status(state: dict, pid: str, viewer: Optional[str]) -> dict:
@@ -757,7 +769,7 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "twist": persona.twist_view(state, viewer, pid),
         "flip": flip_view(state, pid, viewer),
         "grade_details": details,
-        "evaluation": _evaluation(p, public_grades) if top else None,
+        "evaluation": _evaluation(p, public_grades) if top and not p.get("portal") else None,    # a high school senior's write-up: not a transfer's
         # Clear Mode: the abilities he arrives with, once your staff has looked at him
         "abilities": _abilities_seen(p) if read else None,
         "public_comp": comp(projection(state, p, public_grades), p["ea_position"], player_pool(), key=f"public-{pid}") if top and not p.get("portal") else None,
@@ -1292,7 +1304,7 @@ def national_classes(state: dict, viewer: Optional[str] = None) -> dict:
     for r in rows:
         r["points"] = round(r.pop("_points"), 3)
     signed = sum(1 for st in rc["status"].values() if st["signed"])
-    phase = "Signed" if signed == len(rc["status"]) else "Early signing period done" if signed else "Recruiting"
+    phase = "Signed" if signed == len(rc["status"]) else "Early Signing Period Done" if signed else "Recruiting"
     return {"schools": rows, "phase": phase, "fcs": sum(1 for st in rc["status"].values() if st["signed"] == "FCS")}
 
 
@@ -1559,8 +1571,10 @@ def _standing_word(state: dict, pid: str, me: str) -> str:
         return "Signed With You"
     if st["signed"] or st["committed"] not in (None, me):
         school = st["signed"] or st["committed"]
-        name = "FCS" if school == "FCS" else season.load_teams()[school]["name"]
-        return f"{'Signed' if st['signed'] else 'Committed'} to {name}"
+        if st.get("pro"):
+            return "Chose Pro Baseball"
+        name = "an FCS Program" if school == "FCS" else season.load_teams()[school]["name"]
+        return f"Signed With {name}" if st["signed"] else f"Committed to {name}"
     return STANDING_WORDS[recruiting.stage(state, me, pid)]
 
 

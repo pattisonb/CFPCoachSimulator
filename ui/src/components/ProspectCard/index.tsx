@@ -211,7 +211,11 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
           </div>
           <div className="prospect-card__wide">
             <dt className="label">{m.from_}</dt>
-            <dd>{[`${p.hometown.city}, ${p.hometown.state}`, p.high_school].filter(Boolean).join(" · ")}</dd>
+            <dd>
+              {[[p.hometown.city, p.hometown.state].filter(Boolean).join(", "), p.high_school]
+                .filter(Boolean)
+                .join(" · ")}
+            </dd>
           </div>
           <div className="prospect-card__half" title={looks ? undefined : m.unscoutedTip}>
             <dt className="label">{m.scouted}</dt>

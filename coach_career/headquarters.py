@@ -422,6 +422,8 @@ def _task_check(state: dict, t: dict) -> tuple[bool, Optional[str]]:
         return pid not in rc["offers"].get(me, []), None
     if elsewhere:
         name = "an FCS program" if elsewhere == "FCS" else season.team_display(elsewhere, season.load_teams()) if elsewhere in season.load_teams() else elsewhere
+        if st_.get("pro"):
+            return False, "No longer needed: he chose pro baseball."
         verb = "signed with" if st_.get("signed") else "committed to"
         return False, f"No longer needed: he {verb} {name}."
     if kind == "nil":

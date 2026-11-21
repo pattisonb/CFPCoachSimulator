@@ -170,7 +170,7 @@ function lineOf(e: Life, i: number) {
         key={i}
         icon={Handshake}
         tone={e.band === "kept" ? "good" : e.band === "broken" ? "bad" : "gold"}
-        text={m.h.promise[e.band ?? ""] ?? m.h.promise.kept}
+        text={m.h.promise[e.band ?? ""] ?? m.h.stayedPromise}
         detail={e.benched_big ? [m.h.benchedBig] : undefined}
       />
     );
@@ -195,7 +195,7 @@ function lineOf(e: Life, i: number) {
         text={m.h.transfer(e.from_name ?? "", e.to_name ?? "")}
         detail={[
           e.walk_on ? m.h.walkOn : null,
-          e.promised ? m.h.promisedStart : null,
+          e.promised ? m.h.stayedPromise : null,
           e.overall != null ? m.h.arrivedAt(e.overall) : null,
         ].filter((x): x is string => !!x)}
       />

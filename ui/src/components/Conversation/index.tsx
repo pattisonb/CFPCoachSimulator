@@ -21,7 +21,7 @@ import Modal from "../Modal/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
-import { PITCH_NAMES, pullOf } from "../../standing.ts";
+import { PITCH_NAMES, pullOf, topicPhrase } from "../../standing.ts";
 import type { BoardRow, Scene, SceneQuestion, SceneReaction } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -405,9 +405,7 @@ function Result({ reaction, pitched }: { reaction: SceneReaction; pitched: strin
         </span>
         <b className="talk__result-word">{m.reactions[reaction.kind] ?? reaction.kind}</b>
         <span className="talk__soft">
-          {reaction.revealed
-            ? m.learned(PITCH_NAMES[reaction.revealed] ?? reaction.revealed)
-            : (m.meaning[reaction.kind] ?? "")}
+          {reaction.revealed ? m.learned(topicPhrase(reaction.revealed)) : (m.meaning[reaction.kind] ?? "")}
         </span>
       </div>
     </div>
@@ -509,8 +507,8 @@ function Topics({
               .join(" ")}
             disabled={disabled}
             title={[
-              m.pullTip(PITCH_NAMES[t] ?? t, m.pull[pull]),
-              known ? m.known : isCue ? m.cue : mark ? `${m.markTip} ${m.marks[mark] ?? mark}.` : "",
+              m.pullTip(topicPhrase(t), m.pull[pull]),
+              known ? m.known : isCue ? m.cue : mark ? m.markTip(m.marks[mark] ?? mark) : "",
             ]
               .filter(Boolean)
               .join(" ")}

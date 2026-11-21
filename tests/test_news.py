@@ -94,7 +94,7 @@ def test_forced_upset(st: dict) -> None:
     items = news.week_news(cp, w)
     up = [i for i in items if i["kind"] == "upset" and i.get("link", {}).get("event_id") == g["event_id"]]
     assert up, items
-    assert up[0]["text"].startswith("Unranked ") and " stuns No. " in up[0]["text"] and "27-24" in up[0]["text"], up[0]
+    assert up[0]["text"].startswith("Unranked ") and (" stuns No. " in up[0]["text"] or " knocks off No. " in up[0]["text"]) and "27-24" in up[0]["text"], up[0]
     check_items(cp, items)
     news._cache.clear()
 

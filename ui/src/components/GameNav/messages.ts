@@ -8,7 +8,7 @@ export const messages = {
   teamLine: (record: string, week: number) => `${record} · Week ${week}`,
   settings: "Settings",
   settingsSoon: "Settings: Coming Soon",
-  soon: "Coming Soon: Download Career and more.",
+  soon: "Coming soon: download your career and more.",
   exit: "Back to Main Menu",
   minimize: "Minimize Sidebar",
   hide: (shortcut: string) => `Hide Sidebar (${shortcut})`,

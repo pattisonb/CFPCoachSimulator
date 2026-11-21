@@ -245,6 +245,18 @@ WHY_GENERATED = {"head_coach": ("Ready for a bigger job", "Wants back into colle
                                  "Interviewing for coordinator jobs")}
 
 
+def _why_generated(prev: str, head: bool) -> tuple:
+    """Why a generated coach is looking, among the reasons his own background allows (a former head coach is not
+    "Looking for his first FBS job"; an FCS head coach does not want "back into college football")."""
+    if prev.startswith("Former head coach"):
+        return ("Wants back into college football",)
+    if "NFL" in prev:
+        return ("Ready for a bigger job", "Wants back into college football") if head else ("Ready to call his own plays", "Looking for a step up")
+    if prev.startswith("Head coach"):
+        return ("A winner at a lower level, ready to move up", "Looking for his first FBS job") if head else ("Looking for a step up",)
+    return ("Ready for a bigger job", "Looking for his first FBS job") if head else WHY_GENERATED["coordinator"]
+
+
 def market_refresh(state: dict) -> None:
     """Each offseason: coaches too long in the market retire from it, and the supply is topped up
     with generated coaches (FCS and lower-division head coaches, NFL assistants, position coaches)."""
@@ -263,7 +275,7 @@ def market_refresh(state: dict) -> None:
         coach = {"name": name, "role": main, "previous_job": prev, "ratings_generated": True,
                  "age_at": [year, rng.randint(*ages)], "since": year - rng.randint(1, 4)}
         coach["ratings"] = _ratings_for(lgd, main, coach, rng, level + rng.gauss(SUPPLY_LEVEL, SUPPLY_SPREAD))   # the supply runs from bottom-tier to power-tier coaches
-        why = rng.choice(WHY_GENERATED["head_coach" if "head_coach" in roles else "coordinator"])
+        why = rng.choice(_why_generated(prev, "head_coach" in roles))
         mk["coaches"].append(_entry(coach, main, None, why, year, roles, rng))
     mk["year"] = year
 
@@ -333,9 +345,12 @@ def market_take(state: dict, entry_id: str, role: str, slug: str, year: int) -> 
 
 
 def _previous_job(e: dict) -> str:
+    """Where a coach on the market last worked, as a line of its own ("Former offensive coordinator at Texas", "NFL
+    offensive assistant"): a job he no longer holds says so, and a generated coach shows his own background, not the
+    reason he is looking (the text sweep's find: "Hired X as head coach, the Wants back into college football.")."""
     if e["last_team"]:
-        return f"{ROLE_WORDS.get(e['last_role'], e['last_role'])} at {_name(e['last_team'])}"
-    return e["why"]
+        return f"Former {ROLE_WORDS.get(e['last_role'], e['last_role'])} at {_name(e['last_team'])}"
+    return (e.get("coach") or {}).get("previous_job") or e["why"]
 
 
 def market_rows(state: dict, role: Optional[str] = None) -> list[dict]:
@@ -475,7 +490,8 @@ def run(state: dict) -> dict:
                     your_declined.setdefault(role, None)
                     continue
                 changes.append({"team": slug, "role": role, "old": c["name"], "reason": "moved on"})
-                market_add(state, c, role, slug, f"Left {_name(slug)} after {_seasons(year - (c.get('since') or year))} to look for a bigger job", year)
+                market_add(state, c, role, slug, (f"Left {_name(slug)} after {_seasons(year - c['since'])} to look for a bigger job" if year - (c.get("since") or year) >= 1
+                                                else f"Left {_name(slug)} to look for a bigger job"), year)
                 open_coords.append((slug, role, "moved on"))
     your_poached, your_poached_why = [], {}
     for slug, role, reason in sorted(open_coords, key=lambda x: -attract(state, x[0])):

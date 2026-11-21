@@ -33,8 +33,8 @@ export const messages = {
   actions: (name: string) => `What to do with ${name}`,
   start: "Start Him",
   toTop: "Move to the Top",
-  moveUp: "Move up a spot",
-  moveDown: "Move down a spot",
+  moveUp: "Move Up a Spot",
+  moveDown: "Move Down a Spot",
   playAt: "Play At",
   position: "Position",
   hereNow: "Where he is now",
@@ -46,6 +46,6 @@ export const messages = {
   redshirtTip: (games: number, limit: number) =>
     `He sits out the rest of the season and keeps the year. He has played ${games} of the ${limit} games a redshirt allows.`,
   redshirtOnTip: "He is redshirting: he sits out and keeps the year. Pull it to play him again.",
-  redshirtNo: (why: string) => `He can't redshirt: ${why}.`,
+  redshirtNo: (why: string) => (why ? `He can't redshirt: ${why.replace(": ", ", ")}.` : "He can't redshirt."),
   rowLabel: (spot: number, name: string, ovr: number) => `${spot}. ${name}, overall ${ovr}`,
 } as const;

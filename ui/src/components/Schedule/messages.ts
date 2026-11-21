@@ -1,7 +1,7 @@
 export const messages = {
   title: "Schedule",
   teamLabel: "Team",
-  yourTeam: "Your team",
+  yourTeam: "Your Team",
   phaseLabel: "Which games to list",
   phases: { all: "All", regular: "Regular Season", conf: "Conference", post: "Postseason" } as Record<string, string>,
   listLabel: (team: string) => `${team} schedule`,

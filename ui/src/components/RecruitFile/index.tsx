@@ -327,7 +327,7 @@ export function ScoutingTab({
                 // with the letters it covers lit; how sure the read is and whether it carries a plus or minus is the tip
                 <Tooltip
                   title={`${m.confidence(pot.confidence)} · ${pot.fine ? m.fineShort : m.coarseShort}`}
-                  text={pot.fine ? m.fineOn(pot.eye ?? 0) : m.fineOff(pot.eye ?? 0, pot.eye_needed ?? 0)}
+                  text={pot.fine ? m.fineOn : m.fineOff}
                 >
                   <b className="recruit-file__big">
                     <GradeRange read={pot.grade} />

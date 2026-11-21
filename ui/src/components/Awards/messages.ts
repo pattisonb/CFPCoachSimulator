@@ -152,7 +152,7 @@ export const messages = {
   aaWaitingText:
     "The five selectors name their first and second teams with the national awards, in selection week. A player who is first team on three of the five is a consensus All-American.",
   conference: "Conference",
-  yourConference: "Your conference",
+  yourConference: "Your Conference",
   allConference: (conf: string) => `All-${conf}`,
   allConferenceWaiting: "The all-conference teams are named after championship week.",
   confWaiting: "No Conference Awards Yet",

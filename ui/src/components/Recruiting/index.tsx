@@ -16,7 +16,7 @@ import { api } from "../../api.ts";
 import { cachedTeams } from "../../teams.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
-import { PITCH_NAMES, byChance, standingOf, statusOf } from "../../standing.ts";
+import { byChance, standingOf, statusOf, topicPhrase } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { useKept } from "../../kept.ts";
 import { formatClass } from "../../format.ts";
@@ -647,7 +647,7 @@ function RecruitPanel({
       const n = action === "scout" ? (detail?.scout_cost ?? 0) : Number(extra.nil ?? cost(action));
       const said = [
         action === "promise_role" ? m.promisedRole : (m.said[action]?.(r.name, n) ?? ""),
-        out.revealed ? m.revealed(PITCH_NAMES[out.revealed] ?? out.revealed) : "",
+        out.revealed ? m.revealed(topicPhrase(out.revealed)) : "",
         // talking money is a promise: say so plainly
         out.money_owed ? m.moneyOwed(out.money_owed.nil, weekName(out.money_owed.by_week)) : "",
       ];

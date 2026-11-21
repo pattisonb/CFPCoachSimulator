@@ -112,7 +112,7 @@ export const messages = {
   noVisits: "No official visits booked yet.",
   noCommits: "No commits yet this cycle.",
   noActivity: "Nothing new yet. News on your recruits lands here as the weeks play.",
-  committedToYou: "Committed to you",
+  committedToYou: "Committed to You",
   offeredBy: (school: string) => `Offered by ${school}`,
   noWeeks: "No weeks played yet.",
   totalCommits: "Total Commits",
@@ -146,7 +146,7 @@ export const messages = {
   area: "Area",
   eye: "Eye",
   anywhere: "Anywhere",
-  nLooks: (n: number) => (n === 1 ? "1 Look" : `${half(n)} Looks`),
+  nLooks: (n: number) => (n > 0 && n <= 1 ? `${half(n)} Look` : `${half(n)} Looks`),
   nFlags: (n: number) => many(n, "Flag"),
   grades: {
     potential: "Potential",
@@ -178,8 +178,7 @@ export const messages = {
     need: "Need",
   },
   alerts: {
-    money: (name: string, nil: number, by: string) =>
-      `${name} You talked money with him: put ${nil} NIL on your offer by ${by}.`,
+    money: (name: string, nil: number, by: string) => `${name} is owed money: put ${nil} NIL on your offer by ${by}.`,
     cooled: (name: string) => `${name} has cooled on you.`,
     tuningOut: (name: string) => `${name} is tuning you out.`,
     lockedElsewhere: (name: string) => `${name} is locked in elsewhere, and your offer still holds a slot.`,

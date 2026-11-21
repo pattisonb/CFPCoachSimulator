@@ -73,6 +73,9 @@ async function request<T>(path: string, options: ApiOptions, quiet: boolean): Pr
   }
   const res = await gameFetch(path, init, quiet);
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error || data?.detail || `Request failed (${res.status})`);
+  // the game's refusal, without its closing period: every page sets it inside a sentence of its own ("Couldn't do
+  // that: …."), and a message that ended in one printed two
+  if (!res.ok)
+    throw new Error(String(data?.error || data?.detail || `Request failed (${res.status})`).replace(/[.\s]+$/, ""));
   return data as T;
 }

@@ -1,5 +1,5 @@
 export const messages = {
-  search: "Search programs and teams",
+  search: "Search Programs and Teams",
   newProgram: "New Program",
   newProgramHint: "Build Your Own",
   mine: "My Programs",

@@ -61,6 +61,18 @@ def _pregame_chance(teams: dict, g: dict, side: str) -> float:
     return p_home if side == "home" else 1.0 - p_home
 
 
+def _when(day: int) -> str:
+    """A week inside a sentence ("at a hat ceremony in Week 9", "during the semifinals"): the postseason's week labels
+    are tab titles ("Semifinals & New Year Bowls") and do not follow "in"."""
+    from sim import season
+    if day == season.CCG_WEEK:
+        return "during Championship Week"
+    if day == season.SELECTION_WEEK:
+        return "during Selection Week"
+    return {17: "during the first round of the playoff", 18: "during the quarterfinals", 19: "during the semifinals",
+            20: "the week of the national championship"}.get(day) or f"in {season.week_label(day)}"
+
+
 def _score(g: dict, winner_home: bool) -> str:
     hi, lo = (g["home_score"], g["away_score"]) if winner_home else (g["away_score"], g["home_score"])
     return f"{hi}-{lo}" + (" in overtime" if g.get("overtime") else "")
@@ -83,7 +95,8 @@ def _upsets(state: dict, teams: dict, fbs: set, week: int, games: list[dict]) ->
             continue
         wn, ln = _name(teams, w), _name(teams, l)
         lead = f"Unranked {wn}" if wr is None and lr is not None else _ranked(wn, wr)
-        text = f"{lead} stuns {_ranked(ln, lr)} {_score(g, home_won)}."
+        # "stuns" only a real long shot: an unranked team the game itself made a slight favorite "knocks off" a ranked one
+        text = f"{lead} {'stuns' if chance <= UPSET_CHANCE else 'knocks off'} {_ranked(ln, lr)} {_score(g, home_won)}."
         imp = _BASE["upset"] + (UPSET_TOP + 1 - lr if lr and lr <= UPSET_TOP else 0) + round(10 * (UPSET_CHANCE - min(chance, UPSET_CHANCE)) / UPSET_CHANCE)
         out.append({"kind": "upset", "text": text, "team": w, "teams": (w, l), "link": {"type": "game", "event_id": g["event_id"]}, "_imp": imp})
     return out
@@ -92,7 +105,12 @@ def _upsets(state: dict, teams: dict, fbs: set, week: int, games: list[dict]) ->
 def _rankings(state: dict, teams: dict, week: int) -> list[dict]:
     if str(week) not in state["polls"] or not state["polls"][str(week)].get("ap"):
         return []
-    before, after = _ap_rank(state, week - 1), _ap_rank(state, week)
+    # the poll before this one, however far back (the final poll follows three weeks without one: read against an
+    # empty poll, every team "moved into the top 5")
+    prev = next((w for w in range(week - 1, -1, -1) if (state["polls"].get(str(w)) or {}).get("ap")), None)
+    if prev is None:
+        return []
+    before, after = _ap_rank(state, prev), _ap_rank(state, week)
     out = []
     new_one = next((t for t, r in after.items() if r == 1), None)
     old_one = next((t for t, r in before.items() if r == 1), None)
@@ -170,7 +188,7 @@ def _streaks(state: dict, teams: dict, fbs: set, week: int, games: list[dict]) -
                 out.append({"kind": "streak", "text": f"{_name(teams, slug)} moves to {STREAK}-0.", "team": slug, "teams": (slug,),
                             "link": {"type": "team", "slug": slug}, "_imp": _BASE["streak"]})
             elif not won and b["losses"] == 0 and b["wins"] >= STREAK:
-                hs = _score(g, g["home_score"] > g["away_score"])
+                hs = f"{max(g['home_score'], g['away_score'])}-{min(g['home_score'], g['away_score'])}" + (" overtime" if g.get("overtime") else "")
                 out.append({"kind": "streak", "text": f"Unbeaten {_name(teams, slug)} falls to {a['wins']}-1 with a {hs} loss to {_name(teams, g[opp])}.",
                             "team": slug, "teams": (slug,), "link": {"type": "game", "event_id": g["event_id"]}, "_imp": _BASE["streak"] + 4})
     return out
@@ -201,7 +219,7 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
             fin = [_name(teams, s) for s in e.get("finalists") or () if s in teams]
             if blue and len(fin) > 1:
                 said = " and ".join(fin) if len(fin) == 2 else f"{', '.join(fin[:-1])} and {fin[-1]}"
-                out.append({"kind": "recruiting", "text": f"{stars} {p['position']} {p['name']} will choose from {said} at a hat ceremony in {season.week_label(e['day'])}.",
+                out.append({"kind": "recruiting", "text": f"{stars} {p['position']} {p['name']} will choose from {said} at a hat ceremony {_when(e['day'])}.",
                             "team": None, "teams": tuple(e.get("finalists") or ()), "link": link, "_imp": _BASE["recruiting"] - 4 + p["stars"]})
             continue
         if e["kind"] == "twist":               # a blue blood's late offer or a surprise visit to a blue chip
@@ -214,7 +232,7 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
             continue
         if e["kind"] == "bloomed":             # his story: a late bloomer's jump to a blue chip
             if (p.get("stars") or 0) >= 4:
-                out.append({"kind": "recruiting", "text": f"Late bloomer {p['position']} {p['name']} jumps to {stars.lower()} stars.",
+                out.append({"kind": "recruiting", "text": f"Late bloomer {p['position']} {p['name']} jumps to {stars.lower().replace('-star', '')} stars.",
                             "team": None, "teams": (), "link": link, "_imp": _BASE["recruiting"] - 4 + p["stars"]})
             continue
         if not school or school not in teams or teams[school].get("fictional"):
@@ -263,7 +281,7 @@ def _injuries(state: dict, teams: dict, fbs: set, week: int, games: list[dict], 
                     continue
                 wk = inj["weeks"]
                 span = "for the season" if wk >= 10 else f"for {wk} week{'s' if wk != 1 else ''}"
-                kind = f" with {_with(inj['type'])}" if inj.get("type") else ""
+                kind = f" with {_with(inj['type'])}" if inj.get("type") and wk < 10 else ""    # out for the season: not "with back spasms"
                 text = f"No. {rank[slug]} {_name(teams, slug)} loses starting QB {inj['name']} {span}{kind}."
                 out.append({"kind": "injury", "text": text, "team": slug, "teams": (slug,), "link": {"type": "game", "event_id": g["event_id"]},
                             "_imp": _BASE["injury"] + (26 - rank[slug]) // 5})

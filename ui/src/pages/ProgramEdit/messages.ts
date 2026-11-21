@@ -60,7 +60,7 @@ export const messages = {
   headCoach: "Head Coach",
   oc: "Offensive Coordinator",
   dc: "Defensive Coordinator",
-  generated: "Generated if blank",
+  generated: "Generated if Blank",
   offense: "Offense",
   defense: "Defense",
   usual: "Conference's Usual",

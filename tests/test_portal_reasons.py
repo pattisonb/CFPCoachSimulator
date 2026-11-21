@@ -10,7 +10,7 @@ from coach_career import offseason
 from sim import season
 from test_offseason import finished
 
-TEXT = {"deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a bigger stage", "fresh_start": "Wants a fresh start"}
+TEXT = {"deal": "Chasing a bigger NIL deal", "last_year": "One year left and he wants a change", "fresh_start": "Wants a fresh start"}
 
 
 def entry(st, p, use, **item):

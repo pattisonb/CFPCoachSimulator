@@ -1,7 +1,7 @@
 export const messages = {
   title: "Prospects",
   classOf: (year: number, n: number) => `Class of ${year} · ${n.toLocaleString("en-US")} Prospects`,
-  search: "Search by name",
+  search: "Search by Name",
   show: "Show",
   views: {
     all: "Everyone",

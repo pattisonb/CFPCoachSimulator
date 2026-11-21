@@ -104,7 +104,7 @@ def check_reasons() -> None:
     assert o.coachability_note("Film Junkie", "developer", "Coach Smith") == "Now a Film Junkie: Coach Smith's Development"
     assert o.coachability_note("Film Junkie", "redshirt") == "Now a Film Junkie: A Redshirt Year Well Spent"
     assert o.coachability_note("Film Junkie", "maturity") == "Now a Film Junkie: Growing Up"
-    assert o.coachability_note("Slow to Click", "benched").startswith("Now a Slow to Click: Benched")
+    assert o.coachability_note("Slow to Click", "benched").startswith("Now Slow to Click: Benched")   # no "a" before a level that is not a noun
     print("Who Improved reasons read right")
 
 

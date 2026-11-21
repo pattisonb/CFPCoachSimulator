@@ -378,6 +378,11 @@ class Pool:
                 "line": stat_line(p, g), "headline": headline(p, g), "score": round(p["z"].get(g, 0), 2)}
 
 
+def _n(v, one: str) -> str:
+    """A count with its noun: "1 sack", "2.5 sacks", "0 key blocks"."""
+    return f"{v:g} {one if v == 1 else one + 's'}"
+
+
 def headline(p: dict, group: str) -> str:
     """The one number that sums up the season, for the award cards."""
     st = p["stats"]
@@ -389,7 +394,7 @@ def headline(p: dict, group: str) -> str:
     if group in ("WR", "TE"):
         return f"{get('receiving_yards', 0):,} yds · {get('receiving_touchdowns', 0)} TD"
     if group in ("EDGE", "DT"):
-        return f"{get('sacks', 0):g} sacks · {get('tackles_for_loss', 0):g} TFL"
+        return f"{_n(get('sacks', 0), 'sack')} · {get('tackles_for_loss', 0):g} TFL"
     if group == "LB":
         return f"{get('solo_tackles', 0) + get('assisted_tackles', 0)} tkl · {get('tackles_for_loss', 0):g} TFL"
     if group == "DB":
@@ -400,7 +405,7 @@ def headline(p: dict, group: str) -> str:
         n = max(1, get("punts", 0))
         return f"{get('punt_net_yards', 0) / n:.1f} net"
     if group == "OL":
-        return f"{get('sacks_allowed', 0)} sacks allowed"
+        return f"{_n(get('sacks_allowed', 0), 'sack')} allowed"
     if group == "RS":
         return f"{get('kickoff_return_yards', 0) + get('punt_return_yards', 0):,} ret yds"
     return ""
@@ -418,10 +423,10 @@ def stat_line(p: dict, group: str) -> str:
                 f"{get('receptions', 0)} rec, {get('receiving_yards', 0):,} yds, {get('receiving_touchdowns', 0)} TD")
     if group in ("WR", "TE"):
         line = f"{get('receptions', 0)} rec, {get('receiving_yards', 0):,} yds, {get('receiving_touchdowns', 0)} TD"
-        return line + (f", {get('explosive_catches', 0)} plays of 25+" if get('explosive_catches', 0) else "")   # real box scores carry no play lengths
+        return line + (f", {_n(get('explosive_catches', 0), 'play')} of 25+" if get('explosive_catches', 0) else "")   # real box scores carry no play lengths
     if group in ("EDGE", "DT", "LB", "DB"):
         tk = get("solo_tackles", 0) + get("assisted_tackles", 0)
-        return (f"{tk} tackles, {get('tackles_for_loss', 0):g} TFL, {get('sacks', 0):g} sacks, {get('interceptions', 0)} INT, "
+        return (f"{_n(tk, 'tackle')}, {get('tackles_for_loss', 0):g} TFL, {_n(get('sacks', 0), 'sack')}, {get('interceptions', 0)} INT, "
                 f"{get('passes_defended', 0)} PBU, {get('forced_fumbles', 0)} FF")
     if group == "K":
         return f"{get('fg_made', 0)}/{get('fg_attempted', 0)} FG, {get('fg_50_made', 0)}/{get('fg_50_att', 0)} from 50+, long {get('long_fg', 0)}, {get('pat_made', 0)}/{get('pat_attempts', 0)} PAT"
@@ -429,7 +434,8 @@ def stat_line(p: dict, group: str) -> str:
         n = max(1, get("punts", 0))
         return f"{get('punts', 0)} punts, {get('punt_yards', 0) / n:.1f} avg, {get('punt_net_yards', 0) / n:.1f} net, {get('punts_inside_20', 0)} inside 20"
     if group == "OL":
-        return f"{get('snaps', 0)} snaps, {get('sacks_allowed', 0)} sacks allowed, {get('pressures_allowed', 0)} pressures, {get('key_blocks', 0)} key blocks"
+        return (f"{get('snaps', 0):,} {'snap' if get('snaps', 0) == 1 else 'snaps'}, {_n(get('sacks_allowed', 0), 'sack')} allowed, "
+                f"{_n(get('pressures_allowed', 0), 'pressure')}, {_n(get('key_blocks', 0), 'key block')}")
     if group == "RS":
         ret = get("kickoff_returns", 0) + get("punt_returns", 0)
         ry = get("kickoff_return_yards", 0) + get("punt_return_yards", 0)

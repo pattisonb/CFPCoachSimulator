@@ -9,5 +9,5 @@ export const messages = {
   unit: "Unit",
   offense: "Offense",
   defense: "Defense",
-  pounds: (lb: number) => `${lb} lb`,
+  pounds: (lb: number) => `${lb} lbs`,
 } as const;

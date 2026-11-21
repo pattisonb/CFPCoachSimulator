@@ -124,6 +124,15 @@ export function pullOf(v: number | undefined): "strong" | "fair" | "weak" {
   return x >= PULL_STRONG ? "strong" : x >= PULL_FAIR ? "fair" : "weak";
 }
 
+/** A pitch named inside a sentence ("he cares about staying close to home"): its title would read wrong there. */
+const TOPIC_PHRASES: Record<string, string> = {
+  proximity: "staying close to home",
+  coach: "the head coach",
+  pro: "a path to the league",
+  nil: "NIL",
+};
+export const topicPhrase = (key: string): string => TOPIC_PHRASES[key] ?? (PITCH_NAMES[key] ?? key).toLowerCase();
+
 /** What a pitch is called (web/recruiting.js PITCH_NAMES). */
 export const PITCH_NAMES: Record<string, string> = {
   proximity: "Close to Home",

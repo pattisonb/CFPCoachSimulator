@@ -27,7 +27,7 @@ from coach_career import persona, recruiting
 PERSONA_LINE = 0.5         # how often his personality's own line stands in for the generic one *tune*
 CUE_TWO_SIDED = 0.6        # how often a cue names two topics (one his, one not) *tune: tools/check_recruiting.py*
 CUE_TRUST_CONTACTS = 3     # *tune* from this many contacts with him (or once you offered him) he names no decoy: he's straight with you
-KNOWN_LEADS = ["You already know {k} matters to me.", "You know where I stand on {k}."]   # his answer starts from what you've heard
+KNOWN_LEADS = ["You already know I care about {k}.", "You know where I stand on {k}."]   # his answer starts from what you've heard
 ALL_KNOWN = "You know what I care about, Coach: {a}, {b} and {c}."                        # ... when you've heard all three
 REPEAT_LINE = "You already said that one, Coach."                                        # you lead with what your opening said
 # how often a playing-time recruit asks about a named player on a call or visit *tune: tools/check_recruiting.py*
@@ -46,7 +46,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                 "Whoever I pick, my family has to be in the stands. That's the big one."],
         "hit": ["That's what I want to hear. My folks could make every home game.",
                 "Home on a weekend? That matters, Coach. It really does.",
-                "{town} to {school} isn't far at all. I like that a lot."],
+                "{town} to your campus isn't far at all. I like that a lot."],
         "polite": ["Being close is nice, I guess. My folks will travel.",
                    "Yeah, the drive's easy. That's cool.",
                    "Sure. I'd go anywhere for the right fit, though."],
@@ -56,8 +56,8 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
     "playing_time": {
         "cue": ["Honestly, Coach? I want to play {position} on Saturdays, not hold a clipboard.",
-                "Everybody says I'll play early. I want to see it.",
-                "I'm not sitting for three years. I want snaps."],
+                "Everybody says I'll play right away. I want to see it.",
+                "I'm not coming to sit. I want snaps."],
         "hit": ["A real shot at the field next year? I'm all in on that.",
                 "That depth chart looks good to me, Coach. Real good.",
                 "Snaps next year. That's what I needed to hear."],
@@ -100,7 +100,7 @@ LINES: dict[str, dict[str, list[str]]] = {
         "cue": ["The money, Coach. My family could use the help. I'm not going to lie about that.",
                 "The NIL stuff matters. My dad asks about it every time.",
                 "I want to take care of my mom. That's real."],
-        "hit": ["That's real money for my family, Coach. Thank you.",
+        "hit": ["That would be real money for my family, Coach. Thank you.",
                 "My dad is going to like hearing that.",
                 "Okay. That takes care of a lot back home."],
         "polite": ["The money's fine. It's not what I'm chasing.",
@@ -111,7 +111,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "Yeah. That's less than I was hoping."],
     },
     "coach": {
-        "cue": ["The staff. I want a coach who's going to be there all four years.",
+        "cue": ["The staff. I want a coach who's going to be there the whole time I am.",
                 "I need to trust the guy I play for. That's big for me.",
                 "I want somebody who'll yell at me and mean it."],
         "hit": ["I believe you, Coach. I really do.",
@@ -161,7 +161,7 @@ LINES: dict[str, dict[str, list[str]]] = {
 
 # a pestering call or visit (recruiting.PESTER_FREE): he is not weighing you, and the pitch falls flat
 TIRED = ["He is polite but short. He is not weighing you right now, and the calls are wearing thin.",
-         "He lets it ring a while before he picks up. {school} is not on his mind, and he does not hide it.",
+         "He goes quiet on you. {school} is not on his mind, and he does not hide it.",
          "He hears you out and says nothing about {school}. His mind is on other schools, and he wants the calls to stop."]
 
 # his question about a named player (docs/superpowers/specs/2026-10-29-recruit-questions-design.md,
@@ -170,7 +170,7 @@ TIRED = ["He is polite but short. He is not weighing you right now, and the call
 # or another recruit you offered at his position ({other})
 QUESTION_LINES = {
     "roster": ["Is {ahead} still your {position} next year? I'm not coming to sit behind him.",
-               "{ahead} is a {ahead_cls}. That's two more years of him. Where does that leave me?",
+               "{ahead} is a {ahead_cls}, and he's ahead of me. Where does that leave me?",
                "My dad looked at your depth chart. He says {ahead} has that spot locked."],
     "recruit": ["You offered {other} too. Which one of us do you actually want?",
                 "I saw {other} post your offer. You telling him the same thing you're telling me?",
@@ -350,6 +350,8 @@ def portal_line(state: dict, p: dict, sid: str, f: dict) -> str:
     """Why he left, in his words (its own seeded draw `portal-line-{sid}`): a starter with no starts on record reads as
     the rotation line; a line that quotes his numbers only when he has numbers."""
     why = f["why"] if not (f["why"] == "starter" and not f["started"]) else "rotation"
+    if why == "rotation" and not f["games"]:
+        why = "bench"                    # no games on record: he did not "split time" in 0 games (the text sweep's find)
     pool = [x for x in PORTAL_WHY[why] if f.get("has_did") or "{did" not in x] or PORTAL_WHY[why]   # his numbers only when he has some
     return random.Random(f"portal-line-{sid}").choice(pool).format(**f)
 
@@ -442,7 +444,7 @@ SAID_HONEST = {"proximity": "a home away from home", "playing_time": "a fair sho
 NEEDS = {
     "That's what I want to hear. My folks could make every home game.": "proximity",
     "Home on a weekend? That matters, Coach. It really does.": "proximity",
-    "{town} to {school} isn't far at all. I like that a lot.": "proximity",
+    "{town} to your campus isn't far at all. I like that a lot.": "proximity",
     "Being close is nice, I guess. My folks will travel.": "proximity",
     "Yeah, the drive's easy. That's cool.": "proximity",
     "A real shot at the field next year? I'm all in on that.": "playing_time",
@@ -459,7 +461,7 @@ NEEDS = {
     "Yeah, you've been good. That's cool.": "winning",
     "{record}... I want to play for a winner, Coach.": "!winning",
     "...You guys have had some rough years.": "!history",
-    "That's real money for my family, Coach. Thank you.": "nil",
+    "That would be real money for my family, Coach. Thank you.": "nil",
     "My dad is going to like hearing that.": "nil",
     "Okay. That takes care of a lot back home.": "nil",
     "That's a real school, Coach. That counts for a lot.": "academics",
@@ -477,7 +479,7 @@ _G_PHRASES = {"facilities": "the facilities", "location": "where I'd be living",
 _G_LINES = {
     "facilities": {
         "cue": ["Honestly, Coach? I want to see the weight room. Where I train matters.",
-                "I like a nice building. I'm going to live in there for four years.",
+                "I like a nice building. I'm going to live in there every day.",
                 "My trainer says the facilities tell you what a school thinks of its players."],
         "hit": ["That building is crazy, Coach. I could live in there.",
                 "That weight room? That's where I want to be.",
@@ -504,11 +506,11 @@ _G_LINES = {
                   "My mom asked what there is to do there. I didn't know."],
     },
     "stability": {
-        "cue": ["I want to know the staff will still be there when I'm a senior.",
+        "cue": ["I want to know the staff will still be there when I leave.",
                 "Coaches leave. I've seen it happen to guys I know.",
                 "My mom keeps asking if you're staying, Coach."],
         "hit": ["That program doesn't run through coaches. That means something.",
-                "Same staff all four years? That's what I want.",
+                "Same staff the whole way? That's what I want.",
                 "Okay. I trust that you guys aren't going anywhere."],
         "polite": ["Sure. Coaches move, though. That's football.",
                    "I hear you. I'll worry about that later.",
@@ -521,7 +523,7 @@ _G_LINES = {
         "cue": ["I want to play in front of a real crowd. Loud.",
                 "Saturdays, Coach. I want the whole town there.",
                 "I went to a game somewhere and the place was shaking. I want that."],
-        "hit": ["That crowd is loud. I felt it on my visit.",
+        "hit": ["That crowd is loud. I've seen it on TV.",
                 "Running out in front of all those people? I'm in.",
                 "That's a real Saturday, Coach."],
         "polite": ["Crowds are cool. I just want to play.",
@@ -548,7 +550,7 @@ _G_LINES = {
 }
 
 _G_LEAD_LINES = {"facilities": "Come see the building, {first}. Everything you need to get better is under one roof.",
-              "location": "You'd love living here, {first}. It's a great place to be for four years.",
+              "location": "You'd love living here, {first}. It's a great place to spend your college years.",
               "stability": "This program keeps its coaches, {first}. The people recruiting you are the ones who'd coach you.",
               "game_day": "Wait until you feel a Saturday here. The place is packed and loud.",
               "exposure": "We're on TV every week. Everybody back in {town} would see you play."}
@@ -575,8 +577,8 @@ _G_NEEDS = {"That building is crazy, Coach. I could live in there.": "facilities
          "That weight room? That's where I want to be.": "facilities",
          "Okay, the facilities are real. I see it.": "facilities",
          "That program doesn't run through coaches. That means something.": "stability",
-         "Same staff all four years? That's what I want.": "stability",
-         "That crowd is loud. I felt it on my visit.": "game_day",
+         "Same staff the whole way? That's what I want.": "stability",
+         "That crowd is loud. I've seen it on TV.": "game_day",
          "That's a real Saturday, Coach.": "game_day",
          "Prime time every week? Let's go.": "exposure",
          "Everybody back home could watch. That's big.": "exposure",
@@ -890,6 +892,8 @@ def leader_of(state: dict, slug: str, pid: str) -> str:
     return (season.load_teams().get(lead) or {}).get("name", lead)
 
 
+SINGULAR = {"QB": "quarterback", "RB": "running back", "WR": "receiver", "TE": "tight end", "OT": "tackle", "IOL": "guard", "EDGE": "edge rusher",
+            "DL": "defensive lineman", "LB": "linebacker", "CB": "corner", "S": "safety", "K": "kicker", "P": "punter", "ATH": "athlete"}
 PLURAL = {"QB": "quarterbacks", "RB": "backs", "WR": "receivers", "TE": "tight ends", "OT": "tackles", "IOL": "interior linemen", "EDGE": "edge rushers",
           "DL": "defensive linemen", "LB": "linebackers", "CB": "corners", "S": "safeties", "K": "kickers", "P": "punters", "ATH": "athletes"}
 
@@ -913,7 +917,9 @@ def _fields(state: dict, slug: str, p: dict, week: int | None = None) -> dict:
     # a transfer has no town on file: his home state by name ("Sunday dinners in Texas", never "in TX")
     town = p["hometown"]["city"] or STATE_NAMES.get(p["hometown"]["state"], p["hometown"]["state"]) or "home"
     return {"name": p["name"], "first": p["name"].split()[0], "town": town,
-            "state": p["hometown"]["state"], "school": team.get("name", slug), "position": p["position"], "positions": PLURAL.get(p["position"], "players"),
+            # spoken, so by name: "the best linebacker in Florida", never "the best LB in FL"
+            "state": STATE_NAMES.get(p["hometown"]["state"], p["hometown"]["state"]), "school": team.get("name", slug),
+            "position": SINGULAR.get(p["position"], p["position"]), "positions": PLURAL.get(p["position"], "players"),
             "role": _role(state, slug, p["id"]), "record": record, "rec": record[:1].lower() + record[1:], "conf": _conf(state, slug),
             "coach": coach_name(state, slug),
             "opponent": game["opponent"] if game else nxt["opponent"] if nxt else "", "result": ("beat" if game["won"] else "lost to") if game else "",
@@ -1206,7 +1212,7 @@ def case_kind(sv: float) -> str:
 
 # he cares about it and your case is fair: neither lit up nor gone quiet
 FAIR_LINES = ["{Topic}. Okay. I'm listening, Coach.",
-              "{Topic} matters to me. Show me more of it.",
+              "{Topic}. That's one I care about. Show me more of it.",
               "That's one of my things. I'd want to see it for myself."]
 
 

@@ -81,7 +81,8 @@ export const messages = {
   redshirt: "Redshirt",
   redshirtOn: (games: number, limit: number) => `Redshirting · ${games} of ${limit} Games Used`,
   redshirtCan: "Available",
-  redshirtNo: (why: string | null) => (why ? `Not Available: ${why}` : "Not Available"),
+  redshirtNo: (why: string | null) =>
+    why ? `Not Available · ${why.charAt(0).toUpperCase()}${why.slice(1).replace(": ", ", ")}` : "Not Available",
   progress: (have: number, need: number) => `${have} of ${need}`,
 
   // Abilities
@@ -132,7 +133,7 @@ export const messages = {
     homeState: "Home State",
     national: "National",
     position: "Position",
-    atPos: (pos: string) => `Among ${pos}s`,
+    atPos: (pos: string) => `${pos} Rank`,
     inState: (state: string) => `In ${state}`,
     arrived: "Arrived At",
     place: (n: number) => `#${n.toLocaleString("en-US")}`,
@@ -168,7 +169,14 @@ export const messages = {
     met: "You met with him.",
     stayedNil: (nil: number) => `You put ${nil} NIL on it.`,
     stayedPromise: "You promised him a starting role.",
-    transfer: (from: string, to: string) => `Transferred from ${from} to ${to}.`,
+    transfer: (from: string, to: string) =>
+      from && to
+        ? `Transferred from ${from} to ${to}.`
+        : to
+          ? `Transferred to ${to}.`
+          : from
+            ? `Transferred from ${from}.`
+            : "Transferred.",
     walkOn: "Came as a walk-on.",
     arrivedAt: (ovr: number) => `Arrived at ${ovr} overall.`,
   },

@@ -188,7 +188,7 @@ export const messages = {
     lost: "You Lost",
     net: "Net",
     netLine: (n: number) => (n > 0 ? `+${n}` : String(n)),
-    netSmall: "players",
+    netSmall: (n: number) => (Math.abs(n) === 1 ? "player" : "players"),
     league: "Around the Portal",
     leagueLine: (signed: number, entrants: number) =>
       `${signed.toLocaleString("en-US")} of ${entrants.toLocaleString("en-US")}`,
@@ -296,8 +296,12 @@ export const messages = {
     changesLabel: "Changes Around the League",
     coaches: (n: number) => `${n} ${n === 1 ? "Coach" : "Coaches"}`,
     changeLine: (old: string, role: string, reason: string) => `${old}, ${role.toLowerCase()}: ${reason}.`,
+    // `from` is his last job as the game words it ("Head coach at an FCS program", "Promoted from the staff"): a
+    // sentence of its own, not something "the" can lead
     hiredLine: (name: string, role: string, from?: string) =>
-      `Hired ${name} as ${role.toLowerCase()}${from ? `, the ${from}` : ""}.`,
+      name === "You"
+        ? `Hired you as ${role.toLowerCase()}.`
+        : `Hired ${name} as ${role.toLowerCase()}.${from ? ` ${from.charAt(0).toUpperCase()}${from.slice(1).replace(/[.\s]+$/, "")}.` : ""}`,
   },
   conf: {
     how: "Move a program to another conference for next season.",

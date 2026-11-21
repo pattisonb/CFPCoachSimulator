@@ -4,7 +4,7 @@ export const messages = {
   intro: "Pick a face and a name, then save your coach.",
   forTeam: (team: string) => `Coaching ${team}`,
 
-  preview: "Your coach",
+  preview: "Your Coach",
   randomize: "Randomize",
   save: "Save Coach",
   /** opened for a team: save the coach and enter the game */

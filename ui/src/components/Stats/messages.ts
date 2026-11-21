@@ -38,7 +38,7 @@ export const messages = {
   allConferences: "All Conferences",
   teamLabel: "Team",
   allTeams: "All Teams",
-  yours: "Your team",
+  yours: "Your Team",
   loading: "Loading the leaders…",
   loadError: (msg: string) => `Couldn't load the stats: ${msg}.`,
   noGames: "No Games Played Yet",

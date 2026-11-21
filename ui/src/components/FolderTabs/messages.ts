@@ -1,3 +1,3 @@
 export const messages = {
-  needsFix: "Needs a fix",
+  needsFix: "Needs a Fix",
 } as const;

@@ -1,5 +1,5 @@
 export const messages = {
-  title: { call: (name: string) => `Call with ${name}`, hc_visit: (name: string) => `In-Home Visit with ${name}` },
+  title: { call: (name: string) => `Call With ${name}`, hc_visit: (name: string) => `In-Home Visit With ${name}` },
   where: { call: "On the Phone", hc_visit: "In His Living Room" },
   log: "The conversation",
   you: "You",
@@ -12,18 +12,18 @@ export const messages = {
   opening: "Your Opening",
   openingHelp: "Pick three things to sell your program with.",
   present: "Present",
-  presentTip: (n: number) => `Pick ${n} things first`,
+  presentTip: (n: number) => `Pick ${n} ${n === 1 ? "thing" : "things"} first.`,
   asks: "He Asks",
   asksHelp: "Answer him. A promise you can't keep will cost you.",
   leadWith: "Your Pitch",
   leadHelp: "Lead with one thing. Hit what he cares about.",
   pitch: "Pitch",
-  pickLead: "Pick what you lead with",
+  pickLead: "Pick what you lead with.",
   promiseJob: "Promise the Job",
   promiseJobTip: "Tell him the starting job is his. It helps land him, and he'll hold you to it all season.",
   hangUp: { call: "Hang Up", hc_visit: "Step Out" },
   hangUpTip:
-    "It stays open: Finish it from his panel this week. One you never finish counts for nothing, and the energy stays spent.",
+    "It stays open: finish it from his panel this week. One you never finish counts for nothing, and the energy stays spent.",
   done: "Done",
   doneNote: "It counts at the week step.",
   lapsed: "That conversation lapsed: the week moved on.",
@@ -41,7 +41,7 @@ export const messages = {
     not_his: "Not His Thing",
     no_read: "No Read",
   } as Record<string, string>,
-  markTip: "How he took it last time.",
+  markTip: (word: string) => `How he took it last time: ${word}.`,
   cueLine: "His Cue",
 
   // how the pitch went: the big word, and a line on what it means

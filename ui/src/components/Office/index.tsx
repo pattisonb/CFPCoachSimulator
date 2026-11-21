@@ -86,6 +86,8 @@ const EVENT_WORDS: Record<string, string> = {
   asked_more: "wants more from",
   not_buying: "isn't buying the pitch from",
   hung_up: "has an unfinished call from",
+  pester: "is tuning out",
+  promise_broken: "feels a promise was broken by",
 };
 /** Events that carry their own sentence. */
 const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened"]);
@@ -840,7 +842,7 @@ function newsLine(s: SeasonSummary, n: NewsItem) {
         ? n.line.replace(/^He /, "")
         : n.kind === "unsigned"
           ? "went unsigned."
-          : `${EVENT_WORDS[n.kind] ?? n.kind} ${n.school_name ?? ""}`.trim() + ".";
+          : `${EVENT_WORDS[n.kind] ?? "is in the news with"} ${n.school_name ?? ""}`.trim() + ".";
   return (
     <>
       <b>{n.name}</b> ({n.position}, <Stars n={n.stars ?? 0} />) {what}

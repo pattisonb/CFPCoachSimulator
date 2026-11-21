@@ -1077,8 +1077,12 @@ def redshirt_status(state: dict, slug: str, p: dict) -> dict:
     can = bool(state.get("career")) and slug == state.get("team") and not state.get("done") \
         and cls in REDSHIRT_CLASSES and games <= REDSHIRT_GAMES
     return {"on": p.get("slug") in rs, "can": can, "games": games, "limit": REDSHIRT_GAMES,
-            "why": None if can else ("his redshirt year is used" if cls.endswith("RS") or cls in ("SR", "SRRS") else
-                                     f"he has played {games} games: more than the rule allows" if games > REDSHIRT_GAMES else "not your player")}
+            "why": None if can else ("he is not your player" if not state.get("career") or slug != state.get("team") else
+                                     "the season is over" if state.get("done") else
+                                     "seniors cannot redshirt" if cls == "SR" else
+                                     "his redshirt year is used" if cls.endswith("RS") else
+                                     f"he has played {games} games, more than the {REDSHIRT_GAMES} the rule allows" if games > REDSHIRT_GAMES else
+                                     "he is not a player who can redshirt")}
 
 
 def redshirt_toggle(state: dict, slug: str, player_slug: str, on: bool) -> dict:
@@ -1619,6 +1623,12 @@ def week_name(week: int) -> str:
     return f"Week {week - 1}"
 
 
+NO_ARTICLE_TROPHIES = ("Illibuck",)          # a trophy that is a name: "takes Illibuck", not "the Illibuck"
+# the sim's progress line by week: the postseason's week labels are tab titles and do not take "games" after them
+STAGE_WORDS = {17: "Playing the first round and the bowls", 18: "Playing the quarterfinals and the bowls",
+               19: "Playing the semifinals and the bowls", 20: "Playing the national championship"}
+
+
 def week_label(week: int) -> str:
     if week == CCG_WEEK:
         return "Championship Week"
@@ -1724,7 +1734,8 @@ def advance(state: dict, pool: Optional[Pool] = None, report: Optional[Reporter]
         from coach_career import promises
         promises.snapshot_week(state, week)
     ids = [eid for eid, g in state["games"].items() if g["week"] == week and not g["played"]]
-    _run_games(state, ids, pool, report, stage=f"Playing {week_label(week)} games")
+    _run_games(state, ids, pool, report, stage=STAGE_WORDS.get(week) or ("Playing the conference title games" if week == CCG_WEEK else "Playing this week's games" if week == SELECTION_WEEK
+                                                             else f"Playing {week_label(week)} games"))
 
     if week == CCG_WEEK:
         for g in state["games"].values():
@@ -1901,10 +1912,10 @@ def player_overall(p: dict) -> int:
 
 
 DEPTH_ROWS = [
-    ("Offense", [("QB", "Quarterback"), ("HB", "Running back"), ("FB", "Fullback"), ("WR", "Wide receiver"), ("TE", "Tight end"),
-                 ("LT", "Left tackle"), ("LG", "Left guard"), ("C", "Center"), ("RG", "Right guard"), ("RT", "Right tackle")]),
-    ("Defense", [("LEDG", "Left edge"), ("DT", "Defensive tackle"), ("REDG", "Right edge"), ("SAM", "Strongside LB"), ("MIKE", "Middle LB"),
-                 ("WILL", "Weakside LB"), ("CB", "Cornerback"), ("FS", "Free safety"), ("SS", "Strong safety")]),
+    ("Offense", [("QB", "Quarterback"), ("HB", "Running Back"), ("FB", "Fullback"), ("WR", "Wide Receiver"), ("TE", "Tight End"),
+                 ("LT", "Left Tackle"), ("LG", "Left Guard"), ("C", "Center"), ("RG", "Right Guard"), ("RT", "Right Tackle")]),
+    ("Defense", [("LEDG", "Left Edge"), ("DT", "Defensive Tackle"), ("REDG", "Right Edge"), ("SAM", "Strongside LB"), ("MIKE", "Middle LB"),
+                 ("WILL", "Weakside LB"), ("CB", "Cornerback"), ("FS", "Free Safety"), ("SS", "Strong Safety")]),
     ("Special Teams", [("K", "Kicker"), ("P", "Punter"), ("KR", "Kick Returner"), ("PR", "Punt Returner")]),
 ]
 
@@ -3049,7 +3060,7 @@ def schedule_options(state: dict, event_id: str, teams: Optional[dict] = None) -
             continue
         if fcs:
             out.append({"slug": slug, "name": fcs_names[slug], "conference": "FCS", "standing": "FCS", "accepts": True,
-                        "venue": "home", "why": "an FCS team comes to you"})
+                        "venue": "home", "why": "An FCS team comes to you"})
             continue
         other = _other_game(state, slug, g["week"], event_id)
         if not other or other["conference_game"] or other["played"] or teams[other["home"] if other["away"] == slug else other["away"]].get("fictional"):
@@ -3059,8 +3070,8 @@ def schedule_options(state: dict, event_id: str, teams: Optional[dict] = None) -
         theirs = "home" if venue == "away" else "away" if venue == "home" else "neutral"
         gap = programs.attract(state, me) - programs.attract(state, slug)
         accepts = theirs == "home" or gap >= -SCHEDULE_DRAW
-        why = ("they get the home game" if theirs == "home" else "a bigger draw than them" if gap > SCHEDULE_DRAW
-               else "a fair trade" if accepts else "they want the home game")
+        why = ("They get the home game" if theirs == "home" else "A bigger draw than them" if gap > SCHEDULE_DRAW
+               else "A fair trade" if accepts else "They want the home game")
         out.append({"slug": slug, "name": t["name"], "conference": t["conference"], "standing": programs.TIER_NAMES[programs.get(state, slug)["tier"]],
                     "accepts": accepts, "venue": venue, "why": why, "displaced": other["home"] if other["away"] == slug else other["away"]})
     out.sort(key=lambda o: (not o["accepts"], -programs.get(state, o["slug"])["rating"] if not fcs else 0, o["name"]))
@@ -3075,7 +3086,7 @@ def schedule_swap(state: dict, event_id: str, slug: str, teams: Optional[dict] =
     if o is None:
         raise ScheduleError(409, "that school is not available that week")
     if not o["accepts"]:
-        raise ScheduleError(409, f"{o['name']} said no: {o['why']}")
+        raise ScheduleError(409, f"{o['name']} said no: {o['why'][0].lower()}{o['why'][1:]}")
     g = state["games"][event_id]
     me = state["team"]
     teams = teams or load_teams()
@@ -3232,8 +3243,14 @@ def game_rivalry(state: dict, g: dict, after: bool = False) -> Optional[dict]:
         loser = g["away"] if winner == g["home"] else g["home"]
         before = rivalry_series(state, riv, g["week"], teams)
         kept = before["last"] and before["last"]["winner"] == winner
-        thing = riv.get("trophy") or "bragging rights"
-        out["headline"] = f"{teams[winner]['name']} {'keeps' if kept else 'takes'} the {thing}" + (f" from {teams[loser]['name']}" if not kept and riv.get("trophy") else "")
+        # the trophy by name: no "the" before one that has its own or is a name ("The Belt", "Paul Bunyan's Axe",
+        # "Floyd of Rosedale"); no trophy is "bragging rights"; who held it is known only from a meeting this season, so
+        # the first one "wins" it, never "takes it from"
+        trophy = riv.get("trophy") or ""
+        bare = trophy[4:] if trophy.startswith("The ") else trophy
+        thing = (bare if "'s " in bare or " of " in bare or bare in NO_ARTICLE_TROPHIES else f"the {bare}") if trophy else "bragging rights"
+        verb = "keeps" if kept else "takes" if before["last"] else "wins"
+        out["headline"] = f"{teams[winner]['name']} {verb} {thing}" + (f" from {teams[loser]['name']}" if verb == "takes" and trophy else "")
     return out
 
 
@@ -4079,7 +4096,10 @@ def season_review(state: dict) -> dict:
         finish = "National champion"
     elif any(l["kind"] == "playoff" for l in lines):
         last = [l for l in lines if l["kind"] == "playoff"][-1]
-        finish = "Lost the national championship game" if last["event_id"] == "cfp-final" else f"Lost in the {PLAYOFF_WEEKS.get(last['week'], 'playoff').lower()}"
+        if last["won"] and not state["done"]:         # still alive: it won its last playoff game (it read "Lost in the first round")
+            finish = f"Alive in the playoff: won in the {PLAYOFF_WEEKS.get(last['week'], 'playoff').lower()}"
+        else:
+            finish = "Lost the national championship game" if last["event_id"] == "cfp-final" else f"Lost in the {PLAYOFF_WEEKS.get(last['week'], 'playoff').lower()}"
     elif any(l["kind"] == "bowl" for l in lines):
         last = [l for l in lines if l["kind"] == "bowl"][-1]
         finish = f"{'Won' if last['won'] else 'Lost'} the {last['title']}"

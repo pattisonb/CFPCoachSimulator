@@ -2290,7 +2290,7 @@ HISTORY_ONLY = CONTACT_KINDS + ("learned",)   # his History's alone: never the w
 
 
 def _pester_line(prospect: str, school: str) -> str:
-    return f"{prospect} is tuning you out: he is not considering {school}, and more calls push him further away."
+    return f"{prospect} is tuning you out: he is not considering {school}, and more contact pushes him further away."
 
 
 def latest_report(state: dict) -> Optional[dict]:
@@ -3262,8 +3262,9 @@ def _hat(state: dict, pid: str, week: int, finalists: list) -> None:
     rc.setdefault("hats", {})[pid] = [day, finalists]
     names = [persona._school_name(s) for s in finalists]
     said = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}" if len(names) == 2 else f"{', '.join(names[:-1])}, and {names[-1]}"
+    from sim import news
     _event(state, "hat", pid, None, finalists=finalists, day=day,
-           line=f"He will pick from {said} at a hat ceremony in {season.week_label(day)}." if len(names) > 1 else f"He will announce at a hat ceremony in {season.week_label(day)}.")
+           line=f"He will pick from {said} at a hat ceremony {news._when(day)}." if len(names) > 1 else f"He will announce at a hat ceremony {news._when(day)}.")
 
 
 def _pair_ok(state: dict, slug: str, pid: str, offered: dict, room) -> bool:
@@ -3579,7 +3580,7 @@ def lost_line(e: dict, name) -> Optional[str]:
         return f"He went unsigned and took a walk-on spot at {to}."
     return {"no_room_roster": f"He signed with {to}: you had no roster spot left for him.",
             "no_room_group": f"He signed with {to}: you had no room left at {e.get('group') or 'his position'}.",
-            "passed": f"He signed with {to}: {to} passed you on his list at the week's end.",
+            "passed": f"He signed with {to}, who passed you on his list at the week's end.",
             "behind": f"He signed with {to}, who stood ahead of you on his list.",
             "no_offer": f"He signed with {to}: you never offered him."}.get(why, f"He signed with {to}.")
 
