@@ -38,6 +38,7 @@ data/market/
 dist/
 data/base_league.json
 data/base_meta.json
+data/base_development.json
 
 # Wikipedia draft pages cached by tools/fetch_drafts.py
 data/cache/
