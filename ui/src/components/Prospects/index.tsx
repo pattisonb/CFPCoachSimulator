@@ -19,7 +19,7 @@ import Dropdown from "../Dropdown/index.tsx";
 import ScoutMark from "../ScoutMark/index.tsx";
 import ProspectCard, { Stars, statusOf, transferLine } from "../ProspectCard/index.tsx";
 import MinMax from "../MinMax/index.tsx";
-import TileMap from "../TileMap/index.tsx";
+import TileMap, { MapMark } from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
@@ -384,6 +384,19 @@ export default function Prospects({
               </span>
             </div>
           )}
+          {/* the map's column folded away: this button, in the page's corner, brings it back (no rail down the side) */}
+          {sideShut && !picked && (
+            <button
+              type="button"
+              className="prospects__unfold"
+              title={m.showSide}
+              aria-label={m.showSide}
+              aria-expanded={false}
+              onClick={() => setSideShut(false)}
+            >
+              <MapMark />
+            </button>
+          )}
         </header>
 
         <div className="prospects__tools">
@@ -689,18 +702,7 @@ export default function Prospects({
               load();
             }}
           />
-        ) : sideShut ? (
-          <button
-            type="button"
-            className="prospects__rail"
-            title={m.showSideTip}
-            aria-expanded={false}
-            onClick={() => setSideShut(false)}
-          >
-            <CaretLeft size={16} weight="bold" aria-hidden="true" />
-            <span>{m.showSide}</span>
-          </button>
-        ) : (
+        ) : sideShut ? null : (
           <>
             <section className="prospects__panel">
               <h2 className="prospects__panel-title">

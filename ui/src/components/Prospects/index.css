@@ -28,10 +28,10 @@
 .prospects__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--s3);
-  margin-bottom: var(--s1);
+  gap: var(--s2) var(--s3);
+  min-height: 36px; /* the map button's, so the row does not move when it comes and goes */
 }
 
 .prospects__lede {
@@ -41,8 +41,12 @@
 }
 
 .prospects__class {
-  display: grid;
-  justify-items: end;
+  display: flex; /* one line: the label, the count, then the footprint */
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0 var(--s3);
+  margin-left: auto; /* it keeps the right, with or without the map button after it */
   text-align: right;
 }
 
@@ -494,6 +498,7 @@
 
 /* the map and the list's heading stay put; only the list under them scrolls, to the column's foot */
 .prospects__side:has(.prospects__panel--fill) {
+  scrollbar-gutter: auto; /* nothing scrolls here but the list, which keeps its own */
   grid-template-rows: auto minmax(0, 1fr);
   align-content: stretch;
   overflow: hidden;
@@ -541,44 +546,33 @@
   vertical-align: -1px;
 }
 
-/* the column folded away: a rail down the side that opens it again, and the list takes the room */
+/* the column folded away: it takes no room at all, and a map button in the page's corner opens it again */
 .prospects.is-side-shut {
-  --prospects-side: 40px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .prospects.is-side-shut .prospects__side {
-  scrollbar-gutter: auto;
-  grid-template-rows: minmax(0, 1fr);
-  align-content: stretch;
-  overflow: hidden;
-  padding: 0;
+  display: none;
 }
 
-.prospects__rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s2);
-  width: 100%;
-  height: 100%;
-  padding: var(--s4) 0;
-  background: none;
-  color: var(--ink-soft);
-  border: 0;
-  font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+.prospects__unfold {
+  display: grid;
+  flex: none;
+  place-items: center;
+  align-self: center;
+  width: 44px;
+  height: 36px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
   cursor: pointer;
 }
 
-.prospects__rail span {
-  writing-mode: vertical-rl;
-}
-
-.prospects__rail:hover {
-  background: var(--paper-hi);
-  color: var(--ink);
+.prospects__unfold:hover {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 .prospects__top {
@@ -693,4 +687,6 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  margin-right: calc(-1 * var(--s4)); /* its scrollbar sits at the column's edge, not a gutter in from it */
+  padding-right: var(--s2);
 }
