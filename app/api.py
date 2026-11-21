@@ -495,22 +495,22 @@ def _where(exc: BaseException) -> str:
     return f"{exc} ({f.name}, {os.path.basename(f.filename)}:{f.lineno})"
 
 
-NEXT_GAME_STAGE = "Reading your next game"
+NEXT_GAME_STAGE = "Reading the news"
 WARM_NEWS_WEEKS = 2    # *tune* how many finished weeks of league news the crawl asks for (ui Ticker NEWS_WEEKS)
 
 
 def _warm_next_game(state: dict, report: Callable[[str], None] | None) -> None:
     """The run is over: what the page asks for the moment it ends is worked out here, as the run's last stage, so it
-    answers at once: your next game's read (season.game_preview simulates it twenty times) and the league's news for
-    the weeks the crawl shows (it reads every box score of a week). In the browser the page's other reads queued
-    behind these for seconds after every week. Reads only: a failure here is the page's to meet when it asks."""
+    answers at once: the league's news for the weeks the crawl shows (it reads every box score of a week). In the
+    browser the page's other reads queued behind it for seconds after every week. Reads only: a failure here is the
+    page's to meet when it asks. (Your next game's Win Chance was read here too, twenty sims of the game: the player
+    had it taken out.)"""
     if state["done"]:
         return
     _job["stage"], _job["games_done"], _job["games_total"] = NEXT_GAME_STAGE, None, None
     if report is not None:
         report(json.dumps(_status(state, _job.get("since"))))
     try:
-        season.game_preview(state, state["team"])
         news.league_news(state, state["current_week"] - WARM_NEWS_WEEKS)
     except Exception:  # noqa: BLE001
         pass

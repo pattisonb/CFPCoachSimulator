@@ -161,26 +161,36 @@ async function start(init) {
 // this one message with a 500 (a reply that could not be parsed, say); the worker stays up.
 // The save reaches IndexedDB before the page hears the answer: the page may reload on it (the
 // offseason's last step), and a reload ends this worker mid-write.
+// Every answer says where its time went (`ms`: the game's own work, turning its answer into an object, the save), for
+// tools/speed_sweep.js and for anyone reading the worker's messages in the browser's tools.
 async function handle(msg) {
   let reply, transfer = [];
+  const ms = { run: 0, parse: 0, save: 0 };
+  const t0 = performance.now();
+  const saved = async () => { const t = performance.now(); await persist(); ms.save = Math.round(performance.now() - t); };
   try {
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
+    ms.run = Math.round(performance.now() - t0);
     if (typeof out === "string") {
+      const t1 = performance.now();
       const r = JSON.parse(out);
+      ms.parse = Math.round(performance.now() - t1);
+      ms.bytes = out.length;
       reply = r.ok ? { id: msg.id, ok: true, status: 200, result: r.result } : { id: msg.id, ok: false, status: r.status, message: r.message };
-      if (r.changed) await persist();
+      if (r.changed) await saved();
     } else {
       const bytes = new Uint8Array(out.toJs());
       out.destroy();
       reply = { id: msg.id, ok: true, status: 200, bytes };
       transfer = [bytes.buffer];
-      if (api.changed()) await persist();
+      if (api.changed()) await saved();
     }
   } catch (err) {
     console.error(err);
     reply = { id: msg.id, ok: false, status: 500, message: String((err && err.message) || err) };
     try { if (api.changed()) await persist(); } catch (e) { console.error(e); }
   }
+  reply.ms = ms;
   postMessage(reply, transfer);
 }
 
@@ -189,10 +199,14 @@ async function step() {
   let last = null;
   const report = (s) => { last = s; postMessage({ kind: "status", status: JSON.parse(s), busy: true }); };
   if (breakStep) { await new Promise((r) => setTimeout(r, 300)); throw new Error("the sim step is switched off"); }   // calls sent meanwhile are in flight
+  const t0 = performance.now();
   const out = api.step(report);
   if (out && out.destroy) out.destroy();
+  const t1 = performance.now();
   if (api.changed()) await persist();            // the week is in the store before the page is told it is over
-  if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false });
+  const ms = { run: Math.round(t1 - t0), save: Math.round(performance.now() - t1) };      // where the step's time went
+  if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false, ms });
+  else postMessage({ kind: "step", ms });
   await new Promise((r) => setTimeout(r, 0));      // a macrotask: messages sent meanwhile (pause, status) are served next
 }
 

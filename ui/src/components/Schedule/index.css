@@ -179,32 +179,6 @@
   max-width: 360px;
 }
 
-.sched-detail__odds {
-  flex: 1;
-  min-width: 240px;
-  max-width: 520px;
-}
-
-.sched-detail__odds-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2);
-}
-
-.sched-detail__big {
-  font-size: var(--t-2xl);
-  line-height: 1;
-}
-
-.sched-detail__big.is-ahead {
-  color: var(--good);
-}
-
-.sched-detail__big.is-behind {
-  color: var(--warn);
-}
-
 /* the line score: quarters, overtime and the total */
 .sched-line {
   border-collapse: collapse;
