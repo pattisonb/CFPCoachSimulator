@@ -2,7 +2,7 @@
 
 Every line starts with the id to copy back exactly.
 
-## A. Coaches (20): all real, all worth finding
+## A. Coaches (19): all real, all worth finding
 
 id | name | school | job
 
@@ -18,8 +18,7 @@ coach:Kane Ioane | Kane Ioane | Nevada | defensive coordinator
 coach:L.D. Scott | L.D. Scott | Coastal Carolina | defensive coordinator
 coach:Mark Cala | Mark Cala | Missouri State | offensive coordinator
 coach:Nick Petrino | Nick Petrino | Coastal Carolina | offensive coordinator
-coach:Rob Harley | Rob Harley | Northern Illinois | defensive coordinator
-coach:Rob Harley | Rob Harley | Northern Illinois | head coach
+coach:Rob Harley | Rob Harley | Northern Illinois | head coach and defensive coordinator
 coach:Ryan Beard | Ryan Beard | Coastal Carolina | head coach
 coach:Scotty Walden | Scotty Walden | UTEP | head coach
 coach:Sonny Cumbie | Sonny Cumbie | Louisiana Tech | head coach
