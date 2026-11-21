@@ -163,7 +163,7 @@
    ],
    "WR": [
     "matthew-coleman",
-    "jayson-moses",
+    "drey-garner",
     "jace-wilson"
    ],
    "TE": [
@@ -176,7 +176,7 @@
     "hayden-frazier"
    ],
    "C": [
-    "josh-hector"
+    "jeremiah-ponce"
    ],
    "RG": [
     "vae-soifua"
@@ -209,7 +209,7 @@
     "boogsie-silvera"
    ],
    "SS": [
-    "ryan-cartheon"
+    "noah-king"
    ]
   },
   "special_teams": {
@@ -217,7 +217,7 @@
     "grant-meadors"
    ],
    "P": [
-    "wyatt-drag"
+    "hamish-adams"
    ],
    "KR": [
     "elias-mullican"
@@ -246,10 +246,10 @@
   "FB": [],
   "WR": [
    "matthew-coleman",
-   "jayson-moses",
+   "drey-garner",
    "jace-wilson",
    "onterrio-smith-jr",
-   "javion-ford",
+   "matthew-auau",
    "dezmyn-hardy",
    "kenyon-shabazz",
    "guy-fernandez-iii",
@@ -259,7 +259,7 @@
    "jordan-williams",
    "kyle-koontz",
    "cedric-anton",
-   "trevor-nelson",
+   "elijah-huddle",
    "kellan-sutton"
   ],
   "LT": [
@@ -274,7 +274,7 @@
    "jamin-guilbert"
   ],
   "C": [
-   "josh-hector",
+   "jeremiah-ponce",
    "brandon-sousa",
    "luke-slater"
   ],
@@ -286,7 +286,7 @@
   "RT": [
    "jeremiah-stallworth",
    "garrison-blank",
-   "kendrick-thompson"
+   "shontrail-key"
   ],
   "LEDG": [
    "xavier-williams",
@@ -306,7 +306,7 @@
   "REDG": [
    "fata-puloka",
    "austin-chambers",
-   "braxton-craver",
+   "austin-aten",
    "dylan-gooden"
   ],
   "SAM": [
@@ -339,7 +339,7 @@
    "warren-smith-jr"
   ],
   "SS": [
-   "ryan-cartheon",
+   "noah-king",
    "miles-tucker",
    "diesel-gordon",
    "donovan-turner",
@@ -347,10 +347,10 @@
   ],
   "K": [
    "grant-meadors",
-   "josiah-stovall"
+   "saul-marks"
   ],
   "P": [
-   "wyatt-drag",
+   "hamish-adams",
    "jay-brockhaus",
    "mike-melanson"
   ]
@@ -3765,11 +3765,11 @@
    }
   },
   {
-   "slug": "jayson-moses",
+   "slug": "drey-garner",
    "position": "WR",
    "class": "SORS",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/jayson-moses/",
+   "url": null,
    "name": "Drey Garner",
    "position_name": "Wide Receiver",
    "jersey": "14",
@@ -4606,11 +4606,11 @@
    }
   },
   {
-   "slug": "javion-ford",
+   "slug": "matthew-auau",
    "position": "WR",
    "class": "FR",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/javion-ford/",
+   "url": null,
    "name": "Matthew Auau",
    "position_name": "Wide Receiver",
    "jersey": "81",
@@ -6877,11 +6877,11 @@
    }
   },
   {
-   "slug": "trevor-nelson",
+   "slug": "elijah-huddle",
    "position": "TE",
    "class": "SR",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/trevor-nelson/",
+   "url": null,
    "name": "Elijah Huddle",
    "position_name": "Tight End",
    "jersey": "85",
@@ -9389,11 +9389,11 @@
    }
   },
   {
-   "slug": "josh-hector",
+   "slug": "jeremiah-ponce",
    "position": "C",
    "class": "SORS",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/josh-hector/",
+   "url": null,
    "name": "Jeremiah Ponce",
    "position_name": "Center",
    "jersey": "56",
@@ -11590,11 +11590,11 @@
    }
   },
   {
-   "slug": "kendrick-thompson",
+   "slug": "shontrail-key",
    "position": "RT",
    "class": "SRRS",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/kendrick-thompson/",
+   "url": null,
    "name": "Shontrail Key",
    "position_name": "Right Tackle",
    "jersey": "54",
@@ -15420,11 +15420,11 @@
    }
   },
   {
-   "slug": "braxton-craver",
+   "slug": "austin-aten",
    "position": "REDG",
    "class": "FR",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/braxton-craver/",
+   "url": null,
    "name": "Austin Aten",
    "position_name": "Right Edge",
    "jersey": "94",
@@ -21335,11 +21335,11 @@
    }
   },
   {
-   "slug": "ryan-cartheon",
+   "slug": "noah-king",
    "position": "SS",
    "class": "FR",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/ryan-cartheon/",
+   "url": null,
    "name": "Noah King",
    "position_name": "Strong Safety",
    "jersey": "27",
@@ -23014,11 +23014,11 @@
    }
   },
   {
-   "slug": "josiah-stovall",
+   "slug": "saul-marks",
    "position": "K",
    "class": "JR",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/josiah-stovall/",
+   "url": null,
    "name": "Saul Marks",
    "position_name": "Kicker",
    "jersey": "9",
@@ -23254,11 +23254,11 @@
    }
   },
   {
-   "slug": "wyatt-drag",
+   "slug": "hamish-adams",
    "position": "P",
    "class": "SORS",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/wyatt-drag/",
+   "url": null,
    "name": "Hamish Adams",
    "position_name": "Punter",
    "jersey": "37",

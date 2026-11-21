@@ -223,7 +223,7 @@
     "scott-starzyk"
    ],
    "P": [
-    "brayden-lambert"
+    "hayden-craig"
    ],
    "KR": [
     "eugene-wilson-iii"
@@ -237,12 +237,12 @@
   "QB": [
    "sam-leavitt",
    "landen-clark",
-   "evan-dericco"
+   "husan-longstreet"
   ],
   "HB": [
    "harlem-berry",
    "caden-durham",
-   "ceecee-hall",
+   "joseph-ebun",
    "dilin-jones",
    "rod-gainey-jr",
    "stacy-gage"
@@ -272,14 +272,14 @@
   ],
   "LT": [
    "jordan-seaton",
-   "zeek-waymore",
+   "ryan-miret",
    "sean-thompkins-jr",
    "brett-bordelon"
   ],
   "LG": [
    "bo-bordelon",
    "devin-harper",
-   "kwame-franklin"
+   "braden-augustus"
   ],
   "C": [
    "braelin-moore",
@@ -288,7 +288,7 @@
   "RG": [
    "aliou-bah",
    "jaquan-sprinkle",
-   "isaiah-webb"
+   "solomon-thomas"
   ],
   "RT": [
    "weston-davis",
@@ -307,7 +307,7 @@
    "lamar-brown",
    "malik-blocton",
    "stephiylan-green",
-   "terrence-fulton-jr",
+   "joey-august",
    "deuce-geralds",
    "shone-washington",
    "achilles-woods"
@@ -357,7 +357,7 @@
    "aidan-corbello"
   ],
   "P": [
-   "brayden-lambert",
+   "hayden-craig",
    "grant-chadwick"
   ]
  },
@@ -914,11 +914,11 @@
    }
   },
   {
-   "slug": "evan-dericco",
+   "slug": "husan-longstreet",
    "position": "QB",
    "class": "SO",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/evan-dericco/",
+   "url": null,
    "name": "Husan Longstreet",
    "position_name": "Quarterback",
    "jersey": "8",
@@ -1719,11 +1719,11 @@
    }
   },
   {
-   "slug": "ceecee-hall",
+   "slug": "joseph-ebun",
    "position": "HB",
    "class": "JR",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/ceecee-hall/",
+   "url": null,
    "name": "Joseph Ebun",
    "position_name": "Halfback",
    "jersey": "24",
@@ -8013,11 +8013,11 @@
    }
   },
   {
-   "slug": "zeek-waymore",
+   "slug": "ryan-miret",
    "position": "LT",
    "class": "SORS",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/zeek-waymore/",
+   "url": null,
    "name": "Ryan Miret",
    "position_name": "Left Tackle",
    "jersey": "51",
@@ -9398,11 +9398,11 @@
    }
   },
   {
-   "slug": "kwame-franklin",
+   "slug": "braden-augustus",
    "position": "LG",
    "class": "FR",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/kwame-franklin/",
+   "url": null,
    "name": "Braden Augustus",
    "position_name": "Left Guard",
    "jersey": "74",
@@ -10742,11 +10742,11 @@
    }
   },
   {
-   "slug": "isaiah-webb",
+   "slug": "solomon-thomas",
    "position": "RG",
    "class": "SORS",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/isaiah-webb/",
+   "url": null,
    "name": "Solomon Thomas",
    "position_name": "Right Guard",
    "jersey": "66",
@@ -14293,11 +14293,11 @@
    }
   },
   {
-   "slug": "terrence-fulton-jr",
+   "slug": "joey-august",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/terrence-fulton-jr/",
+   "url": null,
    "name": "Joey August",
    "position_name": "Defensive Tackle",
    "jersey": "87",
@@ -23177,11 +23177,11 @@
    }
   },
   {
-   "slug": "brayden-lambert",
+   "slug": "hayden-craig",
    "position": "P",
    "class": "FRRS",
    "team_slug": "lsu",
-   "url": "https://collegefootball.gg/players/brayden-lambert/",
+   "url": null,
    "name": "Hayden Craig",
    "position_name": "Punter",
    "jersey": "99",

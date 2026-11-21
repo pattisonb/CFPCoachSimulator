@@ -233,12 +233,12 @@
   "QB": [
    "jayden-denegal",
    "stone-saunders",
-   "jelani-canady"
+   "brady-campbell"
   ],
   "HB": [
    "lucky-sutton",
    "christian-washington",
-   "sterling-westmoreland",
+   "josiah-lucas",
    "javion-kinnard",
    "jordin-thomas"
   ],
@@ -263,7 +263,7 @@
    "kime-fangupo",
    "jackson-ford-san-diego-st",
    "ryan-wolfer",
-   "bruce-sheldon"
+   "jack-ellis"
   ],
   "LT": [
    "joseph-borjon",
@@ -283,7 +283,7 @@
   "RG": [
    "kalan-ellis",
    "isaac-lucas",
-   "taj-abraham"
+   "jarvis-williams"
   ],
   "RT": [
    "dennis-jones",
@@ -350,7 +350,7 @@
   "K": [
    "cooper-dileva",
    "noah-serna",
-   "alexander-gage"
+   "tyler-prasuhn"
   ],
   "P": [
    "tashi-dorje"
@@ -910,11 +910,11 @@
    }
   },
   {
-   "slug": "jelani-canady",
+   "slug": "brady-campbell",
    "position": "QB",
    "class": "FR",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/jelani-canady/",
+   "url": null,
    "name": "Brady Campbell",
    "position_name": "Quarterback",
    "jersey": "41",
@@ -1729,11 +1729,11 @@
    }
   },
   {
-   "slug": "sterling-westmoreland",
+   "slug": "josiah-lucas",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/sterling-westmoreland/",
+   "url": null,
    "name": "Josiah Lucas",
    "position_name": "Halfback",
    "jersey": "23",
@@ -7423,11 +7423,11 @@
    }
   },
   {
-   "slug": "bruce-sheldon",
+   "slug": "jack-ellis",
    "position": "TE",
    "class": "SO",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/bruce-sheldon/",
+   "url": null,
    "name": "Jack Ellis",
    "position_name": "Tight End",
    "jersey": "87",
@@ -10757,11 +10757,11 @@
    }
   },
   {
-   "slug": "taj-abraham",
+   "slug": "jarvis-williams",
    "position": "RG",
    "class": "SO",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/taj-abraham/",
+   "url": null,
    "name": "Jarvis Williams",
    "position_name": "Right Guard",
    "jersey": "62",
@@ -23523,11 +23523,11 @@
    }
   },
   {
-   "slug": "alexander-gage",
+   "slug": "tyler-prasuhn",
    "position": "K",
    "class": "FR",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/alexander-gage/",
+   "url": null,
    "name": "Tyler Prasuhn",
    "position_name": "Kicker",
    "jersey": "80",

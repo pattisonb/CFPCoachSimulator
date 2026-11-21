@@ -202,7 +202,7 @@
     "keno-jones"
    ],
    "CB": [
-    "andrew-clifford",
+    "antonious-steele",
     "shemar-welch",
     "marlin-odom"
    ],
@@ -277,17 +277,17 @@
   "C": [
    "tyler-cappi",
    "tyler-bell",
-   "kletus-watts"
+   "parks-glaze"
   ],
   "RG": [
    "luke-petit",
    "sharvon-pierre",
-   "justin-mills"
+   "trinton-pritchett"
   ],
   "RT": [
    "jordon-jones",
    "antwone-breland",
-   "sergio-sheard",
+   "corey-dudley",
    "caleb-ash"
   ],
   "LEDG": [
@@ -306,9 +306,9 @@
   ],
   "REDG": [
    "donnie-smith",
-   "nicholas-walton",
-   "deion-griffin",
-   "andrew-hill"
+   "kendall-roseberry",
+   "delvin-whitaker",
+   "dontaye-bush"
   ],
   "SAM": [
    "doug-nelson",
@@ -328,7 +328,7 @@
    "jeremiah-alvis"
   ],
   "CB": [
-   "andrew-clifford",
+   "antonious-steele",
    "shemar-welch",
    "marlin-odom",
    "jordan-turner",
@@ -349,11 +349,11 @@
   "K": [
    "ethan-head",
    "hayden-wolfe",
-   "justin-irons"
+   "jaden-tynes"
   ],
   "P": [
    "evan-crenshaw",
-   "case-nash"
+   "austin-lewis"
   ]
  },
  "roster_size": 85,
@@ -9968,11 +9968,11 @@
    }
   },
   {
-   "slug": "kletus-watts",
+   "slug": "parks-glaze",
    "position": "C",
    "class": "FR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/kletus-watts/",
+   "url": null,
    "name": "Parks Glaze",
    "position_name": "Center",
    "jersey": "75",
@@ -10762,11 +10762,11 @@
    }
   },
   {
-   "slug": "justin-mills",
+   "slug": "trinton-pritchett",
    "position": "RG",
    "class": "SORS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/justin-mills/",
+   "url": null,
    "name": "Trinton Pritchett",
    "position_name": "Right Guard",
    "jersey": "67",
@@ -11537,11 +11537,11 @@
    }
   },
   {
-   "slug": "sergio-sheard",
+   "slug": "corey-dudley",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/sergio-sheard/",
+   "url": null,
    "name": "Corey Dudley",
    "position_name": "Right Tackle",
    "jersey": "79",
@@ -15039,11 +15039,11 @@
    }
   },
   {
-   "slug": "nicholas-walton",
+   "slug": "kendall-roseberry",
    "position": "REDG",
    "class": "SORS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/nicholas-walton/",
+   "url": null,
    "name": "Kendall Roseberry",
    "position_name": "Right Edge",
    "jersey": "52",
@@ -15295,11 +15295,11 @@
    }
   },
   {
-   "slug": "andrew-hill",
+   "slug": "dontaye-bush",
    "position": "REDG",
    "class": "FR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/andrew-hill/",
+   "url": null,
    "name": "Dontaye Bush",
    "position_name": "Right Edge",
    "jersey": "34",
@@ -15554,11 +15554,11 @@
    }
   },
   {
-   "slug": "deion-griffin",
+   "slug": "delvin-whitaker",
    "position": "REDG",
    "class": "FR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/deion-griffin/",
+   "url": null,
    "name": "Delvin Whitaker",
    "position_name": "Right Edge",
    "jersey": "98",
@@ -18946,11 +18946,11 @@
    }
   },
   {
-   "slug": "andrew-clifford",
+   "slug": "antonious-steele",
    "position": "CB",
    "class": "SR",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/andrew-clifford/",
+   "url": null,
    "name": "Antonious Steele",
    "position_name": "Cornerback",
    "jersey": "16",
@@ -23101,11 +23101,11 @@
    }
   },
   {
-   "slug": "justin-irons",
+   "slug": "jaden-tynes",
    "position": "K",
    "class": "SO",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/justin-irons/",
+   "url": null,
    "name": "Jaden Tynes",
    "position_name": "Kicker",
    "jersey": "20",
@@ -23593,11 +23593,11 @@
    }
   },
   {
-   "slug": "case-nash",
+   "slug": "austin-lewis",
    "position": "P",
    "class": "JRRS",
    "team_slug": "troy",
-   "url": "https://collegefootball.gg/players/case-nash/",
+   "url": null,
    "name": "Austin Lewis",
    "position_name": "Punter",
    "jersey": "49",

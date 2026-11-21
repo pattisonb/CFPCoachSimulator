@@ -162,7 +162,7 @@
     "lanorris-sellers"
    ],
    "HB": [
-    "simon-mcallister"
+    "neil-salvage-iii"
    ],
    "WR": [
     "nyck-harbor",
@@ -237,7 +237,7 @@
    "lucian-anderson-iii"
   ],
   "HB": [
-   "simon-mcallister",
+   "neil-salvage-iii",
    "christian-clark",
    "matt-fuller",
    "jawarn-howell",
@@ -284,7 +284,7 @@
    "emmanuel-poku",
    "adedamola-ajidahun",
    "markee-anderson",
-   "phil-labelle",
+   "jake-recker",
    "anthony-baxter"
   ],
   "RT": [
@@ -313,14 +313,14 @@
    "anthony-addison",
    "caleb-herring",
    "julian-walker",
-   "zachary-grimes"
+   "kobby-sakyi-prah"
   ],
   "SAM": [],
   "MIKE": [
    "jayr-johnson",
    "donovan-darden",
    "shawn-murphy",
-   "tyler-vance"
+   "a-j-holloway"
   ],
   "WILL": [
    "justin-okoronkwo",
@@ -342,7 +342,7 @@
    "peyton-williams",
    "gerald-kilgore",
    "kendall-daniels-jr",
-   "solomon-coles"
+   "jackson-burger"
   ],
   "SS": [
    "david-bucey",
@@ -1224,11 +1224,11 @@
    }
   },
   {
-   "slug": "simon-mcallister",
+   "slug": "neil-salvage-iii",
    "position": "HB",
    "class": "SO",
    "team_slug": "south-carolina",
-   "url": "https://collegefootball.gg/players/simon-mcallister/",
+   "url": null,
    "name": "Neil Salvage III",
    "position_name": "Halfback",
    "jersey": "31",
@@ -10709,11 +10709,11 @@
    }
   },
   {
-   "slug": "phil-labelle",
+   "slug": "jake-recker",
    "position": "RG",
    "class": "SO",
    "team_slug": "south-carolina",
-   "url": "https://collegefootball.gg/players/phil-labelle/",
+   "url": null,
    "name": "Jake Recker",
    "position_name": "Right Guard",
    "jersey": "70",
@@ -16449,11 +16449,11 @@
    }
   },
   {
-   "slug": "zachary-grimes",
+   "slug": "kobby-sakyi-prah",
    "position": "REDG",
    "class": "FR",
    "team_slug": "south-carolina",
-   "url": "https://collegefootball.gg/players/zachary-grimes/",
+   "url": null,
    "name": "Kobby Sakyi-Prah",
    "position_name": "Right Edge",
    "jersey": "41",
@@ -17567,11 +17567,11 @@
    }
   },
   {
-   "slug": "tyler-vance",
+   "slug": "a-j-holloway",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "south-carolina",
-   "url": "https://collegefootball.gg/players/tyler-vance/",
+   "url": null,
    "name": "A.J. Holloway",
    "position_name": "Mike Linebacker",
    "jersey": "32",
@@ -22034,11 +22034,11 @@
    }
   },
   {
-   "slug": "solomon-coles",
+   "slug": "jackson-burger",
    "position": "FS",
    "class": "FR",
    "team_slug": "south-carolina",
-   "url": "https://collegefootball.gg/players/solomon-coles/",
+   "url": null,
    "name": "Jackson Burger",
    "position_name": "Free Safety",
    "jersey": "35",

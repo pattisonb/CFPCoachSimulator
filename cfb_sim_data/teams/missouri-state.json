@@ -291,7 +291,7 @@
    "josh-lukusa",
    "dylan-brooks",
    "caden-wiest",
-   "bryson-reader"
+   "maurice-jones-jr"
   ],
   "DT": [
    "markell-chapman",
@@ -334,7 +334,7 @@
    "joel-kpassou",
    "floyd-williams",
    "gionni-mcbride",
-   "rudy-randolph",
+   "joseph-arnold",
    "darryon-taylor",
    "malik-ganaway"
   ],
@@ -12145,11 +12145,11 @@
    }
   },
   {
-   "slug": "bryson-reader",
+   "slug": "maurice-jones-jr",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "missouri-state",
-   "url": "https://collegefootball.gg/players/bryson-reader/",
+   "url": null,
    "name": "Maurice Jones Jr.",
    "position_name": "Left Edge",
    "jersey": "59",
@@ -21089,11 +21089,11 @@
    }
   },
   {
-   "slug": "rudy-randolph",
+   "slug": "joseph-arnold",
    "position": "CB",
    "class": "SO",
    "team_slug": "missouri-state",
-   "url": "https://collegefootball.gg/players/rudy-randolph/",
+   "url": null,
    "name": "Joseph Arnold",
    "position_name": "Cornerback",
    "jersey": "28",

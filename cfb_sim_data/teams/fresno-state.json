@@ -222,7 +222,7 @@
     "manaki-watanabe"
    ],
    "P": [
-    "taylor-jacobsen"
+    "clay-lawrence"
    ],
    "KR": [
     "rayshon-luke"
@@ -274,8 +274,8 @@
   "LG": [
    "edward-fonua",
    "gino-quinones",
-   "conner-tunnell",
-   "spencer-fonoti"
+   "ethan-dasmann",
+   "alex-rivera"
   ],
   "C": [
    "braylan-henderson",
@@ -308,7 +308,7 @@
   "REDG": [
    "sione-noa",
    "dylan-hampsten",
-   "darrin-watkins",
+   "bryson-harrington",
    "brendan-huddleston"
   ],
   "SAM": [
@@ -322,7 +322,7 @@
   ],
   "WILL": [
    "logan-studt",
-   "gerome-granger",
+   "zephaniah-sesay",
    "justin-johnson"
   ],
   "CB": [
@@ -352,11 +352,11 @@
   ],
   "K": [
    "manaki-watanabe",
-   "gage-bloom",
-   "david-stands"
+   "connor-tripp",
+   "ryan-kobzeff"
   ],
   "P": [
-   "taylor-jacobsen",
+   "clay-lawrence",
    "nick-verdugo"
   ]
  },
@@ -8490,11 +8490,11 @@
    }
   },
   {
-   "slug": "conner-tunnell",
+   "slug": "ethan-dasmann",
    "position": "LG",
    "class": "SO",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/conner-tunnell/",
+   "url": null,
    "name": "Ethan Dasmann",
    "position_name": "Left Guard",
    "jersey": "79",
@@ -8743,11 +8743,11 @@
    }
   },
   {
-   "slug": "spencer-fonoti",
+   "slug": "alex-rivera",
    "position": "LG",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/spencer-fonoti/",
+   "url": null,
    "name": "Alex Rivera",
    "position_name": "Left Guard",
    "jersey": "59",
@@ -14419,11 +14419,11 @@
    }
   },
   {
-   "slug": "darrin-watkins",
+   "slug": "bryson-harrington",
    "position": "REDG",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/darrin-watkins/",
+   "url": null,
    "name": "Bryson Harrington",
    "position_name": "Right Edge",
    "jersey": "93",
@@ -16637,11 +16637,11 @@
    }
   },
   {
-   "slug": "gerome-granger",
+   "slug": "zephaniah-sesay",
    "position": "WILL",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/gerome-granger/",
+   "url": null,
    "name": "Zephaniah Sesay",
    "position_name": "Will Linebacker",
    "jersey": "45",
@@ -22716,11 +22716,11 @@
    }
   },
   {
-   "slug": "gage-bloom",
+   "slug": "connor-tripp",
    "position": "K",
    "class": "SORS",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/gage-bloom/",
+   "url": null,
    "name": "Connor Tripp",
    "position_name": "Kicker",
    "jersey": "45",
@@ -22954,11 +22954,11 @@
    }
   },
   {
-   "slug": "david-stands",
+   "slug": "ryan-kobzeff",
    "position": "K",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/david-stands/",
+   "url": null,
    "name": "Ryan Kobzeff",
    "position_name": "Kicker",
    "jersey": "40",
@@ -23201,11 +23201,11 @@
    }
   },
   {
-   "slug": "taylor-jacobsen",
+   "slug": "clay-lawrence",
    "position": "P",
    "class": "SR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/taylor-jacobsen/",
+   "url": null,
    "name": "Clay Lawrence",
    "position_name": "Punter",
    "jersey": "49",

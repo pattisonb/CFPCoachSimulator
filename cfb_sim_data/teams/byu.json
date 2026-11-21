@@ -216,16 +216,16 @@
   },
   "special_teams": {
    "K": [
-    "chip-stewart"
+    "brody-laga"
    ],
    "P": [
-    "nick-orr"
+    "cole-shulman"
    ],
    "KR": [
     "tiger-bachmeier"
    ],
    "PR": [
-    "luke-heller"
+    "fisher-ingersoll"
    ]
   }
  },
@@ -235,7 +235,7 @@
    "patrick-anderson",
    "treyson-bourguet",
    "enoch-watson",
-   "stephen-wakefield",
+   "john-sanders",
    "dorian-patterson"
   ],
   "HB": [
@@ -243,7 +243,7 @@
    "sione-moa",
    "jovesa-damuni",
    "preston-rex",
-   "jarvis-wilburn"
+   "devaughn-eka"
   ],
   "FB": [],
   "WR": [
@@ -252,7 +252,7 @@
    "tiger-bachmeier",
    "tei-nacua",
    "reggie-frischknecht",
-   "luke-heller"
+   "fisher-ingersoll"
   ],
   "TE": [
    "walker-lyons",
@@ -264,26 +264,26 @@
   ],
   "LT": [
    "andrew-gentry",
-   "frank-phelps",
-   "bobby-dickerson",
-   "jefferson-reed"
+   "jeff-lewis",
+   "jake-alexander",
+   "caden-mckee"
   ],
   "LG": [
    "paki-finau",
    "sonny-makasini",
-   "kadeem-thompkins"
+   "bott-mulitalo"
   ],
   "C": [
    "bruce-mitchell",
    "trevor-pay",
-   "dalton-reynolds",
-   "jared-thurston"
+   "brigham-alexander",
+   "siosiua-latu-finau"
   ],
   "RG": [
    "kyle-sfarcioc",
    "joe-brown",
    "trevin-ostler",
-   "matthew-bowie"
+   "strantz-mangisi"
   ],
   "RT": [
    "jr-sia",
@@ -308,7 +308,7 @@
    "hunter-clegg",
    "kinilau-fonohema",
    "kendal-wall",
-   "will-bartow"
+   "siosefa-brown"
   ],
   "SAM": [
    "isaiah-glasker",
@@ -325,7 +325,7 @@
    "cade-uluave",
    "jake-clifton",
    "mitchell-burton",
-   "justin-burnett"
+   "owen-borg"
   ],
   "CB": [
    "evan-johnson",
@@ -333,7 +333,7 @@
    "jayven-williams",
    "jonathan-kabeya",
    "kevin-doe",
-   "nick-dell",
+   "seth-shigg",
    "jordyn-criss",
    "cannon-devries"
   ],
@@ -345,15 +345,15 @@
   "SS": [
    "faletau-satuala",
    "matthias-leach",
-   "terrelle-flanagan",
-   "john-newman"
+   "tj-johnson-byu",
+   "crew-clark"
   ],
   "K": [
-   "chip-stewart",
+   "brody-laga",
    "matthias-dunn"
   ],
   "P": [
-   "nick-orr",
+   "cole-shulman",
    "fuller-shurtz"
   ]
  },
@@ -1451,11 +1451,11 @@
    }
   },
   {
-   "slug": "stephen-wakefield",
+   "slug": "john-sanders",
    "position": "QB",
    "class": "JR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/stephen-wakefield/",
+   "url": null,
    "name": "John Sanders",
    "position_name": "Quarterback",
    "jersey": "15",
@@ -3086,11 +3086,11 @@
    }
   },
   {
-   "slug": "jarvis-wilburn",
+   "slug": "devaughn-eka",
    "position": "HB",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/jarvis-wilburn/",
+   "url": null,
    "name": "Devaughn Eka",
    "position_name": "Halfback",
    "jersey": "25",
@@ -4439,11 +4439,11 @@
    }
   },
   {
-   "slug": "luke-heller",
+   "slug": "fisher-ingersoll",
    "position": "WR",
    "class": "JRRS",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/luke-heller/",
+   "url": null,
    "name": "Fisher Ingersoll",
    "position_name": "Wide Receiver",
    "jersey": "26",
@@ -7015,11 +7015,11 @@
    }
   },
   {
-   "slug": "frank-phelps",
+   "slug": "jeff-lewis",
    "position": "LT",
    "class": "SORS",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/frank-phelps/",
+   "url": null,
    "name": "Jeff Lewis",
    "position_name": "Left Tackle",
    "jersey": "76",
@@ -7263,11 +7263,11 @@
    }
   },
   {
-   "slug": "bobby-dickerson",
+   "slug": "jake-alexander",
    "position": "LT",
    "class": "SO",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/bobby-dickerson/",
+   "url": null,
    "name": "Jake Alexander",
    "position_name": "Left Tackle",
    "jersey": "54",
@@ -7512,11 +7512,11 @@
    }
   },
   {
-   "slug": "jefferson-reed",
+   "slug": "caden-mckee",
    "position": "LT",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/jefferson-reed/",
+   "url": null,
    "name": "Caden McKee",
    "position_name": "Left Tackle",
    "jersey": "73",
@@ -8313,11 +8313,11 @@
    }
   },
   {
-   "slug": "kadeem-thompkins",
+   "slug": "bott-mulitalo",
    "position": "LG",
    "class": "SO",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/kadeem-thompkins/",
+   "url": null,
    "name": "Bott Mulitalo",
    "position_name": "Left Guard",
    "jersey": "52",
@@ -9114,11 +9114,11 @@
    }
   },
   {
-   "slug": "dalton-reynolds",
+   "slug": "brigham-alexander",
    "position": "C",
    "class": "SR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/dalton-reynolds/",
+   "url": null,
    "name": "Brigham Alexander",
    "position_name": "Center",
    "jersey": "66",
@@ -9373,11 +9373,11 @@
    }
   },
   {
-   "slug": "jared-thurston",
+   "slug": "siosiua-latu-finau",
    "position": "C",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/jared-thurston/",
+   "url": null,
    "name": "Siosiua Latu-Finau",
    "position_name": "Center",
    "jersey": "59",
@@ -10461,11 +10461,11 @@
    }
   },
   {
-   "slug": "matthew-bowie",
+   "slug": "strantz-mangisi",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/matthew-bowie/",
+   "url": null,
    "name": "Strantz Mangisi",
    "position_name": "Right Guard",
    "jersey": "53",
@@ -15041,11 +15041,11 @@
    }
   },
   {
-   "slug": "will-bartow",
+   "slug": "siosefa-brown",
    "position": "REDG",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/will-bartow/",
+   "url": null,
    "name": "Siosefa Brown",
    "position_name": "Right Edge",
    "jersey": "59",
@@ -18137,11 +18137,11 @@
    }
   },
   {
-   "slug": "justin-burnett",
+   "slug": "owen-borg",
    "position": "WILL",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/justin-burnett/",
+   "url": null,
    "name": "Owen Borg",
    "position_name": "Will Linebacker",
    "jersey": "43",
@@ -19769,11 +19769,11 @@
    }
   },
   {
-   "slug": "nick-dell",
+   "slug": "seth-shigg",
    "position": "CB",
    "class": "SORS",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/nick-dell/",
+   "url": null,
    "name": "Seth Shigg",
    "position_name": "Cornerback",
    "jersey": "39",
@@ -22004,11 +22004,11 @@
    }
   },
   {
-   "slug": "john-newman",
+   "slug": "crew-clark",
    "position": "SS",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/john-newman/",
+   "url": null,
    "name": "Crew Clark",
    "position_name": "Strong Safety",
    "jersey": "28",
@@ -22265,11 +22265,11 @@
    }
   },
   {
-   "slug": "terrelle-flanagan",
+   "slug": "tj-johnson-byu",
    "position": "SS",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/terrelle-flanagan/",
+   "url": null,
    "name": "TJ Johnson",
    "position_name": "Strong Safety",
    "jersey": "36",
@@ -22531,11 +22531,11 @@
    }
   },
   {
-   "slug": "chip-stewart",
+   "slug": "brody-laga",
    "position": "K",
    "class": "SO",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/chip-stewart/",
+   "url": null,
    "name": "Brody Laga",
    "position_name": "Kicker",
    "jersey": "99",
@@ -23033,11 +23033,11 @@
    }
   },
   {
-   "slug": "nick-orr",
+   "slug": "cole-shulman",
    "position": "P",
    "class": "JR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/nick-orr/",
+   "url": null,
    "name": "Cole Shulman",
    "position_name": "Punter",
    "jersey": "36",

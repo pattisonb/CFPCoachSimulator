@@ -241,7 +241,7 @@
    "hunter-smith",
    "samuel-brown-v",
    "keveun-mason",
-   "josh-forbes",
+   "johnny-martin",
    "r-j-blount",
    "ameir-morrow"
   ],
@@ -273,7 +273,7 @@
    "eric-king",
    "john-watkins",
    "mausa-palu",
-   "clint-clements"
+   "logan-king"
   ],
   "C": [
    "grayson-mains",
@@ -354,7 +354,7 @@
   ],
   "P": [
    "dante-atton",
-   "morris-jones"
+   "luke-sword"
   ]
  },
  "roster_size": 85,
@@ -2655,11 +2655,11 @@
    }
   },
   {
-   "slug": "josh-forbes",
+   "slug": "johnny-martin",
    "position": "HB",
    "class": "FR",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/josh-forbes/",
+   "url": null,
    "name": "Johnny Martin",
    "position_name": "Halfback",
    "jersey": "22",
@@ -9178,11 +9178,11 @@
    }
   },
   {
-   "slug": "clint-clements",
+   "slug": "logan-king",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/clint-clements/",
+   "url": null,
    "name": "Logan King",
    "position_name": "Left Guard",
    "jersey": "58",
@@ -23835,11 +23835,11 @@
    }
   },
   {
-   "slug": "morris-jones",
+   "slug": "luke-sword",
    "position": "P",
    "class": "SORS",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/morris-jones/",
+   "url": null,
    "name": "Luke Sword",
    "position_name": "Punter",
    "jersey": "91",

@@ -357,7 +357,7 @@
   ],
   "P": [
    "hunter-green",
-   "nate-bloomfield"
+   "luke-dunne"
   ]
  },
  "roster_size": 85,
@@ -23661,11 +23661,11 @@
    }
   },
   {
-   "slug": "nate-bloomfield",
+   "slug": "luke-dunne",
    "position": "P",
    "class": "JRRS",
    "team_slug": "washington",
-   "url": "https://collegefootball.gg/players/nate-bloomfield/",
+   "url": null,
    "name": "Luke Dunne",
    "position_name": "Punter",
    "jersey": "45",

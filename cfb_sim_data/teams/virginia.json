@@ -268,7 +268,7 @@
   "LT": [
    "mckale-boley",
    "ben-york",
-   "matthew-peck"
+   "luke-hatfield"
   ],
   "LG": [
    "noah-josey",
@@ -312,7 +312,7 @@
    "evan-ward"
   ],
   "SAM": [
-   "jameel-mcallister"
+   "cayden-cook-cash"
   ],
   "MIKE": [
    "kam-robinson",
@@ -8217,11 +8217,11 @@
    }
   },
   {
-   "slug": "matthew-peck",
+   "slug": "luke-hatfield",
    "position": "LT",
    "class": "FR",
    "team_slug": "virginia",
-   "url": "https://collegefootball.gg/players/matthew-peck/",
+   "url": null,
    "name": "Luke Hatfield",
    "position_name": "Left Tackle",
    "jersey": "57",
@@ -15945,11 +15945,11 @@
    }
   },
   {
-   "slug": "jameel-mcallister",
+   "slug": "cayden-cook-cash",
    "position": "SAM",
    "class": "SO",
    "team_slug": "virginia",
-   "url": "https://collegefootball.gg/players/jameel-mcallister/",
+   "url": null,
    "name": "Cayden Cook-Cash",
    "position_name": "Sam Linebacker",
    "jersey": "49",

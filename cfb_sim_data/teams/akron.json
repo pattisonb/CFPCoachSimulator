@@ -293,7 +293,7 @@
    "allen-jones-jr",
    "jon-gould",
    "jonas-mann",
-   "alan-develin"
+   "lorvens-barthelemy"
   ],
   "LEDG": [
    "kurtis-waye",
@@ -312,7 +312,7 @@
   "REDG": [
    "cyrus-durham",
    "jahvon-frazier",
-   "jalen-taylor",
+   "brandon-tobias-ii",
    "ty-watkins"
   ],
   "SAM": [],
@@ -13130,11 +13130,11 @@
    }
   },
   {
-   "slug": "alan-develin",
+   "slug": "lorvens-barthelemy",
    "position": "RT",
    "class": "FR",
    "team_slug": "akron",
-   "url": "https://collegefootball.gg/players/alan-develin/",
+   "url": null,
    "name": "Lorvens Barthelemy",
    "position_name": "Right Tackle",
    "jersey": "77",
@@ -16703,11 +16703,11 @@
    }
   },
   {
-   "slug": "jalen-taylor",
+   "slug": "brandon-tobias-ii",
    "position": "REDG",
    "class": "FR",
    "team_slug": "akron",
-   "url": "https://collegefootball.gg/players/jalen-taylor/",
+   "url": null,
    "name": "Brandon Tobias II",
    "position_name": "Right Edge",
    "jersey": "96",

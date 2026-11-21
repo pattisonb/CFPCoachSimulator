@@ -204,7 +204,7 @@
    ],
    "CB": [
     "josiah-charles",
-    "justin-guy",
+    "elijah-gutierrez",
     "izzy-clark-white"
    ],
    "FS": [
@@ -253,7 +253,7 @@
    "lyndon-ravare",
    "myles-libman",
    "brodie-malone-bradford",
-   "antoine-bozeman",
+   "kaden-trevino",
    "jadarius-sanders",
    "aj-williams-iii",
    "terrione-graves",
@@ -266,7 +266,7 @@
    "ray-lotten",
    "braydyn-sage",
    "duke-frye",
-   "braxton-may"
+   "josiah-thomas"
   ],
   "LT": [
    "makyi-lee",
@@ -289,7 +289,7 @@
   ],
   "RT": [
    "armond-owens",
-   "maxwell-beason"
+   "jr-hecklinski"
   ],
   "LEDG": [
    "gabe-peterson",
@@ -308,7 +308,7 @@
   ],
   "REDG": [
    "obinna-okeke",
-   "derek-widmer",
+   "latrell-treadwell",
    "jamaun-thompson",
    "joey-banegas",
    "bradley-vislisel",
@@ -329,7 +329,7 @@
   ],
   "CB": [
    "josiah-charles",
-   "justin-guy",
+   "elijah-gutierrez",
    "izzy-clark-white",
    "javon-gillespie",
    "amaurey-brooks",
@@ -5310,11 +5310,11 @@
    }
   },
   {
-   "slug": "antoine-bozeman",
+   "slug": "kaden-trevino",
    "position": "WR",
    "class": "JRRS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/antoine-bozeman/",
+   "url": null,
    "name": "Kaden Trevino",
    "position_name": "Wide Receiver",
    "jersey": "29",
@@ -8203,11 +8203,11 @@
    }
   },
   {
-   "slug": "braxton-may",
+   "slug": "josiah-thomas",
    "position": "TE",
    "class": "SO",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/braxton-may/",
+   "url": null,
    "name": "Josiah Thomas",
    "position_name": "Tight End",
    "jersey": "15",
@@ -11858,11 +11858,11 @@
    }
   },
   {
-   "slug": "maxwell-beason",
+   "slug": "jr-hecklinski",
    "position": "RT",
    "class": "SORS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/maxwell-beason/",
+   "url": null,
    "name": "JR Hecklinski",
    "position_name": "Right Tackle",
    "jersey": "67",
@@ -15400,11 +15400,11 @@
    }
   },
   {
-   "slug": "derek-widmer",
+   "slug": "latrell-treadwell",
    "position": "REDG",
    "class": "SRRS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/derek-widmer/",
+   "url": null,
    "name": "Latrell Treadwell",
    "position_name": "Right Edge",
    "jersey": "93",
@@ -19393,11 +19393,11 @@
    }
   },
   {
-   "slug": "justin-guy",
+   "slug": "elijah-gutierrez",
    "position": "CB",
    "class": "SORS",
    "team_slug": "new-mexico-st",
-   "url": "https://collegefootball.gg/players/justin-guy/",
+   "url": null,
    "name": "Elijah Gutierrez",
    "position_name": "Cornerback",
    "jersey": "32",

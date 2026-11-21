@@ -319,7 +319,7 @@
   "MIKE": [
    "chase-smith",
    "kamal-bonner",
-   "jason-rinehart",
+   "casey-rizzi",
    "kellen-wiley-jr"
   ],
   "WILL": [
@@ -331,7 +331,7 @@
    "oj-frederique-jr",
    "xavier-lucas",
    "damari-brown",
-   "russ-cotton",
+   "takai-azziz",
    "camdin-portis",
    "ja-boree-antoine",
    "chris-ewald-jr",
@@ -17223,11 +17223,11 @@
    }
   },
   {
-   "slug": "jason-rinehart",
+   "slug": "casey-rizzi",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "miami",
-   "url": "https://collegefootball.gg/players/jason-rinehart/",
+   "url": null,
    "name": "Casey Rizzi",
    "position_name": "Mike Linebacker",
    "jersey": "39",
@@ -19355,11 +19355,11 @@
    }
   },
   {
-   "slug": "russ-cotton",
+   "slug": "takai-azziz",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "miami",
-   "url": "https://collegefootball.gg/players/russ-cotton/",
+   "url": null,
    "name": "Takai Azziz",
    "position_name": "Cornerback",
    "jersey": "36",

@@ -218,7 +218,7 @@
   },
   "special_teams": {
    "K": [
-    "michael-gentry"
+    "daniel-jackson"
    ],
    "P": [
     "tom-weston"
@@ -254,7 +254,7 @@
    "jalen-smith-minnesota",
    "zion-steptoe",
    "perry-thompson",
-   "donovan-lowry",
+   "josiah-dozier",
    "bradley-martino",
    "donielle-hayes",
    "noah-jennings",
@@ -278,7 +278,7 @@
   ],
   "LG": [
    "greg-johnson",
-   "danny-david"
+   "beckett-schreiber"
   ],
   "C": [
    "ashton-beers",
@@ -287,7 +287,7 @@
   "RG": [
    "jaden-ball",
    "tony-nelson",
-   "matthew-crowe-hills"
+   "kaveon-lee"
   ],
   "RT": [
    "bennett-warren",
@@ -323,13 +323,13 @@
    "maverick-baranowski",
    "joey-gerlach",
    "mason-carrier",
-   "mole-keller"
+   "hudson-dunn"
   ],
   "WILL": [
    "matt-kingsbury",
    "emmanuel-karmo",
    "andrew-marshall-minnesota",
-   "alfred-mcknight"
+   "angel-luciano"
   ],
   "CB": [
    "john-nestor",
@@ -351,12 +351,12 @@
    "mekhai-smith"
   ],
   "K": [
-   "michael-gentry",
+   "daniel-jackson",
    "beckham-sunderland"
   ],
   "P": [
    "tom-weston",
-   "craig-lewis-brick"
+   "zachary-robbins"
   ]
  },
  "roster_size": 85,
@@ -4837,11 +4837,11 @@
    }
   },
   {
-   "slug": "donovan-lowry",
+   "slug": "josiah-dozier",
    "position": "WR",
    "class": "JR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/donovan-lowry/",
+   "url": null,
    "name": "Josiah Dozier",
    "position_name": "Wide Receiver",
    "jersey": "81",
@@ -10015,11 +10015,11 @@
    }
   },
   {
-   "slug": "danny-david",
+   "slug": "beckett-schreiber",
    "position": "LG",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/danny-david/",
+   "url": null,
    "name": "Beckett Schreiber",
    "position_name": "Left Guard",
    "jersey": "66",
@@ -11360,11 +11360,11 @@
    }
   },
   {
-   "slug": "matthew-crowe-hills",
+   "slug": "kaveon-lee",
    "position": "RG",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/matthew-crowe-hills/",
+   "url": null,
    "name": "Kaveon Lee",
    "position_name": "Right Guard",
    "jersey": "60",
@@ -18015,11 +18015,11 @@
    }
   },
   {
-   "slug": "mole-keller",
+   "slug": "hudson-dunn",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/mole-keller/",
+   "url": null,
    "name": "Hudson Dunn",
    "position_name": "Mike Linebacker",
    "jersey": "16",
@@ -19150,11 +19150,11 @@
    }
   },
   {
-   "slug": "alfred-mcknight",
+   "slug": "angel-luciano",
    "position": "WILL",
    "class": "FR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/alfred-mcknight/",
+   "url": null,
    "name": "Angel Luciano",
    "position_name": "Will Linebacker",
    "jersey": "32",
@@ -22975,11 +22975,11 @@
    }
   },
   {
-   "slug": "michael-gentry",
+   "slug": "daniel-jackson",
    "position": "K",
    "class": "SO",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/michael-gentry/",
+   "url": null,
    "name": "Daniel Jackson",
    "position_name": "Kicker",
    "jersey": "36",
@@ -23706,11 +23706,11 @@
    }
   },
   {
-   "slug": "craig-lewis-brick",
+   "slug": "zachary-robbins",
    "position": "P",
    "class": "SR",
    "team_slug": "minnesota",
-   "url": "https://collegefootball.gg/players/craig-lewis-brick/",
+   "url": null,
    "name": "Zachary Robbins",
    "position_name": "Punter",
    "jersey": "37",

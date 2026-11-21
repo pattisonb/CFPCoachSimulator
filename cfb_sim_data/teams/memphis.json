@@ -218,7 +218,7 @@
   },
   "special_teams": {
    "K": [
-    "jason-keiser"
+    "tarik-ahmetbasic"
    ],
    "P": [
     "jake-snyder"
@@ -254,7 +254,7 @@
    "jordan-bell",
    "jermane-hayes",
    "stonka-burnside",
-   "israel-bradford",
+   "jaylin-taylor",
    "bryce-dorsey",
    "joshua-joseph",
    "zechariah-jenkins"
@@ -270,8 +270,8 @@
   "LT": [
    "riley-mcgehee",
    "carde-smith",
-   "matt-murphy",
-   "jaquayln-ford"
+   "jabarius-oliver",
+   "chance-holloman"
   ],
   "LG": [
    "skyler-grant",
@@ -327,7 +327,7 @@
   ],
   "WILL": [
    "michael-montgomery",
-   "brandon-faulk",
+   "tylon-nash",
    "zach-ruffin",
    "kadan-spratling"
   ],
@@ -351,7 +351,7 @@
    "beni-mwamba"
   ],
   "K": [
-   "jason-keiser",
+   "tarik-ahmetbasic",
    "philippe-laforge"
   ],
   "P": [
@@ -5101,11 +5101,11 @@
    }
   },
   {
-   "slug": "israel-bradford",
+   "slug": "jaylin-taylor",
    "position": "WR",
    "class": "SORS",
    "team_slug": "memphis",
-   "url": "https://collegefootball.gg/players/israel-bradford/",
+   "url": null,
    "name": "Jaylin Taylor",
    "position_name": "Wide Receiver",
    "jersey": "19",
@@ -8210,11 +8210,11 @@
    }
   },
   {
-   "slug": "matt-murphy",
+   "slug": "jabarius-oliver",
    "position": "LT",
    "class": "FR",
    "team_slug": "memphis",
-   "url": "https://collegefootball.gg/players/matt-murphy/",
+   "url": null,
    "name": "Jabarius Oliver",
    "position_name": "Left Tackle",
    "jersey": "70",
@@ -8496,11 +8496,11 @@
    }
   },
   {
-   "slug": "jaquayln-ford",
+   "slug": "chance-holloman",
    "position": "LT",
    "class": "JRRS",
    "team_slug": "memphis",
-   "url": "https://collegefootball.gg/players/jaquayln-ford/",
+   "url": null,
    "name": "Chance Holloman",
    "position_name": "Left Tackle",
    "jersey": "79",
@@ -18434,11 +18434,11 @@
    }
   },
   {
-   "slug": "brandon-faulk",
+   "slug": "tylon-nash",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "memphis",
-   "url": "https://collegefootball.gg/players/brandon-faulk/",
+   "url": null,
    "name": "Tylon Nash",
    "position_name": "Will Linebacker",
    "jersey": "41",
@@ -22916,11 +22916,11 @@
    }
   },
   {
-   "slug": "jason-keiser",
+   "slug": "tarik-ahmetbasic",
    "position": "K",
    "class": "SO",
    "team_slug": "memphis",
-   "url": "https://collegefootball.gg/players/jason-keiser/",
+   "url": null,
    "name": "Tarik Ahmetbasic",
    "position_name": "Kicker",
    "jersey": "40",

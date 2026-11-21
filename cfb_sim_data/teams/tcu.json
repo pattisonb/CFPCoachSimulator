@@ -165,7 +165,7 @@
    ],
    "WR": [
     "jordan-dwyer",
-    "dorian-exum",
+    "sutton-lee",
     "ed-small"
    ],
    "TE": [
@@ -222,7 +222,7 @@
     "john-hoyet-chance"
    ],
    "KR": [
-    "dorian-exum"
+    "sutton-lee"
    ],
    "PR": [
     "major-everhart"
@@ -237,7 +237,7 @@
   ],
   "HB": [
    "jeremy-payne",
-   "xavier-talley",
+   "jacob-martinez",
    "landon-walker",
    "jon-denman",
    "givori-graham"
@@ -245,7 +245,7 @@
   "FB": [],
   "WR": [
    "jordan-dwyer",
-   "dorian-exum",
+   "sutton-lee",
    "ed-small",
    "major-everhart",
    "braylon-james",
@@ -263,7 +263,7 @@
    "lafayette-kaiuway",
    "ka-morreun-pimpton",
    "mason-peterson",
-   "korey-jackson",
+   "braden-bach",
    "joe-pitchford",
    "aaron-bowers",
    "will-terry"
@@ -349,11 +349,11 @@
   ],
   "K": [
    "kyle-lemmermann",
-   "andre-gilyard"
+   "sam-bisesi"
   ],
   "P": [
    "john-hoyet-chance",
-   "spencer-dempsey"
+   "easton-black"
   ]
  },
  "roster_size": 85,
@@ -1478,11 +1478,11 @@
    }
   },
   {
-   "slug": "xavier-talley",
+   "slug": "jacob-martinez",
    "position": "HB",
    "class": "SO",
    "team_slug": "tcu",
-   "url": "https://collegefootball.gg/players/xavier-talley/",
+   "url": null,
    "name": "Jacob Martinez",
    "position_name": "Halfback",
    "jersey": "31",
@@ -2832,11 +2832,11 @@
    }
   },
   {
-   "slug": "dorian-exum",
+   "slug": "sutton-lee",
    "position": "WR",
    "class": "JRRS",
    "team_slug": "tcu",
-   "url": "https://collegefootball.gg/players/dorian-exum/",
+   "url": null,
    "name": "Sutton Lee",
    "position_name": "Wide Receiver",
    "jersey": "86",
@@ -7637,11 +7637,11 @@
    }
   },
   {
-   "slug": "korey-jackson",
+   "slug": "braden-bach",
    "position": "TE",
    "class": "SO",
    "team_slug": "tcu",
-   "url": "https://collegefootball.gg/players/korey-jackson/",
+   "url": null,
    "name": "Braden Bach",
    "position_name": "Tight End",
    "jersey": "89",
@@ -23215,11 +23215,11 @@
    }
   },
   {
-   "slug": "andre-gilyard",
+   "slug": "sam-bisesi",
    "position": "K",
    "class": "FR",
    "team_slug": "tcu",
-   "url": "https://collegefootball.gg/players/andre-gilyard/",
+   "url": null,
    "name": "Sam Bisesi",
    "position_name": "Kicker",
    "jersey": "41",
@@ -23702,11 +23702,11 @@
    }
   },
   {
-   "slug": "spencer-dempsey",
+   "slug": "easton-black",
    "position": "P",
    "class": "SO",
    "team_slug": "tcu",
-   "url": "https://collegefootball.gg/players/spencer-dempsey/",
+   "url": null,
    "name": "Easton Black",
    "position_name": "Punter",
    "jersey": "97",

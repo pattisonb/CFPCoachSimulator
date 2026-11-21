@@ -304,7 +304,7 @@
    "samu-taumanupepe",
    "tyler-moore",
    "sedrick-smith",
-   "will-fitzsimmons"
+   "josiah-manu"
   ],
   "REDG": [
    "balansama-kamara",
@@ -323,7 +323,7 @@
   "WILL": [
    "liona-lefau",
    "carson-crawford",
-   "terrance-clark",
+   "colby-johnson",
    "gage-goldberg"
   ],
   "CB": [
@@ -332,7 +332,7 @@
    "cree-thomas",
    "emory-floyd",
    "makari-vickers",
-   "najee-boothe",
+   "myles-weston",
    "rj-johnson",
    "jason-stokes-jr",
    "paul-omodia",
@@ -351,7 +351,7 @@
   ],
   "K": [
    "elliot-arnold",
-   "ted-wrobles"
+   "cadel-ayala"
   ],
   "P": [
    "damon-greaves",
@@ -14504,11 +14504,11 @@
    }
   },
   {
-   "slug": "will-fitzsimmons",
+   "slug": "josiah-manu",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "colorado",
-   "url": "https://collegefootball.gg/players/will-fitzsimmons/",
+   "url": null,
    "name": "Josiah Manu",
    "position_name": "Defensive Tackle",
    "jersey": "94",
@@ -17613,11 +17613,11 @@
    }
   },
   {
-   "slug": "terrance-clark",
+   "slug": "colby-johnson",
    "position": "WILL",
    "class": "SRRS",
    "team_slug": "colorado",
-   "url": "https://collegefootball.gg/players/terrance-clark/",
+   "url": null,
    "name": "Colby Johnson",
    "position_name": "Will Linebacker",
    "jersey": "40",
@@ -19531,11 +19531,11 @@
    }
   },
   {
-   "slug": "najee-boothe",
+   "slug": "myles-weston",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "colorado",
-   "url": "https://collegefootball.gg/players/najee-boothe/",
+   "url": null,
    "name": "Myles Weston",
    "position_name": "Cornerback",
    "jersey": "32",
@@ -23168,11 +23168,11 @@
    }
   },
   {
-   "slug": "ted-wrobles",
+   "slug": "cadel-ayala",
    "position": "K",
    "class": "FR",
    "team_slug": "colorado",
-   "url": "https://collegefootball.gg/players/ted-wrobles/",
+   "url": null,
    "name": "Cadel Ayala",
    "position_name": "Kicker",
    "jersey": "39",

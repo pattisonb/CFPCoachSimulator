@@ -310,18 +310,18 @@
    "camron-cooper",
    "eddy-smith",
    "jacob-lopez-veasey",
-   "kaseem-hopkins"
+   "hudson-pickett"
   ],
   "SAM": [
    "bryce-grays",
-   "thurman-sharp",
+   "caleb-barrow",
    "james-walley-jr"
   ],
   "MIKE": [
    "brandon-tucker",
    "archie-chambers",
    "eze-osondu",
-   "russell-weldon",
+   "tysan-breaux",
    "braeden-lott"
   ],
   "WILL": [
@@ -16097,11 +16097,11 @@
    }
   },
   {
-   "slug": "kaseem-hopkins",
+   "slug": "hudson-pickett",
    "position": "REDG",
    "class": "FR",
    "team_slug": "utsa",
-   "url": "https://collegefootball.gg/players/kaseem-hopkins/",
+   "url": null,
    "name": "Hudson Pickett",
    "position_name": "Right Edge",
    "jersey": "49",
@@ -16636,11 +16636,11 @@
    }
   },
   {
-   "slug": "thurman-sharp",
+   "slug": "caleb-barrow",
    "position": "SAM",
    "class": "FRRS",
    "team_slug": "utsa",
-   "url": "https://collegefootball.gg/players/thurman-sharp/",
+   "url": null,
    "name": "Caleb Barrow",
    "position_name": "Sam Linebacker",
    "jersey": "46",
@@ -18053,11 +18053,11 @@
    }
   },
   {
-   "slug": "russell-weldon",
+   "slug": "tysan-breaux",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "utsa",
-   "url": "https://collegefootball.gg/players/russell-weldon/",
+   "url": null,
    "name": "Tysan Breaux",
    "position_name": "Mike Linebacker",
    "jersey": "57",

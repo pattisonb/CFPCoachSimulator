@@ -220,7 +220,7 @@
     "kyle-konrardy"
    ],
    "P": [
-    "paul-eaton"
+    "jonah-dupont"
    ],
    "KR": [
     "easton-miller"
@@ -306,7 +306,7 @@
   ],
   "REDG": [
    "isaac-terrell",
-   "derrick-dumars",
+   "jack-janikowski",
    "jack-limbaugh",
    "blake-hawkins"
   ],
@@ -354,7 +354,7 @@
    "kyle-konrardy"
   ],
   "P": [
-   "paul-eaton",
+   "jonah-dupont",
    "ethan-gurney"
   ]
  },
@@ -14596,11 +14596,11 @@
    }
   },
   {
-   "slug": "derrick-dumars",
+   "slug": "jack-janikowski",
    "position": "REDG",
    "class": "JR",
    "team_slug": "iowa-state",
-   "url": "https://collegefootball.gg/players/derrick-dumars/",
+   "url": null,
    "name": "Jack Janikowski",
    "position_name": "Right Edge",
    "jersey": "93",
@@ -23519,11 +23519,11 @@
    }
   },
   {
-   "slug": "paul-eaton",
+   "slug": "jonah-dupont",
    "position": "P",
    "class": "JR",
    "team_slug": "iowa-state",
-   "url": "https://collegefootball.gg/players/paul-eaton/",
+   "url": null,
    "name": "Jonah DuPont",
    "position_name": "Punter",
    "jersey": "99",

@@ -193,7 +193,7 @@
     "brandon-mack-ii"
    ],
    "DT": [
-    "hunter-mcguire",
+    "hunter-jones",
     "de-marion-thomas"
    ],
    "LB": [
@@ -270,7 +270,7 @@
   "LG": [
    "shadre-hurst",
    "larry-crawford",
-   "manuel-banks"
+   "rhett-gray"
   ],
   "C": [
    "anthony-boswell",
@@ -294,7 +294,7 @@
    "kaleb-walker"
   ],
   "DT": [
-   "hunter-mcguire",
+   "hunter-jones",
    "de-marion-thomas",
    "carmello-brooks",
    "xavier-fleming",
@@ -352,7 +352,7 @@
   ],
   "P": [
    "liam-dougherty",
-   "morris-hollister"
+   "jack-raney"
   ]
  },
  "roster_size": 85,
@@ -8654,11 +8654,11 @@
    }
   },
   {
-   "slug": "manuel-banks",
+   "slug": "rhett-gray",
    "position": "LG",
    "class": "FR",
    "team_slug": "houston",
-   "url": "https://collegefootball.gg/players/manuel-banks/",
+   "url": null,
    "name": "Rhett Gray",
    "position_name": "Left Guard",
    "jersey": "54",
@@ -12525,11 +12525,11 @@
    }
   },
   {
-   "slug": "hunter-mcguire",
+   "slug": "hunter-jones",
    "position": "DT",
    "class": "JR",
    "team_slug": "houston",
-   "url": "https://collegefootball.gg/players/hunter-mcguire/",
+   "url": null,
    "name": "Hunter Jones",
    "position_name": "Defensive Tackle",
    "jersey": "51",
@@ -23577,11 +23577,11 @@
    }
   },
   {
-   "slug": "morris-hollister",
+   "slug": "jack-raney",
    "position": "P",
    "class": "FR",
    "team_slug": "houston",
-   "url": "https://collegefootball.gg/players/morris-hollister/",
+   "url": null,
    "name": "Jack Raney",
    "position_name": "Punter",
    "jersey": "62",

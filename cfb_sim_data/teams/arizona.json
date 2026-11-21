@@ -218,7 +218,7 @@
     "michael-salgado-medina"
    ],
    "P": [
-    "paul-clayton"
+    "carter-schwartz"
    ],
    "KR": [
     "chris-hunter"
@@ -278,12 +278,12 @@
   "C": [
    "zach-henning",
    "grayson-stovall",
-   "dan-howard"
+   "khalil-sanogo"
   ],
   "RG": [
    "alexander-doost",
    "isaac-perez",
-   "junior-sampson"
+   "keona-peat"
   ],
   "RT": [
    "tristan-bounds",
@@ -293,7 +293,7 @@
   "LEDG": [
    "tre-smith",
    "victory-johnson",
-   "cam-tucker"
+   "porter-patton"
   ],
   "DT": [
    "leroy-palu",
@@ -306,7 +306,7 @@
   "REDG": [
    "dominic-lolesio",
    "prince-williams",
-   "steven-owens"
+   "dustin-petras"
   ],
   "SAM": [
    "everett-roussaw-jr",
@@ -324,7 +324,7 @@
   "WILL": [
    "chase-kennedy",
    "cooper-blomstrom",
-   "cordell-melton"
+   "dash-fifita"
   ],
   "CB": [
    "jay-vion-cole",
@@ -335,7 +335,7 @@
    "dajon-hinton",
    "johno-price",
    "zuri-watson",
-   "kerry-callahan"
+   "kingston-spivey"
   ],
   "FS": [
    "daylen-austin",
@@ -352,7 +352,7 @@
    "michael-salgado-medina"
   ],
   "P": [
-   "paul-clayton",
+   "carter-schwartz",
    "chase-ridley"
   ]
  },
@@ -10297,11 +10297,11 @@
    }
   },
   {
-   "slug": "dan-howard",
+   "slug": "khalil-sanogo",
    "position": "C",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/dan-howard/",
+   "url": null,
    "name": "Khalil Sanogo",
    "position_name": "Center",
    "jersey": "76",
@@ -11080,11 +11080,11 @@
    }
   },
   {
-   "slug": "junior-sampson",
+   "slug": "keona-peat",
    "position": "RG",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/junior-sampson/",
+   "url": null,
    "name": "Keona Peat",
    "position_name": "Right Guard",
    "jersey": "54",
@@ -12673,11 +12673,11 @@
    }
   },
   {
-   "slug": "cam-tucker",
+   "slug": "porter-patton",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/cam-tucker/",
+   "url": null,
    "name": "Porter Patton",
    "position_name": "Left Edge",
    "jersey": "91",
@@ -15079,11 +15079,11 @@
    }
   },
   {
-   "slug": "steven-owens",
+   "slug": "dustin-petras",
    "position": "REDG",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/steven-owens/",
+   "url": null,
    "name": "Dustin Petras",
    "position_name": "Right Edge",
    "jersey": "52",
@@ -18496,11 +18496,11 @@
    }
   },
   {
-   "slug": "cordell-melton",
+   "slug": "dash-fifita",
    "position": "WILL",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/cordell-melton/",
+   "url": null,
    "name": "Dash Fifita",
    "position_name": "Will Linebacker",
    "jersey": "0",
@@ -21025,11 +21025,11 @@
    }
   },
   {
-   "slug": "kerry-callahan",
+   "slug": "kingston-spivey",
    "position": "CB",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/kerry-callahan/",
+   "url": null,
    "name": "Kingston Spivey",
    "position_name": "Cornerback",
    "jersey": "24",
@@ -23513,11 +23513,11 @@
    }
   },
   {
-   "slug": "paul-clayton",
+   "slug": "carter-schwartz",
    "position": "P",
    "class": "SRRS",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/paul-clayton/",
+   "url": null,
    "name": "Carter Schwartz",
    "position_name": "Punter",
    "jersey": "34",

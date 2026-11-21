@@ -226,7 +226,7 @@
     "zacharyus-williams"
    ],
    "PR": [
-    "terrell-wilkerson"
+    "tanook-hines"
    ]
   }
  },
@@ -251,7 +251,7 @@
    "trent-mosley",
    "romero-ison",
    "ethan-feaster",
-   "terrell-wilkerson",
+   "tanook-hines",
    "luc-weaver",
    "tron-baker",
    "corey-simms"
@@ -354,7 +354,7 @@
   ],
   "P": [
    "lachlan-carrigan",
-   "grayson-farmer"
+   "nate-hillenburg"
   ]
  },
  "roster_size": 85,
@@ -4174,11 +4174,11 @@
    }
   },
   {
-   "slug": "terrell-wilkerson",
+   "slug": "tanook-hines",
    "position": "WR",
    "class": "SO",
    "team_slug": "usc",
-   "url": "https://collegefootball.gg/players/terrell-wilkerson/",
+   "url": null,
    "name": "Tanook Hines",
    "position_name": "Wide Receiver",
    "jersey": "16",
@@ -23531,11 +23531,11 @@
    }
   },
   {
-   "slug": "grayson-farmer",
+   "slug": "nate-hillenburg",
    "position": "P",
    "class": "FR",
    "team_slug": "usc",
-   "url": "https://collegefootball.gg/players/grayson-farmer/",
+   "url": null,
    "name": "Nate Hillenburg",
    "position_name": "Punter",
    "jersey": "39",

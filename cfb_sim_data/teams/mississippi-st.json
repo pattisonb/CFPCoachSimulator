@@ -267,7 +267,7 @@
    "jakheem-shumpert-perkins",
    "tyler-miller",
    "jaelyne-matthews",
-   "keiland-franks"
+   "matthew-lefeau"
   ],
   "LG": [
    "dj-chester",
@@ -306,7 +306,7 @@
   ],
   "REDG": [
    "dj-reed",
-   "todd-maurer",
+   "shawn-gee",
    "chris-addison"
   ],
   "SAM": [
@@ -7940,11 +7940,11 @@
    }
   },
   {
-   "slug": "keiland-franks",
+   "slug": "matthew-lefeau",
    "position": "LT",
    "class": "FR",
    "team_slug": "mississippi-st",
-   "url": "https://collegefootball.gg/players/keiland-franks/",
+   "url": null,
    "name": "Matthew Lefeau",
    "position_name": "Left Tackle",
    "jersey": "60",
@@ -14827,11 +14827,11 @@
    }
   },
   {
-   "slug": "todd-maurer",
+   "slug": "shawn-gee",
    "position": "REDG",
    "class": "FR",
    "team_slug": "mississippi-st",
-   "url": "https://collegefootball.gg/players/todd-maurer/",
+   "url": null,
    "name": "Shawn Gee",
    "position_name": "Right Edge",
    "jersey": "49",

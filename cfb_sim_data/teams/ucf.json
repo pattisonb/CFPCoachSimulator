@@ -252,7 +252,7 @@
    "ric-darious-farmer",
    "tyren-hornes",
    "josh-derry",
-   "slate-ashley",
+   "zack-palmer",
    "caleb-rollerson"
   ],
   "TE": [
@@ -267,9 +267,9 @@
    "henry-tabansi",
    "justin-royes",
    "kasiyah-charlton",
-   "laroyce-johnson",
-   "seth-shoemaker",
-   "jake-borland"
+   "dominick-campbell",
+   "jacob-maiava",
+   "camp-lott"
   ],
   "LG": [
    "tyler-gibson",
@@ -277,8 +277,8 @@
   ],
   "C": [
    "cooper-terpstra",
-   "benry-wilson",
-   "sam-hopewell"
+   "noah-senka",
+   "ethan-higgins"
   ],
   "RG": [
    "brady-wayburn",
@@ -293,7 +293,7 @@
    "bruno-dall",
    "sincere-edwards",
    "l-a-jessie-harrold",
-   "kevin-hartigan"
+   "alhassan-iddrissu"
   ],
   "DT": [
    "horace-lockett",
@@ -302,7 +302,7 @@
    "artavius-jones",
    "jeffson-lafontant",
    "brad-gurley-jr",
-   "robby-birza",
+   "mujahid-jefferson",
    "trenton-turner",
    "noah-mercer-ucf"
   ],
@@ -319,7 +319,7 @@
   "MIKE": [
    "tackett-curtis",
    "phil-picciotti",
-   "xavier-bullard"
+   "jayden-burnett"
   ],
   "WILL": [
    "lewis-carter",
@@ -5345,11 +5345,11 @@
    }
   },
   {
-   "slug": "slate-ashley",
+   "slug": "zack-palmer",
    "position": "WR",
    "class": "FR",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/slate-ashley/",
+   "url": null,
    "name": "Zack Palmer",
    "position_name": "Wide Receiver",
    "jersey": "81",
@@ -8476,11 +8476,11 @@
    }
   },
   {
-   "slug": "laroyce-johnson",
+   "slug": "dominick-campbell",
    "position": "LT",
    "class": "SO",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/laroyce-johnson/",
+   "url": null,
    "name": "Dominick Campbell",
    "position_name": "Left Tackle",
    "jersey": "72",
@@ -8725,11 +8725,11 @@
    }
   },
   {
-   "slug": "seth-shoemaker",
+   "slug": "jacob-maiava",
    "position": "LT",
    "class": "SORS",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/seth-shoemaker/",
+   "url": null,
    "name": "Jacob Maiava",
    "position_name": "Left Tackle",
    "jersey": "55",
@@ -8980,11 +8980,11 @@
    }
   },
   {
-   "slug": "jake-borland",
+   "slug": "camp-lott",
    "position": "LT",
    "class": "FR",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/jake-borland/",
+   "url": null,
    "name": "Camp Lott",
    "position_name": "Left Tackle",
    "jersey": "57",
@@ -10077,11 +10077,11 @@
    }
   },
   {
-   "slug": "benry-wilson",
+   "slug": "noah-senka",
    "position": "C",
    "class": "FRRS",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/benry-wilson/",
+   "url": null,
    "name": "Noah Senka",
    "position_name": "Center",
    "jersey": "67",
@@ -10332,11 +10332,11 @@
    }
   },
   {
-   "slug": "sam-hopewell",
+   "slug": "ethan-higgins",
    "position": "C",
    "class": "SO",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/sam-hopewell/",
+   "url": null,
    "name": "Ethan Higgins",
    "position_name": "Center",
    "jersey": "68",
@@ -12710,11 +12710,11 @@
    }
   },
   {
-   "slug": "kevin-hartigan",
+   "slug": "alhassan-iddrissu",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/kevin-hartigan/",
+   "url": null,
    "name": "Alhassan Iddrissu",
    "position_name": "Left Edge",
    "jersey": "98",
@@ -14534,11 +14534,11 @@
    }
   },
   {
-   "slug": "robby-birza",
+   "slug": "mujahid-jefferson",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/robby-birza/",
+   "url": null,
    "name": "Mujahid Jefferson",
    "position_name": "Defensive Tackle",
    "jersey": "90",
@@ -17594,11 +17594,11 @@
    }
   },
   {
-   "slug": "xavier-bullard",
+   "slug": "jayden-burnett",
    "position": "MIKE",
    "class": "FRRS",
    "team_slug": "ucf",
-   "url": "https://collegefootball.gg/players/xavier-bullard/",
+   "url": null,
    "name": "Jayden Burnett",
    "position_name": "Mike Linebacker",
    "jersey": "23",

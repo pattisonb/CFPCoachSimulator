@@ -242,7 +242,7 @@
    "ju-juan-johnson",
    "tylik-hill",
    "malachi-coleman-syracuse",
-   "damien-betts",
+   "davion-kerr",
    "shavane-anderson-jr"
   ],
   "FB": [],
@@ -250,7 +250,7 @@
    "cole-weaver",
    "zamondre-merriweather",
    "matt-outten",
-   "bryan-wilder",
+   "nate-edwards",
    "darien-williams",
    "darius-johnson",
    "tyshawn-russell",
@@ -269,14 +269,14 @@
   "LT": [
    "trevion-mack",
    "naquil-betrand",
-   "j-j-thurston",
-   "silas-brackins"
+   "shemaj-henry",
+   "vito-shevchenko"
   ],
   "LG": [
    "joe-cruz",
    "jayden-mann",
    "oluwafunto-akinshilo",
-   "leon-graham"
+   "jackson-iak"
   ],
   "C": [
    "kahlil-stewart",
@@ -290,16 +290,16 @@
   "RT": [
    "kam-pringle",
    "kardiear-shepherd",
-   "cam-adkins",
-   "gregory-robertson",
+   "ted-olsen",
+   "adam-boeheim",
    "brayden-charney"
   ],
   "LEDG": [
    "tunmise-adeleye",
-   "paul-mcmillan",
+   "clark-calloway",
    "nathan-nyandoro",
-   "dexter-reese",
-   "spencer-halen"
+   "jaylen-pray",
+   "elijah-crawford"
   ],
   "DT": [
    "rashard-perry",
@@ -319,7 +319,7 @@
   "MIKE": [
    "antoine-deslauriers",
    "zyian-moultrie-goddard",
-   "joe-hill",
+   "garvin-st-john",
    "gemaus-sackie"
   ],
   "WILL": [
@@ -341,7 +341,7 @@
    "tedarius-hughes",
    "braheem-long-jr",
    "jai-eugene-jr",
-   "alex-mathis"
+   "bradley-chandler"
   ],
   "SS": [
    "cornell-perry",
@@ -2841,11 +2841,11 @@
    }
   },
   {
-   "slug": "damien-betts",
+   "slug": "davion-kerr",
    "position": "HB",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/damien-betts/",
+   "url": null,
    "name": "Davion Kerr",
    "position_name": "Halfback",
    "jersey": "3",
@@ -3935,11 +3935,11 @@
    }
   },
   {
-   "slug": "bryan-wilder",
+   "slug": "nate-edwards",
    "position": "WR",
    "class": "SORS",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/bryan-wilder/",
+   "url": null,
    "name": "Nate Edwards",
    "position_name": "Wide Receiver",
    "jersey": "87",
@@ -8446,11 +8446,11 @@
    }
   },
   {
-   "slug": "j-j-thurston",
+   "slug": "shemaj-henry",
    "position": "LT",
    "class": "SO",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/j-j-thurston/",
+   "url": null,
    "name": "Shemaj Henry",
    "position_name": "Left Tackle",
    "jersey": "66",
@@ -8692,11 +8692,11 @@
    }
   },
   {
-   "slug": "silas-brackins",
+   "slug": "vito-shevchenko",
    "position": "LT",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/silas-brackins/",
+   "url": null,
    "name": "Vito Shevchenko",
    "position_name": "Left Tackle",
    "jersey": "73",
@@ -9800,11 +9800,11 @@
    }
   },
   {
-   "slug": "leon-graham",
+   "slug": "jackson-iak",
    "position": "LG",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/leon-graham/",
+   "url": null,
    "name": "Jackson Iak",
    "position_name": "Left Guard",
    "jersey": "62",
@@ -12004,11 +12004,11 @@
    }
   },
   {
-   "slug": "cam-adkins",
+   "slug": "ted-olsen",
    "position": "RT",
    "class": "SO",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/cam-adkins/",
+   "url": null,
    "name": "Ted Olsen",
    "position_name": "Right Tackle",
    "jersey": "53",
@@ -12256,11 +12256,11 @@
    }
   },
   {
-   "slug": "gregory-robertson",
+   "slug": "adam-boeheim",
    "position": "RT",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/gregory-robertson/",
+   "url": null,
    "name": "Adam Boeheim",
    "position_name": "Right Tackle",
    "jersey": "65",
@@ -13076,11 +13076,11 @@
    }
   },
   {
-   "slug": "paul-mcmillan",
+   "slug": "clark-calloway",
    "position": "LEDG",
    "class": "SR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/paul-mcmillan/",
+   "url": null,
    "name": "Clark Calloway",
    "position_name": "Left Edge",
    "jersey": "45",
@@ -13336,11 +13336,11 @@
    }
   },
   {
-   "slug": "dexter-reese",
+   "slug": "jaylen-pray",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/dexter-reese/",
+   "url": null,
    "name": "Jaylen Pray",
    "position_name": "Left Edge",
    "jersey": "77",
@@ -13842,11 +13842,11 @@
    }
   },
   {
-   "slug": "spencer-halen",
+   "slug": "elijah-crawford",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/spencer-halen/",
+   "url": null,
    "name": "Elijah Crawford",
    "position_name": "Left Edge",
    "jersey": "88",
@@ -17445,11 +17445,11 @@
    }
   },
   {
-   "slug": "joe-hill",
+   "slug": "garvin-st-john",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/joe-hill/",
+   "url": null,
    "name": "Garvin St. John",
    "position_name": "Mike Linebacker",
    "jersey": "43",
@@ -21880,11 +21880,11 @@
    }
   },
   {
-   "slug": "alex-mathis",
+   "slug": "bradley-chandler",
    "position": "FS",
    "class": "FR",
    "team_slug": "syracuse",
-   "url": "https://collegefootball.gg/players/alex-mathis/",
+   "url": null,
    "name": "Bradley Chandler",
    "position_name": "Free Safety",
    "jersey": "39",

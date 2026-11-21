@@ -218,7 +218,7 @@
     "mateen-bhaghani"
    ],
    "P": [
-    "ridge-phillips"
+    "lennox-miller"
    ],
    "KR": [
     "semaj-morgan"
@@ -233,7 +233,7 @@
    "nico-iamaleava",
    "ty-dieffenbach",
    "colton-gumino",
-   "edward-dermott"
+   "dj-bordeaux"
   ],
   "HB": [
    "wayne-knight",
@@ -253,7 +253,7 @@
    "major-pride",
    "marcus-harris",
    "kenneth-moore-iii",
-   "jamaal-jordan",
+   "shane-rosenthal",
    "markus-kier"
   ],
   "TE": [
@@ -285,7 +285,7 @@
    "carter-sweazie",
    "derek-osman",
    "julian-armella",
-   "tremaine-bunker"
+   "lucas-hickey"
   ],
   "RT": [
    "hall-schmidt",
@@ -341,7 +341,7 @@
    "tao-johnson",
    "malik-hartford",
    "aaron-williams",
-   "tre-peerman"
+   "zeke-johnson"
   ],
   "SS": [
    "cole-martin",
@@ -349,10 +349,10 @@
   ],
   "K": [
    "mateen-bhaghani",
-   "travis-lorito"
+   "mateo-orosco"
   ],
   "P": [
-   "ridge-phillips",
+   "lennox-miller",
    "curtis-gerrand"
   ]
  },
@@ -1159,11 +1159,11 @@
    }
   },
   {
-   "slug": "edward-dermott",
+   "slug": "dj-bordeaux",
    "position": "QB",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/edward-dermott/",
+   "url": null,
    "name": "DJ Bordeaux",
    "position_name": "Quarterback",
    "jersey": "18",
@@ -5271,11 +5271,11 @@
    }
   },
   {
-   "slug": "jamaal-jordan",
+   "slug": "shane-rosenthal",
    "position": "WR",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/jamaal-jordan/",
+   "url": null,
    "name": "Shane Rosenthal",
    "position_name": "Wide Receiver",
    "jersey": "20",
@@ -11401,11 +11401,11 @@
    }
   },
   {
-   "slug": "tremaine-bunker",
+   "slug": "lucas-hickey",
    "position": "RG",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/tremaine-bunker/",
+   "url": null,
    "name": "Lucas Hickey",
    "position_name": "Right Guard",
    "jersey": "61",
@@ -22030,11 +22030,11 @@
    }
   },
   {
-   "slug": "tre-peerman",
+   "slug": "zeke-johnson",
    "position": "FS",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/tre-peerman/",
+   "url": null,
    "name": "Zeke Johnson",
    "position_name": "Free Safety",
    "jersey": "30",
@@ -23087,11 +23087,11 @@
    }
   },
   {
-   "slug": "travis-lorito",
+   "slug": "mateo-orosco",
    "position": "K",
    "class": "FR",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/travis-lorito/",
+   "url": null,
    "name": "Mateo Orosco",
    "position_name": "Kicker",
    "jersey": "31",
@@ -23323,11 +23323,11 @@
    }
   },
   {
-   "slug": "ridge-phillips",
+   "slug": "lennox-miller",
    "position": "P",
    "class": "FRRS",
    "team_slug": "ucla",
-   "url": "https://collegefootball.gg/players/ridge-phillips/",
+   "url": null,
    "name": "Lennox Miller",
    "position_name": "Punter",
    "jersey": "19",

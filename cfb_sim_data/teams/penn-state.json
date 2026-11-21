@@ -168,7 +168,7 @@
    "WR": [
     "chase-sowell",
     "brett-eskildsen",
-    "nathan-judino"
+    "ethan-black"
    ],
    "TE": [
     "benjamin-brahmer"
@@ -221,7 +221,7 @@
     "ryan-barker"
    ],
    "P": [
-    "colten-bench"
+    "lucas-tenbrock"
    ],
    "KR": [
     "cam-wallace"
@@ -250,7 +250,7 @@
   "WR": [
    "chase-sowell",
    "brett-eskildsen",
-   "nathan-judino",
+   "ethan-black",
    "koby-howard",
    "zay-robinson",
    "peter-gonzalez",
@@ -275,7 +275,7 @@
   "LG": [
    "trevor-buhr",
    "chimdy-onoh",
-   "abdul-whitehead"
+   "pete-eglitis"
   ],
   "C": [
    "brock-riker",
@@ -285,7 +285,7 @@
   "RG": [
    "cooper-cousins",
    "will-tompkins",
-   "david-elliott"
+   "hunter-albright"
   ],
   "RT": [
    "anthony-donkoh",
@@ -355,7 +355,7 @@
    "cristiano-rosa"
   ],
   "P": [
-   "colten-bench",
+   "lucas-tenbrock",
    "nathan-tiyce"
   ]
  },
@@ -3670,11 +3670,11 @@
    }
   },
   {
-   "slug": "nathan-judino",
+   "slug": "ethan-black",
    "position": "WR",
    "class": "JR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/nathan-judino/",
+   "url": null,
    "name": "Ethan Black",
    "position_name": "Wide Receiver",
    "jersey": "82",
@@ -9000,11 +9000,11 @@
    }
   },
   {
-   "slug": "abdul-whitehead",
+   "slug": "pete-eglitis",
    "position": "LG",
    "class": "FR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/abdul-whitehead/",
+   "url": null,
    "name": "Pete Eglitis",
    "position_name": "Left Guard",
    "jersey": "75",
@@ -10676,11 +10676,11 @@
    }
   },
   {
-   "slug": "david-elliott",
+   "slug": "hunter-albright",
    "position": "RG",
    "class": "FR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/david-elliott/",
+   "url": null,
    "name": "Hunter Albright",
    "position_name": "Right Guard",
    "jersey": "76",
@@ -23306,11 +23306,11 @@
    }
   },
   {
-   "slug": "colten-bench",
+   "slug": "lucas-tenbrock",
    "position": "P",
    "class": "FR",
    "team_slug": "penn-state",
-   "url": "https://collegefootball.gg/players/colten-bench/",
+   "url": null,
    "name": "Lucas Tenbrock",
    "position_name": "Punter",
    "jersey": "96",

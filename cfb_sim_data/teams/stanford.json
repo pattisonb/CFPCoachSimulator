@@ -254,7 +254,7 @@
    "carter-shaw",
    "jordan-onovughe",
    "marcus-brown",
-   "demarcus-greenwood",
+   "dre-pollard",
    "liam-thorpe",
    "david-pantelis",
    "langdon-horace"
@@ -285,7 +285,7 @@
    "simione-pale",
    "ziron-brown",
    "charlie-hoitink",
-   "darin-johnson"
+   "jay-miller"
   ],
   "RT": [
    "kahlil-house",
@@ -307,7 +307,7 @@
   "REDG": [
    "zach-rowell",
    "adam-shovlin",
-   "joe-nelson"
+   "max-meier"
   ],
   "SAM": [
    "tevarua-tafiti",
@@ -353,8 +353,8 @@
   ],
   "K": [
    "emmet-kenney",
-   "dustin-watkins",
-   "dakota-clark"
+   "aj-seidler",
+   "london-bironas"
   ],
   "P": [
    "aidan-flintoft"
@@ -4530,11 +4530,11 @@
    }
   },
   {
-   "slug": "demarcus-greenwood",
+   "slug": "dre-pollard",
    "position": "WR",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/demarcus-greenwood/",
+   "url": null,
    "name": "Dre Pollard",
    "position_name": "Wide Receiver",
    "jersey": "14",
@@ -10391,11 +10391,11 @@
    }
   },
   {
-   "slug": "darin-johnson",
+   "slug": "jay-miller",
    "position": "RG",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/darin-johnson/",
+   "url": null,
    "name": "Jay Miller",
    "position_name": "Right Guard",
    "jersey": "65",
@@ -14161,11 +14161,11 @@
    }
   },
   {
-   "slug": "joe-nelson",
+   "slug": "max-meier",
    "position": "REDG",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/joe-nelson/",
+   "url": null,
    "name": "Max Meier",
    "position_name": "Right Edge",
    "jersey": "98",
@@ -23249,11 +23249,11 @@
    }
   },
   {
-   "slug": "dustin-watkins",
+   "slug": "aj-seidler",
    "position": "K",
    "class": "JRRS",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/dustin-watkins/",
+   "url": null,
    "name": "AJ Seidler",
    "position_name": "Kicker",
    "jersey": "92",
@@ -23499,11 +23499,11 @@
    }
   },
   {
-   "slug": "dakota-clark",
+   "slug": "london-bironas",
    "position": "K",
    "class": "FR",
    "team_slug": "stanford",
-   "url": "https://collegefootball.gg/players/dakota-clark/",
+   "url": null,
    "name": "London Bironas",
    "position_name": "Kicker",
    "jersey": "19",

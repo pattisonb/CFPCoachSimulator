@@ -256,7 +256,7 @@
    "cj-brown",
    "jelani-watkins",
    "ismael-cisse",
-   "trent-harrington",
+   "maurice-gleaton-jr",
    "courtney-crutchfield",
    "dequane-prevo",
    "blair-irvin-iii",
@@ -275,8 +275,8 @@
   ],
   "LG": [
    "malachi-breland",
-   "geno-jones",
-   "mark-lindley"
+   "carey-clayton",
+   "kaden-bramlage"
   ],
   "C": [
    "caden-kitler",
@@ -285,8 +285,8 @@
   "RG": [
    "kobe-branham",
    "brooks-edmonson",
-   "jaron-powell",
-   "ike-lawson"
+   "jonas-nantze",
+   "ben-mubenga"
   ],
   "RT": [
    "terence-roberson-jr",
@@ -315,7 +315,7 @@
    "jlynn-allen"
   ],
   "SAM": [
-   "jordan-moate"
+   "preston-davis"
   ],
   "MIKE": [
    "bradley-shaw",
@@ -354,11 +354,11 @@
   ],
   "K": [
    "max-gilbert",
-   "todd-lehmann"
+   "braeden-mcalister"
   ],
   "P": [
    "gavin-rush",
-   "warren-abraham"
+   "connor-smith"
   ]
  },
  "roster_size": 85,
@@ -4749,11 +4749,11 @@
    }
   },
   {
-   "slug": "trent-harrington",
+   "slug": "maurice-gleaton-jr",
    "position": "WR",
    "class": "SR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/trent-harrington/",
+   "url": null,
    "name": "Maurice Gleaton Jr.",
    "position_name": "Wide Receiver",
    "jersey": "86",
@@ -8390,11 +8390,11 @@
    }
   },
   {
-   "slug": "geno-jones",
+   "slug": "carey-clayton",
    "position": "LG",
    "class": "SO",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/geno-jones/",
+   "url": null,
    "name": "Carey Clayton",
    "position_name": "Left Guard",
    "jersey": "55",
@@ -8645,11 +8645,11 @@
    }
   },
   {
-   "slug": "mark-lindley",
+   "slug": "kaden-bramlage",
    "position": "LG",
    "class": "FR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/mark-lindley/",
+   "url": null,
    "name": "Kaden Bramlage",
    "position_name": "Left Guard",
    "jersey": "61",
@@ -10010,11 +10010,11 @@
    }
   },
   {
-   "slug": "jaron-powell",
+   "slug": "jonas-nantze",
    "position": "RG",
    "class": "SO",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/jaron-powell/",
+   "url": null,
    "name": "Jonas Nantze",
    "position_name": "Right Guard",
    "jersey": "60",
@@ -10265,11 +10265,11 @@
    }
   },
   {
-   "slug": "ike-lawson",
+   "slug": "ben-mubenga",
    "position": "RG",
    "class": "FR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/ike-lawson/",
+   "url": null,
    "name": "Ben Mubenga",
    "position_name": "Right Guard",
    "jersey": "56",
@@ -15481,11 +15481,11 @@
    }
   },
   {
-   "slug": "jordan-moate",
+   "slug": "preston-davis",
    "position": "SAM",
    "class": "SO",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/jordan-moate/",
+   "url": null,
    "name": "Preston Davis",
    "position_name": "Sam Linebacker",
    "jersey": "45",
@@ -22954,11 +22954,11 @@
    }
   },
   {
-   "slug": "todd-lehmann",
+   "slug": "braeden-mcalister",
    "position": "K",
    "class": "JRRS",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/todd-lehmann/",
+   "url": null,
    "name": "Braeden McAlister",
    "position_name": "Kicker",
    "jersey": "39",
@@ -23436,11 +23436,11 @@
    }
   },
   {
-   "slug": "warren-abraham",
+   "slug": "connor-smith",
    "position": "P",
    "class": "FR",
    "team_slug": "arkansas",
-   "url": "https://collegefootball.gg/players/warren-abraham/",
+   "url": null,
    "name": "Connor Smith",
    "position_name": "Punter",
    "jersey": "41",

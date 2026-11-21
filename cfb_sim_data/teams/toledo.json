@@ -195,7 +195,7 @@
     "ezra-odinjor"
    ],
    "DT": [
-    "anthony-carey",
+    "adrian-love-jr",
     "nate-chandler"
    ],
    "LB": [
@@ -248,7 +248,7 @@
    "anthony-simpson",
    "terrell-crosby-jr",
    "rico-bond",
-   "terrance-white",
+   "omar-mims-jr",
    "adjatay-dabbs",
    "tashi-braceful",
    "trenton-jones",
@@ -297,10 +297,10 @@
    "andrew-zock",
    "tommy-huss",
    "ben-sahakian",
-   "wayne-thompson"
+   "desmond-okantey"
   ],
   "DT": [
-   "anthony-carey",
+   "adrian-love-jr",
    "nate-chandler",
    "jordin-farrow",
    "lucas-lambert-pipkin",
@@ -339,7 +339,7 @@
   "FS": [
    "kaleb-hutchinson",
    "nicholas-thompson",
-   "dennis-charles",
+   "andrew-fineske",
    "tyler-hackenbracht"
   ],
   "SS": [
@@ -352,7 +352,7 @@
   ],
   "P": [
    "emilio-duran",
-   "quincey-hodges",
+   "hunter-probst",
    "anthony-ruggles"
   ]
  },
@@ -3642,11 +3642,11 @@
    }
   },
   {
-   "slug": "terrance-white",
+   "slug": "omar-mims-jr",
    "position": "WR",
    "class": "SRRS",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/terrance-white/",
+   "url": null,
    "name": "Omar Mims Jr.",
    "position_name": "Wide Receiver",
    "jersey": "83",
@@ -13552,11 +13552,11 @@
    }
   },
   {
-   "slug": "wayne-thompson",
+   "slug": "desmond-okantey",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/wayne-thompson/",
+   "url": null,
    "name": "Desmond Okantey",
    "position_name": "Left Edge",
    "jersey": "37",
@@ -13813,11 +13813,11 @@
    }
   },
   {
-   "slug": "anthony-carey",
+   "slug": "adrian-love-jr",
    "position": "DT",
    "class": "SORS",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/anthony-carey/",
+   "url": null,
    "name": "Adrian Love Jr.",
    "position_name": "Defensive Tackle",
    "jersey": "94",
@@ -21695,11 +21695,11 @@
    }
   },
   {
-   "slug": "dennis-charles",
+   "slug": "andrew-fineske",
    "position": "FS",
    "class": "FR",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/dennis-charles/",
+   "url": null,
    "name": "Andrew Fineske",
    "position_name": "Free Safety",
    "jersey": "33",
@@ -23563,11 +23563,11 @@
    }
   },
   {
-   "slug": "quincey-hodges",
+   "slug": "hunter-probst",
    "position": "P",
    "class": "SO",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/quincey-hodges/",
+   "url": null,
    "name": "Hunter Probst",
    "position_name": "Punter",
    "jersey": "46",

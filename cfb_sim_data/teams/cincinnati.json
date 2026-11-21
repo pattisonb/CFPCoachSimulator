@@ -252,7 +252,7 @@
    "elijah-jones",
    "cade-wolford",
    "larenzo-fenner",
-   "nelson-gottis",
+   "taizaun-burns",
    "giyahni-kontosis",
    "flynn-schiele",
    "heij-jackson",
@@ -314,7 +314,7 @@
   ],
   "SAM": [
    "montay-weedon",
-   "angelo-westbrook"
+   "jaxon-newton"
   ],
   "MIKE": [
    "filip-maciorowski",
@@ -355,7 +355,7 @@
   ],
   "P": [
    "max-fletcher",
-   "toby-petty"
+   "dino-beslagic"
   ]
  },
  "roster_size": 85,
@@ -5105,11 +5105,11 @@
    }
   },
   {
-   "slug": "nelson-gottis",
+   "slug": "taizaun-burns",
    "position": "WR",
    "class": "JR",
    "team_slug": "cincinnati",
-   "url": "https://collegefootball.gg/players/nelson-gottis/",
+   "url": null,
    "name": "Taizaun Burns",
    "position_name": "Wide Receiver",
    "jersey": "27",
@@ -16203,11 +16203,11 @@
    }
   },
   {
-   "slug": "angelo-westbrook",
+   "slug": "jaxon-newton",
    "position": "SAM",
    "class": "FR",
    "team_slug": "cincinnati",
-   "url": "https://collegefootball.gg/players/angelo-westbrook/",
+   "url": null,
    "name": "Jaxon Newton",
    "position_name": "Sam Linebacker",
    "jersey": "45",
@@ -23634,11 +23634,11 @@
    }
   },
   {
-   "slug": "toby-petty",
+   "slug": "dino-beslagic",
    "position": "P",
    "class": "JR",
    "team_slug": "cincinnati",
-   "url": "https://collegefootball.gg/players/toby-petty/",
+   "url": null,
    "name": "Dino Beslagic",
    "position_name": "Punter",
    "jersey": "35",

@@ -266,7 +266,7 @@
   ],
   "LT": [
    "rex-johnsen",
-   "rudy-bartlett",
+   "nathan-geiger",
    "josiah-petaia"
   ],
   "LG": [
@@ -277,7 +277,7 @@
   ],
   "C": [
    "chandler-donaway",
-   "hugh-barnes",
+   "tariq-miller",
    "johnathan-bush"
   ],
   "RG": [
@@ -320,7 +320,7 @@
   "WILL": [
    "karson-butts",
    "gary-rutherford",
-   "tyrone-phelps"
+   "dante-bruley"
   ],
   "CB": [
    "logan-mackey",
@@ -329,7 +329,7 @@
    "junus-mcgraw",
    "bj-inmon",
    "david-leonard",
-   "kendrick-mcalister",
+   "dainsus-miller",
    "therman-williams",
    "kendall-griffin"
   ],
@@ -7920,11 +7920,11 @@
    }
   },
   {
-   "slug": "rudy-bartlett",
+   "slug": "nathan-geiger",
    "position": "LT",
    "class": "JR",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/rudy-bartlett/",
+   "url": null,
    "name": "Nathan Geiger",
    "position_name": "Left Tackle",
    "jersey": "65",
@@ -9814,11 +9814,11 @@
    }
   },
   {
-   "slug": "hugh-barnes",
+   "slug": "tariq-miller",
    "position": "C",
    "class": "FRRS",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/hugh-barnes/",
+   "url": null,
    "name": "Tariq Miller",
    "position_name": "Center",
    "jersey": "74",
@@ -17501,11 +17501,11 @@
    }
   },
   {
-   "slug": "tyrone-phelps",
+   "slug": "dante-bruley",
    "position": "WILL",
    "class": "FR",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/tyrone-phelps/",
+   "url": null,
    "name": "Dante Bruley",
    "position_name": "Will Linebacker",
    "jersey": "40",
@@ -19478,11 +19478,11 @@
    }
   },
   {
-   "slug": "kendrick-mcalister",
+   "slug": "dainsus-miller",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "wyoming",
-   "url": "https://collegefootball.gg/players/kendrick-mcalister/",
+   "url": null,
    "name": "Dainsus Miller",
    "position_name": "Cornerback",
    "jersey": "20",

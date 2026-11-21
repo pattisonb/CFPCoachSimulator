@@ -198,7 +198,7 @@
    ],
    "DT": [
     "preston-watson",
-    "cliff-drummond"
+    "owen-wafle"
    ],
    "LB": [
     "luke-mergott",
@@ -289,7 +289,7 @@
   "RT": [
    "braden-miller",
    "cole-allen",
-   "daryl-milner"
+   "jamin-brown"
   ],
   "LEDG": [
    "tyshon-reed",
@@ -299,7 +299,7 @@
   ],
   "DT": [
    "preston-watson",
-   "cliff-drummond",
+   "owen-wafle",
    "bariate-kara",
    "david-anderson",
    "julius-columbus",
@@ -327,7 +327,7 @@
   "WILL": [
    "luke-mergott",
    "bradley-gompers",
-   "lorenzo-lashley"
+   "asher-wasserman"
   ],
   "CB": [
    "kimari-robinson",
@@ -353,7 +353,7 @@
   "K": [
    "cosme-salas",
    "ashton-zamani",
-   "brayden-moore"
+   "gavin-strange"
   ],
   "P": [
    "kade-reynoldson"
@@ -11241,11 +11241,11 @@
    }
   },
   {
-   "slug": "daryl-milner",
+   "slug": "jamin-brown",
    "position": "RT",
    "class": "FR",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/daryl-milner/",
+   "url": null,
    "name": "Jamin Brown",
    "position_name": "Right Tackle",
    "jersey": "71",
@@ -13097,11 +13097,11 @@
    }
   },
   {
-   "slug": "cliff-drummond",
+   "slug": "owen-wafle",
    "position": "DT",
    "class": "JRRS",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/cliff-drummond/",
+   "url": null,
    "name": "Owen Wafle",
    "position_name": "Defensive Tackle",
    "jersey": "91",
@@ -18385,11 +18385,11 @@
    }
   },
   {
-   "slug": "lorenzo-lashley",
+   "slug": "asher-wasserman",
    "position": "WILL",
    "class": "FR",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/lorenzo-lashley/",
+   "url": null,
    "name": "Asher Wasserman",
    "position_name": "Will Linebacker",
    "jersey": "40",
@@ -23460,11 +23460,11 @@
    }
   },
   {
-   "slug": "brayden-moore",
+   "slug": "gavin-strange",
    "position": "K",
    "class": "SO",
    "team_slug": "duke",
-   "url": "https://collegefootball.gg/players/brayden-moore/",
+   "url": null,
    "name": "Gavin Strange",
    "position_name": "Kicker",
    "jersey": "25",

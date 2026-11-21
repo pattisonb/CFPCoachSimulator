@@ -253,7 +253,7 @@
    "refeno-vangates",
    "nasir-newkirk",
    "eric-smith-liberty",
-   "brandon-payne"
+   "jakobe-dejesus"
   ],
   "TE": [
    "lakelsey-johnson-jr",
@@ -272,17 +272,17 @@
    "joep-engbers",
    "blake-martin",
    "daniel-schiffert",
-   "glenn-martino"
+   "carlton-hall"
   ],
   "C": [
    "aaron-fenimore",
    "gabe-smith",
-   "bret-yoder"
+   "curtis-doirilus"
   ],
   "RG": [
    "alex-birchmeier",
    "val-erickson",
-   "dan-woods"
+   "joseph-morris"
   ],
   "RT": [
    "christian-williams",
@@ -348,7 +348,7 @@
   ],
   "K": [
    "tyler-black",
-   "dalton-byrd"
+   "sam-crossan"
   ],
   "P": [
    "chase-reeves",
@@ -5661,11 +5661,11 @@
    }
   },
   {
-   "slug": "brandon-payne",
+   "slug": "jakobe-dejesus",
    "position": "WR",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/brandon-payne/",
+   "url": null,
    "name": "Jakobe DeJesus",
    "position_name": "Wide Receiver",
    "jersey": "81",
@@ -9350,11 +9350,11 @@
    }
   },
   {
-   "slug": "glenn-martino",
+   "slug": "carlton-hall",
    "position": "LG",
    "class": "SO",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/glenn-martino/",
+   "url": null,
    "name": "Carlton Hall",
    "position_name": "Left Guard",
    "jersey": "77",
@@ -10171,11 +10171,11 @@
    }
   },
   {
-   "slug": "bret-yoder",
+   "slug": "curtis-doirilus",
    "position": "C",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/bret-yoder/",
+   "url": null,
    "name": "Curtis Doirilus",
    "position_name": "Center",
    "jersey": "73",
@@ -10992,11 +10992,11 @@
    }
   },
   {
-   "slug": "dan-woods",
+   "slug": "joseph-morris",
    "position": "RG",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/dan-woods/",
+   "url": null,
    "name": "Joseph Morris",
    "position_name": "Right Guard",
    "jersey": "78",
@@ -23188,11 +23188,11 @@
    }
   },
   {
-   "slug": "dalton-byrd",
+   "slug": "sam-crossan",
    "position": "K",
    "class": "JR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/dalton-byrd/",
+   "url": null,
    "name": "Sam Crossan",
    "position_name": "Kicker",
    "jersey": "49",

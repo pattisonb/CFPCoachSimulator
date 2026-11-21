@@ -169,7 +169,7 @@
    "WR": [
     "na-eem-abdul-rahim-gladding",
     "chris-durr-jr",
-    "rahmir-basher"
+    "emerson-smith"
    ],
    "TE": [
     "dorian-fleming"
@@ -250,7 +250,7 @@
   "WR": [
    "na-eem-abdul-rahim-gladding",
    "chris-durr-jr",
-   "rahmir-basher",
+   "emerson-smith",
    "kaleb-webb",
    "ryan-manning",
    "justin-devaughn",
@@ -273,7 +273,7 @@
    "rahtrel-perry",
    "michael-mcmonigle",
    "davon-watkins",
-   "ar-darius-mitchell"
+   "jonathan-panagou"
   ],
   "LG": [
    "tellek-lockette",
@@ -3720,11 +3720,11 @@
    }
   },
   {
-   "slug": "rahmir-basher",
+   "slug": "emerson-smith",
    "position": "WR",
    "class": "JR",
    "team_slug": "maryland",
-   "url": "https://collegefootball.gg/players/rahmir-basher/",
+   "url": null,
    "name": "Emerson Smith",
    "position_name": "Wide Receiver",
    "jersey": "83",
@@ -8898,11 +8898,11 @@
    }
   },
   {
-   "slug": "ar-darius-mitchell",
+   "slug": "jonathan-panagou",
    "position": "LT",
    "class": "FR",
    "team_slug": "maryland",
-   "url": "https://collegefootball.gg/players/ar-darius-mitchell/",
+   "url": null,
    "name": "Jonathan Panagou",
    "position_name": "Left Tackle",
    "jersey": "52",

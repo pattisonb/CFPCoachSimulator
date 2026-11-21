@@ -249,7 +249,7 @@
    "jamarion-mcdougle",
    "cj-nelson",
    "isaiah-thacker",
-   "juan-mcdougal",
+   "tayshon-bardo",
    "corey-thompson-jr",
    "ace-cooper",
    "dj-young",
@@ -315,7 +315,7 @@
    "ben-marsh",
    "sam-feeney",
    "jamar-birden",
-   "matthew-meekins"
+   "mason-holbrook"
   ],
   "SAM": [],
   "MIKE": [
@@ -4313,11 +4313,11 @@
    }
   },
   {
-   "slug": "juan-mcdougal",
+   "slug": "tayshon-bardo",
    "position": "WR",
    "class": "SORS",
    "team_slug": "ball-state",
-   "url": "https://collegefootball.gg/players/juan-mcdougal/",
+   "url": null,
    "name": "Tayshon Bardo",
    "position_name": "Wide Receiver",
    "jersey": "15",
@@ -17687,11 +17687,11 @@
    }
   },
   {
-   "slug": "matthew-meekins",
+   "slug": "mason-holbrook",
    "position": "REDG",
    "class": "FR",
    "team_slug": "ball-state",
-   "url": "https://collegefootball.gg/players/matthew-meekins/",
+   "url": null,
    "name": "Mason Holbrook",
    "position_name": "Right Edge",
    "jersey": "93",

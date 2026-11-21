@@ -204,7 +204,7 @@
    "CB": [
     "jai-ayviauynn-celestine",
     "lawrence-johnson",
-    "lamar-duval"
+    "myles-cunningham"
    ],
    "FS": [
     "demetrius-hill"
@@ -218,7 +218,7 @@
     "robert-czeremcha"
    ],
    "P": [
-    "sam-payton"
+    "conrad-tolerico"
    ],
    "KR": [
     "andre-brown"
@@ -237,7 +237,7 @@
   "HB": [
    "anthony-carrie",
    "sterling-joseph",
-   "daxton-lamont",
+   "jayden-ford",
    "devonte-lyons",
    "justin-compere"
   ],
@@ -259,7 +259,7 @@
    "sean-burke",
    "ayden-passley",
    "james-resar",
-   "justin-wood"
+   "remy-goins"
   ],
   "LT": [
    "manasseh-ripert",
@@ -272,8 +272,8 @@
    "antonio-tripp-jr",
    "akeem-neal",
    "matias-garcia",
-   "erik-diehl",
-   "quincy-harrison"
+   "samson-chazulle",
+   "marc-michel-jr"
   ],
   "C": [
    "jon-rodriguez",
@@ -291,7 +291,7 @@
   ],
   "LEDG": [
    "dante-anderson",
-   "robert-williams",
+   "michael-smarts",
    "elisha-baldridge",
    "kani-smith",
    "king-massey"
@@ -302,7 +302,7 @@
    "germaine-carter",
    "anthony-smith-fiu",
    "jamorie-flagg",
-   "quincey-howard",
+   "lukenson-morancy",
    "elijah-simmons",
    "nathan-jennings"
   ],
@@ -313,7 +313,7 @@
    "nick-watson"
   ],
   "SAM": [
-   "eric-gilchrist"
+   "de-andre-arnold"
   ],
   "MIKE": [
    "orlando-syph-timmons",
@@ -329,7 +329,7 @@
   "CB": [
    "jai-ayviauynn-celestine",
    "lawrence-johnson",
-   "lamar-duval",
+   "myles-cunningham",
    "da-vontae-floyd",
    "ryan-gadson",
    "zay-west",
@@ -339,7 +339,7 @@
    "demetrius-hill",
    "wesley-miller",
    "eric-johnson",
-   "kelvin-reyes"
+   "kiyante-ingram"
   ],
   "SS": [
    "shamir-sterlin",
@@ -352,8 +352,8 @@
    "noah-sidan"
   ],
   "P": [
-   "sam-payton",
-   "brian-snyder"
+   "conrad-tolerico",
+   "stone-springman"
   ]
  },
  "roster_size": 85,
@@ -1766,11 +1766,11 @@
    }
   },
   {
-   "slug": "daxton-lamont",
+   "slug": "jayden-ford",
    "position": "HB",
    "class": "FR",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/daxton-lamont/",
+   "url": null,
    "name": "Jayden Ford",
    "position_name": "Halfback",
    "jersey": "10",
@@ -6505,11 +6505,11 @@
    }
   },
   {
-   "slug": "justin-wood",
+   "slug": "remy-goins",
    "position": "TE",
    "class": "JRRS",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/justin-wood/",
+   "url": null,
    "name": "Remy Goins",
    "position_name": "Tight End",
    "jersey": "87",
@@ -9102,11 +9102,11 @@
    }
   },
   {
-   "slug": "erik-diehl",
+   "slug": "samson-chazulle",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/erik-diehl/",
+   "url": null,
    "name": "Samson Chazulle",
    "position_name": "Left Guard",
    "jersey": "76",
@@ -9344,11 +9344,11 @@
    }
   },
   {
-   "slug": "quincy-harrison",
+   "slug": "marc-michel-jr",
    "position": "LG",
    "class": "FR",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/quincy-harrison/",
+   "url": null,
    "name": "Marc Michel Jr.",
    "position_name": "Left Guard",
    "jersey": "56",
@@ -12100,11 +12100,11 @@
    }
   },
   {
-   "slug": "robert-williams",
+   "slug": "michael-smarts",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/robert-williams/",
+   "url": null,
    "name": "Michael Smarts",
    "position_name": "Left Edge",
    "jersey": "44",
@@ -14652,11 +14652,11 @@
    }
   },
   {
-   "slug": "quincey-howard",
+   "slug": "lukenson-morancy",
    "position": "DT",
    "class": "FR",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/quincey-howard/",
+   "url": null,
    "name": "Lukenson Morancy",
    "position_name": "Defensive Tackle",
    "jersey": "92",
@@ -16584,11 +16584,11 @@
    }
   },
   {
-   "slug": "eric-gilchrist",
+   "slug": "de-andre-arnold",
    "position": "SAM",
    "class": "SO",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/eric-gilchrist/",
+   "url": null,
    "name": "De'Andre Arnold",
    "position_name": "Sam Linebacker",
    "jersey": "37",
@@ -19332,11 +19332,11 @@
    }
   },
   {
-   "slug": "lamar-duval",
+   "slug": "myles-cunningham",
    "position": "CB",
    "class": "JR",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/lamar-duval/",
+   "url": null,
    "name": "Myles Cunningham",
    "position_name": "Cornerback",
    "jersey": "19",
@@ -21563,11 +21563,11 @@
    }
   },
   {
-   "slug": "kelvin-reyes",
+   "slug": "kiyante-ingram",
    "position": "FS",
    "class": "FRRS",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/kelvin-reyes/",
+   "url": null,
    "name": "Kiyante Ingram",
    "position_name": "Free Safety",
    "jersey": "20",
@@ -23506,11 +23506,11 @@
    }
   },
   {
-   "slug": "brian-snyder",
+   "slug": "stone-springman",
    "position": "P",
    "class": "JR",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/brian-snyder/",
+   "url": null,
    "name": "Stone Springman",
    "position_name": "Punter",
    "jersey": "41",
@@ -23747,11 +23747,11 @@
    }
   },
   {
-   "slug": "sam-payton",
+   "slug": "conrad-tolerico",
    "position": "P",
    "class": "SO",
    "team_slug": "fiu",
-   "url": "https://collegefootball.gg/players/sam-payton/",
+   "url": null,
    "name": "Conrad Tolerico",
    "position_name": "Punter",
    "jersey": "49",

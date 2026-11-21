@@ -217,7 +217,7 @@
     "oliver-hautanen"
    ],
    "P": [
-    "melo-dodge"
+    "evan-pfeifer"
    ],
    "KR": [
     "mikey-crawford"
@@ -232,11 +232,11 @@
    "elijah-holmes",
    "jason-wright",
    "quran-mcneill",
-   "sal-brooks"
+   "jake-forburger"
   ],
   "HB": [
    "terrance-shelton-jr",
-   "laremy-burgess",
+   "devare-mathis",
    "messiah-burch",
    "nino-hill",
    "chase-enlow",
@@ -284,8 +284,8 @@
   "RT": [
    "tyrone-davis",
    "jackson-davenport",
-   "blake-mcdowell",
-   "christopher-lamb"
+   "ben-foglia-albrecht",
+   "jaden-maxey"
   ],
   "LEDG": [
    "will-clark",
@@ -344,14 +344,14 @@
    "saveon-brown",
    "zae-jennings",
    "john-keough",
-   "byron-spears"
+   "dylan-cleary"
   ],
   "K": [
    "oliver-hautanen",
-   "andrew-phillips"
+   "blake-sholder"
   ],
   "P": [
-   "melo-dodge",
+   "evan-pfeifer",
    "andrew-vanslyke"
   ]
  },
@@ -1191,11 +1191,11 @@
    }
   },
   {
-   "slug": "sal-brooks",
+   "slug": "jake-forburger",
    "position": "QB",
    "class": "SO",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/sal-brooks/",
+   "url": null,
    "name": "Jake Forburger",
    "position_name": "Quarterback",
    "jersey": "18",
@@ -1725,11 +1725,11 @@
    }
   },
   {
-   "slug": "laremy-burgess",
+   "slug": "devare-mathis",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/laremy-burgess/",
+   "url": null,
    "name": "Devare Mathis",
    "position_name": "Halfback",
    "jersey": "21",
@@ -10997,11 +10997,11 @@
    }
   },
   {
-   "slug": "blake-mcdowell",
+   "slug": "ben-foglia-albrecht",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/blake-mcdowell/",
+   "url": null,
    "name": "Ben Foglia-Albrecht",
    "position_name": "Right Tackle",
    "jersey": "58",
@@ -11252,11 +11252,11 @@
    }
   },
   {
-   "slug": "christopher-lamb",
+   "slug": "jaden-maxey",
    "position": "RT",
    "class": "FR",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/christopher-lamb/",
+   "url": null,
    "name": "Jaden Maxey",
    "position_name": "Right Tackle",
    "jersey": "72",
@@ -22775,11 +22775,11 @@
    }
   },
   {
-   "slug": "byron-spears",
+   "slug": "dylan-cleary",
    "position": "SS",
    "class": "FRRS",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/byron-spears/",
+   "url": null,
    "name": "Dylan Cleary",
    "position_name": "Strong Safety",
    "jersey": "38",
@@ -23304,11 +23304,11 @@
    }
   },
   {
-   "slug": "andrew-phillips",
+   "slug": "blake-sholder",
    "position": "K",
    "class": "FR",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/andrew-phillips/",
+   "url": null,
    "name": "Blake Sholder",
    "position_name": "Kicker",
    "jersey": "39",
@@ -23569,11 +23569,11 @@
    }
   },
   {
-   "slug": "melo-dodge",
+   "slug": "evan-pfeifer",
    "position": "P",
    "class": "SO",
    "team_slug": "buffalo",
-   "url": "https://collegefootball.gg/players/melo-dodge/",
+   "url": null,
    "name": "Evan Pfeifer",
    "position_name": "Punter",
    "jersey": "95",

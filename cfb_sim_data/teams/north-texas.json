@@ -241,7 +241,7 @@
    "jahiem-white",
    "brendon-haygood",
    "nick-osho",
-   "kingsley-alexander",
+   "adarion-nettles",
    "keenan-jackson-north-texas",
    "colin-page"
   ],
@@ -288,7 +288,7 @@
   ],
   "RT": [
    "neto-umeozulu",
-   "maurice-horne",
+   "drew-cunningham-north-texas",
    "jahzari-priester"
   ],
   "LEDG": [
@@ -324,7 +324,7 @@
   "WILL": [
    "aaron-alexander",
    "chantz-johnson",
-   "ben-woodyard"
+   "kailer-pettijohn"
   ],
   "CB": [
    "caden-jenkins",
@@ -335,7 +335,7 @@
    "zach-johnson-north-texas",
    "jaden-allen",
    "anthony-benford-ii",
-   "erron-burks"
+   "aaden-little"
   ],
   "FS": [
    "taye-seymore",
@@ -353,7 +353,7 @@
   ],
   "K": [
    "dominic-de-freitas",
-   "lucas-fischer"
+   "michael-taylor-ii"
   ],
   "P": [
    "ian-ratliff"
@@ -2307,11 +2307,11 @@
    }
   },
   {
-   "slug": "kingsley-alexander",
+   "slug": "adarion-nettles",
    "position": "HB",
    "class": "FR",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/kingsley-alexander/",
+   "url": null,
    "name": "Adarion Nettles",
    "position_name": "Halfback",
    "jersey": "20",
@@ -10990,11 +10990,11 @@
    }
   },
   {
-   "slug": "maurice-horne",
+   "slug": "drew-cunningham-north-texas",
    "position": "RT",
    "class": "JR",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/maurice-horne/",
+   "url": null,
    "name": "Drew Cunningham",
    "position_name": "Right Tackle",
    "jersey": "61",
@@ -17376,11 +17376,11 @@
    }
   },
   {
-   "slug": "ben-woodyard",
+   "slug": "kailer-pettijohn",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/ben-woodyard/",
+   "url": null,
    "name": "Kailer Pettijohn",
    "position_name": "Will Linebacker",
    "jersey": "40",
@@ -20214,11 +20214,11 @@
    }
   },
   {
-   "slug": "erron-burks",
+   "slug": "aaden-little",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/erron-burks/",
+   "url": null,
    "name": "Aaden Little",
    "position_name": "Cornerback",
    "jersey": "31",
@@ -23619,11 +23619,11 @@
    }
   },
   {
-   "slug": "lucas-fischer",
+   "slug": "michael-taylor-ii",
    "position": "K",
    "class": "FR",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/lucas-fischer/",
+   "url": null,
    "name": "Michael Taylor II",
    "position_name": "Kicker",
    "jersey": "48",

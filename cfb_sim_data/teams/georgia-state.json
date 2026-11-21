@@ -165,7 +165,7 @@
    "WR": [
     "derrick-avery-jr",
     "kyle-washington",
-    "chase-allen-jackman"
+    "amari-powell"
    ],
    "TE": [
     "grant-hollier"
@@ -248,14 +248,14 @@
   "WR": [
    "derrick-avery-jr",
    "kyle-washington",
-   "chase-allen-jackman",
+   "amari-powell",
    "dj-riles",
    "rodshaun-dorsey",
    "owen-dupree",
    "austin-mcgee",
    "jaylin-marshall",
    "jamari-miller",
-   "john-lawless",
+   "khalil-quinn",
    "keron-milton",
    "isaiah-stone",
    "ahmed-souare"
@@ -275,7 +275,7 @@
    "donovan-funsch",
    "maxwell-robinson",
    "aidan-andrews",
-   "jalen-george"
+   "matthew-grow"
   ],
   "C": [
    "tyhler-williams",
@@ -332,7 +332,7 @@
    "tyson-mccrary",
    "toby-bolton",
    "rysheed-fuller",
-   "braylon-alexander",
+   "cade-dutton",
    "monterrius-echols",
    "malique-harrell"
   ],
@@ -4051,11 +4051,11 @@
    }
   },
   {
-   "slug": "chase-allen-jackman",
+   "slug": "amari-powell",
    "position": "WR",
    "class": "SR",
    "team_slug": "georgia-state",
-   "url": "https://collegefootball.gg/players/chase-allen-jackman/",
+   "url": null,
    "name": "Amari Powell",
    "position_name": "Wide Receiver",
    "jersey": "89",
@@ -5981,11 +5981,11 @@
    }
   },
   {
-   "slug": "john-lawless",
+   "slug": "khalil-quinn",
    "position": "WR",
    "class": "SO",
    "team_slug": "georgia-state",
-   "url": "https://collegefootball.gg/players/john-lawless/",
+   "url": null,
    "name": "Khalil Quinn",
    "position_name": "Wide Receiver",
    "jersey": "38",
@@ -9989,11 +9989,11 @@
    }
   },
   {
-   "slug": "jalen-george",
+   "slug": "matthew-grow",
    "position": "LG",
    "class": "FR",
    "team_slug": "georgia-state",
-   "url": "https://collegefootball.gg/players/jalen-george/",
+   "url": null,
    "name": "Matthew Grow",
    "position_name": "Left Guard",
    "jersey": "70",
@@ -20234,11 +20234,11 @@
    }
   },
   {
-   "slug": "braylon-alexander",
+   "slug": "cade-dutton",
    "position": "CB",
    "class": "SRRS",
    "team_slug": "georgia-state",
-   "url": "https://collegefootball.gg/players/braylon-alexander/",
+   "url": null,
    "name": "Cade Dutton",
    "position_name": "Cornerback",
    "jersey": "39",

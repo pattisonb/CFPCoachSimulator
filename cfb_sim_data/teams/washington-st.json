@@ -239,7 +239,7 @@
    "kirby-vorhees",
    "leo-pulalasi",
    "maxwell-woods",
-   "tay-hobbs",
+   "cj-toney",
    "marquez-wimberly",
    "erimus-wright",
    "tremayne-hill"
@@ -273,8 +273,8 @@
   "LG": [
    "jonny-lester",
    "sone-falealo",
-   "drew-braswell",
-   "isaiah-lyons"
+   "grayson-campbell",
+   "aj-olerich"
   ],
   "C": [
    "kyle-martin",
@@ -315,7 +315,7 @@
   ],
   "SAM": [
    "gage-jones",
-   "russell-hardesty"
+   "gavin-fugate"
   ],
   "MIKE": [
    "nylan-brown",
@@ -2032,11 +2032,11 @@
    }
   },
   {
-   "slug": "tay-hobbs",
+   "slug": "cj-toney",
    "position": "HB",
    "class": "FR",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/tay-hobbs/",
+   "url": null,
    "name": "CJ Toney",
    "position_name": "Halfback",
    "jersey": "21",
@@ -9100,11 +9100,11 @@
    }
   },
   {
-   "slug": "drew-braswell",
+   "slug": "grayson-campbell",
    "position": "LG",
    "class": "SO",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/drew-braswell/",
+   "url": null,
    "name": "Grayson Campbell",
    "position_name": "Left Guard",
    "jersey": "76",
@@ -9350,11 +9350,11 @@
    }
   },
   {
-   "slug": "isaiah-lyons",
+   "slug": "aj-olerich",
    "position": "LG",
    "class": "FR",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/isaiah-lyons/",
+   "url": null,
    "name": "AJ Olerich",
    "position_name": "Left Guard",
    "jersey": "73",
@@ -16777,11 +16777,11 @@
    }
   },
   {
-   "slug": "russell-hardesty",
+   "slug": "gavin-fugate",
    "position": "SAM",
    "class": "SO",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/russell-hardesty/",
+   "url": null,
    "name": "Gavin Fugate",
    "position_name": "Sam Linebacker",
    "jersey": "59",

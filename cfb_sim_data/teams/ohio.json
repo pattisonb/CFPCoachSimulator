@@ -167,7 +167,7 @@
    "WR": [
     "preston-bowman",
     "eian-pugh",
-    "paul-hodges"
+    "simon-smith"
    ],
    "TE": [
     "andrew-metzger"
@@ -190,7 +190,7 @@
   },
   "defense": {
    "LEDG": [
-    "carson-vogel"
+    "tyler-stearman"
    ],
    "REDG": [
     "tyler-gillison"
@@ -248,7 +248,7 @@
   "WR": [
    "preston-bowman",
    "eian-pugh",
-   "paul-hodges",
+   "simon-smith",
    "max-rodarte",
    "dom-dorwart",
    "riley-neer",
@@ -281,7 +281,7 @@
   "C": [
    "bryce-parson",
    "job-mavrick",
-   "rashawn-dockery"
+   "danny-fortson"
   ],
   "RG": [
    "cj-dawson-ii",
@@ -294,7 +294,7 @@
    "sandro-malicevic"
   ],
   "LEDG": [
-   "carson-vogel",
+   "tyler-stearman",
    "ike-ackerman"
   ],
   "DT": [
@@ -341,12 +341,12 @@
    "jt-haskins",
    "darren-james-hamilton",
    "dj-morton",
-   "john-zeigler"
+   "caleb-chamberlin"
   ],
   "SS": [
    "dj-walker",
-   "antonio-elliott",
-   "ben-linton",
+   "andrew-vera",
+   "malachi-taylor",
    "brandon-jenkins",
    "ryan-miller"
   ],
@@ -3726,11 +3726,11 @@
    }
   },
   {
-   "slug": "paul-hodges",
+   "slug": "simon-smith",
    "position": "WR",
    "class": "SRRS",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/paul-hodges/",
+   "url": null,
    "name": "Simon Smith",
    "position_name": "Wide Receiver",
    "jersey": "39",
@@ -10604,11 +10604,11 @@
    }
   },
   {
-   "slug": "rashawn-dockery",
+   "slug": "danny-fortson",
    "position": "C",
    "class": "FR",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/rashawn-dockery/",
+   "url": null,
    "name": "Danny Fortson",
    "position_name": "Center",
    "jersey": "78",
@@ -12529,11 +12529,11 @@
    }
   },
   {
-   "slug": "carson-vogel",
+   "slug": "tyler-stearman",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/carson-vogel/",
+   "url": null,
    "name": "Tyler Stearman",
    "position_name": "Left Edge",
    "jersey": "96",
@@ -21796,11 +21796,11 @@
    }
   },
   {
-   "slug": "john-zeigler",
+   "slug": "caleb-chamberlin",
    "position": "FS",
    "class": "FR",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/john-zeigler/",
+   "url": null,
    "name": "Caleb Chamberlin",
    "position_name": "Free Safety",
    "jersey": "17",
@@ -22317,11 +22317,11 @@
    }
   },
   {
-   "slug": "antonio-elliott",
+   "slug": "andrew-vera",
    "position": "SS",
    "class": "SO",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/antonio-elliott/",
+   "url": null,
    "name": "Andrew Vera",
    "position_name": "Strong Safety",
    "jersey": "48",
@@ -22584,11 +22584,11 @@
    }
   },
   {
-   "slug": "ben-linton",
+   "slug": "malachi-taylor",
    "position": "SS",
    "class": "FR",
    "team_slug": "ohio",
-   "url": "https://collegefootball.gg/players/ben-linton/",
+   "url": null,
    "name": "Malachi Taylor",
    "position_name": "Strong Safety",
    "jersey": "36",

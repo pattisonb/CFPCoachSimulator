@@ -268,7 +268,7 @@
   "LT": [
    "joey-tanona",
    "jude-mccoskey",
-   "julian-holcombe",
+   "rocco-daly",
    "max-parrott"
   ],
   "LG": [
@@ -289,7 +289,7 @@
    "jatavius-shivers",
    "nuku-mafi",
    "terrell-berryhill-jr",
-   "blake-wadlow"
+   "tom-ewing"
   ],
   "LEDG": [
    "cj-madden",
@@ -319,7 +319,7 @@
    "jojo-hayden",
    "parker-meese",
    "winston-berglund",
-   "alphonzo-warren",
+   "jaxon-ott",
    "brayden-sweeney"
   ],
   "WILL": [
@@ -354,7 +354,7 @@
   ],
   "P": [
    "dylan-drennan",
-   "griffin-hannah"
+   "sam-dubwig"
   ]
  },
  "roster_size": 85,
@@ -8011,11 +8011,11 @@
    }
   },
   {
-   "slug": "julian-holcombe",
+   "slug": "rocco-daly",
    "position": "LT",
    "class": "FR",
    "team_slug": "purdue",
-   "url": "https://collegefootball.gg/players/julian-holcombe/",
+   "url": null,
    "name": "Rocco Daly",
    "position_name": "Left Tackle",
    "jersey": "52",
@@ -11343,11 +11343,11 @@
    }
   },
   {
-   "slug": "blake-wadlow",
+   "slug": "tom-ewing",
    "position": "RT",
    "class": "FR",
    "team_slug": "purdue",
-   "url": "https://collegefootball.gg/players/blake-wadlow/",
+   "url": null,
    "name": "Tom Ewing",
    "position_name": "Right Tackle",
    "jersey": "57",
@@ -17471,11 +17471,11 @@
    }
   },
   {
-   "slug": "alphonzo-warren",
+   "slug": "jaxon-ott",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "purdue",
-   "url": "https://collegefootball.gg/players/alphonzo-warren/",
+   "url": null,
    "name": "Jaxon Ott",
    "position_name": "Mike Linebacker",
    "jersey": "51",
@@ -23960,11 +23960,11 @@
    }
   },
   {
-   "slug": "griffin-hannah",
+   "slug": "sam-dubwig",
    "position": "P",
    "class": "SO",
    "team_slug": "purdue",
-   "url": "https://collegefootball.gg/players/griffin-hannah/",
+   "url": null,
    "name": "Sam Dubwig",
    "position_name": "Punter",
    "jersey": "95",

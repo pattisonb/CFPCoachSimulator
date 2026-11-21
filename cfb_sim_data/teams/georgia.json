@@ -227,7 +227,7 @@
     "sacovie-white-helton"
    ],
    "PR": [
-    "garrison-hixon"
+    "ryan-mosley"
    ]
   }
  },
@@ -255,7 +255,7 @@
    "landon-roldan",
    "talyn-taylor",
    "cj-wiley",
-   "garrison-hixon",
+   "ryan-mosley",
    "tyler-williams",
    "thomas-blackshear"
   ],
@@ -353,7 +353,7 @@
   ],
   "K": [
    "peyton-woodring",
-   "anderson-cloud"
+   "connor-ferguson"
   ],
   "P": [
    "drew-miller"
@@ -5031,11 +5031,11 @@
    }
   },
   {
-   "slug": "garrison-hixon",
+   "slug": "ryan-mosley",
    "position": "WR",
    "class": "SO",
    "team_slug": "georgia",
-   "url": "https://collegefootball.gg/players/garrison-hixon/",
+   "url": null,
    "name": "Ryan Mosley",
    "position_name": "Wide Receiver",
    "jersey": "85",
@@ -23332,11 +23332,11 @@
    }
   },
   {
-   "slug": "anderson-cloud",
+   "slug": "connor-ferguson",
    "position": "K",
    "class": "FR",
    "team_slug": "georgia",
-   "url": "https://collegefootball.gg/players/anderson-cloud/",
+   "url": null,
    "name": "Connor Ferguson",
    "position_name": "Kicker",
    "jersey": "98",

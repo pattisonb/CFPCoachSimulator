@@ -243,7 +243,7 @@
    "dierre-hill-jr",
    "tradarian-ball",
    "simeon-price",
-   "kevin-fairbanks",
+   "killian-sombe",
    "brandon-smith-oregon",
    "da-jaun-riggs"
   ],
@@ -257,7 +257,7 @@
    "messiah-hampton",
    "jalen-lott",
    "dillon-gresham",
-   "kyle-harrickson",
+   "nathan-mccoy-ii",
    "hudson-lewis"
   ],
   "TE": [
@@ -286,7 +286,7 @@
   "RG": [
    "dave-iuli",
    "tommy-tofi",
-   "nick-lafferty"
+   "solomon-kroeker"
   ],
   "RT": [
    "michael-bennett-iii",
@@ -297,7 +297,7 @@
    "teitum-tuioti",
    "anthony-jones-jr-oregon",
    "elijah-rushing",
-   "case-redmond",
+   "derrick-brown-jr-oregon",
    "dutch-horisk"
   ],
   "DT": [
@@ -306,7 +306,7 @@
    "aydin-breland",
    "d-antre-robinson",
    "jerome-simmons",
-   "lecharles-collins",
+   "tony-cumberland",
    "anthony-jones"
   ],
   "REDG": [
@@ -318,7 +318,7 @@
   "SAM": [],
   "MIKE": [
    "jerry-mixon",
-   "perry-thacker",
+   "cruz-rushing",
    "gavin-nix",
    "dylan-williams"
   ],
@@ -2830,11 +2830,11 @@
    }
   },
   {
-   "slug": "kevin-fairbanks",
+   "slug": "killian-sombe",
    "position": "HB",
    "class": "FR",
    "team_slug": "oregon",
-   "url": "https://collegefootball.gg/players/kevin-fairbanks/",
+   "url": null,
    "name": "Killian Sombe",
    "position_name": "Halfback",
    "jersey": "27",
@@ -5849,11 +5849,11 @@
    }
   },
   {
-   "slug": "kyle-harrickson",
+   "slug": "nathan-mccoy-ii",
    "position": "WR",
    "class": "FR",
    "team_slug": "oregon",
-   "url": "https://collegefootball.gg/players/kyle-harrickson/",
+   "url": null,
    "name": "Nathan McCoy II",
    "position_name": "Wide Receiver",
    "jersey": "82",
@@ -11113,11 +11113,11 @@
    }
   },
   {
-   "slug": "nick-lafferty",
+   "slug": "solomon-kroeker",
    "position": "RG",
    "class": "FR",
    "team_slug": "oregon",
-   "url": "https://collegefootball.gg/players/nick-lafferty/",
+   "url": null,
    "name": "Solomon Kroeker",
    "position_name": "Right Guard",
    "jersey": "65",
@@ -12997,11 +12997,11 @@
    }
   },
   {
-   "slug": "case-redmond",
+   "slug": "derrick-brown-jr-oregon",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "oregon",
-   "url": "https://collegefootball.gg/players/case-redmond/",
+   "url": null,
    "name": "Derrick Brown Jr.",
    "position_name": "Left Edge",
    "jersey": "91",
@@ -15143,11 +15143,11 @@
    }
   },
   {
-   "slug": "lecharles-collins",
+   "slug": "tony-cumberland",
    "position": "DT",
    "class": "FR",
    "team_slug": "oregon",
-   "url": "https://collegefootball.gg/players/lecharles-collins/",
+   "url": null,
    "name": "Tony Cumberland",
    "position_name": "Defensive Tackle",
    "jersey": "32",
@@ -16815,11 +16815,11 @@
    }
   },
   {
-   "slug": "perry-thacker",
+   "slug": "cruz-rushing",
    "position": "MIKE",
    "class": "SR",
    "team_slug": "oregon",
-   "url": "https://collegefootball.gg/players/perry-thacker/",
+   "url": null,
    "name": "Cruz Rushing",
    "position_name": "Mike Linebacker",
    "jersey": "34",

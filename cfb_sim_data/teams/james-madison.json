@@ -235,13 +235,13 @@
    "camden-coleman",
    "davi-belfort",
    "jc-evans",
-   "julian-alexander"
+   "tanner-vibabul"
   ],
   "HB": [
    "george-pettaway",
    "nick-herman",
    "trashon-dye",
-   "de-andre-lawry",
+   "phoenix-donghia",
    "seth-cromwell",
    "malachi-fannin-render"
   ],
@@ -277,7 +277,7 @@
   "LG": [
    "tyler-brown-james-madison",
    "jack-harris",
-   "cody-kay"
+   "jonah-smith"
   ],
   "C": [
    "zach-greenberg",
@@ -286,7 +286,7 @@
   ],
   "RG": [
    "noel-portnjagin",
-   "dion-barden",
+   "jesse-sears",
    "jakobe-campbell-james-madison"
   ],
   "RT": [
@@ -305,14 +305,14 @@
    "kevin-roberts",
    "kells-bush",
    "chukwunedu-okeke",
-   "kendrick-dodge",
+   "chris-bispham",
    "jakolbi-wilson"
   ],
   "REDG": [
    "amar-thomas",
    "turner-schmidt",
    "kei-trone-simpson",
-   "delvin-albert",
+   "cory-simon",
    "kacey-gilliam"
   ],
   "SAM": [],
@@ -320,7 +320,7 @@
    "jt-hooten",
    "lathan-croley",
    "danny-royster",
-   "jaqwaylin-jenkins",
+   "josiah-perry",
    "lee-johnson"
   ],
   "WILL": [
@@ -345,8 +345,8 @@
   "SS": [
    "ken-willis",
    "chase-regan",
-   "dante-scarborough",
-   "jacobie-smith"
+   "joshua-prince",
+   "george-lovelace"
   ],
   "K": [
    "morgan-suarez"
@@ -1503,11 +1503,11 @@
    }
   },
   {
-   "slug": "julian-alexander",
+   "slug": "tanner-vibabul",
    "position": "QB",
    "class": "SO",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/julian-alexander/",
+   "url": null,
    "name": "Tanner Vibabul",
    "position_name": "Quarterback",
    "jersey": "14",
@@ -2573,11 +2573,11 @@
    }
   },
   {
-   "slug": "de-andre-lawry",
+   "slug": "phoenix-donghia",
    "position": "HB",
    "class": "FR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/de-andre-lawry/",
+   "url": null,
    "name": "Phoenix Donghia",
    "position_name": "Halfback",
    "jersey": "27",
@@ -10387,11 +10387,11 @@
    }
   },
   {
-   "slug": "cody-kay",
+   "slug": "jonah-smith",
    "position": "LG",
    "class": "FR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/cody-kay/",
+   "url": null,
    "name": "Jonah Smith",
    "position_name": "Left Guard",
    "jersey": "54",
@@ -11740,11 +11740,11 @@
    }
   },
   {
-   "slug": "dion-barden",
+   "slug": "jesse-sears",
    "position": "RG",
    "class": "FR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/dion-barden/",
+   "url": null,
    "name": "Jesse Sears",
    "position_name": "Right Guard",
    "jersey": "50",
@@ -15326,11 +15326,11 @@
    }
   },
   {
-   "slug": "kendrick-dodge",
+   "slug": "chris-bispham",
    "position": "DT",
    "class": "JR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/kendrick-dodge/",
+   "url": null,
    "name": "Chris Bispham",
    "position_name": "Defensive Tackle",
    "jersey": "51",
@@ -16703,11 +16703,11 @@
    }
   },
   {
-   "slug": "delvin-albert",
+   "slug": "cory-simon",
    "position": "REDG",
    "class": "FR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/delvin-albert/",
+   "url": null,
    "name": "Cory Simon",
    "position_name": "Right Edge",
    "jersey": "90",
@@ -18084,11 +18084,11 @@
    }
   },
   {
-   "slug": "jaqwaylin-jenkins",
+   "slug": "josiah-perry",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/jaqwaylin-jenkins/",
+   "url": null,
    "name": "Josiah Perry",
    "position_name": "Mike Linebacker",
    "jersey": "40",
@@ -22779,11 +22779,11 @@
    }
   },
   {
-   "slug": "dante-scarborough",
+   "slug": "joshua-prince",
    "position": "SS",
    "class": "JR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/dante-scarborough/",
+   "url": null,
    "name": "Joshua Prince",
    "position_name": "Strong Safety",
    "jersey": "35",
@@ -23046,11 +23046,11 @@
    }
   },
   {
-   "slug": "jacobie-smith",
+   "slug": "george-lovelace",
    "position": "SS",
    "class": "FR",
    "team_slug": "james-madison",
-   "url": "https://collegefootball.gg/players/jacobie-smith/",
+   "url": null,
    "name": "George Lovelace",
    "position_name": "Strong Safety",
    "jersey": "41",

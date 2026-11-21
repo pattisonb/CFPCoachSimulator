@@ -345,17 +345,17 @@
   "SS": [
    "tristan-teasdell",
    "ronnie-royal-iii",
-   "chad-bolling",
+   "tristen-hill",
    "koby-sarkodie"
   ],
   "K": [
    "kanoah-vinesett",
-   "donald-hilbers",
+   "drew-lovelace",
    "nick-konieczynski"
   ],
   "P": [
    "jackson-waller",
-   "billy-hallsdale"
+   "cristian-harthan"
   ]
  },
  "roster_size": 85,
@@ -21994,11 +21994,11 @@
    }
   },
   {
-   "slug": "chad-bolling",
+   "slug": "tristen-hill",
    "position": "SS",
    "class": "FR",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/chad-bolling/",
+   "url": null,
    "name": "Tristen Hill",
    "position_name": "Strong Safety",
    "jersey": "36",
@@ -22825,11 +22825,11 @@
    }
   },
   {
-   "slug": "donald-hilbers",
+   "slug": "drew-lovelace",
    "position": "K",
    "class": "JR",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/donald-hilbers/",
+   "url": null,
    "name": "Drew Lovelace",
    "position_name": "Kicker",
    "jersey": "98",
@@ -23570,11 +23570,11 @@
    }
   },
   {
-   "slug": "billy-hallsdale",
+   "slug": "cristian-harthan",
    "position": "P",
    "class": "SR",
    "team_slug": "nc-state",
-   "url": "https://collegefootball.gg/players/billy-hallsdale/",
+   "url": null,
    "name": "Cristian Harthan",
    "position_name": "Punter",
    "jersey": "97",

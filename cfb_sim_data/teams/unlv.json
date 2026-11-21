@@ -263,13 +263,13 @@
    "velltray-jefferson",
    "jae-beasley-ii",
    "tyson-jacobson",
-   "bryce-lange",
+   "andreas-diaz-nicolaidis",
    "heath-virgil"
   ],
   "LT": [
    "will-thomas",
-   "elton-blackwell",
-   "shamir-fowler",
+   "tevita-tausinga",
+   "chrysanthos-fetokakis",
    "jesus-garcia-ii",
    "mateo-bilaver"
   ],
@@ -279,8 +279,8 @@
   ],
   "C": [
    "griffin-scroggs",
-   "brian-bishop",
-   "devin-brenner"
+   "zach-scott",
+   "joe-metzger"
   ],
   "RG": [
    "bj-tolo",
@@ -290,11 +290,11 @@
   "RT": [
    "austin-boyd",
    "malik-white",
-   "toby-langston"
+   "fuad-maali"
   ],
   "LEDG": [
    "elias-rudolph",
-   "taylor-shields",
+   "cj-besser",
    "kenji-scanlan",
    "kal-el-togafau"
   ],
@@ -318,20 +318,20 @@
    "blesyng-alualu-tuiolemotu",
    "cam-santee",
    "dee-crayton",
-   "terrelle-joseph"
+   "alexander-green"
   ],
   "WILL": [
    "kamuela-ka-aihue",
    "mark-iheanachor",
-   "will-mooney",
-   "tavaris-heard"
+   "jacob-beza",
+   "justin-flowe"
   ],
   "CB": [
    "denver-harris",
    "avery-helm",
    "quandarius-keyes",
    "kyron-chambers",
-   "kahlil-scott",
+   "brock-defries",
    "mumu-bin-wahad",
    "tony-louis-nkuba",
    "jaylen-allen",
@@ -7694,11 +7694,11 @@
    }
   },
   {
-   "slug": "bryce-lange",
+   "slug": "andreas-diaz-nicolaidis",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/bryce-lange/",
+   "url": null,
    "name": "Andreas Diaz-Nicolaidis",
    "position_name": "Tight End",
    "jersey": "89",
@@ -8510,11 +8510,11 @@
    }
   },
   {
-   "slug": "elton-blackwell",
+   "slug": "tevita-tausinga",
    "position": "LT",
    "class": "SO",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/elton-blackwell/",
+   "url": null,
    "name": "Tevita Tausinga",
    "position_name": "Left Tackle",
    "jersey": "50",
@@ -8770,11 +8770,11 @@
    }
   },
   {
-   "slug": "shamir-fowler",
+   "slug": "chrysanthos-fetokakis",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/shamir-fowler/",
+   "url": null,
    "name": "Chrysanthos Fetokakis",
    "position_name": "Left Tackle",
    "jersey": "76",
@@ -10436,11 +10436,11 @@
    }
   },
   {
-   "slug": "brian-bishop",
+   "slug": "zach-scott",
    "position": "C",
    "class": "JRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/brian-bishop/",
+   "url": null,
    "name": "Zach Scott",
    "position_name": "Center",
    "jersey": "57",
@@ -10687,11 +10687,11 @@
    }
   },
   {
-   "slug": "devin-brenner",
+   "slug": "joe-metzger",
    "position": "C",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/devin-brenner/",
+   "url": null,
    "name": "Joe Metzger",
    "position_name": "Center",
    "jersey": "64",
@@ -12335,11 +12335,11 @@
    }
   },
   {
-   "slug": "toby-langston",
+   "slug": "fuad-maali",
    "position": "RT",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/toby-langston/",
+   "url": null,
    "name": "Fuad Maali",
    "position_name": "Right Tackle",
    "jersey": "61",
@@ -12846,11 +12846,11 @@
    }
   },
   {
-   "slug": "taylor-shields",
+   "slug": "cj-besser",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/taylor-shields/",
+   "url": null,
    "name": "CJ Besser",
    "position_name": "Left Edge",
    "jersey": "48",
@@ -17495,11 +17495,11 @@
    }
   },
   {
-   "slug": "terrelle-joseph",
+   "slug": "alexander-green",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/terrelle-joseph/",
+   "url": null,
    "name": "Alexander Green",
    "position_name": "Mike Linebacker",
    "jersey": "51",
@@ -18313,11 +18313,11 @@
    }
   },
   {
-   "slug": "will-mooney",
+   "slug": "jacob-beza",
    "position": "WILL",
    "class": "SO",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/will-mooney/",
+   "url": null,
    "name": "Jacob Beza",
    "position_name": "Will Linebacker",
    "jersey": "52",
@@ -18598,11 +18598,11 @@
    }
   },
   {
-   "slug": "tavaris-heard",
+   "slug": "justin-flowe",
    "position": "WILL",
    "class": "JR",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/tavaris-heard/",
+   "url": null,
    "name": "Justin Flowe",
    "position_name": "Will Linebacker",
    "jersey": "36",
@@ -20013,11 +20013,11 @@
    }
   },
   {
-   "slug": "kahlil-scott",
+   "slug": "brock-defries",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "unlv",
-   "url": "https://collegefootball.gg/players/kahlil-scott/",
+   "url": null,
    "name": "Brock DeFries",
    "position_name": "Cornerback",
    "jersey": "25",

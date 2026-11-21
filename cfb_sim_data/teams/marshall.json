@@ -190,7 +190,7 @@
   },
   "defense": {
    "LEDG": [
-    "melvin-rose"
+    "simeon-john"
    ],
    "REDG": [
     "braydin-ward"
@@ -292,7 +292,7 @@
    "william-sandfoss"
   ],
   "LEDG": [
-   "melvin-rose",
+   "simeon-john",
    "jacarius-clayton",
    "keydel-painter"
   ],
@@ -306,7 +306,7 @@
   "REDG": [
    "braydin-ward",
    "cole-funderburk",
-   "donte-beard"
+   "jaxson-cunningham"
   ],
   "SAM": [
    "javae-gilmore",
@@ -12024,11 +12024,11 @@
    }
   },
   {
-   "slug": "melvin-rose",
+   "slug": "simeon-john",
    "position": "LEDG",
    "class": "SRRS",
    "team_slug": "marshall",
-   "url": "https://collegefootball.gg/players/melvin-rose/",
+   "url": null,
    "name": "Simeon John",
    "position_name": "Left Edge",
    "jersey": "99",
@@ -14750,11 +14750,11 @@
    }
   },
   {
-   "slug": "donte-beard",
+   "slug": "jaxson-cunningham",
    "position": "REDG",
    "class": "JR",
    "team_slug": "marshall",
-   "url": "https://collegefootball.gg/players/donte-beard/",
+   "url": null,
    "name": "Jaxson Cunningham",
    "position_name": "Right Edge",
    "jersey": "51",

@@ -162,7 +162,7 @@
     "gio-lopez"
    ],
    "HB": [
-    "jerrott-wiggins"
+    "ryan-henley"
    ],
    "WR": [
     "carlos-hernandez",
@@ -238,7 +238,7 @@
    "gannon-jones"
   ],
   "HB": [
-   "jerrott-wiggins",
+   "ryan-henley",
    "ty-clark-iii",
    "kd-daniels",
    "jamar-searcy",
@@ -1527,11 +1527,11 @@
    }
   },
   {
-   "slug": "jerrott-wiggins",
+   "slug": "ryan-henley",
    "position": "HB",
    "class": "SORS",
    "team_slug": "wake-forest",
-   "url": "https://collegefootball.gg/players/jerrott-wiggins/",
+   "url": null,
    "name": "Ryan Henley",
    "position_name": "Halfback",
    "jersey": "27",

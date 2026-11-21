@@ -241,7 +241,7 @@
    "marcelles-davis",
    "latrelle-murrell",
    "devin-ingram",
-   "kade-mcfadden"
+   "joshua-troupe"
   ],
   "FB": [],
   "WR": [
@@ -260,7 +260,7 @@
    "gerard-bullock-jr",
    "reed-jesiolowski",
    "jamari-harrold",
-   "noah-aaronson",
+   "chase-tatum",
    "brock-walters"
   ],
   "LT": [
@@ -282,13 +282,13 @@
    "precious-ekeh",
    "darius-neals",
    "chase-richardson",
-   "wyatt-canfield"
+   "yusuf-okanlawon"
   ],
   "RT": [
    "nikola-milovac",
    "enrico-maghelli",
    "eseosa-aigbokhae",
-   "dexter-mixon"
+   "haston-crawford"
   ],
   "LEDG": [
    "marcus-patterson",
@@ -324,7 +324,7 @@
    "jecari-bryson",
    "josh-anglin",
    "taiwo-ogundele",
-   "angelo-cunningham"
+   "omari-stephenson"
   ],
   "CB": [
    "luke-evans",
@@ -2916,11 +2916,11 @@
    }
   },
   {
-   "slug": "kade-mcfadden",
+   "slug": "joshua-troupe",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "kennesaw-st",
-   "url": "https://collegefootball.gg/players/kade-mcfadden/",
+   "url": null,
    "name": "Joshua Troupe",
    "position_name": "Halfback",
    "jersey": "25",
@@ -6860,11 +6860,11 @@
    }
   },
   {
-   "slug": "noah-aaronson",
+   "slug": "chase-tatum",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "kennesaw-st",
-   "url": "https://collegefootball.gg/players/noah-aaronson/",
+   "url": null,
    "name": "Chase Tatum",
    "position_name": "Tight End",
    "jersey": "87",
@@ -10811,11 +10811,11 @@
    }
   },
   {
-   "slug": "wyatt-canfield",
+   "slug": "yusuf-okanlawon",
    "position": "RG",
    "class": "FR",
    "team_slug": "kennesaw-st",
-   "url": "https://collegefootball.gg/players/wyatt-canfield/",
+   "url": null,
    "name": "Yusuf Okanlawon",
    "position_name": "Right Guard",
    "jersey": "61",
@@ -11901,11 +11901,11 @@
    }
   },
   {
-   "slug": "dexter-mixon",
+   "slug": "haston-crawford",
    "position": "RT",
    "class": "FR",
    "team_slug": "kennesaw-st",
-   "url": "https://collegefootball.gg/players/dexter-mixon/",
+   "url": null,
    "name": "Haston Crawford",
    "position_name": "Right Tackle",
    "jersey": "72",
@@ -18903,11 +18903,11 @@
    }
   },
   {
-   "slug": "angelo-cunningham",
+   "slug": "omari-stephenson",
    "position": "WILL",
    "class": "FR",
    "team_slug": "kennesaw-st",
-   "url": "https://collegefootball.gg/players/angelo-cunningham/",
+   "url": null,
    "name": "Omari Stephenson",
    "position_name": "Will Linebacker",
    "jersey": "42",

@@ -220,7 +220,7 @@
     "martin-connington"
    ],
    "P": [
-    "jamie-chapman"
+    "ben-shipley"
    ],
    "KR": [
     "dylan-edwards"
@@ -277,12 +277,12 @@
   "LG": [
    "amir-herring",
    "eli-richmond",
-   "gregory-oakley"
+   "anderson-kopp"
   ],
   "C": [
    "kasen-carpenter",
    "trezelle-jenkins-jr",
-   "darwin-oxford"
+   "marco-mohajir"
   ],
   "RG": [
    "connor-stroh",
@@ -325,7 +325,7 @@
    "bam-crouch",
    "josh-galbreath",
    "jibreel-al-amin",
-   "t-t-macomb"
+   "joseph-credit"
   ],
   "CB": [
    "jalen-todd",
@@ -347,15 +347,15 @@
   "SS": [
    "corey-gordon",
    "khijohnn-cummings-coleman",
-   "jack-hixon",
+   "dillon-marshall",
    "brandon-schmelzle"
   ],
   "K": [
    "martin-connington",
-   "adam-stapley"
+   "dane-efird"
   ],
   "P": [
-   "jamie-chapman"
+   "ben-shipley"
   ]
  },
  "roster_size": 85,
@@ -9991,11 +9991,11 @@
    }
   },
   {
-   "slug": "gregory-oakley",
+   "slug": "anderson-kopp",
    "position": "LG",
    "class": "FR",
    "team_slug": "kansas",
-   "url": "https://collegefootball.gg/players/gregory-oakley/",
+   "url": null,
    "name": "Anderson Kopp",
    "position_name": "Left Guard",
    "jersey": "73",
@@ -10800,11 +10800,11 @@
    }
   },
   {
-   "slug": "darwin-oxford",
+   "slug": "marco-mohajir",
    "position": "C",
    "class": "FR",
    "team_slug": "kansas",
-   "url": "https://collegefootball.gg/players/darwin-oxford/",
+   "url": null,
    "name": "Marco Mohajir",
    "position_name": "Center",
    "jersey": "58",
@@ -18237,11 +18237,11 @@
    }
   },
   {
-   "slug": "t-t-macomb",
+   "slug": "joseph-credit",
    "position": "WILL",
    "class": "FR",
    "team_slug": "kansas",
-   "url": "https://collegefootball.gg/players/t-t-macomb/",
+   "url": null,
    "name": "Joseph Credit",
    "position_name": "Will Linebacker",
    "jersey": "18",
@@ -22434,11 +22434,11 @@
    }
   },
   {
-   "slug": "jack-hixon",
+   "slug": "dillon-marshall",
    "position": "SS",
    "class": "SR",
    "team_slug": "kansas",
-   "url": "https://collegefootball.gg/players/jack-hixon/",
+   "url": null,
    "name": "Dillon Marshall",
    "position_name": "Strong Safety",
    "jersey": "34",
@@ -23500,11 +23500,11 @@
    }
   },
   {
-   "slug": "adam-stapley",
+   "slug": "dane-efird",
    "position": "K",
    "class": "FR",
    "team_slug": "kansas",
-   "url": "https://collegefootball.gg/players/adam-stapley/",
+   "url": null,
    "name": "Dane Efird",
    "position_name": "Kicker",
    "jersey": "98",
@@ -23749,11 +23749,11 @@
    }
   },
   {
-   "slug": "jamie-chapman",
+   "slug": "ben-shipley",
    "position": "P",
    "class": "SORS",
    "team_slug": "kansas",
-   "url": "https://collegefootball.gg/players/jamie-chapman/",
+   "url": null,
    "name": "Ben Shipley",
    "position_name": "Punter",
    "jersey": "33",

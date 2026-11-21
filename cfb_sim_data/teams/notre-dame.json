@@ -241,7 +241,7 @@
   ],
   "HB": [
    "aneyas-williams",
-   "t-j-mobley",
+   "kurt-smith",
    "kedren-young",
    "javian-osborne",
    "jonaz-walton",
@@ -278,7 +278,7 @@
   ],
   "LG": [
    "anthonie-knapp",
-   "kaleb-perine"
+   "max-anderson-notre-dame"
   ],
   "C": [
    "ashton-craig",
@@ -1741,11 +1741,11 @@
    }
   },
   {
-   "slug": "t-j-mobley",
+   "slug": "kurt-smith",
    "position": "HB",
    "class": "SORS",
    "team_slug": "notre-dame",
-   "url": "https://collegefootball.gg/players/t-j-mobley/",
+   "url": null,
    "name": "Kurt Smith",
    "position_name": "Halfback",
    "jersey": "37",
@@ -9496,11 +9496,11 @@
    }
   },
   {
-   "slug": "kaleb-perine",
+   "slug": "max-anderson-notre-dame",
    "position": "LG",
    "class": "JR",
    "team_slug": "notre-dame",
-   "url": "https://collegefootball.gg/players/kaleb-perine/",
+   "url": null,
    "name": "Max Anderson",
    "position_name": "Left Guard",
    "jersey": "60",

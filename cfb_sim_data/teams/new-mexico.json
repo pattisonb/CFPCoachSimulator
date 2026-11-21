@@ -274,15 +274,15 @@
   ],
   "C": [
    "kaden-robnett",
-   "duane-shivers",
-   "josh-barrett",
+   "brody-litton",
+   "sebastian-dawkins",
    "sa-kylee-woodard"
   ],
   "RG": [
    "jaymar-tasi",
    "jubilee-siitia-tasi",
    "joe-randle",
-   "tim-gregg"
+   "ty-aun-gates"
   ],
   "RT": [
    "tyler-lawrence",
@@ -320,7 +320,7 @@
   ],
   "WILL": [
    "mercury-swaim",
-   "maurice-cleary",
+   "eli-cronin",
    "thomas-pettus",
    "trent-rocker"
   ],
@@ -332,7 +332,7 @@
    "jayden-sheridan",
    "josh-mensah",
    "jahmir-torres",
-   "bart-pamphile",
+   "brannon-hampton",
    "xavier-rivera-rogers"
   ],
   "FS": [
@@ -8886,11 +8886,11 @@
    }
   },
   {
-   "slug": "duane-shivers",
+   "slug": "brody-litton",
    "position": "C",
    "class": "FRRS",
    "team_slug": "new-mexico",
-   "url": "https://collegefootball.gg/players/duane-shivers/",
+   "url": null,
    "name": "Brody Litton",
    "position_name": "Center",
    "jersey": "65",
@@ -9170,11 +9170,11 @@
    }
   },
   {
-   "slug": "josh-barrett",
+   "slug": "sebastian-dawkins",
    "position": "C",
    "class": "FR",
    "team_slug": "new-mexico",
-   "url": "https://collegefootball.gg/players/josh-barrett/",
+   "url": null,
    "name": "Sebastian Dawkins",
    "position_name": "Center",
    "jersey": "62",
@@ -10564,11 +10564,11 @@
    }
   },
   {
-   "slug": "tim-gregg",
+   "slug": "ty-aun-gates",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "new-mexico",
-   "url": "https://collegefootball.gg/players/tim-gregg/",
+   "url": null,
    "name": "Ty'aun Gates",
    "position_name": "Right Guard",
    "jersey": "75",
@@ -17203,11 +17203,11 @@
    }
   },
   {
-   "slug": "maurice-cleary",
+   "slug": "eli-cronin",
    "position": "WILL",
    "class": "SO",
    "team_slug": "new-mexico",
-   "url": "https://collegefootball.gg/players/maurice-cleary/",
+   "url": null,
    "name": "Eli Cronin",
    "position_name": "Will Linebacker",
    "jersey": "41",
@@ -19958,11 +19958,11 @@
    }
   },
   {
-   "slug": "bart-pamphile",
+   "slug": "brannon-hampton",
    "position": "CB",
    "class": "SO",
    "team_slug": "new-mexico",
-   "url": "https://collegefootball.gg/players/bart-pamphile/",
+   "url": null,
    "name": "Brannon Hampton",
    "position_name": "Cornerback",
    "jersey": "27",

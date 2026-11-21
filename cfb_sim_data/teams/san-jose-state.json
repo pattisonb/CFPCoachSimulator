@@ -194,8 +194,8 @@
     "dejon-roney"
    ],
    "DT": [
-    "gordon-sims",
-    "calvin-essex"
+    "star-taimani",
+    "ian-shewell"
    ],
    "LB": [
     "ethan-powell",
@@ -240,7 +240,7 @@
    "sir-autry",
    "tyler-jacklich",
    "isaiah-carlson",
-   "zeke-clay",
+   "courshawn-hill",
    "viliami-teu"
   ],
   "FB": [],
@@ -252,7 +252,7 @@
    "cooper-hoch",
    "carson-clark",
    "ryker-ruelas",
-   "khaleb-barnett",
+   "jase-nix",
    "trace-hernandez",
    "jeremiah-fung",
    "devin-olmande",
@@ -280,8 +280,8 @@
   ],
   "RG": [
    "tyler-chen",
-   "sean-lidge",
-   "jimmy-garrard",
+   "keenan-parks",
+   "kamuela-wilhelm",
    "nathan-balestrieri"
   ],
   "RT": [
@@ -291,13 +291,13 @@
   ],
   "LEDG": [
    "nate-lewis",
-   "sterling-westbrook",
-   "melvin-wagner",
+   "auma-jennings",
+   "bronx-letuligasenoa",
    "etu-finau"
   ],
   "DT": [
-   "gordon-sims",
-   "calvin-essex",
+   "star-taimani",
+   "ian-shewell",
    "noa-siaosi",
    "colton-thomas",
    "solomone-langi"
@@ -305,7 +305,7 @@
   "REDG": [
    "dejon-roney",
    "justin-stearns",
-   "trevante-carruthers"
+   "russell-devany"
   ],
   "SAM": [
    "ethan-powell",
@@ -2566,11 +2566,11 @@
    }
   },
   {
-   "slug": "zeke-clay",
+   "slug": "courshawn-hill",
    "position": "HB",
    "class": "FR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/zeke-clay/",
+   "url": null,
    "name": "Courshawn Hill",
    "position_name": "Halfback",
    "jersey": "26",
@@ -5080,11 +5080,11 @@
    }
   },
   {
-   "slug": "khaleb-barnett",
+   "slug": "jase-nix",
    "position": "WR",
    "class": "FRRS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/khaleb-barnett/",
+   "url": null,
    "name": "Jase Nix",
    "position_name": "Wide Receiver",
    "jersey": "9",
@@ -10026,11 +10026,11 @@
    }
   },
   {
-   "slug": "sean-lidge",
+   "slug": "keenan-parks",
    "position": "RG",
    "class": "SORS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/sean-lidge/",
+   "url": null,
    "name": "Keenan Parks",
    "position_name": "Right Guard",
    "jersey": "67",
@@ -10274,11 +10274,11 @@
    }
   },
   {
-   "slug": "jimmy-garrard",
+   "slug": "kamuela-wilhelm",
    "position": "RG",
    "class": "FR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/jimmy-garrard/",
+   "url": null,
    "name": "Kamuela Wilhelm",
    "position_name": "Right Guard",
    "jersey": "66",
@@ -11913,11 +11913,11 @@
    }
   },
   {
-   "slug": "sterling-westbrook",
+   "slug": "auma-jennings",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/sterling-westbrook/",
+   "url": null,
    "name": "Auma Jennings",
    "position_name": "Left Edge",
    "jersey": "91",
@@ -12180,11 +12180,11 @@
    }
   },
   {
-   "slug": "melvin-wagner",
+   "slug": "bronx-letuligasenoa",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/melvin-wagner/",
+   "url": null,
    "name": "Bronx Letuligasenoa",
    "position_name": "Left Edge",
    "jersey": "41",
@@ -12722,11 +12722,11 @@
    }
   },
   {
-   "slug": "gordon-sims",
+   "slug": "star-taimani",
    "position": "DT",
    "class": "SORS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/gordon-sims/",
+   "url": null,
    "name": "Star Taimani",
    "position_name": "Defensive Tackle",
    "jersey": "50",
@@ -12970,11 +12970,11 @@
    }
   },
   {
-   "slug": "calvin-essex",
+   "slug": "ian-shewell",
    "position": "DT",
    "class": "SR",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/calvin-essex/",
+   "url": null,
    "name": "Ian Shewell",
    "position_name": "Defensive Tackle",
    "jersey": "42",
@@ -14581,11 +14581,11 @@
    }
   },
   {
-   "slug": "trevante-carruthers",
+   "slug": "russell-devany",
    "position": "REDG",
    "class": "FRRS",
    "team_slug": "san-jose-state",
-   "url": "https://collegefootball.gg/players/trevante-carruthers/",
+   "url": null,
    "name": "Russell Devany",
    "position_name": "Right Edge",
    "jersey": "94",

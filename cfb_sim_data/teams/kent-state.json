@@ -289,13 +289,13 @@
   "RT": [
    "hudson-chasko",
    "cecil-wilson",
-   "bret-rollins"
+   "david-iannini"
   ],
   "LEDG": [
    "garrett-dial",
    "bryce-griffin",
    "antonio-bottiggi",
-   "aaron-gunter"
+   "carlos-shird"
   ],
   "DT": [
    "thomas-aden",
@@ -319,7 +319,7 @@
    "quan-rhodes-mckee",
    "sayed-abuhamdeh",
    "rafael-terrero-jr",
-   "marco-brackins",
+   "matthew-sollberger",
    "tanner-mintz"
   ],
   "WILL": [
@@ -335,7 +335,7 @@
    "ezekiel-castex",
    "tyler-bivens",
    "lennox-lemon",
-   "jamello-buckner"
+   "jeremiah-johnson-kent-state"
   ],
   "FS": [
    "derrick-jackson-iii",
@@ -351,7 +351,7 @@
   "K": [
    "sean-leonard",
    "eli-tucker",
-   "nathan-wentz"
+   "tommy-newcomb"
   ],
   "P": [
    "jake-stoeckel"
@@ -11885,11 +11885,11 @@
    }
   },
   {
-   "slug": "bret-rollins",
+   "slug": "david-iannini",
    "position": "RT",
    "class": "FR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/bret-rollins/",
+   "url": null,
    "name": "David Iannini",
    "position_name": "Right Tackle",
    "jersey": "64",
@@ -13023,11 +13023,11 @@
    }
   },
   {
-   "slug": "aaron-gunter",
+   "slug": "carlos-shird",
    "position": "LEDG",
    "class": "FR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/aaron-gunter/",
+   "url": null,
    "name": "Carlos Shird",
    "position_name": "Left Edge",
    "jersey": "56",
@@ -17492,11 +17492,11 @@
    }
   },
   {
-   "slug": "marco-brackins",
+   "slug": "matthew-sollberger",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/marco-brackins/",
+   "url": null,
    "name": "Matthew Sollberger",
    "position_name": "Mike Linebacker",
    "jersey": "30",
@@ -20885,11 +20885,11 @@
    }
   },
   {
-   "slug": "jamello-buckner",
+   "slug": "jeremiah-johnson-kent-state",
    "position": "CB",
    "class": "FRRS",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/jamello-buckner/",
+   "url": null,
    "name": "Jeremiah Johnson",
    "position_name": "Cornerback",
    "jersey": "29",
@@ -23645,11 +23645,11 @@
    }
   },
   {
-   "slug": "nathan-wentz",
+   "slug": "tommy-newcomb",
    "position": "K",
    "class": "JR",
    "team_slug": "kent-state",
-   "url": "https://collegefootball.gg/players/nathan-wentz/",
+   "url": null,
    "name": "Tommy Newcomb",
    "position_name": "Kicker",
    "jersey": "49",

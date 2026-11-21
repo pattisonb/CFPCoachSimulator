@@ -197,7 +197,7 @@
    ],
    "DT": [
     "levontae-jacobs",
-    "terrelle-alexander"
+    "jaden-rowe"
    ],
    "LB": [
     "noah-flemmings",
@@ -241,9 +241,9 @@
    "derrick-jameson",
    "donald-chaney",
    "jaydon-wright",
-   "trevor-tyson",
+   "christian-ponti",
    "julian-walker-ul-monroe",
-   "j-r-westbrook",
+   "zach-palmer-smith",
    "bryson-roland",
    "trevon-kinchen"
   ],
@@ -256,8 +256,8 @@
    "marcellus-jackson",
    "gavin-howard",
    "dalen-huston",
-   "stephen-evans",
-   "joe-bazley",
+   "javon-campbell",
+   "darrion-gilliam",
    "demarcco-blanton"
   ],
   "TE": [
@@ -271,14 +271,14 @@
   "LT": [
    "bright-fagbamiye",
    "roscoe-tucker",
-   "sergio-simpson",
+   "van-martinez",
    "david-applewhite"
   ],
   "LG": [
    "kaliem-croswell",
    "reese-steele",
    "nolan-anderson-ul-monroe",
-   "kenny-fenton",
+   "ben-gehrke",
    "edarius-green"
   ],
   "C": [
@@ -299,11 +299,11 @@
    "jaeden-calender",
    "lekell-mcgowan",
    "fred-clark",
-   "taylor-mcdaniels"
+   "marvin-hall"
   ],
   "DT": [
    "levontae-jacobs",
-   "terrelle-alexander",
+   "jaden-rowe",
    "zyan-tremont",
    "colton-vatne",
    "james-smith-ul-monroe",
@@ -312,14 +312,14 @@
   "REDG": [
    "derek-omoregie",
    "cj-wilson-jr",
-   "sidney-baldwin",
+   "alexei-ramirez",
    "ethan-bailey"
   ],
   "SAM": [],
   "MIKE": [
    "noah-flemmings",
    "lazavier-amos",
-   "noah-o-malley",
+   "marcus-ross",
    "rickey-banks"
   ],
   "WILL": [
@@ -335,7 +335,7 @@
    "navarion-benson",
    "armoni-rue",
    "rj-hall",
-   "rashaud-mccormick"
+   "orlando-freemont"
   ],
   "FS": [
    "carl-fauntroy",
@@ -2356,11 +2356,11 @@
    }
   },
   {
-   "slug": "trevor-tyson",
+   "slug": "christian-ponti",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/trevor-tyson/",
+   "url": null,
    "name": "Christian Ponti",
    "position_name": "Halfback",
    "jersey": "32",
@@ -2607,11 +2607,11 @@
    }
   },
   {
-   "slug": "j-r-westbrook",
+   "slug": "zach-palmer-smith",
    "position": "HB",
    "class": "FR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/j-r-westbrook/",
+   "url": null,
    "name": "Zach Palmer-Smith",
    "position_name": "Halfback",
    "jersey": "6",
@@ -5712,11 +5712,11 @@
    }
   },
   {
-   "slug": "stephen-evans",
+   "slug": "javon-campbell",
    "position": "WR",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/stephen-evans/",
+   "url": null,
    "name": "Javon Campbell",
    "position_name": "Wide Receiver",
    "jersey": "2",
@@ -6271,11 +6271,11 @@
    }
   },
   {
-   "slug": "joe-bazley",
+   "slug": "darrion-gilliam",
    "position": "WR",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/joe-bazley/",
+   "url": null,
    "name": "Darrion Gilliam",
    "position_name": "Wide Receiver",
    "jersey": "83",
@@ -8907,11 +8907,11 @@
    }
   },
   {
-   "slug": "sergio-simpson",
+   "slug": "van-martinez",
    "position": "LT",
    "class": "FR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/sergio-simpson/",
+   "url": null,
    "name": "Van Martinez",
    "position_name": "Left Tackle",
    "jersey": "71",
@@ -10554,11 +10554,11 @@
    }
   },
   {
-   "slug": "kenny-fenton",
+   "slug": "ben-gehrke",
    "position": "LG",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/kenny-fenton/",
+   "url": null,
    "name": "Ben Gehrke",
    "position_name": "Left Guard",
    "jersey": "61",
@@ -13977,11 +13977,11 @@
    }
   },
   {
-   "slug": "taylor-mcdaniels",
+   "slug": "marvin-hall",
    "position": "LEDG",
    "class": "SR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/taylor-mcdaniels/",
+   "url": null,
    "name": "Marvin Hall",
    "position_name": "Left Edge",
    "jersey": "99",
@@ -14485,11 +14485,11 @@
    }
   },
   {
-   "slug": "terrelle-alexander",
+   "slug": "jaden-rowe",
    "position": "DT",
    "class": "SRRS",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/terrelle-alexander/",
+   "url": null,
    "name": "Jaden Rowe",
    "position_name": "Defensive Tackle",
    "jersey": "51",
@@ -16437,11 +16437,11 @@
    }
   },
   {
-   "slug": "sidney-baldwin",
+   "slug": "alexei-ramirez",
    "position": "REDG",
    "class": "SO",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/sidney-baldwin/",
+   "url": null,
    "name": "Alexei Ramirez",
    "position_name": "Right Edge",
    "jersey": "94",
@@ -17543,11 +17543,11 @@
    }
   },
   {
-   "slug": "noah-o-malley",
+   "slug": "marcus-ross",
    "position": "MIKE",
    "class": "FRRS",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/noah-o-malley/",
+   "url": null,
    "name": "Marcus Ross",
    "position_name": "Mike Linebacker",
    "jersey": "30",
@@ -21007,11 +21007,11 @@
    }
   },
   {
-   "slug": "rashaud-mccormick",
+   "slug": "orlando-freemont",
    "position": "CB",
    "class": "FR",
    "team_slug": "ul-monroe",
-   "url": "https://collegefootball.gg/players/rashaud-mccormick/",
+   "url": null,
    "name": "Orlando Freemont",
    "position_name": "Cornerback",
    "jersey": "21",

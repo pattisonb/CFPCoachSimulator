@@ -221,7 +221,7 @@
     "mason-golding"
    ],
    "KR": [
-    "omarion-brown"
+    "owen-morris"
    ],
    "PR": [
     "kerynn-smith"
@@ -231,9 +231,9 @@
  "depth_chart": {
   "QB": [
    "lunch-winfield",
-   "kj-towers",
+   "alex-munoz",
    "daniel-beale",
-   "jake-roberts"
+   "coleman-carter"
   ],
   "HB": [
    "lamarcus-griffin-palmore",
@@ -242,7 +242,7 @@
    "jj-garner",
    "darrell-smith",
    "kerynn-smith",
-   "omarion-brown"
+   "owen-morris"
   ],
   "FB": [],
   "WR": [
@@ -261,27 +261,27 @@
    "caden-jensen",
    "brock-chappell",
    "khristian-mackintrush",
-   "carson-lloyd",
+   "emiliano-soldevilla",
    "jeremiah-birdlow",
    "teddy-gawlik"
   ],
   "LT": [
    "j-marion-gooch",
    "zay-alexander",
-   "marcus-gilmore",
+   "jackson-hammond",
    "ryder-bentley"
   ],
   "LG": [
    "kaden-moreau",
    "trey-shaw",
    "jakoby-isom",
-   "noah-kirkwood"
+   "michael-bowens-jr"
   ],
   "C": [
    "cooper-fordham",
-   "cole-forbes",
+   "gunnar-goodwin",
    "jayce-mitchell",
-   "mitchell-moorman"
+   "colin-harrington"
   ],
   "RG": [
    "matthew-broussard",
@@ -293,7 +293,7 @@
    "george-jackson",
    "john-bragg",
    "baylynn-williams",
-   "matt-melvin"
+   "drake-perry"
   ],
   "LEDG": [
    "tito-chikere",
@@ -317,14 +317,14 @@
   "SAM": [
    "kailep-edwards",
    "na-tori-brown",
-   "peter-mcleod",
+   "devin-franklin",
    "princeton-malbrue"
   ],
   "MIKE": [
    "ashley-williams",
    "micah-johnson",
    "hayden-darbonne",
-   "kevin-campanaro"
+   "patrick-gosslee"
   ],
   "WILL": [
    "jake-st-andre",
@@ -346,8 +346,8 @@
   ],
   "SS": [
    "kody-jackson",
-   "gilbert-leslie",
-   "corey-hatcher"
+   "julius-harper",
+   "jayden-reed"
   ],
   "K": [
    "tony-sterner"
@@ -642,11 +642,11 @@
    }
   },
   {
-   "slug": "kj-towers",
+   "slug": "alex-munoz",
    "position": "QB",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/kj-towers/",
+   "url": null,
    "name": "Alex Munoz",
    "position_name": "Quarterback",
    "jersey": "13",
@@ -1185,11 +1185,11 @@
    }
   },
   {
-   "slug": "jake-roberts",
+   "slug": "coleman-carter",
    "position": "QB",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/jake-roberts/",
+   "url": null,
    "name": "Coleman Carter",
    "position_name": "Quarterback",
    "jersey": "3",
@@ -3119,11 +3119,11 @@
    }
   },
   {
-   "slug": "omarion-brown",
+   "slug": "owen-morris",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/omarion-brown/",
+   "url": null,
    "name": "Owen Morris",
    "position_name": "Halfback",
    "jersey": "29",
@@ -7092,11 +7092,11 @@
    }
   },
   {
-   "slug": "carson-lloyd",
+   "slug": "emiliano-soldevilla",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/carson-lloyd/",
+   "url": null,
    "name": "Emiliano Soldevilla",
    "position_name": "Tight End",
    "jersey": "46",
@@ -8507,11 +8507,11 @@
    }
   },
   {
-   "slug": "marcus-gilmore",
+   "slug": "jackson-hammond",
    "position": "LT",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/marcus-gilmore/",
+   "url": null,
    "name": "Jackson Hammond",
    "position_name": "Left Tackle",
    "jersey": "60",
@@ -9881,11 +9881,11 @@
    }
   },
   {
-   "slug": "noah-kirkwood",
+   "slug": "michael-bowens-jr",
    "position": "LG",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/noah-kirkwood/",
+   "url": null,
    "name": "Michael Bowens Jr.",
    "position_name": "Left Guard",
    "jersey": "78",
@@ -10380,11 +10380,11 @@
    }
   },
   {
-   "slug": "cole-forbes",
+   "slug": "gunnar-goodwin",
    "position": "C",
    "class": "SO",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/cole-forbes/",
+   "url": null,
    "name": "Gunnar Goodwin",
    "position_name": "Center",
    "jersey": "53",
@@ -10891,11 +10891,11 @@
    }
   },
   {
-   "slug": "mitchell-moorman",
+   "slug": "colin-harrington",
    "position": "C",
    "class": "SO",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/mitchell-moorman/",
+   "url": null,
    "name": "Colin Harrington",
    "position_name": "Center",
    "jersey": "66",
@@ -13093,11 +13093,11 @@
    }
   },
   {
-   "slug": "matt-melvin",
+   "slug": "drake-perry",
    "position": "RT",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/matt-melvin/",
+   "url": null,
    "name": "Drake Perry",
    "position_name": "Right Tackle",
    "jersey": "74",
@@ -17510,11 +17510,11 @@
    }
   },
   {
-   "slug": "peter-mcleod",
+   "slug": "devin-franklin",
    "position": "SAM",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/peter-mcleod/",
+   "url": null,
    "name": "Devin Franklin",
    "position_name": "Sam Linebacker",
    "jersey": "36",
@@ -18959,11 +18959,11 @@
    }
   },
   {
-   "slug": "kevin-campanaro",
+   "slug": "patrick-gosslee",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/kevin-campanaro/",
+   "url": null,
    "name": "Patrick Gosslee",
    "position_name": "Mike Linebacker",
    "jersey": "45",
@@ -22842,11 +22842,11 @@
    }
   },
   {
-   "slug": "gilbert-leslie",
+   "slug": "julius-harper",
    "position": "SS",
    "class": "SRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/gilbert-leslie/",
+   "url": null,
    "name": "Julius Harper",
    "position_name": "Strong Safety",
    "jersey": "30",
@@ -23102,11 +23102,11 @@
    }
   },
   {
-   "slug": "corey-hatcher",
+   "slug": "jayden-reed",
    "position": "SS",
    "class": "FRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/corey-hatcher/",
+   "url": null,
    "name": "Jayden Reed",
    "position_name": "Strong Safety",
    "jersey": "34",

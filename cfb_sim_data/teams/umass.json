@@ -235,7 +235,7 @@
    "logan-inagawa",
    "aedan-mccarthy",
    "will-perry",
-   "trevor-glenn"
+   "ty-mccutcheon"
   ],
   "HB": [
    "tim-baldwin-jr",
@@ -254,8 +254,8 @@
    "devin-matthews",
    "elijah-pedro",
    "dallas-elliott",
-   "xavier-smith-umass",
-   "jimmie-bartow",
+   "david-moore-jr",
+   "drew-alsup",
    "kai-owens"
   ],
   "TE": [
@@ -264,7 +264,7 @@
    "max-dowling",
    "matthew-ogunniyi",
    "jax-markovich",
-   "cooper-proctor"
+   "john-condakes"
   ],
   "LT": [
    "greg-knox",
@@ -339,7 +339,7 @@
   "FS": [
    "zeraun-daniel",
    "keith-sarkodieh",
-   "desean-inkley",
+   "david-chiavegato",
    "jahmad-harmon",
    "michael-pangaro"
   ],
@@ -1504,11 +1504,11 @@
    }
   },
   {
-   "slug": "trevor-glenn",
+   "slug": "ty-mccutcheon",
    "position": "QB",
    "class": "FR",
    "team_slug": "umass",
-   "url": "https://collegefootball.gg/players/trevor-glenn/",
+   "url": null,
    "name": "Ty McCutcheon",
    "position_name": "Quarterback",
    "jersey": "10",
@@ -5412,11 +5412,11 @@
    }
   },
   {
-   "slug": "xavier-smith-umass",
+   "slug": "david-moore-jr",
    "position": "WR",
    "class": "SO",
    "team_slug": "umass",
-   "url": "https://collegefootball.gg/players/xavier-smith-umass/",
+   "url": null,
    "name": "David Moore Jr.",
    "position_name": "Wide Receiver",
    "jersey": "12",
@@ -5674,11 +5674,11 @@
    }
   },
   {
-   "slug": "jimmie-bartow",
+   "slug": "drew-alsup",
    "position": "WR",
    "class": "FR",
    "team_slug": "umass",
-   "url": "https://collegefootball.gg/players/jimmie-bartow/",
+   "url": null,
    "name": "Drew Alsup",
    "position_name": "Wide Receiver",
    "jersey": "85",
@@ -7706,11 +7706,11 @@
    }
   },
   {
-   "slug": "cooper-proctor",
+   "slug": "john-condakes",
    "position": "TE",
    "class": "SO",
    "team_slug": "umass",
-   "url": "https://collegefootball.gg/players/cooper-proctor/",
+   "url": null,
    "name": "John Condakes",
    "position_name": "Tight End",
    "jersey": "88",
@@ -21341,11 +21341,11 @@
    }
   },
   {
-   "slug": "desean-inkley",
+   "slug": "david-chiavegato",
    "position": "FS",
    "class": "SO",
    "team_slug": "umass",
-   "url": "https://collegefootball.gg/players/desean-inkley/",
+   "url": null,
    "name": "David Chiavegato",
    "position_name": "Free Safety",
    "jersey": "19",

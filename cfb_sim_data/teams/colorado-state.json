@@ -181,7 +181,7 @@
     "jayden-tuia"
    ],
    "C": [
-    "tyreek-mellon"
+    "kentez-allen"
    ],
    "RG": [
     "berlin-lillard"
@@ -225,7 +225,7 @@
     "nathan-sutcliffe"
    ],
    "KR": [
-    "oliver-lundberg-coleman"
+    "oliver-lundberg"
    ],
    "PR": [
     "jordan-mosley"
@@ -242,7 +242,7 @@
   ],
   "HB": [
    "mel-brown",
-   "oliver-lundberg-coleman",
+   "oliver-lundberg",
    "durell-robinson",
    "damian-moore-jr",
    "cedric-ross",
@@ -259,7 +259,7 @@
    "makih-johnson",
    "jaivyn-moore",
    "isaiah-watson",
-   "anfernee-reed",
+   "hudson-cocchiara",
    "daven-amos",
    "troy-foster",
    "terrence-smith-jr"
@@ -283,7 +283,7 @@
    "sione-netane"
   ],
   "C": [
-   "tyreek-mellon",
+   "kentez-allen",
    "phillip-ocon",
    "braden-hales"
   ],
@@ -2359,11 +2359,11 @@
    }
   },
   {
-   "slug": "oliver-lundberg-coleman",
+   "slug": "oliver-lundberg",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/oliver-lundberg-coleman/",
+   "url": null,
    "name": "Oliver Lundberg",
    "position_name": "Halfback",
    "jersey": "44",
@@ -6046,11 +6046,11 @@
    }
   },
   {
-   "slug": "anfernee-reed",
+   "slug": "hudson-cocchiara",
    "position": "WR",
    "class": "FR",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/anfernee-reed/",
+   "url": null,
    "name": "Hudson Cocchiara",
    "position_name": "Wide Receiver",
    "jersey": "28",
@@ -10856,11 +10856,11 @@
    }
   },
   {
-   "slug": "tyreek-mellon",
+   "slug": "kentez-allen",
    "position": "C",
    "class": "FR",
    "team_slug": "colorado-state",
-   "url": "https://collegefootball.gg/players/tyreek-mellon/",
+   "url": null,
    "name": "Kentez Allen",
    "position_name": "Center",
    "jersey": "52",

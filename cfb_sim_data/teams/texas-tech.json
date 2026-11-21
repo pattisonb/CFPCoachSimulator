@@ -254,7 +254,7 @@
    "tristian-gentry",
    "chase-campbell",
    "bryson-jones",
-   "remato-williams",
+   "michael-dever",
    "jalen-jones",
    "leyton-stone"
   ],
@@ -326,7 +326,7 @@
   "WILL": [
    "austin-romaine",
    "corey-platt-jr",
-   "lane-baker",
+   "ladamion-guyton",
    "wesley-smith"
   ],
   "CB": [
@@ -5059,11 +5059,11 @@
    }
   },
   {
-   "slug": "remato-williams",
+   "slug": "michael-dever",
    "position": "WR",
    "class": "SO",
    "team_slug": "texas-tech",
-   "url": "https://collegefootball.gg/players/remato-williams/",
+   "url": null,
    "name": "Michael Dever",
    "position_name": "Wide Receiver",
    "jersey": "19",
@@ -18345,11 +18345,11 @@
    }
   },
   {
-   "slug": "lane-baker",
+   "slug": "ladamion-guyton",
    "position": "WILL",
    "class": "FR",
    "team_slug": "texas-tech",
-   "url": "https://collegefootball.gg/players/lane-baker/",
+   "url": null,
    "name": "LaDamion Guyton",
    "position_name": "Will Linebacker",
    "jersey": "32",

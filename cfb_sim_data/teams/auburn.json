@@ -221,7 +221,7 @@
     "alex-mcpherson"
    ],
    "P": [
-    "allen-patton"
+    "max-bourke"
    ],
    "KR": [
     "omar-mabson-ii"
@@ -285,7 +285,7 @@
   "RG": [
    "jacobe-ward",
    "cole-skinner",
-   "tommy-nixon"
+   "parker-pritchett"
   ],
   "RT": [
    "jo-simmons",
@@ -312,7 +312,7 @@
   ],
   "SAM": [
    "jaquez-wilkes",
-   "cris-bethel",
+   "william-grier-mcduffie",
    "joe-phillips"
   ],
   "MIKE": [
@@ -330,7 +330,7 @@
    "rayshawn-pleasant",
    "andre-jordan-jr",
    "blake-woodby",
-   "jerricho-thompson",
+   "shadrick-toodle-jr",
    "scrap-richardson",
    "shamar-arnoux",
    "kamari-todd",
@@ -351,10 +351,10 @@
   "K": [
    "alex-mcpherson",
    "connor-gibbs",
-   "dwight-westerman"
+   "charley-schwinger"
   ],
   "P": [
-   "allen-patton",
+   "max-bourke",
    "hudson-kaak",
    "john-mcguire"
   ]
@@ -10749,11 +10749,11 @@
    }
   },
   {
-   "slug": "tommy-nixon",
+   "slug": "parker-pritchett",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "auburn",
-   "url": "https://collegefootball.gg/players/tommy-nixon/",
+   "url": null,
    "name": "Parker Pritchett",
    "position_name": "Right Guard",
    "jersey": "70",
@@ -15383,11 +15383,11 @@
    }
   },
   {
-   "slug": "cris-bethel",
+   "slug": "william-grier-mcduffie",
    "position": "SAM",
    "class": "FRRS",
    "team_slug": "auburn",
-   "url": "https://collegefootball.gg/players/cris-bethel/",
+   "url": null,
    "name": "William Grier McDuffie",
    "position_name": "Sam Linebacker",
    "jersey": "52",
@@ -18799,11 +18799,11 @@
    }
   },
   {
-   "slug": "jerricho-thompson",
+   "slug": "shadrick-toodle-jr",
    "position": "CB",
    "class": "SR",
    "team_slug": "auburn",
-   "url": "https://collegefootball.gg/players/jerricho-thompson/",
+   "url": null,
    "name": "Shadrick Toodle Jr.",
    "position_name": "Cornerback",
    "jersey": "28",
@@ -22918,11 +22918,11 @@
    }
   },
   {
-   "slug": "dwight-westerman",
+   "slug": "charley-schwinger",
    "position": "K",
    "class": "FR",
    "team_slug": "auburn",
-   "url": "https://collegefootball.gg/players/dwight-westerman/",
+   "url": null,
    "name": "Charley Schwinger",
    "position_name": "Kicker",
    "jersey": "93",
@@ -23161,11 +23161,11 @@
    }
   },
   {
-   "slug": "allen-patton",
+   "slug": "max-bourke",
    "position": "P",
    "class": "SORS",
    "team_slug": "auburn",
-   "url": "https://collegefootball.gg/players/allen-patton/",
+   "url": null,
    "name": "Max Bourke",
    "position_name": "Punter",
    "jersey": "39",

@@ -233,13 +233,13 @@
  "depth_chart": {
   "QB": [
    "maalik-murphy",
-   "david-afalava",
+   "danny-leary",
    "braden-atkinson",
    "brady-jones"
   ],
   "HB": [
    "cornell-hatcher-jr",
-   "jaymar-mcmillan",
+   "skyler-jackson",
    "jake-reichle",
    "aj-newberry",
    "kourdey-glass",
@@ -269,11 +269,11 @@
   "LT": [
    "kwan-johnson",
    "ben-hartman",
-   "demarvin-brimm"
+   "tanu-a-aitui"
   ],
   "LG": [
    "carter-guillaume",
-   "chase-meadows"
+   "maddox-conway"
   ],
   "C": [
    "nathan-elu",
@@ -287,7 +287,7 @@
    "josiah-timoteo",
    "jack-wagner",
    "teko-shoats",
-   "donovan-maine"
+   "michael-langi"
   ],
   "LEDG": [
    "takari-hickle",
@@ -347,12 +347,12 @@
    "tyjai-hopper",
    "milan-clark",
    "sean-craig",
-   "christian-mckenna"
+   "jaheim-patterson"
   ],
   "K": [
    "caleb-ojeda",
    "jadyn-oh",
-   "phillip-kaye"
+   "cameron-smith"
   ],
   "P": [
    "aj-winsor"
@@ -933,11 +933,11 @@
    }
   },
   {
-   "slug": "david-afalava",
+   "slug": "danny-leary",
    "position": "QB",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/david-afalava/",
+   "url": null,
    "name": "Danny Leary",
    "position_name": "Quarterback",
    "jersey": "13",
@@ -1816,11 +1816,11 @@
    }
   },
   {
-   "slug": "jaymar-mcmillan",
+   "slug": "skyler-jackson",
    "position": "HB",
    "class": "FRRS",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/jaymar-mcmillan/",
+   "url": null,
    "name": "Skyler Jackson",
    "position_name": "Halfback",
    "jersey": "33",
@@ -8283,11 +8283,11 @@
    }
   },
   {
-   "slug": "demarvin-brimm",
+   "slug": "tanu-a-aitui",
    "position": "LT",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/demarvin-brimm/",
+   "url": null,
    "name": "Tanu A'aitui",
    "position_name": "Left Tackle",
    "jersey": "52",
@@ -8812,11 +8812,11 @@
    }
   },
   {
-   "slug": "chase-meadows",
+   "slug": "maddox-conway",
    "position": "LG",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/chase-meadows/",
+   "url": null,
    "name": "Maddox Conway",
    "position_name": "Left Guard",
    "jersey": "51",
@@ -11066,11 +11066,11 @@
    }
   },
   {
-   "slug": "donovan-maine",
+   "slug": "michael-langi",
    "position": "RT",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/donovan-maine/",
+   "url": null,
    "name": "Michael Langi",
    "position_name": "Right Tackle",
    "jersey": "70",
@@ -22628,11 +22628,11 @@
    }
   },
   {
-   "slug": "christian-mckenna",
+   "slug": "jaheim-patterson",
    "position": "SS",
    "class": "SO",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/christian-mckenna/",
+   "url": null,
    "name": "Jaheim Patterson",
    "position_name": "Strong Safety",
    "jersey": "6",
@@ -23418,11 +23418,11 @@
    }
   },
   {
-   "slug": "phillip-kaye",
+   "slug": "cameron-smith",
    "position": "K",
    "class": "FR",
    "team_slug": "oregon-state",
-   "url": "https://collegefootball.gg/players/phillip-kaye/",
+   "url": null,
    "name": "Cameron Smith",
    "position_name": "Kicker",
    "jersey": "37",

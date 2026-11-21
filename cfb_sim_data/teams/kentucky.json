@@ -269,18 +269,18 @@
   "LT": [
    "lance-heard",
    "jermiel-atkins",
-   "shane-barnwell",
+   "ben-myers",
    "cameron-miller-jr"
   ],
   "LG": [
    "tegra-tshabola",
    "jordan-knox",
-   "kalen-stallworth"
+   "ryan-meeker"
   ],
   "C": [
    "coleton-price",
    "hayes-johnson",
-   "willis-evans"
+   "mason-howard-kentucky"
   ],
   "RG": [
    "olaus-alinen",
@@ -320,7 +320,7 @@
   ],
   "WILL": [
    "antwan-smith",
-   "bret-greene",
+   "elijah-barnes",
    "quintavion-norman"
   ],
   "CB": [
@@ -338,7 +338,7 @@
   "FS": [
    "martels-carter-jr",
    "aaron-gates",
-   "sebastian-thompson",
+   "sam-brown-iii",
    "jesse-anderson-iii"
   ],
   "SS": [
@@ -350,7 +350,7 @@
   ],
   "K": [
    "jacob-kauwe",
-   "kellen-lyles"
+   "matthew-obermeier"
   ],
   "P": [
    "wilson-berry",
@@ -8533,11 +8533,11 @@
    }
   },
   {
-   "slug": "shane-barnwell",
+   "slug": "ben-myers",
    "position": "LT",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/shane-barnwell/",
+   "url": null,
    "name": "Ben Myers",
    "position_name": "Left Tackle",
    "jersey": "62",
@@ -9338,11 +9338,11 @@
    }
   },
   {
-   "slug": "kalen-stallworth",
+   "slug": "ryan-meeker",
    "position": "LG",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/kalen-stallworth/",
+   "url": null,
    "name": "Ryan Meeker",
    "position_name": "Left Guard",
    "jersey": "64",
@@ -10172,11 +10172,11 @@
    }
   },
   {
-   "slug": "willis-evans",
+   "slug": "mason-howard-kentucky",
    "position": "C",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/willis-evans/",
+   "url": null,
    "name": "Mason Howard",
    "position_name": "Center",
    "jersey": "60",
@@ -17112,11 +17112,11 @@
    }
   },
   {
-   "slug": "bret-greene",
+   "slug": "elijah-barnes",
    "position": "WILL",
    "class": "SO",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/bret-greene/",
+   "url": null,
    "name": "Elijah Barnes",
    "position_name": "Will Linebacker",
    "jersey": "0",
@@ -21024,11 +21024,11 @@
    }
   },
   {
-   "slug": "sebastian-thompson",
+   "slug": "sam-brown-iii",
    "position": "FS",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/sebastian-thompson/",
+   "url": null,
    "name": "Sam Brown III",
    "position_name": "Free Safety",
    "jersey": "33",
@@ -23280,11 +23280,11 @@
    }
   },
   {
-   "slug": "kellen-lyles",
+   "slug": "matthew-obermeier",
    "position": "K",
    "class": "FR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/kellen-lyles/",
+   "url": null,
    "name": "Matthew Obermeier",
    "position_name": "Kicker",
    "jersey": "35",

@@ -181,7 +181,7 @@
     "brody-bolyn"
    ],
    "RG": [
-    "cade-williams"
+    "john-kolarchick"
    ],
    "RT": [
     "james-thomas-jr"
@@ -204,7 +204,7 @@
    ],
    "CB": [
     "jojo-johnson",
-    "jace-hicks",
+    "jayt-jackson",
     "nick-sawyer"
    ],
    "FS": [
@@ -219,7 +219,7 @@
     "travis-kenner"
    ],
    "P": [
-    "mark-carvey"
+    "alex-jenkins-bowling-green"
    ],
    "KR": [
     "austyn-dendy"
@@ -254,7 +254,7 @@
    "pierce-st-geme",
    "joseph-saffold",
    "trey-johnson",
-   "easton-weaver",
+   "reddik-pillarelli",
    "pauly-sadler"
   ],
   "TE": [
@@ -272,23 +272,23 @@
    "maddux-murphy",
    "will-gibson",
    "alex-harris",
-   "sheldon-bradfield"
+   "zane-panchula"
   ],
   "LG": [
    "alexis-sanchez",
-   "jerry-tucker"
+   "caden-campbell"
   ],
   "C": [
    "brody-bolyn",
    "masyn-zahursky"
   ],
   "RG": [
-   "cade-williams",
+   "john-kolarchick",
    "ethan-kraatz"
   ],
   "RT": [
    "james-thomas-jr",
-   "adrian-curtis",
+   "pete-pendergest",
    "gabe-funk",
    "vincent-giordano"
   ],
@@ -310,9 +310,9 @@
   ],
   "REDG": [
    "myles-bradley",
-   "colin-harris",
+   "trent-merrell",
    "samuel-dossous",
-   "garrison-mcneal"
+   "jonathan-hendrix"
   ],
   "SAM": [],
   "MIKE": [
@@ -329,7 +329,7 @@
   ],
   "CB": [
    "jojo-johnson",
-   "jace-hicks",
+   "jayt-jackson",
    "nick-sawyer",
    "josira-andrews",
    "garrison-blair",
@@ -353,7 +353,7 @@
    "ethan-warner"
   ],
   "P": [
-   "mark-carvey",
+   "alex-jenkins-bowling-green",
    "ryan-kingston"
   ]
  },
@@ -4866,11 +4866,11 @@
    }
   },
   {
-   "slug": "easton-weaver",
+   "slug": "reddik-pillarelli",
    "position": "WR",
    "class": "SORS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/easton-weaver/",
+   "url": null,
    "name": "Reddik Pillarelli",
    "position_name": "Wide Receiver",
    "jersey": "87",
@@ -9260,11 +9260,11 @@
    }
   },
   {
-   "slug": "sheldon-bradfield",
+   "slug": "zane-panchula",
    "position": "LT",
    "class": "FR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/sheldon-bradfield/",
+   "url": null,
    "name": "Zane Panchula",
    "position_name": "Left Tackle",
    "jersey": "66",
@@ -9802,11 +9802,11 @@
    }
   },
   {
-   "slug": "jerry-tucker",
+   "slug": "caden-campbell",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/jerry-tucker/",
+   "url": null,
    "name": "Caden Campbell",
    "position_name": "Left Guard",
    "jersey": "73",
@@ -10621,11 +10621,11 @@
    }
   },
   {
-   "slug": "cade-williams",
+   "slug": "john-kolarchick",
    "position": "RG",
    "class": "SORS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/cade-williams/",
+   "url": null,
    "name": "John Kolarchick",
    "position_name": "Right Guard",
    "jersey": "59",
@@ -11423,11 +11423,11 @@
    }
   },
   {
-   "slug": "adrian-curtis",
+   "slug": "pete-pendergest",
    "position": "RT",
    "class": "JRRS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/adrian-curtis/",
+   "url": null,
    "name": "Pete Pendergest",
    "position_name": "Right Tackle",
    "jersey": "61",
@@ -15876,11 +15876,11 @@
    }
   },
   {
-   "slug": "colin-harris",
+   "slug": "trent-merrell",
    "position": "REDG",
    "class": "JR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/colin-harris/",
+   "url": null,
    "name": "Trent Merrell",
    "position_name": "Right Edge",
    "jersey": "93",
@@ -16432,11 +16432,11 @@
    }
   },
   {
-   "slug": "garrison-mcneal",
+   "slug": "jonathan-hendrix",
    "position": "REDG",
    "class": "FR",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/garrison-mcneal/",
+   "url": null,
    "name": "Jonathan Hendrix",
    "position_name": "Right Edge",
    "jersey": "95",
@@ -19251,11 +19251,11 @@
    }
   },
   {
-   "slug": "jace-hicks",
+   "slug": "jayt-jackson",
    "position": "CB",
    "class": "SRRS",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/jace-hicks/",
+   "url": null,
    "name": "JayT Jackson",
    "position_name": "Cornerback",
    "jersey": "14",
@@ -23780,11 +23780,11 @@
    }
   },
   {
-   "slug": "mark-carvey",
+   "slug": "alex-jenkins-bowling-green",
    "position": "P",
    "class": "SO",
    "team_slug": "bowling-green",
-   "url": "https://collegefootball.gg/players/mark-carvey/",
+   "url": null,
    "name": "Alex Jenkins",
    "position_name": "Punter",
    "jersey": "91",

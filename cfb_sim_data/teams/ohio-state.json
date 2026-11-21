@@ -251,7 +251,7 @@
    "devin-mccuin",
    "chris-henry-jr",
    "kyle-parker",
-   "sedrick-pittman-jean",
+   "ryan-seimetz",
    "legend-bey",
    "jerquaden-guilford",
    "dezie-jones",
@@ -263,7 +263,7 @@
    "nate-roberts",
    "mason-williams",
    "bennett-christian",
-   "andre-hyatt",
+   "brody-lennon",
    "nick-lautar",
    "maxence-leblanc"
   ],
@@ -271,7 +271,7 @@
    "ian-moore",
    "sam-greer",
    "deontae-armstrong",
-   "mark-candle"
+   "julian-goines-jackson"
   ],
   "LG": [
    "luke-montgomery",
@@ -286,7 +286,7 @@
   "RG": [
    "austin-siereveld",
    "gabe-vansickle",
-   "christopher-mclaughlin"
+   "simon-lorentz"
   ],
   "RT": [
    "phillip-daniels",
@@ -311,7 +311,7 @@
    "beau-atkinson",
    "qua-russaw",
    "dre-quinn",
-   "robert-lucas"
+   "epi-sitanilei"
   ],
   "SAM": [],
   "MIKE": [
@@ -4249,11 +4249,11 @@
    }
   },
   {
-   "slug": "sedrick-pittman-jean",
+   "slug": "ryan-seimetz",
    "position": "WR",
    "class": "FRRS",
    "team_slug": "ohio-state",
-   "url": "https://collegefootball.gg/players/sedrick-pittman-jean/",
+   "url": null,
    "name": "Ryan Seimetz",
    "position_name": "Wide Receiver",
    "jersey": "33",
@@ -6833,11 +6833,11 @@
    }
   },
   {
-   "slug": "andre-hyatt",
+   "slug": "brody-lennon",
    "position": "TE",
    "class": "SORS",
    "team_slug": "ohio-state",
-   "url": "https://collegefootball.gg/players/andre-hyatt/",
+   "url": null,
    "name": "Brody Lennon",
    "position_name": "Tight End",
    "jersey": "87",
@@ -8728,11 +8728,11 @@
    }
   },
   {
-   "slug": "mark-candle",
+   "slug": "julian-goines-jackson",
    "position": "LT",
    "class": "FR",
    "team_slug": "ohio-state",
-   "url": "https://collegefootball.gg/players/mark-candle/",
+   "url": null,
    "name": "Julian Goines-Jackson",
    "position_name": "Left Tackle",
    "jersey": "63",
@@ -11071,11 +11071,11 @@
    }
   },
   {
-   "slug": "christopher-mclaughlin",
+   "slug": "simon-lorentz",
    "position": "RG",
    "class": "FR",
    "team_slug": "ohio-state",
-   "url": "https://collegefootball.gg/players/christopher-mclaughlin/",
+   "url": null,
    "name": "Simon Lorentz",
    "position_name": "Right Guard",
    "jersey": "64",
@@ -15579,11 +15579,11 @@
    }
   },
   {
-   "slug": "robert-lucas",
+   "slug": "epi-sitanilei",
    "position": "REDG",
    "class": "FR",
    "team_slug": "ohio-state",
-   "url": "https://collegefootball.gg/players/robert-lucas/",
+   "url": null,
    "name": "Epi Sitanilei",
    "position_name": "Right Edge",
    "jersey": "44",

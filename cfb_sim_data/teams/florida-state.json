@@ -253,7 +253,7 @@
    "darryon-williams",
    "devin-carter",
    "tae-shaun-gelsey",
-   "james-sims-davidson",
+   "tony-bland",
    "teriq-mallory"
   ],
   "TE": [
@@ -354,7 +354,7 @@
   ],
   "P": [
    "daniel-hughes",
-   "cody-bellingham",
+   "ethan-post",
    "carter-jula"
   ]
  },
@@ -4802,11 +4802,11 @@
    }
   },
   {
-   "slug": "james-sims-davidson",
+   "slug": "tony-bland",
    "position": "WR",
    "class": "FR",
    "team_slug": "florida-state",
-   "url": "https://collegefootball.gg/players/james-sims-davidson/",
+   "url": null,
    "name": "Tony Bland",
    "position_name": "Wide Receiver",
    "jersey": "86",
@@ -23450,11 +23450,11 @@
    }
   },
   {
-   "slug": "cody-bellingham",
+   "slug": "ethan-post",
    "position": "P",
    "class": "SR",
    "team_slug": "florida-state",
-   "url": "https://collegefootball.gg/players/cody-bellingham/",
+   "url": null,
    "name": "Ethan Post",
    "position_name": "Punter",
    "jersey": "85",

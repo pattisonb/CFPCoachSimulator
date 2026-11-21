@@ -240,7 +240,7 @@
   "HB": [
    "telly-johnson-jr",
    "elijah-porter",
-   "eric-tafoya",
+   "da-sean-howard",
    "jaiduan-cranford",
    "triston-white"
   ],
@@ -256,7 +256,7 @@
    "braylon-agee",
    "tavaris-coles",
    "kevin-holmes-jr",
-   "duane-cousins",
+   "justin-faulkner",
    "zaire-mckinney",
    "afy-ibekwe"
   ],
@@ -315,7 +315,7 @@
    "charles-brooks-iii"
   ],
   "SAM": [
-   "deveon-shaw"
+   "eliot-hummer"
   ],
   "MIKE": [
    "brady-kerperin",
@@ -2017,11 +2017,11 @@
    }
   },
   {
-   "slug": "eric-tafoya",
+   "slug": "da-sean-howard",
    "position": "HB",
    "class": "SRRS",
    "team_slug": "niu",
-   "url": "https://collegefootball.gg/players/eric-tafoya/",
+   "url": null,
    "name": "Da'sean Howard",
    "position_name": "Halfback",
    "jersey": "30",
@@ -5695,11 +5695,11 @@
    }
   },
   {
-   "slug": "duane-cousins",
+   "slug": "justin-faulkner",
    "position": "WR",
    "class": "FR",
    "team_slug": "niu",
-   "url": "https://collegefootball.gg/players/duane-cousins/",
+   "url": null,
    "name": "Justin Faulkner",
    "position_name": "Wide Receiver",
    "jersey": "81",
@@ -16835,11 +16835,11 @@
    }
   },
   {
-   "slug": "deveon-shaw",
+   "slug": "eliot-hummer",
    "position": "SAM",
    "class": "SO",
    "team_slug": "niu",
-   "url": "https://collegefootball.gg/players/deveon-shaw/",
+   "url": null,
    "name": "Eliot Hummer",
    "position_name": "Sam Linebacker",
    "jersey": "47",

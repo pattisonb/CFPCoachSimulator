@@ -217,7 +217,7 @@
     "drew-klein"
    ],
    "P": [
-    "rashad-west"
+    "caleb-mcgrath"
    ],
    "KR": [
     "jackson-williams"
@@ -266,8 +266,8 @@
   "LT": [
    "ryan-babatz",
    "alex-jenkins",
-   "ezekiel-scott",
-   "mason-everett"
+   "noah-stommes",
+   "james-nellis"
   ],
   "LG": [
    "griffin-empey",
@@ -276,7 +276,7 @@
   ],
   "C": [
    "gage-schmidt",
-   "victor-gores"
+   "earl-brown"
   ],
   "RG": [
    "nate-tastad",
@@ -285,14 +285,14 @@
   ],
   "RT": [
    "josh-magin",
-   "peyton-nicholls",
-   "jaren-steel"
+   "austin-schultz",
+   "trey-mcpartland"
   ],
   "LEDG": [
    "matthew-stenbroten",
    "allante-burley",
    "thomas-roberts",
-   "dylan-bowie"
+   "daniel-devine"
   ],
   "DT": [
    "keenan-wilson",
@@ -306,7 +306,7 @@
    "kelton-mccaslin",
    "victor-isele",
    "anthony-okes",
-   "dallas-griffith"
+   "blake-schiltz"
   ],
   "SAM": [
    "peder-haugo",
@@ -322,14 +322,14 @@
   "WILL": [
    "keith-williams",
    "oliver-lucht",
-   "hunter-parkinson"
+   "carter-appl"
   ],
   "CB": [
    "chance-tucker",
    "dj-voltz",
    "ej-davis",
    "najee-nelson",
-   "jalon-tate",
+   "evrett-tait",
    "marion-moore",
    "kendrick-carter",
    "kegan-huber"
@@ -351,7 +351,7 @@
    "drew-klein"
   ],
   "P": [
-   "rashad-west",
+   "caleb-mcgrath",
    "aaron-bickerton"
   ]
  },
@@ -8342,11 +8342,11 @@
    }
   },
   {
-   "slug": "ezekiel-scott",
+   "slug": "noah-stommes",
    "position": "LT",
    "class": "JR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/ezekiel-scott/",
+   "url": null,
    "name": "Noah Stommes",
    "position_name": "Left Tackle",
    "jersey": "78",
@@ -8599,11 +8599,11 @@
    }
   },
   {
-   "slug": "mason-everett",
+   "slug": "james-nellis",
    "position": "LT",
    "class": "FR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/mason-everett/",
+   "url": null,
    "name": "James Nellis",
    "position_name": "Left Tackle",
    "jersey": "59",
@@ -9984,11 +9984,11 @@
    }
   },
   {
-   "slug": "victor-gores",
+   "slug": "earl-brown",
    "position": "C",
    "class": "SORS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/victor-gores/",
+   "url": null,
    "name": "Earl Brown",
    "position_name": "Center",
    "jersey": "67",
@@ -11315,11 +11315,11 @@
    }
   },
   {
-   "slug": "peyton-nicholls",
+   "slug": "austin-schultz",
    "position": "RT",
    "class": "SO",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/peyton-nicholls/",
+   "url": null,
    "name": "Austin Schultz",
    "position_name": "Right Tackle",
    "jersey": "77",
@@ -11560,11 +11560,11 @@
    }
   },
   {
-   "slug": "jaren-steel",
+   "slug": "trey-mcpartland",
    "position": "RT",
    "class": "FR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/jaren-steel/",
+   "url": null,
    "name": "Trey McPartland",
    "position_name": "Right Tackle",
    "jersey": "63",
@@ -12647,11 +12647,11 @@
    }
   },
   {
-   "slug": "dylan-bowie",
+   "slug": "daniel-devine",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/dylan-bowie/",
+   "url": null,
    "name": "Daniel Devine",
    "position_name": "Left Edge",
    "jersey": "92",
@@ -15359,11 +15359,11 @@
    }
   },
   {
-   "slug": "dallas-griffith",
+   "slug": "blake-schiltz",
    "position": "REDG",
    "class": "FRRS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/dallas-griffith/",
+   "url": null,
    "name": "Blake Schiltz",
    "position_name": "Right Edge",
    "jersey": "48",
@@ -18185,11 +18185,11 @@
    }
   },
   {
-   "slug": "hunter-parkinson",
+   "slug": "carter-appl",
    "position": "WILL",
    "class": "FR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/hunter-parkinson/",
+   "url": null,
    "name": "Carter Appl",
    "position_name": "Will Linebacker",
    "jersey": "44",
@@ -19336,11 +19336,11 @@
    }
   },
   {
-   "slug": "jalon-tate",
+   "slug": "evrett-tait",
    "position": "CB",
    "class": "SORS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/jalon-tate/",
+   "url": null,
    "name": "Evrett Tait",
    "position_name": "Cornerback",
    "jersey": "26",
@@ -23523,11 +23523,11 @@
    }
   },
   {
-   "slug": "rashad-west",
+   "slug": "caleb-mcgrath",
    "position": "P",
    "class": "JR",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/rashad-west/",
+   "url": null,
    "name": "Caleb McGrath",
    "position_name": "Punter",
    "jersey": "51",

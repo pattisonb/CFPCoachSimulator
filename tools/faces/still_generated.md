@@ -22,31 +22,31 @@ lagarion-wilson | Lagarion Wilson | Sacramento State | CB | #13 | FR | 5'10" 162
 
 id | name | school | position | jersey | class | height weight
 
-shamir-booth | Justus Perales | Air Force | LT | #54 | FR | 6'5" 282 lb
-trent-harrington | Maurice Gleaton Jr. | Arkansas | WR | #86 | SR | 5'10" 186 lb
-ted-wrobles | Cadel Ayala | Colorado | K | #39 | FR | 5'11" 181 lb
-brayden-moore | Gavin Strange | Duke | K | #25 | SO | 6'2" 204 lb
-paul-hofbeck | Jackson Higgins | Eastern Michigan | C | #79 | FRRS | 6'3" 301 lb
-william-king | Samuel Adjin | Eastern Michigan | C | #70 | FRRS | 6'1" 291 lb
-jalen-bibby | Braylon Outlaw | Georgia Tech | SAM | #35 | FR | 6'3" 225 lb
-maika-eugenio | Isaac Jaramilla-Phe | Hawaiʻi | QB | #14 | FR | 6'0" 180 lb
-pellam-liu | TJ Fo'ilefutu | Hawaiʻi | HB | #28 | FR | 5'8" 220 lb
-ethan-boyle | Hudson Parliament | Iowa | RT | #70 | FRRS | 6'8" 285 lb
-roddy-orr | Brayton Alford | Iowa | WILL | #37 | FR | 6'2" 222 lb
-mav-richmond | Boston Everitt | Iowa | P | #49 | SR | 6'6" 240 lb
-glenn-martino | Carlton Hall | Liberty | LG | #77 | SO | 6'2" 300 lb
-paul-renz | Niall Hayes | Louisville | P | #91 | SO | 6'1" 196 lb
-matt-murphy | Jabarius Oliver | Memphis | LT | #70 | FR | 6'8" 304 lb
-lindsey-flowers | Zarian Simms | Navy | LG | #60 | SR | 6'3" 285 lb
-antwan-glass | Karson Young | Navy | RG | #62 | JR | 6'4" 300 lb
-lloyd-woodyard | Jace Williams | Navy | RG | #64 | FRRS | 6'2" 291 lb
-kadaryl-craig | Gabriel George | Navy | DT | #74 | FR | 6'4" 280 lb
-martez-curry | Joey McGowan | Old Dominion | RT | #62 | SR | 6'3" 307 lb
-j-j-thurston | Shemaj Henry | Syracuse | LT | #66 | SO | 6'5" 285 lb
-phillip-josephsen | Will Evans | Utah State | P | #48 | JR | 6'3" 210 lb
-d-j-crater | Will Fry | Utah | LG | #66 | SR | 6'3" 311 lb
-erik-zimmerman | Luke Jones | Virginia Tech | P | #97 | FRRS | 6'3" 205 lb
-tay-hobbs | CJ Toney | Washington State | HB | #21 | FR | 5'10" 220 lb
+justus-perales | Justus Perales | Air Force | LT | #54 | FR | 6'5" 282 lb
+maurice-gleaton-jr | Maurice Gleaton Jr. | Arkansas | WR | #86 | SR | 5'10" 186 lb
+cadel-ayala | Cadel Ayala | Colorado | K | #39 | FR | 5'11" 181 lb
+gavin-strange | Gavin Strange | Duke | K | #25 | SO | 6'2" 204 lb
+jackson-higgins | Jackson Higgins | Eastern Michigan | C | #79 | FRRS | 6'3" 301 lb
+samuel-adjin | Samuel Adjin | Eastern Michigan | C | #70 | FRRS | 6'1" 291 lb
+braylon-outlaw | Braylon Outlaw | Georgia Tech | SAM | #35 | FR | 6'3" 225 lb
+isaac-jaramilla-phe | Isaac Jaramilla-Phe | Hawaiʻi | QB | #14 | FR | 6'0" 180 lb
+tj-fo-ilefutu | TJ Fo'ilefutu | Hawaiʻi | HB | #28 | FR | 5'8" 220 lb
+hudson-parliament | Hudson Parliament | Iowa | RT | #70 | FRRS | 6'8" 285 lb
+brayton-alford | Brayton Alford | Iowa | WILL | #37 | FR | 6'2" 222 lb
+boston-everitt | Boston Everitt | Iowa | P | #49 | SR | 6'6" 240 lb
+carlton-hall | Carlton Hall | Liberty | LG | #77 | SO | 6'2" 300 lb
+niall-hayes | Niall Hayes | Louisville | P | #91 | SO | 6'1" 196 lb
+jabarius-oliver | Jabarius Oliver | Memphis | LT | #70 | FR | 6'8" 304 lb
+zarian-simms | Zarian Simms | Navy | LG | #60 | SR | 6'3" 285 lb
+karson-young | Karson Young | Navy | RG | #62 | JR | 6'4" 300 lb
+jace-williams | Jace Williams | Navy | RG | #64 | FRRS | 6'2" 291 lb
+gabriel-george | Gabriel George | Navy | DT | #74 | FR | 6'4" 280 lb
+joey-mcgowan | Joey McGowan | Old Dominion | RT | #62 | SR | 6'3" 307 lb
+shemaj-henry | Shemaj Henry | Syracuse | LT | #66 | SO | 6'5" 285 lb
+will-evans | Will Evans | Utah State | P | #48 | JR | 6'3" 210 lb
+will-fry | Will Fry | Utah | LG | #66 | SR | 6'3" 311 lb
+luke-jones | Luke Jones | Virginia Tech | P | #97 | FRRS | 6'3" 205 lb
+cj-toney | CJ Toney | Washington State | HB | #21 | FR | 5'10" 220 lb
 
 ## C. Made-up names with no real player to take the spot (15)
 

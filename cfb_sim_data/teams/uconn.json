@@ -219,7 +219,7 @@
     "mike-baker"
    ],
    "P": [
-    "trent-clifton"
+    "spencer-sullins"
    ],
    "KR": [
     "raymond-liggins"
@@ -249,7 +249,7 @@
    "emanuel-ross",
    "ryder-treadway",
    "cam-abshire",
-   "j-c-blackshear",
+   "drew-kron",
    "ky-wilson",
    "kamren-flowers",
    "zy-marion-lang",
@@ -275,8 +275,8 @@
   "LG": [
    "tamarus-walker",
    "raphael-greene-nyarko",
-   "thomas-curtis",
-   "gordon-weston"
+   "hill-greenlee",
+   "michael-marini"
   ],
   "C": [
    "terrence-moore",
@@ -322,7 +322,7 @@
   ],
   "WILL": [
    "k-von-sherman",
-   "perry-moorehead",
+   "charlie-o-connor",
    "terris-dudley",
    "ethan-hogg"
   ],
@@ -353,7 +353,7 @@
    "mike-baker"
   ],
   "P": [
-   "trent-clifton"
+   "spencer-sullins"
   ]
  },
  "roster_size": 85,
@@ -3958,11 +3958,11 @@
    }
   },
   {
-   "slug": "j-c-blackshear",
+   "slug": "drew-kron",
    "position": "WR",
    "class": "SR",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/j-c-blackshear/",
+   "url": null,
    "name": "Drew Kron",
    "position_name": "Wide Receiver",
    "jersey": "85",
@@ -9752,11 +9752,11 @@
    }
   },
   {
-   "slug": "thomas-curtis",
+   "slug": "hill-greenlee",
    "position": "LG",
    "class": "FR",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/thomas-curtis/",
+   "url": null,
    "name": "Hill Greenlee",
    "position_name": "Left Guard",
    "jersey": "75",
@@ -10032,11 +10032,11 @@
    }
   },
   {
-   "slug": "gordon-weston",
+   "slug": "michael-marini",
    "position": "LG",
    "class": "FR",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/gordon-weston/",
+   "url": null,
    "name": "Michael Marini",
    "position_name": "Left Guard",
    "jersey": "64",
@@ -18080,11 +18080,11 @@
    }
   },
   {
-   "slug": "perry-moorehead",
+   "slug": "charlie-o-connor",
    "position": "WILL",
    "class": "SO",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/perry-moorehead/",
+   "url": null,
    "name": "Charlie O'Connor",
    "position_name": "Will Linebacker",
    "jersey": "39",
@@ -24013,11 +24013,11 @@
    }
   },
   {
-   "slug": "trent-clifton",
+   "slug": "spencer-sullins",
    "position": "P",
    "class": "JRRS",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/trent-clifton/",
+   "url": null,
    "name": "Spencer Sullins",
    "position_name": "Punter",
    "jersey": "35",

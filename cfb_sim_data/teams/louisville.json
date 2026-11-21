@@ -271,12 +271,12 @@
    "anwar-o-neal",
    "johnnie-brown-iii",
    "cameron-gorin",
-   "troy-hyder"
+   "max-merz"
   ],
   "LG": [
    "eryx-daugherty",
    "naeer-jackson",
-   "jamie-wilson-hunter"
+   "jarvis-strickland"
   ],
   "C": [
    "evan-wibberley",
@@ -284,12 +284,12 @@
   ],
   "RG": [
    "lance-robinson",
-   "joshua-aumer",
-   "christopher-taylor-dill"
+   "bryten-close",
+   "gradey-anthony"
   ],
   "RT": [
    "cason-henry",
-   "andre-wimberly-jones",
+   "ellis-mcadoo",
    "charlie-edgeworth",
    "tyler-folmar"
   ],
@@ -304,7 +304,7 @@
    "demeco-kennedy",
    "daylen-russell",
    "tommy-ziesmer",
-   "dion-howdin"
+   "sam-dawson"
   ],
   "REDG": [
    "clev-lubin",
@@ -350,11 +350,11 @@
   ],
   "K": [
    "nick-keller",
-   "patrick-gleason"
+   "bode-shoaps"
   ],
   "P": [
    "jacob-baker",
-   "paul-renz"
+   "niall-hayes"
   ]
  },
  "roster_size": 85,
@@ -9097,11 +9097,11 @@
    }
   },
   {
-   "slug": "troy-hyder",
+   "slug": "max-merz",
    "position": "LT",
    "class": "FR",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/troy-hyder/",
+   "url": null,
    "name": "Max Merz",
    "position_name": "Left Tackle",
    "jersey": "52",
@@ -9942,11 +9942,11 @@
    }
   },
   {
-   "slug": "jamie-wilson-hunter",
+   "slug": "jarvis-strickland",
    "position": "LG",
    "class": "FR",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/jamie-wilson-hunter/",
+   "url": null,
    "name": "Jarvis Strickland",
    "position_name": "Left Guard",
    "jersey": "74",
@@ -11042,11 +11042,11 @@
    }
   },
   {
-   "slug": "joshua-aumer",
+   "slug": "bryten-close",
    "position": "RG",
    "class": "FRRS",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/joshua-aumer/",
+   "url": null,
    "name": "Bryten Close",
    "position_name": "Right Guard",
    "jersey": "63",
@@ -11296,11 +11296,11 @@
    }
   },
   {
-   "slug": "christopher-taylor-dill",
+   "slug": "gradey-anthony",
    "position": "RG",
    "class": "SO",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/christopher-taylor-dill/",
+   "url": null,
    "name": "Gradey Anthony",
    "position_name": "Right Guard",
    "jersey": "61",
@@ -11827,11 +11827,11 @@
    }
   },
   {
-   "slug": "andre-wimberly-jones",
+   "slug": "ellis-mcadoo",
    "position": "RT",
    "class": "JRRS",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/andre-wimberly-jones/",
+   "url": null,
    "name": "Ellis McAdoo",
    "position_name": "Right Tackle",
    "jersey": "65",
@@ -14845,11 +14845,11 @@
    }
   },
   {
-   "slug": "dion-howdin",
+   "slug": "sam-dawson",
    "position": "DT",
    "class": "FR",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/dion-howdin/",
+   "url": null,
    "name": "Sam Dawson",
    "position_name": "Defensive Tackle",
    "jersey": "98",
@@ -23142,11 +23142,11 @@
    }
   },
   {
-   "slug": "patrick-gleason",
+   "slug": "bode-shoaps",
    "position": "K",
    "class": "FRRS",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/patrick-gleason/",
+   "url": null,
    "name": "Bode Shoaps",
    "position_name": "Kicker",
    "jersey": "95",
@@ -23637,11 +23637,11 @@
    }
   },
   {
-   "slug": "paul-renz",
+   "slug": "niall-hayes",
    "position": "P",
    "class": "SO",
    "team_slug": "louisville",
-   "url": "https://collegefootball.gg/players/paul-renz/",
+   "url": null,
    "name": "Niall Hayes",
    "position_name": "Punter",
    "jersey": "91",

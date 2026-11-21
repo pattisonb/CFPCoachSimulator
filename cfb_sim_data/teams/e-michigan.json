@@ -261,7 +261,7 @@
   "TE": [
    "tanner-lemaster",
    "luke-grant",
-   "demetris-magee",
+   "joshua-long",
    "armaad-sharp",
    "jack-kautz",
    "adon-turner",
@@ -276,12 +276,12 @@
   "LG": [
    "cole-dellinger",
    "guzzy-kayed",
-   "d-riq-davis"
+   "nathan-henry"
   ],
   "C": [
    "nicholas-gallegos",
-   "paul-hofbeck",
-   "william-king"
+   "jackson-higgins",
+   "samuel-adjin"
   ],
   "RG": [
    "tyler-mcmillan"
@@ -6583,11 +6583,11 @@
    }
   },
   {
-   "slug": "demetris-magee",
+   "slug": "joshua-long",
    "position": "TE",
    "class": "JR",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/demetris-magee/",
+   "url": null,
    "name": "Joshua Long",
    "position_name": "Tight End",
    "jersey": "9",
@@ -9725,11 +9725,11 @@
    }
   },
   {
-   "slug": "d-riq-davis",
+   "slug": "nathan-henry",
    "position": "LG",
    "class": "FR",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/d-riq-davis/",
+   "url": null,
    "name": "Nathan Henry",
    "position_name": "Left Guard",
    "jersey": "54",
@@ -10245,11 +10245,11 @@
    }
   },
   {
-   "slug": "paul-hofbeck",
+   "slug": "jackson-higgins",
    "position": "C",
    "class": "FRRS",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/paul-hofbeck/",
+   "url": null,
    "name": "Jackson Higgins",
    "position_name": "Center",
    "jersey": "79",
@@ -10496,11 +10496,11 @@
    }
   },
   {
-   "slug": "william-king",
+   "slug": "samuel-adjin",
    "position": "C",
    "class": "FRRS",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/william-king/",
+   "url": null,
    "name": "Samuel Adjin",
    "position_name": "Center",
    "jersey": "70",

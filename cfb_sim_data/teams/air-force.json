@@ -166,7 +166,7 @@
    ],
    "WR": [
     "matt-long",
-    "jonathan-thierry",
+    "astin-hange",
     "owen-chambers"
    ],
    "TE": [
@@ -217,7 +217,7 @@
   },
   "special_teams": {
    "K": [
-    "stephen-snider"
+    "carter-cremascoli"
    ],
    "P": [
     "will-duncan"
@@ -240,7 +240,7 @@
   "HB": [
    "rocco-conti",
    "keegan-sack",
-   "kentrell-duval",
+   "oswaldo-morales",
    "jalen-rashad-turner",
    "mason-lowe"
   ],
@@ -251,7 +251,7 @@
   ],
   "WR": [
    "matt-long",
-   "jonathan-thierry",
+   "astin-hange",
    "owen-chambers",
    "adam-hrynciw",
    "mason-hayes",
@@ -269,7 +269,7 @@
    "nathan-elwood",
    "alex-boyd",
    "brandon-nazworth",
-   "shamir-booth"
+   "justus-perales"
   ],
   "LG": [
    "alec-falk",
@@ -303,7 +303,7 @@
    "andrew-tillett",
    "jayden-oquendo",
    "christian-krietzer",
-   "lionel-harris"
+   "noah-daniels"
   ],
   "REDG": [
    "jaylin-reese",
@@ -314,13 +314,13 @@
    "isaac-hubert",
    "brody-bujnoch",
    "jake-kepler",
-   "tommy-forney"
+   "bryce-braden"
   ],
   "MIKE": [
    "dallas-daley",
    "vinnie-canosa",
    "brodie-mitchell",
-   "brendan-caldwell"
+   "andrew-jurasek"
   ],
   "WILL": [
    "blake-fletcher",
@@ -353,7 +353,7 @@
    "ethan-stannard"
   ],
   "K": [
-   "stephen-snider"
+   "carter-cremascoli"
   ],
   "P": [
    "will-duncan"
@@ -2284,11 +2284,11 @@
    }
   },
   {
-   "slug": "kentrell-duval",
+   "slug": "oswaldo-morales",
    "position": "HB",
    "class": "JRRS",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/kentrell-duval/",
+   "url": null,
    "name": "Oswaldo Morales",
    "position_name": "Halfback",
    "jersey": "34",
@@ -3650,11 +3650,11 @@
    }
   },
   {
-   "slug": "jonathan-thierry",
+   "slug": "astin-hange",
    "position": "WR",
    "class": "SR",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/jonathan-thierry/",
+   "url": null,
    "name": "Astin Hange",
    "position_name": "Wide Receiver",
    "jersey": "36",
@@ -7984,11 +7984,11 @@
    }
   },
   {
-   "slug": "shamir-booth",
+   "slug": "justus-perales",
    "position": "LT",
    "class": "FR",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/shamir-booth/",
+   "url": null,
    "name": "Justus Perales",
    "position_name": "Left Tackle",
    "jersey": "54",
@@ -13933,11 +13933,11 @@
    }
   },
   {
-   "slug": "lionel-harris",
+   "slug": "noah-daniels",
    "position": "DT",
    "class": "FRRS",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/lionel-harris/",
+   "url": null,
    "name": "Noah Daniels",
    "position_name": "Defensive Tackle",
    "jersey": "95",
@@ -15844,11 +15844,11 @@
    }
   },
   {
-   "slug": "tommy-forney",
+   "slug": "bryce-braden",
    "position": "SAM",
    "class": "FR",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/tommy-forney/",
+   "url": null,
    "name": "Bryce Braden",
    "position_name": "Sam Linebacker",
    "jersey": "35",
@@ -16941,11 +16941,11 @@
    }
   },
   {
-   "slug": "brendan-caldwell",
+   "slug": "andrew-jurasek",
    "position": "MIKE",
    "class": "SORS",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/brendan-caldwell/",
+   "url": null,
    "name": "Andrew Jurasek",
    "position_name": "Mike Linebacker",
    "jersey": "32",
@@ -23298,11 +23298,11 @@
    }
   },
   {
-   "slug": "stephen-snider",
+   "slug": "carter-cremascoli",
    "position": "K",
    "class": "SO",
    "team_slug": "air-force",
-   "url": "https://collegefootball.gg/players/stephen-snider/",
+   "url": null,
    "name": "Carter Cremascoli",
    "position_name": "Kicker",
    "jersey": "90",

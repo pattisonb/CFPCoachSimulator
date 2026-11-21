@@ -260,7 +260,7 @@
   "TE": [
    "blake-van-buren",
    "alex-honig",
-   "james-black",
+   "tyler-kielmeyer",
    "tom-mcglinchey",
    "jack-florentine",
    "evan-boutorwick"
@@ -272,13 +272,13 @@
   ],
   "LG": [
    "ezomo-oratokhai",
-   "simon-silva",
+   "hayden-flavin",
    "dennis-rahouski"
   ],
   "C": [
    "jackson-carsello",
    "trey-boyd",
-   "colt-gallery"
+   "jace-borcherding"
   ],
   "RG": [
    "idrys-cotton",
@@ -314,7 +314,7 @@
   ],
   "SAM": [
    "jason-reynolds-ii",
-   "keith-saunders-mason",
+   "lincoln-creager",
    "matthew-smith"
   ],
   "MIKE": [
@@ -326,7 +326,7 @@
   "WILL": [
    "braydon-brus",
    "nigel-glover",
-   "brian-grant-kingston",
+   "parker-maiers",
    "payton-roth"
   ],
   "CB": [
@@ -334,7 +334,7 @@
    "braden-turner",
    "brenden-deasfernandes",
    "ore-adeyi",
-   "bradley-brackett",
+   "jalen-lewis",
    "marquet-dorsey-jr",
    "montae-pate"
   ],
@@ -346,7 +346,7 @@
   "SS": [
    "damon-walters",
    "alijah-jones",
-   "lloyd-singleton",
+   "timi-oke",
    "sean-martin"
   ],
   "K": [
@@ -6494,11 +6494,11 @@
    }
   },
   {
-   "slug": "james-black",
+   "slug": "tyler-kielmeyer",
    "position": "TE",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/james-black/",
+   "url": null,
    "name": "Tyler Kielmeyer",
    "position_name": "Tight End",
    "jersey": "48",
@@ -8707,11 +8707,11 @@
    }
   },
   {
-   "slug": "simon-silva",
+   "slug": "hayden-flavin",
    "position": "LG",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/simon-silva/",
+   "url": null,
    "name": "Hayden Flavin",
    "position_name": "Left Guard",
    "jersey": "60",
@@ -9814,11 +9814,11 @@
    }
   },
   {
-   "slug": "colt-gallery",
+   "slug": "jace-borcherding",
    "position": "C",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/colt-gallery/",
+   "url": null,
    "name": "Jace Borcherding",
    "position_name": "Center",
    "jersey": "67",
@@ -16454,11 +16454,11 @@
    }
   },
   {
-   "slug": "keith-saunders-mason",
+   "slug": "lincoln-creager",
    "position": "SAM",
    "class": "FR",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/keith-saunders-mason/",
+   "url": null,
    "name": "Lincoln Creager",
    "position_name": "Sam Linebacker",
    "jersey": "46",
@@ -18622,11 +18622,11 @@
    }
   },
   {
-   "slug": "brian-grant-kingston",
+   "slug": "parker-maiers",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/brian-grant-kingston/",
+   "url": null,
    "name": "Parker Maiers",
    "position_name": "Will Linebacker",
    "jersey": "39",
@@ -20240,11 +20240,11 @@
    }
   },
   {
-   "slug": "bradley-brackett",
+   "slug": "jalen-lewis",
    "position": "CB",
    "class": "JRRS",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/bradley-brackett/",
+   "url": null,
    "name": "Jalen Lewis",
    "position_name": "Cornerback",
    "jersey": "26",
@@ -22456,11 +22456,11 @@
    }
   },
   {
-   "slug": "lloyd-singleton",
+   "slug": "timi-oke",
    "position": "SS",
    "class": "SO",
    "team_slug": "northwestern",
-   "url": "https://collegefootball.gg/players/lloyd-singleton/",
+   "url": null,
    "name": "Timi Oke",
    "position_name": "Strong Safety",
    "jersey": "28",

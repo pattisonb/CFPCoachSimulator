@@ -161,7 +161,7 @@
     "cole-gonzales"
    ],
    "HB": [
-    "terrence-middleton"
+    "malachi-drayton"
    ],
    "WR": [
     "jaden-barnes",
@@ -238,7 +238,7 @@
    "luke-mcnulty"
   ],
   "HB": [
-   "terrence-middleton",
+   "malachi-drayton",
    "jariel-cobb",
    "henry-rutledge",
    "chance-williams",
@@ -282,11 +282,11 @@
   "C": [
    "isaiah-bullerdick",
    "nicolas-cruji",
-   "kevin-hess"
+   "o-shea-stroman"
   ],
   "RG": [
    "rod-green",
-   "dalton-williams"
+   "callum-cary"
   ],
   "RT": [
    "mathias-nielsen",
@@ -302,7 +302,7 @@
    "devin-ancrum",
    "jamarrion-solomon",
    "caleb-irving",
-   "quincy-hull",
+   "ehigie-aliu-otokiti",
    "lewis-price-law",
    "ayo-tifase"
   ],
@@ -1764,11 +1764,11 @@
    }
   },
   {
-   "slug": "terrence-middleton",
+   "slug": "malachi-drayton",
    "position": "HB",
    "class": "SORS",
    "team_slug": "charlotte",
-   "url": "https://collegefootball.gg/players/terrence-middleton/",
+   "url": null,
    "name": "Malachi Drayton",
    "position_name": "Halfback",
    "jersey": "27",
@@ -11247,11 +11247,11 @@
    }
   },
   {
-   "slug": "kevin-hess",
+   "slug": "o-shea-stroman",
    "position": "C",
    "class": "SO",
    "team_slug": "charlotte",
-   "url": "https://collegefootball.gg/players/kevin-hess/",
+   "url": null,
    "name": "O'Shea Stroman",
    "position_name": "Center",
    "jersey": "64",
@@ -11756,11 +11756,11 @@
    }
   },
   {
-   "slug": "dalton-williams",
+   "slug": "callum-cary",
    "position": "RG",
    "class": "SORS",
    "team_slug": "charlotte",
-   "url": "https://collegefootball.gg/players/dalton-williams/",
+   "url": null,
    "name": "Callum Cary",
    "position_name": "Right Guard",
    "jersey": "63",
@@ -14483,11 +14483,11 @@
    }
   },
   {
-   "slug": "quincy-hull",
+   "slug": "ehigie-aliu-otokiti",
    "position": "DT",
    "class": "JR",
    "team_slug": "charlotte",
-   "url": "https://collegefootball.gg/players/quincy-hull/",
+   "url": null,
    "name": "Ehigie Aliu-Otokiti",
    "position_name": "Defensive Tackle",
    "jersey": "98",

@@ -240,9 +240,9 @@
   "HB": [
    "tavorus-jones",
    "lamar-sperling",
-   "lance-barnes",
-   "derek-sherman",
-   "isaiah-wall"
+   "elijah-mccoy",
+   "chris-hunter-utep",
+   "jaden-moore"
   ],
   "FB": [],
   "WR": [
@@ -270,15 +270,15 @@
   ],
   "LG": [
    "brian-williams-jr",
-   "julian-balmer",
+   "ryder-slaton",
    "diego-de-la-cruz",
-   "jerry-potts"
+   "eddie-lartigue-jr"
   ],
   "C": [
    "jayden-trapp",
    "rashad-smith",
    "preston-perkins",
-   "elliott-mills"
+   "wesley-dallao-kubik"
   ],
   "RG": [
    "omoruyi-aliu-otokiti",
@@ -288,7 +288,7 @@
   "RT": [
    "juan-camacho-jr",
    "grayson-johnson",
-   "tyler-christie"
+   "maddox-huber"
   ],
   "LEDG": [
    "shakaun-bowser",
@@ -321,12 +321,12 @@
    "isaiah-bogerty",
    "garrett-hawkins",
    "copelin-windfont",
-   "rudy-moreland"
+   "japrei-wafer"
   ],
   "WILL": [
    "shay-smith",
    "dylan-brown-turner",
-   "carlos-beal"
+   "jalen-hamilton"
   ],
   "CB": [
    "justin-content",
@@ -352,7 +352,7 @@
   "K": [
    "carlos-arreola",
    "cade-hechter",
-   "quentin-shields"
+   "parker-cushing"
   ],
   "P": [
    "brady-braun"
@@ -2061,11 +2061,11 @@
    }
   },
   {
-   "slug": "lance-barnes",
+   "slug": "elijah-mccoy",
    "position": "HB",
    "class": "SO",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/lance-barnes/",
+   "url": null,
    "name": "Elijah McCoy",
    "position_name": "Halfback",
    "jersey": "6",
@@ -2348,11 +2348,11 @@
    }
   },
   {
-   "slug": "derek-sherman",
+   "slug": "chris-hunter-utep",
    "position": "HB",
    "class": "JRRS",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/derek-sherman/",
+   "url": null,
    "name": "Chris Hunter",
    "position_name": "Halfback",
    "jersey": "22",
@@ -2610,11 +2610,11 @@
    }
   },
   {
-   "slug": "isaiah-wall",
+   "slug": "jaden-moore",
    "position": "HB",
    "class": "SO",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/isaiah-wall/",
+   "url": null,
    "name": "Jaden Moore",
    "position_name": "Halfback",
    "jersey": "21",
@@ -8300,11 +8300,11 @@
    }
   },
   {
-   "slug": "julian-balmer",
+   "slug": "ryder-slaton",
    "position": "LG",
    "class": "SO",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/julian-balmer/",
+   "url": null,
    "name": "Ryder Slaton",
    "position_name": "Left Guard",
    "jersey": "78",
@@ -8551,11 +8551,11 @@
    }
   },
   {
-   "slug": "jerry-potts",
+   "slug": "eddie-lartigue-jr",
    "position": "LG",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/jerry-potts/",
+   "url": null,
    "name": "Eddie Lartigue Jr.",
    "position_name": "Left Guard",
    "jersey": "62",
@@ -9692,11 +9692,11 @@
    }
   },
   {
-   "slug": "elliott-mills",
+   "slug": "wesley-dallao-kubik",
    "position": "C",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/elliott-mills/",
+   "url": null,
    "name": "Wesley Dallao-Kubik",
    "position_name": "Center",
    "jersey": "77",
@@ -11363,11 +11363,11 @@
    }
   },
   {
-   "slug": "tyler-christie",
+   "slug": "maddox-huber",
    "position": "RT",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/tyler-christie/",
+   "url": null,
    "name": "Maddox Huber",
    "position_name": "Right Tackle",
    "jersey": "70",
@@ -17840,11 +17840,11 @@
    }
   },
   {
-   "slug": "rudy-moreland",
+   "slug": "japrei-wafer",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/rudy-moreland/",
+   "url": null,
    "name": "Japrei Wafer",
    "position_name": "Mike Linebacker",
    "jersey": "48",
@@ -18670,11 +18670,11 @@
    }
   },
   {
-   "slug": "carlos-beal",
+   "slug": "jalen-hamilton",
    "position": "WILL",
    "class": "FR",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/carlos-beal/",
+   "url": null,
    "name": "Jalen Hamilton",
    "position_name": "Will Linebacker",
    "jersey": "38",
@@ -23780,11 +23780,11 @@
    }
   },
   {
-   "slug": "quentin-shields",
+   "slug": "parker-cushing",
    "position": "K",
    "class": "FRRS",
    "team_slug": "utep",
-   "url": "https://collegefootball.gg/players/quentin-shields/",
+   "url": null,
    "name": "Parker Cushing",
    "position_name": "Kicker",
    "jersey": "33",

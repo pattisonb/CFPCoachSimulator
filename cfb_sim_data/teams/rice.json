@@ -200,7 +200,7 @@
     "dillan-botts"
    ],
    "LB": [
-    "jesus-machado-jr",
+    "jayden-cupitt",
     "stone-combs"
    ],
    "CB": [
@@ -242,7 +242,7 @@
    "d-andre-hardeman-jr",
    "tyvonn-byars",
    "colin-leahey",
-   "jason-curtis",
+   "justin-powell",
    "carson-morgan"
   ],
   "FB": [],
@@ -277,7 +277,7 @@
   "LG": [
    "cole-principe",
    "colter-alberding",
-   "roman-livingston"
+   "clay-mitchell"
   ],
   "C": [
    "scott-becker",
@@ -287,17 +287,17 @@
    "patrick-valent",
    "leo-bluhm",
    "cullen-witt",
-   "levi-berry"
+   "leyonte-chandler"
   ],
   "RT": [
    "luke-miller",
    "ian-bothwell",
    "peyton-farmer",
-   "daniel-rhodes"
+   "bennett-eivens"
   ],
   "LEDG": [
    "joseph-mutombo",
-   "dereyon-jenkins-jr",
+   "jd-singletary",
    "luca-akirtava"
   ],
   "DT": [
@@ -317,10 +317,10 @@
   ],
   "SAM": [],
   "MIKE": [
-   "jesus-machado-jr",
+   "jayden-cupitt",
    "stone-combs",
    "beau-barton",
-   "ty-thames"
+   "seth-clarke"
   ],
   "WILL": [
    "austin-harnetiaux",
@@ -351,7 +351,7 @@
   ],
   "K": [
    "enock-gota",
-   "dane-colbert"
+   "tommy-bauchiero"
   ],
   "P": [
    "charlie-durkin"
@@ -2566,11 +2566,11 @@
    }
   },
   {
-   "slug": "jason-curtis",
+   "slug": "justin-powell",
    "position": "HB",
    "class": "SO",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/jason-curtis/",
+   "url": null,
    "name": "Justin Powell",
    "position_name": "Halfback",
    "jersey": "33",
@@ -10073,11 +10073,11 @@
    }
   },
   {
-   "slug": "roman-livingston",
+   "slug": "clay-mitchell",
    "position": "LG",
    "class": "FR",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/roman-livingston/",
+   "url": null,
    "name": "Clay Mitchell",
    "position_name": "Left Guard",
    "jersey": "74",
@@ -11784,11 +11784,11 @@
    }
   },
   {
-   "slug": "levi-berry",
+   "slug": "leyonte-chandler",
    "position": "RG",
    "class": "FR",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/levi-berry/",
+   "url": null,
    "name": "Leyonte Chandler",
    "position_name": "Right Guard",
    "jersey": "57",
@@ -12642,11 +12642,11 @@
    }
   },
   {
-   "slug": "daniel-rhodes",
+   "slug": "bennett-eivens",
    "position": "RT",
    "class": "SO",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/daniel-rhodes/",
+   "url": null,
    "name": "Bennett Eivens",
    "position_name": "Right Tackle",
    "jersey": "70",
@@ -13453,11 +13453,11 @@
    }
   },
   {
-   "slug": "dereyon-jenkins-jr",
+   "slug": "jd-singletary",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/dereyon-jenkins-jr/",
+   "url": null,
    "name": "JD Singletary",
    "position_name": "Left Edge",
    "jersey": "21",
@@ -17028,11 +17028,11 @@
    }
   },
   {
-   "slug": "jesus-machado-jr",
+   "slug": "jayden-cupitt",
    "position": "MIKE",
    "class": "SRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/jesus-machado-jr/",
+   "url": null,
    "name": "Jayden Cupitt",
    "position_name": "Mike Linebacker",
    "jersey": "40",
@@ -17874,11 +17874,11 @@
    }
   },
   {
-   "slug": "ty-thames",
+   "slug": "seth-clarke",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/ty-thames/",
+   "url": null,
    "name": "Seth Clarke",
    "position_name": "Mike Linebacker",
    "jersey": "56",
@@ -23866,11 +23866,11 @@
    }
   },
   {
-   "slug": "dane-colbert",
+   "slug": "tommy-bauchiero",
    "position": "K",
    "class": "FRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/dane-colbert/",
+   "url": null,
    "name": "Tommy Bauchiero",
    "position_name": "Kicker",
    "jersey": "49",

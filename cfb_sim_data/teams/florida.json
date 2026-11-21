@@ -275,14 +275,14 @@
   "LG": [
    "knijeah-harris",
    "roderick-kearney",
-   "khalen-anderson",
-   "curt-parks"
+   "jahari-medlock",
+   "corey-brown"
   ],
   "C": [
    "harrison-moore",
    "jason-zandamela",
    "desmond-green",
-   "grant-leonard"
+   "g-nivre-carr"
   ],
   "RG": [
    "tj-shanahan-jr",
@@ -291,7 +291,7 @@
   "RT": [
    "caden-jones",
    "chancellor-campbell",
-   "kwame-collins"
+   "tj-dice-jr"
   ],
   "LEDG": [
    "kamran-james",
@@ -311,16 +311,16 @@
    "jayden-woods",
    "kofi-asare",
    "kj-ford",
-   "leon-bowens-gooden"
+   "jayden-gross"
   ],
   "SAM": [
-   "cayleb-mosley"
+   "charles-emanuel-iii"
   ],
   "MIKE": [
    "jaden-robinson",
    "myles-johnson",
-   "damien-mccloud",
-   "rokeem-minor"
+   "dylan-leighton",
+   "ty-jackson"
   ],
   "WILL": [
    "myles-graham",
@@ -352,12 +352,12 @@
   ],
   "K": [
    "patrick-durkin",
-   "colton-norton",
-   "steven-cuffey"
+   "brandon-rabasco",
+   "liam-padron"
   ],
   "P": [
    "alec-clark",
-   "adam-louden"
+   "miller-fealy"
   ]
  },
  "roster_size": 85,
@@ -8759,11 +8759,11 @@
    }
   },
   {
-   "slug": "khalen-anderson",
+   "slug": "jahari-medlock",
    "position": "LG",
    "class": "SO",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/khalen-anderson/",
+   "url": null,
    "name": "Jahari Medlock",
    "position_name": "Left Guard",
    "jersey": "56",
@@ -9020,11 +9020,11 @@
    }
   },
   {
-   "slug": "curt-parks",
+   "slug": "corey-brown",
    "position": "LG",
    "class": "FR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/curt-parks/",
+   "url": null,
    "name": "Corey Brown",
    "position_name": "Left Guard",
    "jersey": "59",
@@ -10108,11 +10108,11 @@
    }
   },
   {
-   "slug": "grant-leonard",
+   "slug": "g-nivre-carr",
    "position": "C",
    "class": "FR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/grant-leonard/",
+   "url": null,
    "name": "G'Nivre Carr",
    "position_name": "Center",
    "jersey": "61",
@@ -11448,11 +11448,11 @@
    }
   },
   {
-   "slug": "kwame-collins",
+   "slug": "tj-dice-jr",
    "position": "RT",
    "class": "SO",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/kwame-collins/",
+   "url": null,
    "name": "TJ Dice Jr.",
    "position_name": "Right Tackle",
    "jersey": "55",
@@ -15226,11 +15226,11 @@
    }
   },
   {
-   "slug": "leon-bowens-gooden",
+   "slug": "jayden-gross",
    "position": "REDG",
    "class": "FR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/leon-bowens-gooden/",
+   "url": null,
    "name": "Jayden Gross",
    "position_name": "Right Edge",
    "jersey": "40",
@@ -15480,11 +15480,11 @@
    }
   },
   {
-   "slug": "cayleb-mosley",
+   "slug": "charles-emanuel-iii",
    "position": "SAM",
    "class": "FR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/cayleb-mosley/",
+   "url": null,
    "name": "Charles Emanuel III",
    "position_name": "Sam Linebacker",
    "jersey": "55",
@@ -16327,11 +16327,11 @@
    }
   },
   {
-   "slug": "damien-mccloud",
+   "slug": "dylan-leighton",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/damien-mccloud/",
+   "url": null,
    "name": "Dylan Leighton",
    "position_name": "Mike Linebacker",
    "jersey": "52",
@@ -16584,11 +16584,11 @@
    }
   },
   {
-   "slug": "rokeem-minor",
+   "slug": "ty-jackson",
    "position": "MIKE",
    "class": "FR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/rokeem-minor/",
+   "url": null,
    "name": "Ty Jackson",
    "position_name": "Mike Linebacker",
    "jersey": "7",
@@ -22626,11 +22626,11 @@
    }
   },
   {
-   "slug": "colton-norton",
+   "slug": "brandon-rabasco",
    "position": "K",
    "class": "JR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/colton-norton/",
+   "url": null,
    "name": "Brandon Rabasco",
    "position_name": "Kicker",
    "jersey": "40",
@@ -22864,11 +22864,11 @@
    }
   },
   {
-   "slug": "steven-cuffey",
+   "slug": "liam-padron",
    "position": "K",
    "class": "FR",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/steven-cuffey/",
+   "url": null,
    "name": "Liam Padron",
    "position_name": "Kicker",
    "jersey": "41",
@@ -23355,11 +23355,11 @@
    }
   },
   {
-   "slug": "adam-louden",
+   "slug": "miller-fealy",
    "position": "P",
    "class": "SO",
    "team_slug": "florida",
-   "url": "https://collegefootball.gg/players/adam-louden/",
+   "url": null,
    "name": "Miller Fealy",
    "position_name": "Punter",
    "jersey": "47",

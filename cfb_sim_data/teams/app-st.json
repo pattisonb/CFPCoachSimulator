@@ -166,7 +166,7 @@
    "WR": [
     "samuel-mbake",
     "chris-lofton",
-    "nate-branch"
+    "semaj-fleming"
    ],
    "TE": [
     "jamel-howse"
@@ -246,11 +246,11 @@
   "WR": [
    "samuel-mbake",
    "chris-lofton",
-   "nate-branch",
+   "semaj-fleming",
    "dazmin-james",
    "alex-sanchez",
    "kamauri-austin",
-   "denard-dyson",
+   "zalin-ingram",
    "sam-pickett-iii",
    "kabran-paul",
    "edward-coleman",
@@ -268,11 +268,11 @@
   "LT": [
    "devon-manuel",
    "kamron-burris",
-   "phillip-bennett"
+   "ben-jones"
   ],
   "LG": [
    "cayden-sweatt",
-   "trevis-crockett",
+   "eisa-evans",
    "danny-stevens"
   ],
   "C": [
@@ -281,7 +281,7 @@
   ],
   "RG": [
    "trent-ramsey",
-   "lance-williams",
+   "jarvis-potts",
    "scottland-dover"
   ],
   "RT": [
@@ -3728,11 +3728,11 @@
    }
   },
   {
-   "slug": "nate-branch",
+   "slug": "semaj-fleming",
    "position": "WR",
    "class": "SORS",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/nate-branch/",
+   "url": null,
    "name": "Semaj Fleming",
    "position_name": "Wide Receiver",
    "jersey": "22",
@@ -4002,11 +4002,11 @@
    }
   },
   {
-   "slug": "denard-dyson",
+   "slug": "zalin-ingram",
    "position": "WR",
    "class": "SORS",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/denard-dyson/",
+   "url": null,
    "name": "Zalin Ingram",
    "position_name": "Wide Receiver",
    "jersey": "82",
@@ -8270,11 +8270,11 @@
    }
   },
   {
-   "slug": "phillip-bennett",
+   "slug": "ben-jones",
    "position": "LT",
    "class": "FR",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/phillip-bennett/",
+   "url": null,
    "name": "Ben Jones",
    "position_name": "Left Tackle",
    "jersey": "55",
@@ -9092,11 +9092,11 @@
    }
   },
   {
-   "slug": "trevis-crockett",
+   "slug": "eisa-evans",
    "position": "LG",
    "class": "SO",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/trevis-crockett/",
+   "url": null,
    "name": "Eisa Evans",
    "position_name": "Left Guard",
    "jersey": "50",
@@ -9901,11 +9901,11 @@
    }
   },
   {
-   "slug": "lance-williams",
+   "slug": "jarvis-potts",
    "position": "RG",
    "class": "JRRS",
    "team_slug": "app-st",
-   "url": "https://collegefootball.gg/players/lance-williams/",
+   "url": null,
    "name": "Jarvis Potts",
    "position_name": "Right Guard",
    "jersey": "64",

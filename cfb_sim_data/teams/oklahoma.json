@@ -235,7 +235,7 @@
    "john-mateer",
    "bowe-bentley",
    "whitt-newbauer",
-   "hunter-silverman"
+   "jett-niu"
   ],
   "HB": [
    "tory-blaylock",
@@ -268,7 +268,7 @@
   ],
   "LT": [
    "michael-fasusi",
-   "jhermane-smith"
+   "sean-hutton"
   ],
   "LG": [
    "eddy-pierre-louis",
@@ -284,7 +284,7 @@
   "RG": [
    "ryan-fodje",
    "heath-ozaeta",
-   "jamar-dobbins"
+   "ace-hodges"
   ],
   "RT": [
    "e-marion-harris",
@@ -311,7 +311,7 @@
    "adepoju-adebawore",
    "jake-kreul",
    "danny-okoye",
-   "daunte-hills"
+   "alex-shieldnight"
   ],
   "SAM": [
    "kristan-moore"
@@ -341,7 +341,7 @@
   "FS": [
    "michael-boganowski",
    "omarion-robinson",
-   "edward-garcia"
+   "preston-mickens"
   ],
   "SS": [
    "peyton-bowen",
@@ -1167,11 +1167,11 @@
    }
   },
   {
-   "slug": "hunter-silverman",
+   "slug": "jett-niu",
    "position": "QB",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/hunter-silverman/",
+   "url": null,
    "name": "Jett Niu",
    "position_name": "Quarterback",
    "jersey": "15",
@@ -7932,11 +7932,11 @@
    }
   },
   {
-   "slug": "jhermane-smith",
+   "slug": "sean-hutton",
    "position": "LT",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/jhermane-smith/",
+   "url": null,
    "name": "Sean Hutton",
    "position_name": "Left Tackle",
    "jersey": "64",
@@ -10701,11 +10701,11 @@
    }
   },
   {
-   "slug": "jamar-dobbins",
+   "slug": "ace-hodges",
    "position": "RG",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/jamar-dobbins/",
+   "url": null,
    "name": "Ace Hodges",
    "position_name": "Right Guard",
    "jersey": "65",
@@ -15874,11 +15874,11 @@
    }
   },
   {
-   "slug": "daunte-hills",
+   "slug": "alex-shieldnight",
    "position": "REDG",
    "class": "FR",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/daunte-hills/",
+   "url": null,
    "name": "Alex Shieldnight",
    "position_name": "Right Edge",
    "jersey": "97",
@@ -21554,11 +21554,11 @@
    }
   },
   {
-   "slug": "edward-garcia",
+   "slug": "preston-mickens",
    "position": "FS",
    "class": "SO",
    "team_slug": "oklahoma",
-   "url": "https://collegefootball.gg/players/edward-garcia/",
+   "url": null,
    "name": "Preston Mickens",
    "position_name": "Free Safety",
    "jersey": "27",

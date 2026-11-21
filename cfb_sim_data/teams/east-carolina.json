@@ -206,7 +206,7 @@
    ],
    "CB": [
     "jaylen-bowden",
-    "nick-childress",
+    "adam-cole",
     "ashton-levells-mitchell"
    ],
    "FS": [
@@ -275,7 +275,7 @@
   "LG": [
    "karson-jones",
    "kendall-walton",
-   "sharrif-miles"
+   "xavier-massey"
   ],
   "C": [
    "brandon-best",
@@ -288,7 +288,7 @@
   "RT": [
    "hayes-creel",
    "bryson-esser",
-   "darnell-mckenzie"
+   "cayman-reynolds"
   ],
   "LEDG": [
    "kendrick-dujour",
@@ -327,7 +327,7 @@
   ],
   "CB": [
    "jaylen-bowden",
-   "nick-childress",
+   "adam-cole",
    "ashton-levells-mitchell",
    "derrion-horsley",
    "kevon-merrell",
@@ -9140,11 +9140,11 @@
    }
   },
   {
-   "slug": "sharrif-miles",
+   "slug": "xavier-massey",
    "position": "LG",
    "class": "FR",
    "team_slug": "east-carolina",
-   "url": "https://collegefootball.gg/players/sharrif-miles/",
+   "url": null,
    "name": "Xavier Massey",
    "position_name": "Left Guard",
    "jersey": "59",
@@ -11093,11 +11093,11 @@
    }
   },
   {
-   "slug": "darnell-mckenzie",
+   "slug": "cayman-reynolds",
    "position": "RT",
    "class": "FR",
    "team_slug": "east-carolina",
-   "url": "https://collegefootball.gg/players/darnell-mckenzie/",
+   "url": null,
    "name": "Cayman Reynolds",
    "position_name": "Right Tackle",
    "jersey": "67",
@@ -18180,11 +18180,11 @@
    }
   },
   {
-   "slug": "nick-childress",
+   "slug": "adam-cole",
    "position": "CB",
    "class": "SR",
    "team_slug": "east-carolina",
-   "url": "https://collegefootball.gg/players/nick-childress/",
+   "url": null,
    "name": "Adam Cole",
    "position_name": "Cornerback",
    "jersey": "34",
