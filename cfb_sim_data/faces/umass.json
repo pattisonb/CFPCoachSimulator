@@ -87,5 +87,10 @@
   "Jared Keyte": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "black", "eyeColor": "hazel", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
+  "cooper-proctor": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": false, "flip": []},
+  "desean-inkley": {"faceShape": "face_shape_02", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
+  "jimmie-bartow": {"faceShape": "face_shape_03", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_06", "hairFade": true, "flip": []},
+  "trevor-glenn": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_04", "hairFade": false, "flip": []},
+  "xavier-smith-umass": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_03", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_20", "hairFade": true, "flip": []}
  }
 }

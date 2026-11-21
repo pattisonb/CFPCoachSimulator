@@ -91,5 +91,6 @@
   "Scottie Hazelton": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []}
  },
  "rolled": {
+  "jerrott-wiggins": {"faceShape": "face_shape_05", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_06", "hairFade": true, "flip": []}
  }
 }

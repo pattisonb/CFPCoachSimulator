@@ -89,5 +89,8 @@
   "Nate Woody": {"faceShape": "face_shape_06", "skinTone": "tan", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []}
  },
  "rolled": {
+  "angelo-westbrook": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
+  "nelson-gottis": {"faceShape": "face_shape_02", "skinTone": "brown", "hairColor": "darkbrown", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
+  "toby-petty": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_11", "hairFade": false, "flip": []}
  }
 }

@@ -91,5 +91,6 @@
   "Joe Rossi": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_14", "hairFade": true, "flip": []}
  },
  "rolled": {
+  "nashon-west": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_02", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  }
 }

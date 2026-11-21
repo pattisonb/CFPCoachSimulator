@@ -90,5 +90,6 @@
   "Ryan Walters": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  },
  "rolled": {
+  "nate-bloomfield": {"faceShape": "face_shape_03", "skinTone": "porcelain", "hairColor": "red", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  }
 }
