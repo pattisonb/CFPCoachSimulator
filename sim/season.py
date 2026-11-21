@@ -1905,7 +1905,7 @@ DEPTH_ROWS = [
                  ("LT", "Left tackle"), ("LG", "Left guard"), ("C", "Center"), ("RG", "Right guard"), ("RT", "Right tackle")]),
     ("Defense", [("LEDG", "Left edge"), ("DT", "Defensive tackle"), ("REDG", "Right edge"), ("SAM", "Strongside LB"), ("MIKE", "Middle LB"),
                  ("WILL", "Weakside LB"), ("CB", "Cornerback"), ("FS", "Free safety"), ("SS", "Strong safety")]),
-    ("Special teams", [("K", "Kicker"), ("P", "Punter"), ("KR", "Kick returner"), ("PR", "Punt returner")]),
+    ("Special Teams", [("K", "Kicker"), ("P", "Punter"), ("KR", "Kick Returner"), ("PR", "Punt Returner")]),
 ]
 
 

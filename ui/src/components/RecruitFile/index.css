@@ -193,6 +193,12 @@ dd.recruit-file__inline {
   min-width: 0;
 }
 
+/* one list alone (no strengths yet, or nothing to develop) has the whole row: its lines sit on one line, not wrapped
+   in half the card beside nothing (the player's find) */
+.recruit-file__marked:only-child {
+  grid-column: 1 / -1;
+}
+
 .recruit-file__marked .label {
   margin: 0;
   color: var(--ink-soft);
@@ -244,10 +250,11 @@ dd.recruit-file__inline {
   background: var(--warn);
 }
 
-/* a comp: its kicker, then his name, school, position and overall on one line */
+/* a comp: its kicker and his name, school, position and overall, all on one line */
 .recruit-file__comp {
-  display: grid;
-  gap: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
   padding: var(--s2) 0 var(--s1);
   border-top: 1px solid var(--line-soft);
 }
@@ -257,6 +264,8 @@ dd.recruit-file__inline {
 }
 
 .recruit-file__comp-line {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

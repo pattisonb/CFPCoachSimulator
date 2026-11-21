@@ -94,6 +94,9 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
   /** which of the scouting service's lists is up */
   const [side, setSide] = useState<"strengths" | "weaknesses">("strengths");
   const [point, setPoint] = useState(0);
+  /** a board change is on its way: the button waits for it (pressed again at once, it sent the same change twice
+      and ended on the wrong side; the stress run's find) */
+  const [changing, setChanging] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -174,7 +177,13 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
         <Button
           variant={r.on_board ? "outline" : "solid"}
           className="prospect-card__board"
-          onClick={() => onBoard(r, !r.on_board).then(() => setVersion((v) => v + 1))}
+          disabled={changing}
+          onClick={() => {
+            setChanging(true);
+            void onBoard(r, !r.on_board)
+              .then(() => setVersion((v) => v + 1))
+              .finally(() => setChanging(false));
+          }}
         >
           <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
           {r.on_board ? m.removeBoard : m.addBoard}
