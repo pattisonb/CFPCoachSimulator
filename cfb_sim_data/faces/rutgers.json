@@ -85,11 +85,11 @@
  },
  "coaches": {
   "Kirk Ciarrocca": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
-  "Travis Johansen": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []}
+  "Travis Johansen": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
+  "Greg Schiano": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_07", "hairFade": true, "flip": []}
  },
  "rolled": {
   "calvin-givens": {"faceShape": "face_shape_04", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": true, "flip": []},
-  "coach:Greg Schiano": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "black", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
   "markus-hopkins": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "wydeek-collier-johnson": {"faceShape": "face_shape_05", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  }
