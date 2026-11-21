@@ -562,10 +562,15 @@ def card_attributes(ours: dict, p: dict) -> dict[str, int]:
     """A prospect's player card attributes from his skills (our scale), exactly as a player's card
     gets them (build_teams): the skills back through the frozen scale, the card's composites, then
     the card scale (50 at the middle Power 4 starter at his position)."""
+    pos = engine_position(p)
+    return dict(_card(pos, p.get("ea_position") or pos, tuple(ours.items())))
+
+
+@lru_cache(maxsize=60_000)           # one player's card is asked for more than once (his overall, then his grades)
+def _card(pos: str, ea_position: str, skills: tuple) -> dict[str, int]:
     from teamdata import game_scale
     from teamdata import ratings as rv2
-    pos = engine_position(p)
-    raw = rv2.raw_attributes(game_scale.base_from_ours(ours, p.get("ea_position") or pos), pos, pos)
+    raw = rv2.raw_attributes(game_scale.base_from_ours(dict(skills), ea_position), pos, pos)
     group = rv2.card_group(pos, pos)
     group = "RB" if group == "FB" else group
     scale = game_scale.card_scale()

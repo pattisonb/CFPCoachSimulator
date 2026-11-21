@@ -1,5 +1,5 @@
 /* The game in a Web Worker: Pyodide (CPython on WebAssembly) runs the dispatcher (app/api.py)
-   from game.tar.xz, unpacked into the worker's in-memory filesystem; the seasons and coaches
+   from game.tar.xz, unpacked into the worker's in-memory filesystem; the seasons, coaches and leagues
    folders are IDBFS mounts, persisted to IndexedDB after every call that wrote a file.
    Messages from the page (ui/src/gameClient.ts): first {kind: "init", version, breakStorage,
    breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes, background}, answered with {id, ok,
@@ -16,7 +16,10 @@
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
 const ARCHIVE = "game.tar.xz";   // the game and its data, xz-packed (tools/build_site.py write_archive)
 const HOME = "/home/pyodide";
-const STORES = [HOME + "/data/seasons", HOME + "/data/coaches"];   // what IndexedDB keeps
+// What IndexedDB keeps: the saves, the coaches, and a career's own league as the game plays it (data/leagues: built
+// once a season, and without it every reopening of a career past its first season built it again, about fifteen
+// seconds of a twenty-second load).
+const STORES = [HOME + "/data/seasons", HOME + "/data/coaches", HOME + "/data/leagues"];
 
 const queue = [];          // messages from the page, served in order
 let wake = null;           // resolves the pump's wait for a message
