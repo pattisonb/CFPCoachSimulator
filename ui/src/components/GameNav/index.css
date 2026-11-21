@@ -444,3 +444,19 @@
     transition: none;
   }
 }
+
+/* open, the three share one row as icons (their names are their tips), so the league's sections above need no
+   scrolling; minimized they stack, one square each, as the rail's rows do */
+.game-nav-slot:not(.game-nav-slot--rail) .game-nav__foot {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.game-nav-slot:not(.game-nav-slot--rail) .game-nav__foot .game-nav__item {
+  justify-content: center;
+  padding: 0;
+}
+
+.game-nav-slot:not(.game-nav-slot--rail) .game-nav__foot .game-nav__text,
+.game-nav-slot:not(.game-nav-slot--rail) .game-nav__foot .game-nav__switch {
+  display: none;
+}

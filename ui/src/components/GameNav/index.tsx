@@ -309,6 +309,7 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
             aria-checked={dark}
             className="game-nav__item"
             data-tip={rail ? m.darkMode : undefined}
+            title={rail ? undefined : m.darkMode}
             onClick={onToggleTheme}
           >
             <Moon size={20} weight={dark ? "fill" : "bold"} aria-hidden="true" />
@@ -319,6 +320,7 @@ export default function GameNav({ team, active, onSection, theme, onToggleTheme,
             className="game-nav__item"
             href={hrefFor("play")}
             data-tip={rail ? m.exit : undefined}
+            title={rail ? undefined : m.exit}
             onClick={(e) => {
               e.preventDefault();
               navigate("play");

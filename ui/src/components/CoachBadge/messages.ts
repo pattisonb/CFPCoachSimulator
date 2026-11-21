@@ -3,7 +3,7 @@ export const messages = {
   energy: "Energy",
   energyValue: (left: number, total: number) => `${left}/${total}`,
   energyHint: (left: number, total: number) =>
-    `${left} of ${total} recruiting hours left this week. They refill when the week ends.`,
+    `${left} of ${total} recruiting energy left this week. It refills when the week ends.`,
   thisWeek: "This Week",
   bank: "NIL",
   bankHint: (left: number, total: number) => `${left} of ${total} NIL left of this year's budget for offers.`,

@@ -34,6 +34,25 @@ RAW_BODY = {"/api/league/check"}   # paths whose body is passed on as bytes what
 _lock = threading.Lock()          # one dispatcher call or step at a time
 _stepping = False                 # a stepper thread is playing the running job (read and set under _lock)
 _last_status: dict[str, dict] = {}   # season id -> the last status sent for it
+SAVE_AFTER = 1.5                  # *tune* seconds of quiet after a light action before its save is written (api.DEFER_SAVES)
+_saver: threading.Timer | None = None
+
+
+def _flush() -> None:
+    with _lock:
+        api.flush()
+
+
+def _save_soon() -> None:
+    """Called with _lock held, after a dispatcher call: a waiting save is written once the clicking stops."""
+    global _saver
+    if _saver is not None:
+        _saver.cancel()
+        _saver = None
+    if api.dirty():
+        _saver = threading.Timer(SAVE_AFTER, _flush)
+        _saver.daemon = True
+        _saver.start()
 
 
 def _step_loop() -> None:
@@ -74,7 +93,10 @@ def dispatch(method: str, target: str, body: dict | bytes | None) -> dict | byte
         _last_status[sid] = out
         return out
     with _lock:
-        out = api.call(method, target, body)
+        try:
+            out = api.call(method, target, body)
+        finally:
+            _save_soon()
         _start_stepping()
         return out
 
@@ -152,6 +174,7 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
     ap.add_argument("--host", default="127.0.0.1")
     args = ap.parse_args()
+    api.DEFER_SAVES = True              # light actions answer at once; their save follows (SAVE_AFTER), and on the way out
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"Coach Career: http://{args.host}:{args.port}", flush=True)
     try:
@@ -159,6 +182,7 @@ def main() -> None:
     except KeyboardInterrupt:
         pass
     finally:
+        _flush()
         httpd.server_close()
 
 

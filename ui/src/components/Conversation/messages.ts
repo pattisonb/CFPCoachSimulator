@@ -23,7 +23,7 @@ export const messages = {
   promiseJobTip: "Tell him the starting job is his. It helps land him, and he'll hold you to it all season.",
   hangUp: { call: "Hang Up", hc_visit: "Step Out" },
   hangUpTip:
-    "It stays open: Finish it from his panel this week. One you never finish counts for nothing, and the hours stay spent.",
+    "It stays open: Finish it from his panel this week. One you never finish counts for nothing, and the energy stays spent.",
   done: "Done",
   doneNote: "It counts at the week step.",
   lapsed: "That conversation lapsed: the week moved on.",

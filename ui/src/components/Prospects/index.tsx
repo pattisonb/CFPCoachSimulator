@@ -21,7 +21,7 @@ import TileMap from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
-import type { NeedGroup, ProspectRow, ProspectsView } from "../../types.ts";
+import type { NeedGroup, ProspectRow, ProspectsView, TeamCard } from "../../types.ts";
 import { GradeRange } from "../Grade/index.tsx";
 import { useKept } from "../../kept.ts";
 import { formatClass } from "../../format.ts";
@@ -33,6 +33,8 @@ interface Props {
   seasonId: string;
   /** the season's year: the class is the next one */
   year: number;
+  /** your school: the map marks its state in its color */
+  school?: TeamCard;
   /** the board changed (a star): the Recruiting board loads it again */
   onBoardChange?: () => void;
   /** its tab is the one shown (Recruiting's tabs keep both mounted) */
@@ -116,7 +118,18 @@ const chipCount = (n: NeedGroup, show: ChipShow): string | null => {
  * map of where the class lives, your needs by position (each one a filter), your class so far and the best
  * uncommitted. A row opens his file (ProspectCard) over the side column.
  */
-export default function Prospects({ seasonId, year, onBoardChange, active = true, boardSize, onClassSize }: Props) {
+export default function Prospects({
+  seasonId,
+  year,
+  school,
+  onBoardChange,
+  active = true,
+  boardSize,
+  onClassSize,
+}: Props) {
+  const schoolMark = school?.state
+    ? { state: school.state, color: school.colors.primary, second: school.colors.secondary, name: school.name }
+    : null;
   // the filters and the sort are kept for the career: going to another page and back finds them as you left them
   const [view, setView] = useKept<View>(`prospects.${seasonId}.view`, "all");
   const [chips, setChips] = useKept<ChipShow>(`prospects.${seasonId}.chips`, "need");
@@ -136,11 +149,24 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
   }, []);
   // the big labeled map, in a window over the page
   const [mapOpen, setMapOpen] = useState(false);
+  /** the big map's own pick: the list behind it is filtered only when the window closes, so looking round the map
+   * never waits on the list loading */
+  const [bigHome, setBigHome] = useState<string | null>(null);
+  const openMap = () => {
+    setBigHome(home);
+    setMapOpen(true);
+  };
+  const closeMap = () => {
+    setMapOpen(false);
+    if (bigHome !== home) setHome(bigHome);
+  };
   const [query, setQuery] = useState("");
   const [q, setQ] = useState("");
   const [group, setGroup] = useKept<string | null>(`prospects.${seasonId}.group`, null);
   const [stars, setStars] = useKept<number | null>(`prospects.${seasonId}.stars`, null);
   const [home, setHome] = useKept<string | null>(`prospects.${seasonId}.home`, null);
+  /** what the map's dots show: one value for the small map and the big one */
+  const [mapShow, setMapShow] = useKept(`prospects.${seasonId}.mapShow`, "none");
   const [sort, setSort] = useKept(`prospects.${seasonId}.sort`, "rank");
   const [page, setPage] = useState(0);
   const [data, setData] = useState<ProspectsView | null>(null);
@@ -182,9 +208,13 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
       .finally(() => token === seq.current && setLoading(false));
   }, [seasonId, view, q, group, stars, home, sort, page]);
 
+  // the class is read once this tab has been opened (the Board tab does not pay for it), and from then on whenever
+  // a filter changes
+  const [opened, setOpened] = useState(active);
+  if (active && !opened) setOpened(true);
   useEffect(() => {
-    load();
-  }, [load]);
+    if (opened) load();
+  }, [load, opened]);
   // shown again after the board changed on the Board tab: this page's stars and counts follow (its own stars
   // reload it as they land, so only coming back to it checks)
   const shownBoard = data?.summary.footprint.board;
@@ -279,6 +309,19 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   const s = data?.summary;
+  // every state with a prospect, the biggest first, for the filter beside the search
+  const byState = s?.by_state;
+  const topList = (home ? s?.top_in?.[home] : s?.top) ?? [];
+  const stateOptions = useMemo(
+    () => [
+      { value: "", label: m.allStates },
+      ...Object.entries(byState ?? {})
+        .filter(([, c]) => c.n > 0)
+        .sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))
+        .map(([st, c]) => ({ value: st, label: st, hint: String(c.n) })),
+    ],
+    [byState],
+  );
   // Recommended: the ones on this page not yet on your board
   const notOnBoard = rows.filter((r) => !r.on_board).length;
 
@@ -332,6 +375,15 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
               </button>
             )}
           </label>
+          <Dropdown
+            label={m.state}
+            hideLabel
+            size="md"
+            value={home ?? ""}
+            options={stateOptions}
+            onChange={(v) => setHome(v || null)}
+          />
+
           <div className="prospects__chips" role="group" aria-label={m.show}>
             {(Object.keys(m.views) as View[]).map((v) => (
               <Chip key={v} on={view === v} onClick={() => setView(v)}>
@@ -462,7 +514,9 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                     {!narrow && <td className="prospects__soft">{r.height_display}</td>}
                     {!narrow && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
                     <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
-                    <td className="left prospects__status">{statusOf(r)}</td>
+                    <td className="left prospects__status" title={statusOf(r)}>
+                      {statusOf(r)}
+                    </td>
                     <td className="prospects__offers">
                       {r.offers_n ? r.offers_n : <span className="prospects__soft">–</span>}
                     </td>
@@ -565,17 +619,28 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
             <section className="prospects__panel">
               <h2 className="prospects__panel-title">
                 {m.map}
-                <button type="button" className="prospects__panel-link" onClick={() => setMapOpen(true)}>
+                <button type="button" className="prospects__panel-link" onClick={openMap}>
                   {m.bigMap}
                 </button>
               </h2>
-              {s && <TileMap counts={s.by_state ?? {}} value={home} onPick={setHome} />}
+              {s && (
+                <TileMap
+                  counts={s.by_state ?? {}}
+                  value={home}
+                  onPick={setHome}
+                  school={schoolMark}
+                  points={s.board_at}
+                  show={mapShow}
+                  onShow={setMapShow}
+                />
+              )}
             </section>
-            {s && s.top.length > 0 && (
-              <section className="prospects__panel">
-                <h2 className="prospects__panel-title">{m.topOpen}</h2>
+            {/* under the map, to the column's foot: the best uncommitted, of the picked state when there is one */}
+            {s && topList.length > 0 && (
+              <section className="prospects__panel prospects__panel--fill">
+                <h2 className="prospects__panel-title">{home ? m.topIn(home) : m.topOpen}</h2>
                 <ol className="prospects__top">
-                  {s.top.map((t) => (
+                  {topList.map((t) => (
                     <li key={t.id}>
                       <button type="button" onClick={() => setPicked(t.id)}>
                         <span className="prospects__face">
@@ -584,10 +649,14 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
                         <span className="prospects__name">
                           <b>{t.name}</b>
                           <span className="prospects__soft">
-                            #{t.national_rank} · {t.display_pos}
+                            {t.display_pos}
+                            {t.home ? ` · ${t.home}` : ""}
                           </span>
                         </span>
-                        <Stars n={t.stars} size={10} />
+                        <span className="prospects__top-rank">
+                          <Stars n={t.stars} size={10} />
+                          <span className="prospects__soft">#{t.national_rank}</span>
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -599,20 +668,31 @@ export default function Prospects({ seasonId, year, onBoardChange, active = true
       </aside>
       <Modal
         open={mapOpen}
-        onClose={() => setMapOpen(false)}
+        onClose={closeMap}
         title={m.map}
         lede={m.classOf(year + 1, s?.total ?? 0)}
         footer={
-          home ? (
-            <Button onClick={() => setMapOpen(false)}>
-              {m.listThese(total, home)}
-              <ArrowRight size={16} weight="bold" aria-hidden="true" />
-            </Button>
-          ) : null
+          // always there, so the window keeps its size when a state is picked
+          <Button disabled={!bigHome} onClick={closeMap}>
+            {bigHome ? m.listThese(s?.by_state?.[bigHome]?.n ?? 0, bigHome) : m.pickState}
+            {bigHome && <ArrowRight size={16} weight="bold" aria-hidden="true" />}
+          </Button>
         }
       >
         <div className="prospects__bigmap">
-          {s && <TileMap counts={s.by_state ?? {}} value={home} onPick={setHome} labels />}
+          {s && (
+            <TileMap
+              counts={s.by_state ?? {}}
+              value={bigHome}
+              onPick={setBigHome}
+              labels
+              cities={s.cities}
+              school={schoolMark}
+              points={s.board_at}
+              show={mapShow}
+              onShow={setMapShow}
+            />
+          )}
         </div>
       </Modal>
     </div>

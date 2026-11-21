@@ -890,9 +890,13 @@ def board_row(state: dict, pid: str, viewer: str, history: Optional[dict] = None
                traits=persona.view(state, viewer, pid),
                twist=persona.twist_view(state, viewer, pid),
                hc_week=recruiting.hc_visit_week(state, viewer, pid),    # a visit that broke before it opened never counts
+               hc_wait=max(0, recruiting.HC_VISIT_GAP - (state["current_week"] - recruiting.hc_visit_week(state, viewer, pid)))
+               if recruiting.hc_visit_week(state, viewer, pid) is not None else 0,    # weeks until your head coach can visit again
                calls=int((((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("calls")) or 0),   # finished calls: after one, Call is a quick call
                done_this_week=[k for k, w in (((rc["contacts"].get(pid) or {}).get(viewer) or {}).get("week") or {}).items()
                                if w == recruiting.contact_week(state)],
+               planned=list(recruiting.planned(state).get(pid, [])) if viewer == state.get("team") else [],   # ticked on his row: sent at the week step
+               visit_cost=recruiting.action_hours(state, viewer, pid, "official_visit"), hc_cost=recruiting.action_hours(state, viewer, pid, "hc_visit"),                     # your invite by how far he comes
                nil=rc["nil"].get(viewer, {}).get("held", {}).get(pid, 0),
                need=recruiting.needs_by_spot(state, viewer)[recruiting.spot_of(rc["prospects"][pid])]["need"],
                ask=recruiting.ask_view(state, viewer, pid), cooled=recruiting.cooled(state, viewer, pid),
@@ -1124,7 +1128,9 @@ def search(state: dict, viewer: str, position: Optional[str] = None, stars: Opti
             "summary": class_summary(state, viewer, visible, needs)}
 
 
-TOP_UNCOMMITTED = 3                          # the Prospects tab's Top Uncommitted card: this many, best ranked first *tune*
+TOP_UNCOMMITTED = 12         # *tune* the best uncommitted prospects listed under the map (the side column's height)
+MAP_CITIES = 30                  # *tune* towns a state sends the big map (it draws the ones that do not crowd)
+TOP_IN_STATE = 12            # *tune* ... and the best of each state, shown when one is picked on the map
 
 
 def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
@@ -1137,8 +1143,11 @@ def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
     mine = {str(n): 0 for n in (5, 4, 3, 2)}
     contact = evaluated = 0
     top = []
+    top_in: dict[str, list] = {}
     offers = set(rc["offers"].get(viewer, []))
     board = set(rc["board"])
+    towns: dict = {}                          # per home state, the class by town: {town: [n, lat, lon]}
+    board_at: list = []                       # the map's dots: [state, lat, lon, what he is to you ("board offered scouted committed")]
     by_state: dict = {}                       # the new UI's tile map: per home state, the class, its blue chips, your board
     for pid in visible:
         p, st = rc["prospects"][pid], seen_status(state, pid, viewer)
@@ -1151,6 +1160,15 @@ def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
             cell["n"] += 1
             cell["blue"] += (p.get("stars") or 0) >= 4
             cell["board"] += pid in board
+            town = p.get("hometown") or {}
+            if town.get("city") and town.get("lat") is not None:
+                spot = towns.setdefault(home, {}).setdefault(town["city"], [0, town["lat"], town["lon"]])
+                spot[0] += 1
+            tags = [name for name, on in (("board", pid in board), ("offered", pid in offers), ("scouted", bool(rc["reads"].get(pid))),
+                                          ("committed", (st["signed"] or st["committed"]) == viewer)) if on]
+            if tags:
+                town = p.get("hometown") or {}
+                board_at.append([home, town.get("lat"), town.get("lon"), " ".join(tags)])
         c = (rc["contacts"].get(pid) or {}).get(viewer) or {}
         if c.get("n") or pid in offers:
             contact += 1
@@ -1158,14 +1176,22 @@ def class_summary(state: dict, viewer: str, visible: list, needs: dict) -> dict:
             evaluated += 1
         if (st["signed"] or st["committed"]) == viewer and k in mine:
             mine[k] += 1
-        if len(top) < TOP_UNCOMMITTED and not (st["signed"] or st["committed"] or st.get("pro")):
-            top.append({"id": pid, "name": p["name"], "stars": p.get("stars") or 0, "national_rank": p["rank"],
-                        "display_pos": display_pos(p["ea_position"]), "position": p["position"], "portal": bool(p.get("portal"))})
+        if not (st["signed"] or st["committed"] or st.get("pro")):
+            line = {"id": pid, "name": p["name"], "stars": p.get("stars") or 0, "national_rank": p["rank"],
+                    "display_pos": display_pos(p["ea_position"]), "position": p["position"], "portal": bool(p.get("portal")),
+                    "home": ", ".join(x for x in ((p.get("hometown") or {}).get("city"), home) if x)}
+            if len(top) < TOP_UNCOMMITTED:
+                top.append(line)
+            if home and len(top_in.setdefault(home, [])) < TOP_IN_STATE:
+                top_in[home].append(line)
     commits = sum(r["commits"] for r in needs.values())
     return {"stars": stars, "total": len(visible),
             "footprint": {"board": len(rc["board"]), "contact": contact, "evaluated": evaluated},
             "outlook": {"commits": commits, "spots": commits + sum(max(0, r["need"]) for r in needs.values()), "by_stars": mine},
-            "top": top, "by_state": by_state}
+            "top": top, "top_in": top_in, "board_at": board_at, "by_state": by_state,
+            # the big map's one-state view: each state's biggest towns of this class, [name, lat, lon, prospects]
+            "cities": {st: [[name, v[1], v[2], v[0]] for name, v in sorted(ts.items(), key=lambda kv: (-kv[1][0], kv[0]))[:MAP_CITIES]]
+                       for st, ts in towns.items()}}
 
 
 class class_block:
@@ -1252,7 +1278,7 @@ def recruiting_view(state: dict) -> dict:
     return {
         # the dead period: recruiting is closed until Signing Day (no hours to spend; the page says so)
         "closed": recruiting.closed(state), "signing": season_week_label(recruiting.signing_week()),
-        "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": 0 if recruiting.closed(state) else recruiting._hours(state, me),
+        "week": week, "hours": recruiting.weekly_hours(state, me), "hours_left": 0 if recruiting.closed(state) else recruiting.hours_free(state, me),
         "points_left": recruiting.scout_points_left(state, me), "points_week": recruiting.scout_points(state, me),
         "nil": {"budget": nil["budget"], "held": sum(nil["held"].values()), "left": recruiting.nil_left(state, me),
                 "base": recruiting.nil_budget(state, me),                      # the year's budget alone (the class: budget = base + carry)
@@ -1261,6 +1287,7 @@ def recruiting_view(state: dict) -> dict:
         "open_spots": recruiting.open_spots(state, me), "committed": len([1 for s in rc["status"].values() if s["committed"] == me]),
         "needs": {k: d["need"] for k, d in recruiting.needs_by_spot(state, me).items()},     # by position, as the board counts
         "needs_detail": recruiting.needs_by_spot(state, me),
+        "need_levels": recruiting.need_levels(state, me),                       # the Triage colors: how pressing each one is
         "report": recruiting.latest_report(state),
         "portal": {"week": rc.get("week"), "weeks": rc.get("weeks", 4), "entrants": len(rc["prospects"]),
                    "signed": sum(1 for s_ in rc["status"].values() if s_["signed"])} if rc.get("portal") else None,
@@ -1376,7 +1403,7 @@ def scouting_view(state: dict, q: Optional[str] = None, position: Optional[str] 
     this_changes, last_changes = changes.get(str(week)) or {}, changes.get(str(week - 1)) or {}
     this_week = [e for e in log if e["week"] == week]
     last_week = [e for e in log if e["week"] == week - 1]
-    hours_left = recruiting._hours(state, me)
+    hours_left = recruiting.hours_free(state, me)
     points_left = recruiting.scout_points_left(state, me)
     need = {k: d["need"] for k, d in recruiting.needs_by_spot(state, me).items()}
     live = {pid for pid, st in rc["status"].items() if not st["signed"] and st["committed"] != me}

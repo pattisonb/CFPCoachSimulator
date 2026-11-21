@@ -1,5 +1,5 @@
 /* Prospects: the class's table on the left (its head, tools, the table scrolling on its own, the pager), and a side
-   column with the map and the best uncommitted, or a prospect's file in their place. */
+   column with the map and, to its foot, the best uncommitted (of the picked state), or a prospect's file in their place. */
 .prospects {
   --prospects-side: 380px; /* *tune* the same as the Board's side, so a tab switch keeps the columns */
 
@@ -172,7 +172,7 @@
 }
 
 .prospects__col-status {
-  width: 132px;
+  width: 100px; /* a longer status is cut short, whole in its tip: the prospect's name and town have the room */
 }
 
 .prospects__col-offers {
@@ -180,11 +180,11 @@
 }
 
 .prospects__col-int {
-  width: 88px;
+  width: 76px;
 }
 
 .prospects__col-sc {
-  width: 84px;
+  width: 64px;
 }
 
 .prospects__col-pot {
@@ -192,7 +192,7 @@
 }
 
 .prospects__col-board {
-  width: 84px;
+  width: 76px;
 }
 
 /* the head: sticky, small caps; each header sits over its cells (centered, or left over the text columns) */
@@ -343,7 +343,9 @@
 }
 
 .prospects__status {
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .prospects__int {
@@ -451,6 +453,18 @@
   gap: var(--s2);
 }
 
+/* the map and the list's heading stay put; only the list under them scrolls, to the column's foot */
+.prospects__side:has(.prospects__panel--fill) {
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+  overflow: hidden;
+}
+
+.prospects__panel--fill {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+
 .prospects__panel-title {
   display: flex;
   align-items: baseline;
@@ -501,8 +515,29 @@
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
-.prospects__top .prospect-stars {
-  margin-left: auto;
+/* the row runs edge to edge of the panel: its hover tint reaches past the padding */
+.prospects__top li {
+  margin: 0 -6px;
+}
+
+.prospects__top .prospects__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.prospects__top .prospects__name > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* his stars over his national rank, at the row's end */
+.prospects__top-rank {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: 2px;
 }
 
 @media (width <= 1280px) {
@@ -560,4 +595,12 @@
   .prospects__star {
     transition: none;
   }
+}
+
+/* the list under the map scrolls by itself, its rows at their own height */
+.prospects__panel--fill .prospects__top {
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }

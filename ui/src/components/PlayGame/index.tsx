@@ -107,6 +107,7 @@ export default function PlayGame({ open, onClose, seasonId, team, opponent, team
           {onSim && (
             <Button
               variant="outline"
+              title={m.simNote}
               onClick={() => {
                 onClose();
                 onSim();
@@ -116,7 +117,11 @@ export default function PlayGame({ open, onClose, seasonId, team, opponent, team
               {m.sim}
             </Button>
           )}
-          <Button onClick={field} disabled={status.kind === "opening" || !offense}>
+          <Button
+            onClick={field}
+            disabled={status.kind === "opening" || !offense}
+            title={defense ? m.fieldNote(name(offense), name(defense)) : m.alone(name(offense))}
+          >
             <Play size={18} weight="fill" aria-hidden="true" />
             {status.kind === "opening" ? m.opening : m.field}
           </Button>
@@ -155,10 +160,6 @@ export default function PlayGame({ open, onClose, seasonId, team, opponent, team
             teams={teams}
           />
         </div>
-        <p className="play-game__note">
-          {defense ? m.fieldNote(name(offense), name(defense)) : m.alone(name(offense))}
-          {onSim && ` ${m.simNote}`}
-        </p>
         {status.kind === "error" && (
           <p className="play-game__error" role="alert">
             {status.msg}

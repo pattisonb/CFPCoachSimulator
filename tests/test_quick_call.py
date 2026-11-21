@@ -35,10 +35,9 @@ def refused(fn, words):
 if __name__ == "__main__":
     st, pid = fresh()
     rc = st["recruiting"]
-    # no quick call before a first conversation
-    refused(lambda: recruiting.act(st, ME, pid, "call", answer="quick"), "Call and pitch him first")
+    # a quick call needs no first conversation (the player's November 20 ask: it is the call to his high school coach)
     assert prospects.board_row(st, pid, ME)["calls"] == 0
-    # after one: no scene, the hours spent, a slight boost
+    # no scene, the hours spent, a slight boost
     recruiting._contact(st, ME, pid)["calls"] = 1
     hours = rc["hours"][ME]
     before = recruiting.pending(st, ME, pid)
@@ -49,14 +48,32 @@ if __name__ == "__main__":
     assert 0 < gained <= recruiting.BASE_POINTS["call"] * recruiting.QUICK_CALL * 2, gained
     assert prospects.board_row(st, pid, ME)["calls"] == 2
     # once a week still
-    refused(lambda: recruiting.act(st, ME, pid, "call", answer="quick"), "already called")
+    refused(lambda: recruiting.act(st, ME, pid, "call", answer="quick"), "Done this week")
 
-    # the head coach visits once: a visit that happened months ago still counts
+    # the head coach visits once a month (the player's November 20 ask; it was once a recruit)
     st, pid = fresh()
     week = st["current_week"]
-    recruiting._contact(st, ME, pid)["hc_week"] = week - 10
+    recruiting._contact(st, ME, pid)["hc_week"] = week - 1
     recruiting._event(st, "present", pid, ME, action="hc_visit", topics=["nil", "coach", "winning"], hit=0)
-    st["recruiting"]["log"][-1]["week"] = week - 10
-    assert recruiting.hc_visit_week(st, ME, pid) == week - 10
-    refused(lambda: recruiting.act(st, ME, pid, "hc_visit"), "visits a recruit once")
-    print("quick call ok: after a first call, Call spends the hours for a slight boost with no conversation; the head coach visits once")
+    st["recruiting"]["log"][-1]["week"] = week - 1
+    assert recruiting.hc_visit_week(st, ME, pid) == week - 1
+    refused(lambda: recruiting.act(st, ME, pid, "hc_visit"), "One in-home visit a month")
+    # a planned quick action is sent at the week step and stays ticked for the next week (the player's ask), with its
+    # energy held again; a recruit who commits is let go
+    st, pid = fresh()
+    del st["recruiting"]["hours"][ME]
+    recruiting.plan(st, pid, "message", True)
+    recruiting.plan(st, pid, "call", True)
+    free = recruiting.hours_free(st, ME)
+    recruiting._run_planned(st)
+    assert pid not in recruiting.planned(st)
+    st["recruiting"]["hours"] = {}
+    recruiting._carry_planned(st)
+    assert sorted(recruiting.planned(st)[pid]) == ["call", "message"], recruiting.planned(st)
+    assert recruiting.hours_free(st, ME) == free, "the carried plans hold the new week's energy"
+    recruiting._run_planned(st)
+    st["recruiting"]["status"][pid]["committed"] = "texas"
+    st["recruiting"]["hours"] = {}
+    recruiting._carry_planned(st)
+    assert pid not in recruiting.planned(st), "a commit ends the carry"
+    print("quick call ok: after a first call, Call spends the hours for a slight boost with no conversation; the head coach visits once a month")

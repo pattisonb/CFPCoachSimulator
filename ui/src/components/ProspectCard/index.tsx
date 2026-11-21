@@ -186,7 +186,9 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard }: P
               )}
             </p>
           ) : (
-            <p className="prospect-card__soft">{m.unscouted}</p>
+            <p className="prospect-card__soft" title={m.unscoutedTip}>
+              {m.unscouted}
+            </p>
           )}
         </section>
       )}

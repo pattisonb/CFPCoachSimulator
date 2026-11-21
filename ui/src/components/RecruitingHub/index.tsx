@@ -15,7 +15,9 @@ interface Props {
   year: number;
   weekLabels: Record<string, string>;
   board: RecruitingBoard | null;
-  reload: () => Promise<void>;
+  reload: (quiet?: boolean, stale?: () => boolean) => Promise<void>;
+  /** change the board at once, ahead of the server (a quick action ticked) */
+  patch?: (change: (b: RecruitingBoard) => RecruitingBoard) => void;
   tab: HubTab;
   onTab: (tab: HubTab) => void;
   /** the week's season key: a sim remounts both */
@@ -43,6 +45,7 @@ export default function RecruitingHub({
   weekLabels,
   board,
   reload,
+  patch,
   tab,
   onTab,
   weekKey,
@@ -72,6 +75,7 @@ export default function RecruitingHub({
           weekLabels={weekLabels}
           board={board}
           reload={reload}
+          patch={patch}
           coach={coach}
           pick={pick}
           onFindProspects={() => onTab("prospects")}
@@ -84,6 +88,7 @@ export default function RecruitingHub({
           year={year}
           active={tab === "prospects"}
           boardSize={board?.board.length}
+          school={teams.get(team)}
           onBoardChange={() => void reload()}
         />
       </SectionPane>

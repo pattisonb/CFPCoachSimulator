@@ -335,13 +335,13 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
                     aria-current={state === "is-now" ? "step" : undefined}
                     disabled={!t.go || (sim.running && t.key !== "recruit" && t.key !== "scout" && t.key !== "depth")}
                     onClick={t.go}
+                    title={t.sub}
                   >
                     <span className="office__todo-icon" aria-hidden="true">
                       <t.icon size={20} weight="bold" />
                     </span>
                     <span className="office__todo-text">
                       <b>{t.title}</b>
-                      <span className="office__todo-sub">{t.sub}</span>
                     </span>
                     {t.meta && <span className="office__todo-meta">{t.meta}</span>}
                   </button>
@@ -565,6 +565,7 @@ function ActionTile({
       className={`office__action${main ? " is-main" : ""}`}
       onClick={onClick}
       disabled={disabled}
+      title={typeof sub === "string" ? sub : undefined}
       {...rest}
     >
       <span className="office__action-icon" aria-hidden="true">
@@ -572,7 +573,7 @@ function ActionTile({
       </span>
       <span className="office__action-text">
         <b>{title}</b>
-        <span className="office__action-sub">{sub}</span>
+        {typeof sub !== "string" && sub ? <span className="office__action-sub">{sub}</span> : null}
       </span>
       <span className="office__action-trail" aria-hidden="true">
         {trail ?? <ArrowRight size={16} weight="bold" />}
@@ -749,7 +750,6 @@ function Actions({
                 <span className="office__soft">{dateText(s.week_dates[String(k)]?.main)}</span>
               </button>
             ))}
-            <p className="office__menu-note">{m.autoNote}</p>
           </div>,
           document.body,
         )}

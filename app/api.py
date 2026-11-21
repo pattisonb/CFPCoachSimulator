@@ -139,9 +139,16 @@ def _match(pattern: str, parts: list[str]) -> Optional[dict[str, str]]:
 
 def call(method: str, path: str, body: dict | bytes | None = None) -> dict | bytes:
     """Answer one API call the way the server did: the handler's dict (or bytes), or ApiError."""
+    global _light
     method = method.upper()
     url = urllib.parse.urlsplit(path)
     parts = url.path.strip("/").split("/")
+    # a light action's save is put off a moment (DEFER_SAVES, _save_loaded): this call may leave it waiting only when it
+    # is a read of that same season from memory or another light action on it; anything else writes it out first
+    mine = _loaded is not None and parts[:3] == ["api", "season", _loaded["id"]]
+    _light = bool(mine and method != "GET" and LIGHT_PATH.search(url.path))
+    if _dirty and not (mine and (_light or (method == "GET" and parts[-1] != "export"))):
+        flush()
     query = dict(urllib.parse.parse_qsl(url.query, keep_blank_values=True))
     known_path = False
     for m, pattern, fn in ROUTES:
@@ -256,6 +263,34 @@ _changed: bool = False               # a season or coach file was written or del
 _cards: dict[str, tuple[float, dict]] = {}   # season id -> (file mtime, card) for the seasons list
 _teams: dict[str, dict] = {}         # the 2026 teams (data/engine_teams.json), read on first use
 _pending_league: dict | None = None  # the league file last checked (/api/league/check), until a career starts from it
+
+
+# A light action (a quick action ticked, a recruit put on the board, a favorite, a depth chart move) used to wait on the
+# whole season being written out, most of a second for a 20 MB save, and every read behind it waited too. With
+# DEFER_SAVES on (the dev server sets it and calls flush() a moment after the last such action), its change stays in
+# memory and the file is written once the clicking stops; any other action, a sim, another season or the server
+# closing writes it first. Off (the tests, and the game in the browser, whose store is written a call at a time),
+# every action saves before it answers, as before.
+DEFER_SAVES = False
+LIGHT_PATH = re.compile(r"/(recruit(/plan)?|favorite|board|depth/[^/]+)$")   # *tune* the actions whose save may wait
+_light = False                       # this call is one of them
+_dirty = False                       # the season in memory holds a change its file does not
+
+
+def dirty() -> bool:
+    """A light action's change is waiting to be written (flush() writes it)."""
+    return _dirty
+
+
+def flush() -> None:
+    """Write the season in memory to its file if a light action left it waiting."""
+    global _dirty
+    if _dirty and _loaded is not None:
+        _dirty = False
+        season.save_season(_loaded)
+        _cards.pop(_loaded["id"], None)
+        _mark_changed()
+    _dirty = False
 
 
 def changed() -> bool:
@@ -990,7 +1025,13 @@ def coach_delete(p: Params) -> dict:
 # ----- helpers for the season routes -------------------------------------------
 
 def _save_loaded() -> None:
-    """Write the season in memory to its file (a handler that changed it calls this before returning)."""
+    """Write the season in memory to its file (a handler that changed it calls this before returning). A light action
+    under DEFER_SAVES only marks it waiting (flush)."""
+    global _dirty
+    if DEFER_SAVES and _light:
+        _dirty = True
+        return
+    _dirty = False
     season.save_season(_loaded)
     _cards.pop(_loaded["id"], None)
     _mark_changed()
@@ -1352,6 +1393,19 @@ def recruit_action(p: Params) -> dict:
     return out
 
 
+@route("POST", "/api/season/{season_id}/recruit/plan")
+def recruit_plan(p: Params) -> dict:
+    """Tick or untick a quick action on a recruit's row ({pid, action, on}): it holds its energy and goes out at the week
+    step (coach_career/recruiting.plan)."""
+    st = _career_state(p.path["season_id"], change=True)
+    pid, action, on = _field(p, "pid", str), _field(p, "action", str), _field(p, "on", bool, True)
+    if pid not in recruiting.visible(st):
+        raise ApiError(404, "unknown prospect")
+    out = _recruiting_call(recruiting.plan, st, pid, action, on)
+    _save_loaded()
+    return out
+
+
 @route("POST", "/api/season/{season_id}/favorite")
 def favorite_change(p: Params) -> dict:
     """Your favorites (♥): a prospect marked or cleared."""
@@ -1646,7 +1700,8 @@ def season_playlink(p: Params) -> dict:
     """One team in a Pocket Franchise roster link's shape (docs/PLAY_ON_THE_FIELD.md): its depth chart and every
     player's current skills, for Play It on the Field. A read only."""
     state = _season_state(p.path["season_id"])
-    _check_team(p.path["slug"])
+    if p.path["slug"] not in season.load_teams():        # (an FCS stand-in is fine here: it has a roster to play against)
+        raise ApiError(404, "unknown team")
     return season.playlink_team(state, p.path["slug"])
 
 

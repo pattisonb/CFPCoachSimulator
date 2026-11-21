@@ -3,7 +3,7 @@ export const messages = {
   teamLabel: "Team",
   yourTeam: "Your team",
   phaseLabel: "Which games to list",
-  phases: { all: "All", regular: "Regular Season", post: "Postseason" } as Record<string, string>,
+  phases: { all: "All", regular: "Regular Season", conf: "Conference", post: "Postseason" } as Record<string, string>,
   listLabel: (team: string) => `${team} schedule`,
   record: (w: number, l: number) => `${w}-${l}`,
   confRecord: (w: number, l: number) => `${w}-${l} Conf`,

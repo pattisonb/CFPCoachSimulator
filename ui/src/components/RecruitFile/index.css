@@ -37,56 +37,53 @@ dd.recruit-file__inline {
 }
 
 /* his priorities: three tiles side by side under their heading, each naming the priority, the topic and your pull */
-.recruit-file__prios {
+.recruit-file__snap {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s1) var(--s2);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
   padding: var(--s2) 0 var(--s1);
-  border-top: 1px solid var(--line-soft);
 }
 
-.recruit-file__prios-title {
-  grid-column: 1 / -1;
-  color: var(--ink-soft);
-}
-
-.recruit-file__prio {
+/* a tile: its name small, its value under it, and for a priority your program's word on it at the foot */
+.recruit-file__snap-cell {
   display: grid;
   align-content: start;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
-  padding: var(--s2);
-  background: var(--paper);
-  border: var(--line) solid var(--ink);
+  padding: 6px var(--s2);
+  background: var(--tile);
 }
 
-.recruit-file__prio.is-unknown {
-  border: var(--line) dashed var(--ink-soft);
-}
-
-.recruit-file__prio .label {
-  color: var(--ink-soft);
-}
-
-.recruit-file__prio-name {
+.recruit-file__snap-cell .label {
   overflow: hidden;
-  font-size: var(--t-md);
+  color: var(--ink-soft);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.recruit-file__prio.is-unknown .recruit-file__prio-name {
+/* a long value (Playing Time, Not Known) takes a second line before it is cut */
+.recruit-file__snap-cell b {
+  font-size: var(--t-sm);
+  overflow-wrap: anywhere;
+}
+
+/* the looks are counted in words beside it: the bar alone, no percent */
+.recruit-file__snap-cell .meter {
+  display: block;
+}
+
+.recruit-file__snap-cell .meter__pct {
+  display: none;
+}
+
+.recruit-file__snap-unknown {
   color: var(--ink-soft);
   font-weight: 400;
 }
 
-.recruit-file__prio-pull {
+.recruit-file__snap-pull {
   color: var(--ink-soft);
   font-size: var(--t-xs);
-}
-
-.recruit-file__prio-pull b {
-  color: var(--ink);
 }
 
 /* ----- Overview: the battle. A school on one line: its place, its name and tags, its pull as a bar, its word ----- */
@@ -112,7 +109,7 @@ dd.recruit-file__inline {
 
 .recruit-file__battle li {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) minmax(56px, 28%) 78px;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(56px, 22%) 78px;
   align-items: center;
   gap: var(--s2);
   padding: 6px 0;
@@ -173,15 +170,16 @@ dd.recruit-file__inline {
 /* strengths and areas to develop: a kicker each, its lines beside one another, each led by a small mark in its color */
 .recruit-file__lists {
   display: grid;
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* strengths beside areas to develop */
+  gap: 6px var(--s3);
   padding: var(--s1) 0 var(--s2);
 }
 
 .recruit-file__marked {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--s2);
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
 }
 
 .recruit-file__marked .label {
@@ -253,26 +251,35 @@ dd.recruit-file__inline {
   white-space: nowrap;
 }
 
-/* ----- Scouting: the report's lead. How far he is scouted in one tile, his potential in a wider one ----- */
+/* ----- Scouting: the report's lead. Two low strips side by side: how far he is scouted, and his potential; each is its
+   label and its value on one line with its bar under them (the small print is the strip's tip) ----- */
 .recruit-file__lead {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* side by side always */
   gap: var(--s2);
   padding: var(--s2) 0 var(--s1);
 }
 
-.recruit-file__looks .recruit-file__soft {
-  font-size: var(--t-xs);
+.recruit-file__looks,
+.recruit-file__potential {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px var(--s2);
 }
 
-.recruit-file__potential .label,
-.recruit-file__potential .recruit-file__soft {
+.recruit-file__looks > :nth-child(n + 3),
+.recruit-file__potential > :nth-child(n + 3) {
+  grid-column: 1 / -1;
+}
+
+.recruit-file__potential .label {
   color: var(--ink-soft);
   font-size: var(--t-xs);
 }
 
 .recruit-file__big {
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
   line-height: 1.1;
 }
 
@@ -285,8 +292,16 @@ dd.recruit-file__inline {
   border-top: 1px solid var(--line-soft);
 }
 
+/* the button and what holds it give way to a narrow panel: its words wrap, it never pushes the panel wider */
+.recruit-file__acts > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .recruit-file__acts .btn {
   gap: 8px;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 /* a rating on one line: its name, its range as a bar, its numbers; a hairline between them */
@@ -296,7 +311,7 @@ dd.recruit-file__inline {
 
 .recruit-file__rating {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(64px, 34%) 116px; /* *tune* the last is wide enough for "Solid – Strong", so every bar lines up */
+  grid-template-columns: minmax(0, 1fr) minmax(56px, 22%) 116px; /* *tune* a short bar (the numbers say the rest); the last is wide enough for "Solid – Strong", so every bar lines up */
   align-items: center;
   gap: var(--s2);
   padding: 6px 0;
@@ -319,66 +334,68 @@ dd.recruit-file__inline {
   font-size: var(--t-xs);
 }
 
-/* ----- Profile: his traits as cards, like a player's badges; one not known yet is dashed and soft ----- */
+/* ----- Profile: who he is, as one card of four cells side by side (the player's ask): each a small mark with the trait's
+   name beside it and its word under them; one not known yet is soft. What a trait means is the cell's tip ----- */
 .recruit-file__traits {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--s2);
-  padding: var(--s2) 0 var(--s1);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: var(--s2) 0 var(--s1);
+  background: var(--paper);
+  border: var(--line) solid var(--line-soft);
   list-style: none;
 }
 
 .recruit-file__trait {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--s2);
-  padding: var(--s2);
-  background: var(--paper);
-  border: var(--line) solid var(--line-soft);
+  min-width: 0;
 }
 
-.recruit-file__trait.is-unknown {
-  border-style: dashed;
+.recruit-file__trait + .recruit-file__trait {
+  border-left: 1px solid var(--line-soft);
+}
+
+.recruit-file__trait-cell {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 6px;
+  padding: var(--s2);
+}
+
+.recruit-file__trait-cell > :nth-child(n + 3) {
+  grid-column: 1 / -1;
 }
 
 .recruit-file__trait-icon {
   display: grid;
   place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
+  width: 20px;
+  height: 20px;
   background: var(--ink);
   color: var(--paper-hi);
-  border: var(--line) solid var(--ink);
 }
 
 .recruit-file__trait.is-unknown .recruit-file__trait-icon {
   background: transparent;
   color: var(--ink-soft);
-  border: var(--line) dashed var(--ink-soft);
+  border: 1px dashed var(--ink-soft);
 }
 
-.recruit-file__trait-what {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.recruit-file__trait-what .label {
+.recruit-file__trait-cell .label {
+  overflow: hidden;
+  letter-spacing: 0; /* "Personality" whole in a quarter of the card */
   color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.recruit-file__trait-what b {
-  font-size: var(--t-md);
+.recruit-file__trait-cell b {
+  font-size: var(--t-sm);
+  line-height: 1.25;
   text-transform: uppercase;
 }
 
 .recruit-file__trait.is-unknown b {
   color: var(--ink-soft);
-}
-
-.recruit-file__trait-what .recruit-file__soft {
-  font-size: var(--t-xs);
 }
 
 /* ----- History ----- */
@@ -404,14 +421,6 @@ dd.recruit-file__inline {
 
 .recruit-file__timeline svg {
   margin-top: 2px;
-}
-
-.recruit-file__notes {
-  display: grid;
-  padding-left: 16px;
-  gap: 6px;
-  padding-top: 6px;
-  padding-bottom: 6px;
 }
 
 /* the first row of a list has its panel's rule over it already */

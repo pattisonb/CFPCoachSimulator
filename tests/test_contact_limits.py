@@ -95,8 +95,8 @@ def season_part(sid: str) -> None:
         contact(sid, pid, "message", pitch=pitch)
         contact(sid, pid, "call", pitch=pitch)
         assert sorted(row(sid, pid)["done_this_week"]) == ["call", "message"]
-        refused(lambda: contact(sid, pid, "message", pitch=pitch), 409, "already messaged")
-        refused(lambda: contact(sid, pid, "call", pitch=pitch), 409, "already called")
+        refused(lambda: contact(sid, pid, "message", pitch=pitch), 409, "Done this week")
+        refused(lambda: contact(sid, pid, "call", pitch=pitch), 409, "Done this week")
     # ----- your contact and Auto's in the same week: Auto does not contact him a second time -----
     pid = worked[1] if len(worked) > 1 else worked[0]
     st, rc = api.loaded_state(), api.loaded_state()["recruiting"]
@@ -117,10 +117,10 @@ def season_part(sid: str) -> None:
     R(sid, "board", {"pid": a, "on": True})
     R(sid, "board", {"pid": b, "on": True})
     contact(sid, a, "call", pitch=pitch)
-    refused(lambda: contact(sid, a, "call", pitch=pitch), 409, "already called")
+    refused(lambda: contact(sid, a, "call", pitch=pitch), 409, "Done this week")
     opened = contact(sid, b, "call")
     assert opened.get("scene") and row(sid, b)["scene"], "a call with no pitch opens a scene"
-    refused(lambda: contact(sid, b, "call"), 409, "already called")
+    refused(lambda: contact(sid, b, "call"), 409, "Done this week")
     advance_one(sid)                           # Auto is off: only the step runs
     st = api.loaded_state()
     rc = st["recruiting"]
@@ -193,7 +193,7 @@ def portal_part(sid: str) -> None:
     R(sid, "board", {"pid": pid, "on": True})
     contact(sid, pid, "message", pitch=rec.PITCHES[0])
     assert contact(sid, pid, "call").get("scene")               # opened and left
-    refused(lambda: contact(sid, pid, "call"), 409, "already called")
+    refused(lambda: contact(sid, pid, "call"), 409, "Done this week")
     assert sorted(row(sid, pid)["done_this_week"]) == ["call", "message"]
     R(sid, "settings", {"auto_recruit": "season"})
     api.call("POST", f"/api/season/{sid}/offseason/advance", {})

@@ -53,11 +53,16 @@
   text-transform: uppercase;
 }
 
-/* pointed at or open: the button in ink */
-.dropdown__button:enabled:hover,
-.dropdown__button:enabled[aria-expanded="true"] {
+/* pointed at: the button in ink; open: in your team's color (ink where no team is set) */
+.dropdown__button:enabled:hover {
   background: var(--ink);
   color: var(--paper-hi);
+}
+
+.dropdown__button:enabled[aria-expanded="true"] {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border-color: var(--team, var(--ink));
 }
 
 .dropdown__button:enabled:hover .dropdown__label,

@@ -566,7 +566,6 @@ function Rivals({
           })}
         </ul>
       )}
-      <p className="field__hint">{m.rivalsHint}</p>
     </div>
   );
 }

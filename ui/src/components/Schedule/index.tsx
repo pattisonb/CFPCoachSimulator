@@ -25,8 +25,8 @@ interface Props {
   onBox?: (eventId: string) => void;
 }
 
-type Phase = "all" | "regular" | "post";
-const PHASES: Phase[] = ["all", "regular", "post"];
+type Phase = "all" | "regular" | "conf" | "post";
+const PHASES: Phase[] = ["all", "regular", "conf", "post"];
 
 /** *tune* The last regular-season week (sim/season.py LAST_REGULAR_WEEK): later games are the postseason. */
 const LAST_REGULAR_WEEK = 14;
@@ -34,7 +34,8 @@ const LAST_REGULAR_WEEK = 14;
 const keyOf = (g: ScheduleGame) => `${g.week}-${g.event_id ?? g.kind}`;
 const isGame = (g: ScheduleGame) => g.kind !== "bye";
 const inPhase = (g: ScheduleGame, p: Phase) =>
-  p === "all" || (p === "regular" ? g.week <= LAST_REGULAR_WEEK : g.week > LAST_REGULAR_WEEK);
+  p === "all" ||
+  (p === "conf" ? !!g.conference_game : p === "regular" ? g.week <= LAST_REGULAR_WEEK : g.week > LAST_REGULAR_WEEK);
 const winPct = (p: number) => Math.min(99, Math.max(1, Math.round(100 * p)));
 
 /** A side of the matchup (the banner's), with its slug for the line score. */

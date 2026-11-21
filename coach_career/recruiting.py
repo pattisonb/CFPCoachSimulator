@@ -74,7 +74,14 @@ AREAS = {
     "Mountain-Southwest": ["AZ", "NV", "UT", "CO", "NM", "ID", "MT", "WY", "OK"],
 }
 HOURS = {"message": 5, "call": 15, "hc_visit": 30, "offer": 0, "official_visit": 10, "pull_offer": 0, "raise_nil": 0,
-         "pitch": 0}                               # a pitch finishes your call or visit scene: its hours went on the call
+         "pitch": 0, "call_recruit": 30}        # a pitch finishes your call or visit scene: its hours went on the call
+# the player's November 20 asks, for your school alone (the other schools recruit as they did):
+VISIT_MILES = ((250, 10), (750, 15), (1500, 20), (None, 25))   # *tune* your invite to visit costs by how far he comes: (up to these miles, energy)
+HC_MILES = ((250, 20), (750, 30), (1500, 40), (None, 50))      # *tune* ... and your head coach's in-home visit by how far he travels
+# (Your head coach's visit, your invite to visit and the starting job wait for your offer on the page: the Recruiting
+# board keeps their buttons off until he holds it. The rule is the page's, so a test or a tool can still make them.)
+PLANNABLE = ("message", "call", "call_recruit")     # *tune* the quick actions you plan from his row, sent at the week step: a message, a call
+                                                    # to his coach ("call", the old quick call) and a call to him
 WEEKLY_HOURS_BASE = 140                    # *tune* a school's recruiting hours a week at a recruiting rating of 50 ...
 WEEKLY_HOURS_PER = 0.4                     # *tune* ... plus this many per rating point over 50 (about 150 for most schools)
 SCOUT_POINTS_BASE = 150                    # *tune* your scouting points a week with a best evaluator of 50 (about four full reports away from your areas) ...
@@ -89,7 +96,8 @@ AREA_LOOK = 0.5                            # an area scout's weekly look: half a
 AREA_CAP = 2.0                             # ... up to this many looks from his area (read["area"]), so four weeks there leave one trip to finish him
 CALL_REVEAL = 0.5                          # a call tells you one of his priorities this often; an in-home visit always does
 ASK_NARROW = (0.85, 1.15)                  # the ask range after a call; the number itself takes a visit
-BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0}   # *tune*
+BASE_POINTS = {"message": 1.0, "call": 2.5, "hc_visit": 6.0, "offer": 4.0, "official_visit": 8.0,
+               "call_recruit": 4.0}             # *tune* the page's Video Call: more than a call ("call"), less than your head coach's visit
 PITCH_PRIORITY = (1.0, 3.0)                # a pitch on one of his three priorities: 1 + 3 * your strength on it (1x weak, 4x strong) *tune*
 PITCH_OTHER = (0.3, 0.4)                   # any other topic: 0.3 + 0.4 * strength
 STRONG_CASE = 0.6                          # a priority pitched at a strength from this lights him up; under it (and not under BACKFIRE) he is listening: your case is fair *tune*
@@ -101,8 +109,8 @@ PRESENT_HIT = 0.25                         # your opening on a call or visit (sc
 COLD_OFFER = 0.5                           # an offer before any contact counts this much
 STAGES = ("cold", "contact", "top", "visited", "committed")
 DIMINISH = 0.2                             # each earlier contact from the school cuts a new one's worth *tune*
-WEEKLY_ONCE = ("message", "call")           # each of these once a week per prospect: more contact is not more interest
-HC_VISIT_GAP = 4                           # weeks between an AI school's head coach in-home visits to one prospect (yours: one per recruit)
+WEEKLY_ONCE = ("message", "call", "call_recruit")   # each of these once a week per prospect: more contact is not more interest
+HC_VISIT_GAP = 4                           # weeks between a school's head coach in-home visits to one prospect (yours too)
 QUICK_CALL = 0.5                           # *tune* a quick call after his first (no conversation, no pitch): this share of a call's base, a slight boost
 NIL_VALUE = {5: 0.04, 4: 0.07, 3: 0.12, 2: 0.15}   # interest per NIL point by stars: top prospects expect more *tune*
 NIL_FLOOR = 30
@@ -928,6 +936,32 @@ def spot_of_player(role: Optional[str], group: Optional[str]) -> Optional[str]:
     return s if s in SPOT_GROUP and SPOT_GROUP[s] == group else SPOTS[group][0][0]
 
 
+STARTERS = {"QB": 1, "RB": 1, "WR": 3, "TE": 1, "CB": 2, "K": 1, "P": 1,
+            **{name: n for parts in SPOTS.values() for name, n in parts}}     # *tune* how many start at each of your pages' positions
+
+
+def need_levels(state: dict, slug: str) -> dict[str, dict]:
+    """How pressing each position's need is, for the board's Triage colors: 0 covered (the class needs no one there),
+    1 depth (spots to fill, every starter back), 2 a starter leaves, 3 every starter leaves. A position's starters are
+    its best players now (STARTERS of them, by overall); one leaves when he is a senior (LEAVING). Each carries
+    `leaving` and `starters` for the chip's tip. In the portal next year's roster is the roster, so no one leaves."""
+    from sim import season
+    need = {k: d["need"] for k, d in needs_by_spot(state, slug).items()}
+    at: dict[str, list] = {}
+    if not is_portal(state):
+        t = season.load_teams()[slug]
+        for p in t["offense"] + t["defense"]:
+            g = ENGINE_GROUP.get(p["position"], p["position"])
+            at.setdefault(spot_of_player(p.get("role"), g) or g, []).append(p)
+    out = {}
+    for k, n in need.items():
+        first = sorted(at.get(k, []), key=lambda p: -(p.get("ovr") or 0))[:STARTERS.get(k, 1)]
+        leaving = sum(1 for p in first if p.get("class") in LEAVING)
+        level = 0 if n <= 0 else 1 if not leaving else 3 if leaving >= len(first) else 2
+        out[k] = {"level": level, "leaving": leaving, "starters": len(first)}
+    return out
+
+
 def spot_matches(p: dict, key: Optional[str]) -> bool:
     """A page's position filter: a position (OT, MIKE) or a whole group (OL, LB), whichever it is given."""
     return not key or key == spot_of(p) or key == _group_of(p)
@@ -1588,6 +1622,91 @@ def _hours(state: dict, slug: str) -> float:
     return state["recruiting"]["hours"].setdefault(slug, weekly_hours(state, slug))
 
 
+def action_hours(state: dict, slug: str, pid: str, action: str) -> int:
+    """What an action costs `slug` on this prospect: HOURS, but your invite to visit and your head coach's in-home visit
+    by the miles between his hometown and your campus (VISIT_MILES, HC_MILES; the portal keeps the flat costs)."""
+    table = {"official_visit": VISIT_MILES, "hc_visit": HC_MILES}.get(action)
+    if table and slug == state.get("team") and not is_portal(state):
+        loc, home = (_team_model(slug).get("location"), state["recruiting"]["prospects"][pid].get("home"))
+        if loc and home:
+            miles = _miles((loc[0], loc[1]), (home[0], home[1]))
+            return next(cost for upto, cost in table if upto is None or miles <= upto)
+    return HOURS[action]
+
+
+def planned(state: dict) -> dict:
+    """Your planned quick actions ({pid: [actions]}): ticked on his row, sent at the week step."""
+    return state["recruiting"].setdefault("planned", {})
+
+
+def hours_planned(state: dict) -> int:
+    """The energy your plans hold."""
+    return sum(HOURS[a] for acts in planned(state).values() for a in acts)
+
+
+def hours_free(state: dict, slug: str) -> float:
+    """The energy `slug` has left to spend: for you, less what your plans hold."""
+    return _hours(state, slug) - (hours_planned(state) if slug == state.get("team") else 0)
+
+
+def plan(state: dict, pid: str, action: str, on: bool) -> dict:
+    """Tick or untick a quick action on a recruit (PLANNABLE): it holds its energy now and goes out at the week step, so
+    you can move it to someone else until then. Returns your plans for him and the energy left. Raises RecruitingError."""
+    rc, me = state["recruiting"], state.get("team")
+    if closed(state):
+        raise RecruitingError(409, CLOSED_TEXT)
+    if action not in PLANNABLE or pid not in rc["prospects"]:
+        raise RecruitingError(400, "That is not something to plan.")
+    mine = planned(state).setdefault(pid, [])
+    if on and action not in mine:
+        st = rc["status"][pid]
+        if st["signed"] or (st["committed"] and st["committed"] != me and st.get("hard")):
+            raise RecruitingError(409, "He is not taking calls.")
+        if (_contact(state, me, pid).get("week") or {}).get(action) == contact_week(state):
+            raise RecruitingError(409, "Done this week.")
+        if hours_free(state, me) < HOURS[action]:
+            raise RecruitingError(409, "Not enough energy left this week.")
+        mine.append(action)
+    elif not on and action in mine:
+        mine.remove(action)
+    if not mine:
+        planned(state).pop(pid, None)
+    return {"planned": list(planned(state).get(pid, [])), "hours_left": hours_free(state, me)}
+
+
+def _run_planned(state: dict) -> None:
+    """Send your planned quick actions (the week step's first move, before the week's contacts land). One that can no
+    longer be made (he signed, he committed hard elsewhere) is dropped and its energy was never spent."""
+    rc, me = state["recruiting"], state.get("team")
+    plans = rc.pop("planned", None) or {}
+    for pid, acts in plans.items():
+        for action in acts:
+            try:
+                _act(state, me, pid, action, None, 0, manual=action != "call", quick=action == "call")
+            except RecruitingError:
+                pass
+    rc["carry"] = plans                # ticked again next week (the player's ask), see _carry_planned
+
+
+def _carry_planned(state: dict) -> None:
+    """The week step's last move: the quick actions you sent stay ticked for the new week, so a recruit you work every
+    week needs no new clicks; one who committed or signed this week is let go, and so is whatever the new week's energy
+    cannot hold."""
+    rc, me = state["recruiting"], state.get("team")
+    plans = rc.pop("carry", None) or {}
+    if not plans or closed(state):      # (nothing planned: the new week's energy record is left unopened)
+        return
+    left = hours_free(state, me)
+    for pid, acts in plans.items():
+        st = rc["status"].get(pid)
+        if not st or st["signed"] or st["committed"]:
+            continue
+        for action in acts:
+            if action in PLANNABLE and HOURS[action] <= left and action not in planned(state).get(pid, []):
+                planned(state).setdefault(pid, []).append(action)
+                left -= HOURS[action]
+
+
 def _nil(state: dict, slug: str) -> dict:
     """The school's NIL record this block: in the portal its pool; in the class the year's budget
     plus last year's carry-over, consumed once when the record is created."""
@@ -1698,12 +1817,19 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
                 "money_owed": money_owed(state, slug, pid) if pitch == "nil" else None}
     # a quick call (the player's ask): after his first call, or once your head coach has visited him, Call just spends
     # the hours for a slight boost; Call and Pitch opens the conversation as before
-    quick = slug == state.get("team") and action == "call" and answer == "quick"
-    met = _contact(state, slug, pid)
-    if quick and not (met.get("calls") or met.get("hc_week") is not None):
-        raise RecruitingError(409, "Call and pitch him first: a quick call follows a first conversation.")
-    opens = slug == state.get("team") and action in SCENES and pitch is None and not quick
-    manual = slug == state.get("team") and action in ("message", "offer")
+    you = slug == state.get("team")
+    quick = you and action == "call" and answer == "quick"
+    if you and action == "promise_role":                  # the starting job, free, once he holds your offer (the player's ask)
+        if pid not in rc["offers"].get(slug, []):
+            raise RecruitingError(409, "Offer him first.")
+        if _open_roster_promise(_contact(state, slug, pid)):
+            raise RecruitingError(409, "You already promised him the job.")
+        return {"hours_left": hours_free(state, slug), "revealed": None,
+                "promise": {k: v for k, v in _job_promise(state, slug, pid, "offer").items() if k != "reply"}}
+    if you and action in HOURS and hours_free(state, slug) < action_hours(state, slug, pid, action):
+        raise RecruitingError(409, "Not enough energy left this week.")
+    opens = you and action in SCENES and pitch is None and not quick
+    manual = you and action in ("message", "offer", "call_recruit")
     if manual:
         pitch = None                                        # the player's ask: no pitch on a message or an offer
     if manual and action == "offer" and answer == "promise" and _open_roster_promise(_contact(state, slug, pid)):
@@ -1713,7 +1839,7 @@ def act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = No
         marks = rc.setdefault("manual_offers", [])
         if pid not in marks:
             marks.append(pid)
-    out = {"hours_left": _hours(state, slug), "revealed": revealed}
+    out = {"hours_left": hours_free(state, slug), "revealed": revealed}
     if manual and action == "offer" and answer == "promise":     # the offer carries the job: worth more where playing time is his
         out["promise"] = {k: v for k, v in _job_promise(state, slug, pid, "offer").items() if k != "reply"}
     if action == "scout":                                   # the desk shows the trip's before/after from this, and the like a completed report earned
@@ -2200,7 +2326,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     week, revealed, points = state["current_week"], None, 0.0
     you = slug == state.get("team")                   # your actions go in the log for his History (the AI's are not kept)
     if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == contact_week(state):
-        raise RecruitingError(409, f"you already {'messaged' if action == 'message' else 'called'} him this week")
+        raise RecruitingError(409, "Done this week.")
     if action == "scout" and report_complete(rc["reads"].get(pid)):
         raise RecruitingError(409, f"his report is complete: {REPORT_LOOKS} of {REPORT_LOOKS} looks")
     if opens and pid in ((rc.get("scenes") or {}).get(slug) or {}):
@@ -2208,8 +2334,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     if action == "scout":
         if scout_points_left(state, slug) < look_cost(state, slug, pid):
             raise RecruitingError(409, "Not enough scouting points left this week.")
-    elif _hours(state, slug) < HOURS[action]:
-        raise RecruitingError(409, "not enough hours left this week")
+    elif _hours(state, slug) < action_hours(state, slug, pid, action):
+        raise RecruitingError(409, "Not enough energy left this week.")
     offers = rc["offers"].setdefault(slug, [])
     if action == "pull_offer":
         if pid not in offers:
@@ -2333,10 +2459,8 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     else:
         if action == "hc_visit":
             last = hc_visit_week(state, slug, pid)
-            if you and last is not None:                   # the player's ask: your head coach visits a recruit once
-                raise RecruitingError(409, "Your head coach visits a recruit once.")
-            if last is not None and week - last < HC_VISIT_GAP:
-                raise RecruitingError(409, "one in-home visit a month")
+            if last is not None and week - last < HC_VISIT_GAP:     # yours too (the player's November 20 ask: monthly, not once)
+                raise RecruitingError(409, "One in-home visit a month.")
             contact["hc_week"] = week
         if you:                                       # a message, call or in-home visit (a scene's pitch is logged when it lands)
             _event(state, "contact", pid, slug, action=action, **({"pitch": pitch} if pitch else {}))
@@ -2362,7 +2486,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             contact["last_contact"] = week
             points = _contact_land(state, slug, p, contact, action, pitch, auto, manual) * (QUICK_CALL if quick else 1.0)
     if action != "scout":                          # a Send spends scouting points, not hours
-        rc["hours"][slug] = _hours(state, slug) - HOURS[action]
+        rc["hours"][slug] = _hours(state, slug) - action_hours(state, slug, pid, action)
     if points:
         _add_points(state, slug, pid, points * scale, action)
     return revealed
@@ -3294,6 +3418,7 @@ def _weekly_step(state: dict, week: int, auto_user: bool) -> list[dict]:
     # the dead period (after Championship Week, until Signing Day): no school works a recruit, so nothing of a
     # working week runs. The recruits go on deciding among the offers they hold (the draws below)
     dead = not rc.get("portal") and week > close_week()
+    _run_planned(state)                # the quick actions you ticked go out now
     _flush(state, week)                # your week's actions land
     if not dead:
         persona.cool_quiet(state, week)    # a recruit who loves the attention cools on a school gone quiet
@@ -3337,6 +3462,7 @@ def _weekly_step(state: dict, week: int, auto_user: bool) -> list[dict]:
     rc["scout_points"] = {}
     if mode == "week":                       # Auto-recruit for one week: done, so off again
         state["career"]["settings"]["auto_recruit"] = "off"
+    _carry_planned(state)
     return rc["log"][start_log:]
 
 

@@ -199,8 +199,7 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
 
               <header className="off__head">
                 <div>
-                  <h2>{showing.name}</h2>
-                  <p className="off__soft">{m.about[showing.key] ?? ""}</p>
+                  <h2 title={m.about[showing.key]}>{showing.name}</h2>
                 </div>
                 {showing.key === "review" && inMeeting ? (
                   <button type="button" className="off__next" onClick={leaveMeeting}>

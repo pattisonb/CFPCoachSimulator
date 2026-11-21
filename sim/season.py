@@ -2195,8 +2195,8 @@ def playlink_team(state: dict, slug: str) -> dict:
     """One team in the shape of a Pocket Franchise roster link (docs/PLAY_ON_THE_FIELD.md; the reader is
     sprite-test/lib/game/roster-link.ts): the depth chart as this season has it, starter first, and every player
     with his current skills (game_scale's 54, after development) and what his card shows. `_position` and `_look`
-    (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim."""
-    check_fbs(slug)
+    (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim.
+    An FCS stand-in has a full roster too (the sim plays it), so it can be played against on the field."""
     t = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     players = t["offense"] + t["defense"]
     depth = {role: [p["slug"] for p in group] for role, group in _players_by_role(t, players).items() if group}
@@ -3310,6 +3310,7 @@ def team_schedule(state: dict, slug: str) -> list[dict]:
         schedule.append({"event_id": g["event_id"], "week": g["week"], "kind": g["kind"], "title": g.get("title"), "site": g.get("site"),
                          "opponent": opp, "opponent_name": g["away_display"] if home else g["home_display"],
                          "opponent_rank": ap.get(opp), "my_rank": ap.get(slug),
+                         "conference_game": bool(g.get("conference_game")) and g["kind"] == "regular",
                          "my_ratings": _unit_overalls(state, slug), "opponent_ratings": _unit_overalls(state, opp),
                          "opponent_conf_record": (f"{all_rec[opp].get('conf_wins', 0)}-{all_rec[opp].get('conf_losses', 0)}"
                                                   if opp in all_rec and not load_teams().get(opp, {}).get("fictional") else None),

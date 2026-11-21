@@ -40,7 +40,7 @@ import "./index.css";
 // A recruit's file, the four tabs of his panel on the board (web/recruiting.js overviewCards, scoutCards,
 // profileCards, historyCards), on the same panels as a player's card. Overview: the Recruiting Battle, the Recruit
 // Snapshot, the Scout's Summary. Scouting: the report and his ratings. Profile: who he is and his background.
-// History: the timeline, notes and who moved on his list. His offer, his ask and your chance are in the panel's head.
+// History: the timeline and who moved on his list. His offer, his ask and your chance are in the panel's head.
 
 /** Looks in words: 1, 2½, ½. */
 const fmtLooks = (n: number) => `${Math.floor(n) || (n % 1 ? "" : "0")}${n % 1 ? "½" : ""}`;
@@ -122,16 +122,16 @@ function Summary({ rep }: { rep: NonNullable<ProspectDetail["report"]> }) {
     );
   return (
     <>
-      <p className="recruit-file__verdict">{rep.verdict}</p>
       <div className="recruit-file__lists">
         {list(m.strengths, rep.strengths, true)}
         {list(m.develop, rep.develop, false)}
       </div>
+      <p className="recruit-file__verdict">{rep.verdict}</p>
     </>
   );
 }
 
-/** Overview: the Recruiting Battle, the Recruit Snapshot and the Scout's Summary, one under another. */
+/** Overview: the Recruiting Battle and the Recruit Snapshot, one under another (the scout's summary is on Scouting). */
 export function OverviewTab({
   r,
   detail,
@@ -152,7 +152,6 @@ export function OverviewTab({
   const sd = standingOf(r, team);
   const looks = looksOf(r, detail);
   const known = r.priorities_known;
-  const rep = detail?.report;
   return (
     <Panels stack className={wide ? "recruit-file__pair" : undefined}>
       <Panel title={m.battle} aside={rows.length ? m.schools(rows.length) : undefined}>
@@ -196,34 +195,31 @@ export function OverviewTab({
       {/* his recruitment is over: where you stand and what to do next no longer apply, so the snapshot is left out */}
       {!wide && (
         <Panel title={m.snapshot}>
-          <PanelRows>
-            <PanelRow label={m.standing} value={sd.odds ?? sd.word} hint={sd.text} />
-            <div className="panel__row">
-              <dt>{m.scouted}</dt>
-              <dd>
-                <Meter value={looks / 3} label={m.scouted} />
-              </dd>
+          {/* one row of five tiles: where you stand, how far he is scouted, then what he cares about, first to
+              third, each with your program's case on it as a word (so his priority is never read as your strength) */}
+          <div className="recruit-file__snap">
+            <div className="recruit-file__snap-cell" title={sd.text}>
+              <span className="label">{m.standingShort}</span>
+              <b>{sd.odds ?? sd.word}</b>
             </div>
-          </PanelRows>
-          {/* what he cares about, a tile each side by side: which priority it is, the topic, then your program's case
-              on it as a word (so his priority is never read as your strength, or the other way around) */}
-          <div className="recruit-file__prios">
-            <span className="label recruit-file__prios-title">{m.priorities}</span>
+            <div className="recruit-file__snap-cell">
+              <span className="label">{m.scouted}</span>
+              <b>{m.looksCount(looks)}</b>
+              <Meter value={looks / 3} label={m.scouted} />
+            </div>
             {[0, 1, 2].map((i) => {
               const t = known[i];
               const name = t ? (PITCH_NAMES[t] ?? t) : null;
               const word = t ? m.pulls[pullOf(r.strength[t])] : null;
               return (
-                <div key={i} className={`recruit-file__prio${t ? "" : " is-unknown"}`}>
-                  <span className="label">{m.priority(i)}</span>
-                  <b className="recruit-file__prio-name">{name ?? m.unknown}</b>
-                  {t ? (
-                    <span className="recruit-file__prio-pull">
-                      {m.yourPull} <b>{word}</b>
-                    </span>
-                  ) : (
-                    <span className="recruit-file__soft">{m.priorityHint}</span>
-                  )}
+                <div
+                  key={i}
+                  className={`recruit-file__snap-cell${t ? "" : " is-unknown"}`}
+                  title={t ? m.pullTip(word ?? "") : m.priorityHint}
+                >
+                  <span className="label">{m.priorityShort(i)}</span>
+                  <b className={t ? undefined : "recruit-file__snap-unknown"}>{name ?? m.unknown}</b>
+                  {t && <span className="recruit-file__snap-pull">{word}</span>}
                 </div>
               );
             })}
@@ -231,10 +227,6 @@ export function OverviewTab({
           {r.no_room && <p className="recruit-file__warn">{r.no_room.tip}</p>}
         </Panel>
       )}
-
-      <Panel title={m.summary}>
-        {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{detail ? m.noSummary : m.loading}</p>}
-      </Panel>
     </Panels>
   );
 }
@@ -284,7 +276,10 @@ export function ScoutingTab({
   const compText = comp ? (
     <>
       <PlayerLink team={comp.team} name={comp.name} />
-      <span className="recruit-file__comp-rest"> · {m.compRest(comp.school, comp.position, comp.overall)}</span>
+      <span className="recruit-file__comp-rest">
+        {" "}
+        · {m.compRest(teamOf(comp.team)?.abbreviation ?? comp.school, comp.position, comp.overall)}
+      </span>
     </>
   ) : null;
   const coach = rep?.attributes.find((a) => a.group === "coachability");
@@ -304,76 +299,90 @@ export function ScoutingTab({
       <Panel title={m.report}>
         {/* the report's lead: how many looks, and his potential as your staff reads it */}
         <div className="recruit-file__lead">
-          <div className="recruit-file__tile recruit-file__looks">
-            <span className="label">{m.scouted}</span>
-            <b className="recruit-file__big">{m.looks(fmtLooks(looks))}</b>
-            <Meter value={looks / 3} label={m.scouted} />
-            <span className="recruit-file__soft">
-              {looks >= 3
+          <div
+            className="recruit-file__tile recruit-file__looks"
+            title={
+              looks >= 3
                 ? m.complete
                 : looks <= 0
                   ? m.looksShort.none
                   : left <= 1
                     ? m.looksShort.one
-                    : m.looksShort.more(fmtLooks(left))}
-            </span>
+                    : m.looksShort.more(fmtLooks(left))
+            }
+          >
+            <span className="label">{m.scouted}</span>
+            <b className="recruit-file__big">{m.looksOf(fmtLooks(looks))}</b>
+            <Meter value={looks / 3} label={m.scouted} />
           </div>
           {rep && (
             <div className="recruit-file__tile recruit-file__potential">
-              <span className="label">{pot ? pot.label : m.potential}</span>
+              <span className="label" title={pot?.label}>
+                {m.potential}
+              </span>
               {pot?.grade ? (
-                <>
-                  {/* his potential is a letter grade, never a number: the read's low and high ends, then the whole
-                      scale with the letters it covers lit */}
+                // his potential is a letter grade, never a number: the read's low and high ends, then the whole scale
+                // with the letters it covers lit; how sure the read is and whether it carries a plus or minus is the tip
+                <Tooltip
+                  title={`${m.confidence(pot.confidence)} · ${pot.fine ? m.fineShort : m.coarseShort}`}
+                  text={pot.fine ? m.fineOn(pot.eye ?? 0) : m.fineOff(pot.eye ?? 0, pot.eye_needed ?? 0)}
+                >
                   <b className="recruit-file__big">
-                    <GradeRange read={pot.grade} size="lg" />
+                    <GradeRange read={pot.grade} />
                   </b>
-                  <GradeScale read={pot.grade} />
-                  <Tooltip
-                    title={m.fineTitle}
-                    text={pot.fine ? m.fineOn(pot.eye ?? 0) : m.fineOff(pot.eye ?? 0, pot.eye_needed ?? 0)}
-                  >
-                    <span className="recruit-file__soft">
-                      {m.confidence(pot.confidence)} · {pot.fine ? m.fineShort : m.coarseShort}
-                    </span>
-                  </Tooltip>
-                </>
+                </Tooltip>
               ) : pot ? (
-                <>
-                  <b className="recruit-file__big">{m.range(pot.est, pot.lo, pot.hi)}</b>
-                  <RangeBar
-                    lo={pot.lo}
-                    hi={pot.hi}
-                    mid={pot.est}
-                    soft={pot.confidence === "Low"}
-                    label={m.rangeLabel(pot.label, pot.est, pot.lo, pot.hi)}
-                  />
-                  <span className="recruit-file__soft">{m.confidence(pot.confidence)}</span>
-                </>
+                <b className="recruit-file__big" title={m.confidence(pot.confidence)}>
+                  {m.range(pot.est, pot.lo, pot.hi)}
+                </b>
               ) : (
                 <b className="recruit-file__big">{m.wordRange(rep.potential[0], rep.potential[1])}</b>
               )}
+              {pot?.grade ? (
+                <GradeScale read={pot.grade} />
+              ) : pot ? (
+                <RangeBar
+                  lo={pot.lo}
+                  hi={pot.hi}
+                  mid={pot.est}
+                  soft={pot.confidence === "Low"}
+                  label={m.rangeLabel(pot.label, pot.est, pot.lo, pot.hi)}
+                />
+              ) : null}
             </div>
           )}
         </div>
-        {rep ? <Summary rep={rep} /> : <p className="recruit-file__soft">{m.looksLine.none}</p>}
+        {rep ? (
+          <Summary rep={rep} />
+        ) : (
+          <p className="recruit-file__soft" title={m.looksLine.none}>
+            {m.noLook}
+          </p>
+        )}
         {/* who he compares to, on a line of its own under the summary (a transfer has no comp: he is who he is) */}
         {!r.portal && (
           <div className="recruit-file__comp">
             <span className="label">{m.comp}</span>
             <b className="recruit-file__comp-line">
-              {compText ?? <span className="recruit-file__comp-rest">{looks >= 3 ? m.compNone : m.compLater}</span>}
+              {compText ?? (
+                <span className="recruit-file__comp-rest" title={looks >= 3 ? undefined : m.compLater}>
+                  {looks >= 3 ? m.compNone : m.unknown}
+                </span>
+              )}
             </b>
           </div>
         )}
-        {/* a finished report has nothing left to send for: the lead above already says Report Complete */}
+        {/* a finished report has nothing left to send for: the lead's Scouted strip is full */}
         {!yours && looks < 3 && (
           <div className="recruit-file__acts">
-            <Button disabled={busy || cant} onClick={onScout}>
-              <Binoculars size={18} weight="bold" aria-hidden="true" />
-              {left <= 1 ? m.sendFinishes(detail.scout_cost) : m.sendScout(detail.scout_cost)}
-            </Button>
-            <span className="recruit-file__soft">{why ?? m.pointsLeft(detail.points_left)}</span>
+            <span
+              title={why ?? [left <= 1 ? m.finishes : "", m.pointsLeft(detail.points_left)].filter(Boolean).join(" ")}
+            >
+              <Button disabled={busy || cant} onClick={onScout}>
+                <Binoculars size={18} weight="bold" aria-hidden="true" />
+                {m.sendScout(detail.scout_cost)}
+              </Button>
+            </span>
           </div>
         )}
       </Panel>
@@ -430,7 +439,9 @@ export function ScoutingTab({
             ))}
           </div>
         ) : (
-          <p className="recruit-file__soft">{m.noRatings}</p>
+          <p className="recruit-file__soft" title={m.noRatings}>
+            {m.noLook}
+          </p>
         )}
         {justDone && (
           <p className="recruit-file__foot" role="status">
@@ -482,7 +493,10 @@ export function ProfileTab({
   const compText = comp ? (
     <>
       <PlayerLink team={comp.team} name={comp.name} />
-      <span className="recruit-file__comp-rest"> · {m.compRest(comp.school, comp.position, comp.overall)}</span>
+      <span className="recruit-file__comp-rest">
+        {" "}
+        · {m.compRest(teamOf(comp.team)?.abbreviation ?? comp.school, comp.position, comp.overall)}
+      </span>
     </>
   ) : null;
   const st = p.hometown.state === "DC" ? "D.C." : p.hometown.state;
@@ -513,36 +527,36 @@ export function ProfileTab({
             const Mark = TRAIT_ICON[k] ?? User;
             return (
               <li key={k} className={`recruit-file__trait${v || (k === "story" && twist) ? "" : " is-unknown"}`}>
+                {/* a trait is its mark, its name and its word; what it means for recruiting him (and, not known yet,
+                    how to learn it) is the cell's tip, not a paragraph in it */}
                 <Tooltip
+                  block
                   title={v ? `${m.traitNames[k]}: ${v}` : m.traitNames[k]}
-                  text={v ? (tips[k] ?? m.traitAbout[k]) : (hints[k] ?? m.traitAbout[k])}
+                  text={
+                    k === "story" && twist
+                      ? [v ? (tips[k] ?? m.traitAbout[k]) : "", `${twistHead}: ${twist.line}`]
+                          .filter(Boolean)
+                          .join("\n")
+                      : v
+                        ? (tips[k] ?? m.traitAbout[k])
+                        : (hints[k] ?? m.traitAbout[k])
+                  }
                 >
-                  <span className="recruit-file__trait-icon" aria-hidden="true">
-                    <Mark size={22} weight={v ? "fill" : "regular"} />
-                  </span>
+                  <div className="recruit-file__trait-cell">
+                    <span className="recruit-file__trait-icon" aria-hidden="true">
+                      <Mark size={16} weight={v ? "fill" : "regular"} />
+                    </span>
+                    <span className="label">{m.traitShort[k] ?? m.traitNames[k]}</span>
+                    {(v || !(k === "story" && twist)) && <b>{v ?? m.unknown}</b>}
+                    {k === "story" && twist && <b className="recruit-file__twist">{twistHead}</b>}
+                    {k === "story" && tr.story_key === "package" && tr.story_mate && onMate && (
+                      <button type="button" className="recruit-file__mate" onClick={() => onMate(tr.story_mate!)}>
+                        {mateOnBoard?.(tr.story_mate) ? m.openMate : m.addMate}
+                        <ArrowRight size={12} weight="bold" aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
                 </Tooltip>
-                <div className="recruit-file__trait-what">
-                  <span className="label">{m.traitNames[k]}</span>
-                  {(v || !(k === "story" && twist)) && <b>{v ?? m.unknown}</b>}
-                  {!v && hints[k] && !(k === "story" && twist) && (
-                    <span className="recruit-file__soft">{hints[k]}</span>
-                  )}
-                  {k === "story" && tr.story_key === "package" && tr.story_mate && onMate && (
-                    <button type="button" className="recruit-file__mate" onClick={() => onMate(tr.story_mate!)}>
-                      {mateOnBoard?.(tr.story_mate) ? m.openMate : m.addMate}
-                      <ArrowRight size={12} weight="bold" aria-hidden="true" />
-                    </button>
-                  )}
-                  {/* what a story or a way of committing means for recruiting him */}
-                  {v && tips[k] && <span className="recruit-file__soft">{tips[k]}</span>}
-                  {k === "story" && twist && (
-                    <>
-                      {v && <span className="label recruit-file__twist">{m.happened}</span>}
-                      <b>{twistHead}</b>
-                      <span className="recruit-file__soft">{twist.line}</span>
-                    </>
-                  )}
-                </div>
               </li>
             );
           })}
@@ -560,7 +574,7 @@ export function ProfileTab({
               label={m.comp}
               value={compText ?? (looks >= 3 ? m.compNone : undefined)}
               unknown={m.unknown}
-              hint={comp || looks >= 3 ? null : m.compLater}
+              hint={null}
               wide={!!comp}
             />
           )}
@@ -737,42 +751,14 @@ export function RecruitTimeline({ events, team }: { events: RecruitEvent[]; team
   );
 }
 
-/** What you know about him and where you stand this week, as plain sentences. */
-function notesOf(r: BoardRow, d: ProspectDetail | null, team: string): string[] {
-  const out: string[] = [];
-  const tr = d?.traits;
-  if (tr?.personality) out.push(m.note.personality[tr.personality] ?? m.note.personalityOther(tr.personality));
-  if (tr?.decider)
-    out.push(tr.decider === "Himself" ? m.note.decidesHimself : m.note.decides(tr.decider.toLowerCase()));
-  const known = r.priorities_known.map((t) => PITCH_NAMES[t] ?? t);
-  if (known.length) out.push(m.note.cares(known));
-  const mine = raceOf(r).find((x) => x.you || x.school === team);
-  if (r.signed === team || r.committed === team) out.push(r.signed ? m.note.signed : m.note.committed);
-  else if (!mine) out.push(m.note.notOnList);
-  else if (mine.new) out.push(m.note.joined);
-  else if ((mine.move ?? 0) > 0) out.push(m.note.rose);
-  else if ((mine.move ?? 0) < 0) out.push(m.note.slipped);
-  else out.push(m.note.steady);
-  if (!tr?.personality && !known.length) out.push(m.note.callFirst);
-  return out;
-}
-
-/** History: the Recruiting Timeline, Recruiting Notes from what you know, and Recent Interest Changes. */
-export function HistoryTab({ r, detail, team }: { r: BoardRow; detail: ProspectDetail | null; team: string }) {
+/** History: the Recruiting Timeline and Recent Interest Changes. */
+export function HistoryTab({ r, team }: { r: BoardRow; team: string }) {
   const rows = raceOf(r);
   const items = historyItems(r.history, team);
   return (
     <Panels label={m.tabs.history}>
       <Panel title={m.timeline} aside={items.length ? m.entries(items.length) : undefined}>
         <RecruitTimeline events={r.history} team={team} />
-      </Panel>
-
-      <Panel title={m.notes}>
-        <ul className="recruit-file__notes">
-          {notesOf(r, detail, team).map((t) => (
-            <li key={t}>{t}</li>
-          ))}
-        </ul>
       </Panel>
 
       <Panel title={m.changes}>

@@ -1073,7 +1073,7 @@ TWISTS = {"surprise": 0.15, "at_game": 0.14, "hot_seat": 0.10, "late_offer": 0.3
           "grades": 0.06, "beat": 0.20}    # *tune* each twist's weight among those that can happen to him
 TWIST_RATE = {5: 0.24, 4: 0.20, 3: 0.15, 2: 0.12}   # *tune* a prospect's weekly chance of a twist by his real stars
 TWIST_TRIES = 2            # *tune* a roll that hits draws a twist by weight; one that cannot happen to him draws once more, then none
-TWIST_LABEL = {"surprise": "Surprise Visit", "at_game": "At Your Game", "hot_seat": "Hot Seat", "late_offer": "Late Offer",
+TWIST_LABEL = {"surprise": "Surprise Visit", "at_game": "At Your Game", "hot_seat": "Hot Seat", "late_offer": "New Offer",
                "family_move": "Family Move", "grades": "Grades Scare", "beat": "Wants to See You Beat {foe}"}
 SURPRISE_WEEKS = 2         # *tune* a surprise school sits in his top three this long, unless a top-three school calls or visits first
 SURPRISE_SPOT = (0.25, 0.35, 0.40)   # *tune* where in his top three it jumps: first, second, third
@@ -1295,7 +1295,7 @@ def _setup(state: dict, wk: _Week, pid: str, kind: str, rng: random.Random):
         if p.get("nil_ask"):
             p["nil_ask"] = int(round(p["nil_ask"] * LATE_ASK))     # (recruiting._ASKS keys on his ask: no cache to clear)
         return ({"k": kind, "s": school, "w": 1},
-                f"{_rival_name(school)} offered late and jumped near the top of his list, and his NIL ask went up.")
+                f"{_rival_name(school)} offered and jumped near the top of his list, and his NIL ask went up.")
     if kind == "family_move":                    # a new home in another state: proximity and a hero's state move with it
         cur = (moved(state, pid) or {}).get("state") or p["hometown"]["state"]
         homes = [h for h in wk.homes() if h[0] != cur]

@@ -21,8 +21,11 @@
   height: 100%;
 }
 
+/* the big map keeps to its frame: closed in on one state, the neighbors stop at its edge, never over the line and the
+   legend under it */
 .tile-map--big .tile-map__svg {
   height: 100%;
+  overflow: hidden;
 }
 
 .tile-map__state {
@@ -103,11 +106,52 @@
   stroke-linecap: square;
 }
 
-/* someone from here on your board: a lit pixel at the state's middle */
+/* someone on your board, at his hometown: a small pixel in your second color, a line of ink round it */
 .tile-map__dot {
   fill: var(--paper-hi);
   stroke: var(--ink);
-  stroke-width: 0.08;
+  stroke-width: 0.18;
+}
+
+/* the one-state view's towns: light on the picked state's ink, a pixel under each name */
+
+/* they come up as the view settles on the state */
+.tile-map__town {
+  animation: tile-map-town 200ms ease-out 260ms both;
+}
+
+@keyframes tile-map-town {
+  from {
+    opacity: 0;
+  }
+}
+
+.tile-map__town rect {
+  fill: var(--paper-hi);
+  stroke: var(--ink);
+  stroke-width: 0.06;
+}
+
+.tile-map__town text {
+  fill: var(--paper-hi);
+  font-weight: 700;
+  paint-order: stroke; /* an ink edge, so a name that runs off the state still reads */
+  stroke: var(--ink);
+  stroke-linejoin: round;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.tile-map__town tspan {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* your school's star: its color, a hairline of ink so it shows on any shade */
+.tile-map__school {
+  stroke: var(--ink);
+  stroke-width: 0.07;
+  stroke-linejoin: round;
 }
 
 .tile-map__label {
@@ -155,20 +199,29 @@
   white-space: nowrap;
 }
 
+/* Clear is a button: framed, so it reads as something to press */
 .tile-map__clear {
+  display: inline-flex;
   flex: none;
-  padding: 0;
-  background: none;
-  color: var(--ink-soft);
-  border: 0;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
   font-size: var(--t-xs);
   font-weight: 700;
-  text-decoration: underline;
   cursor: pointer;
 }
 
 .tile-map__clear:hover {
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+/* what the dots show: a picker at the legend's end */
+.tile-map__legend-show {
+  margin-left: auto;
 }
 
 .tile-map__legend {
@@ -188,22 +241,23 @@
   background: color-mix(in srgb, var(--ink) var(--tile-ink), var(--paper-hi));
 }
 
-.tile-map__legend-board {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.tile-map__legend .tile-map__legend-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--paper-hi);
-  box-shadow: 0 0 0 2px var(--ink);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .tile-map__fill {
     transition: none;
   }
+
+  .tile-map__town {
+    animation: none;
+  }
+}
+
+/* while the view glides: smooth edges and no fill fades, so nothing shakes or lags behind the move */
+
+/* stylelint-disable-next-line no-descending-specificity -- these two properties are set by no hover or pick rule */
+.tile-map__svg.is-gliding .tile-map__fill,
+.tile-map__svg.is-gliding .tile-map__borders,
+.tile-map__svg.is-gliding .tile-map__raised-shadow,
+.tile-map__svg.is-gliding .tile-map__raised-fill {
+  shape-rendering: auto;
+  transition: none;
 }

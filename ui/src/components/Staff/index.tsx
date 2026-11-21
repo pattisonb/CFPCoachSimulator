@@ -138,10 +138,11 @@ export default function Staff({ seasonId, year, onBoardChange }: Props) {
                 </ul>
                 <section className="staff__map" aria-label={m.mapLabel}>
                   <header className="staff__map-head">
-                    <b className="label">{m.covered(covered, areaCount)}</b>
+                    <b className="label" title={m.howItWorks}>
+                      {m.covered(covered, areaCount)}
+                    </b>
                   </header>
                   <CoverageMap areas={view.areas ?? {}} scouts={scouts} picked={pickedScout} onArea={onArea} />
-                  <p className="staff__soft">{m.howItWorks}</p>
                   <p className="staff__toast" role="status" aria-live="polite">
                     {note ?? ""}
                   </p>

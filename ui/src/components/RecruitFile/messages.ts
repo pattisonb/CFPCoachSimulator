@@ -6,6 +6,7 @@ export const messages = {
   loading: "Loading his file…",
   tabs: { scouting: "Scouting", profile: "Profile", history: "History" },
   unknown: "Not Known Yet",
+  noLook: "No Look Yet",
   you: "You",
   yourSchool: "Your School",
   aSchool: "A school",
@@ -14,6 +15,8 @@ export const messages = {
   battle: "Recruiting Battle",
   schools: (n: number) => `${n} ${n === 1 ? "School" : "Schools"}`,
   standing: "Where You Stand",
+  standingShort: "You Stand",
+  priorityShort: (i: number) => `Priority ${i + 1}`,
   noList: "No school is on his list yet.",
   raceOver: "His race is over.",
   offered: "Offered",
@@ -55,6 +58,8 @@ export const messages = {
   scouted: "Scouted",
   priorities: "His Priorities",
   yourPull: "Your Program:",
+  pullTip: (word: string) => `Your program on this: ${word}.`,
+  looksCount: (n: number) => `${n} / 3`,
   priority: (i: number) => `${ORDINALS[i] ?? ""} Priority`,
   priorityHint: "A call may reveal it.",
   pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
@@ -68,7 +73,7 @@ export const messages = {
 
   // ----- Scouting -----
   report: "Scouting Report",
-  looks: (looks: string) => `${looks} of 3 Looks`,
+  looksOf: (looks: string) => `${looks} / 3`,
   complete: "Report Complete",
   looksShort: {
     none: "Not Scouted Yet",
@@ -101,7 +106,7 @@ export const messages = {
   attributes: "Attributes",
   noRatings: "His ratings come with his first look.",
   sendScout: (points: number) => `Send a Scout · ${points} Points`,
-  sendFinishes: (points: number) => `Send a Scout · ${points} Points · Finishes His Report`,
+  finishes: "This look finishes his report.",
   noPoints: "Not enough scouting points left this week.",
   cantScout: "Your staff can't get to him this week.",
   finishFirst: "Finish your call or visit with him first.",
@@ -122,6 +127,11 @@ export const messages = {
   // ----- Profile -----
   traits: "Who He Is",
   knownOf: (known: number, all: number) => `${known} of ${all} Known`,
+  /** a trait's name short enough for a quarter of the card; its full name is the tip's title */
+  traitShort: { personality: "Personality", decider: "Decider", story: "Story", commit_style: "Commits" } as Record<
+    string,
+    string
+  >,
   traitNames: {
     personality: "Personality",
     decider: "Who Decides",
@@ -181,7 +191,6 @@ export const messages = {
   timeline: "Recruiting Timeline",
   entries: (n: number) => `${n} ${n === 1 ? "Entry" : "Entries"}`,
   noHistory: "Nothing with him yet: no contact, no offer.",
-  notes: "Recruiting Notes",
   changes: "Recent Interest Changes",
   moves: {
     fresh: "New on His List",
@@ -199,6 +208,9 @@ export const messages = {
     raise_nil: "NIL",
     pull_offer: "Offer",
     learned: "Scout",
+    scout: "Scout",
+    call_recruit: "Call",
+    promise_role: "Promise",
     present: "Call",
     answer: "Call",
     hung_up: "Call",
@@ -226,6 +238,8 @@ export const messages = {
     pull_offer: "Offer Pulled",
     scout: "Scout",
     pitch: "Pitch",
+    call_recruit: "Video Call",
+    promise_role: "Promised a Starting Role",
   } as Record<string, string>,
   reactions: {
     hit: "He Lit Up",
@@ -263,29 +277,5 @@ export const messages = {
       signed: (school: string) => `Signed with ${school}`,
     } as Record<string, (school: string) => string>,
     other: (school: string, kind: string) => `${school}: ${kind}`,
-  },
-  note: {
-    personality: {
-      Cocky: "He is cocky: he wants to hear how good he is.",
-      Shy: "He is shy: he opens up slowly.",
-      Guarded: "He is guarded: he keeps what he wants to himself.",
-      "Loves the Attention": "He loves the attention: every contact counts with him.",
-      "All Business": "He is all business: he wants the facts and the offer.",
-    } as Record<string, string>,
-    personalityOther: (word: string) => `His personality: ${word}.`,
-    decidesHimself: "He makes the call himself.",
-    decides: (who: string) => `His ${who} makes the call.`,
-    cares: (topics: string[]) =>
-      `He told you he cares about ${
-        topics.length > 1 ? `${topics.slice(0, -1).join(", ")} and ${topics[topics.length - 1]}` : topics[0]
-      }.`,
-    signed: "He signed with you.",
-    committed: "He is committed to you.",
-    notOnList: "You are not on his list yet.",
-    joined: "You joined his list this week.",
-    rose: "His interest in you rose this week.",
-    slipped: "His interest in you slipped this week.",
-    steady: "His interest in you held steady this week.",
-    callFirst: "A call tells you more about him.",
   },
 } as const;

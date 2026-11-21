@@ -12,7 +12,8 @@ export const messages = {
     all: "All",
     favorites: "Favorites",
     offered: "Offered",
-    scouted: "Scouted",
+    scouted: "Fully Scouted",
+    partly: "Partly Scouted",
     unscouted: "Unscouted",
     committed: "Committed",
     visited: "Visited",
@@ -27,8 +28,20 @@ export const messages = {
   needs: "Class Needs",
   needsTip:
     "Your commits, board or offers at each position (the menu picks which), of the spots your class set out to fill there. Pick a position to list only those recruits.",
+  triage: "Triage",
+  triageTip: "Color each position by how pressing its need is.",
+  triageLevel: (level: number, leaving: number, starters: number) =>
+    level === 0
+      ? "Covered: the class needs no one else here."
+      : level === 1
+        ? "Depth: spots to fill, and every starter is back."
+        : level === 3
+          ? starters === 1
+            ? "Urgent: your starter leaves."
+            : `Urgent: all ${starters} starters leave.`
+          : `Pressing: ${leaving} of ${starters} starters leave.`,
   needShow: "Count",
-  needShows: { commits: "Committed", board: "On Board", offers: "Offered" },
+  needShows: { commits: "Committed / Need", board: "On Board / Need", offers: "Offered / Need" },
   filledShort: (have: number, of: number) => `${have}/${of}`,
   filledOf: (have: number, of: number) => `${have} of ${of} Spots Filled`,
   onBoardN: (n: number) => `${n} on Your Board`,
@@ -61,7 +74,7 @@ export const messages = {
   hisAsk: "His Ask",
   ask: (lo?: number, hi?: number, exact?: number) =>
     exact != null ? `${exact} NIL` : lo != null && hi != null ? `${lo}–${hi} NIL` : "Not Known Yet",
-  hoursLeft: (n: number) => `${n} Hours Left`,
+  hoursLeft: (n: number) => `${n} Energy Left`,
   offBoardTip: "Take him off your board. An offer he holds is pulled.",
   offer: "Your Offer",
   cooled: (why: string | null) =>
@@ -71,7 +84,8 @@ export const messages = {
   jobPromised: "Job Promised",
   jobPromisedTip:
     "You promised him a starting role. It is judged through his first season, and a broken promise costs you.",
-  promiseRole: "Promise Him a Starting Role",
+  promiseRole: "Promise a Starting Role",
+  afterOffer: "After Your Offer",
   promiseRoleHelp:
     "Counts for more if playing time is one of his priorities. It is judged through his first season, and a broken promise costs you.",
   promisedRole: "You promised him a starting role.",
@@ -87,13 +101,24 @@ export const messages = {
     `Recruiting is closed until Signing Day${signing ? `, after the ${signing}` : ""}. No offers, messages, calls, visits or scouting. He is deciding among the offers he holds, and he can still commit or flip.`,
   pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
   message: "Message",
-  call: "Call",
-  quickCall: "Quick Call",
-  quickCallTip: "A check-in with no conversation: it spends the hours for a slight boost.",
-  callAndPitch: "Call and Pitch",
-  callAndPitchTip: "Talk to him again and pitch him.",
-  quickCalled: (name: string, n: number) => `Quick call to ${name} · ${n} hours.`,
-  hcOnce: "Your head coach visits a recruit once.",
+  /** the quick actions on a recruit's row and card */
+  quick: { message: "Message", call: "Call", call_recruit: "Video Call" } as Record<string, string>,
+  /** the same three, short enough for a box on his row */
+  quickShort: { message: "Message", call: "Call", call_recruit: "Video" } as Record<string, string>,
+  quickLabel: (name: string) => `Quick actions: ${name}`,
+  quickTip: (what: string, n: number) =>
+    `${what} · ${n} Energy. Tick it to plan it: it goes out when you sim the week.`,
+  quickPlanned: (what: string, n: number) => `${what} is planned (${n} Energy held). Click to take it back.`,
+  quickDone: (what: string) => `${what}: done this week.`,
+  quickOff: "He is not taking calls.",
+  energy: (n: number) => `${n} NRG`,
+  offerFirst: "Offer him first.",
+  hcWait: (n: number) => (n === 1 ? "In 1 Week" : `In ${n} Weeks`),
+  hcMonthly: "Your head coach visits a recruit once a month.",
+  promiseFree: "Free",
+  promised: "Promised",
+  promisedTip:
+    "You promised him a starting role. It is judged through his first season, and a broken promise costs you.",
   visited: "Visited",
   favorite: "Favorite",
   favoriteTip: "Mark him as one of your favorites. It is your own list: a filter here and on Prospects.",
@@ -101,7 +126,7 @@ export const messages = {
   addFavorite: (name: string) => `Add ${name} to your favorites`,
   removeFavorite: (name: string) => `Take ${name} off your favorites`,
   hcVisit: "HC Visit",
-  hours: (n: number) => `${n} hrs`,
+  hours: (n: number) => `${n} NRG`,
   doneThisWeek: "Done this week.",
   openTalk: { call: "Your call with him is still open.", hc_visit: "Your visit with him is still open." } as Record<
     string,
@@ -109,22 +134,23 @@ export const messages = {
   >,
   finishTalk: { call: "Finish the Call", hc_visit: "Finish the Visit" } as Record<string, string>,
   done: "Done",
-  notEnough: "Not enough hours left this week.",
+  notEnough: "Not enough energy left this week.",
   makeOffer: (n: number) => `Offer · ${n} NIL`,
   raise: "Raise NIL",
   pull: "Pull Offer",
   pullConfirm: (name: string) => `Pull your offer to ${name}?`,
-  officialVisit: "Official Visit",
+  officialVisit: "Official Campus Visit",
+  wk: (n: number) => `Wk ${n}`,
   pickWeekend: "Pick a home weekend",
-  invite: (n: number) => `Invite · ${n} hrs`,
+  invite: (n: number) => `Invite · ${n} NRG`,
   offBoard: "Off My Board",
   offBoardConfirm: (name: string) => `${name} holds your offer. Taking him off your board pulls it. Go ahead?`,
 
   // what an action says when it lands (web/recruiting.js SAID): `n` is its hours, or its NIL for an offer
   said: {
-    message: (name: string, n: number) => `Message sent to ${name} · ${n} hours.`,
+    message: (name: string, n: number) => `Message sent to ${name} · ${n} Energy.`,
     scout: (name: string, n: number) => `Scout sent to ${name} · ${n} points.`,
-    official_visit: (name: string, n: number) => `Official visit invite to ${name} · ${n} hours.`,
+    official_visit: (name: string, n: number) => `Official visit invite to ${name} · ${n} Energy.`,
     offer: (name: string, n: number) => `Offer sent to ${name} · ${n} NIL.`,
     raise_nil: (name: string, n: number) => `Offer to ${name} raised to ${n} NIL.`,
     pull_offer: (name: string) => `Offer to ${name} pulled.`,

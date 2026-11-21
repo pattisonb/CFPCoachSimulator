@@ -60,6 +60,11 @@ export const messages = {
 
   map: "Where They Are",
   bigMap: "Big Map",
+  topOpen: "Top Uncommitted",
+  topIn: (st: string) => `Top Uncommitted in ${st}`,
+  state: "State",
+  allStates: "All States",
+  pickState: "Pick a State",
   listThese: (n: number, st: string) => `List These ${n.toLocaleString("en-US")} From ${st}`,
   chipShow: "Show",
   chipShows: { need: "Need", commits: "Committed / Need", board: "On Board / Need", offers: "Offered / Need" },
@@ -77,5 +82,4 @@ export const messages = {
   committed: "Committed",
   footprint: (board: number, contact: number, scouted: number) =>
     `${board} on your board · ${contact} in contact · ${scouted} scouted`,
-  topOpen: "Top Uncommitted",
 } as const;

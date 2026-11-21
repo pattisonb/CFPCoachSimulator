@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowsDownUp, Chat, ChatsCircle, Heart, House, MagnifyingGlass, Phone, Star, X } from "@phosphor-icons/react";
+import { CaretDown, CaretRight, Check, Handshake, Heart, House, MagnifyingGlass, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
@@ -13,12 +13,15 @@ import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
+import { cachedTeams } from "../../teams.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { PITCH_NAMES, byChance, standingOf, statusOf } from "../../standing.ts";
 import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { useKept } from "../../kept.ts";
 import { formatClass } from "../../format.ts";
+import Swatch from "../Swatch/index.tsx";
+import QuickActions from "./Quick.tsx";
 import { messages as m } from "./messages.ts";
 import RecruitFlags, { type RecruitAlert } from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -64,7 +67,9 @@ interface Props {
   /** GET /recruiting (the game loads it; Energy reads the same) */
   board: RecruitingBoard | null;
   /** load it again after an action (hours, standings, the board) */
-  reload: () => Promise<void>;
+  reload: (quiet?: boolean, stale?: () => boolean) => Promise<void>;
+  /** change it at once, ahead of the server (a quick action ticked) */
+  patch?: (change: (b: RecruitingBoard) => RecruitingBoard) => void;
   /** an empty board's Find Prospects: the Prospects tab */
   onFindProspects: () => void;
   /** your coach, beside your lines on a call or visit */
@@ -83,7 +88,8 @@ const ACROSS = {
   favorites: (r: BoardRow) => !!r.favorite,
   offered: (r: BoardRow) => r.offered,
   scouted: (r: BoardRow) => (r.looks ?? 0) >= FULL_REPORT,
-  unscouted: (r: BoardRow) => (r.looks ?? 0) < FULL_REPORT,
+  partly: (r: BoardRow) => (r.looks ?? 0) > 0 && (r.looks ?? 0) < FULL_REPORT,
+  unscouted: (r: BoardRow) => !(r.looks ?? 0),
 } as const;
 type Across = keyof typeof ACROSS;
 /** *tune* Looks that make a full scouting report (recruiting.REPORT_LOOKS). */
@@ -110,6 +116,7 @@ export default function Recruiting({
   weekLabels,
   board,
   reload,
+  patch,
   onFindProspects,
   coach = null,
   pick = null,
@@ -150,6 +157,10 @@ export default function Recruiting({
   }, [all, team]);
   // what a need chip counts before the slash: your commits there, the recruits on your board, or your open offers
   const [needShow, setNeedShow] = useKept<NeedShow>(`board.${seasonId}.needShow`, "commits");
+  /** Class Needs folded away (its name stays, to open it again) */
+  const [needsShut, setNeedsShut] = useKept(`board.${seasonId}.needsShut`, false);
+  /** Triage Needs: each chip in the color of how pressing its need is */
+  const [triage, setTriage] = useKept(`board.${seasonId}.triage`, true);
   const offeredAt = useMemo(() => {
     const c: Record<string, number> = {};
     for (const r of all) if (r.offered) c[groupOf(r)] = (c[groupOf(r)] ?? 0) + 1;
@@ -257,6 +268,69 @@ export default function Recruiting({
           )}
         </header>
 
+        {/* your class's needs: a chip a position the class set out to fill, with how many are filled; each one a filter */}
+        {needs.length > 0 && (
+          <div className="recruiting__needs" role="group" aria-label={m.needs}>
+            <div className="recruiting__needs-title">
+              <button
+                type="button"
+                className="label recruiting__needs-fold"
+                title={m.needsTip}
+                aria-expanded={!needsShut}
+                onClick={() => setNeedsShut(!needsShut)}
+              >
+                {m.needs}
+                {needsShut ? (
+                  <CaretRight size={12} weight="bold" aria-hidden="true" />
+                ) : (
+                  <CaretDown size={12} weight="bold" aria-hidden="true" />
+                )}
+              </button>
+              {!needsShut && (
+                <label className="recruiting__triage" title={m.triageTip}>
+                  <input type="checkbox" checked={triage} onChange={(e) => setTriage(e.target.checked)} />
+                  {m.triage}
+                </label>
+              )}
+              {!needsShut && (
+                <Dropdown
+                  label={m.needShow}
+                  hideLabel
+                  align="right"
+                  value={needShow}
+                  options={(Object.keys(m.needShows) as NeedShow[]).map((k) => ({
+                    value: k,
+                    label: m.needShows[k],
+                  }))}
+                  onChange={(k) => setNeedShow(k as NeedShow)}
+                />
+              )}
+            </div>
+            {!needsShut &&
+              needs.map((g) => {
+                const lv = triage ? board?.need_levels?.[g] : undefined;
+                const chip = (
+                  <Chip key={g} on={pos === g} onClick={() => setPos(pos === g ? "all" : g)}>
+                    {lv?.level === 0 && <Check size={12} weight="bold" aria-hidden="true" />}
+                    {g}
+                    <span className="chip__count">{m.filledShort(before(g), spots(g))}</span>
+                  </Chip>
+                );
+                return lv ? (
+                  <span
+                    key={g}
+                    className={`recruiting__need recruiting__need--${lv.level}`}
+                    title={m.triageLevel(lv.level, lv.leaving, lv.starters)}
+                  >
+                    {chip}
+                  </span>
+                ) : (
+                  chip
+                );
+              })}
+          </div>
+        )}
+
         <div className="recruiting__tools">
           <label className="recruiting__search">
             <MagnifyingGlass size={16} weight="bold" aria-hidden="true" />
@@ -274,7 +348,7 @@ export default function Recruiting({
             size="md"
             value={stage}
             // a stage with no one in it is left out (unless it is the one you are on)
-            options={(["all", ...STAGES, "favorites", "offered", "scouted", "unscouted"] as StageKey[])
+            options={(["all", ...STAGES, "favorites", "offered", "scouted", "partly", "unscouted"] as StageKey[])
               .filter((s) => s === "all" || s === stage || counts[s])
               .map((s) => ({
                 value: s,
@@ -303,7 +377,6 @@ export default function Recruiting({
           />
           <Dropdown
             label={m.sort}
-            icon={<ArrowsDownUp size={16} weight="bold" aria-hidden="true" />}
             size="md"
             align="right"
             value={sort}
@@ -313,33 +386,6 @@ export default function Recruiting({
             ]}
             onChange={(v) => setSort(v as "chance" | "rank")}
           />
-          {/* your class's needs: a chip a position the class set out to fill, with how many are filled; each one a filter */}
-          {needs.length > 0 && (
-            <div className="recruiting__needs" role="group" aria-label={m.needs}>
-              <div className="recruiting__needs-title">
-                <span className="label recruiting__soft" title={m.needsTip}>
-                  {m.needs}
-                </span>
-                <Dropdown
-                  label={m.needShow}
-                  hideLabel
-                  align="right"
-                  value={needShow}
-                  options={(Object.keys(m.needShows) as NeedShow[]).map((k) => ({
-                    value: k,
-                    label: m.needShows[k],
-                  }))}
-                  onChange={(k) => setNeedShow(k as NeedShow)}
-                />
-              </div>
-              {needs.map((g) => (
-                <Chip key={g} on={pos === g} onClick={() => setPos(pos === g ? "all" : g)}>
-                  {g}
-                  <span className="chip__count">{m.filledShort(before(g), spots(g))}</span>
-                </Chip>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="recruiting__list">
@@ -365,8 +411,16 @@ export default function Recruiting({
                         aria-pressed={current?.id === r.id}
                         onClick={() => setPicked(r.id)}
                       >
-                        <span className="face-tile recruiting__face">
-                          <Face face={playerFace(r.id, r.display_pos)} scale={2} label="" />
+                        <span className="recruiting__mug">
+                          <span className="face-tile recruiting__face">
+                            <Face face={playerFace(r.id, r.display_pos)} scale={2} label="" />
+                          </span>
+                          {/* where his offer or commitment stands, stamped on the picture's corner */}
+                          {statusOf(r, team).key !== "none" && (
+                            <span className="recruiting__stamp">
+                              <RecruitStatus status={statusOf(r, team)} size={14} />
+                            </span>
+                          )}
                         </span>
                         <span className="recruiting__who">
                           <b>
@@ -390,10 +444,32 @@ export default function Recruiting({
                           </span>
                           {rank != null && <span className="recruiting__soft recruiting__place">{m.onList(rank)}</span>}
                         </span>
-                        <span className="recruiting__standing">
-                          <RecruitStatus status={statusOf(r, team)} />
-                        </span>
                       </button>
+                      <QuickActions
+                        seasonId={seasonId}
+                        r={r}
+                        left={board?.hours_left ?? 0}
+                        costs={board?.hours_cost ?? {}}
+                        off={!board || board.closed || !!(r.signed || (r.committed && r.committed !== team && r.hard))}
+                        labels
+                        onChange={(stale) => reload(true, stale)}
+                        onPlan={(action, on) =>
+                          patch?.((b) => ({
+                            ...b,
+                            hours_left: b.hours_left + (on ? -1 : 1) * (b.hours_cost[action] ?? 0),
+                            board: b.board.map((x) =>
+                              x.id === r.id
+                                ? {
+                                    ...x,
+                                    planned: on
+                                      ? [...(x.planned ?? []), action]
+                                      : (x.planned ?? []).filter((a) => a !== action),
+                                  }
+                                : x,
+                            ),
+                          }))
+                        }
+                      />
                     </li>
                   );
                 })}
@@ -476,9 +552,10 @@ function RecruitPanel({
   const askDefault = r.ask.exact ?? r.ask.hi ?? r.ask.lo ?? 0;
   const [nil, setNil] = useState(r.offered ? r.nil + 5 : askDefault);
   const openWeeks = r.visit_weeks.filter((w) => !w.taken_by && w.week > board.week);
+  // a weekend's opponent by its letters, so the week and the team both show in the narrow picker
+  const abbrOf = (name: string) => cachedTeams()?.find((t) => t.name === name)?.abbreviation ?? name;
   const [visitWeek, setVisitWeek] = useState<number | null>(openWeeks[0]?.week ?? null);
   // an offer can carry the promise of a starting role (once per recruit)
-  const [promiseJob, setPromiseJob] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   // what your last action did is said for a moment, then the row is clear again
@@ -518,10 +595,18 @@ function RecruitPanel({
   // his file (the report, his traits, his background): read again whenever the board loads, since a look, an offer
   // or a call changes it; the last one stays up while the next arrives
   const [detail, setDetail] = useState<ProspectDetail | null>(null);
+  const fileOf = useRef<string | null>(null);
   useEffect(() => {
     let live = true;
-    api<ProspectDetail>(`/api/season/${seasonId}/prospect/${encodeURIComponent(r.id)}`)
-      .then((d) => live && setDetail(d))
+    // a fresh read of the file already up is quiet: no "Loading…" for every tick on the board
+    api<ProspectDetail>(`/api/season/${seasonId}/prospect/${encodeURIComponent(r.id)}`, {
+      quiet: fileOf.current === r.id,
+    })
+      .then((d) => {
+        if (!live) return;
+        fileOf.current = r.id;
+        setDetail(d);
+      })
       .catch(() => {});
     return () => {
       live = false;
@@ -535,7 +620,6 @@ function RecruitPanel({
   const weekName = (w: number) => weekLabels[String(w)] ?? m.week(Math.max(0, w - 1));
   const left = board.hours_left;
   const cost = (a: string) => board.hours_cost[a] ?? 0;
-  const done = (a: string) => r.done_this_week.includes(a);
   const closed = !!(r.signed || (r.committed && r.committed !== team && r.hard));
 
   const act = async (action: string, extra: Record<string, unknown> = {}) => {
@@ -558,14 +642,12 @@ function RecruitPanel({
       }
       const n = action === "scout" ? (detail?.scout_cost ?? 0) : Number(extra.nil ?? cost(action));
       const said = [
-        extra.answer === "quick" ? m.quickCalled(r.name, cost("call")) : (m.said[action]?.(r.name, n) ?? ""),
-        extra.answer === "promise" ? m.promisedRole : "",
+        action === "promise_role" ? m.promisedRole : (m.said[action]?.(r.name, n) ?? ""),
         out.revealed ? m.revealed(PITCH_NAMES[out.revealed] ?? out.revealed) : "",
         // talking money is a promise: say so plainly
         out.money_owed ? m.moneyOwed(out.money_owed.nil, weekName(out.money_owed.by_week)) : "",
       ];
       setNote(said.filter(Boolean).join(" "));
-      if (action === "offer") setPromiseJob(false);
       await reload();
     } catch (e) {
       setNote(m.failed((e as Error).message));
@@ -595,26 +677,31 @@ function RecruitPanel({
     await reload();
   };
 
-  const timed = (action: string, label: string, Icon: typeof Chat, extra?: Record<string, unknown>, tip?: string) => {
-    const c = cost(action);
-    // your head coach visits a recruit once
-    const hcSoon = action === "hc_visit" && r.hc_week != null;
-    const off = busy || closed || !!r.scene || done(action) || hcSoon || left < c;
-    const why = hcSoon ? m.hcOnce : done(action) ? m.doneThisWeek : left < c ? m.notEnough : (tip ?? undefined);
-    return (
-      <button
-        type="button"
-        className="recruit__act"
-        disabled={off}
-        title={why}
-        onClick={() => act(action, extra ?? {})}
-      >
-        <Icon size={18} weight="bold" aria-hidden="true" />
-        <b>{label}</b>
-        <span>{hcSoon ? m.visited : done(action) ? m.done : m.hours(c)}</span>
-      </button>
-    );
-  };
+  // what waits for your offer: your head coach's visit (once a month, by how far he lives) and the starting job (free)
+  const after = (
+    key: string,
+    label: string,
+    Icon: typeof House,
+    sub: string,
+    off: boolean,
+    why: string | undefined,
+    go: () => void,
+  ) => (
+    <button
+      key={key}
+      type="button"
+      className="recruit__act"
+      disabled={busy || closed || !!r.scene || off}
+      title={why}
+      onClick={go}
+    >
+      <Icon size={18} weight="bold" aria-hidden="true" />
+      <b>{label}</b>
+      <span>{sub}</span>
+    </button>
+  );
+  const hcCost = r.hc_cost ?? cost("hc_visit");
+  const hcWait = r.hc_wait ?? 0;
 
   return (
     <article className="recruit" aria-label={r.name}>
@@ -736,21 +823,6 @@ function RecruitPanel({
                       </Button>
                     </div>
                   )}
-                  <div className="recruit__acts">
-                    {timed("message", m.message, Chat)}
-                    {/* after his first call, Call is a quick check-in (the hours, a slight boost, no conversation) and
-                        Call and Pitch talks again */}
-                    {(r.calls ?? 0) > 0 || r.hc_week != null ? (
-                      <>
-                        {timed("call", m.quickCall, Phone, { answer: "quick" }, m.quickCallTip)}
-                        {timed("call", m.callAndPitch, ChatsCircle, undefined, m.callAndPitchTip)}
-                      </>
-                    ) : (
-                      timed("call", m.call, Phone)
-                    )}
-                    {timed("hc_visit", m.hcVisit, House)}
-                  </div>
-
                   <div className="recruit__offer">
                     <input
                       type="number"
@@ -778,45 +850,67 @@ function RecruitPanel({
                         </Button>
                       </>
                     ) : (
-                      <Button
-                        disabled={busy || board.offers_left <= 0}
-                        onClick={() => act("offer", { nil, ...(promiseJob ? { answer: "promise" } : {}) })}
-                      >
+                      <Button disabled={busy || board.offers_left <= 0} onClick={() => act("offer", { nil })}>
                         {m.makeOffer(nil)}
                       </Button>
                     )}
                   </div>
 
-                  {!r.offered && !r.job_promised && (
-                    <label className="recruit__promise">
-                      <input type="checkbox" checked={promiseJob} onChange={(e) => setPromiseJob(e.target.checked)} />
-                      <span>
-                        <b>{m.promiseRole}</b>
-                        <span className="recruiting__soft">{m.promiseRoleHelp}</span>
-                      </span>
-                    </label>
-                  )}
+                  {/* once he holds your offer: your head coach's visit, the starting job and a weekend on campus, a row each */}
+                  <span className="label recruit__after">{m.afterOffer}</span>
+                  <div className="recruit__acts">
+                    {after(
+                      "hc",
+                      m.hcVisit,
+                      House,
+                      !r.offered ? m.hours(hcCost) : hcWait > 0 ? m.hcWait(hcWait) : m.hours(hcCost),
+                      !r.offered || hcWait > 0 || left < hcCost,
+                      !r.offered ? m.offerFirst : hcWait > 0 ? m.hcMonthly : left < hcCost ? m.notEnough : undefined,
+                      () => act("hc_visit"),
+                    )}
+                    {after(
+                      "promise",
+                      m.promiseRole,
+                      Handshake,
+                      r.job_promised ? m.promised : m.promiseFree,
+                      !r.offered || !!r.job_promised,
+                      r.job_promised ? m.promisedTip : !r.offered ? m.offerFirst : m.promiseRoleHelp,
+                      () => act("promise_role"),
+                    )}
+                  </div>
 
                   {!r.visit && openWeeks.length > 0 && (
                     <div className="recruit__visit">
                       <span className="label">{m.officialVisit}</span>
+                      {/* the weekend's opponent in its colors, beside the picker */}
+                      <Swatch
+                        team={cachedTeams()?.find(
+                          (t) => t.name === openWeeks.find((w) => w.week === visitWeek)?.opponent_name,
+                        )}
+                        size={24}
+                      />
                       <select
                         aria-label={m.pickWeekend}
+                        disabled={!r.offered}
+                        title={!r.offered ? m.offerFirst : undefined}
                         value={visitWeek ?? ""}
                         onChange={(e) => setVisitWeek(Number(e.target.value))}
                       >
                         {openWeeks.map((w) => (
                           <option key={w.week} value={w.week}>
-                            {w.label} · {w.opponent_name}
+                            {m.wk(w.week)} · {abbrOf(w.opponent_name)}
                           </option>
                         ))}
                       </select>
                       <Button
                         variant="outline"
-                        disabled={busy || !r.offered || left < cost("official_visit") || visitWeek == null}
+                        disabled={
+                          busy || !r.offered || left < (r.visit_cost ?? cost("official_visit")) || visitWeek == null
+                        }
+                        title={!r.offered ? m.offerFirst : undefined}
                         onClick={() => act("official_visit", { week: visitWeek })}
                       >
-                        {m.invite(cost("official_visit"))}
+                        {m.invite(r.visit_cost ?? cost("official_visit"))}
                       </Button>
                     </div>
                   )}
@@ -834,7 +928,7 @@ function RecruitPanel({
           {tab === "profile" && (
             <ProfileTab r={r} detail={detail} onMate={(id) => void openMate(id)} mateOnBoard={onBoard} />
           )}
-          {tab === "history" && <HistoryTab r={r} detail={detail} team={team} />}
+          {tab === "history" && <HistoryTab r={r} team={team} />}
         </div>
       )}
 

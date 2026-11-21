@@ -135,14 +135,24 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
 
   // the week's recruiting board (and with it Energy): on load, after every recruiting action and after a sim. Every
   // change to the board goes through here, so Recruiting never refetches just because it was opened
-  const reloadRecruiting = useCallback(async () => {
-    if (!seasonId) return;
-    const r = await api<RecruitingBoard>(`/api/season/${seasonId}/recruiting`);
-    setRecruiting(r);
-  }, [seasonId]);
+  // (quiet: no "Loading…" notice; stale: asked when the answer lands, and a true drops it, since newer clicks are on
+  // the page already)
+  const reloadRecruiting = useCallback(
+    async (quiet?: boolean, stale?: () => boolean) => {
+      if (!seasonId) return;
+      const r = await api<RecruitingBoard>(`/api/season/${seasonId}/recruiting`, { quiet: quiet === true });
+      if (!stale?.()) setRecruiting(r);
+    },
+    [seasonId],
+  );
   useEffect(() => {
     reloadRecruiting().catch(() => setRecruiting(null));
   }, [reloadRecruiting]);
+  /** a change shown at once, ahead of the server's answer (a quick action ticked: his row and your Energy) */
+  const patchRecruiting = useCallback(
+    (change: (b: RecruitingBoard) => RecruitingBoard) => setRecruiting((b) => (b ? change(b) : b)),
+    [],
+  );
 
   // after a sim: the season and the week's recruiting again, in place (no loading screen)
   const passedAt = useRef(0);
@@ -182,8 +192,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   // the Offseason has the screen to itself: the season is over, so its week strip and the week's Energy say nothing
   // Recruiting has it too, for the room: your coach's card floats in the window's corner there instead
   const bare = section.key === "offseason" || section.key === "recruiting";
-  /** the league's crawl along the window's bottom: through the season, not the Offseason (no games to report) */
-  const ticker = section.key !== "offseason";
+  /** the league's crawl along the window's bottom: on the Office only (the player's ask), where the week is read */
+  const ticker = section.key === "office";
   /** a team's resume in a window (from Rankings and Programs) */
   const [resume, setResume] = useState<string | null>(null);
   const energy = recruiting && { left: recruiting.hours_left, total: recruiting.hours };
@@ -619,6 +629,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         weekLabels={season.week_labels}
                         board={recruiting}
                         reload={reloadRecruiting}
+                        patch={patchRecruiting}
                         tab={hubTab}
                         onTab={openTab}
                         weekKey={`${season.current_week}-${offStage}`}

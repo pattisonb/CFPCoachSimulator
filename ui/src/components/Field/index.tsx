@@ -11,14 +11,17 @@ interface Props {
   children: ReactNode;
 }
 
-/** A label over one form control (or a group of them), with an optional hint under it. */
+/** A label over one form control (or a group of them). Its hint is the field's tip; a field that is wrong says why under it. */
 export default function Field({ label, hint, invalid = false, group = false, className, children }: Props) {
   const Tag = group ? "div" : "label";
   return (
-    <Tag className={["field", invalid && "field--invalid", className].filter(Boolean).join(" ")}>
+    <Tag
+      className={["field", invalid && "field--invalid", className].filter(Boolean).join(" ")}
+      title={!invalid && typeof hint === "string" ? hint : undefined}
+    >
       <span className="label">{label}</span>
       {children}
-      {hint && <span className="field__hint">{hint}</span>}
+      {hint && (invalid || typeof hint !== "string") && <span className="field__hint">{hint}</span>}
     </Tag>
   );
 }

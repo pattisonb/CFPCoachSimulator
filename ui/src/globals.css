@@ -16,6 +16,9 @@
   --cold: #2f7fd1; /* he has cooled on you */
   --hot: #f76707; /* fire: a pitch that lit him up */
   --warn: #c9502b; /* a risk: a bust, a recruit who feels pestered */
+  --need-1: #f2c200; /* Triage Needs: depth to fill */
+  --need-2: #f76707; /* ... a starter leaves */
+  --need-3: #b3123a; /* ... every starter leaves */
 
   /* type */
   --font: "Space Mono", ui-monospace, menlo, monospace;

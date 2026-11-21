@@ -110,6 +110,8 @@ export interface ScheduleGame {
   opponent_ratings?: { overall: number; offense: number; defense: number } | null;
   /** the opponent's conference record ("4-4"); null for an FCS stand-in */
   opponent_conf_record?: string | null;
+  /** a regular-season game inside the conference */
+  conference_game?: boolean;
   /** a box score exists (GET /api/season/{id}/game/{event_id}) */
   has_box?: boolean;
 }
@@ -695,10 +697,27 @@ export interface ProspectsView {
     stars: Record<string, number>;
     footprint: { board: number; contact: number; evaluated: number };
     outlook: { commits: number; spots: number; by_stars: Record<string, number> };
-    top: { id: string; name: string; stars: number; national_rank: number; display_pos: string }[];
+    top: TopLine[];
+    /** the best uncommitted of each home state */
+    top_in?: Record<string, TopLine[]>;
+    /** the map's dots: [state, lat, lon, what he is to you ("board offered scouted committed")] */
+    board_at?: [string, number | null, number | null, string?][];
+    /** per home state, its biggest towns of this class: [name, lat, lon, prospects] */
+    cities?: Record<string, [string, number, number, number][]>;
     /** per home state: the class, its 4- and 5-stars, your board */
     by_state: Record<string, { n: number; blue: number; board: number }>;
   };
+}
+
+/** One of the best uncommitted, in the Prospects page's side list. */
+export interface TopLine {
+  id: string;
+  name: string;
+  stars: number;
+  national_rank: number;
+  display_pos: string;
+  /** "Town, ST" */
+  home?: string;
 }
 
 /** GET /api/season/{id}/prospect/{pid} (the parts the new UI uses) */
@@ -881,6 +900,13 @@ export interface BoardRow {
   /** your program's pull on each topic, 0 to 1 */
   strength: Record<string, number>;
   done_this_week: string[];
+  /** the quick actions ticked on his row: sent when the week is simmed */
+  planned?: string[];
+  /** what your invite to visit and your head coach's visit cost for him (by how far he lives) */
+  visit_cost?: number;
+  hc_cost?: number;
+  /** weeks until your head coach can visit him again (one visit a month) */
+  hc_wait?: number;
   /** the week your head coach visited him (he visits a recruit once) */
   hc_week: number | null;
   /** your finished calls with him: after the first, Call is a quick check-in */
@@ -983,6 +1009,8 @@ export interface RecruitingBoard extends RecruitingWeek {
   signing?: string;
   /** spots still to fill this class, by roster group */
   needs?: Record<string, number>;
+  /** how pressing each position's need is: 0 covered, 1 depth, 2 a starter leaves, 3 every starter leaves */
+  need_levels?: Record<string, { level: number; leaving: number; starters: number }>;
   week: number;
   board: BoardRow[];
   offers: number;

@@ -226,8 +226,9 @@
   }
 }
 
-/* a narrow card: the face and the tile at 2x, a smaller name, the cells in a row under them */
-@container profile-head (width < 560px) {
+/* a narrow card (Recruiting's, in three fifths of the window): the face and the tile at 2x, a smaller name, the cells
+   in a row under them */
+@container profile-head (width < 640px) {
   .profile-head__card {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }

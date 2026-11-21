@@ -323,8 +323,7 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
           <div className="talk__acts">
             {step === "over" ? (
               <>
-                <span className="talk__soft">{m.doneNote}</span>
-                <Button disabled={revealing} onClick={onClose}>
+                <Button disabled={revealing} onClick={onClose} title={m.doneNote}>
                   {m.done}
                 </Button>
               </>
