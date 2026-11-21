@@ -234,7 +234,7 @@ CONFERENCES = {
     "American Athletic Conference": "National Athletic Conference", "Atlantic Coast Conference": "Atlantic Coast League",
     "Southeastern Conference": "Southeastern League", "Mid-American Conference": "Mid-Continent League",
     "ACC": "ACL", "Big Ten": "Big Eighteen", "Big 12": "Big Dozen", "Conference USA": "Conference America",
-    "C-USA": "C-AM", "CUSA": "CAM", "MAC": "MAL", "Mountain West": "Mountain Time", "Pac-12": "Pac-Dozen",
+    "C-USA": "C-AM", "CUSA": "CAM", "MAC": "MAL", "Mountain West": "Mountain Time", "Pac-12": "Pac Ocho",
     "SEC": "SEL", "Sun Belt": "Heat Belt",
 }
 # Conference short forms the app shows that are ordinary words: swapped only where they stand alone.
