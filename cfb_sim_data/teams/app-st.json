@@ -166,7 +166,7 @@
    "WR": [
     "samuel-mbake",
     "chris-lofton",
-    "semaj-fleming"
+    "nate-branch"
    ],
    "TE": [
     "jamel-howse"
@@ -246,7 +246,7 @@
   "WR": [
    "samuel-mbake",
    "chris-lofton",
-   "semaj-fleming",
+   "nate-branch",
    "dazmin-james",
    "alex-sanchez",
    "kamauri-austin",
@@ -281,7 +281,7 @@
   ],
   "RG": [
    "trent-ramsey",
-   "jarvis-potts",
+   "lance-williams",
    "scottland-dover"
   ],
   "RT": [
@@ -3728,14 +3728,14 @@
    }
   },
   {
-   "slug": "semaj-fleming",
+   "slug": "nate-branch",
    "position": "WR",
    "class": "SORS",
    "team_slug": "app-st",
-   "url": null,
-   "name": "Semaj Fleming",
+   "url": "https://collegefootball.gg/players/nate-branch/",
+   "name": "Nate Branch",
    "position_name": "Wide Receiver",
-   "jersey": "22",
+   "jersey": "85",
    "team": "App St.",
    "class_year": "Sophomore (RS)",
    "height": "5'9\"",
@@ -9901,12 +9901,12 @@
    }
   },
   {
-   "slug": "jarvis-potts",
+   "slug": "lance-williams",
    "position": "RG",
    "class": "JRRS",
    "team_slug": "app-st",
-   "url": null,
-   "name": "Jarvis Potts",
+   "url": "https://collegefootball.gg/players/lance-williams/",
+   "name": "Lance Williams",
    "position_name": "Right Guard",
    "jersey": "64",
    "team": "App St.",

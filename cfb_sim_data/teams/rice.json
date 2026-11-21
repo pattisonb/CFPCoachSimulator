@@ -297,7 +297,7 @@
   ],
   "LEDG": [
    "joseph-mutombo",
-   "jd-singletary",
+   "dereyon-jenkins-jr",
    "luca-akirtava"
   ],
   "DT": [
@@ -13453,14 +13453,14 @@
    }
   },
   {
-   "slug": "jd-singletary",
+   "slug": "dereyon-jenkins-jr",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "rice",
-   "url": null,
-   "name": "JD Singletary",
+   "url": "https://collegefootball.gg/players/dereyon-jenkins-jr/",
+   "name": "DeReyon Jenkins Jr.",
    "position_name": "Left Edge",
-   "jersey": "21",
+   "jersey": "42",
    "team": "Rice",
    "class_year": "Freshman (RS)",
    "height": "6'4\"",

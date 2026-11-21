@@ -3,7 +3,13 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-REAL = {"jamaun-thompson": "on ESPN's roster, no headshot there", "nico-wiedmann": "on ESPN at Marshall, no headshot there",
+REAL = {
+        "lance-williams": "on his school's real roster, no headshot found",
+        "nate-branch": "on his school's real roster, no headshot found",
+        "justin-wood": "on his school's real roster, no headshot found",
+        "robert-williams": "on his school's real roster, no headshot found",
+        "dereyon-jenkins-jr": "on his school's real roster, no headshot found",
+       "jamaun-thompson": "on ESPN's roster, no headshot there", "nico-wiedmann": "on ESPN at Marshall, no headshot there",
         "wydeek-collier-johnson": "his school lists him as Wydeek Collier", "guy-fernandez-iii": "his school lists him as Tre Fernandez",
         "lagarion-wilson": "on the 2026 roster (#13, CB)", "taveon-robinson": "on the school roster with a placeholder photo",
         "tim-anthony": "on the school roster with a placeholder photo", "tyrese-cathey": "on ESPN (DL #91), no headshot",

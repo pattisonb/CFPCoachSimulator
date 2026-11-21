@@ -259,7 +259,7 @@
    "sean-burke",
    "ayden-passley",
    "james-resar",
-   "remy-goins"
+   "justin-wood"
   ],
   "LT": [
    "manasseh-ripert",
@@ -291,7 +291,7 @@
   ],
   "LEDG": [
    "dante-anderson",
-   "michael-smarts",
+   "robert-williams",
    "elisha-baldridge",
    "kani-smith",
    "king-massey"
@@ -6505,14 +6505,14 @@
    }
   },
   {
-   "slug": "remy-goins",
+   "slug": "justin-wood",
    "position": "TE",
    "class": "JRRS",
    "team_slug": "fiu",
-   "url": null,
-   "name": "Remy Goins",
+   "url": "https://collegefootball.gg/players/justin-wood/",
+   "name": "Justin Wood",
    "position_name": "Tight End",
-   "jersey": "87",
+   "jersey": "47",
    "team": "FIU",
    "class_year": "Junior (RS)",
    "height": "5'11\"",
@@ -12100,14 +12100,14 @@
    }
   },
   {
-   "slug": "michael-smarts",
+   "slug": "robert-williams",
    "position": "LEDG",
    "class": "SORS",
    "team_slug": "fiu",
-   "url": null,
-   "name": "Michael Smarts",
+   "url": "https://collegefootball.gg/players/robert-williams/",
+   "name": "Robert Williams",
    "position_name": "Left Edge",
-   "jersey": "44",
+   "jersey": "14",
    "team": "FIU",
    "class_year": "Sophomore (RS)",
    "height": "6'2\"",

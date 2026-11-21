@@ -2,11 +2,15 @@
 
 Every line starts with the id to copy back exactly.
 
-## A. Real players, photo not reachable (0)
+## A. Real players, photo not reachable (5)
 
 id | name | school | position | jersey | class | height weight | note
 
-
+nate-branch | Nate Branch | App State | WR | #85 | SORS | 5'9" 175 lb | on his school's real roster, no headshot found
+lance-williams | Lance Williams | App State | RG | #64 | JRRS | 6'3" 305 lb | on his school's real roster, no headshot found
+justin-wood | Justin Wood | FIU | TE | #47 | JRRS | 5'11" 195 lb | on his school's real roster, no headshot found
+robert-williams | Robert Williams | FIU | LEDG | #14 | SORS | 6'2" 235 lb | on his school's real roster, no headshot found
+dereyon-jenkins-jr | DeReyon Jenkins Jr. | Rice | LEDG | #42 | FRRS | 6'4" 224 lb | on his school's real roster, no headshot found
 
 ## B. Real players given a made-up player's spot, no photo found (25)
 
