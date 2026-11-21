@@ -571,7 +571,7 @@ def _team_card(t: dict) -> dict:
         "group": "P4" if t["conference"] in polls.P4 else "G6" if t["conference"] in polls.G6 else "",
         "fictional": t["fictional"], "colors": t["colors"], "stadium": t["stadium"],
         "home_field_advantage": t["home_field_advantage"], "prestige": t["prestige"],
-        "ratings": season._shown.team_ratings(t["team_ratings"]),
+        "ratings": dict(season._shown.team_ratings(t["team_ratings"]), **season.page_ratings(t)),   # the page's own: an average of the players' overalls
         "head_coach": t["coaches"]["head_coach"]["name"],
         "staff": coaches.staff(None, t),
         "tendencies": t.get("tendencies", {}),

@@ -3443,11 +3443,50 @@ def team_overall(state: dict, slug: Optional[str]) -> Optional[int]:
     return (_unit_overalls(state, slug) or {}).get("overall")
 
 
+# *tune* what a position is worth in the rating a page shows for a team (page_ratings): the quarterback most, the edges,
+# tackles, corners and receivers next
+PAGE_POS_VALUE = {"QB": 3.0, "HB": 1.0, "FB": 0.4, "WR": 1.2, "TE": 0.9, "LT": 1.3, "LG": 1.0, "C": 1.0, "RG": 1.0, "RT": 1.2,
+                  "LEDG": 1.4, "REDG": 1.4, "DT": 1.1, "SAM": 0.9, "MIKE": 1.0, "WILL": 0.9, "CB": 1.3, "FS": 1.0, "SS": 1.0,
+                  "K": 0.6, "P": 0.4}
+PAGE_DEPTH_WEIGHT = 0.15         # *tune* a backup counts this much of a starter at his position (one backup a starting spot)
+_PAGE_NOW: dict = {}
+
+
+def page_ratings(t: dict, hurt=()) -> dict:
+    """A team's overall, offense and defense as the page shows them (the player's ask): an average of its players'
+    overalls as their cards show them, each weighted by what his position is worth (PAGE_POS_VALUE), the starters in
+    full and one backup a starting spot a little (PAGE_DEPTH_WEIGHT). So an offense of mid-80s starters reads in the
+    mid 80s. The game's own ratings (team_ratings_now, which the sim, the polls and the odds read) are untouched."""
+    from coach_career import league
+    units: dict[str, list] = {"offense": [], "defense": [], "special_teams": []}
+    for role, group in _players_by_role(t, t["offense"] + t["defense"]).items():
+        if role in ("KR", "PR"):
+            continue
+        fit = [p for p in group if f"{p['name']}|{p['position']}" not in hurt]
+        n, value = role_starters(t, role), PAGE_POS_VALUE.get(role, 1.0)
+        unit = "special_teams" if role in ("K", "P") else "offense" if role in league.OFFENSE_ROLES else "defense"
+        units[unit] += [(_shown.overall(shown_overall(p)), value if i < n else value * PAGE_DEPTH_WEIGHT) for i, p in enumerate(fit[:2 * n])]
+
+    def mean(rows: list) -> int:
+        return int(round(sum(o * w for o, w in rows) / sum(w for _, w in rows))) if rows else 40
+    return {"overall": mean(units["offense"] + units["defense"] + units["special_teams"]),
+            "offense": mean(units["offense"]), "defense": mean(units["defense"])}
+
+
 def _unit_overalls(state: dict, slug: Optional[str]) -> Optional[dict]:
-    """A team's overall, offense and defense as the page shows a team rating, as it lines up today
-    (team_ratings_now); None for a team without ratings (an FCS stand-in)."""
-    r = team_ratings_now(state, slug)
-    return {k: _shown.team(r[k], k) for k in ("overall", "offense", "defense")} if r else None
+    """A team's overall, offense and defense as the page shows a team rating, as it lines up today (page_ratings over
+    its depth chart as it is set, anyone hurt stepping aside); None for a team without ratings (an FCS stand-in)."""
+    if team_ratings_now(state, slug) is None:
+        return None
+    key = (state.get("id"), slug)
+    sig = _RATINGS_NOW[key][0]              # team_ratings_now's: the chart, the injuries, the edits, the week
+    hit = _PAGE_NOW.get(key)
+    if hit and hit[0] == sig:
+        return dict(hit[1])
+    t = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
+    out = page_ratings(t, (state.get("injuries") or {}).get(slug) or {})
+    _PAGE_NOW[key] = (sig, out)
+    return dict(out)
 
 
 def game_preview(state: dict, slug: str, sims: int = 20) -> dict:

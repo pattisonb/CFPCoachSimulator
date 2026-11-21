@@ -605,4 +605,4 @@ def job_rows(state: dict, slugs: list[str]) -> list[dict]:
     teams = season.load_teams()
     return [{"team": s, "name": teams[s]["name"], "conference": teams[s]["conference"], "goal": goal(s, state)["text"],
              "tier": programs.get(state, s)["tier"], "program_rating": programs.get(state, s)["rating"],
-             "rating": shown.team(teams[s]["team_ratings"]["overall"])} for s in slugs]
+             "rating": season.page_ratings(teams[s])["overall"]} for s in slugs]
