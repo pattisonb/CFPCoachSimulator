@@ -61,7 +61,7 @@
     {"name": "Battle for the Victory Bell", "trophy": "Victory Bell", "teams": ["cincinnati", "miami-oh"], "series": {"cincinnati": 60, "miami-oh": 59, "ties": 7}},
     {"name": "Battle for the Milk Can", "trophy": "Milk Can", "teams": ["boise-state", "fresno-state"], "series": {"boise-state": 16, "fresno-state": 6, "ties": 0}},
     {"name": "Battle for the Fremont Cannon", "trophy": "Fremont Cannon", "teams": ["nevada", "unlv"], "series": {"nevada": 29, "unlv": 21, "ties": 0}},
-    {"name": "Border War (Bronze Boot)", "trophy": "Bronze Boot", "teams": ["colorado-state", "wyoming"], "series": {"colorado-state": 60, "wyoming": 50, "ties": 5}},
+    {"name": "Bronze Boot Game", "trophy": "Bronze Boot", "teams": ["colorado-state", "wyoming"], "series": {"colorado-state": 60, "wyoming": 50, "ties": 5}},
     {"name": "Battle for the Old Oil Can", "trophy": "Old Oil Can", "teams": ["fresno-state", "san-diego-st"], "series": {"san-diego-st": 30, "fresno-state": 29, "ties": 4}},
     {"name": "Battle of I-75", "trophy": "Peace Pipe", "teams": ["bowling-green", "toledo"], "series": {"toledo": 45, "bowling-green": 40, "ties": 4}},
     {"name": "Battle of the Bricks", "trophy": "", "teams": ["miami-oh", "ohio"], "series": {"miami-oh": 56, "ohio": 46, "ties": 2}},
@@ -87,10 +87,10 @@
     {"name": "Florida State-Miami", "trophy": "", "teams": ["florida-state", "miami"], "series": {"miami": 36, "florida-state": 33, "ties": 0}},
     {"name": "Clemson-Georgia Tech", "trophy": "", "teams": ["clemson", "georgia-tech"], "series": {"clemson": 36, "georgia-tech": 30, "ties": 2}},
     {"name": "Auburn-LSU", "trophy": "", "teams": ["auburn", "lsu"], "series": {"lsu": 34, "auburn": 23, "ties": 1}},
-    {"name": "Oklahoma-Oklahoma State is Bedlam; Oklahoma-Kansas State", "trophy": "", "teams": ["kansas-state", "oklahoma"], "series": {"oklahoma": 78, "kansas-state": 21, "ties": 4}},
-    {"name": "Big 12 border: West Virginia-Virginia Tech", "trophy": "Black Diamond Trophy", "teams": ["virginia-tech", "west-virginia"], "series": {"virginia-tech": 29, "west-virginia": 23, "ties": 1}},
+    {"name": "Kansas State-Oklahoma", "trophy": "", "teams": ["kansas-state", "oklahoma"], "series": {"oklahoma": 78, "kansas-state": 21, "ties": 4}},
+    {"name": "Black Diamond Trophy Game", "trophy": "Black Diamond Trophy", "teams": ["virginia-tech", "west-virginia"], "series": {"virginia-tech": 29, "west-virginia": 23, "ties": 1}},
     {"name": "Shula Bowl", "trophy": "Don Shula Trophy", "teams": ["fiu", "fla-atlantic"], "series": {"fla-atlantic": 15, "fiu": 8, "ties": 0}},
     {"name": "Old Wagon Wheel", "trophy": "Old Wagon Wheel", "teams": ["byu", "utah-state"], "series": {"byu": 50, "utah-state": 37, "ties": 3}},
-    {"name": "Beehive Boot rivalry: Utah-Utah State", "trophy": "", "teams": ["utah", "utah-state"], "series": {"utah": 80, "utah-state": 30, "ties": 4}}
+    {"name": "Battle of the Brothers", "trophy": "", "teams": ["utah", "utah-state"], "series": {"utah": 80, "utah-state": 30, "ties": 4}}
   ]
 }

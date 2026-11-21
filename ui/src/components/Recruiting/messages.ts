@@ -39,7 +39,7 @@ export const messages = {
           ? starters === 1
             ? "Urgent: your starter leaves."
             : `Urgent: all ${starters} starters leave.`
-          : `Pressing: ${leaving} of ${starters} starters leave.`,
+          : `Pressing: ${leaving} of ${starters} starters ${leaving === 1 ? "leaves" : "leave"}.`,
   needShow: "Count",
   needShows: { commits: "Committed / Need", board: "On Board / Need", offers: "Offered / Need" },
   filledShort: (have: number, of: number) => `${have}/${of}`,

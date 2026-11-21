@@ -477,7 +477,17 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
   }, [season?.id, season?.current_week, offStage]);
 
   // what happened while time passed (a commit, a decommit, an injury, a staff find): the bell on your coach's card
-  const notices = useNotices(season?.id, season?.year, season?.team, season?.current_week, recruiting?.board);
+  // while a sim runs they come with its progress, week by week (sim.status.feed): your class and your injuries are not
+  // read again until it ends, so a long sim showed nothing until then
+  const feed = sim.running ? sim.status?.feed : null;
+  const notices = useNotices(
+    season?.id,
+    season?.year,
+    season?.team,
+    feed?.week ?? season?.current_week,
+    feed?.board ?? recruiting?.board,
+    feed?.injuries,
+  );
   const finds = useFinds(
     season?.id,
     season?.year,

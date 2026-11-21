@@ -560,7 +560,7 @@ def _fill_open_dates(games: dict, teams: dict) -> int:
                       "home_display": teams[home]["name"], "away_display": teams[away]["name"],
                       "conference_game": False, "played": False, "home_score": None, "away_score": None,
                       "overtime": 0, "real": False, "kind": "regular",
-                      "title": f"{teams[a]['conference']} flex game" if same else "Fills an open date"}
+                      "title": f"{teams[a]['conference']} Flex Game" if same else "Open-Date Game"}
         homes[home] = homes.get(home, 0) + 1
         added += 1
     return added
@@ -1582,7 +1582,7 @@ def _playoff_round(state: dict, week: int, teams: dict) -> list[dict]:
 
     if week == min(PLAYOFF_WEEKS):
         for hs, as_ in ((5, 12), (6, 11), (7, 10), (8, 9)):
-            games.append(mk(f"cfp-r1-{hs}", seeds[hs], seeds[as_], False, f"First round: {hs} vs {as_}", hs, as_))
+            games.append(mk(f"cfp-r1-{hs}", seeds[hs], seeds[as_], False, f"First Round: {hs} vs {as_}", hs, as_))
     elif week == min(PLAYOFF_WEEKS) + 1:
         for top, eid, label in ((1, "cfp-r1-8", "1 vs 8/9"), (2, "cfp-r1-7", "2 vs 7/10"), (3, "cfp-r1-6", "3 vs 6/11"), (4, "cfp-r1-5", "4 vs 5/12")):
             w, ws = winner(eid)
@@ -1594,7 +1594,7 @@ def _playoff_round(state: dict, week: int, teams: dict) -> list[dict]:
         games.append(mk("cfp-sf-2", c, d, True, "Semifinal", c_s, d_s, site_key="sf-2"))
     elif week == FINAL_WEEK:
         (a, a_s), (b, b_s) = winner("cfp-sf-1"), winner("cfp-sf-2")
-        games.append(mk("cfp-final", a, b, True, "National championship", a_s, b_s, site_key="final"))
+        games.append(mk("cfp-final", a, b, True, "National Championship", a_s, b_s, site_key="final"))
     return games
 
 
@@ -4693,18 +4693,18 @@ def edit_player(state: dict, slug: str, player_slug: str, changes: dict) -> dict
 
 # the stats a position is ranked on: (stat key or derived name, label, higher is better, minimum qualifier)
 RANK_STATS = {
-    "QB": [("pass_yards", "Passing yards"), ("passing_touchdowns", "Passing TDs"), ("rating", "Passer rating"), ("completion_pct", "Completion %"),
-           ("rush_yards", "Rushing yards"), ("total_touchdowns", "Total TDs")],
-    "RB": [("rush_yards", "Rushing yards"), ("rushing_touchdowns", "Rushing TDs"), ("yards_per_carry", "Yards per carry"), ("receiving_yards", "Receiving yards"),
-           ("scrimmage_yards", "Scrimmage yards"), ("explosive_runs", "Runs of 20+")],
-    "WR": [("receiving_yards", "Receiving yards"), ("receptions", "Receptions"), ("receiving_touchdowns", "Receiving TDs"), ("yards_per_catch", "Yards per catch"),
+    "QB": [("pass_yards", "Passing Yards"), ("passing_touchdowns", "Passing TDs"), ("rating", "Passer Rating"), ("completion_pct", "Completion %"),
+           ("rush_yards", "Rushing Yards"), ("total_touchdowns", "Total TDs")],
+    "RB": [("rush_yards", "Rushing Yards"), ("rushing_touchdowns", "Rushing TDs"), ("yards_per_carry", "Yards per Carry"), ("receiving_yards", "Receiving Yards"),
+           ("scrimmage_yards", "Scrimmage Yards"), ("explosive_runs", "Runs of 20+")],
+    "WR": [("receiving_yards", "Receiving Yards"), ("receptions", "Receptions"), ("receiving_touchdowns", "Receiving TDs"), ("yards_per_catch", "Yards per Catch"),
            ("explosive_catches", "Catches of 25+")],
-    "TE": [("receiving_yards", "Receiving yards"), ("receptions", "Receptions"), ("receiving_touchdowns", "Receiving TDs")],
-    "OL": [("snaps", "Snaps"), ("key_blocks", "Key blocks"), ("sacks_allowed", "Sacks allowed")],
-    "DEF": [("tackles", "Tackles"), ("tackles_for_loss", "Tackles for loss"), ("sacks", "Sacks"), ("interceptions", "Interceptions"),
-            ("passes_defended", "Passes defended"), ("forced_fumbles", "Forced fumbles")],
-    "K": [("fg_made", "Field goals"), ("points", "Points"), ("fg_pct", "Field goal %"), ("long_fg", "Long field goal")],
-    "P": [("punt_avg", "Punt average"), ("net_avg", "Net average"), ("punts_inside_20", "Inside the 20")],
+    "TE": [("receiving_yards", "Receiving Yards"), ("receptions", "Receptions"), ("receiving_touchdowns", "Receiving TDs")],
+    "OL": [("snaps", "Snaps"), ("key_blocks", "Key Blocks"), ("sacks_allowed", "Sacks Allowed")],
+    "DEF": [("tackles", "Tackles"), ("tackles_for_loss", "Tackles for Loss"), ("sacks", "Sacks"), ("interceptions", "Interceptions"),
+            ("passes_defended", "Passes Defended"), ("forced_fumbles", "Forced Fumbles")],
+    "K": [("fg_made", "Field Goals"), ("points", "Points"), ("fg_pct", "Field Goal %"), ("long_fg", "Long Field Goal")],
+    "P": [("punt_avg", "Punt Average"), ("net_avg", "Net Average"), ("punts_inside_20", "Inside the 20")],
 }
 RANK_MINIMUM = {"rating": ("pass_attempts", 100), "completion_pct": ("pass_attempts", 100), "yards_per_carry": ("carries", 60),
                 "yards_per_catch": ("receptions", 20), "fg_pct": ("fg_attempted", 8), "punt_avg": ("punts", 15), "net_avg": ("punts", 15)}
@@ -4807,31 +4807,31 @@ def player_honors(state: dict, team: str, name: str) -> list[dict]:
             out.append({"stage": "Heisman", "award": "Heisman Trophy", "place": place + (" (finalist)" if i and c in h.get("finalists", []) else ""), "detail": f"{c['points']} points"})
     for a in nat.get("awards", []) + (aw.get("postseason") or {}).get("awards", []):
         if hit(a.get("winner")):
-            out.append({"stage": "National awards", "award": a["name"], "place": "winner", "detail": a.get("honors", "")})
+            out.append({"stage": "National awards", "award": a["name"], "place": "Winner", "detail": (a.get("honors") or "")[:1].upper() + (a.get("honors") or "")[1:]})
         else:
             for c in a.get("finalists", [])[1:]:
                 if hit(c):
-                    out.append({"stage": "National awards", "award": a["name"], "place": "finalist", "detail": a.get("honors", "")})
+                    out.append({"stage": "National awards", "award": a["name"], "place": "Finalist", "detail": (a.get("honors") or "")[:1].upper() + (a.get("honors") or "")[1:]})
     aa = nat.get("all_america") or {}
     for c in aa.get("consensus", []):
         if hit(c):
-            out.append({"stage": "All-America", "award": "Consensus All-American" + (" (unanimous)" if c.get("unanimous") else ""), "place": c["slot"], "detail": f"first team on {c['selectors']} of 5 selectors"})
+            out.append({"stage": "All-America", "award": "Consensus All-American" + (" (unanimous)" if c.get("unanimous") else ""), "place": c["slot"], "detail": f"First team on {c['selectors']} of 5 selectors"})
     for sel, picks in (aa.get("selectors") or {}).items():
         for c in picks:
             if hit(c):
-                out.append({"stage": "All-America", "award": f"{sel} All-America", "place": f"{'first' if c['level'] == 1 else 'second'} team ({c['slot']})", "detail": ""})
+                out.append({"stage": "All-America", "award": f"{sel} All-America", "place": f"{'First' if c['level'] == 1 else 'Second'} Team ({c['slot']})", "detail": ""})
     for conf, entry in (aw.get("conference") or {}).items():
         for a in entry.get("awards", []):
             if hit(a.get("winner")):
-                out.append({"stage": f"{conf} awards", "award": a["name"], "place": "winner", "detail": ""})
+                out.append({"stage": f"{conf} awards", "award": a["name"], "place": "Winner", "detail": ""})
             else:
                 for c in a.get("finalists", [])[1:]:
                     if hit(c):
-                        out.append({"stage": f"{conf} awards", "award": a["name"], "place": "finalist", "detail": ""})
+                        out.append({"stage": f"{conf} awards", "award": a["name"], "place": "Finalist", "detail": ""})
         for sel, picks in (entry.get("teams") or {}).get("selectors", {}).items():
             for c in picks:
                 if hit(c):
-                    out.append({"stage": f"All-{conf}", "award": f"{sel} {['first', 'second', 'third'][c['level'] - 1]} team", "place": c["slot"], "detail": ""})
+                    out.append({"stage": f"All-{conf}", "award": f"{sel} {['First', 'Second', 'Third'][c['level'] - 1]} Team", "place": c["slot"], "detail": ""})
     return out
 
 

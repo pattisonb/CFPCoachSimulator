@@ -5,7 +5,8 @@ export const messages = {
   weekLabel: "Week",
   filterLabel: "Which games",
   filters: { all: "All Games", ranked: "Top 25" },
-  played: (done: number, of: number) => (done === of ? `${of} Games · Final` : `${done} of ${of} Played`),
+  played: (done: number, of: number) =>
+    done === of ? `${of} ${of === 1 ? "Game" : "Games"} · Final` : `${done} of ${of} Played`,
   loading: "Loading the games…",
   loadError: (msg: string) => `Couldn't load the games: ${msg}.`,
   noGames: (week: string) => `No games in ${week}.`,

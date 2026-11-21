@@ -406,6 +406,26 @@ export interface SimStatus {
   record?: { wins: number; losses: number; conf_wins: number; conf_losses: number };
   /** your games played so far (sim/season.py my_results), for the week strip while a sim runs */
   results?: SimResult[];
+  /**
+   * what the last week the sim finished brought (app/api.py _feed), sent with its progress so the page need not ask:
+   * your Program News, your board's commitments and your injury report
+   */
+  feed?: SimFeed | null;
+}
+
+export interface SimFeed {
+  week: number;
+  news: NewsItem[];
+  board: {
+    id: string;
+    name: string;
+    display_pos: string;
+    stars: number;
+    committed: string | null;
+    signed: string | null | false;
+    school_name: string | null;
+  }[];
+  injuries: { name: string; position: string; type: string; weeks_left: number; since_week: number }[];
 }
 
 /** One of your results as a running sim reports it. */

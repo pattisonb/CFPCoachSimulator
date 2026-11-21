@@ -146,8 +146,8 @@ export const messages = {
   consensus: "Consensus",
   consensusTip: "First team on at least three of the five selectors' lists. Unanimous means all five.",
   consensusCount: (n: number, unanimous: number, yours: number) =>
-    `${n} Consensus All-Americans · ${unanimous} Unanimous${yours ? ` · ${yours} of Yours` : ""}`,
-  teamCount: (n: number) => `${n} Players`,
+    `${n} Consensus ${n === 1 ? "All-American" : "All-Americans"} · ${unanimous} Unanimous${yours ? ` · ${yours} of Yours` : ""}`,
+  teamCount: (n: number) => `${n} ${n === 1 ? "Player" : "Players"}`,
   aaWaiting: "The All-America Teams Aren't Named Yet",
   aaWaitingText:
     "The five selectors name their first and second teams with the national awards, in selection week. A player who is first team on three of the five is a consensus All-American.",
@@ -159,5 +159,5 @@ export const messages = {
   confWaitingText: "Each conference gives its awards and names its all-conference teams after championship week.",
 
   ballotsLine: (ballots: number, possible: number) =>
-    `${ballots} ballots, ${possible.toLocaleString("en-US")} points possible. First place is worth 3, second 2, third 1.`,
+    `${ballots} ${ballots === 1 ? "ballot" : "ballots"}, ${possible.toLocaleString("en-US")} points possible. First place is worth 3, second 2, third 1.`,
 } as const;

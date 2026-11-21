@@ -332,11 +332,11 @@ LINES: dict[str, dict[str, list[str]]] = {
         "open": ["Coach {coach}! Yeah, I figured {school} would call. Everybody does.",
                  "Hey Coach. Go ahead, you've got my attention. Not for long, but you do.",
                  "Yeah, it's {first}. You're calling the right guy, Coach.",
-                 "About time, Coach. I've been waiting on {school} to step up."],
+                 "There he is. I figured {school} would call."],
         "visit_open": ["Coach {coach}! Come on in. I figured {school} would show up sooner or later.",
                        "Have a seat, Coach. You've got my attention. Not for long, but you do.",
                        "Glad you made the trip, Coach. You're talking to the right guy.",
-                       "About time, Coach. I've been waiting on {school} to step up."],
+                       "There he is. I figured {school} would come by."],
         "small_talk": ["You know I'm the best {position} in {state}, right? Just checking.",
                        "Man, my highlight tape keeps blowing up. Coaches can't stop watching it.",
                        "Everybody in {town} says I'm next. I'm not going to argue with them.",
@@ -352,7 +352,7 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
     "shy": {
         "open": ["Oh. Hi, Coach. Yeah, um, I can talk.",
-                 "Hey. Sorry, I wasn't sure who it was. Hi, Coach.",
+                 "Hey. Sorry, I almost didn't pick up. Hi, Coach.",
                  "Hi. Yes sir. I've got a minute.",
                  "Oh, hey, Coach {coach}. Thanks for calling."],
         "visit_open": ["Oh. Hi, Coach. Um, come in. Thanks for coming.",
@@ -374,7 +374,7 @@ LINES: dict[str, dict[str, list[str]]] = {
     },
     "guarded": {
         "open": ["Yeah, this is {first}. What's up, Coach?",
-                 "Okay. Who is this again? {school}? Okay.",
+                 "Okay. {school}. Go ahead, Coach.",
                  "I've got a minute. Not a long one.",
                  "Coach {coach}. Sure. What do you need?"],
         "visit_open": ["Coach {coach}. Come in. Make it quick, if you can.",
@@ -395,7 +395,7 @@ LINES: dict[str, dict[str, list[str]]] = {
                   "Hm. Let's leave it there."],
     },
     "attention": {
-        "open": ["Coach {coach}! Oh man, I love getting your calls!",
+        "open": ["Coach {coach}! Oh man, I love hearing from {school}!",
                  "Hey Coach! I was hoping you'd call today. Seriously.",
                  "{school}! Yes! Okay, tell me everything.",
                  "Coach! You made my day. I'm all ears."],
@@ -761,6 +761,10 @@ def story_line(state: dict, slug: str, pid: str, scene_id: str, who: str, f: dic
     k, _ = story(state, pid)
     if k is None:
         return None
+    if k == "package":                               # his mate is gone elsewhere: nothing left to ask a spot for
+        st = state["recruiting"]["status"].get(mate(state, pid) or "") or {}
+        if (st.get("signed") or st.get("committed")) not in (None, slug):
+            return None
     rng = random.Random(f"story-line-{scene_id}-{who}")
     table = STORY_LINES[k]
     if k in STORY_LINES_OFFERED and mate_offered(state, slug, pid):   # his mate holds the school's offer: the line says so
