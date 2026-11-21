@@ -807,7 +807,7 @@ function NextDepth({ d, ctx }: P) {
                 g.commits.map((c) => (
                   <li className="hq-lane__item" key={`c-${c.pid}`}>
                     <Tag solid>{c.signed ? m.signed : m.commit}</Tag>
-                    <RName ctx={ctx} pid={c.pid}>
+                    <RName ctx={ctx} pid={c.pid} pos={posOf(c)}>
                       {c.name}
                     </RName>
                     <span className="hq-sub">{c.position}</span>
@@ -819,7 +819,7 @@ function NextDepth({ d, ctx }: P) {
                 .map((c) => (
                   <li className="hq-lane__item" key={`t-${c.kind}-${c.pid}`}>
                     <Tag soft>{m.kindTags[c.kind]}</Tag>
-                    <RName ctx={ctx} pid={c.pid}>
+                    <RName ctx={ctx} pid={c.pid} pos={posOf(c)}>
                       {c.name}
                     </RName>
                     <span className="hq-sub">{c.position}</span>
@@ -928,7 +928,7 @@ function Promises({ d, ctx }: P) {
           {rows.slice(0, rowsFor(ctx.size)).map((r) => (
             <li key={r.key}>
               {r.pid ? (
-                <RName ctx={ctx} pid={r.pid}>
+                <RName ctx={ctx} pid={r.pid} pos={posOf(r)}>
                   {r.name}
                 </RName>
               ) : (

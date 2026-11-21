@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { CaretDown, Star } from "@phosphor-icons/react";
-import RangeBar from "../RangeBar/index.tsx";
+import Face from "../Face/index.tsx";
+import { playerFace } from "../../faces.ts";
 import PlayerLink from "../PlayerLink/index.tsx";
 import { messages as m } from "./messages.ts";
 import type { Ctx, Size, Who } from "./types.ts";
@@ -78,6 +79,9 @@ export function Table({ heads, rows, mine }: { heads: string[]; rows: ReactNode[
   );
 }
 
+/** *tune* How many blocks a meter's bar is drawn in. */
+const METER_BLOCKS = 20;
+
 /** A labeled meter: the label, the value in words, a bar filled 0 to 1 (soft: a count you would rather was low). */
 export function Meter({ label, words, frac, soft }: { label: string; words: string; frac: number; soft?: boolean }) {
   const pct = Math.round(100 * Math.max(0, Math.min(1, frac || 0)));
@@ -87,7 +91,12 @@ export function Meter({ label, words, frac, soft }: { label: string; words: stri
         <span>{label}</span>
         <b>{words}</b>
       </div>
-      <RangeBar lo={0} hi={pct} soft={soft} />
+      {/* the bar in blocks, as your Energy is drawn: filled ones in your color */}
+      <span className={`hq-blocks${soft ? " is-soft" : ""}`} aria-hidden="true">
+        {Array.from({ length: METER_BLOCKS }, (_, i) => (
+          <span key={i} className={i < Math.round((pct * METER_BLOCKS) / 100) ? "is-on" : undefined} />
+        ))}
+      </span>
     </div>
   );
 }
@@ -149,18 +158,35 @@ export function RName({
   pid,
   children,
   grow = true,
+  pos,
 }: {
   ctx: Ctx;
   pid: string;
   children: ReactNode;
   grow?: boolean;
+  /** his position: given, his face leads his name (the face he has everywhere else) */
+  pos?: string;
 }) {
   const cls = `hq-link${grow ? " hq-grow" : ""}`;
-  if (ctx.sample) return <span className={cls}>{children}</span>;
+  const face = pos !== undefined && (
+    <span className="face-tile hq-face" aria-hidden="true">
+      <Face face={playerFace(pid, pos)} scale={1} label="" />
+    </span>
+  );
+  if (ctx.sample)
+    return (
+      <>
+        {face}
+        <span className={cls}>{children}</span>
+      </>
+    );
   return (
-    <button type="button" className={cls} onClick={() => ctx.openRecruit(pid)}>
-      {children}
-    </button>
+    <>
+      {face}
+      <button type="button" className={cls} onClick={() => ctx.openRecruit(pid)}>
+        {children}
+      </button>
+    </>
   );
 }
 

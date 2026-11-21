@@ -95,6 +95,7 @@
   max-height: var(--hq-card-h);
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow); /* the hard pixel shadow every raised box in the game has */
   font-size: var(--t-sm);
 }
 
@@ -109,9 +110,13 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--s2);
-  padding: 12px var(--s2) 8px;
-  background: var(--team-stripe, none) top / 100% 4px no-repeat; /* your three colors along the card's top, as on a panel */
+  padding: 8px var(--s2);
+
+  /* its name on a band of your color (in the ink that reads on it), your second color as a trim under it */
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
   border-bottom: var(--line) solid var(--ink);
+  box-shadow: inset 0 -4px 0 var(--team-2, transparent);
 }
 
 .hq-card__head h3 {
@@ -242,8 +247,11 @@
 
 /* ---------- the kit: the pieces every widget draws with ---------- */
 .hq-empty-line {
-  padding: 4px 0;
+  padding: 10px 12px;
+  background: var(--paper);
   color: var(--ink-soft);
+  border: 1px dashed var(--line-soft);
+  line-height: 1.45;
 }
 
 .hq-soft,
@@ -306,16 +314,22 @@
 
 .hq-stat {
   display: grid;
+  align-content: start;
   gap: 2px;
   min-width: 0;
+  padding: 8px 8px 8px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  box-shadow: inset 4px 0 0 var(--team, var(--ink));
 }
 
 /* a number, or a short word (Unranked, 21 of 35): one line, sized so two fit across a Small card */
 .hq-stat dd {
   overflow: hidden;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -338,8 +352,9 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  padding: 5px 0;
+  padding: 6px 8px;
   border-top: 1px solid var(--line-soft);
+  transition: box-shadow 120ms ease-out;
 }
 
 .hq-list .hq-grow {
@@ -367,6 +382,14 @@
   border-top: 0;
 }
 
+.hq-list li:nth-child(even) {
+  background: var(--paper);
+}
+
+.hq-list li:hover {
+  box-shadow: inset 3px 0 0 var(--team, var(--ink));
+}
+
 /* a name that opens him: plain text, underlined when pointed at */
 .hq-link {
   padding: 0;
@@ -383,6 +406,14 @@ button.hq-link:hover {
   text-underline-offset: 3px;
 }
 
+/* View All, on the card's band: in the band's own ink */
+.hq-card__head .hq-link {
+  color: inherit;
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
 .hq-tag {
   flex: none;
   padding: 0 6px;
@@ -394,8 +425,9 @@ button.hq-link:hover {
 }
 
 .hq-tag.is-solid {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border-color: var(--ink);
 }
 
 .hq-tag.is-soft {
@@ -439,8 +471,8 @@ button.hq-link:hover {
 }
 
 .hq-btn:enabled:hover {
-  background: var(--ink);
-  color: var(--paper-hi);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 .hq-btn--icon {
@@ -472,29 +504,34 @@ button.hq-link:hover {
 
 .hq-table th,
 .hq-table td {
-  padding: 5px 8px 5px 0;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--line-soft);
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
 
 .hq-table th {
+  background: var(--paper);
   color: var(--ink-soft);
+  border-bottom: var(--line) solid var(--ink);
   font-size: var(--t-xs);
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
+.hq-table tr:nth-child(even) td {
+  background: var(--paper);
+}
+
 .hq-table tr.is-mine td {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--team, var(--ink)) 14%, var(--paper-hi));
   font-weight: 700;
 }
 
 .hq-table tr.is-mine td:first-child {
-  padding-left: 8px;
-  box-shadow: inset 3px 0 0 var(--ink);
+  box-shadow: inset 4px 0 0 var(--team, var(--ink));
 }
 
 /* a labeled meter */
@@ -512,6 +549,39 @@ button.hq-link:hover {
 
 .hq-meter__top span {
   color: var(--ink-soft);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* the bar in blocks (your Energy's look): filled ones in your color, soft where low is good */
+.hq-blocks {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+}
+
+.hq-blocks span {
+  flex: 1;
+  height: 10px;
+  background: var(--line-soft);
+}
+
+.hq-blocks span.is-on {
+  background: var(--team, var(--ink));
+}
+
+.hq-blocks.is-soft span.is-on {
+  background: var(--ink-soft);
+}
+
+/* a recruit's face at the head of his row */
+.hq-face {
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
 }
 
 /* a line chart in ink */
@@ -523,16 +593,18 @@ button.hq-link:hover {
 
 .hq-chart__line {
   fill: none;
-  stroke: var(--ink);
+  stroke: var(--team, var(--ink));
   stroke-width: 2.5;
 }
 
 .hq-chart__area {
-  fill: color-mix(in srgb, var(--ink) 10%, transparent);
+  fill: color-mix(in srgb, var(--team, var(--ink)) 16%, transparent);
 }
 
 .hq-chart__dot {
-  fill: var(--ink);
+  fill: var(--team, var(--ink));
+  stroke: var(--ink);
+  stroke-width: 1;
 }
 
 .hq-chart text {
@@ -646,7 +718,8 @@ button.hq-link:hover {
 }
 
 .hq-check[aria-checked="true"] {
-  background: var(--ink);
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 .hq-task.is-done .hq-wrap {

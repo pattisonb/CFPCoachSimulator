@@ -152,7 +152,7 @@ function TopTargets({ d, ctx }: P) {
         <List>
           {shown.slice(0, rowsFor(ctx.size)).map((b) => (
             <li key={b.id}>
-              <RName ctx={ctx} pid={b.id}>
+              <RName ctx={ctx} pid={b.id} pos={posOf(b)}>
                 {b.name}
               </RName>
               <span className="hq-sub">{posOf(b)}</span>
@@ -195,7 +195,7 @@ function VisitSchedule({ d, ctx }: P) {
         return (
           <li key={b.id}>
             <Tag>{wkShort(ctx, b.visit!.week)}</Tag>
-            <RName ctx={ctx} pid={b.id}>
+            <RName ctx={ctx} pid={b.id} pos={posOf(b)}>
               {b.name}
             </RName>
             <span className="hq-sub">
@@ -236,7 +236,7 @@ function RecentCommits({ d, ctx }: P) {
     <List>
       {rows.slice(0, rowsFor(ctx.size)).map((r) => (
         <li key={r.pid}>
-          <RName ctx={ctx} pid={r.pid}>
+          <RName ctx={ctx} pid={r.pid} pos={posOf(r)}>
             {r.name}
           </RName>
           {r.b && <span className="hq-sub">{posOf(r.b)}</span>}
@@ -263,7 +263,7 @@ function Activity({ d, ctx }: P) {
     <List>
       {evs.map((e, i) => (
         <li key={`${e.pid}-${i}`}>
-          <RName ctx={ctx} pid={e.pid} grow={false}>
+          <RName ctx={ctx} pid={e.pid} pos={posOf(e)} grow={false}>
             {e.name}
           </RName>
           <span className="hq-grow hq-sub">{line(e)}</span>
@@ -309,7 +309,7 @@ function Movers({ d, ctx }: P) {
               ) : (
                 <ArrowDown size={14} weight="bold" className="hq-soft" aria-label={m.falling} />
               )}
-              <RName ctx={ctx} pid={r.pid}>
+              <RName ctx={ctx} pid={r.pid} pos={posOf(r)}>
                 {r.name}
               </RName>
               <Tag>{r.word || standingWord(byId.get(r.pid), ctx) || posOf(r)}</Tag>
@@ -414,7 +414,7 @@ function FullClass({ d, ctx }: P) {
                 <Table
                   heads={[m.player, m.pos, m.starsCol, m.natRank, m.status]}
                   rows={shown.map((r) => [
-                    <RName key="n" ctx={ctx} pid={r.id}>
+                    <RName key="n" ctx={ctx} pid={r.id} pos={posOf(r)}>
                       {r.name}
                     </RName>,
                     posOf(r),
@@ -427,7 +427,7 @@ function FullClass({ d, ctx }: P) {
                 <List>
                   {shown.map((r) => (
                     <li key={r.id}>
-                      <RName ctx={ctx} pid={r.id}>
+                      <RName ctx={ctx} pid={r.id} pos={posOf(r)}>
                         {r.name}
                       </RName>
                       <span className="hq-sub">{posOf(r)}</span>
@@ -523,7 +523,7 @@ function RecruitSearch({ d, ctx }: P) {
         <List>
           {shown.slice(0, rowsFor(ctx.size)).map((r) => (
             <li key={r.id}>
-              <RName ctx={ctx} pid={r.id}>
+              <RName ctx={ctx} pid={r.id} pos={posOf(r)}>
                 {r.name}
               </RName>
               <span className="hq-sub">{posOf(r)}</span>
@@ -558,7 +558,7 @@ function ScoutQueue({ d, ctx }: P) {
         const pot = ctx.size === "L" ? potentialTag(r.potential) : null;
         return (
           <li key={r.pid}>
-            <RName ctx={ctx} pid={r.pid}>
+            <RName ctx={ctx} pid={r.pid} pos={posOf(r)}>
               {r.name}
             </RName>
             <span className="hq-sub">{posOf(r)}</span>
@@ -589,7 +589,7 @@ function Flags({ d, ctx }: P) {
         return (
           <li key={`${f.pid}-${f.flag}`}>
             <Tag solid={f.flag === "gem" || f.flag === "generational"}>{word}</Tag>
-            <RName ctx={ctx} pid={f.pid}>
+            <RName ctx={ctx} pid={f.pid} pos={posOf(f)}>
               {f.name}
             </RName>
             <span className="hq-sub">{posOf(f)}</span>

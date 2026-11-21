@@ -138,6 +138,9 @@ def load_teams() -> dict:
     if not _teams_cache:
         data = json.loads(_league_path.read_text(encoding="utf-8"))
         _teams_cache = stand_in_names(data["teams"])
+        for t in _teams_cache.values():          # the game's own team ratings, by the one average every page shows
+            if not t.get("fictional") and t.get("team_ratings") and t.get("offense"):
+                t["team_ratings"] = dict(t["team_ratings"], **game_ratings(t))
         _teams_meta.clear()
         _teams_meta.update(attribute_scale=data.get("attribute_scale") or {}, spread_scale=data.get("spread_scale") or 1.5)
     return _teams_cache
@@ -3425,8 +3428,7 @@ _RATINGS_NOW: dict = {}
 def team_ratings_now(state: dict, slug: Optional[str]) -> Optional[dict]:
     """A team's ratings as it would line up today (the player's ask): its depth chart as it is set, anyone hurt stepping
     aside for the next man, every edit to a player in. The same sum as the ratings built with the team
-    (coach_career/league.team_ratings: the starters' mean overall through TEAM_FIT), so an untouched, healthy team
-    reads exactly as it was built. None for an FCS stand-in. On the game's own scale: the page's is _unit_overalls."""
+    (game_ratings, which rates every team as its file loads), so an untouched, healthy team reads exactly as it was built. None for an FCS stand-in. On the game's own scale: the page's is _unit_overalls."""
     base = load_teams().get(slug) if slug else None
     if base is None or base.get("fictional"):
         return None
@@ -3439,19 +3441,31 @@ def team_ratings_now(state: dict, slug: Optional[str]) -> Optional[dict]:
         return hit[1]
     from coach_career import league
     t = apply_depth(team_data(state, slug), depth)
+    out = game_ratings(t, hurt)
+    _RATINGS_NOW[(state.get("id"), slug)] = (sig, out)
+    return out
+
+
+def game_ratings(t: dict, hurt=()) -> dict:
+    """A team's offense, defense, special teams and overall on the game's own scale (what the polls, the odds, the awards
+    and an AD's expectations read), from the same average the page shows (the player's ask: one rating everywhere): its
+    players' overalls weighted by position (PAGE_POS_VALUE), the starters in full and one backup a starting spot a
+    little (PAGE_DEPTH_WEIGHT), each unit through league.TEAM_FIT. Every team is rated this way as its file loads
+    (load_teams), so a team as it was built and as it lines up today are the same sum."""
+    from coach_career import league
     units: dict[str, list] = {"offense": [], "defense": [], "special_teams": []}
     for role, group in _players_by_role(t, t["offense"] + t["defense"]).items():
         if role in ("KR", "PR"):
             continue
         fit = [p for p in group if f"{p['name']}|{p['position']}" not in hurt]
+        n, value = role_starters(t, role), PAGE_POS_VALUE.get(role, 1.0)
         unit = "special_teams" if role in ("K", "P") else "offense" if role in league.OFFENSE_ROLES else "defense"
-        units[unit] += [shown_overall(p) for p in fit[:role_starters(t, role)]]
+        units[unit] += [(shown_overall(p), value if i < n else value * PAGE_DEPTH_WEIGHT) for i, p in enumerate(fit[:2 * n])]
     out = {}
-    for unit, vals in units.items():
+    for unit, rows in units.items():
         a, b = league.TEAM_FIT[unit]
-        out[unit] = round(max(1.0, min(99.0, a * sum(vals) / len(vals) + b)), 1) if vals else 40.0
+        out[unit] = round(max(1.0, min(99.0, a * sum(o * w for o, w in rows) / sum(w for _, w in rows) + b)), 1) if rows else 40.0
     out["overall"] = round(0.45 * out["offense"] + 0.45 * out["defense"] + 0.1 * out["special_teams"], 1)
-    _RATINGS_NOW[(state.get("id"), slug)] = (sig, out)
     return out
 
 
