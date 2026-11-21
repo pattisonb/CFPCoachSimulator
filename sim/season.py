@@ -4282,7 +4282,8 @@ MAX_FACE_BYTES = 4000
 
 
 # The faces a real player or coach always wears (cfb_sim_data/faces/<team>.json: {"players": {slug: face},
-# "coaches": {name: face}}), made by hand from his roster photo. A team with no file rolls its faces as before.
+# "coaches": {name: face}, "rolled": {...}}): made by hand from his roster photo, or, with no photo, rolled once and
+# saved (tools/faces/roll.py). A team with no file rolls its faces on the page as before.
 FACES_DIR = ROOT / "cfb_sim_data" / "faces"
 _preset_faces: dict[str, dict] = {}
 
@@ -4295,7 +4296,12 @@ def preset_faces(slug: str) -> dict:
             data = json.loads(path.read_text(encoding="utf-8")) if slug.replace("-", "").isalnum() and path.is_file() else {}
         except (OSError, ValueError):
             data = {}
-        _preset_faces[slug] = {k: data.get(k) if isinstance(data.get(k), dict) else {} for k in ("players", "coaches")}
+        got = {k: data.get(k) if isinstance(data.get(k), dict) else {} for k in ("players", "coaches", "rolled")}
+        # "rolled": the faces saved for people with no photo (tools/faces/roll.py); a coach's key is "coach:<name>"
+        rolled = got.pop("rolled")
+        got["players"] = {**{k: v for k, v in rolled.items() if not k.startswith("coach:")}, **got["players"]}
+        got["coaches"] = {**{k[6:]: v for k, v in rolled.items() if k.startswith("coach:")}, **got["coaches"]}
+        _preset_faces[slug] = got
     return _preset_faces[slug]
 
 
