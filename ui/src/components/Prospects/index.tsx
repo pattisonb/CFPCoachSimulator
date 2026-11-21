@@ -423,13 +423,24 @@ export default function Prospects({
             onChange={(v) => setHome(v || null)}
           />
 
-          <div className="prospects__chips" role="group" aria-label={m.show}>
+          {/* which prospects: six chips where the row has the room, one menu where it does not (the map open) */}
+          <div className="prospects__chips prospects__views" role="group" aria-label={m.show}>
             {(Object.keys(m.views) as View[]).map((v) => (
               <Chip key={v} on={view === v} onClick={() => setView(v)}>
                 {m.views[v]}
               </Chip>
             ))}
           </div>
+          <span className="prospects__view-pick">
+            <Dropdown
+              label={m.show}
+              hideLabel
+              size="md"
+              value={view}
+              options={(Object.keys(m.views) as View[]).map((v) => ({ value: v, label: m.views[v] }))}
+              onChange={(v) => setView(v as View)}
+            />
+          </span>
           <select
             className="prospects__select"
             aria-label={m.stars}
