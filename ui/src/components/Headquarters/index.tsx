@@ -376,6 +376,10 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
     const from = placed.findIndex((x) => x.id === c.id);
     let at = from;
     flip();
+    // lifted, the card is placed from the board's own corner: left in its cell, it would be placed from that cell's
+    // corner and jump a column or a row away the moment it is picked up (the player's find)
+    node.style.gridColumn = "";
+    node.style.gridRow = "";
     Object.assign(node.style, {
       left: `${r0.left - g0.left}px`,
       top: `${r0.top - g0.top}px`,
