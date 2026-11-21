@@ -4281,14 +4281,44 @@ def player_edits(state: dict, slug: str) -> dict:
 MAX_FACE_BYTES = 4000
 
 
+# The faces a real player or coach always wears (cfb_sim_data/faces/<team>.json: {"players": {slug: face},
+# "coaches": {name: face}}), made by hand from his roster photo. A team with no file rolls its faces as before.
+FACES_DIR = ROOT / "cfb_sim_data" / "faces"
+_preset_faces: dict[str, dict] = {}
+
+
+def preset_faces(slug: str) -> dict:
+    """One team's preset faces: {"players": {...}, "coaches": {...}}, both empty when the team has no file."""
+    if slug not in _preset_faces:
+        path = FACES_DIR / f"{slug}.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8")) if slug.replace("-", "").isalnum() and path.is_file() else {}
+        except (OSError, ValueError):
+            data = {}
+        _preset_faces[slug] = {k: data.get(k) if isinstance(data.get(k), dict) else {} for k in ("players", "coaches")}
+    return _preset_faces[slug]
+
+
+def all_preset_faces() -> dict:
+    """Every preset face for the page, read once when it starts: {"players": {slug: face}, "coaches": {name: face}}.
+    A player's slug is his alone in the league, and a coach keeps his face when he changes jobs."""
+    out: dict = {"players": {}, "coaches": {}}
+    if FACES_DIR.is_dir():
+        for path in sorted(FACES_DIR.glob("*.json")):
+            for k in out:
+                out[k].update(preset_faces(path.stem)[k])
+    return out
+
+
 def player_faces(state: dict, slug: str) -> dict:
-    """Faces drawn for one team's players this season (the new UI's Edit Player Look): player slug -> the
-    pocket-faces face, as the page sent it. A look only: no game, sim or digest reads it."""
-    return (state.get("player_faces") or {}).get(slug) or {}
+    """One team's player faces: player slug -> the pocket-faces face. His preset face (preset_faces), under the one
+    drawn for him this season (the new UI's Edit Player Look), as the page sent it. A look only: no game, sim or
+    digest reads it."""
+    return {**preset_faces(slug)["players"], **((state.get("player_faces") or {}).get(slug) or {})}
 
 
 def set_player_face(state: dict, slug: str, player_slug: str, face: Optional[dict]) -> Optional[dict]:
-    """Give one player a face for the rest of the season, or (None) back to the one drawn from his id. Any team's
+    """Give one player a face for the rest of the season, or (None) back to his preset or the one drawn from his id. Any team's
     player. Returns the face stored."""
     team = load_teams().get(slug)
     if team is None:

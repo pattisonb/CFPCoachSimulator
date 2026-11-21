@@ -62,7 +62,8 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
     root = work / "project"
     for pkg in PACKAGES:
         shutil.copytree(ROOT / pkg, root / pkg, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-    shutil.copytree(ROOT / "cfb_sim_data", root / "cfb_sim_data")
+    # the preset faces are made from real players' photos: they stay out of every published build
+    shutil.copytree(ROOT / "cfb_sim_data", root / "cfb_sim_data", ignore=shutil.ignore_patterns("faces"))
     (root / "data" / "history").mkdir(parents=True)
     for p in sorted((ROOT / "data").glob("*.json")):
         if f"data/{p.name}" not in GENERATED:

@@ -1,4 +1,5 @@
 import { api } from "./api.ts";
+import { setPresetFaces } from "./faces.ts";
 import type { TeamCard, TeamsResponse } from "./types.ts";
 
 // The game's real teams, fetched once and shared by every page, so a page drawn after another has them at once
@@ -14,7 +15,10 @@ export const cachedTeams = (): TeamCard[] | null => cache;
 export function loadTeams(): Promise<TeamCard[]> {
   if (cache) return Promise.resolve(cache);
   pending ??= api<TeamsResponse>("/api/teams")
-    .then((d) => (cache = d.teams.filter((t) => !t.fictional)))
+    .then((d) => {
+      setPresetFaces(d.faces?.players ?? {}, d.faces?.coaches ?? {});
+      return (cache = d.teams.filter((t) => !t.fictional));
+    })
     .finally(() => {
       pending = null;
     });

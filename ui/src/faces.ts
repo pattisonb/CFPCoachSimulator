@@ -56,6 +56,7 @@ const SKILL_SKIP = 2;
 
 const SHAPES = faces.options().faceShape;
 const playerFaces = new Map<string, Face>();
+const playerPresets = new Map<string, Face>();
 
 /** A small stable hash (FNV-1a), so a player's shape pick never changes between visits. */
 function hash(s: string): number {
@@ -65,13 +66,14 @@ function hash(s: string): number {
 }
 
 /**
- * A player's face, the same every time for the same player: rolled from their id, then given a face shape that suits
+ * A player's face, the same every time for the same player: his preset face when he has one (made from his roster
+ * photo), else rolled from their id, then given a face shape that suits
  * the position (linemen the widest shapes, everyone else the narrower ones). A recruit's id (r2027-0001) becomes his
  * roster slug when he signs, so prospect and player share one face.
  */
 export function playerFace(id: string, position: string): Face {
   const key = `${id}|${LINEMEN.has(position) ? "line" : "skill"}`;
-  const hit = playerFaces.get(key);
+  const hit = playerPresets.get(id) ?? playerFaces.get(key);
   if (hit) return hit;
   const shapes = LINEMEN.has(position) ? SHAPES.slice(-LINEMAN_SHAPES) : SHAPES.slice(0, -SKILL_SKIP);
   const face = faces.resolve({
@@ -88,12 +90,30 @@ export function lookOf(saved: unknown, id: string, position: string): Face {
 }
 
 const staffFaces = new Map<string, Face>();
+const coachPresets = new Map<string, Face>();
 
-/** A staff member's face (a coordinator or a scout), the same every time for the same name. */
+/** The preset faces of real players (by slug) and coaches (by name), as GET /api/teams sends them: each is checked,
+ *  and a bad part is repaired. */
+export function setPresetFaces(players: Record<string, unknown>, coaches: Record<string, unknown>): void {
+  for (const [to, from] of [
+    [playerPresets, players],
+    [coachPresets, coaches],
+  ] as const) {
+    to.clear();
+    for (const [key, face] of Object.entries(from)) if (face) to.set(key, faces.repair(face).face);
+  }
+  playerFaces.clear();
+  staffFaces.clear();
+}
+
+/** A real coach's preset face, if he has one. */
+export const presetCoachFace = (name: string): Face | null => coachPresets.get(name) ?? null;
+
+/** A staff member's face (a coordinator or a scout), the same every time for the same name: his preset, else rolled. */
 export function staffFace(name: string): Face {
   let face = staffFaces.get(name);
   if (!face) {
-    face = faces.resolve(faces.random(`staff-${name}`));
+    face = coachPresets.get(name) ?? faces.resolve(faces.random(`staff-${name}`));
     staffFaces.set(name, face);
   }
   return face;
