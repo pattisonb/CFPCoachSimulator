@@ -17,6 +17,7 @@
 
 /* ---------- the list ---------- */
 .prospects__main {
+  container: prospects / inline-size;
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   gap: var(--s2);
@@ -71,6 +72,30 @@
   gap: var(--s2);
 }
 
+.prospects__view-pick {
+  display: none;
+}
+
+/* less room (the map's column open, or a smaller window): each row of tools stays one row. The six "which
+   prospects" chips become one menu, and the position chips sit closer */
+@container prospects (width < 85rem) {
+  .prospects__tools .prospects__views {
+    display: none;
+  }
+
+  .prospects__view-pick {
+    display: block;
+  }
+
+  .prospects__groups {
+    gap: 4px;
+  }
+
+  .prospects__groups .chip {
+    padding-inline: 7px;
+  }
+}
+
 /* the columns' own filters, a line of their own under the tools: eight matching fields on one even grid (a name over
    its field), four pickers then four low-to-high pairs, and Clear at the end */
 .prospects__cols {
@@ -115,6 +140,7 @@
   align-items: center;
   gap: 6px;
   flex: 0 1 240px;
+  min-width: 150px;
   min-height: 36px;
   padding: 0 8px;
   background: var(--paper-hi);
