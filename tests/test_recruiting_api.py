@@ -246,9 +246,7 @@ if __name__ == "__main__":
         # (the one picked above may have been found by your staff in the weeks simmed since: any still unseen will do)
         st = api.loaded_state()
         seen = set(_rc.visible(st))
-        was_found = hidden in seen
         hidden = next(pid for pid, p in st["recruiting"]["prospects"].items() if p.get("hidden") and pid not in seen)
-        print("DIAG first hidden pick found since:", was_found, "| reads:", bool(st["recruiting"]["reads"].get(hidden)))
         refused(lambda: R(sid, "recruit", {"pid": hidden, "action": "message"}), 404)
         api.job()["status"] = "running"
         refused(lambda: G(sid, "recruiting"), 409)
