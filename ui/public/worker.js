@@ -2,7 +2,7 @@
    from game.zip, unpacked into the worker's in-memory filesystem; the seasons and coaches
    folders are IDBFS mounts, persisted to IndexedDB after every call that wrote a file.
    Messages from the page (ui/src/gameClient.ts): first {kind: "init", version, breakStorage,
-   breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes}, answered with {id, ok,
+   breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes, background}, answered with {id, ok,
    status, result | bytes, message}. The worker posts {kind: "loading", stage, loaded, total}
    while it starts, {kind: "ready"} or {kind: "fatal", message}, {kind: "status", status, busy}
    while a sim runs and {kind: "storage-error", message, copy} when a save could not be
@@ -34,6 +34,17 @@ const LOCK = "cfp-game";
 function otherTab() { const err = new Error(OTHER_TAB); err.plain = true; return err; }
 
 self.onmessage = (e) => { queue.push(e.data); if (wake) { const w = wake; wake = null; w(); } };
+
+// Which queued message is served next. A call that changes the game (anything but a GET) keeps its
+// place: nothing sent after it runs before it. Among the reads ahead of the first such call, the newest
+// one the player is waiting on goes first (the screen just opened, not the one just left), and the
+// background reads (the ticker, the page following a sim) go last.
+function nextIndex() {
+  let end = queue.findIndex((m) => m.method !== "GET");
+  if (end === -1) end = queue.length;
+  for (let i = end - 1; i >= 0; i--) if (!queue[i].background) return i;
+  return 0;
+}
 
 function untilMessage() { return queue.length ? Promise.resolve() : new Promise((r) => { wake = r; }); }
 
@@ -175,7 +186,7 @@ async function main() {
   if (restoreError !== null) postMessage({ kind: "storage-error", message: restoreError, copy: NO_SAVES });
   try {
     for (;;) {
-      if (queue.length) await handle(queue.shift());
+      if (queue.length) await handle(queue.splice(nextIndex(), 1)[0]);
       else if (api.running()) await step();
       else await untilMessage();
     }

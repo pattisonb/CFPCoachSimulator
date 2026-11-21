@@ -432,6 +432,27 @@ def _where(exc: BaseException) -> str:
     return f"{exc} ({f.name}, {os.path.basename(f.filename)}:{f.lineno})"
 
 
+NEXT_GAME_STAGE = "Reading your next game"
+WARM_NEWS_WEEKS = 2    # *tune* how many finished weeks of league news the crawl asks for (ui Ticker NEWS_WEEKS)
+
+
+def _warm_next_game(state: dict, report: Callable[[str], None] | None) -> None:
+    """The run is over: what the page asks for the moment it ends is worked out here, as the run's last stage, so it
+    answers at once: your next game's read (season.game_preview simulates it twenty times) and the league's news for
+    the weeks the crawl shows (it reads every box score of a week). In the browser the page's other reads queued
+    behind these for seconds after every week. Reads only: a failure here is the page's to meet when it asks."""
+    if state["done"]:
+        return
+    _job["stage"], _job["games_done"], _job["games_total"] = NEXT_GAME_STAGE, None, None
+    if report is not None:
+        report(json.dumps(_status(state, _job.get("since"))))
+    try:
+        season.game_preview(state, state["team"])
+        news.league_news(state, state["current_week"] - WARM_NEWS_WEEKS)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def step(report: Callable[[str], None] | None = None) -> dict | None:
     """Play the running job's next unit: one week of an advance, or your game on game day.
     Saves the season, moves the job on (back to idle when the run is over, paused or done)
@@ -471,6 +492,7 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
             if over:
                 _job["paused"] = _job["stop"] and _job["done"] < _job["target"] and not state["done"]
         if over:
+            _warm_next_game(state, report)
             _job.update(status="idle", stage=None, stop=False, progress=1.0, week_frac=1.0)
     except Exception as exc:  # noqa: BLE001 - the page shows the error; the dispatcher stays up
         # the half-played week is dropped: the season in memory is the last save again, so the

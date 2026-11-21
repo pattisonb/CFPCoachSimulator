@@ -20,6 +20,7 @@ unless its status says otherwise.
 
 | Route           | Screen                         | Old UI                                 | Status      |
 | --------------- | ------------------------------ | -------------------------------------- | ----------- |
+| 2026-11-21 | The published game answers faster (it runs in the browser, one call at a time). The first Depth Chart after a page load no longer waits two seconds: every player's development read ships worked out (`data/base_development.json`, written by `league.write_base_files`). A sim's last stage, "Reading your next game", works out the Office's read of your next game and the crawl's news (`api._warm_next_game`), so the page's reads after a week answer at once; the week itself takes that much longer. The worker serves the newest read a screen is waiting on first and background reads (`api` `quiet`: the ticker, the page following a sim) last, never moving a read past a call that changes the game (`worker.js` `nextIndex`). |
 | `/`             | Play (start screen)            | Start Screen (`index.html`, no `?id=`) | In progress |
 | `/coach/edit`   | Your Coach: create or edit     | `coach.html`                           | In progress |
 | `/program/edit` | Custom Program: create or edit | `programs.html`                        | In progress |
