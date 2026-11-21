@@ -35,7 +35,7 @@ import { useTab } from "../../tab.ts";
 import { faces, presetCoachFace, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
 import { inkOn, teamAccent } from "../../colors.ts";
-import { currentParams, hrefFor, navigate, rememberDynasty, replaceParams } from "../../router.ts";
+import { currentParams, navigate, rememberDynasty, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
@@ -49,6 +49,8 @@ interface Props {
   onToggleTheme: () => void;
   /** ?id=: the season (a Coach Career) being played */
   seasonId: string | null;
+  /** the next season has begun: the page is drawn afresh for it */
+  onNewSeason: () => void;
   /** ?section= */
   sectionKey: string | null;
 }
@@ -96,7 +98,7 @@ const BEFORE_PORTAL = ["retention", "departures"];
 /** *tune* How much of your team's color the hard shadows under cards and buttons take, in percent. */
 const SHADOW_TINT = 34;
 
-export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Props) {
+export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNewSeason }: Props) {
   const [section, setSection] = useState(() => sectionOf(sectionKey));
   // Recruiting's tab: the Board, or Prospects (?tab=; an old ?section=prospects link opens it, sectionOf maps it)
   const [hubTab, setHubTab] = useState<HubTab>(() =>
@@ -181,8 +183,13 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   );
   // Auto-Recruit (your staff works the board for you): Off, This Week or All Season, from the coach card
   const setAutoRecruit = async (mode: string) => {
-    await api(`/api/season/${seasonId}/settings`, { method: "POST", body: { auto_recruit: mode } });
-    await reloadRecruiting();
+    if (!seasonId) return;
+    try {
+      await api(`/api/season/${seasonId}/settings`, { method: "POST", body: { auto_recruit: mode } });
+      await reloadRecruiting();
+    } catch {
+      // refused (a sim is running): the menu keeps the mode the game has
+    }
   };
   // a game in a window: a played game's box score, or your game played back after Game Day. The page behind keeps the
   // week as it was until the playback is over, so the score is not given away
@@ -399,6 +406,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
   // the address names the section and, in Recruiting, the Prospects tab; the rest of it (?id=) stays
   const writeAddress = (key: string, tab: HubTab) => {
     const params = currentParams();
+    // the address has already left the game (a click here in the moment before another page draws): it is not
+    // this page's to rewrite (the stress run's find: an Edit Look address turned into a game with no career)
+    if (!params.get("id")) return;
     params.set("section", key);
     if (key === "recruiting" && tab !== "board") params.set("tab", tab);
     else params.delete("tab");
@@ -694,7 +704,12 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         onStage={onOffStage}
                         onRecruit={openRecruit}
                         budgets={budgets}
-                        onNextSeason={(id) => location.assign(hrefFor("game", { id, section: "office" }))}
+                        onNextSeason={(id) => {
+                          // the new season opens in place, on a page drawn afresh: a full load would start the
+                          // published game's engine over (the stress run's find)
+                          navigate("game", { id, section: "office" }, true);
+                          onNewSeason();
+                        }}
                       />
                     ) : key === "scores" ? (
                       <Scores key={season.current_week} season={season} teams={bySlug} onBox={openBox} />

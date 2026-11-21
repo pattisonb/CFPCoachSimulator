@@ -139,9 +139,17 @@ function transition(update: () => void) {
 
 const notify = () => listeners.forEach((l) => l());
 
-/** Go to a page without reloading. */
-export function navigate(route: Route, params?: Record<string, string>) {
+/**
+ * Go to a page without reloading. `instant` skips the page-change animation, so the new address is the page's before
+ * the caller's next line (starting the next season draws the game afresh in the same breath).
+ */
+export function navigate(route: Route, params?: Record<string, string>, instant = false) {
   history.pushState(null, "", hrefFor(route, params));
+  if (instant) {
+    notify();
+    window.scrollTo(0, 0);
+    return;
+  }
   transition(() => {
     notify();
     window.scrollTo(0, 0);

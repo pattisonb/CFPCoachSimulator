@@ -10,6 +10,9 @@ import type { SimStatus } from "./types.ts";
 /** *tune* How often a running sim is checked. */
 const POLL_MS = 450;
 
+/** the game's refusal when a sim is already under way (app/api.py) */
+const BUSY = /already simulating/;
+
 export type SimKind = "advance" | "gameday";
 
 export interface Sim {
@@ -89,6 +92,9 @@ export function useSim(seasonId: string | null, onDone: (last?: SimStatus) => vo
       if (running?.status === "running") {
         setStatus(running);
         timer.current = window.setTimeout(poll, POLL_MS);
+      } else if (BUSY.test(message)) {
+        // the sim that was in the way finished before it could be followed: the page reloads what it played
+        done.current(running ?? undefined);
       } else setError(message);
     }
   };
