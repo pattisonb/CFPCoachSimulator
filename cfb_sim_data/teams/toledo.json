@@ -263,7 +263,7 @@
    "ethan-malafa",
    "sam-lee",
    "peyton-strickland",
-   "phillip-mcintosh",
+   "tanner-rubinstein",
    "max-allen"
   ],
   "LT": [
@@ -7373,14 +7373,14 @@
    }
   },
   {
-   "slug": "phillip-mcintosh",
+   "slug": "tanner-rubinstein",
    "position": "TE",
    "class": "FR",
    "team_slug": "toledo",
-   "url": "https://collegefootball.gg/players/phillip-mcintosh/",
-   "name": "Phillip McIntosh",
+   "url": null,
+   "name": "Tanner Rubinstein",
    "position_name": "Tight End",
-   "jersey": "45",
+   "jersey": "29",
    "team": "Toledo",
    "class_year": "Freshman",
    "height": "6'5\"",

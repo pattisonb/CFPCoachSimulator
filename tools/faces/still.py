@@ -4,6 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REAL = {
+        "jamel-howse": "on his school's real roster", "jeremiah-daoud": "on his school's real roster",
+       
         "lance-williams": "on his school's real roster, no headshot found",
         "nate-branch": "on his school's real roster, no headshot found",
         "justin-wood": "on his school's real roster, no headshot found",

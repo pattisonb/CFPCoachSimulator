@@ -288,7 +288,7 @@
   "RT": [
    "tristan-bounds",
    "matthew-lado",
-   "byron-hill"
+   "kaisi-lafitaga"
   ],
   "LEDG": [
    "tre-smith",
@@ -11862,14 +11862,14 @@
    }
   },
   {
-   "slug": "byron-hill",
+   "slug": "kaisi-lafitaga",
    "position": "RT",
    "class": "FR",
    "team_slug": "arizona",
-   "url": "https://collegefootball.gg/players/byron-hill/",
-   "name": "Byron Hill",
+   "url": null,
+   "name": "Kaisi Lafitaga",
    "position_name": "Right Tackle",
-   "jersey": "75",
+   "jersey": "51",
    "team": "Arizona",
    "class_year": "Freshman",
    "height": "6'7\"",

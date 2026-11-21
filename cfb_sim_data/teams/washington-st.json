@@ -325,7 +325,7 @@
   "WILL": [
    "keith-brown",
    "carsten-reynolds",
-   "jojo-ivey",
+   "ben-beatty",
    "isaiah-hung"
   ],
   "CB": [
@@ -18396,14 +18396,14 @@
    }
   },
   {
-   "slug": "jojo-ivey",
+   "slug": "ben-beatty",
    "position": "WILL",
    "class": "FR",
    "team_slug": "washington-st",
-   "url": "https://collegefootball.gg/players/jojo-ivey/",
-   "name": "Jojo Ivey",
+   "url": null,
+   "name": "Ben Beatty",
    "position_name": "Will Linebacker",
-   "jersey": "47",
+   "jersey": "51",
    "team": "Washington St.",
    "class_year": "Freshman",
    "height": "6'1\"",

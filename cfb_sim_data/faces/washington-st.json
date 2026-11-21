@@ -6,6 +6,7 @@
   "ashton-tripp": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": true, "flip": []},
   "balaam-miller": {"faceShape": "face_shape_03", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "beau-baker": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
+  "ben-beatty": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_17", "hairFade": false, "flip": []},
   "branden-ganashamoorthy": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "black", "eyeColor": "hazel", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
   "caden-pinnick": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_06", "hairFade": true, "flip": []},
   "carsten-reynolds": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_02", "hairFade": true, "flip": []},
@@ -91,6 +92,5 @@
   "Trent Bray": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_07", "hairFade": true, "flip": []}
  },
  "rolled": {
-  "jojo-ivey": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []}
  }
 }

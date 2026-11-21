@@ -352,7 +352,7 @@
   ],
   "P": [
    "chase-reeves",
-   "j-r-hall"
+   "anthony-saget"
   ]
  },
  "roster_size": 85,
@@ -23699,14 +23699,14 @@
    }
   },
   {
-   "slug": "j-r-hall",
+   "slug": "anthony-saget",
    "position": "P",
    "class": "FR",
    "team_slug": "liberty",
-   "url": "https://collegefootball.gg/players/j-r-hall/",
-   "name": "J.R. Hall",
+   "url": null,
+   "name": "Anthony Saget",
    "position_name": "Punter",
-   "jersey": "32",
+   "jersey": "36",
    "team": "Liberty",
    "class_year": "Freshman",
    "height": "6'0\"",

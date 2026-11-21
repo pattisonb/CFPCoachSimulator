@@ -316,12 +316,12 @@
   "SAM": [
    "lawson-pritchett",
    "braylon-outlaw",
-   "sean-younger"
+   "jack-richerson"
   ],
   "MIKE": [
    "kyle-efford",
    "melvin-jordan-iv",
-   "tre-dent",
+   "drew-cohen",
    "c-j-gamble"
   ],
   "WILL": [
@@ -16751,14 +16751,14 @@
    }
   },
   {
-   "slug": "sean-younger",
+   "slug": "jack-richerson",
    "position": "SAM",
    "class": "FR",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/sean-younger/",
-   "name": "Sean Younger",
+   "url": null,
+   "name": "Jack Richerson",
    "position_name": "Sam Linebacker",
-   "jersey": "37",
+   "jersey": "39",
    "team": "Georgia Tech",
    "class_year": "Freshman",
    "height": "6'2\"",
@@ -17577,14 +17577,14 @@
    }
   },
   {
-   "slug": "tre-dent",
+   "slug": "drew-cohen",
    "position": "MIKE",
    "class": "SO",
    "team_slug": "georgia-tech",
-   "url": "https://collegefootball.gg/players/tre-dent/",
-   "name": "Tre Dent",
+   "url": null,
+   "name": "Drew Cohen",
    "position_name": "Mike Linebacker",
-   "jersey": "46",
+   "jersey": "93",
    "team": "Georgia Tech",
    "class_year": "Sophomore",
    "height": "6'2\"",

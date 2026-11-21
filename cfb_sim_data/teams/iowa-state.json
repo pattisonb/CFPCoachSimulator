@@ -162,7 +162,7 @@
     "jaylen-raynor"
    ],
    "HB": [
-    "delvin-forrest"
+    "aj-petersen"
    ],
    "WR": [
     "omari-hayes",
@@ -237,7 +237,7 @@
    "zane-flores"
   ],
   "HB": [
-   "delvin-forrest",
+   "aj-petersen",
    "salahadin-allah",
    "cameron-pettaway",
    "arnold-barnes-iii",
@@ -1205,14 +1205,14 @@
    }
   },
   {
-   "slug": "delvin-forrest",
+   "slug": "aj-petersen",
    "position": "HB",
    "class": "SO",
    "team_slug": "iowa-state",
-   "url": "https://collegefootball.gg/players/delvin-forrest/",
-   "name": "Delvin Forrest",
+   "url": null,
+   "name": "AJ Petersen",
    "position_name": "Halfback",
-   "jersey": "15",
+   "jersey": "39",
    "team": "Iowa State",
    "class_year": "Sophomore",
    "height": "5'11\"",

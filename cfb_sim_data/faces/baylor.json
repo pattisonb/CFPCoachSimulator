@@ -81,6 +81,7 @@
   "tony-livingston": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_01", "hairFade": true, "flip": []},
   "travion-barnes": {"faceShape": "face_shape_05", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
   "trent-thomas-baylor": {"faceShape": "face_shape_05", "skinTone": "deep", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_20", "hairFade": true, "flip": []},
+  "trey-laurence": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_26", "hairFade": true, "flip": []},
   "tyler-turner": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_20", "hairFade": true, "flip": []},
   "yakiri-walker": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
   "zavion-hardy": {"faceShape": "face_shape_05", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
@@ -91,6 +92,5 @@
   "Dave Aranda": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },
  "rolled": {
-  "javonte-bellmead": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_02", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_01", "hairFade": false, "flip": []}
  }
 }

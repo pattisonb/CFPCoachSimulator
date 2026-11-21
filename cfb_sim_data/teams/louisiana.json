@@ -160,7 +160,7 @@
     "lunch-winfield"
    ],
    "HB": [
-    "lamarcus-griffin-palmore"
+    "aiden-falgout"
    ],
    "WR": [
     "shelton-sampson-jr",
@@ -236,7 +236,7 @@
    "coleman-carter"
   ],
   "HB": [
-   "lamarcus-griffin-palmore",
+   "aiden-falgout",
    "anthony-reagan-jr",
    "steven-blanco",
    "jj-garner",
@@ -1474,14 +1474,14 @@
    }
   },
   {
-   "slug": "lamarcus-griffin-palmore",
+   "slug": "aiden-falgout",
    "position": "HB",
    "class": "SRRS",
    "team_slug": "louisiana",
-   "url": "https://collegefootball.gg/players/lamarcus-griffin-palmore/",
-   "name": "LaMarcus Griffin-Palmore",
+   "url": null,
+   "name": "Aiden Falgout",
    "position_name": "Halfback",
-   "jersey": "39",
+   "jersey": "43",
    "team": "Louisiana",
    "class_year": "Senior (RS)",
    "height": "5'10\"",
