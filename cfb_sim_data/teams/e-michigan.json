@@ -260,7 +260,7 @@
   ],
   "TE": [
    "tanner-lemaster",
-   "luke-grant",
+   "payton-kokaly",
    "joshua-long",
    "armaad-sharp",
    "jack-kautz",
@@ -351,7 +351,7 @@
   "K": [
    "rudy-kessinger",
    "nathan-dibert",
-   "quinn-brown"
+   "adam-samaha"
   ],
   "P": [
    "daniel-hull"
@@ -6287,14 +6287,14 @@
    }
   },
   {
-   "slug": "luke-grant",
+   "slug": "payton-kokaly",
    "position": "TE",
    "class": "SO",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/luke-grant/",
-   "name": "Luke Grant",
+   "url": null,
+   "name": "Payton Kokaly",
    "position_name": "Tight End",
-   "jersey": "38",
+   "jersey": "43",
    "team": "E. Michigan",
    "class_year": "Sophomore",
    "height": "6'1\"",
@@ -23499,14 +23499,14 @@
    }
   },
   {
-   "slug": "quinn-brown",
+   "slug": "adam-samaha",
    "position": "K",
    "class": "FR",
    "team_slug": "e-michigan",
-   "url": "https://collegefootball.gg/players/quinn-brown/",
-   "name": "Quinn Brown",
+   "url": null,
+   "name": "Adam Samaha",
    "position_name": "Kicker",
-   "jersey": "48",
+   "jersey": "33",
    "team": "E. Michigan",
    "class_year": "Freshman",
    "height": "6'0\"",

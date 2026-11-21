@@ -312,7 +312,7 @@
   "SAM": [
    "cooper-roy",
    "austin-yelder",
-   "bam-booker"
+   "jedrick-russell-jr"
   ],
   "MIKE": [
    "jared-lloyd",
@@ -16296,14 +16296,14 @@
    }
   },
   {
-   "slug": "bam-booker",
+   "slug": "jedrick-russell-jr",
    "position": "SAM",
    "class": "FR",
    "team_slug": "missouri-state",
-   "url": "https://collegefootball.gg/players/bam-booker/",
-   "name": "Bam Booker",
+   "url": null,
+   "name": "Jedrick Russell Jr.",
    "position_name": "Sam Linebacker",
-   "jersey": "46",
+   "jersey": "48",
    "team": "Missouri State",
    "class_year": "Freshman",
    "height": "6'2\"",

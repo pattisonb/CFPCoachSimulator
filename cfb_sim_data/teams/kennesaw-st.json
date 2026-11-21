@@ -271,7 +271,7 @@
   "LG": [
    "luke-duska",
    "mike-wallace-jr",
-   "keenan-wilson-kennesaw-st"
+   "aidan-williams"
   ],
   "C": [
    "mateo-guevara",
@@ -8577,14 +8577,14 @@
    }
   },
   {
-   "slug": "keenan-wilson-kennesaw-st",
+   "slug": "aidan-williams",
    "position": "LG",
    "class": "FR",
    "team_slug": "kennesaw-st",
-   "url": "https://collegefootball.gg/players/keenan-wilson-kennesaw-st/",
-   "name": "Keenan Wilson",
+   "url": null,
+   "name": "Aidan Williams",
    "position_name": "Left Guard",
-   "jersey": "61",
+   "jersey": "73",
    "team": "Kennesaw St.",
    "class_year": "Freshman",
    "height": "6'4\"",

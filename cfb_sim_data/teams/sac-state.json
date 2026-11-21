@@ -280,7 +280,7 @@
   ],
   "RG": [
    "vae-soifua",
-   "jeremiah-cooper-sac-state",
+   "elijah-ortiz",
    "giovanni-kovacs"
   ],
   "RT": [
@@ -10780,14 +10780,14 @@
    }
   },
   {
-   "slug": "jeremiah-cooper-sac-state",
+   "slug": "elijah-ortiz",
    "position": "RG",
    "class": "SORS",
    "team_slug": "sac-state",
-   "url": "https://collegefootball.gg/players/jeremiah-cooper-sac-state/",
-   "name": "Jeremiah Cooper",
+   "url": null,
+   "name": "Elijah Ortiz",
    "position_name": "Right Guard",
-   "jersey": "79",
+   "jersey": "53",
    "team": "Sac State",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",

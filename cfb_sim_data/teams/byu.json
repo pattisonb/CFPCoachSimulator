@@ -232,11 +232,11 @@
  "depth_chart": {
   "QB": [
    "bear-bachmeier",
-   "patrick-anderson",
+   "owen-geilman",
    "treyson-bourguet",
    "enoch-watson",
    "john-sanders",
-   "dorian-patterson"
+   "jaron-pula"
   ],
   "HB": [
    "lj-martin",
@@ -324,7 +324,7 @@
   "WILL": [
    "cade-uluave",
    "jake-clifton",
-   "mitchell-burton",
+   "braxton-lindsey",
    "owen-borg"
   ],
   "CB": [
@@ -621,14 +621,14 @@
    }
   },
   {
-   "slug": "patrick-anderson",
+   "slug": "owen-geilman",
    "position": "QB",
    "class": "SORS",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/patrick-anderson/",
-   "name": "Patrick Anderson",
+   "url": null,
+   "name": "Owen Geilman",
    "position_name": "Quarterback",
-   "jersey": "6",
+   "jersey": "16",
    "team": "BYU",
    "class_year": "Sophomore (RS)",
    "height": "6'3\"",
@@ -1713,14 +1713,14 @@
    }
   },
   {
-   "slug": "dorian-patterson",
+   "slug": "jaron-pula",
    "position": "QB",
    "class": "FR",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/dorian-patterson/",
-   "name": "Dorian Patterson",
+   "url": null,
+   "name": "Jaron Pula",
    "position_name": "Quarterback",
-   "jersey": "14",
+   "jersey": "5",
    "team": "BYU",
    "class_year": "Freshman",
    "height": "6'0\"",
@@ -17869,14 +17869,14 @@
    }
   },
   {
-   "slug": "mitchell-burton",
+   "slug": "braxton-lindsey",
    "position": "WILL",
    "class": "FRRS",
    "team_slug": "byu",
-   "url": "https://collegefootball.gg/players/mitchell-burton/",
-   "name": "Mitchell Burton",
+   "url": null,
+   "name": "Braxton Lindsey",
    "position_name": "Will Linebacker",
-   "jersey": "55",
+   "jersey": "30",
    "team": "BYU",
    "class_year": "Freshman (RS)",
    "height": "6'3\"",

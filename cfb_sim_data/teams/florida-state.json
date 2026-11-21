@@ -217,7 +217,7 @@
   },
   "special_teams": {
    "K": [
-    "brandon-garner"
+    "conor-mcaneney"
    ],
    "P": [
     "daniel-hughes"
@@ -349,7 +349,7 @@
    "max-redmon"
   ],
   "K": [
-   "brandon-garner",
+   "conor-mcaneney",
    "gabe-panikowski"
   ],
   "P": [
@@ -22691,14 +22691,14 @@
    }
   },
   {
-   "slug": "brandon-garner",
+   "slug": "conor-mcaneney",
    "position": "K",
    "class": "SO",
    "team_slug": "florida-state",
-   "url": "https://collegefootball.gg/players/brandon-garner/",
-   "name": "Brandon Garner",
+   "url": null,
+   "name": "Conor McAneney",
    "position_name": "Kicker",
-   "jersey": "64",
+   "jersey": "93",
    "team": "Florida State",
    "class_year": "Sophomore",
    "height": "6'0\"",

@@ -265,7 +265,7 @@
   ],
   "LT": [
    "ryan-babatz",
-   "alex-jenkins",
+   "jack-hansen",
    "noah-stommes",
    "james-nellis"
   ],
@@ -7836,14 +7836,14 @@
    }
   },
   {
-   "slug": "alex-jenkins",
+   "slug": "jack-hansen",
    "position": "LT",
    "class": "SORS",
    "team_slug": "ndsu",
-   "url": "https://collegefootball.gg/players/alex-jenkins/",
-   "name": "Alex Jenkins",
+   "url": null,
+   "name": "Jack Hansen",
    "position_name": "Left Tackle",
-   "jersey": "77",
+   "jersey": "98",
    "team": "NDSU",
    "class_year": "Sophomore (RS)",
    "height": "6'6\"",

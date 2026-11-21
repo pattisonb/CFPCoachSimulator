@@ -269,7 +269,7 @@
   "LT": [
    "brayden-walton",
    "oscar-weigel",
-   "mason-york"
+   "ekene-ebizie"
   ],
   "LG": [
    "edward-fonua",
@@ -7659,14 +7659,14 @@
    }
   },
   {
-   "slug": "mason-york",
+   "slug": "ekene-ebizie",
    "position": "LT",
    "class": "FR",
    "team_slug": "fresno-state",
-   "url": "https://collegefootball.gg/players/mason-york/",
-   "name": "Mason York",
+   "url": null,
+   "name": "Ekene Ebizie",
    "position_name": "Left Tackle",
-   "jersey": "59",
+   "jersey": "68",
    "team": "Fresno State",
    "class_year": "Freshman",
    "height": "6'5\"",

@@ -180,7 +180,7 @@
     "lawson-petty"
    ],
    "C": [
-    "yakiri-walker"
+    "muyont-a-maxwell"
    ],
    "RG": [
     "koltin-sieracki"
@@ -277,7 +277,7 @@
    "asher-hale"
   ],
   "C": [
-   "yakiri-walker",
+   "muyont-a-maxwell",
    "harrison-cluff"
   ],
   "RG": [
@@ -9160,14 +9160,14 @@
    }
   },
   {
-   "slug": "yakiri-walker",
+   "slug": "muyont-a-maxwell",
    "position": "C",
    "class": "SRRS",
    "team_slug": "baylor",
-   "url": "https://collegefootball.gg/players/yakiri-walker/",
-   "name": "Yakiri Walker",
+   "url": null,
+   "name": "Muyont'a Maxwell",
    "position_name": "Center",
-   "jersey": "68",
+   "jersey": "75",
    "team": "Baylor",
    "class_year": "Senior (RS)",
    "height": "6'2\"",

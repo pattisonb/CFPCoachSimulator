@@ -288,7 +288,7 @@
   "RT": [
    "luke-watson",
    "ransom-mcdermott",
-   "alex-wood"
+   "khalif-mcnear"
   ],
   "LEDG": [
    "jamair-diaz",
@@ -11417,14 +11417,14 @@
    }
   },
   {
-   "slug": "alex-wood",
+   "slug": "khalif-mcnear",
    "position": "RT",
    "class": "SO",
    "team_slug": "temple",
-   "url": "https://collegefootball.gg/players/alex-wood/",
-   "name": "Alex Wood",
+   "url": null,
+   "name": "Khalif McNear",
    "position_name": "Right Tackle",
-   "jersey": "79",
+   "jersey": "53",
    "team": "Temple",
    "class_year": "Sophomore",
    "height": "6'5\"",

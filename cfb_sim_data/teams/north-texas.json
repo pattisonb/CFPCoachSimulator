@@ -278,7 +278,7 @@
   ],
   "C": [
    "chandler-strong",
-   "andrew-cunningham",
+   "drew-cunningham-north-texas",
    "amarion-berry"
   ],
   "RG": [
@@ -288,7 +288,7 @@
   ],
   "RT": [
    "neto-umeozulu",
-   "drew-cunningham-north-texas",
+   "francisco-adams",
    "jahzari-priester"
   ],
   "LEDG": [
@@ -9333,12 +9333,12 @@
    }
   },
   {
-   "slug": "andrew-cunningham",
+   "slug": "drew-cunningham-north-texas",
    "position": "C",
    "class": "SORS",
    "team_slug": "north-texas",
-   "url": "https://collegefootball.gg/players/andrew-cunningham/",
-   "name": "Andrew Cunningham",
+   "url": null,
+   "name": "Drew Cunningham",
    "position_name": "Center",
    "jersey": "61",
    "team": "North Texas",
@@ -10990,14 +10990,14 @@
    }
   },
   {
-   "slug": "drew-cunningham-north-texas",
+   "slug": "francisco-adams",
    "position": "RT",
    "class": "JR",
    "team_slug": "north-texas",
    "url": null,
-   "name": "Drew Cunningham",
+   "name": "Francisco Adams",
    "position_name": "Right Tackle",
-   "jersey": "61",
+   "jersey": "74",
    "team": "North Texas",
    "class_year": "Junior",
    "height": "6'5\"",

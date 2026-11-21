@@ -225,7 +225,7 @@
     "hunter-robertson"
    ],
    "KR": [
-    "taylor-tatum"
+    "nico-andrighetto"
    ],
    "PR": [
     "i-marion-stewart"
@@ -238,7 +238,7 @@
    "brayden-fowler-nicolosi",
    "tommy-carr",
    "brady-smigiel",
-   "colin-hurley"
+   "chase-herbstreit"
   ],
   "HB": [
    "jordan-marshall",
@@ -346,7 +346,7 @@
   ],
   "SS": [
    "chris-bracy",
-   "taylor-tatum",
+   "nico-andrighetto",
    "jordan-deck",
    "kainoa-winston",
    "mason-curtis"
@@ -1463,14 +1463,14 @@
    }
   },
   {
-   "slug": "colin-hurley",
+   "slug": "chase-herbstreit",
    "position": "QB",
    "class": "FRRS",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/colin-hurley/",
-   "name": "Colin Hurley",
+   "url": null,
+   "name": "Chase Herbstreit",
    "position_name": "Quarterback",
-   "jersey": "18",
+   "jersey": "15",
    "team": "Michigan",
    "class_year": "Freshman (RS)",
    "height": "6'1\"",
@@ -21445,14 +21445,14 @@
    }
   },
   {
-   "slug": "taylor-tatum",
+   "slug": "nico-andrighetto",
    "position": "SS",
    "class": "JR",
    "team_slug": "michigan",
-   "url": "https://collegefootball.gg/players/taylor-tatum/",
-   "name": "Taylor Tatum",
+   "url": null,
+   "name": "Nico Andrighetto",
    "position_name": "Strong Safety",
-   "jersey": "26",
+   "jersey": "31",
    "team": "Michigan",
    "class_year": "Junior",
    "height": "5'10\"",

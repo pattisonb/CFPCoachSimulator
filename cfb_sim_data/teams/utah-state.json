@@ -189,7 +189,7 @@
   },
   "defense": {
    "LEDG": [
-    "adrian-williams"
+    "gabriel-iniguez-jr"
    ],
    "REDG": [
     "tyree-morris"
@@ -205,7 +205,7 @@
    "CB": [
     "d-angelo-mayes",
     "antonio-bluiett",
-    "marcus-mckenzie"
+    "dontae-dyson"
    ],
    "FS": [
     "chapman-lewis"
@@ -291,7 +291,7 @@
    "easton-hammond"
   ],
   "LEDG": [
-   "adrian-williams",
+   "gabriel-iniguez-jr",
    "carson-tujague",
    "tanner-jolley",
    "kasen-long",
@@ -332,7 +332,7 @@
   "CB": [
    "d-angelo-mayes",
    "antonio-bluiett",
-   "marcus-mckenzie",
+   "dontae-dyson",
    "kye-stokes",
    "john-shepard",
    "markie-grant"
@@ -11738,14 +11738,14 @@
    }
   },
   {
-   "slug": "adrian-williams",
+   "slug": "gabriel-iniguez-jr",
    "position": "LEDG",
    "class": "SRRS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/adrian-williams/",
-   "name": "Adrian Williams",
+   "url": null,
+   "name": "Gabriel Iniguez Jr.",
    "position_name": "Left Edge",
-   "jersey": "62",
+   "jersey": "10",
    "team": "Utah State",
    "class_year": "Senior (RS)",
    "height": "6'5\"",
@@ -19642,12 +19642,12 @@
    }
   },
   {
-   "slug": "marcus-mckenzie",
+   "slug": "dontae-dyson",
    "position": "CB",
    "class": "SORS",
    "team_slug": "utah-state",
-   "url": "https://collegefootball.gg/players/marcus-mckenzie/",
-   "name": "Marcus McKenzie",
+   "url": null,
+   "name": "Dontae Dyson",
    "position_name": "Cornerback",
    "jersey": "35",
    "team": "Utah State",

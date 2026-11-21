@@ -272,7 +272,7 @@
   ],
   "LG": [
    "evan-lawrence",
-   "chris-mcbride",
+   "koi-taiese",
    "ikbahl-kassim"
   ],
   "C": [
@@ -8818,14 +8818,14 @@
    }
   },
   {
-   "slug": "chris-mcbride",
+   "slug": "koi-taiese",
    "position": "LG",
    "class": "SO",
    "team_slug": "san-diego-st",
-   "url": "https://collegefootball.gg/players/chris-mcbride/",
-   "name": "Chris McBride",
+   "url": null,
+   "name": "Koi Taiese",
    "position_name": "Left Guard",
-   "jersey": "62",
+   "jersey": "52",
    "team": "San Diego St.",
    "class_year": "Sophomore",
    "height": "6'5\"",

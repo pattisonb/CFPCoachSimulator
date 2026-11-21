@@ -281,7 +281,7 @@
   "C": [
    "terrence-moore",
    "deron-mclaughlin",
-   "patrick-richardson"
+   "fred-johnson"
   ],
   "RG": [
    "ty-chan",
@@ -10841,14 +10841,14 @@
    }
   },
   {
-   "slug": "patrick-richardson",
+   "slug": "fred-johnson",
    "position": "C",
    "class": "FRRS",
    "team_slug": "uconn",
-   "url": "https://collegefootball.gg/players/patrick-richardson/",
-   "name": "Patrick Richardson",
+   "url": null,
+   "name": "Fred Johnson",
    "position_name": "Center",
-   "jersey": "65",
+   "jersey": "55",
    "team": "UConn",
    "class_year": "Freshman (RS)",
    "height": "6'2\"",

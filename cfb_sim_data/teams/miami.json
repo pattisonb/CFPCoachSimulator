@@ -267,7 +267,7 @@
   ],
   "LT": [
    "jackson-cantwell",
-   "jared-davis"
+   "ralph-scroggins"
   ],
   "LG": [
    "samson-okunlola",
@@ -7920,14 +7920,14 @@
    }
   },
   {
-   "slug": "jared-davis",
+   "slug": "ralph-scroggins",
    "position": "LT",
    "class": "SO",
    "team_slug": "miami",
-   "url": "https://collegefootball.gg/players/jared-davis/",
-   "name": "Jared Davis",
+   "url": null,
+   "name": "Ralph Scroggins",
    "position_name": "Left Tackle",
-   "jersey": "75",
+   "jersey": "64",
    "team": "Miami",
    "class_year": "Sophomore",
    "height": "6'5\"",

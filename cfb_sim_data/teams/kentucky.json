@@ -167,7 +167,7 @@
    "WR": [
     "nic-anderson",
     "shane-carr",
-    "hardley-gilmore-iv"
+    "cash-harney"
    ],
    "TE": [
     "willie-rodriguez"
@@ -248,7 +248,7 @@
   "WR": [
    "nic-anderson",
    "shane-carr",
-   "hardley-gilmore-iv",
+   "cash-harney",
    "dj-miller",
    "ashton-cozart",
    "kenny-darby",
@@ -3436,14 +3436,14 @@
    }
   },
   {
-   "slug": "hardley-gilmore-iv",
+   "slug": "cash-harney",
    "position": "WR",
    "class": "JR",
    "team_slug": "kentucky",
-   "url": "https://collegefootball.gg/players/hardley-gilmore-iv/",
-   "name": "Hardley Gilmore IV",
+   "url": null,
+   "name": "Cash Harney",
    "position_name": "Wide Receiver",
-   "jersey": "17",
+   "jersey": "89",
    "team": "Kentucky",
    "class_year": "Junior",
    "height": "6'1\"",
