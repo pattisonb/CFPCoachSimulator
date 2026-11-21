@@ -8,11 +8,11 @@ id | name | school | position | jersey | class | height weight | note
 
 
 
-## B. Real players given a made-up player's spot, no photo found (1)
+## B. Real players given a made-up player's spot, no photo found (0)
 
 id | name | school | position | jersey | class | height weight
 
-will-evans | Will Evans | Utah State | P | #48 | JR | 6'3" 210 lb
+
 
 ## C. Made-up names with no real player to take the spot (15)
 
