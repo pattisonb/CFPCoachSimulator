@@ -453,7 +453,35 @@ def _status(state: dict, since: Optional[int]) -> dict:
     out["my_rank"] = season.current_rank(state)      # the header's rank follows the sim week by week
     if since is not None:
         out["results"] = season.my_results(state, since)
+    if _job.get("feed"):
+        out["feed"] = _job["feed"]
     return out
+
+
+def _feed(state: dict) -> Optional[dict]:
+    """What the page shows as a sim passes a week, sent with the sim's own progress (the player's ask: news and notices
+    follow a long sim): your Program News, who on your board is committed or signed where, and your injury report. On
+    the published site a read of these waits behind the sim itself, so they ran a week or two late, or not at all.
+    Never fails a sim: None when it cannot be built."""
+    try:
+        from coach_career import office
+        rc = state.get("recruiting") or {}
+        if not state.get("career") or not rc:
+            return None
+        teams = season.load_teams()
+        board = []
+        for pid in rc.get("board") or []:
+            p, st = (rc.get("prospects") or {}).get(pid), (rc.get("status") or {}).get(pid) or {}
+            if not p:
+                continue
+            school = st.get("signed") or st.get("committed")
+            board.append({"id": pid, "name": p["name"], "display_pos": prospects.display_pos(p["ea_position"]), "stars": p["stars"],
+                          "committed": st.get("committed"), "signed": st.get("signed"),
+                          "school_name": office._school_name(school, teams) if school else None})
+        return {"week": state["current_week"], "news": office.program_news(state), "board": board,
+                "injuries": season.injury_report(state, state["team"])}
+    except Exception:           # a view only
+        return None
 
 
 def _where(exc: BaseException) -> str:
@@ -518,6 +546,7 @@ def step(report: Callable[[str], None] | None = None) -> dict | None:
             if not _job["stop"] and not state["done"]:   # a pause lands between weeks, as advance_to checked it
                 # every week after the run's first runs your recruiting week too, as one advance_to call did
                 season.advance(state, season.shared_pool(), on_progress, auto_recruit=state["current_week"] > _job["since"])
+                _job["feed"] = _feed(state)              # the week's news goes out with the next progress report
                 on_progress(season.SAVING_STAGE, None, None)
                 season.save_season(state)
                 _mark_changed()
@@ -864,7 +893,7 @@ def advance_season(p: Params) -> dict:
         return {"status": "idle", "done": week, "total": week}
     target = max(week + 1, min(season.FINAL_WEEK, to if to is not None else week + 1))
     _job.update(status="running", kind="advance", target=target, done=week, total=target, since=week,
-                stop=False, paused=False, gameday_event=None, error=None)
+                stop=False, paused=False, gameday_event=None, error=None, feed=None)   # last run's news is not this run's
     _plan(state, week + 1, target)
     return {"status": "running", "done": week, "total": target}
 

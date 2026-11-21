@@ -128,6 +128,8 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const next = s.done ? null : (games.find((g) => !g.played && g.week >= s.current_week + 1) ?? null);
   // the game card, held while a sim runs: it stays as it was when the sim began instead of chasing the weeks (its Win
   // Chance ran a week behind the sim; the player's ask)
+  // Program News while a sim runs: the sim sends each finished week's with its progress, so it is not a read behind
+  const news = (sim.running && sim.status?.feed?.news) || office?.news || [];
   const cardNow = { s, thisWeek, next, preview };
   const cardHeld = useRef(cardNow);
   if (!sim.running) cardHeld.current = cardNow;
@@ -358,9 +360,9 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         <section className="office__panel" aria-label={m.news}>
           <h2 className="office__panel-title">{m.news}</h2>
           {office ? (
-            office.news.length ? (
+            news.length ? (
               <ul className="office__feed">
-                {office.news.map((n, i) => (
+                {news.map((n, i) => (
                   <li key={`${n.week}-${n.kind}-${n.pid ?? i}`}>
                     <span className="office__when">
                       {n.week === s.current_week ? m.thisWeekWhen : weekName(n.week)}

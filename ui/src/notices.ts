@@ -46,6 +46,12 @@ const write = (key: string, value: unknown): boolean => {
   }
 };
 
+/** What a notice reads of a board row (the board's own rows, or a running sim's short ones). */
+type ClassRow = Pick<BoardRow, "id" | "name" | "display_pos" | "stars" | "school_name"> & {
+  committed?: string | null;
+  signed?: string | null | false;
+};
+
 interface Injury {
   name: string;
   position: string;
@@ -65,7 +71,9 @@ export function useNotices(
   year: number | undefined,
   team: string | undefined,
   week: number | undefined,
-  board: BoardRow[] | undefined,
+  board: ClassRow[] | undefined,
+  /** your injury report when the caller already has it (a running sim sends it): not read again */
+  hurtNow?: Injury[],
 ) {
   const base = seasonId && year != null ? `cfp.notices.${seasonId}.${year}` : null;
   const [items, setItems] = useState<Notice[]>([]);
@@ -155,7 +163,10 @@ export function useNotices(
   useEffect(() => {
     if (!base || !seasonId || !team || week == null) return;
     let on = true;
-    api<{ injuries?: Injury[] }>(`/api/season/${seasonId}/injuries?team=${team}`)
+    (hurtNow
+      ? Promise.resolve({ injuries: hurtNow })
+      : api<{ injuries?: Injury[] }>(`/api/season/${seasonId}/injuries?team=${team}`)
+    )
       .then((v) => {
         if (!on) return;
         const key = `${base}.hurt`;
@@ -180,7 +191,7 @@ export function useNotices(
     return () => {
       on = false;
     };
-  }, [base, seasonId, team, week, add]);
+  }, [base, seasonId, team, week, add, hurtNow]);
 
   return {
     items,
