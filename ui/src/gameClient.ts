@@ -5,6 +5,9 @@ import { ROOT } from "./router.ts";
 // Python game server. On the published site (built by tools/build_site.py, which sets VITE_GAME=browser) there is no
 // server: the same Python game runs in a Web Worker (public/worker.js, Pyodide) and every call is a message to it,
 // answered as a Response so api.ts reads both the same way. Saves live in the browser (IndexedDB).
+// The worker takes a while to start (Python and the game are downloaded and unpacked), so it starts with the page, and
+// until it is up the team picker's reads are answered from plain files the build wrote (boot/, tools/build_site.py):
+// the first screen shows at once and the game loads behind it.
 
 /** True on the published site: the game runs in this browser. */
 export const IN_BROWSER = import.meta.env.VITE_GAME === "browser";
@@ -35,6 +38,27 @@ let ready: Promise<void> | null = null;
 let snapshot: Snapshot | null = null;
 /** the error once the worker has failed: every call rejects with it */
 let dead: Error | null = null;
+/** the worker is up: every call goes to it */
+let up = false;
+/** a read was answered from the build's files: a worker that then fails must say so itself, no call is waiting on it */
+let servedBoot = false;
+
+// The team picker's reads while the worker is still starting: the answers the build wrote ahead (a game just started
+// gives the same ones). Anything else, or a file that is not there, waits for the worker.
+async function fromBoot(method: string, path: string): Promise<Response | null> {
+  if (up || dead || method !== "GET") return null;
+  const m = /\/api\/teams(?:\/([^/]+))?$/.exec(new URL(path, location.href).pathname);
+  if (!m) return null;
+  try {
+    const res = await fetch(`${ROOT}boot/${m[1] ? `teams/${m[1]}` : "teams"}.json`);
+    // a missing file can come back as the app's own page (the site sends every unknown path there)
+    if (!res.ok || !(res.headers.get("Content-Type") || "").includes("json") || up) return null;
+    servedBoot = true;
+    return res;
+  } catch {
+    return null;
+  }
+}
 
 // a GET of the running sim's status: the snapshot, with the page's `since` applied to the results
 function fromSnapshot(method: string, path: string): Response | null {
@@ -77,6 +101,7 @@ function start(): Promise<void> {
       for (const p of pending.values()) p.reject(dead);
       pending.clear();
       done();
+      if (servedBoot) beginBusy(dead.message); // the picker is already on the screen: the notice stays to say why it won't start
       reject(dead);
     };
     w.onerror = (e) => die(e.message || "the worker failed");
@@ -86,6 +111,7 @@ function start(): Promise<void> {
         const pct = m.total ? ` ${Math.round((100 * m.loaded) / m.total)}%` : "";
         say(`${m.stage}${pct}…`);
       } else if (m.kind === "ready") {
+        up = true;
         done();
         resolve();
       } else if (m.kind === "fatal") die(m.message, m.plain);
@@ -104,9 +130,11 @@ function start(): Promise<void> {
 
 async function viaWorker(path: string, init: RequestInit, background: boolean): Promise<Response> {
   ready ??= start();
+  const method = (init.method || "GET").toUpperCase();
+  const boot = await fromBoot(method, path);
+  if (boot) return boot;
   await ready;
   if (dead) throw dead;
-  const method = (init.method || "GET").toUpperCase();
   const quick = fromSnapshot(method, path);
   if (quick) return quick;
   const msg = { id: nextId++, method, path, bodyJson: null, bodyBytes: null, background, ...(await bodyOf(init.body)) };
@@ -126,3 +154,11 @@ async function viaWorker(path: string, init: RequestInit, background: boolean): 
 export function gameFetch(path: string, init: RequestInit = {}, background = false): Promise<Response> {
   return IN_BROWSER ? viaWorker(path, init, background) : fetch(path, init);
 }
+
+// The game starts loading with the page, not with the first call (a failure is told to whoever calls next). Once the
+// app's modules have all run: this one is read before the router's ROOT is set.
+if (IN_BROWSER)
+  window.setTimeout(() => {
+    ready ??= start();
+    ready.catch(() => {});
+  }, 0);
