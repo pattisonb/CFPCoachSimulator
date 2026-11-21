@@ -16,7 +16,7 @@ export const messages = {
   starsN: (n: number) => `${n} Stars`,
   group: "Position",
   allGroups: "All",
-  addAll: (n: number) => `Add These ${n} to My Board`,
+  addAll: (n: number) => (n === 1 ? "Add Him to My Board" : `Add These ${n} to My Board`),
   adding: "Adding…",
   added: (n: number) => `${n} added to your board.`,
 
@@ -85,7 +85,8 @@ export const messages = {
     scouted: { none: "Not Scouted", partly: "Partly Scouted", fully: "Fully Scouted" },
     pot: { A: "A", B: "B", C: "C", D: "D" },
   } as Record<string, Record<string, string>>,
-  listThese: (n: number, st: string) => `List These ${n.toLocaleString("en-US")} From ${st}`,
+  listThese: (n: number, st: string) =>
+    n === 1 ? `List the 1 From ${st}` : `List These ${n.toLocaleString("en-US")} From ${st}`,
   chipShow: "Show",
   chipShows: { need: "Need", commits: "Committed / Need", board: "On Board / Need", offers: "Offered / Need" },
   chipHints: {

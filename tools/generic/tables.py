@@ -244,7 +244,7 @@ RIVALRIES = {
     "Rocky Mountain Showdown": "Front Range Standoff", "Rumble in the Rockies": "Ruckus in the Rockies",
     "Battle for the Victory Bell": "Battle for the Winner's Bell", "Battle for the Milk Can": "Battle for the Cream Can",
     "Battle for the Fremont Cannon": "Battle for the Silver State Cannon",
-    "Border War (Bronze Boot)": "Border Feud (Brass Boot)", "Battle for the Old Oil Can": "Battle for the Rusty Oil Can",
+    "Bronze Boot Game": "Brass Boot Game", "Black Diamond Trophy Game": "Coal Seam Trophy Game", "Battle of the Brothers": "Battle of the Cousins", "Battle for the Old Oil Can": "Battle for the Rusty Oil Can",
     "Battle of I-75": "Battle of the Interstate", "Battle of the Bricks": "Battle of the Cobblestones",
     "Battle for the Victory Cannon": "Battle for the Winner's Cannon", "Bayou Bucket Classic": "Bayou Pail Classic",
     "Battle for the Iron Skillet": "Battle for the Cast-Iron Pan", "Battle for the Belt": "Battle for the Buckle",

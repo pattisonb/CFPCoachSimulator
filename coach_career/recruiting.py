@@ -638,10 +638,10 @@ def is_lowball(nil: int, ask: int, share: float = LOWBALL) -> bool:
     return nil < share * ask or (nil == 0 and ask >= LOWBALL_MIN)
 
 
-COOLED_409 = {"lowball": "he has cooled on you after that offer: raise it to what he wants",
-              "promise": "he has cooled on you after that promise: give him time",
-              "quiet": "he has cooled on you after you went quiet: call or visit to warm him back up",
-              "game": "he has cooled on you after the loss he watched: give him a week"}
+COOLED_409 = {"lowball": "he has cooled on you after that offer, so raise it to what he wants",
+              "promise": "he has cooled on you after that promise, so give him time",
+              "quiet": "he has cooled on you after you went quiet, so call or visit to warm him back up",
+              "game": "he has cooled on you after the loss he watched, so give him a week"}
 
 
 def cooled(state: dict, slug: str, pid: str) -> bool:
@@ -2321,14 +2321,14 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
     if rc["status"][pid]["signed"]:
         raise RecruitingError(409, "he has already signed")
     if action == "scout" and rc["status"][pid]["committed"] == slug:
-        raise RecruitingError(409, "he has committed to you: no more looks")
+        raise RecruitingError(409, "he has committed to you, so no more looks are needed")
     contact = rc["contacts"].setdefault(pid, {}).setdefault(slug, {"n": 0, "hc_week": None})
     week, revealed, points = state["current_week"], None, 0.0
     you = slug == state.get("team")                   # your actions go in the log for his History (the AI's are not kept)
     if action in WEEKLY_ONCE and (contact.get("week") or {}).get(action) == contact_week(state):
         raise RecruitingError(409, "Done this week.")
     if action == "scout" and report_complete(rc["reads"].get(pid)):
-        raise RecruitingError(409, f"his report is complete: {REPORT_LOOKS} of {REPORT_LOOKS} looks")
+        raise RecruitingError(409, f"his report is complete at {REPORT_LOOKS} of {REPORT_LOOKS} looks")
     if opens and pid in ((rc.get("scenes") or {}).get(slug) or {}):
         raise RecruitingError(409, "finish your call with him first")
     if action == "scout":
@@ -2341,7 +2341,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if pid not in offers:
             raise RecruitingError(409, "no offer to pull")
         if rc["status"][pid]["committed"] == slug and rc["status"][pid].get("hard"):
-            raise RecruitingError(409, "he is a hard commit: his offer stands until he signs")
+            raise RecruitingError(409, "he is a hard commit, and his offer stands until he signs")
         offers.remove(pid)
         _unmark(state, slug, pid)
         held = _nil(state, slug)["held"].pop(pid, None)
@@ -2354,7 +2354,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
             _event(state, "decommit", pid, slug)
     elif action == "offer":
         if pitch is None and not manual:
-            raise RecruitingError(400, "an offer needs a pitch: what you are selling him")
+            raise RecruitingError(400, "an offer needs a pitch, the thing you are selling him")
         if nil > nil_left(state, slug):
             raise RecruitingError(400, "not enough NIL points")
         if pid in offers:
@@ -2401,7 +2401,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if cooled(state, slug, pid):
             raise RecruitingError(409, COOLED_409[persona.cooled_why(state, slug, pid)])
         if slug not in top_group(state, pid):
-            raise RecruitingError(409, "he is not considering you yet: get into his top group first")
+            raise RecruitingError(409, "he is not considering you yet, so get into his top group first")
         if slug in rc["visits"].get(pid, {}):
             raise RecruitingError(409, "one official visit per school")
         if is_portal(state):                       # a campus visit: this week, no game; he sees it all
@@ -2435,7 +2435,7 @@ def _act(state: dict, slug: str, pid: str, action: str, pitch: Optional[str] = N
         if sc.get("question") and not sc["question"].get("answer"):
             raise RecruitingError(409, "answer him first")
         if pitch is None:
-            raise RecruitingError(400, "a pitch: what you are selling him")
+            raise RecruitingError(400, "pick a pitch, the thing you are selling him")
         tells = sc["action"] != "call" or persona.call_reveals(state, slug, pid, roll=False)   # a Guarded or first-call Shy recruit keeps it to himself on a call
         if pitch in p["priorities"] and tells:        # he tells you plainly when it is one of his
             seen = rc["revealed"].setdefault(slug, {}).setdefault(pid, [])
@@ -3926,11 +3926,11 @@ def set_board(state: dict, pid: str, on: bool) -> None:
     dropped = rc.setdefault("dropped", [])
     me = state.get("team")
     if not on and rc["status"][pid]["signed"] == me:
-        raise RecruitingError(409, "he has signed with you: he stays on your board")
+        raise RecruitingError(409, "he has signed with you and stays on your board")
     if not on and pid in rc["offers"].get(me, []):
         st = rc["status"][pid]
         if st["committed"] == me and st.get("hard"):
-            raise RecruitingError(409, "he is a hard commit: his offer stands until he signs")
+            raise RecruitingError(409, "he is a hard commit, and his offer stands until he signs")
         if not st["signed"]:
             act(state, me, pid, "pull_offer")
     if on:

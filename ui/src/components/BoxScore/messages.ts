@@ -12,7 +12,7 @@ export const messages = {
   noScoring: "Nobody scored.",
   noPlayers: "No player stats were kept for this game.",
   noDrives: "No drives were kept for this game.",
-  injured: (type: string) => `Injured (${type})`,
+  injured: (type: string) => `Injured (${type.replace(/\b[a-z]/g, (c) => c.toUpperCase())})`,
   team: "Team",
   player: "Player",
   openCard: (name: string) => `Open ${name}'s card`,

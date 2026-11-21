@@ -9,7 +9,7 @@ export const messages = {
   confsLabel: "Which conference",
   open: (conf: string) => `Open the full ${conf} table`,
   back: "All Conferences",
-  teams: (n: number) => `${n} Teams`,
+  teams: (n: number) => `${n} ${n === 1 ? "Team" : "Teams"}`,
   champion: (name: string) => `${name} Won the Title`,
 
   cols: {

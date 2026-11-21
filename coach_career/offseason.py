@@ -2944,12 +2944,14 @@ def _player_next(state: dict, slug: str) -> Optional[dict]:
     if ev is None:
         return None
     k = ev["kind"]
-    sentence = {"graduated": "Graduated.", "portal": "In the transfer portal.", "quit": "Left the team.",
+    # the portal has shut and he is on no roster: he is not "in the transfer portal" any more
+    shut = k == "portal" and STAGES.index(state["offseason"].get("stage") or STAGES[0]) >= STAGES.index("portal_recap")
+    sentence = {"graduated": "Graduated.", "portal": "Went unsigned in the portal and left FBS." if shut else "In the transfer portal.", "quit": "Left the team.",
                 "declared": "Declared for the NFL Draft.", "undrafted": "Declared for the NFL Draft and went undrafted.",
                 "draft": f"Drafted in round {ev['round']}, pick {ev['pick']}." if ev.get("round") and ev.get("pick") else "Drafted."
                 }.get(k, "Left the program.")
     return {"team": None, "team_name": None, "position": ev.get("pos"), "class": ev.get("cls"), "class_name": None,
-            "overall": ev.get("overall"), "status": k, "status_name": KIND_NAMES.get(k, "Left the Program"),
+            "overall": ev.get("overall"), "status": k, "status_name": "Left FBS" if shut else KIND_NAMES.get(k, "Left the Program"),
             "sentence": sentence, "season": season_year}
 
 

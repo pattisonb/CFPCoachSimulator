@@ -174,7 +174,7 @@ export const messages = {
   playersShown: (shown: number, all: number) =>
     shown < all
       ? `${shown.toLocaleString("en-US")} of ${all.toLocaleString("en-US")} Players`
-      : `${all.toLocaleString("en-US")} Players`,
+      : `${all.toLocaleString("en-US")} ${all === 1 ? "Player" : "Players"}`,
   showAll: (n: number) => `Show All ${n.toLocaleString("en-US")}`,
   noPlayers: "Nobody here has a number in this category yet.",
   player: "Player",

@@ -268,11 +268,12 @@ export const messages = {
     brokenSpot: (who: string) => `He heard you promised the same spot to ${who}`,
     leaningFcs: "He is leaning toward an FCS program.",
     moves: {
-      commit: (school: string) => `Committed to ${school}`,
-      hard: (school: string) => `Hard commit to ${school}`,
-      flip: (school: string) => `Flipped to ${school}`,
-      decommit: (school: string) => `Decommitted from ${school}`,
-      signed: (school: string) => `Signed with ${school}`,
+      // sentences, as every other line in his timeline is; your own school is "you" inside one
+      commit: (school: string) => `He committed to ${school === "You" ? "you" : school}.`,
+      hard: (school: string) => `He is a hard commit to ${school === "You" ? "you" : school}.`,
+      flip: (school: string) => `He flipped to ${school === "You" ? "you" : school}.`,
+      decommit: (school: string) => `He decommitted from ${school === "You" ? "you" : school}.`,
+      signed: (school: string) => `He signed with ${school === "You" ? "you" : school}.`,
     } as Record<string, (school: string) => string>,
     other: (school: string, kind: string) => `${school}: ${kind}`,
   },

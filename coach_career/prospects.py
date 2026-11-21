@@ -32,7 +32,7 @@ GROUP_NAMES = {"athleticism": "athleticism", "size_strength": "size and strength
                "football_iq": "football IQ", "potential": "upside", "coachability": "coachability"}
 # the public evaluation's lines: each a whole sentence that names its group once (no "Upside: Big upside")
 STRENGTH_TEXT = {
-    "athleticism": "Rare athleticism for {a_noun}: burst, change of direction and speed to separate.",
+    "athleticism": "Rare athleticism for {a_noun}: he moves better than most at his position.",
     "size_strength": "His size and strength are already at a college level; he wins with power.",
     "technique": "Polished technique: he plays like a coached, refined {noun}.",
     "football_iq": "A high football IQ: he reads the game fast and is rarely out of position.",
@@ -46,13 +46,17 @@ WEAKNESS_TEXT = {
     "potential": "Less upside than most: he is closer to his ceiling at this stage.",
 }
 STRENGTH_FROM, WEAKNESS_BELOW = 60, 45        # the game's scale: a Solid-and-up read is a strength (60), below 45 a weakness
-SOLID_TEXT = "His {group} is solid for {a_noun} at this level; not a concern."
+SOLID_TEXT = "Solid {group} for {a_noun} at this level; not a concern."
 OUTLOOK = {
-    5: "Day-one impact {pos} with early-round NFL upside.",
+    5: "A day-one impact {noun} with early-round NFL upside.",
     4: "Projects as a multi-year starter at a Power 4 program.",
-    3: "A developmental {pos} who could start by his third year.",
-    2: "A depth {pos} with a path to the field through special teams and development.",
+    3: "A developmental {noun} who could start by his third year.",
+    2: "A depth {noun} with a path to the field through special teams and development.",
 }
+# a kicker's or a punter's: he is not a "first-round" talent or a special teams body, he wins the job or he does not
+OUTLOOK_KICK = {5: "A {noun} who can be a weapon from day one.", 4: "A {noun} who should win the job early.",
+                3: "A {noun} who can win the job in time.", 2: "A depth {noun} who will have to win the job in camp."}
+OPENING_KICK = {"All-American": "A rare {noun} who can be a weapon from day one.", "Elite": "A gifted {noun} who should win the job early."}
 SCHOOL_KINDS = ("High School", "High School", "High School", "Central", "North", "South", "Catholic", "Prep", "Academy")
 
 
@@ -287,7 +291,7 @@ OPENING_PORTAL = {
     "Weak": "A depth {noun} for the back of the roster.",
 }
 STRENGTH_LINE = {
-    "athleticism": "His athleticism stands out: burst, change of direction and speed to separate.",
+    "athleticism": "His athleticism stands out: he moves better than most at his position.",
     "football_iq": "He reads the game fast and is rarely out of position.",
     "technique": "His technique is polished; he plays like a coached, refined {noun}.",
     "size_strength": "He already has college size and strength and wins with power.",
@@ -375,7 +379,9 @@ def report(state: dict, pid: str) -> Optional[dict]:
     skills = [g for g in order if g in ATTRIBUTE_GROUPS]
     best, worst = skills[0], skills[-1]
     a_noun = f"{'An' if noun[:1].lower() in 'aeiou' else 'A'} {noun}"
-    lines = [(OPENING_PORTAL if p.get("portal") else OPENING)[recruiting.word(mid["potential"])].format(noun=noun, pos=pos, A_noun=a_noun)]
+    word = recruiting.word(mid["potential"])
+    opening = OPENING_PORTAL if p.get("portal") else OPENING_KICK if pos in ("K", "P") and word in OPENING_KICK else OPENING
+    lines = [opening[word].format(noun=noun, pos=pos, A_noun=a_noun)]
     if mid[best] >= GOOD_FROM:
         lines.append(STRENGTH_LINE[best].format(pos=pos, noun=noun))
     lines.append(CONCERN_LINE[worst] if mid[worst] < SOLID_FROM else NO_CONCERN)
@@ -650,7 +656,7 @@ def _evaluation(p: dict, public: dict[str, float]) -> dict:
         (strengths if public[g] >= STRENGTH_FROM else solid).append(text(STRENGTH_TEXT[g] if public[g] >= STRENGTH_FROM else SOLID_TEXT, g))
     for g in order[-2:]:
         (weaknesses if public[g] < WEAKNESS_BELOW else solid).append(text(WEAKNESS_TEXT[g] if public[g] < WEAKNESS_BELOW else SOLID_TEXT, g))
-    return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": OUTLOOK.get(recruiting.tier_of(p), OUTLOOK[2]).format(pos=pos)}
+    return {"strengths": strengths, "solid": solid, "weaknesses": weaknesses, "outlook": (OUTLOOK_KICK if pos in ("K", "P") else OUTLOOK).get(recruiting.tier_of(p), OUTLOOK[2]).format(pos=pos, noun=noun)}
 
 
 def generational_seen(rc: dict, pid: str, viewer: str) -> bool:

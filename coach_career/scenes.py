@@ -160,9 +160,9 @@ LINES: dict[str, dict[str, list[str]]] = {
 }
 
 # a pestering call or visit (recruiting.PESTER_FREE): he is not weighing you, and the pitch falls flat
-TIRED = ["He is polite but short. He is not weighing you right now, and the calls are wearing thin.",
+TIRED = ["He is polite but short. He is not weighing you right now, and the attention is wearing thin.",
          "He goes quiet on you. {school} is not on his mind, and he does not hide it.",
-         "He hears you out and says nothing about {school}. His mind is on other schools, and he wants the calls to stop."]
+         "He hears you out and says nothing about {school}. His mind is on other schools, and he wants to be left alone."]
 
 # his question about a named player (docs/superpowers/specs/2026-10-29-recruit-questions-design.md,
 # section 2): the player ahead of him on your roster ({ahead}, {ahead_cls} his class in words, {position}
@@ -199,7 +199,7 @@ PACKAGE_ANSWERS = {
             "promise": ("Promise Him an Offer", "{mate} gets an offer this week. You have my word."),
             "deflect": ("Sidestep It", "Let's talk about what you'd bring.")},
     True: {"straight": ("Already Offered Him", "I offered {mate} already. Two spots, both yours."),
-           "promise": ("Promise Him an Offer", "{mate}'s offer stands. He signs with you, no questions."),
+           "promise": ("Promise His Spot", "{mate}'s offer stands. He signs with you, no questions."),
            "deflect": ("Sidestep It", "Let's talk about what you'd bring.")},
 }
 # what he says back: a promise he believes ("promise") or one he has heard before ("hollow"); the Package Deal's
@@ -273,8 +273,8 @@ CONTEXT = {
             "Hey Coach. Film session just let out. Coach is on us this week."],
     "leader": ["Hey Coach. My phone's been going all week. {leader} called twice.",
                "Yes sir. {leader} was just here, actually. It's been a lot.",
-               "Hey Coach. Yeah, I've got a minute. {leader} keeps calling, so I'm used to it."],
-    "tired": ["...Yeah, Coach. I've got a minute, I guess.",
+               "Hey Coach. {leader} keeps calling, so I'm used to this."],
+    "tired": ["...Yeah, Coach. Okay, I guess.",
               "Hey. Yeah. Kind of a lot going on, Coach.",
               "Hi Coach. Sure. Make it quick if you can."],
 }
@@ -374,6 +374,9 @@ PRESENT_LINES = {
               "Yeah. I've heard the speech, Coach."],
 }
 # your question that sets up the cue: for one topic, and for a cue that names two
+# ... and to a recruit already committed to you: he is not deciding anything
+ASK_COMMITTED = ["Still feeling good about us, {first}?", "How are you feeling about {school}, {first}? Still solid?"]
+CUE_COMMITTED = ["I'm solid, Coach. Nothing's changed on my end.", "Yes sir. I'm with you. Just keep it real with me."]
 ASK = {
     "one": ["So what's going to decide this for you?",
             "Tell me straight, {first}: what's going to decide this for you?"],
@@ -971,15 +974,17 @@ def context_line(state: dict, slug: str, pid: str, week: int, f: dict, rng: rand
     if tired:
         return rng.choice(CONTEXT["tired"]).format(**f)
     game = last_game(state, slug, week)
+    named = bool(f["opponent"]) and not f["opponent"].startswith("FCS ")      # an FCS stand-in has no name he would say
+    recent = bool(game) and game["week"] >= week - 1
     kinds = []
-    if game:
+    if game and recent and named:
         kinds.append("game")
-    elif f["opponent"]:
+    elif not game and named:
         kinds.append("opener")
     if f["leader"]:
         kinds.append("leader")
     kinds.append("own")
-    kind = "game" if game and game["week"] >= week - 1 else rng.choice(kinds)
+    kind = "game" if recent and named else rng.choice(kinds)
     if kind == "game":
         kind = rng.choice(["game", "won" if game["won"] else "lost"])
     return rng.choice(CONTEXT[kind]).format(**f)
@@ -1007,6 +1012,8 @@ def style_line(state: dict, slug: str, pid: str, sid: str, f: dict):
     of the calls (its own seeded draw `style-line-{sid}`); never for All Business (no small talk)."""
     k = persona.style(state, pid)
     if not k or not persona.known(state, slug, pid)["style"] or persona.of(state, pid)["personality"] == "business":
+        return None
+    if (state["recruiting"]["status"].get(pid) or {}).get("committed"):      # he has picked: no "I'm not deciding until signing day"
         return None
     rng = random.Random(f"style-line-{sid}")
     line = rng.choice(STYLE_LINES[k])
@@ -1304,8 +1311,13 @@ def present(state: dict, slug: str, pid: str, sc: dict, topics: list[str], hits:
     if not tells_ and kind != "tired":
         kind = "guarded"
     sc["turns"].append(_turn("him", text))
-    sc["turns"].append(_turn("you", rng.choice(ASK["two" if len(c["topics"]) > 1 else "one"]).format(**f)))
-    sc["turns"].append(_turn("him", c["text"]))
+    if (state["recruiting"]["status"].get(pid) or {}).get("committed") == slug:      # your own commit (the player's call)
+        at = sum(map(ord, sc["id"])) % len(ASK_COMMITTED)
+        sc["turns"].append(_turn("you", ASK_COMMITTED[at].format(**f)))
+        sc["turns"].append(_turn("him", CUE_COMMITTED[at].format(**f)))
+    else:
+        sc["turns"].append(_turn("you", rng.choice(ASK["two" if len(c["topics"]) > 1 else "one"]).format(**f)))
+        sc["turns"].append(_turn("him", c["text"]))
     sc["cue"] = c
     if sc["action"] == "hc_visit":
         sc["turns"].append(_turn("note", ask_note(state, slug, pid, sc["ask"])))
@@ -1351,7 +1363,8 @@ def package_about(state: dict, slug: str, pid: str) -> dict | None:
     prospect in the class still to be had (not signed), else None."""
     rc = state["recruiting"]
     m = persona.mate(state, pid)
-    if not m or m not in rc["prospects"] or (rc["status"].get(m) or {}).get("signed"):
+    st = rc["status"].get(m) or {} if m else {}
+    if not m or m not in rc["prospects"] or st.get("signed") or st.get("committed") not in (None, slug):
         return None
     return {"pid": m, "name": rc["prospects"][m]["name"], "offered": m in rc["offers"].get(slug, [])}
 
@@ -1416,7 +1429,7 @@ def answer_reply(state: dict, slug: str, pid: str, question: dict, answer: str, 
         return "Answer noted." if answer == "straight" else "Sidestepped."
     if question.get("kind") == "package":
         if answer == "promise":
-            return REPLY_LINES["package"]
+            return REPLY_LINES["package_offered" if question["about"].get("offered") else "package"]
         if answer == "straight" and question["about"].get("offered"):
             return REPLY_LINES["package_offered"]
         return REPLY_LINES[answer]
