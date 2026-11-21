@@ -91,7 +91,7 @@
  {"team": "purdue", "slug": "donovan-saunders", "game_name": "Donovan Saunders", "roster_name": "Don Saunders", "kind": "nickname or short form", "source": "team roster page or ESPN roster"},
  {"team": "purdue", "slug": "jacobo-lozano", "game_name": "Jacobo Lozano", "roster_name": "Jacobo Echeverria Lozano", "kind": "nickname or short form", "source": "team roster page or ESPN roster"},
  {"team": "purdue", "slug": "max-carmicle", "game_name": "Max Carmicle", "roster_name": "Maximilian Carmicle", "kind": "nickname or short form", "source": "team roster page or ESPN roster"},
- {"team": "rice", "slug": "dereyon-jenkins-jr", "game_name": "DeReyon Jenkins Jr.", "roster_name": "DJ Jenkins", "kind": "nickname or short form", "source": "school roster, found by the player"},
+ {"team": "rice", "slug": "dj-jenkins", "game_name": "DeReyon Jenkins Jr.", "roster_name": "DJ Jenkins", "kind": "nickname or short form", "source": "school roster, found by the player", "renamed_in_game_to": "DJ Jenkins"},
  {"team": "rice", "slug": "joe-chavez", "game_name": "Joe Chavez", "roster_name": "Jo Chavez", "kind": "spelling", "source": "team roster page or ESPN roster"},
  {"team": "rutgers", "slug": "jamareis-conyers", "game_name": "Jamareis Conyers", "roster_name": "JJ Conyers", "kind": "nickname or short form", "source": "team roster page or ESPN roster"},
  {"team": "rutgers", "slug": "kameron-anthony", "game_name": "Kameron Anthony", "roster_name": "Kam Anthony", "kind": "nickname or short form", "source": "team roster page or ESPN roster"},

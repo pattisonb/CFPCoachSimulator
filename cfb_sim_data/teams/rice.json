@@ -297,7 +297,7 @@
   ],
   "LEDG": [
    "joseph-mutombo",
-   "dereyon-jenkins-jr",
+   "dj-jenkins",
    "luca-akirtava"
   ],
   "DT": [
@@ -13453,12 +13453,12 @@
    }
   },
   {
-   "slug": "dereyon-jenkins-jr",
+   "slug": "dj-jenkins",
    "position": "LEDG",
    "class": "FRRS",
    "team_slug": "rice",
-   "url": "https://collegefootball.gg/players/dereyon-jenkins-jr/",
-   "name": "DeReyon Jenkins Jr.",
+   "url": null,
+   "name": "DJ Jenkins",
    "position_name": "Left Edge",
    "jersey": "42",
    "team": "Rice",
