@@ -82,6 +82,7 @@
   "travion-barnes": {"faceShape": "face_shape_05", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_23", "hairFade": true, "flip": []},
   "trent-thomas-baylor": {"faceShape": "face_shape_05", "skinTone": "deep", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_20", "hairFade": true, "flip": []},
   "tyler-turner": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_20", "hairFade": true, "flip": []},
+  "yakiri-walker": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
   "zavion-hardy": {"faceShape": "face_shape_05", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  },
  "coaches": {
