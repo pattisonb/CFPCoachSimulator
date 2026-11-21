@@ -153,46 +153,6 @@
   color: var(--paper-hi);
 }
 
-/* the Win Chance: a big number and your share of the bar */
-.office__odds {
-  display: grid;
-  gap: 4px;
-  padding-top: var(--s2);
-  border-top: var(--line) solid var(--line-soft);
-}
-
-.office__odds-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s2);
-}
-
-.office__odds-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-}
-
-.office__odds-big {
-  font-size: var(--t-2xl);
-  line-height: 1;
-}
-
-/* the read is still coming: a soft dash where the number will be */
-.office__odds-big.is-waiting {
-  color: var(--ink-soft);
-}
-
-/* the number in green when the game leans your way, in the risk color when it leans theirs */
-.office__odds-big.is-ahead {
-  color: var(--good);
-}
-
-.office__odds-big.is-behind {
-  color: var(--warn);
-}
-
 /* ---------- left: the actions, as tiles ---------- */
 .office__actions {
   display: grid;

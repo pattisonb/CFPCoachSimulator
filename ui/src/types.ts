@@ -323,14 +323,6 @@ export interface RecruitingWeek {
   points_week: number;
 }
 
-/** GET /api/season/{id}/preview?team= : this week's game and a simulated prediction */
-export interface GamePreview {
-  game: unknown | null;
-  /** "bye" or "done" when there's no game */
-  reason?: string;
-  prediction: { win_prob: number; points_for: number; points_against: number } | null;
-}
-
 /** One item of Program News (coach_career/office.py program_news) */
 export interface NewsItem {
   week: number;

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import WinBar from "../WinBar/index.tsx";
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
@@ -7,15 +6,7 @@ import Matchup, { type MatchupSide } from "../Matchup/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { dateText, kickoffText, timeText } from "../../format.ts";
-import type {
-  BoxScore,
-  BoxSide,
-  GamePreview,
-  ScheduleGame,
-  SeasonSummary,
-  TeamCard,
-  TeamScheduleView,
-} from "../../types.ts";
+import type { BoxScore, BoxSide, ScheduleGame, SeasonSummary, TeamCard, TeamScheduleView } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -37,7 +28,6 @@ const isGame = (g: ScheduleGame) => g.kind !== "bye";
 const inPhase = (g: ScheduleGame, p: Phase) =>
   p === "all" ||
   (p === "conf" ? !!g.conference_game : p === "regular" ? g.week <= LAST_REGULAR_WEEK : g.week > LAST_REGULAR_WEEK);
-const winPct = (p: number) => Math.min(99, Math.max(1, Math.round(100 * p)));
 
 /** A side of the matchup (the banner's), with its slug for the line score. */
 interface SideInfo extends MatchupSide {
@@ -58,7 +48,6 @@ export default function Schedule({ season, teams, onBox }: Props) {
   const [phase, setPhase] = useState<Phase>("all");
   // the row picked by hand; null follows the next game (or the last one played)
   const [picked, setPicked] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ key: string; data: GamePreview } | null>(null);
   const [box, setBox] = useState<{ id: string; data: BoxScore | null } | null>(null);
   const boxes = useRef(new Map<string, BoxScore | null>());
   const list = useRef<HTMLOListElement>(null);
@@ -101,19 +90,8 @@ export default function Schedule({ season, teams, onBox }: Props) {
     [games],
   );
 
-  // this week's game: its prediction; a played one: its box score
+  // this week's game; a played one: its box score
   const thisWeek = current && !current.played && current.week === week + 1 ? current : null;
-  const previewKey = `${view}-${week}`;
-  useEffect(() => {
-    if (!thisWeek || preview?.key === previewKey) return;
-    let live = true;
-    api<GamePreview>(`/api/season/${season.id}/preview?team=${view}`)
-      .then((data) => live && setPreview({ key: previewKey, data }))
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, [thisWeek?.event_id, previewKey]);
 
   const boxId = current?.played && current.event_id && current.has_box !== false ? current.event_id : null;
   useEffect(() => {
@@ -229,7 +207,6 @@ export default function Schedule({ season, teams, onBox }: Props) {
             when={[weekName(current), kickoffText(current.date)].filter(Boolean).join(" · ")}
             thisWeek={!!thisWeek}
             weeksAway={!current.played ? current.week - (week + 1) : 0}
-            preview={thisWeek && preview?.key === previewKey ? preview.data : null}
             box={box?.id === boxId ? box.data : undefined}
             onBox={boxId && onBox ? () => onBox(boxId) : undefined}
             onView={canView ? () => setView(current.opponent!) : undefined}
@@ -351,7 +328,6 @@ function Banner({
   when,
   thisWeek,
   weeksAway,
-  preview,
   box,
   onBox,
   onView,
@@ -362,7 +338,6 @@ function Banner({
   when: string;
   thisWeek: boolean;
   weeksAway: number;
-  preview: GamePreview | null;
   /** undefined while it loads; null when there's none */
   box: BoxScore | null | undefined;
   onBox?: () => void;
@@ -404,16 +379,7 @@ function Banner({
             {where}
           </span>
         </div>
-        <Detail
-          g={g}
-          left={left}
-          right={right}
-          thisWeek={thisWeek}
-          weeksAway={weeksAway}
-          preview={preview}
-          box={box}
-          onBox={onBox}
-        />
+        <Detail g={g} left={left} right={right} thisWeek={thisWeek} weeksAway={weeksAway} box={box} onBox={onBox} />
       </div>
     </section>
   );
@@ -426,7 +392,6 @@ function Detail({
   right,
   thisWeek,
   weeksAway,
-  preview,
   box,
   onBox,
 }: {
@@ -435,7 +400,6 @@ function Detail({
   right: SideInfo;
   thisWeek: boolean;
   weeksAway: number;
-  preview: GamePreview | null;
   box: BoxScore | null | undefined;
   onBox?: () => void;
 }) {
@@ -473,33 +437,7 @@ function Detail({
     );
   }
 
-  if (thisWeek) {
-    const p = preview?.prediction;
-    const mine = p ? winPct(p.win_prob) : null;
-    return (
-      <div className="sched-detail">
-        <div className="sched-detail__cell sched-detail__odds">
-          <span className="label sched-banner__kicker">{m.winChance}</span>
-          {mine !== null && p ? (
-            <div
-              className="sched-detail__odds-row"
-              role="img"
-              aria-label={m.odds(left.name, mine, right.name, 100 - mine)}
-            >
-              <b className={`sched-detail__big ${mine >= 50 ? "is-ahead" : "is-behind"}`}>{mine}%</b>
-              <WinBar mine={mine} myColor={left.team?.colors.primary} theirColor={right.team?.colors.primary} />
-              <span className="sched-banner__soft">
-                {m.projected(Math.round(p.points_for), Math.round(p.points_against))}
-              </span>
-            </div>
-          ) : (
-            <span className="sched-banner__soft">{m.scouting}</span>
-          )}
-        </div>
-        {rivalry}
-      </div>
-    );
-  }
+  if (thisWeek) return rivalry ? <div className="sched-detail">{rivalry}</div> : null;
 
   return (
     <div className="sched-detail">

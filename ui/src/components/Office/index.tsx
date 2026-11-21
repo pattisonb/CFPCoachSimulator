@@ -6,7 +6,6 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
-import WinBar from "../WinBar/index.tsx";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -32,15 +31,7 @@ import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { dateText, kickoffText, ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
-import type {
-  GamePreview,
-  NewsItem,
-  OfficeView,
-  RecruitingWeek,
-  ScheduleGame,
-  SeasonSummary,
-  TeamCard,
-} from "../../types.ts";
+import type { NewsItem, OfficeView, RecruitingWeek, ScheduleGame, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -93,7 +84,6 @@ const EVENT_WORDS: Record<string, string> = {
 const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened"]);
 
 const confShort = (c: string) => CONF_SHORT[c] ?? c;
-const winPct = (p: number) => Math.min(99, Math.max(1, Math.round(100 * p)));
 const recordText = (r: { wins: number; losses: number }) => `${r.wins}-${r.losses}`;
 
 interface Todo {
@@ -118,7 +108,6 @@ const NOW_SETTLE_MS = 450;
 export default function Office({ season: s, recruiting: v, teams, sim, onSection, onBox }: Props) {
   const [office, setOffice] = useState<OfficeView | null>(null);
   const [officeError, setOfficeError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<GamePreview | null>(null);
   // Play Game Day: pick the sides, then the field (Pocket Franchise) or a sim
   const [playOpen, setPlayOpen] = useState(false);
 
@@ -126,11 +115,11 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const games = s.schedule.filter((g) => g.opponent);
   const thisWeek = s.done ? null : (games.find((g) => g.week === s.current_week + 1) ?? null);
   const next = s.done ? null : (games.find((g) => !g.played && g.week >= s.current_week + 1) ?? null);
-  // the game card, held while a sim runs: it stays as it was when the sim began instead of chasing the weeks (its Win
-  // Chance ran a week behind the sim; the player's ask)
+  // the game card, held while a sim runs: it stays as it was when the sim began instead of chasing the weeks (the
+  // player's ask)
   // Program News while a sim runs: the sim sends each finished week's with its progress, so it is not a read behind
   const news = (sim.running && sim.status?.feed?.news) || office?.news || [];
-  const cardNow = { s, thisWeek, next, preview };
+  const cardNow = { s, thisWeek, next };
   const cardHeld = useRef(cardNow);
   if (!sim.running) cardHeld.current = cardNow;
   const card = sim.running ? cardHeld.current : cardNow;
@@ -153,20 +142,6 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       })
       .catch((e: Error) => current() && setOfficeError(e.message));
   }, [s.id, s.current_week, s.record.wins, s.record.losses]);
-
-  // the Win Chance, when your game this week is still to play
-  const gameKey = thisWeek && !thisWeek.played ? thisWeek.event_id : null;
-  useEffect(() => {
-    setPreview(null);
-    if (!gameKey) return;
-    let live = true;
-    api<GamePreview>(`/api/season/${s.id}/preview?team=${encodeURIComponent(s.team)}`)
-      .then((p) => live && setPreview(p))
-      .catch(() => {});
-    return () => {
-      live = false;
-    };
-  }, [s.id, s.team, gameKey]);
 
   // ---------- the week's to-dos ----------
   const todos: Todo[] = [];
@@ -447,7 +422,6 @@ function GameCard({
   thisWeek,
   next,
   teams,
-  preview,
   weekName,
   onBox,
   simming,
@@ -457,7 +431,6 @@ function GameCard({
   thisWeek: ScheduleGame | null;
   next: ScheduleGame | null;
   teams: Map<string, TeamCard>;
-  preview: GamePreview | null;
   weekName: (w: number) => string;
   /** a sim is running: the read on the next game waits for it, and says nothing meanwhile */
   simming?: boolean;
@@ -476,8 +449,6 @@ function GameCard({
   const when = [weekName(g.week), kickoffText(g.date)].filter(Boolean).join(" · ");
   const venue = g.venue === "away" ? m.away : g.venue === "neutral" ? m.neutral : m.home;
   const named = g.title ?? g.rivalry?.name ?? null;
-  const p = played ? null : preview?.prediction;
-  const mine = p ? winPct(p.win_prob) : null;
   return (
     <section className="office__game" aria-label={kicker}>
       <header className="office__game-head">
@@ -513,37 +484,6 @@ function GameCard({
         <button type="button" className="office__box office__box--game" onClick={() => onBox(g.event_id!)}>
           {m.boxScore}
         </button>
-      )}
-      {thisWeek && !played && (
-        <div className="office__odds">
-          {/* the same two rows whether the read is in or still coming, so the actions under the card never move */}
-          <div className="office__odds-top">
-            <span className="label office__kicker">{m.winChance}</span>
-            <span className="office__soft">
-              {mine !== null && p
-                ? m.projected(m.score(Math.round(p.points_for), Math.round(p.points_against)))
-                : preview || simming
-                  ? ""
-                  : m.scouting}
-            </span>
-          </div>
-          <div
-            className="office__odds-row"
-            role="img"
-            aria-label={mine !== null && p ? m.odds(s.team_name, mine, g.opponent_name, 100 - mine) : m.scouting}
-          >
-            <b
-              className={`office__odds-big${mine !== null && p ? (mine >= 50 ? " is-ahead" : " is-behind") : " is-waiting"}`}
-            >
-              {mine !== null && p ? `${mine}%` : m.noOdds}
-            </b>
-            <WinBar
-              mine={mine !== null && p ? mine : null}
-              myColor={teams.get(s.team)?.colors.primary}
-              theirColor={g.opponent ? teams.get(g.opponent)?.colors.primary : undefined}
-            />
-          </div>
-        </div>
       )}
     </section>
   );

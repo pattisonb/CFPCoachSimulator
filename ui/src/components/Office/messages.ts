@@ -19,12 +19,6 @@ export const messages = {
   score: (a: number, b: number) => `${a}-${b}`,
   overtime: (n: number) => (n > 1 ? `${n}OT` : "OT"),
 
-  winChance: "Win Chance",
-  odds: (team: string, mine: number, opp: string, theirs: number) => `Win chance: ${team} ${mine}%, ${opp} ${theirs}%`,
-  projected: (score: string) => `Projected ${score}`,
-  scouting: "Scouting the matchup…",
-  noOdds: "–",
-
   actions: "Actions",
   playGame: "Play Game Day",
   playGameSub: (where: string, opp: string) => `Just your game, ${where} ${opp}.`,

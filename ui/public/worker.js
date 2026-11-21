@@ -1,5 +1,5 @@
 /* The game in a Web Worker: Pyodide (CPython on WebAssembly) runs the dispatcher (app/api.py)
-   from game.zip, unpacked into the worker's in-memory filesystem; the seasons and coaches
+   from game.tar.xz, unpacked into the worker's in-memory filesystem; the seasons and coaches
    folders are IDBFS mounts, persisted to IndexedDB after every call that wrote a file.
    Messages from the page (ui/src/gameClient.ts): first {kind: "init", version, breakStorage,
    breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes, background}, answered with {id, ok,
@@ -14,6 +14,7 @@
 "use strict";
 
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+const ARCHIVE = "game.tar.xz";   // the game and its data, xz-packed (tools/build_site.py write_archive)
 const HOME = "/home/pyodide";
 const STORES = [HOME + "/data/seasons", HOME + "/data/coaches"];   // what IndexedDB keeps
 
@@ -105,8 +106,8 @@ async function claimStore() {
 
 // `loud`: the download's progress is posted only once it answers true (until then Python's loading has the notice).
 async function fetchZip(version, loud) {
-  const res = await fetch(`./game.zip?v=${encodeURIComponent(version || "dev")}`);
-  if (!res.ok) throw new Error(`game.zip: HTTP ${res.status}`);
+  const res = await fetch(`./${ARCHIVE}?v=${encodeURIComponent(version || "dev")}`);
+  if (!res.ok) throw new Error(`${ARCHIVE}: HTTP ${res.status}`);
   const total = Number(res.headers.get("Content-Length")) || 0;
   if (!res.body) return res.arrayBuffer();
   const reader = res.body.getReader();
@@ -140,9 +141,11 @@ async function start(init) {
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
   pythonUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
-  const zip = await zipping;
+  const [zip] = await Promise.all([zipping, pyodide.loadPackage("lzma")]);   // Python's xz reader is an add-on (70 KB)
   loading("Unpacking the game");
-  pyodide.unpackArchive(zip, "zip", { extractDir: HOME });
+  // by tarfile itself: Pyodide's own unpackArchive learned its formats before the xz reader was loaded
+  pyodide.FS.writeFile("/tmp/" + ARCHIVE, new Uint8Array(zip));
+  pyodide.runPython(`import os, tarfile\nwith tarfile.open("/tmp/${ARCHIVE}") as t:\n    t.extractall(${JSON.stringify(HOME)}, filter="data")\nos.remove("/tmp/${ARCHIVE}")`);
   for (const dir of STORES) {
     pyodide.FS.mkdirTree(dir);
     pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, {}, dir);
@@ -158,26 +161,36 @@ async function start(init) {
 // this one message with a 500 (a reply that could not be parsed, say); the worker stays up.
 // The save reaches IndexedDB before the page hears the answer: the page may reload on it (the
 // offseason's last step), and a reload ends this worker mid-write.
+// Every answer says where its time went (`ms`: the game's own work, turning its answer into an object, the save), for
+// tools/speed_sweep.js and for anyone reading the worker's messages in the browser's tools.
 async function handle(msg) {
   let reply, transfer = [];
+  const ms = { run: 0, parse: 0, save: 0 };
+  const t0 = performance.now();
+  const saved = async () => { const t = performance.now(); await persist(); ms.save = Math.round(performance.now() - t); };
   try {
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
+    ms.run = Math.round(performance.now() - t0);
     if (typeof out === "string") {
+      const t1 = performance.now();
       const r = JSON.parse(out);
+      ms.parse = Math.round(performance.now() - t1);
+      ms.bytes = out.length;
       reply = r.ok ? { id: msg.id, ok: true, status: 200, result: r.result } : { id: msg.id, ok: false, status: r.status, message: r.message };
-      if (r.changed) await persist();
+      if (r.changed) await saved();
     } else {
       const bytes = new Uint8Array(out.toJs());
       out.destroy();
       reply = { id: msg.id, ok: true, status: 200, bytes };
       transfer = [bytes.buffer];
-      if (api.changed()) await persist();
+      if (api.changed()) await saved();
     }
   } catch (err) {
     console.error(err);
     reply = { id: msg.id, ok: false, status: 500, message: String((err && err.message) || err) };
     try { if (api.changed()) await persist(); } catch (e) { console.error(e); }
   }
+  reply.ms = ms;
   postMessage(reply, transfer);
 }
 
@@ -186,10 +199,14 @@ async function step() {
   let last = null;
   const report = (s) => { last = s; postMessage({ kind: "status", status: JSON.parse(s), busy: true }); };
   if (breakStep) { await new Promise((r) => setTimeout(r, 300)); throw new Error("the sim step is switched off"); }   // calls sent meanwhile are in flight
+  const t0 = performance.now();
   const out = api.step(report);
   if (out && out.destroy) out.destroy();
+  const t1 = performance.now();
   if (api.changed()) await persist();            // the week is in the store before the page is told it is over
-  if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false });
+  const ms = { run: Math.round(t1 - t0), save: Math.round(performance.now() - t1) };      // where the step's time went
+  if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false, ms });
+  else postMessage({ kind: "step", ms });
   await new Promise((r) => setTimeout(r, 0));      // a macrotask: messages sent meanwhile (pause, status) are served next
 }
 
