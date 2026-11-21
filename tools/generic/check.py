@@ -42,7 +42,13 @@ def leaks(root: Path, terms: dict[str, set[str]], files: list[str] | None = None
     word = re.compile(r"(?<![A-Za-z0-9_])(?:" + "|".join(re.escape(k) for k in sorted(terms["words"])) + r")(?![A-Za-z0-9_])")
     for path in shipped(root, files):
         where = path.relative_to(root).as_posix()
-        if path.suffix == ".json":
+        if path.suffix == ".json" and where.startswith("cfb_sim_data/faces/"):
+            # a team's preset faces: the names in it are who each face belongs to (a player's id, a coach's name). The
+            # faces themselves are part ids from the face library the app ships anyway, and one hair color there is
+            # spelled like a school's id, so only the owners are read
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            strings = {k[6:] if k.startswith("coach:") else k for group in doc.values() if isinstance(group, dict) for k in group}
+        elif path.suffix == ".json":
             strings: set[str] = set()
             _strings(json.loads(path.read_text(encoding="utf-8")), strings)
         else:
