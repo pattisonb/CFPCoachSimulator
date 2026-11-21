@@ -121,7 +121,11 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
         method: "POST",
         body: { stage },
       });
-      if (out.next_season && out.summary) return onNextSeason(out.summary.id);
+      if (out.next_season && out.summary) {
+        // the new season opens in place now (no page load to clear the notice): it is taken down here
+        done();
+        return onNextSeason(out.summary.id);
+      }
       setShown(null);
       setV(out as OffView);
       done();
