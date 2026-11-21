@@ -938,14 +938,14 @@ function RecruitPanel({
           open
           onClose={() => {
             setTalk(null);
-            void reload();
+            void reload().catch(() => {});
           }}
           seasonId={seasonId}
           r={r}
           scene={talk}
           pitches={board.pitches}
           coach={coach}
-          onChange={() => void reload()}
+          onChange={() => void reload().catch(() => {})}
         />
       )}
     </article>

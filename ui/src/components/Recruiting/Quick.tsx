@@ -59,7 +59,7 @@ export default function QuickActions({ seasonId, r, left, costs, off, labels, on
     } finally {
       flying -= 1;
       const at = clicks;
-      if (!flying) void onChange(() => clicks !== at);
+      if (!flying) void Promise.resolve(onChange(() => clicks !== at)).catch(() => {}); // (refused mid-sim: read again after)
     }
   };
   return (

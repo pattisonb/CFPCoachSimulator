@@ -660,7 +660,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                           openTab("prospects");
                         }}
                         onRecruit={openRecruit}
-                        onBoardChange={() => void reloadRecruiting()}
+                        onBoardChange={() => void reloadRecruiting().catch(() => {})}
                       />
                     ) : key === "rankings" ? (
                       <Rankings
@@ -716,7 +716,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey }: Pro
                         key={season.current_week}
                         seasonId={season.id}
                         year={season.year}
-                        onBoardChange={() => void reloadRecruiting()}
+                        onBoardChange={() => void reloadRecruiting().catch(() => {})}
                       />
                     ) : key === "schedule" ? (
                       <Schedule season={season} teams={bySlug} onBox={openBox} />

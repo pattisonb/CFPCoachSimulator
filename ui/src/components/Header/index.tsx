@@ -1,6 +1,6 @@
 import { Moon, Sun } from "@phosphor-icons/react";
 import BallLogo from "../BallLogo/index.tsx";
-import { ROOT } from "../../router.ts";
+import { navigate, ROOT } from "../../router.ts";
 import type { Theme } from "../../theme.ts";
 import { messages as m, type NavKey } from "./messages.ts";
 import "./index.css";
@@ -16,7 +16,18 @@ export default function Header({ active, theme, onToggleTheme }: Props) {
   const dark = theme === "dark";
   return (
     <header className="header">
-      <a className="header__brand" href={ROOT} aria-label={m.homeLabel}>
+      {/* home, inside the app: a plain link reloads the page, and on the published site that starts the whole game
+          again (the stress run's find) */}
+      <a
+        className="header__brand"
+        href={ROOT}
+        aria-label={m.homeLabel}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+          e.preventDefault();
+          navigate("play");
+        }}
+      >
         <span className="header__mark">
           <BallLogo />
         </span>
@@ -29,6 +40,11 @@ export default function Header({ active, theme, onToggleTheme }: Props) {
             href={ROOT + n.href}
             className={n.key === active ? "is-active" : undefined}
             aria-current={n.key === active ? "page" : undefined}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+              e.preventDefault();
+              navigate(n.key);
+            }}
           >
             {n.label}
           </a>

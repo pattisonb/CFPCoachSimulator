@@ -130,7 +130,10 @@ function transition(update: () => void) {
     swapped = true;
     flushSync(update);
   };
-  document.startViewTransition(swap);
+  // a newer page change skips this one's animation, and the browser says so by rejecting its promises: that is
+  // expected, not an error (the stress run's find: an unhandled rejection for every quick second click)
+  const t = document.startViewTransition(swap);
+  for (const p of [t.ready, t.finished, t.updateCallbackDone]) p?.catch(() => {});
   setTimeout(swap, SWAP_FALLBACK_MS);
 }
 

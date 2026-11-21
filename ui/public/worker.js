@@ -26,6 +26,8 @@ let breakRestore = false;  // a test hook: reading the saves at start fails
 let breakStep = false;     // a test hook: the next sim step throws (a failure after ready)
 let restoreError = null;   // the saves could not be read at start: told to the page once ready
 
+const LOCK_TRIES = 16;      // *tune* how many times the store's lock is asked for before another tab is blamed...
+const LOCK_WAIT_MS = 250;   // ... and how long between asks (four seconds in all)
 const OTHER_TAB = "The game is already open in another tab. Close it and reload this one.";
 const NO_SAVES = "Your browser's storage could not be read: saves will not be kept in this browser. Download a career you want to keep.";
 const LOCK = "cfp-game";
@@ -70,14 +72,19 @@ async function persist() {
 // BroadcastChannel: whoever answers within 300 ms was there first, and a running worker answers.
 async function claimStore() {
   if (self.navigator && navigator.locks) {
-    const granted = await new Promise((resolve) => {
+    const ask = () => new Promise((resolve) => {
       navigator.locks.request(LOCK, { ifAvailable: true }, (lock) => {
         resolve(!!lock);
         return lock ? new Promise(() => {}) : null;     // never settles: the lock is held until the worker ends
       }).catch(() => resolve(false));
     });
-    if (!granted) throw otherTab();
-    return;
+    // a page reloaded (or left and come back to) finds its old worker still letting go of the lock for a moment:
+    // asked once, that read as "open in another tab" and the game never started. Ask again for a few seconds first
+    for (let tries = 0; tries < LOCK_TRIES; tries++) {
+      if (await ask()) return;
+      await new Promise((r) => setTimeout(r, LOCK_WAIT_MS));
+    }
+    throw otherTab();
   }
   if (typeof BroadcastChannel === "undefined") return;   // nothing to coordinate with
   const channel = new BroadcastChannel(LOCK);

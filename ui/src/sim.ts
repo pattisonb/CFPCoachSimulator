@@ -82,7 +82,14 @@ export function useSim(seasonId: string | null, onDone: (last?: SimStatus) => vo
       setStatus({ ...s, stage: null, week: null, games_done: null, games_total: null, progress: 0, error: null });
       timer.current = window.setTimeout(poll, POLL_MS);
     } catch (e) {
-      setError((e as Error).message);
+      // refused because a sim is already running (pressed in the moment the page had not heard of it: just after a
+      // reload, or between two weeks): that is no failure. Follow the one running; only a real refusal is an error
+      const message = (e as Error).message;
+      const running = await api<SimStatus>(`/api/season/${seasonId}/status?since=0`).catch(() => null);
+      if (running?.status === "running") {
+        setStatus(running);
+        timer.current = window.setTimeout(poll, POLL_MS);
+      } else setError(message);
     }
   };
 
