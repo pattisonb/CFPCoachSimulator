@@ -1,6 +1,6 @@
 import { GradeRange, isGrade } from "../Grade/index.tsx";
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Binoculars, CaretLeft, CaretRight, Plus } from "@phosphor-icons/react";
+import { ArrowDown, ArrowUp, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
 import { historyItems } from "../RecruitFile/index.tsx";
@@ -52,46 +52,6 @@ export const standingWord = (b: HqRow | undefined, ctx: Ctx) => {
   const sd = standingOf(b, ctx.team);
   return title(sd.odds ?? sd.word);
 };
-
-/** Add to Board: it turns to On Board once it worked (or when he already is). */
-function AddButton({ ctx, who, on }: { ctx: Ctx; who: { pid: string; name: string }; on: boolean }) {
-  const [state, setState] = useState<"idle" | "busy" | "done">(on ? "done" : "idle");
-  return (
-    <button
-      type="button"
-      className="hq-btn"
-      disabled={state !== "idle"}
-      aria-label={state === "done" ? m.onBoardLabel(who.name) : m.addLabel(who.name)}
-      onClick={async () => {
-        setState("busy");
-        setState((await ctx.act("board", who)) ? "done" : "idle");
-      }}
-    >
-      {state !== "done" && <Plus size={12} weight="bold" aria-hidden="true" />}
-      {state === "done" ? m.onBoard : m.add}
-    </button>
-  );
-}
-
-/** Send a Scout: it turns to Sent once it worked. */
-function ScoutButton({ ctx, who }: { ctx: Ctx; who: { pid: string; name: string } }) {
-  const [state, setState] = useState<"idle" | "busy" | "done">("idle");
-  return (
-    <button
-      type="button"
-      className="hq-btn"
-      disabled={state !== "idle"}
-      aria-label={m.scoutLabel(who.name)}
-      onClick={async () => {
-        setState("busy");
-        setState((await ctx.act("scout", who)) ? "done" : "idle");
-      }}
-    >
-      {state !== "done" && <Binoculars size={12} weight="bold" aria-hidden="true" />}
-      {state === "done" ? m.sent : m.scout}
-    </button>
-  );
-}
 
 // ---------- Class at a Glance ----------
 function ClassGlance({ d }: P) {
@@ -528,8 +488,6 @@ function RecruitSearch({ d, ctx }: P) {
               </RName>
               <span className="hq-sub">{posOf(r)}</span>
               <Stars n={r.stars ?? 0} size={10} />
-              {ctx.size === "L" && !r.scouted && <ScoutButton ctx={ctx} who={{ pid: r.id, name: r.name }} />}
-              <AddButton ctx={ctx} who={{ pid: r.id, name: r.name }} on={!!r.on_board} />
             </li>
           ))}
         </List>
@@ -565,8 +523,6 @@ function ScoutQueue({ d, ctx }: P) {
             <Stars n={r.stars ?? 0} size={10} />
             <span className="hq-sub">{m.looks(r.looks || 0)}</span>
             {pot}
-            {r.can_send && <ScoutButton ctx={ctx} who={{ pid: r.pid, name: r.name }} />}
-            <AddButton ctx={ctx} who={{ pid: r.pid, name: r.name }} on={!!r.on_board} />
           </li>
         );
       })}
@@ -593,7 +549,6 @@ function Flags({ d, ctx }: P) {
               {f.name}
             </RName>
             <span className="hq-sub">{posOf(f)}</span>
-            {ctx.size === "M" && <AddButton ctx={ctx} who={{ pid: f.pid, name: f.name }} on={!!f.on_board} />}
           </li>
         );
       })}
@@ -723,7 +678,6 @@ function Scouted({ d, ctx }: P) {
           <button type="button" className="hq-btn" onClick={() => ctx.openRecruit(r.pid)}>
             {m.openProfile}
           </button>
-          <AddButton ctx={ctx} who={{ pid: r.pid, name: r.name }} on={!!r.on_board} />
         </div>
       </div>
     );

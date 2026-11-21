@@ -308,7 +308,7 @@
 /* big numbers over their labels */
 .hq-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); /* *tune* room for "Unranked": two across a Small card */
   gap: var(--s2);
 }
 
@@ -317,21 +317,22 @@
   align-content: start;
   gap: 2px;
   min-width: 0;
-  padding: 8px 8px 8px 12px;
+  padding: 8px 10px 10px;
   background: var(--paper);
   border: 1px solid var(--line-soft);
-  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+  background-image: var(--team-stripe, none); /* your three colors as a line beneath, never a color down the side */
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 3px;
 }
 
-/* a number, or a short word (Unranked, 21 of 35): one line, sized so two fit across a Small card */
+/* a number, or a short word (Unranked, 21 of 35): never cut short with dots; a long one wraps to a second line */
 .hq-stat dd {
-  overflow: hidden;
   font-size: 20px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .hq-stat dt {
@@ -387,7 +388,7 @@
 }
 
 .hq-list li:hover {
-  box-shadow: inset 3px 0 0 var(--team, var(--ink));
+  box-shadow: inset 0 -2px 0 var(--team, var(--ink));
 }
 
 /* a name that opens him: plain text, underlined when pointed at */
@@ -527,11 +528,8 @@ button.hq-link:hover {
 
 .hq-table tr.is-mine td {
   background: color-mix(in srgb, var(--team, var(--ink)) 14%, var(--paper-hi));
+  box-shadow: inset 0 -2px 0 var(--team, var(--ink));
   font-weight: 700;
-}
-
-.hq-table tr.is-mine td:first-child {
-  box-shadow: inset 4px 0 0 var(--team, var(--ink));
 }
 
 /* a labeled meter */
@@ -770,7 +768,10 @@ button.hq-link:hover {
   min-width: 0;
   padding: 0 var(--s2);
   border-right: 1px solid var(--line-soft);
-  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+  background-image: var(--team-stripe, none);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 3px;
 }
 
 .hq-lane__name {

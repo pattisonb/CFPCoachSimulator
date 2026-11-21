@@ -17,9 +17,6 @@ export const messages = {
   saveFailed: "Couldn't save your layout.",
   removed: (title: string) => `Removed ${title}.`,
   undo: "Undo",
-  actFailed: (msg: string) => `That didn't work: ${msg}.`,
-  addedToBoard: (name: string) => `Added ${name} to your board.`,
-  scoutSent: (name: string) => `Your staff will take a look at ${name}.`,
   planFailed: "Couldn't save that. Try again.",
 
   // a card
@@ -94,11 +91,7 @@ export const messages = {
   staff: "Staff",
 
   // buttons on a row
-  addLabel: (name: string) => `Add ${name} to Your Board`,
-  onBoardLabel: (name: string) => `${name} Is on Your Board`,
   scout: "Scout",
-  sent: "Sent",
-  scoutLabel: (name: string) => `Send a Scout to ${name}`,
 
   // ----- recruiting widgets -----
   openSpots: "Open Spots",

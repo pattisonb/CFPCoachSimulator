@@ -659,7 +659,10 @@
   padding: var(--s2) var(--s3);
   background: var(--paper);
   border: var(--line) solid var(--ink);
-  box-shadow: inset 6px 0 0 var(--team, var(--ink));
+  background-image: var(--team-stripe, none); /* your three colors as a line beneath, never a color down the side */
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 4px;
 }
 
 .dev__stats dt {
@@ -925,7 +928,10 @@
 
 .dev__chip.is-in {
   border-color: var(--ink);
-  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+  background-image: var(--team-stripe, none);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 3px;
 }
 
 /* ---------- Departures: a board with a column for each way out, redshirt tiles, the draft's picks ---------- */
@@ -998,7 +1004,10 @@
 
 .shirt.is-on {
   border-color: var(--ink);
-  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+  background-image: var(--team-stripe, none);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 3px;
 }
 
 .shirt__who,
@@ -1021,7 +1030,10 @@
 
 .pick.is-mine {
   border-color: var(--ink);
-  box-shadow: inset 4px 0 0 var(--team, var(--ink));
+  background-image: var(--team-stripe, none);
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 3px;
 }
 
 .pick__n {

@@ -688,7 +688,6 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                           openTab("prospects");
                         }}
                         onRecruit={openRecruit}
-                        onBoardChange={() => void reloadRecruiting().catch(() => {})}
                       />
                     ) : key === "rankings" ? (
                       <Rankings

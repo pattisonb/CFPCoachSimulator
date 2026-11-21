@@ -20,8 +20,6 @@ interface Props {
   onProspects: () => void;
   /** open a recruit on the Recruiting board */
   onRecruit: (pid: string) => void;
-  /** the board changed here (Add to Board, Send a Scout): Energy and the board reload */
-  onBoardChange: () => void;
 }
 
 const WIDGETS: Widget[] = [...RECRUITING_WIDGETS, ...PROGRAM_WIDGETS];
@@ -48,6 +46,10 @@ const DRAG_SPEED = 18;
 const DRAG_TICK_MS = 16;
 /** *tune* How far the pointer travels (px) after the cards make room before they can make room again. */
 const DRAG_SETTLE = 8;
+/** *tune* How far the pointer must travel (px) onto a card before the wheel scrolls that card and not the page. */
+const WHEEL_ENGAGE = 4;
+/** *tune* A wheel "line" in px (a mouse that reports lines, not pixels). */
+const WHEEL_LINE = 40;
 /** *tune* How long Removed… Undo stays up. */
 const UNDO_MS = 6000;
 /** *tune* The layout Start With the Recommended Layout builds: the week's work first, then the class, then next year. */
@@ -91,7 +93,7 @@ interface Entry {
  * catalog, where each widget shows a live preview from canned data. The layout saves with the career a moment after
  * every change. Each read the cards need is fetched once, however many cards use it.
  */
-export default function Headquarters({ season, onSection, onProspects, onRecruit, onBoardChange }: Props) {
+export default function Headquarters({ season, onSection, onProspects, onRecruit }: Props) {
   const [cards, setCards] = useState<Card[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -103,6 +105,39 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
   const [note, setNote] = useState<{ text: string; undo?: () => void } | null>(null);
 
   const grid = useRef<HTMLDivElement>(null);
+  const page = useRef<HTMLDivElement>(null);
+  // The wheel belongs to the page. A card scrolls its own list only once you have moved the pointer onto it; a card
+  // that slides under a still pointer while the page scrolls never takes the wheel (the player's note: scrolling down
+  // the board kept stopping in whichever card passed under the pointer). The page moving hands the wheel back to it.
+  useEffect(() => {
+    const el = page.current;
+    if (!el) return;
+    let engaged: Element | null = null;
+    let at: [number, number] | null = null;
+    /** where the page was when the pointer moved onto that card: the page moving since hands the wheel back */
+    let engagedAt = 0;
+    const moved = (e: PointerEvent) => {
+      // the browser also reports a "move" when the page slides under a still pointer: only real travel counts
+      if (at && Math.hypot(e.clientX - at[0], e.clientY - at[1]) < WHEEL_ENGAGE) return;
+      at = [e.clientX, e.clientY];
+      engaged = (e.target as Element).closest?.(".hq-card") ?? null;
+      engagedAt = el.scrollTop;
+    };
+    const wheel = (e: WheelEvent) => {
+      if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // a zoom, or a sideways scroll: the browser's
+      const card = (e.target as Element).closest?.(".hq-card");
+      if (el.scrollTop !== engagedAt) engaged = null;
+      if (!card || card === engaged) return;
+      e.preventDefault();
+      el.scrollTop += e.deltaY * (e.deltaMode === 1 ? WHEEL_LINE : e.deltaMode === 2 ? el.clientHeight : 1);
+    };
+    el.addEventListener("pointermove", moved);
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => {
+      el.removeEventListener("pointermove", moved);
+      el.removeEventListener("wheel", wheel);
+    };
+  }, []);
   const guide = useRef<HTMLDivElement>(null);
   const flipFrom = useRef<Map<Element, DOMRect> | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
@@ -195,23 +230,6 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
   }, []);
 
   // ----- what a widget can do -----
-  const act = useCallback(
-    async (kind: "board" | "scout", who: { pid: string; name: string }) => {
-      try {
-        if (kind === "board")
-          await api(`/api/season/${id}/board`, { method: "POST", body: { pid: who.pid, on: true } });
-        else await api(`/api/season/${id}/recruit`, { method: "POST", body: { pid: who.pid, action: "scout" } });
-      } catch (e) {
-        say(m.actFailed((e as Error).message));
-        return false;
-      }
-      say(kind === "board" ? m.addedToBoard(who.name) : m.scoutSent(who.name));
-      refresh(["board", "scouting", "scouted", "hq"]);
-      onBoardChange();
-      return true;
-    },
-    [id, say, refresh, onBoardChange],
-  );
   const savePlan = useCallback(
     async (body: { tasks?: Task[]; goals?: Record<string, number> }) => {
       try {
@@ -230,7 +248,6 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
     sample,
     season: sample ? null : season,
     team: sample ? "you" : season.team,
-    act: sample ? async () => false : act,
     openRecruit: sample ? () => {} : onRecruit,
     savePlan: sample ? async () => false : savePlan,
     get: (path) => api(path),
@@ -711,7 +728,7 @@ export default function Headquarters({ season, onSection, onProspects, onRecruit
           </>
         }
       />
-      <div className="hq__page">
+      <div className="hq__page" ref={page}>
         {error ? (
           <p className="hq-empty-line">{m.openFailed(error)}</p>
         ) : !cards ? (
