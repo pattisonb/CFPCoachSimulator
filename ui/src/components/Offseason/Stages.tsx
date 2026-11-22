@@ -4,6 +4,8 @@ import { ArrowRight } from "@phosphor-icons/react";
 import Dropdown from "../Dropdown/index.tsx";
 import Modal from "../Modal/index.tsx";
 import Face from "../Face/index.tsx";
+import Slider from "../Slider/index.tsx";
+import { GradeRange } from "../Grade/index.tsx";
 import Panel from "../Panel/index.tsx";
 import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
 import Swatch from "../Swatch/index.tsx";
@@ -207,26 +209,28 @@ function Retention(p: P) {
         {!rt.players.length ? (
           <Empty>{m.keep.none}</Empty>
         ) : (
-          <ul
-            className="off__cards"
-            tabIndex={0}
-            ref={row}
-            onScroll={(e) => {
-              scrollAt.current = e.currentTarget.scrollLeft;
-            }}
-          >
-            {ordered.map((x) => (
-              <LeaverCard
-                key={x.id}
-                x={x}
-                left={rt.left}
-                busy={busy}
-                live={live}
-                act={act}
-                onCard={() => setCard({ team: p.season.team, name: x.name })}
-              />
-            ))}
-          </ul>
+          <Slider>
+            <ul
+              className="off__cards"
+              tabIndex={0}
+              ref={row}
+              onScroll={(e) => {
+                scrollAt.current = e.currentTarget.scrollLeft;
+              }}
+            >
+              {ordered.map((x) => (
+                <LeaverCard
+                  key={x.id}
+                  x={x}
+                  left={rt.left}
+                  busy={busy}
+                  live={live}
+                  act={act}
+                  onCard={() => setCard({ team: p.season.team, name: x.name })}
+                />
+              ))}
+            </ul>
+          </Slider>
         )}
       </section>
       <PlayerWindow seasonId={p.season.id} who={card} weekLabels={p.season.week_labels} onClose={() => setCard(null)} />
@@ -610,49 +614,54 @@ function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
           {pt.board ? ` · ${m.portal.onBoard(pt.board.count)}` : ""}
         </h3>
         {rows.length ? (
-          <ul className="off__cards" tabIndex={0}>
-            {rows.map((x) => (
-              <li key={x.id} className="dev-card portal-card" style={MINE}>
-                <header className="dev-card__top">
-                  <span className="face-tile dev-card__face">
-                    <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+          <Slider>
+            <ul className="off__cards" tabIndex={0}>
+              {rows.map((x) => (
+                <li key={x.id} className="dev-card portal-card" style={MINE}>
+                  <header className="dev-card__top">
+                    <span className="face-tile dev-card__face">
+                      <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                    </span>
+                    {/* your scouts' read, as the Prospects list shows it: never his true overall (the player's ask) */}
+                    <span className="portal-card__read" title={x.our_potential ? m.portal.read : m.portal.unscouted}>
+                      {x.our_potential ? <GradeRange read={x.our_potential} size="lg" /> : m.portal.noRead}
+                    </span>
+                  </header>
+                  <button
+                    type="button"
+                    className="off-card__open dev-card__name"
+                    title={m.portal.openFile(x.name)}
+                    onClick={() => onRecruit(x.id)}
+                  >
+                    {x.name}
+                  </button>
+                  <span className="off__soft">{x.pos}</span>
+                  {/* the school by its short name, so the tag fits the card; the whole line is its tooltip */}
+                  <span
+                    className="dev-card__line"
+                    title={
+                      x.signed
+                        ? m.portal.signedWith(teamName(teams, x.signed))
+                        : x.committed
+                          ? m.portal.committedTo(teamName(teams, x.committed))
+                          : undefined
+                    }
+                  >
+                    {x.signed || x.committed ? (
+                      <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
+                        {(x.signed ? m.portal.signedShort : m.portal.committedShort)(
+                          teams.get(x.signed ?? x.committed ?? "")?.abbreviation ??
+                            teamName(teams, x.signed ?? x.committed ?? ""),
+                        )}
+                      </TeamTag>
+                    ) : (
+                      <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
+                    )}
                   </span>
-                  <b className="dev-card__gain">{x.overall}</b>
-                </header>
-                <button
-                  type="button"
-                  className="off-card__open dev-card__name"
-                  title={m.portal.openFile(x.name)}
-                  onClick={() => onRecruit(x.id)}
-                >
-                  {x.name}
-                </button>
-                <span className="off__soft">{x.pos}</span>
-                {/* the school by its short name, so the tag fits the card; the whole line is its tooltip */}
-                <span
-                  className="dev-card__line"
-                  title={
-                    x.signed
-                      ? m.portal.signedWith(teamName(teams, x.signed))
-                      : x.committed
-                        ? m.portal.committedTo(teamName(teams, x.committed))
-                        : undefined
-                  }
-                >
-                  {x.signed || x.committed ? (
-                    <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
-                      {(x.signed ? m.portal.signedShort : m.portal.committedShort)(
-                        teams.get(x.signed ?? x.committed ?? "")?.abbreviation ??
-                          teamName(teams, x.signed ?? x.committed ?? ""),
-                      )}
-                    </TeamTag>
-                  ) : (
-                    <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </Slider>
         ) : (
           <Empty>{m.portal.noBoard}</Empty>
         )}
@@ -735,12 +744,12 @@ function PortalRecap({ v, teams }: P) {
     </>
   );
   const face = (x: { id: string; pos: string }) => (
-    <span className="face-tile recap__face">
+    <span className="face-tile precap__face">
       <Face face={playerFace(x.id, x.pos)} scale={1} label="" />
     </span>
   );
   return (
-    <div className="dev recap">
+    <div className="dev precap">
       <dl className="dev__stats">
         <Stat label={m.recap.signed}>{rec.signed.length}</Stat>
         <Stat label={m.recap.lost}>{rec.lost.length}</Stat>
@@ -753,11 +762,11 @@ function PortalRecap({ v, teams }: P) {
         </Stat>
         {/* the positions still under a healthy count, a tile beside the numbers (it was a row of its own under the
             panels, which made the page scroll) */}
-        <div className="recap__short-tile" title={m.recap.shortTip}>
+        <div className="precap__short-tile" title={m.recap.shortTip}>
           <dt className="label">{m.recap.short}</dt>
           <dd>
             {short.length ? (
-              <ul className="recap__short">
+              <ul className="precap__short">
                 {short.map((x) => (
                   <li key={x.group}>
                     <Tag>{m.recap.shortLine(x.group, x.have, x.target)}</Tag>
@@ -772,20 +781,20 @@ function PortalRecap({ v, teams }: P) {
       </dl>
 
       {/* three panels, one height: your additions, your losses, the country's biggest moves (each scrolls on its own) */}
-      <div className="recap__cols">
-        <Panel className="recap__col" title={m.recap.signed} aside={m.portal.players(rec.signed.length)}>
+      <div className="precap__cols">
+        <Panel className="precap__col" title={m.recap.signed} aside={m.portal.players(rec.signed.length)}>
           {rec.signed.length ? (
-            <ol className="recap__list">
+            <ol className="precap__list">
               {rec.signed.map((x) => (
-                <li key={x.id} className="recap__row">
+                <li key={x.id} className="precap__row">
                   {face(x)}
-                  <span className="recap__who">
+                  <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
-                  <span className="recap__move">
+                  <span className="precap__move">
                     {school((x as { from?: string }).from, m.recap.from(x.from_name ?? ""))}
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
+                  <b className="precap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
@@ -794,21 +803,21 @@ function PortalRecap({ v, teams }: P) {
           )}
         </Panel>
 
-        <Panel className="recap__col" title={m.recap.lost} aside={m.portal.players(rec.lost.length)}>
+        <Panel className="precap__col" title={m.recap.lost} aside={m.portal.players(rec.lost.length)}>
           {rec.lost.length ? (
-            <ol className="recap__list">
+            <ol className="precap__list">
               {rec.lost.map((x) => (
-                <li key={x.id} className="recap__row" title={x.reason || undefined}>
+                <li key={x.id} className="precap__row" title={x.reason || undefined}>
                   {face(x)}
-                  <span className="recap__who">
+                  <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
-                  <span className="recap__move">
+                  <span className="precap__move">
                     {(x as { to?: string | null }).to
                       ? school((x as { to?: string }).to, m.recap.to(x.to_name))
                       : m.recap.outOfFbs}
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
+                  <b className="precap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
@@ -818,20 +827,20 @@ function PortalRecap({ v, teams }: P) {
         </Panel>
 
         {moves.length > 0 && (
-          <Panel className="recap__col" title={m.recap.moves}>
-            <ol className="recap__list">
+          <Panel className="precap__col" title={m.recap.moves}>
+            <ol className="precap__list">
               {moves.map((x) => (
-                <li key={x.id} className="recap__row">
+                <li key={x.id} className="precap__row">
                   {face(x)}
-                  <span className="recap__who">
+                  <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{x.pos}</span>
                   </span>
-                  <span className="recap__move">
+                  <span className="precap__move">
                     {school(x.from, x.from_name)}
                     <ArrowRight size={12} weight="bold" aria-hidden="true" />
                     {school(x.to, x.to_name)}
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
+                  <b className="precap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>

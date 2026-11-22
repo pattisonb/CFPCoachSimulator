@@ -32,7 +32,16 @@ import { api } from "../../api.ts";
 import { dateText, kickoffText, ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
 import SimBoard from "../SimBoard/index.tsx";
-import type { NewsItem, OfficeView, RecruitingWeek, ScheduleGame, SeasonSummary, TeamCard } from "../../types.ts";
+import type {
+  NewsItem,
+  OfficeView,
+  RecruitingWeek,
+  ScheduleGame,
+  SeasonSummary,
+  SimResult,
+  SimStatus,
+  TeamCard,
+} from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -224,6 +233,39 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const signing = s.current_week >= CLOSE_WEEK;
   /** the sim's own progress, while one runs: the Office shows the board and nothing to press */
   const board = sim.running ? sim.status : null;
+  // The board changes all at once, when the sim finishes a week (the player's ask): the sim counts a week's games
+  // into your record before it calls the week over, so the record and the rank are held as they were until the week
+  // itself moves. Your place in the conference comes with that week's feed.
+  const held = useRef<{
+    week: number;
+    record: NonNullable<SimStatus["record"]>;
+    rank: string | null;
+    results: SimResult[];
+  } | null>(null);
+  const heldPlace = useRef<string | null | undefined>(undefined);
+  if (!board) {
+    held.current = null;
+    heldPlace.current = undefined;
+  } else {
+    const wk = board.current_week ?? s.current_week;
+    if (!held.current || held.current.week !== wk) {
+      const rank = board.my_rank === undefined ? s.my_rank?.rank : board.my_rank?.rank;
+      held.current = {
+        week: wk,
+        record: board.record ?? s.record,
+        rank: rank ? `#${rank}` : null,
+        results: board.results ?? [],
+      };
+      const p = board.feed?.week === wk ? board.feed.place : undefined;
+      if (p !== undefined) heldPlace.current = p ? m.confPlace(ordinal(p.conf_rank), p.of) : null;
+    }
+  }
+  const boardPlace =
+    heldPlace.current !== undefined
+      ? heldPlace.current
+      : office?.conference.independent || !st
+        ? null
+        : m.confPlace(ordinal(st.conf_rank), st.of);
   const title = s.done ? m.seasonComplete(s.year) : m.thisWeek;
   const subtitle = s.done
     ? s.champion_name
@@ -237,12 +279,12 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       {board && (
         <div className="office__board">
           <SimBoard
-            week={weekName((board.current_week ?? s.current_week) + 1)}
-            record={board.record ?? s.record}
+            week={weekName((held.current?.week ?? s.current_week) + 1)}
+            record={held.current?.record ?? s.record}
             conference={conf}
-            place={office?.conference.independent || !st ? null : m.confPlace(ordinal(st.conf_rank), st.of)}
-            rank={s.my_rank?.rank ? `#${s.my_rank.rank}` : null}
-            results={board.results ?? []}
+            place={boardPlace}
+            rank={held.current?.rank ?? null}
+            results={held.current?.results ?? []}
           />
         </div>
       )}

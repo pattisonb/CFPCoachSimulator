@@ -317,12 +317,13 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
               {p.schools.length > SCHOOLS && (
                 <li
                   className="prospect-card__more"
-                  title={p.schools
-                    .slice(SCHOOLS)
-                    .map((x) => x.name)
-                    .join(", ")}
+                  title={m.moreNames(
+                    p.schools.slice(SCHOOLS).map((x) => x.name),
+                    Math.max(0, (p.schools_n ?? p.schools.length) - p.schools.length),
+                  )}
                 >
-                  {m.more(p.schools.length - SCHOOLS)}
+                  {/* his list names ten at most: past that the tile says so ("5+ More"), and its tip counts the rest */}
+                  {m.more(p.schools.length - SCHOOLS, (p.schools_n ?? 0) > p.schools.length)}
                 </li>
               )}
             </ol>

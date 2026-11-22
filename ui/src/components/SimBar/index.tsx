@@ -33,30 +33,34 @@ export default function SimBar({ status: st, week, onStop }: Props) {
       </span>
       <span className="sim-bar__what">
         <b>{st.stage ?? m.working}</b>
-        {!!st.games_total && <span className="sim-bar__soft">{m.games(st.games_done ?? 0, st.games_total)}</span>}
+        {/* always there (empty between stages): the bar beside it never moves */}
+        <span className="sim-bar__soft">{st.games_total ? m.games(st.games_done ?? 0, st.games_total) : ""}</span>
       </span>
       <span className="sim-bar__track" aria-hidden="true">
         <i style={{ width: `${pct}%` }} />
       </span>
       <b className="sim-bar__pct">{m.pct(pct)}</b>
-      {stopping ? (
-        <b className="sim-bar__stopping">{st.stage === SAVING ? m.saving : m.stopping(week)}</b>
-      ) : (
-        more && (
-          <button
-            type="button"
-            className="sim-bar__stop"
-            onClick={() => {
-              setStopping(true);
-              onStop();
-            }}
-            data-sim-allow
-          >
-            <StopCircle size={16} weight="bold" aria-hidden="true" />
-            {m.stop}
-          </button>
-        )
-      )}
+      {/* one width whatever it says (the button, Stopping…, Saving…, or nothing in the last week) */}
+      <span className="sim-bar__end">
+        {stopping ? (
+          <b className="sim-bar__stopping">{st.stage === SAVING ? m.saving : m.stopping(week)}</b>
+        ) : (
+          more && (
+            <button
+              type="button"
+              className="sim-bar__stop"
+              onClick={() => {
+                setStopping(true);
+                onStop();
+              }}
+              data-sim-allow
+            >
+              <StopCircle size={16} weight="bold" aria-hidden="true" />
+              {m.stop}
+            </button>
+          )
+        )}
+      </span>
     </aside>
   );
 }

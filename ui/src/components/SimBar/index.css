@@ -38,20 +38,29 @@
   animation: sim-bar-blink 1s steps(2, jump-none) infinite;
 }
 
+/* what the sim is on: one width whatever it says, so nothing beside it moves as the words change */
 .sim-bar__what {
   display: flex;
-  flex: none;
+  flex: 0 0 clamp(260px, 36%, 480px);
   align-items: center;
   gap: var(--s3);
-  max-width: 46%;
-  overflow: hidden;
+  min-width: 0;
   font-size: var(--t-sm);
   white-space: nowrap;
 }
 
 .sim-bar__what b {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
+}
+
+.sim-bar__end {
+  display: flex;
+  flex: 0 0 236px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .sim-bar__soft {
@@ -59,6 +68,12 @@
   letter-spacing: 1px;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+.sim-bar__what .sim-bar__soft {
+  flex: 0 0 132px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 /* the bar: stripes in your three colors that march while it fills */
