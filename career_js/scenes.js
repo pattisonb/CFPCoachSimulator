@@ -1173,7 +1173,7 @@ export function open_scene(state, slug, pid, action, week) {
   const contact = orr(get(orr(get(rc["contacts"], pid), {}), slug), {});
   if (scenes.heard_rival_due(state, slug, pid)) {
     said = scenes.HEARD_RIVAL;                                      // he heard you promised his job again: he says so, once
-    delete contact["heard_rival"];
+    
   }
   turns.push(scenes._turn("him", said));
   if (action === "hc_visit") {                                      // in his living room what happened to him always comes up
@@ -1193,7 +1193,7 @@ export function open_scene(state, slug, pid, action, week) {
     if (truthy(told)) turns.push(scenes._turn("him", told));
   }
   if (action === "hc_visit" && truthy(persona.story(state, pid)[0]) && truthy(told)) {
-    // it came up in his living room: now you know
+    persona.learn(state, slug, pid, "story");                       // it came up in his living room: now you know
   }
   const sc = { id: sid, action, week, turns, lines: [],
     cue: null, ask: recruiting.ask_view(state, slug, pid), question: null, presented: null, tired,
