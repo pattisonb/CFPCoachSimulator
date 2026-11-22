@@ -122,13 +122,26 @@
   color: var(--ink);
 }
 
+/* a ranking is "#24", small and soft, so it never reads as a score beside one */
 .ticker__rank {
+  margin-right: -2px;
+  color: var(--ink-soft);
   font-size: var(--t-xs);
+  font-weight: 400;
 }
 
 .ticker__score {
   min-width: 18px;
+  margin-left: 2px;
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.ticker__side:not(.is-won) .ticker__score {
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 
 .ticker__face {

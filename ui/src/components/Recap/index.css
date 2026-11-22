@@ -273,7 +273,7 @@
 
 .recap__list li.is-mine {
   background: color-mix(in srgb, var(--ink) 8%, transparent);
-  box-shadow: inset 3px 0 0 var(--ink);
+  box-shadow: inset 0 -2px 0 var(--ink); /* marked with a line beneath, never down the side */
 }
 
 .recap__place {

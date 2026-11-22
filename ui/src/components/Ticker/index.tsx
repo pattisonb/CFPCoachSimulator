@@ -154,7 +154,7 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
       const side = (t: TeamCard | undefined, slug: string, score: number, rank: number | null, won: boolean) => (
         <span className={won ? "ticker__side is-won" : "ticker__side"}>
           <Swatch team={t} size={18} />
-          {rank && <span className="ticker__rank">{rank}</span>}
+          {rank && <span className="ticker__rank">#{rank}</span>}
           <span className="ticker__abbr">{t?.abbreviation ?? slug.slice(0, 4).toUpperCase()}</span>
           <span className="ticker__score">{score}</span>
         </span>
