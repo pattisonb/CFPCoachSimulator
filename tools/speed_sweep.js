@@ -209,7 +209,9 @@ function serve() {
       const rel = decodeURIComponent(new URL(req.url, URL_).pathname);
       let file = path.join(DIST, rel);
       if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(DIST, "index.html");
-      res.writeHead(200, { "Content-Type": types[path.extname(file)] || "application/octet-stream", "Content-Length": fs.statSync(file).size });
+      // the two headers vercel.json sends: with them the game may share memory with its helper workers
+      res.writeHead(200, { "Content-Type": types[path.extname(file)] || "application/octet-stream", "Content-Length": fs.statSync(file).size,
+        "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": args.includes("--no-isolation") ? "unsafe-none" : "require-corp" });
       fs.createReadStream(file).pipe(res);
     });
     server.listen(PORT, () => resolve(server));

@@ -1360,6 +1360,9 @@ def _moments(r: dict, home_team: dict, away_team: dict) -> dict:
     return out
 
 
+EXTERNAL_POOL = None   # set in the browser (app/browser_pool.py): a pool whose imap_unordered shares games with helper workers
+
+
 def _sim_one(args: tuple) -> dict:
     from engine.game import simulate_game
     event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args[:12]
@@ -1513,7 +1516,12 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
         for eid in game_ids:
             take(done[eid])
 
-    if pool is not None:
+    if pool is None and EXTERNAL_POOL is not None:
+        # the published site: the browser's helper workers play the week's games beside this one (app/browser_pool.py)
+        if not _TEAMS:
+            _init(str(_league_path))
+        collect(EXTERNAL_POOL.imap_unordered(_sim_one, jobs, chunksize=1))
+    elif pool is not None:
         collect(pool.imap_unordered(_sim_one, jobs, chunksize=2))
     elif sim_workers() <= 1:
         if not _TEAMS:
