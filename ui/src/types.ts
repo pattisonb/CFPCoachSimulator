@@ -16,6 +16,8 @@ export interface TeamCard {
   prestige: number;
   ratings: { overall: number; offense: number; defense: number; special_teams: number };
   head_coach: string;
+  /** his age as the first season starts */
+  head_coach_age?: number;
   stadium: { name: string; capacity: number };
   /** the coordinators, as "OC Name (Scheme)" */
   staff?: { offense: string; defense: string };
