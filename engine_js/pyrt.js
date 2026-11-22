@@ -207,10 +207,10 @@ export const random = new Random(0);
  */
 export function round(x, ndigits) {
   if (ndigits === undefined || ndigits === null) {
-    if (!Number.isFinite(x)) throw new Error(`round: cannot convert ${x} to a whole number`);
     const f = Math.floor(x), d = x - f;
     if (d < 0.5) return f;
     if (d > 0.5) return f + 1;
+    if (d !== 0.5) throw new Error(`round: cannot convert ${x} to a whole number`);     // NaN or an infinity
     return f % 2 === 0 ? f : f + 1;
   }
   if (!Number.isFinite(x) || x === 0) return x;
@@ -313,7 +313,12 @@ export function range(a, b) {
 // ---- dicts and values ---------------------------------------------------------------------------------------------------
 
 /** dict.get(key, default): the stored value when the key is there (a stored null stays null), else the default. */
-export const get = (o, k, d = null) => (o !== null && o !== undefined && Object.prototype.hasOwnProperty.call(o, k) ? o[k] : d);
+// (The engine's dicts are plain data whose values are never undefined and whose keys are never an Object method's
+// name, so "the key is there" is "its value is not undefined": far quicker than asking hasOwnProperty every time.)
+export function get(o, k, d = null) {
+  const v = o[k];
+  return v === undefined ? d : v;
+}
 
 /** getattr(obj, name, default): the attribute when the object has it, else the default. */
 export const getattr = (o, name, d) => (o[name] === undefined ? d : o[name]);
