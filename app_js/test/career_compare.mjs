@@ -13,6 +13,8 @@
 // played_at and duration_ms) and a box score's own random id; and a number may differ past its ninth digit (counted),
 // which is what PORTING.md allows for a gauss/exp/pow result stored unrounded.
 // `--adopt`: after a step whose state differs, go on from the Python's state (to see what else differs later).
+// `--reload`: this side forgets the career after every step and reads it back from its save (the Python keeps its own
+// in memory): a save and a load must change nothing, the order of a dict's number-like keys included.
 // One scenario per process (Clear Mode is read when the game loads): with several, each runs in a child.
 import fs from "fs";
 import os from "os";
@@ -40,7 +42,7 @@ if (names.length > 1) {
 }
 const name = names[0];
 const cfg = SCENARIOS[name];
-const ADOPT = flags.includes("--adopt"), QUIET = flags.includes("--quiet");
+const ADOPT = flags.includes("--adopt"), QUIET = flags.includes("--quiet"), RELOAD = flags.includes("--reload");
 const STOP = Number((flags.find((f) => f.startsWith("--stop=")) || "--stop=9999").slice(7));
 const dir = path.join(OUT, name);
 
@@ -68,7 +70,7 @@ league.CACHE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "leagues-"));
 const CLOCKS = new Set(["created_at", "saved_at", "played_at", "duration_ms"]);
 // dicts whose key order is the order Python walked a set of strings in (its hash order: PYTHONHASHSEED): the keys and
 // values are compared, their order is not
-const HASH_ORDER = [/^\/recruiting\/stages$/];
+const HASH_ORDER = [/^\/recruiting(_last)?\/stages$/];
 const total = { values: 0, close: 0, steps: 0, bad_steps: 0, calls: 0, bad_calls: 0, close_at: {} };
 /** The differences between the Python's value and this side's (at most `most`), leaves counted. */
 function differences(py, js, most = 8) {
@@ -177,7 +179,11 @@ function end_step(what, seconds = null) {
   if (have) run.league_year = year;
   if (fs.existsSync(py_league) !== have) say(`a league file: py ${fs.existsSync(py_league)} | js ${have}`, []);
   else if (have) {
-    const f2 = differences(JSON.parse(fs.readFileSync(py_league, "utf8")), JSON.parse(fs.readFileSync(abs(lg), "utf8").split(run.sid).join("{sid}")), 12);
+    const theirs = JSON.parse(fs.readFileSync(py_league, "utf8"));
+    // (the build's "source" is a label nothing reads: the Python writes the data folder's full path on its machine,
+    // the JavaScript its path from the project's root, teamdata_js/build_teams.js)
+    if (typeof theirs.source === "string" && path.isAbsolute(theirs.source)) theirs.source = path.relative(ROOT, theirs.source);
+    const f2 = differences(theirs, JSON.parse(fs.readFileSync(abs(lg), "utf8").split(run.sid).join("{sid}")), 12);
     if (f2.length) say("the league file", f2);
   }
   if (bad) total.bad_steps++;
@@ -192,6 +198,10 @@ function end_step(what, seconds = null) {
     console.log("       (going on from the Python's state)");
   } else if (bad && !ADOPT) finish(1);
   if (run.step > STOP) finish(total.bad_steps ? 1 : 0);
+  if (RELOAD) {                                           // the career is read back from its save
+    api._drop(run.sid);
+    api.call("GET", `/api/season/${run.sid}/status`);
+  }
 }
 
 function play() {

@@ -287,7 +287,8 @@ const SIM_START_MS = 500;            // *tune* how long after a career is first 
 const SIM_MIN_JOBS = 4;              // *tune* fewer games than this are played here: sharing them costs more than it saves
 const SIM_STALL_MS = 120000;         // *tune* how long the helpers may go without finishing a game before theirs are played here
 const S_GEN = 0, S_NEXT = 2, S_ALLOC = 3, S_DONE = 4, S_READY = 8, S_TABLE = 32;
-const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev", max: null };
+const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev", max: null,
+  helped: 0, spent: 0 };      // (for a step's `ms`: the games the helpers have played, and the time the games have taken)
 
 function simHelperCount() {
   if (typeof SharedArrayBuffer === "undefined" || !self.crossOriginIsolated) return 0;
@@ -384,6 +385,11 @@ const simBridge = {
 
 // `season.play_jobs`: every job played once, `onResult` called with each result as it is known (in any order).
 function playJobs(jobs, onResult) {
+  const t0 = performance.now();
+  try { shareJobs(jobs, onResult); } finally { sims.spent += performance.now() - t0; }
+}
+
+function shareJobs(jobs, onResult) {
   const season = self.Game.season;
   const here = (job) => onResult(season._sim_one(job));
   let helpers = 0;
@@ -393,7 +399,11 @@ function playJobs(jobs, onResult) {
   }
   if (!helpers) { for (const job of jobs) here(job); return; }
   // the helper could not play it (or its result did not fit): played here
-  const taken = (i) => (simBridge.failed(i) ? here(jobs[i]) : onResult(JSON.parse(simBridge.result(i))));
+  const taken = (i) => {
+    if (simBridge.failed(i)) return here(jobs[i]);
+    sims.helped += 1;
+    return onResult(JSON.parse(simBridge.result(i)));
+  };
   let got = 0;
   for (;;) {
     const i = simBridge.claim();
@@ -497,11 +507,12 @@ async function step() {
   let last = null;
   const report = (s) => { last = s; postMessage({ kind: "status", status: JSON.parse(s), busy: true }); };
   if (breakStep) { await new Promise((r) => setTimeout(r, 300)); throw new Error("the sim step is switched off"); }   // calls sent meanwhile are in flight
-  const t0 = performance.now();
+  const t0 = performance.now(), helped = sims.helped, spent = sims.spent;
   api.step(report);
   const t1 = performance.now();
   if (api.changed()) await persist();            // the week is in the store before the page is told it is over
-  const ms = { run: Math.round(t1 - t0), save: Math.round(performance.now() - t1) };      // where the step's time went
+  // where the step's time went (`games`: the part of `run` that was the week's games), and how many of them the helpers played
+  const ms = { run: Math.round(t1 - t0), games: Math.round(sims.spent - spent), save: Math.round(performance.now() - t1), helped: sims.helped - helped };
   if (last !== null) postMessage({ kind: "status", status: JSON.parse(last), busy: false, ms });
   else postMessage({ kind: "step", ms });
   await new Promise((r) => setTimeout(r, 0));      // a macrotask: messages sent meanwhile (pause, status) are served next

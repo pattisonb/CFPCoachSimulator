@@ -665,7 +665,8 @@ function _fill_rosters(state) {
       if (pref !== null) {
         const c = offseason._compact_prospect(state, pref, attrs);
         c["j"] = offseason._jersey(t["roster"], c["pos"], rng);
-        c["walk_on"] = c["preferred"] = true;
+        c["walk_on"] = true;                                       // (Python assigns a chain left to right: walk_on, then preferred)
+        c["preferred"] = true;
         t["roster"].push(c);
         added += 1;
         continue;

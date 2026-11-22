@@ -2,6 +2,7 @@
 //
 //     node tools/build_site.mjs              # the real rosters, as `npm run dev` shows them
 //     node tools/build_site.mjs --generic    # every real name swapped for a lookalike (tools/generic)
+//     node tools/build_site.mjs --out DIR    # ... to another folder than ui/dist/
 //
 // Vercel runs this (vercel.json) and always builds generic: there VERCEL=1 turns `--generic` on by itself, so nothing
 // published carries a real school, bowl, player or coach name. Nothing in the repository is changed: the game and the
@@ -229,8 +230,10 @@ export function dev_pack(cache) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const generic = process.argv.includes("--generic") || !!process.env.VERCEL || !!process.env.GENERIC_NAMES;
   const mb = (n) => (n / 1e6).toFixed(1);
-  build({ generic }).then((info) => {
-    console.log(`ui/dist/: ${PACK} ${mb(info.pack_bytes)} MB (${PACK_GZIP} ${mb(info.gzip_bytes)} MB, ${mb(info.raw_bytes)} MB unpacked), `
+  const at = process.argv.indexOf("--out");
+  const out = at === -1 ? path.join(ROOT, "ui", "dist") : path.resolve(process.argv[at + 1]);
+  build({ out, generic }).then((info) => {
+    console.log(`${path.relative(ROOT, out) || out}/: ${PACK} ${mb(info.pack_bytes)} MB (${PACK_GZIP} ${mb(info.gzip_bytes)} MB, ${mb(info.raw_bytes)} MB unpacked), `
       + `${info.files.length} files, ${GAME_SCRIPT} ${mb(info.game_bytes)} MB, ${info.teams} teams, ${generic ? "generic" : "real"} names`);
   }).catch((err) => { console.error(err); process.exit(1); });
 }

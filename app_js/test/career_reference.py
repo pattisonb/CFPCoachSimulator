@@ -92,6 +92,9 @@ def main(out: Path, name: str) -> None:
         print(f"  {n:03d} {what}" + (f": {seconds:.1f} s" if seconds is not None else ""), flush=True)
         run["notes"] = []
         run["step"] = n + 1
+        if os.environ.get("CAREER_RELOAD"):       # forget the career and read it back from its save (the compare's --reload)
+            api._drop(run["sid"])
+            api.call("GET", f"/api/season/{run['sid']}/status")
 
     def play():
         """Step the running job to its end; the seconds it took."""
