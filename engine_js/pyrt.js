@@ -524,3 +524,113 @@ export function pyfloat(x) {
   }
   return t;
 }
+
+// ---- dicts whose keys are whole numbers --------------------------------------------------------------------------
+// A JavaScript object lists keys that look like whole numbers first, in numeric order, whatever order they were
+// added in; a Python dict lists every key in the order it was added. A season's games are keyed by event id
+// ("401856766"), and the order Python walks them in decides seeds and draws. `odict` is an object that keeps its
+// keys in the order they were added, number-like or not: Object.keys, Object.values, Object.entries, for...in and
+// JSON.stringify all follow it. Use it for any dict that can hold a number-like key and is ever walked.
+
+/** A dict that keeps insertion order for every key. `entries`: [[key, value], ...] or a plain object to copy from. */
+export function odict(entries = []) {
+  const target = Object.create(null);
+  const order = [];
+  const proxy = new Proxy(target, {
+    set(t, k, v) {
+      if (typeof k === "string" && !(k in t)) order.push(k);
+      t[k] = v;
+      return true;
+    },
+    deleteProperty(t, k) {
+      if (k in t) {
+        delete t[k];
+        const i = order.indexOf(k);
+        if (i !== -1) order.splice(i, 1);
+      }
+      return true;
+    },
+    ownKeys() { return order.slice(); },
+    getOwnPropertyDescriptor(t, k) {
+      return k in t ? { value: t[k], writable: true, enumerable: true, configurable: true } : undefined;
+    },
+    has(t, k) { return k in t; },
+    get(t, k) { return k === ODICT ? true : t[k]; },
+  });
+  const pairs = Array.isArray(entries) ? entries : Object.entries(entries);
+  for (const [k, v] of pairs) proxy[k] = v;
+  return proxy;
+}
+const ODICT = Symbol("odict");
+/** Whether `o` is an odict. */
+export const is_odict = (o) => o !== null && typeof o === "object" && o[ODICT] === true;
+
+/**
+ * The keys of the object at `path` (["games"], or ["seeds", "3"]) of a JSON text, in the order the text has them.
+ * JSON.parse loses that order for number-like keys; this reads it back from the text, without parsing the values.
+ * Returns null when the path is not an object in the text.
+ */
+export function json_key_order(text, path) {
+  let i = 0;
+  const n = text.length;
+  const ws = () => { while (i < n && (text.charCodeAt(i) <= 32)) i++; };
+  const str = () => {                       // at an opening quote: returns the string, leaves i after the closing one
+    const start = ++i;
+    let plain = true;
+    while (i < n && text[i] !== '"') { if (text[i] === "\\") { plain = false; i++; } i++; }
+    const raw = text.slice(start, i++);
+    return plain ? raw : JSON.parse(`"${raw}"`);
+  };
+  const skip = () => {                      // skip one value
+    ws();
+    const c = text[i];
+    if (c === '"') { str(); return; }
+    if (c === "{" || c === "[") {
+      let depth = 0;
+      for (; i < n; i++) {
+        const d = text[i];
+        if (d === '"') { str(); i--; }
+        else if (d === "{" || d === "[") depth++;
+        else if (d === "}" || d === "]") { depth--; if (depth === 0) { i++; return; } }
+      }
+      return;
+    }
+    while (i < n && !",}] \n\r\t".includes(text[i])) i++;
+  };
+  // walk down the path, then list the keys
+  for (let level = 0; level <= path.length; level++) {
+    ws();
+    if (text[i] !== "{") return null;
+    i++;
+    const keys = [];
+    let found = false;
+    for (;;) {
+      ws();
+      if (text[i] === "}") { i++; break; }
+      if (text[i] === ",") { i++; continue; }
+      const key = str();
+      ws();
+      i++;                                  // the colon
+      if (level === path.length) { keys.push(key); skip(); }
+      else if (key === path[level]) { found = true; break; }
+      else skip();
+    }
+    if (level === path.length) return keys;
+    if (!found) return null;
+  }
+  return null;
+}
+
+/** JSON.parse(text) with the dicts at `paths` rebuilt as odicts in the text's key order (a season's games, say). */
+export function parse_ordered(text, paths) {
+  const data = JSON.parse(text);
+  for (const path of paths) {
+    const keys = json_key_order(text, path);
+    if (!keys) continue;
+    let parent = data;
+    for (const k of path.slice(0, -1)) parent = parent[k];
+    const plain = parent[path[path.length - 1]];
+    parent[path[path.length - 1]] = odict(keys.map((k) => [k, plain[k]]));
+  }
+  return data;
+}

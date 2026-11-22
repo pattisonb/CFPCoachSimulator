@@ -144,3 +144,15 @@ Things Python does that the JavaScript does differently, the same way in every p
   `position_fit`, `recruits`, `prospects` (in `career_js/`; `prospects` and `build_teams` hold only a few of their
   functions so far). Any other (`recruiting`, `persona`, `offseason`, `league`, `clear`, `ability_goals`, `news`,
   `schedule_gen`, `grade`, `programs`, `carousel`, ...) is `modules.<name>`.
+
+## Dicts with number-like keys
+
+A JavaScript object lists keys that look like whole numbers ("401856766", "11", "3") first and in numeric order;
+a Python dict lists every key in the order it was added. Where such a dict is only looked up by key, a plain object
+is fine. Where it is walked (`for g in state["games"].values()`, building a list from it, picking the first match,
+writing it out for a page), it must be an `odict` from `pyrt.js`, which keeps the order keys were added in:
+`state["games"]` (keyed by event id) and `state["my_boxes"]` are, and so is any dict built from them and then
+walked (`{eid: ... for eid, g in games.items()}` is `odict(...)`). A season read from its text is read with
+`parse_ordered(text, [["games"], ["my_boxes"]])`. `get`, `in`, `Object.keys/values/entries`, `for...in`, `delete`
+and `JSON.stringify` all work on an odict as on a plain object; `structuredClone` and `postMessage` do not (send
+its JSON text).
