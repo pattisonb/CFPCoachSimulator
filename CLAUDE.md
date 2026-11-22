@@ -8,6 +8,7 @@
 - No numbers out of 100 for moods or chances where the game uses words; no "null"/"undefined"/"NaN" ever reaches the page.
 
 ## Engine
+- The game is moving from Python to JavaScript a piece at a time (the player's goal: no Python left). The game engine is done: `engine_js/` (its rules for a port are in `engine_js/PORTING.md`), asked for games by the remaining Python through `sim/engine.py`, which needs `node` on a computer. A ported piece is held to the Python's exact results, wired in, and its Python deleted.
 - `python3 tests/test_sim_golden.py` must stay byte-identical unless the change is to the season sim itself and the player agreed; recruiting reads, flags and scenes are never in the digest.
 - New randomness goes into its own seeded stream (`_rng(state, "<name>")` or `random.Random(f"<name>-{seed}-...")`) appended after existing draws.
 - Constants the player may want to tune are module-level, marked `*tune*`, with a one-line comment.
