@@ -341,7 +341,11 @@ def hooks() -> None:
     def took_w(self, slug, pid, n=1):
         if T.rec is not None and not T.depth:
             T.took.append([slug, pid, n])
-        return took(self, slug, pid, n)
+        T.depth += 1                       # what a room asks as it counts him is its own business
+        try:
+            return took(self, slug, pid, n)
+        finally:
+            T.depth -= 1
 
     def init_w(self, state, flier=False):
         if T.rec is not None and not T.depth:

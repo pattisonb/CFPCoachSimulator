@@ -371,7 +371,7 @@ def sampled(name, a, k):
     if name == "_contact_land":
         return slug == me or tick(name, 150)
     if name == "_event":
-        return (len(a) > 3 and a[3] == me and tick(name + "-me", 5)) or tick(name, 400)
+        return (len(a) > 3 and a[3] == me and tick(name + "-me", 25)) or tick(name, 400)
     if name == "_reveal":
         return tick(name, 200)
     if name == "_commit":
