@@ -38,6 +38,7 @@ modules.league = { OFFENSE_ROLES: new Set(setup.OFFENSE_ROLES), TEAM_FIT: setup.
 modules.clear = { on: () => setup.clear };
 modules.promises = { snapshot_week: () => null, tags_now: () => ({}) };      // a plain season has no promises
 modules.schedule_gen = { FINALE_WEEK: setup.FINALE_WEEK };
+modules.programs = {};                              // asked for by name before a trade is refused (a plain season trades nothing)
 modules.grade = { season_grade: () => plain(next("grade")) };
 modules.recruiting = { word: () => plain(next("word")[1]) };
 modules.ability_goals = {
