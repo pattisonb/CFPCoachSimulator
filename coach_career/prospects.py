@@ -751,7 +751,10 @@ def profile(state: dict, pid: str, viewer: str) -> dict:
         "ea_position": p["ea_position"], "archetype": p["archetype"], "stars": p["stars"], "composite": p["composite"],
         "generational": generational_seen(rc, pid, viewer), "find": find(state, pid),
         "national_rank": p["rank"], "position_rank": pos_rank, "state_rank": state_rank,
-        "schools": _schools(state, pid, viewer), "committed": status["committed"], "signed": status["signed"], "pro": bool(status.get("pro")),
+        "schools": _schools(state, pid, viewer),
+        # every school recruiting him, counted (his list above carries the ten he likes most): a transfer can have sixty
+        "schools_n": len({s for s, pids in rc["offers"].items() if pid in pids} | set(rc["lists"].get(pid) or ())),
+        "committed": status["committed"], "signed": status["signed"], "pro": bool(status.get("pro")),
         "quiet": bool(status.get("quiet")),
         "hard": bool(status.get("hard")) and not status["signed"],
         "leaning_fcs": bool(status["fcs"]), "offered_by_you": pid in rc["offers"].get(viewer, []),

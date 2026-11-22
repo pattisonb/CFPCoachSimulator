@@ -761,6 +761,8 @@ export interface ProspectDetail {
     on_board: boolean;
     offered_by_you: boolean;
     schools: { school: string; name: string; offered: boolean }[];
+    /** every school recruiting him, counted: `schools` carries only the ten he likes most */
+    schools_n?: number;
     leaning_fcs?: boolean;
     pro?: boolean;
   };

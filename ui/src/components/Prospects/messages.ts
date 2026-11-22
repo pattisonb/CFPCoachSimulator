@@ -56,6 +56,8 @@ export const messages = {
   loadError: (msg: string) => `Couldn't load the class: ${msg}.`,
   page: (from: number, to: number, total: number) =>
     `${from.toLocaleString("en-US")}–${to.toLocaleString("en-US")} of ${total.toLocaleString("en-US")}`,
+  offersPlus: (n: number) => `${n}+`,
+  offersTip: (n: number) => `${n} schools have offered him.`,
   prev: "Previous Page",
   next: "Next Page",
 

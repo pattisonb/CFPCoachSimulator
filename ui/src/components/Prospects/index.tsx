@@ -49,6 +49,8 @@ interface Props {
 
 /** *tune* Prospects a page. */
 const PAGE = 50;
+/** *tune* The Offers column counts this far; past it, it reads "9+" (a transfer can have sixty). */
+const OFFERS_SHOWN = 9;
 /** *tune* Under this width the table drops its Size column and slims the others. */
 const NARROW_TABLE = 1000;
 /** *tune* How long the search waits after a key before it asks the server. */
@@ -611,7 +613,15 @@ export default function Prospects({
                       {statusOf(r)}
                     </td>
                     <td className="prospects__offers">
-                      {r.offers_n ? r.offers_n : <span className="prospects__soft">–</span>}
+                      {r.offers_n ? (
+                        r.offers_n > OFFERS_SHOWN ? (
+                          <span title={m.offersTip(r.offers_n)}>{m.offersPlus(OFFERS_SHOWN)}</span>
+                        ) : (
+                          r.offers_n
+                        )
+                      ) : (
+                        <span className="prospects__soft">–</span>
+                      )}
                     </td>
                     <td className="prospects__ask">
                       {r.ask?.exact != null ? (
