@@ -391,29 +391,23 @@ def main(out: Path, name: str) -> None:
                 R("offseason/hire", {"staff_id": "nobody", "index": 0})
             if stage == "conferences":
                 cv = G("offseason/conferences") or {}
-                note("conferences keys", sorted(cv))
                 confs = cv.get("conferences") or []
-                if not cfg["manual"] and len(confs) > 1:
-                    a, b = confs[0], confs[-1]
-                    mem = a.get("members") or a.get("teams") or []
-                    if mem:
-                        t = mem[-1]
-                        R("offseason/conference", {"team": t["slug"] if isinstance(t, dict) else t, "conference": b.get("name"), "stage": stage})
-                        G("offseason/conferences")
+                if not cfg["manual"] and len(confs) > 4:
+                    R("offseason/conference", {"team": confs[0]["teams"][-1]["team"], "conference": confs[4]["name"], "stage": stage})
+                    R("offseason/conference", {"team": confs[6]["teams"][0]["team"], "conference": confs[1]["name"], "stage": stage})
+                    R("offseason/conference", {"team": "nobody", "conference": confs[1]["name"]})
+                    G("offseason/conferences")
             if stage == "schedule":
                 sv = G("offseason/schedule") or {}
-                note("schedule keys", sorted(sv))
-                games = sv.get("games") or sv.get("editable") or []
-                g = next((x for x in games if x.get("options")), None)
-                if g:
-                    R("offseason/schedule", {"event_id": g["event_id"], "slug": g["options"][0]["slug"], "stage": stage})
-                sched = (G("offseason/schedule") or {}).get("schedule") or []
-                byes = [x["week"] for x in sched if x.get("bye")]
-                gm = next((x for x in sched if x.get("event_id") and not x.get("bye")), None)
-                if gm and byes:
-                    R("offseason/schedule/move", {"event_id": gm["event_id"], "week": byes[0], "stage": stage})
-                elif gm:
-                    R("offseason/schedule/move", {"event_id": gm["event_id"], "week": gm["week"] + 1, "stage": stage})
+                g = next((x for x in sv.get("editable") or [] if x.get("options")), None)
+                opt = next((o for o in g["options"] if o.get("accepts")), None) if g else None
+                if opt:
+                    R("offseason/schedule", {"event_id": g["event_id"], "slug": opt["slug"], "stage": stage})
+                moves = (G("offseason/schedule") or {}).get("moves") or {}
+                eid = next((k for k, v_ in moves.items() if v_), None)
+                if eid:
+                    R("offseason/schedule/move", {"event_id": eid, "week": moves[eid][-1]["week"], "stage": stage})
+                R("offseason/schedule/move", {"event_id": "nothing", "week": 3})
                 G("offseason/schedule")
             out = R("offseason/advance", {"stage": stage})
             G("offseason") if not (out or {}).get("next_season") else None

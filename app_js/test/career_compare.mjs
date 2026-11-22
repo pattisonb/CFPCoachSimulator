@@ -464,29 +464,23 @@ function offseason(me) {
     }
     if (stage === "conferences") {
       const cv = G("offseason/conferences") || {};
-      note("conferences keys", Object.keys(cv).sort());
       const confs = cv.conferences || [];
-      if (!cfg.manual && confs.length > 1) {
-        const a = confs[0], b = confs[confs.length - 1];
-        const mem = a.members || a.teams || [];
-        if (mem.length) {
-          const t = mem[mem.length - 1];
-          R("offseason/conference", { team: typeof t === "object" ? t.slug : t, conference: b.name === undefined ? null : b.name, stage });
-          G("offseason/conferences");
-        }
+      if (!cfg.manual && confs.length > 4) {
+        R("offseason/conference", { team: confs[0].teams[confs[0].teams.length - 1].team, conference: confs[4].name, stage });
+        R("offseason/conference", { team: confs[6].teams[0].team, conference: confs[1].name, stage });
+        R("offseason/conference", { team: "nobody", conference: confs[1].name });
+        G("offseason/conferences");
       }
     }
     if (stage === "schedule") {
       const sv = G("offseason/schedule") || {};
-      note("schedule keys", Object.keys(sv).sort());
-      const games = sv.games || sv.editable || [];
-      const g = games.find((x) => x.options && x.options.length);
-      if (g) R("offseason/schedule", { event_id: g.event_id, slug: g.options[0].slug, stage });
-      const sched = (G("offseason/schedule") || {}).schedule || [];
-      const byes = sched.filter((x) => x.bye).map((x) => x.week);
-      const gm = sched.find((x) => x.event_id && !x.bye);
-      if (gm && byes.length) R("offseason/schedule/move", { event_id: gm.event_id, week: byes[0], stage });
-      else if (gm) R("offseason/schedule/move", { event_id: gm.event_id, week: gm.week + 1, stage });
+      const g = (sv.editable || []).find((x) => x.options && x.options.length);
+      const opt = g ? g.options.find((o) => o.accepts) : null;
+      if (opt) R("offseason/schedule", { event_id: g.event_id, slug: opt.slug, stage });
+      const moves = (G("offseason/schedule") || {}).moves || {};
+      const eid = Object.keys(moves).find((k) => moves[k] && moves[k].length);
+      if (eid) R("offseason/schedule/move", { event_id: eid, week: moves[eid][moves[eid].length - 1].week, stage });
+      R("offseason/schedule/move", { event_id: "nothing", week: 3 });
       G("offseason/schedule");
     }
     const out = R("offseason/advance", { stage });
