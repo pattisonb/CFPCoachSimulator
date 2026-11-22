@@ -8,7 +8,7 @@ import FaceEditor from "../../components/FaceEditor/index.tsx";
 import { api } from "../../api.ts";
 import { navigate, rememberDynasty } from "../../router.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
-import { randomFace, type Face as FaceSpec } from "../../faces.ts";
+import { presetCoachFace, randomFace, type Face as FaceSpec } from "../../faces.ts";
 import type { Theme } from "../../theme.ts";
 import type { CoachOptions, SavedCoach, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -25,6 +25,8 @@ interface Props {
 const DEFAULT_AGE = 42;
 const MIN_AGE = 28;
 const MAX_AGE = 75;
+/** An age kept inside the allowed range; none (or not a number) is the default. */
+const clampAge = (age?: number) => Math.max(MIN_AGE, Math.min(MAX_AGE, age || DEFAULT_AGE));
 
 /** A coach's full name as first and last: the last word is the last name ("P. J. Fleck" → "P. J.", "Fleck"). */
 function splitName(full: string | undefined): [string, string] {
@@ -42,12 +44,15 @@ type Status =
 /** /coach/edit: build a coach's face from pocket-faces parts, name them, and save them to the game. */
 export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   const [team, setTeam] = useState<TeamCard | null>(() => cachedTeams()?.find((t) => t.slug === teamSlug) ?? null);
-  const [face, setFace] = useState<FaceSpec>(randomFace);
-  // the picked team's head coach fills the name fields (the viewer can change them)
+  // the picked team's head coach fills the face (his preset, when he has one), the name fields and the age (the viewer can
+  // change them)
+  const [face, setFace] = useState<FaceSpec>(() => (team && presetCoachFace(team.head_coach)) || randomFace());
+  const faceTouched = useRef(false);
   const [first, setFirst] = useState(() => splitName(team?.head_coach)[0]);
   const [last, setLast] = useState(() => splitName(team?.head_coach)[1]);
   const prefilled = useRef(team?.slug ?? null);
-  const [age, setAge] = useState(DEFAULT_AGE);
+  const [age, setAge] = useState(() => clampAge(team?.head_coach_age));
+  const ageTouched = useRef(false);
   const [hometown, setHometown] = useState("");
   const [coachId, setCoachId] = useState<string | null>(null);
   const [blank, setBlank] = useState<Record<string, unknown> | null>(null);
@@ -66,13 +71,17 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
       .catch(() => setTeam(null));
   }, [teamSlug]);
 
-  // a team that arrives after the first draw (not yet cached) fills the names once, unless the viewer already typed
+  // a team that arrives after the first draw (not yet cached) fills the face, the names and the age once, unless the viewer
+  // already changed them
   useEffect(() => {
     if (!team || prefilled.current === team.slug) return;
     prefilled.current = team.slug;
     const [f, l] = splitName(team.head_coach);
     setFirst((cur) => cur || f);
     setLast((cur) => cur || l);
+    const preset = presetCoachFace(team.head_coach);
+    if (preset && !faceTouched.current) setFace(preset);
+    if (!ageTouched.current) setAge(clampAge(team.head_coach_age));
   }, [team]);
 
   const named = first.trim() !== "" && last.trim() !== "";
@@ -108,6 +117,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   };
 
   const change = (next: FaceSpec) => {
+    faceTouched.current = true;
     setFace(next);
     setStatus({ kind: "idle" });
   };
@@ -132,7 +142,10 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
             min={MIN_AGE}
             max={MAX_AGE}
             value={age}
-            onChange={(e) => setAge(Math.max(MIN_AGE, Math.min(MAX_AGE, Number(e.target.value) || DEFAULT_AGE)))}
+            onChange={(e) => {
+              ageTouched.current = true;
+              setAge(clampAge(Number(e.target.value)));
+            }}
           />
         </Field>
         <Field label={m.hometown}>

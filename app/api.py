@@ -30,6 +30,7 @@ if sys.platform == "emscripten":                 # in the browser: no worker pro
     os.environ.setdefault("SIM_WORKERS", "1")
 
 from coach_career import career
+from coach_career import carousel
 from coach_career import league
 from coach_career import league_file
 from coach_career import offseason
@@ -610,6 +611,8 @@ def _team_card(t: dict) -> dict:
         "home_field_advantage": t["home_field_advantage"], "prestige": t["prestige"],
         "ratings": dict(season._shown.team_ratings(t["team_ratings"]), **season.page_ratings(t)),   # the page's own: an average of the players' overalls
         "head_coach": t["coaches"]["head_coach"]["name"],
+        # his age as the career's first season starts (Your Coach opens on it); a copy, so the team is not marked
+        "head_coach_age": carousel._age(dict(t["coaches"]["head_coach"]), league.FIRST_YEAR),
         "staff": coaches.staff(None, t),
         "tendencies": t.get("tendencies", {}),
     }
