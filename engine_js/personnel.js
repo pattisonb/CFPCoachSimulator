@@ -29,7 +29,7 @@ personnel.GROUPINGS = {
 
 // How often each scheme lines up in each grouping on a normal down (weights).
 // JavaScript lists an object's number-like keys ("10", "11", "12") in numeric order, not in the order written, and
-// the order of the weights decides which grouping a draw picks: each mix is written as Python's ordered pairs, and
+// the order of the weights decides which grouping a draw picks: each mix is written as ordered pairs, and
 // MIX_NAMES keeps each mix's names in that order.
 const _SCHEME_MIX_PAIRS = {
     "Air Raid": [["10", 0.45], ["11", 0.50], ["12", 0.05]],
@@ -42,7 +42,7 @@ const _SCHEME_MIX_PAIRS = {
     "Flexbone Triple Option": [["option", 0.80], ["21", 0.10], ["12", 0.10]],
 };
 personnel.SCHEME_MIX = {};
-personnel.MIX_NAMES = new Map();      // a mix (the object in SCHEME_MIX) -> its names in Python's order
+personnel.MIX_NAMES = new Map();      // a mix (the object in SCHEME_MIX) -> its names in the order written
 for (const [scheme, pairs] of Object.entries(_SCHEME_MIX_PAIRS)) {
     const mix = Object.fromEntries(pairs);
     personnel.SCHEME_MIX[scheme] = mix;

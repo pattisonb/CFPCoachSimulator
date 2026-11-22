@@ -1,6 +1,6 @@
 // What the measuring tools (tools/realism.mjs, long_run.mjs, check_recruiting.mjs) share: the game on Node with its
 // writes in a temporary folder, their command lines, and Python's way of writing a number or a dict in a printed
-// line (the tools print what their Python printed, to the digit).
+// line (the tools' printed lines keep that form, to the digit).
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

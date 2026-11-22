@@ -7,21 +7,20 @@
 // coachability grows over COMP_YEARS offseasons toward his potential) with a player's ratings over
 // the attributes that matter most at his EA position.
 //
-// Ported from coach_career/prospects.py by engine_js/PORTING.md's rules. The modules it asks that may not be
-// ported yet (recruiting, persona, clear, grades, offseason, ability_goals) and the season are reached through
-// `modules` at the call. What could not be written literally is marked "(port)" where it stands.
+// Recruiting, persona, clear, grades, offseason, ability_goals and the season are reached through `modules` at the
+// call (to keep the load free of circles).
 import { Random, round, int, get, sum, sorted, cmp, title, truthy, isNumber, odict, floordiv, mod } from "../engine_js/pyrt.js";
 import { fmean } from "../engine_js/pystat.js";
 import { modules } from "../engine_js/modules.js";
 import { build_teams } from "../teamdata_js/build_teams.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
-import { shown as shown_scale } from "../teamdata_js/shown.js";       // teamdata/shown.py (this file has its own `shown`)
+import { shown as shown_scale } from "../teamdata_js/shown.js";       // teamdata_js/shown.js (this file has its own `shown`)
 import { recruits } from "./recruits.js";
 
 export const prospects = {};
 
-// ---- (port) small things Python has built in ------------------------------------------------------------------------
+// ---- small helpers --------------------------------------------------------------------------------------------------
 
 /** `x in c` for a list, a set or a dict (a dict: the key is there). */
 function _in(x, c) {
@@ -136,7 +135,7 @@ prospects.WEAKNESS_TEXT = {
 };
 prospects.STRENGTH_FROM = 60; prospects.WEAKNESS_BELOW = 45;      // the game's scale: a Solid-and-up read is a strength (60), below 45 a weakness
 prospects.SOLID_TEXT = "Solid {group} for {a_noun} at this level; not a concern.";
-// (port) these two are odicts: Python lists their keys 5 first, a plain object here would list 2 first
+// these two are odicts: their keys are listed 5 first, where a plain object would list 2 first
 prospects.OUTLOOK = odict([
   ["5", "A day-one impact {noun} with early-round NFL upside."],
   ["4", "Projects as a multi-year starter at a Power 4 program."],
@@ -206,8 +205,7 @@ export function _attributes(position) {
 _attributes.cache_clear = () => _attributes_cache.clear();
 
 export function _distance(a, b, keys) {
-  // (port) Python squares with `** 2`, the C library's pow, which is the nearest double to the square all but about
-  // once in 1,200; this is always the nearest. A distance can so differ in its last digit.
+  // (d * d is always the nearest double to the square)
   return Math.sqrt(sum(keys.map((k) => { const d = get(a, k, 0) - get(b, k, 0); return d * d; })) / keys.length);
 }
 
@@ -319,7 +317,7 @@ prospects.COORDINATORS = { OC: "offensive coordinator", DC: "defensive coordinat
 prospects.OFFENSE_GROUPS = ["QB", "RB", "WR", "TE", "OL"];
 prospects.KICKING_GROUPS = ["K", "P"];
 // (class key, {(pid, looks, viewer): the like}): a board builds hundreds of rows
-// (port) the class key is kept as its text and the likes in a Map by their key's text: a tuple cannot be a key here
+// the class key is kept as its text and the likes in a Map by their key's text
 prospects._LIKES = [null, new Map()];
 
 export function read_overall(state, pid) {
@@ -463,7 +461,7 @@ export function pos_rank(state, pid) {
   return cached[1][pid];
 }
 
-prospects._POS_RANKS = [null, {}];           // (port) the key is kept as its text
+prospects._POS_RANKS = [null, {}];           // the key is kept as its text
 
 export function uncertainty(state, pid, group) {
   // How sure the read is, in a word: Low, Medium or High uncertainty (Low once his report is complete).
@@ -561,7 +559,7 @@ export function _ranks(state) {
   return out;
 }
 
-prospects._RANKS = [null, {}];               // (port) the key is kept as its text
+prospects._RANKS = [null, {}];               // the key is kept as its text
 
 
 prospects.DETAIL_PEERS = 8;                  // prospects at his position needed to describe a grade from them alone
@@ -616,7 +614,7 @@ export function grade_detail(state, p, group, lo, hi) {
 }
 
 
-prospects._LEAGUE = new Map();               // (port) keyed by "group|key": a tuple cannot be a key here
+prospects._LEAGUE = new Map();               // keyed by "group|key"
 
 
 export function reset_caches() {
@@ -700,7 +698,7 @@ const _CARD_MAX = 60000;
 const _card_cache = new Map();
 
 // one player's card is asked for more than once (his overall, then his grades)
-// `skills`: [skill, value] pairs in his dict's order (Python's tuple(ours.items())).
+// `skills`: [skill, value] pairs in his dict's order.
 export function _card(pos, ea_position, skills) {
   const at = `${pos}|${ea_position}|${skills.map((kv) => `${kv[0]}:${kv[1]}`).join(",")}`;
   const kept = _card_cache.get(at);
@@ -773,7 +771,7 @@ export function _schools(state, pid, viewer = null) {
   const teams = season.load_teams();
   const offers = new Set(Object.entries(rc["offers"]).filter(([, pids]) => _in(pid, pids)).map(([s]) => s));
   const schools = new Set([...offers, ...members(rc["lists"][pid])]);
-  // (port) a set is walked in no order Python promises; the sort below is by (interest, school), which orders them all
+  // (the Set's order does not matter: the sort below is by (interest, school), which orders them all)
   const rows = sorted([...schools].map((s) => [recruiting.interest(state, s, pid), s]), undefined, true).slice(0, 10);
   const visits = get(rc["visits"], pid, {});
   const pct = {};
@@ -848,7 +846,7 @@ export function flip_word(pct) {
   // A flip chance (a share, 0-1) as the game says it: None, Slim (under 5%), Real (under 15%), Likely.
   if (pct <= 0) return "None";
   for (const [edge, w] of prospects.FLIP_WORDS) if (pct >= edge) return w;
-  throw new Error("StopIteration");          // (port) Python's next() with nothing left: a share that is not a number
+  throw new Error("StopIteration");          // nothing left: a share that is not a number
 }
 
 export function flip_view(state, pid, viewer = null) {
@@ -1117,7 +1115,6 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
 
 export function looks_out(read) {
   // A read's looks for a view: in trip units, never past REPORT_LOOKS, whole numbers as ints (2, 1.5, 3).
-  // (port) a whole number is one number here, float or int: the looks as they are
   return modules.recruiting.report_looks(read);
 }
 
@@ -1132,7 +1129,7 @@ export function signed_ratings(state, p) {
   // A signee's full ratings, as his roster card will show them: every attribute now and at his
   // potential, with his overall and projected overall.
   const keys = [...game_scale.keys()];
-  const grp = game_scale.group(p["ea_position"]);            // every number as the page shows it (teamdata/shown.py)
+  const grp = game_scale.group(p["ea_position"]);            // every number as the page shows it (teamdata_js/shown.js)
   const rows = [];
   const n = Math.min(keys.length, p["ratings"].length, p["potential"].length);
   for (let i = 0; i < n; i++) {
@@ -1378,7 +1375,7 @@ export function class_summary(state, viewer, visible, needs) {
   // class so far (commits against the spots to fill, and commits by star level: plain counts, no targets)
   // and the best uncommitted prospects in the country.
   const rc = state["recruiting"];
-  const stars = odict([["5", 0], ["4", 0], ["3", 0], ["2", 0]]);      // (port) odicts: Python lists these 5 first
+  const stars = odict([["5", 0], ["4", 0], ["3", 0], ["2", 0]]);      // an odict: these are listed 5 first
   const mine = odict([["5", 0], ["4", 0], ["3", 0], ["2", 0]]);
   let contact = 0, evaluated = 0;
   const top = [];
@@ -1443,7 +1440,7 @@ export function class_summary(state, viewer, visible, needs) {
 export class class_block {
   // `with class_block(state):` the high school class is the recruiting block for the calls inside
   // (during the portal weeks the transfer pool holds that place; the classes views need the class).
-  // (port) there is no `with` here: `const b = new class_block(state); b.__enter__(); try { ... } finally { b.__exit__(); }`
+  // Used as: `const b = new class_block(state); b.__enter__(); try { ... } finally { b.__exit__(); }`
 
   constructor(state) {
     this.state = state; this.swapped = false;
@@ -1482,7 +1479,7 @@ export function national_classes(state, viewer = null) {
   for (const slug of recruiting.fbs_schools(state)) {
     const t = table[slug];
     const pids = t["pids"];
-    const stars = odict();                   // (port) an odict: Python lists these 5 first
+    const stars = odict();                   // an odict: these are listed 5 first
     for (const n of [5, 4, 3, 2]) stars[String(n)] = sum(pids.map((q) => (rc["prospects"][q]["stars"] === n ? 1 : 0)));
     rows.push({ school: slug, name: teams[slug]["name"], conference: teams[slug]["conference"],
       count: pids.length, signed: sum(pids.map((q) => (truthy(rc["status"][q]["signed"]) ? 1 : 0))), stars,
@@ -1579,8 +1576,8 @@ export function recruiting_view(state) {
 
 prospects.ROLE_NAMES = { OC: "Offensive Coordinator", DC: "Defensive Coordinator", Recruiter: "Recruiter" };
 prospects.NOT_ENOUGH_POINTS = "Not Enough Points";
-// (port) the three below are built from recruiting's constants when the Python file loads; recruiting may load after
-// this file here, so each is worked out the first time it is read (and can still be set)
+// the three below are built from recruiting's constants; recruiting may load after this file, so each is worked out
+// the first time it is read (and can still be set)
 function lazy(name, make) {
   Object.defineProperty(prospects, name, {
     enumerable: true, configurable: true,
@@ -1698,7 +1695,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
   for (const m of Object.values(staff)) {
     const codes = get(recruiting.AREAS, get(m, "area"), []);
     const mine = get(this_changes, m["id"]) || {};
-    let looking_at = 0;                      // (port) counted over the set in the order it was built: only the count is used
+    let looking_at = 0;                      // only the count is used, so the set's order does not matter
     for (const pid of live) {
       if (codes.includes(rc["prospects"][pid]["hometown"]["state"]) && recruiting.area_open(get(rc["reads"], pid))) looking_at += 1;
     }
@@ -1721,8 +1718,8 @@ export function scouting_view(state, q = null, position = null, group = null, of
   let board = rc["board"].filter((pid) => live.has(pid));
   // one Send from complete first, then the board's open reports, then its complete ones (they stay listed: no Send, a Complete tag)
   board = sorted(board, (pid) => (complete(pid) ? 2 : recruiting.looks_left(get(rc["reads"], pid)) <= recruiting.SEND_LOOK ? 0 : 1));
-  // (port) recruiting.visible is a set, walked here in whatever order it comes in: Python's order is its own (it
-  // differs from run to run), and it shows only between prospects that tie in the sort below
+  // (recruiting.visible is a Set, walked in the order it was built: that order shows only between prospects that tie
+  // in the sort below)
   const seen = [...recruiting.visible(state)].filter((pid) => _in(pid, rc["status"]));
   const rank_of = (pid) => rc["prospects"][pid]["rank"] || 10 ** 6;
   const need_of = (pid) => need[recruiting.spot_of(rc["prospects"][pid])];
@@ -1819,7 +1816,7 @@ prospects.CERTAINTY = [[0.18, "Early Read"], [0.08, "Taking Shape"], [0.0, "Soli
 
 function _certainty(band) {
   for (const [edge, label] of prospects.CERTAINTY) if (band >= edge) return label;
-  throw new Error("StopIteration");          // (port) Python's next() with nothing left: a band below zero
+  throw new Error("StopIteration");          // nothing left: a band below zero
 }
 
 export function odds(state, pid, week = null, viewer = null) {

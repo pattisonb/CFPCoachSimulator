@@ -3,15 +3,15 @@
 // what the game has. The FCS stand-ins and their conference are never written (league.base_meta's
 // "fictional" flag says which they are).
 //
-// Ported from coach_career/league_file.py by engine_js/PORTING.md's rules. What is done differently here:
+// Notes:
 //  - A file's bytes are a Uint8Array. Its JSON is read by `json_loads` below, which reads as Python's json.loads
 //    does (the same errors at the same line and column, NaN and Infinity as Python treats them), since the sentences
 //    a bad file gets carry them. An object of the file with a number-like key ("12") is an odict, so walking it
-//    follows the file's order as Python's dict does.
+//    follows the file's order.
 //  - `YEAR` and `UNTOUCHED_LINE` are read from `league` when asked for (league.FIRST_YEAR), not at load.
-//  - The sets (`_builtin()`'s slugs, fict_slugs, fict_conf) are Sets in sorted-slug order; Python's are in hash order.
-//  - The lru_cache functions (`builtin_bytes`, `_builtin`, `_builtin_rosters`, `_words`, `_builtin_docs`) keep one
-//    answer and have `cache_clear()`, as Python's.
+//  - The sets (`_builtin()`'s slugs, fict_slugs, fict_conf) are Sets in sorted-slug order.
+//  - `builtin_bytes`, `_builtin`, `_builtin_rosters`, `_words` and `_builtin_docs` keep one answer and have
+//    `cache_clear()`.
 import { Random, sorted, minBy, get, truthy, int, fmt, pyfloat, odict, is_odict } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { cfg } from "../engine_js/game_config.js";
@@ -1667,12 +1667,12 @@ function rivalry_names(doc) {
 
 function release_caches() {
   // Drop the built-in league copies a check reads (the export's team docs, the rosters, the fill's base
-  // league): about 70 MB that would otherwise stay for the life of the server, and for good in the browser
-  // (Pyodide's heap never shrinks). The next check reads them again (a few seconds).
+  // league): about 70 MB that would otherwise stay for the life of the server, and for good in the browser's
+  // worker. The next check reads them again (a few seconds).
   const league_fill = modules.league_fill;
   league_file._builtin_docs.cache_clear();
   league_file._builtin_rosters.cache_clear();
-  league_fill._base_league.cache_clear?.();      // (however the fill's port keeps its base league)
+  league_fill._base_league.cache_clear?.();      // (if the fill keeps its base league that way)
 }
 
 
@@ -1740,7 +1740,7 @@ export const league_file = {
   _new_rule, _trimmed_rule, _protect_fits, schedule_rules, _plain, _count,
   get UNTOUCHED_LINE() { return `Teams the file leaves alone play without the real ${league_file.YEAR} depth charts and adjustments.`; },
   _failed, check, RIVALRY_NAME_MAX, rivalry_names, release_caches, _check_merged,
-  // (not in the Python: what this file needed of Python itself, for a caller that reads a file the same way)
+  // (the JSON reader and its errors, for a caller that reads a file the same way)
   json_loads, json_text, JSONDecodeError, RecursionError, KeyError,
 };
 

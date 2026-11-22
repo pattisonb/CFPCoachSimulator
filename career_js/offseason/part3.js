@@ -1,9 +1,9 @@
-// coach_career/offseason.py, part 3 (the Python file's lines 1668 to 2468): what the portal leaves unspent, player
+// The offseason, part 3: what the portal leaves unspent, player
 // development (coachability's moves, a year's growth, a step back), coach development (every coach in the league
 // grows toward a hidden level), walk-ons and roster top-ups, and your staff (who leaves, the candidates, the hires).
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the offseason file is reached
-// through the `offseason` namespace, whichever part defines it.
+// Every name of the offseason is reached through the `offseason` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 import { Random, round, int, sum, cmp, sorted, maxBy, range, get, truthy } from "../../engine_js/pyrt.js";
 import { mean } from "../../engine_js/pystat.js";
 import { modules } from "../../engine_js/modules.js";
@@ -20,11 +20,11 @@ import { coach_names } from "../coach_names.js";
 import { prospects } from "../prospects.js";
 import { offseason } from "../offseason_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
-/** `x in coll` for a tuple, list or set (PHYSICAL is a set in the Python, lg.OFFENSE_ROLES too). */
+/** `x in coll` for an array or a Set (PHYSICAL and lg.OFFENSE_ROLES may be either). */
 const _in = (x, coll) => (coll instanceof Set ? coll.has(x) : Array.from(coll).includes(x));
 
 /** isinstance(v, dict). */
@@ -174,7 +174,7 @@ function _zip_dict(keys, values) {
 
 function _card_growth(was, now, attrs, pos) {
   // Each attribute on his card that moved over the offseason: where it was and is, its name, and its weight in his
-  // position's overall (teamdata/game_scale.py card_formula: the weight times the change is what it added).
+  // position's overall (teamdata_js/game_scale.js card_formula: the weight times the change is what it added).
   const a = game_scale.card_attributes(_zip_dict(attrs, was), pos), b = game_scale.card_attributes(_zip_dict(attrs, now), pos);
   const weights = get(game_scale.card_formula(pos) || {}, "w") || {};
   const out = [];
@@ -279,7 +279,7 @@ function _round(x, rng) {
   // x to a whole number, the fraction decided by a draw (1.3 is 1 seven times in ten, 2 the rest).
   const whole = int(x);
   const sign = x > 0 ? 1 : x < 0 ? -1 : 0;
-  const up = rng.random() < Math.abs(x - whole) ? 1 : 0;       // drawn whatever the sign, as the Python's product does
+  const up = rng.random() < Math.abs(x - whole) ? 1 : 0;       // drawn whatever the sign: the draw is always made
   return whole + sign * up;
 }
 
@@ -381,7 +381,7 @@ function _league_marks(state) {
         out[slug]["class"] = cr <= 25 && truthy(get(points, slug)) ? offseason.STAFF_MARK : cr > 70 || !truthy(get(points, slug)) ? -1 : 0;
       }
     }
-  } catch (e) {  // noqa: BLE001 (the Python's `except Exception`: whatever goes wrong, no class verdict)
+  } catch (e) {  // whatever goes wrong, no class verdict
     // pass
   }
   return out;
@@ -661,7 +661,7 @@ function _fill_rosters(state) {
       if (pref !== null) {
         const c = offseason._compact_prospect(state, pref, attrs);
         c["j"] = offseason._jersey(t["roster"], c["pos"], rng);
-        c["walk_on"] = true;                                       // (Python assigns a chain left to right: walk_on, then preferred)
+        c["walk_on"] = true;                                       // (walk_on, then preferred: the keys' order in a save)
         c["preferred"] = true;
         t["roster"].push(c);
         added += 1;
@@ -814,7 +814,7 @@ function _staff_marks(state) {
   try {
     const cr = prospects.class_rank(state, me);
     out["class"] = truthy(cr) && cr <= 25 ? offseason.STAFF_MARK : truthy(cr) && cr > 70 ? -1 : 0;
-  } catch (e) {  // noqa: BLE001 (the Python's `except Exception`)
+  } catch (e) {  // whatever goes wrong
     out["class"] = 0;
   }
   return out;

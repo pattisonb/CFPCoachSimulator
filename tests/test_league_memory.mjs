@@ -4,8 +4,7 @@
 // dropped, and the identity fields every other caller needs come from a small cached projection.
 // `node tests/test_league_memory.mjs`
 //
-// Python measured with tracemalloc (what is held, and the peak). Node has no peak for a stretch of code that does
-// not give the loop back, so what is held is measured here (the heap in use after a full collection, plus the
+// Node has no peak for a stretch of code that does not give the loop back, so what is held is measured here (the heap in use after a full collection, plus the
 // memory of buffers outside it) and the peak is not: its check is left out.
 import v8 from "node:v8";
 import vm from "node:vm";
@@ -31,7 +30,7 @@ test("league_memory", () => {
   const held = (traced() - before) / 1e6;
   assert(Object.keys(lgd["teams"]).length > 100);
   assert(held < 90, `building the league holds ${held.toFixed(0)} MB; the base files must not stay cached`);
-  // (the peak over the start, under 140 MB in Python, cannot be measured here)
+  // (the peak over the start cannot be measured here)
   // the identity a team keeps for the engine and the offseason's names comes from a small projection
   const meta = league.base_meta("ohio-state");
   assert(meta["short_name"] === "Ohio State" && meta["slug"] === "ohio-state" && !("roster" in meta) && !("depth_chart" in meta));

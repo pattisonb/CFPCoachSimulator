@@ -1,4 +1,4 @@
-// coach_career/recruiting.py, part 1 (the Python file's lines 1 to 814): the constants, the class (start, priorities,
+// Recruiting, part 1: the constants, the class (start, priorities,
 // NIL asks, generational prospects), the small reads (tiers, flag cuts, the recruiting calendar), what he asks of a
 // school, pestering, and where he would line up on a roster.
 //
@@ -7,17 +7,17 @@
 // step, signing and scouting.
 //
 // The recruiting state lives in `state["recruiting"]` (a Coach Career season only):
-//     year, prospects {pid: prospect; "ratings" and "potential" on our scale (game_scale.py) as lists in `attrs` order},
+//     year, prospects {pid: prospect; "ratings" and "potential" on our scale (game_scale.js) as lists in `attrs` order},
 //     lists {pid: {slug: action points}}, status {pid: {committed, signed, fcs}}, offers {slug: [pid]},
 //     visits {pid: {slug: week}}, contacts {pid: {slug: {hc_week}}}, hours {slug: hours left},
 //     nil {slug: {budget, held {pid: points}}}, revealed {slug: {pid: [topic]}}, board [pid], log [event]
 // A prospect's interest in a school = his priorities' weights on the school's pulls (each 0-1)
 // plus the points that school's actions have earned with him.
 //
-// Values marked *tune* are set by tools/check_recruiting.py against the real classes.
+// Values marked *tune* are set by tools/check_recruiting.mjs against the real classes.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the recruiting file is reached
-// through the `recruiting` namespace, whichever part defines it.
+// Every name of recruiting is reached through the `recruiting` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 import { Random, round, int, cmp, sorted, get, truthy, odict } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
@@ -25,7 +25,7 @@ import { build_teams } from "../../teamdata_js/build_teams.js";
 import { recruits } from "../recruits.js";
 import { recruiting } from "../recruiting_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 /** `key in d` for a dict. */
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
@@ -33,10 +33,10 @@ const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 /** `x in coll` for a tuple, list, set or dict (another part's constant, whatever shape it took). */
 const _in = (x, coll) => (coll instanceof Set || coll instanceof Map ? coll.has(x) : Array.isArray(coll) ? coll.includes(x) : has(coll, x));
 
-/** A tuple used as a cache key: its text (a number and the same digits as text stay apart, as in Python). */
+/** A tuple used as a cache key: its text (a number and the same digits as text stay apart). */
 const _key = (...parts) => JSON.stringify(parts);
 
-/** `a == b` for two dicts of JSON data (the order of keys does not count, as in Python). */
+/** `a == b` for two dicts of JSON data (the order of keys does not count). */
 function _equal(a, b) {
   if (a === b) return true;
   if (a === null || b === null || typeof a !== "object" || typeof b !== "object") return false;
@@ -115,7 +115,7 @@ recruiting.SCOUT_POINTS_BASE = 150;                    // *tune* your scouting p
 recruiting.SCOUT_POINTS_PER = 2.0;                     // *tune* ... plus this many per evaluation point over 50 (250 at 100)
 recruiting.LOOK_COST = { home: 5, area: 10, away: 15, portal: 5 };   // *tune* a Send's points: a prospect close to home (his state, or HOME_MILES), one in a staffed area, one away from your scouts, a portal entrant
 recruiting.HOME_MILES = 150;                                     // *tune* a prospect this close to your campus is a "home" look, whatever his state
-recruiting.SCENES = ["call", "hc_visit"];              // your calls and in-home visits without a pitch open a scene (scenes.py)
+recruiting.SCENES = ["call", "hc_visit"];              // your calls and in-home visits without a pitch open a scene (scenes.js)
 // looks come in trip units: a full report is REPORT_LOOKS looks and nothing goes past it (read["looks"] <= 3 always)
 recruiting.REPORT_LOOKS = 3;                           // a complete scouting report: three looks (flags, "our comp" and the SCOUTED line wait for it)
 recruiting.SEND_LOOK = 1.0;                            // a scouting trip (a Send, 5-15 scouting points): one look by your best evaluator, allowed while his report is short
@@ -132,7 +132,7 @@ recruiting.BACKFIRE = 0.25;                            // a priority pitched at 
 recruiting.BACKFIRE_COST = 0.5;                        // ... and costs this much of the action's base points
 recruiting.PRESENT_HIT = 0.25;                         // your opening on a call or visit (scenes.present): each of the three things that is one of his
 //                                                        priorities earns this share of the action's base times (1 + your strength); a weak one costs
-//                                                        BACKFIRE_COST of that share; the total caps at the base *tune: tools/check_recruiting.py*
+//                                                        BACKFIRE_COST of that share; the total caps at the base *tune: tools/check_recruiting.mjs*
 recruiting.COLD_OFFER = 0.5;                           // an offer before any contact counts this much
 recruiting.STAGES = ["cold", "contact", "top", "visited", "committed"];
 recruiting.DIMINISH = 0.2;                             // each earlier contact from the school cuts a new one's worth *tune*
@@ -181,7 +181,7 @@ recruiting.ASK_MULT_MAX = 2.0;
 // Only your own hand pesters. AI schools (_auto_week acting for them) are exempt, and Auto-recruit acting
 // for your school never does it: it skips a contact that would pester and spends the hours elsewhere (and
 // _act's `auto` flag keeps the penalty off its contacts regardless). The AI's targeting does not spam, and
-// tests/test_sim_golden.py stays byte-identical.
+// tests/test_sim_golden.mjs stays byte-identical.
 recruiting.AI_OVER_ASK = 1.1;                          // an AI school offers up to this times his ask from it
 // generational prospects: a public tag on a few top four- and five-stars, drawn once per class *tune*
 recruiting.GENERATIONAL_FROM = 95;                     // true projected overall at least this
@@ -194,7 +194,7 @@ recruiting.GEM_PERCENTILE = 0.94;                      // a gem's potential read
 recruiting.BUST_PERCENTILE = 0.0175;                   // a bust risk's read sits, even at its high end, under this share of his star tier's (one in 57)
 recruiting.FLAG_HOLD = 4.0;                            // a flag found stays until the read moves this far back past its cut (a read's slack, WORD_SLACK): no flicker
 recruiting.LOOK_LOG_KEEP = 30;                         // the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
-// the transfer portal as recruiting (offseason.py runs it): four weeks after signing day *tune*
+// the transfer portal as recruiting (offseason.js runs it): four weeks after signing day *tune*
 recruiting.PORTAL_WEEKS = 4;
 recruiting.PORTAL_PRIORITY_ODDS = { playing_time: 0.34, nil: 0.18, winning: 0.13, proximity: 0.08, prestige: 0.06, pro: 0.05, stability: 0.04,
   coach: 0.03, exposure: 0.03, facilities: 0.02, location: 0.02, academics: 0.01, game_day: 0.01 };
@@ -222,7 +222,7 @@ recruiting.PORTAL_CHURN = 8;                           // portal spots a Power 4
 recruiting.TIER_FROM_OVERALL = [[70, 5], [58, 4], [45, 3], [0, 2]];   // a transfer's standing for the boards' star lifts, from his overall
 recruiting.ROSTER_LIMIT = 85;                          // EA's roster limit (offseason.ROSTER_LIMIT)
 recruiting.MIN_OPEN = 12;
-recruiting.EARLY_LEAVERS = 6;                          // returning players expected to leave early (draft, transfers, quitting; offseason.py) *tune*
+recruiting.EARLY_LEAVERS = 6;                          // returning players expected to leave early (draft, transfers, quitting; offseason.js) *tune*
 recruiting.CLASS_ROOM = 2;                             // a class tops out this far over the school's real mean size *tune*
 recruiting.OFFER_FACTOR = 1.5;
 recruiting.FCS_LINE = 4.0;                             // best FBS interest under this: Leaning FCS *tune*
@@ -257,7 +257,7 @@ recruiting.ACADEMIC = new Set(["stanford", "notre-dame", "northwestern", "duke",
   "virginia", "georgia-tech", "wake-forest", "boston-college", "navy", "army", "air-force", "usc", "north-carolina"]);
 
 
-// (Python keeps the one answer; recruits.model() already reads the file once.)
+// (recruits.model() reads the file once.)
 function model() {
   return recruits.model();
 }
@@ -534,7 +534,7 @@ function upgrade_generational(state) {
 }
 
 
-/** next(t for at, t in TIER_FROM_OVERALL if ovr >= at): Python raises StopIteration when none is. */
+/** next(t for at, t in TIER_FROM_OVERALL if ovr >= at): throws when none is. */
 function _tier_from_overall(ovr) {
   for (const [at, t] of recruiting.TIER_FROM_OVERALL) if (ovr >= at) return t;
   throw new Error("StopIteration");
@@ -752,7 +752,7 @@ function nil_value(p, nil, ask, state = null) {
 }
 
 
-const _LOWBALL_AT_LOAD = recruiting.LOWBALL;       // a Python default is worked out once, when the function is defined
+const _LOWBALL_AT_LOAD = recruiting.LOWBALL;       // the default is fixed here, at load: a later change to LOWBALL does not move it
 
 function is_lowball(nil, ask, share = _LOWBALL_AT_LOAD) {
   return nil < share * ask || (nil === 0 && ask >= recruiting.LOWBALL_MIN);
@@ -904,7 +904,7 @@ function ahead_of(state, slug, pid) {
 
 function promise_holds(state, slug, pid, question) {
   // Whether he can believe your promise. Over a roster player, always (the player's ask): a promised start is your
-  // word to play him over the better player, and next season judges whether you do (promises.py); what can still make
+  // word to play him over the better player, and next season judges whether you do (promises.js); what can still make
   // one fail is two promises at his position (job_crowd) or your record at it (word.believes). Over another recruit,
   // when the recruit is rated at least as high.
   const rc = state["recruiting"];

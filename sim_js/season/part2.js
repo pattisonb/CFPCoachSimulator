@@ -1,7 +1,7 @@
-// sim/season.py, part 2 (the Python's lines 1027 to 1811): the simulation. The league a week's games are played in,
+// The season, part 2: the simulation. The league a week's games are played in,
 // the injured and the redshirting, position changes during the season, one game job and a week of them, the
 // postseason's matchups (title games, playoff rounds, bowls), and the week itself (game day, advance).
-// engine_js/PORTING.md has the rules ("A big file ported in parts").
+// engine_js/PORTING.md ("Big Files in Parts") says how the parts share the `season` namespace.
 import { Random, cmp, get, truthy } from "../../engine_js/pyrt.js";
 import { read_json } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
@@ -13,7 +13,7 @@ import { game_scale } from "../../teamdata_js/game_scale.js";
 import { shown as _shown } from "../../teamdata_js/shown.js";     // the scale ratings are shown on (a view's last step)
 import { position_fit } from "../../career_js/position_fit.js";
 
-// ---- Python's `in`, for the containers of this file (a dict's own keys, a set, a list) ----
+// ---- `k in c`, for the containers of this file (a dict's own keys, a set, a list) ----
 function has(c, k) {
   if (c instanceof Set || c instanceof Map) return c.has(k);
   if (Array.isArray(c)) return c.includes(k);
@@ -21,7 +21,7 @@ function has(c, k) {
   return Object.prototype.hasOwnProperty.call(c, k);
 }
 
-// d[k] of a dict whose keys are whole numbers in Python (a plain object here, or a Map)
+// d[k] of a dict whose keys are whole numbers (a plain object, or a Map)
 function at(d, k) {
   const v = d instanceof Map ? d.get(k) : d[k];
   return v === undefined ? null : v;
@@ -32,7 +32,7 @@ function min_key(d) {
   return Math.min(...(d instanceof Map ? [...d.keys()] : Object.keys(d)).map(Number));
 }
 
-// the league's teams file as the games read it (Python: `_TEAMS_PATH or str(_league_path)`)
+// the league's teams file as the games read it (`_TEAMS_PATH`, or the league's own path)
 function teams_path() {
   return season._TEAMS_PATH || String(season._league_path);
 }
@@ -55,7 +55,6 @@ function _use(path) {
 
 
 function _init(path) {
-  // (Python's pool workers also set their Ctrl-C handling here: there are no processes)
   season._TEAMS_PATH = path;
   season._TEAMS = read_json(path)["teams"];
 }
@@ -148,7 +147,7 @@ function position_changes(state, slug) {
 
 
 function _skills(p) {
-  // His skills on our scale (game_scale.py), as the league stores them.
+  // His skills on our scale (game_scale.js), as the league stores them.
   const keys = game_scale.keys(), values = get(p, "skills") || [];
   const out = {};
   for (let i = 0; i < Math.min(keys.length, values.length); i++) out[keys[i]] = values[i];
@@ -269,7 +268,7 @@ function _game_team(slug, shift, edits, morale, depth, injured) {
 // _with_earned, _moments: sim_js/game_job.js has them (attached at the end)
 
 
-season.EXTERNAL_POOL = null;   // Python's browser pool (app/browser_pool.py): a host replaces season.play_jobs instead
+season.EXTERNAL_POOL = null;   // never set: a host that shares a week's games replaces season.play_jobs instead
 
 
 function _sim_one(args) {
@@ -300,7 +299,7 @@ function _make_pool() {
 }
 
 
-season.Reporter = null;   // (Python's type of a progress callback: (stage text, games done, games total))
+season.Reporter = null;   // (a progress callback takes (stage text, games done, games total))
 
 
 function _week_seeds(state, week) {
@@ -331,7 +330,7 @@ function state_fictional(slug) {
 class StandInError extends Error {
   // A team-scoped view asked for an FCS stand-in. The stand-ins exist only so FBS teams
   // can play their FCS games: they show in the box scores (and schedule lines) of those
-  // games and nowhere else, so they have no pages of their own. (Python's is a LookupError.)
+  // games and nowhere else, so they have no pages of their own. (A LookupError.)
   constructor(message) {
     super(message);
     this.name = "StandInError";
@@ -378,7 +377,7 @@ function _base_traits(slug) {
 
 
 function _run_games(state, game_ids, pool = null, report = null, stage = "Simulating") {
-  // (`pool` is Python's worker pool: there is none here, the games go through season.play_jobs)
+  // (`pool` is unused: there are no worker processes, the games go through season.play_jobs)
   function form_shift(g, slug) {
     // the real FCS school's strength, for a stand-in
     return season.state_fictional(slug) ? get(g, "fcs_shift", 0.0) : 0.0;
@@ -698,7 +697,7 @@ function advance(state, pool = null, report = null, auto_recruit = false) {
   const teams = season.load_teams();
   const week = state["current_week"] + 1;
   season._setup_week(state, week, teams, say);
-  if (truthy(get(state, "career")) && truthy(get(state, "league"))) {          // promises judged all season: who starts this week (coach_career/promises.py)
+  if (truthy(get(state, "career")) && truthy(get(state, "league"))) {          // promises judged all season: who starts this week (career_js/promises.js)
     modules.promises.snapshot_week(state, week);
   }
   const ids = Object.entries(state["games"]).filter(([, g]) => g["week"] === week && !truthy(g["played"])).map(([eid]) => eid);

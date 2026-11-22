@@ -3,9 +3,8 @@
 // the layout in the career save and computes the two reads no other view has: your commits by week and this
 // week's movers on your board. Nothing here touches the season sim (the layout is outside the golden digest).
 //
-// It was coach_career/headquarters.py; engine_js/PORTING.md has the rules it was ported by. Modules reached through
-// `modules`: recruiting, offseason, season, prospects (class_rc, class_table, class_points, class_rank), promises,
-// programs. What could not be written literally is listed at the end of this file.
+// Modules reached through `modules`: recruiting, offseason, season, prospects (class_rc, class_table, class_points,
+// class_rank), promises, programs. Notes on standing quirks are at the end of this file.
 import { int, sum, cmp, sorted, range, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { shown as _shown } from "../teamdata_js/shown.js";
@@ -20,7 +19,7 @@ const len = (text) => [...text].length;
 const PY_SPACE = "\\t\\n\\x0b\\x0c\\r\\x1c\\x1d\\x1e\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
 const STRIP = new RegExp(`^[${PY_SPACE}]+|[${PY_SPACE}]+$`, "g");
 const strip = (text) => text.replace(STRIP, "");
-/** `x in coll` for a module's constant that may have been ported as a Set, a list or a dict. */
+/** `x in coll` for a module's constant that may be a Set, a list or a dict. */
 const contains = (coll, x) => (coll instanceof Set ? coll.has(x) : Array.isArray(coll) ? coll.includes(x) : x in coll);
 
 const HQ_MAX_CARDS = 40;       // *tune* the most cards a Headquarters holds
@@ -177,7 +176,7 @@ export function outlook(state) {
     const ovr = int(get(p, "overall") || 0);
     let draft = null;
     if (contains(offseason.UNDERCLASS_ELIGIBLE, cls)) {
-      // the view's overall is as the page shows it (teamdata/shown.py); the cuts are on the game's own scale
+      // the view's overall is as the page shows it (teamdata_js/shown.js); the cuts are on the game's own scale
       draft = ovr >= _shown.overall(headquarters.DRAFT_LIKELY) ? "Likely" : ovr >= _shown.overall(headquarters.DRAFT_POSSIBLE) ? "Possible" : null;
     }
     const grad = ["SR", "SRRS"].includes(cls);
@@ -565,15 +564,10 @@ export const headquarters = {
 
 modules.headquarters = headquarters;
 
-// What is not written as the Python has it (PORTING.md rule 9):
-// - A whole number against a float: `isinstance(h, int)` (a card's height), `isinstance(do["nil"], int)`, a task's
-//   `since`, a goal's value and `since_n` refuse 150.0 in Python and take it here (150 and 150.0 are one number in
-//   JavaScript; a page sends whole numbers). A bool is refused in both.
-// - `_ID.match(...)`: Python's `$` also matches before a last newline; the pattern here says so (`\n?$`).
-// - `text.strip()` and `len(text)`: written out (Python's white space; characters, not UTF-16 units).
-// - `(pid, what, status) in seen`: a tuple in a set is the three joined with U+0000 here.
-// - commits_by_week: `gained`/`lost` (dicts keyed by a whole number) are Maps; they are only read by key and summed.
-// - _task_check's `any(...)` for a position need is a loop that stops at the first match, as any() does.
-// - `rc is state["recruiting"]` is `===`: the same object, as Python's `is`.
-// - A missing key Python would raise on (KeyError) reads undefined here and goes on; none is reached with a real save.
-// - Names sort by UTF-16 unit here and by character in Python: the same for every name outside the astral planes.
+// Notes:
+// - A whole-number check (a card's height, a task's NIL and `since`, a goal's value and `since_n`) takes 150.0, which
+//   is the number 150 in JavaScript; a page sends whole numbers. A boolean is refused.
+// - `seen` holds (pid, what, status) as the three joined with U+0000.
+// - commits_by_week: `gained`/`lost` (keyed by a whole number) are Maps; they are only read by key and summed.
+// - A missing key reads undefined and goes on; none is reached with a real save.
+// - Names sort by UTF-16 unit: by character for every name outside the astral planes.

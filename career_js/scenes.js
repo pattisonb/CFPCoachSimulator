@@ -3,24 +3,23 @@
 // Deal says so); you present your program (three things) and he answers each with a Yes (one of his priorities) or a
 // No, with your case on each Yes; he may have a question about a named player; you lead with a pitch and get a Yes or
 // No to it. No small talk and nothing to read between the lines. This file owns the scene's words;
-// recruiting.py owns the scene's lifecycle and its points (the one `_act` path).
+// recruiting.js owns the scene's lifecycle and its points (the one `_act` path).
 //
 // A scene is `turns`: [{who: "you" | "him" | "note", text}] in order; `lines` (his turns' texts) stays one release
 // for the page's old readers. His question, and the lines his History keeps (a promise kept or broken, the money
 // talked), are in his voice.
 //
-// Ported from coach_career/scenes.py by engine_js/PORTING.md's rules. Every constant and function is on `scenes`
-// and is read through it. `persona` and `recruiting` are reached through `modules` at the call. What is not the
-// Python's own text, said once:
-//   - `line.format(**f)` is `format(line, f)` below: one pass over the template, a missing field throws;
-//   - QUESTION_RATE reads `env.CFP_QUESTION_RATE` (engine_js/files.js) where Python read the environment.
+// Every constant and function is on `scenes` and is read through it. `persona` and `recruiting` are reached through
+// `modules` at the call. Notes:
+//   - `format(line, f)` below fills a line's {fields}: one pass over the template, a missing field throws;
+//   - QUESTION_RATE reads `env.CFP_QUESTION_RATE` (engine_js/files.js), a setting the host passes in.
 import { Random, cmp, get, truthy, pyfloat } from "../engine_js/pyrt.js";
 import { env } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 
 export const scenes = {};
 
-// ---- Python's own, for this file ----------------------------------------------------------------------------------
+// ---- small helpers ------------------------------------------------------------------------------------------------
 /** `x or d` for a dict, list or None: the value when it is true in Python's sense, else the default. */
 const orr = (x, d) => (truthy(x) ? x : d);
 /** `k in d` for a dict. */
@@ -41,7 +40,7 @@ function format(template, fields) {
   });
 }
 
-// how often a playing-time recruit asks about a named player on a call or visit *tune: tools/check_recruiting.py*
+// how often a playing-time recruit asks about a named player on a call or visit *tune: tools/check_recruiting.mjs*
 // (CFP_QUESTION_RATE: the sweep forces it through the dev server's environment)
 scenes.QUESTION_RATE = Number(env.CFP_QUESTION_RATE ?? "0.6");
 

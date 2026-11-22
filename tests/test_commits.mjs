@@ -1,4 +1,4 @@
-// Verbal and hard commits (recruiting.py): a verbal commit warms to his school on his own each
+// Verbal and hard commits (recruiting.js): a verbal commit warms to his school on his own each
 // week and faster with contact, locks as a hard commit at HARD_AT, and a hard commit cannot flip
 // and keeps his offer; a signee's profile shows his full ratings to the school he signed with.
 // `node tests/test_commits.mjs`
@@ -14,7 +14,7 @@ test("commits", () => {
   const rc = st["recruiting"], me = "ohio-state";
   const by_rank = sorted(Object.keys(rc["prospects"]), (q) => rc["prospects"][q]["rank"]);
   const [quiet, touched, verbal] = [by_rank[10], by_rank[11], by_rank[12]];
-  for (const pid of by_rank.slice(10, 14)) {              // a commit style that firms up as usual (tests/test_commit_style.py has the others)
+  for (const pid of by_rank.slice(10, 14)) {              // a commit style that firms up as usual (tests/test_commit_style.mjs has the others)
     rc["prospects"][pid]["persona"] = { ...persona.of(st, pid), commit_style: "hat" };
   }
   for (const pid of [quiet, touched, verbal]) {

@@ -1,5 +1,5 @@
-// coach_career/offseason.py's namespace: the Python file is ported as the parts in career_js/offseason/ (in the file's own
-// order), each putting its functions, constants and module variables on this one object (engine_js/PORTING.md).
+// The offseason's namespace: the offseason is kept as the parts in career_js/offseason/ (loaded in order), each
+// putting its functions, constants and module variables on this one object (engine_js/PORTING.md, "Big Files in Parts").
 import { modules } from "../engine_js/modules.js";
 
 export const offseason = {};

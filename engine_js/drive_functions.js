@@ -1,5 +1,5 @@
-// engine/drive_functions.py in JavaScript (see PORTING.md): the snap, the fourth-down decision, kicks, punts and
-// the drive loop. Same names, same order, same random draws.
+// The snap, the fourth-down decision, kicks, punts and the drive loop. The order of the random draws here is the
+// game (engine_js/PORTING.md).
 import { random, round, get, getattr, isNumber, truthy, sum, title, maxBy } from "./pyrt.js";
 import { cfg } from "./game_config.js";
 import { personnel } from "./personnel.js";
@@ -107,7 +107,7 @@ export function determine_defense_play(down, first_down) {
 // a random number, so the log never changes a result.
 // (`play_log` lives on the namespace object below: drive_functions.play_log.)
 
-/** Python's _log(**entry): the keyword arguments are one object, in the Python order. */
+/** One line of the play log: the entry's fields are one object, in the order the caller wrote them. */
 export function _log(entry) {
   Object.assign(entry, play_functions.last_play);
   drive_functions.play_log.push(entry);
@@ -185,7 +185,7 @@ export function _momentum_kick(offense, defense, kind, result) {
  */
 export function sim_play(offense_team, defense_team, down, first_down_yardage, yardline, hurrying = false, last_play_type = null, last_gain = 0, seconds_remaining = cfg.HALF_SECONDS, verbose = true, clock_stopped = true, situation = null, posture = null) {
   const sliders = cfg.sliders;
-  // (Python evaluates both arguments, then calls: the offense's lineup first)
+  // (both lineups are taken before the call that uses them, the offense's first)
   const _fatigue_offense = offense_team.get_offense();
   const _fatigue_defense = defense_team.get_defense();
   game_functions.apply_general_fatigue(_fatigue_offense, _fatigue_defense);
@@ -510,7 +510,7 @@ export function attempt_kick(yardline, kicker, defense_team = null) {
   if (distance < 40) {
     make += get(_traits_of(kicker), "automatic", 0) * cfg.TRAIT_FX["automatic"];
   }
-  if (truthy(cfg.EXTRA_TRAITS) && kicker !== null && truthy(play_functions.CLUTCH_NOW[0])) {   // nerves of steel late
+  if (kicker !== null && truthy(play_functions.CLUTCH_NOW[0])) {   // nerves of steel late
     const t = _traits_of(kicker);
     make += (get(t, "ice_water", 0) + get(t, "clutch_leg", 0)) * cfg.TRAIT_FX["ice_water"];
   }
@@ -620,9 +620,7 @@ export function _attempt_punt(yardline, punter, defense_team = null, return_team
   // coffin-corner kick) and either pins the receiving team or loses it into the end zone.
   if (landing >= 90) {
     let pin = cfg.PUNT_PIN_CHANCE + ((punter.punt_accuracy || cfg.NEUTRAL) - cfg.NEUTRAL) / 100;
-    if (truthy(cfg.EXTRA_TRAITS)) {              // a pin artist pins more
-      pin += get(_traits_of(punter), "pin_artist", 0) * cfg.TRAIT_FX["pin_artist"];
-    }
+    pin += get(_traits_of(punter), "pin_artist", 0) * cfg.TRAIT_FX["pin_artist"];   // a pin artist pins more
     if (random.random() < pin) {
       const spot = Math.min(landing, random.randint(88, 99));
       return [spot, spot - yardline, false, null, 0, false, random.choice(["fair_catch", "downed", "out_of_bounds"])];
@@ -668,7 +666,7 @@ export function _attempt_punt(yardline, punter, defense_team = null, return_team
 /** Field goal with the clock about to run out, on any down. */
 export function _clutch_kick(offense, defense, kicker, yardline, seconds_remaining, in_red_zone, play_ran) {
   seconds_remaining -= random.randint(4, 6);
-  play_functions.CLUTCH_NOW[0] = truthy(cfg.EXTRA_TRAITS) ? true : play_functions.CLUTCH_NOW[0];   // the kick with time running out
+  play_functions.CLUTCH_NOW[0] = true;   // the kick with time running out
   const [kick_made, kick_blocked] = attempt_kick(yardline, kicker, defense);
   const result = kick_made && !kick_blocked ? "field goal" : "missed kick";
   if (in_red_zone && result === "field goal") {

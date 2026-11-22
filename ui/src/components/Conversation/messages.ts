@@ -60,7 +60,7 @@ export const messages = {
   } as Record<string, string>,
   learned: (topic: string) => `He told you he cares about ${topic}.`,
 
-  // your answers to his question (scenes.py ANSWER_LABELS, ANSWER_COPY)
+  // your answers to his question (scenes.js ANSWER_LABELS, ANSWER_COPY)
   answerLabels: { straight: "Tell Him Straight", promise: "Make Him a Promise", deflect: "Sidestep It" } as Record<
     string,
     string

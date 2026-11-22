@@ -1,30 +1,30 @@
-// coach_career/recruiting.py, part 4 (the Python file's lines 2495 to 3254): a contact's points and pestering, the
+// Recruiting, part 4: a contact's points and pestering, the
 // week's helpers (a revealed priority, the commit counts, the seeded stream, the log), a school's fit for every
 // prospect and its board, Auto-recruit's week, official visits, a commitment (and a Package Deal's mate), the flip
 // odds, money and other promises at the week step, commitments firming up, a school's room, and the week's draws.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the recruiting file is reached
-// through the `recruiting` namespace, whichever part defines it.
+// Every name of recruiting is reached through the `recruiting` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 //
-// What is not written literally (PORTING.md rule 9):
-//  - `**extra` (keyword arguments carried onto an event): `_event(state, kind, pid, school, extra)` and
-//    `_commit(state, pid, slug, kind, pair, extra)` take them as one object, last (its keys in the keywords' order).
-//  - `_Room` is a class with `__call__`. Here `_Room(state, flier)` (with or without `new`) returns a function
+// Notes:
+//  - `_event(state, kind, pid, school, extra)` and `_commit(state, pid, slug, kind, pair, extra)` take the fields
+//    carried onto an event as one object, last (its keys in the order they are written onto the event).
+//  - `_Room(state, flier)` (with or without `new`) returns a function
 //    `room(slug, pid)` carrying the instance's attributes and methods (`room.commits`, `room.groups`, `room.slack`,
 //    `room.yours`, `room.portal`, `room._at`, `room._limit`, `room.why_not`, `room.took`, and `room.__call__`).
 //    `room.groups[slug]` is the pair `[need, commits]`.
-//  - `_class_by_position` is keyed by the tuple (school, position): here by `school + "\u0000" + position`
+//  - `_class_by_position` is keyed by `school + "\u0000" + position`
 //    (`recruiting._pos_key(school, position)`); no slug or position holds that character.
-//  - `_FITS` is the tuple as an array `[key, fits by school, pool, version, tiers]`, its key the array
-//    `[state id, class key]` (or null), compared item by item. `tiers.keys() != old_tiers.keys()` and the two pools'
-//    states are compared as Python compares them: the same keys (and values), whatever their order.
-//  - `redo` in `_fits` is a set that `_fit_all` walks: Python's order is by hash, here by insertion. Each prospect's
-//    fit is worked out on its own and written over the one kept, so the order changes nothing.
-//  - `_national_share` is `lru_cache`d: here a Map by its argument (`recruiting._national_share.cache_clear()` empties it).
-//  - `x ** 2` on a float is `pypow(x, 2)` (exact); `math.sin`, `cos`, `asin`, `exp` and `log` are JavaScript's, so a
-//    fit (`_fit_all`) and a board's sampling keys can differ from Python's in the last digit (PORTING.md).
-//  - `lean` in `_draws` can be an empty list in Python (`scores and ...`); it is its truth here, which gives the same
-//    `st["fcs"]` and the same events (`[] != False` only ever stores `bool([])`, False again).
+//  - `_FITS` is the array `[key, fits by school, pool, version, tiers]`, its key the array
+//    `[state id, class key]` (or null), compared item by item. The tiers' keys and the two pools' states are compared
+//    by value: the same keys (and values), whatever their order.
+//  - `redo` in `_fits` is a Set that `_fit_all` walks in insertion order. Each prospect's fit is worked out on its
+//    own and written over the one kept, so the order changes nothing.
+//  - `_national_share` keeps its answers in a Map by its argument (`recruiting._national_share.cache_clear()` empties
+//    it).
+//  - A square of a float is `pypow(x, 2)` (exact); `Math.sin`, `cos`, `asin`, `exp` and `log` are the JavaScript
+//    engine's own, so a fit (`_fit_all`) and a board's sampling keys can differ between machines in the last digit
+//    (PORTING.md, "Numbers").
 //  - A dict keyed by prospect id that this part builds (`_fit_all`'s fits, `_fits`' tiers, `_offers_by_prospect`) is an
 //    odict: a transfer's id can be all digits.
 import { Random, round, int, sum, cmp, sorted, get, truthy, odict } from "../../engine_js/pyrt.js";
@@ -32,7 +32,7 @@ import { modules } from "../../engine_js/modules.js";
 import { pypow } from "../recruits.js";
 import { recruiting } from "../recruiting_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
@@ -57,13 +57,13 @@ function _same_key(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
-/** Two dicts hold the same keys (Python's `a.keys() == b.keys()`). */
+/** Two dicts hold the same keys, whatever their order. */
 function _same_keys(a, b) {
   const ka = Object.keys(a);
   return ka.length === Object.keys(b).length && ka.every((k) => has(b, k));
 }
 
-/** Two flat dicts are equal (Python's `a == b`: the same keys and values, whatever the order). */
+/** Two flat dicts are equal (the same keys and values, whatever the order). */
 function _same_dict(a, b) {
   const ka = Object.keys(a);
   return ka.length === Object.keys(b).length && ka.every((k) => has(b, k) && a[k] === b[k]);
@@ -163,7 +163,7 @@ function _rng(state, what) {
 
 /**
  * A line in the recruiting log. In the portal it also carries the portal week (`portal_week`):
- * the season's week stands still through the offseason. (`extra`: Python's keyword arguments, as one object.)
+ * the season's week stands still through the offseason. (`extra`: the event's other fields, as one object.)
  */
 function _event(state, kind, pid, school = null, extra = {}) {
   const e = { week: state["current_week"], kind: kind, pid: pid, school: school, ...extra };
@@ -400,7 +400,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
   const allowed = Math.ceil(recruiting.offer_cap(state, slug) * (truthy(recruiting.is_portal(state)) ? 1.0
     : Math.min(1.0, 0.35 + 0.65 * week / 8) * (week >= recruiting.LATE_MARKET ? recruiting.LATE_OFFERS : 1.0)));
   const budget = recruiting._nil(state, slug)["budget"];
-  const known = get(rc["revealed"], slug, {});     // (unused in the Python too)
+  const known = get(rc["revealed"], slug, {});     // (unused)
   const win = recruiting._winning(state);
   const need = recruiting.needs(state, slug), commits = recruiting.commits_by_group(state, slug);
   for (const pid of Array.from(offers)) {                   // a group at its cap: the open offers there are pulled (no more chasing flips), yours by hand kept
@@ -820,7 +820,7 @@ function _class_by_position(state) {
  * Where a school can still take a prospect: a spot in the class and room at his group (its
  * commits under the group's cap). Recruiting by hand, you may oversign a group you offered; in
  * the late market (`flier`: from LATE_MARKET and on signing day) every school takes one past a cap.
- * (The Python class, callable: `room(slug, pid)` is `__call__`; made with or without `new`.)
+ * (A function that carries its instance: `room(slug, pid)` is `__call__`; made with or without `new`.)
  */
 function _Room(state, flier = false) {
   const self = (slug, pid) => self.why_not(slug, pid) === null;
@@ -878,7 +878,7 @@ function _draws(state, week, rng) {
   const persona = modules.persona;
   const rc = state["recruiting"];
   const room = recruiting._Room(state, week >= recruiting.LATE_MARKET);
-  const commits = room.commits;                 // (unused in the Python too)
+  const commits = room.commits;                 // (unused)
   const base = week < recruiting.COMMIT_FREEZE_WEEKS ? 0.0 : recruiting._interp(recruiting.COMMIT_ODDS, week);
   const win = recruiting._winning(state), offered = recruiting._offers_by_prospect(state), by_pos = recruiting._class_by_position(state);
   const hats = truthy(get(rc, "hats")) ? rc["hats"] : {};
@@ -923,7 +923,6 @@ function _draws(state, week, rng) {
       continue;
     }
     scores = scores.filter(([v, s]) => room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room)));
-    // (Python's `lean` is the empty list when he has no school with room before FCS_NO_OFFER_WEEK: never equal to his flag)
     const lean_is_list = !scores.length && !(week >= recruiting.FCS_NO_OFFER_WEEK);
     const lean = (!scores.length && week >= recruiting.FCS_NO_OFFER_WEEK) || (scores.length > 0 && scores[0][0] < recruiting.FCS_LINE);
     const fcs = st["fcs"];

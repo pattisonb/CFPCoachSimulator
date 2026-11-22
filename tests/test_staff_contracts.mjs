@@ -1,4 +1,4 @@
-// Staff contracts (coach_career/offseason.py, carousel.py, recruiting.make_staff): every member of
+// Staff contracts (career_js/offseason.js, carousel.js, recruiting.make_staff): every member of
 // your staff is signed through a year; under contract he rarely leaves, at expiry he shops and the
 // stayers re-sign.
 // `node tests/test_staff_contracts.mjs`

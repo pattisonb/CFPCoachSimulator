@@ -6,8 +6,6 @@
 // - Players grow by kind (athleticism slowly, technique and the mental game faster), and a year's ceilings can fall too.
 //
 // Nothing here changes how a game or a recruit plays; it is what the player is shown, and how a roster develops.
-//
-// It was coach_career/clear.py; engine_js/PORTING.md has the rules it was ported by.
 import { Random, round, int, sum, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
@@ -142,7 +140,7 @@ export function ratings(state, pid) {
     const est = Math.max(1, Math.min(99, int(round(truth + err))));
     half = Math.max(2.0, half);                        // never a single number: the read's own width, at least a couple of points
     const lo = Math.max(1, int(round(est - half))), hi = Math.min(99, int(round(est + half)));
-    // as the page shows a rating (teamdata/shown.py): a card attribute at his card's group, his potential as an overall
+    // as the page shows a rating (teamdata_js/shown.js): a card attribute at his card's group, his potential as an overall
     const put = key === "potential" ? (v) => shown.overall(v) : (v) => shown.attribute(v, card_grp, key);
     const out = { key, label, est: put(est), lo: put(lo), hi: put(hi), confidence: clear.confidence(state, pid, group) };
     if (key === "potential") out["ours"] = [est, lo, hi];              // the game's own scale: the letter grades are cut from these
@@ -153,7 +151,7 @@ export function ratings(state, pid) {
   const pos_label = pr.display_pos(p["ea_position"]);
   const pot = row("potential", `Potential at ${pos_label}`, Number(p["pot_ovr"]), "potential");   // his projected overall at his position
   pot["position"] = pos_label;
-  if (truthy(get(pot, "ours"))) {                               // the page shows his potential as letters (grades.py), not these numbers
+  if (truthy(get(pot, "ours"))) {                               // the page shows his potential as letters (grades.js), not these numbers
     const sharp = grades.fine(state);
     const [est_, lo_, hi_] = pot["ours"];
     delete pot["ours"];

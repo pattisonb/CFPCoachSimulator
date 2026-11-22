@@ -61,7 +61,7 @@ interface Props {
 }
 
 /** *tune* Recruiting closes once Championship Week is played (recruiting.close_week), and Signing Day comes after the
- *  last game (sim/season.py FINAL_WEEK): between the two nobody can work a recruit. */
+ *  last game (sim_js/season.js FINAL_WEEK): between the two nobody can work a recruit. */
 const CLOSE_WEEK = 15;
 const FINAL_WEEK = 20;
 /** *tune* Selection day: Sim to Selection Day shows before it. */

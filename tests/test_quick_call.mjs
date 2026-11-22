@@ -62,7 +62,7 @@ test("quick call", () => {
   // a planned quick action is sent at the week step and stays ticked for the next week (the player's ask), with its
   // energy held again; a recruit who commits is let go
   [st, pid] = fresh();
-  assert(ME in st["recruiting"]["hours"]);                 // Python's del raises on a missing key
+  assert(ME in st["recruiting"]["hours"]);                 // the key must be there for the delete below to mean anything
   delete st["recruiting"]["hours"][ME];
   recruiting.plan(st, pid, "message", true);
   recruiting.plan(st, pid, "call", true);

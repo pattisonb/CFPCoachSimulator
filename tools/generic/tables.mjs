@@ -7,7 +7,7 @@
 // school's own (Georgia is GA, Pittsburgh is PGH). A "State" school goes by its home town or the town's nickname (Ohio
 // State is Columbus), and a school named for anything else gets a lookalike (Notre Dame is North Dome, TCU is Texas
 // City). Colors stay.
-// (Ported from tools/generic/tables.py: dicts are plain objects, sets are Sets, tuples are arrays, in the same order.)
+// (Dicts are plain objects, sets are Sets and pairs are arrays; their order is kept, since the scrub walks them.)
 
 // slug -> (short name, abbreviation, mascot). The full name is "<short> University".   *tune*
 export const TEAMS = {

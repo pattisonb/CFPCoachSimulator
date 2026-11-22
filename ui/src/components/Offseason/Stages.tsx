@@ -858,7 +858,7 @@ const OFFENSE = new Set(["QB", "HB", "RB", "FB", "WR", "TE", "LT", "LG", "C", "R
 const SPECIAL = new Set(["K", "P", "KR", "PR"]);
 const unitOf = (pos: string): Unit => (SPECIAL.has(pos) ? "special" : OFFENSE.has(pos) ? "offense" : "defense");
 /**
- * The game's notes on a player's offseason (coach_career/offseason.py growth_terms and the coachability roll), sorted
+ * The game's notes on a player's offseason (career_js/offseason.js growth_terms and the coachability roll), sorted
  * by what they say: what sped his growth up, what held it back, and a change to how coachable he is (which shapes the
  * years to come, not this jump).
  */

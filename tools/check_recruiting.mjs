@@ -10,7 +10,7 @@ import { sorted, sum, round, odict } from "../engine_js/pyrt.js";
 import { boot, is_main, f, pct, left, right, repr } from "./pytext.mjs";
 
 // (metric, low, high, real) — the tolerances tests/test_recruiting_realism.mjs holds
-// (the numbers as Python wrote them, since a line prints them that way: "want 0.75-1.0")
+// (a whole-number bound keeps its ".0", since a line prints them that way: "want 0.75-1.0")
 export const TOLERANCES = [
   ["p4_class", "19.5", "24.5", "21.7"],
   ["g5_class", "16.5", "21.5", "18.9"],
@@ -153,7 +153,7 @@ export function report(m) {
 
 export const PRESENT_WITH = ["winning", "playing_time", "coach"];      // the scripted calls' opening: three things, the same every call
 
-// recruiting.act(state, slug, pid, action, pitch, nil, scene, answer, topics): Python's keywords, in its order
+// recruiting.act(state, slug, pid, action, pitch, nil, scene, answer, topics): the arguments in order
 const act = (state, team, pid, action, { pitch, scene, answer, topics } = {}) => game.recruiting.act(state, team, pid, action, pitch, undefined, scene, answer, topics);
 
 /** What a player's call is worth a go, and how often its opening tells you something: a fresh career, the first

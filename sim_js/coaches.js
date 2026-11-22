@@ -5,12 +5,10 @@
 // coaching style (schemes and tendencies on the league scale, 50 = the FBS average), whether he
 // calls his own offense and defense, and a look for his sprite. `apply_coach` puts him on a
 // team: he replaces the head coach, and where he calls his own plays his schemes and
-// tendencies replace the coordinator's, which the engine reads (docs/HOW_IT_WORKS.md, "Coach
-// styles").
+// tendencies replace the coordinator's, which the engine reads.
 //
-// Ported from sim/coaches.py by engine_js/PORTING.md's rules. `apply_coach` was ported with the game's job
-// (game_job.js) and is that one function here. The saved coaches are files in Python (data/coaches/<id>.json); no
-// JavaScript host writes files yet, so save, load, list_all and delete go through `coaches.store`, which a host sets:
+// `apply_coach` lives with the game's job (game_job.js) and is that one function here. The saved coaches are files
+// (data/coaches/<id>.json): save, load, list_all and delete go through `coaches.store`, which a host sets:
 //   read(id)         the saved text of one coach, or null when there is none
 //   write(id, text)  save it
 //   remove(id)       take it away
@@ -93,10 +91,10 @@ const LOOK = {
   outfit: ["polo", "quarter-zip", "hoodie", "suit"],
 };
 
-/** Python's ValueError: what `clean` and the saved-coach functions throw with a readable message. */
+/** A value the page sent that cannot be used: what `clean` and the saved-coach functions throw with a readable message. */
 export class ValueError extends Error {}
 
-// ---- Python's own, for what the page sends ----
+// ---- small helpers, for what the page sends ----
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 // Python's white space (str.strip): JavaScript's trim takes U+FEFF and leaves U+001C-U+001F and U+0085

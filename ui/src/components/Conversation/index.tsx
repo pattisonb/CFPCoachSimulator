@@ -78,7 +78,7 @@ interface Line {
 const stillMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * A call or in-home visit as a conversation (coach_career/scenes.py), played like a chat. His lines come in one at a
+ * A call or in-home visit as a conversation (career_js/scenes.js), played like a chat. His lines come in one at a
  * time behind a typing bubble; yours sit on the right in ink. The head shows who you're talking to and the three
  * steps (Open, Listen, Pitch). Under the log, the step you're on: your opening (three topic cards, then Present),
  * his question when he has one (three answer cards), your pitch (one card), and a reaction card that ends it.

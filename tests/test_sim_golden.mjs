@@ -25,8 +25,8 @@ function digest(state) {
     if (g["played"]) scores[e] = [g["home_score"], g["away_score"], g["overtime"] || 0];
   }
   const stats = state["season_stats"] || {};
-  // 4.0 sacks and 4 sacks are one result (tests/canon.py): JavaScript has one kind of number, and json_dumps writes a
-  // whole one as Python writes an int, so the canon step is nothing here
+  // 4.0 sacks and 4 sacks are one result: JavaScript has one kind of number, and json_dumps writes a whole one
+  // without a ".0"
   const blob = json_dumps(stats, { sort_keys: true });
   const rec = state["recruiting"] || {};
   // the recruiting week's outcome: every school's board, offers, visits, contacts and each prospect's status

@@ -12,7 +12,7 @@ interface Props {
   onStop: () => void;
 }
 
-/** the game's word for its last stage of a week (sim/season.py SAVING_STAGE) */
+/** the game's word for its last stage of a week (sim_js/season.js SAVING_STAGE) */
 const SAVING = "Saving";
 
 /**

@@ -9,15 +9,15 @@
 // {"type": "team", "slug"} or {"type": "recruit", "pid"}. Your own team's items are left out,
 // except an upset either way.
 //
-// Ported from sim/news.py by engine_js/PORTING.md's rules. The season is reached as `modules.season` at each call
-// (the modules import each other in circles), and coach_career/persona.py as `modules.persona`.
+// The season is reached as `modules.season` at each call
+// (the modules import each other in circles), and career_js/persona.js as `modules.persona`.
 import { round, int, floordiv, sum, sorted, cmp, get, truthy, range } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 
 /** `k in d` for a dict. */
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
-// sim/news.py's namespace: its constants and its cache live here and are read from here (a caller may tune one).
+// The module's namespace: its constants and its cache live here and are read from here (a caller may tune one).
 export const news = {};
 
 news.NEWS_PER_WEEK = 6;           // *tune* the most items one week shows
@@ -37,8 +37,8 @@ news.KINDS = ["upset", "rankings", "big_game", "streak", "recruiting", "injury"]
 news._BASE = { rankings_no1: 95, upset: 80, recruiting_flip: 72, recruiting: 68, injury: 64, streak: 60,
   rankings: 55, big_game: 45 };
 
-// (season id, year, week) -> that week's items, once the week is over. (Python's key is the three as a tuple; a Map
-// here, keyed by `_cache_key`'s text of the three: `news._cache.clear()` empties it, as the dict's does.)
+// (season id, year, week) -> that week's items, once the week is over. (A Map, keyed by
+// `_cache_key`'s text of the three: `news._cache.clear()` empties it.)
 news._cache = new Map();
 const _cache_key = (id, year, week) => JSON.stringify([id, year, week]);
 
@@ -61,8 +61,7 @@ export function _ranked(name, rank) {
 export function _pregame_chance(teams, g, side) {
   // The side's chance before the game, from the two teams' overall ratings (the same
   // estimate the morale and the bracket projection use).
-  // (Python tries the sum and answers 0.5 on a KeyError or a TypeError: a team, its ratings or the game's `neutral`
-  // missing, or a rating that is not a number. Here those are asked one by one.)
+  // (0.5 when a team, its ratings or the game's `neutral` is missing, or a rating is not a number)
   const home = get(get(get(teams, g["home"]) || {}, "team_ratings") || {}, "overall");
   const away = get(get(get(teams, g["away"]) || {}, "team_ratings") || {}, "overall");
   if (typeof home !== "number" || typeof away !== "number" || g["neutral"] === undefined) return 0.5;
@@ -174,7 +173,7 @@ export function _big_games(state, teams, fbs, games, boxes) {
         } else if (tds >= news.BIG_TDS) {
           [line, extra] = [`${who} accounts for ${tds} touchdowns ${vs}.`, 20 * (tds - news.BIG_TDS)];
         } else if (sacks >= news.BIG_SACKS) {
-          const n = sacks;             // (Python shows a whole count without its ".0": a number here is shown that way already)
+          const n = sacks;             // (a whole count is shown without a ".0")
           [line, extra] = [`${who} records ${n} sacks ${vs}.`, 20 * (sacks - news.BIG_SACKS)];
         }
         if (truthy(line)) {

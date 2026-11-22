@@ -37,7 +37,7 @@ const flipAlert = (r: BoardRow): { key: RecruitAlert; tip: string } | null =>
 type NeedShow = "commits" | "board" | "offers";
 
 /** The roster groups in order (the keys a need is counted under). */
-// the line, linebackers and safeties as their positions (coach_career/recruiting.py SPOTS), in depth-chart order
+// the line, linebackers and safeties as their positions (career_js/recruiting.js SPOTS), in depth-chart order
 const GROUP_ORDER = [
   "QB",
   "RB",

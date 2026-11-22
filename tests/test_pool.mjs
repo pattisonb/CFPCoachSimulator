@@ -1,5 +1,5 @@
-// The season's worker pool starts clean: its workers hold none of the server's sockets. (In Python a forked worker
-// kept the browser's keep-alive connections open after the server closed them, so the page's next requests went to a
+// The season's worker pool starts clean: its workers hold none of the server's sockets. (A forked worker
+// once kept the browser's keep-alive connections open after the server closed them, so the page's next requests went to a
 // socket nobody read and the page hung on Advance.)
 // The JavaScript game has no worker processes of its own (sim_js/season/part2.js `_make_pool`: always null, the games
 // played in this process; a host that shares a week out replaces `season.play_jobs`), so nothing can inherit a

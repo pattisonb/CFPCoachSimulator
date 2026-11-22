@@ -19,7 +19,7 @@ interface Props {
   titleGame?: TitleGame | null;
 }
 
-/** *tune* The season's last week (sim/season.py: the national championship). */
+/** *tune* The season's last week (sim_js/season.js: the national championship). */
 const LAST_WEEK = 20;
 /** *tune* The first week after the regular season: the weeks from here get a placeholder until a game is set. */
 const FIRST_POST_WEEK = 15;

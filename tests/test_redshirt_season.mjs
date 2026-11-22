@@ -1,4 +1,4 @@
-// Redshirting during the season (sim/season.py redshirt_toggle): any of your players with four
+// Redshirting during the season (sim_js/season.js redshirt_toggle): any of your players with four
 // games or fewer and his year unused can be sat down for the rest of the season; he plays no more
 // games, his page says so, and the Departures step takes him as redshirting by default.
 // `node tests/test_redshirt_season.mjs`

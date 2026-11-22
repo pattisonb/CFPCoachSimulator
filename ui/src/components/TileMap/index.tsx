@@ -65,7 +65,7 @@ interface StateShape {
 }
 
 /**
- * The map's shapes, worked out once from the generated grid (tools/pixel_map.py): each state's pixels and outline,
+ * The map's shapes, worked out once from the generated grid (usPixels.ts): each state's pixels and outline,
  * the borders between states, and a place for each label. A label sits on the pair of side-by-side cells deepest
  * inside its state (a distance from the border, counted in cells); a state with no such pair (RI, DE, DC…) gets a
  * callout beside the map, on the side it's nearer, with a leader line.
@@ -187,8 +187,8 @@ export interface StateCount {
   board: number;
 }
 
-/** The grid's own projection (worked out against tools/pixel_map.py's source: Albers USA at 975 x 610, 68 cells
- * across, cropped one cell at the left and top). Alaska and Hawaii sit in insets and are not projected. */
+/** The grid's own projection (worked out against the source the grid was generated from: Albers USA at 975 x 610,
+ * 68 cells across, cropped one cell at the left and top). Alaska and Hawaii sit in insets and are not projected. */
 const ALBERS = { k: 1300, tx: 487.5, ty: 305, cell: 975 / 68, c0: 1, r0: 1 };
 const RAD = Math.PI / 180;
 

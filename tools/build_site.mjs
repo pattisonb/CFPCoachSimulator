@@ -127,8 +127,7 @@ export function pack_bytes(files, read) {
 }
 
 /**
- * The data pack, to `out`: brotli (a little smaller than the xz archive the Python game shipped in, 4.2 MB against
- * 4.6), which the browser itself unpacks when the server sends it with `Content-Encoding: br` (vercel.json), and the
+ * The data pack, to `out`: brotli (4.2 MB), which the browser itself unpacks when the server sends it with `Content-Encoding: br` (vercel.json), and the
  * same pack as gzip (7.1 MB), which the worker falls back on and unpacks where a server does not.
  */
 export function write_pack(root, out) {

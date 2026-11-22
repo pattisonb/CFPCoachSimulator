@@ -1,5 +1,5 @@
-// What the rest of the game asks of the engine while that rest is still Python (sim/engine.py calls these: in the
-// browser straight from Python, on a computer through engine_js/bridge.mjs). Every answer is plain JSON.
+// What the rest of the game and its hosts ask of the engine: one game, the settings, how a team lines up, one game
+// job in a named league. Every answer is plain JSON.
 import { Random, get, sorted } from "./pyrt.js";
 import { cfg } from "./game_config.js";
 import { personnel } from "./personnel.js";
@@ -15,7 +15,7 @@ export function play(home, away, sliders = null, seed = null, venue = "home", mo
   return r;
 }
 
-/** The engine's settings and personnel tables, for the Python that reads a few of them. */
+/** The engine's settings and personnel tables, for a caller that reads a few of them. */
 export function config() {
   const out = {};
   for (const [k, v] of Object.entries(cfg)) {
@@ -95,7 +95,7 @@ function league_teams([path, sig]) {
   return teams;
 }
 
-/** One game job, as season._run_games builds it, in the league named. Throws NotHere for a job only Python can play. */
+/** One game job, as season._run_games builds it, in the league named. Throws NotHere for a job a helper cannot play (the caller plays it itself). */
 export function sim_one(league, job) {
   return game_job._sim_one(league_teams(league), job);
 }

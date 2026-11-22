@@ -1,9 +1,9 @@
-// coach_career/recruiting.py, part 5 (the Python file's lines 3255 to the end): the Hat Ceremony, Package Deals at a
+// Recruiting, part 5: the Hat Ceremony, Package Deals at a
 // commitment, the two Signing Days, the weekly step itself, the portal's weekly decisions and why an entrant went
 // elsewhere, the portal as a recruiting class, and scouting (truths, looks, reads and grades, the staff, your board).
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the recruiting file is reached
-// through the `recruiting` namespace, whichever part defines it.
+// Every name of recruiting is reached through the `recruiting` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 import { Random, round, sum, cmp, sorted, maxBy, get, truthy, floordiv, mod } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
@@ -13,7 +13,7 @@ import { coach_names } from "../coach_names.js";
 import { grades } from "../grades.js";
 import { recruiting } from "../recruiting_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 /** dict.setdefault(k, v): the value there, or `v` stored and returned. */
 function setdefault(d, k, v) {
@@ -31,7 +31,7 @@ const remove = (xs, x) => { xs.splice(xs.indexOf(x), 1); };
 const pystr = (x) => (x === null || x === undefined ? "None" : String(x));
 
 /**
- * `room(slug, pid)`: a _Room called (Python's __call__). The class is another part's: an object that can be called
+ * `room(slug, pid)`: a _Room called. The class is another part's: an object that can be called
  * is called, one with a `__call__` method has it called, and otherwise it is what __call__ is, `why_not(...) is None`.
  */
 function _has_room(room, slug, pid) {
@@ -43,7 +43,7 @@ function _has_room(room, slug, pid) {
 /** `_Room(state, flier)`: the class made (a class or a plain function is made with `new`, an arrow function is called). */
 const _make_room = (state, flier) => (recruiting._Room.prototype ? new recruiting._Room(state, flier) : recruiting._Room(state, flier));
 
-/** Two word ranges (or None) the same, as Python's `!=` on lists reads them. */
+/** Two word ranges (or None) the same, item by item. */
 const same_words = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 
@@ -123,7 +123,7 @@ function _sign(state, final) {
     for (const pid of sorted(Object.keys(rc["prospects"]), (q) => rc["prospects"][q]["rank"])) {
       const st = rc["status"][pid];
       if (truthy(st["committed"])) continue;
-      // (a set in Python, walked in no fixed order; the scores below are sorted on (interest, school), so the order does not show)
+      // (a Set; the scores below are sorted on (interest, school), so its order does not show)
       let schools = new Set([...get(offered, pid, []), ...Object.keys(rc["lists"][pid])]);
       const hat = get(get(rc, "hats") || {}, pid);          // his Hat Ceremony on signing day: his finalists, if one can take him
       if (truthy(hat) && hat[1].some((s) => schools.has(s) && _has_room(room, s, pid))) {
@@ -492,7 +492,7 @@ function portal_rc(state, entrants, year) {
     prospects[pid] = p;
   }
   const order = sorted(Object.keys(prospects), (q) => { const v = prospects[q]["_sort"]; delete prospects[q]["_sort"]; return -v; });
-  order.forEach((pid, i) => { prospects[pid]["rank"] = i + 1; prospects[pid]["portal_rank"] = i + 1; });   // (Python assigns left to right)
+  order.forEach((pid, i) => { prospects[pid]["rank"] = i + 1; prospects[pid]["portal_rank"] = i + 1; });   // (rank, then portal_rank: the keys' order in a save)
   recruiting._truths(prospects, attrs);
   const each = (make) => Object.fromEntries(Object.keys(prospects).map((pid) => [pid, make()]));
   return { portal: true, week: 1, weeks: recruiting.PORTAL_WEEKS, year, cache_key: `${year}-portal`, prospects,
@@ -624,7 +624,7 @@ function _normalize_read(read) {
 }
 
 
-// (weight's default is SEND_LOOK as it stands at the call; Python fixed it when the file loaded)
+// (weight's default is SEND_LOOK as it stands at the call)
 function look(state, pid, evaluator_rating, rng, by = null, week = null, weight = recruiting.SEND_LOOK) {
   // One look at a prospect by an evaluator, worth `weight` looks (SEND_LOOK for a trip, AREA_LOOK
   // for an area scout's week): every group's read moves toward what he saw, the step and the
@@ -729,12 +729,12 @@ function read_interval(state, pid, group) {
 
 function shown_range(state, pid, group, sharp = null) {
   // A read as the page shows it: the read's numbers (a narrow range once his report is complete). His potential is
-  // letter grades (grades.py: low, high; the same letter twice once the read sits in one grade). Only for display:
+  // letter grades (grades.js: low, high; the same letter twice once the read sits in one grade). Only for display:
   // code that ranks reads uses grade_range.
   let iv = recruiting.read_interval(state, pid, group);
   const clamp = (x) => String(Math.max(1, Math.min(99, round(x))));         // the game's 1-99 scale (a read's points can stray past it)
   if (!truthy(iv)) return null;
-  if (group === "potential") {                                    // his overall potential is a letter grade (grades.py), never a number
+  if (group === "potential") {                                    // his overall potential is a letter grade (grades.js), never a number
     // a complete report settles on one grade: the letter is range enough
     return grades.span(iv[0], iv[1], sharp === null || sharp === undefined ? grades.fine(state) : sharp);   // `sharp`: a caller reading many passes it once
   }
@@ -794,7 +794,7 @@ function make_staff(state) {
   for (const a of Object.keys(recruiting.AREAS)) if (!order.includes(a)) order.push(a);
   for (let i = 0; i < Math.min(staff.length, order.length); i++) staff[i]["area"] = order[i];
   const year = get(state, "year", 2026);
-  for (const member of staff) {                // signed through this season or the next one or two (offseason.py: contracts)
+  for (const member of staff) {                // signed through this season or the next one or two (offseason.js: contracts)
     member["contract_until"] = year + rng.randint(0, 2);
   }
   return staff;

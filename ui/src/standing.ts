@@ -114,7 +114,7 @@ export function byChance(me: string) {
 }
 
 /** *tune* Your pull on a topic (its strength, 0 to 1) from which it reads Strong, and Fair: the engine's own case
- *  words (coach_career/scenes.py _case_word, web/recruiting.js caseWord), so the panel and his lines agree. */
+ *  words (career_js/scenes.js _case_word, web/recruiting.js caseWord), so the panel and his lines agree. */
 const PULL_STRONG = 0.6;
 const PULL_FAIR = 0.25;
 

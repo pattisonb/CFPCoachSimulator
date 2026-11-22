@@ -854,7 +854,7 @@ interface PromiseRow {
   status: string;
 }
 /**
- * The game's own tracker (coach_career/headquarters.py promises_tracker): a starting role, a start over a named
+ * The game's own tracker (career_js/headquarters.js promises_tracker): a starting role, a start over a named
  * player, ahead of another recruit, an offer to his teammate, NIL by a week; each Open, Kept, Broken, Due or Owed Next
  * Season. A game that does not send it yet falls back to what the depth chart and the board show.
  */

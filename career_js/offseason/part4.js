@@ -1,10 +1,10 @@
-// coach_career/offseason.py, part 4 (the Python file's lines 2469 to the end): the jobs you can take, walking the
+// The offseason, part 4: the jobs you can take, walking the
 // stages (advance), Change Conferences and Edit Schedule, saves from the older order (migrate), the step to the next
 // season (summary, next_season), and what the Offseason page shows (the portal's rows, board and recap, a player's
 // next year, page, view).
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the offseason file is reached
-// through the `offseason` namespace, whichever part defines it. Notes on what is not literal are at the end.
+// Every name of the offseason is reached through the `offseason` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts"). Notes on standing quirks are at the end.
 import { Random, round, int, sum, cmp, sorted, range, get, truthy, odict, is_odict } from "../../engine_js/pyrt.js";
 import { exists, remove } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
@@ -19,7 +19,7 @@ import { career as career_mod } from "../career.js";
 import { prospects } from "../prospects.js";
 import { offseason } from "../offseason_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 /** `k in d` for a dict (a save's values are never undefined). */
 const has = (d, k) => d[k] !== undefined;
@@ -33,7 +33,7 @@ const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v) 
 /** isinstance(v, (int, float)) and not isinstance(v, bool) */
 const is_num = (v) => typeof v === "number";
 
-/** Python's KeyError and OverflowError, as portal_offer raises them (the app tells them from a ValueError). */
+/** A missing key and a number too big, as portal_offer throws them (the API tells them from a ValueError). */
 class KeyError extends Error {
   constructor(message) { super(message); this.name = "KeyError"; }
 }
@@ -41,10 +41,10 @@ class OverflowError extends Error {
   constructor(message) { super(message); this.name = "OverflowError"; }
 }
 
-/** A file removed if it is there (Python's `if p.exists(): try: p.unlink() except OSError: pass`). */
+/** A file removed if it is there; one that cannot be removed stays. */
 function _unlink(p) {
   if (exists(p)) {
-    try { remove(p); } catch { /* as Python's OSError: it stays */ }
+    try { remove(p); } catch { /* it stays */ }
   }
 }
 
@@ -332,7 +332,7 @@ function schedule_move(state, event_id, week) {
   return offseason.schedule_view(state);
 }
 
-/** int(week): a whole number, or the text of one (anything else is Python's ValueError). */
+/** int(week): a whole number, or the text of one (anything else is a ValueError). */
 function _int(v) {
   if (typeof v === "number") return int(v);
   if (typeof v === "boolean") return v ? 1 : 0;
@@ -548,7 +548,7 @@ function portal_offer(state, pid, on) {
   const recruiting = modules.recruiting;
   if (_in(get(off, "stage"), offseason.PORTAL_STAGES)) {            // the portal is recruited on the board: an offer with a pitch
     const p = state["recruiting"]["prospects"][pid];
-    if (p === undefined) throw new KeyError(pid);                    // (Python's lookup raises for an unknown player)
+    if (p === undefined) throw new KeyError(pid);                    // (an unknown player)
     const pitch = truthy(on) ? p["priorities"][0] : null;
     recruiting.act(state, state["team"], pid, truthy(on) ? "offer" : "pull_offer", pitch,
       truthy(on) ? recruiting.ask_from(state, state["team"], pid) : 0);
@@ -667,7 +667,7 @@ function _player_next(state, slug) {
     sentence, season: season_year };
 }
 
-/** xs.index(x): where it is, or Python's ValueError. */
+/** xs.index(x): where it is, or a ValueError. */
 function _index(xs, x) {
   const i = xs.indexOf(x);
   if (i === -1) throw new ValueError(`tuple.index(x): x not in tuple`);
@@ -717,7 +717,7 @@ function _school_name(state, slug) {
     if (name === undefined) throw new KeyError("short_name");
     return name;
   } catch {
-    return slug;                 // (Python: KeyError or FileNotFoundError, a school the league and the files do not know)
+    return slug;                 // (a school the league and the files do not know)
   }
 }
 
@@ -877,7 +877,7 @@ function _new_transfer(off, c, me) {
 
 
 function page(obj) {
-  // A view's players as the page shows a rating (teamdata/shown.py): a copy of `obj` in which every player row (a
+  // A view's players as the page shows a rating (teamdata_js/shown.js): a copy of `obj` in which every player row (a
   // dict with an `overall` and a position) has its overall on the shown scale, its `gain` as the difference of the
   // shown overalls before and after, and its `grew` attributes at his card's group. The stored rows keep the game's
   // own scale (an event written last year reads the same as one written today).
@@ -1055,27 +1055,19 @@ Object.assign(offseason, {
   schedule_view, schedule_move, schedule_trade, migrate, run_all, summary, next_season, portal_offer, recruiting_spots,
   player_next, _player_next, recruiting_offer_cap, portal_rows, _school_name, portal_away, portal_board, _portal_recap,
   _stayed, _new_transfer, page, view, _view,
-  KeyError, OverflowError,          // (Python's built-ins, as portal_offer raises them: for the caller that tells them apart)
+  KeyError, OverflowError,          // (as portal_offer throws them: for the caller that tells them apart)
 });
 
-// ----- not ported literally (PORTING.md rule 9) -----------------------------------------------------------------
-// - Files: league.path(...).exists() / .unlink() are exists() / remove() of engine_js/files.js on the path's text.
-// - Exceptions: ConferenceError carries `code` as Python's; KeyError and OverflowError (built in to Python) are local
-//   classes, put on the namespace as offseason.KeyError and offseason.OverflowError. _school_name answers the slug on
-//   any error from league.team_meta (Python: KeyError or FileNotFoundError only). schedule_gen.ScheduleError is told
-//   by instanceof modules.schedule_gen.ScheduleError.
-// - migrate: Python stores a draft score as a float (-float(pick)); a whole float and an int are one number here.
-//   Its `scores` is an odict (keyed by player ids, in the order they were added).
-// - PT_NAMES: Python's keys are the floats 1.0, 0.5 and 0.15; here the keys are their texts ("1", "0.5", "0.15"),
-//   which is what looking one up by the number playing_time answers reads.
+// ----- Notes ----------------------------------------------------------------------------------------------------
+// - Errors: KeyError and OverflowError are local classes, put on the namespace as offseason.KeyError and
+//   offseason.OverflowError. _school_name answers the slug on any error from league.team_meta.
+// - migrate: its `scores` is an odict (keyed by player ids, in the order they were added).
+// - PT_NAMES: the keys are the texts "1", "0.5" and "0.15", which is what looking one up by the number playing_time
+//   answers reads.
 // - _your_jobs answers a Set (only asked whether a slug is in it).
-// - page: isinstance(o, (int, float)) and not bool is `typeof o === "number"`; a dict is any object that is not an
-//   array (an odict stays an odict, so a dict keyed by event ids keeps its order); a plain object with number-like
-//   keys (none is known in a view) would list them first, as every plain object does.
+// - page: a dict is any object that is not an array (an odict stays an odict, so a dict keyed by event ids keeps its
+//   order); a plain object with number-like keys (none is known in a view) would list them first.
 // - _view: the dicts keyed by staff ids (`reasons`, `contract`) are odicts; `kinds`, `target` and `have` are keyed
 //   by names. _player_next writes a player's stored overall into its sentence as JavaScript prints a number (the
-//   league's overalls are whole numbers; Python would print a float's ".0").
-// - schedule_move: int(week) takes a number or the text of a whole number (Python's int() of other text is the same
-//   ValueError); summary: max() of no polls is Python's ValueError.
-// - advance and the two reports: `{"development": _develop_all(state), **_fill_rosters(state)}` calls _develop_all
-//   first, as Python does.
+//   league's overalls are whole numbers).
+// - advance and the two reports: _develop_all runs before _fill_rosters (the order of their draws).

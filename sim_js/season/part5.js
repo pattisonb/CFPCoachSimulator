@@ -1,9 +1,9 @@
-// sim/season.py, part 5 (the Python file's lines 3449 to 4270): this week's game and its simulated prediction, the
+// The season, part 5: this week's game and its simulated prediction, the
 // ratings a page shows for a team, the schedule view, the summary every page load reads, the bracket and bowl
 // projections, the preseason awards outlook, the bowls, and the season in review.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the season file is reached
-// through the `season` namespace, and this part's own are put on it where the Python defines them.
+// Every name of the season is reached through the `season` namespace, and this part's own are put on it where they
+// are defined (engine_js/PORTING.md, "Big Files in Parts").
 import { round, sum, cmp, sorted, maxBy, minBy, get, truthy, isNumber, floordiv, range, json_dumps } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { simulate_game } from "../../engine_js/game.js";
@@ -14,7 +14,7 @@ import { coaches } from "../coaches.js";
 import { polls } from "../polls.js";
 import { shown as _shown } from "../../teamdata_js/shown.js";
 
-// ----- what Python has built in and JavaScript does not (this file's own, not on the namespace) -----------------
+// ----- small helpers (this file's own, not on the namespace) ----------------------------------------------------
 
 const _SHA_K = new Uint32Array([
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01,
@@ -158,7 +158,7 @@ export function erf(x) {
   return neg ? r / ax - 1.0 : 1.0 - r / ax;
 }
 
-/** `item in container` where the container is Python's set, tuple, list or dict (whatever shape its port took). */
+/** `item in container` where the container is a Set, a Map, an array or a plain object. */
 function _in(item, container) {
   if (container === null || container === undefined) return false;
   if (container instanceof Set || container instanceof Map) return container.has(item);
@@ -184,7 +184,7 @@ const _max_or_none = (xs, key) => (xs.length ? maxBy(xs, key) : null);
 /** str(v) for a value an f-string prints as it is. */
 const _str = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
 
-/** Whether two of team_ratings_now's signatures (tuples in Python) are equal. */
+/** Whether two of team_ratings_now's signatures (arrays) are equal, item by item. */
 function _same_sig(a, b) {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
@@ -209,7 +209,6 @@ function _preview_team(state, slug) {
 
 season._PREVIEW_KEYS = ["completions", "pass_attempts", "pass_yards", "passing_touchdowns", "interceptions_thrown",
   "carries", "rush_yards", "rushing_touchdowns", "receptions", "receiving_yards", "receiving_touchdowns"];
-// (Python's _preview_lock is dropped: there are no threads here)
 season._preview_inflight = {};      // cache key -> Event while one thread computes it (always empty here)
 
 
@@ -240,7 +239,7 @@ function _preview_prediction(state, g, sims) {
   const seed0 = parseInt(sha256_hex(`${state["id"]}|${g["event_id"]}|${state["current_week"]}`).slice(0, 8), 16);
   const venue = truthy(g["neutral"]) ? "neutral" : "home";
   const jobs = range(sims).map((i) => [h, a, seed0 + i, venue]);
-  // (no pool here: the sims are played one after the other, as Python does without one)
+  // (no pool here: the sims are played one after the other)
   const results = jobs.map((j) => season._preview_sim(j));
   let wins = 0;
   const pts = { home: [], away: [] };
@@ -299,7 +298,7 @@ function team_ratings_now(state, slug) {
   if (base === null || truthy(get(base, "fictional"))) return null;
   const hurt = get(get(state, "injuries") || {}, slug) || {};
   const depth = get(get(state, "depth") || {}, slug);
-  // (the signature's last item is id(base) in Python: the team's own object here, compared by identity)
+  // (the signature's last item is the team's own object, compared by identity)
   const sig = [season.season_year(state), get(state, "current_week"), truthy(depth) ? json_dumps(depth, { sort_keys: true }) : "",
     sorted(Object.keys(hurt)), json_dumps(get(get(state, "player_edits") || {}, slug) || {}, { sort_keys: true }), base];
   const key = JSON.stringify([get(state, "id"), slug]);
@@ -429,7 +428,7 @@ function game_preview(state, slug, sims = 20) {
       has_box: season.has_box(state, g) });
     return { team: slug, team_name: teams[slug]["name"], game, played: true, prediction: null, injuries: season.injury_report(state, slug) };
   }
-  // (Python's key is a tuple; its JSON text is the key here)
+  // (the key is the JSON text of its parts)
   const key = JSON.stringify([state["id"], state["current_week"], g["event_id"],
     json_dumps(get(state, "player_edits") || {}, { sort_keys: true }).slice(0, 200),
     json_dumps(get(state, "depth") || {}, { sort_keys: true }).slice(0, 200), json_dumps(get(state, "injuries") || {}).length]);
@@ -548,7 +547,7 @@ function summary(state) {
     heisman: get(get(get(state, "awards") || {}, "national") || {}, "heisman"),
     settings: season.settings(state),
     injuries: season.injury_report(state, state["team"]),
-    // (Python walks the set of FBS slugs that have an injury list; a sum of whole numbers, so the order is nothing)
+    // (a sum of whole numbers, so the order the slugs are walked in does not matter)
     injury_count: sum(Object.keys(get(state, "injuries", {})).filter((k) => _in(k, fbs)).map((k) => Object.keys(state["injuries"][k]).length)),
     my_awards: truthy(get(state, "awards")) ? awards.my_awards(state, state["awards"]) : [],
     career: get(state, "career"),
@@ -812,8 +811,7 @@ function bowl_projection(state, early = false) {
     out.push(entry);
   }
   out.sort((x, y) => cmp([x["week"], x["date"] || "", x["time"] || ""], [y["week"], y["date"] || "", y["time"] || ""]));
-  // (the field is a set in Python: teams the ranking does not hold tie at 99 and come out in the set's order there,
-  // in the bracket's seed order here)
+  // (teams the ranking does not hold tie at 99 and come out in the bracket's seed order)
   return { week: pw, bowls: out, playoff: sorted(field, (s) => (order.includes(s) ? order.indexOf(s) : 99)) };
 }
 

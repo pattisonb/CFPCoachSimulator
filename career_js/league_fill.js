@@ -5,12 +5,12 @@
 // the caller passes (new Random(`league-${seed}-${slug}`)), in a fixed order, so a file and a seed
 // always give the same league.
 //
-// Ported from coach_career/league_fill.py by engine_js/PORTING.md's rules. What is not literal is said where it is:
-//   - the three module-level values Python works out when the module loads from other modules or a data file
-//     (COACH_YEAR, _COACH_ROLES, STATE_CENTER) are worked out at their first use (a host sets its reader, and the
-//     other modules load, after this one);
-//   - `taken` and the coach names are Sets; a Python tuple is an array;
-//   - Python's `a != b` between parts of two documents is `!_eq(a, b)` (by value, as Python compares dicts and lists);
+// Notes:
+//   - the three module-level values that come from other modules or a data file (COACH_YEAR, _COACH_ROLES,
+//     STATE_CENTER) are worked out at their first use (a host sets its reader, and the other modules load, after
+//     this one);
+//   - `taken` and the coach names are Sets;
+//   - parts of two documents are compared by value with `_eq(a, b)`;
 //   - `league_seed` takes the file's bytes as a Uint8Array (or its text) and has its own SHA-256.
 import { Random, round, int, sum, sorted, minBy, floordiv, mod, get, isNumber, truthy, odict } from "../engine_js/pyrt.js";
 import { mean, median } from "../engine_js/pystat.js";
@@ -34,7 +34,7 @@ const ROOM_BY_CLASS = { "FR": 0.84, "FRRS": 0.93, "SO": 0.86, "SORS": 0.82, "JR"
 const _TEMPLATE_POS = { "FB": "HB" };        // positions with no recruit template borrow a neighbor's
 const _LB = ["MIKE", "WILL", "SAM"];       // the order league.lineup fills the linebacker spots
 
-// ---- what Python has built in ----------------------------------------------------------------------------------------
+// ---- small helpers --------------------------------------------------------------------------------------------------
 
 // isinstance(v, dict): a dict of the data, not a list and not None.
 const _is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof Set);
@@ -61,7 +61,7 @@ export function _eq(a, b) {
   return true;
 }
 
-// d[k] where Python raises KeyError for a key that is not there (a value the file's checks would have refused):
+// d[k], throwing a KeyError for a key that is not there (a value the file's checks would have refused):
 // to_league turns the error into the team's TeamBuildError, so it has to be one here too.
 function _key(d, k) {
   const v = d[k];
@@ -136,7 +136,7 @@ let _base_tables_cache = null;
 // -> [slug -> team overall, position -> [median height, median weight]]
 export function _base_tables() {
   // (slug -> team overall, position -> (median height, median weight)) over the built-in FBS league.
-  // (Python keeps the one answer: lru_cache.)
+  // (The one answer is kept.)
   if (_base_tables_cache !== null) return _base_tables_cache;
   const league = modules.league;
   const lgd = league.from_base(league.FIRST_YEAR + 1);
@@ -163,7 +163,7 @@ _base_tables.cache_clear = () => { _base_tables_cache = null; };
 let _base_strengths_cache = null;
 
 export function base_strengths() {
-  // Each built-in FBS team's overall team rating. (Python keeps the one answer: lru_cache.)
+  // Each built-in FBS team's overall team rating. (The one answer is kept.)
   if (_base_strengths_cache === null) _base_strengths_cache = { ...league_fill._base_tables()[0] };
   return _base_strengths_cache;
 }
@@ -574,7 +574,7 @@ let _base_league_cache = null;
 
 export function _base_league() {
   // The built-in league (read only): what new teams borrow coaches, styles and programs from.
-  // (Python keeps the one answer: lru_cache.)
+  // (The one answer is kept.)
   if (_base_league_cache === null) _base_league_cache = modules.league.from_base(modules.league.FIRST_YEAR);
   return _base_league_cache;
 }
@@ -587,7 +587,7 @@ export function _members(conf, lgd) {
 }
 
 export function _common(words) {
-  // (Python takes the least of a set by (how often, the word): the same whatever order the set is walked in.)
+  // (The least of a set by (how often, the word): the same whatever order the set is walked in.)
   words = words.filter((w) => truthy(w));
   if (!words.length) return null;
   const count = (w) => words.filter((x) => x === w).length;
@@ -618,7 +618,7 @@ export function _schemes(conf, lgd) {
   for (const s of mem) {
     if (get(sc[s], "offensive_philosophy") === off && get(sc[s], "defensive_philosophy") === de) { carrier = s; break; }
   }
-  if (carrier === undefined) throw new Error("StopIteration");       // Python's next() with nothing to give
+  if (carrier === undefined) throw new Error("StopIteration");       // nothing to give
   return [off, de, carrier];
 }
 
@@ -792,7 +792,7 @@ export function _tree_median(vals, missing_zero = false) {
   const seen = new Set();
   for (const v of vals) if (_is_dict(v)) for (const k of Object.keys(v)) seen.add(k);
   const keys = sorted(Array.from(seen));
-  // (a plain object lists number-like keys first; where the sorted keys hold any, an odict keeps Python's order)
+  // (a plain object lists number-like keys first; where the sorted keys hold any, an odict keeps the order they were added in)
   const out = keys.some((k) => /^(0|[1-9]\d*)$/.test(k)) ? odict() : {};
   for (const k of keys) {
     const col = vals.filter((v) => _is_dict(v)).map((v) => get(v, k, missing_zero ? 0 : null));
@@ -1051,7 +1051,7 @@ export const league_fill = {
   to_league, league_seed, _eq, _sha256_hex,
 };
 
-// The three values Python works out as the module loads, here at their first use (and settable, as any module variable).
+// The three values worked out at their first use, not as the module loads (and settable, as any module variable).
 function _lazy(name, make) {
   let value, made = false;
   Object.defineProperty(league_fill, name, {

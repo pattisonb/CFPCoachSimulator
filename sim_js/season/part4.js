@@ -1,9 +1,9 @@
-// sim/season.py, part 4 (the Python file's lines 2736 to 3448): the views the pages read. Rankings, the committee's
+// The season, part 4: the views the pages read. Rankings, the committee's
 // resume, the season's stats (a game's lines summed into the season's, leaders, team numbers), trading and moving
 // your non-conference games, and rivalries (trophies and the all-time series).
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the season file is reached
-// through the `season` namespace, whichever part defines it.
+// Every name of the season is reached through the `season` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 import { round, int, sum, cmp, sorted, maxBy, minBy, get, isNumber, truthy } from "../../engine_js/pyrt.js";
 import { read_json } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
@@ -11,7 +11,7 @@ import * as game_job from "../game_job.js";
 import { ValueError } from "../coaches.js";
 import { season } from "../season_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
@@ -95,7 +95,7 @@ function resume(state, after_week = null, team = null) {
   const now = season.rank_map(state, w);
   const p = get(state["polls"], String(w), {});
   const kind = (truthy(get(p, "cfp_full")) || truthy(get(p, "cfp"))) ? "cfp" : "ap";
-  // (a set in Python; nothing below depends on its order: the rows are sorted by a key no two teams share)
+  // (nothing below depends on its order: the rows are sorted by a key no two teams share)
   const real = new Set(Object.entries(teams).filter(([, t]) => !truthy(t["fictional"])).map(([s]) => s));
   const games = {};
   for (const s of Object.keys(teams)) games[s] = [];
@@ -335,7 +335,7 @@ function team_stats_view(state) {
 function* _stat_teams(ss, teams, team, conference) {
   // [slug, season stats, team info] for the teams a stats table covers: one team, or the
   // league or one conference, never an FCS stand-in (asking for one is refused).
-  // (A generator, as Python's is: the check runs when the first team is asked for.)
+  // (A generator: the check runs when the first team is asked for.)
   if (truthy(team)) season.check_fbs(team);
   for (const [slug, t] of Object.entries(ss)) {
     if (truthy(team) && slug !== team) continue;
@@ -436,7 +436,7 @@ function week_dates(state) {
     } else {
       const ds = sorted(by_week.get(w));
       const saturdays = ds.filter((d) => new Date(_fromisoformat(d)).getUTCDay() === 6);
-      // no Saturday: the day with the most games (of equals, the earliest; Python's pick among equals is its set's order)
+      // no Saturday: the day with the most games (of equals, the earliest)
       const count = (d) => ds.filter((x) => x === d).length;
       out[w] = { start: ds[0], end: ds[ds.length - 1], main: saturdays.length ? saturdays[0] : maxBy(new Set(ds), count) };
     }
@@ -532,7 +532,7 @@ function schedule_options(state, event_id, teams = null) {
       accepts, venue, why, displaced: other["away"] === slug ? other["home"] : other["away"] });
   }
   const key = (o) => [!o["accepts"], !fcs ? -programs.get(state, o["slug"])["rating"] : 0, o["name"]];
-  // (the key is worked out once per row, in the rows' order, as Python's sort does)
+  // (the key is worked out once per row, in the rows' order)
   const keyed = out.map((o) => [key(o), o]);
   keyed.sort((a, b) => cmp(a[0], b[0]));
   return keyed.map((p) => p[1]);
@@ -620,7 +620,7 @@ function schedule_move(state, event_id, week, teams = null) {
   const was = g["week"];
 
   const shift = (x, to) => {
-    // (Python's try/except: a game without a kickoff time, or with one in another shape, keeps what it has)
+    // (a game without a kickoff time, or with one in another shape, keeps what it has)
     const d = typeof x["date"] === "string" ? _strptime_kickoff(x["date"]) : null;
     if (d !== null) x["date"] = new Date(d + DAY_MS * 7 * (to - x["week"])).toISOString().slice(0, 16) + "Z";
     x["week"] = to;
@@ -634,8 +634,8 @@ function schedule_move(state, event_id, week, teams = null) {
 // ----- rivalries: trophies and the all-time series -----------------------------------
 
 season.RIVALRIES_FILE = "data/rivalries.json";
-// The pair of slugs is a frozenset key in Python; here it is the two slugs sorted and joined (`_fs`), so a lookup
-// by either order finds the rivalry. "__as_of__" sits beside them, as in Python.
+// The key for a pair of slugs is the two sorted and joined (`_fs`), so a lookup by either order finds the rivalry.
+// "__as_of__" sits beside them.
 season._rivalry_cache = {};
 
 function load_rivalries() {
@@ -754,7 +754,7 @@ function rivalries_view(state, slug) {
   for (const [pair, riv] of entries.concat(season._file_rivalries(state, slug, teams))) {
     if (pair === null || !pair.includes(slug)) continue;
     const opp = pair.find((t) => t !== slug);
-    if (opp === undefined) throw new Error("StopIteration");          // a team listed as its own rival: Python's next() raises
+    if (opp === undefined) throw new Error("StopIteration");          // a team listed as its own rival
     if (!has(teams, opp)) continue;
     const series = season.rivalry_series(state, riv, null, teams);
     const key = _fs(pair);

@@ -1,7 +1,7 @@
-// coach_career/recruits.py: fictional recruiting classes and player development (docs/PLAYER_DEVELOPMENT.md).
+// Fictional recruiting classes and player development (docs/PLAYER_DEVELOPMENT.md).
 //
-// Every recruit is generated from data/recruiting_model.json, which tools/recruiting_model.py
-// learns from real classes and from the real 2026 roster players matched to their recruiting
+// Every recruit is generated from data/recruiting_model.json, a model
+// learned from real classes and from the real 2026 roster players matched to their recruiting
 // record. No real recruit is kept or reproduced: names are recombined first and last names,
 // hometowns are real towns, and ratings are real players' shapes blended and perturbed.
 //
@@ -14,7 +14,7 @@
 //        position, scaled by a player-level potential and per-attribute spread
 //     -> coachability: how fast he closes the gap each offseason, independent of stars
 // Ratings are on EA's scale (ratings_ea, overall_ea) like the source rosters, plus the source
-// curve's scale (`ratings`, `overall`) that build_teams.py reads.
+// curve's scale (`ratings`, `overall`) that build_teams.js reads.
 import { Random, round, int, sum, get, truthy, floordiv, mod, fmt, cmp } from "../engine_js/pyrt.js";
 import { read_json, read_text, forget } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
@@ -37,7 +37,7 @@ const RATE = Object.fromEntries(COACHABILITY.map(([name, rate, _]) => [name, rat
 const CAREER_YEARS = 4;                       // career_gain is a fifth-year player against a true freshman
 const SURVIVOR_TRIM = 0.85;                   // the real gains compare survivors: players who stalled often left
 
-// Python's sum() of floats (3.12 and later, which is what the game runs on, the browser's Pyodide too): not a plain
+// Python's sum() of floats (3.12 and later, which the game's numbers were made with): not a plain
 // left-to-right sum but Neumaier's compensated one, the lost low bits carried and added at the end. The first float
 // is added to the starting 0 plainly and the compensation runs from the second on. For a list of floats only (every
 // sum of floats in this file is one): whole numbers are summed with pyrt.js's plain `sum`, as Python sums them.
@@ -59,7 +59,7 @@ export function pysum(xs) {
 // double nearest the true power nearly always (about 1 time in 2,000 it is the next one); JavaScript's Math.pow is
 // a step off far more often (1 in 18, and at 0.45 ** 4 and 0.9 ** 4, which this file needs). So the power is worked
 // out exactly in whole numbers (a double is a whole number times a power of two) and rounded once: the same as
-// Python's for every power this file takes (recruits_compare.mjs holds each of them to it).
+// Python's for every power this file takes.
 const _bits = new DataView(new ArrayBuffer(8));
 export function pypow(x, n) {
   if (n === 0) return 1.0;
@@ -89,8 +89,8 @@ const MIN_WEIGHT_OTHER = 160;
 // attributes are not extrapolated at full slope below the three-star floor (the two-stars who
 // reach FBS rosters are close to low three-stars).
 const EXPECT_FLOOR = 0.80, BELOW_FLOOR_SLOPE = 0.15;
-// Room to grow by stars, tuned so a class's overall by offseason follows the real roster players'
-// (tools/check_recruits.py), a little under them for three- and two-stars, whose real numbers are
+// Room to grow by stars, tuned so a class's overall by offseason follows the real roster players',
+// a little under them for three- and two-stars, whose real numbers are
 // the survivors: the ones who stalled left. *tune*
 const STAR_ROOM = { 5: 1.0, 4: 0.75, 3: 1.6, 2: 1.8 };
 const SKIP_POSITIONS = new Set(["LS"]);       // long snappers are not generated (the engine has none)
@@ -99,7 +99,6 @@ export function model() {
   return read_json(recruits.MODEL_FILE);      // parsed once (files.js keeps it)
 }
 
-// (Python keeps 4,096 answers; the answer is the same worked out again.)
 export function curve(ea) {
   // EA's scale -> the source scale (cfb_sim_data/league.json's piecewise-linear curve).
   const pts = recruits.model()["players"]["curve"];
@@ -240,7 +239,7 @@ export function recruit(rng, year, band, taken, scored = true) {
   const height = round(body["height_in"][0] + body["height_in"][1] * zh);
   const weight = Math.max(get(recruits.MIN_WEIGHT, rpos, recruits.MIN_WEIGHT_OTHER), round(body["weight_lb"][0] + body["weight_lb"][1] * zw));
   const [ratings_ea, archetype] = recruits._attributes(rng, pos, band, composite);
-  const name = recruits._name(rng, taken);                 // the draws below follow the dict's order in Python
+  const name = recruits._name(rng, taken);                 // the draws below follow the dict's order: do not reorder them
   const coachability = recruits.weighted(rng, recruits.COACHABILITY.map(([n, _, s]) => [n, s]));
   const p = {
     "name": name,
@@ -395,7 +394,7 @@ export function seed_real_players(players) {
 // files.js only reads one file by its path, so whoever calls this says how a folder is listed and a file written:
 // `list_files(dir)` -> the names of the files in a folder of the project, `write_text(path, text)` writes one.
 export function write_player_potential(list_files, write_text) {
-  // Seed every source roster player and write data/player_potential.json (build_teams.py runs this).
+  // Seed every source roster player and write data/player_potential.json (build_teams.js runs this).
   let players = [];
   const names = list_files("cfb_sim_data/teams").filter((n) => n.endsWith(".json")).sort((a, b) => cmp(a, b));
   for (const name of names) {

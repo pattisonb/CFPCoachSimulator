@@ -38,7 +38,7 @@ test("depth views", () => {
   for (const r of kr) {
     if (["MLB", "ROLB", "LOLB"].includes(r["position"])) assert(r["rating"] <= best["rating"], () => JSON.stringify([r, best]));
   }
-  const scale = season._house_scale()["KR|return_rating"];      // (the Python's key is the pair ("KR", "return_rating"))
+  const scale = season._house_scale()["KR|return_rating"];      // (the key is the text "group|key")
   assert(40 <= scale[0] && scale[0] <= 70, () => JSON.stringify(scale));     // a typical designated returner, in engine units, is the 50 mark
 
   const wr = season.position_candidates(st, "ohio-state", "WR");
@@ -62,7 +62,7 @@ test("depth views", () => {
   const forms = season.formations_view(st, "ohio-state");
   const off = forms["offense"]["formations"];
   const mix = personnel.SCHEME_MIX[forms["offense"]["scheme"]] ?? personnel.DEFAULT_MIX;
-  // (a mix's names in Python's order are in MIX_NAMES: an object lists number-like keys in numeric order; sort is stable)
+  // (a mix's names in the order written are in MIX_NAMES: an object lists number-like keys in numeric order; sort is stable)
   equal(off.map((f) => f["id"]), [...personnel.MIX_NAMES.get(mix)].sort((a, b) => mix[b] - mix[a]).slice(0, 3));
   const lined_up = Object.fromEntries(engine.formations(season._preview_team(st, "ohio-state"))["offense"].map((f) => [f["id"], f["lineup"]]));
   for (const f of off) {

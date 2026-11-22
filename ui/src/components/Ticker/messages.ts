@@ -1,7 +1,7 @@
 export const messages = {
   label: "Around the League",
   live: "Live",
-  /** a news item's kind (sim/news.py KINDS), as its tag */
+  /** a news item's kind (sim_js/news.js KINDS), as its tag */
   kinds: {
     upset: "Upset",
     rankings: "Rankings",

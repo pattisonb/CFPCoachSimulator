@@ -16,8 +16,8 @@
 // deterministic and idempotent, so it runs when the league is built and on every load (an older
 // save heals). Its draws are its own seeded streams: nothing in the season or the carousel moves.
 //
-// Ported from coach_career/coach_names.py by engine_js/PORTING.md's rules. Sets of names are `Set`s that are only
-// asked whether they hold a name (never walked), so their order does not matter.
+// Sets of names are `Set`s that are only asked whether they hold a name (never walked), so their order does not
+// matter.
 import { Random, sorted, cmp, get, truthy } from "../engine_js/pyrt.js";
 import { read_text } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";

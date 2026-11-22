@@ -19,7 +19,7 @@
 //                                         "meta": {...} (a league file's team), "depth": {role: [player id]} (season one)}},
 //                        "source": {...}, "recruiting_models": {slug: {...}}}     (the last two: a league file's)
 //
-// A player, compact, on our scale only (game_scale.py: 1-99, 50 the middle Power 4 starter at the
+// A player, compact, on our scale only (game_scale.js: 1-99, 50 the middle Power 4 starter at the
 // position; his overall is our formula on these):
 //     {"id": slug, "n": name, "pos": position (LT, MIKE, ...), "cls": FR..SRRS, "ht": inches, "wt": lbs, "j": jersey,
 //      "a": archetype, "dev": trait, "ab": ["name|tier"], "r": [ratings], "g": [room to potential], "c": coachability,
@@ -28,9 +28,9 @@
 // The real 2026 players are converted once, when the career takes its league; nothing reads EA after that.
 // The FCS stand-ins (fictional teams) always play their base rosters.
 //
-// Ported from coach_career/league.py by engine_js/PORTING.md's rules. Every constant, variable and function is on
-// the `league` namespace and is reached through it, here too. Paths are text from the project's root (files.js);
-// functools.lru_cache is `cached` below (each cached function has Python's `cache_clear`).
+// Every constant, variable and function is on the `league` namespace and is reached through it, here too. Paths are
+// text from the project's root (files.js); a function that keeps its answers is wrapped in `cached` below (each has
+// a `cache_clear`).
 import { Random, round, int, floordiv, mod, sorted, get, truthy, json_dumps } from "../engine_js/pyrt.js";
 import { mean } from "../engine_js/pystat.js";
 import { read_text, write_text, exists, remove, list_dir } from "../engine_js/files.js";
@@ -234,8 +234,7 @@ function _int_text(s) {
 }
 
 export function height_in(h) {
-  // (Python tells a whole number from a float here: 72 is returned as it is, 72.0 has no feet and inches and is None.
-  // JSON's 72.0 is the number 72 in JavaScript, so it is returned as 72.)
+  // (JSON's 72.0 is the number 72 in JavaScript, so it is returned as 72.)
   if (typeof h === "boolean" || Number.isInteger(h)) return h;
   if (typeof h !== "string") return null;      // str(h) of anything else has no ' in it (or does not read as numbers)
   const parts = h.replaceAll('"', "").split("'");
@@ -389,8 +388,6 @@ export function _real_usage() {
 export function _role_players(by_pos, role, taken, n) {
   // A role's starters: its own position's best first (linebackers: the best MIKE, WILL and SAM
   // in that order, then the best of the rest), then a neighboring position's.
-  // (`p not in picks` is Python's equality of two player dicts; here it is the same player object, which is what
-  // it comes to: no two players of a roster are equal in every field.)
   let picks;
   if (role === "LB") {
     picks = [];
@@ -553,7 +550,7 @@ export function path(career_id, year) {
 }
 
 
-// A career's cached teams files: [file name, the text between "<id>-" and ".json"] (Python's glob of "<id>-*.json")
+// A career's cached teams files: [file name, the text between "<id>-" and ".json"] (every "<id>-*.json")
 function _cached_files(career_id) {
   const head = `${career_id}-`;
   return list_dir(league.CACHE_DIR).filter((n) => n.startsWith(head) && n.endsWith(".json"))
@@ -570,16 +567,15 @@ export function ensure_built(state) {
   if (!truthy(lg) || (year <= league.FIRST_YEAR && !league.is_imported(lg))) return null;
   const out = league.path(state["id"], year);
   if (!exists(out)) {
-    // an imported league's first season is the file app/api.py wrote at Start (league_file.check's
+    // an imported league's first season is the file app_js/api.js wrote at Start (league_file.check's
     // build, no team by overall); later seasons put your team's depth by overall (league.lineup)
     const me = year <= league.FIRST_YEAR ? null : get(state, "team");
-    // (Python writes a temporary file and renames it, so another process never reads half a file; there is one here)
     write_text(out, JSON.stringify(league.build(lg, me)));
     // the seasons before this one are played: their files go (each is some twenty megabytes, and the browser
     // keeps this folder in its store)
     for (const [name, rest] of _cached_files(state["id"])) {
       if (/^\d+$/.test(rest) && Number(rest) < year) {
-        try { remove(`${league.CACHE_DIR}/${name}`); } catch { /* as Python's OSError: it stays */ }
+        try { remove(`${league.CACHE_DIR}/${name}`); } catch { /* a file that cannot be removed stays */ }
       }
     }
   }
@@ -590,7 +586,7 @@ export function ensure_built(state) {
 export function forget(career_id) {
   // Remove a career's cached teams files (the career was deleted).
   for (const [name] of _cached_files(career_id)) {
-    try { remove(`${league.CACHE_DIR}/${name}`); } catch { /* as Python's OSError: it stays */ }
+    try { remove(`${league.CACHE_DIR}/${name}`); } catch { /* a file that cannot be removed stays */ }
   }
 }
 

@@ -1,8 +1,6 @@
 // Find real names left in a generic build: `leaks(root, terms)` reads the staged, swapped project at `root` (what
 // ships: the game's code, its data and the app's source) and reports every real name in `terms` (scrub.terms of
 // the real project) it still holds, as {kind: {name: where it was first seen}}.
-//
-// Ported from tools/generic/check.py and held to its exact answers.
 import path from "node:path";
 
 import { PY_SPACE, PY_WORD, any_upper, dict, is_dict, is_dir, len, longest_first, read_json, read_text, re_escape, rglob, sorted_text, suffix } from "./pyio.mjs";
@@ -105,5 +103,5 @@ export function leaks(root, terms, files = null) {
   return Object.fromEntries(Object.entries(found).filter(([, v]) => Object.keys(v).length));
 }
 
-/** The module as one object (`check.leaks`), as the Python module was reached. */
+/** The module as one object (`check.leaks`). */
 export const check = { SOURCE, _NAME, JS_DIRS, _strings, shipped, leaks };

@@ -1,4 +1,4 @@
-// Program ratings' starting values (tools/build_program_history.py -> data/program_history.json,
+// Program ratings' starting values (data/program_history.json,
 // read by career_js/programs.js): every FBS program's history, winning, market, NIL, conference
 // and coach scores (0-100), the mixed rating and its tier, with the top of the list recognizable.
 // `node tests/test_program_history.mjs`

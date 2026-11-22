@@ -4,8 +4,8 @@ Similar to EA Sports College Football sliders
 All values range from 0-100, where 50 = default/normal
 Adjusting above 50 increases that attribute, below 50 decreases it
 
-The TUNING block below holds every calibration constant the engine uses. They were set
-by running `calibrate.py` against FBS averages (see docs/HOW_IT_WORKS.md). Ratings are 0-100 and the
+The TUNING block below holds every calibration constant the engine uses. They were
+calibrated against FBS averages. Ratings are 0-100 and the
 formulas are written as differences from NEUTRAL, so a league of better or worse teams
 still plays like football; only the gap between the two teams decides the game.
 */
@@ -21,7 +21,7 @@ cfg.stat_rng = new Random(0);
 // Injuries roll on their own stream too, so a sim with injuries off reproduces the same game.
 cfg.injury_rng = new Random(1);
 
-// ----- personnel (engine/personnel.py) -----
+// ----- personnel (engine_js/personnel.js) -----
 cfg.HEAVY_JUMBO_SHARE = 0.25;         // short yardage / goal line: share of snaps with a sixth lineman
 cfg.HEAVY_13_SHARE = 0.30;            // ... with three tight ends
 cfg.PASSING_DOWN_10_SHARE = 0.35;     // third-and-long: share of snaps in four-wide (Air Raid 1.6x)
@@ -37,7 +37,7 @@ cfg.FLEXBONE_FB_CARRY_WEIGHT = 1.5;   // ... in a Flexbone Triple Option, where 
 cfg.INJURIES = true;
 cfg.INJURY_PER_SNAP = 0.00085;        // per player on the field per snap: about 1.3 injuries a game per team
 // Quarterbacks and backs take the most hits: real teams start more than one passer and lead back
-// over a season (tools/realism.py: the 100th passer's yards, the 1,000-yard rushers).
+// over a season (tools/realism.mjs: the 100th passer's yards, the 1,000-yard rushers).
 cfg.INJURY_POSITION_MULT = {"QB": 2.2, "RB": 1.7};
 // cumulative probability, weeks out (0 = rest of this game only)
 cfg.INJURY_SEVERITY = [[0.55, 0], [0.72, 1], [0.84, 2], [0.91, 3], [0.95, 5], [0.98, 8], [1.0, 20]];
@@ -83,7 +83,7 @@ export class GameSliders {
         // ========== GAME PLAY SLIDERS ==========
         this.game_speed = 50;           // Overall game tempo (affects time per play)
         this.injury_frequency = 50;     // Injury frequency (not yet implemented)
-        this.home_field_advantage = 50; // Home field advantage (scales the home team's rating edge, engine/game.py)
+        this.home_field_advantage = 50; // Home field advantage (scales the home team's rating edge, engine_js/game.js)
     }
 
     /**
@@ -189,32 +189,29 @@ cfg.RUSH_TRAITS = ["pocket_collapser", "edge_bender", "gap_penetrator", "pressur
 cfg.TACKLE_TRAITS = ["sure_tackler", "pack_tackler", "block_buster", "hand_fighter", "edge_setter"];
 cfg.HIT_TRAITS = ["heavy_hitter", "jarring_hits", "ball_jarrer"];
 
-// ----- The 17 abilities that once did nothing have effects -----
-// Each is per tier and small, a fixed nudge with no draw of its own, so a game's other draws are the same.
-cfg.EXTRA_TRAITS = true;                // on: those abilities act (off, the engine plays as it did before them)
+// ----- The 17 situational abilities (clutch time, the scramble, lead blocking, the kicking game) -----
+// Each is per tier and small, a fixed nudge with no draw of its own, so it moves no other draw in a game.
 cfg.CLUTCH_SECONDS = 900;               // "clutch time": the fourth quarter (and overtime) ...
 cfg.CLUTCH_MARGIN = 8;                  // ... within one score
 cfg.COVER_TRAITS_MAN = ["shadow", "jam_artist"];
 cfg.COVER_TRAITS_ZONE = ["route_jumper"];
-if (cfg.EXTRA_TRAITS) {
-    Object.assign(cfg.TRAIT_FX, {
-        "closer": 0.004,             // completion, and rush yards x 40, in clutch time: closer
-        "ice_water": 0.015,          // field-goal make chance in clutch time: ice_water, clutch_leg
-        "ball_handler": 0.004,       // completion on play-action throws
-        "scramble": 0.06,            // scramble chance x (1 + this), and +10x this yards: option_maestro, tuck_and_run
-        "coach_field": 0.0015,       // completion on every throw: coach_on_the_field
-        "lead_back": 0.12,           // run yards per point of lead-blocking backs on the field
-        "option_killer": 0.06,       // scramble chance x (1 - this per point) of the defenders who read it
-        "pin_artist": 0.05,          // pin chance on a punt that would carry inside the 10
-        "cannon_leg": 1.5,           // punt yards, and field-goal range in yards
-        "natural_talent": 0.06,      // offseason growth x (1 + this): coach_career/offseason.develop
-    });
-    cfg.LINE_RUN_TRAITS = cfg.LINE_RUN_TRAITS.concat(["line_leader", "grinder", "screen_blocker"]);
-    cfg.LINE_PASS_TRAITS = cfg.LINE_PASS_TRAITS.concat(["line_leader"]);
-    cfg.TACKLE_TRAITS = cfg.TACKLE_TRAITS.concat(["defensive_leader"]);
-    cfg.COVER_TRAITS_MAN = cfg.COVER_TRAITS_MAN.concat(["diving_breakup", "defensive_leader"]);
-    cfg.COVER_TRAITS_ZONE = cfg.COVER_TRAITS_ZONE.concat(["diving_breakup", "defensive_leader"]);
-}
+Object.assign(cfg.TRAIT_FX, {
+    "closer": 0.004,             // completion, and rush yards x 40, in clutch time: closer
+    "ice_water": 0.015,          // field-goal make chance in clutch time: ice_water, clutch_leg
+    "ball_handler": 0.004,       // completion on play-action throws
+    "scramble": 0.06,            // scramble chance x (1 + this), and +10x this yards: option_maestro, tuck_and_run
+    "coach_field": 0.0015,       // completion on every throw: coach_on_the_field
+    "lead_back": 0.12,           // run yards per point of lead-blocking backs on the field
+    "option_killer": 0.06,       // scramble chance x (1 - this per point) of the defenders who read it
+    "pin_artist": 0.05,          // pin chance on a punt that would carry inside the 10
+    "cannon_leg": 1.5,           // punt yards, and field-goal range in yards
+    "natural_talent": 0.06,      // offseason growth x (1 + this): develop in career_js/offseason
+});
+cfg.LINE_RUN_TRAITS = cfg.LINE_RUN_TRAITS.concat(["line_leader", "grinder", "screen_blocker"]);
+cfg.LINE_PASS_TRAITS = cfg.LINE_PASS_TRAITS.concat(["line_leader"]);
+cfg.TACKLE_TRAITS = cfg.TACKLE_TRAITS.concat(["defensive_leader"]);
+cfg.COVER_TRAITS_MAN = cfg.COVER_TRAITS_MAN.concat(["diving_breakup", "defensive_leader"]);
+cfg.COVER_TRAITS_ZONE = cfg.COVER_TRAITS_ZONE.concat(["diving_breakup", "defensive_leader"]);
 // ----- Coach styles -----
 // What the offensive scheme leans toward: deep and short shares of throws (x), the share of
 // runs that go outside (+), how often it uses play-action (x). Multiple is neutral.
@@ -311,7 +308,7 @@ cfg.CONTESTED_EFFECT = 0.0035;         // per point of (Contested Catches - defe
 cfg.CONTESTED_HEIGHT_POINTS = 2.0;     // an inch of height is worth this many rating points at the catch point
 cfg.PASS_YARDS_RB = [5.0, 4.0];       // gauss mean, sd for completions to running backs (receivers and tight ends: by depth above)
 cfg.PASS_SPEED_EFFECT = 0.0035;       // *tune* yards multiplier per point of receiver speed minus DB speed (0.007 ran the top
-// receivers' yards a catch over the real leaders': tools/realism.py)
+// receivers' yards a catch over the real leaders': tools/realism.mjs)
 cfg.PASS_TACKLE_EFFECT = 0.006;       // yards multiplier per point of the coverage players' tackling below neutral (yards after the catch)
 cfg.PASS_BIG_PLAY_YARDS = [22, 65];   // a short or intermediate catch broken for a long gain (PASS_BREAKAWAY_CHANCE)
 cfg.PASS_MIN_YARDS = -2;
@@ -343,7 +340,7 @@ cfg.RUSH_GUESSED = -0.9;
 cfg.RUSH_NOT_GUESSED = 0.5;
 cfg.RUSH_BIG_PLAY_CHANCE = 0.045;     // per carry (scaled by carrier speed)
 cfg.RUSH_BIG_PLAY_SPEED_POWER = 0.5;  // *tune* ... as (speed / neutral) ** this; at 1 a fast back's long runs put the top ten rushers
-// about 10% over real seasons' (tools/realism.py)
+// about 10% over real seasons' (tools/realism.mjs)
 cfg.RUSH_BIG_PLAY_YARDS = [15, 45];
 cfg.RUSH_SHORT_YARDAGE_CONVERT = 0.62;    // on 3rd/4th and 1-2, chance the carry reaches the line
 cfg.RUSH_MIN_YARDS = -6;
@@ -360,7 +357,7 @@ cfg.TRAILING_LATE_SECONDS = 420;      // trailing in the 2nd half with this much
 cfg.TYING_KICK_MAX_DISTANCE = 50;     // down 1-3 late: kick from this distance or closer instead of going for it
 cfg.TRAILING_DESPERATE_SECONDS = 240;   // down one score: desperation fourth downs only inside 4:00
 cfg.TRAILING_ONE_SCORE_BOLDNESS = 1.4;   // down one score with more time: this much likelier to go than usual
-// Punts, tuned so gross and net match real FBS (about 43 and 39.5 yards; tools/calibrate.py).
+// Punts, tuned so gross and net match real FBS (about 43 and 39.5 yards).
 cfg.PUNT_DISTANCE = [44.2, 5.0];      // full kick in the air (mean, sd), + (punt_power - 50) / 5
 cfg.PUNT_PIN_CHANCE = 0.75;           // would carry inside the 10: chance to stop it short of the goal line
 // (+ (punt_accuracy - NEUTRAL) / 100), else a touchback (real: about 7% of punts)
@@ -407,14 +404,14 @@ cfg.KICKOFF_RETURN_SD = 6.0;
 cfg.KICKOFF_BIG_RETURN_CHANCE = 0.06;
 cfg.KICKOFF_RETURN_TD_CHANCE = 0.004;
 
-// ----- Usage shares (calibrated against 2026 box scores, see calibrate_players.py) -----
+// ----- Usage shares (calibrated against 2026 box scores) -----
 cfg.TARGET_WEIGHT_POWER = 2.3;        // *tune* receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
 // full-season receiving leaders 17% over 2023-2025, 3.5 15% over, 2.5 8% once pass-heavy
-// teams threw as much as they really do: tools/realism.py)
+// teams threw as much as they really do: tools/realism.mjs)
 cfg.TARGET_MULT_MAX = 1.3;            // *tune* cap on a receiver's real-usage target weight (data/real_adjustments.json); 2.0 fed the
 // top receivers too much (the leader had 2,100 yards where real leaders have 1,500)
 
-// ----- Who gets the defensive stats (tools/realism.py: season leaders against real seasons) -----
+// ----- Who gets the defensive stats (tools/realism.mjs: season leaders against real seasons) -----
 // Tackle weight per player on the field: (dl, lb, olb, s, cb) for runs of 2 yards or less,
 // 3-7 yards, and longer plays, times (skill / neutral) ** TACKLE_SKILL_POWER.
 cfg.TACKLE_WEIGHTS_SHORT = [0.22, 0.29, 0.30, 0.11, 0.045];   // *tune* real 2026 (cfbstats, every FBS team): linemen and edge
@@ -457,7 +454,7 @@ cfg.SKILL_SUB_FATIGUE = 62;           // fatigue level at which WR/TE starters (
 // 48% to 75%. The observed share counts games against FCS schools too, where real teams
 // bench their backs harder than the sim does, so it sits about two points under the FBS
 // share: the curve is the midpoint of the two measurements, which puts the per-game share
-// (calibrate_players.py, FBS games) a point low and the season-level share a point or two
+// (FBS games) a point low and the season-level share a point or two
 // high. Re-measure both if the RB_LEAD_* constants change.
 // Backs recover faster on the bench than receivers: a back's rest is a few plays, not a series.
 cfg.RB_LEAD_SHARE_CURVE = [[0.0, 43.0], [0.125, 45.2], [0.25, 48.4], [0.375, 52.3], [0.5, 57.3],
@@ -484,7 +481,7 @@ cfg.GARBAGE_RUN_SHIFT = 0.25;     // added to the leader's run chance
 cfg.GARBAGE_BIG_PLAY = 0.75;       // big-play chance multiplier for a conservative offense
 cfg.COMEBACK_LEAD = 14;           // trailing by this much in the 4th quarter: pass more, hurry
 
-// ----- Situational football (engine/situation.py) -----
+// ----- Situational football (engine_js/situation.js) -----
 // Clock: a snap takes PLAY_SECONDS_SNAP_RANGE off the clock; when the clock keeps running the
 // offense's pace decides the runoff before the next snap (40-second play clock).
 cfg.PLAY_SECONDS_SNAP_RANGE = [5, 8];

@@ -1,13 +1,14 @@
 // One game, start to finish: both teams as this week has them (the stand-in's strength, the season's edits and your
 // coach, morale, the depth chart, the injured, the abilities earned), the game itself, and its result boiled down to
-// what the season keeps. It was sim/season.py's _sim_one and the helpers under it, sim/form.py and
-// sim/coaches.py's apply_coach; engine_js/PORTING.md has the rules it was ported by.
+// what the season keeps. It holds the season's _sim_one and the helpers under it, the form shift (sim_js/form.js
+// re-exports it) and apply_coach (sim_js/coaches.js re-exports it), so a helper worker can play a game with this
+// file and the engine alone.
 import { round, int, sum, sorted, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { drive_functions } from "../engine_js/drive_functions.js";
 import { simulate_game } from "../engine_js/game.js";
 import { position_fit } from "../career_js/position_fit.js";
 
-// the ratings a whole-team shift moves (sim/form.py ATTRS)
+// the ratings a whole-team shift moves (sim_js/form.js ATTRS)
 export const FORM_ATTRS = ["speed", "strength", "intelligence", "passing", "decision_making", "elusiveness", "vision", "hands",
   "route_running", "run_blocking", "pass_blocking", "rushing", "tackling", "coverage", "kick_power",
   "kick_accuracy", "punt_power", "punt_accuracy", "return_rating"];
@@ -25,7 +26,7 @@ export const OFFENSE_POSITIONS = new Set(["QB", "RB", "WR", "TE", "OL", "K", "P"
  * and nothing else, and this season's position changes need the scale and the card's formulas). */
 export class NotHere extends Error {}
 
-// ---- sim/form.py ----
+// ---- the form shift (sim_js/form.js) ----
 function _moved(p, keys, shift) {
   // A copy of the player with the ratings in `keys` moved by `shift` (held to 1-99).
   const q = { ...p };
@@ -44,7 +45,7 @@ export function with_form(team, shift) {
   return out;
 }
 
-// ---- sim/coaches.py apply_coach ----
+// ---- apply_coach (sim_js/coaches.js) ----
 export function apply_coach(team, coach) {
   // The team with `coach` as its head coach: his schemes and tendencies on the sides he calls, his fourth downs and
   // discipline always.
@@ -83,7 +84,7 @@ export function apply_coach(team, coach) {
   return t;
 }
 
-// ---- sim/season.py ----
+// ---- the game job (sim_js/season.js) ----
 export function with_positions(team, moves) {
   // A copy of the team with this season's position changes applied (change_position): each
   // moved player at his new position and depth-chart role, placed in that role's order by his

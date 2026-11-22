@@ -6,7 +6,7 @@ import { fmt, json_dumps } from "../engine_js/pyrt.js";
 const game = await start();
 const season = game.season;
 
-/** Python's `repr` of a list of tuples would differ; the leaders are printed as JSON. */
+/** The leaders are printed as JSON. */
 const show = (rows) => JSON.stringify(rows);
 
 test("stats", () => {

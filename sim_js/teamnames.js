@@ -1,7 +1,5 @@
 // Matching real-world team names (NCAA.com, ESPN, poll archives) to the engine's slugs.
 // Used by the season engine for the real 2026 polls and results, and by the data tools.
-//
-// Ported from sim/teamnames.py by engine_js/PORTING.md's rules.
 import { modules } from "../engine_js/modules.js";
 
 // names the automatic matcher cannot resolve on its own

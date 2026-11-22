@@ -10,8 +10,6 @@
 // champion is. The verdict is one sentence per band (GRADE_LINES), keyed by what the season was:
 // champion, a playoff run, the goal met, a bowl trip short of the goal, the goal missed, a losing
 // season, or a fired-level season (an F).
-//
-// It was sim/grade.py; engine_js/PORTING.md has the rules it was ported by.
 import { round, int, sorted, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 

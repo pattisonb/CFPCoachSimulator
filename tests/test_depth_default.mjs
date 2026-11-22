@@ -1,4 +1,4 @@
-// Your depth chart defaults to overall every season (coach_career/league.py lineup with
+// Your depth chart defaults to overall every season (career_js/league.js lineup with
 // by_overall for your team, built into the season's teams file at next_season): two seasons into
 // a career every role of your chart is in overall order (ties by name), the season's overrides
 // and redshirts did not carry over, a stale override naming a departed player is ignored, and a

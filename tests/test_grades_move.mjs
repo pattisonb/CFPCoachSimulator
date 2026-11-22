@@ -125,7 +125,7 @@ test("test_a_copy_never_writes_back", () => {
 
 test("test_change_read_at_the_carousel", () => {
   // programs.update runs at the carousel, before that offseason's hires: a coach hired last offseason (since ==
-  // year - 1) is this year's change, the way offseason.py reads a new coach.
+  // year - 1) is this year's change, the way offseason.js reads a new coach.
   const base = P.grades(SLUG)["stability"];
   const p = prog();
   P._move_grades(p, SLUG, 2028, null, 2027, P.CHURN_MEAN);

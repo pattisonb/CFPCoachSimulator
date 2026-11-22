@@ -19,7 +19,7 @@ import * as st from "../engine_js/pystat.js";
 import { json_dumps, sorted } from "../engine_js/pyrt.js";
 import { ROOT, boot, is_main, f, left, parse_args } from "./pytext.mjs";
 
-// the real seasons' files (an object, so a caller can point one elsewhere, as Python's module names could be)
+// the real seasons' files (an object, so a caller can point one elsewhere)
 export const FILES = { HISTORY: path.join(ROOT, "data", "history", "fbs_leaders.json"),
   REAL_2026: path.join(ROOT, "data", "seasons", "real-2026.json") };
 export const YEARS = ["2023", "2024", "2025"];

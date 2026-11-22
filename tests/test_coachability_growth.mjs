@@ -31,7 +31,7 @@ function near(got, want, tol = 0.02) {
   assert(Math.abs(got - want) <= tol, () => JSON.stringify([got, want]));
 }
 
-// coachability_chances(level, cls, z, rated, redshirted, benched) from the Python's keywords
+// coachability_chances(level, cls, z, rated, redshirted, benched) from named arguments
 const chances = (a) => o.coachability_chances(a.level, a.cls, a.z, a.rated, a.redshirted, a.benched);
 const empty = (d) => Object.keys(d).length === 0;
 

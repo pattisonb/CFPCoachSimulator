@@ -16,8 +16,7 @@
 // pattern, longest phrase first. `terms(root)` lists the real names a build must not contain
 // (tests/test_generic_names.mjs).
 //
-// Ported from tools/generic/scrub.py and held to its exact results (the same bytes in every file of a staged
-// project). A dict is an object without a prototype, in the order Python's has (pyio.mjs); a set is a Set.
+// A dict is an object without a prototype, its keys in the order they were added (pyio.mjs); a set is a Set.
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -569,7 +568,7 @@ export function terms(root) {
   };
 }
 
-/** The module as one object (`scrub.run`), as the Python module was reached. */
+/** The module as one object (`scrub.run`). */
 export const scrub = {
   SUFFIXES, DONE, GENERIC_STADIUMS, DROP_KEYS, TEXT_SUFFIXES, slugify, _seed, _read, _write, Names, Maps,
   _nudge, _previous_job, _coach, _fields, run, terms,

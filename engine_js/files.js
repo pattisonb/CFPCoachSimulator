@@ -1,6 +1,6 @@
 // The game's data files, for the JavaScript that reads them: a path from the project's root ("data/game_scale.json")
 // to its text or its parsed JSON. Whoever hosts the code says how a file is read (set_reader): Node's fs on a
-// computer (bridge.mjs), the Python file system in the browser's game worker (worker.js). A host without the file
+// computer (tools/game_host.mjs), files held in memory in the browser's game worker (ui/public/worker.js). A host without the file
 // throws, and the caller that can do without it catches that.
 let reader = null;
 const parsed = new Map();
@@ -28,7 +28,7 @@ export function forget(path) {
 }
 
 // ---- writing, and the folders of saves --------------------------------------------------------------------------
-// The season's saves, box scores and built leagues are files in Python. The host gives a store that can do what
+// The season's saves, box scores and built leagues are files. The host gives a store that can do what
 // those need (set_store): Node's fs on a computer, the browser's own storage there. Paths are from the project's
 // root, as for reading.
 let store = null;
@@ -53,5 +53,5 @@ export const list_dir = (dir) => need().list(dir);
 /** When a file was last written, in milliseconds, or null when it is not there. */
 export const mtime = (path) => need().mtime(path);
 
-/** Settings a host passes in where Python read the environment (SIM_WORKERS, CFP_SEASONS_DIR). */
+/** Settings a host passes in, in place of environment variables (SIM_WORKERS, CFP_SEASONS_DIR). */
 export const env = {};

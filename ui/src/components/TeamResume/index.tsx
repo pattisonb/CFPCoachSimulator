@@ -37,7 +37,7 @@ interface Line {
   title: string | null;
 }
 
-/** GET /resume?team= → rows[0] (sim/season.py resume): the committee's sheet on one team. */
+/** GET /resume?team= → rows[0] (sim_js/season.js resume): the committee's sheet on one team. */
 interface Resume {
   team: string;
   name: string;

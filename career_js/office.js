@@ -9,8 +9,7 @@
 // week first. A conference game is {event_id, week, home, away, home_name, away_name, home_score, away_score,
 // overtime, mine, conference_game}, from the latest week your conference's teams played.
 //
-// It was coach_career/office.py; engine_js/PORTING.md has the rules it was ported by. (The Python imports persona,
-// recruiting and the season as it loads; here they are reached at the call, through `modules`.)
+// Persona, recruiting and the season are reached at the call, through `modules`.
 import { cmp, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { shown } from "../teamdata_js/shown.js";

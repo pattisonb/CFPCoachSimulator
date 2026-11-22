@@ -301,7 +301,7 @@ function test_reads_change_nothing() {
   assert(json_dumps(st, { sort_keys: true }) === before, "a read wrote into the save");
 }
 
-// in the Python file's order; a test that takes the second-season career gets the one made for the first of them
+// in the file's order; a test that takes the second-season career gets the one made for the first of them
 let later = null;
 const with_later = (fn) => () => { later = later || second_season(); fn(later); };
 test("test_second_half_mostly_kept", test_second_half_mostly_kept);

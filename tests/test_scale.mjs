@@ -9,7 +9,7 @@ const game = await start();
 const { season } = game;
 
 test("scale", () => {
-  const overall = {}, attrs = new Map();           // attrs: "group\tattribute" -> values (Python's (g, k) tuple key)
+  const overall = {}, attrs = new Map();           // attrs: "group\tattribute" -> values
   for (const [slug, t] of Object.entries(season.load_teams())) {
     if (get(t, "fictional") || !season._is_p4(slug, t)) continue;
     for (const q of [...t["offense"], ...t["defense"]]) {

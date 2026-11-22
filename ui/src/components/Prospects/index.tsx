@@ -84,7 +84,7 @@ const SORTS: Partial<Record<Col, string>> = {
   pot: "pot",
 };
 /** the groups in roster order (the needs' keys come in this order too) */
-// the line, linebackers and safeties as their positions (coach_career/recruiting.py SPOTS), in depth-chart order
+// the line, linebackers and safeties as their positions (career_js/recruiting.js SPOTS), in depth-chart order
 const GROUP_ORDER = [
   "QB",
   "RB",

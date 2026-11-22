@@ -1,6 +1,6 @@
-// Shapes of what the game's API (app/api.py) returns. Add to these as screens are ported.
+// Shapes of what the game's API (app_js/api.js) returns.
 
-/** GET /api/teams → teams[] (app/api.py _team_card) */
+/** GET /api/teams → teams[] (app_js/api.js _team_card) */
 export interface TeamCard {
   slug: string;
   name: string;
@@ -51,7 +51,7 @@ export interface TeamsResponse {
   faces?: { players?: Record<string, unknown>; coaches?: Record<string, unknown> };
 }
 
-/** GET /api/seasons → seasons[] (app/api.py list_seasons) */
+/** GET /api/seasons → seasons[] (app_js/api.js list_seasons) */
 export interface SeasonCard {
   id: string;
   team: string;
@@ -82,11 +82,11 @@ export interface SavedCoach {
   id: string;
   first_name: string;
   last_name: string;
-  /** the pocket-faces face (sim/coaches.py keeps it as stored) */
+  /** the pocket-faces face (sim_js/coaches.js keeps it as stored) */
   face?: unknown;
 }
 
-/** One week of your schedule (GET /api/season/{id} → schedule[], sim/season.py team_schedule) */
+/** One week of your schedule (GET /api/season/{id} → schedule[], sim_js/season.js team_schedule) */
 export interface ScheduleGame {
   event_id: string | null;
   week: number;
@@ -122,7 +122,7 @@ export interface ScheduleGame {
   has_box?: boolean;
 }
 
-/** A rivalry game's line (sim/season.py game_rivalry): the series entering it, or after it with who took the trophy */
+/** A rivalry game's line (sim_js/season.js game_rivalry): the series entering it, or after it with who took the trophy */
 export interface Rivalry {
   name: string;
   trophy?: string;
@@ -163,7 +163,7 @@ export type SeasonCoach =
   | { existing: true; name: string }
   | { existing: false; id: string; first_name: string; last_name: string };
 
-/** The national championship game (sim/season.py _game_line). */
+/** The national championship game (sim_js/season.js _game_line). */
 export interface TitleGame {
   event_id: string;
   home: string;
@@ -200,7 +200,7 @@ export interface SeasonSummary {
   offseason_stage: string | null;
   /** your team's injury report */
   injuries: unknown[];
-  /** the bowls, once they're set on selection day (sim/season.py bowl_view) */
+  /** the bowls, once they're set on selection day (sim_js/season.js bowl_view) */
   bowls?: Bowl[];
   /** before then, from the committee's first ranking: the projected lineup */
   bowl_projection?: BowlProjection | null;
@@ -216,7 +216,7 @@ export interface SeasonSummary {
   cfp_weeks?: number[];
 }
 
-/** One team in a poll (sim/polls.py). */
+/** One team in a poll (sim_js/polls.js). */
 export interface PollEntry {
   rank: number;
   team: string;
@@ -251,7 +251,7 @@ export interface BracketSeed {
   bye: boolean;
 }
 
-/** The 12-team playoff (sim/polls.py build_bracket): the real one, or today's projection. */
+/** The 12-team playoff (sim_js/polls.js build_bracket): the real one, or today's projection. */
 export interface Bracket {
   seeds: BracketSeed[];
   first_round: { home: BracketSeed; away: BracketSeed }[];
@@ -302,7 +302,7 @@ export interface Bowl {
   recent?: { year: number; winner: string; winner_score: number; loser: string; loser_score: number }[];
 }
 
-/** The projected bowl lineup (sim/season.py bowl_projection) */
+/** The projected bowl lineup (sim_js/season.js bowl_projection) */
 export interface BowlProjection {
   /** the committee ranking it's built from */
   week: number;
@@ -327,7 +327,7 @@ export interface RecruitingWeek {
   points_week: number;
 }
 
-/** One item of Program News (coach_career/office.py program_news) */
+/** One item of Program News (career_js/office.js program_news) */
 export interface NewsItem {
   week: number;
   kind: string;
@@ -400,12 +400,12 @@ export interface SimStatus {
   /** the last week the sim has finished */
   current_week?: number;
   record?: { wins: number; losses: number; conf_wins: number; conf_losses: number };
-  /** your ranking now (sim/season.py current_rank) */
+  /** your ranking now (sim_js/season.js current_rank) */
   my_rank?: { rank: number | null; kind?: string } | null;
-  /** your games played so far (sim/season.py my_results), for the week strip while a sim runs */
+  /** your games played so far (sim_js/season.js my_results), for the week strip while a sim runs */
   results?: SimResult[];
   /**
-   * what the last week the sim finished brought (app/api.py _feed), sent with its progress so the page need not ask:
+   * what the last week the sim finished brought (app_js/api.js _feed), sent with its progress so the page need not ask:
    * your Program News, your board's commitments and your injury report
    */
   feed?: SimFeed | null;
@@ -442,7 +442,7 @@ export interface SimResult {
   overtime: number;
 }
 
-/** A player as the depth chart shows him (sim/season.py _depth_card): GET /api/season/{id}/depth/{team} */
+/** A player as the depth chart shows him (sim_js/season.js _depth_card): GET /api/season/{id}/depth/{team} */
 export interface DepthCard {
   name: string;
   slug: string;
@@ -595,7 +595,7 @@ export interface PlayerProfile {
   skills?: { group: string; rows: { key: string; label: string; value: number }[] }[];
   /** his home state (a career's league row) */
   hometown?: string | null;
-  /** how he was recruited out of high school (coach_career/offseason.py _recruit_stories); null for a player who was
+  /** how he was recruited out of high school (career_js/offseason.js _recruit_stories); null for a player who was
    *  on the roster before your first class */
   recruitment?: {
     year?: number;
@@ -646,7 +646,7 @@ export interface PlayerProfile {
   }[];
 }
 
-/** One prospect in the class (GET /api/season/{id}/prospects → rows[], coach_career/prospects.py row) */
+/** One prospect in the class (GET /api/season/{id}/prospects → rows[], career_js/prospects.js row) */
 export interface ProspectRow {
   /** his NIL ask of you as you know it: the number after a call or visit, a range before */
   ask?: { lo?: number; hi?: number; exact?: number };
@@ -786,7 +786,7 @@ export interface ProspectDetail {
     potential:
       | (RatingRead & {
           position: string;
-          /** his potential as letter grades, low then high (coach_career/grades.py): what the page shows, not the numbers */
+          /** his potential as letter grades, low then high (career_js/grades.js): what the page shows, not the numbers */
           grade?: string[];
           /** your reads carry a plus or minus: your best evaluator (`eye`) is at `eye_needed` or better */
           fine?: boolean;
@@ -807,7 +807,7 @@ export interface ProspectDetail {
   points_left: number;
 }
 
-/** A recruit's traits (coach_career/prospects.py): the words, each null until you learn it. */
+/** A recruit's traits (career_js/prospects.js): the words, each null until you learn it. */
 export interface RecruitTraits {
   personality: string | null;
   decider: string | null;
@@ -872,7 +872,7 @@ export interface ListSchool {
   visit: { week: number; done: boolean; game: { opponent_name: string } | null } | null;
 }
 
-/** One recruit on your board (GET /api/season/{id}/recruiting → board[], coach_career/prospects.py board_row) */
+/** One recruit on your board (GET /api/season/{id}/recruiting → board[], career_js/prospects.js board_row) */
 export interface BoardRow {
   /** a transfer's class (FR, SORS, ...) */
   cls?: string;
@@ -956,7 +956,7 @@ export interface BoardRow {
   scene: Scene | null;
 }
 
-/** One entry in a recruit's history, newest first (coach_career/recruiting.py log). */
+/** One entry in a recruit's history, newest first (career_js/recruiting.js log). */
 export interface RecruitEvent {
   week: number;
   kind: string;
@@ -1000,7 +1000,7 @@ export interface SceneQuestion {
   truthful?: boolean | null;
 }
 
-/** A call or in-home visit as a conversation (coach_career/scenes.py). */
+/** A call or in-home visit as a conversation (career_js/scenes.js). */
 export interface Scene {
   id: string;
   action: "call" | "hc_visit";
@@ -1115,7 +1115,7 @@ export interface ScoutingView {
   flags: ScoutFlag[];
 }
 
-/** A player in an award race or result (sim/awards.py Pool.card; `slug` and `face` added by season.awards_view) */
+/** A player in an award race or result (sim_js/awards.js Pool.card; `slug` and `face` added by season.awards_view) */
 export interface AwardPlayer {
   name: string;
   position: string;
@@ -1194,7 +1194,7 @@ export interface CoachAward {
   assistant?: boolean;
 }
 
-/** A player named to an honor team (sim/awards.py select_team): the slot he fills and which team (1 first, 2 second) */
+/** A player named to an honor team (sim_js/awards.js select_team): the slot he fills and which team (1 first, 2 second) */
 export interface TeamPick extends AwardPlayer {
   slot: string;
   level: number;
@@ -1210,14 +1210,14 @@ export interface ConsensusPick extends TeamPick {
   selectors: number;
 }
 
-/** The All-America teams (sim/awards.py all_america): each selector's first and second teams, and the consensus */
+/** The All-America teams (sim_js/awards.js all_america): each selector's first and second teams, and the consensus */
 export interface AllAmerica {
   selectors: Record<string, TeamPick[]>;
   consensus: ConsensusPick[];
   unanimous: ConsensusPick[];
 }
 
-/** One conference's honors (sim/awards.py conference_awards): its awards and its all-conference teams */
+/** One conference's honors (sim_js/awards.js conference_awards): its awards and its all-conference teams */
 export interface ConferenceAwards {
   /** a coach award has kind "coach" and coaches in place of players */
   awards: (PlayerAward | (CoachAward & { kind: string }))[];
@@ -1235,7 +1235,7 @@ export interface NationalAwards {
   conference?: Record<string, ConferenceAwards>;
 }
 
-/** One of your team's honors once given (sim/awards.py my_awards) */
+/** One of your team's honors once given (sim_js/awards.js my_awards) */
 export interface MyHonor {
   stage: string;
   award: string;

@@ -12,7 +12,7 @@ const SPEED = 70;
 /** The sections, in the order they take their turn; one with nothing to say is left out. */
 const SECTIONS = ["top25", "scores", "recruiting", "injuries", "headlines"] as const;
 type Section = (typeof SECTIONS)[number];
-/** which section a news item's kind (sim/news.py) goes under; any other kind is a headline */
+/** which section a news item's kind (sim_js/news.js) goes under; any other kind is a headline */
 const KIND_SECTION: Record<string, Section> = { rankings: "top25", recruiting: "recruiting", injury: "injuries" };
 /** *tune* The most final scores it carries from the week just played (the biggest games first). */
 const MAX_SCORES = 28;
@@ -22,7 +22,7 @@ const NEWS_WEEKS = 2;
 const ROUT = 28;
 const THRILLER = 3;
 
-/** An item of the league's news (sim/news.py league_news). */
+/** An item of the league's news (sim_js/news.js league_news). */
 interface NewsItem {
   week: number;
   kind: string;

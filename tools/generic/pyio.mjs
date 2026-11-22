@@ -1,7 +1,7 @@
-// What scrub.mjs and check.mjs need to read and write a staged project exactly as their Python did (scrub.py,
-// check.py): JSON with every dict in the file's key order and every number written back as Python writes it, text
-// files with Python's line endings, a folder's files in pathlib's order, and Python's idea of a letter, a capital
-// and a space. Node only (fs).
+// What scrub.mjs and check.mjs need to read and write a staged project byte for byte as the published site's files
+// have always been written (the scrub was first written in Python): JSON with every dict in the file's key order
+// and every number written back as Python writes it, text files with Python's line endings, a folder's files in
+// pathlib's order, and Python's idea of a letter, a capital and a space. Node only (fs).
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

@@ -1,10 +1,10 @@
-// coach_career/offseason.py, part 2 (the Python file's lines 812 to 1667): who leaves and why (the portal's odds, the
+// The offseason, part 2: who leaves and why (the portal's odds, the
 // departures, the draft board and the draft), your roster at the Departures step (redshirts, position changes, the
 // roles a staff fills), a player's story (his recruitment and what has happened since), the signed classes arriving,
 // and the transfer portal (spots, an entrant's choice, the AI schools' offers, the old rounds, the portal's close).
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the offseason file is reached
-// through the `offseason` namespace, whichever part defines it.
+// Every name of the offseason is reached through the `offseason` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 import { round, int, sum, cmp, sorted, maxBy, get, truthy, range, floordiv } from "../../engine_js/pyrt.js";
 import { mean as st_mean, pstdev as st_pstdev } from "../../engine_js/pystat.js";
 import { modules } from "../../engine_js/modules.js";
@@ -20,7 +20,7 @@ import { prospects } from "../prospects.js";
 import { ability_goals } from "../ability_goals.js";
 import { offseason } from "../offseason_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 /** `k in d` for a dict. */
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
@@ -51,7 +51,7 @@ function program_shifts(state, lgd) {
     res = carousel._results(state);
     ranks = programs.final_ranks(state);
   } catch (exc) {                                                 // no season behind this state: nothing moves
-    // (Python catches KeyError and TypeError: a missing key read here is a TypeError, or a port's own KeyError)
+    // (a missing key read here is a TypeError, or a plain Error whose message starts "KeyError")
     if (exc instanceof TypeError || (exc instanceof Error && (exc.name === "KeyError" || exc.constructor.name === "KeyError"))) return {};
     throw exc;
   }
@@ -556,7 +556,7 @@ function change_position(state, pid, pos) {
 }
 
 function defense_scheme(team) {
-  // A league team's defensive scheme, read the way the engine reads it (engine/game.py).
+  // A league team's defensive scheme, read the way the engine reads it (engine_js/game.js).
   const co = get(team, "coaches") || {};
   const dc = get(get(get(co, "defensive_coordinator") || {}, "scheme") || {}, "defensive_scheme");
   if (truthy(dc)) return dc;
@@ -659,7 +659,7 @@ function life(p, season_year, kind, extra = {}) {
   // A line in a player's story, kept on his league row (`life`) so it follows him through the rollover and a
   // transfer: {"year": the season it came after, "kind": promise | stayed | transfer | progress, ...}. Never read
   // back by the game: his card's History shows it.
-  // (the Python's keyword arguments, `**extra`, are one object here, its keys in the order the Python names them)
+  // (`extra` is one object; its keys are written in the order given)
   if (!has(p, "life")) p["life"] = [];
   const rows = p["life"];
   const row = { "year": season_year, "kind": kind };
@@ -887,10 +887,10 @@ function resolve_round(state) {
   const lgd = state["league"], portal = off["portal"];
   const rng = offseason._rng(state, `portal-${portal["round"]}`);
   const me = state["team"];
-  // (a set in Python, walked in its own order below; here in the order you made the offers: PORTING.md rule 9)
+  // (a Set, walked below in the order you made the offers)
   let mine = new Set(get(portal["offers"], me, []));
   const auto_recruit = get(get(get(state, "career") || {}, "settings", {}), "auto_recruit");
-  // `not in (None, False, "off")`: Python's 0 equals False
+  // off is null, false, 0 or "off"
   if (!(auto_recruit === null || auto_recruit === false || auto_recruit === 0 || auto_recruit === "off") && !mine.size) {
     mine = new Set(offseason.ai_offers(state, me));
   }
@@ -1009,7 +1009,7 @@ function _close_portal(state) {
       walk_on: !truthy(get(st_, "signed")) ? true : null, promised: get(p, "promised") === lgd["year"] ? true : null,
       log: school === me ? (truthy(get(told, pid)) ? told[pid] : null) : null });
     if (!truthy(get(st_, "signed"))) {
-      p["walk_on"] = true;                                         // (Python assigns a chain left to right: walk_on, then preferred)
+      p["walk_on"] = true;                                         // (walk_on, then preferred: the keys' order in a save)
       p["preferred"] = true;
       st_["signed"] = school;
       recruiting._event(state, "signed", pid, school, { walk_on: true, ...(yours.has(pid) && school !== me ? { lost: "unsigned" } : {}) });

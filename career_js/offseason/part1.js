@@ -2,7 +2,7 @@
 // (docs/superpowers/specs/2026-10-23-career-offseason-design.md).
 //
 // After national signing day `start` opens the offseason: the career's league is taken for next
-// year (league.py), players leave (graduation, the NFL draft, the transfer portal, quitting) and
+// year (league.js), players leave (graduation, the NFL draft, the transfer portal, quitting) and
 // the signed classes arrive. Then `advance` walks the stages: Keep Them Home (your leavers answer,
 // then the draft runs), Departures (what happened), the portal's four weeks, player development,
 // staff changes, and `next_season` hands back the new season's state.
@@ -10,12 +10,12 @@
 //     state["offseason"] = {"stage": one of STAGES, "year": next season, "departures": [event],
 //                           "portal": {"players": {id: entrant}, "round": 1}, "staff": {...}, "report": {...}}
 //
-// coach_career/offseason.py, part 1 (the Python file's lines 1 to 811): the constants, the start of the offseason, the
+// The offseason, part 1: the constants, the start of the offseason, the
 // yearly meeting with your athletic director, Keep Them Home, and the season's production and honors for development.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the offseason file is reached
-// through the `offseason` namespace, whichever part defines it. Modules reached through `modules`: season, recruiting.
-// What could not be written literally is listed at the end of this file.
+// Every name of the offseason is reached through the `offseason` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts"). Modules reached through `modules`: season, recruiting.
+// Notes on standing quirks are at the end of this file.
 import { Random, round, int, sum, floordiv, sorted, get, truthy } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { awards } from "../../sim_js/awards.js";
@@ -28,10 +28,10 @@ import { programs } from "../programs.js";
 import { promises } from "../promises.js";
 import { offseason } from "../offseason_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
-/** Python's str() of a value inside an f-string or str.format, for the ones that can be None or a bool. */
+/** A value inside seed, key or sentence text, for the ones that can be null or a boolean ("None", "True": as the seeds have always had them). */
 const pystr = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
 /** `x in coll` for a set, tuple or list another part or module may hold as a Set or an array. */
 const _in = (x, coll) => (coll instanceof Set ? coll.has(x) : Array.from(coll).includes(x));
@@ -77,7 +77,7 @@ offseason.DRAFT_FROM_FBS = 0.97;                              // the share of pi
 // round over (before, a score per raw overall point, steepest for QB and WR, did). His draft score is
 // DRAFT_VALUE[group] * grade + DRAFT_SHIFT[group] + noise: the NFL's positional value, quarterbacks,
 // tackles, edge rushers and corners early, backs, guards, linebackers, safeties and tight ends later,
-// specialists last. Fitted by tools/calibrate_draft.py to data/draft_targets.json (the 2021-2025 NFL
+// specialists last. Fitted to data/draft_targets.json (the 2021-2025 NFL
 // drafts' round-one and all-pick counts by position) *tune*
 offseason.DRAFT_GROUP = { "QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", "LT": "OT", "RT": "OT", "LG": "IOL", "RG": "IOL", "C": "IOL",
   "LEDG": "EDGE", "REDG": "EDGE", "DT": "DL", "SAM": "LB", "MIKE": "LB", "WILL": "LB", "CB": "CB", "FS": "S", "SS": "S",
@@ -137,7 +137,7 @@ offseason.PT_WEIGHT = 1.0; offseason.PRESTIGE_WEIGHT = 0.8; offseason.RATING_WEI
 
 // ----- development and staff *tune* -----
 offseason.DEV_RATE = 0.75;                                    // coachability's pace on our scale: a class tracks the real players by stars and
-                                                              // years (tools/check_development.py), three- and two-stars a little under the survivors
+                                                              // years, three- and two-stars a little under the survivors
 // real players gain little in their first offseasons and most in their third and fourth (the real rosters
 // by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*
 offseason.YEAR_CURVE = [0.45, 0.7, 1.35, 1.35, 1.0];
@@ -148,20 +148,20 @@ offseason.YEAR_CURVE = [0.45, 0.7, 1.35, 1.35, 1.0];
 offseason.STARTER_YEAR = 1.0;
 // the best get better slowest: above DEV_TOP (card overall) a player's pace is divided by 1 + his points over
 // it / DEV_TOP_SPAN, so the real rosters' top juniors (fast learners with big rooms and big seasons) do not
-// all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.py) *tune*
+// all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.mjs) *tune*
 offseason.DEV_TOP = 55;
 offseason.DEV_TOP_SPAN = 10;
 // the most of his room an offseason closes: the pace's factors (his year, his program, his staff, his
 // production, his position, his third year) compound to 2-4 for a few players a year, a rate past 1,
 // and a real junior rated 49 with a 1,300-point room became a 99 in one offseason (a career's first
 // senior class had 10-12 linebackers rated 85+ where the real 2026 seniors have 2). Half his room a
-// year keeps the real seniors' top end (tests/test_progression_realism.py) and leaves the medians by
-// stars and years (tools/check_development.py) where they were *tune*
+// year keeps the real seniors' top end (tests/test_progression_realism.mjs) and leaves the medians by
+// stars and years where they were *tune*
 offseason.DEV_YEAR_CAP = 0.5;
 // a position group's pace against the league's: the real rosters' backs, quarterbacks and receivers peak
 // early and their senior classes sit lowest, linemen come on late (the real 2026 seniors by position),
 // where one pace for everyone left a career's skill-position seniors 2-5 points high and its linemen low.
-// Fitted with faked seasons (tests/test_progression_realism.py checks a played one) *tune*
+// Fitted with faked seasons (tests/test_progression_realism.mjs checks a played one) *tune*
 offseason.DEV_PACE = { "QB": 0.75, "RB": 0.5, "WR": 0.75, "TE": 1.28, "OT": 1.32, "IOL": 1.07, "EDGE": 1.16, "DL": 0.9, "LB": 1.19, "CB": 1.1,
   "S": 0.94, "K": 0.51, "P": 0.84 };
 offseason.PROGRAM_DEV = 0.35;                                 // development rate per point of the program's recruiting baseline (the blue bloods' facilities and staffs: the top stays the top)
@@ -628,7 +628,7 @@ function _chance_word(c) {
 function stay_chance(e, state = null) {
   // His chance to stay from what you offered against what he wants: NIL at his ask, or your promise of a starting
   // role (the player's ask: your word counts whoever rates higher today, and next season judges whether you start him,
-  // promises.py); a draft entrant projected in the first round is gone whatever you say.
+  // promises.js); a draft entrant projected in the first round is gone whatever you say.
   const ask = e["ask"], offers = e["offers"];
   let nil_share = truthy(ask["nil"]) ? Math.min(1.0, get(offers, "nil", 0) / ask["nil"]) : (truthy(get(offers, "nil", 0)) ? 1.0 : 0.0);
   if (nil_share < offseason.RETAIN_LOWBALL) nil_share = 0.0;
@@ -928,28 +928,16 @@ Object.assign(offseason, {
   _resolve_retention, record_seasons, _performance, growth_terms,
 });
 
-// ----- what is not written literally (PORTING.md rule 9) --------------------------------------------------------------
-// - `life(p, season_year, kind, **extra)` (another part's) is called as `offseason.life(p, season_year, kind, extra)`:
-//   the keyword arguments as one object, in the Python's order (a null value is left out by `life`, as in Python).
-// - Keyword arguments are positional: `_departures(state, lgd, usage, undefined, draft)`,
-//   `season._records(state, undefined, true)`, `programs.nil_move(probe, met, losing, playoff)`,
-//   `word.promise_mult(state, null, group, pers)`.
-// - `start`: the lazy imports are the modules imported above; `_performance(state)` is called just before the
-//   offseason's dict is written (Python calls it while building the dict, after `_sign_classes` and before
-//   `_retention_entries`: the same order).
-// - Dicts keyed by a player's id or a tuple and only looked up are a Map (`by_id`, `ids`, `starts`); a tuple key is its
-//   JSON text. `seen` (a set of tuples) is a Set of the same text; `leaving` is a Set (never walked).
-// - `_retention_entries`: `p in peers[:n + 2]` compares dicts by value in Python; here it is the same row (identity).
-//   Two different players never have equal rows (their ids differ). `_would_start`'s answer may be a Set or an array.
-// - `_retention_entries`, `_review`: `REASONS[key].format(...)` fills the template's "{ahead}" and "{round}" (None
-//   would print "None", as in Python); `x["role"] in STAFF_ROLES` asks the dict's own keys.
-// - `_performance`: f"all_america_{min(2, level)}" assumes a whole-number level (a float 1.0 would print "1.0" in
-//   Python); an honor is a list [kind, name] where Python holds a tuple (the same in a save's JSON).
-// - `growth_terms`: returns a list for Python's tuple; `sum(pts[1:3])` is whole numbers; `list(dict.fromkeys(...))` is
-//   a Set's insertion order (each name once, first seen first).
-// - `seed_key` / `_rng` / `review_decide`: the seed text is Python's str() of the seed (a whole number or the id), the
-//   year and the name: a float seed would print differently (none is made by the game).
-// - `ReviewError`, `RetentionError`: Error subclasses with `code` and `message`, as the Python's.
-// - `rv.update(...)` / `e["offers"].update(...)` / `ev.update(...)`: the keys set one by one in the same order.
+// ----- Notes ----------------------------------------------------------------------------------------------------------
+// - `offseason.life(p, season_year, kind, extra)` (another part's): `extra` is one object whose keys are written in
+//   order; a null value is left out by `life`.
+// - Dicts keyed by a player's id or a compound key and only looked up are a Map (`by_id`, `ids`, `starts`); a compound
+//   key is its JSON text. `seen` is a Set of the same text; `leaving` is a Set (never walked).
+// - `_retention_entries`: a peer is the same row by identity. `_would_start`'s answer may be a Set or an array.
+// - `_retention_entries`, `_review`: a template's "{ahead}" and "{round}" would print "None" for a missing value.
+// - `_performance`: the "all_america_<level>" key assumes a whole-number level; an honor is a list [kind, name].
+// - `growth_terms`: the names come out in a Set's insertion order (each name once, first seen first).
+// - `seed_key` / `_rng` / `review_decide`: the seed text is the seed (a whole number or the id), the year and the
+//   name: a seed with a fraction would print differently (none is made by the game).
 // - `COACH_PERF`'s whole-number keys (2, 0, -1, -2) are an object's text keys: looked up with `get(COACH_PERF, mark, 0.0)`,
 //   never walked (an object would list "0" and "2" first).

@@ -3,9 +3,8 @@
 // settings and when it was last saved. Seasons without one (older saves, "remaining" mode, Real
 // 2026) are plain seasons and nothing here touches them.
 //
-// It was coach_career/career.py; engine_js/PORTING.md has the rules it was ported by. A save is one gzip file in
-// both; JavaScript has no gzip of its own that answers at once in every host, so the host gives this file its two
-// functions (`career.zip`):
+// A save is one gzip file. JavaScript has no gzip of its own that answers at once in every host, so the host gives
+// this file its two functions (`career.zip`):
 //   gzip(bytes)             the bytes packed as a gzip file (a Uint8Array)
 //   gunzip(bytes, most)     a gzip file unpacked (a Uint8Array); throws when it is not gzip or unpacks past `most` bytes
 // Files (the box scores, the season's own file) go through engine_js/files.js as everywhere else.
@@ -18,9 +17,9 @@ import { fcs_names } from "../sim_js/fcs_names.js";
 const FIRST_YEAR = 2026;
 const MAX_UNPACKED = 200 * 1024 * 1024;     // an uploaded save, unpacked (a full season of box scores is well under this)
 const MAX_BOXES = 2000;                     // box scores in one save (a season has about 900)
-const BOX_NAME = /^[A-Za-z0-9_-]+\.json$/;  // (matched whole, as Python's fullmatch)
+const BOX_NAME = /^[A-Za-z0-9_-]+\.json$/;  // (matched whole)
 
-// ---- Python's own ----
+// ---- small helpers ----
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 // Python's white space (str.strip): JavaScript's trim takes U+FEFF and leaves U+001C-U+001F and U+0085
 const WS = "[\\t\\n\\v\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]";

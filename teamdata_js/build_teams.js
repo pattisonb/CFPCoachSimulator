@@ -29,14 +29,13 @@
 // SPREAD_SCALE. The engine was calibrated on rating differences, so this keeps a league
 // of these teams playing like FBS football while preserving who is better than whom.
 //
-// Ported from teamdata/build_teams.py by engine_js/PORTING.md's rules. What is not literal is listed where it is:
-//   - the three data files Python reads when they exist (observed tendencies, real adjustments, manual ratings) and
+// Notes:
+//   - the three data files read only when they exist (observed tendencies, real adjustments, manual ratings) and
 //     the scheme overrides are read with files.js and count as missing when the host throws; the scheme overrides are
 //     read at the first use, not at load (a host sets its reader after the modules load);
-//   - `build`'s "source" is the folder's path from the project's root ("cfb_sim_data"), where Python wrote the
-//     absolute path on the computer that built it (nothing reads it);
-//   - `main(argv)` is the command (`python -m teamdata.build_teams [spread_scale]`): it needs a host with a file
-//     store (files.js set_store) to list the source folder and write the two files.
+//   - `build`'s "source" is the folder's path from the project's root ("cfb_sim_data"); nothing reads it;
+//   - `main(argv)` is the build command (`[spread_scale]`): it needs a host with a file store (files.js set_store)
+//     to list the source folder and write the two files.
 import { round, int, sum, sorted, minBy, maxBy, get, isNumber, truthy, cmp, fmt, pyfloat } from "../engine_js/pyrt.js";
 import { mean, median, pstdev } from "../engine_js/pystat.js";
 import { read_json, read_text, write_text, list_dir, env } from "../engine_js/files.js";
@@ -49,8 +48,8 @@ const ROOT = ".";   // the project root: files.js reads paths from it
 const SRC = "cfb_sim_data";
 const OUT = "data/engine_teams.json";
 
-const NEUTRAL = 55;          // engine reference rating (engine/game_config.py)
-const SPREAD_SCALE = 1.50;   // rating points of spread kept per source point; tuned in calibrate_season.py and tools/realism.py
+const NEUTRAL = 55;          // engine reference rating (engine_js/game_config.js)
+const SPREAD_SCALE = 1.50;   // rating points of spread kept per source point; tuned with tools/realism.mjs
 // Diminishing returns at the top (team_level): of a team's talent above the FBS starter average,
 // only this share counts. Through week 8 of 2026 a point of rating gap was worth 1.4 real points
 // of margin between Power 4 teams and 3.1 between Group of Five teams; the sim paid 2.0 in both,
@@ -93,7 +92,7 @@ const SCHOOL_DISPLAY = {
   "California State University, Sacramento": "Sacramento State University",
 };
 
-// A data file Python reads only when it exists: its parsed JSON, or null when the host has no such file.
+// A data file that is read only when it exists: its parsed JSON, or null when the host has no such file.
 function _file_or_null(path) {
   try {
     return read_json(path);
@@ -201,7 +200,7 @@ export function map_player(p, pos = null) {
     "position": pos,
     "source_position": p["position"],
     "overall": p["overall"],
-    // our overall (game_scale.py: the game's own 1-99 scale, 50 the middle Power 4 starter):
+    // our overall (game_scale.js: the game's own 1-99 scale, 50 the middle Power 4 starter):
     // the player card's overall. The engine never reads it.
     "ovr": get(p, "ovr") !== null ? p["ovr"] : (game_scale.has_overall()
       ? game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"]) : null),
@@ -256,7 +255,7 @@ export function starter_slugs(team) {
 }
 
 export function team_from_source(t) {
-  // One team in the source format (cfb_sim_data/teams/*.json, or a career's league.py
+  // One team in the source format (cfb_sim_data/teams/*.json, or a career's league.js
   // rebuild of it) converted for the build.
   const starters = starter_slugs(t);
   const st_special = t["starters"]["special_teams"];
@@ -275,7 +274,7 @@ export function team_from_source(t) {
     m["starter"] = starters.has(p["slug"]);
     [m["role"], m["depth"]] = roles.has(p["slug"]) ? roles.get(p["slug"]) : [null, null];
     m["_src"] = p;
-    // his skills on our scale (game_scale.py), what comps and the card overall read
+    // his skills on our scale (game_scale.js), what comps and the card overall read
     m["skills"] = truthy(get(p, "skills")) ? p["skills"] : Object.values(game_scale.ours_from_base(p["ratings"], p["position"]));
     if (get(p, "target_mult") !== null) {          // a career's league: his share of targets, kept with him
       m["target_mult"] = p["target_mult"];
@@ -380,7 +379,7 @@ export function decouple_discipline(teams) {
   const xs = fbs.map((t) => t["team_ratings"]["overall"]);
   const ys = fbs.map((t) => t["tendencies"]["discipline"]);
   const mx = mean(xs), my = mean(ys);
-  // ((x - mx) ** 2: the square worked out exactly, as recruits.pypow does; Math.pow can be a digit off Python's)
+  // ((x - mx) ** 2: the square worked out exactly, as recruits.pypow does; Math.pow can be a digit off the exact square)
   const slope = sum(xs.map((x, i) => (x - mx) * (ys[i] - my))) / sum(xs.map((x) => pypow(x - mx, 2)));
   for (const t of teams) {
     const fit = my + slope * (t["team_ratings"]["overall"] - mx);
@@ -499,7 +498,7 @@ export function apply_real_adjustments(teams, means) {
     for (const p of t["players"]) by_slug[p["slug"]] = p;
     const usage = get(get(adj, "usage") || {}, t["slug"]) || {};
     if (get(usage, "rb_lead_feature") !== null) t["tendencies"]["rb_lead_feature"] = usage["rb_lead_feature"];
-    const form = get(usage, "pass_form") || {};       // how the team really throws beyond its ratings (tools/tune_pass_form.py)
+    const form = get(usage, "pass_form") || {};       // how the team really throws beyond its ratings
     if (Object.keys(form).length) {
       t["tendencies"]["pass_form_completion"] = get(form, "completion", 0.0);
       t["tendencies"]["pass_form_yards"] = get(form, "yards", 1.0);
@@ -538,8 +537,6 @@ export function apply_real_adjustments(teams, means) {
 export function usage_ranked(group, order, by_slug, roles) {
   // `group` in real-usage order: the players `order` names (at one of `roles`) first, then
   // the rest of the group in depth order.
-  // (Python's `p not in ranked` compares the players' dicts by value; two players are never the same in every field,
-  // so it is "the same player" here.)
   const ranked = [];
   for (const s of order) if (by_slug[s] !== undefined && roles.includes(get(by_slug[s], "role"))) ranked.push(by_slug[s]);
   for (const p of sorted(group, depth_key)) if (!ranked.includes(p)) ranked.push(p);
@@ -671,7 +668,7 @@ export function _attr_group(p) {
   return g === "FB" ? "RB" : g;
 }
 
-// Whether the frozen scale's file is there (Python: game_scale.FILE.exists()): a host without it throws.
+// Whether the frozen scale's file is there: a host without it throws.
 function _scale_file_exists() {
   try {
     game_scale.data();
@@ -702,7 +699,7 @@ export function attribute_scale(teams) {
   }
   const scale = build_teams.ATTR_SCALE;
   for (const k of Object.keys(scale)) delete scale[k];
-  if (build_teams.USE_FROZEN && _scale_file_exists()) {   // the game's scale is frozen (game_scale.py): every season reads it the same
+  if (build_teams.USE_FROZEN && _scale_file_exists()) {   // the game's scale is frozen (game_scale.js): every season reads it the same
     Object.assign(scale, game_scale.card_scale());
     return scale;
   }
@@ -736,8 +733,7 @@ export function normalize(teams, frozen = null) {
   // Re-centre every attribute per position group on the FBS starter mean: this build's own
   // (the real 2026 rosters), or `frozen` ("POS:attr" -> mean; a career's later seasons read the
   // real 2026 build's, so a league's talent and its depth charts show in the engine as they are).
-  // (Python keys the means by the pair (position, attribute); here by "position:attribute", the same text the frozen
-  // means and the answer are keyed by.)
+  // (The means are keyed by "position:attribute", the same text the frozen means and the answer are keyed by.)
   const ATTRS_ = build_teams.ATTRS, RETURN = build_teams.RETURN_ATTR;
   if (truthy(frozen)) {
     const means_f = { ...frozen };
@@ -1004,7 +1000,7 @@ export function build(sources, real = true, observed = null, quiet = false, styl
   return out;
 }
 
-// `argv`: what follows the script's name ([spread_scale]); Python sets SPREAD_SCALE from it before main().
+// `argv`: what follows the script's name ([spread_scale]), which sets SPREAD_SCALE before the build.
 export function main(argv = []) {
   if (argv.length > 0) build_teams.SPREAD_SCALE = Number(argv[0]);
   const dir = `${build_teams.SRC}/teams`;
@@ -1033,8 +1029,8 @@ export const build_teams = {
   engine_roster, build, main,
 };
 
-// SCHEME_OVERRIDES: data/scheme_overrides.json when it is there, read once at the first use (Python reads it when the
-// module loads; here the host's reader is set after that). It can be set, as any module variable.
+// SCHEME_OVERRIDES: data/scheme_overrides.json when it is there, read once at the first use (not when the
+// module loads: the host's reader is set after that). It can be set, as any module variable.
 let _scheme_overrides;
 Object.defineProperty(build_teams, "SCHEME_OVERRIDES", {
   enumerable: true,

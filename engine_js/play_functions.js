@@ -4,7 +4,7 @@ import { game_functions } from "./game_functions.js";
 import { personnel } from "./personnel.js";
 import { roster } from "./roster.js";
 
-// The namespace (PORTING.md rule 2): the module's variables and constants live here and are always
+// The namespace (PORTING.md, "Modules"): the module's variables and constants live here and are always
 // read and written through it. Filled in at the end of the file.
 export const play_functions = {};
 
@@ -13,7 +13,7 @@ play_functions.debug_td_stats = [];
 
 // Who was involved in the most recent snap (names only; read by the drive log, never by
 // the simulation itself, so it changes no result).
-// It is one object for the whole run, emptied in place (Python's dict.clear()); `clear` is there,
+// It is one object for the whole run, emptied in place, never replaced; `clear` is there,
 // hidden from Object.keys / Object.assign / JSON, for a caller that writes `last_play.clear()`.
 play_functions.last_play = {};
 Object.defineProperty(play_functions.last_play, "clear", {
@@ -110,7 +110,7 @@ export function _tackle_pool(defense, weight_table) {
 }
 
 
-// Python keys the tackle pool by id(weight_table): the same table object gives the same number here.
+// The tackle pool is keyed by its weight table, the object itself: the same table gives the same number here.
 const _table_ids = new WeakMap();
 let _table_next_id = 0;
 
@@ -343,8 +343,8 @@ play_functions.CLUTCH_NOW = [false];   // this drive is in clutch time (set by t
 
 
 // The memo dicts (a Lineup's `static` and `dyn`, a Player's `_tr_cache`) are plain objects with
-// text keys (a Map is read and written as one, should the owner have made a Map of it). A Python
-// tuple key is its parts joined: ("trp", keys) is "trp|a,b,c".
+// text keys (a Map is read and written as one, should the owner have made a Map of it). A
+// compound key is its parts joined: ("trp", keys) is "trp|a,b,c".
 const _MISSING = Symbol("missing");
 
 function _cget(cache, tag) {
@@ -748,11 +748,10 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
   const pursuit = _group_rating(defense, front_positions, ["speed", "tackling"]);
   yards += (carrier_rating - pursuit) * cfg.RUSH_PER_CARRIER_POINT;
   yards += guessed_play ? cfg.RUSH_GUESSED : cfg.RUSH_NOT_GUESSED;
-  if (cfg.EXTRA_TRAITS) {                   // a lead-blocking back, and a closer late in a close game
-    yards += _tr_points(_members(offense, ["FB", "RB", "TE"]), ["lead_back"]) * cfg.TRAIT_FX["lead_back"];
-    if (play_functions.CLUTCH_NOW[0]) {
-      yards += _tr(carrier, "closer") * cfg.TRAIT_FX["closer"] * 40;
-    }
+  // a lead-blocking back, and a closer late in a close game
+  yards += _tr_points(_members(offense, ["FB", "RB", "TE"]), ["lead_back"]) * cfg.TRAIT_FX["lead_back"];
+  if (play_functions.CLUTCH_NOW[0]) {
+    yards += _tr(carrier, "closer") * cfg.TRAIT_FX["closer"] * 40;
   }
 
   let big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * Math.pow(carrier.speed / cfg.NEUTRAL, cfg.RUSH_BIG_PLAY_SPEED_POWER) * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"]);
@@ -1106,14 +1105,13 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   } else if (depth !== "deep") {
     completion -= _tr_points(covers, cfg.COVER_TRAITS_ZONE) * fx["cover"];
   }
-  if (cfg.EXTRA_TRAITS) {                   // the passer's own steadying abilities
-    completion += _tr(qb, "coach_on_the_field") * fx["coach_field"];
-    if (play_action) {
-      completion += _tr(qb, "ball_handler") * fx["ball_handler"];
-    }
-    if (play_functions.CLUTCH_NOW[0]) {
-      completion += _tr(qb, "closer") * fx["closer"];
-    }
+  // the passer's own steadying abilities
+  completion += _tr(qb, "coach_on_the_field") * fx["coach_field"];
+  if (play_action) {
+    completion += _tr(qb, "ball_handler") * fx["ball_handler"];
+  }
+  if (play_functions.CLUTCH_NOW[0]) {
+    completion += _tr(qb, "closer") * fx["closer"];
   }
   completion += (qb_accuracy - cfg.NEUTRAL) * cfg.COMPLETION_PER_QB_POINT;
   completion += (receiver_skill - cfg.NEUTRAL) * cfg.COMPLETION_PER_RECV_POINT;
@@ -1128,7 +1126,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   if (truthy(get(tendencies, "prevent"))) {
     completion += cfg.PREVENT_COMPLETION;
   }
-  completion += get(tendencies, "pass_form_completion", 0.0);    // the team's real passing game beyond its ratings (tools/tune_pass_form.py)
+  completion += get(tendencies, "pass_form_completion", 0.0);    // the team's real passing game beyond its ratings
   // red zone: a short field squeezes the coverage
   const to_goal = 100 - yardline;
   let redzone_adj = 0.0;
@@ -1263,11 +1261,9 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   }
 
   // --- Scramble instead of a throw ---
-  let scramble_mult = 1.0;
-  if (cfg.EXTRA_TRAITS) {                   // a running quarterback scrambles more; defenders who read it, less
-    scramble_mult = (1 + _tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"])
-      * Math.max(0.5, 1 - _tr_points(_members(defense, ["MLB", "ROLB", "LOLB", "S", "DE"]), ["option_killer"]) * cfg.TRAIT_FX["option_killer"]);
-  }
+  // a running quarterback scrambles more; defenders who read it, less
+  const scramble_mult = (1 + _tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"])
+    * Math.max(0.5, 1 - _tr_points(_members(defense, ["MLB", "ROLB", "LOLB", "S", "DE"]), ["option_killer"]) * cfg.TRAIT_FX["option_killer"]);
   if (random.random() < cfg.SCRAMBLE_CHANCE * (qb.speed / cfg.NEUTRAL) * scramble_mult) {
     qb.stats["pass_attempts"] -= 1;
     target.stats["targets"] -= 1;
@@ -1278,7 +1274,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     } else {
       yards = -random.randint(1, 5);
     }
-    if (cfg.EXTRA_TRAITS && yards > 0) {
+    if (yards > 0) {
       yards += round(_tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"] * 10);
     }
     if (yardline + yards >= 100) {

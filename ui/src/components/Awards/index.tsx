@@ -32,7 +32,7 @@ type Tab = "overview" | "heisman" | "national" | "coaches" | "allAmerica" | "con
 type Group = "all" | "poy" | "offense" | "defense" | "special";
 const GROUPS: Group[] = ["all", "poy", "offense", "defense", "special"];
 
-/** Each award's kind, by group (sim/awards.py NATIONAL_AWARDS kinds; anything else counts as Player of the Year). */
+/** Each award's kind, by group (sim_js/awards.js NATIONAL_AWARDS kinds; anything else counts as Player of the Year). */
 const OFFENSE = new Set([
   "qb",
   "qb_upper",

@@ -1,4 +1,4 @@
-// engine/roster.py in JavaScript (see PORTING.md): the Player, Lineup and Team classes.
+// The Player, Lineup and Team classes.
 import { cfg } from "./game_config.js";
 import { random, round, cmp, sorted, maxBy, minBy, get, getattr, isNumber, truthy, sum } from "./pyrt.js";
 
@@ -71,7 +71,7 @@ export class Player {
     this.injury = null;
     this.stats = { ...(get(data, "stats") || {}) };   // own copy: the source roster is shared between games
     this.target_mult = Math.min(cfg.TARGET_MULT_MAX, get(data, "target_mult", 1.0));  // real 2026 share of his team's catches against his ratings' share
-    // ratings v2 (teamdata/ratings.py): the position's attributes on the house scale (50 = an average
+    // ratings v2 (teamdata_js/ratings.js): the position's attributes on the house scale (50 = an average
     // Power 4 starter) and the measurables. The engine reads them where a part of the game
     // has moved onto them (docs/RATINGS_V2.md); elsewhere it reads the composites above.
     this.attrs = { ...(get(data, "attributes") || {}) };
@@ -140,7 +140,7 @@ export class Lineup extends Array {
   // who is in it (traits, ratings v2 attributes, weights), `dyn` the ones that read fatigue-
   // penalised ratings, valid for one `team._ratings_version`.
 
-  // slices, filters, maps and concats of a Lineup are plain arrays, as a Python slice of a list subclass is a list
+  // slices, filters, maps and concats of a Lineup are plain arrays, not Lineups
   static get [Symbol.species]() { return Array; }
 
   constructor(players, team) {
@@ -154,7 +154,7 @@ export class Lineup extends Array {
 }
 
 
-// Python compares the key tuples by value: the same items in the same places.
+// Two keys are the same by value: the same items in the same places.
 function _same_key(a, b) {
   if (a === null || a === undefined || b === null || b === undefined) return false;
   if (a.length !== b.length) return false;
@@ -646,7 +646,7 @@ export class Team {
         continue;
       }
       changed = true;
-      const values = player;      // plain properties: Python writes the instance __dict__
+      const values = player;      // the player's own properties
       lo = -1e9;
       hi = 1e9;
       for (const [attr, original_value, min_allowed] of player._penalty_attrs) {
@@ -671,7 +671,7 @@ export class Team {
   }
 }
 
-// Python reads the class attribute through the instance (self.REST_POSITIONS)
+// REST_POSITIONS is read through an instance too (this.REST_POSITIONS)
 Team.prototype.REST_POSITIONS = Team.REST_POSITIONS;
 
 export const roster = {

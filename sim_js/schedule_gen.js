@@ -14,22 +14,21 @@
 // The rules are data: data/schedule_rules.json (each conference) and data/series.json (annual
 // series and announced games).
 //
-// Ported from sim/schedule_gen.py by engine_js/PORTING.md's rules. What is written differently, the same way all
-// through the file:
-// - a pair of teams (a Python tuple) is a two-item array, and "is this pair in that list" (`p in required`,
-//   `edges.remove((c, d))`) is asked by `has_pair` / `remove_pair`, which compare the two names;
+// Notes, true all through the file:
+// - a pair of teams is a two-item array, and "is this pair in that list" is asked by `has_pair` / `remove_pair`,
+//   which compare the two names;
 // - a set of pairs (`neutral_pairs`, `fixed`) is a Set of the pair's text "a|b" (pair_text), and a dict or set keyed
 //   by (team, week) is keyed by the text "team|week" (slot_key);
-// - `id(g)` (which game is this) is the game object itself in a Set or a Map;
+// - "which game is this" is the game object itself in a Set or a Map;
 // - a team's games by week (`by_week[s]`, whole-number keys, walked) is a Map, which keeps the order weeks were
-//   added in as a Python dict does;
+//   added in;
 // - a sort whose key draws a random number is `sorted(...)` from pyrt.js (one key, so one draw, per item, in the
-//   list's order, as Python's sort does), never Array.sort with a comparison (which would draw again and again).
+//   list's order), never Array.sort with a comparison (which would draw again and again).
 import { Random, sum, sorted, cmp, maxBy, minBy, get, truthy, mod, floordiv, range, odict } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 
-// sim/schedule_gen.py's namespace: its constants live here and are read from here (a caller may tune one).
+// The module's namespace: its constants live here and are read from here (a caller may tune one).
 export const schedule_gen = {};
 
 schedule_gen.ROOT = ".";
@@ -63,7 +62,7 @@ schedule_gen.REGION_OF_STATE = {
 
 export class ScheduleError extends Error {}
 
-// ---- what Python has built in ----------------------------------------------------------------------------------
+// ---- small helpers --------------------------------------------------------------------------------------------
 /** `k in d` for a dict. */
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 /** sorted((a, b)) for two names. */
@@ -207,7 +206,7 @@ export function generate(year, teams, history, rng, rules_override = null) {
 
   function remove(g) {
     // Undo `add` for a game not yet given a week (a stranded team takes over an FCS date).
-    const i = games.indexOf(g);          // (Python's list.remove takes the first equal game: no two games share their teams)
+    const i = games.indexOf(g);          // (the first equal game: no two games share their teams)
     if (i === -1) throw new Error("list.remove(x): x not in list");
     games.splice(i, 1);
     played_pairs.delete(schedule_gen.pair_key(g["home"], g["away"]));
@@ -870,7 +869,7 @@ export function _assign_weeks(games, fbs, rng, year = 0) {
       place(g, w);
     }
     if (ok) {
-      const fixed_weeks = new Set(fixed);                     // (the games themselves, where Python keeps their ids)
+      const fixed_weeks = new Set(fixed);                     // (the games themselves)
       for (const g of games) {
         g["week"] = g["_w"];
         delete g["_w"];

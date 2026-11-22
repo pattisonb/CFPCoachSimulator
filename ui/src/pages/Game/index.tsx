@@ -93,7 +93,7 @@ const PANE: Record<string, string> = {
 /** *tune* How long after time passes (a sim, a week, an offseason stage) a new find still counts as your staff's, in ms. */
 const PASSING_MS = 8000;
 
-/** The offseason's stages before the portal opens (coach_career/offseason.py STAGES). */
+/** The offseason's stages before the portal opens (career_js/offseason.js STAGES). */
 const BEFORE_PORTAL = ["retention", "departures"];
 
 /** *tune* How much of your team's color the hard shadows under cards and buttons take, in percent. */

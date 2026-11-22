@@ -1,7 +1,7 @@
-// What the game's Python relies on, done the same way here, so the JavaScript engine plays every game the Python one
-// does, number for number: Python's `random` (the Mersenne Twister, its seeding and the methods the engine calls),
-// its rounding (halves to the even neighbor), and a few built-ins whose JavaScript namesakes differ.
-// tests/test_engine_js.py holds this file to Python's own answers.
+// The Python behavior the game's numbers depend on, done the same way here (the game was written in Python, and the
+// same seed must go on giving the same game: engine_js/PORTING.md): Python's `random` (the Mersenne Twister, its
+// seeding and the methods the engine calls), its rounding (halves to the even neighbor), and a few built-ins whose
+// JavaScript namesakes differ. tests/test_engine_js.mjs holds this file to answers recorded from Python.
 
 // ---- random ---------------------------------------------------------------------------------------------------------
 const N = 624, M = 397, UPPER = 0x80000000, LOWER = 0x7fffffff, MATRIX_A = 0x9908b0df;

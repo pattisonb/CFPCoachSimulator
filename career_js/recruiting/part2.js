@@ -1,28 +1,27 @@
-// coach_career/recruiting.py, part 2 (the Python file's lines 815 to 1624): a school's needs by roster group and by
+// Recruiting, part 2: a school's needs by roster group and by
 // your pages' positions, the Auto-recruit recommendations, a school's pull on a prospect and his interest in it,
 // the stages, this season's standing, your hours and scouting points, the NIL budget, the portal's pool and spots,
 // and what one action is worth to a prospect.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the recruiting file is reached
-// through the `recruiting` namespace, whichever part defines it.
+// Every name of recruiting is reached through the `recruiting` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts").
 //
-// What is not written literally (rule 9):
-//  - The caches keyed by a tuple (`_PULLS`, `_STATIC`, `_FORCED`) are Maps keyed by the tuple written as JSON text;
-//    the caches that are a (key, value) tuple (`_GROUP_COUNTS`, `_SPOT_NEEDS`, `_WINNING`) are a two-item array whose
-//    key is that same text (null before the first answer).
-//  - `lru_cache` (`_returning`, `_taste`, `_open_spots`) is a Map behind the function, with Python's `cache_clear`;
-//    `_taste` drops its oldest answer past 20000 (Python drops the least recently used: no answer changes).
-//  - `forced_strength` is a class with `__enter__` and `__exit__` (JavaScript has no `with`): call them around the test.
-//  - `top_group` sorts a set: Python walks a set in hash order (which changes from run to run for text), this walks
-//    it in the order built (his list's schools, then the offers', then the pending ones'). Only an exact tie in
-//    interest at the group's edge could be ordered differently, as it can between two Python runs.
+// Notes:
+//  - The caches with a compound key (`_PULLS`, `_STATIC`, `_FORCED`) are Maps keyed by the key's parts as JSON text;
+//    the caches that hold one (key, value) pair (`_GROUP_COUNTS`, `_SPOT_NEEDS`, `_WINNING`) are a two-item array
+//    whose key is that same text (null before the first answer).
+//  - `_returning`, `_taste` and `_open_spots` keep their answers in a Map behind the function, with `cache_clear`;
+//    `_taste` drops its oldest answer past 20000 (no answer changes).
+//  - `forced_strength` is a class with `__enter__` and `__exit__`: call them around the test.
+//  - `top_group` sorts a Set, walked in the order built (his list's schools, then the offers', then the pending
+//    ones'). That order decides only an exact tie in interest at the group's edge.
 //  - `covered_states` returns a Set.
 import { Random, round, int, floordiv, sum, cmp, sorted, maxBy, get, truthy, range } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { programs } from "../programs.js";
 import { recruiting } from "../recruiting_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
@@ -36,7 +35,7 @@ function _in(x, coll) {
 /** A tuple used as a cache key, as text. */
 const _key = (...parts) => JSON.stringify(parts);
 
-/** str(v) inside an f-string, for what a save holds: None, True and False are Python's words. */
+/** str(v) inside an f-string, for what a save holds: "None", "True" and "False", as the seeds and keys have always had them. */
 const pystr = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
 
 /** dict.setdefault(k, v). */
@@ -51,7 +50,7 @@ function _clear(d) {
   else for (const k of Object.keys(d)) delete d[k];
 }
 
-/** functools.lru_cache: the answer kept by its arguments (text and numbers), with Python's cache_clear. */
+/** A function's answers kept by its arguments (text and numbers), with a cache_clear. */
 function cached(fn, maxsize = null) {
   const kept = new Map();
   const f = (...args) => {

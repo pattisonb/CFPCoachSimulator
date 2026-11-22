@@ -1,14 +1,12 @@
-// app/api.py, part 1 (the Python file's lines 1 to 945): errors and params, routing, conference names, the season
+// The API, part 1: errors and params, routing, conference names, the season
 // in memory with its job (plan, progress, step), the teams, the league file's pages, a career's start, export and
 // import, and the status, news, pause, advance and game day routes.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the api file is reached
-// through the `api` namespace, whichever part defines it.
+// Every name of the API is reached through the `api` namespace, whichever part defines it (engine_js/PORTING.md,
+// "Big Files in Parts").
 //
-// What Python has and this does not:
-//  - `sys.platform == "emscripten"` and SIM_WORKERS: there are no worker processes here, so the lines are gone.
-//  - `@route(method, pattern)` on a handler is `api.route(method, pattern, handler)` right after it (the same table,
-//    the same order).
+// Notes:
+//  - A handler is registered with `api.route(method, pattern, handler)` right after it; the table keeps that order.
 //  - A handler's bytes (a save file, an uploaded league) are a Uint8Array.
 import { round, sum, cmp, sorted, get, truthy, is_odict, odict, int as _pyrt_int } from "../../engine_js/pyrt.js";
 import { read_text, write_text, exists } from "../../engine_js/files.js";
@@ -28,7 +26,7 @@ import { news } from "../../sim_js/news.js";
 import { polls } from "../../sim_js/polls.js";
 import { api } from "../api_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && !ArrayBuffer.isView(v) && !(v instanceof ArrayBuffer);
@@ -40,7 +38,7 @@ const casefold = (s) => s.toLowerCase().replace(/ß/g, "ss").replace(/ς/g, "σ"
 /** s.strip("/") */
 const strip_slashes = (s) => s.replace(/^\/+|\/+$/g, "");
 
-/** xs.index(x): Python raises ValueError when it is not there. */
+/** xs.index(x): a ValueError when it is not there. */
 function index_of(xs, x) {
   const i = xs.indexOf(x);
   if (i === -1) throw new coaches.ValueError(`${JSON.stringify(x)} is not in list`);
@@ -115,10 +113,10 @@ function non_finite(x) {
 }
 
 /**
- * The Python type a caller names (Params.q's `cast`, _field's `kind`) as its Python name. A caller may pass
+ * The type a caller names (Params.q's `cast`, _field's `kind`) as its name ("str", "int", "bool", "list", "dict"). A caller may pass
  * `api.str`, `api.int`, `api.bool`, `api.list`, `api.dict` (below), the name itself ("str", "int", ...), JavaScript's
  * own (String, Number, Boolean, Array, Object), pyrt's `int`, or a function such as `api.boolean`; Number counts as
- * int (the Python file never asks for a float).
+ * int (no caller asks for a float).
  */
 function type_name(kind) {
   if (typeof kind === "string") return kind;
@@ -142,7 +140,7 @@ function is_kind(value, name) {
   return false;
 }
 
-// Python's own types, as a caller names them for Params.q's `cast` and _field's `kind` (part 2 reads these at load)
+// The types, as a caller names them for Params.q's `cast` and _field's `kind` (part 2 reads these at load)
 api.str = { __name__: "str" };
 api.int = { __name__: "int" };
 api.float = { __name__: "float" };
@@ -229,8 +227,8 @@ api.ROUTES = [];        // [method, pattern, handler], in the order they were re
 
 function route(method, pattern, fn) {
   // Register `fn` as the handler for `method` on `pattern` (`{name}` matches one path segment).
-  // (Python's is a decorator: `api.route("GET", "/api/teams", list_teams)` after the handler; given no handler it
-  // returns the function that takes one.)
+  // (`api.route("GET", "/api/teams", list_teams)` after the handler; given no handler it returns the function that
+  // takes one.)
   const add = (handler) => {
     api.ROUTES.push([method.toUpperCase(), pattern, handler]);
     return handler;
@@ -241,7 +239,7 @@ api.route = route;       // the handlers below register as they are defined
 
 
 function routes() {
-  // Every registered [method, pattern] (Python: a set of tuples; here an array, each pair once, in the table's order).
+  // Every registered [method, pattern] (an array, each pair once, in the table's order).
   const seen = new Set(), out = [];
   for (const [m, pattern] of api.ROUTES) {
     const key = `${m} ${pattern}`;
@@ -364,7 +362,7 @@ function _show_conferences(out, names) {
 
   const show = (x) => {
     if (typeof x === "string") return x.replace(pattern, (m, name) => names[name]);
-    if (Array.isArray(x)) return x.map(show);       // (a Python tuple is left alone; here it is an array like any list)
+    if (Array.isArray(x)) return x.map(show);       // (any array, a pair included)
     if (is_dict(x)) {
       const d = is_odict(x) ? odict() : {};          // a dict walked in its own order keeps it
       for (const [k, v] of Object.entries(x)) d[show(k)] = show(v);
@@ -500,7 +498,7 @@ function _idle_job(state) {
 
 
 function _activate(state) {
-  // Put the season's league in play (a career's later seasons, or one from a league file, have their own, league.py).
+  // Put the season's league in play (a career's later seasons, or one from a league file, have their own, league.js).
   modules.season.activate(state);
 }
 
@@ -699,8 +697,8 @@ function _feed(state) {
 
 function _where(exc) {
   // The error with where it broke, for the page's toast: the innermost frame of our own code
-  // ("x is not a function (nil_move, programs.js:218)"). (Python reads its traceback; here it is the error's stack,
-  // its first line that is a file of ours.)
+  // ("x is not a function (nil_move, programs.js:218)"). (It is read from the error's stack: its first line
+  // that is a file of ours.)
   const message = String(exc && exc.message !== undefined ? exc.message : exc);
   const lines = String((exc && exc.stack) || "").split("\n").filter((l) => /^\s*at /.test(l) && !l.includes("node_modules") && !l.includes("node:"));
   for (const line of lines) {
@@ -918,7 +916,7 @@ function league_programs(p) {
   if (!has(api._PROGRAMS, "out")) {
     const b = league_file._builtin();
     const teams = [];
-    for (const slug of b["slugs"]) {       // (a set: Python walks it in hash order, here in the Set's; the list is sorted below)
+    for (const slug of b["slugs"]) {       // (a Set, walked in the order added; the list is sorted below)
       const m = league.base_meta(slug);
       teams.push({ slug, name: get(m, "school_name") || get(m, "short_name") || slug, short_name: get(m, "short_name") || slug,
         abbreviation: get(m, "abbreviation") || "", conference: get(b["team_conf"], slug), level: get(m, "subdivision") || "FBS" });
@@ -1027,7 +1025,6 @@ function _start_from_league(key, team, seed, coach) {
   let state;
   try {
     const out = league.path(cid, league.FIRST_YEAR);
-    // (Python writes a temporary file and renames it, so another process never reads half a file; there is one here)
     write_text(out, JSON.stringify(engine));
     season.use_league(out);
     modules.recruiting.use_league_models(get(lgd, "recruiting_models") || {});
@@ -1134,7 +1131,7 @@ api.route("GET", "/api/season/{season_id}/status", season_status);
 
 
 function season_news(p) {
-  // Around-the-league news for the finished weeks after `since_week` (sim/news.py), oldest week first.
+  // Around-the-league news for the finished weeks after `since_week` (sim_js/news.js), oldest week first.
   const state = api._season_state(p.path["season_id"]);
   return { items: news.league_news(state, p.q("since_week", "int", 0)), current_week: state["current_week"] };
 }

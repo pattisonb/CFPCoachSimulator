@@ -1,4 +1,4 @@
-// coach_career/recruiting.py, loaded part by part in the Python file's order.
+// Recruiting in a Coach Career, loaded part by part in order: a later part builds on an earlier one's.
 import { recruiting } from "./recruiting_ns.js";
 import "./recruiting/part1.js";
 import "./recruiting/part2.js";

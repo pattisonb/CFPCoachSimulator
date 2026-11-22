@@ -1,12 +1,12 @@
 // Python's `random`, `round` and `statistics` as the JavaScript engine has them (engine_js/pyrt.js, pystat.js), against
-// Python's own answers. The engine draws its numbers the way the Python engine it replaced did, so every game it plays
-// is the game that engine played (tests/test_sim_golden.mjs and tests/test_play_log.mjs hold its games to that engine's
+// Python's own answers. The game was written in Python and draws its numbers the way Python does, so the same seed
+// goes on giving the same game (tests/test_sim_golden.mjs and tests/test_play_log.mjs hold its games to recorded
 // results); this holds the things underneath: the same random numbers from the same seed (a number or text), shuffle
 // and sample, rounding halves to the even neighbor, and the statistics module's mean, pstdev, median and fmean.
 // `node tests/test_engine_js.mjs`
 //
-// Python's answers are recorded below (EXPECTED), from the draws and cases tests/test_engine_js.py made (CPython 3.11
-// on Linux; that test asked Python each run, which a game with no Python cannot). Where the list of answers is long
+// Python's answers are recorded below (EXPECTED), made once with CPython 3.11 on Linux: there is no Python here to
+// ask. Where the list of answers is long
 // (the 400 draws a seed, some thirty thousand roundings, 1,600 statistics) what is recorded is a digest of them: the
 // first 16 hex digits of the SHA-256 of every answer in order, each as the 16 hex digits of its 64-bit float (a
 // negative zero as zero). So an answer has to be Python's to the last bit; a wrong digest names the seed and the kind
@@ -356,7 +356,7 @@ const summary = [];
 test("random: the same draws from the same seed", () => {
   // every draw the engine's methods make, 400 a seed in turn, then the seed set again (seed + 3)
   // (a gauss or gammavariate draw goes through a logarithm, a sine or a cosine, which JavaScript and the C library
-  // Python uses may round one place apart: such a draw is counted, not failed, as the Python test counted it; the
+  // Python uses may round one place apart: such a draw is counted, not failed; the
   // generator's own numbers under it are exact either way)
   const near = (e, g) => typeof g === "number" && Math.abs(e - g) < 1e-12 * Math.max(1, Math.abs(e));
   const bad = [];

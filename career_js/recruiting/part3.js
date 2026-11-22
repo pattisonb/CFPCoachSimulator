@@ -1,17 +1,17 @@
-// coach_career/recruiting.py, part 3 (the Python file's lines 1625 to 2494): what an action costs, your planned quick
+// Recruiting, part 3: what an action costs, your planned quick
 // actions, a school's NIL record, home weekends for a visit, `act` (the page's one way in) with its scenes (your
 // answer, Promise Him the Job, your opening), the pitch marks, the week's pending points and their flush, the weekly
 // rank snapshot and report, and `_act`, the one action path every school takes.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the recruiting file is reached
-// through the `recruiting` namespace, whichever part defines it. The modules the Python imports inside its functions
-// (season, scenes, word, promises, offseason, prospects) and persona are reached through `modules` at the call.
+// Every name of recruiting is reached through the `recruiting` namespace, whichever part defines it
+// (engine_js/PORTING.md, "Big Files in Parts"). Season, scenes, word, promises, offseason, prospects and
+// persona are reached through `modules` at the call.
 import { Random, round, int, sum, cmp, sorted, maxBy, get, truthy, odict } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { pypow } from "../recruits.js";
 import { recruiting } from "../recruiting_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
@@ -64,7 +64,7 @@ function action_hours(state, slug, pid, action) {
     if (truthy(loc) && truthy(home)) {
       const miles = recruiting._miles([loc[0], loc[1]], [home[0], home[1]]);
       for (const [upto, cost] of table) if (upto === null || miles <= upto) return cost;
-      throw new Error("StopIteration");                // (Python's next() on nothing: the tables end with None)
+      throw new Error("StopIteration");                // (never reached: the tables end with a null floor)
     }
   }
   return recruiting.HOURS[action];
@@ -400,7 +400,7 @@ function _answer(state, slug, pid, scene, answer) {
     ...(doubted ? { doubted: true } : {}),
   });
   if (points) recruiting._add_points(state, slug, pid, points, sc["action"]);
-  const hours = recruiting._hours(state, slug);           // (Python works the default out before it looks)
+  const hours = recruiting._hours(state, slug);           // (worked out before the lookup, whether or not it is used)
   return { scene: sc, points, truthful, revealed, hours_left: get(rc["hours"], slug, hours) };
 }
 
@@ -553,7 +553,7 @@ function _promise_job(state, slug, pid, scene) {
   const out = recruiting._job_promise(state, slug, pid, sc["action"]);
   setdefault(sc, "turns", []).push({ who: "you", text: scenes.JOB_SAID }, { who: "him", text: out["reply"] });
   sc["job"] = true;
-  const hours = recruiting._hours(state, slug);           // (Python works the default out before it looks)
+  const hours = recruiting._hours(state, slug);           // (worked out before the lookup, whether or not it is used)
   return {
     scene: sc, points: out["points"], truthful: out["truthful"], doubted: out["doubted"], crowded: out["crowded"],
     hours_left: get(rc["hours"], slug, hours),
@@ -654,7 +654,7 @@ function _present(state, slug, pid, scene, topics) {
   scenes.present(state, slug, pid, sc, topics, hits, back, tired);
   recruiting._event(state, "present", pid, slug, { action, topics: Array.from(topics), hit: hits.length });
   if (points) recruiting._add_points(state, slug, pid, points, sc["action"]);
-  const hours = recruiting._hours(state, slug);           // (Python works the default out before it looks)
+  const hours = recruiting._hours(state, slug);           // (worked out before the lookup, whether or not it is used)
   return { scene: sc, points, hit: hits, hours_left: get(rc["hours"], slug, hours) };
 }
 
@@ -668,7 +668,7 @@ function _add_points(state, slug, pid, points, action) {
   // Commit's interest in the other schools does not climb).
   const rc = state["recruiting"];
   points = modules.persona.climbs(state, slug, pid, points);
-  const sofar = get(get(rc["pending"], pid, {}), slug, 0.0) + points;      // (Python reads the right side first)
+  const sofar = get(get(rc["pending"], pid, {}), slug, 0.0) + points;      // (the right side is read before the left is made)
   setdefault(setdefault(rc, "pending", {}), pid, {})[slug] = sofar;
   const why = setdefault(setdefault(setdefault(rc, "why_week", {}), pid, {}), slug, {});
   why[action] = get(why, action, 0.0) + points;
@@ -721,8 +721,8 @@ function _snapshot_ranks(state, week) {
     for (const pid of pids) setdefault(offered, pid, new Set()).add(s);
   }
   for (const [pid, lst] of Object.entries(rc["lists"])) {
-    // (a Python set, walked in its hash order; here his list's schools as they were added, then his other offers:
-    // the order only shows between two schools of exactly equal interest)
+    // (a Set, walked in the order built: his list's schools as they were added, then his other offers. The order
+    // only shows between two schools of exactly equal interest)
     const schools = new Set([...Object.keys(lst), ...(offered[pid] || [])]);
     if (!schools.size) continue;
     const order = sorted(schools, (s) => -recruiting.interest(state, s, pid, win));

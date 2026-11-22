@@ -11,9 +11,9 @@ const build_teams = game.modules.build_teams;
 const game_scale = game.modules.game_scale;
 const files = game.files;
 
-// The offline fit (fit, write_scale) is not in the port (teamdata_js/game_scale.js says so), so the writer is here:
-// the scale file written as Python's write_scale writes it, and every kept copy dropped (the parsed file goes
-// with the write; the card overalls kept by skills are cleared as Python clears them).
+// The offline fit that made the scale is not part of the game (teamdata_js/game_scale.js says so), so the writer is
+// here: the scale file written with json_dumps and no indent, and every kept copy dropped (the parsed file goes with
+// the write; the card overalls kept by skills are cleared).
 function write_scale(out) {
   files.write_text(game_scale.FILE, json_dumps(out, { indent: 0 }));
   files.forget(game_scale.FILE);
@@ -25,9 +25,8 @@ test("scale_fit_build", () => {
   const sources = ["ohio-state", "georgia", "boise-state"].map((s) => JSON.parse(files.read_text(`${src_dir}/${s}.json`)));
   let with_ratings = 0;
   for (const t of sources) for (const p of t["roster"]) if (truthy(get(p, "ratings"))) with_ratings++;
-  // `python -m teamdata.game_scale` loads the module twice: as __main__ (where fit() writes the scale
-  // and clears its cache) and as teamdata.game_scale (the copy build_teams reads). JavaScript has one copy of a
-  // module, so the writer here is the helper above; the scale file is a temporary one.
+  // There is one copy of game_scale (the one build_teams reads), so the writer is the helper above; the scale file
+  // is a temporary one.
   const good = JSON.parse(files.read_text(game_scale.FILE));
   const real = game_scale.FILE;
   const tmp = "data/test_scale_fit_build/game_scale.json";      // under the run's temporary folder (the harness)

@@ -1,5 +1,5 @@
-// Time a season advance: `node tests/test_speed.mjs [weeks]`. (The Python set SIM_WORKERS=1 to time the in-process
-// path used on Render; here every game is played in this process: `season.sim_workers()` is always 1.)
+// Time a season advance: `node tests/test_speed.mjs [weeks]`. (Every game is played in this
+// process: `season.sim_workers()` is always 1.)
 import { start } from "./harness.mjs";
 
 const game = await start();

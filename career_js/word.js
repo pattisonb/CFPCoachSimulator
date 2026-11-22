@@ -3,8 +3,6 @@
 // broken ones cost more, and the broken player's position remembers it on top. Each offseason it drifts back toward
 // neutral. Recruits read it when you promise; below FLOOR they do not believe you. Only your coach has one (AI coaches
 // make no promises), and it never draws randomness, so the golden sim is untouched. Shown in words, never a number.
-//
-// It was coach_career/word.py; engine_js/PORTING.md has the rules it was ported by.
 import { round, int, get, truthy, minBy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { coaches } from "../sim_js/coaches.js";
@@ -100,7 +98,7 @@ export function recover(state, year = null) {
 export function word_text(value) {
   const programs = modules.programs;
   for (const [w, f] of programs.WORD_FLOORS) if (value >= f) return w;
-  throw new Error("StopIteration");      // (Python's next() with nothing found: a value under every floor)
+  throw new Error("StopIteration");      // (nothing found: a value under every floor)
 }
 
 export function last_broken(state, group) {

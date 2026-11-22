@@ -32,8 +32,7 @@ const ONE_TEAM_NO_GAMES = { format: FORMAT, remove: ["kent-state"],
   teams: [new_team("alder-tech", "OR", "big-sky-east", { rivals: ["oregon-state"] })] };
 
 // The generator's output for the built-in league, seed 5, 2027 then 2028 (sha256 of the games and the history as
-// sorted JSON). The same schedules the Python recorded as 177c1141... and 50070889...: checked game by game against
-// the Python's output; only the text differs (a whole-number float, `"fcs_shift": 0.0` there, is written `0` here).
+// sorted JSON, a whole-number float written without its ".0": `"fcs_shift": 0`).
 const BUILTIN_DIGESTS = { 2027: "a3e087e6808e4aec8e9a06616b23fa5408f5f1d37d6079f49a655a6729282242",
   2028: "cc83c7f7f777071fecd9ccaeb2b885cf0d7b127bba1f537c57b3512a89ab2a0f" };
 

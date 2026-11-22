@@ -2,12 +2,10 @@
 // which source ratings it is built from, and which ones each position carries. Also the
 // play-style archetypes and the traits, renamed from the source data's.
 //
-// Everything here is data: build_teams.py builds the attributes from it, season.py and the
+// Everything here is data: build_teams.js builds the attributes from it, season.js and the
 // web page show them, and later phases of the engine read them. Values are on the house
 // scale (50 = an average Power 4 starter at the position, about 15 a standard deviation
 // above that and 9 below).
-//
-// It was teamdata/ratings.py; engine_js/PORTING.md has the rules it was ported by.
 import { round, int, sum, sorted, get, isNumber } from "../engine_js/pyrt.js";
 
 /** d.get(k, default) for one of this file's own tables asked with a key from outside (a position, an ability's name):
@@ -25,7 +23,7 @@ export function _avg(...keys) {
 
 export function _mix(weights) {
   // A source formula: a weighted mean of the source ratings present. `weights` is [[source rating, weight], ...]
-  // (Python's keyword arguments, in their order).
+  // (in the order written).
   return function f(r) {
     const got = [];
     for (const [k, w] of weights) if (isNumber(get(r, k))) got.push([r[k], w]);
@@ -152,7 +150,7 @@ const WHOLE = /^\s*[+-]?\d+(?:_\d+)*\s*$/;
 export function height_inches(h) {
   // 6'2" -> 74.
   if (isNumber(h)) return int(h);
-  // (Python: try the split and the two int()s, None on a ValueError. Anything that is not text never splits in two.)
+  // (Feet and inches split at the mark, each a whole number; null when that fails. Anything that is not text never splits in two.)
   if (typeof h !== "string") return null;
   const parts = h.replaceAll('"', "").split("'");
   if (parts.length !== 2) return null;
@@ -186,7 +184,7 @@ const ARCHETYPES = {
 
 // the source's ability -> [trait key, our name, what it does]
 // (A Map, read with TRAITS.get(name): two of the source's names, "360" and "50/50", are not plain names, and an
-// object would list "360" ahead of the rest where Python keeps the order written.)
+// object would list "360" ahead of the rest, out of the order written.)
 const TRAITS = new Map([
     ["Workhorse", ["iron_horse", "Iron Horse", "Tires more slowly and comes off the field less"]],
     ["Recoup", ["quick_recovery", "Quick Recovery", "Recovers from fatigue faster on the sideline"]],
@@ -276,7 +274,7 @@ const TRAITS = new Map([
     ["Clutch Kicker", ["clutch_leg", "Clutch Leg", "Makes the big kick"]],
 ]);
 const TRAIT_TIERS = { Bronze: 1, Silver: 2, Gold: 3, Platinum: 4 };
-// (keyed by the tier's number, as Python's: TIER_NAMES[2] is "Silver")
+// (keyed by the tier's number: TIER_NAMES[2] is "Silver")
 const TIER_NAMES = Object.fromEntries(Object.entries(TRAIT_TIERS).map(([name, n]) => [n, name]));
 
 export function traits_of(abilities) {

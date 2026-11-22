@@ -8,8 +8,6 @@
 // average blocker: a 197-pound free safety projected 67 at guard. `project` puts his ratings on the
 // new group's scale first (through the source scale), then discounts the position skills he has
 // never used and charges the size the new spot asks for.
-//
-// Ported from coach_career/position_fit.py by engine_js/PORTING.md's rules.
 import { round, int, get, isNumber, truthy, cmp } from "../engine_js/pyrt.js";
 import { mean, pstdev } from "../engine_js/pystat.js";
 import { read_json } from "../engine_js/files.js";
@@ -52,7 +50,7 @@ const HAND_SIZES = { QB: [[74.1, 1.8], [207.6, 14.6]], HB: [[70.5, 1.7], [203.7,
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
-/** d[k] where Python's would raise KeyError for a missing key. */
+/** d[k], throwing a KeyError for a missing key. */
 function at(d, k, name) {
   if (!has(d, k)) throw new Error(`KeyError: ${name}[${JSON.stringify(k)}]`);
   return d[k];
@@ -65,7 +63,7 @@ function zipped(ks, vs) {
   return out;
 }
 
-let _sizes = null;       // (Python: lru_cache(maxsize=1)) worked out once
+let _sizes = null;       // worked out once
 
 export function sizes() {
   // Position -> [[height mean, sd], [weight mean, sd]] from the real rosters (data/engine_teams.json),
@@ -79,7 +77,7 @@ function _sizes_now() {
   const out = { ...position_fit.HAND_SIZES };
   let teams;
   try {
-    // Python asks whether the file exists, then reads it: here a host without it (or with one that does not parse) throws
+    // a host without the file (or with one that does not parse) throws
     teams = read_json(position_fit.ENGINE_FILE)["teams"];
   } catch (e) {
     return out;

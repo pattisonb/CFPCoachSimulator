@@ -1,4 +1,4 @@
-// Recruit personas (coach_career/persona.py): every prospect has a personality (how he talks) and a decider
+// Recruit personas (career_js/persona.js): every prospect has a personality (how he talks) and a decider
 // (who has the say in where he signs, and the one topic that decider cares about). A fixed draw from
 // the class seed and his id, worked out when asked and never stored in the save (a save from before
 // this keeps the persona it stored; a test may set one on the prospect).
@@ -6,24 +6,24 @@ import { Random, round, sorted, cmp, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { recruits } from "./recruits.js";
 
-// ---- what Python does in a word and JavaScript needs a helper for --------------------------------------
-/** str(v) inside an f-string for a value that may be None ("None", as Python prints it). */
+// ---- small helpers -------------------------------------------------------------------------------------
+/** str(v) inside an f-string for a value that may be None ("None", as the seeds and keys built from it have always had it). */
 const pystr = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
 /** `a or b`: a when it is true as Python sees it (not None, 0, "", an empty list or dict), else b. */
 const or_ = (a, b) => (truthy(a) ? a : b);
 /** `x in xs` for a list or a tuple. */
 const within = (x, xs) => xs.includes(x);
-/** `d.get(key, default)` for a dict of another module, whichever of a plain object or a Map its port made it (STAR_KEY, AI_NIL, a school's fits). */
+/** `d.get(key, default)` for a dict of another module, whichever of a plain object or a Map it is (STAR_KEY, AI_NIL, a school's fits). */
 function dget(d, k, dflt = null) {
   if (d instanceof Map) return d.has(k) ? d.get(k) : d.has(String(k)) ? d.get(String(k)) : dflt;
   return get(d, k, dflt);
 }
-/** `d.clear()` for a cache of another module, whichever of a plain object, a Map or a Set its port made it. */
+/** `d.clear()` for a cache of another module, whichever of a plain object, a Map or a Set it is. */
 function clear_cache(d) {
   if (d instanceof Map || d instanceof Set) d.clear();
   else for (const k of Object.keys(d)) delete d[k];
 }
-/** `text.format(**fields)` for the game's lines: every {name} filled from `fields` (a name it lacks is Python's KeyError). */
+/** `text.format(**fields)` for the game's lines: every {name} filled from `fields` (a name it lacks is a KeyError). */
 function format(text, fields) {
   return text.replace(/\{(\w+)\}/g, (_, name) => {
     if (fields[name] === undefined) throw new Error(`KeyError: '${name}'`);
@@ -339,7 +339,7 @@ export function story_learned_line(state, pid) {
   // His History's sentence when your staff finds out his story; None for a public story or none.
   const [k, d] = persona.story(state, pid);
   if (k === null || persona.story_public(state, pid)) return null;
-  // (Python works both names out before it fills the sentence, whether the sentence uses them or not)
+  // (both names are worked out before the sentence is filled, whether the sentence uses them or not)
   return format(persona.STORY_LEARNED[k], { school: persona._school_name(get(d, "school")), mate: persona._name_of(state, get(d, "mate")) });
 }
 
@@ -509,7 +509,7 @@ export function _draw_class(state) {
 }
 
 
-/** The key of a class's draw (a tuple in Python): the career, the year, the seed, how many prospects. */
+/** The key of a class's draw (as text): the career, the year, the seed, how many prospects. */
 const _stories_key = (state, rc) => [get(state, "id"), get(rc, "year"), get(rc, "seed"), Object.keys(rc["prospects"]).length];
 const _same_key = (a, b) => a !== null && b !== null && a.length === b.length && a.every((v, i) => v === b[i]);
 
@@ -519,7 +519,7 @@ export function stories(state) {
   const rc = or_(get(or_(state, {}), "recruiting"), {});
   if (truthy(get(rc, "portal")) || !truthy(get(rc, "stories"))) return {};
   let cached = persona._STORIES;
-  // (Python's `not rc.get("prospects")` costs nothing; here the truth of a dict of 4,000 prospects lists its keys, and
+  // (The truth of a dict of 4,000 prospects lists its keys, and
   // this is asked for every prospect of every school's week: it was over half of a week's time. The same class's same
   // prospects dict, which held prospects when its stories were kept, is not asked again.)
   if (cached[0] === rc && cached[3] === rc["prospects"]) return cached[2];
@@ -592,7 +592,7 @@ const STORY_LEARNED = { legacy: "Your staff learned he is a legacy at {school}."
   bloomer: "Your staff learned he is a late bloomer." };
 
 
-// ----- what his story changes in recruiting (hooks in recruiting.py) ----------------------------------
+// ----- what his story changes in recruiting (hooks in recruiting.js) ----------------------------------
 
 const STAR_WORD = { 2: "two", 3: "three", 4: "four", 5: "five" };
 // persona._SCHOOL_STATE: each school's state, kept once read
@@ -666,7 +666,7 @@ export function draft_risk(state, slug, pid) {
 
 export function draft_word(risk) {
   for (const [at, w] of persona.DRAFT_WORDS) if (risk >= at) return w;
-  throw new Error("StopIteration");                 // (a risk under zero: Python's next() finds no word either)
+  throw new Error("StopIteration");                 // (a risk under zero: there is no word for it)
 }
 
 

@@ -20,7 +20,7 @@ interface Props {
 type Phase = "all" | "regular" | "conf" | "post";
 const PHASES: Phase[] = ["all", "regular", "conf", "post"];
 
-/** *tune* The last regular-season week (sim/season.py LAST_REGULAR_WEEK): later games are the postseason. */
+/** *tune* The last regular-season week (sim_js/season.js LAST_REGULAR_WEEK): later games are the postseason. */
 const LAST_REGULAR_WEEK = 14;
 
 const keyOf = (g: ScheduleGame) => `${g.week}-${g.event_id ?? g.kind}`;

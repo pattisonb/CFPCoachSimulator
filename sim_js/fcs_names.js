@@ -8,10 +8,10 @@
 // career.read_save, coaches.load).
 //
 // The old strings are kept here rot13-encoded so that none of them appears anywhere in the
-// repository as written (tests/test_no_standin_names.py checks every tracked file).
+// repository as written (tests/test_no_standin_names.mjs checks every tracked file).
 //
-// Ported from sim/fcs_names.py by engine_js/PORTING.md's rules. Python's `json.loads` and `json.dumps` are written
-// out here (_loads, _dumps): a rewritten save is the text Python would write, number for number and key for key,
+// Python's `json.loads` and `json.dumps` are written out here (_loads, _dumps): a rewritten save is the text
+// Python would write (as the saves were first written), number for number and key for key,
 // which JSON.parse and JSON.stringify do not give (1.0 would come back as 1, a key "2" would move ahead of "10").
 import { sorted } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
@@ -52,7 +52,7 @@ export function label(region) {
 // re.escape: the characters Python puts a backslash before (the pattern's text is then Python's own)
 const _escape = (s) => s.replace(/[()[\]{}?*+\-|^$\\.&~# \t\n\r\v\f]/g, "\\$&");
 
-let _table_made = null;      // (Python: lru_cache(maxsize=1)) worked out once
+let _table_made = null;      // worked out once
 export function _table() {
   // One pattern for every old token, longest first, and what each becomes. Returns [pattern, {old: new}].
   if (_table_made !== null) return _table_made;

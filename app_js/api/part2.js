@@ -1,10 +1,10 @@
-// app/api.py, part 2 (the Python file's lines 946 to the end): the saved seasons' list and their deleting, the
+// The API, part 2: the saved seasons' list and their deleting, the
 // coaches, the helpers every season route uses, and the season routes themselves: schedule, views and settings,
 // recruiting, the offseason, and the roster and stats pages.
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the api file is reached
-// through the `api` namespace, whichever part defines it. A handler's `@route(method, pattern)` is the call
-// `api.route(method, pattern, handler)` right after its definition, in the Python file's order.
+// Every name of the API is reached through the `api` namespace, whichever part defines it (engine_js/PORTING.md,
+// "Big Files in Parts"). A handler is registered by the call `api.route(method, pattern, handler)` right after its
+// definition; the table keeps that order.
 import { get, truthy } from "../../engine_js/pyrt.js";
 import { read_text, exists, remove, remove_dir, list_dir, mtime } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
@@ -13,23 +13,23 @@ import { league } from "../../career_js/league.js";
 import { prospects } from "../../career_js/prospects.js";
 import { api } from "../api_ns.js";
 
-// ----- what Python has built in and JavaScript does not (local to this part) ----------------------------------
+// ----- small helpers (local to this part) --------------------------------------------------------------------
 
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 
 /** isinstance(v, dict): a JSON object (not a list, not an upload's bytes). */
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && !ArrayBuffer.isView(v) && !(v instanceof ArrayBuffer);
 
-/** d[k] where Python raises KeyError for a missing key (list_seasons lists such a save plainly). */
+/** d[k], throwing a KeyError for a missing key (list_seasons lists such a save plainly). */
 function need_key(d, k) {
   if (!has(d, k)) throw new Error(`KeyError: ${JSON.stringify(k)}`);
   return d[k];
 }
 
-/** A ported `except KeyError`: the offseason's own class, or the plain Error a port throws for Python's d[k]. */
+/** Whether an error is a missing key: the offseason's own class, or a plain Error whose message starts "KeyError". */
 const is_key_error = (e) => e instanceof modules.offseason.KeyError || (e instanceof Error && String(e.message).startsWith("KeyError"));
 
-/** The Python types a query value or a body field is asked for by, by name, as `Params.q` and `api._field` take them (part 1). */
+/** The types a query value or a body field is asked for by, by name, as `Params.q` and `api._field` take them (part 1). */
 const str = "str", int = "int", bool = "bool", dict = "dict", list = "list";
 
 
@@ -48,7 +48,7 @@ function list_seasons(p) {
   // card is cached by the file's modification time instead of re-read on every call.
   const season = modules.season;
   const out = [];
-  // (port) a folder that is not there lists no files: Python's SEASONS_DIR.exists() test
+  // a folder that is not there lists no files
   const files = list_dir(season.SEASONS_DIR).filter((n) => n.endsWith(".json"))
     .map((n) => ({ stem: n.slice(0, -5), path: `${season.SEASONS_DIR}/${n}` }));
   const when = new Map(files.map((f) => [f, mtime(f.path)]));
@@ -63,7 +63,7 @@ function list_seasons(p) {
     let st = null, card;
     try {
       st = JSON.parse(read_text(f.path));
-      if (!is_dict(st)) continue;                 // (Python: its `in` or its `.get` fails on anything but a dict, and it is skipped)
+      if (!is_dict(st)) continue;                 // (anything but a dict is skipped)
       if (!has(st, "current_week") || get(st, "mode") === "real") continue;   // the old server's real 2026 season
       const rec = api._card_record(st);          // from the save's own games: a custom program is not in whatever league is loaded
       card = {
@@ -678,7 +678,7 @@ function staff_change(p) {
 api.route("POST", "/api/season/{season_id}/staff", staff_change);
 
 
-// ----- the offseason (offseason.py): departures, the transfer portal, development, staff -----
+// ----- the offseason (offseason.js): departures, the transfer portal, development, staff -----
 
 function offseason_view(p) {
   const st = api._offseason_state(p.path["season_id"]);
@@ -713,8 +713,8 @@ function offseason_portal(p) {
   const pid = api._field(p, "pid", str), on = api._field(p, "on", bool, true);
   let offers;
   try {
-    // (port) in the portal weeks Python's portal_offer reads `state["recruiting"]["prospects"][pid]` first, a KeyError
-    // for a player who is not in the portal; the ported one does not throw there, so the same test is made here
+    // in the portal weeks a player who is not in the portal is a KeyError (a 404 below): portal_offer does not throw
+    // for him, so the test is made here
     if (Array.from(offseason.PORTAL_STAGES).includes(get(get(st, "offseason") || {}, "stage")) && !has(st["recruiting"]["prospects"], pid)) {
       throw new offseason.KeyError(pid);
     }
@@ -724,7 +724,7 @@ function offseason_portal(p) {
     if (e instanceof offseason.OverflowError || e instanceof ValueError) throw new api.ApiError(409, e.message);
     // the board's own refusals in the portal weeks (he has already signed, not enough NIL points): the page is told why
     if (e instanceof modules.recruiting.RecruitingError) throw new api.ApiError(e.code, e.message);
-    // (a port's own "OverflowError: ..." for a float no whole number can hold, as season and coaches throw it)
+    // (a plain Error "OverflowError: ..." for a float no whole number can hold, as season and coaches throw it)
     if (e instanceof Error && String(e.message).startsWith("OverflowError: ")) throw new api.ApiError(409, e.message.slice("OverflowError: ".length));
     throw e;
   }

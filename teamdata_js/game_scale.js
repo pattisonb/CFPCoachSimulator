@@ -1,7 +1,7 @@
 // The game's own ratings: the one scale every player, prospect and number in the game is on.
 //
-// EA's ratings were only the jumping-off point. The one-time fit (still Python: teamdata/game_scale.py's fit, which
-// needs numpy and scipy and is run offline) read the real 2026 rosters once and froze, in data/game_scale.json:
+// EA's ratings were only the jumping-off point. A one-time fit, run offline and not part of the game, read the real 2026
+// rosters once and froze, in data/game_scale.json:
 //   - each of the 54 skills on our 1-99 scale per position group: 50 is the middle Power 4 starter
 //     at the position, 15 points a standard deviation above him, 9 below (as the player cards),
 //   - the player card attributes' scale (ratings.js, the same shape),
@@ -10,9 +10,6 @@
 // them, and the engine reads them back through `to_base` (the frozen inverse) into the formulas it
 // was tuned on. Generated recruits are drawn by a model learned from real players and converted
 // with `from_ea` the moment they are made.
-//
-// Ported from teamdata/game_scale.py by engine_js/PORTING.md's rules. Not here: fit, fit_card_overall,
-// freeze_engine_means, write_scale and OVERALL_RIDGE (the offline fit).
 import { round, int, sum, get, truthy } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { prospects } from "../career_js/prospects.js";
@@ -38,7 +35,6 @@ export function group(pos) {
   return get(game_scale.GROUP_OF, pos) || get(_ENGINE_GROUP, pos, pos);
 }
 
-// (Python keeps the answers of the two conversions and of _base_tenth; each is the same worked out again.)
 export function to_ours(base, grp, key) {
   const [m, sd] = game_scale.data()["skills"][grp][key];
   return int(round(Math.max(1, Math.min(99, 50 + (base - m) / sd * (base >= m ? game_scale.ABOVE : game_scale.BELOW)))));
@@ -75,7 +71,7 @@ export function from_ea(ratings_ea, pos) {
 }
 
 // How far a generated player grows, by position group: his drawn room to potential times this. Set
-// so a career's starters settle, season after season, where the real 2026 starters were (tools/long_run.py).
+// so a career's starters settle, season after season, where the real 2026 starters were (tools/long_run.mjs).
 const ROOM = { QB: 1.33, RB: 1.0, WR: 1.11, TE: 1.21, OL: 1.24, DL: 1.35, LB: 1.45, CB: 1.48, S: 1.63, K: 1.25, P: 0.85 };
 
 export function potential_from_ea(potential_ea, ours, pos) {
@@ -92,7 +88,7 @@ export function potential_from_ea(potential_ea, ours, pos) {
 export function has_overall() {
   let d;
   try {
-    d = game_scale.data();            // Python asks whether the file exists: here a host without it throws
+    d = game_scale.data();            // a host without the file throws
   } catch (e) {
     return false;
   }
@@ -186,14 +182,14 @@ function _zip_dict(attrs, values) {
   return out;
 }
 
-// The career modules these two upgrades of old saves call that are not ported yet: whoever ports
-// coach_career/league.py and coach_career/recruiting.py puts its namespace here (game_scale.modules.league = league),
-// or replaces this with its import. Until then an old save that needs them is refused before anything is changed.
+// The career modules the two upgrades of old saves call. This file cannot import them (they import it), so each is
+// put here by whoever loads it: career_js/league.js sets game_scale.modules.league, app_js/game.js sets
+// game_scale.modules.recruiting. Without one, an old save that needs it is refused before anything is changed.
 const modules = { league: null, recruiting: null };
 
 function _module(name) {
   const m = game_scale.modules[name];
-  if (!m) throw new Error(`game_scale: career_js/${name}.js is not ported yet (game_scale.modules.${name})`);
+  if (!m) throw new Error(`game_scale: career_js/${name}.js is not loaded (game_scale.modules.${name})`);
   return m;
 }
 

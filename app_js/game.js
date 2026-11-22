@@ -47,7 +47,7 @@ import { recruiting } from "../career_js/recruiting.js";
 import { offseason } from "../career_js/offseason.js";
 import { api } from "./api.js";
 
-// the modules written before a port registered itself
+// the modules that do not register themselves
 const early = { game_scale, ratings, shown, position_fit, game_job };
 for (const [name, ns] of Object.entries(early)) modules[name] = ns;
 // an old save's recruits are brought onto the game's scale with recruiting's own reads (teamdata_js/game_scale.js upgrade)

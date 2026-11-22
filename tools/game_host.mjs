@@ -10,8 +10,7 @@
 //   node tools/game_host.mjs ROOT base [OVERLAY]      // the base league's three files (career_js/league.js)
 //   node tools/game_host.mjs ROOT boot DEST [OVERLAY] // the team picker's answers, as files under DEST
 //
-// Each command is a process of its own, as each was in the Python build: nothing one step read is still in memory
-// for the next.
+// Each command is a process of its own: nothing one step read is still in memory for the next.
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";

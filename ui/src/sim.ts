@@ -10,7 +10,7 @@ import type { SimStatus } from "./types.ts";
 /** *tune* How often a running sim is checked. */
 const POLL_MS = 450;
 
-/** the game's refusal when a sim is already under way (app/api.py) */
+/** the game's refusal when a sim is already under way (app_js/api.js) */
 const BUSY = /already simulating/;
 
 export type SimKind = "advance" | "gameday";

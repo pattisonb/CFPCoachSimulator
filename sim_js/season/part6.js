@@ -1,7 +1,7 @@
-// sim/season.py, part 6 (the Python file's "player profiles" section to its end): player profiles, settings and god
+// The season, part 6: player profiles, settings and god
 // mode (editing a player), morale (form carried from game to game), the faces, team edits and team_data, the stat
 // ranks, honors and game log on a player's page, and his card's Ratings tab (every rating he has).
-// Ported by engine_js/PORTING.md's rules; everything of the season file is reached through `season.`.
+// Everything of the season is reached through `season.` (engine_js/PORTING.md, "Big Files in Parts").
 import { Random, round, int, sum, cmp, sorted, get, isNumber, truthy, json_dumps, mod, pyfloat } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { read_json, list_dir } from "../../engine_js/files.js";
@@ -15,10 +15,10 @@ import { game_scale } from "../../teamdata_js/game_scale.js";
 import { recruits } from "../../career_js/recruits.js";
 import { prospects } from "../../career_js/prospects.js";
 
-// ---- Python's own, for what the page sends ----
+// ---- small helpers, for what the page sends ----
 const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-/** Python's ValueError (the one class the ported files throw: sim_js/coaches.js). */
+/** A value the page sent that cannot be used (the one class, from sim_js/coaches.js). */
 const ValueError = coaches.ValueError;
 /** float() or int() could not make a number of it (Python's TypeError or ValueError). */
 class NotANumber extends Error {}
@@ -328,7 +328,7 @@ season.MAX_FACE_BYTES = 4000;
 
 // The faces a real player or coach always wears (cfb_sim_data/faces/<team>.json: {"players": {slug: face},
 // "coaches": {name: face}, "rolled": {...}}): made by hand from his roster photo, or, with no photo, rolled once and
-// saved (tools/faces/roll.py). A team with no file rolls its faces on the page as before.
+// saved. A team with no file rolls its faces on the page as before.
 season.FACES_DIR = "cfb_sim_data/faces";
 season._preset_faces = {};
 
@@ -346,7 +346,7 @@ function preset_faces(slug) {
     if (!is_dict(data)) data = {};
     const got = {};
     for (const k of ["players", "coaches", "rolled"]) got[k] = is_dict(get(data, k)) ? data[k] : {};
-    // "rolled": the faces saved for people with no photo (tools/faces/roll.py); a coach's key is "coach:<name>"
+    // "rolled": the faces saved for people with no photo; a coach's key is "coach:<name>"
     const rolled = got["rolled"];
     delete got["rolled"];
     got["players"] = { ...Object.fromEntries(Object.entries(rolled).filter(([k]) => !k.startsWith("coach:"))), ...got["players"] };
@@ -503,7 +503,7 @@ function _attribute_ceilings(state, slug) {
 function development_reads(state, slug) {
   // player slug -> {"coachability": his level (recruits.COACHABILITY's words), "coach_level": 1
   // (Coach's Dream) to 6 (Set in His Ways), "potential_word": the letter grade of his projected overall at
-  // his potential (grades.py, as the scouting report's Potential)} for your own roster only: the coach knows his
+  // his potential (grades.js, as the scouting report's Potential)} for your own roster only: the coach knows his
   // players; anyone else's (a future portal entrant among them) stays hidden. From the career's league
   // once it has one, else the real 2026 players' seeded values (league.base_development).
   if (!truthy(slug) || slug !== get(state, "team")) return {};
@@ -525,7 +525,7 @@ function development_reads(state, slug) {
     const [c, pot] = get(pairs, get(p, "slug"), [null, 0]);
     if (levels.includes(c)) {
       out[p["slug"]] = { coachability: c, coach_level: levels.indexOf(c) + 1,
-        ...(truthy(pot) ? { potential_word: modules.grades.letter(pot, sharp) } : {}) };   // a letter grade (grades.py)
+        ...(truthy(pot) ? { potential_word: modules.grades.letter(pot, sharp) } : {}) };   // a letter grade (grades.js)
     }
   }
   return out;
@@ -655,7 +655,7 @@ function player_ranks(state, teams, team, name, position) {
     const fbs_rank = 1 + vals.filter(([v]) => better(v, mine)).length;
     const conf_rank = 1 + vals.filter(([v, , c]) => c === conf && better(v, mine)).length;
     const conf_n = vals.filter(([, , c]) => c === conf).length;
-    // (Python: one decimal for a float that is not whole, else the whole number)
+    // (one decimal for a number that is not whole, else the whole number)
     out.push({ key, label, value: Number.isInteger(mine) ? mine : round(mine, 1),
       fbs_rank, fbs_n: vals.length, conf_rank, conf_n });
   }
@@ -844,7 +844,7 @@ function our_rating(key, skills, slug, card = null) {
   const [blend, same] = season.OUR_RATINGS[key];
   if (truthy(same) && isNumber(get(card || {}, same))) return int(round(card[same]));
   const base = sum(Object.entries(blend).map(([k, w]) => get(skills, k, 60) * w)) / sum(Object.values(blend));
-  // (Python's f-string writes a missing slug as "None")
+  // (a missing slug is written "None", as this key has always had it)
   const rng_own = new Random(`${key}-${slug === null || slug === undefined ? "None" : slug}`).uniform(-season.OUR_SPREAD, season.OUR_SPREAD);
   return Math.max(1, Math.min(99, int(round(base + rng_own))));
 }
@@ -856,7 +856,7 @@ function all_skills(p) {
   let skills = {};
   for (let i = 0; i < Math.min(names.length, values.length); i++) skills[names[i]] = values[i];
   if (!Object.keys(skills).length) return [];
-  // onto the scale ratings are shown on (teamdata/shown.py): a skill is the skill itself there, not where he stands
+  // onto the scale ratings are shown on (teamdata_js/shown.js): a skill is the skill itself there, not where he stands
   // among his own position, so a receiver's Throw Power reads low; ours are read off those, and his card's are the card's
   const grp = game_scale.group(get(p, "role") || p["position"]);
   skills = Object.fromEntries(Object.entries(skills).map(([k, v]) => [k, _shown.skill(v, grp, k)]));
@@ -910,7 +910,7 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   }
   const injuries = get(state, "injuries") || {};
   let injured = false;
-  // (the season keeps a team's injured as a dict by "Name|POS": Python's loop then walks its keys, which are text,
+  // (the season keeps a team's injured as a dict by "Name|POS": the loop then walks its keys, which are text,
   // so no name is read from them; a list of [name, ...] or of {"name"} entries is read as written)
   const hurt = is_dict(injuries) ? get(injuries, team) || [] : [];
   for (const entry_ of Array.isArray(hurt) ? hurt : Object.keys(hurt)) {
@@ -952,7 +952,6 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   const built_on = get(game_scale.card_formula(game_scale.card_position(p)) || {}, "w") || {};
   const built_total = sum(Object.keys(get(p, "attributes") || {}).map((k) => get(built_on, k, 0.0))) || 1.0;
   const p_attrs = () => get(p, "attributes") || {};
-  // (built in the Python dict's order: each entry is worked out where Python works it out)
   const out = {
     history, redshirt: season.redshirt_status(state, team, p), promise,
     recruitment, story, hometown: get(entry || {}, "home"),

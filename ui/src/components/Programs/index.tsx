@@ -18,7 +18,7 @@ interface Props {
   onTeam?: (slug: string) => void;
 }
 
-/** One program (GET /programs → rows[], coach_career/programs.py): where it stands and what it is built on. */
+/** One program (GET /programs → rows[], career_js/programs.js): where it stands and what it is built on. */
 interface Program {
   team: string;
   name: string;
@@ -52,7 +52,7 @@ interface View {
 }
 
 type Key = keyof typeof m.measures;
-/** The eight grade words by floor (coach_career/programs.py WORD_FLOORS; the game sends its own in `words`). */
+/** The eight grade words by floor (career_js/programs.js WORD_FLOORS; the game sends its own in `words`). */
 const WORD_FLOORS: [string, number][] = [
   ["Elite", 90],
   ["Excellent", 80],

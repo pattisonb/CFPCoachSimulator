@@ -1,4 +1,4 @@
-// Bowl season: the 2026-27 lineup (data/bowls.json, built by fetch_bowls.py), bowl
+// Bowl season: the 2026-27 lineup (data/bowls.json), bowl
 // selection by conference tie-ins, and the names and sites of the playoff games.
 //
 // Selection follows how the real process works in practice: once the 12-team playoff field
@@ -8,8 +8,6 @@
 // final order, then record and rating), and falls back to the best remaining team from
 // anywhere when a conference's pool is empty. Two teams from the same conference are not
 // paired. Sites are the real ones; dates place each bowl in the playoff weeks.
-//
-// Ported from sim/bowls.py by engine_js/PORTING.md's rules.
 import { int, sorted, get, truthy } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
@@ -50,7 +48,7 @@ const DATE_RE = new RegExp(`^(Dec|Jan)[\\p{L}\\p{N}_]*${WS}+([0-9]+)`, "u");
 const PAYOUT_RE = new RegExp(`\\$([0-9,.]+)${WS}*(million|M)?`, "i");
 
 export function load_bowls() {
-  // (Python parses the file at every call: a caller gets a copy of its own here too)
+  // (the file is parsed once and kept, so a caller gets a copy of its own to change)
   let data;
   try {
     data = read_json(bowls.BOWLS_FILE);
@@ -93,7 +91,7 @@ export function tie_ins_for(b) {
   let ties = own(bowls.DEFAULT_TIE_INS, b["bowl"]) ? [...bowls.DEFAULT_TIE_INS[b["bowl"]]] : [];
   if (ties.length < 2) {
     const more = [];
-    for (const t of get(b, "tie_ins") || []) if (truthy(t) && !ties.includes(t)) more.push(t);   // (against the table's, as Python's does)
+    for (const t of get(b, "tie_ins") || []) if (truthy(t) && !ties.includes(t)) more.push(t);   // (against the table's)
     ties = ties.concat(more);
   }
   return ties.length >= 2 ? ties.slice(0, 2) : ties.concat(Array(2 - ties.length).fill("At-large"));
@@ -101,7 +99,7 @@ export function tie_ins_for(b) {
 
 export function select_bowls(records, teams, playoff_field, order, ratings) {
   // Return bowl matchups: [{"bowl", "name", "date", "time", "site", "week", "home", "away", "tie_ins"}].
-  // (`playoff_field` is Python's set: a Set here, or a list of the same slugs)
+  // (`playoff_field` is a Set, or a list of the same slugs)
   const data = bowls.load_bowls();
   const field = playoff_field instanceof Set ? playoff_field : new Set(playoff_field);
   const pos = new Map(order.map((t, i) => [t, i]));
@@ -182,7 +180,7 @@ export function playoff_sites(seeds, conference_of) {
   // championship site, from data/bowls.json. Quarterfinal bowls go to the top four seeds
   // by traditional affinity (Rose: Big Ten/Pac-12, Peach: SEC/ACC, Cotton: Big 12/SEC,
   // Fiesta: the rest), seed 1 choosing first.
-  // (`seeds` is Python's {seed number: team}: an object keyed 1..12 or a Map of the same)
+  // (`seeds` is {seed number: team}: an object keyed 1..12 or a Map of the same)
   const data = bowls.load_bowls();
   const qf = data["playoff"].filter((p) => get(p, "round") === "quarterfinal");
   const sf = data["playoff"].filter((p) => get(p, "round") === "semifinal");

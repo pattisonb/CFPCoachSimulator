@@ -4,8 +4,8 @@
 // result: a win adds points scaled by the opponent's standing, the venue and the margin; a
 // loss subtracts points, more for losing to an unranked team or at home and less for losing
 // to a top team. The 25 highest scores are the poll. The parameters in AP_PARAMS were fit
-// to every weekly AP poll from 2014 to 2025 (calibrate_polls.py replays those seasons with
-// the real results and minimizes the rank error against the real polls).
+// to every weekly AP poll from 2014 to 2025 (by replaying those seasons with
+// the real results and minimizing the rank error against the real polls).
 //
 // The committee model re-ranks the AP-style scores with the things the committee is known
 // to weigh differently: strength of schedule, wins over ranked teams, a discount for Group
@@ -19,13 +19,11 @@
 // four highest-ranked teams regardless of titles and get byes; an automatic qualifier ranked
 // outside the top 12 takes the lowest seed(s); first round 5v12, 6v11, 7v10, 8v9 at the
 // higher seed's home; quarterfinals 1v8/9, 2v7/10, 3v6/11, 4v5/12; no reseeding.
-//
-// Ported from sim/polls.py by engine_js/PORTING.md's rules.
 import { Random, sorted, get, truthy, range } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 
-// The module's constants and variables live on this object and are read through it (PORTING.md rule 2).
+// The module's constants and variables live on this object and are read through it (PORTING.md, "Modules").
 export const polls = {};
 
 polls.PARAMS_FILE = "data/poll_params.json";
@@ -34,7 +32,7 @@ polls.P4 = new Set(["ACC", "Big Ten", "Big 12", "SEC"]);
 polls.G6 = new Set(["American Athletic Conference", "Conference USA", "MAC", "Mountain West", "Pac-12", "Sun Belt"]);
 polls.INDEPENDENT = new Set(["FBS Independents", "Independent", "Independents"]);
 
-// Defaults; calibrate_polls.py overwrites them in data/poll_params.json.
+// Defaults; data/poll_params.json carries the fitted values that replace them.
 polls.AP_PARAMS = {
   rank_points: 40.0,        // preseason: score gap per poll spot
   unranked_floor: -60.0,    // preseason score of the best unranked team relative to No. 25
@@ -97,13 +95,12 @@ export function load_params() {
 }
 
 export function load_next_params() {
-  // The week-to-week model's fitted parameters (tools/backtest_polls.py).
+  // The week-to-week model's fitted parameters.
   return { ...polls.NEXT_PARAMS, ...get(polls._saved_params(), "next", {}) };
 }
 
 export function load_ballot_params() {
-  // The ballot model's parameters: the week-to-week ones, with the ballot fit on top
-  // (tools/backtest_ballots.py fit).
+  // The ballot model's parameters: the week-to-week ones, with the ballot fit on top.
   return { ...polls.load_next_params(), ...get(polls._saved_params(), "ballots", {}) };
 }
 
@@ -189,8 +186,8 @@ export function rank(scores, records, tiers, params, n = 25) {
 // How voters actually move a poll: last week's vote points (Top 25 and the others receiving
 // votes) are the starting line, each team moves by its result, unbeaten teams get the
 // benefit of the doubt, and a head-to-head winner goes above a close loser. Fit one week
-// ahead (real poll + real results -> next real poll) over 2014-2023 by
-// tools/backtest_polls.py; data/poll_params.json carries the fitted values under "next".
+// ahead (real poll + real results -> next real poll) over 2014-2023;
+// data/poll_params.json carries the fitted values under "next".
 polls.NEXT_PARAMS = {
   win_base: 0.010,       // share of the maximum points gained for any win
   win_opp: 0.10,         // extra x the opponent's share of the maximum (a win over No. 1 ~ +0.10)
@@ -471,8 +468,7 @@ export function build_bracket(ranking, champions, conference_of, names = null) {
 // is the ballots added up (25 points for first down to 1 for 25th). One week ahead this is
 // about 2% closer to the real poll than moving the vote shares; across a whole season with
 // no real poll to lean on (season mode) it is 9% closer, and 26% by the last weeks, because
-// each voter keeps their own view instead of the consensus drifting
-// (tools/backtest_ballots.py; the season replay is in docs/HOW_IT_WORKS.md).
+// each voter keeps their own view instead of the consensus drifting.
 
 polls.BALLOT_SEED_NOISE = 0.06;     // a voter's spread around the consensus when ballots are made from a poll's points
 
@@ -536,8 +532,7 @@ export function next_ballots(ballots, prev, games, records, tiers, params = null
       mine[t] = (25 - i) / 25.0;
     });
     // off the ballot: the consensus share, scaled down (the voter left them off for a reason)
-    // (Python walks a set here, in its hash order; nothing below depends on the order of `val`: its teams are
-    // read one by one and then in sorted order.)
+    // (nothing below depends on the order of `val`: its teams are read one by one and then in sorted order)
     const val = {};
     for (const t of new Set([...Object.keys(share), ...Object.keys(mine)])) val[t] = get(mine, t, get(share, t, 0.0) * off);
     for (const [t, o, won, m, at_home, neutral] of facts) {

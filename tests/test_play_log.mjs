@@ -22,7 +22,7 @@ function fingerprint(n = 5) {
       core[side] = Object.fromEntries(Object.entries(core[side]).filter(([k]) => ["name", "score", "quarters", "team_stats", "players"].includes(k)));
     }
     core["drives"] = g["drives"].map((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== "log")));
-    // 4.0 and 4 are one result (tests/canon.py): a JavaScript number is one kind, so there is nothing to fold here
+    // 4.0 and 4 are one result: a JavaScript number is one kind, so there is nothing to fold here
     h.update(Buffer.from(json_dumps(core, { sort_keys: true }), "utf8"));
     if (process.argv.includes("--check")) check(g);
   }

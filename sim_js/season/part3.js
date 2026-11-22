@@ -1,7 +1,7 @@
-// sim/season.py, part 3 (the Python file's lines 1812 to 2735): a week's work for the progress bar, injuries healing
+// The season, part 3: a week's work for the progress bar, injuries healing
 // and the injury report, the awards step, the depth chart (its orders, cards and views), the formations view, the
 // awards view, the shared pool, the week-by-week advance to a target, box-score files, and saving and loading a
-// season (with the class file beside it). Ported by engine_js/PORTING.md's rules ("A big file ported in parts").
+// season (with the class file beside it). engine_js/PORTING.md ("Big Files in Parts") says how the parts share the namespace.
 import { round, int, sorted, cmp, get, isNumber, truthy, json_dumps, parse_ordered } from "../../engine_js/pyrt.js";
 import { read_text, write_text, exists, list_dir, mtime } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
@@ -17,7 +17,7 @@ import { season } from "../season_ns.js";
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const is_dict = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
-/** str(v) inside an f-string for a value that may be None ("None", as Python prints it). */
+/** str(v) inside an f-string for a value that may be None ("None", as the seeds and keys built from it have always had it). */
 const pystr = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
 /** dict.clear(): in place, so whoever holds the dict sees it empty. */
 const clear = (d) => { for (const k of Object.keys(d)) delete d[k]; };
@@ -157,7 +157,7 @@ season.DEPTH_ROWS = [
   ["Special Teams", [["K", "Kicker"], ["P", "Punter"], ["KR", "Kick Returner"], ["PR", "Punt Returner"]]],
 ];
 
-// (sim_js/game_job.js has these two tables and apply_depth: one copy, as PORTING.md says)
+// (sim_js/game_job.js has these two tables and apply_depth: one copy)
 season.ROLE_POSITION = game_job.ROLE_POSITION;
 season.OFFENSE_POSITIONS = game_job.OFFENSE_POSITIONS;
 season.RATING_KEY = { MLB: "MLB", ROLB: "MLB", LOLB: "MLB" };   // linebacker roles share one rating
@@ -331,7 +331,7 @@ function _depth_card(state, slug) {
   const dev = season.development_reads(state, slug);                     // your roster: coachability and potential
   const looks = season.player_faces(state, slug);                        // faces drawn this season (Edit Player Look)
 
-  // (coach_career/promises.py, not ported yet: reached only for your own team in a career, where Python calls it)
+  // (career_js/promises.js, reached only for your own team in a career)
   const chips = truthy(get(state, "career")) && slug === get(state, "team") ? modules.promises.tags_now(state) : {};   // a promised start: On Track, Slipping, Broken, Not Judged Yet, Next Season
   function card(p, role) {
     const inj = get(injured, `${p["name"]}|${p["position"]}`);
@@ -426,7 +426,7 @@ function depth_chart_view(state, slug) {
     overridden: season.depth_changed(state, slug), editable: true };
 }
 
-// the trait tiers by name, for a roster link's abilities (teamdata/ratings.py TRAIT_TIERS)
+// the trait tiers by name, for a roster link's abilities (teamdata_js/ratings.js TRAIT_TIERS)
 season._TIER_NAMES = Object.fromEntries(Object.entries(ratings_v2.TRAIT_TIERS).map(([k, v]) => [v, k]));
 
 const _WHOLE = /^\s*[+-]?\d+(?:_\d+)*\s*$/;      // what Python's int(text) takes
@@ -598,7 +598,7 @@ function formations_view(state, slug) {
     defense: { scheme, formations: dfn }, special: { scheme: null, formations: st } };
 }
 
-// (keyed by the text of Python's tuple key: season id, week, games played, the length of the player edits' JSON)
+// (keyed by the text of: season id, week, games played, the length of the player edits' JSON)
 season._race_cache = {};
 
 function awards_view(state) {
@@ -691,8 +691,7 @@ season._SHARED_POOL = null;
 function shared_pool() {
   // One worker pool for the life of the process: spawning the workers and loading the
   // league into each costs a few seconds, which should not be paid on every click.
-  // (There are no worker processes here: _make_pool remembers the league's path and gives None, as Python's does
-  // with one worker.)
+  // (There are no worker processes here: _make_pool remembers the league's path and gives null.)
   if (season._SHARED_POOL === null) season._SHARED_POOL = season._make_pool();
   if (season._SHARED_POOL === undefined) season._SHARED_POOL = null;
   return season._SHARED_POOL;
@@ -701,7 +700,7 @@ function shared_pool() {
 function close_pool() {
   // Stop the workers (called when the server shuts down, so Ctrl-C exits at once).
   if (season._SHARED_POOL !== null) {
-    // (a host that did put a pool here stops it the way Python stopped its own)
+    // (a host that did put a pool here has it stopped: terminate, then join)
     if (typeof season._SHARED_POOL.terminate === "function") season._SHARED_POOL.terminate();
     if (typeof season._SHARED_POOL.join === "function") season._SHARED_POOL.join();
     season._SHARED_POOL = null;
@@ -816,7 +815,7 @@ function _rename_stand_ins_files(season_id) {
       const renamed = fcs_names.rewrite_text(text);
       if (renamed !== text) write_text(f, renamed);
     } catch (e) {
-      continue;                           // (Python passes over OSError and ValueError: a file that cannot be read or is not JSON)
+      continue;                           // (passed over: a file that cannot be read or is not JSON)
     }
   }
 }
@@ -896,7 +895,7 @@ function _with_class(state) {
   }
   const fixed = held["prospects"];
   for (const [pid, p] of Object.entries(rc["prospects"])) {
-    if (!has(fixed, pid)) throw new Error(`KeyError: ${JSON.stringify(pid)}`);      // (Python's fixed[pid])
+    if (!has(fixed, pid)) throw new Error(`KeyError: ${JSON.stringify(pid)}`);
     Object.assign(p, fixed[pid]);
   }
   season._class_written[sid] = key;

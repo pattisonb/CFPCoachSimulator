@@ -14,8 +14,6 @@
 // State: state["ability_goals"][team][player key "Name|POS"] = {"trait", "tier", "have", "since": [year, week]};
 // state["abilities_earned"][team][key] = {trait: tier} (merged into the game's team, and into the league's rosters at the
 // offseason); state["ability_events"]: [{week, year, team, player, position, trait, name, tier, how}] (the news reads them).
-//
-// It was coach_career/ability_goals.py; engine_js/PORTING.md has the rules it was ported by.
 import { Random, int, sum, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";

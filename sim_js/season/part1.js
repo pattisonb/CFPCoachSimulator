@@ -1,4 +1,4 @@
-// sim/season.py, lines 1 to 1026: the season's constants and tables, the league's teams (load_teams, use_league),
+// The season, part 1: its constants and tables, the league's teams (load_teams, use_league),
 // the house rating scale, the FCS stand-ins, the real 2026 polls, a new season (new_season and the schedule repairs
 // under it), and the small helpers on one game (records, standings and their tiebreaks, the weekly polls).
 //
@@ -12,7 +12,7 @@
 // higher seed's home, quarterfinals, semifinals, championship on neutral fields).
 //
 // Polls: the AP poll starts from the real 2026 preseason poll and is updated after every
-// week by the model in polls.py; the committee ranking appears after weeks 9-13 and the
+// week by the model in polls.js; the committee ranking appears after weeks 9-13 and the
 // final one after week 14, matching the 2026 release schedule (Nov 3 through Dec 6).
 //
 // Every game is simulated from week 1.
@@ -20,7 +20,7 @@
 // Games against FCS schools are played against the fictional FCS school from the same
 // region (data/fcs_map.json).
 //
-// Ported by engine_js/PORTING.md's rules ("A big file ported in parts").
+// engine_js/PORTING.md ("Big Files in Parts") says how the parts share the `season` namespace.
 import { Random, round, int, sum, sorted, minBy, get, isNumber, truthy, floordiv, mod, range, json_dumps, odict } from "../../engine_js/pyrt.js";
 import { pstdev, median } from "../../engine_js/pystat.js";
 import { read_text, read_json, write_text, exists, env } from "../../engine_js/files.js";
@@ -32,7 +32,7 @@ import { teamnames } from "../teamnames.js";
 import { prospects } from "../../career_js/prospects.js";
 import { season } from "../season_ns.js";
 
-// ---- what Python has built in ----
+// ---- small helpers ----
 const own = (d, k) => Object.prototype.hasOwnProperty.call(d, k);       // `k in d` for a dict
 /** `not d` for a dict (a plain object): whether it has no keys. */
 function empty(d) {
@@ -65,14 +65,14 @@ season.TEAMS_FILE = "data/engine_teams.json";
 season.SCHEDULES_FILE = "data/schedules.json";
 season.FCS_MAP_FILE = "data/fcs_map.json";
 season.HISTORY_POLLS = "data/history/polls.json";
-season.SEASONS_DIR = env.CFP_SEASONS_DIR || "data/seasons";   // CFP_SEASONS_DIR: tests/run_all.py gives its tests a folder of their own
+season.SEASONS_DIR = env.CFP_SEASONS_DIR || "data/seasons";   // CFP_SEASONS_DIR: tests/run_all.mjs gives its tests a folder of their own
 
 season.LAST_REGULAR_WEEK = 14;   // Aug 29 through Nov 28, 2026: fourteen Saturdays, so every team has a bye or two
 season.CCG_WEEK = 15;            // Dec 4-5
 season.SELECTION_WEEK = 16;      // Dec 6 selection, Dec 12 Army-Navy
 season.FINAL_WEEK = 20;          // Jan 25, 2027
 // Weeks run Tuesday to Monday (Labor Day games belong to that weekend); week 1 starts Aug 25.
-// (Python's is a datetime without a time zone; this is the same wall-clock moment as a Date in UTC.)
+// (A wall-clock moment without a time zone, held as a Date in UTC.)
 season.SEASON_EPOCH = new Date(Date.UTC(2026, 7, 25));
 season.AP_OTHERS = 15;        // teams listed under "also receiving votes" below the top 25
 // Conferences that still play divisions: the title game is division winner vs division winner.
@@ -176,7 +176,7 @@ function load_teams() {
 }
 
 function use_league(path) {
-  // Point every view and sim at a league's teams file (a career's later seasons, league.py);
+  // Point every view and sim at a league's teams file (a career's later seasons, league.js);
   // None: the real 2026 league. Everything cached from the old league is dropped.
   path = truthy(path) ? String(path) : season.TEAMS_FILE;
   if (path === season._league_path) return;
@@ -186,7 +186,7 @@ function use_league(path) {
   season._STAR_CUTS = null;
   for (const c of [season._teams_meta, season._scale_cache, season._race_cache, season._preview_cache]) clear(c);
   season.close_pool();                              // the workers hold the old league
-  // (a module that is not ported yet, or a function of one that is not, has cached nothing here)
+  // (a module that is not loaded has cached nothing)
   if (module_loaded("recruiting")) modules.recruiting.reset_caches();
   if (typeof prospects.reset_caches === "function") prospects.reset_caches();
 }
@@ -214,13 +214,13 @@ function _is_p4(slug, team) {
 // starter (the median: half are better, half worse) at 50, and a Power 4 starter one, two and three standard deviations better at 65,
 // 80 and 95. Below the Power 4 starter average a standard deviation is worth 60% as much
 // (BELOW): a typical Power 4 backup or Group of 5 starter reads about 40, not the 20s.
-// A card's overall is our overall (game_scale.py: a fixed formula on our ratings, frozen from the
+// A card's overall is our overall (game_scale.js: a fixed formula on our ratings, frozen from the
 // 2026 rosters); "rated at" numbers come from the engine values on the same shape. One pair of
 // slopes per position group, computed once.
 
 season.SCALE_GROUP = { MLB: "LB", ROLB: "LB", LOLB: "LB" };    // linebackers share one group (the roles are small)
 season.BELOW = 0.6;      // below the Power 4 starter average, a standard deviation is worth 60% as much
-// (Python's keys are (group, key) tuples; here they are the text "group|key", and a value is [p4_mean, slope_above, slope_below])
+// (the keys are the text "group|key", and a value is [p4_mean, slope_above, slope_below])
 season._scale_cache = {};
 
 function _house_scale() {
@@ -313,7 +313,7 @@ function engine_rating(p, key, ours) {
 }
 
 function shown_overall(p, base = null) {
-  // The overall on the card: our overall (game_scale.py, built onto every player as "ovr"). A
+  // The overall on the card: our overall (game_scale.js, built onto every player as "ovr"). A
   // god-mode edit moves it by what the edit does to the engine composite (`base` is the unedited
   // player). A player without one (added from real box scores) shows the engine composite.
   if (!isNumber(get(p, "ovr"))) return season.house_value(p["position"], "overall", season.player_overall(p));
@@ -325,12 +325,12 @@ function shown_overall(p, base = null) {
 }
 
 function page_attribute(p, key, value) {
-  // One of his card's attributes as the page shows it (teamdata/shown.py), at his card's position group.
+  // One of his card's attributes as the page shows it (teamdata_js/shown.js), at his card's position group.
   return _shown.attribute(value, ratings_v2.card_group(p["position"], get(p, "role")), key);
 }
 
 function page_overall(p, base = null) {
-  // His overall as the page shows it: shown_overall on the scale ratings are shown on (teamdata/shown.py, where the
+  // His overall as the page shows it: shown_overall on the scale ratings are shown on (teamdata_js/shown.js, where the
   // average player is about a 70). Every view sends this; the game's own rules read shown_overall.
   return _shown.overall(season.shown_overall(p, base));
 }
@@ -413,7 +413,7 @@ function team_display(slug, teams) {
   return truthy(get(t, "fictional")) ? season.fcs_label(slug) : t["name"];
 }
 
-/** Stands in for Python's hash() of a text, which is different in every run of Python: a number from the text alone. */
+/** A hash of a text that is the same in every run: a number from the text alone. */
 function _text_hash(text) {
   let h = 0;
   for (const ch of String(text)) h = (Math.imul(h, 31) + ch.codePointAt(0)) >>> 0;
@@ -643,10 +643,10 @@ function _fill_open_dates(games, teams) {
 function new_season(team_slug, mode = "full", seed = null, fill_open_dates = true, coach = null, career = false, year = 2026,
   schedule = null, league = null, career_id = null, real_polls = true) {
   // A new season from the 2026 schedule, or from `schedule` (a generated later year's games,
-  // sim/schedule_gen.py, keyed by event id). `fill_open_dates` adds a game for teams whose
+  // sim_js/schedule_gen.js, keyed by event id). `fill_open_dates` adds a game for teams whose
   // schedule has an unannounced date (the real 2026 page turns it off: it shows only real games).
-  // `career`: a Coach Career (career.py), which starts from week 1. `year`: a career's later
-  // season (the active league's rosters, offseason.py), which gets no real polls; without a
+  // `career`: a Coach Career (career.js), which starts from week 1. `year`: a career's later
+  // season (the active league's rosters, offseason.js), which gets no real polls; without a
   // generated `schedule` it replays the 2026 games with home and away swapped every other year.
   // `league`: a career from a league file (league_file.check's, already in play through use_league),
   // stored with id `career_id` before the career starts. `real_polls=False`: the preseason poll comes
@@ -658,7 +658,7 @@ function new_season(team_slug, mode = "full", seed = null, fill_open_dates = tru
   const counterparts = season.fcs_map(schedules, teams);
   const fcs_names = {};
   for (const [k, v] of Object.entries(read_json(season.FCS_MAP_FILE))) fcs_names[k] = v["name"];
-  // (Random(None) in Python is seeded from the computer's own randomness: so is this)
+  // (no seed: seeded from the computer's own randomness)
   const rng = new Random(seed === null || seed === undefined ? crypto.getRandomValues(new Uint32Array(1))[0] : seed);
   let games = odict();
   if (schedule !== null && schedule !== undefined) {
@@ -879,8 +879,8 @@ function _order_rows(rows, conf_rows, opp, rank_pos) {
     return [sum(gs.filter((o) => truthy(o["won"])).map(() => 1)), gs.length];
   };
 
-  // (Python walks the group's slugs as a set, in its hash order; here they come in the group's order. Nothing depends
-  // on it: every step answers with a value per slug, or with None whoever is asked first.)
+  // (The group's slugs come in the group's order. Nothing depends on it: every step answers with a value per slug,
+  // or with null whoever is asked first.)
   const metric = (step, group) => {
     const slugs = new Set(group.map((r) => r["slug"]));
     if (step === 0) {

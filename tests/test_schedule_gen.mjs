@@ -1,4 +1,4 @@
-// Generated schedules (sim/schedule_gen.py): 2027 through 2032 from the 2026 history, each one
+// Generated schedules (sim_js/schedule_gen.js): 2027 through 2032 from the 2026 history, each one
 // following the conferences' rules, and a career that rolls from 2026 into a generated 2027.
 // `node tests/test_schedule_gen.mjs`
 import { start, test, run, assert } from "./harness.mjs";

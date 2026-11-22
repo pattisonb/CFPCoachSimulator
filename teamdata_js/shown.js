@@ -14,8 +14,6 @@
 //   it (the worst in the mid 60s, the middle one a 77, the top handful in the 90s). A unit's stored rating spreads wider
 //   than an overall's, so each has its own line: the ninth-best offense reads 87, not 91.
 // - A coach's or a staff member's rating: COACH_KNOTS, the average coach a 70.
-//
-// It was teamdata/shown.py; engine_js/PORTING.md has the rules it was ported by.
 import { round, int, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { game_scale } from "./game_scale.js";
@@ -107,12 +105,12 @@ export function gain(before, after) {
   return overall(after) - overall(before);
 }
 
-// the curve as the file holds it, and the two lines made from it (made once: Python's lru_cache)
+// the curve as the file holds it, and the two lines made from it (made once)
 let curve_of = null, curve_points = null, curve_flipped = null;
 
 export function _curve() {
   // EA's scale to the source scale the sim's ratings sit on (cfb_sim_data/league.json), as its points.
-  // (Python asks coach_career.recruits.model() for it; that is this file, read once.)
+  // (The same file career_js/recruits.js's model() reads; files.js parses it once.)
   const points = read_json("data/recruiting_model.json")["players"]["curve"];
   if (points !== curve_of) {
     curve_of = points;

@@ -11,8 +11,8 @@ const game = await start();
 const season = game.season;
 
 // tests/test_play_log's fingerprint (that file runs its own tests when it is loaded, so it is written out here):
-// five games' scores, stats and drives as Python's json.dumps(sort_keys=True) text, hashed. Whole floats count as
-// whole numbers there (tests/canon.py); a JavaScript number is one kind, so there is nothing to fold.
+// five games' scores, stats and drives as Python's json.dumps(sort_keys=True) text, hashed. 4.0 and 4 are one
+// result: a JavaScript number is one kind, so there is nothing to fold.
 function fingerprint(n = 5) {
   const teams = season.load_teams();
   const slugs = Object.keys(teams).sort();
@@ -42,9 +42,7 @@ const signed2 = (x) => (x < 0 ? "-" : "+") + round(Math.abs(x), 2).toFixed(2);  
 test("morale", () => {
   const base = fingerprint();
   console.log("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: aa5c3b71cb79a711)");
-  // re-recorded when the engine became JavaScript, from the Python engine's own games with whole floats counted as
-  // whole numbers (tests/canon.py: 4.0 sacks is 4); the JavaScript engine gives the same. It is the engine
-  // with game_config EXTRA_TRAITS on (the abilities the engine once never read act)
+  // the engine's own fingerprint with momentum off: the same five games tests/test_play_log.mjs prints
   assert(base === "aa5c3b71cb79a711");
 
   // in-game momentum changes a game and leaves the flag off afterwards

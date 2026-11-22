@@ -1,4 +1,4 @@
-// A transfer-portal entrant's Prospect Profile (prospects.profile through app/api.py). The portal's
+// A transfer-portal entrant's Prospect Profile (prospects.profile through app_js/api.js). The portal's
 // recruiting block shares its year with the class it replaces, so a cache keyed by the year alone
 // served the class's ranks to the portal and the profile failed with a KeyError on the entrant's id.
 // Also checks the next class's profile after the portal, and a former recruit (r20xx id) in the

@@ -4,7 +4,7 @@ import type { Face as FaceSpec } from "../../faces.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
-/** Your reputation for keeping promises (GET /api/season/{id}/office → word; coach_career/word.py). */
+/** Your reputation for keeping promises (GET /api/season/{id}/office → word; career_js/word.js). */
 export interface CoachWord {
   text: string;
   weakest: { name: string; text: string } | null;
@@ -72,7 +72,7 @@ export function Energy({
   );
 }
 
-/** The game's grade words, weakest first (coach_career/programs.py WORD_FLOORS): a word's place fills the bar. */
+/** The game's grade words, weakest first (career_js/programs.js WORD_FLOORS): a word's place fills the bar. */
 const WORDS = ["Weak", "Thin", "Fair", "Solid", "Good", "Strong", "Excellent", "Elite"];
 /** *tune* How many words under your overall word a position group must be before the tooltip names it. */
 const WEAKEST_GAP = 2;

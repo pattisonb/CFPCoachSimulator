@@ -62,7 +62,7 @@ interface Swing {
   record?: string;
 }
 
-/** GET /api/season/{id}/review (sim/season.py season_review): the season so far, or the whole of it once it ends. */
+/** GET /api/season/{id}/review (sim_js/season.js season_review): the season so far, or the whole of it once it ends. */
 interface Review {
   done: boolean;
   current_week: number;

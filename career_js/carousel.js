@@ -10,9 +10,8 @@
 //     league team["ad"] = {"patience": 2-5, "security": 0-100}
 //     state["offseason"]["carousel"] = {"changes": [...], "openings": [...], "you": {...}, "offers": [...], "choice": slug|None}
 //
-// It was coach_career/carousel.py; engine_js/PORTING.md has the rules it was ported by. Modules reached through
-// `modules` (not ported when this was written, or reached there to keep the load free of circles): programs,
-// recruiting, offseason, season. What could not be written literally is listed at the end of this file.
+// Modules reached through `modules` (to keep the load free of circles): programs, recruiting, offseason, season.
+// Notes on standing quirks are at the end of this file.
 import { Random, round, int, sum, sorted, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { read_json, exists } from "../engine_js/files.js";
@@ -21,9 +20,9 @@ import { build_teams } from "../teamdata_js/build_teams.js";
 import { shown } from "../teamdata_js/shown.js";
 import { recruits } from "./recruits.js";
 
-/** Python's str() of a value inside an f-string, for the ones that can be None or a bool ("None", "True"). */
+/** A value inside seed or key text, for the ones that can be null or a boolean ("None", "True": as the seeds have always had them). */
 const pystr = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
-/** `x in coll` for a module's constant that may have been ported as a Set, a list or a dict. */
+/** `x in coll` for a module's constant that may be a Set, a list or a dict. */
 const contains = (coll, x) => (coll instanceof Set ? coll.has(x) : Array.isArray(coll) ? coll.includes(x) : x in coll);
 /** json.loads(json.dumps(o)): a deep copy. */
 const deep = (o) => JSON.parse(JSON.stringify(o));
@@ -142,7 +141,7 @@ export function judge(team, slug, res, year, state = null) {
   return { "goal": g, "met": met, "security": a["security"], "delta": int(round(delta)), "tenure": tenure, "patience": a["patience"] };
 }
 
-/** build_teams.OBSERVED: the file of observed styles (the part of build_teams ported so far may not carry it). */
+/** build_teams.OBSERVED: the file of observed styles (or its usual path, should build_teams not carry it). */
 const observed_path = () => get(build_teams, "OBSERVED", null) || "data/observed_tendencies.json";
 
 export function new_style(rng, lgd, slug) {
@@ -381,7 +380,7 @@ export function market_take(state, entry_id, role, slug, year) {
   let like = get(lgd["teams"][slug]["coaches"], role);
   if (!truthy(like)) {
     const first = Object.values(lgd["teams"]).find((t) => truthy(get(t["coaches"], role)));
-    if (first === undefined) throw new Error("StopIteration");     // no coach in that role anywhere: Python's next() raises
+    if (first === undefined) throw new Error("StopIteration");     // no coach in that role anywhere
     like = first["coaches"][role];
   }
   const coach = deep(like);
@@ -483,7 +482,7 @@ export function run(state) {
     } else if (carousel._rating(hc) >= 80 && get(r, "wins", 0) >= 10 && rng.random() < carousel.NFL_CHANCE) {
       leave(slug, "left for the NFL");
     } else {
-      const u = rng.random();                                   // (drawn before the odds are worked out, as Python's left side is)
+      const u = rng.random();                                   // (drawn before the odds are worked out: the order of the draws is kept)
       const odds = carousel._age(hc, year) >= carousel.RETIRE_FROM
         ? carousel.RETIRE * (1 + Math.max(0, v["tenure"] - 12) / 8) * (1 + Math.max(0, carousel._age(hc, year) - carousel.RETIRE_FROM) / 5)
         : carousel.RETIRE_YOUNG;
@@ -652,7 +651,7 @@ export function _pick_head_coach(state, slug, verdicts, res, filled, rng, year, 
   }
   cands = sorted(cands, (x) => -x[0]);
   let [score, pick, src] = cands[0];
-  for ([score, pick, src] of cands) {                   // (when every candidate declines, the last one stands, as in Python)
+  for ([score, pick, src] of cands) {                   // (when every candidate declines, the last one stands)
     if (src["kind"] === "coordinator" && src["team"] === me && truthy(get(holds || {}, src["role"]))) {
       if (declined !== null && declined !== undefined) declined.push({ "role": src["role"], "name": pick["name"] });
       continue;
@@ -672,7 +671,7 @@ export function _pick_head_coach(state, slug, verdicts, res, filled, rng, year, 
     g["ratings_by_role"] = { [src["role"]]: { ...pick["ratings"] } };
     hire = g;
   }
-  if (!("team" in src)) throw new Error("KeyError: 'team'");     // a generated pick has no team he left: Python raises here too
+  if (!("team" in src)) throw new Error("KeyError: 'team'");     // a generated pick has no team he left
   hist = [...(get(pick, "history") || []), { "year": get(pick, "since") || year, "to": year, "team": src["team"],
     "role": get(src, "role", "head_coach") }];
   Object.assign(hire, { "since": year, "previous_job": src["text"], "history": hist, "team_slug": slug, "coach_id": `${slug}:head_coach:${year}` });
@@ -720,16 +719,11 @@ export const carousel = {
 
 modules.carousel = carousel;
 
-// What is not written as the Python has it (PORTING.md rule 9):
-// - run, step 4: `sorted(set(better), ...)` and `sorted({...}, ...)` walk a set, whose order in Python follows the
-//   strings' hashes (different every run of Python unless PYTHONHASHSEED is set). Here the set keeps the order the
-//   slugs were added in (the openings, then the filled jobs). The two only differ when two programs are exactly as
-//   attractive: then Python's own order is not fixed from one run to the next.
-// - _pick_head_coach: a "generated" pick (no candidate at all) has no `team`; Python raises KeyError building his
-//   history, and this throws there too. The market has always had a candidate.
-// - market_take: Python's `mk["coaches"].remove(e)` removes the first entry equal to `e`; here the entry found by its
-//   id is the one removed (the same entry: the first with that id).
-// - judge: `met` is the last operand of Python's and/or chain (a bool for the results _results gives); the same here.
-// - gauss: Math.log/sin/cos can differ from Python's in the last digit (PORTING.md); every draw here is cut to a whole
-//   rating with int() or only orders candidates, so a difference shows only for a value exactly on a line.
-// - names are lowered with toLowerCase() where Python has str.lower(): the same for every name the game makes.
+// Notes:
+// - run, step 4: the two sorts walk a Set of slugs, which keeps the order the slugs were added in (the openings, then
+//   the filled jobs). That order decides between two programs that are exactly as attractive.
+// - _pick_head_coach: a "generated" pick (no candidate at all) has no `team`, and building his history throws. The
+//   market has always had a candidate.
+// - gauss: Math.log/sin/cos can differ between machines in the last digit (PORTING.md, "Numbers"); every draw here is
+//   cut to a whole rating with int() or only orders candidates, so a difference shows only for a value exactly on a
+//   line.

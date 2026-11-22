@@ -1,4 +1,4 @@
-// GET /api/season/{id}/offseason (coach_career/offseason.py view): the whole offseason as it stands. Every stage reads
+// GET /api/season/{id}/offseason (career_js/offseason.js view): the whole offseason as it stands. Every stage reads
 // from this one object; an action returns it again (or a small result, after which it is read again).
 
 export interface OffStage {

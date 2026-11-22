@@ -1,10 +1,10 @@
 // Program ratings (docs/superpowers/specs/2026-10-26-program-ratings-design.md). This first
 // piece is the market: how many people watch a program, from real home crowds (CFBD, 2023-2025)
 // and TV audiences (Nielsen's published per-team averages, estimated from the crowd where none is
-// published), built by tools/build_program_market.py into data/program_market.json.
+// published), kept in data/program_market.json.
 //
-// Ported from coach_career/programs.py by engine_js/PORTING.md's rules. Every constant, variable and function is on
-// the `programs` namespace and is reached through it, here too. The module's own `get` (a program's metrics) is
+// Every constant, variable and function is on the `programs` namespace and is reached through it, here too. The
+// module's own `get` (a program's metrics) is
 // `programs.get`; the `get` used bare in this file is pyrt.js's dict.get.
 import { round, int, sum, sorted, get, truthy, range } from "../engine_js/pyrt.js";
 import { read_text, exists } from "../engine_js/files.js";
@@ -148,7 +148,7 @@ export function draft_line(year, picks) {
 }
 
 
-// -> [[weight, points, groups], ...] (a generator in Python: nothing is drawn or changed while it runs)
+// -> [[weight, points, groups], ...] (nothing is drawn or changed while it runs)
 export function _pro_lines(lines, year_now) {
   return lines.slice(-programs.PRO_YEARS).map(([y, pts, groups]) =>
     [y > year_now - programs.PRO_RECENT_YEARS ? programs.PRO_RECENT_WEIGHT : 1.0, pts, groups]);
@@ -390,7 +390,7 @@ export function nil_move(team, met, losing, playoff = false) {
 
 
 // ----- School Grades, Phase 1 (docs/superpowers/specs/2026-11-10-school-grades-expansion-design.md): six grades graded
-// on read from data/program_profile.json (tools/build_program_profile.py). Fixed in Phase 1, so nothing goes into a
+// on read from data/program_profile.json. Fixed in Phase 1, so nothing goes into a
 // save; the rating, tiers and market do not read them.
 
 programs.PROFILE = "data/program_profile.json";
@@ -441,7 +441,7 @@ export function profile_rows() {
 }
 
 
-// float("...") of the first word of a text: the number, or null where Python raises ValueError
+// float("...") of the first word of a text: the number, or null when it is not one
 const _FLOAT = /^[+-]?(\d+(_\d+)*\.?(\d+(_\d+)*)?|\.\d+(_\d+)*)([eE][+-]?\d+(_\d+)*)?$/;
 function _float_text(t) {
   if (_FLOAT.test(t)) return Number(t.replaceAll("_", ""));
@@ -653,7 +653,7 @@ export function _tags(slug) {
 export function word_of(v) {
   // The grade word for a 0-100 metric.
   const found = programs.WORD_FLOORS.find(([, f]) => v >= f);
-  if (!found) throw new Error("StopIteration");      // (Python's next() with no default: a value under every floor)
+  if (!found) throw new Error("StopIteration");      // (a value under every floor)
   return found[0];
 }
 

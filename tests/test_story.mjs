@@ -1,4 +1,4 @@
-// His Story (persona.py, spec section 2): the class's stories are a fixed draw from the seed, worked out
+// His Story (persona.js, spec section 2): the class's stories are a fixed draw from the seed, worked out
 // when asked and never stored; shares hold (about 35% of the class, half the four- and five-stars, at most
 // one each); a Package Deal pairs two prospects both ways; a Late Bloomer starts at two or three stars and an
 // Injury Comeback one star under his own, their real stars kept on the prospect; the class ranking stays one
@@ -14,7 +14,7 @@ const persona = game.modules.persona;
 const career = (seed) => season.new_season("ohio-state", "full", seed, undefined, undefined, true);
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 
-// one script in the Python (its sections named in comments): one test here, the sections kept in order
+// one test, its sections named in comments and kept in order
 test("story", () => {
   const st = career(4);
   const rc = st["recruiting"];

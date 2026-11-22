@@ -6,8 +6,6 @@
 // (more for a quarterback) costs extra, and a week he is injured does not count. His personality sets the bar (`BANDS`):
 // the score lands Kept, Bent or Broken, read by the offseason (offseason.portal_odds, Keep Them Home) and shown during the
 // season as a chip (`chip`: On Track, Slipping, Broken).
-//
-// It was coach_career/promises.py; engine_js/PORTING.md has the rules it was ported by.
 import { round, int, sum, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 

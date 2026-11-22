@@ -10,8 +10,6 @@
 // The same scoring powers the live "race" shown during the season and the final results.
 // Calendar: conference awards after championship week (14), the Heisman and the national
 // awards in selection week (16), the postseason awards after the title game (20).
-//
-// Ported from sim/awards.py by engine_js/PORTING.md's rules.
 import { Random, round, sum, cmp, sorted, get, truthy, fmt, floordiv, mod, range } from "../engine_js/pyrt.js";
 import { fmean, pstdev } from "../engine_js/pystat.js";
 import { modules } from "../engine_js/modules.js";
@@ -122,13 +120,13 @@ const COACH_AWARDS = [
   ["Walter Camp Coach of the Year", 0.5, 0.7],
 ];   // (name, weight on wins, weight on surprise)
 
-// ----- what Python has built in ---------------------------------------------------
+// ----- small helpers -------------------------------------------------------------
 
-const dict_get = get;      // the functions below name their own `get` (the stats' get), as the Python does
+const dict_get = get;      // the functions below name their own `get` (the stats' get)
 const has = (d, k) => Object.prototype.hasOwnProperty.call(d, k);
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof Set) && !(v instanceof Map);
 
-/** d[k] where Python's would raise KeyError for a missing key. */
+/** d[k], throwing a KeyError for a missing key. */
 function at(d, k, name) {
   if (!has(d, k)) throw new Error(`KeyError: ${name}[${JSON.stringify(k)}]`);
   return d[k];
@@ -397,7 +395,7 @@ export class Pool {
     return p["games"] >= share * p["team_games"] && p["team_games"] >= 3;
   }
 
-  /** `cond` is Python's **cond: {conference, roles (a Set), classes (a Set), unit}. */
+  /** `cond` is the conditions as one object: {conference, roles (a Set), classes (a Set), unit}. */
   by_group(group, cond = {}) {
     // the players with a score in the group who played enough, listed once per group
     if (!has(this._eligible, group)) {

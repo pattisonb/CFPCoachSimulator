@@ -24,9 +24,9 @@ type UnitKey = "offense" | "defense" | "special";
 /** The panel: the roles as lists beside the player's card, or the unit lined up on a field. */
 type View = "formation" | "list";
 const VIEWS: View[] = ["formation", "list"];
-/** The chart's units come in this order (sim/season.py DEPTH_ROWS). */
+/** The chart's units come in this order (sim_js/season.js DEPTH_ROWS). */
 const UNITS: UnitKey[] = ["offense", "defense", "special"];
-/** The most players the chart sends for a role (sim/season.py depth_chart_view). */
+/** The most players the chart sends for a role (sim_js/season.js depth_chart_view). */
 const SHOWN = 6;
 
 /** *tune* A team color this close to black (its contrast with black) counts as near-black for the cards. */

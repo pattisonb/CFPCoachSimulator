@@ -1,10 +1,4 @@
-// engine/game.py in JavaScript (see PORTING.md).
-//
-// Run one full game and return a JSON-ready result.
-//
-// This replaces the original `start_game.py`, which kept the teams as module globals and
-// printed everything. The half, overtime, kickoff and scoring logic here follow the
-// original; the differences are listed in docs/HOW_IT_WORKS.md.
+// Run one full game and return a JSON-ready result: the halves, overtime, kickoffs and scoring.
 import { random, round, get, isNumber, truthy, int, floordiv, mod } from "./pyrt.js";
 import { drive_functions } from "./drive_functions.js";
 import { play_functions } from "./play_functions.js";
@@ -36,8 +30,8 @@ function _clear_dict(d) {
 }
 
 /**
- * float(value) as apply_sliders uses it: the number, or undefined where Python raises TypeError or
- * ValueError (None, a list, a dict, text that is not a number).
+ * float(value) as apply_sliders uses it: the number, or undefined for a value that is not one
+ * (null, a list, a dict, text that is not a number).
  */
 function _float(value) {
   if (typeof value === "number") return value;
@@ -113,7 +107,7 @@ export class GameSim {
     }
     this.home = GameSim._make_team(home_data);
     this.away = GameSim._make_team(away_data);
-    this.key = new Map([[this.home, "home"], [this.away, "away"]]);     // Python keys this by id(team)
+    this.key = new Map([[this.home, "home"], [this.away, "away"]]);     // keyed by the team object itself
     this.score = { home: 0, away: 0 };
     this.quarter_scores = { home: [0, 0, 0, 0], away: [0, 0, 0, 0] };
     this.ot_periods = [];
@@ -406,7 +400,7 @@ export class GameSim {
       [team.lead, team.half, team.in_overtime] = [team_lead, this.half, this.in_overtime];
     }
     // clutch time for the abilities that answer it (the fourth quarter or overtime, within one score)
-    play_functions.CLUTCH_NOW[0] = Boolean(truthy(cfg.EXTRA_TRAITS) && Math.abs(lead) <= cfg.CLUTCH_MARGIN
+    play_functions.CLUTCH_NOW[0] = Boolean(Math.abs(lead) <= cfg.CLUTCH_MARGIN
       && (this.in_overtime || (this.half === 2 && seconds <= cfg.CLUTCH_SECONDS)));
     const [play_ran, result, yardline, seconds_left] = drive_functions.sim_drive(
       offense, defense, 1, 10, start_yardline, seconds, hurrying, false,
@@ -437,7 +431,7 @@ export class GameSim {
 
     while (this.seconds > 0) {
       const [offense, defense] = [driving, this.other(driving)];
-      // no hurry flag: pace is decided per snap by engine/situation.py
+      // no hurry flag: pace is decided per snap by engine_js/situation.js
       const [play_ran, result, yardline, seconds_left, drive] = this._run_drive(
         offense, start_yardline, false, this.seconds,
       );
@@ -548,7 +542,7 @@ export class GameSim {
     return out;
   }
 
-  /** Port of the original scoring check: points implied by stats vs. actual. */
+  /** The scoring check: points implied by stats vs. actual. */
   _verify(team) {
     const totals = {};
     for (const p of [...team.offense, ...team.defense]) {
@@ -654,7 +648,7 @@ export class GameSim {
   }
 }
 
-/** Not part of the game: where Python has time.perf_counter() and uuid.uuid4().hex[:12]. */
+/** Not part of the game: a timer, and a 12-character id for a result. No result depends on either. */
 const _now_ms = () => (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now());
 let _id_count = 0;
 function _game_id() {
@@ -680,7 +674,7 @@ export function simulate_game(home_data, away_data, slider_overrides = null, see
     cfg.stat_rng.seed(seed);
     cfg.injury_rng.seed(seed + 7919);
   } else {
-    // Python seeds from the system here (and leaves `random` as the process found it): the clock stands in.
+    // no seed given: the clock stands in for one
     const system = Date.now();
     random.seed(system);
     cfg.stat_rng.seed(system);

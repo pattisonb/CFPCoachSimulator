@@ -62,7 +62,7 @@ interface Rivalry {
 
 type Tab = "scores" | "rivalries";
 type Filter = "all" | "ranked" | "conference";
-/** *tune* The season's last week (sim/season.py: the national championship). */
+/** *tune* The season's last week (sim_js/season.js: the national championship). */
 const LAST_WEEK = 20;
 const DAY = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
