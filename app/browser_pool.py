@@ -1,19 +1,19 @@
 """The published site's game pool: a week's games played on several cores at once.
 
 In the browser the game runs in one Web Worker (ui/public/worker.js), so a week's ninety-odd games were played one
-after another on one core. Here they are shared with helper workers (ui/public/sim-worker.js), each a second copy of
-the game that only plays games: the same `season._sim_one` on the same job, so every result is the one the single
-worker would have made, and `season._run_games` applies them in schedule order as it always has. This worker plays
-games too while it waits. With no helper up (a browser without shared memory, a small machine, the first week before
-they have started) or a helper that stops answering, the games are played here, as before.
+after another on one core. Here they are shared with helper workers (ui/public/sim-worker.js), each of which only
+plays games: the same job (season._sim_one's) on the same JavaScript (sim_js/game_job.js), so every result is the one
+this worker would have made, and `season._run_games` applies them in schedule order as it always has. This worker
+plays games too while it waits. With no helper up (a browser without shared memory, a small machine) or a helper that
+stops answering, or for a job a helper hands back, the games are played here.
 
-`bridge` is the worker's side (JavaScript, the module "sim_bridge"): start(jobs, n, league path) -> how many helpers
-took the week; claim() -> the next game for this worker, or -1; pop(wait ms) -> a game a helper finished, or -1;
-failed(i); result(i) -> its pickled result; abandon() -> the games the helpers still owe when they have gone quiet.
+`bridge` is the worker's side (JavaScript, the module "sim_bridge"): start(jobs as JSON, n, league path) -> how many
+helpers took the week; claim() -> the next game for this worker, or -1; pop(wait ms) -> a game a helper finished, or
+-1; failed(i); result(i) -> its result as JSON; abandon() -> the games the helpers still owe when they have gone quiet.
 """
 from __future__ import annotations
 
-import pickle
+import json
 import random
 
 MIN_JOBS = 4          # *tune* fewer games than this are played here: sharing them costs more than it saves
@@ -38,7 +38,7 @@ class BrowserPool:
         helpers = 0
         if len(jobs) >= MIN_JOBS:
             try:
-                helpers = int(b.start(pickle.dumps(jobs), len(jobs), _league_path()))
+                helpers = int(b.start(json.dumps(jobs), len(jobs), _league_path()))
             except Exception:  # noqa: BLE001 - the bridge is an optimization: without it the games are played here
                 helpers = 0
         if not helpers:
@@ -50,7 +50,7 @@ class BrowserPool:
         def taken(i: int):
             if b.failed(i):                  # the helper could not play it (or its result did not fit): played here
                 return self._here(fn, jobs[i])
-            return pickle.loads(b.result(i).to_bytes())
+            return json.loads(b.result(i))
 
         while True:
             i = int(b.claim())

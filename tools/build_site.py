@@ -34,6 +34,7 @@ sys.path.insert(0, str(ROOT))
 
 PACKAGES = ("sim", "coach_career", "teamdata", "app")     # their .py files only
 ENGINE = "engine_js"       # the game engine, which is JavaScript: bundled into one file the workers load (engine.js)
+JS_DIRS = (ENGINE, "sim_js")    # the game's JavaScript so far (the engine and the season code ported onto it)
 # the data a career reads through a season, its offseason and the next season's first week
 DATA_FILES = (
     "data/engine_teams.json", "data/player_potential.json", "data/recruiting_model.json", "data/history/polls.json",
@@ -72,7 +73,8 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
     # the preset faces go with the rosters (the player's ask): a face file holds face parts only, keyed by player id
     # and coach name, and a generic build's scrub renames those keys and the file with everything else
     shutil.copytree(ROOT / "cfb_sim_data", root / "cfb_sim_data")
-    shutil.copytree(ROOT / ENGINE, root / ENGINE)       # the staged Python asks it for games too (sim/engine.py, through Node)
+    for d in JS_DIRS:                                   # the staged Python asks it for games too (sim/engine.py, through Node)
+        shutil.copytree(ROOT / d, root / d)
     (root / "data" / "history").mkdir(parents=True)
     for p in sorted((ROOT / "data").glob("*.json")):
         if f"data/{p.name}" not in GENERATED:

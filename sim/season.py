@@ -1029,8 +1029,20 @@ def _update_polls_after_week(state: dict, teams: dict, week: int) -> None:
 _TEAMS: dict = {}
 
 
+_TEAMS_PATH: Optional[str] = None      # the teams file this process's games are played in (_init, _use)
+
+
+def _use(path: str) -> None:
+    """The league this process's games are played in. The games themselves are played in JavaScript, which reads the
+    file itself (sim/engine.py sim_one); Python reads it only for a job JavaScript hands back (_sim_one_here)."""
+    global _TEAMS, _TEAMS_PATH
+    if path != _TEAMS_PATH:
+        _TEAMS, _TEAMS_PATH = {}, path
+
+
 def _init(path: str) -> None:
-    global _TEAMS
+    global _TEAMS, _TEAMS_PATH
+    _TEAMS_PATH = path
     # Pool workers ignore Ctrl-C; the server stops them on shutdown (keeps tracebacks out of the
     # console). In-process sims (SIM_WORKERS=1, as on Render) run on the server's job thread,
     # where Python refuses signal.signal, so only a process's main thread sets it.
@@ -1363,7 +1375,25 @@ EXTERNAL_POOL = None   # set in the browser (app/browser_pool.py): a pool whose 
 
 
 def _sim_one(args: tuple) -> dict:
+    """One game job. JavaScript plays it whole (sim_js/game_job.js: both teams as this week has them, the game, the
+    result boiled down); a job with this season's position changes comes back here, since placing a moved player
+    needs the card's formulas, which are still Python."""
+    from sim import engine
+    path = _TEAMS_PATH or str(_league_path)
+    if not any(e and "__positions__" in e for e in args[9]):
+        try:
+            return engine.sim_one(path, list(args))
+        except engine.NotHere:
+            pass
+    return _sim_one_here(args)
+
+
+def _sim_one_here(args: tuple) -> dict:
+    """The job with its teams prepared in Python and only the game itself played in JavaScript."""
+    global _TEAMS
     from sim.engine import simulate_game
+    if not _TEAMS:
+        _TEAMS = json.loads(Path(_TEAMS_PATH or str(_league_path)).read_text(encoding="utf-8"))["teams"]
     event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args[:12]
     earned = args[12] if len(args) > 12 else (None, None)
     home_team = _with_earned(_game_team(home, form[0], edits[0], morale[0], depth[0], home_out), earned[0])
@@ -1396,12 +1426,12 @@ def _make_pool() -> Optional[Pool]:
     """A worker pool, or None to simulate in this process."""
     n = sim_workers()
     if n <= 1:
-        _init(str(_league_path))
+        _use(str(_league_path))
         return None
     # spawned, never forked: a forked worker inherits the server's open connections and keeps
     # a browser's keep-alive socket alive after the server closes it, so the page's next
     # request goes to a socket nobody reads (tests/test_pool.py)
-    return multiprocessing.get_context("spawn").Pool(processes=n, initializer=_init, initargs=(str(_league_path),))
+    return multiprocessing.get_context("spawn").Pool(processes=n, initializer=_use, initargs=(str(_league_path),))
 
 
 Reporter = Callable[[str, Optional[int], Optional[int]], None]   # (stage text, games done, games total)
@@ -1519,14 +1549,12 @@ def _run_games(state: dict, game_ids: list[str], pool: Optional[Pool] = None, re
 
     if pool is None and EXTERNAL_POOL is not None:
         # the published site: the browser's helper workers play the week's games beside this one (app/browser_pool.py)
-        if not _TEAMS:
-            _init(str(_league_path))
+        _use(str(_league_path))
         collect(EXTERNAL_POOL.imap_unordered(_sim_one, jobs, chunksize=1))
     elif pool is not None:
         collect(pool.imap_unordered(_sim_one, jobs, chunksize=2))
     elif sim_workers() <= 1:
-        if not _TEAMS:
-            _init(str(_league_path))
+        _use(str(_league_path))
         collect(_sim_one(job) for job in jobs)
     else:
         with _make_pool() as p:

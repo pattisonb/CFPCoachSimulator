@@ -134,19 +134,19 @@ async function fetchZip(version, loud) {
 }
 
 // ---- a week's games on several cores ----------------------------------------------------------------------------
-// Helper workers (sim-worker.js), each a second copy of the game that only plays games. Python hands a week's jobs to
+// Helper workers (sim-worker.js), each the JavaScript that plays a game and nothing else. Python hands a week's jobs to
 // `simBridge` (the module "sim_bridge"; app/browser_pool.py says what each call is for) and plays games itself
 // meanwhile. This worker is inside a Python call for the whole week and cannot hear messages, so the helpers and it
 // share two buffers (sim-worker.js lays out the control one): that needs the page to be cross-origin isolated
 // (vercel.json's two headers), and without it, or on a small machine, there are no helpers and nothing changes.
-const SIM_HELPERS_MAX = 3;           // *tune* the most helpers (each is a second copy of the game: some 250 MB of memory)
+const SIM_HELPERS_MAX = 3;           // *tune* the most helpers (each holds the league's teams: some 100 MB of memory)
 const SIM_SPARE_CORES = 2;           // *tune* cores left alone: this worker's and the page's
 // *tune* helpers by the memory the device says it has (Chrome only, and it never says more than 8): [at least GB, helpers]
-const SIM_BY_MEMORY = [[8, 3], [4, 1], [0, 0]];
+const SIM_BY_MEMORY = [[8, 3], [4, 2], [0, 0]];
 const SIM_HELPERS_UNKNOWN_MEMORY = 2;   // *tune* ... and where the browser does not say
 const SIM_DATA_BYTES = 24 << 20;     // room for a week's results (some 45 KB a game)
 const SIM_MAX_GAMES = 400;
-const SIM_START_MS = 2500;           // *tune* how long after a career is first asked for the first helper starts
+const SIM_START_MS = 500;            // *tune* how long after a career is first asked for the first helper starts (they start at once)
 const S_GEN = 0, S_NEXT = 2, S_ALLOC = 3, S_DONE = 4, S_READY = 8, S_TABLE = 32;
 const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev" };
 
@@ -175,11 +175,12 @@ function simStartHelpers() {
     sims.workers.push(helper);
     w.onmessage = (e) => { if (e.data.kind === "ready") startOne(k + 1); else if (e.data.kind === "failed") console.warn("sim helper:", e.data.message); };
     w.onerror = (e) => console.warn("sim helper:", e.message);
-    w.postMessage({ kind: "init", version: sims.version, me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer });
+    w.postMessage({ kind: "init", me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer });
   };
   setTimeout(() => startOne(0), SIM_START_MS);
 }
 
+const simDecoder = new TextDecoder();
 const simStatus = (i) => Atomics.load(sims.ctrl, S_TABLE + 3 * i);
 
 const simBridge = {
@@ -188,7 +189,6 @@ const simBridge = {
     if (!sims.ctrl || sims.broken || n > SIM_MAX_GAMES) return 0;
     const ready = sims.workers.filter((h) => Atomics.load(sims.ctrl, S_READY + h.me) === 1);
     if (!ready.length) return 0;
-    const bytes = jobs.toJs();
     const stat = pyodide.FS.stat(path);
     const sig = `${path}:${stat.size}:${+stat.mtime}`;
     sims.gen += 1;
@@ -200,10 +200,10 @@ const simBridge = {
     Atomics.store(sims.ctrl, S_DONE, 0);
     Atomics.store(sims.ctrl, S_GEN, sims.gen);
     for (const h of ready) {
-      // a career's own league is a file only this worker has: its bytes go with the first week played in it
-      const league = { path, sig, bytes: h.league === sig || !path.includes("/data/leagues/") ? null : pyodide.FS.readFile(path) };
+      // the league's teams file is this worker's: its bytes go with the first week a helper plays in it
+      const league = { path, sig, bytes: h.league === sig ? null : pyodide.FS.readFile(path) };
       h.league = sig;
-      h.worker.postMessage({ kind: "jobs", gen: sims.gen, n, jobs: bytes, league });
+      h.worker.postMessage({ kind: "jobs", gen: sims.gen, n, jobs, league }, league.bytes ? [league.bytes.buffer] : []);
     }
     return ready.length;
   },
@@ -229,7 +229,7 @@ const simBridge = {
   failed: (i) => simStatus(i) === 3,
   result(i) {
     const at = Atomics.load(sims.ctrl, S_TABLE + 3 * i + 1), len = Atomics.load(sims.ctrl, S_TABLE + 3 * i + 2);
-    return sims.data.slice(at, at + len);
+    return simDecoder.decode(sims.data.slice(at, at + len));      // (a copy: text cannot be read straight from shared memory)
   },
   // The helpers have gone quiet: they are let go for good, and the games they still held come back to Python.
   abandon() {
@@ -263,7 +263,16 @@ async function start(init) {
   // the game engine is JavaScript (engine_js/, bundled as engine.js): the Python asks it for games through this
   // module (sim/engine.py), JSON text each way
   importScripts("./engine.js");
-  pyodide.registerJsModule("js_engine", { call: (fn, args) => JSON.stringify(self.EngineJS.api[fn](...JSON.parse(args))) });
+  self.EngineJS.api.set_reader((path) => pyodide.FS.readFile(path, { encoding: "utf8" }));     // a league's teams file
+  pyodide.registerJsModule("js_engine", {
+    call: (fn, args) => {
+      try { return JSON.stringify(self.EngineJS.api[fn](...JSON.parse(args))); }
+      catch (err) {
+        if (err instanceof self.EngineJS.api.NotHere) return '{"__not_here__":true}';      // a job the Python plays
+        throw err;
+      }
+    },
+  });
   pythonUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
   const [zip] = await Promise.all([zipping, pyodide.loadPackage("lzma")]);   // Python's xz reader is an add-on (70 KB)

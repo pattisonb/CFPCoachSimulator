@@ -5,6 +5,7 @@ import { cfg } from "./game_config.js";
 import { personnel } from "./personnel.js";
 import { drive_functions } from "./drive_functions.js";
 import { game, simulate_game } from "./game.js";
+import * as game_job from "../sim_js/game_job.js";
 
 /** One game. `want_log`: the game's play log rides along as `play_log` (Clear Mode's big moments read it). */
 export function play(home, away, sliders = null, seed = null, venue = "home", momentum = false, want_log = false) {
@@ -74,4 +75,29 @@ export function formations(team_data) {
   };
 }
 
-export const api = { play, config, formations };
+// ---- whole game jobs (sim_js/game_job.js) ----
+// The league a job is played in is a teams file the caller names by [path, signature]; `read` gets its text (Node's
+// fs on a computer, the Python file system or a message's bytes in the browser). Two are kept: the built-in league
+// and a career's own.
+let read = null;
+const leagues = new Map();
+
+export function set_reader(fn) { read = fn; }
+
+function league_teams([path, sig]) {
+  const key = `${path}|${sig}`;
+  let teams = leagues.get(key);
+  if (!teams) {
+    teams = JSON.parse(read(path, sig))["teams"];
+    if (leagues.size >= 2) leagues.delete(leagues.keys().next().value);
+    leagues.set(key, teams);
+  }
+  return teams;
+}
+
+/** One game job, as season._run_games builds it, in the league named. Throws NotHere for a job only Python can play. */
+export function sim_one(league, job) {
+  return game_job._sim_one(league_teams(league), job);
+}
+
+export const api = { play, config, formations, sim_one, set_reader, NotHere: game_job.NotHere };

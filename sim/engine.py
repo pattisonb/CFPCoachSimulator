@@ -57,11 +57,18 @@ def _stop() -> None:
 atexit.register(_stop)
 
 
+class NotHere(Exception):
+    """A game job the JavaScript does not play (sim_js/game_job.js NotHere): the caller plays it the older way."""
+
+
 def call(fn: str, *args):
     """One call of the engine's API (engine_js/api.js) by name."""
     js = _in_browser()
     if js is not None:
-        return json.loads(js.call(fn, json.dumps(args)))
+        out = json.loads(js.call(fn, json.dumps(args)))
+        if isinstance(out, dict) and out.get("__not_here__"):
+            raise NotHere(fn)
+        return out
     with _lock:
         proc = _node["proc"]
         if proc is None or _node["pid"] != os.getpid() or proc.poll() is not None:     # none yet, a forked copy, or it died
@@ -79,6 +86,8 @@ def call(fn: str, *args):
         _node["proc"] = None
         raise RuntimeError(f"the engine (node {BRIDGE.name}) stopped without an answer; is Node installed?")
     reply = json.loads(line)
+    if reply.get("not_here"):
+        raise NotHere(fn)
     if not reply.get("ok"):
         raise RuntimeError(f"engine.{fn}: {reply.get('error')}")
     return reply["result"]
@@ -88,6 +97,13 @@ def simulate_game(home_data: dict, away_data: dict, slider_overrides: Optional[d
                   venue: str = "home", momentum: bool = False, play_log: bool = False) -> dict:
     """One game (engine_js/game.js simulate_game). `play_log`: the game's play log comes back as r["play_log"]."""
     return call("play", home_data, away_data, slider_overrides, seed, venue, bool(momentum), bool(play_log))
+
+
+def sim_one(league_path: str, job: list) -> dict:
+    """One whole game job (season._run_games builds them) in the league whose teams file is `league_path`: the teams
+    prepared, the game played and the result boiled down, all in JavaScript. Raises NotHere for a job it leaves to Python."""
+    st = os.stat(league_path)
+    return call("sim_one", [league_path, f"{st.st_size}:{st.st_mtime_ns}"], job)
 
 
 def _load() -> dict:
