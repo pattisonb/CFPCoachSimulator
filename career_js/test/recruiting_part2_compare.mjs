@@ -107,6 +107,16 @@ modules.persona = {};
 for (const name of ["home_of", "story_interest", "pitch_mult", "story_mult", "twist_mult", "offer_mult", "counts_as_priority"]) {
   modules.persona[name] = replay(`persona.${name}`);
 }
+// story_interest's last argument (the pulls' sum) carries Math.exp's last digit: it is checked close, not keyed, and the
+// answer moves by the same last digit
+modules.persona.story_interest = (state_, slug, pid, base) => {
+  const key = `persona.story_interest(${[state_, slug, pid].map(canon).join(",")})`;
+  if (!(key in table)) throw new Error(`a call the Python did not make: ${key}`);
+  const [py_base, py_out] = table[key];
+  if (Math.abs(py_base - base) > 1e-13 * Math.max(1, Math.abs(py_base))) throw new Error(`story_interest's base: py ${py_base} | js ${base}`);
+  asked++;
+  return py_out + (base - py_base);
+};
 modules.offseason = { GROUP: setup.offseason.GROUP, TARGET: setup.offseason.TARGET, UNDERCLASS_ELIGIBLE: dec(setup.offseason.UNDERCLASS_ELIGIBLE),
   season_facts: replay("offseason.season_facts") };
 modules.season = { load_teams: () => setup.teams, _records: replay("season._records"), rank_map: replay("season.rank_map"), _is_p4: replay("season._is_p4") };

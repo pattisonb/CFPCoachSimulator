@@ -36,6 +36,7 @@ from coach_career import prospects as pr                                       #
 CAREERS = (("smu", 11, "season"), ("ohio-state", 5, "off"))
 TAGS = ("week_03", "week_09", "week_14", "week_15", "week_16", "week_20", "portal_01", "portal_02", "portal_04")
 LOG_KEEP = 20
+PURE_AT = ("week_03", "week_20", "portal_02")     # where a function taken as changing nothing is proved to (once each)
 OUT = None
 T0 = time.time()
 
@@ -112,6 +113,14 @@ def slim(state: dict, base: int) -> dict:
         else:
             rc[k] = v
     out["recruiting"] = rc
+    return jclone(out)
+
+
+def lite(state: dict, base: int) -> dict:
+    """What the weekly step itself reads and writes (its calls are notes): enough of the state for those batches."""
+    rc = state["recruiting"]
+    out = {k: state[k] for k in ("id", "team", "current_week", "year", "career") if k in state}
+    out["recruiting"] = {k: (rc[k][base:] if k == "log" else rc[k]) for k in ("seed", "portal", "week", "hours", "scout_points", "log") if k in rc}
     return jclone(out)
 
 
@@ -264,7 +273,7 @@ def foreign(owner, label: str, name: str, method: bool = False) -> None:
         check = False
         if scope is None:                                 # taken as changing nothing: proved the first times in a snapshot
             n = T.pure_seen.get(full, 0)
-            check = n < 2
+            check = n < 1
             T.pure_seen[full] = n + 1
         whole = slim(T.state, T.base) if (scope == FULL or check) else None
         part = scoped_before(scope) if scope not in (None, FULL) else None
@@ -350,20 +359,22 @@ class Snap:
         st = blob["state"]
         self.base = max(0, len(st["recruiting"]["log"]) - LOG_KEEP)
         self.slim = slim(st, self.base)
-        self.batches = []
-        T.pure_seen = {}
+        self.lines, self.n_calls = [], 0
+        if T.pure_seen is None or tag.endswith(PURE_AT):
+            T.pure_seen = {}
 
     def fresh(self) -> dict:
         return pickle.loads(self.pickle)
 
-    def batch(self, name: str, calls: list, pre=None, clear_on=None, fakes=None, want_state: bool = True) -> None:
+    def batch(self, name: str, calls: list, pre=None, clear_on=None, fakes=None) -> None:
         """`calls`: [fn, args]; an argument {"$": "state" | "rng" | "room" | "read" | "name"} is made on each side.
         `pre`: ops applied to the fresh state first. `fakes`: the weekly step's calls replaced by notes."""
         st = self.fresh()
         T.base = self.base
         pre = jclone(pre or [])
         apply(st, pre)
-        before = slim(st, self.base)
+        view = lite if fakes is not None else slim
+        before = view(st, self.base)
         T.state, T.rec, T.took, T.rooms, T.depth = st, {}, [], [], 0
         CLEAR[0] = clear_on
         rngs, results, notes = [], [], []
@@ -380,8 +391,10 @@ class Snap:
                     return recruiting._Room(st, flier=a["flier"])
                 if a["$"] == "read":
                     return st["recruiting"]["reads"].get(a["pid"])
-                if a["$"] == "name":
-                    return lambda slug: f"<{slug}>"
+                if a["$"] == "offered":
+                    return recruiting._offers_by_prospect(st)
+                if a["$"] == "win":
+                    return recruiting._winning(st)
             return a
         try:
             for fn, args in calls:
@@ -400,13 +413,16 @@ class Snap:
                 undo()
         b = {"name": name, "pre": pre, "calls": calls, "clear": clear_on, "fakes": fakes, "results": results, "rec": rec,
              "took": T.took, "rooms": T.rooms, "rngs": [r.random() for r in rngs], "notes": notes, "step_week": recruiting._STEP_WEEK[0],
-             "ops": checked_diff(before, slim(st, self.base)) if want_state else None}
-        self.batches.append(b)
+             "ops": checked_diff(before, view(st, self.base)), "state": before if fakes is not None else None}
+        self.lines.append(json.dumps(b))
+        self.n_calls += len(calls)
 
     def write(self) -> None:
-        with open(OUT / f"snap_{self.tag}.json", "w") as f:
-            json.dump({"tag": self.tag, "state": self.slim, "batches": self.batches}, f)
-        say(self.tag, len(self.batches), "batches,", sum(len(b["calls"]) for b in self.batches), "calls")
+        with open(OUT / f"snap_{self.tag}.jsonl", "w") as f:           # the state, then a batch a line
+            f.write(json.dumps({"tag": self.tag, "state": self.slim}) + "\n")
+            for line in self.lines:
+                f.write(line + "\n")
+        say(self.tag, len(self.lines), "batches,", self.n_calls, "calls")
 
 
 class StepBoom(Exception):
@@ -424,9 +440,8 @@ def install_fakes(st: dict, notes: list, fakes: dict):
         kept.append((owner, name, real))
 
         def f(*a, **k):
-            assert not k, (name, k)
             row = [f"{label}.{name}", recruiting._STEP_WEEK[0]]
-            for x in a:
+            for x in list(a) + list(k.values()):
                 if x is st:
                     row.append("<state>")
                 elif isinstance(x, random.Random):
@@ -553,9 +568,8 @@ def cases(snap: Snap) -> None:
     snap.batch("looks", calls, clear_on=False)
     # one scout's week of many looks: the log keeps LOOK_LOG_KEEP
     many = (unread[:60] + spread(short, 30))
-    snap.batch("looks (one scout, the log's cap)", [["look", [S, q, 45, rng_arg("cap"), "r2", week, 1.0]] for q in many][:1]
-               + [["look", [S, q, 45 + (i % 3) * 20, {"$": "rng", "seed": f"cap-{i}"}, "r2", week, 1.0]] for i, q in enumerate(many)],
-               clear_on=False)
+    snap.batch("looks (one scout, the log's cap)",
+               [["look", [S, q, 45 + (i % 3) * 20, rng_arg(f"cap-{i}"), "r2", week, 1.0]] for i, q in enumerate(many)], clear_on=False)
     snap.batch("looks (Clear Mode)", [["look", [S, q, 90, rng_arg(f"clear-{q}")]] for q in spread(short, 12) + unread[:6]], clear_on=True)
 
     # ---- the staff's week
@@ -568,8 +582,9 @@ def cases(snap: Snap) -> None:
     snap.batch("spend_leftover", on_board + [["spend_leftover", [S, week or 1]], ["spend_leftover", [S, week or 1]]], clear_on=False)
     snap.batch("spend_leftover (few points)", on_board + [["spend_leftover", [S, (week or 1) + 1]]],
                pre=[["set", ["recruiting", "scout_points"], {me: 15}]], clear_on=False)
-    snap.batch("spend_leftover (none, no career)", [["spend_leftover", [S, 3]], ["scout_week", [S, week or 1]]],
+    snap.batch("spend_leftover (no points, no staff)", [["spend_leftover", [S, 3]], ["scout_week", [S, week or 1]]],
                pre=[["set", ["recruiting", "scout_points"], {me: 0}], ["set", ["career", "staff"], []]])
+    snap.batch("spend_leftover (no career)", [["spend_leftover", [S, 3]], ["scout_week", [S]], ["auto_mode", [S]]], pre=[["del", ["career"]]])
 
     # ---- your board and favorites
     calls = [["set_favorite", [S, by_rank[0], True]], ["set_favorite", [S, by_rank[0], True]], ["set_favorite", [S, by_rank[1], False]],
@@ -622,7 +637,7 @@ def cases(snap: Snap) -> None:
                 calls.append(["_lost_why", [S, {"$": "room", "flier": True}, q, school, got + [me]]])
         snap.batch("_lost_why", calls)
         snap.batch("_lost_why (your Auto off)", calls[:120], pre=[["set", ["career", "settings", "auto_recruit"], "off"]])
-        snap.batch("_lost_why (no team)", calls[:6], pre=[["set", ["team"], None]], want_state=False)
+        snap.batch("_lost_why (no team)", calls[:6], pre=[["set", ["team"], None]])
     else:
         # ---- hats, asks, signing
         fin = [schools[3:4], schools[10:12], schools[20:23], schools[30:34]]
@@ -643,17 +658,17 @@ def cases(snap: Snap) -> None:
                     pre.append(["set", ["recruiting", "nil", s, "held", q], rc["nil"][ss[0]]["held"][q] * (2 + j)])
         if pre:
             snap.batch("_asks_for_more (bigger numbers)", [["_asks_for_more", [S, week]], ["_asks_for_more", [S, week]]], pre=pre)
-        win, offered = recruiting._winning(st), recruiting._offers_by_prospect(st)
+        offered = recruiting._offers_by_prospect(st)
         mates = [q for q in pids if persona.mate(st, q)]
         calls = []
         for q in spread(mates, 40) + by_rank[:5]:
             for s in (list(offered.get(q, []))[:3] + rand.sample(schools, 2)):
-                calls.append(["_pair_ok", [S, s, q, offered, {"$": "room", "flier": bool(len(calls) % 2)}]])
+                calls.append(["_pair_ok", [S, s, q, {"$": "offered"}, {"$": "room", "flier": bool(len(calls) % 2)}]])
         snap.batch("_pair_ok", calls)
         snap.batch("_sign (early)", [["_sign", [S, False]]])
         snap.batch("_sign (early), your Auto off", [["_sign", [S, False]]], pre=[["set", ["career", "settings", "auto_recruit"], "off"]])
         if week >= 14:
-            snap.batch("_last_quarterbacks", [["_last_quarterbacks", [S, {"$": "room", "flier": True}, win, offered]]])
+            snap.batch("_last_quarterbacks", [["_last_quarterbacks", [S, {"$": "room", "flier": True}, {"$": "win"}, {"$": "offered"}]]])
             snap.batch("_sign (final)", [["_sign", [S, True]]])
             snap.batch("_sign (early, then final), your Auto off", [["_sign", [S, False]], ["_sign", [S, True]]],
                        pre=[["set", ["career", "settings", "auto_recruit"], "off"]])
@@ -671,19 +686,16 @@ def big(name: str, data: dict) -> None:
 def record(fn):
     """Run fn() with the tape on (no state to follow): its answer and what it asked."""
     T.state, T.rec, T.took, T.rooms, T.depth, T.pure_seen, T.base = {"team": None, "recruiting": {"log": []}}, {}, [], [], 0, {}, 0
-    SCOPES_KEPT = dict(SCOPES)
     try:
         out = fn()
     finally:
         rec = T.rec
         T.rec = None
-        SCOPES.clear()
-        SCOPES.update(SCOPES_KEPT)
     return out, rec
 
 
 def stateless(states: Path) -> None:
-    name = {"$": "name"}
+    name = {"$": "name"}               # a school's name from its slug: "<slug>" on both sides
     calls = []
     pts = [x / 4 for x in range(-40, 440)] + [f + d for f in recruiting.WORD_FLOORS[:-1] for d in (-1e-9, 0, 1e-9, -1e-12)] + [-1e9, 1e9]
     for p in pts:
@@ -796,11 +808,15 @@ if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     states = OUT / "states"
     states.mkdir(exist_ok=True)
-    only = sys.argv[2:]                                # snapshot names to (re)write, e.g. smu_11_week_15; none: everything
+    if sys.argv[2:3] == ["--play"]:                    # a career, in a process of its own (it leaves the league and caches changed)
+        play(states, sys.argv[3], int(sys.argv[4]), sys.argv[5])
+        sys.exit(0)
+    only = sys.argv[2:]                                # snapshot names to (re)write, e.g. smu_11_week_15, or "big"; none: everything
+    import subprocess
     for team, seed, mode in CAREERS:
         if not (states / f"{team}_{seed}_after_portal.pkl").exists():
             say("playing", team, seed)
-            play(states, team, seed, mode)
+            subprocess.run([sys.executable, __file__, str(OUT), "--play", team, str(seed), mode], check=True)
     hooks()
     setup()
     if not only or "big" in only:

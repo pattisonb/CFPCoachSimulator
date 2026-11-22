@@ -133,7 +133,8 @@ def wrap(mod, name: str):
             return real(*a, **k)
         given = sig.bind(*a, **k).arguments
         last = max(names.index(n) for n in given) if given else -1
-        key = label + "(" + ",".join(canon(given[n]) if n in given else "U" for n in names[:last + 1]) + ")"
+        loose = label == "persona.story_interest"       # its last argument carries math.exp's last digit: checked close, not keyed
+        key = label + "(" + ",".join(canon(given[n]) if n in given else "U" for n in names[:last + (0 if loose else 1)]) + ")"
         kept = (recruiting._WINNING, recruiting._GROUP_COUNTS, recruiting._SPOT_NEEDS)
         DEPTH += 1
         try:
@@ -141,7 +142,7 @@ def wrap(mod, name: str):
         finally:
             DEPTH -= 1
             recruiting._WINNING, recruiting._GROUP_COUNTS, recruiting._SPOT_NEEDS = kept
-        text = json.dumps(enc(out))
+        text = json.dumps([a[-1], out] if loose else enc(out))
         if key in TABLE and TABLE[key] != text:
             CONFLICTS.append(key)
         TABLE[key] = text

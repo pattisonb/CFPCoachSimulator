@@ -1,6 +1,6 @@
 // Everything the pages read from a season, asked of the JavaScript season (sim_js/season.js) at the points and in the
 // order season_views_reference.py asked the Python, the changes a page can make made the same way in between, and
-// every answer compared, key order included: node sim_js/test/season_views_compare.mjs OUT [--all]
+// every answer compared, key order included: node sim_js/test/season_views_compare.mjs OUT [--all] [--real]
 // (after CFP_CLEAR=0 python3 sim_js/test/season_views_reference.py OUT [team] [seed]). --all: do not stop at a
 // checkpoint with differences.
 import fs from "fs";
@@ -34,21 +34,29 @@ const replay = { grade: stubs["grade.season_grade"], word: stubs["recruiting.wor
 const at = { grade: 0, word: 0, merged: 0 };
 const next = (name) => { if (at[name] >= replay[name].length) throw new Error(`${name} asked more often than Python asked`); return replay[name][at[name]++]; };
 const base_development = plain(stubs["league.base_development"]);
-modules.league = { OFFENSE_ROLES: new Set(setup.OFFENSE_ROLES), TEAM_FIT: setup.TEAM_FIT, GROUP_OF: setup.GROUP_OF, base_development: () => base_development };
-modules.clear = { on: () => setup.clear };
-modules.promises = { snapshot_week: () => null, tags_now: () => ({}) };      // a plain season has no promises
-modules.schedule_gen = { FINALE_WEEK: setup.FINALE_WEEK };
-modules.programs = {};                              // asked for by name before a trade is refused (a plain season trades nothing)
-modules.grade = { season_grade: () => plain(next("grade")) };
-modules.recruiting = { word: () => plain(next("word")[1]) };
-modules.ability_goals = {
-  on: () => setup.clear,
-  merged_traits: (state, team, key) => {
-    const [t, k, r] = next("merged");
-    if (t !== team || k !== key) throw new Error(`merged_traits asked for ${team} ${key} where Python asked for ${t} ${k}`);
-    return plain(r);
-  },
-};
+const REAL = process.argv.includes("--real");
+if (REAL) {
+  // --real: the ported modules themselves answer (Clear Mode off, as the reference was run), nothing replayed
+  env.CFP_CLEAR = "0";
+  for (const f of ["../../career_js/clear.js", "../../career_js/league.js", "../../career_js/promises.js", "../schedule_gen.js",
+    "../../career_js/programs.js", "../grade.js", "../../career_js/recruiting.js", "../../career_js/ability_goals.js"]) await import(f);
+} else {
+  modules.league = { OFFENSE_ROLES: new Set(setup.OFFENSE_ROLES), TEAM_FIT: setup.TEAM_FIT, GROUP_OF: setup.GROUP_OF, base_development: () => base_development };
+  modules.clear = { on: () => setup.clear };
+  modules.promises = { snapshot_week: () => null, tags_now: () => ({}) };      // a plain season has no promises
+  modules.schedule_gen = { FINALE_WEEK: setup.FINALE_WEEK };
+  modules.programs = {};                              // asked for by name before a trade is refused (a plain season trades nothing)
+  modules.grade = { season_grade: () => plain(next("grade")) };
+  modules.recruiting = { word: () => plain(next("word")[1]) };
+  modules.ability_goals = {
+    on: () => setup.clear,
+    merged_traits: (state, team, key) => {
+      const [t, k, r] = next("merged");
+      if (t !== team || k !== key) throw new Error(`merged_traits asked for ${team} ${key} where Python asked for ${t} ${k}`);
+      return plain(r);
+    },
+  };
+}
 const { season } = await import("../season.js");
 
 const BOX_SKIP = /\/(played_at|duration_ms|created_at|saved_at)$|^\/my_boxes\/[^/]+\/id$/;        // clocks, and a box's own drawn id
@@ -163,7 +171,7 @@ for (let n = 0; n < setup.checkpoints; n++) {
   console.log(`${file} (after week ${state.current_week}${state.done ? ", done" : ""}): ${d ? d + " answers differ" : "all the same"}`);
   if (d) { bad++; if (!ALL) break; }
 }
-for (const name of Object.keys(at)) if (at[name] !== replay[name].length) { bad++; console.log(`${name}: Python asked ${replay[name].length} times, JavaScript ${at[name]}`); }
+if (!REAL) for (const name of Object.keys(at)) if (at[name] !== replay[name].length) { bad++; console.log(`${name}: Python asked ${replay[name].length} times, JavaScript ${at[name]}`); }
 if (Object.keys(numkeys).length) console.log("whole-number keys listed in JavaScript's order (same keys, same values):", JSON.stringify(numkeys, null, 1));
 console.log(`${asked} answers asked, ${same} the same, ${asked - same} different (${close} numbers differ only past the ninth digit)`, `${Date.now() - t0} ms`);
 if (Object.keys(wrong).length) console.log("different by function:", JSON.stringify(wrong));

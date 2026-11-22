@@ -7,7 +7,8 @@ every class signed, the transfer portal's first week and its second), and at eac
 for real prospects, lists and views. The modules prospects.py calls that are not in JavaScript yet (recruiting, persona,
 clear, grades, ability_goals) are recorded as they answer: every call's arguments and result go to a table the compare
 script replays, so the JavaScript is given exactly what the Python was. The run is made twice: Clear Mode on (the
-default, OUTDIR/clear) and off (CFP_CLEAR=0, fewer moments, OUTDIR/words).
+default, OUTDIR/clear) and off (CFP_CLEAR=0, fewer moments, OUTDIR/words). About eight minutes and 600 MB of JSON.
+(`--one`: only the run for the Clear Mode the environment sets; `--first`: only the first moment.)
 """
 import hashlib
 import inspect
@@ -199,6 +200,8 @@ def sample(st: dict, n_random: int, seed: str) -> list:
         pids = [q for q in pids if q in rc["prospects"] and q not in picks]
         picks.extend(pids if len(pids) <= n else rng.sample(pids, n))
 
+    take([q for q in rc["reads"] if prospects.find(st, q) == "gem"], 5)       # the flags: a few percent of the complete reports
+    take([q for q in rc["reads"] if prospects.find(st, q) == "bust"], 5)
     take(rc["board"], 14)
     take(rc["offers"].get(me, []), 8)
     take([q for q, r in rc["reads"].items() if recruiting.report_complete(r)], 14)

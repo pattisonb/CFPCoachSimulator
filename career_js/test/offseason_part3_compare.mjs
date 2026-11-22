@@ -168,8 +168,9 @@ for (const info of setup.cases) {
   }
   const coaches_after = (s) => ({ teams: Object.fromEntries(Object.entries(s["league"]["teams"]).map(([slug, team]) => [slug, { coaches: team["coaches"] }])),
     market: get(s["league"], "market"), staff: s["career"]["staff"] });
-  const again = copy(state);
-  for (const [s, file, what] of [[state, "_develop_coaches.json", "_develop_coaches"], [again, "_develop_coaches.again.json", "_develop_coaches (a second year)"]]) {
+  // ... and once more on a copy of the state it left (a second year: the hidden levels are already drawn)
+  for (const [file, what] of [["_develop_coaches.json", "_develop_coaches"], ["_develop_coaches.again.json", "_develop_coaches (a second year)"]]) {
+    const s = what === "_develop_coaches" ? state : copy(state);
     const r = read(dir, file);
     load(r.rec);
     const res = offseason._develop_coaches(s);
