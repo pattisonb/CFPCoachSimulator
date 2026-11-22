@@ -443,6 +443,39 @@ function summary(state) {
 }
 
 
+offseason.GAME_LOG_SEASONS = 5;          // *tune* past seasons of game logs a career keeps (as long as a player can still be on your roster)
+
+function keep_game_logs(state, year, moved) {
+  // Called as a season hands over to the next (next_season), while its box scores and rosters are still loaded:
+  // the career keeps who played in each of your games that season, for the Game Log's season tabs
+  // (season.player_game_logs). career["game_logs"] is a list, oldest first, of {year, team, games, players: {his id:
+  // a character a game}}; only players still on your roster are kept, only the last GAME_LOG_SEASONS seasons, and
+  // none of it when you leave for another school. Reads only; no draw.
+  const season = modules.season;
+  const car = state["career"];
+  if (truthy(moved)) { delete car["game_logs"]; return; }
+  const me = state["team"];
+  const t = get(season.load_teams(), me);
+  const logs = (get(car, "game_logs") || []).filter((s) => get(s, "team") === me && s["year"] !== year);
+  if (truthy(t)) {
+    const kept = season.team_game_logs(state, me);
+    const edited = season.with_edits(t, season.team_edits(state, me));      // the names and positions the boxes were played under
+    const players = {};
+    for (const p of [...edited["offense"], ...edited["defense"]]) {
+      const marks = get(kept["players"], `${p["name"]}|${p["position"]}`);
+      if (truthy(get(p, "slug")) && truthy(marks)) players[p["slug"]] = marks;
+    }
+    if (kept["games"].length) logs.push({ year, team: me, games: kept["games"], players });
+  }
+  const here = new Set(state["league"]["teams"][me]["roster"].map((c) => c["id"]));
+  const out = [];
+  for (const s of logs.slice(-offseason.GAME_LOG_SEASONS)) {
+    const players = Object.fromEntries(Object.entries(get(s, "players") || {}).filter(([id]) => here.has(id)));
+    if (Object.keys(players).length) out.push({ ...s, players });
+  }
+  car["game_logs"] = out;
+}
+
 function next_season(state) {
   // The next season's state for this career: same id, the league as the offseason left it,
   // the career (staff, settings, history) carried over, a new class of high school seniors.
@@ -459,6 +492,7 @@ function next_season(state) {
   for (const t of Object.values(lgd["teams"])) {
     position_fit.settle(t["roster"]);          // this year's position changes are theirs now
   }
+  offseason.keep_game_logs(state, year - 1, get(off, "move_to"));      // before the old season's teams and boxes are let go
   const team = get(off, "move_to") || state["team"];
   // your team's default depth chart is by overall (league.lineup); the season's depth-chart
   // overrides and redshirts are this season's and are not carried (new_season starts clean)
@@ -1052,7 +1086,7 @@ function _view(state, position = null, status = null) {
 
 Object.assign(offseason, {
   _your_jobs, choose_job, _take_job, advance, next_teams, conferences_view, move_conference, _draw_schedule, _schedule_shim,
-  schedule_view, schedule_move, schedule_trade, migrate, run_all, summary, next_season, portal_offer, recruiting_spots,
+  schedule_view, schedule_move, schedule_trade, migrate, run_all, summary, keep_game_logs, next_season, portal_offer, recruiting_spots,
   player_next, _player_next, recruiting_offer_cap, portal_rows, _school_name, portal_away, portal_board, _portal_recap,
   _stayed, _new_transfer, page, view, _view,
   KeyError, OverflowError,          // (as portal_offer throws them: for the caller that tells them apart)
