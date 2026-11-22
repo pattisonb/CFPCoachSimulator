@@ -68,3 +68,20 @@ The rules below are how the port was written, and how the next pieces are: they 
    iteration over a set (Python's order is by hash, JavaScript's by insertion), an exception used to steer
    (`try`/`except KeyError`, `StopIteration`), anything dynamic (`setattr`, `__dict__`, `getattr` by a computed
    name): port it the closest way and list it in the notes at the end of your work.
+
+## Modules that are not ported yet
+
+A ported file imports the namespaces of files that exist (`import { game_scale } from "../teamdata_js/game_scale.js";`)
+and reaches one that does not exist yet through `engine_js/modules.js`: `modules.season.load_teams()`. Every ported
+module registers its namespace there under its Python name as its last line (`modules.polls = polls;`), so the call
+starts working when that module is ported. Folders: `engine/` is `engine_js/`, `sim/` is `sim_js/`, `teamdata/` is
+`teamdata_js/`, `coach_career/` is `career_js/`, `app/` is `app_js/`.
+
+Data files are read with `read_json("data/x.json")` from `engine_js/files.js` (a path from the project's root).
+Generators seeded with text are `new Random(0)` then `.seed("text")`, or `new Random("text")`... the constructor takes
+a whole number or text, as Python's does. `statistics.mean`, `pstdev`, `median`, `fmean` are in `engine_js/pystat.js`
+(exact, as Python's are): never a plain floating-point average where Python used the module.
+
+Each port is checked against the Python before it counts: a Python script that writes real inputs and Python's
+answers as JSON, and a Node script that feeds the same inputs to the JavaScript and compares exactly, both kept in the
+folder's `test/` so they can be rerun.
