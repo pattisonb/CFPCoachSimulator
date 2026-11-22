@@ -1,7 +1,7 @@
 // Quick check of season-long stats: sim a few weeks and print team and player leaders.
 // `node tests/test_stats.mjs [team] [weeks]`
 import { start, test, run } from "./harness.mjs";
-import { json_dumps } from "../engine_js/pyrt.js";
+import { fmt, json_dumps } from "../engine_js/pyrt.js";
 
 const game = await start();
 const season = game.season;
@@ -19,7 +19,7 @@ test("stats", () => {
   const tv = season.team_stats_view(st);
   console.log("partial:", tv["partial"]);
   for (const r of tv["teams"].slice(0, 5)) {
-    console.log(`  ${r["name"].padEnd(16)} ${r["wins"]}-${r["losses"]} ppg ${r["ppg"].toFixed(1)} opp ${r["opp_ppg"].toFixed(1)} ypg ${r["ypg"].toFixed(0)} ypp ${r["ypp"].toFixed(2)} 3rd ${r["third_pct"].toFixed(0)}% top ${r["top"].toFixed(0)}s TO ${r["turnovers"]} opp ypg ${r["opp_ypg"].toFixed(0)}`);
+    console.log(`  ${r["name"].padEnd(16)} ${r["wins"]}-${r["losses"]} ppg ${fmt(r["ppg"], 1)} opp ${fmt(r["opp_ppg"], 1)} ypg ${fmt(r["ypg"], 0)} ypp ${fmt(r["ypp"], 2)} 3rd ${fmt(r["third_pct"], 0)}% top ${fmt(r["top"], 0)}s TO ${r["turnovers"]} opp ypg ${fmt(r["opp_ypg"], 0)}`);
   }
   for (const cat of ["passing", "rushing", "receiving", "defense", "kicking", "returns"]) {
     const pv = season.player_stats_view(st, null, cat, 3);
