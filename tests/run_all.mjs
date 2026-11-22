@@ -30,6 +30,7 @@ const KNOWN_FAILURES = {
   test_scale: "the middle Power 4 starter is not a 50 at WR and RB",
   // on its seed 6 of 8 generational prospects sign with a top-25 class, under its mark; it failed before the move to JavaScript too
   test_recruiting_realism: "too few generational prospects sign with a top-25 class on its seed",
+  // a suspected game bug: teamdata_js/game_scale.js `upgrade` asks for game_scale.modules.recruiting, which nothing sets (league is set)
 };
 
 const stem = (name) => path.basename(name).replace(/\.(mjs|js|py)$/, "");

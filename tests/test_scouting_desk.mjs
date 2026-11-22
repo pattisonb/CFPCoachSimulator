@@ -46,23 +46,22 @@ function check_entry(e) {
 test("before any look the desk shows your scouts, an empty report and the class to send them to; reading it creates nothing", () => {
   for (const k of ["looks", "look_counts", "look_changes"]) delete rc[k];
   const v = G("scouting?sort=board");
-  for (const k of ["hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "board_size", "board_scouted", "areas"]) {
-    assert(k in v, `the desk has no ${k}`);
-  }
+  equal(keys(v), new Set(["hours", "hours_left", "points_left", "points_week", "scouts", "queue", "queue_total", "reports", "flags", "full_reports",
+    "trips_this_week", "board_size", "board_scouted", "areas"]), "what the page reads from the desk");
   assert(v["board_size"] === rc["board"].length && v["hours"] === v["hours_left"] && v["hours"] > 0);
   equal(v["areas"], Object.fromEntries(Object.entries(recruiting.AREAS).map(([a, codes]) => [a, [...codes]])));
   equal(v["reports"], { this_week: [], last_week: [] });
   equal(v["scouts"].map((s) => s["id"]), ids);
   for (const s of v["scouts"]) {
-    for (const k of ["id", "name", "role", "evaluation_word", "area", "looking_at", "yield"]) assert(k in s, `a scout's card has no ${k}`);
+    equal(keys(s), new Set(["id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"]), "a scout's card");
     assert(["Offensive Coordinator", "Defensive Coordinator", "Recruiter"].includes(s["role"]) && recruiting.WORDS.includes(s["evaluation_word"]), J(s));
     assert(s["area"] in recruiting.AREAS && s["looking_at"] > 0);
     equal(s["yield"], { looks: 0, narrowed: 0, flags: 0 });
   }
   assert(v["queue"].length === prospects.QUEUE_LIMIT && v["queue_total"] > 3000);
-  for (const k of ["cost", "pid", "name", "position", "stars", "group", "need", "national_rank", "looks", "trips", "potential", "can_send", "why", "state", "on_board"]) {
-    assert(v["queue"].every((r) => k in r), `a queue row has no ${k}`);
-  }
+  const row_keys = new Set(["cost", "pid", "name", "position", "display_pos", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
+    "can_send", "why", "state", "likes", "on_board", "flags"]);
+  for (const r of v["queue"]) equal(keys(r), row_keys, "a queue row");
   assert(v["queue"].every((r) => r["can_send"] && r["why"] === null && r["looks"] === 0 && r["potential"] === null));
   assert(!("looks" in rc) && !("look_counts" in rc) && !("look_changes" in rc), "a read of the desk created the log");
 });
@@ -118,10 +117,10 @@ test("the desk's reports group this week's logged looks by scout, flags first, a
   const on_board = new Set(G("recruiting")["board"].map((b) => b["id"]));
   assert(v["queue"].every((r) => r["on_board"] === on_board.has(r["pid"])));
   for (const group of [...this_week, ...last_week]) {
-    for (const k of ["scout_id", "scout", "area", "looks", "changed", "items"]) assert(k in group, `a report group has no ${k}`);
+    equal(keys(group), new Set(["scout_id", "scout", "area", "looks", "changed", "items"]), "a report group");
     assert(ids.includes(group["scout_id"]) && group["area"] in recruiting.AREAS);
     for (const it of group["items"]) {
-      for (const k of ["pid", "name", "position", "stars", "change", "flags", "on_board"]) assert(k in it, `a report item has no ${k}`);
+      equal(keys(it), new Set(["pid", "name", "position", "stars", "change", "flags", "likes", "on_board", "complete"]), "a report item");
       assert(it["on_board"] === on_board.has(it["pid"]) && (it["change"] || it["flags"].length), J(it));
     }
   }
@@ -254,7 +253,7 @@ test("a flag waits for the complete report, then shows on the desk and on the tr
   rc["reads"][gem]["looks"] = recruiting.FIND_LOOKS;
   const v = G("scouting?sort=board");
   for (const f of v["flags"]) {
-    for (const k of ["pid", "name", "position", "stars", "flag", "looks", "standing_word", "on_board"]) assert(k in f, `a flag has no ${k}`);
+    equal(keys(f), new Set(["pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes", "on_board"]), "a flag");
     assert(FLAGS.includes(f["flag"]) && f["looks"] <= 3);
   }
   const found = v["flags"].find((f) => f["pid"] === gem);

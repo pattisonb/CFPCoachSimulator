@@ -209,6 +209,11 @@ test("the campus topics and Academics read the school's grades", () => {
     assert(Math.abs(pu[t] - g[t] / 100) < 1e-9, J([t, pu[t], g[t]]));
   }
   assert(recruiting.academic("stanford") && !recruiting.academic("akron"));
+  // a program the research has no row for pulls the same on every campus topic, and is academic only if the old list says so
+  const none = recruiting.pull(st, "ndsu", pid, false);
+  for (const t of NEW_TOPICS) assert(none[t] === recruiting.NEUTRAL_PULL, J([t, none[t]]));
+  const listed = recruiting.ACADEMIC instanceof Set ? recruiting.ACADEMIC.has("ndsu") : recruiting.ACADEMIC.includes("ndsu");
+  assert(recruiting.academic("ndsu") === listed);
 });
 
 test("Location reads the school's setting and climate against his taste", () => {

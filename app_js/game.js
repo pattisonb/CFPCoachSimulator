@@ -50,6 +50,8 @@ import { api } from "./api.js";
 // the modules written before a port registered itself
 const early = { game_scale, ratings, shown, position_fit, game_job };
 for (const [name, ns] of Object.entries(early)) modules[name] = ns;
+// an old save's recruits are brought onto the game's scale with recruiting's own reads (teamdata_js/game_scale.js upgrade)
+game_scale.modules.recruiting = recruiting;
 
 // a custom coach is a file: data/coaches/<id>.json
 coaches.store = {
