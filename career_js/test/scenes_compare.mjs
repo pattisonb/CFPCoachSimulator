@@ -52,6 +52,7 @@ modules.recruiting = stubs("recruiting");
 modules.persona = stubs("persona");
 modules.programs = stubs("programs");
 modules.clear = stubs("clear");
+modules.league = { ...setup.constants.league, OFFENSE_ROLES: new Set(setup.constants.league.OFFENSE_ROLES) };   // for the season's load_teams
 const { season } = await import("../../sim_js/season.js");
 const { scenes } = await import("../scenes.js");
 
@@ -121,7 +122,6 @@ for (const text of lines) {
     state.games = e.games;
     state.polls = e.polls;
   }
-  setup.constants.clear_on = c.clear;
   replay = { calls: c.calls, at: 0, state };
   const args = c.args.map((a) => decode(a, state));
   const found = [];

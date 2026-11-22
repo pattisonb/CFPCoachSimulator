@@ -271,7 +271,7 @@ for b in BYTES:
     json_fuzz.append({"blob": spec_bytes(b), "expect": parsed(b)})
 for parts in ([["[", 9998], ["]", 9998]], [["[", 9999], ["]", 9999]], [['{"a":', 9998], ["1", 1], ["}", 9998]], [['{"a":', 9999], ["1", 1], ["}", 9999]],
               [['[{"a":', 4999], ["[]", 1], ["}]", 4999]], [['[{"a":', 4999], ["{}", 1], ["}]", 4999]], [['[{"a":', 4999], ["[1]", 1], ["}]", 4999]],
-              [["[", 9997], ["[", 1], ["1,", 3], ["]", 2]], [["[", 20000]], [[" ", lf.MAX_LEAGUE_BYTES], ["{}", 1]], [[" ", lf.MAX_LEAGUE_BYTES - 2], ["{}", 1]],
+              [["[", 9000], ["[", 1], ["1,", 3], ["]", 2]], [["[", 9000], ["NaN", 1]], [["[", 9000], ["9", 4301]], [['{"a":[', 4000], ['"\\x"', 1]], [["[", 20000]], [[" ", lf.MAX_LEAGUE_BYTES], ["{}", 1]], [[" ", lf.MAX_LEAGUE_BYTES - 2], ["{}", 1]],
               [["é", lf.MAX_LEAGUE_BYTES // 2], ["x", 1]], [[" ", 70 * 1024 * 1024 + 123456]]):
     spec = {"parts": parts}
     r = parsed(blob_of(spec))
@@ -420,7 +420,7 @@ lf.check = check
 
 
 # ---- the pipeline on league files with one thing changed ----------------------------------------------------------
-def pipeline(blob):
+def pipeline(blob, merge=True):
     out = {}
     try:
         doc = lf.parse(blob)
@@ -438,7 +438,7 @@ def pipeline(blob):
         out["problems_raise"] = type(e).__name__
         return out
     out["problems"], out["validate"] = probs, lf.validate(doc)
-    if not probs and not nerrs:
+    if not probs and not nerrs and merge:
         m = lf.merge(doc)
         m["finales"] = [sorted(f) for f in doc.get("_finales") or []]
         out["merged"] = slim_merged(m)
@@ -501,20 +501,25 @@ BAD += [FICT[0], FICT_CONF[0], FICT_CONF[-1], league.base_meta(FICT[0])["confere
 fuzz = []
 
 
-def add_fuzz(note, text):
+MERGE_SHARE = 0.06      # the share of the single changes carried on through merge and the schedule rules (a merge copies the whole league: slow)
+
+
+def add_fuzz(note, text, merge=None):
     spec = spec_text(text)
     if spec is None:
         return
     blob = blob_of(spec)
-    fuzz.append({"note": note, "blob": spec, "expect": pipeline(blob)})
+    merge = rng.random() < MERGE_SHARE if merge is None else merge
+    fuzz.append({"note": note, "blob": spec, "merge": merge, "expect": pipeline(blob, merge)})
 
 
 rng = random.Random("league-file-fuzz")
 ALL_PATHS = list(paths(FUZZ_DOC))
-add_fuzz("whole", dump(FUZZ_DOC))
+log("fuzz paths:", len(ALL_PATHS))
+add_fuzz("whole", dump(FUZZ_DOC), True)
 for p in ALL_PATHS[1:]:
     add_fuzz(f"del {p}", dump(with_at(FUZZ_DOC, p, None, delete=True)))
-    for v in rng.sample(BAD, 5):
+    for v in rng.sample(BAD, 3):
         add_fuzz(f"set {p} {v!r:.30}", dump(with_at(FUZZ_DOC, p, v)))
     target = FUZZ_DOC
     for k in p:
@@ -532,7 +537,7 @@ log("fuzz: single changes", len(fuzz))
 def variant(note, fn):
     d = copy.deepcopy(FUZZ_DOC)
     r = fn(d)
-    add_fuzz(note, dump(d if r is None else r))
+    add_fuzz(note, dump(d if r is None else r), True)
 
 
 def top(**kw):

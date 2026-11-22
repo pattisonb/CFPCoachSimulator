@@ -71,8 +71,10 @@ function _deepcopy(v) {
 }
 
 // str.strip() and str.split(): Python's white space.
-const _strip = (s) => s.replace(/^[\s\x1c-\x1f]+|[\s\x1c-\x1f]+$/g, "");
-const _words = (s) => s.split(/[\s\x1c-\x1f]+/).filter((w) => w !== "");
+const _WS = "[\\t\\n\\v\\f\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]";
+const _WS_ENDS = new RegExp(`^${_WS}+|${_WS}+$`, "g"), _WS_RUN = new RegExp(`${_WS}+`);
+const _strip = (s) => s.replace(_WS_ENDS, "");
+const _words = (s) => s.split(_WS_RUN).filter((w) => w !== "");
 
 // SHA-256 of bytes, as hex (hashlib.sha256(...).hexdigest()).
 const _K256 = new Uint32Array([

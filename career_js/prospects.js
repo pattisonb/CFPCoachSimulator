@@ -136,15 +136,16 @@ prospects.WEAKNESS_TEXT = {
 };
 prospects.STRENGTH_FROM = 60; prospects.WEAKNESS_BELOW = 45;      // the game's scale: a Solid-and-up read is a strength (60), below 45 a weakness
 prospects.SOLID_TEXT = "Solid {group} for {a_noun} at this level; not a concern.";
-prospects.OUTLOOK = {
-  5: "A day-one impact {noun} with early-round NFL upside.",
-  4: "Projects as a multi-year starter at a Power 4 program.",
-  3: "A developmental {noun} who could start by his third year.",
-  2: "A depth {noun} with a path to the field through special teams and development.",
-};
+// (port) these two are odicts: Python lists their keys 5 first, a plain object here would list 2 first
+prospects.OUTLOOK = odict([
+  ["5", "A day-one impact {noun} with early-round NFL upside."],
+  ["4", "Projects as a multi-year starter at a Power 4 program."],
+  ["3", "A developmental {noun} who could start by his third year."],
+  ["2", "A depth {noun} with a path to the field through special teams and development."],
+]);
 // a kicker's or a punter's: he is not a "first-round" talent or a special teams body, he wins the job or he does not
-prospects.OUTLOOK_KICK = { 5: "A {noun} who can be a weapon from day one.", 4: "A {noun} who should win the job early.",
-  3: "A {noun} who can win the job in time.", 2: "A depth {noun} who will have to win the job in camp." };
+prospects.OUTLOOK_KICK = odict([["5", "A {noun} who can be a weapon from day one."], ["4", "A {noun} who should win the job early."],
+  ["3", "A {noun} who can win the job in time."], ["2", "A depth {noun} who will have to win the job in camp."]]);
 prospects.OPENING_KICK = { "All-American": "A rare {noun} who can be a weapon from day one.", Elite: "A gifted {noun} who should win the job early." };
 prospects.SCHOOL_KINDS = ["High School", "High School", "High School", "Central", "North", "South", "Catholic", "Prep", "Academy"];
 

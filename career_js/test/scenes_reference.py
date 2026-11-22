@@ -31,7 +31,7 @@ os.environ.setdefault("CFP_CLEAR", "0")
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from coach_career import clear, persona, programs, recruiting, scenes    # noqa: E402
+from coach_career import clear, league, persona, programs, recruiting, scenes    # noqa: E402
 from sim import season                                                     # noqa: E402
 
 OUT = Path(sys.argv[1])
@@ -54,6 +54,8 @@ CONSTANTS = {
                                                  "TWIST_CALL_LINE", "STYLE_CALL_LINE")},
     "programs": {"GROUP_DRAFT": {k: list(v) for k, v in programs.GROUP_DRAFT.items()}},
     "clear": {},
+    # (the JavaScript season's load_teams reads these three of league.py, which is not ported yet)
+    "league": {"OFFENSE_ROLES": sorted(league.OFFENSE_ROLES), "TEAM_FIT": league.TEAM_FIT, "GROUP_OF": league.GROUP_OF},
 }
 
 # the module as it is, before anything is wrapped
@@ -311,7 +313,7 @@ def direct(state, rng, n_prospects, n_react) -> None:
         case("_record", state, slug, state=state, slug=slug)
         case("_conf", state, slug, state=state, slug=slug)
         case("coach_name", state, slug, state=state, slug=slug)
-        for w in (week, max(0, week - 1), week + 2, 0, 30):
+        for w in (week, max(0, week - 1), week + 2) + ((0, 30) if schools.index(slug) % 6 == 0 else ()):
             case("last_game", state, slug, w, state=state, slug=slug)
             case("next_game", state, slug, w, state=state, slug=slug)
     case("coach_name", state, "no-such-school", state=state, slug="no-such-school")
@@ -345,6 +347,10 @@ def direct(state, rng, n_prospects, n_react) -> None:
                 case("twist_line", state, slug, pid, sid, f, always, **kw)
             case("twist_line", state, slug, pid, f"hc_visit-{pid}-{week}", f, **kw)
             case("style_line", state, slug, pid, sid, f, **kw)
+            if slug == me and i % 2 == 0:                 # his commit style, once you know it: a fifth of the calls say it
+                persona.learn(state, me, pid, "style")
+                for n in range(8):
+                    case("style_line", state, slug, pid, f"{sid}-{n}", f, **kw)
             for tired in (False, True):
                 case("context_line", state, slug, pid, week, f, Rng(f"ctx-{pid}-{slug}-{week}-{tired}"), tired, **kw)
             case("context_line", state, slug, pid, week + 2, f, Rng(f"ctx-{pid}-{slug}-{week}-later"), False, **kw)

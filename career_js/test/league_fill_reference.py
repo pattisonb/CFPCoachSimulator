@@ -90,6 +90,26 @@ taped(programs, "programs", "empty_drafts", lambda year: [year])
 taped(carousel, "carousel", "generated", lambda rng, lgd, role, slug, year, like=None, level=0.0: [role, slug, year, like, level], rng_at=0)
 taped(carousel, "carousel", "_taken_names", lambda lgd: [], result=lambda out: sorted(out))
 
+
+
+def silent(mod, name):
+    """A function the compare script answers from constants.json: what it asks inside itself stays off the tape."""
+    real = getattr(mod, name)
+
+    def f(*a, **k):
+        global DEPTH
+        DEPTH += 1
+        try:
+            return real(*a, **k)
+        finally:
+            DEPTH -= 1
+
+    setattr(mod, name, f)
+
+
+for _mod, _name in ((league, "from_base"), (league, "base_meta"), (league, "base_slugs"), (league_file, "_builtin_docs")):
+    silent(_mod, _name)
+
 BASE = {str(y): league.from_base(y) for y in (league.FIRST_YEAR, league.FIRST_YEAR + 1)}
 DOCS = league_file._builtin_docs()
 (OUT / "constants.json").write_text(json.dumps({
@@ -443,7 +463,7 @@ for seed, tgt in enumerate((40.0, 52.0, 56.0, 60.0, 64.0, 68.0, 72.0, 88.0), 1):
     fill(f"empty roster to {tgt}", alder(roster=[]), tgt, f"league-{seed}-alder-tech")
 fill("empty roster, a fullback formation", alder(roster=[], formation=F_FB), 55.0, "league-11-alder-tech")
 fill("empty roster, no formation, no state", {"slug": "alder-tech", "name": "Alder Tech"}, 55.0, "league-12-alder-tech")
-fill("empty roster, an odd formation", alder(roster=None, formation=F_ODD), 55.0, "league-13-alder-tech")
+fill("empty roster, an odd formation", alder(roster=None, formation={**F_ODD, "special_teams": {"K": 1}}), 55.0, "league-13-alder-tech")
 fill("two quarterbacks", alder(roster=[{"name": "Jay Smith", "pos": "QB", "class": "JR"}, {"name": "Bo Jones", "pos": "QB", "class": "SO"}]), 55.0)
 fill("one short", alder(roster=_names([p for p in POSITIONS_85 if p != "K"])), 55.0)
 fill("ids given and taken", alder(roster=[{"name": "P1", "pos": "QB", "class": "JR"}, {"name": "Zed", "pos": "QB", "class": "JR", "id": "zed-9"}]), 50.0, 1, taken={"alder-tech-p1"})

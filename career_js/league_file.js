@@ -331,6 +331,11 @@ function json_loads(s) {
   }
 }
 
+const _JSON_ESCAPE = /["\\\x00-\x1f]/g;
+const _JSON_ESCAPES = { '"': '\\"', "\\": "\\\\", "\n": "\\n", "\r": "\\r", "\t": "\\t", "\b": "\\b", "\f": "\\f" };
+/** A text as json.dumps(ensure_ascii=False) writes it (half a surrogate pair stays as it is; JSON.stringify escapes it). */
+const json_string = (t) => '"' + t.replace(_JSON_ESCAPE, (c) => _JSON_ESCAPES[c] ?? "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0")) + '"';
+
 /** json.dumps(doc, ensure_ascii=False, separators=(",", ":")): a float is written as Python writes it, but a whole one (3.0) as "3". */
 function json_text(v) {
   if (v === null || v === undefined) return "null";
@@ -339,9 +344,10 @@ function json_text(v) {
   if (typeof v === "number") {
     if (Number.isNaN(v)) return "NaN";
     if (!Number.isFinite(v)) return v > 0 ? "Infinity" : "-Infinity";
-    return Number.isInteger(v) ? String(v) : pyfloat(v);
+    if (!Number.isInteger(v)) return pyfloat(v);
+    return Math.abs(v) < 1e21 ? String(v) : BigInt(v).toString();
   }
-  if (typeof v === "string") return JSON.stringify(v);
+  if (typeof v === "string") return json_string(v);
   if (Array.isArray(v)) {
     let out = "[";
     for (let i = 0; i < v.length; i++) out += (i ? "," : "") + json_text(v[i]);
@@ -349,7 +355,7 @@ function json_text(v) {
   }
   let out = "{", first = true;
   for (const k of Object.keys(v)) {
-    out += (first ? "" : ",") + JSON.stringify(k) + ":" + json_text(v[k]);
+    out += (first ? "" : ",") + json_string(k) + ":" + json_text(v[k]);
     first = false;
   }
   return out + "}";

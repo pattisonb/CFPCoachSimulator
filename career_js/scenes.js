@@ -790,7 +790,8 @@ export function true_line(tr, topic, kind, line, sid) {
       if (key === null || key === "winning") {                    // the record wins: only "every year" can be false
         pool = scenes.LINES["winning"]["hit"].filter((x) => scenes._holds(x, tr));
       } else {
-        pool = orr(get(scenes.WIN_DOUBT, key), null) || scenes.WIN_DOUBT[key.split("_")[0]];
+        const doubt = get(scenes.WIN_DOUBT, key);
+        pool = truthy(doubt) ? doubt : scenes.WIN_DOUBT[key.split("_")[0]];
       }
     } else if (topic === "pro" && truthy(get(tr, "pro"))) {       // the claim holds for the program, not at his spot: a line that holds
       pool = scenes.LINES["pro"]["hit"].filter((x) => scenes._holds(x, tr));
@@ -1079,7 +1080,7 @@ export function context_line(state, slug, pid, week, f, rng, tired) {
   const kinds = [];
   if (game && recent && named) kinds.push("game");
   else if (!game && named) kinds.push("opener");
-  if (truthy(f["leader"])) kinds.push("leader");
+  if (truthy(f["leader"])) kinds.unshift("leader");
   kinds.push("own");
   let kind = recent && named ? "game" : rng.choice(kinds);
   if (kind === "game") kind = rng.choice(["game", game["won"] ? "won" : "lost"]);

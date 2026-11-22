@@ -254,7 +254,7 @@ function parsed(blob) {
 }
 
 // ---- the pipeline on changed league files --------------------------------------------------------------------------
-function pipeline(blob) {
+function pipeline(blob, merge) {
   const o = {};
   let doc;
   try { doc = league_file.parse(blob); } catch (e) {
@@ -268,7 +268,7 @@ function pipeline(blob) {
   let probs;
   try { probs = league_file.problems(doc); } catch (e) { o.problems_raise = true; return o; }
   o.problems = probs; o.validate = league_file.validate(doc);
-  if (!probs.length && !nerrs.length) {
+  if (!probs.length && !nerrs.length && merge) {
     const m = league_file.merge(doc);
     m.finales = (doc._finales || []).map((f) => Array.from(f).sort());
     o.merged = slim_merged(m);
@@ -286,7 +286,7 @@ function pipeline(blob) {
     const e = c.expect;
     if (e.rivalry_names_raise !== undefined) e.rivalry_names_raise = true;
     if (e.problems_raise !== undefined) e.problems_raise = true;
-    same("pipeline", c.note, e, pipeline(blob_of(c.blob)));
+    same("pipeline", c.note, e, pipeline(blob_of(c.blob), c.merge));
   }
   lap(`pipeline: ${cases.length}`);
 }
