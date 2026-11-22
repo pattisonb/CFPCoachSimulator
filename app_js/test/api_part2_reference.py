@@ -7,12 +7,15 @@ What is written:
 - pure.json: _champion_name on real and made-up saves.
 - A scripted run of API calls through api.call, each with its answer or its refusal (status, message), in two acts
   on real saves the compare script replays from copies of the same files:
+    act 0: a new career (Texas, seed 7) before its first week: its non-conference games traded, and its delete;
     act 1: a real career (SMU, seed 11) two weeks in: the seasons list (with unreadable and odd files beside it),
            every season view and its refusals, the settings, recruiting reads and actions, Headquarters, the roster
            and stats pages, god-mode edits, depth chart moves, the coaches;
     act 2: that career with its season faked finished, walked through the whole offseason a stage at a time (every
-           offseason action asked at every stage, so most are refusals), on to the next season, then the deletes.
-About two and a half minutes (the two weeks are simulated)."""
+           offseason action asked at every stage, so most are refusals), on to the next season, then the deletes;
+    act 3: the same finished season taken straight to the next one (to="next_season").
+A call whose handler breaks in Python (an error that is not an ApiError) is written as that, and must break in
+the JavaScript too. About two and a half minutes (the two weeks are simulated in this process)."""
 import copy
 import json
 import os
@@ -89,6 +92,30 @@ def ids(x, n=1):
         return list(x)[:n]
     return [(r["id"] if isinstance(r, dict) else r) for r in (x or [])][:n]
 
+
+# act 0: a career before its first week (the one time its non-conference games can be traded)
+sid0 = api.call("POST", "/api/season", {"team": "texas", "seed": 7})["id"]
+api._drop(sid0)
+recruiting.reset_caches()
+keep(sid0, "act0_seasons")
+z = Act()
+S = f"/api/season/{sid0}"
+edit = z.ask("GET", f"{S}/schedule_edit")
+for g in edit["games"][:2]:
+    yes = [o["slug"] for o in g["options"] if o.get("accepts")]
+    no = [o["slug"] for o in g["options"] if not o.get("accepts")]
+    for slug in no[:1] + ["nope", "texas"] + yes[:1] + yes[:1]:
+        z.ask("POST", f"{S}/schedule_edit", {"event_id": g["event_id"], "slug": slug})
+z.ask("GET", f"{S}/schedule_edit")
+z.ask("GET", f"{S}/schedule/texas")
+z.ask("GET", S)
+z.ask("GET", f"{S}/week/1")
+z.ask("GET", f"{S}/preview")
+z.ask("DELETE", S)
+z.ask("DELETE", S)
+z.ask("GET", S)
+(OUT / "act0.json").write_text(json.dumps({"sid": sid0, "steps": z.steps}))
+print(f"act 0: {len(z.steps)} calls, {sum('status' in s for s in z.steps)} refused, {sum('crash' in s for s in z.steps)} broke")
 
 # act 1: the career, two weeks in
 sid = api.call("POST", "/api/season", {"team": "smu", "seed": 11})["id"]
@@ -259,8 +286,9 @@ a.ask("GET", S)
 a.ask("GET", "/api/coach-options")
 a.ask("GET", "/api/coaches")
 blank = api.call("GET", "/api/coach-options")["blank"]
-for body in (None, {}, {"coach": "x"}, {"coach": dict(blank, id="abcdef000001", name="Pat Tester")}, {"coach": dict(blank, id="../up", name="Bad Id")},
-             {"coach": dict(blank, id="abcdef000002", name="Sam Second")}):
+for body in (None, {}, {"coach": "x"}, {"coach": dict(blank, id="abcdef000001")}, {"coach": dict(blank, id="abcdef000001", first_name="Pat", last_name="Tester")},
+             {"coach": dict(blank, id="../up", first_name="Bad", last_name="Id")},
+             {"coach": dict(blank, id="abcdef000002", first_name="Sam", last_name="Second", age=51)}):
     a.ask("POST", "/api/coaches", body)
 for path in ("/api/coaches", "/api/coaches/abcdef000001", "/api/coaches/nope", "/api/coaches/bad%20id"):
     a.ask("GET", path)
@@ -330,7 +358,11 @@ for n in range(40):
     stage = off["stage"]
     b.ask("GET", f"{S}/offseason?position=QB&status=open")
     b.ask("GET", f"{S}/offseason/conferences")
-    b.ask("GET", f"{S}/offseason/schedule")
+    sched = b.ask("GET", f"{S}/offseason/schedule") or {}
+    for e, rows in list((sched.get("moves") or {}).items())[:1]:
+        if rows:
+            b.ask("POST", f"{S}/offseason/schedule/move", {"event_id": e, "week": rows[0]["week"], "stage": stage})
+            b.ask("GET", f"{S}/offseason/schedule")
     b.ask("GET", f"{S}/player?slug={view['my_roster'][0]['slug'] if view.get('my_roster') and isinstance(view['my_roster'][0], dict) and view['my_roster'][0].get('slug') else 'nope'}")
     red = ids((off.get("redshirts") or {}).get("players"))
     mine_ = ids(st["league"]["teams"][st["team"]].get("roster") or [], 3) if st.get("league") else []
@@ -365,6 +397,8 @@ for n in range(40):
         b.ask("POST", f"{S}/offseason/hire", {"staff_id": sidx, "index": 99})
         b.ask("POST", f"{S}/offseason/hire", {"staff_id": sidx, "index": 0})
     b.ask("POST", f"{S}/offseason/open_role", {"staff_id": my_staff[-1]})
+    stayers = [x for x in my_staff if x not in ((off.get("staff") or {}).get("leaving") or [])]
+    b.ask("POST", f"{S}/offseason/open_role", {"staff_id": stayers[0] if stayers else "nope", "stage": stage})
     b.ask("POST", f"{S}/offseason/open_role", {"staff_id": "nope"})
     for team, conf in ((st["team"], "SEC"), (st["team"], "Nowhere"), ("nope", "SEC"), ("texas", "Big Ten")):
         b.ask("POST", f"{S}/offseason/conference", {"team": team, "conference": conf})

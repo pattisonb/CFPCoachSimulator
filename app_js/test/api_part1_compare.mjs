@@ -215,6 +215,33 @@ note("advance to 3 again", api.call("POST", `/api/season/${sid}/advance`, { to: 
 play("advance 3");
 note("status end", api.call("GET", `/api/season/${sid}/status?since=1`));
 note("card record 3", api._card_record(api.loaded_state()));
+
+// your game alone (game day), then the rest of the week
+note("gameday 3", attempt(() => api.call("POST", `/api/season/${sid}/gameday`)));
+note("gameday 3 job", job());
+play("gameday 3");
+note("advance the rest", api.call("POST", `/api/season/${sid}/advance`, {}));
+play("the rest");
+
+// a week that breaks: the job says so and the season in memory is the last save again
+{
+  const real_advance = season.advance;
+  season.advance = () => { throw new Error("boom"); };
+  note("advance to fail", api.call("POST", `/api/season/${sid}/advance`, { to: 9 }));
+  const reports = [];
+  const failed = api.step((r) => reports.push(r));
+  season.advance = real_advance;
+  const where = failed["error"];
+  const j = job();
+  console.log(`a failed week's error here: ${where}`);
+  note("failed step", { out: { ...failed, error: where.split(" (")[0] }, reports: reports.map((r) => JSON.parse(r)), job: { ...j, error: j["error"].split(" (")[0] },
+    where: where.includes(" (") && where.endsWith(")"), week: api.loaded_state()["current_week"], running: api.running(), changed: api.changed() });
+  note("status after failure", { ...api.call("GET", `/api/season/${sid}/status`), error: null });
+  note("advance after failure", api.call("POST", `/api/season/${sid}/advance`, {}));
+  note("pause it", api.call("POST", `/api/season/${sid}/pause`));
+  play("after failure");
+}
+
 const blob = api.call("GET", `/api/season/${sid}/export?full=true`);
 note("import same", api.call("POST", "/api/season/import", blob));
 note("import changed", api.changed());
@@ -233,6 +260,26 @@ for (let i = 0; i < Math.min(run.length, ref.run.length); i++) {
 {
   const theirs = attempt(() => api.call("POST", "/api/season/import", bin("export.bin")));
   check("import", "the Python's export file", { id: ref.py_id, changed: true }, "ok" in theirs ? { id: theirs.ok.id, changed: api.changed() } : theirs);
+}
+
+// a career from a league file: a conference renamed and a team edited
+{
+  const c = {};
+  c["check"] = api.call("POST", "/api/league/check?seed=3", bin("custom2_league.bin"));
+  c["stale key"] = attempt(() => api.call("POST", "/api/season", { team: "akron", league: "0".repeat(64) }));
+  c["unknown team"] = attempt(() => api.call("POST", "/api/season", { team: "nope", league: c["check"]["key"] }));
+  const made = api.call("POST", "/api/season", { team: "akron", league: c["check"]["key"], seed: 3 });
+  c["create"] = made;
+  c["pending after"] = api._pending_league;
+  c["league file written"] = fs.existsSync(league.path(made["id"], league.FIRST_YEAR));
+  c["conference names"] = api._conference_names(api.loaded_state());
+  c["status"] = api.call("GET", `/api/season/${made["id"]}/status?since=0`);
+  c["engine conference"] = ["Mid-America", "MAC", "SEC", null].map((n) => api._engine_conference(api.loaded_state(), n));
+  c["key again"] = attempt(() => api.call("POST", "/api/season", { team: "akron", league: c["check"]["key"] }));
+  for (const k of Object.keys(ref.custom)) {
+    check("a league file's career", k, JSON.parse(JSON.stringify(ref.custom[k], CLOCK)),
+      JSON.parse(JSON.stringify(plain(c[k]), CLOCK).split(made["id"]).join(ref.custom_id)));
+  }
 }
 
 for (const [g, [n, b]] of Object.entries(groups)) console.log(`${b ? "FAIL" : "ok  "} ${g}: ${n - b} of ${n}`);

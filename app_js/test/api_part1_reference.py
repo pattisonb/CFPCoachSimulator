@@ -226,11 +226,60 @@ note("advance to 3 again", api.call("POST", f"/api/season/{sid}/advance", {"to":
 play("advance 3")
 note("status end", api.call("GET", f"/api/season/{sid}/status?since=1"))
 note("card record 3", api._card_record(api.loaded_state()))
+
+# your game alone (game day), then the rest of the week
+note("gameday 3", attempt(lambda: api.call("POST", f"/api/season/{sid}/gameday")))
+note("gameday 3 job", job())
+play("gameday 3")
+note("advance the rest", api.call("POST", f"/api/season/{sid}/advance", {}))
+play("the rest")
+
+# a week that breaks: the job says so and the season in memory is the last save again
+real_advance = season.advance
+
+
+def boom(*args, **kwargs):
+    raise RuntimeError("boom")
+
+
+season.advance = boom
+note("advance to fail", api.call("POST", f"/api/season/{sid}/advance", {"to": 9}))
+reports = []
+failed = api.step(reports.append)
+season.advance = real_advance
+where = failed["error"]
+j = job()
+note("failed step", {"out": dict(failed, error=where.split(" (")[0]), "reports": [json.loads(r) for r in reports], "job": dict(j, error=j["error"].split(" (")[0]),
+                     "where": " (" in where and where.endswith(")"), "week": api.loaded_state()["current_week"], "running": api.running(), "changed": api.changed()})
+note("status after failure", dict(api.call("GET", f"/api/season/{sid}/status"), error=None))
+note("advance after failure", api.call("POST", f"/api/season/{sid}/advance", {}))
+note("pause it", api.call("POST", f"/api/season/{sid}/pause"))
+play("after failure")
+
 blob = api.call("GET", f"/api/season/{sid}/export?full=true")
 (OUT / "export.bin").write_bytes(blob)
 note("import same", api.call("POST", "/api/season/import", blob))
 note("import changed", api.changed())
 ref["run"] = run
+
+# a career from a league file: a conference renamed and a team edited
+custom2 = json.dumps({"format": "cfp-league/1", "name": "Renamed", "year": 2026, "conferences": [{"id": "mac", "name": "Mid-America"}], "teams": [
+    {"slug": "akron", "name": "Akron Rubber", "colors": {"primary": {"name": "Gold", "hex": "#C9A227"}}}]}).encode()
+(OUT / "custom2_league.bin").write_bytes(custom2)
+c = {}
+c["check"] = api.call("POST", "/api/league/check?seed=3", custom2)
+c["stale key"] = attempt(lambda: api.call("POST", "/api/season", {"team": "akron", "league": "0" * 64}))
+c["unknown team"] = attempt(lambda: api.call("POST", "/api/season", {"team": "nope", "league": c["check"]["key"]}))
+made = api.call("POST", "/api/season", {"team": "akron", "league": c["check"]["key"], "seed": 3})
+ref["custom_id"] = made["id"]
+c["create"] = made
+c["pending after"] = api._pending_league
+c["league file written"] = league.path(made["id"], league.FIRST_YEAR).exists()
+c["conference names"] = api._conference_names(api.loaded_state())
+c["status"] = api.call("GET", f"/api/season/{made['id']}/status?since=0")
+c["engine conference"] = [api._engine_conference(api.loaded_state(), n) for n in ("Mid-America", "MAC", "SEC", None)]
+c["key again"] = attempt(lambda: api.call("POST", "/api/season", {"team": "akron", "league": c["check"]["key"]}))
+ref["custom"] = json.loads(json.dumps(c))
 
 (OUT / "ref.json").write_text(json.dumps(ref), encoding="utf-8")
 print(f"wrote {OUT / 'ref.json'}: {len(run)} run notes")

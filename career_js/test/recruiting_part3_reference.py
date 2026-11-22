@@ -235,7 +235,7 @@ def wrap_dep(mod_name: str, name: str) -> None:
         N["dep_calls"] += 1
         given = sig.bind(*a, **k).arguments
         last = max((params.index(p) for p in given), default=-1)
-        pre, ids = (None, {})
+        pre, ids = (None, REC["ids0"])                    # (a case whose calls change nothing: where things sat at its start)
         if state is not None and spec["diff"]:
             data, ids = snap(state, spec)
             pre = json.dumps(data)
@@ -249,7 +249,7 @@ def wrap_dep(mod_name: str, name: str) -> None:
             raised, out = e, None
         finally:
             REC["depth"] = 0
-        ops, ids = [], {}
+        ops, ids = [], REC["ids0"]
         if state is not None and spec["diff"]:
             data, ids = snap(state, spec)
             post = json.dumps(data)
@@ -321,6 +321,7 @@ def run_case(name, fn, bound):
         data, ids = snap(state, spec)
         pre = json.dumps(data)
         REC["keep"].append(data)
+    REC["ids0"] = ids
     before = json.dumps([enc(a, ids) for a in args])
     out, error = None, None
     try:

@@ -73,7 +73,19 @@ function same_arg(got, want) {
     if (want.$res !== undefined && Object.keys(want).length === 1) return got === CUR.results[want.$res];
     if (want.$rng !== undefined) return got.random() === want.$rng;
   }
-  return JSON.stringify(jsonable(got === undefined ? null : got)) === JSON.stringify(want);
+  return JSON.stringify(jsonable(got === undefined ? null : got)) === JSON.stringify(jsonable(deep(want, false)));
+}
+
+/** A recorded value with the things it points at put in: an object of the state, an earlier answer. */
+function deep(v, sets = true) {
+  if (v === null || typeof v !== "object") return v;
+  if (Array.isArray(v)) return v.map((x) => deep(x, sets));
+  if (v.$ref) return at(CUR.state, v.$ref);
+  if (v.$res !== undefined && Object.keys(v).length === 1) return CUR.results[v.$res];
+  if (sets && Array.isArray(v.$set) && Object.keys(v).length === 1) return new Set(v.$set);
+  const o = {};
+  for (const [k, x] of Object.entries(v)) o[k] = deep(x, sets);
+  return o;
 }
 
 function answer(res) {
@@ -82,7 +94,7 @@ function answer(res) {
     if (res.$ref) return at(CUR.state, res.$ref);
     if (res.$raise) throw new RecruitingError(res.$raise[0], res.$raise[1]);
   }
-  return plain(plain_keep(res));
+  return deep(plain_keep(res));
 }
 
 function stub(mod, name) {

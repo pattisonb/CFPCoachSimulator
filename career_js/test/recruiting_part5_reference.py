@@ -128,8 +128,10 @@ def diff(a, b, path=(), ops=None) -> list:
     """What changed from a to b: ["set", path, value], ["del", path], ["app", path, the items added to a list]."""
     if ops is None:
         ops = []
-    if type(a) is dict and type(b) is dict and [k for k in a if k in b] != [k for k in b if k in a]:
-        ops.append(["set", list(path), b])               # a key taken out and put back: the dict whole, in its new order
+    if type(a) is dict and type(b) is dict and list(b) != [k for k in a if k in b] + [k for k in b if k not in a]:
+        ops.append(["set", list(path), b])               # a key taken out and put back, or a dict made again: whole, in its new order
+        if os.environ.get("PART5_TIMES"):
+            say("   reordered", path, list(a)[:6], list(b)[:6])
     elif type(a) is dict and type(b) is dict:
         for k in a:
             if k not in b:
@@ -186,6 +188,7 @@ class Tape:
     rooms = None          # the fliers of the rooms made
     pure_seen = None      # per snapshot: how many times a function's purity was checked
     asked = 0
+    most = None           # the keys state["recruiting"] had before a call followed as MOST
 
 
 T = Tape()
@@ -233,9 +236,11 @@ def at_path(rc, path):
 
 def scoped_before(scope):
     rc = T.state["recruiting"]
-    if scope == MOST:
-        scope = [(k,) for k in rc if k not in MOST_SKIP] + [("manual_offers",), ("offer_weeks",), ("offer_landing",), ("pending",), ("dropped",)]
-        scope = list(dict.fromkeys(scope))
+    if scope == MOST:                       # every key there is, and (scoped_ops) every key the call adds
+        T.most = set(rc)
+        scope = [(k,) for k in rc if k not in MOST_SKIP]
+    else:
+        T.most = None
     paths = [tuple(T.state["team"] if k == "$team" else k for k in p) for p in scope]
     return paths, [(MISSING if at_path(rc, p) is MISSING else jclone(at_path(rc, p))) for p in paths], len(rc["log"])
 
@@ -243,6 +248,9 @@ def scoped_before(scope):
 def scoped_ops(paths, before, log_len) -> list:
     rc = T.state["recruiting"]
     ops = []
+    if T.most is not None:
+        new = [(k,) for k in rc if k not in T.most]
+        paths, before = list(paths) + new, list(before) + [MISSING] * len(new)
     for p, was in zip(paths, before):
         now = at_path(rc, p)
         where = ["recruiting", *p]

@@ -49,6 +49,13 @@ for (const f of ["sim_js/season.js", "career_js/recruiting.js", "career_js/offse
   "career_js/career.js", "career_js/carousel.js", "career_js/coach_names.js", "sim_js/news.js", "sim_js/schedule_gen.js",
   "sim_js/form.js", "sim_js/grade.js"]) await import(`../../${f}`);
 const { api } = await import("../api.js");
+if (process.env.API2_PATCH_RECORDS) {
+  // career_js/offseason/part3.js (_league_marks) asks season._records(state, true): `true` lands on through_week, where
+  // Python passes include_playoff=True. With this set, that call is read as Python's, to see what else differs.
+  const records = modules.season._records;
+  modules.season._records = (state, through_week = null, include_playoff = false) =>
+    (through_week === true ? records(state, null, true) : records(state, through_week, include_playoff));
+}
 modules.league.CACHE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "leagues-"));
 const COACHES = fs.mkdtempSync(path.join(os.tmpdir(), "coaches-"));
 modules.coaches.store = {
@@ -77,7 +84,7 @@ function copy_in(dir) {
   const from = path.join(out, dir);
   for (const name of fs.readdirSync(from)) fs.cpSync(path.join(from, name), path.join(SEASONS, name), { recursive: true, preserveTimestamps: true });
 }
-const only = process.argv[3] ? process.argv[3].split(",") : ["act1", "act2", "act3"];
+const only = process.argv[3] ? process.argv[3].split(",") : ["act0", "act1", "act2", "act3"];
 const not_run = new Set(api.ROUTES.map((r) => r[2].name));
 const by_handler = {};
 function handler_of(method, url) {
@@ -87,7 +94,7 @@ function handler_of(method, url) {
 }
 for (const act of only) {
   if (!fs.existsSync(path.join(out, `${act}.json`))) { console.log(`no ${act}.json`); bad++; continue; }
-  if (act !== "act1") copy_in("act1_seasons");      // (the other saves beside it, as Python's folder had them)
+  if (act === "act2" || act === "act3") copy_in("act1_seasons");      // (the other saves beside it, as Python's folder had them)
   copy_in(`${act}_seasons`);
   const { steps } = read(out, `${act}.json`);
   const n0 = t.bad, t0 = Date.now();
