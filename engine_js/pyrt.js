@@ -379,11 +379,25 @@ export const int = (x) => Math.trunc(x);
 export const floordiv = (a, b) => Math.floor(a / b);
 export const mod = (a, b) => { const r = a % b; return r !== 0 && (r < 0) !== (b < 0) ? r + b : r; };
 
-/** Python's sum(iterable, start=0): left to right. */
+/**
+ * Python's sum(iterable, start=0). Whole numbers add exactly; from the first number with a fraction on, Python (3.12
+ * and later) keeps a running correction for the digits each addition loses and adds it back at the end (Neumaier's
+ * summation), so the total of many floats is not what adding them one by one gives. This does the same.
+ */
 export function sum(xs, start = 0) {
-  let acc = start;
-  for (const x of xs) acc += x;
-  return acc;
+  let total = start, c = 0, floats = !Number.isInteger(start);
+  for (const x of xs) {
+    if (!floats) {
+      if (Number.isInteger(x) || typeof x === "boolean") { total += Number(x); continue; }
+      floats = true;                       // Python's float path starts here, from the whole-number total so far
+    }
+    const v = Number(x), t = total + v;
+    if (Math.abs(total) >= Math.abs(v)) c += (total - t) + v;
+    else c += (v - t) + total;
+    total = t;
+  }
+  if (floats && c && Number.isFinite(c)) total += c;
+  return total;
 }
 
 /**

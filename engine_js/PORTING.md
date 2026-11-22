@@ -85,3 +85,17 @@ a whole number or text, as Python's does. `statistics.mean`, `pstdev`, `median`,
 Each port is checked against the Python before it counts: a Python script that writes real inputs and Python's
 answers as JSON, and a Node script that feeds the same inputs to the JavaScript and compares exactly, both kept in the
 folder's `test/` so they can be rerun.
+
+## Where Python and JavaScript cannot agree to the last digit
+
+- **`sum` of floats** is `sum` from `pyrt.js`, which adds the way Python 3.12+ does (with a running correction). It is
+  exact for a list of floats and for a list of whole numbers. A list that mixes Python ints and floats cannot be told
+  apart here (3 and 3.0 are one number in JavaScript), and Python adds an int inside a float sum without the
+  correction: where the Python sums such a mix, say so in the port's notes.
+- **`x ** y`, `math.exp`, `math.log`, `math.sin`, `math.cos`** are the machine's math library in Python and the
+  JavaScript engine's own here; about one result in fifteen differs in the sixteenth digit. A whole-number power can
+  be made exact (`career_js/recruits.js` `pypow`); the others cannot. So `gauss` and `gammavariate` draw the same
+  random numbers but can return a value one last digit off. Everything the game decides from such a value (a rounded
+  yardage, a comparison with a random number, an order of teams) comes out the same unless the value sits exactly on
+  the line, which no test has found; a value that is stored as it is (a coach's opinion of a team in the polls) can
+  differ in its last digit, and a comparison of such values allows for that.
