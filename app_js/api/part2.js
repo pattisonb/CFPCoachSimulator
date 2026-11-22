@@ -713,6 +713,11 @@ function offseason_portal(p) {
   const pid = api._field(p, "pid", str), on = api._field(p, "on", bool, true);
   let offers;
   try {
+    // (port) in the portal weeks Python's portal_offer reads `state["recruiting"]["prospects"][pid]` first, a KeyError
+    // for a player who is not in the portal; the ported one does not throw there, so the same test is made here
+    if (Array.from(offseason.PORTAL_STAGES).includes(get(get(st, "offseason") || {}, "stage")) && !has(st["recruiting"]["prospects"], pid)) {
+      throw new offseason.KeyError(pid);
+    }
     offers = offseason.portal_offer(st, pid, on);
   } catch (e) {
     if (is_key_error(e)) throw new api.ApiError(404, "unknown portal player");

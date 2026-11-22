@@ -39,7 +39,7 @@ function answer(fn, args) {
   const e = replay.shift();
   if (!e || e.fn !== fn) { replay_problems.push(`asked ${fn}, the Python asked ${e ? e.fn : "nothing more"}`); throw new Error("replay out of step"); }
   const found = [];
-  diff(e.args, JSON.parse(JSON.stringify(args)), `${fn} args`, found);
+  diff(e.args, clean(args), `${fn} args`, found);
   if (found.length) replay_problems.push(...found);
   if (e.raise) {
     if (e.raise.type === "TeamBuildError") throw new TeamBuildError(e.raise.slug, e.raise.label);
@@ -89,14 +89,30 @@ const { league_file } = await import("../league_file.js");
 const logged = [];
 league_file._log = { error: (...a) => logged.push(a), exception: (...a) => logged.push(a) };
 
-const read = (name) => league_file.json_loads(text_of_file(name));       // keeps a number-like key in its place, as the Python wrote it
+// (json_loads keeps a number-like key in its place, as the Python wrote it; a test's NaN or Infinity is read as the number here)
+function read(name) {
+  const real = league_file._no_constant;
+  league_file._no_constant = (word) => ({ NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity })[word];
+  try { return league_file.json_loads(text_of_file(name)); } finally { league_file._no_constant = real; }
+}
+/** A plain copy (what JSON would carry, but NaN and Infinity stay numbers and a number-like key stays in its place). */
+function clean(v) {
+  if (v === undefined) return null;
+  if (v === null || typeof v !== "object") return v;
+  if (Array.isArray(v)) return v.map(clean);
+  const pairs = Object.keys(v).filter((k) => v[k] !== undefined).map((k) => [k, clean(v[k])]);
+  return pairs.some(([k]) => /^\d+$/.test(k)) ? new Map(pairs) : Object.fromEntries(pairs);
+}
+const keys_of = (o) => (o instanceof Map ? [...o.keys()] : Object.keys(o));
+const at = (o, k) => (o instanceof Map ? o.get(k) : o[k]);
+const has_key = (o, k) => (o instanceof Map ? o.has(k) : Object.hasOwn(o, k));
 const decoder = new TextDecoder();
 const text_of = (v) => league_file.json_text(v);
 
 // ---- comparing ------------------------------------------------------------------------------------------------------
 function diff(a, b, where, found) {
   if (found.length >= 6) return;
-  if (a === b) return;
+  if (a === b || (typeof a === "number" && typeof b === "number" && Number.isNaN(a) && Number.isNaN(b))) return;
   if (a === undefined || b === undefined || a === null || b === null || typeof a !== "object" || typeof b !== "object" || Array.isArray(a) !== Array.isArray(b)) {
     found.push(`${where}: py ${JSON.stringify(a)?.slice(0, 160)} | js ${JSON.stringify(b)?.slice(0, 160)}`); return;
   }
@@ -105,14 +121,14 @@ function diff(a, b, where, found) {
     a.forEach((v, i) => diff(v, b[i], `${where}[${i}]`, found));
     return;
   }
-  const ka = Object.keys(a), kb = Object.keys(b);
+  const ka = keys_of(a), kb = keys_of(b);
   if (ka.join("\u0000") !== kb.join("\u0000")) {
     const sa = new Set(ka), sb = new Set(kb);
     const only_py = ka.filter((k) => !sb.has(k)), only_js = kb.filter((k) => !sa.has(k));
     found.push(only_py.length || only_js.length ? `${where}: keys only py [${only_py.slice(0, 6)}] only js [${only_js.slice(0, 6)}]`
       : `${where}: key order differs: py [${ka.slice(0, 12)}] js [${kb.slice(0, 12)}]`);
   }
-  for (const k of ka) if (Object.hasOwn(b, k)) diff(a[k], b[k], `${where}/${k}`, found);
+  for (const k of ka) if (has_key(b, k)) diff(at(a, k), at(b, k), `${where}/${k}`, found);
 }
 const totals = {};
 let failures = 0;
@@ -263,7 +279,7 @@ function pipeline(blob, merge) {
   }
   let names, nerrs;
   try { [names, nerrs] = league_file.rivalry_names(doc); } catch (e) { return { rivalry_names_raise: true }; }
-  o.names = names; o.name_errs = nerrs; o.finales = JSON.parse(JSON.stringify(plain(doc._finales)));
+  o.names = names; o.name_errs = nerrs; o.finales = clean(doc._finales);
   o.rivals_after = Array.isArray(doc.teams) ? doc.teams.map((t) => (is_dict(t) ? plain(t.rivals) : null)) : null;
   let probs;
   try { probs = league_file.problems(doc); } catch (e) { o.problems_raise = true; return o; }
@@ -329,7 +345,7 @@ function pipeline(blob, merge) {
         got = { raise: true, errors: e.errors === undefined ? null : e.errors };
         if (c.out.raise !== undefined) c.out.raise = true;
       }
-      same(`calls: ${name}`, `case ${n}`, c.out, JSON.parse(JSON.stringify(got)));
+      same(`calls: ${name}`, `case ${n}`, c.out, clean(got));
       n++;
     }
   }
@@ -346,7 +362,7 @@ function pipeline(blob, merge) {
     replay_problems.length = 0;
     const cleared = base_league_cleared;
     const got = league_file.check(c.blob === "=export" ? export_py : blob_of(c.blob), c.seed);
-    same("check", `case ${n}`, c.expect, JSON.parse(JSON.stringify(got)));
+    same("check", `case ${n}`, c.expect, clean(got));
     same("check: what it asked the other modules", `case ${n}`, [[], 0, 1], [replay_problems.slice(0, 6), replay.length, base_league_cleared - cleared]);
     n++;
   }

@@ -292,7 +292,9 @@ function json_loads(s) {
     else if (c === "t" && s.startsWith("true", i)) { i += 4; v = true; }
     else if (c === "f" && s.startsWith("false", i)) { i += 5; v = false; }
     else if ((c === "N" && s.startsWith("NaN", i)) || (c === "I" && s.startsWith("Infinity", i)) || (c === "-" && s.startsWith("-Infinity", i))) {
-      league_file._no_constant(c === "N" ? "NaN" : c === "I" ? "Infinity" : "-Infinity");
+      const name = c === "N" ? "NaN" : c === "I" ? "Infinity" : "-Infinity";
+      v = league_file._no_constant(name);              // parse_constant: it raises (were it to answer, that would be the value)
+      i += name.length;
     } else {
       _NUMBER.lastIndex = i;
       const m = i < n ? _NUMBER.exec(s) : null;

@@ -75,6 +75,14 @@ class Act:
         return got.get("result")
 
 
+def keep(season_id, folder):
+    """A save as it stands (its file, and its folder with the class and the box scores), for the compare script."""
+    (OUT / folder).mkdir(exist_ok=True)
+    shutil.copy2(SEASONS / f"{season_id}.json", OUT / folder / f"{season_id}.json")
+    if (SEASONS / season_id).exists():
+        shutil.copytree(SEASONS / season_id, OUT / folder / season_id, dirs_exist_ok=True)
+
+
 def ids(x, n=1):
     """The first ids of a list of rows or a dict keyed by id."""
     if isinstance(x, dict):
@@ -89,6 +97,7 @@ while api.step() is not None:
     pass
 assert api.job()["status"] == "idle" and api.job()["error"] is None, api.job()
 api._drop(sid)                                   # the compare script starts from the file too
+recruiting.reset_caches()                        # and with nothing remembered from the two weeks' steps (an ask cached mid-step outlives the step)
 odd = {
     "aaa_not_json": "{ not json",
     "aaa_list": "[1, 2]",
@@ -304,8 +313,7 @@ sid2 = "offseason0002"
 st2["id"] = sid2
 season.save_season(st2)
 api._drop(sid)
-(OUT / "act2_seasons").mkdir(exist_ok=True)
-shutil.copy2(SEASONS / f"{sid2}.json", OUT / "act2_seasons" / f"{sid2}.json")
+keep(sid2, "act2_seasons")
 
 b = Act()
 S = f"/api/season/{sid2}"
@@ -390,7 +398,6 @@ b.ask("GET", S)
 print(f"act 2: {len(b.steps)} calls, {sum('status' in s for s in b.steps)} refused, {sum('crash' in s for s in b.steps)} broke")
 
 # act 3: straight to the next season from the first stage (to="next_season": offseason.run_all)
-st3 = season.load_season(sid) if (SEASONS / f"{sid}.json").exists() else None
 shutil.copytree(OUT / "act1_seasons", SEASONS, dirs_exist_ok=True)
 st3 = season.load_season(sid)
 season.activate(st3)
@@ -398,8 +405,7 @@ finished(st3)
 sid3 = "offseason0003"
 st3["id"] = sid3
 season.save_season(st3)
-(OUT / "act3_seasons").mkdir(exist_ok=True)
-shutil.copy2(SEASONS / f"{sid3}.json", OUT / "act3_seasons" / f"{sid3}.json")
+keep(sid3, "act3_seasons")
 c = Act()
 S = f"/api/season/{sid3}"
 c.ask("POST", f"{S}/offseason/advance", {"to": 5})

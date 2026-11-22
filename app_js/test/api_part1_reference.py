@@ -193,6 +193,8 @@ note("feed 1", api._feed(api.loaded_state()))
 # the save after week 1, for the JavaScript to read: the views from the same state, and a scripted progress run
 shutil.copytree(season.SEASONS_DIR, OUT / "seasons_w1", dirs_exist_ok=True)
 ref["py_id"] = sid
+api._drop(sid)                                   # read again from its save, as the JavaScript reads it
+api.call("GET", f"/api/season/{sid}/status")
 state = api.loaded_state()
 view = {"status": api._status(state, 0), "idle_job": api._idle_job(state), "card_record": api._card_record(state), "feed": api._feed(state),
         "news": api.call("GET", f"/api/season/{sid}/news"), "export_is_bytes": isinstance(api.call("GET", f"/api/season/{sid}/export"), bytes)}

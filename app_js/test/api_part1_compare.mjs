@@ -19,6 +19,12 @@ env.CFP_SEASONS_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "seasons-"));
 const ref = JSON.parse(fs.readFileSync(path.join(out, "ref.json"), "utf8"));
 
 const { season } = await import("../../sim_js/season.js");
+// every ported module, so each is on `modules` when another asks for it by name
+for (const m of ["sim_js/schedule_gen", "sim_js/news", "sim_js/form", "sim_js/grade", "sim_js/awards", "sim_js/bowls", "sim_js/polls",
+  "career_js/persona", "career_js/scenes", "career_js/league_file", "career_js/league_fill", "career_js/programs", "career_js/carousel",
+  "career_js/headquarters", "career_js/clear", "career_js/ability_goals", "career_js/promises", "career_js/grades", "career_js/word",
+  "career_js/office", "career_js/coach_names", "career_js/prospects", "career_js/recruits", "career_js/position_fit",
+  "teamdata_js/build_teams", "teamdata_js/ratings", "teamdata_js/shown", "teamdata_js/game_scale"]) await import(`../../${m}.js`);
 await import("../../career_js/recruiting.js");
 await import("../../career_js/offseason.js");
 const { career } = await import("../../career_js/career.js");
@@ -33,6 +39,13 @@ if (alone) {
 }
 career.zip = { gzip: (b) => zlib.gzipSync(b), gunzip: (b, most) => zlib.gunzipSync(b, { maxOutputLength: most }) };
 league.CACHE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "leagues-"));
+const coach_dir = fs.mkdtempSync(path.join(os.tmpdir(), "coaches-"));      // the saved coaches: none
+coaches.store = {
+  read: (id) => (fs.existsSync(path.join(coach_dir, `${id}.json`)) ? fs.readFileSync(path.join(coach_dir, `${id}.json`), "utf8") : null),
+  write: (id, text) => fs.writeFileSync(path.join(coach_dir, `${id}.json`), text),
+  remove: (id) => fs.rmSync(path.join(coach_dir, `${id}.json`), { force: true }),
+  list: () => fs.readdirSync(coach_dir).filter((n) => n.endsWith(".json")).map((n) => n.slice(0, -5)),
+};
 
 let cases = 0, bad = 0;
 const groups = {};
@@ -53,11 +66,13 @@ function attempt(fn) {
     return { ok: fn() };
   } catch (e) {
     if (e instanceof api.ApiError) return { api_error: [e.status, e.message] };
+    if (!(e instanceof coaches.ValueError) && process.env.SHOW_ERRORS) console.log(e.stack.split("\n").slice(0, 5).join("\n"));
     return { error: e instanceof coaches.ValueError ? "ValueError" : e.constructor.name, message: e.message };
   }
 }
 const same_error = (py, js) => ("error" in py ? { error: py.error } : py);       // an error's class only
 const strip = (js) => ("error" in js ? { error: js.error } : js);
+const seen_errors = new Set();
 
 // ----- the pure helpers -----
 for (const [t, want] of ref.boolean) check("boolean", JSON.stringify(t), same_error(want), strip(attempt(() => api.boolean(t))));
@@ -205,12 +220,14 @@ note("import same", api.call("POST", "/api/season/import", blob));
 note("import changed", api.changed());
 console.log(`the run here: ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 
-const swap = (v) => JSON.parse(JSON.stringify(v).split(sid).join(ref.py_id));
+// the season's own id, and the clock (when it was made and last saved)
+const CLOCK = (k, v) => (k === "created_at" || k === "saved_at" ? "<clock>" : v);
+const swap = (v) => JSON.parse(JSON.stringify(v, CLOCK).split(sid).join(ref.py_id));
 if (run.length !== ref.run.length) { bad++; console.log(`DIFF the run has ${run.length} notes, the Python's ${ref.run.length}`); }
 for (let i = 0; i < Math.min(run.length, ref.run.length); i++) {
   const [what, want] = ref.run[i];
   if (run[i][0] !== what) { bad++; console.log(`DIFF note ${i}: py ${what} | js ${run[i][0]}`); continue; }
-  check("run", what, want, swap(run[i][1]), { close: 1e-9 });
+  check("run", what, JSON.parse(JSON.stringify(want, CLOCK)), swap(run[i][1]));
 }
 // the Python's own export, imported here (a career this side has never seen)
 {

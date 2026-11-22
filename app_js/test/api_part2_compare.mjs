@@ -87,7 +87,7 @@ function handler_of(method, url) {
 }
 for (const act of only) {
   if (!fs.existsSync(path.join(out, `${act}.json`))) { console.log(`no ${act}.json`); bad++; continue; }
-  if (act === "act3") copy_in("act1_seasons");
+  if (act !== "act1") copy_in("act1_seasons");      // (the other saves beside it, as Python's folder had them)
   copy_in(`${act}_seasons`);
   const { steps } = read(out, `${act}.json`);
   const n0 = t.bad, t0 = Date.now();
@@ -101,7 +101,10 @@ for (const act of only) {
     } catch (e) {
       if (e instanceof api.ApiError) got = { status: e.status, message: e.message };
       else if ("crash" in s) got = { crash: true };       // Python's handler broke here too (which error is not compared)
-      else { got = { crashed: String(e && e.stack ? e.stack.split("\n").slice(0, 4).join(" | ") : e) }; crashed++; }
+      else {
+        got = { crashed: String(e && e.stack ? e.stack.split("\n").slice(0, 4).join(" | ") : e) };
+        if (crashed++ < 8) console.log(`BROKE ${act} #${i} ${s.method} ${s.path}: ${got.crashed.slice(0, 500)}`);
+      }
     }
     if ("status" in s) refused++;
     const want = "crash" in s ? { crash: true } : "status" in s ? { status: s.status, message: s.message } : { result: s.result };
