@@ -23,6 +23,7 @@ import random
 import shutil
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 OUT = Path(sys.argv[1])
@@ -67,6 +68,8 @@ class Act:
     def ask(self, method, path, body=None):
         """One call: its answer, or its refusal."""
         sent = copy.deepcopy(body)
+        if (method, path) == ("POST", "/api/coaches"):
+            time.sleep(1.1)                      # a coach's updated_at is to the second, and the list is by it (the compare script waits too)
         try:
             out = api.call(method, path, body)
             got = {"result": json.loads(json.dumps(out))}

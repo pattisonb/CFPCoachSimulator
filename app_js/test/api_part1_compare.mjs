@@ -72,7 +72,6 @@ function attempt(fn) {
 }
 const same_error = (py, js) => ("error" in py ? { error: py.error } : py);       // an error's class only
 const strip = (js) => ("error" in js ? { error: js.error } : js);
-const seen_errors = new Set();
 
 // ----- the pure helpers -----
 for (const [t, want] of ref.boolean) check("boolean", JSON.stringify(t), same_error(want), strip(attempt(() => api.boolean(t))));
@@ -82,7 +81,6 @@ for (const [q, cast, d, want] of ref.q) {
 }
 check("Params.q", "default cast", { ok: "12" }, attempt(() => new api.Params({}, { a: "12" }).q("a")));
 check("Params.q", "pyrt int", { ok: 12 }, attempt(() => new api.Params({}, { a: "12" }).q("a", Number, null)));
-const INT_FLOAT = new Set();     // a JSON 3.0 against `int`: no case here holds one
 for (const [b, kind, d, want] of ref.field) {
   const args = d === "<missing>" ? [] : [d];
   check("_field", `${JSON.stringify(b)} ${kind} ${JSON.stringify(d)}`, want, attempt(() => api._field(new api.Params({}, {}, b), "x", api[kind], ...args)));
@@ -100,7 +98,6 @@ if (!alone) check("routes", "routes()", ref.routes, api.routes().map((r) => r.sl
 
 api.route("GET", "/api/_echo/{a}/x/{b}", (p) => ({ path: p.path, query: p.query, body: p.body }));
 api.route("POST", "/api/_echo/{a}/x/{b}", (p) => ({ path: p.path, query: p.query, body: p.body }));
-const PART2 = /"league": "nokey"/;
 for (const [m, p, body, want] of ref.calls) {
   const b = body === "<bytes:notgzip>" ? new TextEncoder().encode("not a gzip file") : body;
   check("call", `${m} ${p} ${JSON.stringify(body)}`, want, attempt(() => api.call(m, p, b)));
@@ -254,7 +251,9 @@ if (run.length !== ref.run.length) { bad++; console.log(`DIFF the run has ${run.
 for (let i = 0; i < Math.min(run.length, ref.run.length); i++) {
   const [what, want] = ref.run[i];
   if (run[i][0] !== what) { bad++; console.log(`DIFF note ${i}: py ${what} | js ${run[i][0]}`); continue; }
-  check("run", what, JSON.parse(JSON.stringify(want, CLOCK)), swap(run[i][1]));
+  // (where a failed week broke is each language's own file and line: the message is compared)
+  const WHERE = (k, v) => (k === "error" && typeof v === "string" ? v.split(" (")[0] : CLOCK(k, v));
+  check("run", what, JSON.parse(JSON.stringify(want, WHERE)), JSON.parse(JSON.stringify(swap(run[i][1]), WHERE)));
 }
 // the Python's own export, imported here (a career this side has never seen)
 {

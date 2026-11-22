@@ -647,6 +647,39 @@ def season_of(team, seed, weeks, rng, tag, clear_mode) -> dict:
     return state
 
 
+def doubts(state, rng) -> None:
+    """Keeps His Word under its floor (word.believes made to say no for these cases, with and without a broken promise
+    to name): he doubts the job you promise, on a call, on a visit and with your offer."""
+    me = state["team"]
+    rc = state["recruiting"]
+    real = {k: getattr(word, k) for k in ("believes", "last_broken")}
+    for round_, name in enumerate(("Sam Dial", None, "Ty $& O'Neal")):
+        word.believes = lambda state, group: False
+        word.last_broken = lambda state, group, name=name: name
+        wrap_dep("word", "believes")
+        wrap_dep("word", "last_broken")
+        TAG[0] = f"doubted round {round_}"
+        recruiting._hours(state, me)
+        rc["hours"][me] = 100000
+        for i, pid in enumerate(visible(state, 30, rng)):
+            if i % 3 == 0:
+                act(state, pid, "offer", answer="promise" if i % 2 else None)
+                act(state, pid, "promise_role")
+                continue
+            sc = (act(state, pid, "hc_visit" if i % 2 else "call") or {}).get("scene")
+            if not sc:
+                continue
+            p = rc["prospects"][pid]
+            got = act(state, pid, "present", scene=sc["id"], topics=(list(p["priorities"]) + ["nil", "coach", "pro"])[:3])
+            if ((got or {}).get("scene") or {}).get("question") and i % 3 == 1:
+                act(state, pid, "answer", scene=sc["id"], answer="promise")
+            else:
+                act(state, pid, "promise_job", scene=sc["id"])
+            act(state, pid, "pitch", pitch=p["priorities"][0], scene=sc["id"])
+    for k, fn in real.items():
+        setattr(word, k, fn)
+
+
 def portal(rng) -> None:
     """The transfer portal of a finished season (tests/test_portal_profile.to_portal)."""
     from app import api
@@ -731,7 +764,7 @@ def main() -> None:
     t0 = time.time()
     season_of("smu", 5, 4, rng, "smu", False)
     season_of("ohio-state", 11, 3, rng, "ohio-state", False)
-    season_of("kent-state", 7, 2, rng, "kent-state clear", True)
+    doubts(season_of("kent-state", 7, 2, rng, "kent-state clear", True), rng)
     portal(rng)
     clear.CLEAR = False
     cases_file.close()

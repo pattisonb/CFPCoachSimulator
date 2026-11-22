@@ -102,6 +102,8 @@ for (const act of only) {
   for (const [i, s] of steps.entries()) {
     const name = handler_of(s.method, s.path);
     let got;
+    // a coach's updated_at is to the second, and the coaches are listed by it: the reference waited here too
+    if (s.method === "POST" && s.path === "/api/coaches") Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1100);
     try {
       const result = api.call(s.method, s.path, s.body === null ? null : structuredClone(s.body));
       got = { result: JSON.parse(JSON.stringify(result)) };
