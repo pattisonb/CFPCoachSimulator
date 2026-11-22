@@ -523,6 +523,17 @@ export interface PlayerTrait {
   next?: { tier: number; tier_name: string; have: number; need: number; text: string };
 }
 
+/** One of a player's games in his Game Log. */
+export interface GameLogRow {
+  week: number;
+  opponent_name: string;
+  venue: string;
+  won: boolean;
+  points_for: number;
+  points_against: number;
+  started: boolean;
+}
+
 /** GET /api/season/{id}/player?team=&slug= (the parts the new UI uses) */
 export interface PlayerProfile {
   slug: string;
@@ -570,17 +581,9 @@ export interface PlayerProfile {
     conf_n: number;
   }[];
   /** his games this season, in order; null when the game keeps no box scores for his team */
-  game_log?:
-    | {
-        week: number;
-        opponent_name: string;
-        venue: string;
-        won: boolean;
-        points_for: number;
-        points_against: number;
-        started: boolean;
-      }[]
-    | null;
+  game_log?: GameLogRow[] | null;
+  /** his game log a season at a time, newest first: only seasons he has a game in (a career keeps the last few) */
+  game_logs?: { year: number; rows: GameLogRow[] }[];
   honors?: { stage: string; award: string; place: string; detail: string }[];
   /** his past seasons, oldest first */
   history?: {

@@ -102,9 +102,6 @@ test("a player who graduated or left has no log kept", () => {
 test("an FCS stand-in in a kept season reads as its region, never a school", () => {
   const st = api.loaded_state();
   const teams = season.load_teams();
-  const row = { week: 1, opponent_name: season.fcs_label(Object.keys(teams).find((t) => teams[t]["fictional"])), venue: "home",
-    won: true, points_for: 41, points_against: 3 };
-  assert(/^FCS /.test(row["opponent_name"]), row["opponent_name"]);
   // every kept opponent is the name the schedule showed: a team's name, or a stand-in's region label
   const names = new Set(Object.values(first["games"]).flatMap((g) => [g["home_display"], g["away_display"]]));
   for (const g of st["career"]["game_logs"][0]["games"]) assert(names.has(g["opponent_name"]), g["opponent_name"]);

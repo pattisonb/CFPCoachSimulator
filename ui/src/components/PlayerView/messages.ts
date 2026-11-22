@@ -106,6 +106,7 @@ export const messages = {
   rankOf: (rank: number, n: number) => `#${rank} of ${n}`,
   noRanks: "His ranks show once he has played.",
   gameLog: "Game Log",
+  gameLogSeasons: "Season",
   weekCol: "Week",
   opponent: "Opponent",
   result: "Result",

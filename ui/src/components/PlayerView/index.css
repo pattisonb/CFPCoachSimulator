@@ -491,3 +491,16 @@
 .player-view__mark--gold {
   color: var(--gold);
 }
+
+/* the Game Log's seasons, at its head's far end: small tabs, so the head stays the height of the one beside it */
+.player-view__seasons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.player-view__seasons .chip {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: var(--t-xs);
+}

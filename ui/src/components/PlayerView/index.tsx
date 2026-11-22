@@ -490,32 +490,7 @@ ${m.ceiling(a.potential)}.`
               <p className="player-view__soft">{m.noRanks}</p>
             )}
           </Panel>
-          <Panel title={m.gameLog}>
-            {pr.game_log?.length ? (
-              <table className="player-view__table">
-                <thead>
-                  <tr>
-                    <th scope="col">{m.weekCol}</th>
-                    <th scope="col">{m.opponent}</th>
-                    <th scope="col">{m.result}</th>
-                    <th scope="col">{m.role}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pr.game_log.map((g) => (
-                    <tr key={g.week}>
-                      <th scope="row">{weekLabels?.[String(g.week)] ?? m.week(g.week)}</th>
-                      <td>{m.versus(g.venue === "away", g.opponent_name)}</td>
-                      <td>{m.score(g.won, g.points_for, g.points_against)}</td>
-                      <td>{g.started ? m.started : m.played}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="player-view__soft">{m.noGameLog}</p>
-            )}
-          </Panel>
+          <GameLog pr={pr} weekLabels={weekLabels} />
           <Panel title={m.honors}>
             {pr.honors?.length ? (
               <ul className="player-view__list">
@@ -533,6 +508,58 @@ ${m.ceiling(a.potential)}.`
         </Panels>
       )}
     </article>
+  );
+}
+
+/**
+ * His games, a season at a time: a tab a season he has games in (newest first), opening on the newest, so before a
+ * new season's first game it is last year's log and not an empty panel. One season: no tabs.
+ */
+function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<string, string> }) {
+  // a game from before the seasons were sent: this season's log alone
+  const seasons = pr.game_logs ?? (pr.game_log?.length ? [{ year: 0, rows: pr.game_log }] : []);
+  const [picked, setPicked] = useState<number | null>(null);
+  const shown = seasons.find((s) => s.year === picked) ?? seasons[0];
+  return (
+    <Panel
+      title={m.gameLog}
+      aside={
+        seasons.length > 1 ? (
+          <span className="player-view__seasons" role="tablist" aria-label={m.gameLogSeasons}>
+            {seasons.map((s) => (
+              <Chip key={s.year} role="tab" on={s === shown} onClick={() => setPicked(s.year)}>
+                {s.year}
+              </Chip>
+            ))}
+          </span>
+        ) : undefined
+      }
+    >
+      {shown ? (
+        <table className="player-view__table">
+          <thead>
+            <tr>
+              <th scope="col">{m.weekCol}</th>
+              <th scope="col">{m.opponent}</th>
+              <th scope="col">{m.result}</th>
+              <th scope="col">{m.role}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.rows.map((g) => (
+              <tr key={g.week}>
+                <th scope="row">{weekLabels?.[String(g.week)] ?? m.week(g.week)}</th>
+                <td>{m.versus(g.venue === "away", g.opponent_name)}</td>
+                <td>{m.score(g.won, g.points_for, g.points_against)}</td>
+                <td>{g.started ? m.started : m.played}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="player-view__soft">{m.noGameLog}</p>
+      )}
+    </Panel>
   );
 }
 
