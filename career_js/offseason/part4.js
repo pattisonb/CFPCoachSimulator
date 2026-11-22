@@ -587,8 +587,14 @@ function recruiting_spots(state, slug) {
 
 
 function player_next(state, slug) {
-  // _player_next, with his overall as the page shows a rating (page).
-  return offseason.page(offseason._player_next(state, slug));
+  // _player_next, with his overall as the page shows a rating (page): the number in his sentence is that one too.
+  const raw = offseason._player_next(state, slug);
+  const stored = raw === null ? null : get(raw, "overall");
+  const out = offseason.page(raw);
+  if (out !== null && typeof get(out, "sentence") === "string" && stored !== null && stored !== undefined) {
+    out["sentence"] = out["sentence"].replace(`, ${stored} overall.`, `, ${get(out, "overall")} overall.`);
+  }
+  return out;
 }
 
 

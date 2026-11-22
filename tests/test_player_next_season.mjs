@@ -67,9 +67,9 @@ test("a returning player reads his team, class and overall for next season", () 
   assert(n["status"] === "returning" && n["team"] === ME && n["team_name"], show(n));
   assert(n["position"] === c["pos"] && n["class"] === c["cls"] && n["class_name"], show(n));
   equal(n["season"], st["offseason"]["year"] - 1);
-  // his overall is on the scale the page shows (the sentence, which the page does not print, carries the stored one)
+  // his overall is on the scale the page shows, and the number in his sentence is the same one
   equal(n["overall"], game.modules.shown.overall(c["o"]));
-  equal(n["sentence"], `Returning to ${n["team_name"]} as a ${n["class_name"].toLowerCase()}, ${c["o"]} overall.`);
+  equal(n["sentence"], `Returning to ${n["team_name"]} as a ${n["class_name"].toLowerCase()}, ${n["overall"]} overall.`);
 });
 
 test("a graduated player reads Graduated, with no team", () => {
