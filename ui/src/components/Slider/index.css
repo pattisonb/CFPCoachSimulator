@@ -1,0 +1,46 @@
+/* A sideways row with an arrow tab at each edge that has more behind it, and no scrollbar. */
+.slider {
+  position: relative;
+  min-width: 0;
+}
+
+/* the row it wraps: it still scrolls, its bar is not drawn */
+.slider > :first-child {
+  scrollbar-width: none;
+}
+
+.slider > :first-child::-webkit-scrollbar {
+  display: none;
+}
+
+.slider__tab {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 64px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow, var(--ink));
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.slider__tab--left {
+  left: -6px;
+}
+
+.slider__tab--right {
+  right: -6px;
+}
+
+.slider__tab:hover,
+.slider__tab:focus-visible {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  outline: none;
+}

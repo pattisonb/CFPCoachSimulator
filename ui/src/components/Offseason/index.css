@@ -745,6 +745,15 @@
   line-height: 1;
 }
 
+/* a transfer's card: your scouts' read where a number would be */
+.portal-card__read {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--t-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
 .dev-card__name {
   overflow: hidden;
   font-size: var(--t-md);

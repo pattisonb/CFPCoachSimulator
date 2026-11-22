@@ -164,6 +164,8 @@ export interface OffView {
         name: string;
         pos: string;
         overall: number;
+        /** your scouts' read of him as a grade or a range of two (null until scouted): what the card shows */
+        our_potential?: [string, string] | null;
         offered: boolean;
         signed: string | null;
         committed: string | null;

@@ -3041,6 +3041,8 @@ def portal_board(state: dict) -> dict:
         p = e["player"]
         seen = prospects.seen_status(state, pid, me)
         rows.append({"id": pid, "name": p["n"], "pos": p["pos"], "overall": house(p["pos"], p["o"]), "portal_rank": rc["prospects"][pid].get("portal_rank"),
+                     # what your scouts read of him, as the Prospects list shows it (the card shows this, never his true overall)
+                     "our_potential": recruiting.shown_range(state, pid, "potential") if rc["reads"].get(pid) else None,
                      "offered": pid in offers, "signed": seen["signed"], "committed": seen["committed"],
                      "hard": bool(seen.get("hard")) and not seen["signed"],
                      "list": [dict(x, you=x["school"] == me) for x in prospects._schools(state, pid, me)[:5]],

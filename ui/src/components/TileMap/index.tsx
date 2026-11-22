@@ -210,10 +210,35 @@ export function project(lat: number, lon: number): [number, number] {
 
 /** Where a town of `st` goes on the map: its own spot when that lands in its state, else the state's nearest cell
  * (a coarse grid gives a border town to the neighbor); the state's middle with no place known. */
-export function spot(st: string, lat: number | null, lon: number | null): [number, number] | null {
+/** every state's cells, for spreading the dots that have a state but no town */
+const CELLS = (() => {
+  const by = new Map<string, [number, number][]>();
+  for (let r = 0; r < PIXEL_ROWS; r++)
+    for (let c = 0; c < PIXEL_COLS; c++) {
+      const st = at(c, r);
+      if (st === "..") continue;
+      if (!by.has(st)) by.set(st, []);
+      by.get(st)!.push([c, r]);
+    }
+  return by;
+})();
+/** *tune* the step between two town-less dots of one state, in its cells (odd, so they spread before they repeat) */
+const SPREAD = 7;
+
+/**
+ * Where a town's dot goes on the map. `nth` is for a dot with a state but no town (a transfer: the portal knows his
+ * home state only): the nth such dot of its state takes a cell of its own, so ten of them never stack on the state's
+ * middle as one.
+ */
+export function spot(st: string, lat: number | null, lon: number | null, nth?: number): [number, number] | null {
   const shape = SHAPES.shapes.get(st);
   if (!shape) return null;
-  if (lat == null || lon == null || st === "AK" || st === "HI") return [shape.mid[0] + 0.5, shape.mid[1] + 0.5];
+  if (lat == null || lon == null || st === "AK" || st === "HI") {
+    const cells = nth == null ? undefined : CELLS.get(st);
+    if (!cells?.length) return [shape.mid[0] + 0.5, shape.mid[1] + 0.5];
+    const [c, r] = cells[(Math.floor(cells.length / 2) + (nth ?? 0) * SPREAD) % cells.length];
+    return [c + 0.5, r + 0.5];
+  }
   const [x, y] = project(lat, lon);
   if (at(Math.floor(x), Math.floor(y)) === st) return [x, y];
   let best: [number, number] = [shape.mid[0] + 0.5, shape.mid[1] + 0.5];
@@ -331,10 +356,17 @@ export default function TileMap({
   const dots = useMemo(
     () =>
       show !== "none" && points
-        ? points
-            .filter((p) => (p[3] ?? "board").split(" ").includes(show))
-            .map(([st, lat, lon]) => spot(st, lat, lon))
-            .filter((p) => p != null)
+        ? (() => {
+            const seen = new Map<string, number>(); // how many town-less dots each state has had so far
+            return points
+              .filter((p) => (p[3] ?? "board").split(" ").includes(show))
+              .map(([st, lat, lon]) => {
+                const nth = lat == null || lon == null ? (seen.get(st) ?? 0) : undefined;
+                if (nth !== undefined) seen.set(st, nth + 1);
+                return spot(st, lat, lon, nth);
+              })
+              .filter((p) => p != null);
+          })()
         : [],
     [show, points],
   );

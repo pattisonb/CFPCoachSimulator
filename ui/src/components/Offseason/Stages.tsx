@@ -4,6 +4,8 @@ import { ArrowRight } from "@phosphor-icons/react";
 import Dropdown from "../Dropdown/index.tsx";
 import Modal from "../Modal/index.tsx";
 import Face from "../Face/index.tsx";
+import Slider from "../Slider/index.tsx";
+import { GradeRange } from "../Grade/index.tsx";
 import Panel from "../Panel/index.tsx";
 import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
 import Swatch from "../Swatch/index.tsx";
@@ -207,26 +209,28 @@ function Retention(p: P) {
         {!rt.players.length ? (
           <Empty>{m.keep.none}</Empty>
         ) : (
-          <ul
-            className="off__cards"
-            tabIndex={0}
-            ref={row}
-            onScroll={(e) => {
-              scrollAt.current = e.currentTarget.scrollLeft;
-            }}
-          >
-            {ordered.map((x) => (
-              <LeaverCard
-                key={x.id}
-                x={x}
-                left={rt.left}
-                busy={busy}
-                live={live}
-                act={act}
-                onCard={() => setCard({ team: p.season.team, name: x.name })}
-              />
-            ))}
-          </ul>
+          <Slider>
+            <ul
+              className="off__cards"
+              tabIndex={0}
+              ref={row}
+              onScroll={(e) => {
+                scrollAt.current = e.currentTarget.scrollLeft;
+              }}
+            >
+              {ordered.map((x) => (
+                <LeaverCard
+                  key={x.id}
+                  x={x}
+                  left={rt.left}
+                  busy={busy}
+                  live={live}
+                  act={act}
+                  onCard={() => setCard({ team: p.season.team, name: x.name })}
+                />
+              ))}
+            </ul>
+          </Slider>
         )}
       </section>
       <PlayerWindow seasonId={p.season.id} who={card} weekLabels={p.season.week_labels} onClose={() => setCard(null)} />
@@ -610,49 +614,54 @@ function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
           {pt.board ? ` · ${m.portal.onBoard(pt.board.count)}` : ""}
         </h3>
         {rows.length ? (
-          <ul className="off__cards" tabIndex={0}>
-            {rows.map((x) => (
-              <li key={x.id} className="dev-card portal-card" style={MINE}>
-                <header className="dev-card__top">
-                  <span className="face-tile dev-card__face">
-                    <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+          <Slider>
+            <ul className="off__cards" tabIndex={0}>
+              {rows.map((x) => (
+                <li key={x.id} className="dev-card portal-card" style={MINE}>
+                  <header className="dev-card__top">
+                    <span className="face-tile dev-card__face">
+                      <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                    </span>
+                    {/* your scouts' read, as the Prospects list shows it: never his true overall (the player's ask) */}
+                    <span className="portal-card__read" title={x.our_potential ? m.portal.read : m.portal.unscouted}>
+                      {x.our_potential ? <GradeRange read={x.our_potential} size="lg" /> : m.portal.noRead}
+                    </span>
+                  </header>
+                  <button
+                    type="button"
+                    className="off-card__open dev-card__name"
+                    title={m.portal.openFile(x.name)}
+                    onClick={() => onRecruit(x.id)}
+                  >
+                    {x.name}
+                  </button>
+                  <span className="off__soft">{x.pos}</span>
+                  {/* the school by its short name, so the tag fits the card; the whole line is its tooltip */}
+                  <span
+                    className="dev-card__line"
+                    title={
+                      x.signed
+                        ? m.portal.signedWith(teamName(teams, x.signed))
+                        : x.committed
+                          ? m.portal.committedTo(teamName(teams, x.committed))
+                          : undefined
+                    }
+                  >
+                    {x.signed || x.committed ? (
+                      <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
+                        {(x.signed ? m.portal.signedShort : m.portal.committedShort)(
+                          teams.get(x.signed ?? x.committed ?? "")?.abbreviation ??
+                            teamName(teams, x.signed ?? x.committed ?? ""),
+                        )}
+                      </TeamTag>
+                    ) : (
+                      <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
+                    )}
                   </span>
-                  <b className="dev-card__gain">{x.overall}</b>
-                </header>
-                <button
-                  type="button"
-                  className="off-card__open dev-card__name"
-                  title={m.portal.openFile(x.name)}
-                  onClick={() => onRecruit(x.id)}
-                >
-                  {x.name}
-                </button>
-                <span className="off__soft">{x.pos}</span>
-                {/* the school by its short name, so the tag fits the card; the whole line is its tooltip */}
-                <span
-                  className="dev-card__line"
-                  title={
-                    x.signed
-                      ? m.portal.signedWith(teamName(teams, x.signed))
-                      : x.committed
-                        ? m.portal.committedTo(teamName(teams, x.committed))
-                        : undefined
-                  }
-                >
-                  {x.signed || x.committed ? (
-                    <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
-                      {(x.signed ? m.portal.signedShort : m.portal.committedShort)(
-                        teams.get(x.signed ?? x.committed ?? "")?.abbreviation ??
-                          teamName(teams, x.signed ?? x.committed ?? ""),
-                      )}
-                    </TeamTag>
-                  ) : (
-                    <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </Slider>
         ) : (
           <Empty>{m.portal.noBoard}</Empty>
         )}
