@@ -352,11 +352,12 @@ def main(out: Path, name: str) -> None:
                 R("offseason/retain", {"pid": "nobody", "action": "meet"})
             if stage == "departures":
                 mine = v.get("my_roster") or []
-                under = [p for p in mine if p["cls"] in ("FR", "SO")]
-                for p in under[:2]:
-                    R("offseason/redshirt", {"pid": p["id"], "on": True, "stage": stage})
+                under = (v.get("redshirts") or {}).get("players") or []
+                for p in under[:3]:
+                    R("offseason/redshirt", {"pid": p["id"], "on": not p["redshirt"], "stage": stage})
                 if under:
-                    R("offseason/redshirt", {"pid": under[0]["id"], "on": False})
+                    R("offseason/redshirt", {"pid": under[0]["id"], "on": bool(under[0]["redshirt"])})
+                R("offseason/redshirt", {"pid": "nobody", "on": True})
                 p = pick(mine, len(mine) // 3)
                 if p:
                     opts = (G(f"offseason/position_options?pid={p['id']}") or {}).get("options") or []

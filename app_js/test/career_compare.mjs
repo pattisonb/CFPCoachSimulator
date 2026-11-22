@@ -435,9 +435,10 @@ function offseason(me) {
     }
     if (stage === "departures") {
       const mine = v.my_roster || [];
-      const under = mine.filter((p) => p.cls === "FR" || p.cls === "SO");
-      for (const p of under.slice(0, 2)) R("offseason/redshirt", { pid: p.id, on: true, stage });
-      if (under.length) R("offseason/redshirt", { pid: under[0].id, on: false });
+      const under = (v.redshirts || {}).players || [];
+      for (const p of under.slice(0, 3)) R("offseason/redshirt", { pid: p.id, on: !p.redshirt, stage });
+      if (under.length) R("offseason/redshirt", { pid: under[0].id, on: Boolean(under[0].redshirt) });
+      R("offseason/redshirt", { pid: "nobody", on: true });
       const p = pick(mine, Math.floor(mine.length / 3));
       if (p) {
         const opts = (G(`offseason/position_options?pid=${p.id}`) || {}).options || [];
