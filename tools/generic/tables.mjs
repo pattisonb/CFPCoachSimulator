@@ -1,6 +1,6 @@
-// The lookalike names the published site uses in place of real ones (tools/generic/scrub.py applies them).
+// The lookalike names the published site uses in place of real ones (tools/generic/scrub.mjs applies them).
 // Edit freely: every table is `real -> lookalike`. Players and coaches are not listed here; their names are drawn
-// by scrub.py with the same initials.
+// by scrub.mjs with the same initials.
 //
 // House rule for teams: no school keeps its real full name, mascot or stadium. A school named for its state or city
 // goes by that place (Alabama, Texas, Houston: PLACES), with a plain abbreviation of the place where the real one is the
@@ -152,7 +152,7 @@ export const TEAMS = {
 };
 
 // Schools that go by their real place name (the state or city each is named for). Only these may match the real short
-// name: tests/test_generic_names.py holds every other school to a lookalike.   *tune*
+// name: tests/test_generic_names.mjs holds every other school to a lookalike.   *tune*
 export const PLACES = new Set([
     "akron", "alabama", "arizona", "arkansas", "auburn", "bowling-green", "buffalo", "california", "charlotte",
     "cincinnati", "colorado", "delaware", "florida", "georgia", "hawai-i", "houston", "illinois", "indiana", "iowa",
@@ -308,7 +308,7 @@ export const TROPHIES = {
     "Don Shula Trophy": "Coach's Trophy", "Old Wagon Wheel": "Old Cart Wheel",
 };
 
-// Awards, leagues and networks named in the game's own words (Python and the app). Longest first wins.   *tune*
+// Awards, leagues and networks named in the game's own words (the game's code and the app). Longest first wins.   *tune*
 export const MARKS = {
     "College Football Playoff": "National Championship Playoff", "CFP": "NCP",
     "Commander in Chief's Trophy": "Commandant's Trophy", "Commander-in-Chief's Trophy": "Commandant's Trophy",

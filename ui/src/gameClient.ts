@@ -1,22 +1,20 @@
 import { beginBusy } from "./busy.ts";
 import { ROOT } from "./router.ts";
 
-// The page's way to the game. On this computer (`npm run dev`) every call is a plain fetch, which Vite hands to the
-// Python game server. On the published site (built by tools/build_site.py, which sets VITE_GAME=browser) there is no
-// server: the same Python game runs in a Web Worker (public/worker.js, Pyodide) and every call is a message to it,
-// answered as a Response so api.ts reads both the same way. Saves live in the browser (IndexedDB).
-// The worker takes a while to start (Python and the game are downloaded and unpacked), so it starts with the page, and
-// until it is up the team picker's reads are answered from plain files the build wrote (boot/, tools/build_site.py):
+// The page's way to the game. There is no server: the game runs in this browser, in a Web Worker (public/worker.js,
+// the whole game as one script), and every call is a message to it, answered as a Response so api.ts reads it the way
+// it would read a server's. Saves live in the browser (IndexedDB). It is the same on the published site (built by
+// tools/build_site.mjs) and under `npm run dev` (vite.config.ts serves the worker its game and its data).
+// The worker takes a moment to start (the game's data is downloaded and unpacked), so it starts with the page, and
+// until it is up the team picker's reads are answered from plain files the build wrote (boot/, tools/build_site.mjs):
 // the first screen shows at once and the game loads behind it.
-
-/** True on the published site: the game runs in this browser. */
-export const IN_BROWSER = import.meta.env.VITE_GAME === "browser";
 
 interface Reply {
   id: number;
   ok: boolean;
   status: number;
-  result?: unknown;
+  /** the answer as JSON text */
+  json?: string;
   bytes?: Uint8Array;
   message?: string;
 }
@@ -25,7 +23,7 @@ interface Snapshot {
   results?: { week: number }[];
 }
 
-const CANNOT = "This browser cannot run the game: it needs WebAssembly and Web Workers.";
+const CANNOT = "This browser cannot run the game: it needs Web Workers.";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 const jsonResponse = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
@@ -96,7 +94,7 @@ async function bodyOf(body: BodyInit | null | undefined): Promise<{ bodyJson?: s
 
 function start(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    if (!window.Worker || !window.WebAssembly) {
+    if (!window.Worker) {
       reject(new Error(CANNOT));
       return;
     }
@@ -139,7 +137,11 @@ function start(): Promise<void> {
   });
 }
 
-async function viaWorker(path: string, init: RequestInit, background: boolean): Promise<Response> {
+/**
+ * One call to the game, answered like fetch answers. `background`: a read nobody is waiting on (the ticker, the page
+ * following a sim); the game answers one call at a time, and these wait behind the screen's own reads.
+ */
+export async function gameFetch(path: string, init: RequestInit = {}, background = false): Promise<Response> {
   ready ??= start();
   const method = (init.method || "GET").toUpperCase();
   const boot = await fromBoot(method, path);
@@ -165,21 +167,12 @@ async function viaWorker(path: string, init: RequestInit, background: boolean): 
   });
   if (!reply.ok) return jsonResponse({ detail: reply.message }, reply.status);
   if (reply.bytes) return new Response(reply.bytes, { status: 200, headers: { "Content-Type": "application/gzip" } });
-  return jsonResponse(reply.result);
-}
-
-/**
- * One call to the game, answered like fetch answers. `background`: a read nobody is waiting on (the ticker, the page
- * following a sim); in the browser the game answers one call at a time, and these wait behind the screen's own reads.
- */
-export function gameFetch(path: string, init: RequestInit = {}, background = false): Promise<Response> {
-  return IN_BROWSER ? viaWorker(path, init, background) : fetch(path, init);
+  return new Response(reply.json ?? "null", { status: 200, headers: JSON_HEADERS });
 }
 
 // The game starts loading with the page, not with the first call (a failure is told to whoever calls next). Once the
 // app's modules have all run: this one is read before the router's ROOT is set.
-if (IN_BROWSER)
-  window.setTimeout(() => {
-    ready ??= start();
-    ready.catch(() => {});
-  }, 0);
+window.setTimeout(() => {
+  ready ??= start();
+  ready.catch(() => {});
+}, 0);

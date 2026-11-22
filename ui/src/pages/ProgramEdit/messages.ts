@@ -94,7 +94,6 @@ export const messages = {
   pasteHint:
     "One a line: Name, Position, Class, and an overall if you like. Players you list are kept; the game fills the rest.",
 
-  // (the game's own sentence, its period dropped so there is one; the dev server is asked after only where there is one)
-  loadError: (msg: string) =>
-    `Can't reach the game: ${msg.replace(/\.$/, "")}.${import.meta.env.DEV ? " Is the dev server running?" : ""}`,
+  // (the game's own sentence, its period dropped so there is one)
+  loadError: (msg: string) => `Can't reach the game: ${msg.replace(/\.$/, "")}.`,
 } as const;

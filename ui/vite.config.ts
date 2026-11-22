@@ -1,59 +1,76 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import { connect } from "node:net";
-import { fileURLToPath } from "node:url";
+import { createReadStream, existsSync, mkdirSync, statSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 
-const GAME_PORT = 8000; // the Python dev server (tools/dev_server.py)
 const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
+const UI_ROOT = fileURLToPath(new URL(".", import.meta.url));
+const GAME_CACHE = `${UI_ROOT}node_modules/.cache/cfp-game`; // the dev server's game script and data pack
+const GAME_DIRS = ["engine_js", "sim_js", "teamdata_js", "career_js", "app_js"]; // the game's code (tools/build_site.mjs JS_DIRS)
+// what lets the game share a week's games with its helper workers over shared memory (vercel.json sends the same two)
+const ISOLATION = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp" };
 
-// true when something already answers on the port
-function portInUse(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const socket = connect(port, "127.0.0.1");
-    socket.once("connect", () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.once("error", () => resolve(false));
-  });
-}
-
-// `npm run dev` also starts the game's API, unless one is already running.
-function gameServer(): Plugin {
-  let child: ChildProcess | null = null;
+// `npm run dev` serves the game the worker loads (public/worker.js), as the published site has it but with the real
+// rosters: `game.js`, the whole game as one script, made again when a file of the game changes (the page reloads),
+// and the data pack, made by the game itself when a source file has changed since the last one (tools/build_site.mjs
+// dev_pack; some fifteen seconds, the first time). Nothing is written outside node_modules/.cache.
+function gameFiles(): Plugin {
+  type Tools = {
+    bundle_game: (ui: string, outfile: string, minify?: boolean) => void;
+    dev_pack: (cache: string) => string;
+  };
+  const script = `${GAME_CACHE}/game.js`;
+  let stale = true;
   return {
-    name: "cfp-game-server",
+    name: "cfp-game-files",
     apply: "serve",
-    async configureServer() {
-      if (await portInUse(GAME_PORT)) {
-        console.log(`  Game API: already running on port ${GAME_PORT}`);
-        return;
-      }
-      const python = process.platform === "win32" ? "python" : "python3";
-      child = spawn(python, ["tools/dev_server.py", "--port", String(GAME_PORT)], { cwd: REPO_ROOT, stdio: "inherit" });
-      child.on("error", (e) => console.error(`  Game API failed to start (${python}): ${e.message}`));
-      const stop = () => {
-        child?.kill();
-        child = null;
-      };
-      process.once("exit", stop);
-      process.once("SIGINT", () => {
-        stop();
-        process.exit(0);
+    async configureServer(server) {
+      // (read here, not at the top: the published site's build runs this file from a copy with no tools/ beside it)
+      const build: Tools = await import(pathToFileURL(`${REPO_ROOT}tools/build_site.mjs`).href);
+      mkdirSync(GAME_CACHE, { recursive: true });
+      const pack = build.dev_pack(GAME_CACHE); // before the first page asks, so its load does not wait on it
+      const dirs = GAME_DIRS.map((d) => `${REPO_ROOT}${d}/`);
+      server.watcher.add([...dirs, `${UI_ROOT}game.entry.js`]);
+      server.watcher.on("all", (_event, file) => {
+        const f = file.replaceAll("\\", "/");
+        if (!f.endsWith(".js") || !(f.endsWith("ui/game.entry.js") || dirs.some((d) => f.startsWith(d)))) return;
+        stale = true;
+        server.ws.send({ type: "full-reload" });
       });
-      process.once("SIGTERM", () => {
-        stop();
-        process.exit(0);
+      const send = (res: import("node:http").ServerResponse, file: string, type: string) => {
+        res.writeHead(200, {
+          "Content-Type": type,
+          "Content-Length": statSync(file).size,
+          "Cache-Control": "no-store",
+          ...ISOLATION,
+        });
+        createReadStream(file).pipe(res);
+      };
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url || "").split("?")[0];
+        try {
+          if (path === "/game.js") {
+            if (stale || !existsSync(script)) {
+              stale = false;
+              build.bundle_game(UI_ROOT, script, false);
+            }
+            send(res, script, "text/javascript");
+          } else if (path === "/game-data.br") {
+            send(res, pack, "application/octet-stream"); // (not packed: it never leaves this computer)
+          } else next();
+        } catch (e) {
+          console.error(e);
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end(String(e));
+        }
       });
     },
   };
 }
 
-// base "./" keeps every URL relative, so the build works under the GitHub Pages sub-path.
-// In dev, /api goes to the Python dev server.
+// base "./" keeps every URL relative, so the build works under a sub-path.
 export default defineConfig({
-  plugins: [react(), gameServer()],
+  plugins: [react(), gameFiles()],
   base: "./",
   // pocket-faces lives in this repository (../pocket-faces) and is read as source: nothing to install or build,
   // and an edit there shows up at once (tsconfig.json "paths" says the same to the type checker)
@@ -75,6 +92,7 @@ export default defineConfig({
   server: {
     port: 5173,
     fs: { allow: [REPO_ROOT] },
-    proxy: { "/api": `http://127.0.0.1:${GAME_PORT}` },
+    headers: ISOLATION,
   },
+  preview: { headers: ISOLATION },
 });

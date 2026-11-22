@@ -60,8 +60,11 @@ def main(out: Path, name: str) -> None:
             res = {"ok": api.call(method, path.replace("{sid}", run["sid"] or ""), body)}
         except api.ApiError as e:
             res = {"api_error": [e.status, e.message]}
+        except Exception as e:  # noqa: BLE001 - what the API does not catch (the page gets a 500): the same error on both sides
+            res = {"error": type(e).__name__, "message": getattr(e, "message", None) or str(e)}
         if isinstance(res.get("ok"), (bytes, bytearray)):
             res = {"ok": f"<{len(res['ok']) > 0} bytes>"}
+        res = json.loads(json.dumps(canon(res)))      # as it is now: a later call may change what the answer holds
         run["notes"].append({"req": [method, path, body], "res": res})
         return res.get("ok")
 
@@ -72,13 +75,13 @@ def main(out: Path, name: str) -> None:
         return call("POST", "/api/season/{sid}/" + path, body)
 
     def note(what, value):
-        run["notes"].append({"what": what, "value": value})
+        run["notes"].append({"what": what, "value": json.loads(json.dumps(canon(value)))})
 
     def end_step(what, seconds=None):
         """The step is over: its calls, the career as its save holds it, and how long the sim took."""
         n = run["step"]
         state = season.load_season(run["sid"])
-        text = json.dumps(canon({"what": what, "memo": memo, "notes": run["notes"]})).replace(run["sid"], "{sid}")
+        text = json.dumps({"what": what, "memo": memo, "notes": run["notes"]}).replace(run["sid"], "{sid}")
         (out / f"{n:03d}.notes.json").write_text(text)
         (out / f"{n:03d}.state.json").write_text(json.dumps(canon(state)).replace(run["sid"], "{sid}"))
         lg = league.path(run["sid"], state["year"])
@@ -422,7 +425,14 @@ def main(out: Path, name: str) -> None:
 
     # ----- the run -----
     t0 = time.perf_counter()
+    # the career's id is random, and two reads are seeded from it (your next game's Win Chance, the staff's
+    # recommendations): both sides give this career the same id, made from the scenario's name
+    import hashlib
+    import uuid
+    real_uuid4 = uuid.uuid4
+    uuid.uuid4 = lambda: type("U", (), {"hex": hashlib.md5(name.encode()).hexdigest()})()
     s = call("POST", "/api/season", {"team": cfg["team"], "seed": cfg["seed"], "career": True})
+    uuid.uuid4 = real_uuid4
     run["sid"] = s["id"]
     run["notes"][-1]["res"] = json.loads(json.dumps(run["notes"][-1]["res"]).replace(s["id"], "{sid}"))
     me = cfg["team"]

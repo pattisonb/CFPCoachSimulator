@@ -1,30 +1,33 @@
-/* The game in a Web Worker: Pyodide (CPython on WebAssembly) runs the dispatcher (app/api.py)
-   from game.tar.xz, unpacked into the worker's in-memory filesystem; the seasons, coaches and leagues
-   folders are IDBFS mounts, persisted to IndexedDB after every call that wrote a file.
+/* The game in a Web Worker: the whole game is JavaScript (game.js, one script: app_js/game.js bundled by
+   tools/build_site.mjs or the dev server), with its files in memory. The game's own data (the teams, the base league,
+   the faces) is one download, the data pack; the seasons, coaches and leagues folders are kept in IndexedDB, written
+   after every call that changed a file.
    Messages from the page (ui/src/gameClient.ts): first {kind: "init", version, breakStorage,
    breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes, background}, answered with {id, ok,
-   status, result | bytes, message}. The worker posts {kind: "loading", stage, loaded, total}
+   status, json | bytes, message} (`json`: the answer as JSON text, which the page reads as it reads a server's).
+   The worker posts {kind: "loading", stage, loaded, total}
    while it starts, {kind: "ready"} or {kind: "fatal", message}, {kind: "status", status, busy}
    while a sim runs and {kind: "storage-error", message, copy} when a save could not be
    persisted (or, right after ready, when the saves could not be read: the game then plays from
-   memory). One tab at a time holds the store: each worker has its own in-memory mirror of the
-   same IndexedDB folders and a persist writes the whole mirror back, so a second tab would roll
+   memory). One tab at a time holds the store: each worker has its own in-memory copy of the saved
+   files and writes what it changed back, so a second tab would roll
    the first one's saves back. The worker takes the "cfp-game" Web Lock for its life before it
-   mounts the store, waiting for it while another tab holds it (the page is told it is waiting). */
+   reads the store, waiting for it while another tab holds it (the page is told it is waiting). */
 "use strict";
 
-const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
-const ARCHIVE = "game.tar.xz";   // the game and its data, xz-packed (tools/build_site.py write_archive)
-const HOME = "/home/pyodide";
+const GAME = "game.js";              // the game, one script (ui/game.entry.js): the global `Game`
+// The data pack (tools/build_site.mjs write_pack): the brotli one where the server says so (Content-Encoding: br,
+// vercel.json: the browser has unpacked it by the time it is read here), else the gzip one, unpacked here.
+const PACK = "game-data.br", PACK_GZIP = "game-data.gz";
+const PACK_MAGIC = [0x43, 0x46, 0x50, 0x4b];      // "CFPK"
 // What IndexedDB keeps: the saves, the coaches, and a career's own league as the game plays it (data/leagues: built
-// once a season, and without it every reopening of a career past its first season built it again, about fifteen
-// seconds of a twenty-second load).
-const STORES = [HOME + "/data/seasons", HOME + "/data/coaches", HOME + "/data/leagues"];
+// once a season, and without it every reopening of a career past its first season built it again).
+const KEPT = ["data/seasons/", "data/coaches/", "data/leagues/"];
+const DB_NAME = "cfp-game-files", DB_STORE = "files";     // path -> {t: the file's text, m: when it was written}
 
 const queue = [];          // messages from the page, served in order
 let wake = null;           // resolves the pump's wait for a message
-let pyodide = null;
-let api = null;            // the app.api module
+let api = null;            // the game's dispatcher (app_js/api.js)
 let breakStorage = false;  // a test hook: every persist fails
 let breakRestore = false;  // a test hook: reading the saves at start fails
 let breakStep = false;     // a test hook: the next sim step throws (a failure after ready)
@@ -59,19 +62,118 @@ function untilMessage() { return queue.length ? Promise.resolve() : new Promise(
 // `blocked`: the stage is a wait the player should hear of even with nothing asked of the game yet (another tab).
 function loading(stage, loaded, total, blocked) { postMessage({ kind: "loading", stage, loaded: loaded || 0, total: total || 0, blocked: !!blocked }); }
 
-function syncfs(populate) {
+// ---- the game's files -------------------------------------------------------------------------------------------
+// Every file the game reads or writes, by its path from the project's root: the data pack's (never written back) and
+// the kept folders' (KEPT), which are also in IndexedDB. The game reads and writes at once (engine_js/files.js), so
+// everything is in memory; `changes` is what the store has not been told yet.
+const mem = new Map();          // path -> text
+const times = new Map();        // path -> when it was written (ms), for the files written here or read from the store
+const folders = new Map();      // folder -> the names of the files in it (a folder made by a write is in here)
+const changes = new Map();      // path -> true (written) | false (removed), for the kept folders
+
+const clean = (path) => { let p = String(path); while (p.startsWith("./")) p = p.slice(2); while (p.startsWith("/")) p = p.slice(1); return p.endsWith("/") ? p.slice(0, -1) : p; };
+const kept = (path) => KEPT.some((dir) => path.startsWith(dir));
+
+function put(path, text, when) {
+  if (!mem.has(path)) {
+    let at = path.lastIndexOf("/"), name = path.slice(at + 1);
+    for (;;) {                                   // the file in its folder, and that folder in the ones above it
+      const dir = at < 0 ? "" : path.slice(0, at);
+      let names = folders.get(dir);
+      const known = !!names;
+      if (!names) folders.set(dir, (names = new Set()));
+      if (name !== null) names.add(name);
+      if (known || at < 0) break;
+      name = null;
+      at = dir.lastIndexOf("/");
+    }
+  }
+  mem.set(path, text);
+  if (when !== undefined) times.set(path, when);
+}
+
+function drop(path) {
+  if (!mem.delete(path)) return false;
+  times.delete(path);
+  const at = path.lastIndexOf("/");
+  const names = folders.get(at < 0 ? "" : path.slice(0, at));
+  if (names) names.delete(path.slice(at + 1));
+  return true;
+}
+
+const store = {
+  read(path) {
+    const text = mem.get(clean(path));
+    if (text === undefined) throw new Error(`${path} is not here`);
+    return text;
+  },
+  write(path, text) {
+    const p = clean(path);
+    put(p, String(text), Date.now());
+    if (kept(p)) changes.set(p, true);
+  },
+  exists(path) { const p = clean(path); return mem.has(p) || folders.has(p); },
+  remove(path) {
+    const p = clean(path);
+    if (drop(p) && kept(p)) changes.set(p, false);
+  },
+  remove_dir(path) {
+    const dir = clean(path), head = dir + "/";
+    for (const p of [...mem.keys()]) if (p.startsWith(head)) store.remove(p);
+    for (const d of [...folders.keys()]) if (d === dir || d.startsWith(head)) folders.delete(d);
+  },
+  list(path) { const names = folders.get(clean(path)); return names ? [...names].sort() : []; },
+  mtime(path) { const p = clean(path); return mem.has(p) ? times.get(p) || 0 : null; },
+};
+
+// ---- IndexedDB ----------------------------------------------------------------------------------------------------
+// (A store of its own: the folders the game kept when it was Python in the browser are other databases, left alone.)
+let db = null;
+
+const asked = (req) => new Promise((resolve, reject) => { req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+
+function openDb() {
   return new Promise((resolve, reject) => {
-    if (breakStorage && !populate) { reject(new Error("storage is switched off")); return; }
-    if (breakRestore && populate) { reject(new Error("the saved files could not be read")); return; }
-    pyodide.FS.syncfs(populate, (err) => (err ? reject(err) : resolve()));
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error("the saved files are held by another page"));
   });
 }
 
-// Persist the IDBFS mounts; a failure is reported once, the game keeps playing from memory.
+// The saves kept from last time, into memory.
+async function restore() {
+  if (breakRestore) throw new Error("the saved files could not be read");
+  db = await openDb();
+  const from = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE);
+  const [paths, values] = await Promise.all([asked(from.getAllKeys()), asked(from.getAll())]);
+  for (let i = 0; i < paths.length; i++) if (values[i] && typeof values[i].t === "string") put(String(paths[i]), values[i].t, values[i].m || 0);
+}
+
+// What changed since the last write goes to the store in one transaction; a failure is reported once, the game keeps
+// playing from memory (and the changes are tried again with the next).
 async function persist() {
-  if (restoreError !== null) return;        // the saves could not be read: memory-only session (a write-back would wipe the store)
-  try { await syncfs(false); }
-  catch (err) { postMessage({ kind: "storage-error", message: String((err && err.message) || err) }); }
+  if (restoreError !== null || !changes.size) return;      // the saves could not be read: a memory-only session
+  const batch = [...changes];
+  changes.clear();
+  try {
+    if (breakStorage) throw new Error("storage is switched off");
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      const to = tx.objectStore(DB_STORE);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error("the save was stopped"));
+      for (const [path, written] of batch) {
+        if (written && mem.has(path)) to.put({ t: mem.get(path), m: times.get(path) || 0 }, path);
+        else to.delete(path);
+      }
+    });
+  } catch (err) {
+    for (const [path, written] of batch) if (!changes.has(path)) changes.set(path, written);
+    postMessage({ kind: "storage-error", message: String((err && err.message) || err) });
+  }
 }
 
 // Become the one tab that holds the store, for the worker's life. Web Locks where the browser has them (Chrome 69,
@@ -111,34 +213,69 @@ async function claimStore(onWait) {
   channel.onmessage = (e) => { if ((e.data || {}).kind === "who") channel.postMessage({ kind: "here", token }); };
 }
 
-// `loud`: the download's progress is posted only once it answers true (until then Python's loading has the notice).
-async function fetchZip(version, loud) {
-  const res = await fetch(`./${ARCHIVE}?v=${encodeURIComponent(version || "dev")}`);
-  if (!res.ok) throw new Error(`${ARCHIVE}: HTTP ${res.status}`);
-  const total = Number(res.headers.get("Content-Length")) || 0;
-  if (!res.body) return res.arrayBuffer();
-  const reader = res.body.getReader();
+// ---- the data pack ------------------------------------------------------------------------------------------------
+// One file: "CFPK", its whole length and its index's length (two 32-bit numbers, low byte first), the index as JSON
+// ([[path, bytes], ...]), then every file's text one after another.
+const isPack = (bytes) => bytes.length >= 12 && PACK_MAGIC.every((b, i) => bytes[i] === b);
+const packNumber = (bytes, at) => (bytes[at] | (bytes[at + 1] << 8) | (bytes[at + 2] << 16) | (bytes[at + 3] << 24)) >>> 0;
+
+// Every byte of a download; `loud()` answers whether its progress is posted (the pack says its own length up front:
+// the server's is the packed one).
+async function readAll(stream, loud) {
+  const reader = stream.getReader();
   const chunks = [];
-  let loaded = 0;
+  let loaded = 0, total = 0;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value);
     loaded += value.length;
-    if (loud()) loading("Downloading the game", loaded, total);
+    if (!total && chunks.length === 1 && isPack(value)) total = packNumber(value, 4);
+    if (loud()) loading("Downloading the game", Math.min(loaded, total), total);
   }
+  if (chunks.length === 1) return chunks[0];
   const out = new Uint8Array(loaded);
   let at = 0;
   for (const c of chunks) { out.set(c, at); at += c.length; }
-  return out.buffer;
+  return out;
+}
+
+async function fetchPack(version, loud) {
+  const v = `?v=${encodeURIComponent(version || "dev")}`;
+  let bytes = null;
+  try {
+    const res = await fetch(`./${PACK}${v}`);
+    if (res.ok && res.body) bytes = await readAll(res.body, loud);
+  } catch (err) { /* the gzip one is asked for next */ }
+  if (bytes && isPack(bytes)) return bytes;
+  // a server that does not say the first is brotli sends it still packed: the same pack as gzip, unpacked here
+  const res = await fetch(`./${PACK_GZIP}${v}`);
+  if (!res.ok || !res.body) throw new Error(`${PACK_GZIP}: HTTP ${res.status}`);
+  bytes = await readAll(res.body.pipeThrough(new DecompressionStream("gzip")), loud);
+  if (!isPack(bytes)) throw new Error(`${PACK_GZIP} is not the game's data`);
+  return bytes;
+}
+
+function unpack(bytes) {
+  const indexLength = packNumber(bytes, 8);
+  const decoder = new TextDecoder();
+  const index = JSON.parse(decoder.decode(bytes.subarray(12, 12 + indexLength)));
+  let at = 12 + indexLength;
+  for (const [path, length] of index) {
+    put(path, decoder.decode(bytes.subarray(at, at + length)));
+    at += length;
+  }
 }
 
 // ---- a week's games on several cores ----------------------------------------------------------------------------
-// Helper workers (sim-worker.js), each the JavaScript that plays a game and nothing else. Python hands a week's jobs to
-// `simBridge` (the module "sim_bridge"; app/browser_pool.py says what each call is for) and plays games itself
-// meanwhile. This worker is inside a Python call for the whole week and cannot hear messages, so the helpers and it
-// share two buffers (sim-worker.js lays out the control one): that needs the page to be cross-origin isolated
-// (vercel.json's two headers), and without it, or on a small machine, there are no helpers and nothing changes.
+// Helper workers (sim-worker.js), each the same script of the game, playing games and nothing else. A week's jobs
+// (sim_js/season: `season.play_jobs`, which `playJobs` below replaces) go to every helper that is up, and this worker
+// plays games itself meanwhile: the same job on the same code, so every result is the one this worker would have
+// made, and the season applies them in schedule order as it always has. This worker is inside the game's call for
+// the whole week and cannot hear messages, so the helpers and it share two buffers (sim-worker.js lays out the
+// control one): that needs the page to be cross-origin isolated (vercel.json's two headers), and without it, or on a
+// small machine, there are no helpers and nothing changes. With no helper up, a helper that stops answering, or a
+// job a helper hands back, the games are played here.
 const SIM_HELPERS_MAX = 3;           // *tune* the most helpers (each holds the league's teams: some 100 MB of memory)
 const SIM_SPARE_CORES = 2;           // *tune* cores left alone: this worker's and the page's
 // *tune* helpers by the memory the device says it has (Chrome only, and it never says more than 8): [at least GB, helpers]
@@ -147,17 +284,20 @@ const SIM_HELPERS_UNKNOWN_MEMORY = 2;   // *tune* ... and where the browser does
 const SIM_DATA_BYTES = 24 << 20;     // room for a week's results (some 45 KB a game)
 const SIM_MAX_GAMES = 400;
 const SIM_START_MS = 500;            // *tune* how long after a career is first asked for the first helper starts (they start at once)
+const SIM_MIN_JOBS = 4;              // *tune* fewer games than this are played here: sharing them costs more than it saves
+const SIM_STALL_MS = 120000;         // *tune* how long the helpers may go without finishing a game before theirs are played here
 const S_GEN = 0, S_NEXT = 2, S_ALLOC = 3, S_DONE = 4, S_READY = 8, S_TABLE = 32;
-const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev" };
+const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev", max: null };
 
 function simHelperCount() {
   if (typeof SharedArrayBuffer === "undefined" || !self.crossOriginIsolated) return 0;
   const nav = self.navigator || {};
   const byMemory = nav.deviceMemory ? SIM_BY_MEMORY.find(([gb]) => nav.deviceMemory >= gb)[1] : SIM_HELPERS_UNKNOWN_MEMORY;
-  return Math.max(0, Math.min(SIM_HELPERS_MAX, byMemory, (nav.hardwareConcurrency || 2) - SIM_SPARE_CORES));
+  const count = Math.max(0, Math.min(SIM_HELPERS_MAX, byMemory, (nav.hardwareConcurrency || 2) - SIM_SPARE_CORES));
+  return sims.max === null ? count : Math.min(count, sims.max);
 }
 
-// Start the helpers, one after another (each loads Python and the game: together they would crowd the page).
+// Start the helpers, one after another (each loads the game: together they would crowd the page).
 function simStartHelpers() {
   if (sims.asked) return;
   sims.asked = true;
@@ -175,7 +315,7 @@ function simStartHelpers() {
     sims.workers.push(helper);
     w.onmessage = (e) => { if (e.data.kind === "ready") startOne(k + 1); else if (e.data.kind === "failed") console.warn("sim helper:", e.data.message); };
     w.onerror = (e) => console.warn("sim helper:", e.message);
-    w.postMessage({ kind: "init", me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer });
+    w.postMessage({ kind: "init", me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer, game: `./${GAME}?v=${encodeURIComponent(sims.version)}` });
   };
   setTimeout(() => startOne(0), SIM_START_MS);
 }
@@ -184,13 +324,13 @@ const simDecoder = new TextDecoder();
 const simStatus = (i) => Atomics.load(sims.ctrl, S_TABLE + 3 * i);
 
 const simBridge = {
-  // A week's jobs (pickled) to every helper that is up; returns how many took them (0: Python plays them all here).
+  // A week's jobs (as JSON) to every helper that is up; returns how many took them (0: they are all played here).
   start(jobs, n, path) {
     if (!sims.ctrl || sims.broken || n > SIM_MAX_GAMES) return 0;
     const ready = sims.workers.filter((h) => Atomics.load(sims.ctrl, S_READY + h.me) === 1);
     if (!ready.length) return 0;
-    const stat = pyodide.FS.stat(path);
-    const sig = `${path}:${stat.size}:${+stat.mtime}`;
+    const text = store.read(path);
+    const sig = `${path}:${text.length}:${store.mtime(path)}`;
     sims.gen += 1;
     sims.n = n;
     sims.taken.clear();
@@ -200,10 +340,9 @@ const simBridge = {
     Atomics.store(sims.ctrl, S_DONE, 0);
     Atomics.store(sims.ctrl, S_GEN, sims.gen);
     for (const h of ready) {
-      // the league's teams file is this worker's: its bytes go with the first week a helper plays in it
-      const league = { path, sig, bytes: h.league === sig ? null : pyodide.FS.readFile(path) };
+      // the league's teams file is this worker's: its text goes with the first week a helper plays in it
+      h.worker.postMessage({ kind: "jobs", gen: sims.gen, n, jobs, league: { path, sig, text: h.league === sig ? null : text } });
       h.league = sig;
-      h.worker.postMessage({ kind: "jobs", gen: sims.gen, n, jobs, league }, league.bytes ? [league.bytes.buffer] : []);
     }
     return ready.length;
   },
@@ -214,7 +353,7 @@ const simBridge = {
     Atomics.store(sims.ctrl, S_TABLE + 3 * i, 5);
     return i;
   },
-  // A game a helper has finished and Python has not yet taken, or -1; with `wait`, after waiting that long for one.
+  // A game a helper has finished and this worker has not yet taken, or -1; with `wait`, after waiting that long for one.
   pop(wait) {
     for (let pass = 0; pass < 2; pass++) {
       for (let i = 0; i < sims.n; i++) {
@@ -231,7 +370,7 @@ const simBridge = {
     const at = Atomics.load(sims.ctrl, S_TABLE + 3 * i + 1), len = Atomics.load(sims.ctrl, S_TABLE + 3 * i + 2);
     return simDecoder.decode(sims.data.slice(at, at + len));      // (a copy: text cannot be read straight from shared memory)
   },
-  // The helpers have gone quiet: they are let go for good, and the games they still held come back to Python.
+  // The helpers have gone quiet: they are let go for good, and the games they still held come back to this worker.
   abandon() {
     sims.broken = true;
     Atomics.store(sims.ctrl, S_GEN, sims.gen + 1);
@@ -243,69 +382,80 @@ const simBridge = {
   },
 };
 
+// `season.play_jobs`: every job played once, `onResult` called with each result as it is known (in any order).
+function playJobs(jobs, onResult) {
+  const season = self.Game.season;
+  const here = (job) => onResult(season._sim_one(job));
+  let helpers = 0;
+  if (jobs.length >= SIM_MIN_JOBS) {
+    try { helpers = simBridge.start(JSON.stringify(jobs), jobs.length, clean(season._TEAMS_PATH || String(season._league_path))); }
+    catch (err) { console.warn(err); helpers = 0; }      // the helpers are an optimization: without them the games are played here
+  }
+  if (!helpers) { for (const job of jobs) here(job); return; }
+  // the helper could not play it (or its result did not fit): played here
+  const taken = (i) => (simBridge.failed(i) ? here(jobs[i]) : onResult(JSON.parse(simBridge.result(i))));
+  let got = 0;
+  for (;;) {
+    const i = simBridge.claim();
+    if (i < 0) break;
+    here(jobs[i]);
+    got += 1;
+    for (let j = simBridge.pop(0); j >= 0; j = simBridge.pop(0)) { taken(j); got += 1; }
+  }
+  while (got < jobs.length) {
+    const j = simBridge.pop(SIM_STALL_MS);
+    if (j < 0) {                         // the helpers have gone quiet: what they still owe is played here
+      for (const k of simBridge.abandon()) { here(jobs[k]); got += 1; }
+      break;
+    }
+    taken(j);
+    got += 1;
+  }
+}
+
 
 async function start(init) {
   breakStorage = !!init.breakStorage;
   breakRestore = !!init.breakRestore;
   breakStep = !!init.breakStep;
-  loading("Loading Python");
-  // the game's download starts now and runs beside Python's (they were one after the other); a failure waits for
-  // the await below
-  let pythonUp = false;
-  const zipping = fetchZip(init.version, () => pythonUp);
-  zipping.catch(() => {});
-  // the store's lock is asked for now and awaited where the store is opened: Python and the game load meanwhile
+  sims.version = init.version || "dev";
+  if (init.helpers !== undefined && init.helpers !== null) sims.max = Number(init.helpers);     // a test hook: at most this many helpers
+  loading("Loading the game");
+  // the data's download starts now and runs beside the game's own script; a failure waits for the await below
+  let scriptUp = false;
+  const packing = fetchPack(init.version, () => scriptUp);
+  packing.catch(() => {});
+  // the store's lock is asked for now and awaited where the store is opened: the game loads meanwhile
   let waitingTab = false;
   const locked = claimStore(() => { waitingTab = true; loading(WAITING_TAB, 0, 0, true); });
   locked.catch(() => {});
-  importScripts(PYODIDE_URL + "pyodide.js");
-  pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
-  // the game engine is JavaScript (engine_js/, bundled as engine.js): the Python asks it for games through this
-  // module (sim/engine.py), JSON text each way
-  importScripts("./engine.js");
-  // the game's files, for the JavaScript: a path from the project's root, or an absolute one (a league's teams file)
-  self.EngineJS.api.set_reader((path) => pyodide.FS.readFile(path.startsWith("/") ? path : `${HOME}/${path}`, { encoding: "utf8" }));
-  pyodide.registerJsModule("js_engine", {
-    call: (fn, args) => {
-      try { return JSON.stringify(self.EngineJS.api[fn](...JSON.parse(args))); }
-      catch (err) {
-        if (err instanceof self.EngineJS.api.NotHere) return '{"__not_here__":true}';      // a job the Python plays
-        throw err;
-      }
-    },
-  });
-  pythonUp = true;       // from here the download says how far along it is
+  importScripts(`./${GAME}?v=${encodeURIComponent(sims.version)}`);
+  const game = self.Game;
+  scriptUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
-  const [zip] = await Promise.all([zipping, pyodide.loadPackage("lzma")]);   // Python's xz reader is an add-on (70 KB)
+  const pack = await packing;
   loading("Unpacking the game");
-  // by tarfile itself: Pyodide's own unpackArchive learned its formats before the xz reader was loaded
-  pyodide.FS.writeFile("/tmp/" + ARCHIVE, new Uint8Array(zip));
-  pyodide.runPython(`import os, tarfile\nwith tarfile.open("/tmp/${ARCHIVE}") as t:\n    t.extractall(${JSON.stringify(HOME)}, filter="data")\nos.remove("/tmp/${ARCHIVE}")`);
+  unpack(pack);
   if (waitingTab) loading(WAITING_TAB, 0, 0, true);      // the stages since took the notice over
   await locked;
   if (waitingTab) loading("Unpacking the game");
-  for (const dir of STORES) {
-    pyodide.FS.mkdirTree(dir);
-    pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, {}, dir);
-  }
-  try { await syncfs(true); }               // the saves kept from last time
+  try { await restore(); }                  // the saves kept from last time
   catch (err) { restoreError = String((err && err.message) || err); }   // blocked storage: play from memory, say so once ready
   loading("Starting the game");
-  await pyodide.runPythonAsync(`import sys, os\nsys.path.insert(0, ${JSON.stringify(HOME)})\nos.environ["SIM_WORKERS"] = "1"\nimport app.api`);
-  api = pyodide.pyimport("app.api");
-  sims.version = init.version || "dev";
-  try {                                       // a week's games on several cores, where the browser allows it
-    pyodide.registerJsModule("sim_bridge", simBridge);
-    pyodide.runPython("from app import browser_pool\nbrowser_pool.install()");
-  } catch (err) { console.warn(err); }
+  game.files.set_reader(store.read);
+  game.files.set_store(store);
+  game.career.zip = game.zip;
+  game.season.play_jobs = playJobs;         // a week's games on several cores, where the browser allows it
+  api = game.api;
 }
 
 // One dispatcher call; the answer goes back and what it wrote is persisted. A failure answers
-// this one message with a 500 (a reply that could not be parsed, say); the worker stays up.
+// this one message with a 500; the worker stays up.
 // The save reaches IndexedDB before the page hears the answer: the page may reload on it (the
 // offseason's last step), and a reload ends this worker mid-write.
-// Every answer says where its time went (`ms`: the game's own work, turning its answer into an object, the save), for
+// Every answer says where its time went (`ms`: the game's own work and the save), for
 // tools/speed_sweep.js and for anyone reading the worker's messages in the browser's tools.
+const OK_HEAD = '{"ok":true,"result":';
 async function handle(msg) {
   let reply, transfer = [];
   const ms = { run: 0, parse: 0, save: 0 };
@@ -316,15 +466,19 @@ async function handle(msg) {
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
     ms.run = Math.round(performance.now() - t0);
     if (typeof out === "string") {
-      const t1 = performance.now();
-      const r = JSON.parse(out);
-      ms.parse = Math.round(performance.now() - t1);
       ms.bytes = out.length;
-      reply = r.ok ? { id: msg.id, ok: true, status: 200, result: r.result } : { id: msg.id, ok: false, status: r.status, message: r.message };
-      if (r.changed) await saved();
+      if (out.startsWith(OK_HEAD)) {
+        // {"ok":true,"result":...,"changed":true|false}: the result's own text goes to the page as it is
+        const end = out.lastIndexOf(',"changed":');
+        reply = { id: msg.id, ok: true, status: 200, json: out.slice(OK_HEAD.length, end) };
+        if (out.endsWith("true}")) await saved();
+      } else {
+        const r = JSON.parse(out);
+        reply = { id: msg.id, ok: false, status: r.status, message: r.message };
+        if (r.changed) await saved();
+      }
     } else {
-      const bytes = new Uint8Array(out.toJs());
-      out.destroy();
+      const bytes = new Uint8Array(out);            // a copy of its own, handed over to the page
       reply = { id: msg.id, ok: true, status: 200, bytes };
       transfer = [bytes.buffer];
       if (api.changed()) await saved();
@@ -344,8 +498,7 @@ async function step() {
   const report = (s) => { last = s; postMessage({ kind: "status", status: JSON.parse(s), busy: true }); };
   if (breakStep) { await new Promise((r) => setTimeout(r, 300)); throw new Error("the sim step is switched off"); }   // calls sent meanwhile are in flight
   const t0 = performance.now();
-  const out = api.step(report);
-  if (out && out.destroy) out.destroy();
+  api.step(report);
   const t1 = performance.now();
   if (api.changed()) await persist();            // the week is in the store before the page is told it is over
   const ms = { run: Math.round(t1 - t0), save: Math.round(performance.now() - t1) };      // where the step's time went
@@ -365,7 +518,7 @@ async function main() {
       if (queue.length) await handle(queue.splice(nextIndex(), 1)[0]);
       else if (api.running()) await step();
       else if (!warmed) {
-        // nothing asked yet: read the league now (the first call's wait, a second or two), while the player is
+        // nothing asked yet: read the league now (the first call's wait), while the player is
         // still looking at the team picker. Not at once: the calls that waited on the start arrive a moment after
         // "ready", and one of them stood behind this read with a Loading note up
         await Promise.race([untilMessage(), new Promise((r) => setTimeout(r, WARM_AFTER_MS))]);     // a call ends the wait at once

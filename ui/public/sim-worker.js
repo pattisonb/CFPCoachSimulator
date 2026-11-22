@@ -1,13 +1,14 @@
 /* A helper of the game's worker (worker.js): it only plays games, so a week's games run on several cores at once.
-   The games are JavaScript (engine.js: the engine and the whole game job, sim_js/game_job.js), so a helper is that
-   one script and the league's teams; it has no Python.
+   A helper is the game's one script (game.js, the same one worker.js loads: its engine and the whole game job,
+   sim_js/game_job.js) and the league's teams, and no other file of the game.
 
-   From worker.js: {kind: "init", me, ctrl, data} once (its number and the two shared buffers), then for each week
-   {kind: "jobs", gen, n, jobs, league: {path, sig, bytes?}}: the week's jobs as JSON (season._run_games' own) and the
-   league they are played in (its teams file's bytes the first time it is played in here). The helper then claims
-   games one at a time from the shared counter, plays each and writes its result, as JSON, into the shared data
-   buffer; worker.js, which is inside a Python call and cannot hear messages, reads them there. A job the JavaScript
-   leaves to Python (this season's position changes) is marked as not played here, and worker.js plays it.
+   From worker.js: {kind: "init", me, ctrl, data, game} once (its number, the two shared buffers and the game's
+   script), then for each week {kind: "jobs", gen, n, jobs, league: {path, sig, text?}}: the week's jobs as JSON
+   (season._run_games' own) and the league they are played in (its teams file's text the first time it is played in
+   here). The helper then claims games one at a time from the shared counter, plays each and writes its result, as
+   JSON, into the shared data buffer; worker.js, which is inside the game's call for the whole week and cannot hear
+   messages, reads them there. A job that needs a file a helper does not have (this season's position changes) is
+   marked as not played here, and worker.js plays it.
 
    The shared control buffer (Int32Array; worker.js lays it out the same way):
      [GEN] the week's number, bumped at each start and when the helpers are given up on
@@ -27,8 +28,8 @@ function boot(init) {
   me = init.me;
   ctrl = new Int32Array(init.ctrl);
   data = new Uint8Array(init.data);
-  importScripts("./engine.js");
-  api = self.EngineJS.api;
+  importScripts(init.game);
+  api = self.Game.engine;
   api.set_reader((path) => {
     const text = files.get(path);
     files.delete(path);           // the engine keeps the parsed teams: the text can go
@@ -48,7 +49,7 @@ function finish(i, status, offset, length) {
 }
 
 function play(m) {
-  if (m.league.bytes) files.set(m.league.path, new TextDecoder().decode(m.league.bytes));
+  if (m.league.text) files.set(m.league.path, m.league.text);
   const league = [m.league.path, m.league.sig];
   const jobs = JSON.parse(m.jobs);
   for (;;) {

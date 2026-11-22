@@ -1,13 +1,13 @@
-/* Where the published game loses time: play a career in the built site (ui/dist, the Python game running in the
+/* Where the published game loses time: play a career in the built site (ui/dist, the game running in the
    browser) with an automated browser, open every page and tab at set points of every season, and record every call
    the app makes to the game.
 
-     python3 tools/build_site.py --generic
+     node tools/build_site.mjs --generic
      node tools/speed_sweep.js --years 10 --out sweep.json      # serves ui/dist itself; --url to sweep a site instead
      node tools/speed_sweep.js --report sweep.json              # the tables again, from a finished run
 
-   Each call is timed where it is spent (the worker's own `ms`, ui/public/worker.js): `run` the game's work, `parse`
-   turning its answer into an object, `save` writing the career to the browser's store, and `wait` the rest of the
+   Each call is timed where it is spent (the worker's own `ms`, ui/public/worker.js): `run` the game's work (`parse`
+   is no longer the worker's: the page reads the answer's text), `save` writing the career to the browser's store, and `wait` the rest of the
    time the page waited (standing in line behind other calls: the game answers one at a time). Each click is timed
    from the click until the page has no call in flight and has painted, with the main thread's long tasks in between.
    Seasons past the first are advanced through the game's own calls (the weeks one sim, the offseason stage by stage). */
@@ -53,7 +53,7 @@ function instrument() {
         c.ok = m.ok; c.status = m.status;
         S.calls.push(c);
         const waiter = S.waiters.get(m.id);
-        if (waiter) { S.waiters.delete(m.id); waiter(m); }
+        if (waiter) { S.waiters.delete(m.id); waiter({ ...m, result: m.json === undefined ? undefined : JSON.parse(m.json) }); }
       }
     });
     const post = w.postMessage.bind(w);
@@ -210,7 +210,10 @@ function serve() {
       let file = path.join(DIST, rel);
       if (!file.startsWith(DIST) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(DIST, "index.html");
       // the two headers vercel.json sends: with them the game may share memory with its helper workers
-      res.writeHead(200, { "Content-Type": types[path.extname(file)] || "application/octet-stream", "Content-Length": fs.statSync(file).size,
+      // ... and the data pack as vercel.json sends it: brotli, which the browser unpacks (--no-brotli: as a server
+      // that does not say so sends it, and the game falls back on the gzip one)
+      const packed = path.extname(file) === ".br" && !args.includes("--no-brotli") ? { "Content-Encoding": "br" } : {};
+      res.writeHead(200, { "Content-Type": types[path.extname(file)] || "application/octet-stream", "Content-Length": fs.statSync(file).size, ...packed,
         "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": args.includes("--no-isolation") ? "unsafe-none" : "require-corp" });
       fs.createReadStream(file).pipe(res);
     });

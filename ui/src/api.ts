@@ -1,8 +1,7 @@
 import { trackSlow } from "./busy.ts";
 import { gameFetch } from "./gameClient.ts";
 
-// The one way to the game (gameClient.ts): a fetch the Vite dev server hands to the Python game server
-// (tools/dev_server.py), or on the published site a message to the game running in this browser.
+// The one way to the game (gameClient.ts): a message to the game running in this browser, answered like a fetch.
 
 export interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: BodyInit | object;

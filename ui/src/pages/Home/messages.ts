@@ -26,7 +26,6 @@ export const messages = {
   loadingTeams: "Loading teams…",
 
   tryAgain: "Try Again",
-  // (the game's own sentence, its period dropped so there is one; the dev server is asked after only where there is one)
-  loadError: (msg: string) =>
-    `Can't reach the game: ${msg.replace(/\.$/, "")}.${import.meta.env.DEV ? " Is the dev server running?" : ""}`,
+  // (the game's own sentence, its period dropped so there is one)
+  loadError: (msg: string) => `Can't reach the game: ${msg.replace(/\.$/, "")}.`,
 } as const;
