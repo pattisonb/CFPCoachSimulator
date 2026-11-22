@@ -345,7 +345,7 @@ def coaches_reference(engine_teams: dict) -> dict:
     for f in faces:
         cases.append({**good, "face": f})
     # shapes the page never sends (Python stops with something other than a ValueError)
-    cases += [{**good, "ratings": [1, 2]}, {**good, "style": "fast"}, {**good, "look": [1]}, {**good, "archetype": ["Program Builder"]}, {**good, "age": 1e400}]
+    cases += [{**good, "ratings": [1, 2]}, {**good, "style": "fast"}, {**good, "look": [1]}, {**good, "archetype": ["Program Builder"]}]
     out["clean"] = [[c, attempt(coaches.clean, copy.deepcopy(c))] for c in cases]
 
     ids = ["0123456789ab", "abcdef012345", "", None, "0123456789AB", "0123456789abc", "0123456789a", "../../etc/pw", "0123456789a\n", "ghijklmnopqr"]
@@ -462,7 +462,7 @@ def main(argv: list[str]) -> None:
         "coaches": coaches_reference(engine_teams),
         "bowls": bowls_reference(engine_teams, seeds),
     }
-    Path(out_path).write_text(json.dumps(out), encoding="utf-8")
+    Path(out_path).write_text(json.dumps(out, allow_nan=False), encoding="utf-8")    # plain JSON: Node reads it
     b = out["bowls"]
     print(f"wrote {out_path}: bowls {len(b['select_bowls'])} standings, {len(b['playoff_sites']['cases'])} seedings, "
           f"{[(s['seed'], s['counts']) for s in b['seasons']]}; teamnames {len(out['teamnames']['names'])} names; "
