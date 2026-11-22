@@ -22,6 +22,8 @@ export const messages = {
   yourSeason: "Your Season",
   yourGames: "Your Games",
   yourLeaders: "Your Leaders",
+  leaders: "Leaders",
+  whose: { mine: "Yours", all: "National" },
   rows: {
     record: "Record",
     conference: "Conference",

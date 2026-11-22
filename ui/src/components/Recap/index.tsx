@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { ArrowDown, ArrowUp, Trophy } from "@phosphor-icons/react";
-import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
+import Chip from "../Chip/index.tsx";
+import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
@@ -150,27 +151,8 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
       {name}
     </span>
   );
-  /** One of your games as a card: won or lost on a tab in its color, the score large, who and where under it. */
-  const gameCard = (label: string, g: GameLine | null, none: string) => (
-    <div key={label} className={`recap__game${g ? (g.won ? " is-won" : " is-lost") : " is-none"}`}>
-      <span className="label">{label}</span>
-      {g ? (
-        <>
-          <b className="recap__game-score">
-            <span className="recap__game-tab">{g.won ? m.w : m.l}</span>
-            {g.points_for}–{g.points_against}
-          </b>
-          <span className="recap__game-who">
-            <Swatch team={teams.get(g.opponent)} size={14} />
-            {g.venue === "away" ? m.at : m.vs} {g.opponent_rank ? `#${g.opponent_rank} ` : ""}
-            {g.opponent_name}
-          </span>
-        </>
-      ) : (
-        <span className="recap__soft">{none}</span>
-      )}
-    </div>
-  );
+  /** whose leaders the one Leaders card shows */
+  const [whose, setWhose] = useState<"mine" | "all">("mine");
   const me = view?.mine;
   const played = !!me && me.wins + me.losses > 0;
   const poll = view?.final_cfp.length ? view.final_cfp : (view?.final_ap ?? []);
@@ -290,23 +272,43 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
               </dl>
             )}
 
-            <Panels>
-              <Panel title={m.yourGames} onTitle={go("schedule")}>
-                {played ? (
-                  <div className="recap__games">
-                    {gameCard(m.rows.bestWin, me.best_win, m.noWins)}
-                    {gameCard(m.rows.biggestWin, me.biggest_win, m.noWins)}
-                    {gameCard(m.rows.worstLoss, me.worst_loss, m.noLosses)}
-                    {gameCard(m.rows.closestLoss, me.closest_loss, m.noLosses)}
-                    {me.postseason.map((g) => gameCard(g.title ?? m.rows.postseason, g, ""))}
-                  </div>
-                ) : (
-                  <p className="recap__soft">{m.noGames}</p>
-                )}
-              </Panel>
-
-              <Panel title={m.yourLeaders} onTitle={go("stats-mine")}>
-                {MY_LEADERS.some(([k]) => me.leaders[k]) ? (
+            {/* one row of cards to the page's foot: the whole recap is one screen (the player's ask) */}
+            <div className="recap__cards">
+              <Panel
+                title={m.leaders}
+                onTitle={go(whose === "mine" ? "stats-mine" : "stats")}
+                aside={
+                  <span className="recap__pick" role="group" aria-label={m.leaders}>
+                    {(["mine", "all"] as const).map((k) => (
+                      <Chip key={k} on={whose === k} onClick={() => setWhose(k)}>
+                        {m.whose[k]}
+                      </Chip>
+                    ))}
+                  </span>
+                }
+              >
+                {whose === "all" ? (
+                  NATIONAL.some(([k]) => view.national_leaders[k]) ? (
+                    <PanelRows>
+                      {NATIONAL.map(([k, line]) => {
+                        const p = view.national_leaders[k];
+                        return p ? (
+                          <PanelRow
+                            key={k}
+                            label={m.nationalNames[k]}
+                            value={
+                              <>
+                                <PlayerLink team={p.team} name={p.name} />, {p.team_name ?? ""} · {line(p.stats)}
+                              </>
+                            }
+                          />
+                        ) : null;
+                      })}
+                    </PanelRows>
+                  ) : (
+                    <p className="recap__soft">{m.noGames}</p>
+                  )
+                ) : MY_LEADERS.some(([k]) => me.leaders[k]) ? (
                   <PanelRows>
                     {MY_LEADERS.map(([k, line]) => {
                       const p = me.leaders[k];
@@ -366,60 +368,39 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
                 )}
               </Panel>
 
-              <Panel title={m.nationalLeaders} onTitle={go("stats")}>
-                {NATIONAL.some(([k]) => view.national_leaders[k]) ? (
-                  <PanelRows>
-                    {NATIONAL.map(([k, line]) => {
-                      const p = view.national_leaders[k];
-                      return p ? (
-                        <PanelRow
-                          key={k}
-                          label={m.nationalNames[k]}
-                          value={
-                            <>
-                              <PlayerLink team={p.team} name={p.name} />, {p.team_name ?? ""} · {line(p.stats)}
-                            </>
-                          }
-                        />
-                      ) : null;
-                    })}
-                  </PanelRows>
-                ) : (
-                  <p className="recap__soft">{m.noGames}</p>
-                )}
-              </Panel>
-
               {(view.surprises.length > 0 || view.disappointments.length > 0) && (
                 <Panel title={m.swings}>
-                  <h3 className="label recap__kicker">{m.surprises}</h3>
-                  <ul className="recap__list">
-                    {view.surprises.map((s) => (
-                      <li key={s.team}>
-                        <ArrowUp size={14} weight="bold" className="recap__up" aria-hidden="true" />
-                        <span className="recap__grow">
-                          <b>{team(s.team, s.name)}</b>
-                        </span>
-                        <span className="recap__soft">{s.final_rank ? `#${s.final_rank}` : (s.record ?? "")}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <h3 className="label recap__kicker">{m.disappointments}</h3>
-                  <ul className="recap__list">
-                    {view.disappointments.map((s) => (
-                      <li key={s.team}>
-                        <ArrowDown size={14} weight="bold" className="recap__down" aria-hidden="true" />
-                        <span className="recap__grow">
-                          <b>{team(s.team, s.name)}</b>
-                        </span>
-                        <span className="recap__soft">
-                          {s.final_rank ? `#${s.final_rank}` : (s.record ?? m.unranked)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="recap__swings">
+                    <h3 className="label recap__kicker">{m.surprises}</h3>
+                    <ul className="recap__list">
+                      {view.surprises.map((s) => (
+                        <li key={s.team}>
+                          <ArrowUp size={14} weight="bold" className="recap__up" aria-hidden="true" />
+                          <span className="recap__grow">
+                            <b>{team(s.team, s.name)}</b>
+                          </span>
+                          <span className="recap__soft">{s.final_rank ? `#${s.final_rank}` : (s.record ?? "")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <h3 className="label recap__kicker">{m.disappointments}</h3>
+                    <ul className="recap__list">
+                      {view.disappointments.map((s) => (
+                        <li key={s.team}>
+                          <ArrowDown size={14} weight="bold" className="recap__down" aria-hidden="true" />
+                          <span className="recap__grow">
+                            <b>{team(s.team, s.name)}</b>
+                          </span>
+                          <span className="recap__soft">
+                            {s.final_rank ? `#${s.final_rank}` : (s.record ?? m.unranked)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </Panel>
               )}
-            </Panels>
+            </div>
           </>
         )}
       </div>
