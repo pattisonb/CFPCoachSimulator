@@ -10,7 +10,7 @@
    memory). One tab at a time holds the store: each worker has its own in-memory mirror of the
    same IndexedDB folders and a persist writes the whole mirror back, so a second tab would roll
    the first one's saves back. The worker takes the "cfp-game" Web Lock for its life before it
-   mounts the store and refuses to start (fatal) when another tab holds it. */
+   mounts the store, waiting for it while another tab holds it (the page is told it is waiting). */
 "use strict";
 
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
@@ -31,8 +31,9 @@ let breakStep = false;     // a test hook: the next sim step throws (a failure a
 let warmed = false;        // the league has been read once, ahead of the first call that needs it
 let restoreError = null;   // the saves could not be read at start: told to the page once ready
 
-const LOCK_TRIES = 16;      // *tune* how many times the store's lock is asked for before another tab is blamed...
-const LOCK_WAIT_MS = 250;   // ... and how long between asks (four seconds in all)
+const LOCK_WAIT_MS = 5000;  // *tune* how long the store's lock is waited for before the page is told another tab has it
+const WARM_AFTER_MS = 1500;  // *tune* how long the game sits idle after starting before it reads the league ahead
+const WAITING_TAB = "The game is open in another tab. This one starts when that one is closed.";
 const OTHER_TAB = "The game is already open in another tab. Close it and reload this one.";
 const NO_SAVES = "Your browser's storage could not be read: saves will not be kept in this browser. Download a career you want to keep.";
 const LOCK = "cfp-game";
@@ -55,7 +56,8 @@ function nextIndex() {
 
 function untilMessage() { return queue.length ? Promise.resolve() : new Promise((r) => { wake = r; }); }
 
-function loading(stage, loaded, total) { postMessage({ kind: "loading", stage, loaded: loaded || 0, total: total || 0 }); }
+// `blocked`: the stage is a wait the player should hear of even with nothing asked of the game yet (another tab).
+function loading(stage, loaded, total, blocked) { postMessage({ kind: "loading", stage, loaded: loaded || 0, total: total || 0, blocked: !!blocked }); }
 
 function syncfs(populate) {
   return new Promise((resolve, reject) => {
@@ -72,24 +74,26 @@ async function persist() {
   catch (err) { postMessage({ kind: "storage-error", message: String((err && err.message) || err) }); }
 }
 
-// Become the one tab that holds the store, for the worker's life; throws when another tab does.
-// Web Locks where the browser has them (Chrome 69, Firefox 96, Safari 15.4); else a ping on a
-// BroadcastChannel: whoever answers within 300 ms was there first, and a running worker answers.
-async function claimStore() {
+// Become the one tab that holds the store, for the worker's life. Web Locks where the browser has them (Chrome 69,
+// Firefox 96, Safari 15.4): the worker waits in line for the lock, however long that takes, and `onWait` is told
+// when it has waited a while. A page reloaded (or left and come back to) finds its old worker still letting go, for
+// seconds on a slow machine when that worker was in the middle of starting; asking a few times and then blaming
+// another tab stopped the game for good, on a tab that was the only one. A real second tab now starts by itself when
+// the first is closed. Else a ping on a BroadcastChannel: whoever answers within 300 ms was there first, a running
+// worker answers, and this one throws.
+async function claimStore(onWait) {
   if (self.navigator && navigator.locks) {
-    const ask = () => new Promise((resolve) => {
-      navigator.locks.request(LOCK, { ifAvailable: true }, (lock) => {
-        resolve(!!lock);
-        return lock ? new Promise(() => {}) : null;     // never settles: the lock is held until the worker ends
-      }).catch(() => resolve(false));
+    await new Promise((resolve) => {
+      let held = false;
+      const timer = setTimeout(() => { if (!held) onWait(); }, LOCK_WAIT_MS);
+      navigator.locks.request(LOCK, () => {
+        held = true;
+        clearTimeout(timer);
+        resolve();
+        return new Promise(() => {});     // never settles: the lock is held until the worker ends
+      }).catch(() => { clearTimeout(timer); resolve(); });     // locks refused here: nothing to coordinate with
     });
-    // a page reloaded (or left and come back to) finds its old worker still letting go of the lock for a moment:
-    // asked once, that read as "open in another tab" and the game never started. Ask again for a few seconds first
-    for (let tries = 0; tries < LOCK_TRIES; tries++) {
-      if (await ask()) return;
-      await new Promise((r) => setTimeout(r, LOCK_WAIT_MS));
-    }
-    throw otherTab();
+    return;
   }
   if (typeof BroadcastChannel === "undefined") return;   // nothing to coordinate with
   const channel = new BroadcastChannel(LOCK);
@@ -139,7 +143,10 @@ async function start(init) {
   let pythonUp = false;
   const zipping = fetchZip(init.version, () => pythonUp);
   zipping.catch(() => {});
-  await claimStore();
+  // the store's lock is asked for now and awaited where the store is opened: Python and the game load meanwhile
+  let waitingTab = false;
+  const locked = claimStore(() => { waitingTab = true; loading(WAITING_TAB, 0, 0, true); });
+  locked.catch(() => {});
   importScripts(PYODIDE_URL + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
   pythonUp = true;       // from here the download says how far along it is
@@ -149,6 +156,9 @@ async function start(init) {
   // by tarfile itself: Pyodide's own unpackArchive learned its formats before the xz reader was loaded
   pyodide.FS.writeFile("/tmp/" + ARCHIVE, new Uint8Array(zip));
   pyodide.runPython(`import os, tarfile\nwith tarfile.open("/tmp/${ARCHIVE}") as t:\n    t.extractall(${JSON.stringify(HOME)}, filter="data")\nos.remove("/tmp/${ARCHIVE}")`);
+  if (waitingTab) loading(WAITING_TAB, 0, 0, true);      // the stages since took the notice over
+  await locked;
+  if (waitingTab) loading("Unpacking the game");
   for (const dir of STORES) {
     pyodide.FS.mkdirTree(dir);
     pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, {}, dir);
@@ -223,12 +233,16 @@ async function main() {
     for (;;) {
       if (queue.length) await handle(queue.splice(nextIndex(), 1)[0]);
       else if (api.running()) await step();
-      else {
+      else if (!warmed) {
         // nothing asked yet: read the league now (the first call's wait, a second or two), while the player is
-        // still looking at the team picker
-        if (!warmed) { warmed = true; try { api.call_js("GET", "/api/teams", null, null); } catch (err) { console.error(err); } }
-        if (!queue.length) await untilMessage();
+        // still looking at the team picker. Not at once: the calls that waited on the start arrive a moment after
+        // "ready", and one of them stood behind this read with a Loading note up
+        await Promise.race([untilMessage(), new Promise((r) => setTimeout(r, WARM_AFTER_MS))]);     // a call ends the wait at once
+        if (queue.length || api.running()) continue;
+        warmed = true;
+        try { api.call_js("GET", "/api/teams", null, null); } catch (err) { console.error(err); }
       }
+      else await untilMessage();
     }
   } catch (err) {                 // a crash in the pump: the page hears it instead of hanging
     console.error(err);
