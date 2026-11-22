@@ -20,7 +20,7 @@
 const GEN = 0, NEXT = 2, ALLOC = 3, DONE = 4, READY = 8, TABLE = 32;
 
 let api = null, ctrl = null, data = null, me = 0;
-const files = new Map();        // a league's signature -> its teams file's text, until the engine has read it
+const files = new Map();        // a league's teams file's path -> its text, until the engine has read it
 const encoder = new TextEncoder();
 
 function boot(init) {
@@ -29,10 +29,10 @@ function boot(init) {
   data = new Uint8Array(init.data);
   importScripts("./engine.js");
   api = self.EngineJS.api;
-  api.set_reader((path, sig) => {
-    const text = files.get(sig);
-    files.delete(sig);            // the engine keeps the parsed teams: the text can go
-    if (text === undefined) throw new Error(`no teams file for ${path}`);
+  api.set_reader((path) => {
+    const text = files.get(path);
+    files.delete(path);           // the engine keeps the parsed teams: the text can go
+    if (text === undefined) throw new Error(`${path} is not here`);      // a helper has the league's teams and nothing else
     return text;
   });
   Atomics.store(ctrl, READY + me, 1);
@@ -48,7 +48,7 @@ function finish(i, status, offset, length) {
 }
 
 function play(m) {
-  if (m.league.bytes) files.set(m.league.sig, new TextDecoder().decode(m.league.bytes));
+  if (m.league.bytes) files.set(m.league.path, new TextDecoder().decode(m.league.bytes));
   const league = [m.league.path, m.league.sig];
   const jobs = JSON.parse(m.jobs);
   for (;;) {

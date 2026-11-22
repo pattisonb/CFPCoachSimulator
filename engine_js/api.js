@@ -6,6 +6,7 @@ import { personnel } from "./personnel.js";
 import { drive_functions } from "./drive_functions.js";
 import { game, simulate_game } from "./game.js";
 import * as game_job from "../sim_js/game_job.js";
+import * as files from "./files.js";
 
 /** One game. `want_log`: the game's play log rides along as `play_log` (Clear Mode's big moments read it). */
 export function play(home, away, sliders = null, seed = null, venue = "home", momentum = false, want_log = false) {
@@ -76,19 +77,18 @@ export function formations(team_data) {
 }
 
 // ---- whole game jobs (sim_js/game_job.js) ----
-// The league a job is played in is a teams file the caller names by [path, signature]; `read` gets its text (Node's
-// fs on a computer, the Python file system or a message's bytes in the browser). Two are kept: the built-in league
-// and a career's own.
-let read = null;
+// The league a job is played in is a teams file the caller names by [path, signature] (the signature changes when
+// the file does). Two are kept: the built-in league and a career's own.
 const leagues = new Map();
 
-export function set_reader(fn) { read = fn; }
+/** How files are read here: `fn(path)` gives a file's text (engine_js/files.js). */
+export function set_reader(fn) { files.set_reader(fn); }
 
 function league_teams([path, sig]) {
   const key = `${path}|${sig}`;
   let teams = leagues.get(key);
   if (!teams) {
-    teams = JSON.parse(read(path, sig))["teams"];
+    teams = JSON.parse(files.read_text(path))["teams"];
     if (leagues.size >= 2) leagues.delete(leagues.keys().next().value);
     leagues.set(key, teams);
   }

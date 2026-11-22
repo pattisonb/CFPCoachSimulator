@@ -2,9 +2,13 @@
 // ({"id", "fn", "args"}), a line of JSON out ({"id", "ok", "result" | "error"}). It ends when its input does.
 import readline from "readline";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { api } from "./api.js";
 
-api.set_reader((path) => fs.readFileSync(path, "utf8"));
+// a path from the project's root, or an absolute one (a league's teams file)
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+api.set_reader((p) => fs.readFileSync(path.isAbsolute(p) ? p : path.join(ROOT, p), "utf8"));
 
 const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
 rl.on("line", (line) => {

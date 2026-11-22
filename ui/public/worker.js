@@ -263,7 +263,8 @@ async function start(init) {
   // the game engine is JavaScript (engine_js/, bundled as engine.js): the Python asks it for games through this
   // module (sim/engine.py), JSON text each way
   importScripts("./engine.js");
-  self.EngineJS.api.set_reader((path) => pyodide.FS.readFile(path, { encoding: "utf8" }));     // a league's teams file
+  // the game's files, for the JavaScript: a path from the project's root, or an absolute one (a league's teams file)
+  self.EngineJS.api.set_reader((path) => pyodide.FS.readFile(path.startsWith("/") ? path : `${HOME}/${path}`, { encoding: "utf8" }));
   pyodide.registerJsModule("js_engine", {
     call: (fn, args) => {
       try { return JSON.stringify(self.EngineJS.api[fn](...JSON.parse(args))); }
