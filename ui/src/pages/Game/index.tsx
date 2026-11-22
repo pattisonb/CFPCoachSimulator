@@ -780,7 +780,13 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                 );
               })}
               {/* a sim running: its bar takes the ticker's place, on every page (the player's ask) */}
-              {sim.running && sim.status && <SimBar status={sim.status} onStop={sim.stop} />}
+              {sim.running && sim.status && (
+                <SimBar
+                  status={sim.status}
+                  week={season?.week_labels[String((sim.status.current_week ?? season.current_week) + 1)] ?? null}
+                  onStop={sim.stop}
+                />
+              )}
               {ticker && season && !sim.running && (
                 <Ticker
                   seasonId={season.id}

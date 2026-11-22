@@ -114,6 +114,18 @@
   cursor: pointer;
 }
 
+/* Stop was pressed: what is happening, where the button was */
+.sim-bar__stopping {
+  flex: none;
+  align-self: center;
+  color: var(--gold);
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: sim-bar-blink 1.2s ease-in-out infinite;
+}
+
 .sim-bar__stop:hover,
 .sim-bar__stop:focus-visible {
   background: var(--hot);
@@ -143,6 +155,7 @@
 @media (prefers-reduced-motion: reduce) {
   .sim-bar,
   .sim-bar__dot,
+  .sim-bar__stopping,
   .sim-bar__track i {
     animation: none;
   }
