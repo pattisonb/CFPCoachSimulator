@@ -1,44 +1,37 @@
-__pycache__/
-*.pyc
-.venv/
 .claude/
-# generated or local-only data (rebuild with python -m teamdata.build_teams; history is per machine)
-data/engine_teams.json
-data/player_ratings.json
-data/player_potential.json
-data/games.json
-data/season_results.json
-data/seasons/
 *.log
-# AP ballots from collegepolltracker.com (tools/fetch_ballots.py): their compilation, kept local
-data/ballots/
-# CollegeFootballData.com recruiting classes (tools/fetch_recruits.py): their compilation, kept local
-data/recruiting/
 
-# cfbstats pages cached by tools/fetch_leaders.py
-data/history/cfbstats_cache/
+# made by the game from the rosters in cfb_sim_data/ (node tools/game_host.mjs . teams)
+data/engine_teams.json
+data/player_potential.json
 
-# overnight comparison output (tools/team_reality.py)
-data/analysis/
+# the precomputed base league (node tools/game_host.mjs . base); the site build makes its own in a scratch folder
+data/base_league.json
+data/base_meta.json
+data/base_development.json
+
+# saves, custom coaches and a career's built leagues, when the game runs on Node against this folder
+data/seasons/
 data/coaches/
-
-# taste-skill working files (screenshots, reviews)
-.taste-skill/
 data/leagues/
+
+# the long run's working files (tools/long_run.mjs); a finished run's seedN.json can be committed
 data/long_run/check*.json
 data/long_run/*.league.json
 data/long_run/final*.json
 data/long_run/*_[0-9]*.json
 data/long_run/draft_pools.json
 
-# CFBD game attendance (tools/build_program_market.py builds data/program_market.json from it)
+# other people's compilations fetched for fitting the game's models (ballots, recruiting classes, attendance,
+# cached pages): kept local, never committed
+data/ballots/
+data/recruiting/
 data/market/
-
-# the browser site (python tools/build_site.py) and the precomputed base league it writes
-dist/
-data/base_league.json
-data/base_meta.json
-data/base_development.json
-
-# Wikipedia draft pages cached by tools/fetch_drafts.py
 data/cache/
+data/history/cfbstats_cache/
+data/analysis/
+data/games.json
+data/season_results.json
+
+# the built site (node tools/build_site.mjs writes ui/dist/)
+dist/
