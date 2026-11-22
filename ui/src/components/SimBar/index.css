@@ -1,0 +1,149 @@
+/* The sim's bar along the bottom of the game's window, in the ticker's place: the one thing in color while a sim runs. */
+.sim-bar {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 6;
+  display: flex;
+  align-items: stretch;
+  gap: var(--s3);
+  height: var(--ticker-h);
+  padding-right: var(--s3);
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-top: var(--line) solid var(--ink);
+  animation: sim-bar-in 220ms ease-out;
+}
+
+/* your color, with a light that blinks */
+.sim-bar__plate {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: var(--team, var(--paper-hi));
+  color: var(--team-on, var(--ink));
+  font-size: var(--t-sm);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  box-shadow: inset 0 -4px 0 var(--team-2, var(--gold)); /* a dark team's plate still stands off the bar */
+}
+
+.sim-bar__dot {
+  width: 8px;
+  height: 8px;
+  background: var(--hot);
+  animation: sim-bar-blink 1s steps(2, jump-none) infinite;
+}
+
+.sim-bar__what {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s3);
+  max-width: 46%;
+  overflow: hidden;
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.sim-bar__what b {
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.sim-bar__soft {
+  font-size: var(--t-xs);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* the bar: stripes in your three colors that march while it fills */
+.sim-bar__track {
+  flex: 1;
+  align-self: center;
+  min-width: 60px;
+  height: 14px;
+  background: color-mix(in srgb, var(--paper-hi) 14%, transparent);
+  border: var(--line) solid var(--paper-hi);
+}
+
+.sim-bar__track i {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--team, var(--paper-hi)) 0 10px,
+    var(--team-2, var(--gold)) 10px 16px,
+    var(--paper-hi) 16px 20px
+  );
+  background-size: 56.57px 100%; /* one turn of the stripes (20px along the slant, twice): the march loops clean */
+  transition: width 300ms ease-out;
+  animation: sim-bar-march 900ms linear infinite;
+}
+
+.sim-bar__pct {
+  flex: none;
+  align-self: center;
+  min-width: 44px;
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.sim-bar__stop {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--paper-hi);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sim-bar__stop:hover,
+.sim-bar__stop:focus-visible {
+  background: var(--hot);
+  color: var(--paper-hi);
+  border-color: var(--hot);
+  outline: none;
+}
+
+@keyframes sim-bar-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sim-bar-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes sim-bar-march {
+  to {
+    background-position-x: 56.57px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-bar,
+  .sim-bar__dot,
+  .sim-bar__track i {
+    animation: none;
+  }
+}

@@ -234,7 +234,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       <aside className="office__col office__left">
         {s.done ? (
           <WrapCard s={s} teams={teams} />
-        ) : (
+        ) : sim.running ? null : (
           <GameCard {...card} teams={teams} weekName={weekName} onBox={onBox} simming={sim.running} />
         )}
         <Actions

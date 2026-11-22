@@ -11,6 +11,7 @@ import Offseason from "../../components/Offseason/index.tsx";
 import Programs from "../../components/Programs/index.tsx";
 import Rankings from "../../components/Rankings/index.tsx";
 import Recap from "../../components/Recap/index.tsx";
+import SimBar from "../../components/SimBar/index.tsx";
 import Ticker from "../../components/Ticker/index.tsx";
 import Scores from "../../components/Scores/index.tsx";
 import Stats from "../../components/Stats/index.tsx";
@@ -640,7 +641,10 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
 
           {season ? (
             // one window for every section: it never changes; the sections stack in it and cross-fade (Game/index.css)
-            <section className={ticker ? "game__body has-ticker" : "game__body"} aria-label={section.label}>
+            <section
+              className={ticker || sim.running ? "game__body has-ticker" : "game__body"}
+              aria-label={section.label}
+            >
               {visited.map((key) => {
                 const sec = sectionOf(key);
                 return (
@@ -775,7 +779,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                   </div>
                 );
               })}
-              {ticker && season && (
+              {/* a sim running: its bar takes the ticker's place, on every page (the player's ask) */}
+              {sim.running && sim.status && <SimBar status={sim.status} onStop={sim.stop} />}
+              {ticker && season && !sim.running && (
                 <Ticker
                   seasonId={season.id}
                   week={stripWeek}

@@ -244,9 +244,7 @@
 
 /* a sim running: what it's on, a bar, Stop */
 
-/* while a sim runs the page behind is to watch, not to work: the box throws a gray tint over everything else in the
-   window (a shadow spread past its edges, clipped by the window, so the sidebar and the top bar stay clear) and sits
-   above it */
+/* (the whole window goes gray while a sim runs: pages/Game) */
 .office__sim {
   position: relative;
   z-index: 3;
@@ -255,7 +253,6 @@
   padding: var(--s3);
   background: var(--paper-hi);
   border: var(--line) solid var(--ink);
-  box-shadow: 0 0 0 4000px color-mix(in srgb, var(--ink) 30%, transparent); /* *tune* the tint */
 }
 
 /* one line each, cut short if it must be: a longer stage name never makes the box taller */
