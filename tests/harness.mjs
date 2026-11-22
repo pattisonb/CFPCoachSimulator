@@ -23,7 +23,8 @@ let scratch = null;
 export async function start({ env = {} } = {}) {
   scratch = fs.mkdtempSync(path.join(os.tmpdir(), "cfp-test-"));
   process.on("exit", () => fs.rmSync(scratch, { recursive: true, force: true }));
-  return host(ROOT, { overlay: scratch, env: { ...process.env, ...env } });
+  // saves go to a folder of the run's own: a list of seasons never shows this computer's own careers (data/seasons)
+  return host(ROOT, { overlay: scratch, env: { CFP_SEASONS_DIR: path.join(scratch, "seasons"), ...process.env, ...env } });
 }
 
 /** This test file again in a process of its own with other environment settings; returns its exit code. */
