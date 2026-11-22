@@ -172,7 +172,7 @@ test("test_crowd_and_strain", () => {
   }
   assert(Math.abs(r["points"] - worth(st, b, recruiting.JOB_PRIORITY * recruiting.JOB_CROWD)) < 1e-9, show(r));
   const ca = st["recruiting"]["contacts"][a][ME];
-  assert(recruiting.cooled(st, ME, a) && get(ca, "heard_rival") === recruiting.rival_stamp(st), show(ca));
+  assert(recruiting.cooled(st, ME, a) && JSON.stringify(get(ca, "heard_rival")) === JSON.stringify(recruiting.rival_stamp(st)), show(ca));
   assert(st["recruiting"]["log"].some((e) => e["kind"] === "promise_strained" && e["pid"] === a && get(e, "line") === scenes.HEARD_RIVAL));
 });
 
