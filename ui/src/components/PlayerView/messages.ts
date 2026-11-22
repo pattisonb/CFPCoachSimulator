@@ -17,7 +17,7 @@ export const messages = {
   tabs: {
     overview: "Overview",
     ratings: "Ratings",
-    development: "Progression",
+    development: "Potential",
     abilities: "Abilities",
     history: "History",
   },
