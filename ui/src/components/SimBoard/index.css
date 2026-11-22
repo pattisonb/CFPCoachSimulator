@@ -1,0 +1,126 @@
+/* The Office's one big board while a sim runs: the week, your record and standing, your latest results. */
+.sim-board {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--s3);
+  min-height: 0;
+  padding: var(--s6, 48px) var(--s6, 48px) var(--s4);
+  overflow: hidden;
+}
+
+.sim-board__kicker {
+  color: var(--ink-soft);
+  letter-spacing: 3px;
+}
+
+/* the week, as big as the board allows */
+.sim-board__week {
+  font-size: clamp(56px, 9vw, 128px);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+}
+
+.sim-board__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s3);
+  width: 100%;
+  max-width: 900px;
+  margin-top: var(--s3);
+}
+
+.sim-board__stats div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--s3) var(--s3) calc(var(--s3) + 4px);
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+  background-image: var(--team-stripe, none); /* your three colors as a line beneath */
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 4px;
+}
+
+.sim-board__stats dt {
+  color: var(--ink-soft);
+}
+
+.sim-board__stats dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--s2);
+  font-size: clamp(28px, 3.6vw, 52px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.sim-board__stats small {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  font-weight: 400;
+}
+
+.sim-board__title {
+  margin-top: var(--s3);
+  color: var(--ink-soft);
+}
+
+.sim-board__results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  width: 100%;
+  max-height: 96px; /* two rows of them at most: the board never scrolls */
+  overflow: hidden;
+  list-style: none;
+}
+
+.sim-board__results li {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 6px 10px 6px 6px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.sim-board__wl {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.sim-board__results li.is-lost .sim-board__wl {
+  background: none;
+  color: var(--ink-soft);
+  box-shadow: inset 0 0 0 var(--line) var(--ink-soft);
+}
+
+.sim-board__score {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-board__score small {
+  margin-left: 4px;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 400;
+}
+
+.sim-board__opp,
+.sim-board__none {
+  color: var(--ink-soft);
+}

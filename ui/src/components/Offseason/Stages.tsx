@@ -735,12 +735,12 @@ function PortalRecap({ v, teams }: P) {
     </>
   );
   const face = (x: { id: string; pos: string }) => (
-    <span className="face-tile recap__face">
+    <span className="face-tile precap__face">
       <Face face={playerFace(x.id, x.pos)} scale={1} label="" />
     </span>
   );
   return (
-    <div className="dev recap">
+    <div className="dev precap">
       <dl className="dev__stats">
         <Stat label={m.recap.signed}>{rec.signed.length}</Stat>
         <Stat label={m.recap.lost}>{rec.lost.length}</Stat>
@@ -753,11 +753,11 @@ function PortalRecap({ v, teams }: P) {
         </Stat>
         {/* the positions still under a healthy count, a tile beside the numbers (it was a row of its own under the
             panels, which made the page scroll) */}
-        <div className="recap__short-tile" title={m.recap.shortTip}>
+        <div className="precap__short-tile" title={m.recap.shortTip}>
           <dt className="label">{m.recap.short}</dt>
           <dd>
             {short.length ? (
-              <ul className="recap__short">
+              <ul className="precap__short">
                 {short.map((x) => (
                   <li key={x.group}>
                     <Tag>{m.recap.shortLine(x.group, x.have, x.target)}</Tag>
@@ -772,20 +772,20 @@ function PortalRecap({ v, teams }: P) {
       </dl>
 
       {/* three panels, one height: your additions, your losses, the country's biggest moves (each scrolls on its own) */}
-      <div className="recap__cols">
-        <Panel className="recap__col" title={m.recap.signed} aside={m.portal.players(rec.signed.length)}>
+      <div className="precap__cols">
+        <Panel className="precap__col" title={m.recap.signed} aside={m.portal.players(rec.signed.length)}>
           {rec.signed.length ? (
-            <ol className="recap__list">
+            <ol className="precap__list">
               {rec.signed.map((x) => (
-                <li key={x.id} className="recap__row">
+                <li key={x.id} className="precap__row">
                   {face(x)}
-                  <span className="recap__who">
+                  <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
-                  <span className="recap__move">
+                  <span className="precap__move">
                     {school((x as { from?: string }).from, m.recap.from(x.from_name ?? ""))}
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
+                  <b className="precap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
@@ -794,21 +794,21 @@ function PortalRecap({ v, teams }: P) {
           )}
         </Panel>
 
-        <Panel className="recap__col" title={m.recap.lost} aside={m.portal.players(rec.lost.length)}>
+        <Panel className="precap__col" title={m.recap.lost} aside={m.portal.players(rec.lost.length)}>
           {rec.lost.length ? (
-            <ol className="recap__list">
+            <ol className="precap__list">
               {rec.lost.map((x) => (
-                <li key={x.id} className="recap__row" title={x.reason || undefined}>
+                <li key={x.id} className="precap__row" title={x.reason || undefined}>
                   {face(x)}
-                  <span className="recap__who">
+                  <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
-                  <span className="recap__move">
+                  <span className="precap__move">
                     {(x as { to?: string | null }).to
                       ? school((x as { to?: string }).to, m.recap.to(x.to_name))
                       : m.recap.outOfFbs}
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
+                  <b className="precap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>
@@ -818,20 +818,20 @@ function PortalRecap({ v, teams }: P) {
         </Panel>
 
         {moves.length > 0 && (
-          <Panel className="recap__col" title={m.recap.moves}>
-            <ol className="recap__list">
+          <Panel className="precap__col" title={m.recap.moves}>
+            <ol className="precap__list">
               {moves.map((x) => (
-                <li key={x.id} className="recap__row">
+                <li key={x.id} className="precap__row">
                   {face(x)}
-                  <span className="recap__who">
+                  <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{x.pos}</span>
                   </span>
-                  <span className="recap__move">
+                  <span className="precap__move">
                     {school(x.from, x.from_name)}
                     <ArrowRight size={12} weight="bold" aria-hidden="true" />
                     {school(x.to, x.to_name)}
                   </span>
-                  <b className="recap__ovr">{x.overall}</b>
+                  <b className="precap__ovr">{x.overall}</b>
                 </li>
               ))}
             </ol>

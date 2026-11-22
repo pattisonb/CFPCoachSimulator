@@ -22,6 +22,9 @@ export const messages = {
   yourSeason: "Your Season",
   yourGames: "Your Games",
   yourLeaders: "Your Leaders",
+  leaders: "Leaders",
+  seeSchedule: "Open your schedule.",
+  whose: { mine: "Yours", all: "National" },
   rows: {
     record: "Record",
     conference: "Conference",

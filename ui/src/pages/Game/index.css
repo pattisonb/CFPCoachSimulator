@@ -224,6 +224,14 @@
   cursor: progress;
 }
 
+/* ... and the whole window says so: every page, the top row and the sidebar go gray and dim, and only the sim's bar
+   along the bottom (components/SimBar) and the Office's board (components/SimBoard) stay in color */
+.game.is-simming .game__pane:not(:has(.sim-board)),
+.game.is-simming .game__top,
+.game.is-simming .game-nav {
+  filter: grayscale(1) contrast(0.92) opacity(0.72); /* *tune* how far the window fades while a sim runs */
+}
+
 .game.is-simming button:not([data-sim-allow]),
 .game.is-simming a:not([data-sim-allow]),
 .game.is-simming input,
