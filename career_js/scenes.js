@@ -1173,7 +1173,7 @@ export function open_scene(state, slug, pid, action, week) {
   const contact = orr(get(orr(get(rc["contacts"], pid), {}), slug), {});
   if (scenes.heard_rival_due(state, slug, pid)) {
     said = scenes.HEARD_RIVAL;                                      // he heard you promised his job again: he says so, once
-    
+    delete contact["heard_rival"];
   }
   turns.push(scenes._turn("him", said));
   if (action === "hc_visit") {                                      // in his living room what happened to him always comes up

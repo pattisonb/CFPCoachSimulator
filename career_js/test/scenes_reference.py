@@ -534,7 +534,39 @@ def season_of(team, seed, weeks, rng, me_wins, tag, n_talks, n_prospects, n_reac
         if step == 2:
             state["polls"]["final"] = {"ap": [{"rank": 1, "team": team}]}       # a key that is no week
         state["current_week"] = week + 1 if step != 3 else week + 2             # (one stop comes after an open date)
+    ties(state, rng, tag)
     return state
+
+
+def ties(state, rng, tag) -> None:
+    """Two games in one week for your school, added after the rest under low event ids (a JavaScript object would list
+    "7" before "401856766"; Python lists it last): the first of equals, and the order a week's results are read in."""
+    st = copy.deepcopy(state)
+    me, week, rc = st["team"], st["current_week"], st["recruiting"]
+    mine = [g for g in st["games"].values() if me in (g["home"], g["away"])]
+    played, unplayed = [g for g in mine if g.get("played")], [g for g in mine if not g.get("played")]
+    others = [s for s in rng.sample(fbs(), 8) if s != me]
+    for n, src in enumerate(played[-2:] + unplayed[:2]):
+        g = dict(src)
+        side = "away" if g["home"] == me else "home"
+        g.update({"event_id": str(7 - n), side: others[n], "home_score": src["away_score"], "away_score": src["home_score"]})   # the other result
+        st["games"][g["event_id"]] = g
+    TAG[0] = f"{tag} two games a week"
+    new_epoch(st)
+    for w in range(0, week + 3):
+        case("last_game", st, me, w, state=st, slug=me)
+        case("next_game", st, me, w, state=st, slug=me)
+        case("facts", st, me, w, state=st, slug=me)
+    for pid in visible(st, 12, rng):
+        p = rc["prospects"][pid]
+        kw = dict(state=st, slug=me, pid=pid)
+        for w in (week, max(0, week - 1), week + 1):
+            f = case("_fields", st, me, p, w, **kw)
+            case("truth", st, me, pid, w, **kw)
+            case("context_line", st, me, pid, w, f, Rng(f"ties-{pid}-{w}"), False, **kw)
+            case("open_scene", st, me, pid, "call", w, **kw)
+        for pitch in ("winning", "prestige"):
+            case("reaction", st, me, pid, "call", pitch, p, False, True, False, **kw)
 
 
 def portal(rng) -> None:
