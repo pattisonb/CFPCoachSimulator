@@ -744,20 +744,103 @@ function player_game_log(state, team, name, position) {
       opponent_name: home ? g["away_display"] : g["home_display"],
       venue: season._venue(g, home),
       won: pf > pa, points_for: pf, points_against: pa, stats: p["stats"], started: truthy(get(p, "starter")),
-      ...season.game_line(position, p["stats"]) });
+      ...season.game_unit(box[side]), ...season.game_line(position, p["stats"], get(season.game_unit(box[side]), "unit")) });
   }
   out.sort((a, b) => cmp(a["week"], b["week"]));
-  return out;
+  return season.mark_best(out);
 }
 
-function game_line(position, stats) {
-  // One game's stat line for a Game Log row, in the words the game already uses for a position: {line: the short one
-  // his card leads with (awards.headline, "383 yds · 4 TD"), line_full: the box-score line (awards.stat_line)}.
-  // {} with no stats on file, or at a position that has no line.
-  if (!truthy(stats) || !Object.keys(stats).length) return {};
+function game_unit(side) {
+  // What the offense did behind its line in one game, from the box score's team totals: {unit: {rush_yards,
+  // sacks_allowed}} (a lineman's row shows it: he has no numbers of his own), or {} for a box without totals.
+  const ts = get(side, "team_stats");
+  if (!truthy(ts) || !isNumber(get(ts, "Rush Yards"))) return {};
+  return { unit: { rush_yards: ts["Rush Yards"], sacks_allowed: get(ts, "Sacks Taken", 0) } };
+}
+
+function mark_best(rows) {
+  // His best game of a season's rows gets `best: true`: the one whose line leads (game_line's `value`: the main
+  // number of his position's line, then its second). Only with three games to compare, a number above zero, and one
+  // game alone on top; `value` is the game's own and does not go to the page.
+  const scored = rows.filter((r) => Array.isArray(get(r, "value")));
+  let top = null, tied = false;
+  for (const r of scored) {
+    const c = top === null ? 1 : cmp(r["value"], top["value"]);
+    if (c > 0) { top = r; tied = false; } else if (c === 0) tied = true;
+  }
+  const best = scored.length >= season.BEST_GAME_MIN && top !== null && !tied && top["value"][0] > 0 ? top : null;
+  return rows.map((r) => {
+    const { value: _value, ...rest } = r;
+    return r === best ? { ...rest, best: true } : rest;
+  });
+}
+
+season.BEST_GAME_MIN = 3;                 // *tune* games with a line before one of them is marked his best
+
+function game_line(position, stats, unit = null) {
+  // One game's line for a Game Log row, in the words the game already uses (awards.headline, awards.stat_line).
+  // {played, line_kind, line, line_sub, line_full, value}:
+  //   "own"      his position's line ("383 Yds · 4 TD"; a defender's leads with his tackles, a kicker's is his makes
+  //              and attempts, a punter's his punts and average); his returns that day under it (`line_sub`)
+  //   "returns"  he only returned kicks or punts: that is the line
+  //   "unit"     a lineman: what the offense did behind the line (`unit`: game_unit), not his own numbers
+  //   "none"     he got in the game and nothing was recorded for him
+  //   "dnp"      he was on the roster for it and did not play (the box has him with no stats at all)
+  // `line_full` is the whole box-score line where there is one; `value` ranks the game among his (mark_best).
+  // {} with no stats on file (a save that kept only who played).
+  if (stats === null || stats === undefined) return {};
+  if (!Object.keys(stats).length) return { played: false, line_kind: "dnp" };
+  const st = (k) => get(stats, k, 0) || 0;
+  const n = awards._n;
   const group = awards.Pool._group(position, null, stats) || position;
-  const line = awards.headline({ stats }, group);
-  return truthy(line) ? { line, line_full: awards.stat_line({ stats }, group) } : {};
+  const kr = st("kickoff_returns"), pr = st("punt_returns");
+  let returns = null;
+  if (kr || pr) {
+    const td = st("kickoff_return_touchdowns") + st("punt_return_touchdowns");
+    returns = `${kr + pr} ${kr && pr ? "Ret" : kr ? "KR" : "PR"} · ${st("kickoff_return_yards") + st("punt_return_yards")} Yds` + (td ? ` · ${td} TD` : "");
+  }
+  let line = null, value = null;
+  if (group === "QB" && (st("pass_attempts") || st("carries"))) {
+    [line, value] = [awards.headline({ stats }, group), [st("pass_yards"), st("passing_touchdowns") + st("rushing_touchdowns")]];
+  } else if (group === "RB" && (st("carries") || st("targets") || st("receptions"))) {
+    [line, value] = [awards.headline({ stats }, group), [st("rush_yards"), st("rushing_touchdowns") + st("receiving_touchdowns")]];
+  } else if ((group === "WR" || group === "TE") && (st("targets") || st("receptions") || st("carries"))) {
+    [line, value] = [awards.headline({ stats }, group), [st("receiving_yards"), st("receiving_touchdowns")]];
+  } else if (["EDGE", "DT", "LB", "DB"].includes(group)) {
+    const tk = st("solo_tackles") + st("assisted_tackles");
+    const more = [];                                    // what else he did, the loudest first; two at most
+    if (st("sacks")) more.push(n(st("sacks"), "Sack"));
+    if (st("interceptions")) more.push(`${st("interceptions")} INT`);
+    if (st("tackles_for_loss") && !st("sacks")) more.push(`${st("tackles_for_loss")} TFL`);
+    if (st("passes_defended")) more.push(`${st("passes_defended")} PBU`);
+    if (st("forced_fumbles")) more.push(`${st("forced_fumbles")} FF`);
+    if (st("fumble_recoveries")) more.push(`${st("fumble_recoveries")} FR`);
+    if (tk || more.length) {
+      line = [`${tk} Tkl`, ...more.slice(0, 2)].join(" · ");
+      value = [tk + 2 * st("sacks") + 3 * st("interceptions") + st("tackles_for_loss") + st("passes_defended") + 2 * st("forced_fumbles"), tk];
+    }
+  } else if (group === "K" && (st("fg_attempted") || st("pat_attempts"))) {
+    line = [st("fg_attempted") ? `${st("fg_made")}/${st("fg_attempted")} FG` : null,
+      st("pat_attempts") ? `${st("pat_made")}/${st("pat_attempts")} PAT` : null].filter((x) => x !== null).join(" · ");
+    value = [3 * st("fg_made") + st("pat_made"), st("long_fg")];
+  } else if (group === "P" && st("punts")) {
+    line = `${n(st("punts"), "Punt")} · ${(st("punt_yards") / st("punts")).toFixed(1)} Avg`;
+    value = [round(st("punt_yards") / st("punts"), 1), st("punts")];
+  }
+  if (line !== null) {
+    return { played: true, line_kind: "own", line, line_full: awards.stat_line({ stats }, group), value,
+      ...(returns !== null ? { line_sub: returns } : {}) };
+  }
+  if (returns !== null) return { played: true, line_kind: "returns", line: returns, line_full: awards.stat_line({ stats }, "RS") };
+  if (group === "OL") {
+    const full = awards.stat_line({ stats }, group);
+    if (truthy(unit)) {
+      return { played: true, line_kind: "unit", line_full: full,
+        line: `${unit["rush_yards"]} Rush Yds · ${n(unit["sacks_allowed"], "Sack")} Allowed` };
+    }
+    return { played: true, line_kind: "own", line: awards.headline({ stats }, group), line_full: full };
+  }
+  return { played: true, line_kind: "none" };
 }
 
 function team_game_logs(state, team) {
@@ -777,7 +860,7 @@ function team_game_logs(state, team) {
     const home = g["home"] === team;
     const [pf, pa] = season._scores_for(g, home);
     games.push({ week: g["week"], opponent_name: home ? g["away_display"] : g["home_display"], venue: season._venue(g, home),
-      won: pf > pa, points_for: pf, points_against: pa });
+      won: pf > pa, points_for: pf, points_against: pa, ...season.game_unit(box[home ? "home" : "away"]) });
     for (const p of box[home ? "home" : "away"]["players"]) {
       const key = `${p["name"]}|${p["position"]}`;
       if (!own(players, key)) players[key] = { pos: p["position"], m: "0".repeat(boxes.length).split(""), s: [] };
@@ -817,10 +900,11 @@ function player_game_logs(state, team, slug, now) {
         const flat = lines[n++] || [];
         const stats = {};
         for (let j = 0; j + 1 < flat.length; j += 2) stats[keys[flat[j]]] = flat[j + 1];
-        rows.push({ ...g, started: marks[i] === "2", ...(truthy(lines.length) ? { stats, ...season.game_line(get(e, "pos"), stats) } : {}) });
+        rows.push({ ...g, started: marks[i] === "2",
+          ...(truthy(lines.length) ? { stats, ...season.game_line(get(e, "pos"), stats, get(g, "unit")) } : {}) });
       });
       if (rows.length) {
-        past.push({ year: s["year"], rows,
+        past.push({ year: s["year"], rows: season.mark_best(rows),
           ...(get(s, "team") !== team ? { team_name: get(get(teams, s["team"]) || {}, "name") || s["team"] } : {}) });
       }
     }
@@ -1094,6 +1178,6 @@ Object.assign(season, {
   settings, update_settings, morale_on, _morale_store, team_morale, player_form, morale_factor, morale_payload,
   _perf_score, _decay_morale, _update_morale, morale_view, player_edits, preset_faces, all_preset_faces, player_faces,
   set_player_face, _attr_to_source, _edit_attributes, team_edits, team_data, attribute_ceilings, _attribute_ceilings,
-  development_reads, edit_player, derived_stat, _rank_group, player_ranks, player_honors, player_game_log, game_line, team_game_logs, player_game_logs,
+  development_reads, edit_player, derived_stat, _rank_group, player_ranks, player_honors, player_game_log, game_unit, mark_best, game_line, team_game_logs, player_game_logs,
   recruit_stars, our_rating, all_skills, player_profile,
 });

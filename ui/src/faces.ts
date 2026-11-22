@@ -1,5 +1,6 @@
 import { createFaces, type CatalogEntry, type Category, type FaceJSON } from "pocket-faces";
 import data from "pocket-faces/data";
+import { titleCase as title } from "./format.ts";
 
 // One face kit for the app: faces are composited once and cached, so thumbnails are cheap.
 export const faces = createFaces(data);
@@ -18,18 +19,8 @@ export const randomFace = (): Face => faces.random(Math.floor(Math.random() * 2 
 export const withFlip = (face: Face, category: Category, on: boolean): Face =>
   faces.resolve({ ...face, flip: on ? [...face.flip, category] : face.flip.filter((c) => c !== category) });
 
-const SMALL = new Set(["a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"]);
-/** The face data's names are sentence case ("Short crop"); labels here are Title Case ("Short Crop"). */
-export const titleCase = (s: string) =>
-  s
-    .split(" ")
-    .map((w, i, all) =>
-      i > 0 && i < all.length - 1 && SMALL.has(w.toLowerCase())
-        ? w.toLowerCase()
-        : w.charAt(0).toUpperCase() + w.slice(1),
-    )
-    .join(" ")
-    .replace(/colour/gi, (c) => (c[0] === "C" ? "Color" : "color"));
+/** The face data's names are sentence case ("Short crop", "Side part (left)"); labels here are Title Case, American. */
+export const titleCase = (s: string) => title(s).replace(/colour/gi, (c) => (c[0] === "C" ? "Color" : "color"));
 
 /** *tune* Positions drawn with the widest face shapes: the roster's (OL, DL), the depth chart's roles (LT, DT…) and
  *  recruiting's (OT, IOL, EDGE), so a recruit keeps his face when he signs. */

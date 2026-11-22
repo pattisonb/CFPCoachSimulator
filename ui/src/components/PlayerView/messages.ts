@@ -83,8 +83,7 @@ export const messages = {
   redshirt: "Redshirt",
   redshirtOn: (games: number, limit: number) => `Redshirting · ${games} of ${limit} Games Used`,
   redshirtCan: "Available",
-  redshirtNo: (why: string | null) =>
-    why ? `Not Available · ${titleCase(why.replace(": ", ", "))}` : "Not Available",
+  redshirtNo: (why: string | null) => (why ? `Not Available · ${titleCase(why.replace(": ", ", "))}` : "Not Available"),
   progress: (have: number, need: number) => `${have} of ${need}`,
 
   // Abilities
