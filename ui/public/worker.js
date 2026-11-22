@@ -133,6 +133,117 @@ async function fetchZip(version, loud) {
   return out.buffer;
 }
 
+// ---- a week's games on several cores ----------------------------------------------------------------------------
+// Helper workers (sim-worker.js), each a second copy of the game that only plays games. Python hands a week's jobs to
+// `simBridge` (the module "sim_bridge"; app/browser_pool.py says what each call is for) and plays games itself
+// meanwhile. This worker is inside a Python call for the whole week and cannot hear messages, so the helpers and it
+// share two buffers (sim-worker.js lays out the control one): that needs the page to be cross-origin isolated
+// (vercel.json's two headers), and without it, or on a small machine, there are no helpers and nothing changes.
+const SIM_HELPERS_MAX = 3;           // *tune* the most helpers (each is a second copy of the game: some 250 MB of memory)
+const SIM_SPARE_CORES = 2;           // *tune* cores left alone: this worker's and the page's
+// *tune* helpers by the memory the device says it has (Chrome only, and it never says more than 8): [at least GB, helpers]
+const SIM_BY_MEMORY = [[8, 3], [4, 1], [0, 0]];
+const SIM_HELPERS_UNKNOWN_MEMORY = 2;   // *tune* ... and where the browser does not say
+const SIM_DATA_BYTES = 24 << 20;     // room for a week's results (some 45 KB a game)
+const SIM_MAX_GAMES = 400;
+const SIM_START_MS = 2500;           // *tune* how long after a career is first asked for the first helper starts
+const S_GEN = 0, S_NEXT = 2, S_ALLOC = 3, S_DONE = 4, S_READY = 8, S_TABLE = 32;
+const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev" };
+
+function simHelperCount() {
+  if (typeof SharedArrayBuffer === "undefined" || !self.crossOriginIsolated) return 0;
+  const nav = self.navigator || {};
+  const byMemory = nav.deviceMemory ? SIM_BY_MEMORY.find(([gb]) => nav.deviceMemory >= gb)[1] : SIM_HELPERS_UNKNOWN_MEMORY;
+  return Math.max(0, Math.min(SIM_HELPERS_MAX, byMemory, (nav.hardwareConcurrency || 2) - SIM_SPARE_CORES));
+}
+
+// Start the helpers, one after another (each loads Python and the game: together they would crowd the page).
+function simStartHelpers() {
+  if (sims.asked) return;
+  sims.asked = true;
+  const count = simHelperCount();
+  if (!count) return;
+  try {
+    sims.ctrl = new Int32Array(new SharedArrayBuffer(4 * (S_TABLE + 3 * SIM_MAX_GAMES)));
+    sims.data = new Uint8Array(new SharedArrayBuffer(SIM_DATA_BYTES));
+  } catch (err) { console.warn(err); sims.ctrl = null; return; }
+  const startOne = (k) => {
+    if (k >= count || sims.broken) return;
+    let w;
+    try { w = new Worker("./sim-worker.js"); } catch (err) { console.warn(err); return; }
+    const helper = { worker: w, me: k, league: null };
+    sims.workers.push(helper);
+    w.onmessage = (e) => { if (e.data.kind === "ready") startOne(k + 1); else if (e.data.kind === "failed") console.warn("sim helper:", e.data.message); };
+    w.onerror = (e) => console.warn("sim helper:", e.message);
+    w.postMessage({ kind: "init", version: sims.version, me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer });
+  };
+  setTimeout(() => startOne(0), SIM_START_MS);
+}
+
+const simStatus = (i) => Atomics.load(sims.ctrl, S_TABLE + 3 * i);
+
+const simBridge = {
+  // A week's jobs (pickled) to every helper that is up; returns how many took them (0: Python plays them all here).
+  start(jobs, n, path) {
+    if (!sims.ctrl || sims.broken || n > SIM_MAX_GAMES) return 0;
+    const ready = sims.workers.filter((h) => Atomics.load(sims.ctrl, S_READY + h.me) === 1);
+    if (!ready.length) return 0;
+    const bytes = jobs.toJs();
+    const stat = pyodide.FS.stat(path);
+    const sig = `${path}:${stat.size}:${+stat.mtime}`;
+    sims.gen += 1;
+    sims.n = n;
+    sims.taken.clear();
+    for (let i = 0; i < 3 * n; i++) Atomics.store(sims.ctrl, S_TABLE + i, 0);
+    Atomics.store(sims.ctrl, S_NEXT, 0);
+    Atomics.store(sims.ctrl, S_ALLOC, 0);
+    Atomics.store(sims.ctrl, S_DONE, 0);
+    Atomics.store(sims.ctrl, S_GEN, sims.gen);
+    for (const h of ready) {
+      // a career's own league is a file only this worker has: its bytes go with the first week played in it
+      const league = { path, sig, bytes: h.league === sig || !path.includes("/data/leagues/") ? null : pyodide.FS.readFile(path) };
+      h.league = sig;
+      h.worker.postMessage({ kind: "jobs", gen: sims.gen, n, jobs: bytes, league });
+    }
+    return ready.length;
+  },
+  // The next game for this worker to play itself, or -1 when every game is taken.
+  claim() {
+    const i = Atomics.add(sims.ctrl, S_NEXT, 1);
+    if (i >= sims.n) return -1;
+    Atomics.store(sims.ctrl, S_TABLE + 3 * i, 5);
+    return i;
+  },
+  // A game a helper has finished and Python has not yet taken, or -1; with `wait`, after waiting that long for one.
+  pop(wait) {
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < sims.n; i++) {
+        const st = simStatus(i);
+        if ((st === 2 || st === 3) && !sims.taken.has(i)) { sims.taken.add(i); return i; }
+      }
+      if (!wait || pass) break;
+      Atomics.wait(sims.ctrl, S_DONE, sims.taken.size, wait);      // DONE counts the same games `taken` does
+    }
+    return -1;
+  },
+  failed: (i) => simStatus(i) === 3,
+  result(i) {
+    const at = Atomics.load(sims.ctrl, S_TABLE + 3 * i + 1), len = Atomics.load(sims.ctrl, S_TABLE + 3 * i + 2);
+    return sims.data.slice(at, at + len);
+  },
+  // The helpers have gone quiet: they are let go for good, and the games they still held come back to Python.
+  abandon() {
+    sims.broken = true;
+    Atomics.store(sims.ctrl, S_GEN, sims.gen + 1);
+    for (const h of sims.workers) { try { h.worker.terminate(); } catch (err) { /* already gone */ } }
+    const owed = [];
+    for (let i = 0; i < sims.n; i++) if (!sims.taken.has(i) && simStatus(i) !== 5) owed.push(i);
+    console.warn("sim helpers stopped answering:", owed.length, "games played here");
+    return owed;
+  },
+};
+
+
 async function start(init) {
   breakStorage = !!init.breakStorage;
   breakRestore = !!init.breakRestore;
@@ -168,6 +279,11 @@ async function start(init) {
   loading("Starting the game");
   await pyodide.runPythonAsync(`import sys, os\nsys.path.insert(0, ${JSON.stringify(HOME)})\nos.environ["SIM_WORKERS"] = "1"\nimport app.api`);
   api = pyodide.pyimport("app.api");
+  sims.version = init.version || "dev";
+  try {                                       // a week's games on several cores, where the browser allows it
+    pyodide.registerJsModule("sim_bridge", simBridge);
+    pyodide.runPython("from app import browser_pool\nbrowser_pool.install()");
+  } catch (err) { console.warn(err); }
 }
 
 // One dispatcher call; the answer goes back and what it wrote is persisted. A failure answers
@@ -181,6 +297,7 @@ async function handle(msg) {
   const ms = { run: 0, parse: 0, save: 0 };
   const t0 = performance.now();
   const saved = async () => { const t = performance.now(); await persist(); ms.save = Math.round(performance.now() - t); };
+  if (!sims.asked && msg.path.includes("/api/season/")) simStartHelpers();     // a career is open: sims are coming
   try {
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
     ms.run = Math.round(performance.now() - t0);

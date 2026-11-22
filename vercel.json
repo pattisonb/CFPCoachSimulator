@@ -4,11 +4,34 @@
   "installCommand": "cd ui && npm ci",
   "buildCommand": "python3 tools/build_site.py --generic",
   "outputDirectory": "ui/dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        }
+      ]
+    },
+    {
       "source": "/(game.tar.xz|version.json|worker.js)",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     }
   ],
   "ignoreCommand": "test \"$VERCEL_GIT_COMMIT_REF\" != main && test -z \"$VERCEL_GIT_PULL_REQUEST_ID\""
