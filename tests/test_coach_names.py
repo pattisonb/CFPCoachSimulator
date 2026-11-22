@@ -149,10 +149,10 @@ def test_old_save_heals_on_load():
         # an uploaded save heals the same way
         from coach_career import career
         up, _ = career.read_save(career.export_save(old, boxes=False))
-        # (read_save only heals the names; opening a save also stamps the league's overall version, which changes no player:
-        # teamdata/game_scale.upgrade_overalls)
-        assert "overall_v" not in up["league"] and back["league"]["overall_v"] == 2
-        assert up["league"] == {k: v for k, v in back["league"].items() if k != "overall_v"}
+        # (a league is stamped with its overall version when it is made, so read_save's copy and the opened save agree:
+        # teamdata/game_scale.overall_version)
+        assert up["league"]["overall_v"] == back["league"]["overall_v"] == 2
+        assert up["league"] == back["league"]
         assert up["career"]["staff"] == back["career"]["staff"]
     finally:
         path.unlink(missing_ok=True)

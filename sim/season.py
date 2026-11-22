@@ -2606,9 +2606,62 @@ def save_season(state: dict) -> Path:
         state["career"]["saved_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     SEASONS_DIR.mkdir(parents=True, exist_ok=True)
     path = SEASONS_DIR / f"{state['id']}.json"
-    path.write_text(json.dumps(state), encoding="utf-8")
+    path.write_text(json.dumps(_without_class(state)), encoding="utf-8")
     _note_current(path)
     return path
+
+
+# ----- the class's fixed half: written once, not with every save -----------------------------------
+# A recruiting class's ratings, potential, true grades, hometowns and priorities are drawn when the class is made and
+# never change, and they were a fifth of the save, written again with every week and every click that saves. They are
+# kept in a file of their own beside the career's box scores (seasons/<id>/class.json), written when the class is new,
+# and put back into the prospects when the career is loaded. A save without the marker (rc["class_file"]) holds
+# everything itself, as an imported career's does.
+CLASS_KEYS = ("ratings", "potential", "truth", "hometown", "priorities")
+_class_written: dict[str, str] = {}      # season id -> the class its file is known to hold
+
+
+def _class_path(season_id: str) -> Path:
+    return SEASONS_DIR / season_id / "class.json"
+
+
+def _class_key(rc: dict) -> str:
+    return f"{rc.get('year')}-{'portal' if rc.get('portal') else 'class'}-{len(rc['prospects'])}"
+
+
+def _without_class(state: dict) -> dict:
+    """The state as its save file holds it: the prospects without their fixed half, which goes to the class file
+    when that does not hold this class yet. The state itself is not touched (a copy of what changes)."""
+    rc = state.get("recruiting")
+    if not rc or not rc.get("prospects"):
+        return state
+    sid, key = state["id"], _class_key(rc)
+    cpath = _class_path(sid)
+    if _class_written.get(sid) != key or not cpath.exists():
+        cpath.parent.mkdir(parents=True, exist_ok=True)
+        fixed = {pid: {k: p[k] for k in CLASS_KEYS if k in p} for pid, p in rc["prospects"].items()}
+        cpath.write_text(json.dumps({"key": key, "prospects": fixed}), encoding="utf-8")
+        _class_written[sid] = key
+    lean = {pid: {k: v for k, v in p.items() if k not in CLASS_KEYS} for pid, p in rc["prospects"].items()}
+    return {**state, "recruiting": {**rc, "prospects": lean, "class_file": key}}
+
+
+def _with_class(state: dict) -> None:
+    """A loaded save's prospects made whole again from its class file."""
+    rc = state.get("recruiting")
+    sid = state.get("id")
+    key = rc.pop("class_file", None) if rc else None
+    if key is None:
+        _class_written.pop(sid, None)        # the save held everything: the next save writes the class file anew
+        return
+    cpath = _class_path(sid)
+    held = json.loads(cpath.read_text(encoding="utf-8")) if cpath.exists() else {}
+    if held.get("key") != key:
+        raise RuntimeError(f"career {sid}: its class file is missing or belongs to another class ({held.get('key')} for {key})")
+    fixed = held["prospects"]
+    for pid, p in rc["prospects"].items():
+        p.update(fixed[pid])
+    _class_written[sid] = key
 
 
 # season file -> (its mtime_ns, size) when it was last known to hold today's FCS names: written here from
@@ -2646,6 +2699,7 @@ def load_season(season_id: str) -> Optional[dict]:
             _rename_stand_ins_files(season_id)
         _note_current(path)
     state = json.loads(renamed)
+    _with_class(state)
     # seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
     for g in state["games"].values():
         for side in ("home", "away"):
