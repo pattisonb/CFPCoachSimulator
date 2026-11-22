@@ -7,8 +7,13 @@ import Swatch from "../Swatch/index.tsx";
 import "./index.css";
 import { messages as m } from "./messages.ts";
 
-/** *tune* How fast the ticker crawls, in px a second. */
+/** *tune* How fast a section's items slide by, in px a second. */
 const SPEED = 70;
+/** The sections, in the order they take their turn; one with nothing to say is left out. */
+const SECTIONS = ["top25", "scores", "recruiting", "injuries", "headlines"] as const;
+type Section = (typeof SECTIONS)[number];
+/** which section a news item's kind (sim/news.py) goes under; any other kind is a headline */
+const KIND_SECTION: Record<string, Section> = { rankings: "top25", recruiting: "recruiting", injury: "injuries" };
 /** *tune* The most final scores it carries from the week just played (the biggest games first). */
 const MAX_SCORES = 28;
 /** *tune* How many finished weeks back its news goes. */
@@ -51,6 +56,16 @@ interface Props {
   onRecruit: (pid: string) => void;
 }
 
+/** A team the league's list does not carry: an FCS stand-in by its region ("FCS Plains"), anyone else by four letters. */
+const short = (slug: string) =>
+  slug.startsWith("fcs-")
+    ? `FCS ${slug
+        .slice(4)
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")}`
+    : slug.slice(0, 4).toUpperCase();
+
 const POSITION = /\b(QB|RB|WR|TE|OT|OG|IOL|OL|EDGE|DT|DL|LB|CB|FS|SS|S|K|P)\b/;
 
 /** How much a final matters to the crawl: ranked teams, then a close or lopsided score. */
@@ -63,9 +78,10 @@ const weight = (g: WeekGame) => {
 };
 
 /**
- * The crawl along the bottom of the game's window: the week's news from around the league (upsets, the polls, big
- * days, commitments) and its final scores, each in its teams' colors, sliding by without end. It stops under the
- * pointer, and an item opens what it is about (the box score, the team, the recruit).
+ * The bar along the bottom of the game's window, as a sports channel runs one: sections (Top 25, Scores, Recruiting,
+ * Injuries, Headlines), one at a time, in one crawl that never ends. A section's name is pinned at the left while its
+ * items slide by; the next section's name rides in behind the last item and knocks the old one off when it reaches
+ * the side. It stops under the pointer, and an item opens what it is about (the box score, the team, the recruit).
  */
 export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onRecruit }: Props) {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -100,9 +116,10 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
       .catch(() => {});
   }, [seasonId, week]);
 
-  const items = useMemo(() => {
-    const out: JSX.Element[] = [];
+  const sections = useMemo(() => {
+    const by: Record<Section, JSX.Element[]> = { top25: [], scores: [], recruiting: [], injuries: [], headlines: [] };
     news.forEach((n, i) => {
+      const out = by[KIND_SECTION[n.kind] ?? "headlines"];
       const team = n.team ? teams.get(n.team) : undefined;
       const open =
         n.link?.type === "game"
@@ -138,6 +155,7 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
       );
     });
     games.forEach((g) => {
+      const out = by[g.home_rank || g.away_rank ? "top25" : "scores"];
       const [home, away] = [teams.get(g.home), teams.get(g.away)];
       const [hs, as] = [g.home_score ?? 0, g.away_score ?? 0];
       const margin = Math.abs(hs - as);
@@ -155,7 +173,7 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
         <span className={won ? "ticker__side is-won" : "ticker__side"}>
           <Swatch team={t} size={18} />
           {rank && <span className="ticker__rank">#{rank}</span>}
-          <span className="ticker__abbr">{t?.abbreviation ?? slug.slice(0, 4).toUpperCase()}</span>
+          <span className="ticker__abbr">{t?.abbreviation ?? short(slug)}</span>
           <span className="ticker__score">{score}</span>
         </span>
       );
@@ -185,16 +203,44 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
         ),
       );
     });
-    return out;
+    // the ranked teams' scores lead Top 25, ahead of the poll's own news
+    by.top25.sort((a, b) => Number(String(b.key).startsWith("g")) - Number(String(a.key).startsWith("g")));
+    return SECTIONS.filter((k) => by[k].length).map((k) => ({ key: k, items: by[k] }));
   }, [news, games, teams, onBox, onTeam, onRecruit]);
 
-  // the crawl's pace is the same whatever it carries: its time is its width over SPEED
-  const run = useRef<HTMLDivElement>(null);
-  const [seconds, setSeconds] = useState(60);
+  // The crawl is the window's own scroll, moved a little every frame, so a section's name can be `position: sticky`:
+  // it holds at the left while its section passes and is pushed off by the next one's. The list is there twice, and
+  // the scroll steps back one list's width at the halfway mark, so it never ends.
+  const win = useRef<HTMLDivElement>(null);
+  const held = useRef(false);
   useEffect(() => {
-    const el = run.current;
-    if (el) setSeconds(Math.max(20, Math.round(el.scrollWidth / 2 / SPEED)));
-  }, [items]);
+    const el = win.current;
+    if (!el || !sections.length || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    let last = performance.now();
+    let pos = el.scrollLeft; // kept here as a fraction: the element rounds what it is given
+    const tick = (now: number) => {
+      const dt = Math.min(100, now - last); // a tab left and come back to does not leap
+      last = now;
+      if (!held.current) {
+        const lap = el.scrollWidth / 2;
+        pos += (SPEED * dt) / 1000;
+        if (lap > 0 && pos >= lap) pos -= lap;
+        el.scrollLeft = pos;
+      } else pos = el.scrollLeft; // moved by hand while held: it carries on from there
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [sections]);
+
+  const list = (copy: number) =>
+    sections.map((x) => (
+      <div key={`${copy}-${x.key}`} className="ticker__sec" aria-hidden={copy ? true : undefined}>
+        <span className="ticker__head">{m.sections[x.key]}</span>
+        {x.items}
+      </div>
+    ));
 
   return (
     <aside className={live ? "ticker is-live" : "ticker"} aria-label={m.label}>
@@ -202,15 +248,18 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
         <i className="ticker__dot" aria-hidden="true" />
         {live ? m.live : m.label}
       </span>
-      {items.length ? (
-        <div className="ticker__window">
-          {/* the list twice over, sliding left by one list's width, then again: it never ends */}
-          <div className="ticker__run" ref={run} style={{ animationDuration: `${seconds}s` }}>
-            <div className="ticker__list">{items}</div>
-            <div className="ticker__list" aria-hidden="true">
-              {items}
-            </div>
-          </div>
+      {sections.length ? (
+        // it holds still under the pointer or the keyboard, so an item can be read and opened
+        <div
+          className="ticker__window"
+          ref={win}
+          onPointerEnter={() => (held.current = true)}
+          onPointerLeave={() => (held.current = false)}
+          onFocus={() => (held.current = true)}
+          onBlur={() => (held.current = false)}
+        >
+          {list(0)}
+          {list(1)}
         </div>
       ) : (
         <p className="ticker__empty">{m.empty}</p>
