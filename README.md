@@ -22,7 +22,7 @@ any week, to Selection Day or to Signing Day.
 
 ![Your office: this week's game, your actions, the program's news and the league's ticker](docs/readme/office.png)
 
-- **Your Office.** This week's opponent and your chance to win, the week's steps, your program's news and the scores
+- **Your Office.** This week's opponent, the week's steps, your program's news and the scores
   around your conference.
 - **Game Day.** Every game is simulated play by play. Play your own, then advance the week to play everyone else's.
 - **Recruiting.** A fictional class of about 4,000 high school seniors, none committed at the start. Each week you
