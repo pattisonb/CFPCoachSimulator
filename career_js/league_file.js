@@ -1720,7 +1720,7 @@ export const league_file = {
   get UNTOUCHED_LINE() { return `Teams the file leaves alone play without the real ${league_file.YEAR} depth charts and adjustments.`; },
   _failed, check, RIVALRY_NAME_MAX, rivalry_names, release_caches, _check_merged,
   // (not in the Python: what this file needed of Python itself, for a caller that reads a file the same way)
-  json_loads, JSONDecodeError, RecursionError, KeyError,
+  json_loads, json_text, JSONDecodeError, RecursionError, KeyError,
 };
 
 export {

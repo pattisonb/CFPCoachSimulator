@@ -52,9 +52,9 @@ const { fcs_names } = await import("../../sim_js/fcs_names.js");
 // (after the imports: a ported module that came in with them is replaced by the recording, so this check stands alone)
 modules.season = stubs("season", ["load_teams", "team_data", "_preview_team", "team_display", "standings", "season_year", "rivalry_for", "rank_map"], {
   SCALE_GROUP: setup.season.SCALE_GROUP,
-  get SEASONS_DIR() { return env.CFP_SEASONS_DIR; },
   box_dir: (s) => `${env.CFP_SEASONS_DIR}/${typeof s === "string" ? s : s.id}/boxes`,
 });
+Object.defineProperty(modules.season, "SEASONS_DIR", { get: () => env.CFP_SEASONS_DIR });
 modules.recruiting = stubs("recruiting", ["read_spread", "report_complete", "report_looks", "lost_reason", "_group_of", "start", "make_staff"], setup.recruiting);
 modules.persona = stubs("persona", ["shown_to", "of", "draw"]);
 modules.offseason = stubs("offseason", ["house"], setup.offseason);
@@ -338,18 +338,25 @@ for await (const c of cases("career")) {
     const again = parse_ordered(mine, [["state", "games"], ["state", "my_boxes"]]);
     check("career.export_save: what the save holds, in Python's order", c.label, py, again);
     const plain = (t) => t.replace(/(\d)\.0(?=[,}\]])/g, "$1");      // Python writes a whole float as 4.0, JavaScript as 4
+    if (mine !== py_text && plain(py_text) !== mine) {
+      const q = plain(py_text);
+      let i = 0;
+      while (i < mine.length && mine[i] === q[i]) i++;
+      console.log(`  (first difference at ${i}: py ${JSON.stringify(q.slice(i - 30, i + 40))} | js ${JSON.stringify(mine.slice(i - 30, i + 40))})`);
+    }
     console.log(`  export_save ${c.label}: ${mine.length} characters; the text itself ${mine === py_text ? "is" : plain(py_text) === mine ? "is (whole floats aside)" : "is not"} Python's`);
   } else if (c.fn === "read_save") {
     const r = run("career.read_save", c, () => career.read_save(b64(c.blob)));
-    check("career.read_save", c.name, c.expect, r);
+    check("career.read_save", c.name, c.expect, copy(r));
+    if (c.order) check("career.read_save: games and box scores in the saved order", c.name, c.order, [Object.keys(r[0].games), Object.keys(r[0].my_boxes)]);
   } else if (c.fn === "restore" || c.fn === "import_save") {
     env.CFP_SEASONS_DIR = fresh_dir();
     const current = copy(c.current) ?? null;
     const r = run(`career.${c.fn}`, c, () => (c.fn === "restore" ? career.restore(b64(c.blob), current) : career.import_save(b64(c.blob))));
-    if (c.fn === "import_save") check("career.import_save", "", c.expect, r);
+    if (c.fn === "import_save") check("career.import_save", "", c.expect, copy(r));
     else if (c.expect.$raise) check("career.restore", c.name, c.expect, r);
-    else check("career.restore", c.name, c.expect, { kept: r === current ? "current" : "upload", state: r });
-    check(`career.${c.fn}: the files written`, c.name || "", by_name(c.files), files_under(env.CFP_SEASONS_DIR));
+    else check("career.restore", c.name, c.expect, { kept: r === current ? "current" : "upload", state: copy(r) });
+    check(`career.${c.fn}: the files written`, c.name || "", by_name(c.files), by_name(files_under(env.CFP_SEASONS_DIR)));
   } else throw new Error(`career: ${c.fn}?`);
 }
 

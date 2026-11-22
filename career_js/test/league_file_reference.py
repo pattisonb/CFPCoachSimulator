@@ -39,7 +39,7 @@ def log(*a):
 
 
 def write(name, data):
-    (OUT / name).write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    (OUT / name).write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")      # (escaped: a text here can hold half a surrogate pair)
 
 
 def whole(v):

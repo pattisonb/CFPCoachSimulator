@@ -542,7 +542,8 @@ def saves(st, label):
     for name, blob in bad.items():
         r, calls = run(career.read_save, blob)
         write("career", {"fn": "read_save", "name": name, "blob": base64.b64encode(blob).decode(), "calls": calls,
-                         "expect": r if isinstance(r, dict) else [r[0], r[1]]})
+                         "expect": r if isinstance(r, dict) else [r[0], r[1]],
+                         **({} if isinstance(r, dict) else {"order": [list(r[0]["games"]), list(r[0].get("my_boxes") or {})]})})
     # restore: the upload against the server's copy
     older = copy.deepcopy(small)
     older["career"] = dict(older["career"], saved_week=small["career"].get("saved_week", 0) - 1)

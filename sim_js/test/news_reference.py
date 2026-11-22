@@ -240,7 +240,9 @@ def stat_boxes(seed, chance):
                 if not players or rng.random() > chance:
                     continue
                 p = rng.choice(players)
-                st = p.setdefault("stats", {})
+                if p.get("stats") is None:
+                    p["stats"] = {}
+                st = p["stats"]
                 what = rng.choice(("pass", "rush", "tds", "sacks", "half", "mix", "none"))
                 if what == "pass":
                     st["pass_yards"] = rng.randint(380, 560)
