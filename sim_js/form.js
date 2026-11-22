@@ -1,0 +1,25 @@
+// A rating shift for a whole team: every player's ratings moved by the same number of points. The sim uses it for an
+// FCS stand-in, which plays as the real FCS school it stands for that week (season.fcs_strength).
+//
+// It was sim/form.py; engine_js/PORTING.md has the rules it was ported by. The game's job (game_job.js) was ported
+// with its own copy of the two functions; `with_form` here is that one function, and `ATTRS` its list.
+import { round, int, get, isNumber } from "../engine_js/pyrt.js";
+import { modules } from "../engine_js/modules.js";
+import { FORM_ATTRS, with_form } from "./game_job.js";
+
+const ATTRS = FORM_ATTRS;
+
+export function _moved(p, keys, shift) {
+  // A copy of the player with the ratings in `keys` moved by `shift` (held to 1-99).
+  const q = { ...p };
+  for (const k of keys) {
+    const v = get(p, k);
+    if (isNumber(v)) q[k] = Math.max(1, Math.min(99, int(round(v + shift))));
+  }
+  return q;
+}
+
+export { with_form };
+
+export const form = { ATTRS, _moved, with_form };
+modules.form = form;
