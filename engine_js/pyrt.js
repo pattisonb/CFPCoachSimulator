@@ -483,3 +483,44 @@ export function truthy(v) {
 
 /** f"{x:.{n}f}": fixed decimals, rounded as Python formats (the nearest decimal, an exact half to even). */
 export const fmt = (x, n) => round(x, n).toFixed(n);
+
+/**
+ * Python's json.dumps(o) text: ", " and ": " between items by default, non-ASCII escaped, keys in the dict's order
+ * (or sorted with sort_keys). For the few places the game uses the text itself (a cache key, a length, a hash); a
+ * save is written with JSON.stringify. Whole floats print as whole numbers (4.0 is "4": JavaScript has one number).
+ */
+export function json_dumps(o, { sort_keys = false, separators = null, indent = null } = {}) {
+  const [item_sep, key_sep] = separators || [indent === null ? ", " : ",", ": "];
+  const str = (t) => JSON.stringify(t).replace(/[\u007f-\uffff]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
+  const num = (x) => (Number.isNaN(x) ? "NaN" : x === Infinity ? "Infinity" : x === -Infinity ? "-Infinity" : Number.isInteger(x) ? String(x) : pyfloat(x));
+  const walk = (v, depth) => {
+    if (v === null || v === undefined) return "null";
+    if (v === true) return "true";
+    if (v === false) return "false";
+    if (typeof v === "number") return num(v);
+    if (typeof v === "string") return str(v);
+    const pad = indent === null ? "" : "\n" + " ".repeat(indent * (depth + 1));
+    const end = indent === null ? "" : "\n" + " ".repeat(indent * depth);
+    if (Array.isArray(v)) return v.length ? "[" + pad + v.map((x) => walk(x, depth + 1)).join(item_sep + pad) + end + "]" : "[]";
+    let keys = v instanceof Map ? [...v.keys()] : Object.keys(v);
+    if (sort_keys) keys = keys.slice().sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    if (!keys.length) return "{}";
+    const at = (k) => (v instanceof Map ? v.get(k) : v[k]);
+    return "{" + pad + keys.map((k) => str(String(k)) + key_sep + walk(at(k), depth + 1)).join(item_sep + pad) + end + "}";
+  };
+  return walk(o, 0);
+}
+
+/** Python's repr of a float that is not a whole number (the shortest text that reads back the same; "1e-05" style exponents). */
+export function pyfloat(x) {
+  let t = String(x);
+  if (t.includes("e")) {
+    const [m, e] = t.split("e");
+    const n = Number(e);
+    t = m + "e" + (n < 0 ? "-" : "+") + String(Math.abs(n)).padStart(2, "0");
+  } else if (Math.abs(x) < 1e-4 && x !== 0) {
+    const [m, e] = x.toExponential().split("e");
+    t = m + "e-" + String(Math.abs(Number(e))).padStart(2, "0");
+  }
+  return t;
+}

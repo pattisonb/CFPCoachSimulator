@@ -26,3 +26,32 @@ export function read_json(path) {
 export function forget(path) {
   parsed.delete(path);
 }
+
+// ---- writing, and the folders of saves --------------------------------------------------------------------------
+// The season's saves, box scores and built leagues are files in Python. The host gives a store that can do what
+// those need (set_store): Node's fs on a computer, the browser's own storage there. Paths are from the project's
+// root, as for reading.
+let store = null;
+
+/** `s`: { write(path, text), exists(path), remove(path), list(dir) -> names, mtime(path) -> ms or null, remove_dir(dir) }. */
+export function set_store(s) { store = s; }
+
+function need() {
+  if (!store) throw new Error("no file store: set_store was not called");
+  return store;
+}
+
+/** Write a file (its folders are made as needed). */
+export function write_text(path, text) { need().write(path, text); parsed.delete(path); }
+export const exists = (path) => need().exists(path);
+/** Remove a file; nothing happens when it is not there. */
+export function remove(path) { need().remove(path); parsed.delete(path); }
+/** Remove a folder and everything in it; nothing happens when it is not there. */
+export const remove_dir = (dir) => need().remove_dir(dir);
+/** The names of the files in a folder (not its sub-folders), sorted; none when the folder is not there. */
+export const list_dir = (dir) => need().list(dir);
+/** When a file was last written, in milliseconds, or null when it is not there. */
+export const mtime = (path) => need().mtime(path);
+
+/** Settings a host passes in where Python read the environment (SIM_WORKERS, CFP_SEASONS_DIR). */
+export const env = {};

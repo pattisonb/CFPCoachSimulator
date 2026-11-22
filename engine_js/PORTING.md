@@ -99,3 +99,48 @@ folder's `test/` so they can be rerun.
   yardage, a comparison with a random number, an order of teams) comes out the same unless the value sits exactly on
   the line, which no test has found; a value that is stored as it is (a coach's opinion of a team in the polls) can
   differ in its last digit, and a comparison of such values allows for that.
+
+## A big file ported in parts (sim/season.py)
+
+`sim/season.py` is `sim_js/season.js`, which loads `sim_js/season/part1.js` to `part6.js` in the Python file's order.
+Every part imports the one namespace object (`import { season } from "../season_ns.js";`) and:
+
+- defines each function as a local `function name(...)` and puts all of them on the namespace at the end of the
+  part (`Object.assign(season, { name, ... })`);
+- puts every module-level constant and variable on the namespace where the Python defines it (`season.FINAL_WEEK = 20;`),
+  in the Python's order, since a later one may be built from an earlier one (possibly from an earlier part);
+- reaches every function, constant and variable of the season file through the namespace, always, even one defined
+  a line above (`season.load_teams()`, `season.FINAL_WEEK`): the parts cannot see each other's locals, and a caller
+  may replace one;
+- keeps module-level state (caches, the league in play) on the namespace too (`season._teams_cache = {}`).
+
+Things Python does that the JavaScript does differently, the same way in every part:
+
+- **Files.** `Path` constants are strings from the project's root (`season.SEASONS_DIR = "data/seasons"`; an
+  environment override is `env.CFP_SEASONS_DIR` from `engine_js/files.js`). Reading is `read_text(path)` /
+  `read_json(path)`; writing and the rest are `write_text`, `exists`, `remove`, `remove_dir`, `list_dir`, `mtime`
+  from the same file. A path is joined with "/" (`${season.SEASONS_DIR}/${id}.json`).
+- **A save's text.** `json.dumps(state)` written to a file is `JSON.stringify(state)`. Where the text itself is
+  used (a cache key from a slice of it, its length, a hash) it is `json_dumps` from `pyrt.js`, which writes it as
+  Python does.
+- **Processes and threads.** There are none. The functions that only manage a pool of worker processes
+  (`_make_pool`, `shared_pool`, `close_pool`, `_init`, `_use`, `sim_workers`) keep their names and do the small
+  thing left (remember the league's path; report one worker); a lock is dropped. A week's games are played through
+  `season.play_jobs(jobs, on_result)`, which by default plays each with `_sim_one` from `../game_job.js` against the
+  league's teams, in order; a host may replace it to share them out.
+- **Time and ids.** `datetime.now(timezone.utc).isoformat(timespec="seconds")` is
+  `new Date().toISOString().slice(0, 19) + "+00:00"`. `uuid.uuid4().hex[:12]` is
+  `crypto.randomUUID().replace(/-/g, "").slice(0, 12)`.
+- **The engine.** `from sim.engine import simulate_game` is `simulate_game` from `../../engine_js/game.js`;
+  `engine.config()` is `cfg` from `../../engine_js/game_config.js`; `engine.personnel()` is `personnel` from
+  `../../engine_js/personnel.js`; `engine.formations(team)` is `formations` from `../../engine_js/api.js`;
+  `engine.sim_one(path, job)` is `_sim_one(teams, job)` from `../game_job.js`.
+- **What `sim_js/game_job.js` already has** is used from there, not written again: `with_form`, `apply_coach`,
+  `with_edits`, `with_positions`, `with_morale`, `apply_depth`, `_with_injuries`, `_game_team`, `_with_earned`,
+  `_compact_side`, `_moments`, `_sim_one`, and the constants `ROLE_POSITION`, `OFFENSE_POSITIONS`, `RATING_KEYS`,
+  `MORALE_PLAYER_EFFECT`, `MORALE_TEAM_EFFECT` (`season.with_edits = game_job.with_edits;`).
+- **Other modules.** Ported ones are imported by their namespace: `polls`, `awards`, `bowls`, `teamnames`,
+  `fcs_names`, `coaches` (in `sim_js/`), `game_scale`, `ratings`, `shown`, `build_teams` (in `teamdata_js/`),
+  `position_fit`, `recruits`, `prospects` (in `career_js/`; `prospects` and `build_teams` hold only a few of their
+  functions so far). Any other (`recruiting`, `persona`, `offseason`, `league`, `clear`, `ability_goals`, `news`,
+  `schedule_gen`, `grade`, `programs`, `carousel`, ...) is `modules.<name>`.
