@@ -128,7 +128,9 @@ def diff(a, b, path=(), ops=None) -> list:
     """What changed from a to b: ["set", path, value], ["del", path], ["app", path, the items added to a list]."""
     if ops is None:
         ops = []
-    if type(a) is dict and type(b) is dict:
+    if type(a) is dict and type(b) is dict and [k for k in a if k in b] != [k for k in b if k in a]:
+        ops.append(["set", list(path), b])               # a key taken out and put back: the dict whole, in its new order
+    elif type(a) is dict and type(b) is dict:
         for k in a:
             if k not in b:
                 ops.append(["del", list(path) + [k]])

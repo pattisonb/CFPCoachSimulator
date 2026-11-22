@@ -337,7 +337,7 @@ function _int(v) {
   if (typeof v === "number") return int(v);
   if (typeof v === "boolean") return v ? 1 : 0;
   const text = String(v).trim().replace(/_/g, "");
-  if (!/^[+-]?\d+$/.test(text)) throw new ValueError(`invalid literal for int() with base 10: ${JSON.stringify(v)}`);
+  if (!/^[+-]?\d+$/.test(text)) throw new ValueError(`invalid literal for int() with base 10: '${v}'`);
   return Number(text);
 }
 

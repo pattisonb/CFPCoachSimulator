@@ -418,10 +418,11 @@ def walk(name: str, st: dict, plan: dict, stages: list) -> dict:
         c = Cases(st)
         if n == 0:
             c.ask("page", PAGE_CASES, label="page (odd values)", real=lambda xs: [offseason.page(x) for x in xs])
-            if off.get("review") and not off["review"]["decided"]:
-                off["auto"] = False
+            rv = off.get("review")
+            if rv:                                   # the AD's meeting not held and no Auto: refused (the compare script sets the same)
+                was, rv["decided"], off["auto"] = rv["decided"], False, False
                 c.ask("advance", st, label="advance refused: the AD is waiting")
-                off["auto"] = True
+                rv["decided"], off["auto"] = was, True
         views(c, n == 0)
         doings(c, plan)
         if stage == "ready":

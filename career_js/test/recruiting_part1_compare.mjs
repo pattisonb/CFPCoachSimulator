@@ -73,6 +73,7 @@ const exact = (name, py_bits, js) => t.same(name, py_bits, bits(js));
   for (const [name, v] of Object.entries(s.constants)) {
     if (name === "ROOT") { t.same("ROOT", "string", typeof recruiting.ROOT); continue; }
     if (name === "_ASKS") { t.same("_ASKS", true, recruiting._ASKS instanceof Map && recruiting._ASKS.size === 0); continue; }
+    if (name === "_GROUP") { t.same("_GROUP", {}, recruiting._GROUP); continue; }      // (the Python's had been filled by the time it was read)
     t.same(`constant ${name}`, v, plain(recruiting[name]));
     // the order of a dict's keys, where its keys are names (a number-keyed table is only ever looked up)
     if (v !== null && typeof v === "object" && !Array.isArray(v) && !v.__set__ && !Object.keys(v).some((k) => /^\d+$/.test(k))) {
@@ -144,6 +145,7 @@ for (const file of fs.readdirSync(out).filter((f) => /^start_.*\.json$/.test(f))
   t.same(`${file}: the key order of the class`, Object.keys(s.state.recruiting.prospects), Object.keys(state.recruiting.prospects));
   t.same(`${file}: the stories were asked for once, last`, true, stories.length === 1 && stories[0] === state);
   t.same(`${file}: every answer was asked for`, [], leftovers().slice(0, 5));
+  console.log(`${file}: a class of ${Object.keys(state.recruiting.prospects).length}, ${t.bad} different so far`);
 }
 
 // ---- snap_<name>.json -------------------------------------------------------------------------------------------
