@@ -2524,15 +2524,37 @@ def box_dir(state_or_id) -> Path:
     return SEASONS_DIR / sid / "boxes"
 
 
+# The boxes just written, by (season id, event id): the news reads every box of the week the moment the week ends,
+# and read each one back from its file (a parse of four megabytes a week). Kept for one week's games; a reader that
+# only reads asks for them with `shared` (load_box).
+_fresh_boxes: dict[tuple, dict] = {}
+_fresh_week: list = [None]
+
+
 def save_box(state: dict, event_id: str, game: dict) -> None:
     """Every simulated game's box score, one small file each, so any game can be opened."""
     d = box_dir(state)
     d.mkdir(parents=True, exist_ok=True)
     (d / f"{event_id}.json").write_text(json.dumps(game), encoding="utf-8")
+    week = (state["id"], season_year(state), (state["games"].get(event_id) or {}).get("week"))
+    if _fresh_week[0] != week:
+        _fresh_boxes.clear()
+        _fresh_week[0] = week
+    _fresh_boxes[(state["id"], event_id)] = game
 
 
-def load_box(state: dict, event_id: str) -> Optional[dict]:
+def forget_fresh_boxes() -> None:
+    """The week's boxes have been read: their memory goes (each is on disk)."""
+    _fresh_boxes.clear()
+    _fresh_week[0] = None
+
+
+def load_box(state: dict, event_id: str, shared: bool = False) -> Optional[dict]:
+    """A game's box score. `shared`: the caller only reads it, so the one just written may be handed over as it is
+    (it is what its file holds: a box is the same after a trip through JSON) instead of read back and parsed."""
     box = state.get("my_boxes", {}).get(event_id)
+    if box is None and shared:
+        box = _fresh_boxes.get((state["id"], event_id))
     if box is None:
         path = box_dir(state) / f"{event_id}.json"
         if not path.exists():

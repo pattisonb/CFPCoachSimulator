@@ -311,7 +311,7 @@ def week_news(state: dict, week: int) -> list[dict]:
     boxes = {}
     for g in games:
         if g["home"] in fbs and g["away"] in fbs:
-            b = season.load_box(state, g["event_id"])
+            b = season.load_box(state, g["event_id"], shared=True)      # read only, below
             if b is not None:
                 boxes[g["event_id"]] = b
     items = (_upsets(state, teams, fbs, week, games) + _rankings(state, teams, week) + _big_games(state, teams, fbs, games, boxes)

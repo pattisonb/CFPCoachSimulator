@@ -3671,7 +3671,10 @@ def _truths(prospects: dict, attrs: list[str]) -> None:
 
 
 def word(points: float) -> str:
-    return next(w for w, floor in zip(WORDS, WORD_FLOORS) if points >= floor)
+    for w, floor in zip(WORDS, WORD_FLOORS):
+        if points >= floor:
+            return w
+    raise StopIteration
 
 
 def word_band(points: float) -> tuple[float, float]:
@@ -3691,9 +3694,24 @@ def look_week(state: dict) -> int:
 
 def _read_words(state: dict, pid: str) -> dict:
     """Every group's grade range in words, or {} before his first look (the look log's before/after)."""
-    if pid not in state["recruiting"]["reads"]:
+    read = state["recruiting"]["reads"].get(pid)
+    if read is None:
         return {}
-    return {g: list(grade_range(state, pid, g)) for g in GROUPS}
+    if not read:
+        return {g: list(grade_range(state, pid, g)) for g in GROUPS}
+    # grade_range for every group at once (read_spread and read_interval's own lines): the best evaluator and whether
+    # the report is complete are the same for all six, and a look asks for all six twice
+    s = int(max(read["by"].items(), key=lambda kv: (kv[1], int(kv[0])))[0]) / 99
+    complete = report_complete(read)
+    out = {}
+    for g in GROUPS:
+        mean, prec = read["g"][g]
+        if complete:
+            out[g] = [word(mean), word(mean)]
+        else:
+            half = max(0.0, (0.6 + 1.1 * s) / math.sqrt(prec) - WORD_SLACK)
+            out[g] = [word(mean - half), word(mean + half)]
+    return out
 
 
 def _flags(state: dict, pid: str) -> list[str]:
