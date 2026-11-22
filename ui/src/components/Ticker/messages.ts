@@ -11,6 +11,14 @@ export const messages = {
     injury: "Injury",
   } as Record<string, string>,
   news: "News",
+  /** the bar's sections, one at a time */
+  sections: {
+    top25: "Top 25",
+    scores: "Scores",
+    recruiting: "Recruiting",
+    injuries: "Injuries",
+    headlines: "Headlines",
+  },
   final: "Final",
   finalOt: (n: number) => (n > 1 ? `Final / ${n}OT` : "Final / OT"),
   rout: "Rout",

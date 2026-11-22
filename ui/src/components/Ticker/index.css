@@ -34,29 +34,41 @@
   animation: ticker-blink 1s steps(2, jump-none) infinite;
 }
 
+/* the crawl: the window scrolls itself (index.tsx), its scrollbar hidden */
 .ticker__window {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.ticker__run {
   display: flex;
-  width: max-content;
-  height: 100%;
-  animation: ticker-crawl 60s linear infinite;
+  flex: 1;
+  align-items: stretch;
+  min-width: 0;
+  overflow: auto hidden;
+  scrollbar-width: none;
 }
 
-/* it holds still under the pointer or the keyboard, so an item can be read and opened */
-.ticker__window:hover .ticker__run,
-.ticker__window:focus-within .ticker__run {
-  animation-play-state: paused;
-}
-
-.ticker__list {
+/* a section: its name, then its items. The name is pinned to the window's left while the section passes, and the
+   next section's name pushes it off as it arrives */
+.ticker__sec {
   display: flex;
   flex: none;
   align-items: stretch;
+}
+
+.ticker__head {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border-right: var(--line) solid var(--ink);
+  border-left: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .ticker__item {
@@ -122,13 +134,26 @@
   color: var(--ink);
 }
 
+/* a ranking is "#24", small and soft, so it never reads as a score beside one */
 .ticker__rank {
+  margin-right: -2px;
+  color: var(--ink-soft);
   font-size: var(--t-xs);
+  font-weight: 400;
 }
 
 .ticker__score {
   min-width: 18px;
+  margin-left: 2px;
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.ticker__side:not(.is-won) .ticker__score {
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 
 .ticker__face {
@@ -161,12 +186,6 @@
   white-space: nowrap;
 }
 
-@keyframes ticker-crawl {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @keyframes ticker-blink {
   50% {
     opacity: 0.25;
@@ -175,16 +194,11 @@
 
 /* no motion: the crawl stands still and scrolls by hand */
 @media (prefers-reduced-motion: reduce) {
-  .ticker__run,
   .ticker.is-live .ticker__dot {
     animation: none;
   }
 
-  .ticker__window {
-    overflow-x: auto;
-  }
-
-  .ticker__list[aria-hidden="true"] {
+  .ticker__sec[aria-hidden="true"] {
     display: none;
   }
 }

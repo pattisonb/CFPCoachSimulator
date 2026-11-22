@@ -64,13 +64,13 @@
   padding: 2px 8px 2px 4px;
   background: none;
   border: var(--line) solid transparent;
-  border-left-width: 4px;
+  border-bottom-width: 3px; /* a starter's mark: a line beneath, never down the side */
   text-align: left;
   cursor: pointer;
 }
 
 .depth__player.is-starter {
-  border-left-color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 
 .depth__player.is-last-starter {

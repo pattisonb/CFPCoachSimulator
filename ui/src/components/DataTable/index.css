@@ -93,15 +93,11 @@
 }
 
 .data-table tr.is-mine td {
+  box-shadow: inset 0 -2px 0 var(--ink); /* your row: a line beneath it, never a mark down the side */
   background: color-mix(in srgb, var(--team, var(--ink)) 10%, transparent);
 }
 
 /* the one column in bold: the one the table is sorted by */
 .data-table td.is-sorted {
   font-weight: 700;
-}
-
-.data-table tr.is-mine td:first-child {
-  padding-left: 8px;
-  box-shadow: inset 3px 0 0 var(--ink);
 }

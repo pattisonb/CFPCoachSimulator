@@ -61,6 +61,9 @@ def _pregame_chance(teams: dict, g: dict, side: str) -> float:
     return p_home if side == "home" else 1.0 - p_home
 
 
+LATE_FROM_WEEK = 12        # *tune* from this week a new blue-blood offer is "late" in the news (recruiting's late market)
+
+
 def _when(day: int) -> str:
     """A week inside a sentence ("at a hat ceremony in Week 9", "during the semifinals"): the postseason's week labels
     are tab titles ("Semifinals & New Year Bowls") and do not follow "in"."""
@@ -224,7 +227,9 @@ def _recruiting(state: dict, teams: dict, week: int) -> list[dict]:
             continue
         if e["kind"] == "twist":               # a blue blood's late offer or a surprise visit to a blue chip
             if blue and school in teams and not teams[school].get("fictional") and e.get("twist") in ("late_offer", "surprise"):
-                verb = "jumps in late for" if e["twist"] == "late_offer" else "makes a surprise visit to"
+                # "late" only once it is: the same offer in September is a school jumping in (the player's catch)
+                jumps = "jumps in late for" if week >= LATE_FROM_WEEK else "jumps in for"
+                verb = jumps if e["twist"] == "late_offer" else "makes a surprise visit to"
                 if e.get("end"):               # your call knocked the surprise school back out: not news
                     continue
                 out.append({"kind": "recruiting", "text": f"{_name(teams, school)} {verb} {stars.lower()} {p['position']} {p['name']}.",

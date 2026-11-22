@@ -193,7 +193,8 @@ def test_late_offer(st, used):
     assert any(e["kind"] == "offer" and e["pid"] == pid and e["school"] == school for e in rc["log"])
     # the news, for a blue chip
     items = [x for x in news._recruiting(st, season.load_teams(), st["current_week"]) if x["link"].get("pid") == pid]
-    assert items and "jumps in late" in items[0]["text"], items
+    assert items and "jumps in" in items[0]["text"], items
+    assert ("late" in items[0]["text"]) == (st["current_week"] >= news.LATE_FROM_WEEK), items      # "late" only late in the year
     # a two-star never gets one
     two = plain(st, used, stars=2)
     assert persona._setup(st, persona._Week(st, 3), two, "late_offer", random.Random(1)) is None
