@@ -57,6 +57,8 @@ def canon(a) -> str:
     if isinstance(a, dict):
         if "recruiting" in a and "team" in a:
             return "S"
+        if "prospects" in a and "status" in a:
+            return "RC"
         if "ea_position" in a and "id" in a:
             return "P:" + a["id"]
         if "offense" in a and "defense" in a:

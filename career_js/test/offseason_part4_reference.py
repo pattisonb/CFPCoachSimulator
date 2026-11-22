@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from coach_career import carousel, league as lg, offseason, programs, prospects, recruiting    # noqa: E402
+from coach_career import carousel, league as lg, offseason, prospects, recruiting    # noqa: E402
 from sim import season                                                                            # noqa: E402
 
 OUT = Path(sys.argv[1])
@@ -87,15 +87,28 @@ for fn in ("is_portal", "weekly_step", "portal_spots", "offer_cap", "pool_record
            "ask_from", "use_league_models", "_baseline"):
     wrap(recruiting, fn, trim=(lambda out: None) if fn == "weekly_step" else None)
 wrap(recruiting, "act", trim=lambda out: None, effect=lambda state, slug, *a, **kw: list(state["recruiting"]["offers"].get(slug, [])))
-wrap(recruiting, "start", trim=lambda out: None)
+_recruiting_start = recruiting.start
+NEW = {}
+
+
+def _start(state, year=2027):
+    """recruiting.start: the new season as next_season hands it over (the compare script's start does nothing)."""
+    if Rec.calls is None or Rec.depth:
+        return _recruiting_start(state, year)
+    NEW["before"] = json.dumps({k: v for k, v in state.items() if k not in ("league", "career", "my_boxes")})
+    Rec.calls.append(["recruiting.start", ["<state>", year], None])
+    Rec.depth += 1
+    try:
+        return _recruiting_start(state, year)
+    finally:
+        Rec.depth -= 1
+
+
+recruiting.start = _start
 for fn in ("seen_status", "_schools", "standing", "class_rank"):
     wrap(prospects, fn)
 for fn in ("goal", "job_rows", "market_rows", "run"):
     wrap(carousel, fn)
-for fn in ("goal_for", "attract", "z", "coach_level", "coach_ceiling", "update", "final_ranks", "nil_move"):
-    wrap(programs, fn)
-wrap(programs, "get", lambda p: {"tier": p["tier"], "rating": p["rating"]})
-wrap(programs, "base", lambda p: {"tier": p["tier"]})
 
 
 # ----- real careers ----------------------------------------------------------------------------------------------
@@ -199,7 +212,7 @@ AFTER = {
     "conferences": lambda st: {"stage": st["offseason"]["stage"], "next_schedule": st["offseason"]["next_schedule"]},
     "stage": lambda st: {"stage": st["offseason"]["stage"]},
     "career": lambda st: {"career": {k: v for k, v in st["career"].items() if k != "saved_at"}, "year": st["league"]["year"],
-                          "schedule_history": len(json.dumps(st["league"].get("schedule_history")))},
+                          "schedule_history": st["league"].get("schedule_history")},
 }
 ADVANCE_AFTER = {"retention": "retention", "departures": "departures", "portal_w1": "portal_week", "portal_w2": "portal_week",
                  "portal_w3": "portal_week", "portal_w4": "portal_last", "portal_recap": "report", "portal_1": "portal_round", "portal_2": "report",
@@ -361,10 +374,11 @@ def doings(c: Cases, plan: dict) -> None:
         v = offseason.schedule_view(st)
         c.ask("schedule_trade", st, "no-such-game", me, label="schedule_trade unknown")
         c.ask("schedule_move", st, "no-such-game", 4, label="schedule_move unknown")
-        tradable = [(g["event_id"], [o for o in g["options"] if o.get("ok", True)]) for g in v["editable"]]
+        tradable = [(g["event_id"], g["options"]) for g in v["editable"]]
         tradable = [(e, o) for e, o in tradable if o]
         for e, opts in tradable[:plan.get("trades", 2)]:
-            slug = opts[len(opts) // 2].get("team") or opts[len(opts) // 2].get("slug")
+            opts = [o for o in opts if o.get("accepts")] or opts
+            slug = opts[len(opts) // 2]["slug"]
             c.ask("schedule_trade", st, e, slug, after="schedule", label="schedule_trade")
         v = offseason.schedule_view(st)
         done = 0
@@ -388,8 +402,6 @@ def walk(name: str, st: dict, plan: dict, stages: list) -> dict:
         league_file = f"{name}_league.json"
         shutil.copyfile(path, OUT / league_file)
     Rec.calls = None
-    if plan.get("legacy_draft"):                      # a save from the older order: the draft run at the start, no "draft" block
-        pass
     offseason.start(st)
     off = st["offseason"]
     off["auto"] = True
@@ -414,20 +426,10 @@ def walk(name: str, st: dict, plan: dict, stages: list) -> dict:
         doings(c, plan)
         if stage == "ready":
             if plan.get("next"):
-                before = {}
-                orig = recruiting.start.__wrapped__
-
-                def start_(state, year=2027):
-                    before["new"] = json.dumps({k: v for k, v in state.items() if k not in ("league", "career", "my_boxes")})
-                    return orig(state, year)
-                recruiting.start.__wrapped__ = start_
-                wrapped = recruiting.start
-                recruiting.start = lambda state, year=2027: (Rec.calls.append(["recruiting.start", ["<state>", year], None]), start_(state, year))[1]
-                c.ask("next_season", st, after="career", show=lambda out: None)
-                recruiting.start = wrapped
-                recruiting.start.__wrapped__ = orig
-                c.rows[-1]["new"] = json.loads(before["new"])
-                new = c.rows[-1].pop("_new", None)
+                made = {}
+                c.ask("next_season", st, after="career", show=lambda out: None, real=lambda s: made.update(new=offseason.next_season(s)))
+                c.rows[-1]["new"] = json.loads(NEW["before"])            # the new season before recruiting.start gave it a class
+                new = made["new"]
         else:
             c.ask("advance", st, after=ADVANCE_AFTER[stage], show=lambda out: out["stage"], label=f"advance from {stage}")
         file = f"{name}_{n:02d}_{stage}.json"
@@ -437,7 +439,7 @@ def walk(name: str, st: dict, plan: dict, stages: list) -> dict:
         if stage == "ready":
             break
         n += 1
-    return st
+    return new
 
 
 def old_order(name: str, st: dict, stages: list) -> None:
@@ -479,10 +481,7 @@ def main():
     season.use_league(None)
     st = season.new_season("smu", "full", seed=7, career=True)
     finished(st)
-    walk("a1", st, {"next": True, "moves": 4, "trades": 2}, stages)
-    # the next season as Python made it (the walk's last case ran next_season on `st`): do it again for the state itself
-    # (next_season is not idempotent on the career's history, so the walk's own run is the one compared)
-    st2 = PY_NEW["a1"]
+    st2 = walk("a1", st, {"next": True, "moves": 4, "trades": 2}, stages)
     finished(st2)
     walk("a2", st2, {"next": True, "wanted": True, "take": True, "moves": 2, "trades": 1}, stages)
 
@@ -520,18 +519,6 @@ def main():
     (OUT / "setup.json").write_text(json.dumps(setup))
     print(f"{sum(s['cases'] for s in stages)} cases in {len(stages)} files")
 
-
-PY_NEW: dict = {}
-_next_season = offseason.next_season
-
-
-def _keeping(state):
-    new = _next_season(state)
-    PY_NEW[state.get("_name") or "a1"] = new
-    return new
-
-
-offseason.next_season = _keeping
 
 if __name__ == "__main__":
     main()

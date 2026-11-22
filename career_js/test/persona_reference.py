@@ -86,9 +86,11 @@ def view(state: dict) -> dict:
             out[k] = [e for i, e in enumerate(v) if i >= LOG_BASE or e.get("kind") == "twist"]
         elif k in RC_KEEP:
             out[k] = v
-    s = {k: state[k] for k in ("id", "team", "current_week", "year", "league") if k in state}
+    s = {k: state[k] for k in ("id", "team", "current_week", "year") if k in state}
     s["games"] = state.get("games", {})
     s["recruiting"] = out
+    if "league" in state:
+        s["league"] = state["league"]
     return s
 
 

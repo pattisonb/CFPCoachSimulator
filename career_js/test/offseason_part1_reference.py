@@ -314,6 +314,14 @@ def with_setup(st: dict, setup, fn):
             del st["promises"]
 
 
+def put_market(lgd: dict, market) -> None:
+    """The coaches' market as it was (a league that has none yet has no key for it)."""
+    if market is None:
+        lgd.pop("market", None)
+    else:
+        lgd["market"] = J(market)
+
+
 def attempt(fn):
     try:
         return J(fn())
@@ -446,7 +454,7 @@ def section_c(st: dict, add, tag: str, pending: list, ref: dict) -> None:
                                                   + [("change", None), ("change", "nobody"), ("bogus", None)]):
                     team["ad"], team["coaches"] = J(after), J(saved["coaches"])
                     team["coaches"]["head_coach"]["since"] = since
-                    lgd["market"] = J(saved["market"])
+                    put_market(lgd, saved["market"])
                     off["review"] = J(rv)
                     for key in ("staff_open", "fired", "auto"):
                         off.pop(key, None)
@@ -458,9 +466,8 @@ def section_c(st: dict, add, tag: str, pending: list, ref: dict) -> None:
                                     "market": [len(market), J(market[-1]) if market else None]})
                 reviews.append({"ad": {"security": sec, "ultimatum": ult}, "since": since, "bare": bare, "review": rv, "ad_after": after, "decides": decides})
                 st["career"]["staff"] = J(saved["staff"])
-    team["ad"], team["coaches"], lgd["market"], off["review"], st["seed"] = J(saved["ad"]), J(saved["coaches"]), J(saved["market"]), saved["review"], saved["seed"]
-    if lgd.get("market") is None:
-        lgd.pop("market", None)
+    team["ad"], team["coaches"], off["review"], st["seed"] = J(saved["ad"]), J(saved["coaches"]), saved["review"], saved["seed"]
+    put_market(lgd, saved["market"])
     for key in ("staff_open", "fired", "auto"):
         off.pop(key, None)
     ref["reviews"] = reviews
@@ -552,7 +559,8 @@ def run(kind: str, slug: str, seed: int) -> None:
 
 if __name__ == "__main__":
     setup = {"clear": CLEAR, "cases": [f"{k}-{s}-{n}" for k, s, n in CASES], "leagues": str(OUT / "leagues"),
-             "recruiting": {k: getattr(recruiting, k) for k in ("NIL_FLOOR", "NIL_PER_TIER", "PORTAL_STARTERS", "ASK_POS")}}
+             "recruiting": {k: getattr(recruiting, k) for k in ("NIL_FLOOR", "NIL_PER_TIER", "PORTAL_STARTERS", "ASK_POS")},
+             "STAFF_ROLES": offseason.STAFF_ROLES}
     done = []
     for kind, slug, seed in CASES:
         try:
