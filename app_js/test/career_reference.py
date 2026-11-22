@@ -448,6 +448,10 @@ def main(out: Path, name: str) -> None:
                                                  "steps": run["times"], "total": time.perf_counter() - t0}))
     (out / "steps.json").write_text(json.dumps(run["step"]))
     print(f"{name}: {run['step']} steps in {time.perf_counter() - t0:.0f} s")
+    import shutil
+    season.close_pool()
+    shutil.rmtree(os.environ["CFP_SEASONS_DIR"], ignore_errors=True)       # the run's own saves and league files
+    shutil.rmtree(league.CACHE_DIR, ignore_errors=True)
 
 
 if __name__ == "__main__":

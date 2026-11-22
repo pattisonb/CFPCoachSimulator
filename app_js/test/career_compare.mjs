@@ -521,6 +521,8 @@ function finish(code) {
   const by_field = Object.entries(total.close_at).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, n]) => `${k} ${n}`).join(", ");
   console.log(`${name}: ${total.steps} steps, ${total.calls} calls and notes (${total.bad_calls} differ), ${total.values} values compared, `
     + `${total.close} numbers differ only past the ninth digit${by_field ? ` (${by_field})` : ""}: ${total.bad_steps ? `${total.bad_steps} STEPS DIFFER` : "all the same"}`);
+  fs.rmSync(files.env.CFP_SEASONS_DIR, { recursive: true, force: true });      // the run's own saves and league files
+  fs.rmSync(league.CACHE_DIR, { recursive: true, force: true });
   process.exit(code);
 }
 
