@@ -368,7 +368,7 @@ function _league_marks(state) {
   }
   thirds(sorted(pts, (x) => x, true).map(([_, s]) => s), "O");
   thirds(sorted(allowed).map(([_, s]) => s), "D");
-  const recs = season._records(state, true);
+  const recs = season._records(state, null, true);
   const shares = [];
   for (const [s, r] of Object.entries(recs)) {
     if (has(out, s)) shares.push([r["wins"] / Math.max(1, r["wins"] + r["losses"]), s]);

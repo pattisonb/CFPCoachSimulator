@@ -548,6 +548,7 @@ function portal_offer(state, pid, on) {
   const recruiting = modules.recruiting;
   if (_in(get(off, "stage"), offseason.PORTAL_STAGES)) {            // the portal is recruited on the board: an offer with a pitch
     const p = state["recruiting"]["prospects"][pid];
+    if (p === undefined) throw new KeyError(pid);                    // (Python's lookup raises for an unknown player)
     const pitch = truthy(on) ? p["priorities"][0] : null;
     recruiting.act(state, state["team"], pid, truthy(on) ? "offer" : "pull_offer", pitch,
       truthy(on) ? recruiting.ask_from(state, state["team"], pid) : 0);
