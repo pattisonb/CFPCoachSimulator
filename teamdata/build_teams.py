@@ -124,39 +124,10 @@ def depth_key(p: dict) -> int:
     return p.get("depth") or 99
 
 
-def map_player(p: dict, pos: str | None = None) -> dict:
-    """Raw engine attributes (before normalization) for one source player, at his own
-    position or, with `pos`, as if he played another engine position."""
-    r = p["ratings"]
-    pos = pos or POSITION_MAP.get(p["position"])
-    if pos is None:
-        return {}
-    out = {
-        "name": p["name"],
-        "slug": p["slug"],
-        "position": pos,
-        "source_position": p["position"],
-        "overall": p["overall"],
-        # our overall (game_scale.py: the game's own 1-99 scale, 50 the middle Power 4 starter):
-        # the player card's overall. The engine never reads it.
-        "ovr": p["ovr"] if p.get("ovr") is not None else (game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"])
-                                                          if game_scale.has_overall() else None),
-        # identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
-        "class": p.get("class"),
-        "height": p.get("height"),
-        "weight": p.get("weight_lbs"),
-        "jersey": p.get("jersey"),
-        "dev_trait": p.get("dev_trait"),
-        "speed": 0.7 * r.get("speed", 50) + 0.3 * r.get("acceleration", 50),
-        "strength": r.get("strength", 50),
-        "intelligence": r.get("awareness", 50),
-        "endurance": r.get("stamina", 50),
-        # Return rating: the EA kick-return skill plus the traits a returner uses.
-        "return_rating": (0.35 * r.get("kick_return", 50) + 0.20 * r.get("speed", 50)
-                          + 0.15 * r.get("acceleration", 50)
-                          + 0.15 * avg(r, "agility", "juke_move", "change_of_direction")
-                          + 0.10 * r.get("bc_vision", 50) + 0.05 * r.get("carrying", 50)),
-    }
+def _skills_at(r: dict, pos: str, out: dict) -> None:
+    """The attributes engine position `pos` plays with, from source ratings `r`, written into `out` (over the ones
+    every position shares). Its own function so rating a player at every position (ratings_at_every_position) does
+    not rebuild his whole card eleven times."""
     if pos == "QB":
         out["passing"] = (0.3 * r.get("throw_accuracy_short", 50) + 0.35 * r.get("throw_accuracy_mid", 50)
                           + 0.2 * r.get("throw_accuracy_deep", 50) + 0.15 * r.get("throw_power", 50))
@@ -204,6 +175,42 @@ def map_player(p: dict, pos: str | None = None) -> dict:
     elif pos == "P":
         out["punt_power"] = r.get("kick_power", 50)
         out["punt_accuracy"] = r.get("kick_accuracy", 50)
+
+
+def map_player(p: dict, pos: str | None = None) -> dict:
+    """Raw engine attributes (before normalization) for one source player, at his own
+    position or, with `pos`, as if he played another engine position."""
+    r = p["ratings"]
+    pos = pos or POSITION_MAP.get(p["position"])
+    if pos is None:
+        return {}
+    out = {
+        "name": p["name"],
+        "slug": p["slug"],
+        "position": pos,
+        "source_position": p["position"],
+        "overall": p["overall"],
+        # our overall (game_scale.py: the game's own 1-99 scale, 50 the middle Power 4 starter):
+        # the player card's overall. The engine never reads it.
+        "ovr": p["ovr"] if p.get("ovr") is not None else (game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"])
+                                                          if game_scale.has_overall() else None),
+        # identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
+        "class": p.get("class"),
+        "height": p.get("height"),
+        "weight": p.get("weight_lbs"),
+        "jersey": p.get("jersey"),
+        "dev_trait": p.get("dev_trait"),
+        "speed": 0.7 * r.get("speed", 50) + 0.3 * r.get("acceleration", 50),
+        "strength": r.get("strength", 50),
+        "intelligence": r.get("awareness", 50),
+        "endurance": r.get("stamina", 50),
+        # Return rating: the EA kick-return skill plus the traits a returner uses.
+        "return_rating": (0.35 * r.get("kick_return", 50) + 0.20 * r.get("speed", 50)
+                          + 0.15 * r.get("acceleration", 50)
+                          + 0.15 * avg(r, "agility", "juke_move", "change_of_direction")
+                          + 0.10 * r.get("bc_vision", 50) + 0.05 * r.get("carrying", 50)),
+    }
+    _skills_at(r, pos, out)
     return out
 
 
@@ -762,6 +769,7 @@ def ratings_at_every_position(teams: list[dict], means: dict) -> None:
     """Give every player a rating at every engine position: his source ratings run through
     that position's attribute formulas, normalized with that position's starter means,
     then scored like a native player. Linebacker roles share the MLB rating."""
+    mean_at: dict[str, dict] = {}       # position -> each attribute's starter mean there
     for t in teams:
         for m in t["players"]:
             src = m.pop("_src", None)
@@ -770,13 +778,21 @@ def ratings_at_every_position(teams: list[dict], means: dict) -> None:
                 m["ratings_at"]["KR"] = m[RETURN_ATTR]
                 continue
             out = {}
+            r = src["ratings"]
+            shift = t.get("level_shift", 0.0)
+            # what every position shares, worked out once (map_player's own lines)
+            shared = {"speed": 0.7 * r.get("speed", 50) + 0.3 * r.get("acceleration", 50), "strength": r.get("strength", 50),
+                      "intelligence": r.get("awareness", 50), "endurance": r.get("stamina", 50)}
             for pos in ENGINE_POSITIONS:
-                raw = map_player(src, pos)
+                raw = dict(shared)
+                _skills_at(r, pos, raw)
+                at = mean_at.get(pos)
+                if at is None:
+                    at = mean_at[pos] = {a: means.get(f"{pos}:{a}", 50.0) for a in ATTRS}
                 attrs = {}
                 for a, v in raw.items():
-                    if a in ATTRS and isinstance(v, (int, float)):
-                        mean = means.get(f"{pos}:{a}", 50.0)
-                        attrs[a] = clamp_rating(to_engine(v, mean) + t.get("level_shift", 0.0))
+                    if isinstance(v, (int, float)):
+                        attrs[a] = clamp_rating(to_engine(v, at[a]) + shift)
                 attrs["position"] = pos
                 rating = player_overall(attrs)
                 if pos != m["position"]:

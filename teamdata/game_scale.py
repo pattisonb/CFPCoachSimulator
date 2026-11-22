@@ -43,6 +43,12 @@ def write_scale(out: dict) -> None:
     FILE.write_text(json.dumps(out, indent=0), encoding="utf-8")
     data.cache_clear()
     _card_overall.cache_clear()
+    to_ours.cache_clear()
+    to_base.cache_clear()
+    _base_tenth.cache_clear()
+    cards = sys.modules.get("coach_career.prospects")
+    if cards is not None:
+        cards._card.cache_clear()
     for name in ("teamdata.game_scale", "game_scale", "__main__"):
         mod = sys.modules.get(name)
         if mod is not None and getattr(mod, "FILE", None) == FILE and hasattr(getattr(mod, "data", None), "cache_clear"):
@@ -58,11 +64,15 @@ def group(pos: str) -> str:
     return GROUP_OF.get(pos) or {"RB": "RB", "OL": "OL", "DL": "DL", "MLB": "LB", "ROLB": "LB", "LOLB": "LB", "S": "S"}.get(pos, pos)
 
 
+# The two conversions are asked for the same few numbers over and over (a class of recruits: 4,000 players, 54 skills,
+# now and at their potential), so each answer is kept; write_scale drops them with the scale.
+@lru_cache(maxsize=400_000)
 def to_ours(base: float, grp: str, key: str) -> int:
     m, sd = data()["skills"][grp][key]
     return int(round(max(1, min(99, 50 + (base - m) / sd * (ABOVE if base >= m else BELOW)))))
 
 
+@lru_cache(maxsize=400_000)
 def to_base(ours: float, grp: str, key: str) -> float:
     m, sd = data()["skills"][grp][key]
     return m + (ours - 50) * sd / (ABOVE if ours >= 50 else BELOW)
@@ -73,9 +83,14 @@ def ours_from_base(ratings: dict, pos: str) -> dict[str, int]:
     return {k: to_ours(ratings[k], g, k) for k in keys() if k in ratings}
 
 
+@lru_cache(maxsize=400_000)
+def _base_tenth(ours: float, grp: str, key: str) -> float:
+    return round(to_base(ours, grp, key), 1)
+
+
 def base_from_ours(ours: dict, pos: str) -> dict[str, float]:
     g = group(pos)
-    return {k: round(to_base(v, g, k), 1) for k, v in ours.items()}
+    return {k: _base_tenth(v, g, k) for k, v in ours.items()}
 
 
 def from_ea(ratings_ea: dict, pos: str) -> dict[str, int]:
@@ -178,10 +193,18 @@ def fit_card_overall(players: list[tuple[dict, str, int]]) -> dict:
     return out
 
 
+def overall_version() -> int:
+    """Which overall formula this build stores: 2 on the card's attributes, 1 before. A league and a class are stamped
+    with it when they are made ("overall_v"), so opening the career does not work every overall out again."""
+    return (data().get("card_overall") and 2) or 1
+
+
 def upgrade_overalls(state: dict) -> bool:
     """A career saved before the overall was built on the card's attributes: every stored overall recomputed (the
-    league's players, the portal's, the recruits' now and at their potential). Returns whether anything changed."""
-    version = (data().get("card_overall") and 2) or 1
+    league's players, the portal's, the recruits' now and at their potential). Returns whether anything changed.
+    A league or class already stamped with this build's formula is left alone (it was 8,000 recruits recomputed on
+    every open of every career, most of the time a saved career took to load)."""
+    version = overall_version()
     changed = False
     lg = state.get("league")
     if lg and lg.get("scale") == "ours" and lg.get("overall_v", 1) != version:

@@ -264,6 +264,7 @@ def from_base(year: int = FIRST_YEAR + 1) -> dict:
     if BASE_LEAGUE_FILE.exists():
         lgd = json.loads(BASE_LEAGUE_FILE.read_text(encoding="utf-8"))
         lgd["year"] = year
+        lgd.setdefault("overall_v", game_scale.overall_version())   # written by this build, on this build's formula
         for t in lgd["teams"].values():   # as programs.init sets it for this year
             t["program"]["year"] = year - 1
         return lgd
@@ -284,7 +285,7 @@ def _compute_base(year: int) -> dict:
         teams[slug] = {"roster": [compact({**p, "target_mult": tm.get(p["slug"])}, attrs, t.get("state")) for p in t["roster"] if p.get("ratings")],
                        "coaches": coaches, "formation": formation(t)}
     build_teams.measured_recruiting([{"slug": s, "coaches": v["coaches"]} for s, v in teams.items()])
-    lgd = {"year": year, "attrs": attrs, "scale": "ours", "teams": teams}
+    lgd = {"year": year, "attrs": attrs, "scale": "ours", "overall_v": game_scale.overall_version(), "teams": teams}
     from coach_career import programs
     programs.init(lgd)
     return lgd
@@ -444,6 +445,14 @@ def ensure_built(state: dict) -> Optional[Path]:
         me = None if year <= FIRST_YEAR else state.get("team")
         tmp.write_text(json.dumps(build(lg, me)), encoding="utf-8")
         os.replace(tmp, out)
+        # the seasons before this one are played: their files go (each is some twenty megabytes, and the browser
+        # keeps this folder in its store)
+        for old in CACHE_DIR.glob(f"{state['id']}-*.json"):
+            if old.stem[len(state["id"]) + 1:].isdigit() and int(old.stem[len(state["id"]) + 1:]) < year:
+                try:
+                    old.unlink()
+                except OSError:
+                    pass
     return out
 
 

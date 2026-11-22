@@ -74,6 +74,7 @@ def model() -> dict:
     return json.loads(MODEL_FILE.read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=4096)             # a class asks it a few hundred thousand times, of a hundred whole numbers
 def curve(ea: float) -> float:
     """EA's scale -> the source scale (cfb_sim_data/league.json's piecewise-linear curve)."""
     pts = model()["players"]["curve"]
@@ -159,7 +160,9 @@ def _potential(rng: random.Random, pos: str, stars: int, ratings: dict) -> dict:
     return out
 
 
-def recruit(rng: random.Random, year: int, band: str, taken: set[str]) -> dict:
+def recruit(rng: random.Random, year: int, band: str, taken: set[str], scored: bool = True) -> dict:
+    """One prospect. `scored` False leaves out the overall and the source-scale ratings (rescore): a career converts
+    the draw to its own scale at once and never reads them."""
     gen = model()["generation"]
     pl = model()["players"]
     composite = round(from_quantiles(gen["rating_quantiles"][band], rng.random()), 4)
@@ -195,17 +198,18 @@ def recruit(rng: random.Random, year: int, band: str, taken: set[str]) -> dict:
         "ratings_ea": ratings_ea,
         "potential_ea": _potential(rng, pos, int(band), ratings_ea),
     }
-    rescore(p)
+    if scored:
+        rescore(p)
     return p
 
 
-def generate_class(year: int, seed: int = 0, taken: Optional[set[str]] = None) -> list[dict]:
+def generate_class(year: int, seed: int = 0, taken: Optional[set[str]] = None, scored: bool = True) -> list[dict]:
     """A national class: every prospect from five stars to two, ranked by composite rating.
     `taken`: names already in use (real rosters, earlier classes), lower case; never reused."""
     rng = random.Random(f"class-{year}-{seed}")
     taken = taken if taken is not None else set()
     counts = model()["generation"]["prospects_per_class"]
-    out = [recruit(rng, year, band, taken) for band in STAR_BANDS for _ in range(counts[band])]
+    out = [recruit(rng, year, band, taken, scored) for band in STAR_BANDS for _ in range(counts[band])]
     out.sort(key=lambda p: -p["composite"])
     for i, p in enumerate(out, 1):
         p["rank"] = i
