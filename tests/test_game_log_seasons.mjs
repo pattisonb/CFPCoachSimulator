@@ -82,12 +82,12 @@ test("after the rollover a returning player has last season's rows, before any g
   for (const p of back) {
     const pr = profile(p["slug"]);
     equal(pr["game_log"], []);                                   // this season's, as it always was
-    equal(pr["game_logs"].length, 1);
-    equal(pr["game_logs"][0]["year"], YEAR);
+    // this season leads with nothing in it yet (the page opens on the newest season with games: last year's)
+    equal(pr["game_logs"].map((x) => [x["year"], x["rows"].length > 0]), [[YEAR + 1, false], [YEAR, true]]);
     // the rows are the ones his page showed last season (what the page reads of them)
     const want = then[p["slug"]].map((r) => ({ week: r["week"], opponent_name: r["opponent_name"], venue: r["venue"], won: r["won"],
       points_for: r["points_for"], points_against: r["points_against"], started: r["started"] }));
-    equal(pr["game_logs"][0]["rows"], want);
+    equal(pr["game_logs"][1]["rows"], want);
   }
 });
 
@@ -126,9 +126,9 @@ test("once he plays this season, this season comes first", () => {
     equal(pr["game_logs"].map((x) => x["year"]), [YEAR + 1, YEAR]);
     equal(pr["game_logs"][0]["rows"], pr["game_log"]);
   }
-  // one who did not play this week still opens on last year
+  // one who did not play this week still has last year's to open on
   const sat = back.map((p) => profile(p["slug"])).find((pr) => pr && !pr["game_log"].length);
-  if (sat) equal(sat["game_logs"].map((x) => x["year"]), [YEAR]);
+  if (sat) equal(sat["game_logs"].map((x) => [x["year"], x["rows"].length > 0]), [[YEAR + 1, false], [YEAR, true]]);
   assert(st["year"] === YEAR + 1);
 });
 
@@ -160,8 +160,8 @@ test("only the last few seasons are kept, and none of a school you left", () => 
   const here = new Set(next["league"]["teams"][ME]["roster"].map((c) => c["id"]));
   for (const x of next["career"]["game_logs"]) for (const id of Object.keys(x["players"])) assert(here.has(id), id);
   const pr = season.player_profile(next, ME, null, null, Object.keys(next["career"]["game_logs"][4]["players"])[0]);
-  equal(pr["game_logs"][0]["year"], YEAR + 1);
-  assert(pr["game_logs"].length >= 1 && pr["game_logs"].length <= offseason.GAME_LOG_SEASONS);
+  equal(pr["game_logs"].slice(0, 2).map((x) => [x["year"], x["rows"].length > 0]), [[YEAR + 2, false], [YEAR + 1, true]]);
+  assert(pr["game_logs"].length <= offseason.GAME_LOG_SEASONS + 1);                  // this season and the kept ones
   // leaving for another school drops them
   offseason.keep_game_logs({ ...next, career: next["career"] }, YEAR + 2, "ohio-state");
   assert(!("game_logs" in next["career"]));

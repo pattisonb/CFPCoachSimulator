@@ -582,7 +582,7 @@ export interface PlayerProfile {
   }[];
   /** his games this season, in order; null when the game keeps no box scores for his team */
   game_log?: GameLogRow[] | null;
-  /** his game log a season at a time, newest first: only seasons he has a game in (a career keeps the last few) */
+  /** his game log a season at a time, newest first: this season (empty before he plays), then the past ones he played in (a career keeps the last few); [] with no game at all */
   game_logs?: { year: number; rows: GameLogRow[] }[];
   honors?: { stage: string; award: string; place: string; detail: string }[];
   /** his past seasons, oldest first */

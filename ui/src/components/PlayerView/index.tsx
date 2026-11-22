@@ -512,14 +512,15 @@ ${m.ceiling(a.potential)}.`
 }
 
 /**
- * His games, a season at a time: a tab a season he has games in (newest first), opening on the newest, so before a
- * new season's first game it is last year's log and not an empty panel. One season: no tabs.
+ * His games, a season at a time: a tab a season (newest first: this one, then the ones a career kept that he played
+ * in), opening on the newest with games, so before a new season's first game it is last year's log and not an empty
+ * panel. One season: no tabs.
  */
 function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<string, string> }) {
   // a game from before the seasons were sent: this season's log alone
   const seasons = pr.game_logs ?? (pr.game_log?.length ? [{ year: 0, rows: pr.game_log }] : []);
   const [picked, setPicked] = useState<number | null>(null);
-  const shown = seasons.find((s) => s.year === picked) ?? seasons[0];
+  const shown = seasons.find((s) => s.year === picked) ?? seasons.find((s) => s.rows.length) ?? seasons[0];
   return (
     <Panel
       title={m.gameLog}
@@ -535,7 +536,7 @@ function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<st
         ) : undefined
       }
     >
-      {shown ? (
+      {shown?.rows.length ? (
         <table className="player-view__table">
           <thead>
             <tr>

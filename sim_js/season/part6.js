@@ -775,22 +775,25 @@ function team_game_logs(state, team) {
 }
 
 function player_game_logs(state, team, slug, now) {
-  // His game log season by season, newest first: [{year, rows}], only seasons he has a game in. `now` is this
-  // season's log (player_game_log); the seasons before it are the ones the career kept (offseason.keep_game_logs).
-  // Another team's player, or a season that is not a career: this season's at most.
-  const out = [];
-  if (truthy(now) && now.length) out.push({ year: get(state, "year"), rows: now });
-  if (team !== get(state, "team") || !truthy(slug)) return out;
-  const kept = get(get(state, "career") || {}, "game_logs") || [];
-  for (const s of sorted(kept.filter((x) => get(x, "team") === team && x["year"] !== get(state, "year")), (x) => x["year"], true)) {
-    const marks = get(get(s, "players") || {}, slug) || "";
-    const rows = [];
-    (get(s, "games") || []).forEach((g, i) => {
-      if (marks[i] === "1" || marks[i] === "2") rows.push({ ...g, started: marks[i] === "2" });
-    });
-    if (rows.length) out.push({ year: s["year"], rows });
+  // His game log season by season, newest first: [{year, rows}]. `now` is this season's log (player_game_log); the
+  // seasons before it are the ones the career kept (offseason.keep_game_logs), each only if he has a game in it.
+  // This season leads when he has played, and also, with no rows yet, when there is a kept season after it (the page
+  // then opens on the newest season with games). Another team's player, or a season that is not a career: this
+  // season's at most.
+  const past = [];
+  if (team === get(state, "team") && truthy(slug)) {
+    const kept = get(get(state, "career") || {}, "game_logs") || [];
+    for (const s of sorted(kept.filter((x) => get(x, "team") === team && x["year"] !== get(state, "year")), (x) => x["year"], true)) {
+      const marks = get(get(s, "players") || {}, slug) || "";
+      const rows = [];
+      (get(s, "games") || []).forEach((g, i) => {
+        if (marks[i] === "1" || marks[i] === "2") rows.push({ ...g, started: marks[i] === "2" });
+      });
+      if (rows.length) past.push({ year: s["year"], rows });
+    }
   }
-  return out;
+  const mine = truthy(now) ? now : [];
+  return mine.length || past.length ? [{ year: get(state, "year"), rows: mine }, ...past] : [];
 }
 
 season._STAR_CUTS = null;

@@ -497,6 +497,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px;
+  margin-block: -2px;
 }
 
 .player-view__seasons .chip {
