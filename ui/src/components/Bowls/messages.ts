@@ -1,4 +1,4 @@
-import { ordinal } from "../../format.ts";
+import { ordinal, titleCase } from "../../format.ts";
 
 export const messages = {
   title: "Bowls",
@@ -34,7 +34,7 @@ export const messages = {
   facts: "The Bowl",
   firstPlayed: (year: number) => `First Played ${year}`,
   edition: (n: number) => `${ordinal(n)} Game`,
-  payout: (p: string) => `Payout ${p.replace(/^US\$\s*/, "$").replace(/\s*\(.*\)$/, "")}`,
+  payout: (p: string) => titleCase(`Payout ${p.replace(/^US\$\s*/, "$").replace(/\s*\(.*\)$/, "")}`),
   tieIns: "Tie-Ins",
   recent: "Recent Winners",
   recentLine: (year: number, winner: string, ws: number, loser: string, ls: number) =>
@@ -50,5 +50,7 @@ export const messages = {
   >,
   count: (n: number) => `${n} ${n === 1 ? "Bowl" : "Bowls"}`,
   none: "No bowls match that filter.",
+  /** a kickoff as the schedule writes one: "5:30 PM" (the bowls' own data says "5:30 pm") */
+  time: (t: string | null | undefined) => t?.replace(/\b[ap]m\b/g, (x) => x.toUpperCase()) ?? null,
   you: "You",
 } as const;

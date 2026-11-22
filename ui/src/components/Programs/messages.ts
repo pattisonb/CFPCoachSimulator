@@ -24,7 +24,7 @@ export const messages = {
   tierLabel: "Which tier",
   allTiers: "All",
   sortHint: "Click a Column to Sort",
-  openResume: (team: string) => `Open ${team}'s resume`,
+  openResume: (team: string) => `Open ${team}'s resume.`,
   cols: { program: "Program", standing: "Standing" },
 
   /** the twelve measures, and the market (a headline reading and a column) */

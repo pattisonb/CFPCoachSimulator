@@ -619,12 +619,6 @@ interface Item {
   text: string;
 }
 
-/** A topic inside a sentence: lower case, unless it is all capitals (NIL). */
-const lowerTopic = (t: string) => {
-  const n = PITCH_NAMES[t] ?? t;
-  return n === n.toUpperCase() ? n : n.toLowerCase();
-};
-
 /** Kinds whose line the game wrote itself. */
 const LINE_KINDS = new Set([
   "learned",
@@ -683,7 +677,8 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
     if (k === "not_buying") return [m.h.notBuying];
     if (k === "pester")
       return [m.h.tunedOut(e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message")];
-    if (k === "present") return [m.h.presented((e.topics ?? []).map(lowerTopic).join(", ")), m.h.landed(e.hit ?? 0)];
+    if (k === "present")
+      return [m.h.presented((e.topics ?? []).map((t) => PITCH_NAMES[t] ?? t).join(", ")), m.h.landed(e.hit ?? 0)];
     if (k === "answer" && e.question === "package")
       return [
         e.answer === "promise"

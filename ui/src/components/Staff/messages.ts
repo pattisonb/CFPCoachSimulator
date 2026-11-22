@@ -24,10 +24,10 @@ export const messages = {
   areaFor: (name: string) => `Area ${name} covers`,
   signedThrough: (year: number) => `Signed Through ${year}`,
   finalYear: "Final Year",
-  lookingAt: (n: number) => `${n.toLocaleString("en-US")} ${n === 1 ? "prospect" : "prospects"} left to see`,
+  lookingAt: (n: number) => `${n.toLocaleString("en-US")} ${n === 1 ? "Prospect" : "Prospects"} Left to See`,
   thisWeek: "This Week",
   yieldLine: (looks: number, moved: number, flags: number) =>
-    `${fmtLooks(looks)} ${looks === 1 ? "look" : "looks"} · ${moved.toLocaleString("en-US")} ${moved === 1 ? "read" : "reads"} moved${flags ? ` · ${flags} ${flags === 1 ? "flag" : "flags"}` : ""}`,
+    `${fmtLooks(looks)} ${looks === 1 ? "Look" : "Looks"} · ${moved.toLocaleString("en-US")} ${moved === 1 ? "Read" : "Reads"} Moved${flags ? ` · ${flags} ${flags === 1 ? "Flag" : "Flags"}` : ""}`,
   idle: "No looks yet this week.",
   shared: (other: string) => `Shares it with ${other}.`,
   moved: (name: string, area: string) => `${name} now covers ${area}.`,
@@ -48,7 +48,7 @@ export const messages = {
   weeks: { this_week: "This Week", last_week: "Last Week", finds: "Finds" } as Record<string, string>,
   weeksLabel: "Which reports",
   reportHead: (looks: number, changed: number) =>
-    `${fmtLooks(looks)} ${looks === 1 ? "look" : "looks"} · ${changed.toLocaleString("en-US")} ${changed === 1 ? "read" : "reads"} moved`,
+    `${fmtLooks(looks)} ${looks === 1 ? "Look" : "Looks"} · ${changed.toLocaleString("en-US")} ${changed === 1 ? "Read" : "Reads"} Moved`,
   yourTrips: "Your Trips",
   noReports: "No Reports Yet",
   noReportsText: "Your scouts file their first reports after the week is simmed.",
@@ -63,8 +63,8 @@ export const messages = {
   likes: (who: string) => `${who} Likes Him`,
   complete: "Full Report",
   looks: (n: number) => `${fmtLooks(n)} of 3 Looks`,
-  addBoard: (name: string) => `Add ${name} to your board`,
-  removeBoard: (name: string) => `Take ${name} off your board`,
+  addBoard: (name: string) => `Add ${name} to your board.`,
+  removeBoard: (name: string) => `Take ${name} off your board.`,
   boardError: (msg: string) => `Couldn't change your board: ${msg}.`,
 } as const;
 

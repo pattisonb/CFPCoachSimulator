@@ -7,6 +7,30 @@ export function formatClass(code: string | null): string {
   return code.endsWith("RS") ? `RS ${year}` : year;
 }
 
+/** The small words that stay lowercase inside a title (CLAUDE.md: Copy and casing). */
+const SMALL_WORDS = new Set(["a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by", "vs"]);
+
+/**
+ * A label or a standalone value in Title Case ("Redshirt Junior", "3 Sacks Allowed", "Won the Pinstripe Bowl"): for
+ * words the game sends in sentence case because it also writes them into sentences. Every word starts with a capital
+ * but the small ones inside it; a word is otherwise left as it is (TD, RS Jr., McCoy), and a number is no word.
+ */
+export function titleCase(text: string | null | undefined): string {
+  if (!text) return "";
+  const words = text.split(" ");
+  const lettered = words.map((w) => /[A-Za-z]/.test(w));
+  const last = words.length - 1; // (a number leading it is its first word: "41 on Your Board")
+  return words
+    .map((w, i) => {
+      if (!lettered[i]) return w;
+      const bare = w.replace(/[^A-Za-z]/g, "");
+      if (i !== 0 && i !== last && SMALL_WORDS.has(bare) && !/[:;.]$/.test(words[i - 1] ?? "")) return w;
+      // each part of a hyphenated word ("Two-Point"), but not what follows an apostrophe ("Iowa's")
+      return w.replace(/(^|[-(\/"“])([a-z])/g, (_, lead: string, c: string) => lead + c.toUpperCase());
+    })
+    .join(" ");
+}
+
 /** 1st, 2nd, 3rd, 4th, 11th, 22nd */
 export function ordinal(n: number): string {
   const v = n % 100;

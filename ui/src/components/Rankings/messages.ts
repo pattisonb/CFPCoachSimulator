@@ -22,8 +22,8 @@ export const messages = {
   down: (n: number) => `Down ${n}`,
 
   last: "Last Result",
-  boxScore: "Open the box score",
-  openResume: (team: string) => `Open ${team}'s resume`,
+  boxScore: "Open the box score.",
+  openResume: (team: string) => `Open ${team}'s resume.`,
   next: "Next Game",
   win: "W",
   loss: "L",

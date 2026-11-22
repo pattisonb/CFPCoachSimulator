@@ -255,15 +255,15 @@ export const messages = {
     notBuying: "He isn't buying your pitch.",
     tunedOut: (what: string) => `He tuned out your ${what}.`,
     presented: (topics: string) => `Presented ${topics}`,
-    landed: (n: number) => `${["None", "One", "Two", "Three"][n] ?? n} landed`,
-    promisedOffer: (who: string) => `Promised an offer to ${who}`,
-    sidestepped: (who: string) => `Sidestepped his question about ${who}`,
-    alreadyOffered: (who: string) => `Told him ${who} already has an offer`,
-    straight: (who: string) => `Told him straight about ${who}`,
+    landed: (n: number) => `${["None", "One", "Two", "Three"][n] ?? n} Landed`,
+    promisedOffer: (who: string) => `Promised an offer to ${who}.`,
+    sidestepped: (who: string) => `Sidestepped his question about ${who}.`,
+    alreadyOffered: (who: string) => `Told him ${who} already has an offer.`,
+    straight: (who: string) => `Told him straight about ${who}.`,
     promisedJob: (who: string, doubted: boolean) =>
-      `Promised him the job${who ? ` over ${who}` : ""}${doubted ? " (he did not buy it)" : ""}`,
-    brokenPackage: (who: string) => `${who} never got the offer you promised`,
-    brokenSpot: (who: string) => `He heard you promised the same spot to ${who}`,
+      `Promised him the job${who ? ` over ${who}` : ""}${doubted ? " (he did not buy it)" : ""}.`,
+    brokenPackage: (who: string) => `${who} never got the offer you promised.`,
+    brokenSpot: (who: string) => `He heard you promised the same spot to ${who}.`,
     leaningFcs: "He is leaning toward an FCS program.",
     moves: {
       // sentences, as every other line in his timeline is; your own school is "you" inside one

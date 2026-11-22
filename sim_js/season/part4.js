@@ -526,8 +526,8 @@ function schedule_options(state, event_id, teams = null) {
     const theirs = venue === "away" ? "home" : venue === "home" ? "away" : "neutral";
     const gap = programs.attract(state, me) - programs.attract(state, slug);
     const accepts = theirs === "home" || gap >= -season.SCHEDULE_DRAW;
-    const why = theirs === "home" ? "They get the home game" : gap > season.SCHEDULE_DRAW ? "A bigger draw than them"
-      : accepts ? "A fair trade" : "They want the home game";
+    const why = theirs === "home" ? "They Get the Home Game" : gap > season.SCHEDULE_DRAW ? "A Bigger Draw Than Them"
+      : accepts ? "A Fair Trade" : "They Want the Home Game";
     out.push({ slug, name: t["name"], conference: t["conference"], standing: programs.TIER_NAMES[programs.get(state, slug)["tier"]],
       accepts, venue, why, displaced: other["away"] === slug ? other["home"] : other["away"] });
   }
@@ -683,12 +683,12 @@ function rivalry_series(state, riv, before_week = null, teams = null) {
   else lead = null;
   let text;
   if (lead === null && !truthy(wins[a]) && !truthy(ties)) {
-    text = "First meeting";                   // a new rivalry (a custom program's) before its first game
+    text = "First Meeting";                   // a new rivalry (a custom program's) before its first game
   } else if (lead === null) {
-    text = `Series tied ${wins[a]}-${wins[b]}` + (truthy(ties) ? `-${ties}` : "");
+    text = `Series Tied ${wins[a]}-${wins[b]}` + (truthy(ties) ? `-${ties}` : "");
   } else {
     const other = lead === a ? b : a;
-    text = `${teams[lead]["name"]} leads ${wins[lead]}-${wins[other]}` + (truthy(ties) ? `-${ties}` : "");
+    text = `${teams[lead]["name"]} Leads ${wins[lead]}-${wins[other]}` + (truthy(ties) ? `-${ties}` : "");
   }
   return { wins, ties, leader: lead, text, last };
 }

@@ -32,7 +32,7 @@
  "test_engine_js.mjs": 0,
  "test_fcs_hidden.mjs": 13,
  "test_flags.mjs": 31,
- "test_game_log_seasons.mjs": 75,
+ "test_game_log_seasons.mjs": 80,
  "test_gameday_split.mjs": 31,
  "test_generic_names.mjs": 40,
  "test_godmode.mjs": 10,

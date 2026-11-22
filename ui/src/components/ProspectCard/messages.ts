@@ -58,7 +58,7 @@ export const messages = {
   scouting: "Your Scouting",
   unscouted: "No Look Yet",
   unscoutedTip: "Send a scout from Scouting to read his potential.",
-  looks: (n: number) => `${n} of 3 looks`,
+  looks: (n: number) => `${n} of 3 Looks`,
   potential: "Potential",
   evaluation: "The Scouting Service",
   strengths: "Strengths",

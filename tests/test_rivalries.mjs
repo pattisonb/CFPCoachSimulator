@@ -1,6 +1,6 @@
 // Rivalries (data/rivalries.json; sim_js/season rivalry_for, rivalry_series, rivalries_view): every rivalry names two
 // teams of the game and their series; the series moves when the game is played, and the schedule and the rivalries
-// page show it; a rivalry with no history reads "First meeting"; the service academies' game in selection week counts.
+// page show it; a rivalry with no history reads "First Meeting"; the service academies' game in selection week counts.
 // `node tests/test_rivalries.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 
@@ -39,10 +39,10 @@ test("a rivalry game played adds a win to the series, and the schedule shows the
 });
 
 // a custom program's new rivalry has no series behind it
-test("a rivalry with no history reads First meeting until it is played, then the winner leads 1-0", () => {
+test("a rivalry with no history reads First Meeting until it is played, then the winner leads 1-0", () => {
   const fresh = { teams: [A, B], name: "M vs. O", trophy: "", series: {} };
-  equal(season.rivalry_series(st, fresh, 1)["text"], "First meeting");
-  assert(season.rivalry_series(st, fresh)["text"].endsWith("leads 1-0"), season.rivalry_series(st, fresh)["text"]);
+  equal(season.rivalry_series(st, fresh, 1)["text"], "First Meeting");
+  assert(season.rivalry_series(st, fresh)["text"].endsWith("Leads 1-0"), season.rivalry_series(st, fresh)["text"]);
 });
 
 test("a team's rivalries page lists its rivalries with their names, trophies and this season's game", () => {

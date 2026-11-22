@@ -66,8 +66,8 @@ export const messages = {
   usual: "Conference's Usual",
 
   rivals: "Rivals",
-  rivalSearch: "Search a team to add as a rival",
-  rivalsFull: `${MAX_RIVALS} rivals is the most a schedule always fits`,
+  rivalSearch: "Search a Team to Add as a Rival",
+  rivalsFull: `${MAX_RIVALS} rivals is the most a schedule always fits.`,
   rivalCount: (n: number) => `${n} of ${MAX_RIVALS}`,
   rivalName: "Rivalry Name",
   rivalNamePlaceholder: "Optional",

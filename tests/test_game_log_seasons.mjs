@@ -1,6 +1,8 @@
-// The Game Log's season tabs: a career keeps who played in each of your games when a season ends, so a returning
-// player's page still has last year's log (and opens on it before the new season's first game); a player who is gone
-// has none, only the last few seasons are kept, and a save from before this simply shows what it did.
+// The Game Log's season tabs: a career keeps every player's part in each of your games when a season ends, stat lines
+// and all, so a returning player's page still has last year's log (and opens on it before the new season's first
+// game). A log follows the player until he leaves college: one who transfers away keeps his (and his page shows it),
+// one who graduates has none; changing schools keeps the old players' logs. Only the last few seasons are kept, and
+// a save from before this simply shows what it did.
 // `node tests/test_game_log_seasons.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 import { Random, sorted } from "../engine_js/pyrt.js";
@@ -63,7 +65,9 @@ test("in a first season the seasons are this season's log alone, and none before
   assert(theirs["game_log"] === null && theirs["game_logs"].length === 0);
 });
 
-let gone = null, back = null;
+let gone = null, back = null, left = null;
+/** A season's rows as the page had them in the season itself: all but what only the live season knows. */
+const kept_rows = (rows) => rows.map(({ event_id: _e, title: _t, opponent: _o, ...rest }) => rest);
 test("after the rollover a returning player has last season's rows, before any game this season", () => {
   finished(first); api._save_loaded();
   const size_before = JSON.stringify(first).length;
@@ -73,8 +77,10 @@ test("after the rollover a returning player has last season's rows, before any g
   equal(Object.keys(st["my_boxes"]).length, 0);
   const here = new Set(st["league"]["teams"][ME]["roster"].map((c) => c["id"]));
   back = played.filter((p) => here.has(p["slug"]));
-  gone = played.filter((p) => !here.has(p["slug"]));
-  assert(back.length > 10 && gone.length > 3, show([back.length, gone.length]));
+  const anywhere = new Set(Object.values(st["league"]["teams"]).flatMap((t) => t["roster"].map((c) => c["id"])));
+  left = played.filter((p) => !here.has(p["slug"]) && anywhere.has(p["slug"]));          // transferred away
+  gone = played.filter((p) => !anywhere.has(p["slug"]));                                 // out of college
+  assert(back.length > 10 && gone.length > 3, show([back.length, gone.length, left.length]));
   const kept = st["career"]["game_logs"];
   assert(kept.length === 1 && kept[0]["year"] === YEAR && kept[0]["team"] === ME && kept[0]["games"].length === 2, show(kept));
   console.log(`     (a season of ${kept[0]["games"].length} games adds ${JSON.stringify(kept).length} bytes to the save; `
@@ -84,19 +90,62 @@ test("after the rollover a returning player has last season's rows, before any g
     equal(pr["game_log"], []);                                   // this season's, as it always was
     // this season leads with nothing in it yet (the page opens on the newest season with games: last year's)
     equal(pr["game_logs"].map((x) => [x["year"], x["rows"].length > 0]), [[YEAR + 1, false], [YEAR, true]]);
-    // the rows are the ones his page showed last season (what the page reads of them)
-    const want = then[p["slug"]].map((r) => ({ week: r["week"], opponent_name: r["opponent_name"], venue: r["venue"], won: r["won"],
-      points_for: r["points_for"], points_against: r["points_against"], started: r["started"] }));
-    equal(pr["game_logs"][1]["rows"], want);
+    // the rows are the ones his page showed last season, his stat line in each game with them
+    equal(pr["game_logs"][1]["rows"], kept_rows(then[p["slug"]]));
+    assert(!("team_name" in pr["game_logs"][1]));
   }
 });
 
-test("a player who graduated or left has no log kept", () => {
+test("a kept row's stat line is the box score's, and reads as the game's own line for his position", () => {
+  const side = (eid) => (first["games"][eid]["home"] === ME ? "home" : "away");
+  const boxes = sorted(Object.keys(first["my_boxes"]), (eid) => first["games"][eid]["week"]);
+  let lines = 0;
+  for (const p of back) {
+    const rows = profile(p["slug"])["game_logs"][1]["rows"];
+    const mine = boxes.map((eid) => first["my_boxes"][eid][side(eid)]["players"].find((x) => x["name"] === p["name"] && x["position"] === p["position"]))
+      .filter(Boolean);
+    equal(rows.map((r) => r["stats"]), mine.map((x) => x["stats"]));
+    for (const r of rows) if (r["line"]) { lines++; assert(typeof r["line_full"] === "string" && r["line_full"].length >= r["line"].length, show(r)); }
+  }
+  assert(lines > 20, String(lines));
+  const qb = back.map((p) => [p, profile(p["slug"])["game_logs"][1]["rows"]]).find(([p, rows]) => p["position"] === "QB" && rows.some((r) => r["stats"]["pass_attempts"]));
+  if (qb) {
+    const r = qb[1].find((x) => x["stats"]["pass_attempts"]);
+    equal(r["line"], game.modules.awards.headline({ stats: r["stats"] }, "QB"));
+    assert(/ Yds · \d+ TD$/.test(r["line"]), r["line"]);
+  }
+});
+
+test("a player who transferred away keeps his log, and his page at his new school shows it as his games with you", () => {
+  const st = api.loaded_state();
+  if (!left.length) {                                   // the seed sent nobody who played to another school: send one
+    const teams = st["league"]["teams"];
+    const other = sorted(Object.keys(teams)).find((s) => s !== ME);
+    const c = teams[ME]["roster"].find((x) => x["id"] === back[back.length - 1]["slug"]);
+    teams[ME]["roster"].splice(teams[ME]["roster"].indexOf(c), 1);
+    teams[other]["roster"].push(c);
+    left = [back.pop()];
+  }
+  const kept = st["career"]["game_logs"][0]["players"];
+  let seen = 0;
+  for (const p of left) {
+    assert(p["slug"] in kept, p["slug"]);
+    const pr = season.player_profile(st, null, null, null, p["slug"]);
+    if (!pr || pr["team"]["slug"] === ME) continue;                    // (the built teams file has him where the league does)
+    seen++;
+    assert(pr["game_log"] === null);
+    equal(pr["game_logs"].map((x) => [x["year"], x["team_name"]]), [[YEAR, season.load_teams()[ME]["name"]]]);
+    equal(pr["game_logs"][0]["rows"], kept_rows(then[p["slug"]]));
+  }
+  console.log(`     (${left.length} who played transferred away; ${seen} read on their new team's page)`);
+});
+
+test("a player who graduated or left college has no log kept", () => {
   const kept = api.loaded_state()["career"]["game_logs"][0]["players"];
   const grads = new Set(first["offseason"]["departures"].filter((e) => e["kind"] === "graduated" && e["team"] === ME).map((e) => e["id"]));
   assert(gone.some((p) => grads.has(p["slug"])), "the seed graduates someone who played");
   for (const p of gone) assert(!(p["slug"] in kept), p["slug"]);
-  equal(sorted(Object.keys(kept)), sorted(back.map((p) => p["slug"])));
+  equal(sorted(Object.keys(kept)), sorted([...back, ...left].map((p) => p["slug"])));
 });
 
 test("an FCS stand-in in a kept season reads as its region, never a school", () => {
@@ -141,10 +190,17 @@ test("an old save without the block loads and shows what it did; the next rollov
   assert(again && !("game_logs" in api.loaded_state()["career"]));
   const pr = profile(back[0]["slug"]);
   equal(pr["game_logs"], pr["game_log"].length ? [{ year: YEAR + 1, rows: pr["game_log"] }] : []);
+  // a save from when only who played was kept (a character a game, no lines): the rows, without a line
+  const full = profile(back[0]["slug"]);
+  st["career"]["game_logs"] = kept.map(({ stat_keys: _k, ...x }) => ({ ...x, players: Object.fromEntries(Object.entries(x["players"]).map(([id, e]) => [id, e["m"]])) }));
+  const bare = profile(back[0]["slug"])["game_logs"].at(-1);
   st["career"]["game_logs"] = kept;
+  const whole = profile(back[0]["slug"])["game_logs"].at(-1);
+  equal(bare["rows"], whole["rows"].map(({ stats: _s, line: _l, line_full: _f, ...rest }) => rest));
+  assert(full && whole["rows"].some((r) => r["line"]));
 });
 
-test("only the last few seasons are kept, and none of a school you left", () => {
+test("only the last few seasons are kept, and changing schools keeps the old players' logs", () => {
   const st = api.loaded_state();
   const car = st["career"];
   const one = car["game_logs"][0];
@@ -157,14 +213,23 @@ test("only the last few seasons are kept, and none of a school you left", () => 
   const years = next["career"]["game_logs"].map((x) => x["year"]);
   equal(years.length, offseason.GAME_LOG_SEASONS);
   equal(years, [YEAR - 3, YEAR - 2, YEAR - 1, YEAR, YEAR + 1]);
-  const here = new Set(next["league"]["teams"][ME]["roster"].map((c) => c["id"]));
+  const here = new Set(Object.values(next["league"]["teams"]).flatMap((t) => t["roster"].map((c) => c["id"])));
   for (const x of next["career"]["game_logs"]) for (const id of Object.keys(x["players"])) assert(here.has(id), id);
   const pr = season.player_profile(next, ME, null, null, Object.keys(next["career"]["game_logs"][4]["players"])[0]);
   equal(pr["game_logs"].slice(0, 2).map((x) => [x["year"], x["rows"].length > 0]), [[YEAR + 2, false], [YEAR + 1, true]]);
   assert(pr["game_logs"].length <= offseason.GAME_LOG_SEASONS + 1);                  // this season and the kept ones
-  // leaving for another school drops them
-  offseason.keep_game_logs({ ...next, career: next["career"] }, YEAR + 2, "ohio-state");
-  assert(!("game_logs" in next["career"]));
+  // you take another job: the season is kept as any other, and at the new school the old one's players still have
+  // their seasons with you, while the new school's start fresh
+  const before = JSON.stringify(next["career"]["game_logs"]);
+  const moved = { ...next, team: "ohio-state", year: YEAR + 3, my_boxes: {} };
+  const stayed = Object.keys(next["career"]["game_logs"][4]["players"]).find((id) => next["league"]["teams"][ME]["roster"].some((c) => c["id"] === id));
+  offseason.keep_game_logs(next, YEAR + 2);
+  equal(JSON.stringify(next["career"]["game_logs"]), before);
+  const old = season.player_profile(moved, ME, null, null, stayed);
+  assert(old["game_log"] === null && old["game_logs"].length >= 1, show(old["game_logs"].map((x) => x["year"])));
+  assert(old["game_logs"][0]["year"] === YEAR + 1 && old["game_logs"].every((x) => !("team_name" in x) && x["rows"].length));
+  const fresh = season.load_teams()["ohio-state"]["offense"][0];
+  equal(season.player_profile(moved, "ohio-state", null, null, fresh["slug"])["game_logs"], []);
 });
 
 await run();

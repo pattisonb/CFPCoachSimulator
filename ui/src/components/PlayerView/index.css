@@ -505,3 +505,13 @@
   padding: 0 8px;
   font-size: var(--t-xs);
 }
+
+/* the Game Log: only the opponent's name may wrap; the season's team (when not his now) sits over the table */
+.player-view__table--log :is(th, td):not(:nth-child(2)) {
+  white-space: nowrap;
+}
+
+.player-view__with {
+  margin-bottom: 4px;
+  font-size: var(--t-xs);
+}

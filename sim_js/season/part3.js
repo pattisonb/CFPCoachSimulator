@@ -679,7 +679,7 @@ function _heisman_with_final_lines(state, h) {
     const group = get(season._LINE_GROUP, c["position"]);
     if (!truthy(rec) || !truthy(group)) return null;
     const line = awards.stat_line({ stats: rec["stats"] }, group);
-    return line !== get(c, "line") ? line : null;
+    return line.toLowerCase() !== (get(c, "line") || "").toLowerCase() ? line : null;   // (a line kept by an older save differs only in its capitals)
   }
   const out = { ...h, candidates: get(h, "candidates", []).map((c) => ({ ...c, final_line: final(c) })) };
   if (truthy(get(h, "winner"))) out["winner"] = { ...h["winner"], final_line: final(h["winner"]) };

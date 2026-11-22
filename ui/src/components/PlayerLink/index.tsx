@@ -50,7 +50,7 @@ interface Props {
  */
 export default function PlayerLink({ team, name, position, children, className }: Props) {
   const open = useContext(Open);
-  if (!open || !team) return <>{children ?? name}</>;
+  if (!open || !team || !name) return <>{children ?? name}</>; // (a unit's award names no player: no card to open)
   return (
     <button
       type="button"

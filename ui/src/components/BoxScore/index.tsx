@@ -14,6 +14,7 @@ import {
   type SideKey,
 } from "../../gamelog.ts";
 import type { TeamCard } from "../../types.ts";
+import { titleCase } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -172,8 +173,8 @@ export function Scoring({
             {scoreKind(s.kind)}
           </span>
           <span className="box__desc">
-            <b>{s.team_name}</b> {s.description}
-            {s.try && <span className="box__soft"> ({s.try})</span>}
+            <b>{s.team_name}</b> {titleCase(s.description)}
+            {s.try && <span className="box__soft"> ({titleCase(s.try)})</span>}
           </span>
           <span className="box__running">
             {s.away_score}–{s.home_score}

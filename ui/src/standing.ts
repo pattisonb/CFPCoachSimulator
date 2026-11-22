@@ -33,7 +33,7 @@ export function standingOf(b: BoardRow, me: string): Standing {
     return {
       word: st.pct != null && st.pct >= 0.3 ? "In It" : "Long Shot",
       text: `Verbal commit to ${there}.`,
-      odds: st.pct != null && st.pct >= 0.3 ? "He could still flip to you" : "A flip is a long shot",
+      odds: st.pct != null && st.pct >= 0.3 ? "He Could Still Flip to You" : "A Flip Is a Long Shot",
       tone: "warn",
       pct: st.pct,
     };

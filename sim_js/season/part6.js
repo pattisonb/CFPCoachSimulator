@@ -112,8 +112,8 @@ season.RATING_LABELS = [["speed", "Speed"], ["strength", "Strength"], ["intellig
   ["hands", "Hands"], ["route_running", "Route Running"], ["run_blocking", "Run Blocking"], ["pass_blocking", "Pass Blocking"],
   ["rushing", "Pass Rush"], ["tackling", "Tackling"], ["coverage", "Coverage"], ["kick_power", "Kick Power"],
   ["kick_accuracy", "Kick Accuracy"], ["punt_power", "Punt Power"], ["punt_accuracy", "Punt Accuracy"], ["return_rating", "Returns"]];
-season.CLASS_NAMES = { FR: "Freshman", FRRS: "Redshirt freshman", SO: "Sophomore", SORS: "Redshirt sophomore", JR: "Junior",
-  JRRS: "Redshirt junior", SR: "Senior", SRRS: "Redshirt senior" };
+season.CLASS_NAMES = { FR: "Freshman", FRRS: "Redshirt Freshman", SO: "Sophomore", SORS: "Redshirt Sophomore", JR: "Junior",
+  JRRS: "Redshirt Junior", SR: "Senior", SRRS: "Redshirt Senior" };
 
 // ----- settings and god mode -----------------------------------------------------------
 
@@ -303,11 +303,11 @@ function morale_view(state, slug, name, position) {
   const form = on ? season.player_form(state, slug, name, position) : 0.0;
   const tm = on ? season.team_morale(state, slug) : 0.0;
   let label, team_label;
-  if (form >= season.MORALE_HOT) label = "Hot streak";
-  else if (form <= -season.MORALE_HOT) label = "Cold streak";
+  if (form >= season.MORALE_HOT) label = "Hot Streak";
+  else if (form <= -season.MORALE_HOT) label = "Cold Streak";
   else label = "Steady";
-  if (tm >= season.MORALE_HOT) team_label = "Team riding high";
-  else if (tm <= -season.MORALE_HOT) team_label = "Team in a slump";
+  if (tm >= season.MORALE_HOT) team_label = "Team Riding High";
+  else if (tm <= -season.MORALE_HOT) team_label = "Team in a Slump";
   else team_label = "";
   const factor = season.morale_factor(state, slug, name, position);
   return { enabled: on, form: round(form, 2), team: round(tm, 2), factor: round(factor, 3),
@@ -683,8 +683,8 @@ function player_honors(state, team, name) {
   const h = get(nat, "heisman") || {};
   get(h, "candidates", []).forEach((c, i) => {
     if (hit(c)) {
-      const place = i === 0 ? "Heisman Trophy winner" : `${ordinal(i + 1)} in the Heisman vote`;
-      out.push({ stage: "Heisman", award: "Heisman Trophy", place: place + (i && get(h, "finalists", []).some((x) => py_eq(x, c)) ? " (finalist)" : ""), detail: `${c["points"]} points` });
+      const place = i === 0 ? "Heisman Trophy Winner" : `${ordinal(i + 1)} in the Heisman Vote`;
+      out.push({ stage: "Heisman", award: "Heisman Trophy", place: place + (i && get(h, "finalists", []).some((x) => py_eq(x, c)) ? " (Finalist)" : ""), detail: `${c["points"]} Points` });
     }
   });
   for (const a of [...get(nat, "awards", []), ...get(get(aw, "postseason") || {}, "awards", [])]) {
@@ -699,7 +699,7 @@ function player_honors(state, team, name) {
   const aa = get(nat, "all_america") || {};
   for (const c of get(aa, "consensus", [])) {
     if (hit(c)) {
-      out.push({ stage: "All-America", award: "Consensus All-American" + (truthy(get(c, "unanimous")) ? " (unanimous)" : ""), place: c["slot"], detail: `First team on ${c["selectors"]} of 5 selectors` });
+      out.push({ stage: "All-America", award: "Consensus All-American" + (truthy(get(c, "unanimous")) ? " (Unanimous)" : ""), place: c["slot"], detail: `First Team on ${c["selectors"]} of 5 Selectors` });
     }
   }
   for (const [sel, picks] of Object.entries(get(aa, "selectors") || {})) {
@@ -743,17 +743,30 @@ function player_game_log(state, team, name, position) {
     out.push({ event_id: eid, week: g["week"], title: get(g, "title"), opponent: opp,
       opponent_name: home ? g["away_display"] : g["home_display"],
       venue: season._venue(g, home),
-      won: pf > pa, points_for: pf, points_against: pa, stats: p["stats"], started: truthy(get(p, "starter")) });
+      won: pf > pa, points_for: pf, points_against: pa, stats: p["stats"], started: truthy(get(p, "starter")),
+      ...season.game_line(position, p["stats"]) });
   }
   out.sort((a, b) => cmp(a["week"], b["week"]));
   return out;
 }
 
+function game_line(position, stats) {
+  // One game's stat line for a Game Log row, in the words the game already uses for a position: {line: the short one
+  // his card leads with (awards.headline, "383 yds · 4 TD"), line_full: the box-score line (awards.stat_line)}.
+  // {} with no stats on file, or at a position that has no line.
+  if (!truthy(stats) || !Object.keys(stats).length) return {};
+  const group = awards.Pool._group(position, null, stats) || position;
+  const line = awards.headline({ stats }, group);
+  return truthy(line) ? { line, line_full: awards.stat_line({ stats }, group) } : {};
+}
+
 function team_game_logs(state, team) {
-  // The season's games your team has box scores for, once, and who played in each: what a career keeps of a season
-  // when it ends (offseason.keep_game_logs). {games: [a game_log row without the player's own parts], players:
-  // {"Name|POS": one character a game: "2" started, "1" played, "0" did not}}.
-  const games = [], players = {};
+  // The season's games your team has box scores for, once, and every player's part in each: what a career keeps of a
+  // season when it ends (offseason.keep_game_logs). {games: [a game_log row without the player's own parts],
+  // stat_keys: [every stat's name, once], players: {"Name|POS": {pos, m, s}}}: `m` a character a game ("2" started,
+  // "1" played, "0" did not) and `s` his stat line for each game he played, in order, as [index into stat_keys,
+  // value, ...] (his box-score `stats`, whole).
+  const games = [], players = {}, stat_keys = [], key_at = {};
   const boxes = [];
   for (const [eid, box] of Object.entries(get(state, "my_boxes") || {})) {
     const g = get(state["games"], eid);
@@ -767,32 +780,53 @@ function team_game_logs(state, team) {
       won: pf > pa, points_for: pf, points_against: pa });
     for (const p of box[home ? "home" : "away"]["players"]) {
       const key = `${p["name"]}|${p["position"]}`;
-      if (!own(players, key)) players[key] = "0".repeat(boxes.length).split("");
-      players[key][i] = truthy(get(p, "starter")) ? "2" : "1";
+      if (!own(players, key)) players[key] = { pos: p["position"], m: "0".repeat(boxes.length).split(""), s: [] };
+      if (players[key]["m"][i] !== "0") continue;                    // (a name twice in one box: the first is his)
+      players[key]["m"][i] = truthy(get(p, "starter")) ? "2" : "1";
+      const line = [];
+      for (const [k, v] of Object.entries(get(p, "stats") || {})) {
+        if (!own(key_at, k)) { key_at[k] = stat_keys.length; stat_keys.push(k); }
+        line.push(key_at[k], v);
+      }
+      players[key]["s"].push(line);
     }
   });
-  return { games, players: Object.fromEntries(Object.entries(players).map(([k, v]) => [k, v.join("")])) };
+  for (const e of Object.values(players)) e["m"] = e["m"].join("");
+  return { games, stat_keys, players };
 }
 
 function player_game_logs(state, team, slug, now) {
-  // His game log season by season, newest first: [{year, rows}]. `now` is this season's log (player_game_log); the
-  // seasons before it are the ones the career kept (offseason.keep_game_logs), each only if he has a game in it.
-  // This season leads when he has played, and also, with no rows yet, when there is a kept season after it (the page
-  // then opens on the newest season with games). Another team's player, or a season that is not a career: this
-  // season's at most.
+  // His game log season by season, newest first: [{year, rows}]. `now` is this season's log (player_game_log, null
+  // for a team whose box scores the season does not keep); the seasons before it are the ones the career kept
+  // (offseason.keep_game_logs), each only if he has a game in it. They follow him: a season is kept wherever he plays
+  // now, and one he played for another team than he is on carries that team's name (`team_name`).
+  // On your team this season leads when he has played, and also, with no rows yet, when there is a kept season after
+  // it (the page then opens on the newest season with games). A season that is not a career: this season's at most.
   const past = [];
-  if (team === get(state, "team") && truthy(slug)) {
+  if (truthy(slug)) {
+    const teams = season.load_teams();
     const kept = get(get(state, "career") || {}, "game_logs") || [];
-    for (const s of sorted(kept.filter((x) => get(x, "team") === team && x["year"] !== get(state, "year")), (x) => x["year"], true)) {
-      const marks = get(get(s, "players") || {}, slug) || "";
+    for (const s of sorted(kept.filter((x) => x["year"] !== get(state, "year")), (x) => x["year"], true)) {
+      let e = get(get(s, "players") || {}, slug);
+      if (typeof e === "string") e = { m: e };                      // a save from when only who played was kept: no lines
+      const marks = get(e || {}, "m") || "", lines = get(e || {}, "s") || [], keys = get(s, "stat_keys") || [];
       const rows = [];
+      let n = 0;
       (get(s, "games") || []).forEach((g, i) => {
-        if (marks[i] === "1" || marks[i] === "2") rows.push({ ...g, started: marks[i] === "2" });
+        if (marks[i] !== "1" && marks[i] !== "2") return;
+        const flat = lines[n++] || [];
+        const stats = {};
+        for (let j = 0; j + 1 < flat.length; j += 2) stats[keys[flat[j]]] = flat[j + 1];
+        rows.push({ ...g, started: marks[i] === "2", ...(truthy(lines.length) ? { stats, ...season.game_line(get(e, "pos"), stats) } : {}) });
       });
-      if (rows.length) past.push({ year: s["year"], rows });
+      if (rows.length) {
+        past.push({ year: s["year"], rows,
+          ...(get(s, "team") !== team ? { team_name: get(get(teams, s["team"]) || {}, "name") || s["team"] } : {}) });
+      }
     }
   }
   const mine = truthy(now) ? now : [];
+  if (team !== get(state, "team")) return past;                    // his seasons with you; this one is another team's
   return mine.length || past.length ? [{ year: get(state, "year"), rows: mine }, ...past] : [];
 }
 
@@ -1060,6 +1094,6 @@ Object.assign(season, {
   settings, update_settings, morale_on, _morale_store, team_morale, player_form, morale_factor, morale_payload,
   _perf_score, _decay_morale, _update_morale, morale_view, player_edits, preset_faces, all_preset_faces, player_faces,
   set_player_face, _attr_to_source, _edit_attributes, team_edits, team_data, attribute_ceilings, _attribute_ceilings,
-  development_reads, edit_player, derived_stat, _rank_group, player_ranks, player_honors, player_game_log, team_game_logs, player_game_logs,
+  development_reads, edit_player, derived_stat, _rank_group, player_ranks, player_honors, player_game_log, game_line, team_game_logs, player_game_logs,
   recruit_stars, our_rating, all_skills, player_profile,
 });

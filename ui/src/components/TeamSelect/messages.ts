@@ -1,6 +1,6 @@
 export const messages = {
   search: "Search",
-  searchPlaceholder: "Team, mascot, city or state",
+  searchPlaceholder: "Team, Mascot, City or State",
   clearSearch: "Clear Search",
   conference: "Conference",
   allConferences: "All Conferences",

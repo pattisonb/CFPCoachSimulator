@@ -31,7 +31,7 @@ export const messages = {
   winner: "Winner",
   points: "Points",
   share: (share: number, ballots: number) => `${share}% of Possible · ${ballots} Ballots`,
-  pts: (n: number) => `${n.toLocaleString("en-US")} pts`,
+  pts: (n: number) => `${n.toLocaleString("en-US")} Pts`,
   chasing: "Chasing Him",
   openVote: "See the Full Vote",
   noHeisman: "No Heisman Race Yet",
@@ -63,8 +63,8 @@ export const messages = {
   noHonorsLive: "Nobody from your team is in a top five yet.",
   noHonors: "No awards or placements this season.",
   unitLine: (ypg: number, ypc: number, sacks: number) =>
-    `${ypg} rush yds a game · ${ypc} a carry · ${sacks}% sacks allowed`,
-  unitShort: (ypg: number) => `${ypg} rush yds a game`,
+    `${ypg} Rush Yds a Game · ${ypc} a Carry · ${sacks}% Sacks Allowed`,
+  unitShort: (ypg: number) => `${ypg} Rush Yds a Game`,
   consensusAa: "Consensus All-America Team",
   unanimousAa: "Unanimous All-America Team",
   allAmerican: "All-American",
@@ -88,9 +88,9 @@ export const messages = {
     points: "Points",
   },
   colsTip: {
-    first: "First-place votes (3 points)",
-    second: "Second-place votes (2 points)",
-    third: "Third-place votes (1 point)",
+    first: "First-place votes (3 points).",
+    second: "Second-place votes (2 points).",
+    third: "Third-place votes (1 point).",
   },
   // the second pass: the national table, the coaches, the honor teams
   whatFor: (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}.`,

@@ -281,7 +281,7 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
                     ceiling={a.potential}
                     tip={
                       a.potential != null
-                        ? `${a.about}.
+                        ? `${a.about}
 ${m.ceiling(a.potential)}.`
                         : a.about
                     }
@@ -305,7 +305,9 @@ ${m.ceiling(a.potential)}.`
                 />
               )}
               {p.promise && <PanelRow label={m.promise} value={p.promise} tip={m.promiseTip} />}
-              {goalLine && <PanelRow label={m.goal} value={goalLine} tip={goal?.text} />}
+              {goalLine && goal && (
+                <PanelRow label={m.goal} value={goalLine} tip={m.goalNext(goal.tier_name, goal.text)} />
+              )}
               {pr.traits.length > 0 && (
                 <PanelRow label={m.traits} value={pr.traits.map((t) => `${t.name} (${t.tier_name})`).join(", ")} />
               )}
@@ -518,7 +520,8 @@ ${m.ceiling(a.potential)}.`
  */
 function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<string, string> }) {
   // a game from before the seasons were sent: this season's log alone
-  const seasons = pr.game_logs ?? (pr.game_log?.length ? [{ year: 0, rows: pr.game_log }] : []);
+  const seasons: NonNullable<PlayerProfile["game_logs"]> =
+    pr.game_logs ?? (pr.game_log?.length ? [{ year: 0, rows: pr.game_log }] : []);
   const [picked, setPicked] = useState<number | null>(null);
   const shown = seasons.find((s) => s.year === picked) ?? seasons.find((s) => s.rows.length) ?? seasons[0];
   return (
@@ -536,14 +539,19 @@ function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<st
         ) : undefined
       }
     >
+      {/* a season he played for another team than he is on now: which */}
+      {shown?.team_name && (
+        <p className="player-view__soft player-view__with">{m.gamesWith(shown.team_name, shown.year)}</p>
+      )}
       {shown?.rows.length ? (
-        <table className="player-view__table">
+        <table className="player-view__table player-view__table--log">
           <thead>
             <tr>
               <th scope="col">{m.weekCol}</th>
               <th scope="col">{m.opponent}</th>
               <th scope="col">{m.result}</th>
               <th scope="col">{m.role}</th>
+              <th scope="col">{m.line}</th>
             </tr>
           </thead>
           <tbody>
@@ -553,6 +561,10 @@ function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<st
                 <td>{m.versus(g.venue === "away", g.opponent_name)}</td>
                 <td>{m.score(g.won, g.points_for, g.points_against)}</td>
                 <td>{g.started ? m.started : m.played}</td>
+                {/* his line that game, short; the whole box-score line on hover */}
+                <td>
+                  {g.line ? <Tip text={g.line_full}>{g.line}</Tip> : <span className="player-view__soft">–</span>}
+                </td>
               </tr>
             ))}
           </tbody>

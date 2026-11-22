@@ -1,4 +1,5 @@
 import type { BoxScore, BoxSide } from "./types.ts";
+import { titleCase } from "./format.ts";
 
 // A played game in full (GET /api/season/{id}/game/{event_id}): the two sides with their players, the scoring plays
 // and every drive with its play log. The box score reads it as tables; Game Day replays it a play at a time, so the
@@ -153,9 +154,9 @@ export const SCORE_KINDS: Record<string, string> = {
 };
 export const driveResult = (r: string) => DRIVE_RESULTS[r] ?? r;
 export const scoreKind = (k: string) => SCORE_KINDS[k] ?? k.toUpperCase();
-/** A drive in a line: "Touchdown · 8 plays, 74 yards, 3:12". */
+/** A drive in a line: "Touchdown · 8 Plays, 74 Yards, 3:12". */
 export const driveLine = (d: Drive) =>
-  `${driveResult(d.result)} · ${d.plays} ${d.plays === 1 ? "play" : "plays"}, ${d.end_yardline - d.start_yardline} yards, ${clockOf(d.seconds)}`;
+  `${driveResult(d.result)} · ${d.plays} ${d.plays === 1 ? "Play" : "Plays"}, ${d.end_yardline - d.start_yardline} Yards, ${clockOf(d.seconds)}`;
 
 /** Whether a drive ended in points. */
 const SCORING_RESULTS = ["touchdown", "field goal", "safety", "defensive_touchdown", "punt_return_td"];
@@ -254,7 +255,8 @@ export function momentsOf(g: GameBox, abbr: Record<SideKey, string>): Moment[] {
     away = s.away_score;
     return s;
   };
-  const scoreText = (s: ScoringPlay) => `${s.team_name}: ${s.description}${s.try ? ` (${s.try})` : ""}`;
+  const scoreText = (s: ScoringPlay) =>
+    `${s.team_name}: ${titleCase(s.description)}${s.try ? ` (${titleCase(s.try)})` : ""}`;
 
   const out: Moment[] = [];
   g.drives.forEach((d, di) => {

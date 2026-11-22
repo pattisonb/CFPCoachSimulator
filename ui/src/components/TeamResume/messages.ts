@@ -38,7 +38,7 @@ export const messages = {
   l: "L",
   vs: "vs",
   at: "at",
-  boxScore: "Open the box score",
+  boxScore: "Open the box score.",
   cols: {
     week: "Week",
     opponent: "Opponent",

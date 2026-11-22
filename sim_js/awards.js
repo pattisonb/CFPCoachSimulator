@@ -441,19 +441,19 @@ export function _n(v, one) {
 export function headline(p, group) {
   const st = p["stats"];
   const get = (k, d = null) => dict_get(st, k, d);
-  if (group === "QB") return `${commas(get("pass_yards", 0))} yds · ${get("passing_touchdowns", 0) + get("rushing_touchdowns", 0)} TD`;
-  if (group === "RB") return `${commas(get("rush_yards", 0))} yds · ${get("rushing_touchdowns", 0) + get("receiving_touchdowns", 0)} TD`;
-  if (group === "WR" || group === "TE") return `${commas(get("receiving_yards", 0))} yds · ${get("receiving_touchdowns", 0)} TD`;
-  if (group === "EDGE" || group === "DT") return `${_n(get("sacks", 0), "sack")} · ${g_format(get("tackles_for_loss", 0))} TFL`;
-  if (group === "LB") return `${get("solo_tackles", 0) + get("assisted_tackles", 0)} tkl · ${g_format(get("tackles_for_loss", 0))} TFL`;
+  if (group === "QB") return `${commas(get("pass_yards", 0))} Yds · ${get("passing_touchdowns", 0) + get("rushing_touchdowns", 0)} TD`;
+  if (group === "RB") return `${commas(get("rush_yards", 0))} Yds · ${get("rushing_touchdowns", 0) + get("receiving_touchdowns", 0)} TD`;
+  if (group === "WR" || group === "TE") return `${commas(get("receiving_yards", 0))} Yds · ${get("receiving_touchdowns", 0)} TD`;
+  if (group === "EDGE" || group === "DT") return `${_n(get("sacks", 0), "Sack")} · ${g_format(get("tackles_for_loss", 0))} TFL`;
+  if (group === "LB") return `${get("solo_tackles", 0) + get("assisted_tackles", 0)} Tkl · ${g_format(get("tackles_for_loss", 0))} TFL`;
   if (group === "DB") return `${get("interceptions", 0)} INT · ${get("passes_defended", 0)} PBU`;
   if (group === "K") return `${get("fg_made", 0)}/${get("fg_attempted", 0)} FG`;
   if (group === "P") {
     const n = Math.max(1, get("punts", 0));
-    return `${fmt(get("punt_net_yards", 0) / n, 1)} net`;
+    return `${fmt(get("punt_net_yards", 0) / n, 1)} Net`;
   }
-  if (group === "OL") return `${_n(get("sacks_allowed", 0), "sack")} allowed`;
-  if (group === "RS") return `${commas(get("kickoff_return_yards", 0) + get("punt_return_yards", 0))} ret yds`;
+  if (group === "OL") return `${_n(get("sacks_allowed", 0), "Sack")} Allowed`;
+  if (group === "RS") return `${commas(get("kickoff_return_yards", 0) + get("punt_return_yards", 0))} Ret Yds`;
   return "";
 }
 
@@ -462,37 +462,37 @@ export function stat_line(p, group) {
   const st = p["stats"];
   const get = (k, d = null) => dict_get(st, k, d);
   if (group === "QB") {
-    return (`${get("completions", 0)}/${get("pass_attempts", 0)}, ${commas(get("pass_yards", 0))} yds, ${get("passing_touchdowns", 0)} TD, `
-            + `${get("interceptions_thrown", 0)} INT, ${fmt(passer_rating(st), 1)} rtg; ${commas(get("rush_yards", 0))} rush yds, ${get("rushing_touchdowns", 0)} rush TD`);
+    return (`${get("completions", 0)}/${get("pass_attempts", 0)}, ${commas(get("pass_yards", 0))} Yds, ${get("passing_touchdowns", 0)} TD, `
+            + `${get("interceptions_thrown", 0)} INT, ${fmt(passer_rating(st), 1)} Rtg; ${commas(get("rush_yards", 0))} Rush Yds, ${get("rushing_touchdowns", 0)} Rush TD`);
   }
   if (group === "RB") {
-    return (`${get("carries", 0)} car, ${commas(get("rush_yards", 0))} yds, ${get("rushing_touchdowns", 0)} TD; `
-            + `${get("receptions", 0)} rec, ${commas(get("receiving_yards", 0))} yds, ${get("receiving_touchdowns", 0)} TD`);
+    return (`${get("carries", 0)} Car, ${commas(get("rush_yards", 0))} Yds, ${get("rushing_touchdowns", 0)} TD; `
+            + `${get("receptions", 0)} Rec, ${commas(get("receiving_yards", 0))} Yds, ${get("receiving_touchdowns", 0)} TD`);
   }
   if (group === "WR" || group === "TE") {
-    const line = `${get("receptions", 0)} rec, ${commas(get("receiving_yards", 0))} yds, ${get("receiving_touchdowns", 0)} TD`;
-    return line + (truthy(get("explosive_catches", 0)) ? `, ${_n(get("explosive_catches", 0), "play")} of 25+` : "");   // real box scores carry no play lengths
+    const line = `${get("receptions", 0)} Rec, ${commas(get("receiving_yards", 0))} Yds, ${get("receiving_touchdowns", 0)} TD`;
+    return line + (truthy(get("explosive_catches", 0)) ? `, ${_n(get("explosive_catches", 0), "Play")} of 25+` : "");   // real box scores carry no play lengths
   }
   if (["EDGE", "DT", "LB", "DB"].includes(group)) {
     const tk = get("solo_tackles", 0) + get("assisted_tackles", 0);
-    return (`${_n(tk, "tackle")}, ${g_format(get("tackles_for_loss", 0))} TFL, ${_n(get("sacks", 0), "sack")}, ${get("interceptions", 0)} INT, `
+    return (`${_n(tk, "Tackle")}, ${g_format(get("tackles_for_loss", 0))} TFL, ${_n(get("sacks", 0), "Sack")}, ${get("interceptions", 0)} INT, `
             + `${get("passes_defended", 0)} PBU, ${get("forced_fumbles", 0)} FF`);
   }
   if (group === "K") {
-    return `${get("fg_made", 0)}/${get("fg_attempted", 0)} FG, ${get("fg_50_made", 0)}/${get("fg_50_att", 0)} from 50+, long ${get("long_fg", 0)}, ${get("pat_made", 0)}/${get("pat_attempts", 0)} PAT`;
+    return `${get("fg_made", 0)}/${get("fg_attempted", 0)} FG, ${get("fg_50_made", 0)}/${get("fg_50_att", 0)} From 50+, Long ${get("long_fg", 0)}, ${get("pat_made", 0)}/${get("pat_attempts", 0)} PAT`;
   }
   if (group === "P") {
     const n = Math.max(1, get("punts", 0));
-    return `${get("punts", 0)} punts, ${fmt(get("punt_yards", 0) / n, 1)} avg, ${fmt(get("punt_net_yards", 0) / n, 1)} net, ${get("punts_inside_20", 0)} inside 20`;
+    return `${get("punts", 0)} Punts, ${fmt(get("punt_yards", 0) / n, 1)} Avg, ${fmt(get("punt_net_yards", 0) / n, 1)} Net, ${get("punts_inside_20", 0)} Inside 20`;
   }
   if (group === "OL") {
-    return (`${commas(get("snaps", 0))} ${get("snaps", 0) === 1 ? "snap" : "snaps"}, ${_n(get("sacks_allowed", 0), "sack")} allowed, `
-            + `${_n(get("pressures_allowed", 0), "pressure")}, ${_n(get("key_blocks", 0), "key block")}`);
+    return (`${commas(get("snaps", 0))} ${get("snaps", 0) === 1 ? "Snap" : "Snaps"}, ${_n(get("sacks_allowed", 0), "Sack")} Allowed, `
+            + `${_n(get("pressures_allowed", 0), "Pressure")}, ${_n(get("key_blocks", 0), "Key Block")}`);
   }
   if (group === "RS") {
     const ret = get("kickoff_returns", 0) + get("punt_returns", 0);
     const ry = get("kickoff_return_yards", 0) + get("punt_return_yards", 0);
-    return `${ret} returns, ${commas(ry)} yds, ${fmt(ry / Math.max(1, ret), 1)} avg, ${get("kickoff_return_touchdowns", 0) + get("punt_return_touchdowns", 0)} TD`;
+    return `${ret} Returns, ${commas(ry)} Yds, ${fmt(ry / Math.max(1, ret), 1)} Avg, ${get("kickoff_return_touchdowns", 0) + get("punt_return_touchdowns", 0)} TD`;
   }
   return "";
 }
@@ -710,8 +710,8 @@ export function broyles_table(pool) {
   for (const slug of fbs) {
     const coaches = truthy(dict_get(teams[slug], "coaches")) ? teams[slug]["coaches"] : {};
     const wins = pool.records[slug]["wins"];
-    for (const [role, key, rank, rrank] of [["Offensive coordinator", "offensive_coordinator", off_rank, off_rating],
-      ["Defensive coordinator", "defensive_coordinator", def_rank, def_rating]]) {
+    for (const [role, key, rank, rrank] of [["Offensive Coordinator", "offensive_coordinator", off_rank, off_rating],
+      ["Defensive Coordinator", "defensive_coordinator", def_rank, def_rating]]) {
       const c = truthy(dict_get(coaches, key)) ? coaches[key] : {};
       if (!truthy(dict_get(c, "name"))) continue;
       const gain = (rrank[slug] - rank[slug]) / Math.max(1, fbs.length) * 6;

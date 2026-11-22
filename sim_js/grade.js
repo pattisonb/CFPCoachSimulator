@@ -26,7 +26,7 @@ const GRADE_LETTERS = [["A+", 97], ["A", 93], ["A-", 90], ["B+", 87], ["B", 83],
   ["D+", 67], ["D", 63], ["D-", 60], ["F", 0]];
 
 const ROUND_WORDS = { 17: "the first round", 18: "the quarterfinals", 19: "the semifinals", 20: "the national championship game" };
-// one sentence per band; {record} is the final record, {goal} the AD's goal in lowercase, {round} the playoff exit
+// one sentence per band; {record} is the final record, {goal} the AD's goal in lowercase (the table holds it in Title Case), {round} the playoff exit
 const GRADE_LINES = {
   champion: "National champions at {record}: the season every program dreams of.",
   playoff: "A playoff season at {record}; the run ended in {round}.",
@@ -95,7 +95,7 @@ export function season_grade(state) {
   else band = "missed";
   const text = goal["text"];
   const last_week = playoff.length ? Math.max(...playoff.map((g) => g["week"])) : 0;
-  const fill = { record: `${wins}-${losses}`, A: [8, 11, 18].includes(wins) ? "An" : "A", goal: text.slice(0, 1).toLowerCase() + text.slice(1),
+  const fill = { record: `${wins}-${losses}`, A: [8, 11, 18].includes(wins) ? "An" : "A", goal: text.toLowerCase().replace("college football playoff", "College Football Playoff"),
     round: get(grade.ROUND_WORDS, last_week, "the playoff") };
   const line = grade.GRADE_LINES[band].replace(/\{(record|A|goal|round)\}/g, (_, k) => fill[k]);
   return { grade: letter, score, band, line, goal: text, met };

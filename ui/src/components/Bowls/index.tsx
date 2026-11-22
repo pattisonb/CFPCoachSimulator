@@ -190,7 +190,7 @@ function Banner({ b, teams, me, yours }: { b: Bowl; teams: Map<string, TeamCard>
         <div className="bowls-banner__when">
           <span className="label bowls__kicker">{yours ? (played ? `${yours} · ${kicker}` : yours) : kicker}</span>
           <b className="bowls-banner__name">{b.name}</b>
-          <span>{[b.date, b.time].filter(Boolean).join(" · ")}</span>
+          <span>{[b.date, m.time(b.time)].filter(Boolean).join(" · ")}</span>
           {b.site && <span className="bowls-banner__chip">{b.site}</span>}
         </div>
         <div className="bowls-banner__facts">

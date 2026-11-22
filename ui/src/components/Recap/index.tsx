@@ -6,6 +6,7 @@ import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { inkOn } from "../../colors.ts";
+import { titleCase } from "../../format.ts";
 import type { PollEntry, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import PlayerLink from "../PlayerLink/index.tsx";
@@ -230,7 +231,7 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
                 <h2>
                   {me.wins}-{me.losses}
                 </h2>
-                <p>{me.finish ?? (played ? m.soFar(weekName) : m.notStarted)}</p>
+                <p>{me.finish ? titleCase(me.finish) : played ? m.soFar(weekName) : m.notStarted}</p>
                 {view.grade && (
                   <div className="recap__grade" title={view.grade.line}>
                     <span className="label">{m.grade}</span>

@@ -28,5 +28,5 @@ export const messages = {
   titleTip: (away: string, home: string) => `${away} vs ${home}`,
   /** a postseason week that came and went, or will, with no game of yours */
   noGame: "No Game",
-  boxScore: (opponent: string) => `Open the box score: ${opponent}`,
+  boxScore: (opponent: string) => `Open the box score: ${opponent}.`,
 } as const;

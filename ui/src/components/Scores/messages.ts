@@ -15,7 +15,7 @@ export const messages = {
   finalOt: (n: number) => (n > 1 ? `Final/${n}OT` : "Final/OT"),
   toBePlayed: "To Be Played",
   neutral: "Neutral Site",
-  boxScore: (away: string, home: string) => `Open the box score: ${away} at ${home}`,
+  boxScore: (away: string, home: string) => `Open the box score: ${away} at ${home}.`,
   boxScoreShort: "Box Score",
 
   noRivalries: (team: string) => `${team} has no rivalries on record.`,

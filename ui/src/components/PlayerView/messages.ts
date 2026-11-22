@@ -111,6 +111,8 @@ export const messages = {
   opponent: "Opponent",
   result: "Result",
   role: "Role",
+  line: "Line",
+  gamesWith: (team: string, year: number) => `His ${year} games with ${team}.`,
   versus: (away: boolean, opp: string) => `${away ? "at" : "vs"} ${opp}`,
   score: (won: boolean, pf: number, pa: number) => `${won ? "W" : "L"} ${pf}–${pa}`,
   started: "Started",

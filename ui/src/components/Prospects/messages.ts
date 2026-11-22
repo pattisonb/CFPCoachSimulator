@@ -39,12 +39,12 @@ export const messages = {
   askRange: (lo: number, hi: number) => `${lo}–${hi}`,
   sortBy: (col: string) => `Sort by ${col}`,
   unscouted: "Unscouted",
-  addBoard: (name: string) => `Add ${name} to your board`,
-  removeBoard: (name: string) => `Take ${name} off your board`,
+  addBoard: (name: string) => `Add ${name} to your board.`,
+  removeBoard: (name: string) => `Take ${name} off your board.`,
   pullsOffer: (name: string) =>
     `${name} holds your offer. Taking him off your board pulls it (and a soft commit to you ends). Go ahead?`,
-  addFav: (name: string) => `Add ${name} to your favorites`,
-  removeFav: (name: string) => `Take ${name} off your favorites`,
+  addFav: (name: string) => `Add ${name} to your favorites.`,
+  removeFav: (name: string) => `Take ${name} off your favorites.`,
   favOn: (name: string) => `${name} is one of your favorites.`,
   favOff: (name: string) => `${name} is off your favorites.`,
   boardOn: (name: string) => `${name} is on your board.`,
@@ -107,5 +107,5 @@ export const messages = {
   commits: (n: number, spots: number) => `${n} / ${spots}`,
   committed: "Committed",
   footprint: (board: number, contact: number, scouted: number) =>
-    `${board} on your board · ${contact} in contact · ${scouted} scouted`,
+    `${board} on Your Board · ${contact} in Contact · ${scouted} Scouted`,
 } as const;

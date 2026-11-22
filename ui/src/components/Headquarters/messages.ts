@@ -208,7 +208,7 @@ export const messages = {
   spotsFilled: "Class Spots Filled",
   rosterNote: (limit: number) => `Rosters hold ${limit}. Open spots are what next year's roster leaves room for.`,
   calKinds: { game: "Game", visit: "Visit", signing: "Signing" },
-  onVisit: (name: string) => `${name} on an official visit`,
+  onVisit: (name: string) => `${name} on an Official Visit`,
   noCalendar: "Nothing left on the calendar this season.",
   rankNow: "Class Rank Now",
   rankIf: "If He Commits",

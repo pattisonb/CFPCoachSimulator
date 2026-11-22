@@ -15,7 +15,7 @@ export const messages = {
   injured: (type: string) => `Injured (${type.replace(/\b[a-z]/g, (c) => c.toUpperCase())})`,
   team: "Team",
   player: "Player",
-  openCard: (name: string) => `Open ${name}'s card`,
+  openCard: (name: string) => `Open ${name}'s card.`,
 
   stats: {
     points: "Points",
@@ -46,8 +46,8 @@ export const messages = {
     kickReturns: "Kick Returns",
     puntReturns: "Punt Returns",
   },
-  passLine: (c: number, a: number, y: number) => `${c}/${a}, ${y} yds`,
-  rushLine: (c: number, y: number) => `${c} car, ${y} yds`,
+  passLine: (c: number, a: number, y: number) => `${c}/${a}, ${y} Yds`,
+  rushLine: (c: number, y: number) => `${c} Car, ${y} Yds`,
   returns: (n: number, y: number, td: number) => `${n} for ${y}${td ? `, ${td} TD` : ""}`,
   redZoneLine: (scores: number, trips: number, td: number) => `${scores}/${trips} (${td} TD)`,
 

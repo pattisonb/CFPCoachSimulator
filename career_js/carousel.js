@@ -28,8 +28,8 @@ const contains = (coll, x) => (coll instanceof Set ? coll.has(x) : Array.isArray
 const deep = (o) => JSON.parse(JSON.stringify(o));
 
 // goals, by the program's recruiting baseline (about -2 to +2): (from, kind, wins, words) *tune*
-const GOALS = [[1.2, "playoff", 10, "Make the College Football Playoff"], [0.5, "wins", 9, "Win nine games"],
-  [-0.3, "wins", 7, "Win seven games and go bowling"], [-10, "wins", 6, "Reach a bowl game"]];
+const GOALS = [[1.2, "playoff", 10, "Make the College Football Playoff"], [0.5, "wins", 9, "Win Nine Games"],
+  [-0.3, "wins", 7, "Win Seven Games and Go Bowling"], [-10, "wins", 6, "Reach a Bowl Game"]];
 const G5_TITLE_FROM = 0.0;             // a Group of 5 program this strong expects to win its conference
 const START_SECURITY = 70;
 const STANDING = [33, 90];             // a sitting coach's unknown standing when the career starts (third season on) *tune*

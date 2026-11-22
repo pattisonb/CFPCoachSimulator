@@ -35,7 +35,7 @@ export const messages = {
   simThroughSub: "Stop after any week.",
   autoNote: "The recruiting weeks in between run on Auto.",
   simming: "Simming…",
-  progress: (done: number, total: number) => `${done} of ${total} games`,
+  progress: (done: number, total: number) => `${done} of ${total} Games`,
   stop: "Stop After This Week",
   simError: (msg: string) => `The sim stopped: ${msg}.`,
 
@@ -50,7 +50,7 @@ export const messages = {
   scout: "Scout",
   scoutSub: (left: number) => `${left} scouting ${left === 1 ? "point" : "points"} to spend on prospects.`,
   scoutDone: "This week's scouting points are spent.",
-  points: (n: number) => `${n} ${n === 1 ? "pt" : "pts"}`,
+  points: (n: number) => `${n} ${n === 1 ? "Pt" : "Pts"}`,
   depth: "Depth Chart",
   depthSub: (n: number) => `${n} ${n === 1 ? "player is" : "players are"} hurt: check who starts.`,
   hurt: (n: number) => `${n} Out`,
@@ -94,7 +94,7 @@ export const messages = {
   noScores: "No results yet. The scores show here after the first games.",
   finalOt: "Final/OT",
   boxScore: "Box Score",
-  boxScoreOf: (away: string, home: string) => `Open the box score: ${away} at ${home}`,
+  boxScoreOf: (away: string, home: string) => `Open the box score: ${away} at ${home}.`,
   loading: "Loading…",
   loadError: (msg: string) => `Couldn't load this: ${msg}.`,
 } as const;

@@ -11,7 +11,7 @@ import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { playerFace } from "../../faces.ts";
-import { formatClass } from "../../format.ts";
+import { formatClass, titleCase } from "../../format.ts";
 import type { TeamCard } from "../../types.ts";
 import type { StageProps } from "./index.tsx";
 import { messages as m } from "./messages.ts";
@@ -807,7 +807,7 @@ function PortalRecap({ v, teams }: P) {
           {rec.lost.length ? (
             <ol className="precap__list">
               {rec.lost.map((x) => (
-                <li key={x.id} className="precap__row" title={x.reason || undefined}>
+                <li key={x.id} className="precap__row" title={x.reason ? `${x.reason}.` : undefined}>
                   {face(x)}
                   <span className="precap__who">
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
@@ -1143,7 +1143,7 @@ function Notes({ why }: { why: string[] }) {
     items.length > 0 && (
       <span className="dev-card__note">
         <span className="label">{label}</span>
-        {items.join(" · ")}
+        {items.map(titleCase).join(" · ")}
       </span>
     );
   return (
@@ -1249,7 +1249,7 @@ function Staff({ v, teams, busy, live, act, season }: P) {
                     <b className="cand__name">{c.name}</b>
                   </header>
                   <span className="off__soft">
-                    {[c.age ? m.staff.age(c.age) : "", c.previous_job, c.years ? m.staff.years(c.years) : ""]
+                    {[c.age ? m.staff.age(c.age) : "", titleCase(c.previous_job), c.years ? m.staff.years(c.years) : ""]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
@@ -1322,7 +1322,7 @@ function Staff({ v, teams, busy, live, act, season }: P) {
                   <b>{d.name}</b>
                   <span className="off__soft">
                     {role(d.role)}
-                    {d.why.length ? ` · ${d.why.join(", ")}` : ""}
+                    {d.why.length ? ` · ${d.why.map(titleCase).join(", ")}` : ""}
                   </span>
                 </span>
                 <span className="off__soft">

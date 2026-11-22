@@ -532,6 +532,10 @@ export interface GameLogRow {
   points_for: number;
   points_against: number;
   started: boolean;
+  /** his stat line that game, short ("303 yds · 5 TD"); absent with no line on file */
+  line?: string;
+  /** the same in full, as a box score has it */
+  line_full?: string;
 }
 
 /** GET /api/season/{id}/player?team=&slug= (the parts the new UI uses) */
@@ -582,8 +586,13 @@ export interface PlayerProfile {
   }[];
   /** his games this season, in order; null when the game keeps no box scores for his team */
   game_log?: GameLogRow[] | null;
-  /** his game log a season at a time, newest first: this season (empty before he plays), then the past ones he played in (a career keeps the last few); [] with no game at all */
-  game_logs?: { year: number; rows: GameLogRow[] }[];
+  /** his game log a season at a time, newest first: this season (empty before he plays), then the past ones he played in (a career keeps the last few, and they follow him to another team: there, the past ones alone); [] with no game at all */
+  game_logs?: {
+    year: number;
+    rows: GameLogRow[];
+    /** the team that season was with, when it is not the one he is on now */
+    team_name?: string;
+  }[];
   honors?: { stage: string; award: string; place: string; detail: string }[];
   /** his past seasons, oldest first */
   history?: {

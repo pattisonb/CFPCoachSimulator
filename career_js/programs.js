@@ -46,10 +46,10 @@ programs.NIL_FLOOR_TIER = 10.0;
 programs.COACH_TENURE = 3.0;               // coach appeal: overall + this a year of tenure (up to five) - 5
 programs.COACH_TIER_MEAN = { 1: 77, 2: 65, 3: 60, 4: 48, 5: 40 };   // real 2026 head coaches' overall by tier: what a program of that tier can hire
 programs.COACH_LEAGUE_MEAN = 52;           // the real 2026 head coaches' mean overall
-programs.GOALS = { 1: ["playoff", 10, "Make the College Football Playoff"], 2: ["wins", 9, "Win nine games"],
-  3: ["wins", 8, "Win eight games"], 4: ["wins", 7, "Win seven games and go bowling"], 5: ["wins", 6, "Reach a bowl game"] };
+programs.GOALS = { 1: ["playoff", 10, "Make the College Football Playoff"], 2: ["wins", 9, "Win Nine Games"],
+  3: ["wins", 8, "Win Eight Games"], 4: ["wins", 7, "Win Seven Games and Go Bowling"], 5: ["wins", 6, "Reach a Bowl Game"] };
 programs.G5_TITLE_FROM = 42.0;             // a Group of 5 program rated this high expects to win its conference
-programs.INDEPENDENT_GOAL = ["wins", 10, "Win ten games"];   // the same program with no conference to win (UConn): ten wins instead *tune*
+programs.INDEPENDENT_GOAL = ["wins", 10, "Win Ten Games"];   // the same program with no conference to win (UConn): ten wins instead *tune*
 programs.INDEPENDENTS = new Set(["FBS Independents", "FBS Independent", "Independent", "Independents"]);
 programs.MARKET_DEFAULT = 25;              // a program without three seasons of FBS crowds (new to FBS)
 programs.P4 = new Set(["SEC", "Big Ten", "Big 12", "ACC"]);
@@ -257,7 +257,7 @@ export function goal_for(tier, p4, rating = null, independent = false) {
       const [kind, wins, text] = programs.INDEPENDENT_GOAL;
       return { kind: kind, wins: wins, text: text };
     }
-    return { kind: "conference", wins: 10, text: "Win the conference" };
+    return { kind: "conference", wins: 10, text: "Win the Conference" };
   }
   const [kind, wins, text] = programs.GOALS[tier];
   return { kind: kind, wins: wins, text: text };
