@@ -31,6 +31,7 @@ import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { dateText, kickoffText, ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
+import SimBoard from "../SimBoard/index.tsx";
 import type { NewsItem, OfficeView, RecruitingWeek, ScheduleGame, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -221,6 +222,8 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const conf = confShort(office?.conference.name ?? s.conference);
   const st = office?.conference.standing;
   const signing = s.current_week >= CLOSE_WEEK;
+  /** the sim's own progress, while one runs: the Office shows the board and nothing to press */
+  const board = sim.running ? sim.status : null;
   const title = s.done ? m.seasonComplete(s.year) : m.thisWeek;
   const subtitle = s.done
     ? s.champion_name
@@ -229,12 +232,25 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
     : [weekName(w), dateText(thisWeek?.date ?? s.week_dates[String(w)]?.main)].filter(Boolean).join(" · ");
 
   return (
-    <div className="office">
+    <div className={board ? "office is-simming" : "office"}>
+      {/* a sim running: one big board in place of the game, the actions and the to-dos (the player's ask) */}
+      {board && (
+        <div className="office__board">
+          <SimBoard
+            week={weekName((board.current_week ?? s.current_week) + 1)}
+            record={board.record ?? s.record}
+            conference={conf}
+            place={office?.conference.independent || !st ? null : m.confPlace(ordinal(st.conf_rank), st.of)}
+            rank={s.my_rank?.rank ? `#${s.my_rank.rank}` : null}
+            results={board.results ?? []}
+          />
+        </div>
+      )}
       {/* ---------- left: the game, then the actions ---------- */}
-      <aside className="office__col office__left">
+      <aside className="office__col office__left" hidden={!!board}>
         {s.done ? (
           <WrapCard s={s} teams={teams} />
-        ) : sim.running ? null : (
+        ) : (
           <GameCard {...card} teams={teams} weekName={weekName} onBox={onBox} simming={sim.running} />
         )}
         <Actions
@@ -249,7 +265,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       </aside>
 
       {/* ---------- middle: the week and its to-dos ---------- */}
-      <section className="office__col office__mid" aria-label={m.todo}>
+      <section className="office__col office__mid" aria-label={m.todo} hidden={!!board}>
         <header className="office__hero">
           <h1 className="office__title">
             <span>{title}</span>

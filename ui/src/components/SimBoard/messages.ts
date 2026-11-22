@@ -1,0 +1,15 @@
+export const messages = {
+  label: "The Sim So Far",
+  kicker: "Now Simming",
+  record: "Record",
+  rank: "Rank",
+  unranked: "Unranked",
+  winsLosses: (w: number, l: number) => `${w}-${l}`,
+  results: "Latest Results",
+  win: "W",
+  loss: "L",
+  score: (us: number, them: number) => `${us}-${them}`,
+  ot: (n: number) => (n > 1 ? `${n}OT` : "OT"),
+  venue: { home: "vs", away: "at", neutral: "vs" } as Record<string, string>,
+  none: "No games played yet.",
+} as const;

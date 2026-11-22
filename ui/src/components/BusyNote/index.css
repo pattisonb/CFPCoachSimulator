@@ -54,3 +54,8 @@ body:has(.ticker) .busy-note {
     animation: none;
   }
 }
+
+/* a sim running: its own bar says so, and the pill would only repeat it (the player's ask) */
+body:has(.game.is-simming) .busy-note {
+  display: none;
+}
