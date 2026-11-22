@@ -910,7 +910,10 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   }
   const injuries = get(state, "injuries") || {};
   let injured = false;
-  for (const entry_ of is_dict(injuries) ? get(injuries, team) || [] : []) {
+  // (the season keeps a team's injured as a dict by "Name|POS": Python's loop then walks its keys, which are text,
+  // so no name is read from them; a list of [name, ...] or of {"name"} entries is read as written)
+  const hurt = is_dict(injuries) ? get(injuries, team) || [] : [];
+  for (const entry_ of Array.isArray(hurt) ? hurt : Object.keys(hurt)) {
     const n = Array.isArray(entry_) ? entry_[0] : is_dict(entry_) ? get(entry_, "name") : null;
     if (n === name) injured = true;
   }
