@@ -514,6 +514,7 @@ def _warm_next_game(state: dict, report: Callable[[str], None] | None) -> None:
         news.league_news(state, state["current_week"] - WARM_NEWS_WEEKS)
     except Exception:  # noqa: BLE001
         pass
+    season.forget_fresh_boxes()          # the news has read the week's boxes: they are on disk
 
 
 def step(report: Callable[[str], None] | None = None) -> dict | None:
