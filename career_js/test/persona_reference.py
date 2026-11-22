@@ -184,6 +184,26 @@ def rec_act() -> None:
     recruiting._act = w
 
 
+def rec_nil(name: str) -> None:
+    """_nil and nil_left open the school's NIL record when it has none: what they made goes with the answer."""
+    orig = getattr(recruiting, name)
+
+    def w(state, slug):
+        global DEPTH
+        if REC is None or DEPTH:
+            return orig(state, slug)
+        had = slug in state["recruiting"]["nil"]
+        DEPTH += 1
+        try:
+            out = orig(state, slug)
+        finally:
+            DEPTH -= 1
+        REC.setdefault(f"recruiting.{name}:" + json.dumps([slug], separators=(",", ":")), []).append(
+            jclone({"ret": {"budget": out["budget"]} if name == "_nil" else out, "made": None if had else state["recruiting"]["nil"][slug]}))
+        return out
+    setattr(recruiting, name, w)
+
+
 def hooks() -> None:
     R = recruiting
     rec(R, "recruiting", "report_looks", lambda read: [None if read is None else READ_PID[id(read)]])
@@ -194,8 +214,8 @@ def hooks() -> None:
     rec(R, "recruiting", "_commits", lambda state: [])
     rec(R, "recruiting", "open_spots", lambda state, slug: [slug])
     rec(R, "recruiting", "offer_cap", lambda state, slug: [slug])
-    rec(R, "recruiting", "nil_left", lambda state, slug: [slug])
-    rec(R, "recruiting", "_nil", lambda state, slug: [slug], lambda out, state, slug: {"budget": out["budget"]})
+    rec_nil("nil_left")
+    rec_nil("_nil")
     rec(R, "recruiting", "best_pitch", lambda state, slug, pid, required=False: [slug, pid, bool(required)])
     rec(R, "recruiting", "tier_of", lambda p: [p["id"], p["stars"]])
     rec(R, "recruiting", "nil_ask", lambda p, year, seed: [p["id"], p["stars"], bits(p["composite"]), year, seed])
@@ -356,7 +376,9 @@ def sweep(base: dict, week: int, entries: list, pre=(), name="") -> dict:
                     print(f"    skipped {name} {fn}{args}: {type(e).__name__} {e}", flush=True)
     finally:
         stubs = end()
-    assert json.dumps(slim(st)) == before, f"a read-only call changed the state ({name})"
+    moved_ = diff(json.loads(before), slim(st))
+    if moved_:                                           # (persona's own reads change nothing: the compare script checks that)
+        print(f"    {name}: the modules persona asked changed the state: {json.dumps(moved_)[:300]}", flush=True)
     print(f"    sweep {name}: {len(done)} calls ({skipped} skipped)", flush=True)
     return {"kind": "sweep", "name": name, "pre": list(pre), "clear": clear.on(), "entries": done, "stubs": stubs}
 

@@ -43,6 +43,12 @@ function apply(obj, ops) {
 }
 
 class RecruitingError extends Error {}
+/** _nil and nil_left: the answer, and the school's NIL record the Python opened for it when it had none. */
+function nil_record(name, state, slug) {
+  const got = take(`recruiting.${name}`, [slug]);
+  if (got.made !== null && state.recruiting.nil[slug] === undefined) state.recruiting.nil[slug] = got.made;
+  return got.ret;
+}
 const given = (win) => win !== undefined && win !== null;
 const recruiting = {
   ...stat.recruiting,
@@ -50,14 +56,17 @@ const recruiting = {
   _ASKS: {},
   report_looks: (read) => take("recruiting.report_looks", [read === null || read === undefined ? null : read._pid]),
   interest: (state, slug, pid, win) => take("recruiting.interest", [slug, pid, given(win)]),
-  ask_from: (state, slug, pid, win) => take("recruiting.ask_from", [slug, pid, given(win)]),
+  ask_from(state, slug, pid, win) {                      // (it opens the school's contact record with him, as the Python's does)
+    recruiting._contact(state, slug, pid);
+    return take("recruiting.ask_from", [slug, pid, given(win)]);
+  },
   _fits: (state, slug) => take("recruiting._fits", [slug]),
   _winning: () => take("recruiting._winning", []),
   _commits: () => take("recruiting._commits", []),
   open_spots: (state, slug) => take("recruiting.open_spots", [slug]),
   offer_cap: (state, slug) => take("recruiting.offer_cap", [slug]),
-  nil_left: (state, slug) => take("recruiting.nil_left", [slug]),
-  _nil: (state, slug) => take("recruiting._nil", [slug]),
+  nil_left: (state, slug) => nil_record("nil_left", state, slug),
+  _nil: (state, slug) => nil_record("_nil", state, slug),
   best_pitch: (state, slug, pid, required = false) => take("recruiting.best_pitch", [slug, pid, !!required]),
   tier_of: (p) => take("recruiting.tier_of", [p.id, p.stars]),
   nil_ask: (p, year, seed) => take("recruiting.nil_ask", [p.id, p.stars, bits(p.composite), year, seed]),
@@ -211,10 +220,9 @@ for (const file of files) {
   const state_text = JSON.stringify(data.state);
   const fresh = (pre) => { const s = parse_ordered(state_text, [["games"]]); apply(s, pre); return s; };
   totals.files++;
-  let bad_here = 0;
+  const bad_before = totals.bad;
   for (const [gi, group] of data.groups.entries()) {
     const label = `${file} #${gi} ${group.kind}${group.name ? ` "${group.name}"` : ""}`;
-    const before = totals.bad;
     begin(group);
     if (group.kind === "sweep") {
       totals.sweeps++;
@@ -258,8 +266,8 @@ for (const file of files) {
       }
       for (const f of found.slice(0, 3)) fail(`${name}: ${f}`);
     }
-    bad_here += totals.bad - before;
   }
+  const bad_here = totals.bad - bad_before;
   console.log(`${file}: ${data.groups.length} groups, ${bad_here ? `${bad_here} DIFFERENT` : "the same"}`);
 }
 

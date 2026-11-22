@@ -61,6 +61,14 @@ export function _eq(a, b) {
   return true;
 }
 
+// d[k] where Python raises KeyError for a key that is not there (a value the file's checks would have refused):
+// to_league turns the error into the team's TeamBuildError, so it has to be one here too.
+function _key(d, k) {
+  const v = d[k];
+  if (v === undefined) throw new Error(`KeyError: ${JSON.stringify(k)}`);
+  return v;
+}
+
 // copy.deepcopy of a value of the data (key order kept, an odict's too).
 function _deepcopy(v) {
   if (v === null || v === undefined || typeof v !== "object") return v === undefined ? null : v;
@@ -173,7 +181,7 @@ export function strength_target(team, conference, strengths) {
   // without one its conference's built-in members' mean (the FBS median for a new conference).
   const grade = get(team, "strength");
   if (grade !== null) {
-    const g = typeof grade === "string" ? league_fill.STRENGTH_GRADE[grade] : grade;
+    const g = typeof grade === "string" ? _key(league_fill.STRENGTH_GRADE, grade) : grade;
     return _percentile(Object.values(strengths), g);
   }
   const mine = [];
@@ -307,7 +315,7 @@ export function fill_roster(team, target, rng, attrs, taken) {
   const level = starter_level(target);
   const lines = [];
   const roster_in = (get(team, "roster") || []).filter((p) => _is_dict(p));
-  for (const p of roster_in) taken.add(_strip(String(p["name"])).toLowerCase());
+  for (const p of roster_in) taken.add(_strip(String(_key(p, "name"))).toLowerCase());
 
   // 1. depth slots: the depth chart's order first, then roster order, at each position
   const charted = {};
@@ -318,7 +326,7 @@ export function fill_roster(team, target, rng, attrs, taken) {
   }
   const by_pos = {};
   roster_in.forEach((p, i) => {
-    const pos = league_file.POS_IN[p["pos"]];
+    const pos = _key(league_file.POS_IN, _key(p, "pos"));
     if (by_pos[pos] === undefined) by_pos[pos] = [];
     by_pos[pos].push(i);
   });
@@ -364,8 +372,8 @@ export function fill_roster(team, target, rng, attrs, taken) {
   const gen = [];   // [index in out, template, raw target, room, given potential]
   for (let i = 0; i < roster_in.length; i++) {
     const p = roster_in[i];
-    const pos = league_file.POS_IN[p["pos"]];
-    const cls = p["class"];
+    const pos = _key(league_file.POS_IN, _key(p, "pos"));
+    const cls = _key(p, "class");
     const given_r = {};
     for (const [k, v] of Object.entries(get(p, "ratings") || {})) if (attrs.includes(k)) given_r[k] = int(Number(v));
     const n_given = Object.keys(given_r).length;
@@ -418,7 +426,7 @@ export function fill_roster(team, target, rng, attrs, taken) {
   for (const g of Object.keys(offseason.FLOOR)) counts[g] = 0;
   const at_pos = {};
   for (const c of out) {
-    counts[offseason.GROUP[c["pos"]]] += 1;
+    counts[_key(offseason.GROUP, c["pos"])] += 1;
     at_pos[c["pos"]] = get(at_pos, c["pos"], 0) + 1;
   }
   const want = !out.length ? offseason.TARGET : offseason.FLOOR;

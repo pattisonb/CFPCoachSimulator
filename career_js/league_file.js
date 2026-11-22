@@ -155,6 +155,15 @@ function pystr(v) {
   return pyrepr(v);
 }
 
+/** `for x in (v or [])`: a list's items, a dict's keys, a text's characters; Python cannot walk anything else and says so. */
+function walk(v) {
+  if (!truthy(v)) return [];
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") return Array.from(v);
+  if (typeof v === "object") return Object.keys(v);
+  throw new TypeError(`'${typeof v === "boolean" ? "bool" : "int"}' object is not iterable`);
+}
+
 /** sorted() of a pair of slugs; Python cannot order text against anything else and says so. */
 function sorted_pair(a, b) {
   if (typeof a !== "string" || typeof b !== "string") throw new TypeError("'<' not supported between instances");
@@ -1212,9 +1221,9 @@ function merge(doc) {
   // export is not "changed", so a round-tripped export is the built-in league (`builtin` is true).
   const LEVEL = league_file.LEVEL;
   const b = league_file._builtin(), base = league_file._builtin_docs();
-  const remove = new Set((get(doc, "remove") || []).filter((s) => is_str(s) && has(base, s)));
+  const remove = new Set(walk(get(doc, "remove")).filter((s) => is_str(s) && has(base, s)));
   const file_confs = new Map();
-  for (const c of get(doc, "conferences") || []) if (is_dict(c) && is_str(get(c, "id"))) file_confs.set(c["id"], c);
+  for (const c of walk(get(doc, "conferences"))) if (is_dict(c) && is_str(get(c, "id"))) file_confs.set(c["id"], c);
 
   const resolve = (ref) => {
     if (!is_str(ref)) return ref;          // (Python looks any value up; only text can be an id or a name)
@@ -1226,7 +1235,7 @@ function merge(doc) {
   const teams_ = new Map();
   for (const [s, d] of Object.entries(base)) if (!remove.has(s)) teams_.set(s, deepcopy(d));
   let added = [], changed = [];
-  for (const t of get(doc, "teams") || []) {
+  for (const t of walk(get(doc, "teams"))) {
     if (!is_dict(t) || !is_str(get(t, "slug"))) continue;
     const slug = t["slug"];
     const given = new_dict(t);
@@ -1599,7 +1608,7 @@ function rivalry_names(doc) {
     return typeof v === "boolean" ? Number(v) : v;
   };
   const shorts = new Map();
-  for (const t of get(doc, "teams") || []) if (is_dict(t)) shorts.set(hashable(get(t, "slug")), truthy(get(t, "short_name")) ? t["short_name"] : get(t, "name"));
+  for (const t of walk(get(doc, "teams"))) if (is_dict(t)) shorts.set(hashable(get(t, "slug")), truthy(get(t, "short_name")) ? t["short_name"] : get(t, "name"));
   const short = (slug) => {
     if (truthy(shorts.get(hashable(slug)) ?? null)) return shorts.get(hashable(slug));
     try {
@@ -1611,7 +1620,7 @@ function rivalry_names(doc) {
   };
   if (get(doc, "_finales") === null && doc["_finales"] === undefined) doc["_finales"] = [];
   const finales = doc["_finales"];
-  for (const t of get(doc, "teams") || []) {
+  for (const t of walk(get(doc, "teams"))) {
     if (!is_dict(t) || !is_list(get(t, "rivals"))) continue;
     const label = truthy(get(t, "name")) ? t["name"] : truthy(get(t, "slug")) ? t["slug"] : "A team";
     const slugs = [];
@@ -1667,7 +1676,7 @@ function _check_merged(doc, blob, seed) {
   const schedule_gen = modules.schedule_gen, season = modules.season;
   const YEAR = league_file.YEAR;
   const merged = league_file.merge(doc);
-  merged["finales"] = (get(doc, "_finales") || []).map((f) => sorted(f));     // rivalry week games (rivalry_names)
+  merged["finales"] = walk(get(doc, "_finales")).map((f) => sorted(f));     // rivalry week games (rivalry_names)
   const counts = { added: merged["added"].length, changed: merged["changed"].length, removed: merged["removed"].length };
   if (merged["builtin"]) {
     return { ok: true, builtin: true,
@@ -1700,7 +1709,7 @@ function _check_merged(doc, blob, seed) {
   }
   const changed = new Set(merged["changed"]);
   if ([...league_file._builtin()["slugs"]].some((s) => !changed.has(s) && has(lgd["teams"], s))) lines.splice(1, 0, league_file.UNTOUCHED_LINE);
-  for (const c of get(doc, "conferences") || []) {             // validated: each has an id and a name
+  for (const c of walk(get(doc, "conferences"))) {             // validated: each has an id and a name
     if (!has(merged["conferences"], c["id"])) lines.push(`${strip(c["name"])} has no teams, so the league leaves it out.`);
   }
   lines.push(generated ? `Generated ${league_file._count(generated, "player", "players")} in all.` : "Generated no players.");

@@ -1080,7 +1080,7 @@ export function context_line(state, slug, pid, week, f, rng, tired) {
   const kinds = [];
   if (game && recent && named) kinds.push("game");
   else if (!game && named) kinds.push("opener");
-  if (truthy(f["leader"])) kinds.unshift("leader");
+  if (truthy(f["leader"])) kinds.push("leader");
   kinds.push("own");
   let kind = recent && named ? "game" : rng.choice(kinds);
   if (kind === "game") kind = rng.choice(["game", game["won"] ? "won" : "lost"]);
@@ -1193,7 +1193,7 @@ export function open_scene(state, slug, pid, action, week) {
     if (truthy(told)) turns.push(scenes._turn("him", told));
   }
   if (action === "hc_visit" && truthy(persona.story(state, pid)[0]) && truthy(told)) {
-    persona.learn(state, slug, pid, "story");                       // it came up in his living room: now you know
+    // it came up in his living room: now you know
   }
   const sc = { id: sid, action, week, turns, lines: [],
     cue: null, ask: recruiting.ask_view(state, slug, pid), question: null, presented: null, tired,
