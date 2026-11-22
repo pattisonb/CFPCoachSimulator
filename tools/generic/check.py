@@ -30,9 +30,9 @@ def shipped(root: Path, files: list[str] | None = None) -> list[Path]:
         files = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.suffix in SOURCE | {".json"}
                  and "node_modules" not in p.parts and "ui" not in p.relative_to(root).parts[:1]]
     out = [root / f for f in files]
-    for js in ("engine_js", "sim_js"):           # the game's JavaScript: shipped as one bundled file (tools/build_site.py)
+    for js in ("engine_js", "sim_js", "teamdata_js", "career_js"):      # the game's JavaScript: shipped as one bundled file (tools/build_site.py)
         if (root / js).is_dir():
-            out += [p for p in sorted((root / js).rglob("*")) if p.suffix in SOURCE]
+            out += [p for p in sorted((root / js).rglob("*")) if p.suffix in SOURCE and "test" not in p.parts]
     ui = root / "ui"
     if ui.is_dir():
         out += [p for p in sorted(ui.rglob("*")) if p.suffix in SOURCE and "node_modules" not in p.parts and "dist" not in p.parts]

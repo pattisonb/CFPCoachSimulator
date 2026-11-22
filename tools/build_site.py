@@ -34,7 +34,7 @@ sys.path.insert(0, str(ROOT))
 
 PACKAGES = ("sim", "coach_career", "teamdata", "app")     # their .py files only
 ENGINE = "engine_js"       # the game engine, which is JavaScript: bundled into one file the workers load (engine.js)
-JS_DIRS = (ENGINE, "sim_js")    # the game's JavaScript so far (the engine and the season code ported onto it)
+JS_DIRS = (ENGINE, "sim_js", "teamdata_js", "career_js")    # the game's JavaScript so far (the engine and what has been ported onto it)
 # the data a career reads through a season, its offseason and the next season's first week
 DATA_FILES = (
     "data/engine_teams.json", "data/player_potential.json", "data/recruiting_model.json", "data/history/polls.json",

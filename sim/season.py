@@ -1376,16 +1376,13 @@ EXTERNAL_POOL = None   # set in the browser (app/browser_pool.py): a pool whose 
 
 def _sim_one(args: tuple) -> dict:
     """One game job. JavaScript plays it whole (sim_js/game_job.js: both teams as this week has them, the game, the
-    result boiled down); a job with this season's position changes comes back here, since placing a moved player
-    needs the card's formulas, which are still Python."""
+    result boiled down). A job it hands back (NotHere: a host of the JavaScript without the data files a position
+    change needs) is prepared here instead."""
     from sim import engine
-    path = _TEAMS_PATH or str(_league_path)
-    if not any(e and "__positions__" in e for e in args[9]):
-        try:
-            return engine.sim_one(path, list(args))
-        except engine.NotHere:
-            pass
-    return _sim_one_here(args)
+    try:
+        return engine.sim_one(_TEAMS_PATH or str(_league_path), list(args))
+    except engine.NotHere:
+        return _sim_one_here(args)
 
 
 def _sim_one_here(args: tuple) -> dict:
