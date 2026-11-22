@@ -236,9 +236,10 @@ for (const file of files) {
         diff(want, got, "", found);
         if (found.length) fail(`${label} ${fn}(${JSON.stringify(args).slice(0, 100)}) ${found[0]}`);
       }
-      const found = [];
-      diff(fresh(group.pre), state, "state", found);
-      if (found.length) fail(`${label}: a read-only call changed the state: ${found[0]}`);
+      const found = [], want = fresh([]);
+      apply(want, group.diff);
+      diff(want, state, "state", found);
+      if (found.length) fail(`${label}: the state after the reads: ${found[0]}`);
     } else {
       totals.cases++;
       const state = fresh(group.pre);
@@ -253,7 +254,7 @@ for (const file of files) {
       if (threw) { fail(`${name}: ${threw}`); continue; }
       const found = [];
       diff(group.rets, rets, "returned", found);
-      const want = fresh(group.pre);
+      const want = fresh([]);                  // (the Python's diff is from the file's state, `pre` included)
       apply(want, group.diff);
       diff(want, state, "state", found);
       for (const [k, q] of Object.entries(table)) {

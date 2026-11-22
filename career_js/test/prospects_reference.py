@@ -173,13 +173,18 @@ class Cases:
                     "p": lambda: rc["prospects"][a["id"]], "read": lambda: rc["reads"].get(a["id"])}[a["@"]]()
         return a
 
-    def add(self, fn: str, *args, close: bool = False) -> None:
-        """One call of prospects.<fn>; `close`: numbers may differ in their last digits (the C library's exp, cos, pow)."""
+    def add(self, fn: str, *args, close: bool = False, block: bool = False) -> None:
+        """One call of prospects.<fn>; `close`: numbers may differ in their last digits (the C library's exp, cos, pow);
+        `block`: asked inside `with prospects.class_block(state)`, as the Classes tab asks during the portal weeks."""
         try:
-            want = {"want": enc(getattr(prospects, fn)(*[self.real(a) for a in args]))}
+            if block:
+                with prospects.class_block(self.st):
+                    want = {"want": enc(getattr(prospects, fn)(*[self.real(a) for a in args]))}
+            else:
+                want = {"want": enc(getattr(prospects, fn)(*[self.real(a) for a in args]))}
         except recruiting.RecruitingError as e:
             want = {"error": [e.code, e.message]}
-        self.rows.append({"fn": fn, "args": [enc(a) for a in args], **want, **({"close": True} if close else {})})
+        self.rows.append({"fn": fn, "args": [enc(a) for a in args], **want, **({"close": True} if close else {}), **({"block": True} if block else {})})
 
 
 def sample(st: dict, n_random: int, seed: str) -> list:
@@ -381,11 +386,15 @@ def stage_cases(st: dict, light: bool) -> list:
         c.add("class_table", S, viewer, close=True)
     c.add("national_classes", S)
     schools = [me, other] + [s for s in recruiting.fbs_schools(st) if s not in (me, other)][:: 16 if light else 9]
+    portal = bool(rc.get("portal"))                  # the Classes tab asks for a class inside class_block then
     for slug in schools:
-        c.add("class_detail", S, slug, me)
+        c.add("class_detail", S, slug, me, block=portal)
         c.add("class_rank", S, slug)
         c.add("class_rank", S, slug, me)
-    c.add("class_detail", S, me, other)
+    c.add("class_detail", S, me, other, block=portal)
+    if portal:
+        c.add("national_classes", S, me, close=True, block=True)
+        c.add("search", S, me, None, None, None, None, None, 0, 20, block=True)
     c.add("season_week_label", st["current_week"])
     for w in range(0, 22):
         c.add("season_week_label", w)

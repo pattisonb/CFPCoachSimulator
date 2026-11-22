@@ -351,9 +351,15 @@ LOG = {"now": None}
 FORCE = {}
 
 
-def patch(mod, name, args_of, result_of):
-    real = getattr(mod, name)
+PATCHES = []
 
+
+def patch(mod, name, args_of, result_of):
+    PATCHES.append((mod, name, args_of, result_of))
+    setattr(mod, name, logging(getattr(mod, name), name, args_of, result_of))
+
+
+def logging(real, name, args_of, result_of):
     def w(*a, **k):
         if LOG["now"] is None:
             return real(*a, **k)
@@ -377,7 +383,8 @@ def patch(mod, name, args_of, result_of):
         entry["result"] = copy.deepcopy(result_of(res))
         LOG["now"].append(entry)
         return res
-    setattr(mod, name, w)
+    w.logging = True
+    return w
 
 
 def first_draw(rng_):
@@ -400,10 +407,18 @@ def check(blob, seed=None):
     if LOG["now"] is not None:
         return real_check(blob, seed)
     LOG["now"] = []
+    replaced = []           # a test that put its own function in a module's place: its answers are recorded too
+    for mod, name, args_of, result_of in PATCHES:
+        cur = getattr(mod, name)
+        if not getattr(cur, "logging", False):
+            replaced.append((mod, name, cur))
+            setattr(mod, name, logging(cur, name, args_of, result_of))
     try:
         out = real_check(blob, seed)
     finally:
         entries, LOG["now"] = LOG["now"], None
+        for mod, name, cur in replaced:
+            setattr(mod, name, cur)
     small_blob = len(blob) < 400000
     if (small_blob or sum(1 for c in CHECKS if c["blob"] == "=export") < 1) and len(CHECKS) < 70:
         exp = dict(out)
@@ -624,6 +639,7 @@ log("fuzz:", len(fuzz), "files;", sum("merged" in c["expect"] for c in fuzz), "m
 # ---- the repo's own tests, their calls recorded -------------------------------------------------------------------
 RECORD["on"] = True
 ran, failed = 0, []
+sys.path.insert(0, str(ROOT / "tests"))
 for file, only in (("test_league_file.py", None), ("test_league_schedule.py", None), ("test_league_career.py", ("test_plain_reasons",))):
     spec = importlib.util.spec_from_file_location("ref_" + file[:-3], ROOT / "tests" / file)
     mod = importlib.util.module_from_spec(spec)

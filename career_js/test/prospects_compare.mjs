@@ -158,16 +158,19 @@ for (const mode of ["clear", "words"]) {
       return decode(a);
     };
     for (const c of cases) {
-      const args = c.args.map(real);
       const label = `${where} ${JSON.stringify(c.args).slice(0, 110)}`;
       let got;
+      const block = c.block ? new prospects.class_block(state) : null;
       try {
-        got = prospects[c.fn](...args);
+        if (block) block.__enter__();
+        got = prospects[c.fn](...c.args.map(real));
       } catch (e) {
+        if (block) block.__exit__();
         if (e instanceof RecruitingError) { check(c.fn, c.error ?? "no error", [e.code, e.message], label); continue; }
         check(c.fn, "an answer", `threw ${String(e.stack || e).slice(0, 500)}`, label);
         continue;
       }
+      if (block) block.__exit__();
       if (c.error) { check(c.fn, c.error, "no error", label); continue; }
       check(c.fn, decode(c.want), got, label, c.close === true);
     }

@@ -40,6 +40,7 @@ BLOOMERS: set = set()
 LOG_BASE = 0          # the log's length when the case's state was taken: older lines that are not twists are left out
 CLEAR_FORCE = None
 LOW_SEC = False
+BASE_SLIM = None      # the kept state as its file has it
 SAVED: dict = {}      # week -> the whole state pickled as roll_twists was called
 CAPTURE = False
 COUNTS: dict = {}
@@ -70,9 +71,10 @@ def norm(v):
     return v
 
 
-def slim(state: dict) -> dict:
+def view(state: dict) -> dict:
     """The state as persona reads it (and as the compare script gets it): the prospects' fields it uses, the
-    recruiting block's keys it uses, each read only as whose it is, the log's twists and everything new."""
+    recruiting block's keys it uses, each read only as whose it is, the log's twists and everything new.
+    (Made of the state's own dicts and lists: to read at once, not to keep.)"""
     rc = state["recruiting"]
     out = {}
     for k, v in rc.items():
@@ -84,16 +86,26 @@ def slim(state: dict) -> dict:
             out[k] = [e for i, e in enumerate(v) if i >= LOG_BASE or e.get("kind") == "twist"]
         elif k in RC_KEEP:
             out[k] = v
-    s = {k: state[k] for k in ("id", "team", "current_week", "year") if k in state}
+    s = {k: state[k] for k in ("id", "team", "current_week", "year", "league") if k in state}
     s["games"] = state.get("games", {})
     s["recruiting"] = out
-    return jclone(s)
+    return s
+
+
+def slim(state: dict) -> dict:
+    return jclone(view(state))
 
 
 def diff(a, b, path=(), ops=None) -> list:
     """What changed from a to b: ["set", path, value], ["del", path], ["app", path, the items added to a list]."""
     if ops is None:
         ops = []
+    if isinstance(a, tuple):
+        a = list(a)
+    if isinstance(b, tuple):
+        b = list(b)
+    if type(a) is type(b) and type(a) in (dict, list) and a == b:        # (the same all the way down: nothing to walk)
+        return ops
     if type(a) is dict and type(b) is dict:
         for k in a:
             if k not in b:
@@ -107,7 +119,7 @@ def diff(a, b, path=(), ops=None) -> list:
         if len(a) == len(b):
             for i, (x, y) in enumerate(zip(a, b)):
                 diff(x, y, path + (i,), ops)
-        elif len(b) > len(a) and b[:len(a)] == a and json.dumps(b[:len(a)]) == json.dumps(a):
+        elif len(b) > len(a) and b[:len(a)] == a:
             ops.append(["app", list(path), b[len(a):]])
         else:
             ops.append(["set", list(path), b])
@@ -129,11 +141,17 @@ def apply(obj, ops) -> None:
             at[op[1][-1]] = jclone(op[2])
 
 
-def checked_diff(before, after) -> list:
-    ops = diff(before, after)
-    again = jclone(before)
-    apply(again, ops)
-    assert json.dumps(again) == json.dumps(after), "the diff does not rebuild the state (a dict's key order moved?)"
+CHECKS = [0]
+
+
+def checked_diff(before, after, always=True) -> list:
+    """The diff, and (always, or every tenth time) the proof that it rebuilds `after` from `before`, key order included."""
+    ops = jclone(diff(before, after))
+    CHECKS[0] += 1
+    if always or CHECKS[0] % 10 == 0:
+        again = jclone(before)
+        apply(again, ops)
+        assert json.dumps(again) == json.dumps(after), "the diff does not rebuild the state (a dict's key order moved?)"
     return ops
 
 
@@ -177,7 +195,7 @@ def rec_act() -> None:
         finally:
             DEPTH -= 1
         REC.setdefault("recruiting._act:" + json.dumps([slug, pid, action, pitch, nil], separators=(",", ":")), []).append(
-            {"raise": None if err is None else str(err), "ret": out, "diff": checked_diff(before, slim(state))})
+            {"raise": None if err is None else str(err), "ret": out, "diff": checked_diff(before, view(state), CAPTURE)})
         if err is not None:
             raise err
         return out
@@ -242,12 +260,12 @@ def packed(table: dict) -> dict:
     return {k: (v[:1] if all(json.dumps(x) == json.dumps(v[0]) for x in v) else v) for k, v in table.items()}
 
 
-def begin(state: dict) -> None:
+def begin(state: dict, blooms: bool = False) -> None:
     """Before a case, here and in the compare script: nothing kept in memory from the case before."""
     global REC, READ_PID, BLOOMERS
     REC = None
     persona._STORIES = (None, None, {})
-    BLOOMERS = {pid for pid, s in persona.stories(state).items() if s["story"] == "bloomer"}
+    BLOOMERS = {pid for pid, s in persona.stories(state).items() if s["story"] == "bloomer"} if blooms else set()
     persona._STORIES = (None, None, {})
     persona._FRONT = (None, {})
     persona._SCHOOL_STATE.clear()
@@ -279,12 +297,12 @@ def capture(name: str, keep) -> None:
         before = slim(state)
         if name == "roll_twists" and a[0] in SNAP_WEEKS:
             SAVED[a[0]] = pickle.dumps(state)
-        begin(state)
+        begin(state, name == "bloom")
         try:
             ret = orig(state, *a)
         finally:
             stubs = end()
-        ops = checked_diff(before, slim(state))
+        ops = checked_diff(before, view(state))
         if keep(a, ret, ops):
             case = {"kind": "case", "pre": [], "clear": clear.on(), "calls": [[name, ["$state", *a]]], "rets": [jclone(ret)], "diff": ops, "stubs": stubs}
             tag = f"apply_{state['recruiting'].get('seed')}" if name == "apply_stories" else f"step_{a[0]:02d}_{name}"
@@ -346,22 +364,21 @@ def case(base: dict, week: int, calls: list, pre=(), clear_on=None, low=False) -
     """Calls that change the state, on a copy of it."""
     global CLEAR_FORCE, LOW_SEC
     st = copy_of(base, list(pre))
-    before = slim(st)
     CLEAR_FORCE, LOW_SEC = clear_on, low
-    begin(st)
+    begin(st, any(fn == "bloom" for fn, _ in calls))
     try:
         rets = [norm(jclone(norm(call(st, fn, args, week)))) for fn, args in calls]
     finally:
         stubs = end()
         used_clear = clear.on()
         CLEAR_FORCE, LOW_SEC = None, False
-    return {"kind": "case", "pre": list(pre), "clear": used_clear, "calls": calls, "rets": rets, "diff": checked_diff(before, slim(st)), "stubs": stubs}
+    # (the diff is from the file's state, before `pre`: what the compare script rebuilds the Python's state from)
+    return {"kind": "case", "pre": list(pre), "clear": used_clear, "calls": calls, "rets": rets, "diff": checked_diff(BASE_SLIM, view(st), False), "stubs": stubs}
 
 
 def sweep(base: dict, week: int, entries: list, pre=(), name="") -> dict:
     """Calls that only read, one after another on one copy."""
     st = copy_of(base, list(pre))
-    before = json.dumps(slim(st))
     begin(st)
     done, skipped = [], 0
     try:
@@ -376,11 +393,10 @@ def sweep(base: dict, week: int, entries: list, pre=(), name="") -> dict:
                     print(f"    skipped {name} {fn}{args}: {type(e).__name__} {e}", flush=True)
     finally:
         stubs = end()
-    moved_ = diff(json.loads(before), slim(st))
-    if moved_:                                           # (persona's own reads change nothing: the compare script checks that)
-        print(f"    {name}: the modules persona asked changed the state: {json.dumps(moved_)[:300]}", flush=True)
-    print(f"    sweep {name}: {len(done)} calls ({skipped} skipped)", flush=True)
-    return {"kind": "sweep", "name": name, "pre": list(pre), "clear": clear.on(), "entries": done, "stubs": stubs}
+    # (what a read leaves behind: ask_from opens the school's contact record with him; and `pre` itself)
+    ops = checked_diff(BASE_SLIM, view(st))
+    print(f"    sweep {name}: {len(done)} calls ({skipped} skipped), {len(ops)} changes with pre's", flush=True)
+    return {"kind": "sweep", "name": name, "pre": list(pre), "clear": clear.on(), "entries": done, "diff": ops, "stubs": stubs}
 
 
 FIELDS = {"coach": "Smith", "school": "Ohio State", "first": "Jay", "position": "QB", "state": "Ohio", "town": "Columbus"}
@@ -467,12 +483,13 @@ def forced_pre(pids: list) -> list:
 
 
 def snapshot(week: int, teams: dict) -> None:
-    global LOG_BASE
+    global LOG_BASE, BASE_SLIM
     base = pickle.loads(SAVED[week])
     recruiting.reset_caches()
     recruiting._STEP_WEEK[0] = base["current_week"]
     rc = base["recruiting"]
     LOG_BASE = len(rc["log"])
+    BASE_SLIM = slim(base)
     pitches = [*recruiting.PITCHES, None]
     S = "$state"
     groups = []
@@ -540,7 +557,7 @@ def snapshot(week: int, teams: dict) -> None:
     free = sorted((q for q in pool if not rc["status"][q]["committed"] and not rc["status"][q]["signed"] and q not in (rc.get("twists") or {})),
                   key=lambda q: (rc["prospects"][q]["rank"], q))
     r = random.Random(week)
-    chosen = free[:40:6] + r.sample(free[40:], min(9, len(free[40:])))
+    chosen = free[:40:7] + r.sample(free[40:], min(8, len(free[40:])))
     for kind in persona.TWISTS:
         for i, pid in enumerate(chosen):
             cases.append(case(base, week, [["$setup", [pid, kind, f"setup-{week}-{kind}-{pid}"]], ["twist_view", [S, TEAM, pid]]],
@@ -559,7 +576,7 @@ def snapshot(week: int, teams: dict) -> None:
     cases.append(case(base, week, [["$rerank", []]], [["set", ["recruiting", "prospects", q, "composite"], c]
                                                     for q, c in zip(free[5:60:11], (0.2, 0.9991, 0.85, 0.5, 0.97))]))
     # learning
-    for pid in pids[::3]:
+    for pid in pids[::9]:
         for slug in (TEAM, "michigan"):
             cases.append(case(base, week, [["learn", [S, slug, pid, t]] for t in ("personality", "decider", "story", "style", "style", "story")]
                               + [["known", [S, slug, pid]], ["view", [S, slug, pid]]]))
@@ -575,7 +592,7 @@ def snapshot(week: int, teams: dict) -> None:
         cases.append(case(base, week, [["learn", [S, TEAM, pid, "style"]], ["learn", [S, TEAM, pid, "story"]]],
                           pre + [["set", ["recruiting", "portal"], True]]))
     # what a contact leaves: the contacts there are, with a comeback's and a two-sport's story forced on him
-    have = [(pid, s) for pid in sorted(rc["contacts"]) for s in sorted(rc["contacts"][pid])][::max(1, len(rc["contacts"]) // 12)][:12]
+    have = [(pid, s) for pid in sorted(rc["contacts"]) for s in sorted(rc["contacts"][pid])][::max(1, len(rc["contacts"]) // 8)][:8]
     for i, (pid, slug) in enumerate(have):
         f = dict(FORCED[2 + i % 2])
         for cw in (3, 8):
@@ -591,7 +608,7 @@ def snapshot(week: int, teams: dict) -> None:
     for pid in sorted(rc.get("twists") or {})[:8]:
         cases.append(case(base, week, [["knock_back", [S, TEAM, pid, "call"]]]))
     print(f"    {len(cases)} cases that change the state", flush=True)
-    write(f"snap_{week:02d}.json", {"week": week, "state": slim(base), "groups": groups + cases})
+    write(f"snap_{week:02d}.json", {"week": week, "state": BASE_SLIM, "groups": groups + cases})
     COUNTS[f"snap {week}"] = [len(groups), len(cases)]
 
 

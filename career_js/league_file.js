@@ -484,8 +484,12 @@ function export_document() {
     teams: slugs.map((s) => league_file.team_doc(lgd, s)) };
 }
 
+const _LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
+
 function dumps(doc) {
-  return _encoder.encode(json_text(doc) + "\n");
+  const text = json_text(doc) + "\n";
+  if (_LONE_SURROGATE.test(text)) throw new ValueError("'utf-8' codec can't encode a character: surrogates not allowed");   // (Python's UnicodeEncodeError)
+  return _encoder.encode(text);
 }
 
 const builtin_bytes = cached(() => league_file.dumps(league_file.export_document()));
