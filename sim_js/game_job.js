@@ -5,6 +5,7 @@
 import { round, int, sum, sorted, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { drive_functions } from "../engine_js/drive_functions.js";
 import { simulate_game } from "../engine_js/game.js";
+import { position_fit } from "../career_js/position_fit.js";
 
 // the ratings a whole-team shift moves (sim/form.py ATTRS)
 export const FORM_ATTRS = ["speed", "strength", "intelligence", "passing", "decision_making", "elusiveness", "vision", "hands",
@@ -20,7 +21,8 @@ export const ROLE_POSITION = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE",
   LEDG: "DL", REDG: "DL", DT: "DL", MIKE: "MLB", WILL: "ROLB", SAM: "LOLB", CB: "CB", FS: "S", SS: "S", K: "K", P: "P" };
 export const OFFENSE_POSITIONS = new Set(["QB", "RB", "WR", "TE", "OL", "K", "P"]);
 
-/** A job this file does not play: this season's position changes need the card's formulas, which are still Python. */
+/** A job this file does not play: one whose data files this host cannot read (a browser helper has the league's teams
+ * and nothing else, and this season's position changes need the scale and the card's formulas). */
 export class NotHere extends Error {}
 
 // ---- sim/form.py ----
@@ -82,6 +84,66 @@ export function apply_coach(team, coach) {
 }
 
 // ---- sim/season.py ----
+export function with_positions(team, moves) {
+  // A copy of the team with this season's position changes applied (change_position): each
+  // moved player at his new position and depth-chart role, placed in that role's order by his
+  // projected overall there (position_fit.season_move: his skills as they transfer, his size
+  // against the spot's; behind everyone rated at least as high; a depth-chart override still pins
+  // whoever you moved); his old role closes up behind him. The engine reads his attributes as they are,
+  // as it does for a player moved into another role on the depth chart.
+  const players = [...team["offense"], ...team["defense"]].map((p) => ({ ...p }));
+  const by_slug = new Map();
+  for (const p of players) by_slug.set(get(p, "slug"), p);
+  const starters = {};
+  for (const p of players) {
+    if (truthy(get(p, "role")) && truthy(get(p, "in_game"))) starters[p["role"]] = get(starters, p["role"], 0) + 1;
+  }
+  const keys = new Set();
+  for (const p of players) for (const k of Object.keys(get(p, "stats") || {})) keys.add(k);
+  const stat_keys = sorted(keys);
+  const touched = new Set(), arriving = new Set();
+  for (const [pslug, m] of Object.entries(moves)) {
+    const p = by_slug.has(pslug) ? by_slug.get(pslug) : null, role = get(truthy(m) ? m : {}, "to");
+    if (p === null || typeof role !== "string" || !Object.prototype.hasOwnProperty.call(ROLE_POSITION, role)) continue;
+    const pos = ROLE_POSITION[role];
+    if (get(p, "role") === role && p["position"] === pos) continue;      // the league file has him there already
+    for (const r of [get(p, "role"), role]) if (truthy(r)) touched.add(r);
+    arriving.add(pslug);
+    const crossing = OFFENSE_POSITIONS.has(p["position"]) !== OFFENSE_POSITIONS.has(pos);
+    if (truthy(get(p, "skills"))) {
+      const moved = position_fit.season_move(p, get(p, "role") || p["position"], role);
+      p["ovr"] = moved[0];
+      p["skills"] = moved[1];
+    }
+    p["position"] = pos;
+    p["role"] = role;
+    p["depth"] = null;
+    p["in_game"] = false;
+    p["source_position"] = role;                   // his card is scored where he plays now (game_scale.card_position)
+    if (crossing) p["stats"] = Object.fromEntries(stat_keys.map((k) => [k, 0]));      // a player crossing units needs every box-score key
+  }
+  if (!touched.size) return team;
+  for (const role of touched) {          // (each role's players are its own: the order the roles come in does not matter)
+    const group = sorted(players.filter((p) => get(p, "role") === role && !arriving.has(p["slug"])), (p) => [get(p, "depth") || 99, p["name"]]);
+    for (const p of sorted(players.filter((q) => get(q, "role") === role && arriving.has(q["slug"])), (q) => [-(get(q, "ovr") || 0), q["name"]])) {
+      let at = group.length;
+      for (let i = 0; i < group.length; i++) {
+        if ((get(group[i], "ovr") || 0) < (get(p, "ovr") || 0)) { at = i; break; }
+      }
+      group.splice(at, 0, p);
+    }
+    const n = get(starters, role, Object.prototype.hasOwnProperty.call(ROLE_POSITION, role) ? 1 : 0);
+    group.forEach((p, i) => {
+      p["depth"] = i + 1;
+      p["in_game"] = i < n;
+    });
+  }
+  const out = { ...team };
+  out["offense"] = players.filter((p) => OFFENSE_POSITIONS.has(p["position"]));
+  out["defense"] = players.filter((p) => !OFFENSE_POSITIONS.has(p["position"]));
+  return out;
+}
+
 export function with_edits(team, edits) {
   // A copy of the team with god-mode edits merged into its players, and your coach on your team.
   if (!truthy(edits)) return team;
@@ -89,7 +151,16 @@ export function with_edits(team, edits) {
     team = apply_coach(team, edits["__coach__"]);
     edits = Object.fromEntries(Object.entries(edits).filter(([k]) => k !== "__coach__"));
   }
-  if ("__positions__" in edits) throw new NotHere("this season's position changes");
+  if ("__positions__" in edits) {
+    // this season's position changes (change_position): he plays and shows at his new spot
+    try {
+      team = with_positions(team, edits["__positions__"]);
+    } catch (err) {
+      // (position_fit.season_move reads the scale's files: a host without them leaves the job to one that has them)
+      throw new NotHere(`this season's position changes: ${(err && err.message) || err}`, { cause: err });
+    }
+    edits = Object.fromEntries(Object.entries(edits).filter(([k]) => k !== "__positions__"));
+  }
   if (!truthy(edits)) return team;
   const out = { ...team };
   const merged = (p) => {
