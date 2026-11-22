@@ -83,7 +83,9 @@ act_of = lambda a: {"recruiting": {"contacts": {a["pid"]: None}, "lists": {a["pi
                                    "offers": {a["slug"]: None}, "nil": {a["slug"]: None}, "hours": {a["slug"]: None}, "visits": {a["pid"]: None},
                                    "revealed": {a["slug"]: {a["pid"]: None}}, "log": None, "status": {a["pid"]: None}, "board": None,
                                    "manual_offers": None, "action_points": None, "scenes": {a["slug"]: None}, "hats": {a["pid"]: None},
-                                   "dropped": None, "planned": None, "scout_points": {a["slug"]: None}}}
+                                   "dropped": None, "planned": None, "scout_points": {a["slug"]: None}, "twists": {a["pid"]: None},
+                                   "offer_weeks": {a["pid"]: None}, "offer_landing": {a["pid"]: None}, "cooled_why": {a["slug"]: None},
+                                   "traits_known": {a["slug"]: None}}}
 points_of = lambda a: {"recruiting": {"pending": {a["pid"]: None}, "why_week": {a["pid"]: None}, "action_points": None}}
 OUT_REC.update({"_contact": contacts_of, "ask_from": contacts_of, "_nil": nil_of, "nil_left": nil_of, "_hours": hours_of,
                 "_act": act_of, "_add_points": points_of, "_unmark": "hot", "_hat": "hot"})
@@ -178,6 +180,11 @@ def view(st):
             "recruiting": st.get("recruiting") or {}}
 
 
+# small parts whose keys are taken out and put back (a NIL package pulled and made again): equal to Python whatever the
+# order, so these are compared by their text
+ORDERED = ("nil", "pending", "hats", "visits", "hours")
+
+
 def diff(old, new, path, ops, mask=None, skip=()):
     """The edits that turn `old` (the shadow, edited as it goes) into `new`. `mask`: only these branches. Returns
     "replace" when the keys both hold changed their order (the caller then writes the whole dict)."""
@@ -205,9 +212,10 @@ def diff(old, new, path, ops, mask=None, skip=()):
             continue
         o = old[k]
         if isinstance(o, dict) and isinstance(v, dict):
-            if sub is None and o == v:
+            by_text = sub is None and k in ORDERED and path == ["recruiting"]
+            if sub is None and o == v and not (by_text and json.dumps(o) != json.dumps(dcopy(v))):
                 continue
-            if diff(o, v, path + [k], ops, sub) == "replace":
+            if (by_text and o == v) or diff(o, v, path + [k], ops, sub) == "replace" or (by_text and json.dumps(o) != json.dumps(dcopy(v))):
                 ops.append(["set", path + [k], enc(v)])
                 old[k] = dcopy(v)
         elif isinstance(o, list) and isinstance(v, (list, tuple)):

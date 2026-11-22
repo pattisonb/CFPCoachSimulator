@@ -202,6 +202,7 @@ SCOPES = {
     "recruiting.act": MOST,
     "recruiting.scout_points_left": [("scout_points",)],
     "persona.learn_from_read": [("traits_known",), ("revealed", "$team")],
+    "persona.goes_pro": [("contacts", "$2")],             # (his ask from the school is read, which opens its contact record with him)
 }
 HAND = ("_event", "_unmark", "_contact")       # written out in the compare script
 
@@ -234,14 +235,15 @@ def at_path(rc, path):
     return rc
 
 
-def scoped_before(scope):
+def scoped_before(scope, args=()):
     rc = T.state["recruiting"]
     if scope == MOST:                       # every key there is, and (scoped_ops) every key the call adds
         T.most = set(rc)
         scope = [(k,) for k in rc if k not in MOST_SKIP]
     else:
         T.most = None
-    paths = [tuple(T.state["team"] if k == "$team" else k for k in p) for p in scope]
+    name = lambda k: T.state["team"] if k == "$team" else args[int(k[1:])] if isinstance(k, str) and k[:1] == "$" else k   # "$2": the call's third argument
+    paths = [tuple(name(k) for k in p) for p in scope]
     return paths, [(MISSING if at_path(rc, p) is MISSING else jclone(at_path(rc, p))) for p in paths], len(rc["log"])
 
 
@@ -291,7 +293,7 @@ def foreign(owner, label: str, name: str, method: bool = False) -> None:
             check = n < 1
             T.pure_seen[full] = n + 1
         whole = slim(T.state, T.base) if (scope == FULL or check) else None
-        part = scoped_before(scope) if scope not in (None, FULL) else None
+        part = scoped_before(scope, args) if scope not in (None, FULL) else None
         T.depth += 1
         err = None
         try:
