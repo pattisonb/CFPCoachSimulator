@@ -8,7 +8,7 @@ import FaceEditor from "../../components/FaceEditor/index.tsx";
 import { api } from "../../api.ts";
 import { navigate, rememberDynasty } from "../../router.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
-import { randomFace, type Face as FaceSpec } from "../../faces.ts";
+import { presetCoachFace, randomFace, type Face as FaceSpec } from "../../faces.ts";
 import type { Theme } from "../../theme.ts";
 import type { CoachOptions, SavedCoach, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -42,8 +42,10 @@ type Status =
 /** /coach/edit: build a coach's face from pocket-faces parts, name them, and save them to the game. */
 export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   const [team, setTeam] = useState<TeamCard | null>(() => cachedTeams()?.find((t) => t.slug === teamSlug) ?? null);
-  const [face, setFace] = useState<FaceSpec>(randomFace);
-  // the picked team's head coach fills the name fields (the viewer can change them)
+  // the picked team's head coach fills the face (his preset, when he has one) and the name fields (the viewer can
+  // change them)
+  const [face, setFace] = useState<FaceSpec>(() => (team && presetCoachFace(team.head_coach)) || randomFace());
+  const faceTouched = useRef(false);
   const [first, setFirst] = useState(() => splitName(team?.head_coach)[0]);
   const [last, setLast] = useState(() => splitName(team?.head_coach)[1]);
   const prefilled = useRef(team?.slug ?? null);
@@ -66,13 +68,16 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
       .catch(() => setTeam(null));
   }, [teamSlug]);
 
-  // a team that arrives after the first draw (not yet cached) fills the names once, unless the viewer already typed
+  // a team that arrives after the first draw (not yet cached) fills the face and the names once, unless the viewer
+  // already changed them
   useEffect(() => {
     if (!team || prefilled.current === team.slug) return;
     prefilled.current = team.slug;
     const [f, l] = splitName(team.head_coach);
     setFirst((cur) => cur || f);
     setLast((cur) => cur || l);
+    const preset = presetCoachFace(team.head_coach);
+    if (preset && !faceTouched.current) setFace(preset);
   }, [team]);
 
   const named = first.trim() !== "" && last.trim() !== "";
@@ -108,6 +113,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   };
 
   const change = (next: FaceSpec) => {
+    faceTouched.current = true;
     setFace(next);
     setStatus({ kind: "idle" });
   };
