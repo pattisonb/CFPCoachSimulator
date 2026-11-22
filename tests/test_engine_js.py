@@ -40,13 +40,37 @@ def runtime_answers() -> dict:
     return out
 
 
+def more_answers() -> dict:
+    """Generators seeded with text (the season and recruiting code's), shuffle and sample, and `statistics`."""
+    import statistics as st
+    out = {"seed": [], "stat": []}
+    for s in ["", "a", "auto-11-smu-3", "recruiting-0-12", "hidden-2027-11-r2027-0042", "staff-0-ohio-state", "x" * 200,
+              "ünïcödé-ñ-日本", "class-2027-7", "twists", "0", "abc" * 50 + "z"]:
+        r = random.Random(s)
+        a = [r.random(), r.randint(0, 10**6), r.gauss(0, 1), r.random()]
+        xs = list(range(40))
+        r.shuffle(xs)
+        out["seed"].append([s, a, xs, r.sample(list(range(100)), 7), r.sample(list(range(12)), 5), r.sample(list(range(5000)), 30), r.randrange(1 << 30)])
+    r = random.Random(9)
+    for i in range(400):
+        n, kind = r.randint(1, 60), i % 4
+        xs = ([r.randint(60, 330) for _ in range(n)] if kind == 0 else [r.uniform(-50, 50) for _ in range(n)] if kind == 1
+              else [round(r.uniform(0, 99), 1) for _ in range(n)] if kind == 2 else [r.choice([70, 71, 72.5, 73]) for _ in range(n)])
+        out["stat"].append([xs, st.mean(xs), st.pstdev(xs), st.median(xs), st.fmean(xs)])
+    return out
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="cfp-engine-js-") as tmp:
         expected = Path(tmp) / "pyrt.json"
         expected.write_text(json.dumps(runtime_answers()), encoding="utf-8")
         r = subprocess.run(["node", str(ROOT / "engine_js" / "test" / "pyrt_check.mjs"), str(expected)], capture_output=True, text=True)
         assert r.returncode == 0, "pyrt.js is not Python's random and round:\n" + r.stdout[-2000:] + r.stderr[-2000:]
-        print("engine js ok:", r.stdout.strip().splitlines()[-1])
+        first = r.stdout.strip().splitlines()[-1]
+        expected.write_text(json.dumps(more_answers()), encoding="utf-8")
+        r = subprocess.run(["node", str(ROOT / "engine_js" / "test" / "pyrt_more.mjs"), str(expected)], capture_output=True, text=True)
+        assert r.returncode == 0, "pyrt.js / pystat.js are not Python's text seeds, shuffle, sample or statistics:\n" + r.stdout[-2000:] + r.stderr[-2000:]
+        print("engine js ok:", first + ";", r.stdout.strip().splitlines()[-1])
 
 
 if __name__ == "__main__":
