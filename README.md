@@ -166,7 +166,8 @@ and is merged when they pass (`pr-automerge.yml`).
 
 ### Realism Tools
 
-These play whole seasons and print how the results compare with real ones. They take minutes.
+These play whole seasons and print how the results compare with real ones. A season takes from half a minute to a
+minute and a half, depending on the tool.
 
 ```
 node tools/realism.mjs --seeds 2         # a season's stats against real FBS seasons; --check exits 1 outside the margins

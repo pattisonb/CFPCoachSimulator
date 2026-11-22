@@ -1,5 +1,7 @@
 # Every pull request to main is tested as it would land: the current main is merged into the PR
-# first and that merged tree is what gets built and tested, in four parallel parts (shard).
+# first and that merged tree is what gets tested, in four parallel parts (shard). Everything is Node:
+# the game and its tests are JavaScript (tests/run_all.mjs), and the app's gate (types, CSS lint,
+# formatting) runs in the first part.
 # PR Auto-merge (pr-automerge.yml) merges the PR
 # when this passes, and asks for a fresh run (workflow_dispatch) when main moved in between.
 # A run started that way never fires PR Auto-merge's workflow_run trigger (GitHub starts no
@@ -90,7 +92,7 @@ jobs:
           path: ${{ runner.temp }}/tested/tested.json
           retention-days: 7
 
-  # the suite in four parallel parts (tests/run_all.py --shard, balanced by tests/durations.json)
+  # the suite in four parallel parts (tests/run_all.mjs --shard, balanced by tests/durations.json)
   shard:
     needs: prepare
     runs-on: ubuntu-latest
@@ -112,23 +114,31 @@ jobs:
           git fetch --no-tags origin main
           git -c user.name="PR Tests" -c user.email="pr-tests@users.noreply.github.com" merge --no-edit "$BASE_SHA"
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
 
-      - name: Every Python file compiles
-        run: python -m compileall -q app coach_career engine sim teamdata tools tests
+      # the app's gate is the same for every part, so it runs in one (no test needs the app's packages)
+      - name: Install the app's packages
+        if: matrix.part == 1
+        run: cd ui && npm ci
 
+      - name: The app's gate (types, CSS lint, formatting)
+        if: matrix.part == 1
+        working-directory: ui
+        run: |
+          npx tsc --noEmit
+          npx stylelint "src/**/*.css"
+          npx prettier --check --end-of-line auto src
+
+      # data/engine_teams.json is not committed: the game makes it from the rosters
       - name: Build the team data
-        run: python -m teamdata.build_teams
+        run: node tools/game_host.mjs . teams
 
       - name: Tests, part ${{ matrix.part }} of 4 (one retry for a flaky test)
-        env:
-          SIM_WORKERS: "4"
-        run: python tests/run_all.py --retry 1 --shard ${{ matrix.part }}/4 2>&1 | tee "$RUNNER_TEMP/tests.log"; exit "${PIPESTATUS[0]}"
+        run: node tests/run_all.mjs --retry 1 --shard ${{ matrix.part }}/4 2>&1 | tee "$RUNNER_TEMP/tests.log"; exit "${PIPESTATUS[0]}"
 
       - name: Keep the test log
         if: always()

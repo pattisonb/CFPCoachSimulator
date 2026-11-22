@@ -8,9 +8,10 @@
 - No numbers out of 100 for moods or chances where the game uses words; no "null"/"undefined"/"NaN" ever reaches the page.
 
 ## Engine
-- The game is moving from Python to JavaScript a piece at a time (the player's goal: no Python left). The game engine is done: `engine_js/` (its rules for a port are in `engine_js/PORTING.md`), asked for games by the remaining Python through `sim/engine.py`, which needs `node` on a computer. A ported piece is held to the Python's exact results, wired in, and its Python deleted.
-- `python3 tests/test_sim_golden.py` must stay byte-identical unless the change is to the season sim itself and the player agreed; recruiting reads, flags and scenes are never in the digest.
-- New randomness goes into its own seeded stream (`_rng(state, "<name>")` or `random.Random(f"<name>-{seed}-...")`) appended after existing draws.
+- The game is JavaScript throughout: `engine_js/` (the play-by-play engine and the runtime: `pyrt.js`, `pystat.js`, `files.js`, `modules.js`), `sim_js/` (the season), `teamdata_js/` (ratings, the team builder), `career_js/` (recruiting, the offseason, the career), `app_js/` (`api.js` the API, `game.js` the whole game for a host). It was ported from Python file for file and keeps Python's names, numbers and dict order; `engine_js/PORTING.md` says why and holds the rules for working in it. No Python comes back.
+- The same seed gives the same game, and an old save must still load. Random numbers come from `Random` in `pyrt.js`, never `Math.random`; rounding is `round` from `pyrt.js`, never `Math.round`; a dict with number-like keys that is walked is an `odict`.
+- `node tests/test_sim_golden.mjs` must stay byte-identical unless the change is to the season sim itself and the player agreed; recruiting reads, flags and scenes are never in the digest.
+- New randomness goes into its own seeded stream (`_rng(state, "<name>")` or ``new Random(`<name>-${seed}-...`)``) appended after existing draws.
 - Constants the player may want to tune are module-level, marked `*tune*`, with a one-line comment.
 
 ## Front end
@@ -21,12 +22,12 @@
 - **Containers side by side are the same height** (the player's standing rule): two panels or columns that share a row end on one line, the shorter one stretched to match (`align-items: stretch`, its last panel taking the difference), never a ragged foot.
 
 ## Published site
-- Vercel builds `main` with `python3 tools/build_site.py --generic` (vercel.json): the app in `ui/` plus the Python game packed to run in the browser (`ui/public/worker.js`, `ui/src/gameClient.ts`; the game ships as `game.tar.xz`). `npm run dev` is unchanged and keeps the real rosters. A week's games are shared with helper workers (`ui/public/sim-worker.js`, `app/browser_pool.py`) over shared memory, which needs the two cross-origin isolation headers in `vercel.json`: anything the page loads from another origin must allow it (CORS or `Cross-Origin-Resource-Policy`).
-- Nothing published carries a real name, with one exception the player chose: a school named for its state or city goes by that place (Alabama, Texas, Houston: `PLACES` in `tools/generic/tables.py`), its mascot, stadium and full name still swapped. `tools/generic/tables.py` holds the lookalikes (schools, mascots, bowls, conferences, trophies, awards) and `tools/generic/scrub.py` draws same-initial names for players and coaches. A new real name in the data or in the game's words needs a lookalike there; `python3 tests/test_generic_names.py` is the gate.
+- Vercel builds `main` with `node tools/build_site.mjs --generic` (vercel.json): the app in `ui/` plus the game to run in the browser (`ui/public/worker.js` hosts it, `ui/src/gameClient.ts` calls it; the game ships as one script, `game.js`, and its data as one download, `game-data.br`/`.gz`). `npm run dev` runs the same worker with no server and keeps the real rosters. Saves are in the browser (IndexedDB). A week's games are shared with helper workers (`ui/public/sim-worker.js`) over shared memory, which needs the two cross-origin isolation headers in `vercel.json`: anything the page loads from another origin must allow it (CORS or `Cross-Origin-Resource-Policy`).
+- Nothing published carries a real name, with one exception the player chose: a school named for its state or city goes by that place (Alabama, Texas, Houston: `PLACES` in `tools/generic/tables.mjs`), its mascot, stadium and full name still swapped. `tools/generic/tables.mjs` holds the lookalikes (schools, mascots, bowls, conferences, trophies, awards) and `tools/generic/scrub.mjs` draws same-initial names for players and coaches. A new real name in the data or in the game's words needs a lookalike there; `node tests/test_generic_names.mjs` is the gate.
 - The preset faces (`cfb_sim_data/faces/`) are published: only who a face belongs to is a name, so the scrub renames those keys and the file and never touches the face parts.
-- Branches: `main` is the React app; `v0` (the old `web/` site), `v1` (Clear Mode before React) and `v2` (the React app with the old rosters and ratings: before the 70-average scale, the real-player rosters and the preset faces) are kept as they were.
+- Branches: `main` is the React app; `v0` (the old `web/` site), `v1` (Clear Mode before React), `v2` (the React app with the old rosters and ratings: before the 70-average scale, the real-player rosters and the preset faces) and `v3` (the last version with the game in Python) are kept as they were.
 
 ## Process
-- Engine tests are plain scripts: `python3 tests/<file>.py`; the full suite is `python3 tests/run_all.py`. Keep testing light: run the tests that touch what changed, not the full suite, unless the player asks.
-- The Python server does not reload: an engine change needs `npm run dev` restarted.
+- Tests are plain scripts: `node tests/<file>.mjs` (a fresh clone first needs `node tools/game_host.mjs . teams`); the full suite is `node tests/run_all.mjs`. Keep testing light: run the tests that touch what changed, not the full suite, unless the player asks.
+- `npm run dev` picks up a change to the game's code on its own (the page reloads); a change to a roster or to how the game's data is built needs it restarted.
 - Commits end with the session's two attribution trailer lines; no model identifiers in code or commits.

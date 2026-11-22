@@ -26,8 +26,10 @@ const TAIL_LINES = 60;           // *tune* how much of a failing test's output i
 
 // Tests that fail today and are reported without failing the run. Take one off when it passes again.
 const KNOWN_FAILURES = {
-  test_scale: "failed before the move to JavaScript too: the starter averages it expects are from an older rating scale",
-  test_recruiting_realism: "failed before the move to JavaScript too: a seeded season lands outside one of its margins",
+  // the middle Power 4 starter's overall is not 50 at two positions (WR 51.5, RB 52); it failed before the move to JavaScript too
+  test_scale: "the middle Power 4 starter is not a 50 at WR and RB",
+  // on its seed 6 of 8 generational prospects sign with a top-25 class, under its mark; it failed before the move to JavaScript too
+  test_recruiting_realism: "too few generational prospects sign with a top-25 class on its seed",
 };
 
 const stem = (name) => path.basename(name).replace(/\.(mjs|js|py)$/, "");
@@ -122,7 +124,7 @@ const NOTE = {
 
 function report(r, width) {
   const note = NOTE[r.status](r);
-  console.log(`${WORD[r.status].padEnd(5)}${r.test.padEnd(width)} ${String(Math.round(r.seconds)).padStart(4)}s${note ? `  (${note})` : ""}`);
+  console.log(`${WORD[r.status].padEnd(6)}${r.test.padEnd(width)} ${String(Math.round(r.seconds)).padStart(4)}s${note ? `  (${note})` : ""}`);
   if (r.status === "failed") {
     const lines = r.output.trimEnd().split("\n");
     if (lines.length > TAIL_LINES) console.log(`     ... ${lines.length - TAIL_LINES} lines above`);

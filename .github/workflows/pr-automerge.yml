@@ -8,7 +8,7 @@
 #   - the PR's head is the commit that was tested (a newer push gets its own run)
 #   - main is the commit it was tested against; if main moved (another PR merged first), the PR is
 #     sent back to PR Tests against the new main instead of being merged
-# The deploy is Vercel's: it watches main and builds the site (vercel.json: tools/build_site.py --generic,
+# The deploy is Vercel's: it watches main and builds the site (vercel.json: tools/build_site.mjs --generic,
 # the React app with every real name swapped for a lookalike).
 #
 # Two ways in: workflow_run for a PR Tests run a push started, and workflow_dispatch (run_id) for a
