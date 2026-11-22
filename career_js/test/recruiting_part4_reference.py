@@ -192,7 +192,7 @@ def diff(old, new, path, ops, mask=None, skip=()):
         for k in [k for k in old if k not in new]:
             ops.append(["del", path + [k]])
             del old[k]
-        if [k for k in new if k in old] != list(old):
+        if list(new)[:len(old)] != list(old):         # what is left must lead the new dict, in its order
             return "replace"
         keys = new.keys()
     else:

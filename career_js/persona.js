@@ -681,11 +681,16 @@ export function stories(state) {
   // The class's stories {pid: {"story", "story_data"}} (read only; {} for a class from before stories and
   // for the portal), drawn once a process and kept in memory, never in the save.
   const rc = or_(get(or_(state, {}), "recruiting"), {});
-  if (truthy(get(rc, "portal")) || !truthy(get(rc, "stories")) || !truthy(get(rc, "prospects"))) return {};
+  if (truthy(get(rc, "portal")) || !truthy(get(rc, "stories"))) return {};
   let cached = persona._STORIES;
-  if (cached[0] === rc) return cached[2];
+  // (Python's `not rc.get("prospects")` costs nothing; here the truth of a dict of 4,000 prospects lists its keys, and
+  // this is asked for every prospect of every school's week: it was over half of a week's time. The same class's same
+  // prospects dict, which held prospects when its stories were kept, is not asked again.)
+  if (cached[0] === rc && cached[3] === rc["prospects"]) return cached[2];
+  if (!truthy(get(rc, "prospects"))) return {};
+  if (cached[0] === rc) { cached[3] = rc["prospects"]; return cached[2]; }
   const key = _stories_key(state, rc);
-  cached = [rc, key, _same_key(cached[1], key) ? cached[2] : persona._draw_class(state)];
+  cached = [rc, key, _same_key(cached[1], key) ? cached[2] : persona._draw_class(state), rc["prospects"]];
   persona._STORIES = cached;
   return cached[2];
 }
