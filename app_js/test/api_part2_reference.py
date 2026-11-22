@@ -26,6 +26,7 @@ OUT = Path(sys.argv[1])
 OUT.mkdir(parents=True, exist_ok=True)
 SEASONS = Path(tempfile.mkdtemp(prefix="seasons-"))
 os.environ["CFP_SEASONS_DIR"] = str(SEASONS)
+os.environ["SIM_WORKERS"] = "1"                 # the weeks are simulated in this process (no pool to spawn from a script)
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app import api                                              # noqa: E402
@@ -68,6 +69,8 @@ class Act:
             got = {"result": json.loads(json.dumps(out))}
         except api.ApiError as e:
             got = {"status": e.status, "message": e.message}
+        except Exception as e:  # noqa: BLE001 - a handler that breaks (the page's 500): the compare script must break the same way
+            got = {"crash": type(e).__name__, "message": str(e)}
         self.steps.append({"method": method, "path": path, "body": sent, **got})
         return got.get("result")
 
@@ -247,17 +250,17 @@ a.ask("GET", S)
 a.ask("GET", "/api/coach-options")
 a.ask("GET", "/api/coaches")
 blank = api.call("GET", "/api/coach-options")["blank"]
-for body in (None, {}, {"coach": "x"}, {"coach": dict(blank, id="test-coach-1", name="Pat Tester")}, {"coach": dict(blank, id="../up", name="Bad Id")},
-             {"coach": dict(blank, id="test-coach-2", name="Sam Second")}):
+for body in (None, {}, {"coach": "x"}, {"coach": dict(blank, id="abcdef000001", name="Pat Tester")}, {"coach": dict(blank, id="../up", name="Bad Id")},
+             {"coach": dict(blank, id="abcdef000002", name="Sam Second")}):
     a.ask("POST", "/api/coaches", body)
-for path in ("/api/coaches", "/api/coaches/test-coach-1", "/api/coaches/nope", "/api/coaches/bad%20id"):
+for path in ("/api/coaches", "/api/coaches/abcdef000001", "/api/coaches/nope", "/api/coaches/bad%20id"):
     a.ask("GET", path)
-for path in ("/api/coaches/test-coach-1", "/api/coaches/test-coach-1", "/api/coaches/bad%20id", "/api/coaches/nope"):
+for path in ("/api/coaches/abcdef000001", "/api/coaches/abcdef000001", "/api/coaches/bad%20id", "/api/coaches/nope"):
     a.ask("DELETE", path)
 a.ask("GET", "/api/coaches")
 a.ask("GET", "/api/seasons")
 (OUT / "act1.json").write_text(json.dumps({"sid": sid, "steps": a.steps}))
-print(f"act 1: {len(a.steps)} calls, {sum('status' in s for s in a.steps)} refused")
+print(f"act 1: {len(a.steps)} calls, {sum('status' in s for s in a.steps)} refused, {sum('crash' in s for s in a.steps)} broke")
 
 
 # act 2: the offseason
@@ -311,6 +314,7 @@ b.ask("GET", f"{S}/review")
 b.ask("POST", f"{S}/offseason/advance", {"stage": "departures"})          # asked before the offseason is open
 view = b.ask("GET", f"{S}/offseason")
 for n in range(40):
+    api.call("GET", S)                           # (a call that broke dropped the season from memory: read again)
     st = api.loaded_state()
     off = st.get("offseason") if st["id"] == sid2 else None
     if not off:
@@ -383,7 +387,7 @@ b.ask("DELETE", "/api/seasons")
 b.ask("GET", "/api/seasons")
 b.ask("GET", S)
 (OUT / "act2.json").write_text(json.dumps({"sid": sid2, "steps": b.steps}))
-print(f"act 2: {len(b.steps)} calls, {sum('status' in s for s in b.steps)} refused")
+print(f"act 2: {len(b.steps)} calls, {sum('status' in s for s in b.steps)} refused, {sum('crash' in s for s in b.steps)} broke")
 
 # act 3: straight to the next season from the first stage (to="next_season": offseason.run_all)
 st3 = season.load_season(sid) if (SEASONS / f"{sid}.json").exists() else None
@@ -404,4 +408,4 @@ c.ask("GET", S)
 c.ask("GET", f"{S}/teams")
 c.ask("GET", f"{S}/standings")
 (OUT / "act3.json").write_text(json.dumps({"sid": sid3, "steps": c.steps}))
-print(f"act 3: {len(c.steps)} calls, {sum('status' in s for s in c.steps)} refused")
+print(f"act 3: {len(c.steps)} calls, {sum('status' in s for s in c.steps)} refused, {sum('crash' in s for s in c.steps)} broke")

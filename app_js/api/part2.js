@@ -717,6 +717,8 @@ function offseason_portal(p) {
   } catch (e) {
     if (is_key_error(e)) throw new api.ApiError(404, "unknown portal player");
     if (e instanceof offseason.OverflowError || e instanceof ValueError) throw new api.ApiError(409, e.message);
+    // (a port's own "OverflowError: ..." for a float no whole number can hold, as season and coaches throw it)
+    if (e instanceof Error && String(e.message).startsWith("OverflowError: ")) throw new api.ApiError(409, e.message.slice("OverflowError: ".length));
     throw e;
   }
   api._save_loaded();

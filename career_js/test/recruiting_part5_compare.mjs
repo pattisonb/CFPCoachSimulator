@@ -190,6 +190,7 @@ function run(tag, base, b) {
   const sort = (xs) => xs.map((x) => JSON.stringify(x)).sort();
   t.same(`${name}: returns`, b.results, results, { close: 1e-12 });
   t.same(`${name}: state`, want, st, { close: 1e-12 });
+  if (unasked.length && process.env.PART5_SHOW) console.log(name, unasked.length, unasked.slice(0, 8));
   t.same(`${name}: asked`, { unasked: [], took: sort(b.took), rooms: b.rooms, rngs: b.rngs, notes: b.notes, step_week: b.step_week },
     { unasked: unasked.slice(0, 5), took: sort(took), rooms, rngs: rngs.map((r) => r.random()), notes, step_week: recruiting._STEP_WEEK[0] });
 }

@@ -15,6 +15,7 @@ from pathlib import Path
 OUT = Path(sys.argv[1])
 OUT.mkdir(parents=True, exist_ok=True)
 os.environ["CFP_SEASONS_DIR"] = tempfile.mkdtemp(prefix="seasons-")
+os.environ["SIM_WORKERS"] = "1"          # the games in this process (a worker process would run this script again)
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app import api                       # noqa: E402

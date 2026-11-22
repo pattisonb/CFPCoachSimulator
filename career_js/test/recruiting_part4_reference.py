@@ -89,7 +89,8 @@ OUT_REC.update({"_contact": contacts_of, "ask_from": contacts_of, "_nil": nil_of
                 "_act": act_of, "_add_points": points_of, "_unmark": "hot", "_hat": "hot"})
 OUT_PERSONA = {n: None for n in ("pester_free board_front scared_off ai_doubts mate start_firmness quiet_mark decommit_mult "
                                  "counts_as_priority climbs of needs_attention _school_name style").split()}
-OUT_PERSONA.update({"note_contact": contacts_of, "set_cooled_why": contacts_of})
+OUT_PERSONA.update({"note_contact": contacts_of,
+                    "set_cooled_why": lambda a: {"recruiting": {"contacts": {a["pid"]: None}, "cooled_why": {a["slug"]: None}}}})
 # (real in the Node script too, small and pure: tier_of, _group_of, need_factor, group_cap, _ck, and _pair_ok, which
 #  calls back into the part's _Room)
 COLD = ("prospects", "reads", "ranks", "looks", "why", "reports", "attrs")       # the recruiting block's big parts no action changes
@@ -256,6 +257,16 @@ def follow(st):
 
 def digest(label):
     sync = look()
+    # a dict rebuilt with the same items in another order is equal in Python, so the looks miss it: the parts the part
+    # under test never touches are written again whole when their text moved (any other is left to fail the hash)
+    rc, was = T.st.get("recruiting") or {}, T.shadow["recruiting"]
+    for k in rc:
+        if json.dumps(enc_plain(rc[k])) != json.dumps(was[k]) and json.dumps(enc_plain(rc[k])) != json.dumps(enc_plain(was[k])):
+            if k in COLD[1:]:
+                sync.append(["set", ["recruiting", k], enc(rc[k])])
+                was[k] = dcopy(rc[k])
+            else:
+                print(f"  ({label}: the order inside recruiting/{k} moved without its items changing)", flush=True)
     text = json.dumps(enc_plain(view(T.st)))
     rec = {"t": "digest", "label": label, "sync": sync, "sha": hashlib.sha1(text.encode()).hexdigest()}
     emit(rec)

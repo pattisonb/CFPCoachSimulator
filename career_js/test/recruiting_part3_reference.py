@@ -589,7 +589,7 @@ def my_week(state, rng, step) -> None:
         for j, pid in enumerate(by_group.get(group, [])[:4]):
             act(state, pid, "offer", nil=0)
             if j == 1:
-                rc["status"][pid].update(committed=me, firmness=30 if step % 2 else None, hard=False)
+                rc["status"][pid].update(committed=me, firmness=30 if step % 2 else 0, hard=False)
             if j == 2 and step % 2:
                 rc["status"][pid].update(committed=me, firmness=55, hard=True)
             act(state, pid, "promise_role")
