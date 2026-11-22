@@ -4,13 +4,14 @@
 // from the older order (Departures first, the draft already shown) still loads and carries on.
 // `node tests/test_offseason_order.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
-import { Random, sorted, round, json_dumps } from "../engine_js/pyrt.js";
+import { Random, sorted, round, json_dumps, parse_ordered } from "../engine_js/pyrt.js";
 
 const game = await start({ env: { SIM_WORKERS: "1" } });
 const { season, offseason } = game;
 
 const show = (v) => JSON.stringify(v);
-const copy = (v) => JSON.parse(JSON.stringify(v));
+/** A copy of a season's state as a save would give it back (the games keep their order). */
+const copy = (st) => parse_ordered(JSON.stringify(st), [["games"], ["my_boxes"]]);
 const same = (a, b) => json_dumps(a, { sort_keys: true }) === json_dumps(b, { sort_keys: true });
 const FBS_PICKS = round(offseason.DRAFT_PICKS * offseason.DRAFT_FROM_FBS);
 
