@@ -2,7 +2,7 @@
 // and the injury report, the awards step, the depth chart (its orders, cards and views), the formations view, the
 // awards view, the shared pool, the week-by-week advance to a target, box-score files, and saving and loading a
 // season (with the class file beside it). Ported by engine_js/PORTING.md's rules ("A big file ported in parts").
-import { round, int, sorted, cmp, get, isNumber, truthy, json_dumps } from "../../engine_js/pyrt.js";
+import { round, int, sorted, cmp, get, isNumber, truthy, json_dumps, parse_ordered } from "../../engine_js/pyrt.js";
 import { read_text, write_text, exists, list_dir, mtime } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
 import { formations } from "../../engine_js/api.js";
@@ -937,7 +937,7 @@ function load_season(season_id) {
     }
     season._note_current(path, renamed);
   }
-  const state = JSON.parse(renamed);
+  const state = parse_ordered(renamed, [["games"], ["my_boxes"]]);     // event ids look like numbers: keep the saved order
   season._with_class(state);
   // seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
   for (const g of Object.values(state["games"])) {

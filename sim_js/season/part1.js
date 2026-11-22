@@ -21,7 +21,7 @@
 // region (data/fcs_map.json).
 //
 // Ported by engine_js/PORTING.md's rules ("A big file ported in parts").
-import { Random, round, int, sum, sorted, minBy, get, isNumber, truthy, floordiv, mod, range, json_dumps } from "../../engine_js/pyrt.js";
+import { Random, round, int, sum, sorted, minBy, get, isNumber, truthy, floordiv, mod, range, json_dumps, odict } from "../../engine_js/pyrt.js";
 import { pstdev, median } from "../../engine_js/pystat.js";
 import { read_text, read_json, write_text, exists, env } from "../../engine_js/files.js";
 import { modules, has as module_loaded } from "../../engine_js/modules.js";
@@ -660,9 +660,9 @@ function new_season(team_slug, mode = "full", seed = null, fill_open_dates = tru
   for (const [k, v] of Object.entries(read_json(season.FCS_MAP_FILE))) fcs_names[k] = v["name"];
   // (Random(None) in Python is seeded from the computer's own randomness: so is this)
   const rng = new Random(seed === null || seed === undefined ? crypto.getRandomValues(new Uint32Array(1))[0] : seed);
-  let games = {};
+  let games = odict();
   if (schedule !== null && schedule !== undefined) {
-    games = {};
+    games = odict();
     for (const [eid, g] of Object.entries(schedule)) games[eid] = { ...g };
     fill_open_dates = false;                      // a generated schedule is complete
   }
@@ -694,7 +694,7 @@ function new_season(team_slug, mode = "full", seed = null, fill_open_dates = tru
     id: crypto.randomUUID().replace(/-/g, "").slice(0, 12), created_at: new Date().toISOString().slice(0, 19) + "+00:00",
     team: team_slug, team_name: teams[team_slug]["name"], conference: teams[team_slug]["conference"],
     mode, seed, current_week: 0, phase: "regular", done: false,
-    games, polls: {}, scores: {}, champions: {}, runners_up: {}, bracket: null, playoff: {}, my_boxes: {},
+    games, polls: {}, scores: {}, champions: {}, runners_up: {}, bracket: null, playoff: {}, my_boxes: odict(),
     settings: { god_mode: false, morale: true },
     rng_state: rng.randrange(1 << 30), year,
   };
