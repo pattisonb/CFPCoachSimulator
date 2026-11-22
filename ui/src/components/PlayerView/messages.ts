@@ -1,3 +1,5 @@
+import { titleCase } from "../../format.ts";
+
 export const messages = {
   overall: "OVR",
   overallLabel: (n: number) => `Overall ${n}`,
@@ -82,7 +84,7 @@ export const messages = {
   redshirtOn: (games: number, limit: number) => `Redshirting · ${games} of ${limit} Games Used`,
   redshirtCan: "Available",
   redshirtNo: (why: string | null) =>
-    why ? `Not Available · ${why.charAt(0).toUpperCase()}${why.slice(1).replace(": ", ", ")}` : "Not Available",
+    why ? `Not Available · ${titleCase(why.replace(": ", ", "))}` : "Not Available",
   progress: (have: number, need: number) => `${have} of ${need}`,
 
   // Abilities

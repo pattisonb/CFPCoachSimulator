@@ -191,11 +191,11 @@ export const messages = {
     lost: "You Lost",
     net: "Net",
     netLine: (n: number) => (n > 0 ? `+${n}` : String(n)),
-    netSmall: (n: number) => (Math.abs(n) === 1 ? "player" : "players"),
+    netSmall: (n: number) => (Math.abs(n) === 1 ? "Player" : "Players"),
     league: "Around the Portal",
     leagueLine: (signed: number, entrants: number) =>
       `${signed.toLocaleString("en-US")} of ${entrants.toLocaleString("en-US")}`,
-    leagueSmall: "signed",
+    leagueSmall: "Signed",
     youSigned: (n: number) => `You Signed · ${n}`,
     youLost: (n: number) => `You Lost · ${n}`,
     moves: "The Biggest Moves",

@@ -124,7 +124,7 @@ function Meeting(p: P) {
           {r.record[0]}-{r.record[1]}
         </Stat>
         <Stat label={m.review.result}>
-          {r.met ? m.review.met : m.review.missed} <small>{r.goal}</small>
+          {r.met ? m.review.met : m.review.missed} <small>{titleCase(r.goal)}</small>
         </Stat>
         <Stat label={m.review.standing}>{r.mood}</Stat>
         <Stat label={m.review.nil}>
@@ -1298,7 +1298,7 @@ function Staff({ v, teams, busy, live, act, season }: P) {
                   <span className="shirt__who">
                     <b>{j.name}</b>
                     <span className="off__soft">
-                      {j.conference} · {j.goal}
+                      {j.conference} · {titleCase(j.goal)}
                     </span>
                   </span>
                   {live && (
@@ -1609,7 +1609,7 @@ function Ready({ v, season }: P) {
       >
         {goal && (
           <p className="off__lede">
-            <span className="label">{m.ready.goal}</span> {goal}
+            <span className="label">{m.ready.goal}</span> {titleCase(goal)}
           </p>
         )}
         <p className="off__soft">{m.ready.text}</p>

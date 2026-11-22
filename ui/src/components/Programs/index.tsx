@@ -7,6 +7,7 @@ import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
+import { titleCase } from "../../format.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -323,7 +324,7 @@ export default function Programs({ season, teams, onTeam }: Props) {
 
                   <footer className="programs__job">
                     <span className="label programs__kicker">{m.adGoal}</span>
-                    <b>{job?.goal ?? you.goal}</b>
+                    <b>{titleCase(job?.goal ?? you.goal)}</b>
                     {job && (
                       <span className="programs__tag">
                         {job.mood}
