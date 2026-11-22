@@ -208,7 +208,15 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
                 </div>
               )}
               <div
-                className="recap__hero recap__hero--you"
+                className={`recap__hero recap__hero--you${go("schedule") ? " is-link" : ""}`}
+                // your record opens your schedule (the player's ask), now that Your Games is not a card here
+                role={go("schedule") ? "link" : undefined}
+                tabIndex={go("schedule") ? 0 : undefined}
+                title={go("schedule") ? m.seeSchedule : undefined}
+                onClick={go("schedule")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") go("schedule")?.();
+                }}
                 style={
                   mineCard
                     ? ({ "--c": mineCard.colors.primary, "--on": inkOn(mineCard.colors.primary) } as CSSProperties)
@@ -298,7 +306,9 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
                             label={m.nationalNames[k]}
                             value={
                               <>
-                                <PlayerLink team={p.team} name={p.name} />, {p.team_name ?? ""} · {line(p.stats)}
+                                <PlayerLink team={p.team} name={p.name} />,{" "}
+                                {(p.team ? teams.get(p.team)?.abbreviation : undefined) ?? p.team_name ?? ""} ·{" "}
+                                {line(p.stats)}
                               </>
                             }
                           />

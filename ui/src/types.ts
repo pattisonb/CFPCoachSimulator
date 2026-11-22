@@ -396,6 +396,8 @@ export interface SimStatus {
   /** the last week the sim has finished */
   current_week?: number;
   record?: { wins: number; losses: number; conf_wins: number; conf_losses: number };
+  /** your ranking now (sim/season.py current_rank) */
+  my_rank?: { rank: number | null; kind?: string } | null;
   /** your games played so far (sim/season.py my_results), for the week strip while a sim runs */
   results?: SimResult[];
   /**
@@ -406,6 +408,8 @@ export interface SimStatus {
 }
 
 export interface SimFeed {
+  /** where you stand in your conference (or your division); null for an independent */
+  place?: { conf_rank: number; of: number } | null;
   week: number;
   news: NewsItem[];
   board: {

@@ -28,7 +28,22 @@
 .recap__cards > .panel > :not(.panel__head) {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden auto;
+}
+
+.recap__cards .panel__row {
+  padding: 5px 0;
+}
+
+/* your banner opens your schedule */
+.recap__hero.is-link {
+  cursor: pointer;
+}
+
+.recap__hero.is-link:hover,
+.recap__hero.is-link:focus-visible {
+  outline: var(--line) solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* Yours or National, in the Leaders card's head */

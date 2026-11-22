@@ -478,8 +478,15 @@ def _feed(state: dict) -> Optional[dict]:
             board.append({"id": pid, "name": p["name"], "display_pos": prospects.display_pos(p["ea_position"]), "stars": p["stars"],
                           "committed": st.get("committed"), "signed": st.get("signed"),
                           "school_name": office._school_name(school, teams) if school else None})
+        # where you stand in your conference, for the Office's board while a sim runs (None for an independent)
+        me = state["team"]
+        row = next((r for rows in season.standings(state).values() for r in rows if r["slug"] == me), None)
+        place = None
+        if row is not None and row.get("conf_rank"):
+            conf = next(rows for rows in season.standings(state).values() if row in rows)
+            place = {"conf_rank": row["conf_rank"], "of": sum(1 for r in conf if r.get("division") == row.get("division"))}
         return {"week": state["current_week"], "news": office.program_news(state), "board": board,
-                "injuries": season.injury_report(state, state["team"])}
+                "injuries": season.injury_report(state, state["team"]), "place": place}
     except Exception:           # a view only
         return None
 
