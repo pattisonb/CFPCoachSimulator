@@ -263,8 +263,6 @@ export interface Ctx {
   season: SeasonSummary | null;
   /** your school's slug ("you" in a sample) */
   team: string;
-  /** Add to Board, or Send a Scout; resolves true when it worked (the cards that read it redraw) */
-  act: (kind: "board" | "scout", who: { pid: string; name: string }) => Promise<boolean>;
   /** open a recruit on the Recruiting board */
   openRecruit: (pid: string) => void;
   /** store tasks or goal targets, then redraw the cards that read them */
