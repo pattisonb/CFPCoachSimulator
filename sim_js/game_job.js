@@ -263,7 +263,7 @@ export function _game_team(teams, slug, shift, edits, morale, depth, injured) {
 }
 
 export function _with_earned(team, earned) {
-  // Clear Mode: the abilities his players have earned this career ({"Name|POS": {trait: tier}}) over the roster's own.
+  // The abilities his players have earned this career ({"Name|POS": {trait: tier}}) over the roster's own.
   if (!truthy(earned)) return team;
   team = { ...team };
   for (const unit of ["offense", "defense"]) {
@@ -299,7 +299,7 @@ export function _compact_side(side, drives, which) {
 const _WHOLE = /^\s*[+-]?\d+(?:_\d+)*\s*$/;      // what Python's int(text) takes
 
 export function _moments(r, home_team, away_team, play_log) {
-  // Clear Mode: the game's big moments by player: a go-ahead or tying score in the fourth quarter or overtime
+  // The game's big moments by player: a go-ahead or tying score in the fourth quarter or overtime
   // (clutch_score: the scorer and his passer; clutch_kick: the kicker), and a sack or interception then while his
   // team led by one score (clutch_stop). From the scoring plays and the play log.
   const roster = new Map();
@@ -361,17 +361,15 @@ export function _moments(r, home_team, away_team, play_log) {
 
 /** One game job (season._run_games builds them) played against `teams`, the league's teams by slug. */
 export function _sim_one(teams, args) {
-  const [event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form] = args;
-  const earned = args.length > 12 ? args[12] : [null, null];
+  const [event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form, earned] = args;
   const home_team = _with_earned(_game_team(teams, home, form[0], edits[0], morale[0], depth[0], home_out), earned[0]);
   const away_team = _with_earned(_game_team(teams, away, form[1], edits[1], morale[1], depth[1], away_out), earned[1]);
-  const clear = !(earned[0] === null && earned[1] === null);      // Clear Mode: the big moments are read from the play log
   const r = simulate_game(home_team, away_team, null, seed, truthy(neutral) ? "neutral" : "home", morale[2]);
-  const play_log = clear ? drive_functions.play_log.slice() : [];
+  const play_log = drive_functions.play_log.slice();             // the big moments are read from the play log
   const out = { event_id, home_score: r["home"]["score"], away_score: r["away"]["score"], overtime: r["overtime_periods"],
     stats: { home: _compact_side(r["home"], r["drives"], "home"), away: _compact_side(r["away"], r["drives"], "away") },
     injuries: { home: get(r["home"], "injuries", []), away: get(r["away"], "injuries", []) } };
-  if (clear) out["moments"] = _moments(r, home_team, away_team, play_log);
+  out["moments"] = _moments(r, home_team, away_team, play_log);
   if (truthy(keep_full)) {
     r["home_slug"] = home;
     r["away_slug"] = away;

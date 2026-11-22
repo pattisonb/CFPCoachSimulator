@@ -6,7 +6,6 @@ import {
   Fire,
   Handshake,
   HouseLine,
-  Lock,
   MoonStars,
   Phone,
   PhoneDisconnect,
@@ -34,9 +33,9 @@ const TYPE_PER_CHAR = 11;
 const TYPE_MAX = 1500;
 /** *tune* The pause before your own line or a note on the room shows (ms). */
 const BEAT = 260;
-/** the line that brings his question (scenes.py QUESTION_INTRO; Clear Mode's note): the question goes in after it,
- *  or after the last turn when neither is there */
-const QUESTION_INTRO = ["Can I ask you something?", "He has a question."];
+/** the note that brings his question (scenes.js `present`): the question goes in after it, or after the last turn
+ *  when it is not there */
+const QUESTION_INTRO = "He has a question.";
 
 const REACTION_ICON: Record<string, Icon> = {
   hit: Fire,
@@ -44,7 +43,6 @@ const REACTION_ICON: Record<string, Icon> = {
   polite: ThumbsUp,
   quiet: SmileyMeh,
   tired: MoonStars,
-  guarded: Lock,
 };
 const ANSWER_ICON: Record<string, Icon> = {
   straight: ChatCenteredText,
@@ -70,9 +68,8 @@ interface Props {
 
 /** A line in the log: a scene's turn, or one the page adds (his question, your answer, his reply, his reaction). */
 interface Line {
-  who: "you" | "him" | "family" | "note";
+  who: "you" | "him" | "note";
   text: string;
-  label?: string;
   /** a tag over the line: His Cue, or how he took your pitch */
   tag?: string;
   tone?: string;
@@ -93,8 +90,6 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
-  const firstCue = (s: Scene) =>
-    (s.cue?.topics ?? []).find((t) => r.pitch_marks[t]?.mark !== "not_his") ?? r.priorities_known[0] ?? "";
   const [lead, setLead] = useState("");
   const log = useRef<HTMLDivElement | null>(null);
   const face = playerFace(r.id, r.display_pos);
@@ -102,7 +97,7 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
   const q = scene.question;
   const asking = !!(q && !q.answer);
   const step: "opening" | "finish" | "over" = reaction ? "over" : scene.presented ? "finish" : "opening";
-  const chosen = lead || firstCue(scene);
+  const chosen = lead || (r.priorities_known[0] ?? "");
 
   // the log as it reads: the scene's turns, his question and its answer after the line that brings it, then your
   // pitch and his reaction
@@ -119,7 +114,7 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
   for (const t of scene.turns) {
     const cue = !!(scene.cue && t.who === "him" && t.text === scene.cue.text);
     lines.push({ ...t, tag: cue ? m.cueLine : undefined, tone: cue ? "cue" : undefined });
-    if (q && !placed && QUESTION_INTRO.includes(t.text)) {
+    if (q && !placed && t.text === QUESTION_INTRO) {
       asked();
       placed = true;
     }
@@ -139,7 +134,7 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
   const [shown, setShown] = useState(() => (given.presented || stillMotion() ? lines.length : 0));
   const revealing = shown < lines.length;
   const next = revealing ? lines[shown] : null;
-  const typing = !!next && (next.who === "him" || next.who === "family");
+  const typing = !!next && next.who === "him";
   const total = lines.length;
   const nextLen = next?.text.length ?? 0;
   useEffect(() => {
@@ -303,7 +298,6 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
                   r={r}
                   topics={pitches}
                   selected={chosen ? [chosen] : []}
-                  cue={scene.cue?.topics ?? []}
                   onPick={setLead}
                   disabled={wait}
                   label={m.leadWith}
@@ -446,12 +440,12 @@ function TalkLine({
         {line.text}
       </p>
     );
-  const who = line.who === "you" ? you : line.who === "family" ? (line.label ?? "") : name;
+  const who = line.who === "you" ? you : name;
   return (
     <div className={`talk__line is-${line.who}${line.tone ? ` is-${line.tone}` : ""}`}>
       {line.who !== "you" && (
-        <span className={`face-tile talk__face${last && line.who === "him" ? "" : " is-blank"}`} aria-hidden="true">
-          {line.who === "him" && last && <Face face={face} scale={1} label="" />}
+        <span className={`face-tile talk__face${last ? "" : " is-blank"}`} aria-hidden="true">
+          {last && <Face face={face} scale={1} label="" />}
         </span>
       )}
       <div className="talk__bubble">
@@ -465,14 +459,13 @@ function TalkLine({
   );
 }
 
-/** The topics as cards: your pull on each in blocks, and what you know (he cares, his cue, how he took it). */
+/** The topics as cards: your pull on each in blocks, and what you know (he cares, how he took it). */
 function Topics({
   r,
   topics,
   selected,
   onPick,
   multi = false,
-  cue = [],
   disabled,
   label,
 }: {
@@ -481,7 +474,6 @@ function Topics({
   selected: string[];
   onPick: (t: string) => void;
   multi?: boolean;
-  cue?: string[];
   disabled: boolean;
   label: string;
 }) {
@@ -493,7 +485,6 @@ function Topics({
         const pull = pullOf(r.strength[t]);
         const known = r.priorities_known.includes(t);
         const mark = r.pitch_marks[t]?.mark;
-        const isCue = !known && cue.includes(t) && mark !== "not_his";
         const full = multi && !on && selected.length >= OPENING;
         return (
           <button
@@ -502,13 +493,11 @@ function Topics({
             role={multi ? undefined : "radio"}
             aria-pressed={multi ? on : undefined}
             aria-checked={multi ? undefined : on}
-            className={["talk__topic", on && "is-on", known && "is-known", isCue && "is-cue", full && "is-full"]
-              .filter(Boolean)
-              .join(" ")}
+            className={["talk__topic", on && "is-on", known && "is-known", full && "is-full"].filter(Boolean).join(" ")}
             disabled={disabled}
             title={[
               m.pullTip(topicPhrase(t), m.pull[pull]),
-              known ? m.known : isCue ? m.cue : mark ? m.markTip(m.marks[mark] ?? mark) : "",
+              known ? m.known : mark ? m.markTip(m.marks[mark] ?? mark) : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -516,16 +505,14 @@ function Topics({
           >
             {/* its place in your opening sits on the corner, over the frame: picking one never changes its width */}
             {multi && on && <span className="talk__num">{at + 1}</span>}
-            {(known || isCue) && (
-              <Star className="talk__star" size={14} weight={known ? "fill" : "bold"} aria-hidden="true" />
-            )}
+            {known && <Star className="talk__star" size={14} weight="fill" aria-hidden="true" />}
             <span className="talk__topic-name">{PITCH_NAMES[t] ?? t}</span>
             <span className="talk__pull" aria-label={m.pull[pull]}>
               {[1, 2, 3].map((k) => (
                 <i key={k} className={k <= PULL_BLOCKS[pull] ? "is-on" : undefined} />
               ))}
             </span>
-            {mark && !known && !isCue && <span className="talk__mark">{m.marks[mark] ?? mark}</span>}
+            {mark && !known && <span className="talk__mark">{m.marks[mark] ?? mark}</span>}
           </button>
         );
       })}

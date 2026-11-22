@@ -312,7 +312,7 @@ function morale_view(state, slug, name, position) {
   const factor = season.morale_factor(state, slug, name, position);
   return { enabled: on, form: round(form, 2), team: round(tm, 2), factor: round(factor, 3),
     label, team_label,
-    // what each does to his play next game, in percent (Clear Mode shows these in place of the words)
+    // what each does to his play next game, in percent (the page shows these)
     form_pct: round(100 * season.MORALE_PLAYER_EFFECT * form), team_pct: round(100 * season.MORALE_TEAM_EFFECT * tm),
     total_pct: round(100 * (factor - 1)) };
 }
@@ -459,10 +459,10 @@ function team_data(state, slug) {
 }
 
 function attribute_ceilings(state, slug) {
-  // Clear Mode, your own roster: player slug -> {card attribute: how many points he can still grow there}, his card at
+  // Your own roster: player slug -> {card attribute: how many points he can still grow there}, his card at
   // his potential (skills + the room each has left, league.potential) against his card now. The coach knows his players;
-  // anyone else's stays hidden. {} without a career league or outside Clear Mode.
-  if (!(season._clear_on() && truthy(slug) && slug === get(state, "team"))) return {};
+  // anyone else's stays hidden. {} without a career league.
+  if (!(truthy(slug) && slug === get(state, "team"))) return {};
   const key = [get(state, "id"), season.season_year(state), get(state, "current_week"), get(get(state, "offseason") || {}, "stage"), slug,
     Object.keys(get(state, "player_edits") || {}).length];
   const had = get(season._CEILINGS, "key");
@@ -502,8 +502,8 @@ function _attribute_ceilings(state, slug) {
 
 function development_reads(state, slug) {
   // player slug -> {"coachability": his level (recruits.COACHABILITY's words), "coach_level": 1
-  // (Coach's Dream) to 6 (Set in His Ways), "potential_word": the word for his projected overall at
-  // his potential (the scouting report's Potential headline words)} for your own roster only: the coach knows his
+  // (Coach's Dream) to 6 (Set in His Ways), "potential_word": the letter grade of his projected overall at
+  // his potential (grades.py, as the scouting report's Potential)} for your own roster only: the coach knows his
   // players; anyone else's (a future portal entrant among them) stays hidden. From the career's league
   // once it has one, else the real 2026 players' seeded values (league.base_development).
   if (!truthy(slug) || slug !== get(state, "team")) return {};
@@ -525,7 +525,7 @@ function development_reads(state, slug) {
     const [c, pot] = get(pairs, get(p, "slug"), [null, 0]);
     if (levels.includes(c)) {
       out[p["slug"]] = { coachability: c, coach_level: levels.indexOf(c) + 1,
-        ...(truthy(pot) ? { potential_word: season._clear_on() ? modules.grades.letter(pot, sharp) : modules.recruiting.word(pot) } : {}) };   // Clear Mode: a letter grade (grades.py)
+        ...(truthy(pot) ? { potential_word: modules.grades.letter(pot, sharp) } : {}) };   // a letter grade (grades.py)
     }
   }
   return out;
@@ -895,7 +895,7 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   const line = get(get(ss, "players") || {}, `${name}|${position}`);
   const stats = truthy(line) ? { ...line["stats"] } : {};
   const mf = season.morale_factor(state, team, name, position);
-  const ceil = get(season.attribute_ceilings(state, team), get(p, "slug"), {});      // Clear Mode: his room to grow per attribute
+  const ceil = get(season.attribute_ceilings(state, team), get(p, "slug"), {});      // his room to grow per attribute
   const base_p = [...teams[team]["offense"], ...teams[team]["defense"]].find((x) => get(x, "slug") === get(p, "slug")) ?? p;
   const ratings = [];
   for (const [k, lbl] of season.RATING_LABELS) {
@@ -948,7 +948,7 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   };
   const story = (get(entry || {}, "life") || []).map((e) => told(e));
   const trait_tiers = () => Object.fromEntries((get(p, "traits") || []).filter((x) => is_dict(x)).map((x) => [x["key"], x["tier"]]));
-  const next_tiers = ability_goals.on() ? ability_goals.upgrades_view(state, team, `${name}|${position}`, trait_tiers()) : {};
+  const next_tiers = ability_goals.upgrades_view(state, team, `${name}|${position}`, trait_tiers());
   const built_on = get(game_scale.card_formula(game_scale.card_position(p)) || {}, "w") || {};
   const built_total = sum(Object.keys(get(p, "attributes") || {}).map((k) => get(built_on, k, 0.0))) || 1.0;
   const p_attrs = () => get(p, "attributes") || {};
@@ -970,7 +970,7 @@ function player_profile(state, team, name = null, position = null, slug = null) 
       key: k, label: ratings_v2.ATTRIBUTES[k][0], group: ratings_v2.ATTRIBUTES[k][1],
       about: ratings_v2.ATTRIBUTES[k][2], value: season.page_attribute(p, k, v),
       boost: mf !== 1.0 ? season.page_attribute(p, k, Math.max(1, Math.min(99, round(v * mf)))) - season.page_attribute(p, k, v) : 0,
-      // Clear Mode, your own player: his ceiling there (the bar's unfilled part shows it)
+      // your own player: his ceiling there (the bar's unfilled part shows it)
       ...(own(ceil, k) ? { potential: season.page_attribute(p, k, Math.min(99, v + ceil[k])) } : {}),
       // how much of his overall it is, in percent (game_scale.card_formula's weights)
       weight: round(100 * get(built_on, k, 0.0) / built_total, 1),
@@ -984,11 +984,11 @@ function player_profile(state, team, name = null, position = null, slug = null) 
       built_on: get(ratings_v2.TRAIT_KEYS, tr["key"], []).filter((k) => own(p_attrs(), k))
         .map((k) => ({ label: ratings_v2.ATTRIBUTES[k][0], value: season.page_attribute(p, k, p_attrs()[k]) })),
       intangible: !truthy(get(ratings_v2.TRAIT_KEYS, tr["key"])), earned: truthy(get(tr, "earned")),
-      // Clear Mode: what its next tier takes and how far along he is ({tier, tier_name, have, need, text})
+      // what its next tier takes and how far along he is ({tier, tier_name, have, need, text})
       ...(own(next_tiers, tr["key"]) ? { next: next_tiers[tr["key"]] } : {}),
     })),
-    // Clear Mode: the ability he works toward and how far along he is
-    ability_goal: ability_goals.on() ? ability_goals.goal_view(state, team, `${name}|${position}`, position, trait_tiers()) : null,
+    // the ability he works toward and how far along he is
+    ability_goal: ability_goals.goal_view(state, team, `${name}|${position}`, position, trait_tiers()),
     edited_attributes: sorted(Object.keys(get(get(season.player_edits(state, team), get(p, "slug"), {}), "attributes") || {})),
     morale: season.morale_view(state, team, name, position),
     // rated at every position; at his own position it is the card's overall

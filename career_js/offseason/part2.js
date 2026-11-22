@@ -10,7 +10,6 @@ import { mean as st_mean, pstdev as st_pstdev } from "../../engine_js/pystat.js"
 import { modules } from "../../engine_js/modules.js";
 import { personnel } from "../../engine_js/personnel.js";
 import { shown } from "../../teamdata_js/shown.js";
-import { clear } from "../clear.js";
 import { league as lg } from "../league.js";
 import { position_fit } from "../position_fit.js";
 import { programs } from "../programs.js";
@@ -318,7 +317,7 @@ function draft_score(pos, overall, rng, grades = null) {
   const [mean, sd] = truthy(own) ? own : [40.0, 12.0];
   const all = get(grades || {}, "*");
   const [mean_all, sd_all] = truthy(all) ? all : [mean, sd];
-  const share = clear.on() ? offseason.DRAFT_ABS_SHARE_CLEAR : offseason.DRAFT_ABS_SHARE;
+  const share = offseason.DRAFT_ABS_SHARE;
   const z = (1 - share) * (h - mean) / sd + share * (h - mean_all) / sd_all;
   return get(offseason.DRAFT_VALUE, g, 1.0) * z + get(offseason.DRAFT_SHIFT, g, 0.0) + rng.gauss(0, offseason.DRAFT_NOISE);
 }
@@ -773,7 +772,7 @@ function _compact_prospect(state, p, attrs) {
     "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
     "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"] };
   const out = lg.compact(src, attrs);
-  const ab = ability_goals.recruit_ab_field(p);       // Clear Mode: some recruits arrive with an ability or two
+  const ab = ability_goals.recruit_ab_field(p);       // some recruits arrive with an ability or two
   if (truthy(ab)) out["ab"] = ab;
   return out;
 }

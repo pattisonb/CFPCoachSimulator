@@ -510,7 +510,7 @@ export function attempt_kick(yardline, kicker, defense_team = null) {
   if (distance < 40) {
     make += get(_traits_of(kicker), "automatic", 0) * cfg.TRAIT_FX["automatic"];
   }
-  if (truthy(cfg.EXTRA_TRAITS) && kicker !== null && truthy(play_functions.CLUTCH_NOW[0])) {   // Clear Mode: nerves of steel late
+  if (truthy(cfg.EXTRA_TRAITS) && kicker !== null && truthy(play_functions.CLUTCH_NOW[0])) {   // nerves of steel late
     const t = _traits_of(kicker);
     make += (get(t, "ice_water", 0) + get(t, "clutch_leg", 0)) * cfg.TRAIT_FX["ice_water"];
   }
@@ -620,7 +620,7 @@ export function _attempt_punt(yardline, punter, defense_team = null, return_team
   // coffin-corner kick) and either pins the receiving team or loses it into the end zone.
   if (landing >= 90) {
     let pin = cfg.PUNT_PIN_CHANCE + ((punter.punt_accuracy || cfg.NEUTRAL) - cfg.NEUTRAL) / 100;
-    if (truthy(cfg.EXTRA_TRAITS)) {              // Clear Mode: a pin artist pins more
+    if (truthy(cfg.EXTRA_TRAITS)) {              // a pin artist pins more
       pin += get(_traits_of(punter), "pin_artist", 0) * cfg.TRAIT_FX["pin_artist"];
     }
     if (random.random() < pin) {

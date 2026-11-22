@@ -1,4 +1,4 @@
-// Ability goals (Clear Mode; the player's ask): every player always works toward one ability that fits his position, a
+// Ability goals (the player's ask): every player always works toward one ability that fits his position, a
 // plain goal per tier ("Breakaway Speed (Bronze): 3 runs of 20+ yards"). Progress lands after every game; reaching the goal
 // unlocks the ability (or its next tier) mid-season, and the engine uses it from the next game on. One goal at a time (a
 // seeded draw of the abilities that fit, next_goal); beside it, every ability he already holds moves toward its own next
@@ -19,7 +19,6 @@
 import { Random, int, sum, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
-import { clear } from "./clear.js";
 
 /** d.get(k, default) for one of this file's own tables asked with a key from outside (a position, a trait): only a key
  * the table itself holds, never one of Object's. */
@@ -148,10 +147,6 @@ const POS_GROUP = { QB: "QB", RB: "RB", HB: "RB", FB: "FB", WR: "WR", TE: "TE", 
   RT: "OL", OL: "OL", OT: "OL", IOL: "OL", DE: "DL", DT: "DL", LEDG: "DL", REDG: "DL", DL: "DL", EDGE: "DL",
   MLB: "LB", LOLB: "LB", ROLB: "LB", LB: "LB", SAM: "LB", MIKE: "LB", WILL: "LB", CB: "CB", FS: "S",
   SS: "S", S: "S", K: "K", P: "P" };
-
-export function on() {
-  return clear.on();
-}
 
 export function _held(state, team, key, base) {
   // {trait: tier} he holds: the roster's own (base) and what he has earned since.
@@ -289,9 +284,9 @@ export function upgrades_view(state, team, key, base) {
 }
 
 export function news(state) {
-  // Program News items for your players' abilities earned (Clear Mode): {week, kind "ability", slug, name, position,
+  // Program News items for your players' abilities earned: {week, kind "ability", slug, name, position,
   // trait, ability, tier_name, line}, his player page on the name.
-  if (!ability_goals.on() || !truthy(get(state, "career"))) return [];
+  if (!truthy(get(state, "career"))) return [];
   const season = modules.season;
   const me = get(state, "team");
   const year = get(state, "year") || 2026;
@@ -313,7 +308,7 @@ export function news(state) {
 export function merged_traits(state, team, key, base) {
   // His traits for the page: the roster's own (`base`, [{key, tier}]) with what he earned this career over them,
   // each earned one marked "earned".
-  const earned = ability_goals.on() ? get(get(get(state, "abilities_earned") || {}, team) || {}, key) || {} : {};
+  const earned = get(get(get(state, "abilities_earned") || {}, team) || {}, key) || {};
   const out = {};
   for (const t of base) if (t !== null && typeof t === "object" && !Array.isArray(t)) out[t["key"]] = { ...t };
   for (const [k, tier] of Object.entries(earned)) {
@@ -323,7 +318,7 @@ export function merged_traits(state, team, key, base) {
 }
 
 export function carry_over(state, lgd) {
-  // At the offseason's start (Clear Mode): write every ability earned this season into the league's rosters ("ab",
+  // At the offseason's start: write every ability earned this season into the league's rosters ("ab",
   // the source's "name|tier"), so he keeps it next year wherever he plays, then clear the season's goals. Returns how
   // many abilities were written.
   const popped = get(state, "abilities_earned");
@@ -331,7 +326,7 @@ export function carry_over(state, lgd) {
   const earned = truthy(popped) ? popped : {};
   delete state["ability_goals"];
   delete state["ability_upgrades"];
-  if (!ability_goals.on() || !Object.keys(earned).length) return 0;
+  if (!Object.keys(earned).length) return 0;
   const season = modules.season;
   const source = {};                                                // trait key -> the source's ability name
   for (const [k, v] of rv2.TRAITS.entries()) source[v[0]] = k;
@@ -368,16 +363,15 @@ export function carry_over(state, lgd) {
   return n;
 }
 
-// recruits who arrive with abilities (the player's ask; Clear Mode only): a share by stars, mostly Bronze
+// recruits who arrive with abilities (the player's ask): a share by stars, mostly Bronze
 const RECRUIT_AB_CHANCE = { 5: 0.75, 4: 0.45, 3: 0.25, 2: 0.10, 1: 0.05 };   // *tune* chance a recruit of these stars has one
 const RECRUIT_AB_SECOND = { 5: 0.35, 4: 0.12 };                              // *tune* ... and a second one
 const RECRUIT_AB_TIERS = { 5: [0.45, 0.40, 0.15], 4: [0.65, 0.30, 0.05] };   // *tune* Bronze/Silver/Gold odds by stars (else 85/15/0)
 
 export function recruit_abilities(p) {
-  // The abilities a high school prospect arrives with (Clear Mode): [{key, name, tier, tier_name}], drawn from the
+  // The abilities a high school prospect arrives with: [{key, name, tier, tier_name}], drawn from the
   // goals that suit his position (front-weighted, as a goal is) on his own stream (`recruit-ab-{id}`), so nothing else
-  // moves. Empty outside Clear Mode.
-  if (!ability_goals.on()) return [];
+  // moves.
   const rng = new Random(`recruit-ab-${p["id"]}`);
   const stars = int(Number(get(p, "stars") || 3));
   const fits = own(ability_goals.FITS, own(ability_goals.POS_GROUP, get(p, "ea_position") || get(p, "position"), ""), [])
@@ -404,7 +398,7 @@ export function recruit_ab_field(p) {
 }
 
 export const ability_goals = {
-  TIER_NAMES, UPGRADES_ALONGSIDE, GOALS, FITS, POS_GROUP, on, _held, next_goal, goal_view, _counts, after_game, upgrades_view,
+  TIER_NAMES, UPGRADES_ALONGSIDE, GOALS, FITS, POS_GROUP, _held, next_goal, goal_view, _counts, after_game, upgrades_view,
   news, merged_traits, carry_over, RECRUIT_AB_CHANCE, RECRUIT_AB_SECOND, RECRUIT_AB_TIERS, recruit_abilities, recruit_ab_field,
 };
 modules.ability_goals = ability_goals;

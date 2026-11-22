@@ -90,8 +90,7 @@ offseason.DRAFT_NOISE = 0.25;                                 // the scouts' dis
 offseason.DRAFT_REF_SHARE = 0.08;                             // a grade is against the top this share of a position's draft-eligible players ... *tune*
 offseason.DRAFT_REF_MIN = 12;                                 // ... at least this many of them *tune*
 offseason.DRAFT_MIN_SD = 4.0;                                 // ... and their spread taken as at least this (card overall points) *tune*
-offseason.DRAFT_ABS_SHARE = 0.25;                             // the share of a grade against every position's prospects, not his own (a 99 is a 99) *tune*
-offseason.DRAFT_ABS_SHARE_CLEAR = 0.33;        // *tune* Clear Mode's share: its slower physical growth leaves a year's best QB near 76, and the first pick should still be a top player
+offseason.DRAFT_ABS_SHARE = 0.33;                             // the share of a grade against every position's prospects, not his own (a 99 is a 99): slow physical growth leaves a year's best QB near 76, and the first pick should still be a top player *tune*
 offseason.DRAFT_RUN = 0.12;                                   // the board steps the n-th player at a position down this much a place ... *tune*
 offseason.DRAFT_RUN_CAP = 6;                                  // ... for at most this many places (needs spread a first round) *tune*
 // projected first-rounders almost always go (the real drafts: a handful of first-round underclassmen stay a year) *tune*
@@ -275,7 +274,7 @@ function start(state) {
   coach_names.distinct(state, built);     // one coach, one name: your coach's record is yours, no one doubles up
   offseason._season_moves(state, lgd);
   offseason.record_seasons(state, lgd);
-  ability_goals.carry_over(state, lgd);         // Clear Mode: abilities earned in games stay with the player
+  ability_goals.carry_over(state, lgd);         // abilities earned in games stay with the player
   const usage = offseason._usage(state);
   const draft = {};
   word.recover(state, year);                    // Keeps His Word drifts back toward neutral, before this year's promises land

@@ -43,8 +43,8 @@ test("morale", () => {
   const base = fingerprint();
   console.log("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: aa5c3b71cb79a711)");
   // re-recorded when the engine became JavaScript, from the Python engine's own games with whole floats counted as
-  // whole numbers (tests/canon.py: 4.0 sacks is 4); the JavaScript engine gives the same. It is Clear Mode's
-  // engine (game_config EXTRA_TRAITS on: the abilities the engine never read now act)
+  // whole numbers (tests/canon.py: 4.0 sacks is 4); the JavaScript engine gives the same. It is the engine
+  // with game_config EXTRA_TRAITS on (the abilities the engine once never read act)
   assert(base === "aa5c3b71cb79a711");
 
   // in-game momentum changes a game and leaves the flag off afterwards

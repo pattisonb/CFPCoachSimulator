@@ -683,11 +683,7 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
     if (k === "not_buying") return [m.h.notBuying];
     if (k === "pester")
       return [m.h.tunedOut(e.action === "hc_visit" ? "visit" : e.action === "call" ? "call" : "message")];
-    if (k === "present")
-      return [
-        m.h.presented((e.topics ?? []).map(lowerTopic).join(", ")),
-        e.hit == null ? m.h.nothing : m.h.landed(e.hit),
-      ];
+    if (k === "present") return [m.h.presented((e.topics ?? []).map(lowerTopic).join(", ")), m.h.landed(e.hit ?? 0)];
     if (k === "answer" && e.question === "package")
       return [
         e.answer === "promise"

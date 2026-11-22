@@ -8,7 +8,7 @@ import { game, simulate_game } from "./game.js";
 import * as game_job from "../sim_js/game_job.js";
 import * as files from "./files.js";
 
-/** One game. `want_log`: the game's play log rides along as `play_log` (Clear Mode's big moments read it). */
+/** One game. `want_log`: the game's play log rides along as `play_log` (the game job's big moments read it). */
 export function play(home, away, sliders = null, seed = null, venue = "home", momentum = false, want_log = false) {
   const r = simulate_game(home, away, sliders, seed, venue, momentum);
   if (want_log) r.play_log = drive_functions.play_log.slice();

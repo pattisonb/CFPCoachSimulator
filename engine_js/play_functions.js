@@ -339,7 +339,7 @@ export function _throw_depth(target, tendencies, play_action = false) {
 }
 
 
-play_functions.CLUTCH_NOW = [false];   // Clear Mode: this drive is in clutch time (set by the game loop each drive; game_config CLUTCH_*)
+play_functions.CLUTCH_NOW = [false];   // this drive is in clutch time (set by the game loop each drive; game_config CLUTCH_*)
 
 
 // The memo dicts (a Lineup's `static` and `dyn`, a Player's `_tr_cache`) are plain objects with
@@ -748,7 +748,7 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
   const pursuit = _group_rating(defense, front_positions, ["speed", "tackling"]);
   yards += (carrier_rating - pursuit) * cfg.RUSH_PER_CARRIER_POINT;
   yards += guessed_play ? cfg.RUSH_GUESSED : cfg.RUSH_NOT_GUESSED;
-  if (cfg.EXTRA_TRAITS) {                   // Clear Mode: a lead-blocking back, and a closer late in a close game
+  if (cfg.EXTRA_TRAITS) {                   // a lead-blocking back, and a closer late in a close game
     yards += _tr_points(_members(offense, ["FB", "RB", "TE"]), ["lead_back"]) * cfg.TRAIT_FX["lead_back"];
     if (play_functions.CLUTCH_NOW[0]) {
       yards += _tr(carrier, "closer") * cfg.TRAIT_FX["closer"] * 40;
@@ -1106,7 +1106,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   } else if (depth !== "deep") {
     completion -= _tr_points(covers, cfg.COVER_TRAITS_ZONE) * fx["cover"];
   }
-  if (cfg.EXTRA_TRAITS) {                   // Clear Mode: the passer's own steadying abilities
+  if (cfg.EXTRA_TRAITS) {                   // the passer's own steadying abilities
     completion += _tr(qb, "coach_on_the_field") * fx["coach_field"];
     if (play_action) {
       completion += _tr(qb, "ball_handler") * fx["ball_handler"];
@@ -1264,7 +1264,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
 
   // --- Scramble instead of a throw ---
   let scramble_mult = 1.0;
-  if (cfg.EXTRA_TRAITS) {                   // Clear Mode: a running quarterback scrambles more; defenders who read it, less
+  if (cfg.EXTRA_TRAITS) {                   // a running quarterback scrambles more; defenders who read it, less
     scramble_mult = (1 + _tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"])
       * Math.max(0.5, 1 - _tr_points(_members(defense, ["MLB", "ROLB", "LOLB", "S", "DE"]), ["option_killer"]) * cfg.TRAIT_FX["option_killer"]);
   }

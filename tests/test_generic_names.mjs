@@ -96,8 +96,8 @@ async function main() {
     const kept = json(path.join(root, "cfb_sim_data", "teams", "iowa-city.json"));     // its old slug
     assert(kept["short_name"] === "Iowa" && kept["state"] === "IA" && kept["mascot"] === "Kernels", kept["short_name"]);
     assert(kept["school_name"] === "Iowa University" && kept["abbreviation"] === "IOWA");
-    const scenes = fs.readFileSync(path.join(root, "career_js", "scenes.js"), "utf8");
-    assert(scenes.includes('"TX": "Texas"') && scenes.includes('"MT": "Montana"') && scenes.includes('"RI": "Rhode Island"'), "a state lost its name to a school's swap");
+    const states = fs.readFileSync(path.join(root, "ui", "src", "states.ts"), "utf8");      // the app's list of states
+    assert(states.includes('TX: "Texas"') && states.includes('MT: "Montana"') && states.includes('RI: "Rhode Island"'), "a state lost its name to a school's swap");
     assert(!fs.readFileSync(path.join(root, "sim_js", "season", "part1.js"), "utf8").includes('"Montana": "MT"'), "an FCS school kept its state's name");
     assert(same(kept["colors"], json(path.join(ROOT, "cfb_sim_data", "teams", "iowa.json"))["colors"]));
     assert(team["roster"].length === real["roster"].length);

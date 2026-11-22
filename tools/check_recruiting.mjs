@@ -156,16 +156,16 @@ export const PRESENT_WITH = ["winning", "playing_time", "coach"];      // the sc
 // recruiting.act(state, slug, pid, action, pitch, nil, scene, answer, topics): Python's keywords, in its order
 const act = (state, team, pid, action, { pitch, scene, answer, topics } = {}) => game.recruiting.act(state, team, pid, action, pitch, undefined, scene, answer, topics);
 
-/** How often your call scene's cue leads you to one of his priorities: a fresh career, the first
- * 100 prospects you can see, each a call, presenting PRESENT_WITH and pitching the first topic the
- * cue names (the band: 0.55-0.75, set by scenes.CUE_TWO_SIDED). Also what a player's call is worth a
- * go: the opening's points and the pitch's, against the one-shot call the AI makes (BASE_POINTS). */
-export function reveal_rate(seed, team = "georgia") {
+/** What a player's call is worth a go, and how often its opening tells you something: a fresh career, the first
+ * 100 prospects you can see, each a call, presenting PRESENT_WITH and pitching his first Yes (the first of the three
+ * when none was his). `yes`: the share of openings that got a Yes; `present` and `pitch`: the opening's points and the
+ * pitch's, against the one-shot call the AI makes (BASE_POINTS). */
+export function call_worth(seed, team = "georgia") {
   const { season, recruiting } = game;
   const state = season.new_season(team, "full", seed, undefined, undefined, true);
   const rc = state["recruiting"];
   const pids = [...recruiting.prospect_list(state)].filter((q) => !rc["prospects"][q]["hidden"]).slice(0, 100);
-  let found = 0, present = 0.0, pitch = 0.0, told = 0;
+  let yes = 0, present = 0.0, pitch = 0.0;
   for (const pid of pids) {
     rc["hours"][team] = 100;
     let sc = act(state, team, pid, "call")["scene"];
@@ -173,15 +173,14 @@ export function reveal_rate(seed, team = "georgia") {
     sc = act(state, team, pid, "present", { scene: sc["id"], topics: [...PRESENT_WITH] })["scene"];
     const mid = recruiting.pending(state, team, pid);
     if (sc["question"]) act(state, team, pid, "answer", { scene: sc["id"], answer: "deflect" });   // he asked about a named player: the pitch waits on an answer
-    if (!sc["cue"]["topics"].length) continue;   // a Guarded or first-call Shy recruit keeps it to himself: no cue to follow
-    told += 1;
-    const r = act(state, team, pid, "pitch", { pitch: sc["cue"]["topics"][0], scene: sc["id"] });
-    found += r["reaction"]["kind"] === "hit" || r["reaction"]["kind"] === "quiet" ? 1 : 0;
+    const his = sc["present"]["hit"];
+    yes += his.length ? 1 : 0;
+    act(state, team, pid, "pitch", { pitch: his.length ? his[0] : PRESENT_WITH[0], scene: sc["id"] });
     present += mid - before;
     pitch += recruiting.pending(state, team, pid) - mid;
   }
-  told = Math.max(1, told);
-  return { rate: found / told, present: present / told, pitch: pitch / told, quiet: pids.length - told, calls: pids.length };
+  const n = Math.max(1, pids.length);
+  return { yes: yes / n, present: present / n, pitch: pitch / n, calls: pids.length };
 }
 
 /** How often a call brings a question about a named player (scenes.QUESTION_RATE of the calls to
@@ -219,9 +218,9 @@ export function main(argv) {
   const { recruiting } = game;
   const n = argv.length > 0 ? Number.parseInt(argv[0], 10) : 1;
   if (Number.isNaN(n)) throw new Error(`ValueError: invalid literal for int() with base 10: '${argv[0]}'`);
-  const rr = reveal_rate(1);
-  console.log(`  player reveal rate ${f(rr["rate"], 3)}   want 0.55-0.75  (${rr["quiet"]} of ${rr["calls"]} first calls kept it to himself: Guarded or Shy)`);
-  console.log(`  a player's call a go: opening ${f(rr["present"], 2)} + pitch on the cue ${f(rr["pitch"], 2)} = ${f(rr["present"] + rr["pitch"], 2)} `
+  const rr = call_worth(1);
+  console.log(`  a player's opening got a Yes on ${f(rr["yes"], 3)} of ${rr["calls"]} first calls (presenting ${PRESENT_WITH.join(", ")})`);
+  console.log(`  a player's call a go: opening ${f(rr["present"], 2)} + pitch on his Yes ${f(rr["pitch"], 2)} = ${f(rr["present"] + rr["pitch"], 2)} `
     + `(a one-shot call ${repr(recruiting.BASE_POINTS["call"], { floats: true })}; want the opening about a quarter of the call: PRESENT_HIT ${repr(recruiting.PRESENT_HIT, { floats: true })})`);
   const qm = question_mix(1);
   console.log(`  recruit questions: ${qm["questions"]} on ${qm["calls"]} calls (${qm["playing_time"]} care about playing time; `

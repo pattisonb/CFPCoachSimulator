@@ -4,7 +4,7 @@
 // `node tests/test_persona_rules.mjs`
 import { start, test, run, assert } from "./harness.mjs";
 
-const game = await start({ env: { CFP_CLEAR: "0" } });     // the word-mode screens and conversations Clear Mode replaces (tests/test_clear_mode covers Clear Mode)
+const game = await start();
 const { season, recruiting } = game;
 const { persona } = game.modules;
 
@@ -146,16 +146,22 @@ test("persona rules", () => {
   reset(st, pid);
   recruiting.act(st, ME, pid, "hc_visit", t);
   assert(rc["revealed"][ME][pid].length, "an in-home visit always tells");
-  // ... and a scene's pitch hit on a call keeps it to himself
+  // ... but a conversation is plain: your opening gets a Yes or No to each topic, a Guarded recruit's call too, and a
+  // Yes tells you it is one of his
   const [pid3, t3] = prospect(st, true);
   force(st, pid3, "guarded");
   reset(st, pid3);
   let sc = recruiting.act(st, ME, pid3, "call")["scene"];
-  recruiting.act(st, ME, pid3, "present", undefined, undefined, sc["id"], undefined, [t3, ...recruiting.PITCHES.filter((x) => x !== t3).slice(0, 2)]);
+  assert(!((rc["revealed"][ME] || {})[pid3] || []).length, "opening the call tells nothing yet");
+  const opening = [t3, ...recruiting.PITCHES.filter((x) => x !== t3 && !rc["prospects"][pid3]["priorities"].includes(x)).slice(0, 2)];
+  const shown = recruiting.act(st, ME, pid3, "present", undefined, undefined, sc["id"], undefined, opening);
   sc = rc["scenes"][ME][pid3];
+  assert(shown["hit"].length === 1 && shown["hit"][0] === t3 && sc["present"]["hit"].includes(t3), () => JSON.stringify(shown["hit"]));
+  assert(sc["cue"]["text"].split(" · ").filter((x) => x.endsWith(": Yes")).length === 1, sc["cue"]["text"]);
+  assert(rc["revealed"][ME][pid3].length === 1 && rc["revealed"][ME][pid3][0] === t3, "a Yes tells you it is one of his");
   if (sc["question"] && !sc["question"]["answer"]) recruiting.act(st, ME, pid3, "answer", undefined, undefined, sc["id"], "deflect");
-  recruiting.act(st, ME, pid3, "pitch", t3, undefined, sc["id"]);
-  assert(!((rc["revealed"][ME] || {})[pid3] || []).includes(t3), "Guarded does not give it up on a call");
+  const said = recruiting.act(st, ME, pid3, "pitch", t3, undefined, sc["id"])["reaction"];
+  assert(["hit", "fair"].includes(said["kind"]) && said["text"].includes("Yes, one of his priorities"), () => JSON.stringify(said));
 
   // test_guarded_decommit_half
   [pid, _] = prospect(st);

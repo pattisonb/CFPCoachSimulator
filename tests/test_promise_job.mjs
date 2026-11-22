@@ -6,10 +6,10 @@ import { Random, sorted, get } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting, offseason } = game;
-const { clear, persona, promises, scenes, word } = game.modules;
+const { persona, promises, scenes, word } = game.modules;
 
 const ME = "iowa";
-const HEARD_NOTE = "He heard you promised the job to another player at his position.";     // Clear Mode's note for scenes.HEARD_RIVAL
+const HEARD_NOTE = "He heard you promised the job to another player at his position.";     // the call's note (his History's line is scenes.HEARD_RIVAL)
 const show = (v) => JSON.stringify(v);
 
 function fresh() {
@@ -222,16 +222,9 @@ test("test_heard_rival_line", () => {
   st["current_week"] += 1;
   delete get(st["recruiting"]["scenes"], ME, {})[a];
   const sc2 = open_call(st, a);
-  // Clear Mode (career_js/clear.js, on by default) says it in a plain note; the word-mode call (CFP_CLEAR=0) has him say it first
-  let heard;
-  if (clear.on()) {
-    heard = (sc_) => sc_["turns"].filter((t) => t["who"] === "note" && t["text"] === HEARD_NOTE).map((t) => t["text"]);
-    assert(heard(sc2).length === 1 && sc2["turns"].every((t) => t["who"] === "note"), show(sc2["turns"]));
-  } else {
-    heard = (sc_) => sc_["turns"].filter((t) => t["who"] === "him" && t["text"] === scenes.HEARD_RIVAL).map((t) => t["text"]);
-    const him = sc2["turns"].filter((t) => t["who"] === "him").map((t) => t["text"]);
-    assert(him.length && him[0] === scenes.HEARD_RIVAL, show(sc2["turns"]));
-  }
+  // the call says it in a plain note
+  const heard = (sc_) => sc_["turns"].filter((t) => t["who"] === "note" && t["text"] === HEARD_NOTE).map((t) => t["text"]);
+  assert(heard(sc2).length === 1 && sc2["turns"].every((t) => t["who"] === "note"), show(sc2["turns"]));
   assert(!("heard_rival" in st["recruiting"]["contacts"][a][ME]), "the stamp is spent once he has said it");
   st["current_week"] += 1;
   delete st["recruiting"]["scenes"][ME][a];

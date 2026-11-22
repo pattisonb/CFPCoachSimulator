@@ -189,9 +189,9 @@ cfg.RUSH_TRAITS = ["pocket_collapser", "edge_bender", "gap_penetrator", "pressur
 cfg.TACKLE_TRAITS = ["sure_tackler", "pack_tackler", "block_buster", "hand_fighter", "edge_setter"];
 cfg.HIT_TRAITS = ["heavy_hitter", "jarring_hits", "ball_jarrer"];
 
-// ----- Clear Mode (the clear-mode branch): the 17 abilities that did nothing get effects -----
+// ----- The 17 abilities that once did nothing have effects -----
 // Each is per tier and small, a fixed nudge with no draw of its own, so a game's other draws are the same.
-cfg.EXTRA_TRAITS = true;                // the branch's switch (coach_career/clear.py CLEAR)
+cfg.EXTRA_TRAITS = true;                // on: those abilities act (off, the engine plays as it did before them)
 cfg.CLUTCH_SECONDS = 900;               // "clutch time": the fourth quarter (and overtime) ...
 cfg.CLUTCH_MARGIN = 8;                  // ... within one score
 cfg.COVER_TRAITS_MAN = ["shadow", "jam_artist"];

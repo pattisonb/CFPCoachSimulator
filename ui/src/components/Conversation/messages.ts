@@ -33,7 +33,6 @@ export const messages = {
   pull: { strong: "Strong", fair: "Fair", weak: "Weak" } as Record<string, string>,
   pullTip: (topic: string, word: string) => `Your program's case on ${topic}: ${word.toLowerCase()}.`,
   known: "He told you he cares about this.",
-  cue: "He just brought this up.",
   marks: {
     hit: "Lit Up",
     fair: "Listening",
@@ -51,7 +50,6 @@ export const messages = {
     polite: "Polite Nod",
     quiet: "He Went Quiet",
     tired: "Tired of the Calls",
-    guarded: "Poker Face",
   } as Record<string, string>,
   meaning: {
     hit: "That's one of his. Keep pushing it.",
@@ -59,7 +57,6 @@ export const messages = {
     polite: "Not his thing. Try another angle next time.",
     quiet: "He cares about it, but your case there is weak.",
     tired: "Too many calls. Give him some room.",
-    guarded: "He kept his cards close this time.",
   } as Record<string, string>,
   learned: (topic: string) => `He told you he cares about ${topic}.`,
 

@@ -405,7 +405,7 @@ export class GameSim {
     for (const [team, team_lead] of [[offense, lead], [defense, 0 - lead]]) {
       [team.lead, team.half, team.in_overtime] = [team_lead, this.half, this.in_overtime];
     }
-    // Clear Mode: clutch time for the abilities that answer it (the fourth quarter or overtime, within one score)
+    // clutch time for the abilities that answer it (the fourth quarter or overtime, within one score)
     play_functions.CLUTCH_NOW[0] = Boolean(truthy(cfg.EXTRA_TRAITS) && Math.abs(lead) <= cfg.CLUTCH_MARGIN
       && (this.in_overtime || (this.half === 2 && seconds <= cfg.CLUTCH_SECONDS)));
     const [play_ran, result, yardline, seconds_left] = drive_functions.sim_drive(

@@ -69,7 +69,7 @@ export function program_news(state) {
       venue: truthy(get(g, "neutral")) ? "neutral" : home ? "home" : "away", overtime: get(g, "overtime") || 0 });
   }
   items = items.concat(promises.news(state).filter((n) => n["week"] > week - office.NEWS_WEEKS));     // a promised start slipping: he says so
-  items = items.concat(ability_goals.news(state).filter((n) => n["week"] > week - office.NEWS_WEEKS));   // Clear Mode: an ability he earned
+  items = items.concat(ability_goals.news(state).filter((n) => n["week"] > week - office.NEWS_WEEKS));   // an ability he earned
   // newest week first; inside a week your game, then commitments to you, then the rest by weight
   const rank = (kind) => { const i = office._NEWS_ORDER.indexOf(kind); return i === -1 ? 99 : i; };
   const key = (x) => [-x["week"], x["kind"] !== "game", !truthy(get(x, "yours")), rank(x["kind"])];

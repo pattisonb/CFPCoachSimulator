@@ -686,7 +686,7 @@ export interface ProspectRow {
   offered: boolean;
   /** your staff's looks at him (a full report at 3) */
   looks: number;
-  /** your staff's potential read, low and high (grade words, or numbers in Clear Mode); null before a look */
+  /** your staff's potential read, low and high (letter grades); null before a look */
   our_potential: [string, string] | null;
   interest_level: "High" | "Medium" | "Low";
   generational: boolean;
@@ -778,7 +778,7 @@ export interface ProspectDetail {
   trait_hints: Record<string, string>;
   /** your staff's report; null before a look */
   report: ScoutReport | null;
-  /** Clear Mode: his position's key ratings as ranges; null before a look or outside Clear Mode */
+  /** his position's key ratings as ranges; null before a look */
   clear: {
     complete: boolean;
     looks: number;
@@ -963,12 +963,12 @@ export interface RecruitEvent {
   school?: string;
   /** a contact's or pitch's action: message, call, hc_visit, official_visit */
   action?: string;
-  /** the topic pitched, and how he took it: hit, fair, polite, quiet, tired, guarded */
+  /** the topic pitched, and how he took it: hit, fair, polite, quiet, tired */
   pitch?: string;
   reaction?: string;
-  /** an opening's topics, and how many landed (null: he gave nothing away) */
+  /** an opening's topics, and how many landed */
   topics?: string[];
-  hit?: number | null;
+  hit?: number;
   /** his question: how you answered (straight, promise, deflect), about whom */
   question?: string;
   answer?: string;
@@ -982,11 +982,10 @@ export interface RecruitEvent {
   nil?: number;
 }
 
-/** A turn of a call or visit: you, him, someone in his family (with their label), or a note on the room. */
+/** A turn of a call or visit: you, him, or a note on the room. */
 export interface SceneTurn {
-  who: "you" | "him" | "family" | "note";
+  who: "you" | "him" | "note";
   text: string;
-  label?: string;
 }
 
 /** His question about a named player (or his Package Deal mate), and your answer once given. */
@@ -1007,8 +1006,8 @@ export interface Scene {
   action: "call" | "hc_visit";
   week: number;
   turns: SceneTurn[];
-  /** the line he tells you what he cares about in (after your opening), and the topics it points at */
-  cue: { text: string; topics: string[] } | null;
+  /** his answer to your opening (a Yes or No to each topic): the line the conversation turns on */
+  cue: { text: string } | null;
   question: SceneQuestion | null;
   /** your opening's three topics, once presented */
   presented: string[] | null;
@@ -1019,7 +1018,7 @@ export interface Scene {
 
 /** POST /recruit action "pitch": how he took what you led with */
 export interface SceneReaction {
-  kind: "hit" | "fair" | "polite" | "quiet" | "tired" | "guarded";
+  kind: "hit" | "fair" | "polite" | "quiet" | "tired";
   text: string;
   /** your line */
   you: string;

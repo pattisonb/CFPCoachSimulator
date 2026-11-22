@@ -6,7 +6,7 @@
 //   test("a new career has a board", () => { ... });
 //   await run();                                // runs the tests in order; prints a line each; exit code 1 on a failure
 //
-// `start({ env: { CFP_CLEAR: "0" } })` sets what the game reads from its environment before it loads (a process has
+// `start({ env: { SIM_WORKERS: "1" } })` sets what the game reads from its environment before it loads (a process has
 // one game: a test file that needs two settings runs itself twice, see `again`).
 import fs from "node:fs";
 import os from "node:os";

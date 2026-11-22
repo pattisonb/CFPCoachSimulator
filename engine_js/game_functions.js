@@ -140,7 +140,7 @@ export function fg_max_distance(kicker) {
   // Longest field goal this kicker will attempt, in yards.
   const power_mult = cfg.sliders.get_multiplier(cfg.sliders.kicking_power);
   let long_range = get(getattr(kicker, "traits", null) || {}, "long_range", 0) * cfg.TRAIT_FX["long_range"];
-  if (cfg.EXTRA_TRAITS) {                  // Clear Mode: a cannon leg kicks from farther
+  if (cfg.EXTRA_TRAITS) {                  // a cannon leg kicks from farther
     long_range += get(getattr(kicker, "traits", null) || {}, "cannon_leg", 0) * cfg.TRAIT_FX["cannon_leg"];
   }
   return round(cfg.FG_MAX_DISTANCE * power_mult + ((kicker.kick_power || 50) * power_mult - 50) / 8 + long_range);
@@ -151,7 +151,7 @@ export function get_punt_distance(punter) {
   const punt_power_mult = cfg.sliders.get_multiplier(cfg.sliders.kicking_power);
   const [mean, sd] = cfg.PUNT_DISTANCE;
   let punt_distance = int(random.gauss(mean * punt_power_mult, sd));
-  if (cfg.EXTRA_TRAITS) {                  // Clear Mode: a cannon leg punts farther
+  if (cfg.EXTRA_TRAITS) {                  // a cannon leg punts farther
     punt_distance += get(getattr(punter, "traits", null) || {}, "cannon_leg", 0) * cfg.TRAIT_FX["cannon_leg"];
   }
   return round(punt_distance + (((punter.punt_power || 50) * punt_power_mult) - 50) / 5);

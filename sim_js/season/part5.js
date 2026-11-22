@@ -5,7 +5,7 @@
 // Ported by engine_js/PORTING.md's rules ("A big file ported in parts"): every name of the season file is reached
 // through the `season` namespace, and this part's own are put on it where the Python defines them.
 import { round, sum, cmp, sorted, maxBy, minBy, get, truthy, isNumber, floordiv, range, json_dumps } from "../../engine_js/pyrt.js";
-import { modules, has } from "../../engine_js/modules.js";
+import { modules } from "../../engine_js/modules.js";
 import { simulate_game } from "../../engine_js/game.js";
 import { season } from "../season_ns.js";
 import { awards } from "../awards.js";
@@ -510,13 +510,6 @@ function _job(state) {
 }
 
 
-function _clear_on() {
-  // (Python's `except ImportError`: no clear module, no Clear Mode)
-  if (!has("clear")) return false;
-  return modules.clear.on();
-}
-
-
 function summary(state) {
   const teams = season.load_teams();
   const rec = season._records(state, undefined, true)[state["team"]];
@@ -535,7 +528,6 @@ function summary(state) {
   return {
     id: state["id"], team: state["team"], team_name: state["team_name"], conference: state["conference"],
     mode: state["mode"], created_at: state["created_at"], current_week: state["current_week"],
-    clear_mode: season._clear_on(),                     // the clear-mode branch: numbers, not words (coach_career/clear.py)
     phase: state["phase"], done: state["done"], champion: get(state, "champion"), year: season.season_year(state),
     offseason_stage: get(get(state, "offseason") || {}, "stage"),
     job: truthy(get(state, "career")) ? season._job(state) : null,
@@ -1147,7 +1139,7 @@ function _team_stat_ranks(state, me) {
 
 Object.assign(season, {
   _preview_team, _preview_sim, _preview_prediction, team_ratings_now, game_ratings, team_overall, page_ratings, _unit_overalls,
-  game_preview, team_schedule_view, _coach_line, _job, _clear_on, summary, _projection_order, _conference_leaders,
+  game_preview, team_schedule_view, _coach_line, _job, summary, _projection_order, _conference_leaders,
   bracket_projection, awards_outlook, bowl_projection, _remaining, bowl_view, _game_line, _player_leaders, _national_leaders,
   _surprises, season_review, _team_stat_ranks,
 });

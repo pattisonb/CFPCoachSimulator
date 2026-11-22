@@ -267,11 +267,9 @@ function act(state, slug, pid, action, pitch = null, nil = 0, scene = null, answ
     const sc = get(get(get(rc, "scenes") || {}, slug) || {}, pid);
     const start = rc["log"].length;
     const scenes = modules.scenes;
-    const tells = truthy(sc) ? scenes.tells(state, slug, pid, sc["action"]) : true;       // asked before the pitch lands: a Shy recruit's first call is a call by then
-    const repeat = Boolean(truthy(sc) && _in(pitch, get(sc, "presented") || []));           // your opening already said it: he notices
     const revealed = recruiting._act(state, slug, pid, action, pitch, nil, undefined, scene);
     const tired = rc["log"].slice(start).some((e) => e["kind"] === "pester");      // the call or visit pestered him: the pitch fell flat
-    const said = scenes.reaction(state, slug, pid, sc["action"], pitch, rc["prospects"][pid], tired, tells, repeat);
+    const said = scenes.reaction(state, slug, pid, pitch, tired);
     if (slug === get(state, "team")) {              // your History: the pitch and how he took it
       recruiting._event(state, "pitch", pid, slug, { action: sc["action"], pitch, reaction: said["kind"] });
     }
@@ -407,7 +405,7 @@ function _answer(state, slug, pid, scene, answer) {
 }
 
 
-recruiting.PITCH_MARK = { hit: "hit", fair: "fair", quiet: "weak", polite: "not_his", guarded: "no_read", tired: "no_read" };   // his reaction -> the mark the page shows
+recruiting.PITCH_MARK = { hit: "hit", fair: "fair", quiet: "weak", polite: "not_his", tired: "no_read" };   // his reaction -> the mark the page shows
 
 
 recruiting._MARKS = new Map();       // (career, school, log identity, log length) -> {pid: marks}: one pass over the log per view
@@ -439,7 +437,7 @@ function _marks_index(state, slug) {
 function pitch_marks(state, slug, pid) {
   // What he said about each topic your school pitched him (your History): {topic: {"mark", "week", "action"}}. The mark
   // is "hit" (He Lit Up), "weak" (Weak Case: he cares, your case is weak), "not_his" (Not His Thing: polite, not one of his
-  // priorities) or "no_read" (guarded, tired, or one of your opening's three, which reads no single topic). The latest real
+  // priorities) or "no_read" (tired, or one of your opening's three, which reads no single topic). The latest real
   // read wins and a No Read never hides one. A topic you never pitched has no entry. The log is read once per view
   // (_marks_index, cached on the log's length).
   let log = get(state["recruiting"], "log");
@@ -608,15 +606,15 @@ function _job_promise(state, slug, pid, action) {
 
 function _present(state, slug, pid, scene, topics) {
   // Your opening on the open scene (scenes.present), no hours: three different topics, scored
-  // against his true priorities without revealing them. Each that is one of his earns PRESENT_HIT of
+  // against his true priorities (he answers each with a Yes or No). Each that is one of his earns PRESENT_HIT of
   // the action's base times (1 + your strength); one you are weak at (under BACKFIRE) costs
   // BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. His priorities
   // include his decider's topic, and his personality and decider scale each share and the cap as they
   // do a pitch (persona.pitch_mult: a Shy recruit's visit, his first call, a visit on the decider's
   // topic). The points are the
   // call's or visit's (diminished by his earlier contacts, halved while he is cooled, nothing while
-  // the call pesters him) and land through `_add_points` on the scene's action. His reaction, your
-  // question and his cue join the scene; it remembers what you presented.
+  // the call pesters him) and land through `_add_points` on the scene's action. His answers and
+  // his question join the scene; it remembers what you presented.
   const [scenes, persona] = [modules.scenes, modules.persona];
   const rc = state["recruiting"];
   const p = get(rc["prospects"], pid);
@@ -654,12 +652,10 @@ function _present(state, slug, pid, scene, topics) {
   if (points && recruiting.cooled(state, slug, pid)) points *= recruiting.COOLED_CONTACT;
   if (points < 0) recruiting._event(state, "not_buying", pid, slug, { topic: back[0] });
   scenes.present(state, slug, pid, sc, topics, hits, back, tired);
-  const tells = scenes.tells(state, slug, pid, action);
-  const shown = truthy(tells) ? hits : [];      // a call that keeps his priority to himself does not say which were his
-  recruiting._event(state, "present", pid, slug, { action, topics: Array.from(topics), hit: truthy(tells) ? shown.length : null });
+  recruiting._event(state, "present", pid, slug, { action, topics: Array.from(topics), hit: hits.length });
   if (points) recruiting._add_points(state, slug, pid, points, sc["action"]);
   const hours = recruiting._hours(state, slug);           // (Python works the default out before it looks)
-  return { scene: sc, points, hit: shown, hours_left: get(rc["hours"], slug, hours) };
+  return { scene: sc, points, hit: hits, hours_left: get(rc["hours"], slug, hours) };
 }
 
 
@@ -986,7 +982,7 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
       persona.learn_on_contact(state, slug, pid, action);
       persona.knock_back(state, slug, pid, action);       // a Surprise Visit's school: a top-three school's call or visit knocks it back
     }
-    if (truthy(opens)) {                                  // your scene: the contact is marked, his lines and cue stored; no points until the pitch
+    if (truthy(opens)) {                                  // your scene: the contact is marked, the scene stored; no points until the pitch
       contact["asked"] = action === "hc_visit" || get(contact, "asked") === true ? true : "range";
       contact["last_contact"] = week;
       const scenes = modules.scenes;

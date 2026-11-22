@@ -204,19 +204,6 @@
   text-transform: uppercase;
 }
 
-.talk__line.is-family {
-  padding-left: 50px;
-}
-
-.talk__line.is-family .talk__face {
-  display: none;
-}
-
-.talk__line.is-family .talk__bubble {
-  border-style: dashed;
-  box-shadow: none;
-}
-
 /* his cue and his reaction: the lines the conversation turns on */
 .talk__tag {
   padding: 1px 6px;
@@ -237,14 +224,12 @@
 }
 
 .talk__line.is-quiet .talk__bubble p,
-.talk__line.is-polite .talk__bubble p,
-.talk__line.is-guarded .talk__bubble p {
+.talk__line.is-polite .talk__bubble p {
   color: var(--ink-soft);
 }
 
 .talk__line.is-quiet .talk__tag,
-.talk__line.is-polite .talk__tag,
-.talk__line.is-guarded .talk__tag {
+.talk__line.is-polite .talk__tag {
   background: var(--ink-soft);
 }
 
@@ -372,13 +357,9 @@
   transform: translate(-2px, -2px);
 }
 
-/* what he cares about (thick edge), and what he just brought up (dashed) */
+/* what he cares about (thick edge) */
 .talk__topic.is-known {
   border-width: 3px;
-}
-
-.talk__topic.is-cue {
-  border-style: dashed;
 }
 
 .talk__num {
@@ -498,14 +479,13 @@
 
 .talk__result.is-quiet .talk__stamp,
 .talk__result.is-polite .talk__stamp,
-.talk__result.is-guarded .talk__stamp,
 .talk__result.is-tired .talk__stamp {
   background: var(--paper-hi);
   color: var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
 }
 
-/* the stamp's icon in its own color: fire for a hit, green for polite, blue for tired, red for guarded */
+/* the stamp's icon in its own color: fire for a hit, green for polite, blue for tired */
 .talk__result.is-hit .talk__stamp {
   color: var(--hot);
 }
@@ -521,10 +501,6 @@
 
 .talk__result.is-tired .talk__stamp {
   color: var(--cold);
-}
-
-.talk__result.is-guarded .talk__stamp {
-  color: var(--warn);
 }
 
 .talk__result-text {

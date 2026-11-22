@@ -296,22 +296,20 @@ export function learn_on_contact(state, slug, pid, action) {
 
 
 export function learn_from_read(state, pid, looks) {
-  // His decider shows once the player's read of him holds DECIDER_LOOKS looks, his story at a complete report.
+  // His decider shows once the player's read of him holds DECIDER_LOOKS looks; a complete report tells the rest: his
+  // story, his personality, how he means to commit and his priorities.
   const recruiting = modules.recruiting;
   if (looks >= persona.DECIDER_LOOKS) persona.learn(state, state["team"], pid, "decider");
   if (looks >= recruiting.REPORT_LOOKS) {
     persona.learn(state, state["team"], pid, "story");
-    const clear = modules.clear;
-    if (clear.on()) {                               // Clear Mode: a complete report leaves no guesswork about him
-      const me = state["team"];
-      for (const t of ["personality", "decider", "style"]) persona.learn(state, me, pid, t);
-      const revealed = state["recruiting"]["revealed"];
-      if (revealed[me] === undefined) revealed[me] = {};
-      if (revealed[me][pid] === undefined) revealed[me][pid] = [];
-      const seen = revealed[me][pid];
-      for (const t of state["recruiting"]["prospects"][pid]["priorities"]) {
-        if (!within(t, seen)) seen.push(t);
-      }
+    const me = state["team"];                       // a complete report leaves no guesswork about him
+    for (const t of ["personality", "decider", "style"]) persona.learn(state, me, pid, t);
+    const revealed = state["recruiting"]["revealed"];
+    if (revealed[me] === undefined) revealed[me] = {};
+    if (revealed[me][pid] === undefined) revealed[me][pid] = [];
+    const seen = revealed[me][pid];
+    for (const t of state["recruiting"]["prospects"][pid]["priorities"]) {
+      if (!within(t, seen)) seen.push(t);
     }
   }
 }
@@ -378,167 +376,6 @@ export function view(state, viewer, pid) {
 }
 
 
-// ----- how each personality and decider sounds in calls and in-home visits (scenes.py reads these) ------
-// His voice, present tense, no numbers; only scenes.FIELDS placeholders. `open` answers your opener on a
-// call and `visit_open` answers it in his living room; `small_talk`, `hit` and `quiet` play on a call or
-// a visit, so they say nothing about the phone. `hit` and `quiet` react to a pitch or your presentation
-// and name no topic, so a call that keeps his priority to himself still tells you nothing.
-const LINES = {
-  cocky: {
-    open: ["Coach {coach}! Yeah, I figured {school} would call. Everybody does.",
-      "Hey Coach. Go ahead, you've got my attention. Not for long, but you do.",
-      "Yeah, it's {first}. You're calling the right guy, Coach.",
-      "There he is. I figured {school} would call."],
-    visit_open: ["Coach {coach}! Come on in. I figured {school} would show up sooner or later.",
-      "Have a seat, Coach. You've got my attention. Not for long, but you do.",
-      "Glad you made the trip, Coach. You're talking to the right guy.",
-      "There he is. I figured {school} would come by."],
-    small_talk: ["You know I'm the best {position} in {state}, right? Just checking.",
-      "Man, my highlight tape keeps blowing up. Coaches can't stop watching it.",
-      "Everybody in {town} says I'm next. I'm not going to argue with them.",
-      "Everybody wants to talk to me this month. It's a nice problem."],
-    hit: ["Now you're talking, Coach. That's what a guy like me needs to hear.",
-      "See, that's why I'm listening. You get it.",
-      "Yeah, that's more like it. I like it.",
-      "Good. You know what you've got in me."],
-    quiet: ["Hmm. That's not what I expected from {school}, Coach.",
-      "I'm used to bigger pitches than that.",
-      "That doesn't move me. Try again.",
-      "Come on, Coach. Is that really your best?"],
-  },
-  shy: {
-    open: ["Oh. Hi, Coach. Yeah, um, I can talk.",
-      "Hey. Sorry, I almost didn't pick up. Hi, Coach.",
-      "Hi. Yes sir. I've got a minute.",
-      "Oh, hey, Coach {coach}. Thanks for calling."],
-    visit_open: ["Oh. Hi, Coach. Um, come in. Thanks for coming.",
-      "Hey. Sorry, I'm kind of nervous. Hi, Coach.",
-      "Hi. Yes sir. Please, sit down.",
-      "Oh, hey, Coach {coach}. Thanks for coming all this way."],
-    small_talk: ["Um, it's been a long week. School, practice, you know.",
-      "I was just doing homework. It's fine, though.",
-      "My mom said you might be in touch. I didn't know what to say.",
-      "Sorry, I'm not great at talking to coaches, Coach."],
-    hit: ["Oh. Yeah. That sounds really good, Coach.",
-      "Okay. I like that. I do.",
-      "That's... that's actually what I was hoping for.",
-      "Huh. Yeah. That helps, Coach."],
-    quiet: ["Oh. Um. I don't know about that.",
-      "Yeah, okay. I'll have to think about it.",
-      "...I'm not sure, Coach.",
-      "Sorry. That's not really what I was thinking."],
-  },
-  guarded: {
-    open: ["Yeah, this is {first}. What's up, Coach?",
-      "Okay. {school}. Go ahead, Coach.",
-      "I've got a minute. Not a long one.",
-      "Coach {coach}. Sure. What do you need?"],
-    visit_open: ["Coach {coach}. Come in. Make it quick, if you can.",
-      "Okay. {school}. Sit down, Coach.",
-      "You're here. Fine. I've got a little time.",
-      "Coach {coach}. Sure. What do you need from me?"],
-    small_talk: ["Not much going on. Same as always.",
-      "I'd rather not get into my week, Coach.",
-      "It's fine. Everything's fine. What did you want to talk about?",
-      "People ask me a lot of questions. I'm used to it."],
-    hit: ["Okay. That's fine, I guess.",
-      "Noted, Coach. I'll think about it.",
-      "Maybe. I'm not saying more than that.",
-      "Not bad. Don't read too much into that."],
-    quiet: ["I hear you. That's all I'm going to say.",
-      "Okay. We'll see.",
-      "That doesn't tell me much, Coach.",
-      "Hm. Let's leave it there."],
-  },
-  attention: {
-    open: ["Coach {coach}! Oh man, I love hearing from {school}!",
-      "Hey Coach! I was hoping you'd call today. Seriously.",
-      "{school}! Yes! Okay, tell me everything.",
-      "Coach! You made my day. I'm all ears."],
-    visit_open: ["Coach {coach}! Oh man, you're actually here! Come in!",
-      "Hey Coach! I was hoping you'd come by. Seriously.",
-      "{school}! Yes! Okay, sit down and tell me everything.",
-      "Coach! You made my whole week. I'm all ears."],
-    small_talk: ["Dude, my texts have not stopped. It's wild.",
-      "My friends in {town} keep asking which schools are after me. I love telling them.",
-      "I'm telling you, this is the best part. I could talk all day.",
-      "Did you see my last post? People are going crazy for it."],
-    hit: ["Yes! That's so good, Coach! Keep it coming!",
-      "Okay, wow. I love that. Tell me more!",
-      "Oh, that's exactly it! You get me, Coach.",
-      "That's awesome. Seriously, I'm smiling right now."],
-    quiet: ["Aw, really? I was hoping for something bigger, Coach.",
-      "Hm. That's not as exciting as I thought it would be.",
-      "Okay... I guess. Got anything better?",
-      "Oh. That's kind of a bummer, honestly."],
-  },
-  business: {
-    open: ["Coach {coach}. Go ahead.",
-      "I've got a few minutes. What do you have for me?",
-      "Okay. Let's get to it, Coach.",
-      "Appreciate the call. What's the plan for me at {school}?"],
-    visit_open: ["Coach {coach}. Have a seat. Go ahead.",
-      "I've got a little time. What do you have for me?",
-      "Okay. Let's get to it, Coach.",
-      "Appreciate you coming. What's the plan for me at {school}?"],
-    small_talk: ["I'd rather skip the small talk, Coach.",
-      "Let's keep this to football.",
-      "Time is short. What do you need from me?"],
-    hit: ["That's specific. I can work with that.",
-      "Good. I need specifics, and that's one.",
-      "Okay. That checks out, Coach.",
-      "That's what I'm looking for. Put it in writing and we'll talk."],
-    quiet: ["That's not specific enough, Coach.",
-      "I need more than that.",
-      "That doesn't tell me much.",
-      "Come back with something concrete."],
-  },
-};
-
-// what he says when a call keeps his priority to himself (a Guarded recruit, a Shy one's first call):
-// a cue that names no topic
-const NO_TOPIC = {
-  guarded: ["I don't know, Coach. I keep that to myself.",
-    "That's between me and my family, Coach.",
-    "I'm not telling anybody that yet.",
-    "You'll have to earn that one, Coach."],
-  shy: ["I don't know, Coach. I'm still figuring it out.",
-    "Um, I'm not sure yet. Sorry.",
-    "I haven't really thought about it, Coach.",
-    "That's hard to say. I don't know you very well yet."],
-};
-
-// the one turn the decider takes in an in-home visit (who: "family"): the voice of the person who decides
-// (no topic named: what he cares about is learned, not told). Himself has none.
-const DECIDER_LINES = {
-  mom: ["We're glad you came, Coach. I just want to know my son will be looked after.",
-    "Have you eaten? Sit down. I want to hear how you'll take care of him up there.",
-    "He's still my baby, Coach. You'll treat him right, won't you?",
-    "I'll be honest, I worry. Tell me he'll be safe and have people looking out for him.",
-    "I like you, Coach. Now convince me he's in good hands."],
-  dad: ["I'll cut to it, Coach. What can you do for my son?",
-    "I've heard a lot of talk from coaches. I want straight answers.",
-    "Don't waste my time. Tell me what he gets and what he has to earn.",
-    "My son works hard. I expect the same from a school that wants him.",
-    "Don't sell me. Show me."],
-  grandma: ["Bless you for coming, Coach. Family means everything to us.",
-    "I pray for him every night, Coach. I want him somewhere good for his heart, too.",
-    "Is he going to be around good people, Coach? That matters most to me.",
-    "He's a sweet boy, Coach. Promise me you'll look after him.",
-    "Come sit by me, Coach. Let's talk about what's best for him."],
-  hs_coach: ["Coach {coach}, good to see you. I've coached this young man for years, so I'll tell you straight.",
-    "I'd like to hear your plan for his development, Coach. I want to see the full picture.",
-    "He's been well prepared. I expect the next program to keep that standard.",
-    "I've seen plenty of programs make promises, Coach. I'll be watching how you follow through.",
-    "My job is to make sure he lands in the right place. Walk me through how you'd use him."],
-  trainer: ["Let's talk value, Coach. What's the number, and what does it look like on the field?",
-    "I've put a lot into this kid. I need to see what {school} brings to the table.",
-    "Everyone has an offer. What's your best number?",
-    "He's an asset, Coach. Show me how {school} makes him more valuable.",
-    "I'm looking at the package, Coach. The whole thing, not the speech."],
-};
-
-
 // ----- his story (spec section 2): Legacy, Hometown Hero, Package Deal, Two-Sport, Injury Comeback, Late Bloomer -----
 // A class-wide fixed draw from the seed (each prospect's own stream `story-{seed}-{pid}`; a Package Deal's
 // mate from `story-mate-{seed}-{pid}`), worked out when asked and never stored: {pid: {"story", "story_data"}}
@@ -577,7 +414,6 @@ const BLOOM_WEEKS = [5, 9];       // a Late Bloomer jumps at the week step after
 const COMEBACK_SHOWN = 1.0;       // *tune* a comeback's shown composite comes from the top this share of the band under his own (1: anywhere in it)
 const BLOOM_SHOWN = 0.5;          // *tune* a bloomer's shown composite comes from the bottom this share of his starting band: unranked
 const BLOOM_BOARDS = 10;          // *tune* AI schools that add a bloomer to their boards at his jump: the ones he fits best
-const STORY_CALL_LINE = 0.35;     // *tune* how often a call's small talk is his story, once the school knows it
 
 // persona._STORIES: (the recruiting block, its key, its stories): the draw for one class, in memory only
 
@@ -713,13 +549,6 @@ export function mate(state, pid) {
 }
 
 
-export function mate_offered(state, slug, pid) {
-  // Whether the school has offered a Package Deal's mate.
-  const m = persona.mate(state, pid);
-  return truthy(m) && within(m, get(state["recruiting"]["offers"], slug, []));
-}
-
-
 export function rerank(rc) {
   // The class ranked 1..N again by the shown composite (ties keep their order).
   const pros = rc["prospects"];
@@ -754,71 +583,6 @@ export function apply_stories(state) {
 }
 
 
-// ----- how each story sounds (scenes.py): "him" plays as his small talk, "family" is the decider's turn at an
-// in-home visit. His voice or theirs, present tense, no numbers; {legacy} is his legacy school, {mate} his
-// Package Deal mate, the rest scenes.FIELDS. A call brings a story up only once the school knows it.
-const STORY_LINES = {
-  legacy: {
-    him: ["My dad played at {legacy}, Coach. I grew up in that stadium.",
-      "Everybody at home figures I'm going to {legacy}. I'm keeping an open mind.",
-      "There's a picture of my dad in his {legacy} uniform in our hallway. Just so you know."],
-    family: ["This family goes back a long way with {legacy}, Coach. That means something to him.",
-      "We have been {legacy} people for a long time. You'll have to show us why that should change.",
-      "A lot of his family went to {legacy}. I'm not saying that decides it. I'm saying it's there."],
-  },
-  hero: {
-    him: ["Everybody in {town} wants me to stay in {state}. I hear it at the grocery store.",
-      "I want to play in front of the people who raised me, Coach.",
-      "My whole town comes to my games. I think about that a lot."],
-    family: ["This whole town wants him to stay home, Coach. People stop us at church about it.",
-      "He's {town}'s boy. Folks here would love to watch him on Saturdays.",
-      "Every kid in {town} wears his number. That counts for something."],
-  },
-  package: {
-    him: ["Me and {mate} have played together since we were kids. Where I go, he goes.",
-      "You want me, you want {mate} too. That's the deal, Coach.",
-      "{mate} is my guy. We're doing this together."],
-    family: ["He and {mate} are a package, Coach. Two offers, or no deal.",
-      "{first} and {mate} have been inseparable since grade school. They want to go together.",
-      "If you want him, you'll need a spot for {mate} too."],
-  },
-  two_sport: {
-    him: ["I had a doubleheader yesterday, Coach. My arm's still sore.",
-      "Baseball scouts keep showing up at my games. It's a lot.",
-      "Honestly, baseball could be my thing too. I haven't decided."],
-    family: ["Pro baseball scouts have been calling too, Coach. He has options.",
-      "I'll be honest, the baseball draft is real for him. Give him a reason to pick football.",
-      "The baseball people say he'll go high in the draft. Show us he'll play right away here."],
-  },
-  comeback: {
-    him: ["The knee feels great, Coach. Better than before, honestly.",
-      "Everybody forgot about me after I got hurt. I didn't forget.",
-      "I'm healthy now. I just need somebody who believes it."],
-    family: ["After the injury, a lot of schools stopped calling. We remember who didn't.",
-      "He worked so hard to come back, Coach. Every morning before school.",
-      "We know who stuck with him when he was hurt. That matters to us."],
-  },
-  bloomer: {
-    him: ["I grew a few inches since last year, Coach. Everything feels different.",
-      "Nobody was calling me a year ago. Now my phone won't stop.",
-      "I'm just getting started. Wait until you see my senior film."],
-    family: ["He grew so much this year, Coach. None of his old clothes fit.",
-      "A year ago nobody called. Now everybody does. We remember that.",
-      "He's still growing, Coach. You haven't seen the best of him."],
-  },
-};
-// the Package Deal once the school has offered his mate: the line acknowledges it instead of demanding it
-// (scenes.open_scene; the same {mate}); any other story keeps its one pool
-const STORY_LINES_OFFERED = {
-  package: {
-    him: ["{mate} showed me your offer, Coach. That's the one thing I needed to see.",
-      "You offered {mate} too. Me and him have been waiting on a school to do that.",
-      "{mate} got your offer. Now we're both listening."],
-    family: ["You offered {mate} too. That means a lot in this house.",
-      "He and {mate} have been inseparable since grade school, and you offered both. We noticed.",
-      "{mate}'s mother called us about your offer. That's the kind of thing we remember."],
-  },
-};
 // his History's sentence when your staff finds out (a public story is never news to them)
 const STORY_LEARNED = { legacy: "Your staff learned he is a legacy at {school}.",
   hero: "Your staff learned he is a hometown hero.",
@@ -826,43 +590,6 @@ const STORY_LEARNED = { legacy: "Your staff learned he is a legacy at {school}."
   two_sport: "Your staff learned he could go pro in baseball.",
   comeback: "Your staff learned he is coming back from an injury.",
   bloomer: "Your staff learned he is a late bloomer." };
-
-
-export function story_fields(state, pid) {
-  // The story's own placeholders for scenes: {legacy} (his legacy school's name) and {mate}.
-  const [k, d] = persona.story(state, pid);
-  return { legacy: k === "legacy" ? persona._school_name(get(d, "school")) : "",
-    mate: k === "package" ? persona._name_of(state, get(d, "mate")) : "" };
-}
-
-
-export function story_line(state, slug, pid, scene_id, who, f, action, first_call = false) {
-  // His story's line for a scene (its own seeded draw `story-line-{scene_id}-{who}`, so no other stream
-  // moves), or None: at an in-home visit always ("family": the decider brings it up, and the school learns
-  // it); on a call ("him") a Package Deal's first call always, otherwise STORY_CALL_LINE of the time once
-  // the school knows the story (never for All Business: no small talk).
-  const [k, _] = persona.story(state, pid);
-  if (k === null) return null;
-  if (k === "package") {                           // his mate is gone elsewhere: nothing left to ask a spot for
-    const st = or_(get(state["recruiting"]["status"], or_(persona.mate(state, pid), "")), {});
-    const where = or_(get(st, "signed"), get(st, "committed"));
-    if (where !== null && where !== slug) return null;
-  }
-  const rng = new Random(`story-line-${pystr(scene_id)}-${pystr(who)}`);
-  let table = persona.STORY_LINES[k];
-  if (persona.STORY_LINES_OFFERED[k] !== undefined && persona.mate_offered(state, slug, pid)) {   // his mate holds the school's offer: the line says so
-    table = persona.STORY_LINES_OFFERED[k];
-  }
-  const line = rng.choice(table[who]);
-  if (action === "call") {
-    if (!(k === "package" && truthy(first_call))) {          // All Business skips the small talk, his story's too
-      if (persona.of(state, pid)["personality"] === "business" || !persona.known(state, slug, pid)["story"] || rng.random() >= persona.STORY_CALL_LINE) {
-        return null;
-      }
-    }
-  }
-  return format(line, f);
-}
 
 
 // ----- what his story changes in recruiting (hooks in recruiting.py) ----------------------------------
@@ -1210,8 +937,6 @@ const GRADES_WEEKS = 3;
 const GRADES_PITCH = 2.0;         // *tune* an Academics pitch from a school outside ACADEMIC counts this much more during a Grades Scare
 const BEAT_AHEAD = 3;             // he names one of the school's next this many opponents
 const BEAT_WIN = 5.0, BEAT_LOSS = 3.0;   // *tune* interest points the school he told gains with the win, loses with the loss
-const TWIST_CALL_LINE = 0.6;      // *tune* how often a call's small talk is his twist while it is on
-const STYLE_CALL_LINE = 0.2;      // *tune* how often a call's small talk is his commit style, once the school knows it
 
 
 export function _teams() {
@@ -1600,14 +1325,6 @@ export function twist_view(state, viewer, pid) {
 }
 
 
-export function twist_fields(state, pid) {
-  // A twist's placeholders for scenes: {rival} (the school it is about), {foe} (the opponent), {moved} (his new town).
-  const tw = or_(persona._twist(state, pid), {});
-  const m = or_(persona.moved(state, pid), {});
-  return { rival: persona._rival_name(get(tw, "s")), foe: persona._rival_name(get(tw, "o")), moved: or_(get(m, "city"), "") };
-}
-
-
 export const persona = {
   PERSONALITIES, PERSONALITY_LABEL, DECIDERS, DECIDER_LABEL, PORTAL_DECIDERS, _TOPICS_BEFORE_GRADES, DECIDER_TOPICS, _TOPICS_BEFORE_PRO,
   draw, _drawn, of,
@@ -1617,14 +1334,12 @@ export const persona = {
   set_cooled_why, cooled_why,
   DECIDER_LOOKS, PERSONALITY_LINE, DECIDER_LINE,
   known, learn, learn_on_contact, learn_from_read, story_public, _name_of, _school_name, story_learned_line, story_detail, view,
-  LINES, NO_TOPIC, DECIDER_LINES,
   STORIES, STORY_RATE, STORY_LABEL, NO_STORY, PUBLIC_STORIES, TWO_SPORT_GROUPS, MATE_NEAR, LEGACY_TILT, LEGACY_HEAD, LEGACY_PITCH,
   LEGACY_LEVEL, LEGACY_COST, HERO_STATE, HERO_AWAY, HERO_FULL, DRAFT_RISK, DRAFT_FLOOR, DRAFT_PT, DRAFT_NIL, DRAFT_WORDS, COMEBACK_AI,
-  LOYALTY, LOYALTY_WEEK, COMEBACK_READ, SHOWN_BAND, BLOOM_WEEKS, COMEBACK_SHOWN, BLOOM_SHOWN, BLOOM_BOARDS, STORY_CALL_LINE,
+  LOYALTY, LOYALTY_WEEK, COMEBACK_READ, SHOWN_BAND, BLOOM_WEEKS, COMEBACK_SHOWN, BLOOM_SHOWN, BLOOM_BOARDS,
   _STORIES: [null, null, {}],
-  _real, _eligible, _draw_class, stories, story, mate, mate_offered, rerank, apply_stories,
-  STORY_LINES, STORY_LINES_OFFERED, STORY_LEARNED,
-  story_fields, story_line,
+  _real, _eligible, _draw_class, stories, story, mate, rerank, apply_stories,
+  STORY_LEARNED,
   STAR_WORD, _SCHOOL_STATE: {},
   school_state, story_interest, story_mult, note_contact, lowball_weeks, draft_risk, draft_word, goes_pro, ai_doubts, read_mult,
   _FRONT: [null, new Map()],
@@ -1634,9 +1349,8 @@ export const persona = {
   needs_attention, learn_styles,
   TWISTS, TWIST_RATE, TWIST_TRIES, TWIST_LABEL, SURPRISE_WEEKS, SURPRISE_SPOT, SURPRISE_TILT, GAME_MILES, GAME_WIN, GAME_BLOWOUT, BLOWOUT,
   GAME_CAP, HOT_SEAT, HOT_SEAT_WEEKS, HOT_SEAT_PITCH, LATE_ASK, LATE_FROM, GRADES_WEEKS, GRADES_PITCH, BEAT_AHEAD, BEAT_WIN, BEAT_LOSS,
-  TWIST_CALL_LINE, STYLE_CALL_LINE,
   _teams, _rival_name, _twist, twist_bonus, twist_mult, scared_off, knock_back, moved, home_of, hero_state, security, _Week,
-  _his_schools, _setup, roll_twists, twist_week, _game_twist, twist_label, twist_view, twist_fields,
+  _his_schools, _setup, roll_twists, twist_week, _game_twist, twist_label, twist_view,
 };
 
 modules.persona = persona;

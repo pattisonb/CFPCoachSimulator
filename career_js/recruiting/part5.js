@@ -10,7 +10,6 @@ import { game_scale } from "../../teamdata_js/game_scale.js";
 import { recruits, pypow } from "../recruits.js";
 import { prospects as pr } from "../prospects.js";
 import { coach_names } from "../coach_names.js";
-import { clear } from "../clear.js";
 import { grades } from "../grades.js";
 import { recruiting } from "../recruiting_ns.js";
 
@@ -729,13 +728,9 @@ function read_interval(state, pid, group) {
 
 
 function shown_range(state, pid, group, sharp = null) {
-  // A read as the page shows it: grade_range's words, or in Clear Mode (coach_career/clear.py) the read's numbers
-  // (a narrow range once his report is complete). His potential is letter grades there (grades.py: low, high; the same
-  // letter twice once the read sits in one grade). Only for display: code that ranks reads uses grade_range.
-  if (!truthy(clear.on())) {
-    const r = recruiting.grade_range(state, pid, group);
-    return truthy(r) ? [...r] : null;
-  }
+  // A read as the page shows it: the read's numbers (a narrow range once his report is complete). His potential is
+  // letter grades (grades.py: low, high; the same letter twice once the read sits in one grade). Only for display:
+  // code that ranks reads uses grade_range.
   let iv = recruiting.read_interval(state, pid, group);
   const clamp = (x) => String(Math.max(1, Math.min(99, round(x))));         // the game's 1-99 scale (a read's points can stray past it)
   if (!truthy(iv)) return null;

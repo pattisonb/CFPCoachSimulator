@@ -245,7 +245,6 @@ export const messages = {
     polite: "Polite Nod",
     quiet: "He Went Quiet",
     tired: "Tired of the Calls",
-    guarded: "Poker Face",
   } as Record<string, string>,
   h: {
     nil: (n?: number) => (n != null ? `${n} NIL` : null),
@@ -256,7 +255,6 @@ export const messages = {
     notBuying: "He isn't buying your pitch.",
     tunedOut: (what: string) => `He tuned out your ${what}.`,
     presented: (topics: string) => `Presented ${topics}`,
-    nothing: "He gave nothing away.",
     landed: (n: number) => `${["None", "One", "Two", "Three"][n] ?? n} landed`,
     promisedOffer: (who: string) => `Promised an offer to ${who}`,
     sidestepped: (who: string) => `Sidestepped his question about ${who}`,

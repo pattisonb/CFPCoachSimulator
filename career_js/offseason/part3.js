@@ -191,19 +191,16 @@ function develop(p, attrs, factor, rng, starter = false) {
   let rate = get(recruits.RATE, get(p, "c"), 0.27) * factor * offseason.DEV_RATE * offseason.year_pace(p, starter);
   rate /= 1 + Math.max(0, p["o"] - offseason.DEV_TOP) / offseason.DEV_TOP_SPAN;       // the last points come slowest (DEV_TOP)
   rate *= get(offseason.DEV_PACE, get(offseason.DRAFT_GROUP, p["pos"], ""), 1.0);     // ... and by position (DEV_PACE)
-  if (clear.on()) {                                         // Clear Mode: Natural Talent grows faster (engine TRAIT_FX)
-    let tier = 0;
-    for (const a of get(p, "ab") || []) {
-      if (a.split("|")[0] === "The Natural") tier = Math.max(tier, offseason.rv2_tier(a));
-    }
-    rate *= 1 + tier * get(cfg.TRAIT_FX, "natural_talent", 0);
+  let tier = 0;                                             // Natural Talent grows faster (engine TRAIT_FX)
+  for (const a of get(p, "ab") || []) {
+    if (a.split("|")[0] === "The Natural") tier = Math.max(tier, offseason.rv2_tier(a));
   }
+  rate *= 1 + tier * get(cfg.TRAIT_FX, "natural_talent", 0);
   const base = rate;
   rate = Math.min(offseason.DEV_YEAR_CAP, rate);            // no offseason closes more than half his room (DEV_YEAR_CAP)
-  // Clear Mode: physical ratings grow slower, technique and mental faster (clear.PHYS_RATE, clear.SKILL_RATE), each
-  // still under DEV_YEAR_CAP; the same draws either way
-  const paces = clear.on()
-    ? attrs.map((k) => Math.min(offseason.DEV_YEAR_CAP, base * (_in(k, offseason.PHYSICAL) ? clear.PHYS_RATE : clear.SKILL_RATE))) : null;
+  // physical ratings grow slower, technique and mental faster (clear.PHYS_RATE, clear.SKILL_RATE), each still under
+  // DEV_YEAR_CAP
+  const paces = attrs.map((k) => Math.min(offseason.DEV_YEAR_CAP, base * (_in(k, offseason.PHYSICAL) ? clear.PHYS_RATE : clear.SKILL_RATE)));
   const new_r = [], new_g = [];
   const n = Math.min(p["r"].length, p["g"].length);
   for (let i = 0; i < n; i++) {
@@ -522,10 +519,9 @@ function _develop_all(state) {
         p["g"] = capped;
         breakouts += 1;
       }
-      if (clear.on()) {                 // Clear Mode: ceilings move both ways (a struggling year, a slow learner, a drift)
-        const fell = clear.ceiling_drift(p, attrs, get(perf, p["id"]), year, PHYSICAL);
-        if (fell < 0 && clear.struggled(get(perf, p["id"]))) why.push(offseason.CEILING_NOTE);
-      }
+      // ceilings move both ways (a struggling year, a slow learner, a drift)
+      const fell = clear.ceiling_drift(p, attrs, get(perf, p["id"]), year, PHYSICAL);
+      if (fell < 0 && clear.struggled(get(perf, p["id"]))) why.push(offseason.CEILING_NOTE);
       if (truthy(level_up) && rng.random() < offseason.LEVEL_UP && levels.slice(1).includes(get(p, "c"))) {
         p["c"] = levels[levels.indexOf(p["c"]) - 1];
         why.push(offseason.coachability_note(p["c"], "award"));

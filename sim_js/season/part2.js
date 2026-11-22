@@ -357,7 +357,7 @@ function check_fbs(slug) {
 
 
 function _earned_for(state, slug) {
-  // Clear Mode: a team's earned abilities for its game ({"Name|POS": {trait: tier}}; {} when none).
+  // A team's earned abilities for its game ({"Name|POS": {trait: tier}}; {} when none).
   return { ...(get(get(state, "abilities_earned") || {}, slug) || {}) };
 }
 
@@ -401,8 +401,8 @@ function _run_games(state, game_ids, pool = null, report = null, stage = "Simula
       season._injured(state, home), season._injured(state, away),
       [season.team_edits(state, home), season.team_edits(state, away)],
       [season.morale_payload(state, home), season.morale_payload(state, away), season.morale_on(state)],
-      [form_shift(g, home), form_shift(g, away)]];
-    if (season._clear_on()) job.push([season._earned_for(state, home), season._earned_for(state, away)]);
+      [form_shift(g, home), form_shift(g, away)],
+      [season._earned_for(state, home), season._earned_for(state, away)]];
     jobs.push(job);
   }
   const before = season.morale_on(state) ? season.rank_map(state, state["current_week"]) : {};
@@ -415,11 +415,9 @@ function _run_games(state, game_ids, pool = null, report = null, stage = "Simula
     if (has(r, "stats")) {
       season._accumulate_stats(state, g, r["stats"]);
       season._update_morale(state, g, r["stats"], before);
-      if (season._clear_on()) {                              // Clear Mode: ability goals move after every game
-        const ability_goals = modules.ability_goals;
-        ability_goals.after_game(state, { ...g, event_id: r["event_id"] }, r["stats"], get(r, "moments") || {},
-          { [g["home"]]: season._base_traits(g["home"]), [g["away"]]: season._base_traits(g["away"]) });
-      }
+      const ability_goals = modules.ability_goals;           // ability goals move after every game
+      ability_goals.after_game(state, { ...g, event_id: r["event_id"] }, r["stats"], get(r, "moments") || {},
+        { [g["home"]]: season._base_traits(g["home"]), [g["away"]]: season._base_traits(g["away"]) });
     }
     if (has(r, "game")) {
       if (state["team"] === g["home"] || state["team"] === g["away"]) state["my_boxes"][r["event_id"]] = r["game"];

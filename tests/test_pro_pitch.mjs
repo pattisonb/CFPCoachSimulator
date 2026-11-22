@@ -6,7 +6,7 @@ import { fmt, get, sum } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting } = game;
-const { persona, programs, scenes } = game.modules;
+const { persona, programs } = game.modules;
 const J = (v) => () => JSON.stringify(v);
 const has = (xs, v) => (xs instanceof Set ? xs.has(v) : xs.includes(v));
 
@@ -35,24 +35,6 @@ test("pro pitch", () => {
   assert(0.15 <= share && share <= 0.30, J(share));          // pro is 8% of a first pick across thirteen topics (School Grades Phase 2), tilted up for five-stars and All Business
   const first = all.filter((pr) => pr["priorities"][0] === "pro").length / all.length;
   assert(0.05 <= first && first <= 0.11, J(first));          // 8% base odds, diluted a little by the other leans
-  assert(scenes.PHRASES["pro"] === "getting to the league" && scenes.SAID_HONEST["pro"] === "a path to Sundays");
-  assert(["cue", "hit", "polite", "quiet"].every((kk) => kk in scenes.LINES["pro"] && scenes.LINES["pro"][kk].length === 3));
-  const need = (line) => { const n = get(scenes.NEEDS, line); return typeof n === "string" ? [n] : [...(n || [])]; };
-  assert(scenes.LINES["pro"]["hit"].every((line) => need(line).includes("pro")));
-  assert(scenes.LEAD_LINES["pro"].includes("{positions}") && scenes.LEAD_HONEST["pro"].includes("Sundays") && scenes.HONEST_HIT["pro"].length === 2 && scenes.HONEST_HIT["pro_some"].length === 2);
-  // honest where picks exist (Iowa has tackles drafted), the first-one lines only at a school with none; plurals are words; a kicker's spot is his own group
-  const ia = scenes.truth(st, "iowa", wr), rb = scenes.truth(st, "army", wr);
-  assert(rb["pro_any"] === false && scenes.lead_line(rb, "pro") === scenes.LEAD_HONEST["pro"] && !rb["pro_spot"]);
-  assert(scenes.truth(st, "ohio-state", wr)["pro_any"] === true);
-  assert(scenes.lead_line({ pro: false, pro_any: true }, "pro") === scenes.LEAD_HONEST_PRO_SOME);
-  assert(scenes.HONEST_HIT["pro_some"].includes(scenes.true_line({ pro: false, pro_any: true, form: "hot", history: true }, "pro", "hit", scenes.LINES["pro"]["hit"][0], "t")[0]));
-  assert(scenes.HONEST_HIT["pro"].includes(scenes.true_line({ pro: false, pro_any: false, form: "hot", history: true }, "pro", "hit", scenes.LINES["pro"]["hit"][0], "t")[0]));
-  assert(scenes.true_line({ pro: true, pro_spot: false }, "pro", "hit", scenes.LINES["pro"]["hit"][0], "t")[0] === scenes.LINES["pro"]["hit"][1]);
-  assert(scenes.lead_line({ pro: true, pro_spot: false }, "pro") === scenes.LEAD_PRO_PROGRAM);
-  assert(["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P", "ATH"].every((g) => g in scenes.PLURAL) && Object.values(scenes.PLURAL).every((v) => !v.endsWith("Ss")));
-  const kt = scenes.truth(st, "ohio-state", k);
-  assert(kt["pro_spot"] === (get(programs.get(st, "ohio-state")["pro_groups"], rc["prospects"][k]["ea_position"], 0) >= 100 * scenes.CLAIM_FROM));
-  assert(scenes.truth(st, "ohio-state", wr)["pro"] === true && scenes.truth(st, "army", wr)["pro"] === false);
   console.log(`pro pitch ok: Ohio State WR ${fmt(osu["pro"], 2)} vs San José State ${fmt(sjsu["pro"], 2)}; ${fmt(share * 100, 0)}% of the class carry it, ${fmt(first * 100, 0)}% first`);
 });
 

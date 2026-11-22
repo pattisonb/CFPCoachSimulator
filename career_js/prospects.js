@@ -869,7 +869,7 @@ export function flip_view(state, pid, viewer = null) {
 
 export function _abilities_seen(p) {
   const ability_goals = modules.ability_goals;
-  return ability_goals.on() ? ability_goals.recruit_abilities(p) : null;
+  return ability_goals.recruit_abilities(p);
 }
 
 export function profile(state, pid, viewer) {
@@ -937,11 +937,11 @@ export function profile(state, pid, viewer) {
     flip: prospects.flip_view(state, pid, viewer),
     grade_details: details,
     evaluation: top && !truthy(get(p, "portal")) ? prospects._evaluation(p, public_grades) : null,    // a high school senior's write-up: not a transfer's
-    // Clear Mode: the abilities he arrives with, once your staff has looked at him
+    // the abilities he arrives with, once your staff has looked at him
     abilities: truthy(read) ? prospects._abilities_seen(p) : null,
     public_comp: top && !truthy(get(p, "portal")) ? prospects.comp(prospects.projection(state, p, public_grades), p["ea_position"], prospects.player_pool(), `public-${pid}`) : null,
     our_grades,
-    clear: clear.on() ? clear.ratings(state, pid) : null,      // Clear Mode: his key ratings in numbers
+    clear: clear.ratings(state, pid),                          // his key ratings in numbers
     looks: prospects.looks_out(read),
     our_comp,
     likes: prospects.staff_likes(state, pid, viewer),
@@ -995,7 +995,7 @@ export function row(state, pid, viewer) {
     out.our_grades = {};
     for (const g of recruiting.GROUPS) out.our_grades[g] = [...recruiting.grade_range(state, pid, g)];
   }
-  if (clear.on() && truthy(read)) {                          // Clear Mode: potential in numbers
+  if (truthy(read)) {                                        // his potential as the report reads it (a letter grade)
     const r = clear.ratings(state, pid);
     out.clear_pot = truthy(r) ? r["potential"] : r;
   }
@@ -1216,7 +1216,7 @@ prospects.STATUS_ORDER = { signed: 0, hard: 1, committed: 2, visited: 3, top: 4,
 export function _sort_key(state, viewer, key, keen) {
   // A Prospects column's sort key (best or first on top; ties by national rank): rank, interest, name, pos, ht, wt,
   // stars, status, offers (the schools that have offered), ask (his NIL ask of you), sc (your looks), pot (your potential read; unscouted last).
-  const recruiting = modules.recruiting, clear = modules.clear;
+  const recruiting = modules.recruiting;
   const rc = state["recruiting"];
   const P = rc["prospects"];
   if (key === "interest" || key === "int") return (pid) => -keen[pid];
@@ -1250,13 +1250,12 @@ export function _sort_key(state, viewer, key, keen) {
   }
   if (key === "sc") return (pid) => -recruiting.report_looks(get(rc["reads"], pid));
   if (key === "pot") {
-    const sharp = clear.on() ? modules.grades.fine(state) : null;           // once, not once a prospect
+    const sharp = modules.grades.fine(state);                               // once, not once a prospect
     return (pid) => {
       // by the letters the page shows (best first), never the number behind them: two B's tie, and rank breaks it
       const shown_ = truthy(get(rc["reads"], pid)) ? recruiting.shown_range(state, pid, "potential", sharp) : null;
       if (!truthy(shown_)) return Infinity;                                 // unscouted last
-      if (clear.on()) return modules.grades.sort_key(shown_);
-      return -(recruiting.WORDS.indexOf(shown_[1]) * 10 + recruiting.WORDS.indexOf(shown_[0]));
+      return modules.grades.sort_key(shown_);
     };
   }
   return (pid) => P[pid]["rank"];
@@ -1270,7 +1269,7 @@ export function search(state, viewer, position = null, stars = null, home = null
   // ask): `commit` (open, committed, signed), `interest` (High, Medium, Low), `scouted` (none, partly, fully), `pot` (a
   // letter: your read's best grade starts with it), and a low and a high end for ht (inches), wt, offers (the schools
   // that have offered) and ask (his NIL ask of you as you know it, a range by its middle): ht_min, ht_max and so on.
-  const recruiting = modules.recruiting, clear = modules.clear;
+  const recruiting = modules.recruiting;
   const rc = state["recruiting"];
   cols = Object.fromEntries(Object.entries(cols || {}).filter(([, v]) => !(v === null || v === undefined || v === "")));
   let span = {};
@@ -1282,7 +1281,7 @@ export function search(state, viewer, position = null, stars = null, home = null
   if (_in("offers", span)) {
     for (const pids of Object.values(rc["offers"])) for (const x of pids) offers_n[x] = get(offers_n, x, 0) + 1;
   }
-  const sharp = truthy(get(cols, "pot")) && clear.on() ? modules.grades.fine(state) : null;
+  const sharp = truthy(get(cols, "pot")) ? modules.grades.fine(state) : null;
   let keen, cuts;
 
   const within = (k, v) => {
@@ -1679,7 +1678,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
   // `why` says so), in `sort` order over the whole match (QUEUE_SORTS: rank by default; "board" is the board
   // first as above, then the class by need and rank). Read-only counts for the tab's header: `full_reports`
   // (complete reports this class) and `trips_this_week` (your Sends).
-  const recruiting = modules.recruiting, clear = modules.clear;
+  const recruiting = modules.recruiting;
   const rc = state["recruiting"], me = state["team"];
   const week = recruiting.look_week(state);
   const staff = odict();                     // by staff id, in the staff's order
@@ -1727,16 +1726,12 @@ export function scouting_view(state, q = null, position = null, group = null, of
   const seen = [...recruiting.visible(state)].filter((pid) => _in(pid, rc["status"]));
   const rank_of = (pid) => rc["prospects"][pid]["rank"] || 10 ** 6;
   const need_of = (pid) => need[recruiting.spot_of(rc["prospects"][pid])];
-  const sharp = clear.on() ? modules.grades.fine(state) : null;               // once, not once a prospect
+  const sharp = modules.grades.fine(state);                                   // once, not once a prospect
 
   const potential_of = (pid) => {
-    // the read's high word then its low word (best first); no read sorts last
+    // by the letters shown (best first); a tie is broken by rank (below); no read sorts last
     if (!_in(pid, rc["reads"])) return -1;
-    if (clear.on()) {                               // by the letters shown; a tie is broken by rank (below)
-      return -modules.grades.sort_key(recruiting.shown_range(state, pid, "potential", sharp));
-    }
-    const [lo, hi] = recruiting.grade_range(state, pid, "potential");
-    return recruiting.WORDS.indexOf(hi) * 10 + recruiting.WORDS.indexOf(lo);
+    return -modules.grades.sort_key(recruiting.shown_range(state, pid, "potential", sharp));
   };
   sort = prospects.QUEUE_SORTS.includes(sort) ? sort : "rank";
   let order;

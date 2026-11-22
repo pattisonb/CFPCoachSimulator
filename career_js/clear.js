@@ -1,19 +1,14 @@
-// Clear Mode (the player's experiment, on the clear-mode branch): the game says what it knows in numbers, not words.
+// What the game knows, said in numbers and letters (it began as "Clear Mode", an experiment that became the game).
 //
 // - A prospect's scouting shows up to eight of his position's key ratings, each a range that narrows with every look,
-//   with the staff's confidence in a word (High, Medium, Low), instead of grade words over bars. Potential reads as a
-//   range at his position. The report's verdict, strengths and the uncertainty card stay.
-// - Conversations are transactional: each topic you pitch gets a plain Yes (one of his priorities) or No.
-// - Once his report is complete you know his priorities, who decides and his personality: no guesswork.
-// - Chances, interest, your program's case and the like read as numbers.
+//   with the staff's confidence in a word (High, Medium, Low). Potential reads as a letter grade at his position. The
+//   report's verdict, strengths and the uncertainty card stay.
+// - Players grow by kind (athleticism slowly, technique and the mental game faster), and a year's ceilings can fall too.
 //
-// CLEAR is the switch: on for this branch. Nothing here changes how a game or a recruit plays; it changes what the
-// player is shown and when he learns it.
+// Nothing here changes how a game or a recruit plays; it is what the player is shown, and how a roster develops.
 //
-// It was coach_career/clear.py; engine_js/PORTING.md has the rules it was ported by. The switch is read from
-// `env.CFP_CLEAR` (engine_js/files.js) when this file loads, as the Python reads the environment when it is imported.
+// It was coach_career/clear.py; engine_js/PORTING.md has the rules it was ported by.
 import { Random, round, int, sum, get, truthy } from "../engine_js/pyrt.js";
-import { env } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
 import { shown } from "../teamdata_js/shown.js";
@@ -22,9 +17,7 @@ import { grades } from "./grades.js";
 /** d.get(k, default) for one of this file's own tables asked with a key from outside: only a key the table holds. */
 const own = (o, k, d = null) => (typeof k === "string" && Object.hasOwn(o, k) ? o[k] : d);
 
-const CLEAR = get(env, "CFP_CLEAR", "1") !== "0";   // *tune* the branch's switch: Clear Mode on (CFP_CLEAR=0 turns it off: the word-mode tests)
-
-// Clear Mode judges confidence on the range the page shows (the read plus WORD_SLACK each side), not the word read's own
+// confidence is judged on the range the page shows (the read plus WORD_SLACK each side), not the word read's own
 // width: half-widths under these are High, then Medium, else Low; a complete report is High *tune*
 const CLEAR_CONFIDENCE = [[6.0, "High"], [10.0, "Medium"]];
 
@@ -44,16 +37,12 @@ const KEYS = {
   P: ["punt_power", "punt_accuracy", "football_iq", "stamina"],
 };
 
-export function on() {
-  return clear.CLEAR;
-}
-
-// growth by kind (the player's ask; Clear Mode only): athleticism is mostly set by the time he arrives, coaching shows in
+// growth by kind (the player's ask): athleticism is mostly set by the time he arrives, coaching shows in
 // technique and the mental game. SKILL_RATE is set so the average overall gain a year matches the game's.
 const PHYS_RATE = 0.5;                  // *tune* physical ratings close their gap to potential at this share of the usual pace
 const SKILL_RATE = 1.08;                // *tune* technique and mental ratings at this share (calibrated: the same average overall gain a year, 4.05 vs 4.07)
 
-// potential that moves both ways each offseason (the player's ask; Clear Mode only): a year's ceilings can fall too
+// potential that moves both ways each offseason (the player's ask): a year's ceilings can fall too
 const CEIL_STRUGGLE = 5;                // *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
 const CEIL_SOLID = 2;                   // *tune* a solid year (production CEIL_SOLID_Z over the average starter, short of a breakout) adds this
 const CEIL_SOLID_Z = 0.0;               // *tune* ... from this production score up (about a starter's top fifth; a breakout is 1.0)
@@ -128,7 +117,7 @@ export function _group_of_key(p, key) {
 export function ratings(state, pid) {
   // His key ratings as the staff reads them, or null before any look: {"complete", "rows": [{key, label, est, lo, hi,
   // confidence}], "overall": {...}, "potential": {...}}. A rating's estimate is his true card rating moved by the staff's
-  // error on its group (the same error the grade words carried), so it is no more exact than the old words were, only
+  // error on its group (the same error the grade words carry), so it is no more exact than a word would be, only
   // said plainly. Always a range: it narrows with every look (a complete report's is a few points wide).
   const pr = modules.prospects, recruiting = modules.recruiting, season = modules.season;
   const rc = state["recruiting"];
@@ -180,7 +169,7 @@ export function ratings(state, pid) {
 }
 
 export const clear = {
-  CLEAR, CLEAR_CONFIDENCE, KEYS, on, PHYS_RATE, SKILL_RATE, CEIL_STRUGGLE, CEIL_SOLID, CEIL_SOLID_Z, CEIL_STRUGGLE_Z, CEIL_SLOW,
+  CLEAR_CONFIDENCE, KEYS, PHYS_RATE, SKILL_RATE, CEIL_STRUGGLE, CEIL_SOLID, CEIL_SOLID_Z, CEIL_STRUGGLE_Z, CEIL_SLOW,
   CEIL_DRIFT_SD, SLOW_LEVELS, FAST_LEVELS, struggled, ceiling_drift, confidence, _raw_half, _group_of_key, ratings,
 };
 modules.clear = clear;
