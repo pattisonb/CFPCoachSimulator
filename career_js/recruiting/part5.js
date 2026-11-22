@@ -493,7 +493,7 @@ function portal_rc(state, entrants, year) {
     prospects[pid] = p;
   }
   const order = sorted(Object.keys(prospects), (q) => { const v = prospects[q]["_sort"]; delete prospects[q]["_sort"]; return -v; });
-  order.forEach((pid, i) => { prospects[pid]["rank"] = prospects[pid]["portal_rank"] = i + 1; });
+  order.forEach((pid, i) => { prospects[pid]["rank"] = i + 1; prospects[pid]["portal_rank"] = i + 1; });   // (Python assigns left to right)
   recruiting._truths(prospects, attrs);
   const each = (make) => Object.fromEntries(Object.keys(prospects).map((pid) => [pid, make()]));
   return { portal: true, week: 1, weeks: recruiting.PORTAL_WEEKS, year, cache_key: `${year}-portal`, prospects,

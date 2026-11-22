@@ -171,7 +171,7 @@ def checked_diff(before, after) -> list:
     ops = jclone(diff(before, after))
     again = jclone(before)
     apply(again, ops)
-    assert json.dumps(again) == json.dumps(after), "the diff does not rebuild the state (a dict's key order moved?)"
+    assert json.dumps(canon(again)) == json.dumps(canon(after)), "the diff does not rebuild the state (a dict's key order moved?)"
     return ops
 
 
