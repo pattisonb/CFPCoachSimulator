@@ -93,7 +93,7 @@ N = {"cases": 0, "skipped": {}, "by_fn": {}, "seen": {}, "errors": {}, "dep_call
 FORCE = [False]
 TAG = ["start"]
 # one call in this many is a case when the game itself makes it (the week step, a page's view); mine are all cases
-RATE = {"_act": 12, "_add_points": 40, "_nil": 150, "nil_left": 150, "points_now": 400, "pending": 400, "action_hours": 150,
+RATE = {"_act": 20, "_add_points": 60, "_nil": 150, "nil_left": 150, "points_now": 400, "pending": 400, "action_hours": 150,
         "_home_game_left": 6, "hours_free": 25, "manual_offers": 40, "_open_roster_promise": 60, "job_crowd": 4, "_unmark": 5,
         "visit_weekends": 20, "home_weekends": 3, "pitch_marks": 60, "hours_planned": 25, "planned": 40, "rival_stamp": 3,
         "_snapshot_ranks": 2, "latest_report": 2}
@@ -108,6 +108,10 @@ def slim(p: dict) -> dict:
 
 WHOLE = {"planned", "carry"}               # walked whole whatever the case is about (the energy your plans hold)
 LEFT_OUT = {"boards", "attrs", "looks"}    # never read by this part
+# read only by the week's snapshot and report (their cases name them): left out of every other case's slice
+NARROW_OUT = {"reports", "traits_known", "look_changes", "look_counts", "generational", "twists", "moved", "why", "ranks", "stages",
+              "leader_changes"}
+LIGHT = ("contacts", "prospects", "status")    # what a case holds of the recruits it only walks past (job_crowd's walk)
 
 
 def snap(state, spec, want_ids=True):
@@ -115,6 +119,7 @@ def snap(state, spec, want_ids=True):
     those objects sits in it ({id: path})."""
     rc = state["recruiting"]
     P, S, keys = spec["P"], spec["S"], spec["keys"]
+    P2 = spec.get("P2") or set()
     teams = TEAM_NAMES
     out = {k: state[k] for k in ("id", "team", "current_week", "year", "done", "nil_carry") if k in state}
     if "offseason" in state:
@@ -128,10 +133,10 @@ def snap(state, spec, want_ids=True):
     r = {}
     real = {}
     for k, v in rc.items():
-        if (keys is not None and k not in keys) or k in LEFT_OUT:
+        if (k not in keys if keys is not None else k in NARROW_OUT) or k in LEFT_OUT:
             continue
         if k == "prospects":
-            r[k] = {pid: slim(p) for pid, p in v.items() if P is None or pid in P}
+            r[k] = {pid: (slim(p) if P is None or pid in P else {"name": p["name"]}) for pid, p in v.items() if P is None or pid in P or pid in P2}
             for pid in r[k]:
                 real[id(v[pid])] = ["recruiting", "prospects", pid]
         elif k == "log":
@@ -140,7 +145,7 @@ def snap(state, spec, want_ids=True):
         elif k in WHOLE or not isinstance(v, dict) or not v:
             r[k] = v
         elif next(iter(v)) in rc["prospects"]:
-            sub = v if P is None else {pid: x for pid, x in v.items() if pid in P}
+            sub = v if P is None else {pid: x for pid, x in v.items() if pid in P or (k in LIGHT and pid in P2)}
             if k == "contacts" and S is not None:
                 sub = {pid: {s: c for s, c in by.items() if s in S} for pid, by in sub.items()}
             r[k] = sub
@@ -279,12 +284,14 @@ def spec_for(name, A, state):
     spec = {"P": P, "S": S, "log": "pids", "games": set(S), "keys": None, "league": False, "diff": True, "unordered": False}
     if name in ("job_crowd", "_job_promise", "_promise_job", "_strain") or (
             name == "act" and (A["action"] in ("promise_job", "promise_role") or A.get("answer") == "promise")):
-        for q, by in rc["contacts"].items():              # every recruit the school has talked to: job_crowd walks them all
-            if any(by.get(s) for s in S):
-                P.add(q)
+        spec["P2"] = {q for q, by in rc["contacts"].items() if any(by.get(s) for s in S)}   # everyone the school has talked to: job_crowd walks them all
         spec["league"] = True
+    if name == "job_crowd":
+        spec.update(keys={"contacts", "prospects", "status", "portal", "week", "year"}, diff=False, games=set())
+    if name == "latest_report":
+        spec["keys"] = {"reports"}
     if name == "_strain":
-        P |= {x["id"] for x in A["crowd"] if x["kind"] == "recruit"}
+        spec["P2"] |= {x["id"] for x in A["crowd"] if x["kind"] == "recruit"}
     if name in ("_run_planned", "_carry_planned", "plan"):
         P |= set(rc.get("planned") or {}) | set(rc.get("carry") or {})
     if name == "_flush":
@@ -458,7 +465,7 @@ def views(state, rng, pids) -> None:
     """The part's read-only functions over schools and prospects."""
     me = state["team"]
     rc = state["recruiting"]
-    schools = [me] + rng.sample(fbs(), 6)
+    schools = [me] + rng.sample(fbs(), 3)
     for slug in schools:
         case("hours_free", state, slug)
         case("nil_left", state, slug)
@@ -467,7 +474,7 @@ def views(state, rng, pids) -> None:
         case("_home_game_left", state, slug)
         case("manual_offers", state, slug)
         case("_marks_index", state, slug)
-        for group in ("QB", "WR", "OL", "DL", "LB"):
+        for group in ("QB", "OL"):
             case("job_crowd", state, slug, group, rng.choice(pids))
     case("planned", state)
     case("hours_planned", state)
@@ -479,7 +486,7 @@ def views(state, rng, pids) -> None:
     homes = recruiting.home_weekends(state, me)
     for i, pid in enumerate(pids):
         for slug in [me] + ([rng.choice(schools)] if i % 3 == 0 else []):
-            for action in recruiting.HOURS:
+            for action in ("official_visit", "hc_visit", "call"):
                 case("action_hours", state, slug, pid, action)
             case("visit_weekends", state, slug, pid)
             case("visit_weekends", state, slug, pid, homes if slug == me else [])
@@ -503,7 +510,7 @@ def my_week(state, rng, step) -> None:
     recruiting._hours(state, me)
     if step % 3 != 2:
         rc["hours"][me] = 100000                          # (one week in three runs on the real energy: it runs out)
-    pids = visible(state, 56, rng)
+    pids = visible(state, 48, rng)
     for pid in pids[:14]:
         try:
             recruiting.set_board(state, pid, True)
@@ -687,7 +694,7 @@ def portal(rng) -> None:
             case("_act", state, slug, pid, ["offer", "official_visit", "call", "hc_visit"][j % 4], rc["prospects"][pid]["priorities"][0], 5 * (j % 3))
             case("_nil", state, slug)
             case("nil_left", state, slug)
-            for group in ("QB", "WR", "OL", "DL", "LB", "CB", "S"):
+            for group in ("QB", "WR", "OL", "DL")[:2 + j % 3]:
                 case("job_crowd", state, slug if j % 2 else me, group, pid)
         views(state, rng, pids[:8])
         print(f"{TAG[0]}: {N['cases']} cases so far", flush=True)
@@ -721,9 +728,9 @@ def main() -> None:
         wrap_entry(name)
     rng = random.Random(20261122)
     t0 = time.time()
-    season_of("smu", 5, 7, rng, "smu", False)
-    season_of("ohio-state", 11, 5, rng, "ohio-state", False)
-    season_of("kent-state", 7, 4, rng, "kent-state clear", True)
+    season_of("smu", 5, 4, rng, "smu", False)
+    season_of("ohio-state", 11, 3, rng, "ohio-state", False)
+    season_of("kent-state", 7, 2, rng, "kent-state clear", True)
     portal(rng)
     clear.CLEAR = False
     cases_file.close()

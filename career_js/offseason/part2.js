@@ -1010,7 +1010,8 @@ function _close_portal(state) {
       walk_on: !truthy(get(st_, "signed")) ? true : null, promised: get(p, "promised") === lgd["year"] ? true : null,
       log: school === me ? (truthy(get(told, pid)) ? told[pid] : null) : null });
     if (!truthy(get(st_, "signed"))) {
-      p["walk_on"] = p["preferred"] = true;
+      p["walk_on"] = true;                                         // (Python assigns a chain left to right: walk_on, then preferred)
+      p["preferred"] = true;
       st_["signed"] = school;
       recruiting._event(state, "signed", pid, school, { walk_on: true, ...(yours.has(pid) && school !== me ? { lost: "unsigned" } : {}) });
     }

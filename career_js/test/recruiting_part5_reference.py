@@ -171,7 +171,7 @@ def checked_diff(before, after) -> list:
     ops = jclone(diff(before, after))
     again = jclone(before)
     apply(again, ops)
-    assert json.dumps(canon(again)) == json.dumps(canon(after)), "the diff does not rebuild the state (a dict's key order moved?)"
+    assert json.dumps(again) == json.dumps(after) or json.dumps(canon(again)) == json.dumps(canon(after)), "the diff does not rebuild the state (a dict's key order moved?)"
     return ops
 
 
@@ -191,10 +191,12 @@ class Tape:
 T = Tape()
 MISSING = object()
 FULL = "full"
+MOST = "most"         # every key of state["recruiting"] but the big ones an action does not write (the batch's end state would show one it did)
+MOST_SKIP = ("prospects", "log", "reads", "revealed", "why", "ranks", "reports", "traits_known", "moved", "twists", "stories", "boards", "lists")
 # a function that changes the state: where (paths under state["recruiting"]; the log is always followed)
 SCOPES = {
     "recruiting._commit": [("status",), ("commits_v",), ("nil",), ("hats",)],
-    "recruiting.act": FULL,
+    "recruiting.act": MOST,
     "recruiting.scout_points_left": [("scout_points",)],
     "persona.learn_from_read": [("traits_known",), ("revealed", "$team")],
 }
@@ -231,6 +233,9 @@ def at_path(rc, path):
 
 def scoped_before(scope):
     rc = T.state["recruiting"]
+    if scope == MOST:
+        scope = [(k,) for k in rc if k not in MOST_SKIP] + [("manual_offers",), ("offer_weeks",), ("offer_landing",), ("pending",), ("dropped",)]
+        scope = list(dict.fromkeys(scope))
     paths = [tuple(T.state["team"] if k == "$team" else k for k in p) for p in scope]
     return paths, [(MISSING if at_path(rc, p) is MISSING else jclone(at_path(rc, p))) for p in paths], len(rc["log"])
 
@@ -416,6 +421,8 @@ class Snap:
         b = {"name": name, "pre": pre, "calls": calls, "clear": clear_on, "fakes": fakes, "results": results, "rec": rec,
              "took": T.took, "rooms": T.rooms, "rngs": [r.random() for r in rngs], "notes": notes, "step_week": recruiting._STEP_WEEK[0],
              "ops": checked_diff(before, view(st, self.base)), "state": before if fakes is not None else None}
+        if os.environ.get("PART5_TIMES"):
+            say("  ", name, len(calls), "calls,", sum(len(v) for v in rec.values()), "asked")
         self.lines.append(json.dumps(b))
         self.n_calls += len(calls)
 

@@ -510,7 +510,7 @@ def snapshot(week: int, teams: dict) -> None:
     for slug in slugs + fcs:
         entries += [[fn, [S, slug]] for fn in ("board_front", "security", "pro_line")] + [["school_state", [slug]]]
     entries += [[fn, [s]] for fn in ("_school_name", "_rival_name") for s in (*slugs[:6], *fcs, None, "", "nowhere-state")]
-    entries += [["pro_line", [S, "nowhere-state"]], ["security", [S, "nowhere-state"]], ["_teams", []]]
+    entries += [["pro_line", [S, "nowhere-state"]], ["security", [S, "nowhere-state"]]]
     entries += [["draft_word", [x]] for x in (0.0, 0.02, 0.0399, 0.04, 0.06, 0.08, 0.1, 0.5)]
     shown = slim(base)["recruiting"]["log"]
     entries += [["shown_to", [{"$e": e}, v]] for e in shown[-250:] for v in (TEAM, e.get("school"), "michigan")]

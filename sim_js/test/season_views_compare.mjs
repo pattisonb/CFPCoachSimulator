@@ -39,7 +39,7 @@ if (REAL) {
   // --real: the ported modules themselves answer (Clear Mode off, as the reference was run), nothing replayed
   env.CFP_CLEAR = "0";
   for (const f of ["../../career_js/clear.js", "../../career_js/league.js", "../../career_js/promises.js", "../schedule_gen.js",
-    "../../career_js/programs.js", "../grade.js", "../../career_js/recruiting.js", "../../career_js/ability_goals.js"]) await import(f);
+    "../../career_js/programs.js", "../grade.js", "../../career_js/recruiting.js", "../../career_js/ability_goals.js", "../../career_js/carousel.js"]) await import(f);
 } else {
   modules.league = { OFFENSE_ROLES: new Set(setup.OFFENSE_ROLES), TEAM_FIT: setup.TEAM_FIT, GROUP_OF: setup.GROUP_OF, base_development: () => base_development };
   modules.clear = { on: () => setup.clear };

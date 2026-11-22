@@ -165,7 +165,7 @@ for (const line of lines) {
   const same = (what, py, js) => {
     const d = differences(py, js, opts);
     close += d.close;
-    for (const [k, n] of Object.entries(d.close_at)) close_at[k] = (close_at[k] || 0) + n;
+    if (d.close) close_at[what.trim()] = (close_at[what.trim()] || 0) + d.close;
     for (const f of d.slice(0, 4)) found.push(`${what}${f}`);
   };
   try {
@@ -199,7 +199,6 @@ for (const line of lines) {
     bad.push(c.name);
     if (bad.length <= 25) { console.log(`DIFFERENT ${c.name}`); for (const f of found.slice(0, 6)) console.log("   " + f); }
   }
-  if (c.fresh) ro_key = c.fresh && ro_key === c.state["$file"] ? ro_key : ro_key;
 }
 
 console.log(Object.entries(tally).map(([k, n]) => `${k} ${n}`).join(", "));
@@ -207,5 +206,5 @@ const missing = Object.keys(setup.count).filter((k) => tally[k] !== setup.count[
 if (missing.length) console.log(`NOT RUN as often as the Python: ${missing.join(", ")}`);
 console.log(`${cases} cases, ${steps_run} calls of ${Object.keys(tally).length} functions, ${asked} calls out of the part replayed; ` +
   `${cases - bad.length} cases the same, ${bad.length} different` +
-  (close ? `; ${close} numbers a last digit apart (${Object.entries(close_at).map(([k, n]) => `${k} ${n}`).join(", ")})` : ""));
+  (close ? `; ${close} numbers a last digit apart (${Object.entries(close_at).map(([k, n]) => `${k}: ${n}`).join(", ")})` : ""));
 process.exit(bad.length || missing.length ? 1 : 0);

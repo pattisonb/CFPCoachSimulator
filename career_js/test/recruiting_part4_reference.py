@@ -78,11 +78,18 @@ OUT_REC = {n: None for n in (
     "academic manual_offers _coach_edge offer_cap _winning commits_by_group is_generational offers_by_group group_full "
     "portal_upgrade best_pitch would_pester _logistic top_group strengths auto_mode portal_room _interp interest "
     "early_signing_week").split()}
+# one action's reach (a miss shows in the Node script as an edit of the part's own that the JavaScript never made)
+act_of = lambda a: {"recruiting": {"contacts": {a["pid"]: None}, "lists": {a["pid"]: None}, "pending": {a["pid"]: None}, "why_week": {a["pid"]: None},
+                                   "offers": {a["slug"]: None}, "nil": {a["slug"]: None}, "hours": {a["slug"]: None}, "visits": {a["pid"]: None},
+                                   "revealed": {a["slug"]: {a["pid"]: None}}, "log": None, "status": {a["pid"]: None}, "board": None,
+                                   "manual_offers": None, "action_points": None, "scenes": {a["slug"]: None}, "hats": {a["pid"]: None},
+                                   "dropped": None, "planned": None, "scout_points": {a["slug"]: None}}}
+points_of = lambda a: {"recruiting": {"pending": {a["pid"]: None}, "why_week": {a["pid"]: None}, "action_points": None}}
 OUT_REC.update({"_contact": contacts_of, "ask_from": contacts_of, "_nil": nil_of, "nil_left": nil_of, "_hours": hours_of,
-                "_act": "hot", "_add_points": "hot", "_unmark": "hot", "_hat": "hot"})
+                "_act": act_of, "_add_points": points_of, "_unmark": "hot", "_hat": "hot"})
 OUT_PERSONA = {n: None for n in ("pester_free board_front scared_off ai_doubts mate start_firmness quiet_mark decommit_mult "
                                  "counts_as_priority climbs of needs_attention _school_name style").split()}
-OUT_PERSONA.update({"note_contact": "hot", "set_cooled_why": "hot"})
+OUT_PERSONA.update({"note_contact": contacts_of, "set_cooled_why": contacts_of})
 # (real in the Node script too, small and pure: tier_of, _group_of, need_factor, group_cap, _ck, and _pair_ok, which
 #  calls back into the part's _Room)
 COLD = ("prospects", "reads", "ranks", "looks", "why", "reports", "attrs")       # the recruiting block's big parts no action changes
@@ -177,14 +184,13 @@ def diff(old, new, path, ops, mask=None, skip=()):
         for k in [k for k in old if k not in new]:
             ops.append(["del", path + [k]])
             del old[k]
-        if len(old) != len(new) or True:
-            if [k for k in new if k in old] != list(old):
-                return "replace"
+        if [k for k in new if k in old] != list(old):
+            return "replace"
         keys = new.keys()
     else:
         keys = [k for k in mask if k in new or k in old]
     for k in keys:
-        if k in skip:
+        if k in skip and k in old:          # (a new one is still written, where Python put it: the keys' order is the state's)
             continue
         sub = mask[k] if mask else None
         if k not in new:
@@ -220,16 +226,19 @@ def diff(old, new, path, ops, mask=None, skip=()):
 
 
 def look(mask=None):
-    """The edits since the last look (within `mask`; "hot": all but the recruiting block's big parts)."""
+    """The edits since the last look (within `mask`; "hot": all but the recruiting block's big parts; "warm": the
+    prospects too, all the part reads; None: everything, at a digest)."""
     t = time.time()
     ops = []
     live = view(T.st)
-    if mask == "hot":
+    if mask in ("hot", "warm"):
         for k in ("team", "id", "current_week"):
             if not same_leaf(T.shadow[k], live[k]):
                 ops.append(["set", [k], live[k]])
                 T.shadow[k] = live[k]
-        if diff(T.shadow["recruiting"], live["recruiting"], ["recruiting"], ops, None, COLD) == "replace":
+        if mask == "warm":
+            diff(T.shadow["games"], live["games"], ["games"], ops)
+        if diff(T.shadow["recruiting"], live["recruiting"], ["recruiting"], ops, None, COLD if mask == "hot" else COLD[1:]) == "replace":
             ops.append(["set", ["recruiting"], enc(live["recruiting"])])
             T.shadow["recruiting"] = dcopy(live["recruiting"])
     else:
@@ -310,11 +319,12 @@ def enc_ret(label, r, args):
 
 
 def run_case(name, orig, sig, a, k):
-    sync = look()
+    sync = look("warm")
     b = sig.bind(*a, **k)
     b.apply_defaults()
     rec = {"t": "case", "fn": name, "sync": sync, "args": [enc_arg(v, b.arguments) for v in b.arguments.values()], "calls": []}
     T.case, T.depth = rec, 0
+    recruiting._FITS = (None, {}, None, None, {})       # the fits kept from before: the Node script holds none either
     T.stats[name] = T.stats.get(name, 0) + 1
     try:
         try:
@@ -325,7 +335,7 @@ def run_case(name, orig, sig, a, k):
             raise
     finally:
         T.case = None
-        rec["own"] = look()
+        rec["own"] = look("warm")
         emit(rec)
     return r
 
@@ -357,7 +367,7 @@ def sampled(name, a, k):
         return tick(name, 5)
     if name == "_fits":
         return tick(name, 25)
-    if name in ("flip_weekly", "flip_by_signing", "money_owed", "signed_class", "_rng", "_pool"):
+    if name in ("flip_weekly", "flip_by_signing", "money_owed", "signed_class", "_rng", "_pool", "_commits"):
         return tick(name, 20)
     return True
 
@@ -459,6 +469,23 @@ def probe_room(state, flier, steps):
 def probe_rng(state, what):
     r = recruiting._rng(state, what)
     return [r.random(), r.random(), r.randint(1, 1000)]
+
+
+def probe_redo(state, slugs, pid, stars):
+    """The fits kept, then a star that moves (a Late Bloomer's jump): only what it touches is worked out again."""
+    rc = state["recruiting"]
+    p = rc["prospects"][pid]
+    was, had, v = p["stars"], "class_v" in rc, rc.get("class_v", 0)
+    first = [recruiting._fits(state, s)[pid] for s in slugs]
+    p["stars"], rc["class_v"] = stars, v + 1
+    try:
+        return [first, {s: recruiting._fits(state, s) for s in slugs}, recruiting._fits(state, slugs[0]) is recruiting._FITS[1][slugs[0]]]
+    finally:
+        p["stars"] = was
+        if had:
+            rc["class_v"] = v
+        else:
+            del rc["class_v"]
 
 
 def probe_shares(state):
@@ -563,6 +590,11 @@ def asked(st, week):
     for s in [me] + rng.sample(schools, min(2, len(schools))):
         ask("_fits", st, s)
         ask("signed_class", st, s)
+    if not rc.get("portal"):
+        three = [pid for pid, p in rc["prospects"].items() if p["stars"] == 3]
+        four = [pid for pid, p in rc["prospects"].items() if p["stars"] == 4]
+        probe("probe_redo", probe_redo, st, rng.sample(schools, min(2, len(schools))), rng.choice(three), 4)   # one more blue chip
+        probe("probe_redo", probe_redo, st, rng.sample(schools, min(2, len(schools))), rng.choice(four), 5)    # the same number of them
     committed = [pid for pid, s in rc["status"].items() if s["committed"] and s["committed"] != "FCS" and not s["signed"]]
     for pid in rng.sample(committed, min(12, len(committed))) + [next(iter(rc["status"]))]:
         gap = rng.choice([-3.0, 0.0, 0.7, 2.5, 8.0, 40.0])
