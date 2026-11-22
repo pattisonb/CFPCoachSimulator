@@ -43,6 +43,18 @@ let up = false;
 /** a read was answered from the build's files: a worker that then fails must say so itself, no call is waiting on it */
 let servedBoot = false;
 
+/** how far the worker's start has come, in words; shown only while a call waits on it (or the start itself is held up) */
+let stageText = "";
+let waiting = 0;
+let blocked = false;
+let stageNote: (() => void) | null = null;
+// The start's notice. The game starts with the page, behind whatever is on the screen, so its stages are not said
+// unless something the player did is waiting on it, or the start is waiting on another tab.
+function showStage() {
+  stageNote?.();
+  stageNote = !up && !dead && stageText && (waiting > 0 || blocked) ? beginBusy(stageText) : null;
+}
+
 // The team picker's reads while the worker is still starting: the answers the build wrote ahead (a game just started
 // gives the same ones). Anything else, or a file that is not there, waits for the worker.
 async function fromBoot(method: string, path: string): Promise<Response | null> {
@@ -88,11 +100,8 @@ function start(): Promise<void> {
       reject(new Error(CANNOT));
       return;
     }
-    let done = beginBusy("Loading the game…");
-    const say = (text: string) => {
-      done();
-      done = beginBusy(text);
-    };
+    stageText = "Loading the game…";
+    showStage();
     const w = new Worker(`${ROOT}worker.js`);
     // the worker failed: before ready, `ready` rejects; after, every call in flight or to come rejects
     const die = (reason: string, plain = false) => {
@@ -100,7 +109,7 @@ function start(): Promise<void> {
       snapshot = null;
       for (const p of pending.values()) p.reject(dead);
       pending.clear();
-      done();
+      showStage();
       if (servedBoot) beginBusy(dead.message); // the picker is already on the screen: the notice stays to say why it won't start
       reject(dead);
     };
@@ -109,10 +118,12 @@ function start(): Promise<void> {
       const m = e.data;
       if (m.kind === "loading") {
         const pct = m.total ? ` ${Math.round((100 * m.loaded) / m.total)}%` : "";
-        say(`${m.stage}${pct}…`);
+        blocked = !!m.blocked;
+        stageText = blocked ? m.stage : `${m.stage}${pct}…`;
+        showStage();
       } else if (m.kind === "ready") {
         up = true;
-        done();
+        showStage();
         resolve();
       } else if (m.kind === "fatal") die(m.message, m.plain);
       else if (m.kind === "status") snapshot = m.busy ? m.status : null;
@@ -133,7 +144,17 @@ async function viaWorker(path: string, init: RequestInit, background: boolean): 
   const method = (init.method || "GET").toUpperCase();
   const boot = await fromBoot(method, path);
   if (boot) return boot;
-  await ready;
+  if (!up) {
+    // this call waits on the game's start: the notice says how far along it is until it is up
+    waiting++;
+    showStage();
+    try {
+      await ready;
+    } finally {
+      waiting--;
+      showStage();
+    }
+  }
   if (dead) throw dead;
   const quick = fromSnapshot(method, path);
   if (quick) return quick;
