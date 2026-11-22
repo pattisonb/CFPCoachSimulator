@@ -1,8 +1,8 @@
-"""The JavaScript engine (engine_js/) plays the Python engine's games, number for number.
-
-Python's `random` and `round` as engine_js/pyrt.js has them, against Python's own answers; then a run of seeded games
-(tools/engine_reference.py) through engine_js/test/compare.mjs, which holds every field of every result to Python's.
-Needs `node` on the path. `python3 tests/test_engine_js.py [games]`"""
+"""Python's `random` and `round` as the JavaScript engine has them (engine_js/pyrt.js), against Python's own answers.
+The engine draws its numbers the way the Python engine it replaced did, so every game it plays is the game that engine
+played (tests/test_sim_golden.py and tests/test_play_log.py hold its games to that engine's results); this holds the
+two things underneath: the same random numbers from the same seed, and rounding halves to the even neighbor.
+Needs `node` on the path. `python3 tests/test_engine_js.py`"""
 import json
 import random
 import subprocess
@@ -41,19 +41,12 @@ def runtime_answers() -> dict:
 
 
 def main() -> None:
-    games = int(sys.argv[1]) if len(sys.argv) > 1 else 60
     with tempfile.TemporaryDirectory(prefix="cfp-engine-js-") as tmp:
         expected = Path(tmp) / "pyrt.json"
         expected.write_text(json.dumps(runtime_answers()), encoding="utf-8")
         r = subprocess.run(["node", str(ROOT / "engine_js" / "test" / "pyrt_check.mjs"), str(expected)], capture_output=True, text=True)
         assert r.returncode == 0, "pyrt.js is not Python's random and round:\n" + r.stdout[-2000:] + r.stderr[-2000:]
-        runtime = r.stdout.strip().splitlines()[-1]
-        ref = Path(tmp) / "games.json"
-        r = subprocess.run([sys.executable, str(ROOT / "tools" / "engine_reference.py"), str(ref), str(games), "5000"], capture_output=True, text=True, cwd=ROOT)
-        assert r.returncode == 0, r.stderr[-2000:]
-        r = subprocess.run(["node", str(ROOT / "engine_js" / "test" / "compare.mjs"), str(ref)], capture_output=True, text=True)
-        assert r.returncode == 0, "the JavaScript engine does not play Python's games:\n" + r.stdout[-3000:] + r.stderr[-2000:]
-        print(f"engine js ok: {runtime}; {r.stdout.strip().splitlines()[-1]}")
+        print("engine js ok:", r.stdout.strip().splitlines()[-1])
 
 
 if __name__ == "__main__":

@@ -1258,7 +1258,8 @@ def defense_scheme(team: dict) -> str:
 def has_sam(scheme: str) -> bool:
     """Whether a defense lines up a SAM: a base front with SAM_FRONT_LBS linebackers (a 4-2-5's
     nickel back plays where the SAM would, so its two linebackers are a MIKE and a WILL)."""
-    from engine import personnel
+    from sim import engine
+    personnel = engine.personnel()
     return personnel.FRONTS[personnel.SCHEME_FRONT.get(scheme, "4-2-5")]["LB"] >= SAM_FRONT_LBS
 
 
@@ -1802,7 +1803,8 @@ def develop(p: dict, attrs: list[str], factor: float, rng: random.Random, starte
     rate /= 1 + max(0, p["o"] - DEV_TOP) / DEV_TOP_SPAN       # the last points come slowest (DEV_TOP)
     rate *= DEV_PACE.get(DRAFT_GROUP.get(p["pos"], ""), 1.0)  # ... and by position (DEV_PACE)
     if clear.on():                                            # Clear Mode: Natural Talent grows faster (engine TRAIT_FX)
-        from engine import game_config as _cfg
+        from sim import engine
+        _cfg = engine.config()
         tier = max((rv2_tier(a) for a in p.get("ab") or [] if a.split("|")[0] == "The Natural"), default=0)
         rate *= 1 + tier * _cfg.TRAIT_FX.get("natural_talent", 0)
     base = rate

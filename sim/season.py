@@ -1292,12 +1292,11 @@ def _with_earned(team: dict, earned: Optional[dict]) -> dict:
     return team
 
 
-def _moments(r: dict, home_team: dict, away_team: dict) -> dict:
+def _moments(r: dict, home_team: dict, away_team: dict, play_log: list) -> dict:
     """Clear Mode: the game's big moments by player ({"home": {"Name|POS": {metric: n}}, "away": ...}): a go-ahead or tying
     score in the fourth quarter or overtime (clutch_score: the scorer and his passer; clutch_kick: the kicker), and a sack,
     interception or forced fumble then while his team led by one score (clutch_stop). From the scoring plays and the play
-    log (engine.drive_functions.play_log, this game's)."""
-    from engine import drive_functions as dfn
+    log (`play_log`: this game's, as the engine hands it over)."""
     import re
     roster = {}
     for side, t in (("home", home_team), ("away", away_team)):
@@ -1345,7 +1344,7 @@ def _moments(r: dict, home_team: dict, away_team: dict) -> dict:
             if mq < q or (mq == q and mleft > left):
                 lead = hl
         return lead
-    for e in dfn.play_log:
+    for e in play_log:
         q = e.get("quarter") or 0
         if q < 4:
             continue
@@ -1364,17 +1363,19 @@ EXTERNAL_POOL = None   # set in the browser (app/browser_pool.py): a pool whose 
 
 
 def _sim_one(args: tuple) -> dict:
-    from engine.game import simulate_game
+    from sim.engine import simulate_game
     event_id, home, away, neutral, seed, keep_full, depth, home_out, away_out, edits, morale, form = args[:12]
     earned = args[12] if len(args) > 12 else (None, None)
     home_team = _with_earned(_game_team(home, form[0], edits[0], morale[0], depth[0], home_out), earned[0])
     away_team = _with_earned(_game_team(away, form[1], edits[1], morale[1], depth[1], away_out), earned[1])
-    r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2])
+    clear = earned != (None, None)                     # Clear Mode: the big moments are read from the play log
+    r = simulate_game(home_team, away_team, None, seed, venue="neutral" if neutral else "home", momentum=morale[2], play_log=clear)
+    play_log = r.pop("play_log", None) or []
     out = {"event_id": event_id, "home_score": r["home"]["score"], "away_score": r["away"]["score"], "overtime": r["overtime_periods"],
            "stats": {"home": _compact_side(r["home"], r["drives"], "home"), "away": _compact_side(r["away"], r["drives"], "away")},
            "injuries": {"home": r["home"].get("injuries", []), "away": r["away"].get("injuries", [])}}
     if earned != (None, None):                         # Clear Mode: the game's big moments, for ability goals
-        out["moments"] = _moments(r, home_team, away_team)
+        out["moments"] = _moments(r, home_team, away_team, play_log)
     if keep_full:
         r["home_slug"], r["away_slug"] = home, away
         out["game"] = r
@@ -2285,28 +2286,25 @@ def formations_view(state: dict, slug: str) -> dict:
     engine's own lineup from the depth chart, the injured and redshirting left out): the three
     groupings its offensive scheme uses most, its defense's base front and the two packages it
     turns to, and the special teams' kicking and return units."""
-    from engine import personnel
-    from engine.game import GameSim
+    from sim import engine
     t = apply_depth(team_data(state, slug), (state.get("depth") or {}).get(slug))
     by_slug = {p["slug"]: p for p in t["offense"] + t["defense"]}
     card = _depth_card(state, slug)
-    team = GameSim._make_team(_preview_team(state, slug))
+    team = engine.formations(_preview_team(state, slug))      # the engine's own lineups: {slug, position, role} a man
 
     def slot(sid: str, label: str, p) -> dict:
-        src = by_slug.get(p.slug) if p is not None else None
+        src = by_slug.get(p["slug"]) if p is not None else None
         return {"slot": sid, "label": label, "player": card(src, src.get("role") or label) if src else None}
 
-    def offense(name: str) -> list:
-        team.set_grouping(name, personnel.GROUPINGS[name])
-        lineup = list(team._lineup["offense"])
-        of = lambda pos: [p for p in lineup if p.position == pos]
+    def offense(name: str, lineup: list) -> list:
+        of = lambda pos: [p for p in lineup if p["position"] == pos]
         line = of("OL")
         roles = ["LT", "LG", "C", "RG", "RT"]
         placed = {}
         for p in line:                              # each lineman at his own spot where it is free
-            if p.role in roles and p.role not in placed:
-                placed[p.role] = p
-        rest = [p for p in line if p not in placed.values()]
+            if p["role"] in roles and p["role"] not in placed:
+                placed[p["role"]] = p
+        rest = [p for p in line if not any(p is q for q in placed.values())]
         for r in roles:
             if r not in placed and rest:
                 placed[r] = rest.pop(0)
@@ -2319,55 +2317,43 @@ def formations_view(state: dict, slug: str) -> dict:
         out += [slot(f"WR{i + 1}", f"WR{i + 1}", p) for i, p in enumerate(of("WR")[:4])]
         return out
 
-    def defense(counts: dict) -> list:
-        team.set_front(counts)
-        lineup = list(team._lineup["defense"])
+    def defense(counts: dict, lineup: list) -> list:
         n_edge, n_dt, n_lb, n_cb = counts["EDGE"], counts["DT"], counts["LB"], counts["CB"]
         edges, tackles = lineup[:n_edge], lineup[n_edge:n_edge + n_dt]
         backers = lineup[n_edge + n_dt:n_edge + n_dt + n_lb]
         corners = lineup[n_edge + n_dt + n_lb:n_edge + n_dt + n_lb + n_cb]
         safeties = lineup[n_edge + n_dt + n_lb + n_cb:]
-        edges = sorted(edges, key=lambda p: 0 if p.role == "LEDG" else 1 if p.role == "REDG" else 2)
+        edges = sorted(edges, key=lambda p: 0 if p["role"] == "LEDG" else 1 if p["role"] == "REDG" else 2)
         out = [slot("LE" if i == 0 else "RE", "LE" if i == 0 else "RE", p) for i, p in enumerate(edges[:2])]
         out += [slot(f"DT{i + 1}", "NT" if len(tackles) == 1 else "DT", p) for i, p in enumerate(tackles)]
-        out += [slot(f"LB{i + 1}", p.role if p.role in ("SAM", "MIKE", "WILL") else "LB", p) for i, p in enumerate(backers)]
+        out += [slot(f"LB{i + 1}", p["role"] if p["role"] in ("SAM", "MIKE", "WILL") else "LB", p) for i, p in enumerate(backers)]
         out += [slot(f"CB{i + 1}", "CB" if i < 2 else "NB", p) for i, p in enumerate(corners)]
-        out += [slot(f"S{i + 1}", p.role if p.role in ("FS", "SS") else "S", p) for i, p in enumerate(safeties)]
+        out += [slot(f"S{i + 1}", p["role"] if p["role"] in ("FS", "SS") else "S", p) for i, p in enumerate(safeties)]
         return _number_labels(out)
 
-    mix = personnel.SCHEME_MIX.get(team.offense_scheme, personnel.DEFAULT_MIX)
-    top = sorted(mix, key=lambda g: -mix[g])[:3]
     off = []
-    for g in top:
-        c = personnel.GROUPINGS[g]
+    for f in team["offense"]:
+        g, c = f["id"], f["counts"]
         off.append({"id": g, "name": GROUPING_NAMES.get(g, g), "personnel": "Flexbone" if g == "option" else f"{g} personnel",
                     "note": f"{c['RB']} RB · {c['TE']} TE · {c['WR']} WR" + (" · 6 OL" if c["OL"] > 5 else ""),
-                    "usage": round(mix[g], 2), "slots": offense(g)})
+                    "usage": round(f["usage"], 2), "slots": offense(g, f["lineup"])})
 
-    scheme = team.defense_scheme
-    packages = [
-        ("base", "Base", "Against two backs or two tight ends", personnel.defense_package(scheme, "12", 1, 10)),
-        ("nickel", "Nickel", "Against three receivers", personnel.defense_package(scheme, "11", 1, 10, rnd=lambda: 0.0)),
-        ("dime", "Dime", "Against four receivers and on third and long", personnel.defense_package(scheme, "10", 3, 10)),
-        ("heavy", "Heavy", "Against three tight ends and at the goal line", personnel.defense_package(scheme, "13", 1, 10)),
-    ]
-    seen, dfn = set(), []
-    for pid, name, when, counts in packages:
-        shape = tuple(counts[k] for k in ("EDGE", "DT", "LB", "CB", "S"))
-        if shape in seen or len(dfn) == 3:
-            continue
-        seen.add(shape)
+    scheme = team["defense_scheme"]
+    package = {"base": ("Base", "Against two backs or two tight ends"), "nickel": ("Nickel", "Against three receivers"),
+               "dime": ("Dime", "Against four receivers and on third and long"), "heavy": ("Heavy", "Against three tight ends and at the goal line")}
+    dfn = []
+    for f in team["defense"]:
+        counts = f["counts"]
+        name, when = package[f["id"]]
         front = f"{counts['EDGE'] + counts['DT']}-{counts['LB']}-{counts['CB'] + counts['S']}"
-        dfn.append({"id": pid, "name": name, "personnel": front, "note": when, "slots": defense(counts)})
+        dfn.append({"id": f["id"], "name": name, "personnel": front, "note": when, "slots": defense(counts, f["lineup"])})
 
     def specialist(sid: str, label: str, pos: str) -> dict:
-        p = next((x for x in team.offense if x.position == pos and x.in_game and not x.injured), None) \
-            or next((x for x in sorted(team.offense, key=lambda x: x.depth) if x.position == pos and not x.injured), None)
-        return slot(sid, label, p)
+        who = team["kicker"] if pos == "K" else team["punter"]
+        return slot(sid, label, {"slug": who} if who else None)
 
     def returner(sid: str, label: str, who) -> dict:
-        p = next((x for x in team.offense + team.defense if x.slug == who), None)
-        return slot(sid, label, p)
+        return slot(sid, label, {"slug": who} if who else None)
 
     st = [
         {"id": "fg", "name": "Field goal", "personnel": "Field goal & PAT", "note": "The kicker; the rest of the unit is not on the depth chart",
@@ -2375,9 +2361,9 @@ def formations_view(state: dict, slug: str) -> dict:
         {"id": "punt", "name": "Punt", "personnel": "Punt", "note": "The punter; the rest of the unit is not on the depth chart",
          "slots": [specialist("P", "P", "P")]},
         {"id": "return", "name": "Returns", "personnel": "Kick & punt return", "note": "Who fields kickoffs and punts",
-         "slots": [returner("KR", "KR", team.kick_returner), returner("PR", "PR", team.punt_returner)]},
+         "slots": [returner("KR", "KR", team["kick_returner"]), returner("PR", "PR", team["punt_returner"])]},
     ]
-    return {"team": slug, "offense": {"scheme": team.offense_scheme, "formations": off},
+    return {"team": slug, "offense": {"scheme": team["offense_scheme"], "formations": off},
             "defense": {"scheme": scheme, "formations": dfn}, "special": {"scheme": None, "formations": st}}
 
 
@@ -3455,7 +3441,7 @@ _preview_inflight: dict = {}      # cache key -> Event while one thread computes
 def _preview_sim(args: tuple) -> dict:
     """One simulation of the previewed game (in a pool worker when there is one); only the
     numbers the This week card uses come back."""
-    from engine.game import simulate_game
+    from sim.engine import simulate_game
     home, away, seed, venue = args
     r = simulate_game(home, away, seed=seed, venue=venue)
     return {side: {"score": r[side]["score"],

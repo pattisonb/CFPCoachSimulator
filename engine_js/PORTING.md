@@ -1,10 +1,16 @@
-# The engine in JavaScript: how the port is written
+# The engine in JavaScript
 
-`engine_js/` is `engine/` (the Python play-by-play game sim) in JavaScript, file for file. It must play every game the
-Python engine plays, number for number: `simulate_game(home, away, sliders, seed, venue, momentum)` with the same team
-data and seed returns the same result. `tests/test_engine_js.py` compares the two.
+`engine_js/` is the game engine: the play-by-play sim of one game. It was `engine/` in Python and was ported file for
+file, checked game for game against the Python it replaced (640 seeded games, every field of every result the same),
+and the Python was then deleted. The rest of the game is being ported the same way, a piece at a time; until it is,
+the Python that remains asks this engine for games through `sim/engine.py` (in the browser directly, on a computer
+through a Node process running `bridge.mjs`), and `api.js` is what it can ask for.
 
-The Python stays the reference. A change to `engine/*.py` is made in `engine_js/*.js` too, the same way.
+What holds the engine to the results it had in Python: `tests/test_sim_golden.py` (two weeks of a career, every score
+and stat line), `tests/test_play_log.py` (five games' fingerprint) and `tests/test_engine_js.py` (the random numbers
+and the rounding underneath).
+
+The rules below are how the port was written, and how the next pieces are: they are what kept the two identical.
 
 ## Rules (every one of them is about keeping the two identical)
 

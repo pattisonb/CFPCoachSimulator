@@ -40,7 +40,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from engine import game_config as cfg  # noqa: E402
+from sim import engine  # noqa: E402
+cfg = engine.config()
 
 OUT = ROOT / "data" / "real_adjustments.json"
 STATS = ROOT / "data" / "history" / "team_players_2026.json"

@@ -448,7 +448,7 @@ def _fields(root: Path, m: Maps) -> None:
     _write(path, prof)
 
 
-TEXT_SUFFIXES = {".py", ".ts", ".tsx", ".html", ".css", ".md"}
+TEXT_SUFFIXES = {".py", ".ts", ".tsx", ".js", ".mjs", ".html", ".css", ".md"}
 
 
 def run(root: Path) -> Maps:

@@ -6,8 +6,7 @@ from pathlib import Path as _Path
 
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))   # the project root, so `from sim import season` works from here
 from sim import season
-from engine import game_config as cfg
-from engine.game import simulate_game
+from sim.engine import simulate_game
 from test_play_log import fingerprint
 
 
@@ -21,18 +20,18 @@ def record_trend(r: dict) -> str:
 
 if __name__ == "__main__":
     base = fingerprint()
-    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 3f214b0e3112df73)")
-    # re-recorded when the FCS stand-ins were renamed for their regions: the fingerprint picks teams by
-    # sorted slug and hashes their names; with the old order and names it is the same games as before
-    from engine import game_config
-    # Clear Mode's engine (game_config.EXTRA_TRAITS: the abilities the engine never read now act) has its own
-    assert base == ("f4e6be51d8a68f80" if game_config.EXTRA_TRAITS else "3f214b0e3112df73")
+    print("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: aa5c3b71cb79a711)")
+    # re-recorded when the engine became JavaScript, from the Python engine's own games with whole floats counted as
+    # whole numbers (tests/canon.py: 4.0 sacks is 4); the JavaScript engine gives the same. It is Clear Mode's
+    # engine (game_config EXTRA_TRAITS on: the abilities the engine never read now act)
+    assert base == "aa5c3b71cb79a711"
 
     # in-game momentum changes a game and leaves the flag off afterwards
     season._init(str(season.TEAMS_FILE))
     a = simulate_game(season._TEAMS["ohio-state"], season._TEAMS["michigan"], seed=5)
     b = simulate_game(season._TEAMS["ohio-state"], season._TEAMS["michigan"], seed=5, momentum=True)
-    assert cfg.MOMENTUM is False
+    c = simulate_game(season._TEAMS["ohio-state"], season._TEAMS["michigan"], seed=5)
+    assert (c["home"]["score"], c["away"]["score"]) == (a["home"]["score"], a["away"]["score"]), "momentum stayed on after a game"
     print("momentum off:", a["home"]["score"], "-", a["away"]["score"], "| on:", b["home"]["score"], "-", b["away"]["score"])
 
     st = season.new_season("ohio-state", "full", seed=9)

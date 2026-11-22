@@ -7,7 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from coach_career import scenes
-from engine import game_config
+from sim import engine
+game_config = engine.config()
 from sim import news
 
 

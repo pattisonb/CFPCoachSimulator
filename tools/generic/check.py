@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-SOURCE = {".py", ".ts", ".tsx", ".html", ".css"}
+SOURCE = {".py", ".ts", ".tsx", ".js", ".mjs", ".html", ".css"}
 _NAME = re.compile(r"[A-Z][\w'’.\-]*(?: [A-Z][\w'’.\-]*){1,4}")
 
 
@@ -30,6 +30,9 @@ def shipped(root: Path, files: list[str] | None = None) -> list[Path]:
         files = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.suffix in SOURCE | {".json"}
                  and "node_modules" not in p.parts and "ui" not in p.relative_to(root).parts[:1]]
     out = [root / f for f in files]
+    engine = root / "engine_js"                  # shipped as one bundled file (tools/build_site.py)
+    if engine.is_dir():
+        out += [p for p in sorted(engine.rglob("*")) if p.suffix in SOURCE]
     ui = root / "ui"
     if ui.is_dir():
         out += [p for p in sorted(ui.rglob("*")) if p.suffix in SOURCE and "node_modules" not in p.parts and "dist" not in p.parts]
@@ -53,7 +56,7 @@ def leaks(root: Path, terms: dict[str, set[str]], files: list[str] | None = None
             _strings(json.loads(path.read_text(encoding="utf-8")), strings)
         else:
             text = path.read_text(encoding="utf-8")
-            if path.suffix in (".ts", ".tsx", ".css"):       # comments never reach the built app
+            if path.suffix in (".ts", ".tsx", ".js", ".mjs", ".css"):       # comments never reach the built app
                 text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
                 text = re.sub(r"(?m)(^|\s)//.*$", " ", text)
             strings = {text}

@@ -260,6 +260,10 @@ async function start(init) {
   locked.catch(() => {});
   importScripts(PYODIDE_URL + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
+  // the game engine is JavaScript (engine_js/, bundled as engine.js): the Python asks it for games through this
+  // module (sim/engine.py), JSON text each way
+  importScripts("./engine.js");
+  pyodide.registerJsModule("js_engine", { call: (fn, args) => JSON.stringify(self.EngineJS.api[fn](...JSON.parse(args))) });
   pythonUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
   const [zip] = await Promise.all([zipping, pyodide.loadPackage("lzma")]);   // Python's xz reader is an add-on (70 KB)

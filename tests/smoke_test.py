@@ -7,11 +7,11 @@ import json
 import sys
 import time
 
-from engine.game import simulate_game
+from sim.engine import simulate_game
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 30
 
-with open("engine/rosters.json", encoding="utf-8") as f:
+with open(_Path(__file__).resolve().parent / "rosters.json", encoding="utf-8") as f:
     data = json.load(f)
 home, away = data["teams"][0], data["teams"][1]
 

@@ -10,6 +10,7 @@ import json
 import sys
 
 from sim import season
+from canon import canon
 
 
 def fingerprint(n: int = 5) -> str:
@@ -18,7 +19,7 @@ def fingerprint(n: int = 5) -> str:
     h = hashlib.sha256()
     for i in range(n):
         home, away = slugs[(i * 37) % len(slugs)], slugs[(i * 53 + 7) % len(slugs)]
-        from engine.game import simulate_game
+        from sim.engine import simulate_game
         if not season._TEAMS:
             season._init(str(season.TEAMS_FILE))
         g = simulate_game(season._TEAMS[home], season._TEAMS[away], seed=100 + i)
@@ -26,7 +27,7 @@ def fingerprint(n: int = 5) -> str:
         for side in ("home", "away"):
             core[side] = {k: v for k, v in core[side].items() if k in ("name", "score", "quarters", "team_stats", "players")}
         core["drives"] = [{k: v for k, v in d.items() if k != "log"} for d in g["drives"]]
-        h.update(json.dumps(core, sort_keys=True, default=str).encode())
+        h.update(json.dumps(canon(core), sort_keys=True, default=str).encode())      # 4.0 and 4 are one result (canon.py)
         if "--check" in sys.argv:
             check(g)
     return h.hexdigest()[:16]

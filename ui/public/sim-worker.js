@@ -29,6 +29,10 @@ async function boot(init) {
   data = new Uint8Array(init.data);
   importScripts(PYODIDE_URL + "pyodide.js");
   pyodide = await loadPyodide({ indexURL: PYODIDE_URL });
+  // the game engine is JavaScript (engine_js/, bundled as engine.js): the Python asks it for games through this
+  // module (sim/engine.py), JSON text each way
+  importScripts("./engine.js");
+  pyodide.registerJsModule("js_engine", { call: (fn, args) => JSON.stringify(self.EngineJS.api[fn](...JSON.parse(args))) });
   const [res] = await Promise.all([fetch(`./${ARCHIVE}?v=${encodeURIComponent(init.version || "dev")}`), pyodide.loadPackage("lzma")]);
   if (!res.ok) throw new Error(`${ARCHIVE}: HTTP ${res.status}`);
   pyodide.FS.writeFile("/tmp/" + ARCHIVE, new Uint8Array(await res.arrayBuffer()));

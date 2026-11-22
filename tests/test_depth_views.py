@@ -51,16 +51,15 @@ if __name__ == "__main__":
     after = {r["role"]: r for u in season.depth_chart_view(st, "ohio-state")["units"] for r in u["rows"]}
     assert after["WR"]["players"][0]["slug"] == order[0] and after["WR"]["starters"] == rows["WR"]["starters"]
     # formations: the scheme's three most-used groupings, each filled as the engine fills it from the chart
-    from engine import personnel
-    from engine.game import GameSim
+    from sim import engine
+    personnel = engine.personnel()
     forms = season.formations_view(st, "ohio-state")
     off = forms["offense"]["formations"]
     mix = personnel.SCHEME_MIX.get(forms["offense"]["scheme"], personnel.DEFAULT_MIX)
     assert [f["id"] for f in off] == sorted(mix, key=lambda g: -mix[g])[:3], [f["id"] for f in off]
-    team = GameSim._make_team(season._preview_team(st, "ohio-state"))
+    lined_up = {f["id"]: f["lineup"] for f in engine.formations(season._preview_team(st, "ohio-state"))["offense"]}
     for f in off:
-        team.set_grouping(f["id"], personnel.GROUPINGS[f["id"]])
-        want = {p.slug for p in team._lineup["offense"] if p.position not in ("K", "P")}
+        want = {p["slug"] for p in lined_up[f["id"]] if p["position"] not in ("K", "P")}
         got = {s["player"]["slug"] for s in f["slots"] if s["player"]}
         assert got == want and len(f["slots"]) == 11, (f["id"], got ^ want)
     assert next(s for s in off[0]["slots"] if s["slot"] == "WR1")["player"]["slug"] == order[0]   # the new WR order is on the field

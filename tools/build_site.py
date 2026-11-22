@@ -8,7 +8,8 @@ published carries a real school, bowl, player or coach name. Nothing in the repo
 app are copied to a scratch folder, the names are swapped there, and the build reads the copy.
 
 What lands in `ui/dist/`: the app (vite build, with VITE_GAME=browser so it talks to the worker instead of a
-server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `game.tar.xz` (the Python game and the data a
+server), `worker.js` (Pyodide runs the game's dispatcher, app/api.py), `engine.js` (the game engine, engine_js/ as one
+file: the workers load it and the Python calls it), `game.tar.xz` (the Python game and the data a
 career reads), `boot/` (the team picker's answers worked out ahead, so the first screen shows before Python has
 loaded: `boot/teams.json` and one `boot/teams/<slug>.json` a team) and `version.json` (the commit).
 
@@ -31,7 +32,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PACKAGES = ("engine", "sim", "coach_career", "teamdata", "app")     # their .py files only
+PACKAGES = ("sim", "coach_career", "teamdata", "app")     # their .py files only
+ENGINE = "engine_js"       # the game engine, which is JavaScript: bundled into one file the workers load (engine.js)
 # the data a career reads through a season, its offseason and the next season's first week
 DATA_FILES = (
     "data/engine_teams.json", "data/player_potential.json", "data/recruiting_model.json", "data/history/polls.json",
@@ -70,6 +72,7 @@ def stage(work: Path, generic: bool, ui: bool = True) -> Path:
     # the preset faces go with the rosters (the player's ask): a face file holds face parts only, keyed by player id
     # and coach name, and a generic build's scrub renames those keys and the file with everything else
     shutil.copytree(ROOT / "cfb_sim_data", root / "cfb_sim_data")
+    shutil.copytree(ROOT / ENGINE, root / ENGINE)       # the staged Python asks it for games too (sim/engine.py, through Node)
     (root / "data" / "history").mkdir(parents=True)
     for p in sorted((ROOT / "data").glob("*.json")):
         if f"data/{p.name}" not in GENERATED:
@@ -151,6 +154,10 @@ def build(out: Path = ROOT / "ui" / "dist", generic: bool = False) -> dict:
         shutil.rmtree(out, ignore_errors=True)
         shutil.copytree(ui / "dist", out)
         files = write_archive(root, out / ARCHIVE)
+        # the engine as one plain script (no comments: they are the only place it names a school), for worker.js and
+        # sim-worker.js to load beside Python
+        _run([npx, "esbuild", str(root / ENGINE / "api.js"), "--bundle", "--format=iife", "--global-name=EngineJS", "--minify",
+              "--log-level=warning", f"--outfile={out / 'engine.js'}"], ui)
         write_boot(root, out / "boot", Path(tmp))
     (out / "version.json").write_text(json.dumps({"commit": commit, "generic": generic}), encoding="utf-8")
     return {"archive_bytes": (out / ARCHIVE).stat().st_size, "files": files}

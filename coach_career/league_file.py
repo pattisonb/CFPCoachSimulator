@@ -239,8 +239,8 @@ _COACH_FLAGS = ("is_interim", "ratings_generated", "vacant", "plays_called_by_hc
 @lru_cache(maxsize=1)
 def _words() -> dict:
     """The game's own words a file's fields must use (small; read once)."""
-    from engine import game_config
-    from sim import coaches as sim_coaches, season
+    from sim import coaches as sim_coaches, engine, season
+    game_config = engine.config()
     from teamdata import ratings as rv
     return {"offense": tuple(sim_coaches.OFFENSE_SCHEMES), "defense": tuple(sim_coaches.DEFENSE_SCHEMES),
             "dev": tuple(season.DEV_TRAITS), "coachability": tuple(n for n, _, _ in recruits.COACHABILITY),

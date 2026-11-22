@@ -12,6 +12,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
+from canon import canon  # noqa: E402
 os.environ["SIM_WORKERS"] = "1"          # in this process: the pool's order does not matter, but one process is simplest
 
 GOLDEN = ROOT / "tests" / "golden" / "sim_seed11_two_weeks.json"
@@ -21,7 +23,7 @@ TEAM, SEED, WEEKS = "smu", 11, 2
 def digest(state: dict) -> dict:
     scores = {e: [g["home_score"], g["away_score"], g.get("overtime") or 0] for e, g in sorted(state["games"].items()) if g.get("played")}
     stats = state.get("season_stats") or {}
-    blob = json.dumps(stats, sort_keys=True, default=str)
+    blob = json.dumps(canon(stats), sort_keys=True, default=str)       # 4.0 sacks and 4 sacks are one result (tests/canon.py)
     rec = state.get("recruiting") or {}
     # the recruiting week's outcome: every school's board, offers, visits, contacts and each prospect's status
     rec_blob = json.dumps({k: rec.get(k) for k in ("status", "lists", "offers", "visits", "contacts", "hours", "nil")}, sort_keys=True, default=str)
