@@ -606,6 +606,7 @@ def _team_card(t: dict) -> dict:
         "head_coach": t["coaches"]["head_coach"]["name"],
         # his age as the career's first season starts (Your Coach opens on it); a copy, so the team is not marked
         "head_coach_age": carousel._age(dict(t["coaches"]["head_coach"]), league.FIRST_YEAR),
+        "head_coach_hometown": carousel.hometown(t["coaches"]["head_coach"]["name"]),     # "" when we do not know it
         "staff": coaches.staff(None, t),
         "tendencies": t.get("tendencies", {}),
     }

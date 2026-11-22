@@ -44,7 +44,7 @@ type Status =
 /** /coach/edit: build a coach's face from pocket-faces parts, name them, and save them to the game. */
 export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   const [team, setTeam] = useState<TeamCard | null>(() => cachedTeams()?.find((t) => t.slug === teamSlug) ?? null);
-  // the picked team's head coach fills the face (his preset, when he has one), the name fields and the age (the viewer can
+  // the picked team's head coach fills the face (his preset, when he has one), the name fields, the age and the hometown (the viewer can
   // change them)
   const [face, setFace] = useState<FaceSpec>(() => (team && presetCoachFace(team.head_coach)) || randomFace());
   const faceTouched = useRef(false);
@@ -53,7 +53,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   const prefilled = useRef(team?.slug ?? null);
   const [age, setAge] = useState(() => clampAge(team?.head_coach_age));
   const ageTouched = useRef(false);
-  const [hometown, setHometown] = useState("");
+  const [hometown, setHometown] = useState(() => team?.head_coach_hometown ?? "");
   const [coachId, setCoachId] = useState<string | null>(null);
   const [blank, setBlank] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -71,7 +71,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
       .catch(() => setTeam(null));
   }, [teamSlug]);
 
-  // a team that arrives after the first draw (not yet cached) fills the face, the names and the age once, unless the viewer
+  // a team that arrives after the first draw (not yet cached) fills the face, the names, the age and the hometown once, unless the viewer
   // already changed them
   useEffect(() => {
     if (!team || prefilled.current === team.slug) return;
@@ -82,6 +82,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
     const preset = presetCoachFace(team.head_coach);
     if (preset && !faceTouched.current) setFace(preset);
     if (!ageTouched.current) setAge(clampAge(team.head_coach_age));
+    setHometown((cur) => cur || (team.head_coach_hometown ?? ""));
   }, [team]);
 
   const named = first.trim() !== "" && last.trim() !== "";

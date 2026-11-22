@@ -18,6 +18,8 @@ export interface TeamCard {
   head_coach: string;
   /** his age as the first season starts */
   head_coach_age?: number;
+  /** where he is from ("Milbank, SD"), or "" */
+  head_coach_hometown?: string;
   stadium: { name: string; capacity: number };
   /** the coordinators, as "OC Name (Scheme)" */
   staff?: { offense: string; defense: string };

@@ -147,6 +147,15 @@ def _rating(c: dict) -> float:
 
 BIRTH_YEARS = Path(__file__).resolve().parents[1] / "data" / "coach_birth_years.json"
 _BIRTHS: dict = {}
+_HOMETOWNS: dict = {}
+
+
+def hometown(name: Optional[str]) -> str:
+    """Where a real head coach is from ("Milbank, SD": the `hometowns` of data/coach_birth_years.json), or "" when
+    we do not know."""
+    if not _HOMETOWNS and BIRTH_YEARS.exists():
+        _HOMETOWNS.update(json.loads(BIRTH_YEARS.read_text(encoding="utf-8")).get("hometowns") or {})
+    return _HOMETOWNS.get(name) or ""
 
 
 def _birth_years() -> dict:
