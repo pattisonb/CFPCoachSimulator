@@ -751,8 +751,8 @@ function player_game_log(state, team, name, position) {
 }
 
 function mark_best(rows) {
-  // His best game of a season's rows gets `best: true`: the one whose line leads (game_line's `value`: the main
-  // number of his position's line, then its second). Only with three games to compare, a number above zero, and one
+  // His best game of a season's rows gets `best: true`: the one that leads on game_line's `value` (his whole day
+  // as the award races score it for his position, then the numbers of his line). Only with three games to compare, a number above zero, and one
   // game alone on top; `value` is the game's own and does not go to the page.
   const scored = rows.filter((r) => Array.isArray(get(r, "value")));
   let top = null, tied = false;
@@ -826,6 +826,12 @@ function game_line(position, stats) {
     value = [st("key_blocks") - 3 * st("sacks_allowed") - st("pressures_allowed"), st("snaps")];
     extra = [n(st("snaps"), "Snap"), st("key_blocks") ? n(st("key_blocks"), "Key Block") : null,
       st("pressures_allowed") ? n(st("pressures_allowed"), "Pressure") : null].filter((x) => x !== null);
+  }
+  if (value !== null && group !== "P") {         // (a punter's day is his average: the races' score is built for a season of punts)
+    // his best game is judged on the whole day, not one number: the production score the award races use (yards,
+    // touchdowns, turnovers and the rest, weighed for his position), with the line's own numbers to break a tie
+    const blended = get(awards.Pool.prototype._raw_scores({ stats, group, ratings: {} }), group);
+    if (isNumber(blended)) value = [round(blended, 3), ...value];
   }
   const under = [...extra, ...(returns !== null ? [returns] : [])].join(" · ") || null;
   if (line !== null) {
