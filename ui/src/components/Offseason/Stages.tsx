@@ -1238,7 +1238,7 @@ function Staff({ v, teams, busy, live, act, season }: P) {
       {st?.leaving.map((s) => (
         <section key={s.id} aria-label={m.staff.opening(role(s.role))}>
           <h3 className="label dev__kicker">
-            {m.staff.opening(role(s.role))} · {m.staff.reason(s.name, st.reasons[s.id] ?? "")}
+            {m.staff.opening(role(s.role))} · {titleCase(m.staff.reason(s.name, st.reasons[s.id] ?? ""))}
           </h3>
           <ul className="dev__jumps">
             {(st.candidates[s.id] ?? []).map((c: Candidate, i) => {

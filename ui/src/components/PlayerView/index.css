@@ -506,9 +506,75 @@
   font-size: var(--t-xs);
 }
 
-/* the Game Log: only the opponent's name may wrap; the season's team (when not his now) sits over the table */
+/* the Game Log: only the opponent's name and a second line (his returns) may wrap; the season's team (when not his
+   now) sits over the table */
 .player-view__table--log :is(th, td):not(:nth-child(2)) {
   white-space: nowrap;
+}
+
+/* the result and the line read down their columns: each starts on one edge (the win and loss boxes in a file) */
+.player-view__table--log :is(th, td):is(:nth-child(3), :nth-child(5)) {
+  text-align: left;
+}
+
+.player-view__table--log :is(th, td):nth-child(3) {
+  padding-left: 8px;
+}
+
+/* the line's column has the room its second line needs before the opponent's takes the slack */
+.player-view__line-col {
+  width: 40%;
+}
+
+/* a game he did not play: the whole row steps back */
+.player-view__table--log tr.is-out :is(th, td) {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* the result's letter in a box: a win filled, a loss outlined (the schedule's own way) */
+.player-view__wl {
+  display: inline-block;
+  width: 18px;
+  margin-right: 6px;
+  border: 1px solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.player-view__wl.is-won {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.player-view__table--log tr.is-out .player-view__wl {
+  border-color: var(--ink-soft);
+  background: none;
+  color: var(--ink-soft);
+}
+
+.player-view__line-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.player-view__line-sub {
+  display: block;
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  white-space: normal;
+}
+
+.player-view__line-part {
+  white-space: nowrap;
+}
+
+.player-view__best {
+  color: var(--gold);
 }
 
 .player-view__with {

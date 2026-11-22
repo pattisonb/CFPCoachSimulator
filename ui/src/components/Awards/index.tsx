@@ -11,7 +11,7 @@ import { SAMPLE } from "./sample.ts";
 import { api } from "../../api.ts";
 import { inkOn } from "../../colors.ts";
 import { lookOf, staffFace, type Face as FaceSpec } from "../../faces.ts";
-import { formatClass, ordinal } from "../../format.ts";
+import { formatClass, ordinal, titleCase } from "../../format.ts";
 import type {
   AwardCoach,
   AwardPlayer,
@@ -70,6 +70,19 @@ const colorsOf = (t: TeamCard | undefined) =>
     "--on": t ? inkOn(t.colors.primary) : "var(--ink)",
   }) as CSSProperties;
 
+/**
+ * The awards as the game words them now. An award already given keeps the words it was given with, so a career saved
+ * before stat lines and coaches' roles were Title Case ("3,972 yds · 45 TD", "Defensive coordinator") reads as a new one.
+ */
+const CASED = new Set(["line", "headline", "final_line", "role"]);
+function cased<T>(v: T): T {
+  if (Array.isArray(v)) return v.map(cased) as T;
+  if (v && typeof v === "object")
+    return Object.fromEntries(
+      Object.entries(v).map(([k, x]) => [k, CASED.has(k) && typeof x === "string" ? titleCase(x) : cased(x)]),
+    ) as T;
+  return v;
+}
 const sentence = (t?: string) => (t ? `${t[0].toUpperCase()}${t.slice(1)}.` : "");
 const whoLine = (p: AwardPlayer) => [p.position, formatClass(p.class), p.team_name].filter(Boolean).join(" · ");
 
@@ -163,7 +176,7 @@ export default function Awards({ season, teams, coach }: Props) {
   useEffect(() => {
     let live = true;
     api<AwardsView>(`/api/season/${season.id}/awards`)
-      .then((v) => live && setView(v))
+      .then((v) => live && setView(cased(v)))
       .catch((e: Error) => live && setError(e.message));
     return () => {
       live = false;

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
+import { Check, Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Blocks from "../Blocks/index.tsx";
 import Face from "../Face/index.tsx";
@@ -9,7 +9,7 @@ import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { lookOf } from "../../faces.ts";
 import { formatClass, ordinal } from "../../format.ts";
-import type { DepthCard, PlayerProfile } from "../../types.ts";
+import type { DepthCard, GameLogRow, PlayerProfile } from "../../types.ts";
 import { Career, RecruitedHow, Recruitment } from "./History.tsx";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -544,35 +544,80 @@ function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<st
         <p className="player-view__soft player-view__with">{m.gamesWith(shown.team_name, shown.year)}</p>
       )}
       {shown?.rows.length ? (
-        <table className="player-view__table player-view__table--log">
-          <thead>
-            <tr>
-              <th scope="col">{m.weekCol}</th>
-              <th scope="col">{m.opponent}</th>
-              <th scope="col">{m.result}</th>
-              <th scope="col">{m.role}</th>
-              <th scope="col">{m.line}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.rows.map((g) => (
-              <tr key={g.week}>
-                <th scope="row">{weekLabels?.[String(g.week)] ?? m.week(g.week)}</th>
-                <td>{m.versus(g.venue === "away", g.opponent_name)}</td>
-                <td>{m.score(g.won, g.points_for, g.points_against)}</td>
-                <td>{g.started ? m.started : m.played}</td>
-                {/* his line that game, short; the whole box-score line on hover */}
-                <td>
-                  {g.line ? <Tip text={g.line_full}>{g.line}</Tip> : <span className="player-view__soft">–</span>}
-                </td>
+        <>
+          <table className="player-view__table player-view__table--log">
+            <thead>
+              <tr>
+                <th scope="col">{m.weekCol}</th>
+                <th scope="col">{m.opponent}</th>
+                <th scope="col">{m.result}</th>
+                <th scope="col">
+                  <Tip text={m.startTip}>{m.start}</Tip>
+                </th>
+                <th scope="col" className="player-view__line-col">
+                  {m.line}
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {shown.rows.map((g) => (
+                <tr key={g.week} className={g.line_kind === "dnp" ? "is-out" : undefined}>
+                  <th scope="row">{weekLabels?.[String(g.week)] ?? m.week(g.week)}</th>
+                  <td>{m.versus(g.venue === "away", g.opponent_name)}</td>
+                  <td>
+                    <span className={`player-view__wl${g.won ? " is-won" : ""}`}>{g.won ? m.win : m.loss}</span>
+                    {m.points(g.points_for, g.points_against)}
+                  </td>
+                  <td>
+                    {g.started && g.played !== false && (
+                      <Check size={14} weight="bold" role="img" aria-label={m.started} />
+                    )}
+                  </td>
+                  <td className="player-view__line">
+                    <GameLine g={g} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       ) : (
         <p className="player-view__soft">{m.noGameLog}</p>
       )}
     </Panel>
+  );
+}
+
+/**
+ * A game's line in his log: his position's line (his best game of the season starred), his returns under it or in its
+ * place, or what happened in words when there is no line.
+ */
+function GameLine({ g }: { g: GameLogRow }) {
+  if (g.line_kind === "dnp") return <span className="player-view__soft">{m.didNotPlay}</span>;
+  if (g.line_kind === "none") return <span className="player-view__soft">{m.noStats}</span>;
+  if (!g.line) return <span className="player-view__soft">–</span>;
+  return (
+    <>
+      <span className="player-view__line-main">
+        <Tip text={g.line_full}>{g.line}</Tip>
+        {g.best && (
+          <Tip text={m.bestGame}>
+            <Star size={12} weight="fill" className="player-view__best" role="img" aria-label={m.bestGame} />
+          </Tip>
+        )}
+      </span>
+      {g.line_sub && (
+        <span className="player-view__line-sub">
+          {/* it may wrap between its parts, never inside one: so its parts are set off by commas, which can end a line */}
+          {g.line_sub.split(m.lineSep).map((part, i) => (
+            <span key={i}>
+              {i > 0 && m.subSep}
+              <span className="player-view__line-part">{part}</span>
+            </span>
+          ))}
+        </span>
+      )}
+    </>
   );
 }
 

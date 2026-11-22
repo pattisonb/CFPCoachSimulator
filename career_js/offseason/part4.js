@@ -463,7 +463,8 @@ function keep_game_logs(state, year) {
     const players = {};
     for (const p of [...edited["offense"], ...edited["defense"]]) {
       const e = get(kept["players"], `${p["name"]}|${p["position"]}`);
-      if (truthy(get(p, "slug")) && truthy(e)) players[p["slug"]] = e;
+      // (one who never got in a game all season has no log to keep: the box lists him with no stats)
+      if (truthy(get(p, "slug")) && truthy(e) && e["s"].some((line) => line.length)) players[p["slug"]] = e;
     }
     if (kept["games"].length) logs.push({ year, team: me, games: kept["games"], stat_keys: kept["stat_keys"], players });
   }

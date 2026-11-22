@@ -36,8 +36,8 @@ const QB1: Seed = [
   "texas",
   "Texas",
   "SEC",
-  "71/98, 1,024 yds, 11 TD, 1 INT",
-  "1,024 yds · 11 TD",
+  "71/98, 1,024 Yds, 11 TD, 1 INT",
+  "1,024 Yds · 11 TD",
 ];
 const WR1: Seed = [
   "Dante Rivers",
@@ -46,8 +46,8 @@ const WR1: Seed = [
   "ohio-state",
   "Ohio State",
   "Big Ten",
-  "24 rec, 418 yds, 6 TD",
-  "418 yds · 6 TD",
+  "24 Rec, 418 Yds, 6 TD",
+  "418 Yds · 6 TD",
 ];
 const RB1: Seed = [
   "Isaiah Monroe",
@@ -56,8 +56,8 @@ const RB1: Seed = [
   "oregon",
   "Oregon",
   "Big Ten",
-  "61 car, 455 yds, 5 TD",
-  "455 yds · 5 TD",
+  "61 Car, 455 Yds, 5 TD",
+  "455 Yds · 5 TD",
 ];
 const QB2: Seed = [
   "Cole Whitaker",
@@ -66,8 +66,8 @@ const QB2: Seed = [
   "georgia",
   "Georgia",
   "SEC",
-  "64/90, 902 yds, 9 TD, 0 INT",
-  "902 yds · 9 TD",
+  "64/90, 902 Yds, 9 TD, 0 INT",
+  "902 Yds · 9 TD",
 ];
 const QB3: Seed = [
   "Jalen Price",
@@ -76,8 +76,8 @@ const QB3: Seed = [
   "miami",
   "Miami",
   "ACC",
-  "70/104, 955 yds, 8 TD, 2 INT",
-  "955 yds · 8 TD",
+  "70/104, 955 Yds, 8 TD, 2 INT",
+  "955 Yds · 8 TD",
 ];
 const TE1: Seed = [
   "Brody Hayes",
@@ -86,8 +86,8 @@ const TE1: Seed = [
   "penn-state",
   "Penn State",
   "Big Ten",
-  "15 rec, 201 yds, 3 TD",
-  "201 yds · 3 TD",
+  "15 Rec, 201 Yds, 3 TD",
+  "201 Yds · 3 TD",
 ];
 const LB1: Seed = [
   "Terrell Vaughn",
@@ -96,10 +96,10 @@ const LB1: Seed = [
   "alabama",
   "Alabama",
   "SEC",
-  "31 tkl, 4.5 TFL, 2 sacks",
-  "31 tkl · 4.5 TFL",
+  "31 Tkl, 4.5 TFL, 2 Sacks",
+  "31 Tkl · 4.5 TFL",
 ];
-const DE1: Seed = ["Kobe Ellison", "DL", "JR", "lsu", "LSU", "SEC", "12 tkl, 5 sacks, 2 FF", "5 sacks · 2 FF"];
+const DE1: Seed = ["Kobe Ellison", "DL", "JR", "lsu", "LSU", "SEC", "12 Tkl, 5 Sacks, 2 FF", "5 Sacks · 2 FF"];
 const DB1: Seed = [
   "Andre Simms",
   "CB",
@@ -107,10 +107,10 @@ const DB1: Seed = [
   "notre-dame",
   "Notre Dame",
   "FBS Independents",
-  "9 tkl, 3 INT, 6 PD",
+  "9 Tkl, 3 INT, 6 PD",
   "3 INT · 6 PD",
 ];
-const DB2: Seed = ["Malik Ford", "S", "JR", "clemson", "Clemson", "ACC", "18 tkl, 2 INT", "2 INT · 18 tkl"];
+const DB2: Seed = ["Malik Ford", "S", "JR", "clemson", "Clemson", "ACC", "18 Tkl, 2 INT", "2 INT · 18 Tkl"];
 const K1: Seed = ["Will Carter", "K", "SR", "smu", "SMU", "ACC", "8/9 FG, long 52", "8/9 FG"];
 const OL1: Seed = [
   "Grant Moody",
@@ -119,8 +119,8 @@ const OL1: Seed = [
   "michigan",
   "Michigan",
   "Big Ten",
-  "212 snaps, 0 sacks allowed",
-  "0 sacks allowed",
+  "212 Snaps, 0 Sacks Allowed",
+  "0 Sacks Allowed",
 ];
 
 const heismanRow = (

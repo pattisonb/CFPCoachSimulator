@@ -51,7 +51,7 @@ const first = api.loaded_state();
 const roster_then = [...season.load_teams()[ME]["offense"], ...season.load_teams()[ME]["defense"]];
 // each player's log as his page had it in the season itself
 const then = Object.fromEntries(roster_then.map((p) => [p["slug"], season.player_game_log(first, ME, p["name"], p["position"])]));
-const played = roster_then.filter((p) => then[p["slug"]].length);
+const played = roster_then.filter((p) => then[p["slug"]].some((r) => r["played"]));        // got in a game (the box lists the rest with no stats)
 
 test("in a first season the seasons are this season's log alone, and none before a game", () => {
   assert(played.length > 30 && Object.keys(first["my_boxes"]).length === 2, show([played.length, Object.keys(first["my_boxes"])]));
@@ -105,7 +105,7 @@ test("a kept row's stat line is the box score's, and reads as the game's own lin
     const mine = boxes.map((eid) => first["my_boxes"][eid][side(eid)]["players"].find((x) => x["name"] === p["name"] && x["position"] === p["position"]))
       .filter(Boolean);
     equal(rows.map((r) => r["stats"]), mine.map((x) => x["stats"]));
-    for (const r of rows) if (r["line"]) { lines++; assert(typeof r["line_full"] === "string" && r["line_full"].length >= r["line"].length, show(r)); }
+    for (const r of rows) if (r["line"]) { lines++; assert(r["played"] === true && ["own", "returns"].includes(r["line_kind"]), show(r)); }
   }
   assert(lines > 20, String(lines));
   const qb = back.map((p) => [p, profile(p["slug"])["game_logs"][1]["rows"]]).find(([p, rows]) => p["position"] === "QB" && rows.some((r) => r["stats"]["pass_attempts"]));
@@ -114,6 +114,63 @@ test("a kept row's stat line is the box score's, and reads as the game's own lin
     equal(r["line"], game.modules.awards.headline({ stats: r["stats"] }, "QB"));
     assert(/ Yds · \d+ TD$/.test(r["line"]), r["line"]);
   }
+});
+
+// What the Line column says for each kind of game (season.game_line), in the game's own words.
+test("every kind of game has a line: a lineman's own, returns never lost, a quiet game and a game not played said in words", () => {
+  const line = (pos, stats) => season.game_line(pos, stats);
+  // a lineman's clean day reads as one (his card's own line), his snaps, key blocks and pressures under it
+  const ol = line("OL", { games_started: 1, snaps: 74 });
+  equal([ol["line_kind"], ol["line"], ol["line_sub"]], ["own", "0 Sacks Allowed", "74 Snaps"]);
+  equal(ol["line"], game.modules.awards.headline({ stats: {} }, "OL"));
+  equal(line("OL", { snaps: 61, sacks_allowed: 1, key_blocks: 2, pressures_allowed: 1 })["line_sub"], "61 Snaps · 2 Key Blocks · 1 Pressure");
+  equal(line("OL", { snaps: 61, sacks_allowed: 1 })["line"], "1 Sack Allowed");
+  // returns: the line when he did nothing else, under his position's line when he did
+  const only = line("RB", { punt_returns: 2, punt_return_yards: 3, long_punt_return: 3 });
+  equal([only["line_kind"], only["line"]], ["returns", "2 PR · 3 Yds"]);
+  equal(line("WR", { kickoff_returns: 2, kickoff_return_yards: 91, kickoff_return_touchdowns: 1 })["line"], "2 KR · 91 Yds · 1 TD");
+  const both = line("WR", { receptions: 3, targets: 5, receiving_yards: 40, snaps: 30, kickoff_returns: 1, kickoff_return_yards: 20, punt_returns: 2, punt_return_yards: 11 });
+  equal([both["line_kind"], both["line"], both["line_sub"]], ["own", game.modules.awards.headline({ stats: { receiving_yards: 40 } }, "WR"), "3 Ret · 31 Yds"]);
+  // a kicker's makes and attempts, a punter's punts and average, a defender's tackles first
+  equal(line("K", { fg_attempted: 2, fg_made: 1, pat_attempts: 5, pat_made: 4 })["line"], "1/2 FG · 4/5 PAT");
+  equal(line("K", { pat_attempts: 3, pat_made: 3 })["line"], "3/3 PAT");
+  equal(line("P", { punts: 3, punt_yards: 135 })["line"], "3 Punts · 45.0 Avg");
+  equal(line("CB", { solo_tackles: 4, assisted_tackles: 3, interceptions: 2, passes_defended: 3, snaps: 58 })["line"], "7 Tkl · 2 INT");
+  equal(line("CB", { solo_tackles: 4, assisted_tackles: 3, interceptions: 2, passes_defended: 3, snaps: 58 })["line_sub"], "3 PBU");
+  equal(line("DL", { solo_tackles: 5, assisted_tackles: 1, sacks: 2.5, tackles_for_loss: 3.5 })["line"], "6 Tkl · 2.5 Sacks");
+  // in the game with nothing recorded, and on the roster without playing
+  equal(line("TE", { snaps: 6 }), { played: true, line_kind: "none" });
+  equal(line("S", { games_started: 1, snaps: 40 }), { played: true, line_kind: "none" });
+  equal(line("QB", {}), { played: false, line_kind: "dnp" });
+  equal(line("QB", null), {});
+  // his best game of a season: one alone on top, three games to compare; never sent with its score
+  const rows = [[100, 1], [250, 3], [90, 0]].map(([y, td], i) => ({ week: i + 1, value: [y, td] }));
+  equal(season.mark_best(rows), [{ week: 1 }, { week: 2, best: true }, { week: 3 }]);
+  equal(season.mark_best(rows.slice(0, 2)), [{ week: 1 }, { week: 2 }]);
+  equal(season.mark_best([...rows, { week: 4, value: [250, 3] }]).filter((r) => r["best"]), []);
+});
+
+test("the real rows carry them: a lineman who played has his own line, a returner his returns, a reserve reads that he did not play", () => {
+  const kinds = {};
+  for (const p of roster_then) {
+    for (const r of then[p["slug"]]) {
+      const box = first["my_boxes"][r["event_id"]];
+      const side = first["games"][r["event_id"]]["home"] === ME ? "home" : "away";
+      const st = box[side]["players"].find((x) => x["name"] === p["name"] && x["position"] === p["position"])["stats"];
+      const k = `${p["position"] === "OL" ? "OL" : "any"}/${r["line_kind"]}`;
+      kinds[k] = (kinds[k] || 0) + 1;
+      equal(r["played"], Object.keys(st).length > 0);
+      if (p["position"] === "OL" && st["snaps"]) {
+        assert(r["line"].endsWith(" Allowed") && r["line_sub"].startsWith(`${st["snaps"]} Snap`) && r["line_full"], show(r));
+      }
+      if (st["kickoff_returns"] || st["punt_returns"]) {
+        const text = `${(st["kickoff_return_yards"] || 0) + (st["punt_return_yards"] || 0)} Yds`;
+        assert((r["line_kind"] === "returns" ? r["line"] : r["line_sub"]).includes(text), show(r));
+      }
+      assert(!("value" in r));
+    }
+  }
+  assert(kinds["OL/own"] >= 10 && kinds["any/returns"] >= 1 && kinds["any/dnp"] > 20 && kinds["any/own"] > 40, show(kinds));
 });
 
 test("a player who transferred away keeps his log, and his page at his new school shows it as his games with you", () => {
@@ -191,12 +248,13 @@ test("an old save without the block loads and shows what it did; the next rollov
   const pr = profile(back[0]["slug"]);
   equal(pr["game_logs"], pr["game_log"].length ? [{ year: YEAR + 1, rows: pr["game_log"] }] : []);
   // a save from when only who played was kept (a character a game, no lines): the rows, without a line
-  const full = profile(back[0]["slug"]);
+  const lined = back.find((p) => then[p["slug"]].some((r) => r["line"]))["slug"];
+  const full = profile(lined);
   st["career"]["game_logs"] = kept.map(({ stat_keys: _k, ...x }) => ({ ...x, players: Object.fromEntries(Object.entries(x["players"]).map(([id, e]) => [id, e["m"]])) }));
-  const bare = profile(back[0]["slug"])["game_logs"].at(-1);
+  const bare = profile(lined)["game_logs"].at(-1);
   st["career"]["game_logs"] = kept;
-  const whole = profile(back[0]["slug"])["game_logs"].at(-1);
-  equal(bare["rows"], whole["rows"].map(({ stats: _s, line: _l, line_full: _f, ...rest }) => rest));
+  const whole = profile(lined)["game_logs"].at(-1);
+  equal(bare["rows"], whole["rows"].map(({ stats: _s, line: _l, line_full: _f, line_sub: _u, line_kind: _k, played: _p, best: _b, ...rest }) => rest));
   assert(full && whole["rows"].some((r) => r["line"]));
 });
 

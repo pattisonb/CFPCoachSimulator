@@ -126,7 +126,7 @@ export interface ScheduleGame {
 export interface Rivalry {
   name: string;
   trophy?: string;
-  /** "SMU leads 5-3" */
+  /** "SMU Leads 5-3" */
   series?: string;
   /** a played game: "TCU keeps the Iron Skillet" */
   headline?: string;
@@ -459,7 +459,7 @@ export interface DepthCard {
   overall: number;
   starter: boolean;
   games: number;
-  /** one line of season stats ("1,204 yds · 9 TD"), empty before he plays */
+  /** one line of season stats ("1,204 Yds · 9 TD"), empty before he plays */
   headline: string;
   archetype: string | null;
   form: number;
@@ -532,10 +532,18 @@ export interface GameLogRow {
   points_for: number;
   points_against: number;
   started: boolean;
-  /** his stat line that game, short ("303 yds · 5 TD"); absent with no line on file */
+  /** false: he was on the roster for it and did not play; absent in a save that kept no stat lines */
+  played?: boolean;
+  /** what `line` is: his position's line ("own") or his returns ("returns"); "none": he played and nothing was recorded; "dnp": he did not play */
+  line_kind?: "own" | "returns" | "none" | "dnp";
+  /** his line that game, short ("303 Yds · 5 TD") */
   line?: string;
-  /** the same in full, as a box score has it */
+  /** under his position's line: his returns that day, a lineman's key blocks and pressures */
+  line_sub?: string;
+  /** the whole box-score line */
   line_full?: string;
+  /** his best game of that season */
+  best?: boolean;
 }
 
 /** GET /api/season/{id}/player?team=&slug= (the parts the new UI uses) */
@@ -1140,7 +1148,7 @@ export interface AwardPlayer {
   games: number;
   /** the season line: "40 rec, 672 yds, 8 TD" */
   line: string;
-  /** the short line: "672 yds · 8 TD" */
+  /** the short line: "672 Yds · 8 TD" */
   headline: string;
   score: number;
   slug?: string;
