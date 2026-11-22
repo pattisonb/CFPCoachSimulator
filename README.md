@@ -14,7 +14,7 @@ A college football coaching career in your pocket. Take one of 138 programs thro
 the bowls, recruit your classes, run the offseason, and keep going season after season. It is free and runs in any
 browser. There is nothing to install and no account to make.
 
-> The whole game runs in your browser. The first visit downloads it (Python included) and takes a little while;
+> The whole game runs in your browser. The first visit downloads it (about five megabytes);
 > after that your browser keeps it, so later visits start faster.
 
 ## Your Career
@@ -78,17 +78,18 @@ Ratings run from 1 to 99 on the game's own scale:
 ## Run It Yourself
 
 ```
-python -m teamdata.build_teams     # once: builds data/engine_teams.json from the rosters in cfb_sim_data/
 cd ui
 npm install                        # once
 npm run dev                        # the game on http://localhost:5173
 ```
 
-`npm run dev` also starts the game's API (`tools/dev_server.py`, port 8000) and stops it when you quit. On Windows,
-`run.bat` does the last step. Run this way the game uses the source rosters in `cfb_sim_data/`, not the lookalikes.
+All it needs is Node. `npm run dev` serves the app and the game it runs in the browser (the first start builds the
+game's data from the rosters in `cfb_sim_data/`, some fifteen seconds; so does the next start after a roster or the
+game's code changes). On Windows, `run.bat` does the last step. Run this way the game uses the source rosters, not the
+lookalikes, and its saves are kept by the browser.
 
-`python tools/build_site.py --generic` builds the published site to `ui/dist/`: the app, with the Python game packed
-to run in the browser and every name swapped. Vercel runs it on every merge to `main`.
+`node tools/build_site.mjs --generic` builds the published site to `ui/dist/`: the app, the game as one script, its
+data as one download and every name swapped. Vercel runs it on every merge to `main`.
 
 ### What Is Where
 

@@ -35,7 +35,8 @@ test("career", () => {
     season.new_season("ohio-state", "remaining", undefined, undefined, undefined, true);
     started = true;
   } catch (e) {
-    if (!(e instanceof ValueError)) throw e;
+    // Python's ValueError; the port throws a plain Error with the same message here (sim_js/season/part1.js new_season)
+    if (!(e instanceof ValueError || e.message === "a season starts from week 1")) throw e;
   }
   assert(!started, "a career started from today");
   // saves: saving stamps the career with its week; a download round-trips with its box scores

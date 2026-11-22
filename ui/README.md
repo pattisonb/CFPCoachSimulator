@@ -1,6 +1,6 @@
 # The App (React)
 
-The game's front end, in React. The Python game (`app/`, `engine/`, `sim/`, `coach_career/`) is the back end it talks to.
+The game's front end, in React. The game itself (JavaScript: `app_js/`, `engine_js/`, `sim_js/`, `career_js/`, `teamdata_js/`) runs in a Web Worker beside it (`public/worker.js`).
 
 Stack: React 18 + Vite 5 + TypeScript (strict), no router or state library yet.
 
@@ -12,8 +12,9 @@ npm install      # first time only
 npm run dev      # the game on http://localhost:5173
 ```
 
-`npm run dev` also starts the game's API (`python3 tools/dev_server.py` on port 8000) unless one is
-already running, and stops it when you quit. Vite forwards every `/api/...` call to it,.
+`npm run dev` also serves the game the worker loads (`vite.config.ts`): the whole game as one script, made again when
+a file of the game changes, and its data, built from the rosters the first time (some fifteen seconds). There is no
+other server to start.
 
 ## Layout
 
@@ -36,4 +37,4 @@ Run `npm run check` before committing. Editors with the Prettier and Stylelint e
 
 ## Build
 
-`npm run typecheck` checks the types. `npm run build` type-checks, then writes the app to `ui/dist/` with relative URLs. The built app still needs the game's API (`tools/dev_server.py`) to talk to.
+`npm run typecheck` checks the types. `npm run build` type-checks, then writes the app to `ui/dist/` with relative URLs. The built app still needs the game beside it: `node tools/build_site.mjs` (from the repository's root) builds the whole site, the app and the game.

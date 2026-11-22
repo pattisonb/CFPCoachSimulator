@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "cd ui && npm ci",
-  "buildCommand": "python3 tools/build_site.py --generic",
+  "buildCommand": "node tools/build_site.mjs --generic",
   "outputDirectory": "ui/dist",
   "rewrites": [
     {
@@ -25,7 +25,16 @@
       ]
     },
     {
-      "source": "/(game.tar.xz|version.json|worker.js)",
+      "source": "/game-data.br",
+      "headers": [
+        {
+          "key": "Content-Encoding",
+          "value": "br"
+        }
+      ]
+    },
+    {
+      "source": "/(game-data.br|game-data.gz|game.js|version.json|worker.js|sim-worker.js)",
       "headers": [
         {
           "key": "Cache-Control",
