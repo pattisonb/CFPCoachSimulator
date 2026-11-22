@@ -148,7 +148,7 @@ class Cur:
 def mark(v):
     if v is Cur.state:
         return "$state"
-    if Cur.state is not None and v is Cur.state.get("league"):
+    if v is not None and Cur.state is not None and v is Cur.state.get("league"):
         return "$lgd"
     return v
 
@@ -249,7 +249,7 @@ def natural(name, keys, watch, extra=None):
         st = Cur.state
         assert a[0] is st, name
         before = big(state_slice(st, keys))
-        args = [mark(v) if isinstance(mark(v), str) and mark(v) in ("$state", "$lgd") else copy.deepcopy(v) for v in a]
+        args = [mark(v) if mark(v) is not v else copy.deepcopy(v) for v in a]
         if k:
             assert name == "_departures" and list(k) == ["draft"] and k["draft"] == {}, k
             args += [None, {}]                                  # shifts, draft
@@ -276,7 +276,7 @@ natural("_redshirt_block", ("league", "season_stats", "redshirting"), lambda st:
 natural("_run_draft", ("offseason",), lambda st: [["offseason", "departures"], ["offseason", "draft"]])
 natural("_apply_redshirts", ("offseason", "league"), lambda st: [["league", "teams", st["team"], "roster"], ["offseason", "redshirts"]])
 natural("_close_portal", ("league", "offseason", "recruiting", "recruiting_last", "career"),
-        lambda st: [["league", "teams"], ["offseason", "portal"], ["offseason", "portal_recruiting"], ["recruiting"], ["recruiting_last"]])
+        lambda st: [["league", "teams"], ["offseason", "portal"], ["offseason", "portal_recruiting"], ["recruiting", "portal"], ["recruiting_last"]])
 natural("fill_roles", ("league", "offseason"), lambda st: [["league", "teams"], ["offseason", "position_changes"]])
 
 
@@ -328,7 +328,10 @@ def run_case(name, st, snap, steps, fresh=False, watch=(), patch=(), clear_on=No
             args = [resolve(v, target, rngs) for v in s["args"]]
             step = {"fn": s["fn"], "args": s["args"]}
             try:
-                r = getattr(offseason, s["fn"])(*args)
+                if s["fn"] == "life":                             # its last argument here is the Python's keyword arguments
+                    r = offseason.life(*args[:3], **(args[3] if len(args) > 3 else {}))
+                else:
+                    r = getattr(offseason, s["fn"])(*args)
                 step["ret"] = keep(RET.get(s["fn"], lambda x: x)(r))
             except offseason.RosterError as exc:
                 step["raise"] = [exc.code, str(exc)]
