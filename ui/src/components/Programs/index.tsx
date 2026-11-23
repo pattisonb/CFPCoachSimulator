@@ -154,15 +154,15 @@ export default function Programs({ season, teams, onTeam }: Props) {
       </span>
     );
   };
-  /** a grade as a patch, in your colors: one palette down every column, so a column reads at a glance (each
-   *  program's own colors made the table a patchwork; its swatch by its name says whose row it is) */
+  /** a grade as a patch: yours in your colors, another program's in its own (the player: "we lost team branding"
+   *  when every row wore yours) */
   const grade = (p: Program, k: Key, size: "sm" | "md" = "md") => {
     const l = letterOf(p, k);
     return l == null ? (
       <span className="programs__word is-low">{m.notGraded}</span>
     ) : (
       <span className="programs__word">
-        <SchoolGrade grade={l} size={size} />
+        <SchoolGrade grade={l} size={size} colors={p.team === season.team ? undefined : teams.get(p.team)?.colors} />
         {moved(p, k)}
       </span>
     );
