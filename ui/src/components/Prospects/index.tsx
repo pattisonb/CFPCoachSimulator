@@ -612,20 +612,19 @@ export default function Prospects({
                     {!narrow && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
                     <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
                     <td className="left prospects__status" title={statusOf(r)}>
-                      {/* where he went: his school's stamp before the words */}
+                      {/* where he went: his school's stamp alone; the cell's tip says it in words ("Signed: Oregon") */}
                       {!r.pro && (r.signed || r.committed) ? (
-                        <span className="prospects__held">
+                        <span className="prospects__held" role="img" aria-label={statusOf(r)}>
                           <RecruitStatus
                             status={{
                               key: r.signed ? "signed" : r.hard ? "hard" : "verbal",
                               away: (r.signed || r.committed) !== school?.slug,
                             }}
                             size={10}
-                            stamp={18}
+                            stamp={22}
                             school={cachedTeams()?.find((t) => t.slug === (r.signed || r.committed))}
                             bare
                           />
-                          <span>{statusOf(r)}</span>
                         </span>
                       ) : (
                         statusOf(r)
