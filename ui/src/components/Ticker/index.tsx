@@ -51,6 +51,9 @@ interface Props {
   teams: Map<string, TeamCard>;
   /** a sim is running: the ticker says Live */
   live?: boolean;
+  /** another page is showing: the ticker is out of sight and holds its place, so it carries on from there when
+   *  you come back (taken away and put back, it started over each time) */
+  away?: boolean;
   onBox: (eventId: string) => void;
   onTeam: (slug: string) => void;
   onRecruit: (pid: string) => void;
@@ -76,7 +79,7 @@ const weight = (g: WeekGame) => {
  * items slide by; the next section's name rides in behind the last item and knocks the old one off when it reaches
  * the side. It stops under the pointer, and an item opens what it is about (the box score, the team, the recruit).
  */
-export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onRecruit }: Props) {
+export default function Ticker({ seasonId, week, teams, live, away, onBox, onTeam, onRecruit }: Props) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [games, setGames] = useState<WeekGame[]>([]);
   // an answer is shown unless a later one already is (the weeks pass faster than the game answers during a sim)
@@ -206,6 +209,8 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
   // the scroll steps back one list's width at the halfway mark, so it never ends.
   const win = useRef<HTMLDivElement>(null);
   const held = useRef(false);
+  const gone = useRef(!!away);
+  gone.current = !!away;
   useEffect(() => {
     const el = win.current;
     if (!el || !sections.length || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -215,7 +220,9 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
     const tick = (now: number) => {
       const dt = Math.min(100, now - last); // a tab left and come back to does not leap
       last = now;
-      if (!held.current) {
+      if (gone.current) {
+        // out of sight: it waits where it is
+      } else if (!held.current) {
         const lap = el.scrollWidth / 2;
         pos += (SPEED * dt) / 1000;
         if (lap > 0 && pos >= lap) pos -= lap;
@@ -236,7 +243,11 @@ export default function Ticker({ seasonId, week, teams, live, onBox, onTeam, onR
     ));
 
   return (
-    <aside className={live ? "ticker is-live" : "ticker"} aria-label={m.label}>
+    <aside
+      className={["ticker", live && "is-live", away && "is-away"].filter(Boolean).join(" ")}
+      aria-label={m.label}
+      aria-hidden={away || undefined}
+    >
       <span className="ticker__label label">
         <i className="ticker__dot" aria-hidden="true" />
         {live ? m.live : m.label}

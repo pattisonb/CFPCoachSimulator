@@ -12,6 +12,12 @@
   border-top: var(--line) solid var(--ink);
 }
 
+/* another page is showing: out of sight and out of reach, its crawl kept where it was */
+.ticker.is-away {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .ticker__label {
   flex: none;
   display: flex;

@@ -769,8 +769,10 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                   onStop={sim.stop}
                 />
               )}
-              {ticker && season && !sim.running && (
+              {/* the ticker is the Office's, but it stays in place behind the other pages so its crawl never starts over */}
+              {season && !sim.running && (
                 <Ticker
+                  away={!ticker}
                   seasonId={season.id}
                   week={stripWeek}
                   teams={bySlug}
