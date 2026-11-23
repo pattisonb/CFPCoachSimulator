@@ -12,6 +12,7 @@ const { prospects } = game.modules;
 
 const ME = "ohio-state";
 const J = (v) => () => JSON.stringify(v);
+const remove_from = (xs, v) => { const i = xs.indexOf(v); if (i !== -1) xs.splice(i, 1); };
 const has = (xs, v) => (xs instanceof Set ? xs.has(v) : xs.includes(v));
 const PLAIN = () => ({ personality: "business", decider: "self", decider_topic: null });   // a recruit with no quirks: a Guarded or Shy one keeps things to himself on a call
 
@@ -502,6 +503,24 @@ test("your own action is marked for the week you are in (live), a step's event i
   assert(prospects.board_row(st4, pid, ME).history.some((e) => e["kind"] === "offer" && e["live"] === true), "the row's History drops the mark");
   const stranger = recruiting.prospect_list(st4).find((q) => !rc4["board"].includes(q) && !rc4["offers"][ME].includes(q) && !rc4["status"][q]["committed"]);
   equal(recruiting._offer_gone(st4, other, stranger, "money"), null);
+});
+
+test("taking a recruit off your board lets go of what you had ticked for him: the energy is yours again, at once and in a save made before", () => {
+  const st5 = season.new_season(ME, "full", 4, undefined, undefined, true);
+  const rc5 = st5["recruiting"];
+  const [a, b] = recruiting.prospect_list(st5).filter((q) => !rc5["status"][q]["committed"] && recruiting.blocked(st5, ME, q) === null && !recruiting.would_pester(st5, ME, q)).slice(0, 2);
+  for (const q of [a, b]) recruiting.set_board(st5, q, true);
+  const free = recruiting.hours_free(st5, ME);
+  recruiting.plan(st5, a, "message", true);
+  recruiting.plan(st5, b, "call", true);
+  equal(recruiting.hours_free(st5, ME), free - recruiting.HOURS["message"] - recruiting.HOURS["call"]);
+  recruiting.set_board(st5, a, false);
+  equal(recruiting.hours_free(st5, ME), free - recruiting.HOURS["call"]);
+  assert(!(a in recruiting.planned(st5)) && b in recruiting.planned(st5));
+  // a save from before: he is off the board, his plan still there
+  remove_from(rc5["board"], b);
+  rc5["dropped"].push(b);
+  equal(recruiting.hours_free(st5, ME), free);
 });
 
 await run();

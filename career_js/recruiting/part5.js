@@ -842,6 +842,8 @@ function set_board(state, pid, on) {
   } else {
     if (rc["board"].includes(pid)) remove(rc["board"], pid);
     if (!dropped.includes(pid)) dropped.push(pid);
+    delete recruiting.planned(state)[pid];              // what you had ticked for him is let go: its energy is yours again
+    if (truthy(get(rc, "carry"))) delete rc["carry"][pid];
     const mine = get(rc["boards"], state["team"]);
     if (truthy(mine) && mine.includes(pid)) remove(mine, pid);
   }

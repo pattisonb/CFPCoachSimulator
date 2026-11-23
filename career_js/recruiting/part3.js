@@ -72,8 +72,15 @@ function action_hours(state, slug, pid, action) {
 
 
 function planned(state) {
-  // Your planned quick actions ({pid: [actions]}): ticked on his row, sent at the week step.
-  return setdefault(state["recruiting"], "planned", {});
+  // Your planned quick actions ({pid: [actions]}): ticked on his row, sent at the week step. One for a recruit you
+  // have since taken off your board is let go here, so its energy is yours again (set_board lets it go at once; this
+  // is for a save made before it did: the player's "i removed recruits that had actions sent on them and my energy
+  // is still gone").
+  const rc = state["recruiting"];
+  const plans = setdefault(rc, "planned", {});
+  const dropped = get(rc, "dropped") || [];
+  if (dropped.length) for (const pid of Object.keys(plans)) if (dropped.includes(pid)) delete plans[pid];
+  return plans;
 }
 
 
@@ -149,6 +156,7 @@ function _carry_planned(state) {
   for (const [pid, acts] of Object.entries(plans)) {
     const st = get(rc["status"], pid);
     if (!truthy(st) || truthy(st["signed"]) || truthy(st["committed"]) || recruiting.blocked(state, me, pid) !== null) continue;
+    if ((get(rc, "dropped") || []).includes(pid)) continue;        // you took him off your board: nothing is ticked for him again
     for (const action of acts) {
       if (_in(action, recruiting.PLANNABLE) && recruiting.HOURS[action] <= left && !get(recruiting.planned(state), pid, []).includes(action)) {
         setdefault(recruiting.planned(state), pid, []).push(action);

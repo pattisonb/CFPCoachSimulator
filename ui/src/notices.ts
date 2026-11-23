@@ -87,19 +87,21 @@ export function useNotices(
   }, [base]);
 
   const add = useCallback(
-    (list: Omit<Notice, "week" | "read">[]) => {
-      if (!base || !list.length) return;
-      setItems((old) => {
+    /** `drop`: notices taken back in the same move (one that turned out not to be so) */
+    (list: Omit<Notice, "week" | "read">[], drop: string[] = []) => {
+      if (!base || (!list.length && !drop.length)) return;
+      setItems((before) => {
+        const old = drop.length ? before.filter((o) => !drop.includes(o.id)) : before;
         const fresh = list
           .filter((n, i) => !old.some((o) => o.id === n.id) && list.findIndex((x) => x.id === n.id) === i)
           .map((n) => ({ ...n, week: at.current.week, read: false }));
-        if (!fresh.length) return old;
+        if (!fresh.length && old.length === before.length) return before;
         const next = [...fresh, ...old].slice(0, KEEP);
         write(base, next);
         const ids = fresh.map((n) => n.id);
         // outside this update: React may run it twice
         queueMicrotask(() => {
-          setToasts((t) => [...ids.filter((id) => !t.includes(id)), ...t]);
+          setToasts((t) => [...ids.filter((id) => !t.includes(id)), ...t.filter((id) => !drop.includes(id))]);
           setTimeout(() => setToasts((t) => t.filter((id) => !ids.includes(id))), TOAST_MS);
         });
         return next;
@@ -138,25 +140,42 @@ export function useNotices(
     const joined = mine.filter((r) => !seen.includes(r.id));
     // gone from your class and still on your board (a recruit you took off it is your own doing)
     const left = board.filter((r) => seen.includes(r.id) && !mine.includes(r));
-    add([
-      ...joined.map((r) => ({
-        id: `commit:${r.id}:${at.current.week}`,
-        kind: "commit" as const,
-        name: r.name,
-        position: r.display_pos,
-        pid: r.id,
-        stars: r.stars,
-      })),
-      ...left.map((r) => ({
-        id: `decommit:${r.id}:${at.current.week}`,
-        kind: "decommit" as const,
-        name: r.name,
-        position: r.display_pos,
-        pid: r.id,
-        stars: r.stars,
-        school: r.committed ? r.school_name : null,
-      })),
-    ]);
+    // A recruit cannot both join and leave your class in one week: the later of the two takes the earlier back. (When
+    // a sim ended the board on hand was, for a moment, the one from before it: a recruit who had just committed read
+    // as gone, and the bell kept a New Commit and a Decommitment for him side by side: the player's "which is it?")
+    const w = at.current.week;
+    // (the newest notice about him, when it is this week's or later: a sim's notices run a week ahead of the board)
+    const kept = read<Notice[]>(base) ?? [];
+    const last = (r: ClassRow, kind: NoticeKind) => {
+      const n = kept.find((x) => x.pid === r.id && (x.kind === "commit" || x.kind === "decommit"));
+      return n && n.kind === kind && n.week >= w ? n.id : null;
+    };
+    const undone = left.filter((r) => last(r, "commit"));
+    const back = joined.filter((r) => last(r, "decommit"));
+    add(
+      [
+        ...joined.map((r) => ({
+          id: `commit:${r.id}:${at.current.week}`,
+          kind: "commit" as const,
+          name: r.name,
+          position: r.display_pos,
+          pid: r.id,
+          stars: r.stars,
+        })),
+        ...left
+          .filter((r) => !undone.includes(r))
+          .map((r) => ({
+            id: `decommit:${r.id}:${at.current.week}`,
+            kind: "decommit" as const,
+            name: r.name,
+            position: r.display_pos,
+            pid: r.id,
+            stars: r.stars,
+            school: r.committed ? r.school_name : null,
+          })),
+      ],
+      [...undone.map((r) => last(r, "commit")!), ...back.map((r) => last(r, "decommit")!)],
+    );
   }, [base, team, board, add]);
 
   // your injury report, read again when a week passes

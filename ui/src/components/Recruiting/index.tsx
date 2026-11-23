@@ -1071,8 +1071,8 @@ function RecruitPanel({
                       <Swatch team={teamNamed(openWeeks.find((w) => w.week === visitWeek)?.opponent_name)} size={24} />
                       <select
                         aria-label={m.pickWeekend}
-                        disabled={!r.offered}
-                        title={!r.offered ? m.offerFirst : undefined}
+                        disabled={!r.offered || r.cooled}
+                        title={!r.offered ? m.offerFirst : r.cooled ? m.cooled(r.cooled_why) : undefined}
                         value={visitWeek ?? ""}
                         onChange={(e) => setVisitWeek(Number(e.target.value))}
                       >
@@ -1085,9 +1085,14 @@ function RecruitPanel({
                       <Button
                         variant="outline"
                         disabled={
-                          busy || !r.offered || left < (r.visit_cost ?? cost("official_visit")) || visitWeek == null
+                          // (cold on you: he will not visit until he warms back up, so the invite is off, and says why)
+                          busy ||
+                          !r.offered ||
+                          r.cooled ||
+                          left < (r.visit_cost ?? cost("official_visit")) ||
+                          visitWeek == null
                         }
-                        title={!r.offered ? m.offerFirst : undefined}
+                        title={!r.offered ? m.offerFirst : r.cooled ? m.cooled(r.cooled_why) : undefined}
                         onClick={() => act("official_visit", { week: visitWeek })}
                       >
                         {m.invite(r.visit_cost ?? cost("official_visit"))}
