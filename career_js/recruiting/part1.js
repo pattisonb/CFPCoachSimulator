@@ -83,6 +83,7 @@ recruiting.EARLY_LEAVER_RATE = 0.65;                   // ... this often (offsea
 recruiting.NEED_FACTOR = [[2, 1.6], [1, 1.2], [0, 0.6]];   // a board's pull toward a group by its need (need, factor); below 0: NEED_FLOOR *tune*
 recruiting.NEED_FLOOR = 0.25;
 recruiting.ONE_A_CLASS = ["QB", "K", "P"];              // groups a class takes one of unless the need is higher
+recruiting.QB_CLASS_MAX = 3;                            // *tune* the most quarterbacks a CPU school signs in a class, however thin its room (you sign as many as you offer)
 recruiting.OFFER_ROOM = 2.0;                            // open offers a school keeps out at a group: this times its cap there (it offers more than it takes)
 recruiting.QB_EVERY_CLASS = true;                       // a class takes a quarterback whatever the room (the one-starter spot turns over)
 recruiting.FIVE_STAR_FLOOR = 0.6;                       // a blue blood's board pull on a five-star never drops below this for need
@@ -125,7 +126,12 @@ recruiting.FINE_BLEND = 85;                            // *tune* a blend this go
 recruiting.OFFENSE_GROUPS = ["QB", "RB", "WR", "TE", "OL"];   // his group's side of the ball (a kicker, a punter or an athlete: both coordinators' average)
 recruiting.DEFENSE_GROUPS = ["DL", "LB", "CB", "S"];
 recruiting.STAFF_LOOKS_WEEK = 10;                      // *tune* how many prospects each recruiter looks at on his own a week
-recruiting.BOARD_CAP = 50;                             // *tune* the most prospects your board holds
+// The class is the same size every year (the player's design, part 2): CLASS_CAP high school signees and TRANSFER_CAP
+// transfers on top. Your roster's room no longer holds either back: what does not fit under the roster limit is
+// settled at the offseason's Roster Cuts. The other schools sign under the same caps and still aim at their usual size. *tune*
+recruiting.CLASS_CAP = 25;
+recruiting.TRANSFER_CAP = 20;
+recruiting.BOARD_CAP = 30;                             // *tune* the most prospects your board holds (the player's number: 50 first, then 30)
 recruiting.WEEKLY_HOURS_BASE = 140;                    // *tune* a school's recruiting hours a week at a recruiting rating of 50 ...
 recruiting.WEEKLY_HOURS_PER = 0.4;                     // *tune* ... plus this many per rating point over 50 (about 150 for most schools)
 recruiting.SCOUT_POINTS_BASE = 150;                    // *tune* your scouting points a week with a best evaluator of 50 (about four full reports away from your areas) ...
@@ -248,7 +254,7 @@ recruiting.FCS_LINE = 4.0;                             // best FBS interest unde
 recruiting.FCS_NO_OFFER_WEEK = 8;                      // from this week a prospect with no FBS offer leans FCS
 recruiting.COMMIT_ODDS = [[0, 0.02], [6, 0.05], [9, 0.095], [12, 0.11], [16, 0.12], [20, 0.30]];   // weekly base chance by week (raised from Week 9 on when a fifth of the class became Signing Day recruits) *tune*
 recruiting.COMMIT_FREEZE_WEEKS = 3;                     // nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
-recruiting.LEAD_SCALE = 6.0;                           // interest lead worth a doubling of the base chance (6 with energy by stars, 180 to 480 a week: leads run bigger still, and 4 had 91-93% signed by the early period; 5.5 sat on the 90% edge and 7 let one school sign nine five-stars. It was 4 with the commit styles; 5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
+recruiting.LEAD_SCALE = 6.3;                           // interest lead worth a doubling of the base chance (6 with energy by stars, 180 to 480 a week: leads run bigger still, and 4 had 91-93% signed by the early period; 5.5 sat on the 90% edge and 7 let one school sign nine five-stars. It was 4 with the commit styles; 5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
 recruiting.VISIT_BOOST = 1.6;                          // after an official visit to the leader
 recruiting.DECOMMIT_RATE = 1.4;                        // weekly chance of a decommitment at an even race (1.4: Early Bird, Quiet Commit and Signing Day recruits flip less or never; 0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
 // a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*

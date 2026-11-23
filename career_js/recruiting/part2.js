@@ -448,6 +448,7 @@ function offers_by_group(state, slug) {
 function group_cap(need, group) {
   // How many a school takes at a group this class: its need plus one (quarterbacks and
   // specialists: one unless the need is higher).
+  if (group === "QB") return Math.min(recruiting.QB_CLASS_MAX, Math.max(1, need[group]));
   return _in(group, recruiting.ONE_A_CLASS) ? Math.max(1, need[group]) : need[group] + 1;
 }
 
@@ -1010,15 +1011,21 @@ function open_spots(state, slug) {
   if (recruiting.is_portal(state)) {
     return recruiting.portal_spots(state, slug);
   }
-  return recruiting._open_spots(slug);
+  // your class is CLASS_CAP every year, whatever room your roster has (the rest is Roster Cuts); another school's is
+  // its usual size, under the same cap
+  if (slug === get(state, "team") && truthy(get(state, "career"))) return recruiting.CLASS_CAP;
+  return Math.min(recruiting.CLASS_CAP, recruiting._open_spots(slug));
 }
 
 
 function portal_room(state, slug) {
   // A school's room for transfers this portal, before any signs: the roster limit (plus the end
   // of the roster a Power 4 school or you would release) minus next year's roster.
-  const extra = slug === get(state, "team") || recruiting._p4(slug) ? recruiting.PORTAL_CHURN : 0;
-  return recruiting.ROSTER_LIMIT + extra - state["league"]["teams"][slug]["roster"].length;
+  // (yours is TRANSFER_CAP every year, whatever your roster holds: Roster Cuts settles the limit; another school's is
+  // its roster's room, under the same cap)
+  if (slug === get(state, "team") && truthy(get(state, "career"))) return recruiting.TRANSFER_CAP;
+  const extra = recruiting._p4(slug) ? recruiting.PORTAL_CHURN : 0;
+  return Math.min(recruiting.TRANSFER_CAP, recruiting.ROSTER_LIMIT + extra - state["league"]["teams"][slug]["roster"].length);
 }
 
 

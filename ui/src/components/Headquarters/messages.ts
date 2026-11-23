@@ -181,7 +181,6 @@ export const messages = {
     quiet: (name: string, weeks: number) => `${name} hasn't heard from you in ${many(weeks, "week")}.`,
     unscouted: (name: string) => `${name} is a top target with no scouting report.`,
     need: (n: number, group: string) => `You need ${n} more at ${group}, and nobody at ${group} is on your board.`,
-    unusedOffers: (n: number) => `You have ${n} offers unused with the season half gone.`,
   },
   tasksFor: {
     money: (name: string, nil: number, by: string) => `Put ${nil} NIL on ${name}'s offer by ${by}.`,
@@ -193,7 +192,6 @@ export const messages = {
     pull: (name: string) => `Pull the offer to ${name}.`,
     scout: (name: string) => `Send a scout to ${name}.`,
     need: (group: string) => `Find ${group} prospects for the board.`,
-    useOffers: "Use more of your offers.",
   },
   noAlerts: "Nothing needs you right now.",
   boardEmpty: "Your board is empty. Add recruits to see its health.",

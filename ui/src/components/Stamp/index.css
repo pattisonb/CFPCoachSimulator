@@ -1,0 +1,26 @@
+/* A stamp: a small tile set a little askew, its mark dead center, for the corner of a picture. The same tile a
+   recruit's status wears (RecruitStatus), for anything else that is stamped on a player: Cut, the school he landed at. */
+.stamp {
+  display: inline-grid;
+  place-items: center;
+  width: var(--side);
+  height: var(--side);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  box-shadow: 2px 2px 0 var(--shadow);
+  line-height: 0;
+  transform: rotate(-8deg);
+}
+
+/* a school's mark: its first color, its second across the bottom right corner, the icon in the ink that reads on it */
+.stamp.is-branded {
+  background: linear-gradient(135deg, var(--c) 71%, var(--c2) 71%);
+  color: var(--on);
+}
+
+/* a warning (Cut): red, its icon in white */
+.stamp.is-warn {
+  background: var(--warn);
+  color: #fff;
+}

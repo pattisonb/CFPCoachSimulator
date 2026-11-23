@@ -2,7 +2,7 @@
 // API and the week-by-week dispatcher as the page plays it:
 // - an offer you make by hand, and a prospect you put on your board, stay through Auto-recruit's weeks, even in a
 //   group at its cap or after he commits elsewhere, while the offers Auto-recruit made itself go by its rules; a pull
-//   by hand clears the mark; a hand offer still counts toward the offer limit;
+//   by hand clears the mark; a hand offer is not held to the offer limit (your board and energy are the limit);
 // - an offer you raise by hand keeps your NIL;
 // - you may Message and Call each recruit once a week, in the week you are playing: Auto-recruit's contacts in a week
 //   step count against the week that step closes, never the one you are about to play, and the board's
@@ -142,7 +142,7 @@ test("Auto-recruit's contacts count against the week its step closes: your new w
   }
 });
 
-test("a pull by hand clears the mark, and a hand offer counts toward the offer limit", () => {
+test("a pull by hand clears the mark, and an offer by hand is not held to the offer limit", () => {
   const [st, rc] = live();
   contact(mine, "pull_offer");
   assert(!rc["offers"][ME].includes(mine) && !rc["manual_offers"].includes(mine));
@@ -153,8 +153,10 @@ test("a pull by hand clears the mark, and a hand offer counts toward the offer l
   const [extra, last] = spare.slice(-2);
   contact(last, "offer", { nil: 0 });
   assert(rc["manual_offers"].includes(last) && rc["offers"][ME].length === cap);
-  refused(() => contact(extra, "offer", { nil: 0 }), 409);
+  contact(extra, "offer", { nil: 0 });                          // one past the staff's limit: yours to make
+  assert(rc["manual_offers"].includes(extra) && rc["offers"][ME].length === cap + 1);
   rc["offers"][ME] = rc["offers"][ME].filter((q) => !spare.includes(q) || q === last);      // the filler comes back off
+  rc["manual_offers"] = rc["manual_offers"].filter((q) => q !== extra);
 });
 
 test("the week you and Auto-recruit both work a recruit, Auto does not contact him a second time", () => {

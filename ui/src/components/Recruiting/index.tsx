@@ -304,15 +304,9 @@ export default function Recruiting({
                 </dd>
               </div>
               <div>
-                <dt className="label">{m.offers}</dt>
+                <dt className="label">{m.onBoard}</dt>
                 <dd>
-                  {board.offers} <small>/ {board.offers + board.offers_left}</small>
-                </dd>
-              </div>
-              <div>
-                <dt className="label">{m.commits}</dt>
-                <dd>
-                  {board.committed} <small>/ {board.open_spots}</small>
+                  {board.on_board} <small>/ {board.board_cap}</small>
                 </dd>
               </div>
             </dl>
@@ -1035,7 +1029,7 @@ function RecruitPanel({
                         </Button>
                       </>
                     ) : (
-                      <Button disabled={busy || board.offers_left <= 0} onClick={() => act("offer", { nil })}>
+                      <Button disabled={busy} onClick={() => act("offer", { nil })}>
                         {m.makeOffer(nil)}
                       </Button>
                     )}

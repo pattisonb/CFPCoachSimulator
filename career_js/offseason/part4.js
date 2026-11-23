@@ -133,7 +133,7 @@ function advance(state) {
     }
   } else if (stage === "portal_recap") {
     const development = offseason._develop_all(state);
-    off["report"] = { development, ...offseason._fill_rosters(state) };
+    off["report"] = { development, walk_ons: 0, released: 0 };      // (the rosters are filled after Roster Cuts)
     off["report"]["coaches"] = offseason._develop_coaches(state);
     off["stage"] = "development";
   } else if (stage === "portal_1") {
@@ -144,10 +144,14 @@ function advance(state) {
     offseason.resolve_round(state);
     offseason._close_portal_rounds(state);
     const development = offseason._develop_all(state);
-    off["report"] = { development, ...offseason._fill_rosters(state) };
+    off["report"] = { development, walk_ons: 0, released: 0 };
     off["report"]["coaches"] = offseason._develop_coaches(state);
     off["stage"] = "development";
   } else if (stage === "development") {
+    off["cuts"] = { marked: [], done: false, out: [] };     // Roster Cuts: yours to make, now that you have seen who grew
+    off["stage"] = "cuts";
+  } else if (stage === "cuts") {
+    offseason._finish_cuts(state);
     const car = carousel.run(state);
     off["carousel"] = car;
     off["coaching_changes"] = car["changes"];
@@ -174,6 +178,137 @@ function advance(state) {
     off["stage"] = "ready";
   }
   return off;
+}
+
+
+// ----- Roster Cuts: after Progress, your roster comes down to the limit by your own hand ------------------------------
+// Your class is 25 signees and up to 20 transfers every year (recruiting.CLASS_CAP, TRANSFER_CAP), whatever room the
+// roster has, so it can stand over the limit when the portal shuts. Once everyone has developed you choose who goes:
+// anyone but this year's signees and transfers. A cut is free, but for a player you promised a starting job this
+// coming season: that breaks the promise (word.apply). Every other school's roster comes down by the game's own rule.
+// The cut players are walk-ons a school short at their position takes (_fill_rosters); the rest are out of football.
+
+function _cut_protected(state, c) {
+  // Why a player of yours cannot be cut this offseason: "signee" (he signed with you this year), "transfer" (he
+  // came through this portal), else null.
+  const off = state["offseason"];
+  const me = state["team"];
+  if (offseason._new_transfer(off, c, me)) return "transfer";
+  if (get(c, "joined") === get(off, "year")) return "signee";
+  return null;
+}
+
+
+function cuts_view(state) {
+  // Roster Cuts as the page shows it, or null before the stage: the limit, your roster and how far over it stands
+  // with your marks, every player (who cannot be cut and why, who holds your promise, how thin his group would be),
+  // and, once the cuts are made, where each one went.
+  const off = state["offseason"];
+  const cuts = get(off, "cuts");
+  if (!truthy(cuts)) return null;
+  const me = state["team"];
+  const lgd = state["league"];
+  const roster = lgd["teams"][me]["roster"];
+  const marked = new Set(cuts["marked"]);
+  const counts = offseason._group_counts(roster);
+  const gains = {};
+  for (const r of get(get(get(off, "report") || {}, "development") || {}, "mine") || []) gains[r["id"]] = r["gain"];
+  const year = get(off, "year");
+  const players = truthy(cuts["done"]) ? [] : sorted(roster.map((c) => {
+    const g = get(offseason.GROUP, c["pos"], "S");
+    return { id: c["id"], name: c["n"], pos: c["pos"], cls: c["cls"], group: g, overall: offseason.house(c["pos"], c["o"]),
+      gain: has(gains, c["id"]) ? gains[c["id"]] : null, marked: marked.has(c["id"]), protected: offseason._cut_protected(state, c),
+      promised: get(c, "promised") === year, walk_on: truthy(get(c, "walk_on")),
+      group_count: counts[g], group_floor: offseason.FLOOR[g] };
+  }), (r) => [r["overall"], r["name"]]);
+  const left = roster.length - (truthy(cuts["done"]) ? 0 : roster.filter((c) => marked.has(c["id"])).length);
+  return { limit: offseason.ROSTER_LIMIT, roster: roster.length, left, over: Math.max(0, left - offseason.ROSTER_LIMIT),
+    marked: Array.from(cuts["marked"]), done: truthy(cuts["done"]), players, out: Array.from(get(cuts, "out") || []), joined: Array.from(get(cuts, "joined") || []) };
+}
+
+
+function cut_mark(state, pid, on) {
+  // Mark one of your players to be cut, or take the mark back. Raises RosterError.
+  const off = state["offseason"];
+  const cuts = get(off, "cuts");
+  if (get(off, "stage") !== "cuts" || !truthy(cuts) || truthy(cuts["done"])) throw new offseason.RosterError(409, "Roster Cuts is not open.");
+  const c = state["league"]["teams"][state["team"]]["roster"].find((x) => x["id"] === pid);
+  if (c === undefined) throw new offseason.RosterError(404, "He is not on your roster.");
+  const why = offseason._cut_protected(state, c);
+  if (truthy(on) && why !== null) {
+    throw new offseason.RosterError(409, why === "transfer" ? "He transferred in this year and cannot be cut." : "He signed with you this year and cannot be cut.");
+  }
+  const at = cuts["marked"].indexOf(pid);
+  if (truthy(on) && at === -1) cuts["marked"].push(pid);
+  else if (!truthy(on) && at !== -1) cuts["marked"].splice(at, 1);
+  return cuts["marked"];
+}
+
+
+function cuts_auto(state) {
+  // Let the Staff Decide: with your marks kept, the game marks who it would let go to reach the limit (its own rule:
+  // the lowest-rated players, never a senior, a group at its floor or this year's newcomers; then, if that is not
+  // enough, the lowest-rated of whoever is left to cut). Returns the marks.
+  const off = state["offseason"];
+  const cuts = get(off, "cuts");
+  if (!truthy(cuts) || truthy(cuts["done"])) return [];
+  const roster = state["league"]["teams"][state["team"]]["roster"];
+  const marked = new Set(cuts["marked"].filter((id) => roster.some((c) => c["id"] === id)));
+  const keep = new Set(roster.filter((c) => offseason._cut_protected(state, c) !== null).map((c) => c["id"]));
+  const rest = { roster: roster.filter((c) => !marked.has(c["id"])) };
+  for (const p of offseason._release(rest, keep)) marked.add(p["id"]);
+  const more = sorted(rest["roster"].filter((c) => !keep.has(c["id"])), (c) => [c["o"], c["id"]]);
+  while (roster.length - marked.size > offseason.ROSTER_LIMIT && more.length) marked.add(more.shift()["id"]);
+  cuts["marked"] = roster.filter((c) => marked.has(c["id"])).map((c) => c["id"]);
+  return cuts["marked"];
+}
+
+
+function _finish_cuts(state) {
+  // Roster Cuts is settled: your marked players leave (on Auto, or a roster you never opened, the staff decides
+  // first), a promise broken by a cut is counted, every roster is filled and brought to the limit, and each of your
+  // cut players is told where he went. Raises RosterError while you are still over the limit.
+  const word = modules.word, promises = modules.promises;
+  const off = state["offseason"];
+  const me = state["team"];
+  const lgd = state["league"];
+  const cuts = truthy(get(off, "cuts")) ? off["cuts"] : (off["cuts"] = { marked: [], done: false, out: [] });
+  const t = lgd["teams"][me];
+  const year = get(off, "year");
+  const over = () => t["roster"].length - t["roster"].filter((c) => cuts["marked"].includes(c["id"])).length - offseason.ROSTER_LIMIT;
+  if (over() > 0) {
+    if (!truthy(get(off, "auto"))) {
+      throw new offseason.RosterError(409, `Your roster is ${over()} over the limit of ${offseason.ROSTER_LIMIT}. Cut ${over()} more, or let the staff decide.`);
+    }
+    offseason.cuts_auto(state);
+  }
+  const marked = new Set(cuts["marked"]);
+  const gone = t["roster"].filter((c) => marked.has(c["id"]) && offseason._cut_protected(state, c) === null);
+  const ids = new Set(gone.map((c) => c["id"]));
+  t["roster"] = t["roster"].filter((c) => !ids.has(c["id"]));
+  const out = [];
+  for (const c of gone) {
+    const promised = get(c, "promised") === year;
+    if (promised) {                                    // the one cut that costs you: his starting job was your word
+      const overall = offseason.house(c["pos"], c["o"]);
+      word.apply(state, "broken", promises._group(c["pos"]), c["n"], overall >= 70, promises.personality_of(state, c["id"]));
+    }
+    out.push({ id: c["id"], name: c["n"], pos: c["pos"], cls: c["cls"], overall: offseason.house(c["pos"], c["o"]), promised, to: null, to_name: null });
+  }
+  const fill = offseason._fill_rosters(state, gone.map((c) => ({ p: c, from: me })));
+  const where = {};
+  for (const e of fill["landed"]) if (e["from"] === me) where[e["id"]] = e["to"];
+  for (const r of out) {
+    r["to"] = get(where, r["id"]);
+    r["to_name"] = r["to"] !== null && r["to"] !== undefined ? offseason._school_name(state, r["to"]) : null;
+  }
+  // a cut player from another school who walked on with you
+  const here = fill["landed"].filter((e) => e["to"] === me).map((e) => {
+    const c = t["roster"].find((x) => x["id"] === e["id"]);
+    return { id: e["id"], name: c["n"], pos: c["pos"], cls: c["cls"], overall: offseason.house(c["pos"], c["o"]), from: e["from"], from_name: offseason._school_name(state, e["from"]) };
+  });
+  Object.assign(cuts, { marked: [], done: true, out, joined: here });
+  if (truthy(get(off, "report"))) Object.assign(off["report"], { walk_ons: fill["walk_ons"], released: fill["released"] });
 }
 
 
@@ -443,7 +578,7 @@ function summary(state) {
 }
 
 
-offseason.GAME_LOG_SEASONS = 5;          // *tune* past seasons of game logs a career keeps (as many as a player can be in college for)
+offseason.GAME_LOG_SEASONS = 0;          // *tune* past seasons of game logs a career keeps: none (it was 5; see keep_game_logs)
 
 function keep_game_logs(state, year) {
   // Called as a season hands over to the next (next_season), while its box scores and rosters are still loaded:
@@ -452,6 +587,13 @@ function keep_game_logs(state, year) {
   // stat_keys, players: {his id: {pos, m, s}}} (season.team_game_logs). A log follows the player until he leaves
   // college: it is kept while he is on any roster in the league (after he transfers away, and after you take another
   // job), and dropped when he is on none. Only the last GAME_LOG_SEASONS seasons are kept. Reads only; no draw.
+  // (No longer kept, the player's call: a past season is its season stat line on the player's history, and the game
+  // log is the current season's, read from its box scores. With players cut and moved every year, the old logs were
+  // the one thing that had to be reconciled against who is still in the league. A save's old logs are let go here.)
+  if (offseason.GAME_LOG_SEASONS <= 0) {
+    state["career"]["game_logs"] = [];
+    return;
+  }
   const season = modules.season;
   const car = state["career"];
   const me = state["team"];
@@ -1013,6 +1155,7 @@ function _view(state, position = null, status = null) {
       moved_from: get(c, "moved_from"), transfer: offseason._new_transfer(off, c, me) ? get(c, "transfer") : null })),
     (r) => [get(offseason.GROUP, r["pos"], "Z"), -r["overall"]]),
     roster: lgd["teams"][me]["roster"].length, roster_limit: offseason.ROSTER_LIMIT,
+    cuts: offseason.cuts_view(state),
     open_spots: new_portal ? offseason.recruiting_spots(state, me) : offseason.open_spots(lgd, me, portal),
     release_spots: new_portal ? 0 : offseason.churn_left(portal, me),
     portal: { round: new_portal ? get(rc, "week") : portal["round"], week: new_portal ? get(rc, "week") : null,
@@ -1090,7 +1233,7 @@ Object.assign(offseason, {
   _your_jobs, choose_job, _take_job, advance, next_teams, conferences_view, move_conference, _draw_schedule, _schedule_shim,
   schedule_view, schedule_move, schedule_trade, migrate, run_all, summary, keep_game_logs, next_season, portal_offer, recruiting_spots,
   player_next, _player_next, recruiting_offer_cap, portal_rows, _school_name, portal_away, portal_board, _portal_recap,
-  _stayed, _new_transfer, page, view, _view,
+  _stayed, _new_transfer, page, view, _view, cuts_view, cut_mark, cuts_auto, _finish_cuts, _cut_protected,
   KeyError, OverflowError,          // (as portal_offer throws them: for the caller that tells them apart)
 });
 

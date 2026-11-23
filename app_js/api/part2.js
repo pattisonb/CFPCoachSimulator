@@ -696,7 +696,12 @@ function offseason_advance(p) {
   if (to === "next_season") {
     offseason.run_all(st);
   } else if (st["offseason"]["stage"] !== "ready") {
-    offseason.advance(st);
+    try {
+      offseason.advance(st);
+    } catch (e) {
+      if (e instanceof offseason.RosterError) throw new api.ApiError(e.code, e.message);     // Roster Cuts: still over the limit
+      throw e;
+    }
     api._save_loaded();
     return offseason.view(st);
   }
@@ -750,6 +755,23 @@ function offseason_redshirt(p) {
   return offseason.view(st);
 }
 api.route("POST", "/api/season/{season_id}/offseason/redshirt", offseason_redshirt);
+
+
+function offseason_cut(p) {
+  // Roster Cuts: mark one of your players to be cut (or take the mark back), or `auto` to let the staff decide.
+  const offseason = modules.offseason;
+  const st = api._offseason_state(p.path["season_id"], p);
+  try {
+    if (api._field(p, "auto", bool, false)) offseason.cuts_auto(st);
+    else offseason.cut_mark(st, api._field(p, "pid", str), api._field(p, "on", bool, true));
+  } catch (e) {
+    if (e instanceof offseason.RosterError) throw new api.ApiError(e.code, e.message);
+    throw e;
+  }
+  api._save_loaded();
+  return offseason.view(st);
+}
+api.route("POST", "/api/season/{season_id}/offseason/cut", offseason_cut);
 
 
 function offseason_position_options(p) {

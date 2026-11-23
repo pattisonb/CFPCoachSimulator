@@ -167,7 +167,9 @@ test("coach development", () => {
       assert(staff_by[row["id"]]["evaluation"] === c["ratings"]["player_development"], () => JSON.stringify([staff_by[row["id"]], c["ratings"]]));
     }
   }
-  // the Staff step view carries the rows, one per staff member
+  // the Staff step view carries the rows, one per staff member (past Roster Cuts, where the staff decides here)
+  offseason.advance(a);
+  offseason.cuts_auto(a);
   offseason.advance(a);
   const v = offseason.view(a);
   const developed = new Set(v["staff"]["developed"].map((r) => r["id"]));

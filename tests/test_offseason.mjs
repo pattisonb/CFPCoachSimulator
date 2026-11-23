@@ -182,7 +182,14 @@ test("most transfers find a school, the best mostly at strong programs, and smal
 });
 
 // a team must be able to line up next year whatever it lost
-test("every roster ends between 70 and the limit with every position floor met, preferred walk-ons filling in", () => {
+test("after Roster Cuts every roster ends between 70 and the limit with every position floor met, preferred walk-ons filling in", () => {
+  // Progress is done: Roster Cuts is next, and the rosters are filled once it is settled (here the staff decides)
+  offseason.advance(st);
+  equal(off["stage"], "cuts");
+  offseason.cuts_auto(st);
+  offseason.advance(st);
+  equal(off["stage"], "staff");
+  assert(off["cuts"]["done"] === true);
   assert(rosters().some((r) => r.some((p) => p["walk_on"] && p["preferred"])), "no preferred walk-ons");
   const sizes = rosters().map((r) => r.length);
   assert(Math.min(...sizes) >= 70 && Math.max(...sizes) <= offseason.ROSTER_LIMIT, show([Math.min(...sizes), Math.max(...sizes)]));
@@ -194,7 +201,6 @@ test("every roster ends between 70 and the limit with every position floor met, 
 
 let hired_id = null, hired_name = null, target = null;
 test("a staff opening has candidates to choose from and your pick is hired", () => {
-  offseason.advance(st);
   equal(off["stage"], "staff");
   const staff = off["staff"];
   if (!staff["leaving"].length) {                      // nobody left on this seed: open a job

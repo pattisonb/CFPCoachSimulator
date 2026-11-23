@@ -137,37 +137,65 @@ interface ToastsProps {
   weekLabels?: Record<string, string>;
   onOpen: (n: Notice) => void;
   onDismiss: (id: string) => void;
+  /** put every one of them away at once */
+  onClear?: () => void;
   /** rise from the anchor instead of dropping from it (your coach at the foot of the window) */
   rise?: boolean;
 }
 
-/** The notices that have just landed, as cards dropping one under another from under your coach. */
-export function NoticeToasts({ items, weekLabels, onOpen, onDismiss, rise }: ToastsProps) {
+/**
+ * The notices that have just landed, under your coach: the newest as a card, the rest stacked behind it as a deck
+ * (its edges show, and a line says how many). A busy stretch (an offseason stage) is one card to read, not a column
+ * of them: Show All fans the deck out, Dismiss All puts it away.
+ */
+export function NoticeToasts({ items, weekLabels, onOpen, onDismiss, onClear, rise }: ToastsProps) {
+  const [open, setOpen] = useState(false);
+  // a new stack starts shut
+  const none = items.length === 0;
+  useEffect(() => {
+    if (none) setOpen(false);
+  }, [none]);
   if (!items.length) return null;
+  const rest = items.length - 1;
+  const card = (n: Notice) => (
+    <div className="notifications__toast" key={n.id}>
+      <Row
+        notice={n}
+        weekLabels={weekLabels}
+        onOpen={(x) => {
+          onDismiss(x.id);
+          onOpen(x);
+        }}
+      />
+      <button
+        type="button"
+        className="notifications__x"
+        aria-label={m.dismiss}
+        title={m.dismiss}
+        onClick={() => onDismiss(n.id)}
+      >
+        <X size={12} weight="bold" aria-hidden="true" />
+      </button>
+    </div>
+  );
   return (
     <div className={`notifications__toasts${rise ? " is-rise" : ""}`} role="status">
-      {items.slice(0, SHOWN).map((n) => (
-        <div className="notifications__toast" key={n.id}>
-          <Row
-            notice={n}
-            weekLabels={weekLabels}
-            onOpen={(x) => {
-              onDismiss(x.id);
-              onOpen(x);
-            }}
-          />
-          <button
-            type="button"
-            className="notifications__x"
-            aria-label={m.dismiss}
-            title={m.dismiss}
-            onClick={() => onDismiss(n.id)}
-          >
-            <X size={12} weight="bold" aria-hidden="true" />
+      <div className={`notifications__deck${!open && rest > 0 ? ` is-stacked${rest > 1 ? " is-deep" : ""}` : ""}`}>
+        {card(items[0])}
+      </div>
+      {open && items.slice(1, 1 + SHOWN).map(card)}
+      {rest > 0 && (
+        <span className="notifications__deck-foot">
+          <button type="button" className="notifications__more label" onClick={() => setOpen(!open)}>
+            {open ? m.fewer : m.more(rest)}
           </button>
-        </div>
-      ))}
-      {items.length > SHOWN && <span className="notifications__more label">{m.more(items.length - SHOWN)}</span>}
+          {onClear && (
+            <button type="button" className="notifications__more label" onClick={onClear}>
+              {m.dismissAll}
+            </button>
+          )}
+        </span>
+      )}
     </div>
   );
 }

@@ -184,6 +184,8 @@ export const messages = {
     met: "You met with him.",
     stayedNil: (nil: number) => `You put ${nil} NIL on it.`,
     stayedPromise: "You promised him a starting role.",
+    /** Roster Cuts: the school that let him go and the one he walked on at */
+    cut: (from: string, to: string) => `Cut by ${from}. He walked on at ${to}.`,
     transfer: (from: string, to: string) =>
       from && to
         ? `Transferred from ${from} to ${to}.`

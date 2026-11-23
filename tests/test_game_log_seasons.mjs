@@ -11,6 +11,11 @@ const game = await start({ env: { SIM_WORKERS: "1", CFP_SEASONS_DIR: "data/seaso
 const { api, season, offseason } = game;
 const show = (v) => JSON.stringify(v);
 const ME = "iowa";
+// A career keeps no past seasons' game logs now (offseason.GAME_LOG_SEASONS is 0: a past season is its stat line, and
+// tests/test_roster_cuts.mjs holds the rollover to that). These tests keep the machinery honest for the day it is
+// turned back on: they run it with five seasons kept, as it was built.
+equal(offseason.GAME_LOG_SEASONS, 0);
+offseason.GAME_LOG_SEASONS = 5;
 
 /** Every game not yet played is given a score (the better team usually wins), every class signed, the season over. */
 function finished(st) {

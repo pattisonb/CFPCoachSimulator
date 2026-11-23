@@ -894,7 +894,8 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
     if (pitch === null && !truthy(manual)) throw new recruiting.RecruitingError(400, "an offer needs a pitch, the thing you are selling him");
     if (nil > recruiting.nil_left(state, slug)) throw new recruiting.RecruitingError(400, "not enough NIL points");
     if (offers.includes(pid)) throw new recruiting.RecruitingError(409, "already offered");
-    if (offers.length >= recruiting.offer_cap(state, slug)) throw new recruiting.RecruitingError(409, "offer limit reached");
+    // your own offers have no limit of their own: the board (BOARD_CAP) and your energy are the limit
+    if (!you && offers.length >= recruiting.offer_cap(state, slug)) throw new recruiting.RecruitingError(409, "offer limit reached");
     const ask = recruiting.ask_from(state, slug, pid);
     offers.push(pid);
     if (you) {                                    // four weeks holding your offer shows you his commit style

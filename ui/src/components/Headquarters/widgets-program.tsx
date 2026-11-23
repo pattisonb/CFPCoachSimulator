@@ -52,9 +52,6 @@ type P = { d: Sources; ctx: Ctx };
 
 /** *tune* Weeks without contact before an offered target goes stale (headquarters.STALE_WEEKS). */
 const STALE_WEEKS = 3;
-/** *tune* From this week, many unused offers is worth a word; and how many. */
-const LATE_WEEK = 8;
-const UNUSED_OFFERS = 10;
 const SIGNING: Record<number, string> = { 15: m.earlySigning, 20: m.signingDay };
 /** offseason.ROSTER_LIMIT */
 const ROSTER_LIMIT = 85;
@@ -173,8 +170,6 @@ function alertsOf(board: HqBoard, contacts: Record<string, number>, ctx: Ctx): A
         task: m.tasksFor.need(g),
         do: { kind: "need", group: g },
       });
-  if (week >= LATE_WEEK && board.offers_left >= UNUSED_OFFERS)
-    out.push({ kind: m.alertKinds.offer, text: m.alerts.unusedOffers(board.offers_left), task: m.tasksFor.useOffers });
   return out;
 }
 

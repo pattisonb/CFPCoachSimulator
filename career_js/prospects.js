@@ -1580,6 +1580,7 @@ export function recruiting_view(state) {
   out.portal = truthy(get(rc, "portal")) ? { week: get(rc, "week"), weeks: get(rc, "weeks", 4), entrants: Object.keys(rc["prospects"]).length,
     signed: sum(Object.values(rc["status"]).map((s_) => (truthy(s_["signed"]) ? 1 : 0))) } : null;
   out.offers = offers.length; out.offers_left = recruiting.offer_cap(state, me) - offers.length;
+  out.on_board = rc["board"].length; out.board_cap = recruiting.BOARD_CAP;      // the one count the page shows: On Board 12 / 30
   out.board = board;
   out.targets = sorted(board.filter((b) => b["standing"]["pct"] !== null && !truthy(b["committed"])), (b) => -b["standing"]["pct"]).slice(0, 4);
   out.class_rank = prospects.class_rank(state, me);

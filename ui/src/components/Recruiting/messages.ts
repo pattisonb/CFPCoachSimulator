@@ -1,8 +1,7 @@
 export const messages = {
   title: "Recruiting Board",
   nil: "NIL Left",
-  offers: "Offers",
-  commits: "Commits",
+  onBoard: "On Board",
   scout: "Scouting",
 
   stages: "Stage",

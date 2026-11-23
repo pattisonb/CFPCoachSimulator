@@ -22,6 +22,8 @@ export const messages = {
   yourSeason: "Your Season",
   yourGames: "Your Games",
   yourLeaders: "Your Leaders",
+  heisman: "Heisman Trophy",
+  heismanRace: "Leading the Heisman Race",
   leaders: "Leaders",
   seeSchedule: "Open your schedule.",
   whose: { mine: "Yours", all: "National" },

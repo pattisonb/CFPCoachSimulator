@@ -1,5 +1,15 @@
 import type { ReactNode } from "react";
-import { ArrowsLeftRight, Handshake, House, Medal, Star, TrendDown, TrendUp, type Icon } from "@phosphor-icons/react";
+import {
+  ArrowsLeftRight,
+  Handshake,
+  House,
+  Medal,
+  Scissors,
+  Star,
+  TrendDown,
+  TrendUp,
+  type Icon,
+} from "@phosphor-icons/react";
 import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
 import { RecruitTimeline, timelineItems } from "../RecruitFile/index.tsx";
 import Swatch from "../Swatch/index.tsx";
@@ -198,6 +208,17 @@ function lineOf(e: Life, i: number) {
           e.promised ? m.h.stayedPromise : null,
           e.overall != null ? m.h.arrivedAt(e.overall) : null,
         ].filter((x): x is string => !!x)}
+      />
+    );
+  // Roster Cuts: the school that let him go, and where he walked on
+  if (e.kind === "cut")
+    return (
+      <Line
+        key={i}
+        icon={Scissors}
+        tone="bad"
+        text={m.h.cut(e.from_name ?? "", e.to_name ?? "")}
+        detail={[m.h.walkOn]}
       />
     );
   return null;

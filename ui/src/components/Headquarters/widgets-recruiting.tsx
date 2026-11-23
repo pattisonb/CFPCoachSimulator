@@ -63,7 +63,7 @@ function ClassGlance({ d }: P) {
         [b.committed, m.commits],
         [b.open_spots, m.openSpots],
         [b.committed && b.class_rank ? `#${b.class_rank}` : m.unranked, m.classRank],
-        [m.xOfY(b.offers, b.offers + b.offers_left), m.offersOut],
+        [b.offers, m.offersOut],
       ]}
     />
   );

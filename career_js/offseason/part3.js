@@ -506,7 +506,10 @@ function _develop_all(state) {
     for (const p of t["roster"]) {
       const signed = get(p, "signed", false);
       delete p["signed"];
-      if (truthy(signed)) continue;
+      if (truthy(signed)) {
+        p["joined"] = year;                     // this year's signee: Roster Cuts leaves him be
+        continue;
+      }
       let [mult, room, why, level_up] = offseason.growth_terms(get(perf, p["id"]));
       mult *= team_year * Math.exp(rng.gauss(-sq(offseason.PLAYER_YEAR_SD) / 2, offseason.PLAYER_YEAR_SD));
       if (truthy(room)) {                       // a big year raises his ceiling where it shows: skill and football IQ
@@ -623,10 +626,13 @@ function _preferred_walk_on(state, slug, group, taken) {
   return best;
 }
 
-function _fill_rosters(state) {
+function _fill_rosters(state, cut = []) {
   // Walk-ons where a group has fallen below its floor and then up to FILL_TO (the
   // thinnest groups first, against a healthy roster's make-up); rosters over the limit release
-  // their lowest-rated non-seniors (counted as quitting).
+  // their lowest-rated non-seniors. A player who was cut (`cut`: [{p, from}], yours from Roster Cuts; every other
+  // school's own release joins them) is a walk-on a school short at his group takes before it generates one; a cut
+  // player nobody takes is out of football. Returns the counts and `landed`: [{id, from, to}] for every cut player
+  // (`to` null: nobody took him).
   const lgd = state["league"];
   const rng = offseason._rng(state, "walk-ons");
   const attrs = offseason._attrs(lgd);
@@ -640,6 +646,14 @@ function _fill_rosters(state) {
   const taken = new Set();
   const season = modules.season;
   const GROUP = offseason.GROUP, FLOOR = offseason.FLOOR, TARGET = offseason.TARGET;
+  // the players cut this offseason, best first: yours, then every school already over the limit lets its own go
+  const cut_pool = cut.map((e) => ({ p: e["p"], from: e["from"], to: null }));
+  for (const [slug, t] of Object.entries(lgd["teams"])) {
+    if (t["roster"].length <= offseason.ROSTER_LIMIT) continue;
+    for (const p of offseason._release(t)) cut_pool.push({ p, from: slug, to: null });
+  }
+  cut_pool.sort((a, b) => cmp([-a["p"]["o"], a["p"]["id"]], [-b["p"]["o"], b["p"]["id"]]));
+  released += cut_pool.length - cut.length;
   for (const [slug, t] of Object.entries(lgd["teams"])) {
     const p4 = season._is_p4(slug, season.load_teams()[slug]);
     let counts = offseason._group_counts(t["roster"]);
@@ -657,6 +671,20 @@ function _fill_rosters(state) {
       size += 1;
     }
     for (const g of wanted) {
+      // a cut player at the group, from another school: he walks on here
+      const free = cut_pool.find((e) => e["to"] === null && e["from"] !== slug && get(GROUP, e["p"]["pos"], "S") === g);
+      if (free !== undefined) {
+        free["to"] = slug;
+        const c = free["p"];
+        c["j"] = offseason._jersey(t["roster"], c["pos"], rng);
+        c["walk_on"] = true;
+        c["cut_from"] = free["from"];
+        delete c["promised"];
+        offseason.life(c, get(state["offseason"], "year") - 1, "cut", { from: free["from"], to: slug });
+        t["roster"].push(c);
+        added += 1;
+        continue;
+      }
       const pref = offseason._preferred_walk_on(state, slug, g, taken);
       if (pref !== null) {
         const c = offseason._compact_prospect(state, pref, attrs);
@@ -689,23 +717,31 @@ function _fill_rosters(state) {
       t["roster"].push(c);
       added += 1;
     }
-    if (t["roster"].length > offseason.ROSTER_LIMIT) {
-      counts = offseason._group_counts(t["roster"]);
-      const spare = sorted(t["roster"].filter((p) => counts[GROUP[p["pos"]]] > FLOOR[GROUP[p["pos"]]] && !["SR", "SRRS"].includes(p["cls"])),
-        (p) => p["o"]);
-      const cut = new Set();
-      for (const p of spare) {
-        if (t["roster"].length - cut.size <= offseason.ROSTER_LIMIT) break;
-        if (counts[GROUP[p["pos"]]] > FLOOR[GROUP[p["pos"]]]) {
-          cut.add(p["id"]);
-          counts[GROUP[p["pos"]]] -= 1;
-        }
-      }
-      t["roster"] = t["roster"].filter((p) => !cut.has(p["id"]));
-      released += cut.size;
+    if (t["roster"].length > offseason.ROSTER_LIMIT) released += offseason._release(t).length;      // (a floor's walk-ons put it over: they go)
+  }
+  return { walk_ons: added, released: released, landed: cut_pool.map((e) => ({ id: e["p"]["id"], from: e["from"], to: e["to"] })) };
+}
+
+
+function _release(t, keep = null) {
+  // A roster over the limit lets go of its lowest-rated players down to it and returns them: never a senior, never a
+  // group at its floor, and never one in `keep` (a Set of ids: this year's newcomers at your school).
+  const GROUP = offseason.GROUP, FLOOR = offseason.FLOOR;
+  const counts = offseason._group_counts(t["roster"]);
+  const spare = sorted(t["roster"].filter((p) => counts[GROUP[p["pos"]]] > FLOOR[GROUP[p["pos"]]] && !["SR", "SRRS"].includes(p["cls"])
+    && !(keep !== null && keep.has(p["id"]))), (p) => p["o"]);
+  const out = [];
+  const gone = new Set();
+  for (const p of spare) {
+    if (t["roster"].length - gone.size <= offseason.ROSTER_LIMIT) break;
+    if (counts[GROUP[p["pos"]]] > FLOOR[GROUP[p["pos"]]]) {
+      gone.add(p["id"]);
+      out.push(p);
+      counts[GROUP[p["pos"]]] -= 1;
     }
   }
-  return { walk_ons: added, released: released };
+  t["roster"] = t["roster"].filter((p) => !gone.has(p["id"]));
+  return out;
 }
 
 // ----- staff and coaches ------------------------------------------------------------------------
@@ -937,6 +973,6 @@ function _apply_staff(state) {
 Object.assign(offseason, {
   _carry_over, program_factor, _dev_side, dev_rating, coach_factor, coachability_chances, coachability_roll, coachability_note,
   _coach_title, year_pace, rv2_tier, _card_growth, develop, regress, age_factor, pot_mean, _round, grow_coach, _pot, _league_marks,
-  _why, _develop_coaches, _develop_all, _newcomer, _preferred_walk_on, _fill_rosters, _staff_taken, term_of, expiring,
+  _why, _develop_coaches, _develop_all, _newcomer, _preferred_walk_on, _fill_rosters, _release, _staff_taken, term_of, expiring,
   _staff_changes, _staff_marks, _candidates, _candidate, open_role, hire, _apply_staff,
 });

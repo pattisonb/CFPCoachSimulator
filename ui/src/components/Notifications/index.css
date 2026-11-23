@@ -155,22 +155,19 @@
   line-height: 1.35;
 }
 
-/* the cards: under the anchor's right edge, one under another */
+/* the notices that have just landed sit in the window's bottom right corner, over the ticker: clear of the page's
+   own buttons (dropping from under your coach, they covered the offseason's Advance, and the next click hit them)
+   and above the bar a sim runs in at the foot of the page (its Stop button) */
 .notifications__toasts {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--control, 48px) + 40px);
   z-index: 25;
   display: grid;
   justify-items: end;
   gap: 8px;
   width: 340px;
   pointer-events: none;
-}
-
-.notifications__toasts.is-rise {
-  top: auto;
-  bottom: calc(100% + 10px);
 }
 
 .notifications__toast {
@@ -180,7 +177,7 @@
   border: var(--line) solid var(--ink);
   box-shadow: 4px 4px 0 var(--shadow);
   pointer-events: auto;
-  animation: notifications-drop 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: notifications-rise 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .notifications__toasts.is-rise .notifications__toast {
@@ -211,11 +208,59 @@
   color: var(--paper-hi);
 }
 
+/* the newest notice, and the rest as a deck behind it: one or two edges showing under the card */
+.notifications__deck {
+  position: relative;
+  width: 100%;
+}
+
+.notifications__deck.is-stacked {
+  margin-bottom: 6px;
+}
+
+.notifications__deck.is-stacked::before,
+.notifications__deck.is-deep::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  bottom: -6px;
+  left: 6px;
+  z-index: -1;
+  height: 12px;
+  background: var(--paper);
+  border: var(--line) solid var(--ink);
+}
+
+.notifications__deck.is-deep {
+  margin-bottom: 11px;
+}
+
+.notifications__deck.is-deep::after {
+  right: 12px;
+  bottom: -11px;
+  left: 12px;
+  z-index: -2;
+}
+
+/* how many are behind it, and the two things to do about them */
+.notifications__deck-foot {
+  display: inline-flex;
+  gap: 6px;
+}
+
 .notifications__more {
   padding: 2px 6px;
   background: var(--ink);
   color: var(--paper-hi);
+  border: 0;
+  cursor: pointer;
   pointer-events: auto;
+}
+
+.notifications__more:hover,
+.notifications__more:focus-visible {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
 }
 
 @keyframes notifications-drop {

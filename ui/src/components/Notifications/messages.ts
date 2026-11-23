@@ -8,7 +8,9 @@ export const messages = {
   title: "Notifications",
   bell: (unread: number) => (unread > 0 ? `Notifications: ${unread} New` : "Notifications"),
   empty: "Nothing yet. Staff finds, commits and injuries land here as the weeks pass.",
-  more: (n: number) => `+${n} More`,
+  more: (n: number) => `+${n} More · Show All`,
+  fewer: "Show Fewer",
+  dismissAll: "Dismiss All",
   dismiss: "Dismiss",
   week: (w: number) => `Week ${w}`,
   heads: {

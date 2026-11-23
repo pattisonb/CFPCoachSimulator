@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import PlayerLink from "../PlayerLink/index.tsx";
-import { ArrowRight } from "@phosphor-icons/react";
+import { ArrowRight, Scissors, UserMinus } from "@phosphor-icons/react";
 import Dropdown from "../Dropdown/index.tsx";
 import Modal from "../Modal/index.tsx";
 import Face from "../Face/index.tsx";
@@ -8,7 +8,9 @@ import Slider from "../Slider/index.tsx";
 import { GradeRange } from "../Grade/index.tsx";
 import Panel from "../Panel/index.tsx";
 import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
+import Stamp from "../Stamp/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import Tooltip from "../Tooltip/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { playerFace } from "../../faces.ts";
 import { formatClass, titleCase } from "../../format.ts";
@@ -27,6 +29,7 @@ export function Stage({ stage, ...p }: P & { stage: string }) {
   if (stage === "portal_recap") return <PortalRecap {...p} />;
   if (stage.startsWith("portal")) return <Portal {...p} />;
   if (stage === "development") return <Development {...p} />;
+  if (stage === "cuts") return <Cuts {...p} />;
   if (stage === "staff") return <Staff {...p} />;
   if (stage === "conferences") return <Conferences {...p} />;
   if (stage === "schedule") return <Schedule {...p} />;
@@ -586,9 +589,7 @@ function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
         <Stat label={m.portal.spots}>
           {v.open_spots} <small>{m.portal.rosterSmall(v.roster, v.roster_limit)}</small>
         </Stat>
-        <Stat label={m.portal.offers}>
-          {pt.offers.length} <small>{m.portal.left(pt.offers_left)}</small>
-        </Stat>
+        <Stat label={m.portal.offers}>{pt.offers.length}</Stat>
         <Stat label={m.portal.entrants}>
           {pt.entrants.toLocaleString("en-US")} <small>{m.portal.signedSmall(pt.signed)}</small>
         </Stat>
@@ -1158,6 +1159,231 @@ function Notes({ why }: { why: string[] }) {
       {line(m.dev.backLabel, n.back)}
       {line(m.dev.changedLabel, n.changed)}
     </span>
+  );
+}
+
+// ---------- Roster Cuts ----------
+
+/**
+ * Roster Cuts: your roster comes down to the limit by your own hand, after you have seen who grew. Four numbers up
+ * top (your roster against the limit, how far over, how many you have marked, how many cannot be cut); a banner in
+ * your color with what is left to do and Let the Staff Decide; then every player you could cut as a card, weakest
+ * first: his face and overall, what he gained, what cutting him would cost (a promise, a thin position), and Cut or
+ * Keep. A marked card wears a Cut stamp on its picture's corner. Once the cuts are made the stage reads back where
+ * each player went, each card stamped with the school that took him.
+ */
+function Cuts({ v, teams, busy, live, act }: P) {
+  const [unit, setUnit] = useState<Unit>("all");
+  const c = v.cuts;
+  if (!c) return <Empty>{m.cuts.none}</Empty>;
+  const units: Unit[] = ["all", "offense", "defense", "special"];
+
+  if (c.done || !live) {
+    const landed = c.out.filter((x) => x.to);
+    return (
+      <div className="dev">
+        <dl className="dev__stats">
+          <Stat label={m.cuts.doneCut}>{c.out.length}</Stat>
+          <Stat label={m.cuts.doneLanded}>{landed.length}</Stat>
+          <Stat label={m.cuts.doneGone}>{c.out.length - landed.length}</Stat>
+          <Stat label={m.cuts.doneJoined}>{c.joined?.length ?? 0}</Stat>
+        </dl>
+        <section aria-label={m.cuts.went}>
+          <h3 className="label dev__kicker">{m.cuts.went}</h3>
+          {c.out.length ? (
+            <ul className="dev__jumps">
+              {c.out.map((x) => {
+                const to = x.to ? teams.get(x.to) : undefined;
+                return (
+                  <li key={x.id} className="dev-card cut-card" style={MINE}>
+                    <header className="dev-card__top">
+                      <span className="face-tile dev-card__face">
+                        <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                      </span>
+                      {/* the school that took him, stamped on the corner of his picture */}
+                      {x.to && (
+                        <span className="cut-card__stamp">
+                          <Stamp
+                            label={m.cuts.landed(to?.abbreviation ?? x.to_name ?? "")}
+                            tip={m.cuts.landedTip(x.name, x.to_name ?? "")}
+                            team={to}
+                          >
+                            <UserMinus size={16} weight="fill" aria-hidden="true" />
+                          </Stamp>
+                        </span>
+                      )}
+                      <b className="dev-card__gain">{x.overall}</b>
+                    </header>
+                    <b className="dev-card__name">{x.name}</b>
+                    <span className="off__soft">
+                      {x.pos} · {formatClass(x.cls)}
+                    </span>
+                    <span className="dev-card__line">
+                      {x.to ? (
+                        <TeamTag team={to}>{m.cuts.landed(to?.abbreviation ?? x.to_name ?? "")}</TeamTag>
+                      ) : (
+                        <span title={m.cuts.goneTip(x.name)}>
+                          <Tag>{m.cuts.gone}</Tag>
+                        </span>
+                      )}
+                    </span>
+                    {x.promised && (
+                      <span className="dev-card__line" title={m.cuts.brokeTip}>
+                        <span className="off__tag is-warn">{m.cuts.broke}</span>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <Empty>{m.cuts.noCuts}</Empty>
+          )}
+        </section>
+        {!!c.joined?.length && (
+          <section aria-label={m.cuts.joined}>
+            <h3 className="label dev__kicker">{m.cuts.joined}</h3>
+            <ul className="cut__chips">
+              {c.joined.map((x) => (
+                <li key={x.id} className="cut__chip">
+                  <b>{x.name}</b>
+                  <span className="off__soft">
+                    {x.pos} · {x.overall} {m.cuts.overall}
+                  </span>
+                  <TeamTag team={teams.get(x.from)}>
+                    {m.cuts.cutBy(teams.get(x.from)?.abbreviation ?? x.from_name)}
+                  </TeamTag>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  const open = c.players.filter((x) => !x.protected);
+  const safe = c.players.filter((x) => x.protected);
+  // how many of a group would be left with your marks made
+  const leftAt = (group: string) => c.players.filter((x) => x.group === group && !x.marked).length;
+  const shown = open.filter((x) => unit === "all" || unitOf(x.pos) === unit);
+  return (
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.cuts.roster}>{m.cuts.rosterOf(c.left, c.limit)}</Stat>
+        <Stat label={c.over > 0 ? m.cuts.over : m.cuts.atLimit}>
+          {c.over > 0 ? c.over : c.left < c.limit ? m.cuts.under(c.limit - c.left) : 0}
+        </Stat>
+        <Stat label={m.cuts.marked}>{c.marked.length}</Stat>
+        <Stat label={m.cuts.safe}>
+          {safe.length} <small>{m.cuts.safeSmall}</small>
+        </Stat>
+      </dl>
+
+      <div className="off__cta off__cta--portal">
+        <div className="off__cta-words">
+          {/* (the stage's own title is above: the banner says where you stand) */}
+          <b>{c.over > 0 ? m.cuts.overBy(c.over) : m.cuts.atLimit}</b>
+          <span>{c.over > 0 ? m.cuts.howOver(c.over) : m.cuts.howDone}</span>
+        </div>
+        <Tooltip title={m.cuts.auto} text={m.cuts.autoTip}>
+          <button type="button" className="off__next" disabled={busy} onClick={() => act("/cut", { auto: true })}>
+            {m.cuts.auto}
+          </button>
+        </Tooltip>
+      </div>
+
+      <section className="dev__chart" aria-label={m.cuts.list}>
+        <header className="dev__chart-head">
+          <h3 className="label dev__kicker">{m.cuts.list}</h3>
+          <div className="off__row" role="group" aria-label={m.cuts.unitLabel}>
+            {units.map((u) => (
+              <button
+                key={u}
+                type="button"
+                className={`off__btn${unit === u ? " is-on" : ""}`}
+                aria-pressed={unit === u}
+                onClick={() => setUnit(u)}
+              >
+                {m.dev.units[u]}
+              </button>
+            ))}
+          </div>
+        </header>
+        <ul className="dev__jumps">
+          {shown.map((x) => {
+            // cutting him (or, already marked, the group as it stands) would leave his position at or under its floor
+            const left = leftAt(x.group) - (x.marked ? 0 : 1);
+            const thin = left < x.group_floor;
+            return (
+              <li key={x.id} className={`dev-card cut-card${x.marked ? " is-marked" : ""}`} style={MINE}>
+                <header className="dev-card__top">
+                  <span className="face-tile dev-card__face">
+                    <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                  </span>
+                  {/* marked: a Cut stamp on the corner of his picture */}
+                  {x.marked && (
+                    <span className="cut-card__stamp">
+                      <Stamp label={m.cuts.stamp} warn>
+                        <Scissors size={16} weight="fill" aria-hidden="true" />
+                      </Stamp>
+                    </span>
+                  )}
+                  <b className="dev-card__gain">{x.overall}</b>
+                </header>
+                <b className="dev-card__name">{x.name}</b>
+                <span className="off__soft">
+                  {x.pos} · {formatClass(x.cls)}
+                </span>
+                {x.gain != null && (
+                  <span className={`dev__delta cut-card__grew${x.gain > 0 ? " is-up" : x.gain < 0 ? " is-down" : ""}`}>
+                    {m.cuts.grew(x.gain)}
+                  </span>
+                )}
+                <span className="cut-card__tags">
+                  {x.promised && (
+                    <span title={m.cuts.promisedTip}>
+                      <span className="off__tag is-warn">{m.cuts.promised}</span>
+                    </span>
+                  )}
+                  {thin && (
+                    <span title={m.cuts.thinTip(x.group, Math.max(0, left), x.group_floor)}>
+                      <Tag>{m.cuts.thin(x.group)}</Tag>
+                    </span>
+                  )}
+                  {x.walk_on && <Tag>{m.cuts.walkOn}</Tag>}
+                </span>
+                <button
+                  type="button"
+                  className={`off__btn cut-card__act${x.marked ? " is-on" : ""}`}
+                  disabled={busy}
+                  title={x.marked ? m.cuts.keepTip(x.name) : m.cuts.cutTip(x.name)}
+                  onClick={() => act("/cut", { pid: x.id, on: !x.marked })}
+                >
+                  {x.marked ? m.cuts.keep : m.cuts.cut}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {safe.length > 0 && (
+        <Panel title={m.cuts.newcomers(safe.length)} collapsible defaultOpen={false} className="growth__rest">
+          <ul className="cut__chips">
+            {safe.map((x) => (
+              <li key={x.id} className="cut__chip">
+                <b>{x.name}</b>
+                <span className="off__soft">
+                  {x.pos} · {x.overall} {m.cuts.overall}
+                </span>
+                <Tag>{x.protected === "transfer" ? m.cuts.transfer : m.cuts.signee}</Tag>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+    </div>
   );
 }
 

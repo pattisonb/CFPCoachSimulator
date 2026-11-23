@@ -526,6 +526,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
         weekLabels={season.week_labels}
         onOpen={openNotice}
         onDismiss={notices.dismiss}
+        onClear={notices.clearToasts}
       />
     );
 

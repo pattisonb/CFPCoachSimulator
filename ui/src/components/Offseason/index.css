@@ -568,9 +568,13 @@
   font-weight: 400;
 }
 
+/* the card's moves hold one height, before you meet him (two rows) and after (three), so a card never changes size
+   when you sit down with him; the fewer rows sit at its foot */
 .off-card__acts {
   display: grid;
+  align-content: end;
   gap: 6px;
+  min-height: 128px; /* *tune* three rows of moves and the padding */
   padding: 8px 10px 10px;
   border-top: 1px solid var(--line-soft);
 }
@@ -1379,6 +1383,78 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ----- Roster Cuts: the Progress stage's cards, each with what cutting him costs and Cut or Keep ----- */
+.cut-card {
+  gap: 4px;
+}
+
+/* marked to go: the card steps back and its picture wears the stamp */
+.cut-card.is-marked {
+  background: var(--paper);
+  box-shadow: none;
+}
+
+.cut-card.is-marked .dev-card__face,
+.cut-card.is-marked .dev-card__name {
+  opacity: 0.55;
+}
+
+/* the stamp hangs off the corner of his picture, as a recruit's status does on the board */
+.cut-card__stamp {
+  position: absolute;
+  top: -6px;
+  left: -8px;
+  z-index: 1;
+  line-height: 0;
+}
+
+.cut-card__grew {
+  font-size: var(--t-xs);
+  text-align: left;
+}
+
+/* what cutting him costs, on one line that holds its place when it is empty (every card one height) */
+.cut-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 22px;
+}
+
+.cut-card__act {
+  justify-self: stretch;
+  margin-top: 2px;
+}
+
+/* a warning tag: a promise this cut breaks */
+.off__tag.is-warn {
+  background: var(--warn);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+/* a plain run of players (this year's newcomers, the walk-ons who joined you): a name, his place, a tag */
+.cut__chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px var(--s3);
+  padding: var(--s2) 0;
+  list-style: none;
+}
+
+.cut__chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.cut__chip b {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ----- Portal Recap: a column each for who came, who went and the league's biggest moves ----- */

@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowDown, ArrowUp, Trophy } from "@phosphor-icons/react";
+import { ArrowDown, ArrowUp, Medal, Trophy } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
@@ -7,7 +7,11 @@ import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { inkOn } from "../../colors.ts";
 import { titleCase } from "../../format.ts";
-import type { PollEntry, SeasonSummary, TeamCard } from "../../types.ts";
+import type { AwardsView, HeismanCandidate, PollEntry, SeasonSummary, TeamCard } from "../../types.ts";
+import Face from "../Face/index.tsx";
+import FitText from "../FitText/index.tsx";
+import { lookOf } from "../../faces.ts";
+import { formatClass } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import PlayerLink from "../PlayerLink/index.tsx";
 import "./index.css";
@@ -144,6 +148,20 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
     };
   }, [season.id, season.current_week]);
 
+  // the Heisman: the winner once it is given, the leader of the race until then (the Awards page's own read)
+  const [awards, setAwards] = useState<AwardsView | null>(null);
+  useEffect(() => {
+    let live = true;
+    api<AwardsView>(`/api/season/${season.id}/awards`)
+      .then((v) => live && setAwards(v))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [season.id, season.current_week]);
+  const won = awards?.national?.heisman?.winner ?? null;
+  const heisman: HeismanCandidate | null = won ?? awards?.race?.heisman?.candidates[0] ?? null;
+
   const weekName = season.week_labels[String(season.current_week)] ?? m.week(season.current_week);
   const status = view && <SectionStatus>{view.done ? m.final(view.year) : m.through(weekName)}</SectionStatus>;
   const team = (slug: string, name: string) => (
@@ -170,7 +188,7 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
           <>
             {/* the headline, two banners side by side and the same height: the champion in its colors (once there is
                 one), and your season in yours with the AD's grade stamped on it */}
-            <header className={`recap__heroes${champ ? "" : " is-solo"}`}>
+            <header className={`recap__heroes${champ ? "" : " is-solo"}${heisman ? " has-heisman" : ""}`}>
               {champ && (
                 <div
                   className="recap__hero recap__hero--champ"
@@ -239,6 +257,43 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
                   </div>
                 )}
               </div>
+              {/* the Heisman: who won it (or leads the race until it is given), a banner in his school's colors */}
+              {heisman && (
+                <div
+                  className="recap__hero recap__hero--heisman"
+                  style={
+                    teams.get(heisman.team)
+                      ? ({
+                          "--c": teams.get(heisman.team)!.colors.primary,
+                          "--on": inkOn(teams.get(heisman.team)!.colors.primary),
+                        } as CSSProperties)
+                      : undefined
+                  }
+                >
+                  <span className="recap__hero-mark" aria-hidden="true">
+                    {teams.get(heisman.team)?.abbreviation}
+                  </span>
+                  <span className="recap__hero-kicker">
+                    <Medal size={16} weight="fill" aria-hidden="true" />
+                    {won ? m.heisman : m.heismanRace}
+                  </span>
+                  {/* (a long name is set smaller until it fits its line: never cut short) */}
+                  <h2>
+                    <FitText>
+                      <PlayerLink team={heisman.team} name={heisman.name} position={heisman.position} />
+                    </FitText>
+                  </h2>
+                  <p>{[heisman.position, formatClass(heisman.class), heisman.team_name].filter(Boolean).join(" · ")}</p>
+                  <p className="recap__hero-line">{heisman.final_line ?? heisman.line}</p>
+                  <span className="face-tile recap__hero-face">
+                    <Face
+                      face={lookOf(heisman.face, heisman.slug ?? heisman.name, heisman.position)}
+                      scale={2}
+                      label=""
+                    />
+                  </span>
+                </div>
+              )}
             </header>
             {view.grade && <p className="recap__gradeline">{view.grade.line}</p>}
 

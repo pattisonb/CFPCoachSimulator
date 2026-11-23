@@ -351,7 +351,7 @@ test("the country is nine scouting areas and no state is in two", () => {
   equal(prospects.recruiting_view(st)["areas"]["Texas"], ["TX"]);
 });
 
-test("your offers are capped from your open spots", () => {
+test("the staff's offers are capped from your open spots (Auto-recruit: an offer by hand has no limit)", () => {
   const cap = recruiting.offer_cap(st, ME);
   assert(cap >= 15 && cap <= 45, String(cap));
 });

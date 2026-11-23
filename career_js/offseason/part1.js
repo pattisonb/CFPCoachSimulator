@@ -44,13 +44,13 @@ const _format = (template, values) => template.replace(/\{(\w+)\}/g, (_, name) =
 
 // Keep Them Home first, then Departures: who wants out is decided at the start, the draft runs after your
 // answers (and the AI schools'), so Departures shows only what happened. Saves from the older order: migrate()
-offseason.STAGES = ["retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "portal_recap", "development", "staff", "conferences", "schedule", "ready"];
+offseason.STAGES = ["retention", "departures", "portal_w1", "portal_w2", "portal_w3", "portal_w4", "portal_recap", "development", "cuts", "staff", "conferences", "schedule", "ready"];
 offseason.PORTAL_STAGES = ["portal_w1", "portal_w2", "portal_w3", "portal_w4"];
 offseason.OLD_PORTAL = { "portal_1": "portal_w1", "portal_2": "portal_w2" };     // saves from the two-round portal
 offseason.STAGE_NAMES = { "departures": "Departures", "retention": "Keep Them Home", "portal_w1": "Transfer Portal, Week 1", "portal_w2": "Transfer Portal, Week 2",
   "portal_w3": "Transfer Portal, Week 3", "portal_w4": "Transfer Portal, Week 4",
   "portal_recap": "Portal Recap", "portal_1": "Transfer Portal, Round 1", "portal_2": "Transfer Portal, Round 2",
-  "development": "Progression", "staff": "Staff", "conferences": "Change Conferences", "schedule": "Edit Schedule",
+  "development": "Progression", "cuts": "Roster Cuts", "staff": "Staff", "conferences": "Change Conferences", "schedule": "Edit Schedule",
   "ready": "Ready for Next Season" };
 offseason.ROSTER_LIMIT = 85;          // EA's roster limit (the real 2026 rosters; the NCAA's has been 105 since 2025)
 offseason.FILL_TO = 80;               // walk-ons and lower-level transfers top a roster up to this

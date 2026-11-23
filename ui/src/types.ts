@@ -1100,6 +1100,9 @@ export interface RecruitingBoard extends RecruitingWeek {
   board: BoardRow[];
   offers: number;
   offers_left: number;
+  /** how many are on your board, and the most it holds */
+  on_board: number;
+  board_cap: number;
   pitches: string[];
   hours_cost: Record<string, number>;
 }

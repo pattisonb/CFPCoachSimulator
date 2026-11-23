@@ -186,6 +186,8 @@ export interface OffView {
     mine: Grown[];
     walk_ons: number;
   } | null;
+  /** Roster Cuts (after Progress): null before the stage */
+  cuts: CutsView | null;
   your_staff: StaffMember[];
   staff: {
     leaving: StaffMember[];
@@ -247,4 +249,38 @@ export interface NextSchedule {
   weeks?: number[];
   /** where each game could move: its event id to the weeks, with the game of yours it would trade weeks with */
   moves?: Record<string, { week: number; swap: string | null; swap_name: string | null }[]>;
+}
+
+/** One of your players at Roster Cuts. */
+export interface CutPlayer extends OffPlayer {
+  /** his roster group (QB, RB, WR, ...) and how many you have there against the fewest a roster can carry */
+  group: string;
+  group_count: number;
+  group_floor: number;
+  /** what he gained (or lost) this offseason; null for a newcomer */
+  gain: number | null;
+  /** you have marked him to be cut */
+  marked: boolean;
+  /** why he cannot be cut: he signed with you or transferred in this year */
+  protected: "signee" | "transfer" | null;
+  /** you promised him a starting job this coming season: cutting him breaks it */
+  promised: boolean;
+  walk_on: boolean;
+}
+
+/** Roster Cuts (GET /offseason `cuts`): the limit, your roster, your marks, and once it is settled where each went. */
+export interface CutsView {
+  limit: number;
+  roster: number;
+  /** your roster with the marked players gone, and how far over the limit that still is */
+  left: number;
+  over: number;
+  marked: string[];
+  done: boolean;
+  /** every player on your roster, weakest first ([] once the cuts are made) */
+  players: CutPlayer[];
+  /** the players you cut: the school each walked on at (null: out of football), and whether it broke a promise */
+  out: (OffPlayer & { promised: boolean; to: string | null; to_name: string | null })[];
+  /** players another school cut who walked on with you */
+  joined?: (OffPlayer & { from: string; from_name: string })[];
 }

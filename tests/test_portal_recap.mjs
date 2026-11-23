@@ -114,10 +114,15 @@ test("portal recap", () => {
     while (api.loaded_state()["offseason"]["stage"] !== "development") advance(sid);
     v = G(sid, "offseason");
     rec = check_recap(sid, v);
+    advance(sid);                             // Roster Cuts: the staff decides, then on to Staff
+    api.call("POST", `/api/season/${sid}/offseason/cut`, { auto: true });
     advance(sid);
     const v2 = G(sid, "offseason");
     assert(v2["stage"] === "staff");
-    equal(check_recap(sid, v2), rec);
+    // (the rosters are filled after Roster Cuts now, so the groups still short have moved: the rest is as it was)
+    const but_short = (r) => ({ ...r, short: null });
+    equal(but_short(check_recap(sid, v2)), but_short(rec));
+    rec = check_recap(sid, v2);
     let v3;
     for (let i = 0; i < 3; i++) {             // Change Conferences, Edit Schedule, the recap
       advance(sid);

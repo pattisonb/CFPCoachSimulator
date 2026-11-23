@@ -1103,7 +1103,7 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   const told = (e) => {
     // his overall then, and a gain, as the page shows a rating (the stored event keeps the game's own scale)
     const o = get(e, "overall"), g = get(e, "gain");
-    const out = { ...e, ...(e["kind"] === "transfer" ? { from_name: name_of(e["from"]), to_name: name_of(e["to"]) } : {}) };
+    const out = { ...e, ...(e["kind"] === "transfer" || e["kind"] === "cut" ? { from_name: name_of(e["from"]), to_name: name_of(e["to"]) } : {}) };   // (a cut: the school that let him go, and the one he walked on at)
     if (isNumber(o)) {
       out["overall"] = _shown.overall(o);
       if (isNumber(g)) out["gain"] = _shown.gain(o - g, o);

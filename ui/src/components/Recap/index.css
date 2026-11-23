@@ -90,6 +90,32 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* with the Heisman's banner: it is the third and the narrowest, so the champion's and yours keep their room (and it
+   sits beside your season alone when there is no champion yet) */
+.recap__heroes.has-heisman {
+  grid-template-columns: repeat(2, minmax(0, 1.3fr)) minmax(260px, 0.8fr);
+}
+
+.recap__heroes.has-heisman.is-solo {
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.8fr);
+}
+
+/* a smaller window: the Heisman's banner is a strip of its own under the other two */
+@media (width <= 1700px) {
+  .recap__heroes.has-heisman {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recap__heroes.has-heisman.is-solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recap__heroes.has-heisman .recap__hero--heisman {
+    grid-column: 1 / -1;
+    min-height: 0;
+  }
+}
+
 .recap__hero {
   --c: var(--ink);
   --on: var(--paper-hi);
@@ -148,6 +174,33 @@
 .recap__hero p {
   font-size: var(--t-sm);
   font-weight: 700;
+}
+
+/* the Heisman's banner: his name a size down (a long one keeps its line), his season under it, his face at its end */
+.recap__hero--heisman {
+  padding-right: 96px;
+}
+
+.recap__hero--heisman h2 {
+  overflow: hidden;
+  font-size: var(--t-xl);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recap__hero--heisman .recap__hero-line {
+  font-weight: 400;
+}
+
+.recap__hero > .recap__hero-face {
+  position: absolute;
+  top: 50%;
+  right: var(--s3);
+  width: 68px;
+  height: 68px;
+  overflow: hidden;
+  border: var(--line) solid var(--ink);
+  transform: translateY(-50%);
 }
 
 /* the way to the Bracket: a small drawn bracket and its name, framed in the banner's own ink, at its right */
