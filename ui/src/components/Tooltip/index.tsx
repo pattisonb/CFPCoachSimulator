@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { tipLayer } from "./titleTips.ts";
 import "./index.css";
@@ -19,6 +19,8 @@ const MAX_WIDTH = 260;
 const EDGE = MAX_WIDTH / 2 + 8;
 /** *tune* Nearer the window's top than this, the tip shows under its target instead of over it. */
 const FLIP_UNDER = 90;
+/** *tune* A tip whose top would come nearer the window's top than this goes under its target too, however far down the target is. */
+const TOP_MARGIN = 4;
 
 /**
  * The game's own tooltip on anything: point at (or tab to) the children and an ink label with a pixel notch shows over
@@ -43,6 +45,16 @@ export default function Tooltip({ title, text, children, block, className }: Pro
   };
   const hide = () => setPlace(null);
 
+  // a long tip over a target near the top would run off the window: once it is drawn and found to, it goes under
+  // (before the page paints, so it is never seen cut off)
+  const tip = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const r = ref.current?.getBoundingClientRect();
+    const t = tip.current?.getBoundingClientRect();
+    if (!place || place.under || !r || !t) return;
+    if (t.top < TOP_MARGIN && window.innerHeight - r.bottom > r.top) setPlace({ ...place, top: r.bottom, under: true });
+  }, [place]);
+
   return (
     <span
       className={["tooltip", block && "tooltip--block", className].filter(Boolean).join(" ")}
@@ -58,6 +70,7 @@ export default function Tooltip({ title, text, children, block, className }: Pro
         createPortal(
           <span
             id={id}
+            ref={tip}
             role="tooltip"
             className={`tooltip__tip${place.under ? " tooltip__tip--under" : ""}`}
             style={{ left: place.left, top: place.top, maxWidth: MAX_WIDTH, ["--nudge" as string]: `${place.nudge}px` }}
