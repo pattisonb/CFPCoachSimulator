@@ -403,6 +403,22 @@ function season_review(p) {
 }
 api.route("GET", "/api/season/{season_id}/review", season_review);
 
+/** One finished week told for the Recap page (sim_js/news.js week_recap): `?week=N`, the latest without it. */
+function season_week_recap(p) {
+  const w = p.query["week"];
+  const week = w !== undefined && /^\d+$/.test(String(w)) ? parseInt(w, 10) : null;
+  return modules.news.week_recap(api._season_state(p.path["season_id"]), week);
+}
+api.route("GET", "/api/season/{season_id}/week_recap", season_week_recap);
+
+/** One finished week's Players of the Week (sim_js/news.js week_awards): `?week=N`, the latest without it. */
+function season_week_awards(p) {
+  const w = p.query["week"];
+  const week = w !== undefined && /^\d+$/.test(String(w)) ? parseInt(w, 10) : null;
+  return modules.news.week_awards(api._season_state(p.path["season_id"]), week);
+}
+api.route("GET", "/api/season/{season_id}/week_awards", season_week_awards);
+
 
 function season_resume(p) {
   // The committee's resume for every FBS team through `week` (default: now); with
@@ -1184,7 +1200,7 @@ Object.assign(api, {
   coach_options, coach_list, coach_get, coach_save, coach_delete,
   _save_loaded, _check_team, _need, _career_state, _recruiting_call, _offseason_state,
   season_week, season_team_schedule, schedule_edit_view, schedule_edit_swap, season_redshirt, season_position_options,
-  season_position, season_standings, season_review, season_resume, season_game, season_settings, season_settings_change,
+  season_position, season_standings, season_review, season_week_recap, season_week_awards, season_resume, season_game, season_settings, season_settings_change,
   recruiting_view, scouting_view, programs_view, office_view, headquarters_view, headquarters_plan, headquarters_save,
   recruiting_reports, prospect_search, national_classes, prospect_profile, recruit_action, recruit_plan, favorite_change,
   board_change, staff_change,

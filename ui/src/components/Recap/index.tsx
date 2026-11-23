@@ -14,6 +14,8 @@ import { lookOf } from "../../faces.ts";
 import { formatClass } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import PlayerLink from "../PlayerLink/index.tsx";
+import Week, { type WeekRecap } from "./Week.tsx";
+import WeekStepper from "../WeekStepper/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -21,6 +23,8 @@ interface Props {
   teams: Map<string, TeamCard>;
   /** open the Bracket (the champion's banner links to it: the playoff's rounds are told there) */
   onBracket?: () => void;
+  /** open a game's box score (This Week's games and lines) */
+  onBox?: (eventId: string) => void;
   /** a panel's name opens the page that tells it in full: your schedule, the stats (yours, or everyone's), the
    * rankings, the standings */
   onOpen?: (to: "schedule" | "stats-mine" | "stats" | "rankings" | "standings") => void;
@@ -132,8 +136,12 @@ const NATIONAL: [string, (s: Record<string, number>) => string][] = [
  * your best win and worst loss, your leaders, and the AD's grade at the end); then the country's: the champion and
  * the playoff's rounds, the conference champions, the top of the poll, the national leaders, and the teams that
  * surprised or disappointed.
+ *
+ * While the season is being played the page is the Weekly Recap (the player's design): This Week first (Week.tsx: the
+ * week just played, and any week before it by the stepper at the bar's end), the season so far on a second tab. Once
+ * the season ends it is the Season Recap alone.
  */
-export default function Recap({ season, teams, onBracket, onOpen }: Props) {
+export default function Recap({ season, teams, onBracket, onBox, onOpen }: Props) {
   const go = (to: Parameters<NonNullable<Props["onOpen"]>>[0]) => (onOpen ? () => onOpen(to) : undefined);
   const [view, setView] = useState<Review | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -162,8 +170,32 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
   const won = awards?.national?.heisman?.winner ?? null;
   const heisman: HeismanCandidate | null = won ?? awards?.race?.heisman?.candidates[0] ?? null;
 
-  const weekName = season.week_labels[String(season.current_week)] ?? m.week(season.current_week);
-  const status = view && <SectionStatus>{view.done ? m.final(view.year) : m.through(weekName)}</SectionStatus>;
+  // This Week: the week asked for (null: the latest one played), fetched again when a week is played
+  const [tab, setTab] = useState<"week" | "season">("week");
+  const [pick, setPick] = useState<number | null>(null);
+  const [wk, setWk] = useState<WeekRecap | null>(null);
+  useEffect(() => setPick(null), [season.id, season.current_week]);
+  useEffect(() => {
+    let live = true;
+    api<WeekRecap>(`/api/season/${season.id}/week_recap${pick != null ? `?week=${pick}` : ""}`)
+      .then((v) => live && setWk(v))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [season.id, season.current_week, pick]);
+  const weekly = !!view && !view.done;
+  const showWeek = weekly && tab === "week";
+  const nameOf = (w: number) => season.week_labels[String(w)] ?? m.weekN(w);
+
+  const weekName = season.week_labels[String(season.current_week)] ?? m.weekN(season.current_week);
+  const status =
+    view &&
+    (showWeek && wk?.week != null ? (
+      <WeekStepper weeks={wk.weeks} week={wk.week} name={nameOf} onPick={setPick} />
+    ) : (
+      <SectionStatus>{view.done ? m.final(view.year) : m.through(weekName)}</SectionStatus>
+    ));
   const team = (slug: string, name: string) => (
     <span className="recap__team">
       <Swatch team={teams.get(slug)} size={14} />
@@ -180,10 +212,31 @@ export default function Recap({ season, teams, onBracket, onOpen }: Props) {
 
   return (
     <div className="section-tabs__wrap">
-      <SectionTabs title={m.title} value="all" onChange={() => {}} tabs={[]} aside={status} />
-      <div className="recap">
+      <SectionTabs
+        title={weekly ? m.weekly : m.title}
+        value={tab}
+        onChange={setTab}
+        tabs={
+          weekly
+            ? [
+                { key: "week", label: m.tabs.week },
+                { key: "season", label: m.tabs.season },
+              ]
+            : []
+        }
+        aside={status}
+      />
+      <div className={`recap${showWeek ? " recap--week" : ""}`}>
         {!view || !me ? (
           <p className="recap__soft">{error ? m.loadError(error) : m.loading}</p>
+        ) : showWeek ? (
+          !wk ? (
+            <p className="recap__soft">{m.week.loading}</p>
+          ) : wk.week == null ? (
+            <p className="recap__soft">{m.week.none}</p>
+          ) : (
+            <Week view={wk} weekName={nameOf(wk.week)} season={season} teams={teams} onBox={onBox} />
+          )
         ) : (
           <>
             {/* the headline, two banners side by side and the same height: the champion in its colors (once there is

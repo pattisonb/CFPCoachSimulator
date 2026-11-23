@@ -442,3 +442,238 @@
 .recap__results li:first-child {
   border-top: 0;
 }
+
+/* ---- This Week (Week.tsx): the week just played ------------------------------------------------------------ */
+
+/* the three banners: your game and the game of the week the same width, the Boom the narrowest (as the Heisman's is) */
+.recap__heroes--week .recap__hero {
+  min-height: 148px;
+}
+
+/* a W or an L over the way to the box score */
+.recap__wl {
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* the game of the week: the two teams and their scores, the winner over the loser */
+.recap__hero h2.recap__duel {
+  display: grid;
+  gap: 2px;
+  font-size: var(--t-xl);
+}
+
+.recap__duel > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  max-width: 420px;
+}
+
+.recap__duel b {
+  font-variant-numeric: tabular-nums;
+}
+
+.recap__duel-lost {
+  opacity: 0.7;
+}
+
+/* what kind of game it was, stamped in the banner's corner */
+.recap__hero > .recap__hero-stamp {
+  position: absolute;
+  top: var(--s2);
+  right: var(--s2);
+}
+
+/* the Boom's banner has no face: it keeps its whole width for his line */
+.recap__hero--boom {
+  padding-right: var(--s4);
+}
+
+/* your week in tiles: your record and your ranking, then your own best lines, wider */
+.recap__nums--week {
+  grid-template-columns: repeat(2, minmax(0, 0.7fr)) repeat(3, minmax(0, 1.2fr));
+}
+
+.recap__nums--week dd {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recap__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--t-lg);
+}
+
+.recap__nums--week .recap__standout dd {
+  display: block;
+  font-size: var(--t-xl);
+  text-transform: uppercase;
+}
+
+.recap__standout--none {
+  grid-column: span 3;
+}
+
+/* a list row with two lines of words */
+.recap__two {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.recap__tall {
+  min-height: 44px;
+}
+
+/* This Week's lists start at the top and keep each row's own height (a short list never spreads to the foot) */
+.recap--week .recap__list {
+  grid-auto-rows: max-content;
+  align-content: start;
+}
+
+/* the cards: Boom Performances and Upsets are the widest (a name, a school and a line each), the rest share what is left */
+.recap--week .recap__cards {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.1fr);
+}
+
+@media (width <= 1180px) {
+  .recap--week .recap__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* a Boom: his place, his name and school, the game it came in; his line under them, the row's whole width */
+.recap__list > .recap__boom {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 2px 8px;
+}
+
+.recap__boom-who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recap__boom-line {
+  grid-column: 2 / -1;
+}
+
+/* a row, or its end, that opens the box score */
+.recap__rowlink {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  text-overflow: ellipsis;
+  background: none;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.recap__rowlink.recap__soft {
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+}
+
+.recap__rowlink.is-plain {
+  cursor: default;
+}
+
+.recap__rowlink:not(.is-plain):hover,
+.recap__rowlink:not(.is-plain):focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* an upset: the whole row is the way to its box score */
+.recap__rowlink.recap__upset {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+.recap__rowlink.recap__upset:hover {
+  text-decoration: none;
+}
+
+.recap__rowlink.recap__upset:hover .is-won {
+  text-decoration: underline;
+}
+
+/* the winner's chance before kickoff: a real long shot stands on the warning color */
+.recap__odds {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.recap__odds.is-stunner {
+  background: var(--warn);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+/* how many places a team moved */
+.recap__move {
+  flex: none;
+  width: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the teams new to the poll, and out of it: their marks in a line */
+.recap__inout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 4px;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+/* the week's headlines: what kind of news over the sentence */
+.recap__news {
+  flex-direction: column;
+  font-size: var(--t-sm);
+}
+
+.recap__news > * {
+  align-self: stretch;
+}
+
+.recap__newskind {
+  color: var(--ink-soft);
+}
+
+/* a narrower window: the tiles three across */
+@media (width <= 1180px) {
+  .recap__nums--week {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recap__standout--none {
+    grid-column: span 2;
+  }
+}

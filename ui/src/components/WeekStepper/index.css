@@ -1,0 +1,32 @@
+/* the week shown, with a step back and a step on, at a tab bar's end */
+.week-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.week-stepper__step {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  cursor: pointer;
+}
+
+.week-stepper__step:focus-visible {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.week-stepper__step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.week-stepper__step:hover:enabled {
+  background: var(--ink);
+  color: var(--paper-hi);
+}

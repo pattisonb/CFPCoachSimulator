@@ -53,6 +53,8 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
   const [busy, setBusy] = useState(false);
   /** the stage whose panels are showing: the current one unless you opened an earlier one */
   const [shown, setShown] = useState<string | null>(null);
+  /** the stage just finished whose results are still on the page (Roster Cuts: where each cut player went) */
+  const [results, setResults] = useState<string | null>(null);
   /** you have moved on from the AD's meeting this offseason (kept by this browser, a career and a year at a time) */
   const metKey = `cfp.off.met.${season.id}.${season.year}`;
   const [met, setMet] = useState(() => {
@@ -122,7 +124,11 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
         done();
         return onNextSeason(out.summary.id);
       }
-      setShown(null);
+      // the cuts are made: where each player went stays on the page until you move on (the player's note: he had
+      // to click back to Roster Cuts to see it)
+      const told = stage === "cuts" && ((out.cuts?.out?.length ?? 0) > 0 || (out.cuts?.joined?.length ?? 0) > 0);
+      setShown(told ? "cuts" : null);
+      setResults(told ? "cuts" : null);
       setV(out as OffView);
       done();
     } catch (e) {
@@ -209,6 +215,18 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
                 ) : showing.key === stage ? (
                   <button type="button" className="off__next" disabled={busy} onClick={advance}>
                     {busy ? m.working : ready ? m.startSeason(v.year) : next ? m.onTo(next.name) : m.advance}
+                    <ArrowRight size={16} weight="bold" aria-hidden="true" />
+                  </button>
+                ) : showing.key === results ? (
+                  <button
+                    type="button"
+                    className="off__next"
+                    onClick={() => {
+                      setShown(null);
+                      setResults(null);
+                    }}
+                  >
+                    {m.onTo(steps[at]?.name ?? v.stage_name)}
                     <ArrowRight size={16} weight="bold" aria-hidden="true" />
                   </button>
                 ) : (

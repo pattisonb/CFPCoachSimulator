@@ -363,7 +363,316 @@ export function league_news(state, since_week) {
   return out;
 }
 
+// ---- the Weekly Recap (GET /api/season/{id}/week_recap) -------------------------------------------------------
+// One finished week told for the Recap page: your game and its standouts, the game of the week, the upsets, the
+// biggest performances in the country, the poll's risers and fallers, and how the top 25 did. Read only, as the news is.
+
+news.RECAP_BOOMS = 8;             // *tune* the most Boom Performances a week shows
+news.RECAP_UPSETS = 6;            // *tune* the most upsets a week shows
+news.RECAP_MOVERS = 5;            // *tune* the most risers, and the most fallers, a week shows
+news.RECAP_STANDOUTS = 3;         // *tune* your own best lines in your game
+news.RECAP_BOOM_FLOOR = 28;       // *tune* a line scoring under this is a good game, not a Boom
+// what one of each is worth when a game's lines are ranked (a 300-yard, 3-touchdown passer is about 24)
+news._BOOM = { pass_yards: 0.04, passing_touchdowns: 4, interceptions_thrown: -2, rush_yards: 0.1, rushing_touchdowns: 6,
+  receptions: 0.5, receiving_yards: 0.1, receiving_touchdowns: 6, sacks: 5, tackles_for_loss: 2, solo_tackles: 1,
+  assisted_tackles: 0.5, interceptions: 7, forced_fumbles: 4, passes_defended: 2, defensive_touchdowns: 6,
+  kickoff_return_touchdowns: 6, punt_return_touchdowns: 6 };
+
+export function _boom_score(st) {
+  let s = 0.0;
+  for (const [k, w] of Object.entries(news._BOOM)) s += w * (get(st, k, 0) || 0);
+  return round(s, 1);
+}
+
+/** One player's game in a line: the numbers of his position, nothing he did not do. */
+export function _game_stat_line(position, st) {
+  const n = (k) => get(st, k, 0) || 0;
+  const whole = (v) => (Number.isInteger(v) ? String(v) : String(round(v, 1)));
+  const some = (v, one, many = null) => (v ? `${whole(v)} ${v === 1 ? one : many ?? one + "s"}` : null);
+  const parts = [];
+  if (n("pass_attempts") >= 5) {
+    parts.push(`${n("completions")}/${n("pass_attempts")}`, `${n("pass_yards")} Yds`, `${n("passing_touchdowns")} TD`, `${n("interceptions_thrown")} INT`);
+    if (n("rush_yards") >= 30 || n("rushing_touchdowns")) parts.push(`${n("rush_yards")} Rush Yds`, some(n("rushing_touchdowns"), "Rush TD"));
+    return parts.filter(Boolean).join(", ");
+  }
+  if (n("carries") >= 5 && n("rush_yards") >= n("receiving_yards")) {
+    parts.push(`${n("carries")} Car`, `${n("rush_yards")} Yds`, `${n("rushing_touchdowns")} TD`);
+    if (n("receiving_yards") >= 30 || n("receiving_touchdowns")) parts.push(`${n("receptions")} Rec`, `${n("receiving_yards")} Rec Yds`, some(n("receiving_touchdowns"), "Rec TD"));
+    return parts.filter(Boolean).join(", ");
+  }
+  if (n("receptions")) {
+    parts.push(`${n("receptions")} Rec`, `${n("receiving_yards")} Yds`, `${n("receiving_touchdowns")} TD`);
+    if (n("rush_yards") >= 30 || n("rushing_touchdowns")) parts.push(`${n("rush_yards")} Rush Yds`, some(n("rushing_touchdowns"), "Rush TD"));
+    return parts.filter(Boolean).join(", ");
+  }
+  const tk = n("solo_tackles") + n("assisted_tackles");
+  parts.push(some(tk, "Tackle"), some(n("sacks"), "Sack"), n("tackles_for_loss") ? `${whole(n("tackles_for_loss"))} TFL` : null,
+    n("interceptions") ? `${n("interceptions")} INT` : null, n("passes_defended") ? `${n("passes_defended")} PBU` : null,
+    n("forced_fumbles") ? `${n("forced_fumbles")} FF` : null, some(n("defensive_touchdowns"), "TD"));
+  return parts.filter(Boolean).join(", ");
+}
+
+export function recap_weeks(state) {
+  // The weeks with a finished game, oldest first.
+  const out = new Set();
+  for (const g of Object.values(state["games"])) if (truthy(get(g, "played"))) out.add(g["week"]);
+  return sorted(Array.from(out));
+}
+
+export function week_recap(state, week = null) {
+  const season = modules.season;
+  const weeks = news.recap_weeks(state);
+  if (!weeks.length) return { week: null, weeks: [], latest: null };
+  const latest = weeks[weeks.length - 1];
+  if (week === null || week === undefined || !weeks.includes(week)) week = latest;
+  const teams = season.load_teams();
+  const fbs = season.fbs_only(teams);
+  const me = state["team"];
+  const games = sorted(Object.values(state["games"]).filter((g) => g["week"] === week && truthy(get(g, "played"))), (g) => String(g["event_id"]));
+  // the poll the week was played under, and the one it made (the nearest one either way: some weeks have no poll)
+  const poll_at = (w, step) => {
+    for (; w >= 0 && w <= latest + 1; w += step) if (truthy(get(get(state["polls"], String(w)) || {}, "ap"))) return w;
+    return null;
+  };
+  const before_w = poll_at(week - 1, -1);
+  const after_w = own(state["polls"], String(week)) && truthy(get(state["polls"][String(week)], "ap")) ? week : null;
+  const before = before_w === null ? {} : news._ap_rank(state, before_w);
+  const after = after_w === null ? null : news._ap_rank(state, after_w);
+  const rank_of = (slug) => (own(before, slug) ? before[slug] : null);
+  const abbr = (slug) => get(get(teams, slug) || {}, "abbreviation") || null;
+
+  const line = (g) => {
+    const home_won = g["home_score"] > g["away_score"];
+    const [w, l] = home_won ? [g["home"], g["away"]] : [g["away"], g["home"]];
+    return { event_id: g["event_id"], has_box: season.has_box(state, g), title: get(g, "title"), kind: get(g, "kind"),
+      winner: w, loser: l, winner_name: season.team_display(w, teams), loser_name: season.team_display(l, teams),
+      winner_rank: rank_of(w), loser_rank: rank_of(l), winner_score: Math.max(g["home_score"], g["away_score"]),
+      loser_score: Math.min(g["home_score"], g["away_score"]), overtime: get(g, "overtime", 0) || 0,
+      winner_home: home_won, neutral: truthy(get(g, "neutral")) };
+  };
+
+  // ---- the upsets: an unranked team over a ranked one, a ranked team over one well above it, or a real long shot
+  const upsets = [];
+  for (const g of games) {
+    if (!fbs.has(g["home"]) || !fbs.has(g["away"])) continue;
+    const l_ = line(g);
+    const chance = news._pregame_chance(teams, g, l_["winner_home"] ? "home" : "away");
+    const wr = l_["winner_rank"], lr = l_["loser_rank"];
+    const over_ranked = wr === null && lr !== null;
+    const long_shot = chance <= news.UPSET_CHANCE && !(wr !== null && lr !== null && wr < lr);
+    if (!(over_ranked || long_shot)) continue;
+    const size = (lr !== null ? 30 - lr : 0) + round(40 * Math.max(0, 0.5 - chance)) + (long_shot ? 10 : 0);
+    upsets.push({ ...l_, chance: round(100 * chance), stunner: long_shot, _size: size });
+  }
+  upsets.sort((a, b) => cmp(-a["_size"], -b["_size"]));
+
+  // ---- the game of the week: ranked teams, a close score, overtime, an upset (never your own: it has its banner)
+  let gotw = null, gotw_score = -1;
+  for (const g of games) {
+    if (!fbs.has(g["home"]) || !fbs.has(g["away"]) || g["home"] === me || g["away"] === me) continue;
+    const l_ = line(g);
+    const margin = l_["winner_score"] - l_["loser_score"];
+    const ranks = [l_["winner_rank"], l_["loser_rank"]].filter((r) => r !== null);
+    const s = sum(ranks.map((r) => 30 - r)) + (ranks.length === 2 ? 25 : 0) + Math.max(0, 17 - margin) + 6 * l_["overtime"]
+      + (upsets.some((u) => u["event_id"] === g["event_id"]) ? 20 : 0);
+    if (s > gotw_score) {
+      gotw_score = s;
+      gotw = { ...l_, tag: upsets.some((u) => u["event_id"] === g["event_id"]) ? "upset" : l_["overtime"] ? "overtime"
+        : ranks.length === 2 ? "ranked" : margin <= 7 ? "close" : null };
+    }
+  }
+
+  // ---- the lines: every player's game from the box scores, scored; the best in the country, and your own best
+  const booms = [], mine_lines = [];
+  for (const g of games) {
+    const involves_me = g["home"] === me || g["away"] === me;
+    if (!(fbs.has(g["home"]) && fbs.has(g["away"])) && !involves_me) continue;
+    const box = season.load_box(state, g["event_id"], true);
+    if (box === null) continue;
+    for (const [side, opp] of [["home", "away"], ["away", "home"]]) {
+      const slug = g[side];
+      if (!fbs.has(slug)) continue;
+      const won = (g["home_score"] > g["away_score"]) === (side === "home");
+      for (const p of news._player_side(box, side)) {
+        const st = get(p, "stats") || {};
+        const score = news._boom_score(st);
+        if (score <= 0) continue;
+        const text = news._game_stat_line(p["position"], st);
+        if (!text) continue;
+        const row = { team: slug, team_name: news._name(teams, slug), name: p["name"], position: p["position"], line: text,
+          opponent: g[opp], opponent_abbr: abbr(g[opp]), opponent_name: season.team_display(g[opp], teams), won,
+          event_id: g["event_id"], mine: slug === me, _score: score };
+        if (slug === me) mine_lines.push(row);
+        if (fbs.has(g[opp]) && score >= news.RECAP_BOOM_FLOOR) booms.push(row);      // never stats padded against a stand-in
+      }
+    }
+  }
+  const by_score = (a, b) => cmp(-a["_score"], -b["_score"]) || cmp(a["name"], b["name"]);
+  booms.sort(by_score);
+  mine_lines.sort(by_score);
+  const bare = (rows) => rows.map((r) => { const o = { ...r }; delete o["_score"]; delete o["_size"]; return o; });
+
+  // ---- the poll: who rose and fell, who came in and who dropped out
+  const risers = [], fallers = [], entered = [], dropped = [];
+  let poll = [];
+  if (after !== null) {
+    poll = state["polls"][String(after_w)]["ap"];
+    for (const e of poll) {
+      const was = own(before, e["team"]) ? before[e["team"]] : null;
+      const row = { team: e["team"], name: e["name"], rank: e["rank"], previous: was, record: get(e, "record"), move: was === null ? null : was - e["rank"] };
+      if (was === null) entered.push(row);
+      else if (row["move"] > 0) risers.push(row);
+      else if (row["move"] < 0) fallers.push(row);
+    }
+    for (const [t, r] of sorted(Object.entries(before), (x) => x[1])) {
+      if (!own(after, t)) dropped.push({ team: t, name: news._name(teams, t), rank: null, previous: r, record: null, move: null });
+    }
+    risers.sort((a, b) => cmp(-a["move"], -b["move"]) || cmp(a["rank"], b["rank"]));
+    fallers.sort((a, b) => cmp(a["move"], b["move"]) || cmp(a["rank"], b["rank"]));
+  }
+
+  // ---- how the top 25 did
+  const scores = [];
+  for (const g of games) {
+    for (const [side, opp] of [["home", "away"], ["away", "home"]]) {
+      const r = rank_of(g[side]);
+      if (r === null) continue;
+      const [pf, pa] = season._scores_for(g, side === "home");
+      scores.push({ rank: r, team: g[side], name: news._name(teams, g[side]), won: pf > pa, points_for: pf, points_against: pa,
+        opponent: g[opp], opponent_name: season.team_display(g[opp], teams), opponent_rank: rank_of(g[opp]),
+        venue: season._venue(g, side === "home"), overtime: get(g, "overtime", 0) || 0, event_id: g["event_id"], has_box: season.has_box(state, g) });
+    }
+  }
+  scores.sort((a, b) => cmp(a["rank"], b["rank"]));
+
+  // ---- your week
+  const mg = games.find((g) => g["home"] === me || g["away"] === me);
+  let my_game = null;
+  if (mg !== undefined) {
+    const home = mg["home"] === me, opp = home ? mg["away"] : mg["home"];
+    const [pf, pa] = season._scores_for(mg, home);
+    my_game = { event_id: mg["event_id"], has_box: season.has_box(state, mg), title: get(mg, "title"), opponent: opp,
+      opponent_abbr: abbr(opp), opponent_name: season.team_display(opp, teams), opponent_rank: rank_of(opp), venue: season._venue(mg, home),
+      won: pf > pa, points_for: pf, points_against: pa, overtime: get(mg, "overtime", 0) || 0 };
+  }
+  const rec = get(season._records(state, week, true), me);
+  const mine = { game: my_game, record: truthy(rec) ? season._record_str(rec) : null, rank_before: rank_of(me),
+    rank: after !== null ? (own(after, me) ? after[me] : null) : rank_of(me), standouts: bare(mine_lines.slice(0, news.RECAP_STANDOUTS)) };
+
+  return { week, weeks, latest, year: season.season_year(state), mine, game_of_week: gotw,
+    upsets: bare(upsets.slice(0, news.RECAP_UPSETS)), booms: bare(booms.slice(0, news.RECAP_BOOMS)),
+    risers: risers.slice(0, news.RECAP_MOVERS), fallers: fallers.slice(0, news.RECAP_MOVERS), entered, dropped,
+    has_poll: after !== null, top_five: poll.slice(0, 5).map((e) => ({ team: e["team"], name: e["name"], rank: e["rank"],
+      previous: own(before, e["team"]) ? before[e["team"]] : null, record: get(e, "record") })), scores,
+    news: news.week_news(state, week).filter((i) => ["recruiting", "injury", "streak"].includes(i["kind"])) };
+}
+
+// ---- the Players of the Week (GET /api/season/{id}/week_awards) -----------------------------------------------
+// One finished week's honors for the Awards page (the player's design): the national Offensive, Defensive and
+// Special Teams Player of the Week, and the same three in each conference. Read only: each is the best line of its
+// kind in the week's box scores, a winner's line worth a little more, a tie going to the name first in the alphabet.
+
+news.POTW_WIN = 1.12;             // *tune* a line in a win is worth this much more
+news.POTW_ALSO = 2;               // *tune* how many more are named under a national winner
+news._POTW = {
+  offense: { pass_yards: 0.04, passing_touchdowns: 4, interceptions_thrown: -2, rush_yards: 0.1, rushing_touchdowns: 6,
+    receptions: 0.5, receiving_yards: 0.1, receiving_touchdowns: 6 },
+  defense: { sacks: 5, tackles_for_loss: 2, solo_tackles: 1, assisted_tackles: 0.5, interceptions: 7, forced_fumbles: 4,
+    passes_defended: 2, defensive_touchdowns: 6 },
+  special: { fg_made: 3, fg_50_made: 2, pat_made: 0.5, punts_inside_20: 1.5, kickoff_return_yards: 0.08, punt_return_yards: 0.12,
+    kickoff_return_touchdowns: 7, punt_return_touchdowns: 7 },
+};
+news.POTW_KINDS = ["offense", "defense", "special"];
+
+export function _potw_score(kind, st) {
+  let s = 0.0;
+  for (const [k, w] of Object.entries(news._POTW[kind])) s += w * (get(st, k, 0) || 0);
+  if (kind === "special") {
+    s -= 2 * Math.max(0, (get(st, "fg_attempted", 0) || 0) - (get(st, "fg_made", 0) || 0));       // a miss costs
+    const punts = get(st, "punts", 0) || 0;
+    if (punts >= 3) s += 0.4 * Math.max(0, (get(st, "punt_yards", 0) || 0) / punts - 40);              // a punter's average over 40
+  }
+  return round(s, 2);
+}
+
+/** A kicker's, a punter's or a returner's game in a line. */
+export function _special_line(st) {
+  const n = (k) => get(st, k, 0) || 0;
+  const parts = [];
+  if (n("fg_attempted") || n("pat_attempts")) {
+    parts.push(`${n("fg_made")}/${n("fg_attempted")} FG`);
+    if (n("long_fg")) parts.push(`Long ${n("long_fg")}`);
+    if (n("pat_attempts")) parts.push(`${n("pat_made")}/${n("pat_attempts")} PAT`);
+  }
+  if (n("punts")) {
+    parts.push(`${n("punts")} ${n("punts") === 1 ? "Punt" : "Punts"}`, `${(n("punt_yards") / n("punts")).toFixed(1)} Avg`);
+    if (n("punts_inside_20")) parts.push(`${n("punts_inside_20")} Inside 20`);
+  }
+  const ret = n("kickoff_returns") + n("punt_returns");
+  if (ret) {
+    const td = n("kickoff_return_touchdowns") + n("punt_return_touchdowns");
+    parts.push(`${ret} ${ret === 1 ? "Return" : "Returns"}`, `${n("kickoff_return_yards") + n("punt_return_yards")} Yds`);
+    if (td) parts.push(`${td} TD`);
+  }
+  return parts.join(", ");
+}
+
+export function week_awards(state, week = null) {
+  const season = modules.season;
+  const weeks = news.recap_weeks(state);
+  if (!weeks.length) return { week: null, weeks: [], latest: null, national: null, conferences: [] };
+  const latest = weeks[weeks.length - 1];
+  if (week === null || week === undefined || !weeks.includes(week)) week = latest;
+  const teams = season.load_teams();
+  const fbs = season.fbs_only(teams);
+  const me = state["team"];
+  const rank = news._ap_rank(state, week - 1);
+  const games = sorted(Object.values(state["games"]).filter((g) => g["week"] === week && truthy(get(g, "played"))), (g) => String(g["event_id"]));
+  const rows = { offense: [], defense: [], special: [] };
+  for (const g of games) {
+    if (!fbs.has(g["home"]) || !fbs.has(g["away"])) continue;          // never a line padded against a stand-in
+    const box = season.load_box(state, g["event_id"], true);
+    if (box === null) continue;
+    for (const [side, opp] of [["home", "away"], ["away", "home"]]) {
+      const slug = g[side];
+      const won = (g["home_score"] > g["away_score"]) === (side === "home");
+      const [pf, pa] = season._scores_for(g, side === "home");
+      for (const p of news._player_side(box, side)) {
+        const st = get(p, "stats") || {};
+        for (const kind of news.POTW_KINDS) {
+          if (kind !== "special" && get(p, "unit") !== kind) continue;
+          const score = news._potw_score(kind, st) * (won ? news.POTW_WIN : 1.0);
+          if (score <= 0) continue;
+          const text = kind === "special" ? news._special_line(st) : news._game_stat_line(p["position"], st);
+          if (!text) continue;
+          rows[kind].push({ team: slug, team_name: news._name(teams, slug), team_rank: own(rank, slug) ? rank[slug] : null,
+            conference: get(teams[slug], "conference") || null, name: p["name"], position: p["position"], line: text,
+            opponent: g[opp], opponent_abbr: get(get(teams, g[opp]) || {}, "abbreviation") || null,
+            opponent_name: season.team_display(g[opp], teams), won, points_for: pf, points_against: pa,
+            event_id: g["event_id"], mine: slug === me, _score: score });
+        }
+      }
+    }
+  }
+  const bare = (r) => { if (r === null || r === undefined) return null; const o = { ...r }; delete o["_score"]; return o; };
+  const national = {}, by_conf = {};
+  for (const kind of news.POTW_KINDS) {
+    rows[kind].sort((a, b) => cmp(-a["_score"], -b["_score"]) || cmp(a["name"], b["name"]) || cmp(a["team"], b["team"]));
+    national[kind] = { winner: bare(rows[kind][0]), also: rows[kind].slice(1, 1 + news.POTW_ALSO).map(bare) };
+    for (const r of rows[kind]) {
+      if (r["conference"] === null) continue;
+      if (!own(by_conf, r["conference"])) by_conf[r["conference"]] = {};
+      if (!own(by_conf[r["conference"]], kind)) by_conf[r["conference"]][kind] = bare(r);       // the first is the best
+    }
+  }
+  const mine_conf = get(state, "conference") || get(get(teams, me) || {}, "conference") || null;
+  const conferences = sorted(Object.keys(by_conf), (c) => [c === mine_conf ? 0 : 1, c]).map((c) => ({ conference: c, mine: c === mine_conf,
+    offense: get(by_conf[c], "offense"), defense: get(by_conf[c], "defense"), special: get(by_conf[c], "special") }));
+  return { week, weeks, latest, year: season.season_year(state), national, conferences };
+}
+
 Object.assign(news, {
+  _boom_score, _game_stat_line, recap_weeks, week_recap, _potw_score, _special_line, week_awards,
   _name, _ap_rank, _ranked, _pregame_chance, _when, _score, _upsets, _rankings, _player_side, _big_games, _streaks, _recruiting,
   _injuries, _with, week_news, league_news,
 });

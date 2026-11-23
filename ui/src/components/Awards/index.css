@@ -927,3 +927,214 @@
   text-overflow: clip;
   white-space: nowrap;
 }
+
+/* ---- This Week (Week.tsx): the Players of the Week ---------------------------------------------------------- */
+
+/* the three national honors: banners side by side, the same height, each in its winner's colors */
+.aw-week__nation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--s3);
+}
+
+.aw-week__banner {
+  --c: var(--ink);
+  --on: var(--paper-hi);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--s3) var(--s4) 0;
+  background: var(--c);
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.aw-week__banner > * {
+  position: relative;
+}
+
+/* the school's letters, huge, slanted and faint, off the banner's right edge */
+.aw-week__banner > .aw-week__mark {
+  position: absolute;
+  top: -18px;
+  right: -12px;
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -6px;
+  opacity: 0.14;
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
+
+.aw-week__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.aw-week__banner h2 {
+  overflow: hidden;
+  margin-top: 4px;
+  font-size: var(--t-2xl);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.aw-week__who {
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+/* his game: the line large enough to read across the room */
+.aw-week__line {
+  margin-top: 4px;
+  font-size: var(--t-lg);
+  font-weight: 700;
+}
+
+.aw-week__game {
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the two who ran him closest: a strip across the banner's foot, on paper */
+.aw-week__also {
+  display: grid;
+  margin: auto calc(-1 * var(--s4)) 0;
+  padding: 6px var(--s4);
+  background: var(--paper-hi);
+  color: var(--ink);
+  border-top: var(--line) solid var(--ink);
+  list-style: none;
+}
+
+.aw-week__banner > .aw-week__line + .aw-week__game {
+  margin-bottom: var(--s3);
+}
+
+.aw-week__also li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 3px 0;
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.aw-week__also li > span {
+  color: var(--ink-soft);
+}
+
+.aw-week__also li > .aw-week__also-line {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+}
+
+/* a card a conference, its three honors a row each; yours first, and marked across its top */
+.aw-week__confs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  align-items: stretch;
+  gap: var(--s3);
+}
+
+.aw-week__conf {
+  margin: 0;
+}
+
+.aw-week__conf.is-mine {
+  box-shadow: inset 0 4px 0 var(--team, var(--ink));
+}
+
+.aw-week__rows {
+  display: grid;
+  list-style: none;
+}
+
+.aw-week__rows li {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px var(--s2);
+  padding: 7px 4px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.aw-week__rows li:first-child {
+  border-top: 0;
+}
+
+.aw-week__rows li.is-mine {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 0 -2px 0 var(--ink);
+}
+
+.aw-week__kind {
+  grid-row: 1 / span 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+}
+
+/* his name and school on the row's first line with the game at its end; his line under them, the row's width */
+.aw-week__pick {
+  display: contents;
+}
+
+.aw-week__pick-line {
+  grid-row: 2;
+  grid-column: 2 / -1;
+}
+
+.aw-week__pick-who {
+  grid-row: 1;
+  grid-column: 2;
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.aw-week__soft {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--t-sm);
+  text-overflow: ellipsis;
+}
+
+.aw-week__result {
+  grid-row: 1;
+  grid-column: 3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* a narrower window: the banners stack, the conferences one across */
+@media (width <= 1180px) {
+  .aw-week__nation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aw-week__confs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

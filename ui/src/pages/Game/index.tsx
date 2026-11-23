@@ -560,7 +560,11 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
           active={section.key}
           onSection={open}
           // the offseason's portal: the same page works the portal, so it goes by that name (the player's ask)
-          names={portalNamed ? { recruiting: m.portal } : undefined}
+          // and the recap is the week's while the season is played, the season's once it is over
+          names={{
+            ...(portalNamed && { recruiting: m.portal }),
+            ...(season && !season.done && { recap: m.weeklyRecap }),
+          }}
           // the Offseason joins the list when the season is over (it stays while you are on it, an address typed by hand)
           hide={season && !season.done && section.key !== "offseason" ? ["offseason"] : undefined}
           theme={theme}
@@ -688,6 +692,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                         season={season}
                         teams={bySlug}
                         onBracket={() => open("bracket")}
+                        onBox={openBox}
                         onOpen={(to) => {
                           // the stats open on the players, yours alone or the whole league's
                           if (to === "stats" || to === "stats-mine")

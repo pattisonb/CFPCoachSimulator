@@ -8,6 +8,8 @@ import Swatch from "../Swatch/index.tsx";
 import Wordmark from "../Wordmark/index.tsx";
 import { AllAmericaTeams, Coaches, Conferences, NationalTable } from "./More.tsx";
 import { SAMPLE } from "./sample.ts";
+import Week, { type WeekAwards } from "./Week.tsx";
+import WeekStepper from "../WeekStepper/index.tsx";
 import { api } from "../../api.ts";
 import { inkOn } from "../../colors.ts";
 import { lookOf, staffFace, type Face as FaceSpec } from "../../faces.ts";
@@ -28,7 +30,7 @@ import type {
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
-type Tab = "overview" | "heisman" | "national" | "coaches" | "allAmerica" | "conferences" | "team";
+type Tab = "week" | "overview" | "heisman" | "national" | "coaches" | "allAmerica" | "conferences" | "team";
 type Group = "all" | "poy" | "offense" | "defense" | "special";
 const GROUPS: Group[] = ["all", "poy", "offense", "defense", "special"];
 
@@ -168,7 +170,25 @@ function honorsOf(
  * it's the live race ("Leader"); then the results ("Winner"). Before Week 4, with no race yet, it shows a sample.
  */
 export default function Awards({ season, teams, coach }: Props) {
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(season.done ? "overview" : "week");
+  // the Players of the Week: the week asked for (null: the latest one played), fetched again when a week is played
+  const [pick, setPick] = useState<number | null>(null);
+  const [wk, setWk] = useState<WeekAwards | null>(null);
+  useEffect(() => setPick(null), [season.id, season.current_week]);
+  useEffect(() => {
+    let on = true;
+    api<WeekAwards>(`/api/season/${season.id}/week_awards${pick != null ? `?week=${pick}` : ""}`)
+      .then((v) => on && setWk(v))
+      .catch(() => {});
+    return () => {
+      on = false;
+    };
+  }, [season.id, season.current_week, pick]);
+  // the weekly honors lead the page while the season is played; once it is over the season's own awards do
+  const weekly = !season.done;
+  useEffect(() => {
+    if (!weekly) setTab((t) => (t === "week" ? "overview" : t));
+  }, [weekly]);
   const [view, setView] = useState<AwardsView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [group, setGroup] = useState<Group>("all");
@@ -230,9 +250,21 @@ export default function Awards({ season, teams, coach }: Props) {
           title={m.title}
           value={tab}
           onChange={setTab}
-          aside={status}
+          aside={
+            tab === "week" && wk?.week != null ? (
+              <WeekStepper
+                weeks={wk.weeks}
+                week={wk.week}
+                name={(w) => season.week_labels[w] ?? `Week ${w}`}
+                onPick={setPick}
+              />
+            ) : (
+              status
+            )
+          }
           tabs={[
-            { key: "overview", label: m.tabs.overview },
+            ...(weekly ? [{ key: "week" as const, label: m.tabs.week }] : []),
+            { key: "overview", label: weekly ? m.tabs.overview : m.tabs.overviewDone },
             { key: "heisman", label: m.tabs.heisman },
             { key: "national", label: m.tabs.national },
             { key: "coaches", label: m.tabs.coaches },
@@ -247,6 +279,11 @@ export default function Awards({ season, teams, coach }: Props) {
           </p>
         ) : (
           <>
+            {weekly && (
+              <SectionPane shown={tab === "week"}>
+                {wk ? <Week view={wk} teams={teams} /> : <p className="aw__note">{m.loading}</p>}
+              </SectionPane>
+            )}
             <SectionPane shown={tab === "overview"}>
               <div className="aw__scroll">
                 {sample && <SampleNote>{m.sampleTip}</SampleNote>}

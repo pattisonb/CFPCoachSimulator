@@ -3,7 +3,9 @@ import { ordinal } from "../../format.ts";
 export const messages = {
   title: "Awards",
   tabs: {
-    overview: "Overview",
+    week: "This Week",
+    overview: "Season Races",
+    overviewDone: "Overview",
     heisman: "Heisman",
     national: "National",
     coaches: "Coaches",
@@ -11,6 +13,33 @@ export const messages = {
     conferences: "Conferences",
   },
   loading: "Loading the awards…",
+
+  // the Players of the Week: the Awards page while the season is played
+  week: {
+    none: "No week has been played yet. The Players of the Week are named after the first one.",
+    national: {
+      offense: "National Offensive Player of the Week",
+      defense: "National Defensive Player of the Week",
+      special: "National Special Teams Player of the Week",
+    },
+    kinds: {
+      offense: "Offensive Player of the Week",
+      defense: "Defensive Player of the Week",
+      special: "Special Teams Player of the Week",
+    },
+    kindShort: { offense: "Offense", defense: "Defense", special: "Special Teams" },
+    conferences: "Conference Players of the Week",
+    confShort: { "American Athletic Conference": "American", "FBS Independent": "Independents" } as Record<
+      string,
+      string
+    >,
+    yours: "Your Conference",
+    also: "Also Considered",
+    nobody: "Nobody stood out.",
+    ranked: (rank: number, name: string) => `(${rank}) ${name}`,
+    who: (pos: string, team: string) => `${pos} · ${team}`,
+    game: (won: boolean, pf: number, pa: number, opp: string) => `${won ? "W" : "L"} ${pf}-${pa} vs ${opp}`,
+  },
   loadError: (msg: string) => `Couldn't load the awards: ${msg}.`,
 
   // the status at the bar's end
