@@ -22,6 +22,8 @@ export const messages = {
     cold: "Cold",
     gone: "Elsewhere",
   } as Record<string, string>,
+  /** the Committed stage once the class has signed */
+  signedStage: "Signed",
   search: "Search Your Board",
   position: "Position",
   allPositions: "Any Pos",

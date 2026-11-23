@@ -190,6 +190,10 @@ export default function Recruiting({
     () => (sort === "chance" ? byChance(team) : (a: BoardRow, b: BoardRow) => a.national_rank - b.national_rank),
     [sort, team],
   );
+  // once your whole class has signed (after a signing day), the stage reads Signed, not Committed
+  const yours = all.filter((r) => stageOf(r, team) === "committed");
+  const classSigned = yours.length > 0 && yours.every((r) => r.signed === team);
+  const stageName = (s: StageKey) => (s === "committed" && classSigned ? m.signedStage : m.stageNames[s]);
   const groups = useMemo(
     () =>
       STAGES.filter((s) => stage === "all" || isAcross(stage) || stage === s)
@@ -354,7 +358,7 @@ export default function Recruiting({
               .filter((s) => s === "all" || s === stage || counts[s])
               .map((s) => ({
                 value: s,
-                label: m.stageNames[s],
+                label: stageName(s),
                 count: counts[s] ?? 0,
               }))}
             onChange={(s) => setStage(s as StageKey)}
@@ -393,10 +397,10 @@ export default function Recruiting({
         <div className="recruiting__list">
           {groups.length === 0 && <p className="recruiting__soft">{m.noneAtStage}</p>}
           {groups.map((g) => (
-            <section key={g.key} className="recruiting__group" aria-label={m.stageNames[g.key]}>
+            <section key={g.key} className="recruiting__group" aria-label={stageName(g.key)}>
               {(stage === "all" || isAcross(stage)) && (
                 <h2 className="label recruiting__group-title">
-                  {m.stageNames[g.key]} <span>{g.rows.length}</span>
+                  {stageName(g.key)} <span>{g.rows.length}</span>
                 </h2>
               )}
               <ul className="recruiting__rows">
@@ -746,7 +750,9 @@ function RecruitPanel({
             .join(" · ")}
           tags={
             <>
-              <HeadTag solid={stage === "committed"}>{m.stageNames[stage]}</HeadTag>
+              <HeadTag solid={stage === "committed"}>
+                {stage === "committed" && r.signed === team ? m.signedStage : m.stageNames[stage]}
+              </HeadTag>
               {/* a transfer has a class, not stars */}
               {r.portal ? r.cls && <HeadTag>{formatClass(r.cls)}</HeadTag> : <Stars n={r.stars} />}
               <RecruitFlags

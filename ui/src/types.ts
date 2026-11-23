@@ -335,6 +335,8 @@ export interface NewsItem {
   won?: boolean;
   points_for?: number;
   points_against?: number;
+  /** the opponent's slug */
+  opponent?: string;
   opponent_name?: string;
   venue?: "home" | "away" | "neutral";
   overtime?: number;

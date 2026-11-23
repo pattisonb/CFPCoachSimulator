@@ -328,10 +328,17 @@ export function _name_of(state, pid) {
 
 
 export function _school_name(slug) {
-  // A school's name for a line: an FCS stand-in is only ever its region label (season.team_display), never its placeholder name.
+  // A school's name for a line: an FCS stand-in is only ever its own name (season.team_display), never a placeholder's.
   const season = modules.season;
   const teams = season.load_teams();
   return typeof slug === "string" && slug in teams ? season.team_display(slug, teams) : or_(slug, "");
+}
+
+export function _foe_name(slug) {
+  // The team a school plays, inside a line: "Iowa State", but "the Plains Thunderheads" (season.team_in_line).
+  const season = modules.season;
+  const teams = season.load_teams();
+  return typeof slug === "string" && slug in teams ? season.team_in_line(slug, teams) : or_(slug, "");
 }
 
 
@@ -1130,7 +1137,7 @@ export function _setup(state, wk, pid, kind, rng) {
     if (!ok.length) return null;
     const [s, g] = rng.choice(ok);
     return [{ k: kind, s, w: 1, g: g["week"], o: g["away"] },
-      `He plans to be at ${persona._rival_name(s)}'s home game against ${persona._rival_name(g["away"])} this week.`];
+      `He plans to be at ${persona._rival_name(s)}'s home game against ${persona._foe_name(g["away"])} this week.`];
   }
   if (kind === "hot_seat") {                       // his leader's head coach is on the hot seat
     const leader = order.length ? order[0] : null;
@@ -1274,7 +1281,7 @@ export function _game_twist(state, pid, tw, week) {
   const g = Object.values(state["games"]).find((g) => g["week"] === week && truthy(g["played"]) && same_pair(g)) ?? null;
   if (g === null || truthy(rc["status"][pid]["signed"])) return;
   const mine = g["home"] === s ? g["home_score"] - g["away_score"] : g["away_score"] - g["home_score"];
-  const name = persona._rival_name(s), foe = persona._rival_name(opp);
+  const name = persona._rival_name(s), foe = persona._foe_name(opp);
   const lst = rc["lists"][pid];
   let line;
   if (tw["k"] === "at_game") {
@@ -1333,7 +1340,7 @@ export const persona = {
   pitch_mult, counts_as_priority, lowball_share, nil_over, offer_mult, hollow_mult, pester_free, call_reveals, decommit_mult, cool_quiet,
   set_cooled_why, cooled_why,
   DECIDER_LOOKS, PERSONALITY_LINE, DECIDER_LINE,
-  known, learn, learn_on_contact, learn_from_read, story_public, _name_of, _school_name, story_learned_line, story_detail, view,
+  known, learn, learn_on_contact, learn_from_read, story_public, _name_of, _school_name, _foe_name, story_learned_line, story_detail, view,
   STORIES, STORY_RATE, STORY_LABEL, NO_STORY, PUBLIC_STORIES, TWO_SPORT_GROUPS, MATE_NEAR, LEGACY_TILT, LEGACY_HEAD, LEGACY_PITCH,
   LEGACY_LEVEL, LEGACY_COST, HERO_STATE, HERO_AWAY, HERO_FULL, DRAFT_RISK, DRAFT_FLOOR, DRAFT_PT, DRAFT_NIL, DRAFT_WORDS, COMEBACK_AI,
   LOYALTY, LOYALTY_WEEK, COMEBACK_READ, SHOWN_BAND, BLOOM_WEEKS, COMEBACK_SHOWN, BLOOM_SHOWN, BLOOM_BOARDS,

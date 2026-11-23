@@ -206,7 +206,7 @@ export function _streaks(state, teams, fbs, week, games) {
           link: { type: "team", slug }, _imp: news._BASE["streak"] });
       } else if (!won && b["losses"] === 0 && b["wins"] >= news.STREAK) {
         const hs = `${Math.max(g["home_score"], g["away_score"])}-${Math.min(g["home_score"], g["away_score"])}` + (truthy(get(g, "overtime")) ? " overtime" : "");
-        out.push({ kind: "streak", text: `Unbeaten ${news._name(teams, slug)} falls to ${a["wins"]}-1 with a ${hs} loss to ${news._name(teams, g[opp])}.`,
+        out.push({ kind: "streak", text: `Unbeaten ${news._name(teams, slug)} falls to ${a["wins"]}-1 with a ${hs} loss to ${modules.season.team_in_line(g[opp], teams)}.`,
           team: slug, teams: [slug], link: { type: "game", event_id: g["event_id"] }, _imp: news._BASE["streak"] + 4 });
       }
     }

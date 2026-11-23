@@ -5,6 +5,7 @@ import Modal from "../Modal/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { PopupBlocked, playOnTheField } from "../../franchise.ts";
 import type { TeamCard } from "../../types.ts";
+import { nameInLine } from "../../teams.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -127,7 +128,11 @@ export default function PlayGame({ open, onClose, seasonId, team, opponent, team
           <Button
             onClick={field}
             disabled={status.kind === "opening" || !offense}
-            title={defense ? m.fieldNote(name(offense), name(defense)) : m.alone(name(offense))}
+            title={
+              defense
+                ? m.fieldNote(nameInLine(name(offense), offense), nameInLine(name(defense), defense))
+                : m.alone(nameInLine(name(offense), offense))
+            }
           >
             <Play size={18} weight="fill" aria-hidden="true" />
             {status.kind === "opening" ? m.opening : m.field}

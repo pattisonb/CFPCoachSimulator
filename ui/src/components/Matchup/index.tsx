@@ -57,7 +57,8 @@ function Side({ side, align }: { side: MatchupSide; align: "left" | "right" }) {
   } as CSSProperties;
   // an FCS stand-in's name ends in its mascot ("New England Lobsters"): told in two lines like anyone else
   const mascot = t?.mascot || "";
-  const school = t?.fictional && mascot && side.name.endsWith(` ${mascot}`) ? side.name.slice(0, -mascot.length - 1) : side.name;
+  const school =
+    t?.fictional && mascot && side.name.endsWith(` ${mascot}`) ? side.name.slice(0, -mascot.length - 1) : side.name;
   const name = (
     <>
       <span className="matchup__school">
@@ -73,13 +74,16 @@ function Side({ side, align }: { side: MatchupSide; align: "left" | "right" }) {
         {t ? t.abbreviation : side.name.slice(0, 3).toUpperCase()}
       </span>
       <div className="matchup__text">
-        {side.record && (
+        {side.record ? (
           <span className="matchup__line">
             {side.record}
             {side.confRecord && real && !INDEPENDENT.test(t.conference) && (
               <span className="matchup__conf">{m.conference(side.confRecord, t.conference)}</span>
             )}
           </span>
+        ) : (
+          // an FCS stand-in keeps no record: its level stands where a record would
+          t?.fictional && <span className="matchup__line">{t.conference}</span>
         )}
         {side.onName ? (
           <button type="button" className="matchup__name" title={side.nameTip} onClick={side.onName}>

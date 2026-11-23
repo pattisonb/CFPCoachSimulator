@@ -42,6 +42,7 @@ import type {
   SimStatus,
   TeamCard,
 } from "../../types.ts";
+import { nameInLine } from "../../teams.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -203,7 +204,10 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         title: m.gameDay,
         sub: thisWeek.played
           ? m.played(!!thisWeek.won, m.score(thisWeek.points_for ?? 0, thisWeek.points_against ?? 0))
-          : m.gameDaySub(thisWeek.venue === "away" ? m.atOpp : m.against, thisWeek.opponent_name),
+          : m.gameDaySub(
+              thisWeek.venue === "away" ? m.atOpp : m.against,
+              nameInLine(thisWeek.opponent_name, thisWeek.opponent),
+            ),
         meta: kickoffText(thisWeek.date),
         done: thisWeek.played,
         go: thisWeek.played ? undefined : () => setPlayOpen(true),
@@ -708,7 +712,7 @@ function Actions({
         <ActionTile
           icon={Play}
           title={m.playGame}
-          sub={m.playGameSub(game.venue === "away" ? m.atOpp : m.vs, game.opponent_name)}
+          sub={m.playGameSub(game.venue === "away" ? m.atOpp : m.vs, nameInLine(game.opponent_name, game.opponent))}
           main
           onClick={onPlay}
         />
@@ -717,7 +721,7 @@ function Actions({
         <ActionTile
           icon={GameController}
           title={m.field}
-          sub={next ? m.fieldSub(next.opponent_name) : m.fieldAny}
+          sub={next ? m.fieldSub(nameInLine(next.opponent_name, next.opponent)) : m.fieldAny}
           onClick={onPlay}
         />
       )}
@@ -816,7 +820,7 @@ function newsLine(s: SeasonSummary, n: NewsItem) {
     const where = n.venue === "away" ? " on the road" : n.venue === "neutral" ? " at a neutral site" : "";
     return (
       <>
-        <b>{s.team_name}</b> {n.won ? "beat" : "lost to"} {n.opponent_name}{" "}
+        <b>{s.team_name}</b> {n.won ? "beat" : "lost to"} {nameInLine(n.opponent_name ?? "", n.opponent)}{" "}
         <span className="office__nowrap">{m.score(n.points_for ?? 0, n.points_against ?? 0)}</span>
         {where}
         {n.overtime ? " in overtime" : ""}.

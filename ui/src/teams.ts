@@ -19,9 +19,12 @@ export const cachedTeams = (): TeamCard[] | null => cache;
  */
 export const cachedStandIns = (): TeamCard[] => standIns;
 
-/** A team's name inside a sentence: "Iowa State", but "the Plains Thunderheads" (a stand-in's name ends in its mascot). */
-export const nameInLine = (name: string, team: TeamCard | undefined): string =>
-  team?.fictional && !/^the /i.test(name) ? `the ${name}` : name;
+/**
+ * A team's name inside a sentence, given its slug: "Iowa State", but "the Plains Thunderheads" (a stand-in's name
+ * ends in its mascot).
+ */
+export const nameInLine = (name: string, slug: string | null | undefined): string =>
+  standIns.some((t) => t.slug === slug) && !/^the /i.test(name) ? `the ${name}` : name;
 
 /** The teams (the FCS stand-ins left out); a failed load can be tried again. */
 export function loadTeams(): Promise<TeamCard[]> {
