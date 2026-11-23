@@ -18,7 +18,7 @@ import path from "node:path";
 import vm from "node:vm";
 import zlib from "node:zlib";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 process.env.CFP_PACK_QUALITY ??= "5";        // a quick pack: its size is not what is tested
 const build = await import("../tools/build_site.mjs");
@@ -90,7 +90,7 @@ function hostile() {
 // One step of the game on Node over a folder's files, with the game as one script (`game`): teams | base | play
 const STEP = `
 import { createRequire } from "node:module";
-import { fileStore } from ${JSON.stringify(path.join(ROOT, "tools", "game_host.mjs"))};
+import { fileStore } from ${JSON.stringify(pathToFileURL(path.join(ROOT, "tools", "game_host.mjs")).href)};
 const [game, root, step] = process.argv.slice(2);
 const Game = createRequire(import.meta.url)(game);
 const store = fileStore(root);

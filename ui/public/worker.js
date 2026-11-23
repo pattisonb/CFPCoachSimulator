@@ -297,8 +297,8 @@ async function readSkin(version) {
   importScripts("./skin.js");
   const kept = await self.Skin.read(["meta", "words", "files"]);
   const meta = kept.meta;
-  if (!meta || !kept.words || !kept.files) throw new Error("no skin is kept in this browser");
-  if (meta.format !== self.Skin.FORMAT) throw new Error("the skin was made for another version of the game");
+  if (!meta || !kept.words || !kept.files) throw new Error("no roster file is kept in this browser");
+  if (meta.format !== self.Skin.FORMAT) throw new Error("the roster file was made for another version of the game");
   const v = `?v=${encodeURIComponent(version || "dev")}`;
   const [text, names] = await Promise.all([fetched(`./${GAME}${v}`, "text"), fetched(`./${SKIN_NAMES}${v}`, "json")]);
   const made = self.Skin.apply(text, names, self.Skin.lookup(kept.words), null);
@@ -314,7 +314,7 @@ const scriptUrl = (text) => URL.createObjectURL(new Blob([text], { type: "text/j
 // skin's rosters itself) and answers with what the step wrote.
 function skinStep(task, files) {
   return new Promise((resolve, reject) => {
-    if (typeof Worker === "undefined") { reject(new Error("this browser cannot make a skin's teams")); return; }
+    if (typeof Worker === "undefined") { reject(new Error("this browser cannot make a roster file's teams")); return; }
     const w = new Worker("./worker.js");
     const end = (err, written) => { w.terminate(); if (err) reject(err); else resolve(written); };
     w.onerror = (e) => end(new Error(e.message || "the step failed"));
@@ -332,7 +332,7 @@ async function runTask(init) {
   try {
     importScripts("./skin.js");
     const kept = await self.Skin.read(["sources"]);
-    if (!kept.sources) throw new Error("the skin's rosters are not kept in this browser");
+    if (!kept.sources) throw new Error("the roster file's rosters are not kept in this browser");
     for (const [path, text] of init.files) put(path, text);
     for (const path of Object.keys(kept.sources)) put(path, kept.sources[path]);
     importScripts(scriptUrl(init.gameText));

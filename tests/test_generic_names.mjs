@@ -8,7 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import * as build_site from "../tools/build_site.mjs";
 import { check } from "../tools/generic/check.mjs";
@@ -19,7 +19,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 // what the swapped game says: a career at the team given, one week played, and the team picker's list
 const PLAY = `
-import { host } from ${JSON.stringify(path.join(ROOT, "tools", "game_host.mjs"))};
+import { host } from ${JSON.stringify(pathToFileURL(path.join(ROOT, "tools", "game_host.mjs")).href)};
 const [root, team, seasons] = process.argv.slice(2);
 const { api } = await host(root, { env: { CFP_SEASONS_DIR: seasons, SIM_WORKERS: "1" } });
 const s = api.call("POST", "/api/season", { team, seed: 11 });

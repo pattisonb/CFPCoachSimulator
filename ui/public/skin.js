@@ -141,7 +141,7 @@
       req.onupgradeneeded = function () { req.result.createObjectStore(STORE); };
       req.onsuccess = function () { resolve(req.result); };
       req.onerror = function () { reject(req.error); };
-      req.onblocked = function () { reject(new Error("the skin is held by another page")); };
+      req.onblocked = function () { reject(new Error("the roster file is held by another page")); };
     });
   }
 
@@ -152,7 +152,7 @@
         var tx = db.transaction(STORE, "readonly"), from = tx.objectStore(STORE), out = {};
         parts.forEach(function (p) { from.get(p).onsuccess = function (e) { out[p] = e.target.result; }; });
         tx.oncomplete = function () { db.close(); resolve(out); };
-        tx.onerror = tx.onabort = function () { db.close(); reject(tx.error || new Error("the skin could not be read")); };
+        tx.onerror = tx.onabort = function () { db.close(); reject(tx.error || new Error("the roster file could not be read")); };
       });
     });
   }
@@ -166,7 +166,7 @@
           var tx = db.transaction(STORE, "readwrite"), to = tx.objectStore(STORE);
           if (parts[p] === undefined) to.delete(p); else to.put(parts[p], p);
           tx.oncomplete = function () { resolve(); };
-          tx.onerror = tx.onabort = function () { reject(tx.error || new Error("the skin could not be kept")); };
+          tx.onerror = tx.onabort = function () { reject(tx.error || new Error("the roster file could not be kept")); };
         });
       };
       return names.reduce(function (before, p) { return before.then(function () { return one(p); }); }, Promise.resolve())
@@ -193,7 +193,7 @@
       fetch(url).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }),
       fetch(new URL(names, document.baseURI).href, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
     ]).then(function (got) {
-      if (!got[0].words) throw new Error("no skin is kept");
+      if (!got[0].words) throw new Error("no roster file is kept");
       var made = apply(got[1], got[2], lookup(got[0].words), url);
       root.__skinApp = { done: made.done, missed: made.missed };
       return URL.createObjectURL(new Blob([made.text], { type: "text/javascript" }));

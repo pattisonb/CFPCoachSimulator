@@ -68,7 +68,7 @@ export function failure(): string | null {
 }
 
 async function textOf(file: File): Promise<string> {
-  if (file.size > MAX_FILE) no("This file is too large to be a skin.");
+  if (file.size > MAX_FILE) no("This file is too large to be a roster file.");
   const head = new Uint8Array(await file.slice(0, 2).arrayBuffer());
   if (head[0] !== 0x1f || head[1] !== 0x8b) return file.text();
   // gzip: unpacked a piece at a time, so a file that would unpack past the limit is refused before it has
@@ -82,7 +82,7 @@ async function textOf(file: File): Promise<string> {
     size += value.length;
     if (size > MAX_TEXT) {
       await reader.cancel();
-      no("This file is too large to be a skin.");
+      no("This file is too large to be a roster file.");
     }
     parts.push(decoder.decode(value, { stream: true }));
   }
@@ -95,14 +95,14 @@ const goodPath = (p: string) => PATH.test(p) && !p.includes("..") && !SAVES.some
 
 /** The files of a skin, checked: every path is one of the game's data files and every file is JSON text. */
 function filesOf(v: unknown, what: string): Record<string, string> {
-  if (!isRecord(v)) return no(`This skin is damaged: it has no ${what}.`);
+  if (!isRecord(v)) return no(`This roster file is damaged: it has no ${what}.`);
   const paths = Object.keys(v);
-  if (paths.length > MAX_FILES) no("This skin is damaged: it holds too many files.");
+  if (paths.length > MAX_FILES) no("This roster file is damaged: it holds too many files.");
   for (const p of paths) {
     const text = v[p];
-    if (!goodPath(p)) no("This skin is damaged: it names a file the game does not have.");
+    if (!goodPath(p)) no("This roster file is damaged: it names a file the game does not have.");
     if (typeof text !== "string" || !/^\s*[[{]/.test(text.slice(0, 64)))
-      no("This skin is damaged: one of its files is not data.");
+      no("This roster file is damaged: one of its files is not data.");
   }
   return v as Record<string, string>;
 }
@@ -113,26 +113,28 @@ export function parse(text: string): { meta: Record<string, unknown>; parts: Rec
   try {
     doc = JSON.parse(text);
   } catch {
-    return no("This file could not be read. A skin is a .json or .json.gz file.");
+    return no("This file could not be read. A roster file is a .json or .json.gz file.");
   }
   const S = window.Skin!;
-  if (!isRecord(doc) || doc.skin !== KIND) return no("This file is not a skin for this game.");
+  if (!isRecord(doc) || doc.skin !== KIND) return no("This file is not a roster file for this game.");
   if (doc.format !== S.FORMAT)
     no(
-      `This skin was made for another version of the game (format ${String(doc.format).slice(0, 8)}, and this one reads format ${S.FORMAT}). Ask for a new one.`,
+      `This roster file was made for another version of the game (format ${String(doc.format).slice(0, 8)}, and this one reads format ${S.FORMAT}). Ask for a new one.`,
     );
   const { id, name, base, pack, generated, words, made } = doc;
-  if (typeof id !== "string" || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) no("This skin is damaged: it has no id.");
-  if (typeof name !== "string" || name.length > 40 || !S.plain(name)) no("This skin is damaged: it has no name.");
-  if (typeof base !== "number") no("This skin is damaged: it does not say what it was made for.");
+  if (typeof id !== "string" || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(id)) no("This roster file is damaged: it has no id.");
+  if (typeof name !== "string" || name.length > 40 || !S.plain(name))
+    no("This roster file is damaged: it has no name.");
+  if (typeof base !== "number") no("This roster file is damaged: it does not say what it was made for.");
   const paths = (v: unknown): v is string[] =>
     Array.isArray(v) && v.length <= MAX_FILES && v.every((p) => typeof p === "string" && goodPath(p));
   if (!paths(pack) || !paths(generated) || !generated.every((p) => pack.includes(p)))
-    return no("This skin is damaged: its list of files cannot be read.");
+    return no("This roster file is damaged: its list of files cannot be read.");
   const files = filesOf(doc.files, "files");
   const sources = filesOf(doc.sources, "rosters");
-  if (!Object.keys(files).every((p) => pack.includes(p))) no("This skin is damaged: its list of files cannot be read.");
-  if (!isRecord(words)) return no("This skin is damaged: it has no names.");
+  if (!Object.keys(files).every((p) => pack.includes(p)))
+    no("This roster file is damaged: its list of files cannot be read.");
+  if (!isRecord(words)) return no("This roster file is damaged: it has no names.");
   // the names: kept only where they are plain name text (public/skin.js writes no other into the game)
   const kept: Record<string, string[]> = Object.create(null);
   let count = 0;
@@ -141,7 +143,7 @@ export function parse(text: string): { meta: Record<string, unknown>; parts: Rec
     if (!Array.isArray(list)) continue;
     const names = list.filter((n): n is string => S.plain(n));
     count += names.length;
-    if (count > MAX_WORDS) no("This skin is damaged: it holds too many names.");
+    if (count > MAX_WORDS) no("This roster file is damaged: it holds too many names.");
     if (names.length && shown.length <= 120) kept[shown] = names;
   }
   const when = isRecord(made) ? made : {};
@@ -160,13 +162,13 @@ export function parse(text: string): { meta: Record<string, unknown>; parts: Rec
 /** Load the skin in `file` and turn it on. The page must be reloaded after: the game starts again on the skin. */
 export async function install(file: File): Promise<void> {
   const S = window.Skin;
-  if (!available() || !S) return no("This version of the game does not take a skin.");
+  if (!available() || !S) return no("This version of the game does not take a roster file.");
   let text: string;
   try {
     text = await textOf(file);
   } catch (e) {
     if (e instanceof SkinError) throw e;
-    return no("This file could not be read. A skin is a .json or .json.gz file.");
+    return no("This file could not be read. A roster file is a .json or .json.gz file.");
   }
   const { meta, parts } = parse(text);
   try {
@@ -174,7 +176,7 @@ export async function install(file: File): Promise<void> {
     await S.write({ ...parts, cache: undefined, meta });
     localStorage.setItem(S.FLAG, JSON.stringify({ id: meta.id, name: meta.name }));
   } catch {
-    no("This browser could not keep the skin: its storage is full or switched off.");
+    no("This browser could not keep the roster file: its storage is full or switched off.");
   }
 }
 
