@@ -219,8 +219,12 @@
   width: auto;
 }
 
+/* (one width for every number, "205/205" at the widest: the bars beside them end on one line) */
 .coach-badge__more .coach-badge__value {
+  flex: none;
+  width: 58px;
   min-width: 0;
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
