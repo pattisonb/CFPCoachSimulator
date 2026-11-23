@@ -3,6 +3,7 @@
   display: grid;
   gap: var(--s2);
   font-size: var(--t-sm);
+  container: box / inline-size;
 }
 
 .box__soft {
@@ -52,10 +53,32 @@
   text-transform: uppercase;
 }
 
+/* a long name ("Pacific Northwest Sasquatch") takes two lines before it is cut */
 .box__name b {
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+/* the team's letters, in place of its name on a board too narrow for two names */
+.box__name .box__short {
+  display: none;
+}
+
+@container box (width < 800px) {
+  .box__name .box__full {
+    display: none;
+  }
+
+  .box__name .box__short {
+    display: block;
+    flex: none;
+    white-space: nowrap;
+  }
 }
 
 /* the team's overall after its name */
@@ -312,6 +335,15 @@
 
   .box__side--home {
     flex-direction: row;
+  }
+
+  /* each side has the board's width to itself: its name again */
+  .box__name .box__full {
+    display: -webkit-box;
+  }
+
+  .box__name .box__short {
+    display: none;
   }
 }
 

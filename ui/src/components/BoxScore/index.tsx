@@ -103,7 +103,11 @@ export function Scoreboard({
           <div key={s} className={`box__side box__side--${s}${lost ? " is-lost" : ""}`}>
             <span className="box__name">
               <Swatch team={teams.get(slug)} size={22} />
-              <b>{side.name}</b>
+              <b className="box__full">{side.name}</b>
+              {/* where the board is too narrow for two names (index.css): the team's letters */}
+              <b className="box__short" title={side.name}>
+                {teams.get(slug)?.abbreviation ?? side.name}
+              </b>
               {box.overalls?.[s] != null && (
                 <span className="box__ovr" title={m.overallTip}>
                   {m.overall(box.overalls[s]!)}
