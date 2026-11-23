@@ -806,7 +806,7 @@ function _report(state, week) {
 
 
 recruiting.REPORT_KINDS = ["offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken",
-  "promise_kept", "bloomed", "pro", "twist", "hat", "softened"];
+  "promise_kept", "bloomed", "pro", "twist", "hat", "softened", "rival_push"];
 recruiting.CONTACT_KINDS = ["contact", "pitch", "raise_nil", "pull_offer", "answer", "present"];   // your actions, logged for his History (not news)
 recruiting.HISTORY_ONLY = [...recruiting.CONTACT_KINDS, "learned"];   // his History's alone: never the week's news (what your staff learned is his, not news)
 
@@ -1000,6 +1000,9 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
       revealed = recruiting._reveal(state, slug, pid);
     } else if (action === "call") {                       // a call: sometimes a priority
       if (persona.call_reveals(state, slug, pid)) revealed = recruiting._reveal(state, slug, pid);
+    }
+    if (you && recruiting._STEP_WEEK[0] === null && !truthy(get(rc, "portal"))) {
+      contact["touch_week"] = recruiting.contact_week(state);     // made before the step: it lands, and counts as keeping in touch, the week of the step (_firm_up)
     }
     if (!truthy(opens)) {
       contact["last_contact"] = week;

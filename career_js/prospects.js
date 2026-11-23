@@ -1037,7 +1037,7 @@ prospects.HISTORY_SHOWN = 40;                          // a board row's History:
 prospects.HIS_OWN = ["commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro", "twist", "hat", "softened"];   // his own moves: every school's show (persona.shown_to: a quiet one, a private one, only its school)
 prospects.PRO = "Pro Baseball";                        // where a Two-Sport recruit who took the baseball money went
 prospects.HISTORY_KEYS = ["week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line",
-  "question", "offered", "why"];   // a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
+  "question", "offered", "why", "how"];   // a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
 
 
 // a save from before his ask came from scouting holds History lines where he named his number on a call or visit:
@@ -1050,9 +1050,15 @@ export function history_index(state, viewer) {
   const recruiting = modules.recruiting, persona = modules.persona;
   const out = odict();                       // by prospect id (a transfer's can be all digits)
   const log = state["recruiting"]["log"];
+  const said = new Set();                    // (prospect, school, week) of an offer a rival_push line already tells
   for (let i = log.length - 1; i >= 0; i--) {
     const e = log[i];
-    if (get(e, "school") !== viewer && !prospects.HIS_OWN.includes(e["kind"]) && e["kind"] !== "offer") continue;
+    if (e["kind"] === "rival_push") {                  // another school's answer to your recruiting: yours alone to read
+      if (viewer !== get(state, "team")) continue;
+      if (get(e, "how") === "offer") said.add(JSON.stringify([e["pid"], e["school"], e["week"]]));
+    } else if (e["kind"] === "offer" && said.size && said.has(JSON.stringify([e["pid"], get(e, "school"), e["week"]]))) {
+      continue;                                        // that offer's line is the answer's own ("... offered him after you took the lead.")
+    } else if (get(e, "school") !== viewer && !prospects.HIS_OWN.includes(e["kind"]) && e["kind"] !== "offer") continue;
     if (!persona.shown_to(e, viewer)) continue;        // a Quiet Commit's moves, a twist he told another school
     if (e["kind"] === "learned" && prospects.OLD_ASK_LINE.test(get(e, "line") || "")) continue;   // an old save: his number is your scouts' to learn now
     if (out[e["pid"]] === undefined) out[e["pid"]] = [];
@@ -1120,6 +1126,12 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
   out.role = prospects._role(recruiting.depth_place(state, viewer, pid));
   out.standing = prospects.standing(state, pid, viewer);
   out.no_room = recruiting.no_room(state, viewer, pid);
+  // the schools answering your recruiting of him (recruiting part 7), each by name; and the school whose money keeps him
+  // from committing to you on your offer as it stands
+  out.rival_push = recruiting.rival_pushes(state, pid, viewer).map((x) => ({ ...x, name: recruiting.school_name(x["school"]) }));
+  const paying = viewer === get(state, "team") ? recruiting.unpaid_hold(state, pid, true) : null;
+  out.unpaid = paying === null ? null : { ...(paying === true ? { school: null, name: null } : { school: paying, name: recruiting.school_name(paying) }),
+    flip: truthy(seen["committed"]) };                // (he is committed elsewhere: it is a flip your offer is too low for)
   out.history = get(history, pid, []);
   return out;
 }

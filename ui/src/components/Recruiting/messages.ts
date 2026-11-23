@@ -103,6 +103,13 @@ export const messages = {
       ? `${school} is close to flipping him.`
       : `${school} is working him hard: a real chance he flips.`,
   pestering: "He feels pestered. Ease off until a visit or an offer changes things.",
+  unpaid: (school: string | null, flip?: boolean) =>
+    flip
+      ? "He will not flip to you on that offer. Raise it."
+      : school
+        ? `He will not commit to you on that offer while ${school} is after him. Raise it.`
+        : "He will not commit to you on that offer. Raise it.",
+  pressed: (school: string) => `${school} is still calling your commit. Keep in touch.`,
 
   fromSchool: (school: string) => `From ${school}`,
   work: "Work Him",

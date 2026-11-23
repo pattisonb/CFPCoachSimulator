@@ -494,3 +494,16 @@ dd.recruit-file__inline {
 .recruit-file__twist {
   margin-top: 6px;
 }
+
+/* another school's answer to your recruiting: its mark in the icon's place, its tag on the school's first color */
+.recruit-file__timeline li.is-rival .swatch {
+  margin-top: 2px;
+}
+
+.recruit-file__tag.is-rival,
+.recruit-file__timeline li.is-rival .recruit-file__tag {
+  background: var(--rw, var(--tile));
+  color: var(--rw-on, var(--ink));
+  border-color: var(--ink);
+  font-weight: 700;
+}

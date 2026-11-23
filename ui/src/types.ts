@@ -370,6 +370,8 @@ export interface ConferenceGame {
 /** GET /api/season/{id}/office */
 export interface OfficeView {
   news: NewsItem[];
+  /** your commits another school is still calling: `kept` once he has heard from you this week */
+  pressed?: { pid: string; name: string; school: string; school_name: string; kept: boolean }[];
   conference: {
     name: string;
     week: number | null;
@@ -955,6 +957,10 @@ export interface BoardRow {
   case?: Record<string, string>;
   /** why you cannot add or work him (he has signed, he will not consider you, you are not one of his finalists), or null */
   blocked?: Blocked | null;
+  /** the schools answering your recruiting of him (recruiting part 7): `pressing` once he is your commit */
+  rival_push?: { school: string; name: string; pressing: boolean }[];
+  /** the school whose money keeps him from committing to you on your offer as it stands, or null */
+  unpaid?: { school: string | null; name: string | null; flip?: boolean } | null;
   /** his top group's size this week: 8, then his finalists (5, 3) */
   top_size?: number;
   done_this_week: string[];
@@ -1015,6 +1021,8 @@ export interface RecruitEvent {
   /** a line the game wrote for it */
   line?: string;
   nil?: number;
+  /** a rival_push's move: offer, raise_nil, hc_visit, visit, call, press, cost, gave_up */
+  how?: string;
 }
 
 /** A turn of a call or visit: you, him, or a note on the room. */

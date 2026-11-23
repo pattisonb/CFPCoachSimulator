@@ -386,14 +386,19 @@ function auto_recruit(state, slug, rng = null, commits = null, yours = false) {
 function _auto_week(state, slug, rng, board, spots_left, week) {
   const persona = modules.persona;
   const rc = state["recruiting"];
-  if (spots_left <= 0) return;
+  if (spots_left <= 0) {
+    if (rc["races"] !== undefined) recruiting._react_idle(state, slug);     // its class is full: it is out of its races with you (part 7)
+    return;
+  }
   if (!has(rc["offers"], slug)) rc["offers"][slug] = [];
   const offers = rc["offers"][slug];
   const kept = recruiting.manual_offers(state, slug);          // your offers by hand: never pulled here (a signing elsewhere still ends one)
   const elsewhere = (q) => rc["status"][q]["committed"] !== null && rc["status"][q]["committed"] !== slug;
   const mine_or_free = (q) => rc["status"][q]["committed"] === null || rc["status"][q]["committed"] === slug;
+  // its races with you (part 7): its offer to your soft commit stands while it is still calling him
+  const pressed = rc["races"] !== undefined ? recruiting.racing(state, slug).filter((q) => rc["status"][q]["committed"] === get(state, "team")) : [];
   for (const pid of offers.filter((q) => elsewhere(q)
-    && (truthy(rc["status"][q]["signed"]) || (rc["prospects"][q]["rank"] > recruiting.RIVAL_RANK && !_in(q, kept))))) {
+    && (truthy(rc["status"][q]["signed"]) || (rc["prospects"][q]["rank"] > recruiting.RIVAL_RANK && !_in(q, kept) && !pressed.includes(q))))) {
     _remove(offers, pid);                  // he went elsewhere: the offer frees up (a top prospect is still chased)
     recruiting._unmark(state, slug, pid);
     delete recruiting._nil(state, slug)["held"][pid];
@@ -420,6 +425,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
   for (const pid of board) {                          // its board's order (the board already leans to the thin groups); the caps hold
     if (offers.length >= allowed) break;
     if (!offers.includes(pid) && rc["status"][pid]["committed"] === null) {
+      if (rc["races_out"] !== undefined && recruiting.gave_up(state, slug, pid)) continue;     // it gave up on him in a race with you (part 7)
       const p = rc["prospects"][pid];
       const g = recruiting._group_of(p);
       if (truthy(persona.ai_doubts(state, slug, pid))) continue;          // an Injury Comeback: this school doubts the knee
@@ -466,6 +472,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
       }
     }
   }
+  recruiting._react_week(state, slug, week);          // its answers to your recruiting come first (part 7; nothing without an offer of yours by hand)
   let targets = offers.filter((pid) => rc["status"][pid]["committed"] === null && !truthy(rc["status"][pid]["signed"]));
   targets = targets.concat(offers.filter((pid) => elsewhere(pid) && !truthy(rc["status"][pid]["signed"])));
   targets = targets.filter((pid) => recruiting.blocked(state, slug, pid) === null);    // he has cut the school from his list, or will not consider it
@@ -760,6 +767,7 @@ function _firm_up(state, week) {
   const persona = modules.persona;
   const rc = state["recruiting"];
   const win = recruiting._winning(state);
+  const pressing = recruiting._pressing(state);       // your soft commits other schools are still calling (part 7), or null
   for (const [pid, st_] of Object.entries(rc["status"])) {
     const school = st_["committed"];
     if (truthy(st_["signed"]) || !truthy(school) || school === "FCS") continue;
@@ -768,7 +776,10 @@ function _firm_up(state, week) {
       continue;                                   // Needs Attention: a quiet week from his school costs him, hard commit or not
     }
     if (truthy(get(st_, "hard"))) continue;
-    let delta = get(c, "last_contact") === week ? recruiting.FIRM_TOUCH : recruiting.FIRM_DRIFT;
+    // (touch_week: your call or visit by hand is made before the step and lands this week, as a ticked message does)
+    const touched = get(c, "last_contact") === week || get(c, "touch_week") === week;
+    let delta = touched ? recruiting.FIRM_TOUCH : recruiting.FIRM_DRIFT;
+    if (pressing !== null && has(pressing, pid)) delta -= recruiting._press_cost(state, pid, pressing[pid], week, touched);
     if (get(get(get(rc["nil"], school, {}), "held", {}), pid, 0) > 0 && get(rc["offers"], school, []).includes(pid)) delta += recruiting.FIRM_NIL;
     const rivals = recruiting.top_group(state, pid, win).filter((s) => s !== school && get(rc["offers"], s, []).includes(pid)).slice(0, recruiting.FIRM_RIVALS);
     if (rivals.length) {
@@ -889,6 +900,9 @@ function _draws(state, week, rng) {
   const base = week < recruiting.COMMIT_FREEZE_WEEKS ? 0.0 : recruiting._interp(recruiting.COMMIT_ODDS, week);
   const win = recruiting._winning(state), offered = recruiting._offers_by_prospect(state), by_pos = recruiting._class_by_position(state);
   const hats = truthy(get(rc, "hats")) ? rc["hats"] : {};
+  // the unpaid offer (part 7): the recruits who will not commit to you on your standing lowball, or null
+  const unpaid = recruiting._unpaid(state), me = get(state, "team");
+  const held_out = (s, pid) => unpaid !== null && s === me && unpaid.has(pid);
 
   /** His interest less the crowd: recruits already committed there at his position, rated at least as high. */
   const score = (slug, pid) => {
@@ -920,7 +934,7 @@ function _draws(state, week, rng) {
       const mine = score(st["committed"], pid);
       let rival = null;
       for (const [v, s] of scores) {
-        if (s !== st["committed"] && room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room))) { rival = [v, s]; break; }
+        if (s !== st["committed"] && !held_out(s, pid) && room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room))) { rival = [v, s]; break; }
       }
       if (rival !== null && rng.random() < recruiting.flip_weekly(state, pid, rival[0] - mine)) {
         room.took(st["committed"], pid, -1);
@@ -929,7 +943,7 @@ function _draws(state, week, rng) {
       }
       continue;
     }
-    scores = scores.filter(([v, s]) => room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room)));
+    scores = scores.filter(([v, s]) => !held_out(s, pid) && room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room)));
     const lean_is_list = !scores.length && !(week >= recruiting.FCS_NO_OFFER_WEEK);
     const lean = (!scores.length && week >= recruiting.FCS_NO_OFFER_WEEK) || (scores.length > 0 && scores[0][0] < recruiting.FCS_LINE);
     const fcs = st["fcs"];

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowRight,
   ArrowDown,
@@ -11,6 +11,7 @@ import {
   Handshake,
   House,
   type Icon,
+  Lightning,
   Minus,
   Newspaper,
   PenNib,
@@ -162,6 +163,9 @@ export function OverviewTab({
           <ol className="recruit-file__battle">
             {rows.slice(0, 8).map((x, i) => {
               const you = x.you || x.school === team;
+              // a school answering your recruiting of him says so, on its own color
+              const push = (r.rival_push ?? []).find((p) => p.school === x.school);
+              const worn = push ? teamOf(x.school)?.colors.primary : undefined;
               return (
                 <li key={x.school} className={you ? "is-you" : undefined}>
                   <span className="recruit-file__place">{x.rank ?? i + 1}</span>
@@ -169,6 +173,14 @@ export function OverviewTab({
                     <Swatch team={teamOf(x.school)} size={16} />
                     <b>{x.name}</b>
                     {x.offered && <span className="recruit-file__tag">{m.offered}</span>}
+                    {push && (
+                      <span
+                        className="recruit-file__tag is-rival"
+                        style={worn ? ({ "--rw": worn, "--rw-on": inkOn(worn) } as CSSProperties) : undefined}
+                      >
+                        {push.pressing ? m.pressing : m.pushing}
+                      </span>
+                    )}
                     {x.visit && (
                       <span className="recruit-file__tag">
                         {x.visit.done
@@ -619,6 +631,7 @@ const KIND_ICON: Record<string, Icon> = {
   leaning_fcs: Flag,
   bloomed: Star,
   pro: Star,
+  rival_push: Lightning,
 };
 
 /** A line of his history, in the old board's order: "Call · Program Prestige", then how he took it. */
@@ -628,6 +641,8 @@ interface Item {
   text: string;
   /** how he took a pitch (sold, hit, fair, lukewarm, quiet, polite, tired): drawn as its own mark after the line */
   reaction?: string;
+  /** another school's answer to your recruiting: that school, whose mark and colors the line wears */
+  rival?: string;
 }
 
 /** Kinds whose line the game wrote itself. */
@@ -638,6 +653,7 @@ const LINE_KINDS = new Set([
   "twist",
   "hat",
   "softened",
+  "rival_push",
   "promise_kept",
   "promise_strained",
 ]);
@@ -721,6 +737,7 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
             kind: e.kind === "contact" || e.kind === "pitch" ? (e.action ?? actionOf.get(i) ?? "pitch") : e.kind,
             text: line(e, i).filter(Boolean).join(" · "),
             ...(e.kind === "pitch" && e.reaction ? { reaction: e.reaction } : {}),
+            ...(e.kind === "rival_push" && e.school ? { rival: e.school } : {}),
           },
         ],
   );
@@ -737,9 +754,14 @@ export function RecruitTimeline({ events, team }: { events: RecruitEvent[]; team
     <ul className="recruit-file__timeline" tabIndex={0}>
       {items.map((x, i) => {
         const Mark = KIND_ICON[x.kind] ?? Newspaper;
+        // a rival's move wears that school's mark, and its tag the school's color
+        const rival = x.rival ? teamOf(x.rival) : undefined;
+        const worn = rival
+          ? ({ "--rw": rival.colors.primary, "--rw-on": inkOn(rival.colors.primary) } as CSSProperties)
+          : undefined;
         return (
-          <li key={i}>
-            <Mark size={16} weight="bold" aria-hidden="true" />
+          <li key={i} className={x.rival ? "is-rival" : undefined} style={worn}>
+            {x.rival ? <Swatch team={rival} size={16} /> : <Mark size={16} weight="bold" aria-hidden="true" />}
             <span>
               <b>{m.week(Math.max(0, x.week - 1))}</b> · {x.text}
               {x.reaction && (

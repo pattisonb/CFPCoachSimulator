@@ -22,7 +22,7 @@ const CONF_GAMES = 4;        // *tune* the most results Around the Conference sh
 const NEWS_WEEKS = 4;        // *tune* how many weeks back Program News reaches
 
 // the recruiting events worth a line, the biggest first inside a week
-const _NEWS_ORDER = ["promise", "signed", "unsigned", "pro", "commit", "hard", "flip", "decommit", "softened", "hat", "bloomed", "twist", "offer", "asked_more", "not_buying",
+const _NEWS_ORDER = ["promise", "signed", "unsigned", "pro", "commit", "hard", "flip", "decommit", "rival_push", "softened", "hat", "bloomed", "twist", "offer", "asked_more", "not_buying",
   "hung_up", "pester", "promise_broken"];
 
 export function _school_name(slug, teams) {
@@ -127,6 +127,7 @@ export function office_view(state) {
   const ratings = {};
   for (const [k, v] of Object.entries(get(hc, "ratings") || {})) if (isNumber(v)) ratings[k] = shown.coach(v);
   out["coach"] = { ratings };
+  out["pressed"] = modules.recruiting.pressed_commits(state);     // your commits another school is still calling (recruiting part 7)
   return out;
 }
 

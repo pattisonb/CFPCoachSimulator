@@ -1,0 +1,127 @@
+/* The schools answering your recruiting of him: a pennant each, in that school's own colors. */
+.rival-push {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+/* in a tight line the pennant gives way before anything else: its words are cut short, never the line */
+.rival-push > .tooltip {
+  min-width: 0;
+}
+
+/* the pennant: the school's mark, then the words on its first color; a plain one (no colors on file) is ink on tile */
+.rival-push__pennant {
+  --rp: var(--tile);
+  --rp-on: var(--ink);
+  --rp-2: var(--ink);
+  --h: 20px;
+
+  display: inline-flex;
+  align-items: stretch;
+  min-width: 0;
+  height: var(--h);
+  border: var(--line) solid var(--ink);
+  box-shadow: 2px 2px 0 var(--shadow);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rival-push--md .rival-push__pennant {
+  --h: 26px;
+}
+
+/* its mark: the two colors split corner to corner, as every team tile in the game */
+.rival-push__mark {
+  flex: none;
+  width: calc(var(--h) - 2 * var(--line));
+  background: linear-gradient(135deg, var(--rp) 50%, var(--rp-2) 50%);
+  border-right: var(--line) solid var(--ink);
+}
+
+/* the words, on the school's color in the ink that reads on it; the tail is a swallowtail cut of its second color */
+.rival-push__words {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 14px 0 6px;
+  overflow: hidden;
+  background: var(--rp);
+  color: var(--rp-on);
+  white-space: nowrap;
+}
+
+.rival-push__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rival-push__words::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  background: var(--rp-2);
+  clip-path: polygon(0 0, 100% 0, 35% 50%, 100% 100%, 0 100%);
+}
+
+.rival-push__icon {
+  flex: none;
+}
+
+/* your commit, and the school is still calling: the phone rings */
+.rival-push__pennant.is-pressing .rival-push__icon {
+  animation: rival-push-ring 1.6s steps(2, jump-none) infinite;
+  transform-origin: 50% 60%;
+}
+
+@keyframes rival-push-ring {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  15%,
+  45% {
+    transform: rotate(-18deg);
+  }
+
+  30% {
+    transform: rotate(18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rival-push__pennant.is-pressing .rival-push__icon {
+    animation: none;
+  }
+}
+
+/* the rest of the schools, as a count */
+.rival-push__more {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  height: 20px;
+  padding: 0 4px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rival-push--md .rival-push__more {
+  height: 26px;
+}

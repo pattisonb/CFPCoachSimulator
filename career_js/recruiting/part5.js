@@ -120,11 +120,13 @@ function _sign(state, final) {
     if (recruiting.QB_EVERY_CLASS) {                 // first, a school still without a quarterback takes the best one left who would come
       recruiting._last_quarterbacks(state, room, win, offered);
     }
+    const unpaid = recruiting._unpaid(state, true);  // the unpaid offer (part 7): he does not sign with you on your standing lowball
     for (const pid of sorted(Object.keys(rc["prospects"]), (q) => rc["prospects"][q]["rank"])) {
       const st = rc["status"][pid];
       if (truthy(st["committed"])) continue;
       // (a Set; the scores below are sorted on (interest, school), so its order does not show)
       let schools = new Set([...get(offered, pid, []), ...Object.keys(rc["lists"][pid])]);
+      if (unpaid !== null && unpaid.has(pid)) schools.delete(get(state, "team"));
       const hat = get(get(rc, "hats") || {}, pid);          // his Hat Ceremony on signing day: his finalists, if one can take him
       if (truthy(hat) && hat[1].some((s) => schools.has(s) && _has_room(room, s, pid))) {
         const finalists = new Set(hat[1]);
@@ -262,6 +264,8 @@ function _weekly_step(state, week, auto_user) {
   if (!dead) {
     recruiting._asks_for_more(state, week);
     const commits = recruiting._commits(state);  // AI weeks change offers and interest, not commitments
+    recruiting._react_map(state, week);          // your offer puts a blue chip on the map (part 7; nothing without an offer of yours by hand)
+    recruiting._react_open(state, week);         // ... and who may join a race with you this week
     for (const slug of recruiting.fbs_schools(state)) {
       if (slug !== mine || auto_mine) {
         recruiting.auto_recruit(state, slug, new Random(`auto-${rc["seed"]}-${slug}-${week}`), commits, slug === mine);

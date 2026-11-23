@@ -17,6 +17,7 @@ import {
   GameController,
   Football,
   Handshake,
+  PhoneCall,
   Lightning,
   ListNumbers,
   Play,
@@ -176,6 +177,20 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         done: spent,
         go: () => onSection("recruiting"),
       });
+      // a commit of yours another school is still calling: keep in touch (done once he has heard from you this week)
+      const pressed = office?.pressed ?? [];
+      if (pressed.length && !auto) {
+        const waiting = pressed.filter((x) => !x.kept);
+        todos.push({
+          key: "pressed",
+          icon: PhoneCall,
+          title: m.pressed,
+          sub: waiting.length ? m.pressedSub(waiting[0].school_name) : m.pressedDone,
+          meta: m.pressedCount(waiting.length || pressed.length),
+          done: !waiting.length,
+          go: () => onSection("recruiting"),
+        });
+      }
       todos.push({
         key: "scout",
         icon: Binoculars,
@@ -373,7 +388,14 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
                     type="button"
                     className="office__todo-card"
                     aria-current={state === "is-now" ? "step" : undefined}
-                    disabled={!t.go || (sim.running && t.key !== "recruit" && t.key !== "scout" && t.key !== "depth")}
+                    disabled={
+                      !t.go ||
+                      (sim.running &&
+                        t.key !== "recruit" &&
+                        t.key !== "pressed" &&
+                        t.key !== "scout" &&
+                        t.key !== "depth")
+                    }
                     onClick={t.go}
                     title={t.sub}
                   >
@@ -404,7 +426,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
                     <span className="office__when">
                       {n.week === s.current_week ? m.thisWeekWhen : weekName(n.week)}
                     </span>
-                    <span>{newsLine(s, n)}</span>
+                    <span>{newsLine(s, n, teams)}</span>
                   </li>
                 ))}
               </ul>
@@ -815,7 +837,7 @@ const Stars = ({ n }: { n: number }) => (
 );
 
 /** One line of Program News (web/office.js newsLine). */
-function newsLine(s: SeasonSummary, n: NewsItem) {
+function newsLine(s: SeasonSummary, n: NewsItem, teams: Map<string, TeamCard>) {
   if (n.kind === "game") {
     const where = n.venue === "away" ? " on the road" : n.venue === "neutral" ? " at a neutral site" : "";
     return (
@@ -831,6 +853,15 @@ function newsLine(s: SeasonSummary, n: NewsItem) {
     return (
       <>
         <b>{n.name}</b> ({n.position}) {n.line.charAt(0).toLowerCase() + n.line.slice(1)}
+      </>
+    );
+  // another school's answer to your recruiting: the game's own sentence, the school's mark before it
+  if (n.kind === "rival_push" && n.line)
+    return (
+      <>
+        <Swatch team={teams.get(n.school ?? "")} size={12} className="office__news-mark" /> <b>{n.name}</b> (
+        {n.position}, <Stars n={n.stars ?? 0} />
+        ): {n.line}
       </>
     );
   if (n.kind === "promise")

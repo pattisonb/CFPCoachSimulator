@@ -44,6 +44,10 @@ export const messages = {
   recruitSub: (left: number, total: number, used: number) =>
     used > 0 ? `${left} of ${total} energy left for your board.` : `${total} energy to spend on your board.`,
   recruitDone: (total: number) => `All ${total} energy used this week.`,
+  pressed: "Keep Your Commit",
+  pressedSub: (school: string) => `${school} is still calling your commit. Keep in touch.`,
+  pressedDone: "Your commit has heard from you this week.",
+  pressedCount: (n: number) => `${n} ${n === 1 ? "Commit" : "Commits"}`,
   autoWeek: "Auto-recruit runs this week for you.",
   autoSeason: "Auto-recruit runs all season for you.",
   hours: (n: number) => `${n} NRG`,

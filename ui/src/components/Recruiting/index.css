@@ -334,6 +334,17 @@
   font-weight: 700;
 }
 
+/* a school answering your recruiting of him: its pennant on a line of its own along the row's foot, running under
+   the quick actions (which move up to clear it) */
+.recruiting__rivals {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  left: calc(72px + var(--s2)); /* beside his picture, under his name */
+  display: flex;
+  line-height: 0;
+}
+
 /* under his name: his position, then his stars */
 .recruiting__facts {
   display: flex;
@@ -440,6 +451,22 @@
   padding: 6px 10px;
   border: var(--line) dashed var(--ink);
   font-size: var(--t-sm);
+}
+
+/* a school is still calling your commit: a band of that school's first color, its mark at the head */
+.recruit__warn--rival {
+  --rw: var(--tile);
+  --rw-on: var(--ink);
+
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin: 0;
+  background: var(--rw);
+  color: var(--rw-on);
+  border-style: solid;
+  box-shadow: 4px 4px 0 var(--shadow);
+  font-weight: 700;
 }
 
 /* Overview: his file's panels beside the week's work; in a narrow panel the work comes first */
@@ -729,6 +756,12 @@
   transform: translateY(-50%);
 }
 
+/* a rival's pennant runs along the row's foot: the boxes move up to clear it */
+.recruiting__rows li.has-rival > .quick,
+.recruiting__rows li.has-rival > .recruiting__shut {
+  top: calc(50% - 14px);
+}
+
 /* the shut door, where his quick actions would be: on the page's own paper, so its words read over the hatching */
 .recruiting__shut .closed-mark {
   padding: 4px 8px;
@@ -738,6 +771,11 @@
 
 .recruiting__rows .recruiting__row {
   padding-right: 282px; /* the three named boxes */
+}
+
+/* ... and the row makes room for it */
+.recruiting__rows li.has-rival .recruiting__row {
+  padding-bottom: 30px;
 }
 
 /* the door is shut on you: he stays on your board, marked out (his face washed, his quick actions off) */

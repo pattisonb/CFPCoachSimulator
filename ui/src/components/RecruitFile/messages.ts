@@ -196,6 +196,8 @@ export const messages = {
     down: (n: number) => `Down ${n}`,
     same: "No Change",
   },
+  pushing: "Pushing Back",
+  pressing: "Calling Your Commit",
   chips: {
     message: "Message",
     call: "Call",
@@ -213,6 +215,7 @@ export const messages = {
     answer: "Call",
     hung_up: "Call",
     asked_more: "NIL",
+    rival_push: "Rival",
     not_buying: "Pitch",
     pester: "Contact",
     commit: "Commit",

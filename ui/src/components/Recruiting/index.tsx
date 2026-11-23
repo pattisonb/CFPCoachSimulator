@@ -1,5 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CaretDown, CaretRight, Check, Handshake, Heart, House, MagnifyingGlass, Star, X } from "@phosphor-icons/react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  CaretDown,
+  CaretRight,
+  Check,
+  Handshake,
+  Heart,
+  House,
+  MagnifyingGlass,
+  PhoneCall,
+  Star,
+  X,
+} from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import ClosedDoor, { ClosedMark } from "../ClosedDoor/index.tsx";
@@ -18,13 +29,15 @@ import { cachedTeams, teamNamed } from "../../teams.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { byChance, standingOf, statusOf, topicPhrase } from "../../standing.ts";
-import type { BoardRow, MoneyOwed, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
+import type { BoardRow, MoneyOwed, ProspectDetail, RecruitingBoard, Scene, TeamCard } from "../../types.ts";
+import { inkOn } from "../../colors.ts";
 import { useKept } from "../../kept.ts";
 import { formatClass } from "../../format.ts";
 import Swatch from "../Swatch/index.tsx";
 import QuickActions from "./Quick.tsx";
 import { messages as m } from "./messages.ts";
 import RecruitFlags, { type RecruitAlert } from "../RecruitFlags/index.tsx";
+import RivalPush from "../RivalPush/index.tsx";
 import "./index.css";
 
 /** *tune* How long what your last action did, and a warning that has just started, stay written out, in ms. */
@@ -61,6 +74,21 @@ const GROUP_ORDER = [
 const groupOf = (r: BoardRow) => r.group ?? r.display_pos;
 /** A school by its slug, for its colors (none for a stand-in). */
 const schoolOf = (slug: string | null) => (slug ? cachedTeams()?.find((t) => t.slug === slug) : undefined);
+
+/** A warning about one school, on a band of that school's first color in the ink that reads on it. */
+function RivalWarn({ team, text }: { team: TeamCard | undefined; text: string }) {
+  const c = team?.colors;
+  const style = c
+    ? ({ "--rw": c.primary, "--rw-on": inkOn(c.primary), "--rw-2": c.secondary } as CSSProperties)
+    : undefined;
+  return (
+    <p className="recruit__warn recruit__warn--rival" role="status" style={style}>
+      <Swatch team={team} size={22} />
+      <PhoneCall size={16} weight="fill" aria-hidden="true" />
+      <span>{text}</span>
+    </p>
+  );
+}
 
 interface Props {
   seasonId: string;
@@ -417,7 +445,12 @@ export default function Recruiting({
                   // your board, marked out, every action off
                   const out = r.blocked && r.blocked.why !== "signed" ? r.blocked : null;
                   return (
-                    <li key={r.id} className={out ? "is-out" : undefined}>
+                    <li
+                      key={r.id}
+                      className={
+                        [out && "is-out", !!r.rival_push?.length && "has-rival"].filter(Boolean).join(" ") || undefined
+                      }
+                    >
                       <button
                         type="button"
                         className="recruiting__row"
@@ -466,6 +499,13 @@ export default function Recruiting({
                             />
                           </span>
                           {rank != null && <span className="recruiting__soft recruiting__place">{m.onList(rank)}</span>}
+                          {/* a school answering your recruiting of him, in its own colors: a line of its own along
+                              the row's foot */}
+                          {!!r.rival_push?.length && (
+                            <span className="recruiting__rivals">
+                              <RivalPush rivals={r.rival_push} teamOf={schoolOf} />
+                            </span>
+                          )}
                         </span>
                       </button>
                       {/* every action is off: the shut door stands where his quick actions would */}
@@ -607,6 +647,7 @@ function RecruitPanel({
   if (r.cooled) alerts.push({ key: "cooled", tip: m.cooled(r.cooled_why) });
   if (r.money_owed) alerts.push({ key: "owed", tip: m.moneyOwed(r.money_owed, weekOf(r.money_owed.by_week)) });
   if (r.pestering) alerts.push({ key: "pestered", tip: m.pestering });
+  if (r.unpaid) alerts.push({ key: "unpaid", tip: m.unpaid(r.unpaid.name, r.unpaid.flip) });
   if (flipAlert(r)) alerts.push(flipAlert(r)!);
   const alertKeys = alerts.map((a) => a.key).join(",");
   const alertsWere = useRef({ id: "", keys: "" });
@@ -793,6 +834,7 @@ function RecruitPanel({
               {r.job_promised && (
                 <HeadTag tip={{ title: m.jobPromised, text: m.jobPromisedTip }}>{m.jobPromised}</HeadTag>
               )}
+              <RivalPush rivals={r.rival_push} teamOf={schoolOf} bare />
             </>
           }
           cells={[
@@ -849,6 +891,17 @@ function RecruitPanel({
 
       {tab === "overview" && (
         <div className="recruit__overview" role="tabpanel" aria-label={m.tabs.overview}>
+          {/* your commit, and another school is still calling him: said in that school's colors until it stops */}
+          {(r.rival_push ?? [])
+            .filter((x) => x.pressing)
+            .map((x) => (
+              <RivalWarn key={x.school} team={schoolOf(x.school)} text={m.pressed(x.name)} />
+            ))}
+          {r.unpaid && !flash.includes("unpaid") && (
+            <p className="recruit__warn" role="status">
+              {m.unpaid(r.unpaid.name, r.unpaid.flip)}
+            </p>
+          )}
           {alerts
             .filter((a) => flash.includes(a.key))
             .map((a) => (

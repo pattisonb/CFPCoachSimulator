@@ -6,5 +6,6 @@ import "./recruiting/part3.js";
 import "./recruiting/part4.js";
 import "./recruiting/part5.js";
 import "./recruiting/part6.js";
+import "./recruiting/part7.js";
 
 export { recruiting };

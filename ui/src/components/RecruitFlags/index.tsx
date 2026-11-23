@@ -3,6 +3,7 @@ import {
   Crown,
   CurrencyDollar,
   Diamond,
+  HandCoins,
   HandPalm,
   Snowflake,
   ThumbsUp,
@@ -12,9 +13,16 @@ import { messages as m } from "./messages.ts";
 import "./index.css";
 
 /** Where you stand with him that needs your attention: he has cooled on you, you owe him NIL, he feels pestered,
- *  or he is your commit and a rival is close to flipping him. */
-export type RecruitAlert = "cooled" | "owed" | "pestered" | "flip";
-const ALERT_ICONS = { cooled: Snowflake, owed: CurrencyDollar, pestered: HandPalm, flip: ArrowsLeftRight };
+ *  he is your commit and a rival is close to flipping him, or your offer is too low for him to commit on while
+ *  another school is paying him. */
+export type RecruitAlert = "cooled" | "owed" | "pestered" | "flip" | "unpaid";
+const ALERT_ICONS = {
+  cooled: Snowflake,
+  owed: CurrencyDollar,
+  pestered: HandPalm,
+  flip: ArrowsLeftRight,
+  unpaid: HandCoins,
+};
 
 interface Props {
   /** what needs your attention with him, each with the sentence its tooltip gives */
