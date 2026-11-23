@@ -584,7 +584,8 @@ function nil_room(state, slug) {
 
 
 function known_ask(state, slug, pid) {
-  // His ask as the player knows it (ask_view): the number once he has said it, else the range's middle.
+  // His ask as the player knows it (ask_view): the number once he is fully scouted, else the range's middle (which is
+  // not his number: ask_spot).
   const v = recruiting.ask_view(state, slug, pid, true);
   return has(v, "exact") ? v["exact"] : recruiting._five((v["lo"] + v["hi"]) / 2);
 }

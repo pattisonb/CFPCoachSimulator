@@ -974,7 +974,7 @@ export function row(state, pid, viewer) {
     height: p["height"], weight: p["weight"], home: p["home"], ...prospects.shown(state, p),
     hometown: { city: p["hometown"]["city"], state: p["hometown"]["state"] },
     committed: st["committed"], signed: st["signed"], leaning_fcs: truthy(st["fcs"]),
-    ask: recruiting.ask_view(state, viewer, pid, true),     // his NIL ask of you as you know it: the number, or a range
+    ask: recruiting.ask_view(state, viewer, pid, true),     // his NIL ask of you as you know it: the number once he is fully scouted, a range before
     hard: truthy(get(st, "hard")) && !truthy(st["signed"]),          // a hard commit: the Status column says so, and sorts it over a verbal one
     stage: recruiting.stage(state, viewer, pid),              // where you stand with him: cold, contact, top, visited, committed
     school_name: truthy(get(st, "pro")) ? prospects.PRO : school === "FCS" ? "FCS" : (truthy(school) ? season.team_display(school, teams) : null),
@@ -1036,6 +1036,10 @@ prospects.HISTORY_KEYS = ["week", "portal_week", "kind", "action", "pitch", "nil
   "question", "offered", "why"];   // a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
 
 
+// a save from before his ask came from scouting holds History lines where he named his number on a call or visit:
+// they are never shown (recruiting.ask_known)
+prospects.OLD_ASK_LINE = /^He told you he's looking for \d+ in NIL\.$/;
+
 export function history_index(state, viewer) {
   // One pass over the log: each prospect's History for the viewer, newest first and capped. His
   // own moves and any school's offer show; everything else only when it is the viewer's.
@@ -1046,6 +1050,7 @@ export function history_index(state, viewer) {
     const e = log[i];
     if (get(e, "school") !== viewer && !prospects.HIS_OWN.includes(e["kind"]) && e["kind"] !== "offer") continue;
     if (!persona.shown_to(e, viewer)) continue;        // a Quiet Commit's moves, a twist he told another school
+    if (e["kind"] === "learned" && prospects.OLD_ASK_LINE.test(get(e, "line") || "")) continue;   // an old save: his number is your scouts' to learn now
     if (out[e["pid"]] === undefined) out[e["pid"]] = [];
     const rows = out[e["pid"]];
     if (rows.length < prospects.HISTORY_SHOWN) {

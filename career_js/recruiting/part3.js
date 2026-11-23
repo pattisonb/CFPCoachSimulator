@@ -921,7 +921,7 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
     if (recruiting.is_portal(state)) {                       // a campus visit: this week, no game; he sees it all
       setdefault(rc["visits"], pid, {})[slug] = { week, done: true };
       while (truthy(recruiting._reveal(state, slug, pid))) { /* every priority */ }
-      Object.assign(contact, { asked: true, last_contact: week });
+      contact["last_contact"] = week;                     // (his ask is your scouts' to learn: ask_known)
       pop(contact, "pester", null);
       points = recruiting.BASE_POINTS["official_visit"];
     } else if (visit_week !== null) {               // the weekend you picked: one of your home games left, free on his side
@@ -983,16 +983,13 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
       persona.knock_back(state, slug, pid, action);       // a Surprise Visit's school: a top-three school's call or visit knocks it back
     }
     if (truthy(opens)) {                                  // your scene: the contact is marked, the scene stored; no points until the pitch
-      contact["asked"] = action === "hc_visit" || get(contact, "asked") === true ? true : "range";
       contact["last_contact"] = week;
       const scenes = modules.scenes;
       setdefault(setdefault(rc, "scenes", {}), slug, {})[pid] = scenes.open_scene(state, slug, pid, action, week);
-    } else if (action === "hc_visit") {                   // an in-home visit tells you one thing he cares about, and his number
+    } else if (action === "hc_visit") {                   // an in-home visit tells you one thing he cares about (never his number: ask_known)
       revealed = recruiting._reveal(state, slug, pid);
-      contact["asked"] = true;
-    } else if (action === "call") {                       // a call: sometimes a priority, and about what he wants
+    } else if (action === "call") {                       // a call: sometimes a priority
       if (persona.call_reveals(state, slug, pid)) revealed = recruiting._reveal(state, slug, pid);
-      if (get(contact, "asked") !== true) contact["asked"] = "range";
     }
     if (!truthy(opens)) {
       contact["last_contact"] = week;

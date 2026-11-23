@@ -258,25 +258,25 @@ export function _lines(sc) {
 scenes.ASK_WHO = {"mom": "His mom", "dad": "His dad", "grandma": "His grandmother", "hs_coach": "His high school coach", "trainer": "His trainer", "self": "He"};
 
 export function ask_note(state, slug, pid, ask) {
-  // The visit's note on his family's NIL ask, in the game's NIL words and numerals: the ask the profile's
-  // His Ask shows (the number after a visit, the middle of the range before) and where you stand: the NIL
-  // you have left (and what your offer already holds on him), or that the ask is more than you can put up.
+  // The visit's note on NIL, in the game's NIL words and numerals: who speaks to the money, his ask as your scouts
+  // have it (what the profile's His Ask shows: the number at a complete report, the range before; he never names
+  // it himself) and where you stand: the NIL you have left (and what your offer already holds on him), or that the
+  // ask is more than you can put up.
   const persona = modules.persona, recruiting = modules.recruiting;
-  let n = get(ask, "exact");
-  if (n === null && truthy(get(ask, "hi"))) n = recruiting._five((ask["lo"] + ask["hi"]) / 2);
+  const n = get(ask, "exact");
+  const ranged = n === null && truthy(get(ask, "hi"));
   const d = persona.of(state, pid)["decider"];                      // the one who decides speaks to the money (never "his dad" for a trainer)
   const who = get(scenes.ASK_WHO, d, scenes.ASK_WHO["dad"]);
-  const they = d === "self" ? "he's" : "they're";
-  if (!truthy(n)) return `${who} says the money isn't the point.`;
+  if (!ranged && !truthy(n)) return `${who} says the money isn't the point.`;
   const rec = get(state["recruiting"]["nil"], slug);
   const left = truthy(rec) ? recruiting.nil_left(state, slug)       // read only: never opens the school's NIL record here
     : recruiting.is_portal(state) ? recruiting.portal_budget(state, slug) : recruiting.nil_budget(state, slug);
   const held = get(orr(get(orr(rec, {}), "held"), {}), pid, 0);
   const room = left + held;                                         // an offer to him can hold up to this (recruiting.act)
-  const about = get(ask, "exact") !== null ? "" : "about ";
-  if (n > room) return `${who} wants ${about}${pystr(n)} in NIL, more than you have left (${pystr(room)}).`;
-  if (truthy(held)) return `${who} wants to know about NIL: ${they} looking for ${about}${pystr(n)}. Your offer holds ${pystr(held)}, and you have ${pystr(left)} NIL left.`;
-  return `${who} wants to know about NIL: ${they} looking for ${about}${pystr(n)}. You have ${pystr(left)} NIL left.`;
+  const have = ranged ? `Your scouts have his ask between ${pystr(ask["lo"])} and ${pystr(ask["hi"])}` : `Your scouts have his ask at ${pystr(n)}`;
+  if ((ranged ? ask["lo"] : n) > room) return `${who} wants to know about NIL. ${have}, more than you have left (${pystr(room)}).`;
+  if (truthy(held)) return `${who} wants to know about NIL. ${have}. Your offer holds ${pystr(held)}, and you have ${pystr(left)} NIL left.`;
+  return `${who} wants to know about NIL. ${have}. You have ${pystr(left)} NIL left.`;
 }
 
 

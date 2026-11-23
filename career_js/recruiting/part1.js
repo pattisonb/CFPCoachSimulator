@@ -122,7 +122,7 @@ recruiting.SEND_LOOK = 1.0;                            // a scouting trip (a Sen
 recruiting.AREA_LOOK = 0.5;                            // an area scout's weekly look: half a look (the read moves half as far) ...
 recruiting.AREA_CAP = 2.0;                             // ... up to this many looks from his area (read["area"]), so four weeks there leave one trip to finish him
 recruiting.CALL_REVEAL = 0.5;                          // a call tells you one of his priorities this often; an in-home visit always does
-recruiting.ASK_NARROW = [0.85, 1.15];                  // the ask range after a call; the number itself takes a visit
+recruiting.ASK_NARROW = [0.85, 1.15];                  // *tune* the ask range once your staff has had a look at him (any look short of a complete report)
 recruiting.BASE_POINTS = { message: 1.0, call: 2.5, hc_visit: 6.0, offer: 4.0, official_visit: 8.0,
   call_recruit: 4.0 };             // *tune* the page's Video Call: more than a call ("call"), less than your head coach's visit
 recruiting.PITCH_PRIORITY = [1.0, 3.0];                // a pitch on one of his three priorities: 1 + 3 * your strength on it (1x weak, 4x strong) *tune*
@@ -147,7 +147,9 @@ recruiting.ASK = { 5: 60, 4: 30, 3: 8, 2: 0 };
 recruiting.ASK_POS = { QB: 1.5, LEDG: 1.2, REDG: 1.2, LT: 1.2, WR: 1.2, CB: 1.2, HB: 0.9, TE: 0.9, K: 0.3, P: 0.3 };
 recruiting.ASK_SPREAD = 0.3;
 recruiting.ASK_TRAIL = 0.15;                           // he wants this much more per place you trail on his list
-recruiting.ASK_SHOWN = [0.7, 1.3];                     // the range shown before a call or visit tells you the number
+recruiting.ASK_SHOWN = [0.7, 1.3];                     // *tune* the ask range shown before your staff has looked at him; a complete report gives the number
+recruiting.ASK_OFF_CENTER = [0.2, 0.8];                // *tune* where his number sits in a shown range, as a share of its width from the low end, drawn per prospect and school
+//                                                        (its own stream, ask-view-{seed}-{school}-{pid}); [0.5, 0.5] puts every number dead center, so a range's middle gives it away
 recruiting.NIL_OVER = 0.3;                             // NIL past his ask counts this much of the usual value
 recruiting.LOWBALL = 0.5;                              // an offer under this share of his ask from you is a lowball ...
 recruiting.LOWBALL_MIN = 20;                           // ... as is a 0-NIL offer when he asks for at least this
@@ -729,14 +731,49 @@ function ask_from(state, slug, pid, win = null, peek = false) {
 }
 
 
+recruiting._ASK_SPOTS = new Map();     // (class seed, school, prospect) -> where his number sits in a shown range (ASK_OFF_CENTER)
+
+
+function ask_spot(state, slug, pid) {
+  // Where his number sits in the range you are shown, 0 (the low end) to 1 (the high end): a fixed draw per prospect
+  // and school on its own stream, never stored in the save, so the middle of a range is not his number.
+  const seed = state["recruiting"]["seed"];
+  const key = _key(seed, slug, pid);
+  let f = recruiting._ASK_SPOTS.get(key);
+  if (f === undefined) {
+    if (recruiting._ASK_SPOTS.size > 500000) recruiting._ASK_SPOTS.clear();
+    const [a, b] = recruiting.ASK_OFF_CENTER;
+    f = a + (b - a) * new Random(`ask-view-${seed}-${slug}-${pid}`).random();
+    recruiting._ASK_SPOTS.set(key, f);
+  }
+  return f;
+}
+
+
+function ask_known(state, slug, pid) {
+  // How well `slug` knows his NIL ask: "exact" once your staff's report on him is complete (report_complete: the same
+  // test that tells you his priorities, decider and personality) or he has signed with you, "narrow" once the report
+  // holds any look, "wide" before that. Scouting is the only way to it: no call, visit or money talk tells you (a
+  // save from before this may hold contact["asked"] from a talk; it is ignored). Only the player's school keeps
+  // scouting reports, so any other school reads "wide" (the AI never reads this: it recruits from ask_from).
+  const rc = state["recruiting"];
+  if (slug !== get(state, "team")) return "wide";
+  if (get(get(rc["status"], pid) || {}, "signed") === slug) return "exact";
+  const looks = recruiting.report_looks(get(get(rc, "reads") || {}, pid));
+  return looks >= recruiting.REPORT_LOOKS ? "exact" : looks > 0 ? "narrow" : "wide";
+}
+
+
 function ask_view(state, slug, pid, peek = false) {
-  // His ask from your school as you know it: the number after a call or visit, a range before.
-  // `peek`: read only, never opening a contact record.
+  // His ask from your school as you know it (ask_known): the number once he is fully scouted, a range before
+  // (ASK_SHOWN unscouted, ASK_NARROW once your staff has had a look), in fives, with the number somewhere inside it
+  // (ask_spot), not at its middle. `peek`: read only, never opening a contact record.
   const ask = recruiting.ask_from(state, slug, pid, undefined, peek);
-  const asked = get(peek ? (get(get(state["recruiting"]["contacts"], pid) || {}, slug) || {}) : recruiting._contact(state, slug, pid), "asked");
-  if (asked === true) return { exact: ask };
-  const [lo, hi] = asked === "range" ? recruiting.ASK_NARROW : recruiting.ASK_SHOWN;
-  return { lo: Math.max(0, Math.min(ask - 5, recruiting._five(ask * lo))), hi: Math.max(ask + 5, recruiting._five(ask * hi)) };     // a range in fives that straddles the number
+  const how = recruiting.ask_known(state, slug, pid);
+  if (how === "exact") return { exact: ask };
+  const [lo, hi] = how === "narrow" ? recruiting.ASK_NARROW : recruiting.ASK_SHOWN;
+  const width = (hi - lo) * ask, f = recruiting.ask_spot(state, slug, pid);
+  return { lo: Math.max(0, Math.min(ask - 5, recruiting._five(ask - f * width))), hi: Math.max(ask + 5, recruiting._five(ask + (1 - f) * width)) };     // a range in fives that straddles the number
 }
 
 
@@ -965,6 +1002,6 @@ Object.assign(recruiting, {
   model, _miles, _logistic, _interp, use_league_models, _team_model, _baseline, attributes, fbs_schools, _home, tilt_for, _priorities,
   start, nil_ask, draw_generational, is_generational, contact_week, heal_contacts, upgrade_generational, market_value, tier_of, _tiers,
   flag_cuts, _percentile, _ck, close_week, early_signing_week, signing_week, closed, is_portal, upgrade_asks, hc_visit_week, _contact,
-  ask_from, ask_view, nil_value, is_lowball, cooled, _pester_exempt, not_considering, would_pester, pesters, upgrade_grades, _group,
+  ask_from, ask_spot, ask_known, ask_view, nil_value, is_lowball, cooled, _pester_exempt, not_considering, would_pester, pesters, upgrade_grades, _group,
   _ahead, depth_place, ahead_of, promise_holds, other_offered, _early_leaver_cut,
 });

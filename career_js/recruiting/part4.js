@@ -402,6 +402,9 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
   const budget = recruiting._nil(state, slug)["budget"];
   const known = get(rc["revealed"], slug, {});     // (unused)
   const win = recruiting._winning(state);
+  // his ask as this staff reads it: an AI school its own number from him, as always; your staff on Auto only what
+  // your scouting knows (known_ask: the number at a complete report, else the middle of the range you are shown)
+  const ask_of = (q) => (slug === get(state, "team") ? recruiting.known_ask(state, slug, q) : recruiting.ask_from(state, slug, q, win));
   const need = recruiting.needs(state, slug), commits = recruiting.commits_by_group(state, slug);
   for (const pid of Array.from(offers)) {                   // a group at its cap: the open offers there are pulled (no more chasing flips), yours by hand kept
     if (!_in(pid, kept) && rc["status"][pid]["committed"] !== slug && !truthy(rc["status"][pid]["signed"])
@@ -422,7 +425,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
       open_[g] += 1;
       const left = recruiting.nil_left(state, slug);
       const by_tier = round(budget * get(recruiting.AI_NIL, recruiting.tier_of(p), 0));
-      const nil = Math.min(left, by_tier, round(recruiting.AI_OVER_ASK * recruiting.ask_from(state, slug, pid, win)));
+      const nil = Math.min(left, by_tier, round(recruiting.AI_OVER_ASK * ask_of(pid)));
       try {
         recruiting._act(state, slug, pid, "offer", recruiting.best_pitch(state, slug, pid, true), nil, edge);
       } catch (err) {
@@ -436,7 +439,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
           const pitch = recruiting.best_pitch(state, slug, mate, true);
           const mate_left = recruiting.nil_left(state, slug);
           const mate_tier = round(budget * get(recruiting.AI_NIL, recruiting.tier_of(q), 0));
-          const mate_nil = Math.min(mate_left, mate_tier, round(recruiting.AI_OVER_ASK * recruiting.ask_from(state, slug, mate, win)));
+          const mate_nil = Math.min(mate_left, mate_tier, round(recruiting.AI_OVER_ASK * ask_of(mate)));
           recruiting._act(state, slug, mate, "offer", pitch, mate_nil, edge);
           open_[recruiting._group_of(q)] += 1;
         } catch (err) {
@@ -449,7 +452,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
     if (_in(pid, kept)) continue;
     const c = recruiting._contact(state, slug, pid);
     if (truthy(get(c, "asked_more")) && !truthy(get(c, "ai_raised")) && mine_or_free(pid)) {
-      const ask = recruiting.ask_from(state, slug, pid, win);
+      const ask = ask_of(pid);
       const want = Math.min(ask, get(recruiting._nil(state, slug)["held"], pid, 0) + recruiting.nil_left(state, slug));
       c["ai_raised"] = true;
       if (want > get(recruiting._nil(state, slug)["held"], pid, 0)) {
@@ -513,8 +516,8 @@ function _visits(state, week) {
       }
       v["done"] = true;
       if (game === null) continue;
-      while (truthy(recruiting._reveal(state, slug, pid))) { /* a weekend on campus: you learn everything he cares about, his ask too */ }
-      Object.assign(recruiting._contact(state, slug, pid), { asked: true, last_contact: week });
+      while (truthy(recruiting._reveal(state, slug, pid))) { /* a weekend on campus: you learn everything he cares about (his ask is your scouts' to learn) */ }
+      recruiting._contact(state, slug, pid)["last_contact"] = week;
       delete recruiting._contact(state, slug, pid)["pester"];     // a weekend on campus clears the air
       const margin = game["home_score"] - game["away_score"];
       const mood = margin > 0 ? 1.2 : (margin <= -21 ? 0.6 : 0.9);
@@ -602,8 +605,7 @@ const _open_promise = (pr) => get(pr, "broken") === null && get(pr, "kept") === 
 
 /**
  * You pitched NIL in a call or visit. When NIL is his (a priority or his decider's topic), he has an ask and
- * nothing is held on him yet, he names his number (the contact's ask is exact; a History line says it) and you
- * owe him a money promise: NIL_PROMISE_SHARE of his ask on your offer within NIL_PROMISE_WEEKS (_promises), and the
+ * nothing is held on him yet, you owe him a money promise (he never names his number: your scouts learn it, ask_known): NIL_PROMISE_SHARE of his ask on your offer within NIL_PROMISE_WEEKS (_promises), and the
  * History says so. Not on a call that keeps his priorities to himself (`tells` False: he gives nothing away), not on
  * a call that pestered him (`tired`: the pitch fell flat), and not in the portal (its weeks judge no promises).
  */
@@ -612,9 +614,6 @@ function _money_talk(state, slug, pid, contact, week, tells = true, tired = fals
   const ask = recruiting.ask_from(state, slug, pid);
   const held = get(get(get(state["recruiting"]["nil"], slug) || {}, "held", {}), pid, 0);
   if (!truthy(ask) || truthy(held)) return;
-  const named = get(contact, "asked") !== true;
-  contact["asked"] = true;
-  if (named) recruiting._event(state, "learned", pid, slug, { line: `He told you he's looking for ${ask} in NIL.` });
   if (!(get(contact, "promises") || []).some((pr) => pr["kind"] === "money" && _open_promise(pr))) {
     const scenes = modules.scenes;
     if (!has(contact, "promises")) contact["promises"] = [];
@@ -626,14 +625,19 @@ function _money_talk(state, slug, pid, contact, week, tells = true, tired = fals
 
 /**
  * An open money promise as the page shows it: the NIL to put on your offer (NIL_PROMISE_SHARE of his ask, up to the
- * next NIL step) and the week it is due; null when there is none.
+ * next NIL step) and the week it is due; null when there is none. The number is yours only once you know his ask
+ * (ask_view: a complete report): before that `nil` is null and `sure` is the share of the top of the range you are
+ * shown, which covers it whatever his number is.
  */
 function money_owed(state, slug, pid) {
   const c = get(get(state["recruiting"]["contacts"], pid) || {}, slug) || {};
   const pr = (get(c, "promises") || []).find((x) => x["kind"] === "money" && _open_promise(x));
   if (pr === undefined) return null;
   const ask = Math.min(pr["about"]["ask"], recruiting.ask_from(state, slug, pid, undefined, true) || pr["about"]["ask"]);
-  return { nil: 5 * Math.ceil(recruiting.NIL_PROMISE_SHARE * ask / 5), by_week: pr["week"] + recruiting.NIL_PROMISE_WEEKS };
+  const by_week = pr["week"] + recruiting.NIL_PROMISE_WEEKS;
+  const seen = recruiting.ask_view(state, slug, pid, true);
+  if (!has(seen, "exact")) return { nil: null, sure: 5 * Math.ceil(recruiting.NIL_PROMISE_SHARE * seen["hi"] / 5), by_week };
+  return { nil: 5 * Math.ceil(recruiting.NIL_PROMISE_SHARE * ask / 5), by_week };
 }
 
 /**
