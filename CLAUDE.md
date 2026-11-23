@@ -31,4 +31,5 @@
 ## Process
 - Tests are plain scripts: `node tests/<file>.mjs` (a fresh clone first needs `node tools/game_host.mjs . teams`); the full suite is `node tests/run_all.mjs`. Keep testing light: run the tests that touch what changed, not the full suite, unless the player asks.
 - `npm run dev` picks up a change to the game's code on its own (the page reloads); a change to a roster or to how the game's data is built needs it restarted.
+- A quick change to the app alone (`ui/`: wording, layout, a component; nothing in the game's folders, the build or the data) goes straight to `main` once the front-end gate passes, with no wider test run (the player's standing rule). Anything that touches the game waits for the tests that cover it.
 - Commits end with the session's two attribution trailer lines; no model identifiers in code or commits.
