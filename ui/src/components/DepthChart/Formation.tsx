@@ -11,6 +11,7 @@ import Face from "../Face/index.tsx";
 import Helmet from "../Helmet/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { lookOf, titleCase } from "../../faces.ts";
+import FitText from "../FitText/index.tsx";
 import { firstNames, formatClass, lastName } from "../../format.ts";
 import type { DepthCard, DepthRow } from "../../types.ts";
 import { CARD_W, boardOf, type Kick, type Unit } from "./formation.ts";
@@ -228,7 +229,9 @@ export default function Formation({ unit, rows, kick, onOpen, onSwap, school }: 
                         </span>
                         <span className="board__backup-name">
                           <span>{firstNames(b.name)}</span>
-                          <b>{lastName(b.name)}</b>
+                          <b>
+                            <FitText>{lastName(b.name)}</FitText>
+                          </b>
                         </span>
                         {b.promise && <PromiseMark status={b.promise} />}
                         {b.injury && <span className="depth__flag depth__flag--out">{m.out}</span>}
@@ -332,10 +335,13 @@ function StarterCard({
       </span>
       <span className="board__name">
         <span>{firstNames(p.name)}</span>
-        <b>{lastName(p.name)}</b>
+        <b>
+          <FitText>{lastName(p.name)}</FitText>
+        </b>
       </span>
-      <span className="board__meta">{[formatClass(p.class), size].filter(Boolean).join(" · ")}</span>
-      <span className="board__type">{p.archetype ?? ""}</span>
+      {/* each line whole: one too long for the card is set smaller, never cut to dots */}
+      <FitText className="board__meta">{[formatClass(p.class), size].filter(Boolean).join(" · ")}</FitText>
+      <FitText className="board__type">{p.archetype ?? ""}</FitText>
     </button>
   );
 }

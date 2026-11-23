@@ -1,0 +1,8 @@
+/* One line that is set smaller until it fits (index.tsx); at its least size it is cut short as before. */
+.fit-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
