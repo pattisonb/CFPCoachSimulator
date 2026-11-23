@@ -162,23 +162,9 @@ export const PLACES = new Set([
     "utah", "virginia", "washington", "west-virginia", "wisconsin", "wyoming",
 ]);
 
-// The slug each of those schools had on the published site before it took its place name. A slug is how a saved career
-// finds its team, so these stay as they were: a career begun at "tuscaloosa" still opens, now as Alabama.
-export const SLUGS = {
-    "akron": "rubber-city", "alabama": "tuscaloosa", "arizona": "tucson", "arkansas": "fayetteville",
-    "auburn": "the-plains", "bowling-green": "black-swamp", "buffalo": "nickel-city", "california": "berkeley",
-    "charlotte": "crown-city", "cincinnati": "queen-city", "colorado": "boulder", "delaware": "first-state",
-    "florida": "gainesville", "georgia": "athens", "hawai-i": "honolulu", "houston": "space-city",
-    "illinois": "champaign", "indiana": "bloomington", "iowa": "iowa-city", "kansas": "lawrence",
-    "kentucky": "lexington", "louisiana": "lafayette", "louisville": "derby-city", "maryland": "college-park",
-    "memphis": "bluff-city", "miami": "coral-gables", "michigan": "ann-arbor", "minnesota": "twin-cities",
-    "missouri": "como", "nebraska": "lincoln", "nevada": "reno", "new-mexico": "albuquerque",
-    "north-carolina": "chapel-hill", "north-texas": "denton", "ohio": "hocking", "oklahoma": "norman",
-    "oregon": "eugene", "pittsburgh": "steel-city", "south-alabama": "mobile", "south-carolina": "soda-city",
-    "syracuse": "salt-city", "tennessee": "knoxville", "texas": "austin", "toledo": "glass-city",
-    "troy": "pike-county", "tulsa": "t-town", "utah": "salt-lake", "virginia": "charlottesville",
-    "washington": "seattle", "west-virginia": "morgantown", "wisconsin": "madison", "wyoming": "laramie",
-};
+// A place-named school's slug is its place name too (memphis, not a nickname for the city), so the page's address
+// matches the name on it. This table is for a slug that must differ from its name's own; none does today.
+export const SLUGS = {};
 
 // Real short names that are not also a place: swapped wherever they stand as whole words. A place name ("Texas",
 // "Houston", "North Carolina") is swapped only in the fields that name a team, so states and cities keep theirs.

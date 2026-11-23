@@ -71,7 +71,10 @@ async function main() {
     const others = new Set(Object.entries(maps.real_teams).filter(([s]) => s !== slug).flatMap(([, t]) => [t["short_name"], t["abbreviation"]]));
     assert(!others.has(made.short) && !others.has(made.abbr), `${slug}'s lookalike is another school's real name`);
   }
-  assert(same(Object.keys(tables.SLUGS).sort(), [...tables.PLACES].sort()), "every place-named school keeps the slug it had");
+  // a place-named school's address is its place name: its slug is the slug of the name it shows
+  for (const slug of tables.PLACES) {
+    assert(!(slug in tables.SLUGS) || tables.SLUGS[slug] === slug, `${slug} is shown by its place name, so its slug is that name's`);
+  }
   for (const [real, made] of Object.entries(maps.person)) {
     const [first_real, last_real] = scrub.Names._parts(real);
     const words = made.split(/\s+/).filter(Boolean);
