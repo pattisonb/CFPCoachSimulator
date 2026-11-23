@@ -775,7 +775,8 @@ function RecruitPanel({
               label: m.hisAsk,
               value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact),
               // a range is what your scouts know so far
-              tip: r.ask.exact == null && r.ask.lo != null && r.ask.hi != null ? m.askTip(r.ask.lo, r.ask.hi) : undefined,
+              tip:
+                r.ask.exact == null && r.ask.lo != null && r.ask.hi != null ? m.askTip(r.ask.lo, r.ask.hi) : undefined,
             },
           ]}
           tile={{
