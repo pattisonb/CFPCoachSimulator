@@ -22,8 +22,7 @@ export const messages = {
   moved: (up: boolean, n: number) => `${up ? "Up" : "Down"} ${n} since last season.`,
 
   tierLabel: "Which stars",
-  /** a pair of star levels, by its top: "4.5 to 5 Stars" */
-  band: (top: number) => `${top - 0.5} to ${top} Stars`,
+  starCount: (stars: number, n: number) => `${stars} Star · ${n} ${n === 1 ? "Program" : "Programs"}`,
   allTiers: "All",
   sortHint: "Click a Column to Sort",
   openResume: (team: string) => `Open ${team}'s resume.`,

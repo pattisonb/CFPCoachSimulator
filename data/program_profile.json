@@ -4147,6 +4147,68 @@
     "tv_millions": "Fitted from attendance and conference (data/program_market.json): Nielsen publishes only the most-watched teams."
    }
   },
+  "ndsu": {
+   "facts": {
+    "us_news_rank": 231,
+    "football_gsr": 84,
+    "football_apr": 968,
+    "stadium_name": "Fargodome",
+    "stadium_capacity": 18700,
+    "stadium_renovated": 2016,
+    "football_building_year": 2022,
+    "indoor_practice": 2022,
+    "metro_population": 248591,
+    "jan_avg_temp_f": 8.6,
+    "setting": "College Town",
+    "head_coaches_since_2010": 4,
+    "current_hc_since": 2024,
+    "instagram_followers": 46000,
+    "attendance": 16000,
+    "tv_millions": 0.95,
+    "state": "ND",
+    "conference": "Mountain West"
+   },
+   "sources": {
+    "us_news_rank": "https://en.wikipedia.org/wiki/North_Dakota_State_University",
+    "stadium_name": "https://en.wikipedia.org/wiki/Fargodome",
+    "stadium_capacity": "https://en.wikipedia.org/wiki/Fargodome",
+    "stadium_renovated": "https://en.wikipedia.org/wiki/Fargodome",
+    "football_building_year": "https://en.wikipedia.org/wiki/North_Dakota_State_University",
+    "indoor_practice": "https://en.wikipedia.org/wiki/North_Dakota_State_University",
+    "metro_population": "https://en.wikipedia.org/wiki/Fargo,_North_Dakota",
+    "jan_avg_temp_f": "https://en.wikipedia.org/wiki/Fargo,_North_Dakota",
+    "setting": "https://en.wikipedia.org/wiki/Fargo,_North_Dakota",
+    "head_coaches_since_2010": "https://en.wikipedia.org/wiki/List_of_North_Dakota_State_Bison_head_football_coaches",
+    "current_hc_since": "https://en.wikipedia.org/wiki/List_of_North_Dakota_State_Bison_head_football_coaches"
+   },
+   "estimates": [
+    "football_gsr",
+    "football_apr",
+    "stadium_renovated",
+    "football_building_year",
+    "instagram_followers",
+    "attendance",
+    "tv_millions",
+    "setting"
+   ],
+   "notes": {
+    "us_news_rank": "U.S. News Best National Universities, 2025 edition, tied at No. 231 (Wikipedia, Rankings section). Read 2026-11-23.",
+    "football_gsr": "Not looked up; the Mountain West median.",
+    "football_apr": "Not looked up; the Mountain West median.",
+    "stadium_capacity": "Football capacity, Wikipedia infobox.",
+    "stadium_renovated": "Opened December 1992. No expansion since (a remodel was voted down in 2023 and 2024); the 2016 video boards ($7.7 million) are taken as the last major work. Turf replaced 2022.",
+    "football_building_year": "Nodak Insurance Company Football Performance Complex, a $54 million practice facility opened 2022; taken as the football building too.",
+    "indoor_practice": "Nodak Insurance Company Football Performance Complex, opened 2022.",
+    "metro_population": "Fargo–Moorhead metropolitan area, 2020 (Wikipedia city page).",
+    "jan_avg_temp_f": "Hector International Airport, NOAA 1991–2020 normals, daily mean.",
+    "setting": "Fargo–Moorhead, about 249k. Labeled College Town as the closest fit; flagged for review.",
+    "head_coaches_since_2010": "Non-interim head coaches who started a season 2010–2025: Craig Bohl, Chris Klieman, Matt Entz, Tim Polasek. ",
+    "current_hc_since": "2025 head coach: Tim Polasek. ",
+    "instagram_followers": "Not counted; the Mountain West median.",
+    "attendance": "No season average found; estimated from a dome of 18,700 that is usually near full.",
+    "tv_millions": "Not in data/program_market.json (new to FBS); the Mountain West median."
+   }
+  },
   "nebraska": {
    "facts": {
     "us_news_rank": 169,
@@ -5447,6 +5509,67 @@
     "current_hc_since": "Greg Schiano, second stint.",
     "instagram_followers": "Counted by the player on 2026-11-10.",
     "tv_millions": "Fitted from attendance and conference (data/program_market.json): Nielsen publishes only the most-watched teams."
+   }
+  },
+  "sac-state": {
+   "facts": {
+    "us_news_rank": "unranked",
+    "football_gsr": 84,
+    "football_apr": 957,
+    "stadium_name": "Hornet Stadium",
+    "stadium_capacity": 21195,
+    "stadium_renovated": 2010,
+    "football_building_year": 2008,
+    "indoor_practice": "none",
+    "metro_population": 2397382,
+    "jan_avg_temp_f": 47.6,
+    "setting": "Big City",
+    "head_coaches_since_2010": 5,
+    "current_hc_since": 2025,
+    "instagram_followers": 38000,
+    "attendance": 13348,
+    "tv_millions": 0.87,
+    "state": "CA",
+    "conference": "MAC"
+   },
+   "sources": {
+    "us_news_rank": "https://en.wikipedia.org/wiki/California_State_University,_Sacramento",
+    "stadium_name": "https://en.wikipedia.org/wiki/Hornet_Stadium_(Sacramento)",
+    "stadium_capacity": "https://en.wikipedia.org/wiki/Hornet_Stadium_(Sacramento)",
+    "stadium_renovated": "https://en.wikipedia.org/wiki/Hornet_Stadium_(Sacramento)",
+    "football_building_year": "https://en.wikipedia.org/wiki/Hornet_Stadium_(Sacramento)",
+    "indoor_practice": "https://en.wikipedia.org/wiki/Hornet_Stadium_(Sacramento)",
+    "metro_population": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+    "jan_avg_temp_f": "https://en.wikipedia.org/wiki/Sacramento,_California",
+    "setting": "https://en.wikipedia.org/wiki/Metropolitan_statistical_area",
+    "head_coaches_since_2010": "https://en.wikipedia.org/wiki/Sacramento_State_Hornets_football",
+    "current_hc_since": "https://en.wikipedia.org/wiki/Sacramento_State_Hornets_football",
+    "attendance": "https://en.wikipedia.org/wiki/Sacramento_State_Hornets_football"
+   },
+   "estimates": [
+    "football_gsr",
+    "football_apr",
+    "football_building_year",
+    "instagram_followers",
+    "tv_millions",
+    "metro_population"
+   ],
+   "notes": {
+    "us_news_rank": "Ranked as a Regional University (West), No. 27 (tie); not in the National Universities list (Wikipedia, Rankings section). Read 2026-11-23.",
+    "football_gsr": "Not looked up; the MAC median.",
+    "football_apr": "Not looked up; the MAC median.",
+    "stadium_capacity": "Wikipedia infobox capacity.",
+    "stadium_renovated": "Opened 1969. Last improvements listed are 2010 (FieldTurf, The Well, a video board). A 25,000-seat replacement was announced in 2024; not built as far as the page says.",
+    "football_building_year": "Eli and Edythe Broad Athletic Fieldhouse, opened 2008 (offices, locker rooms, weight room), shared with other sports.",
+    "indoor_practice": "None mentioned on the pages read.",
+    "metro_population": "Sacramento–Roseville–Folsom, CA MSA, 2020 census, from memory of the Census table (the city page shows a later 2,463,127); flagged for review.",
+    "jan_avg_temp_f": "Sacramento Executive Airport, NOAA 1991–2020 normals, daily mean.",
+    "setting": "Sacramento MSA, about 2.4 million.",
+    "head_coaches_since_2010": "Non-interim head coaches who started a season 2010–2025: Marshall Sperbeck, Jody Sears, Troy Taylor, Andy Thompson, Brennan Marion. ",
+    "current_hc_since": "2025 head coach: Brennan Marion. ",
+    "instagram_followers": "Not counted; the MAC median.",
+    "attendance": "Average home attendance in 2023 (Wikipedia, football article).",
+    "tv_millions": "Not in data/program_market.json (new to FBS); the MAC median."
    }
   },
   "sam-houston": {

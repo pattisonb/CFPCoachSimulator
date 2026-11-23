@@ -7,6 +7,44 @@
   vertical-align: middle;
 }
 
-.program-stars .is-off {
+.program-stars .is-off,
+.star-picker .is-off {
   opacity: 0.35;
+}
+
+/* the picker: five stars to fill, each star two buttons laid over its halves */
+.star-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  line-height: 0;
+}
+
+.star-picker__star {
+  position: relative;
+  display: inline-flex;
+}
+
+.star-picker__half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.star-picker__half + .star-picker__half {
+  left: 50%;
+}
+
+.star-picker__star:hover .is-off {
+  opacity: 0.7;
+}
+
+.star-picker__half:focus-visible {
+  outline: var(--line) solid var(--ink);
 }

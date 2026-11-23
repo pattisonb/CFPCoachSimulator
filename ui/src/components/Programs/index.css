@@ -288,6 +288,20 @@
     inset 0 calc(-1 * var(--line)) 0 var(--ink);
 }
 
+/* the grade columns are one width, their headers on two lines when they need them, so the patches line up in even
+   lanes */
+.programs__scroll th.is-num,
+.programs__scroll td.is-num {
+  width: 86px;
+  min-width: 86px;
+  padding: 6px 4px;
+}
+
+.programs__scroll th.is-num {
+  white-space: normal;
+  vertical-align: bottom;
+}
+
 /* every other row tinted, so a row reads across; yours tinted darker */
 .programs__scroll tbody tr:nth-child(even) td {
   background: var(--paper);
@@ -300,7 +314,8 @@
 .programs__bar-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
   margin-bottom: var(--s2);
 }
 

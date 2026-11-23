@@ -240,12 +240,21 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const first = todos.find((t) => !t.done)?.key;
   // the to-do in ink follows the week, but only once it has settled: a sim (and the moment after it, while the new
   // week's schedule and its recruiting hours arrive one after the other) moved it from one row to another and back
-  const [current, setCurrent] = useState(first);
+  // (outside a sim it IS the first thing left to do, at once: held a beat behind, a new dynasty showed Advance or Scout
+  // in ink until the recruiting numbers had arrived and the beat had passed, and sometimes stayed there)
+  const [nowHeld, setNowHeld] = useState(first);
+  const [holding, setHolding] = useState(sim.running);
   useEffect(() => {
-    if (sim.running) return;
-    const t = window.setTimeout(() => setCurrent(first), NOW_SETTLE_MS);
+    if (sim.running) return setHolding(true);
+    const t = window.setTimeout(() => setHolding(false), NOW_SETTLE_MS);
     return () => window.clearTimeout(t);
-  }, [first, sim.running]);
+  }, [sim.running]);
+  useEffect(() => {
+    if (!holding) setNowHeld(first);
+  }, [first, holding]);
+  // before the recruiting numbers arrive the list is not whole yet (Recruit and Scout are missing): nothing is in ink
+  const waiting = !s.done && !v && s.current_week < CLOSE_WEEK;
+  const current = waiting ? undefined : holding ? nowHeld : first;
 
   const conf = confShort(office?.conference.name ?? s.conference);
   const st = office?.conference.standing;

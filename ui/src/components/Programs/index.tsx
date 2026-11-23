@@ -12,6 +12,7 @@ import { titleCase } from "../../format.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import ProgramStars from "../ProgramStars/index.tsx";
+import StarPicker from "../ProgramStars/Picker.tsx";
 import "./index.css";
 
 interface Props {
@@ -153,14 +154,15 @@ export default function Programs({ season, teams, onTeam }: Props) {
       </span>
     );
   };
-  /** a grade as a patch: yours in your colors, another program's in its own */
+  /** a grade as a patch, in your colors: one palette down every column, so a column reads at a glance (each
+   *  program's own colors made the table a patchwork; its swatch by its name says whose row it is) */
   const grade = (p: Program, k: Key, size: "sm" | "md" = "md") => {
     const l = letterOf(p, k);
     return l == null ? (
       <span className="programs__word is-low">{m.notGraded}</span>
     ) : (
       <span className="programs__word">
-        <SchoolGrade grade={l} size={size} colors={p.team === season.team ? undefined : teams.get(p.team)?.colors} />
+        <SchoolGrade grade={l} size={size} />
         {moved(p, k)}
       </span>
     );
@@ -210,7 +212,7 @@ export default function Programs({ season, teams, onTeam }: Props) {
 
   const you = view?.you;
   const job = season.job;
-  const rows = view ? view.rows.filter((p) => tier == null || Math.ceil(p.stars) === tier) : [];
+  const rows = view ? view.rows.filter((p) => tier == null || p.stars === tier) : [];
   const groups = you
     ? (view.group_order?.length ? view.group_order : PRO_ORDER)
         .map((g, i) => ({ g, v: you.pro_groups?.[g] ?? 0, i }))
@@ -342,20 +344,17 @@ export default function Programs({ season, teams, onTeam }: Props) {
 
             <Panel title={m.everyProgram} aside={m.sortHint} className="programs__table">
               <div className="programs__bar-row" role="group" aria-label={m.tierLabel}>
+                {/* five empty stars: fill them to a level and the list is that level's programs; All empties them */}
                 <Chip on={tier == null} onClick={() => setTier(null)}>
                   {m.allTiers}
                 </Chip>
-                {/* the stars two levels at a time, by the band's top: 4.5 to 5 Stars, 3.5 to 4 Stars, ... */}
-                {[5, 4, 3, 2, 1].map((top) => (
-                  <Chip
-                    key={top}
-                    on={tier === top}
-                    count={view.rows.filter((p) => Math.ceil(p.stars) === top).length}
-                    onClick={() => setTier(top)}
-                  >
-                    {m.band(top)}
-                  </Chip>
-                ))}
+                <StarPicker
+                  label={m.tierLabel}
+                  value={tier}
+                  onPick={setTier}
+                  count={(s) => view.rows.filter((p) => p.stars === s).length}
+                />
+                {tier != null && <span className="programs__soft">{m.starCount(tier, rows.length)}</span>}
               </div>
               {/* its own box: it scrolls both ways from anywhere in it, the header and the names staying put */}
               <div className="programs__scroll" tabIndex={0} role="region" aria-label={m.everyProgram}>
