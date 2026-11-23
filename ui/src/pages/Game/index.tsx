@@ -707,7 +707,6 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                         onSection={open}
                         onStage={onOffStage}
                         onRecruit={openRecruit}
-                        budgets={budgets}
                         onNextSeason={(id) => {
                           // the new season opens in place, on a page drawn afresh: a full load would start the
                           // published game's engine over (the stress run's find)

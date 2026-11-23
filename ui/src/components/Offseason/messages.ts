@@ -224,7 +224,10 @@ export const messages = {
     overall: "Overall",
     lifted: (n: number) => `What Lifted His Overall · ${n} ${n === 1 ? "Rating" : "Ratings"}`,
     noLift: "None of the ratings his overall is built on moved.",
+    /** a step back: the same list, said for a drop */
+    lowered: (n: number) => `What Lowered His Overall · ${n} ${n === 1 ? "Rating" : "Ratings"}`,
     also: (n: number) => `Also Improved · ${n}`,
+    alsoChanged: (n: number) => `Also Changed · ${n}`,
     lift: (n: number) => `${n > 0 ? "+" : ""}${n} OVR`,
     liftTip: "What this rating's change added to his overall at his position.",
     /** ratings whose key does not read as its name */

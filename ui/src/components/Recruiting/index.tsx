@@ -505,7 +505,12 @@ export default function Recruiting({
                             {r.display_pos}
                             {/* a transfer: his year (they are not all freshmen) and the school he left (his season's numbers are on his file; they do not fit a card) */}
                             {r.portal ? (
-                              <span>{[r.cls && formatClass(r.cls), r.from_name].filter(Boolean).join(" · ")}</span>
+                              // (the school by its short name, FAU: a long one was cut off; the whole name is its tooltip)
+                              <span title={r.from_name ?? undefined}>
+                                {[r.cls && formatClass(r.cls), teamNamed(r.from_name)?.abbreviation ?? r.from_name]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </span>
                             ) : (
                               <Stars n={r.stars} size={10} />
                             )}

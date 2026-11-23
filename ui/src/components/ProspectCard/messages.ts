@@ -27,9 +27,10 @@ export const messages = {
   open: "Open",
   /** uncommitted, but the door is shut on you: he will not consider you, or you missed his cut */
   shut: { locked: "Closed", finalists: "Cut You" } as Record<string, string>,
-  openAt: { visited: "Open · Visited", contact: "Open · In Contact" } as Record<string, string>,
+  /** uncommitted, and where you stand with him: said alone (it was "Open · In Contact", too long for the list) */
+  openAt: { visited: "Visited", contact: "In Contact" } as Record<string, string>,
   /** in his top group, by its size this week: 8, then his finalists (5, 3) */
-  openTop: (n: number) => `Open · Top ${n}`,
+  openTop: (n: number) => `Top ${n}`,
   hardCommit: (school: string) => `Hard Commit: ${school}`,
   committedTo: (school: string) => `Verbal: ${school}`,
   signedWith: (school: string) => `Signed: ${school}`,

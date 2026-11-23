@@ -29,7 +29,7 @@ interface Props {
 /** the game's answer for a player who has left the pool */
 const GONE = /unknown prospect/;
 
-/** "Open", "Closed", "Committed: Texas", "Signed: SMU", "Leaning FCS", "Going Pro" */
+/** "Open", "In Contact", "Top 8", "Closed", "Committed: Texas", "Signed: SMU", "Leaning FCS", "Going Pro" */
 export function statusOf(r: ProspectRow): string {
   if (r.pro) return m.goingPro;
   if (r.signed && r.school_name) return m.signedWith(r.school_name);

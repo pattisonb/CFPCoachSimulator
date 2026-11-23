@@ -569,7 +569,7 @@ function Departures(p: P) {
  * his scouting and ratings), then who has come and gone as two columns. The ones who went elsewhere
  * are folded.
  */
-function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
+function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
   const pt = v.portal;
   const rows = [...(pt.board?.rows ?? [])].sort((a, b) => b.overall - a.overall);
   const sides = [
@@ -599,8 +599,6 @@ function Portal({ v, teams, onSection, onRecruit, live, season, budgets }: P) {
             <b>{m.portal.how}</b>
             <span>{m.portal.howSub(pt.week || pt.weeks, pt.weeks)}</span>
           </div>
-          {/* what you have left to work it with this week */}
-          {budgets && <div className="off__budgets">{budgets}</div>}
           <button type="button" className="off__next" onClick={() => onSection("recruiting")}>
             {m.portal.open}
             <ArrowRight size={16} weight="bold" aria-hidden="true" />
@@ -1081,8 +1079,10 @@ function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSPr
               />
             </span>
             <span className="growth__from">{r.from}</span>
-            <b className="dev__now">{r.to}</b>
-            <span className={`dev__delta${r.to > r.from ? " is-up" : ""}`}>{signed(r.to - r.from)}</span>
+            <b className={`dev__now${r.to < r.from ? " is-down" : ""}`}>{r.to}</b>
+            <span className={`dev__delta${r.to > r.from ? " is-up" : r.to < r.from ? " is-down" : ""}`}>
+              {signed(r.to - r.from)}
+            </span>
           </li>
         );
       })}
@@ -1109,7 +1109,7 @@ function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSPr
                 {who.overall - who.gain} <ArrowRight size={14} weight="bold" aria-hidden="true" /> <b>{who.overall}</b>
               </span>
             </span>
-            <b className="growth__gain">{signed(who.gain)}</b>
+            <b className={`growth__gain${who.gain < 0 ? " is-down" : ""}`}>{signed(who.gain)}</b>
           </header>
           <Notes why={who.why} />
           {!who.grew ? (
@@ -1119,11 +1119,16 @@ function GrowthWindow({ who, style, onClose }: { who: Grown | null; style: CSSPr
           ) : (
             <>
               <section>
-                <h4 className="label dev__kicker">{m.dev.lifted(main.length)}</h4>
+                <h4 className="label dev__kicker">{(who.gain < 0 ? m.dev.lowered : m.dev.lifted)(main.length)}</h4>
                 {main.length ? bars(main) : <p className="off__soft">{m.dev.noLift}</p>}
               </section>
               {rest.length > 0 && (
-                <Panel title={m.dev.also(rest.length)} collapsible defaultOpen={false} className="growth__rest">
+                <Panel
+                  title={(who.gain < 0 ? m.dev.alsoChanged : m.dev.also)(rest.length)}
+                  collapsible
+                  defaultOpen={false}
+                  className="growth__rest"
+                >
                   <div className="growth__cols">{bars(rest)}</div>
                 </Panel>
               )}

@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Check } from "@phosphor-icons/react";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
@@ -21,8 +20,6 @@ interface Props {
   onStage?: (stage: string) => void;
   /** the next season has begun: open it */
   onNextSeason: (seasonId: string) => void;
-  /** the week's hours and scouting points as bars, for the portal stage (it is worked with them) */
-  budgets?: ReactNode;
 }
 
 /** What every stage's panels are handed: the offseason, and the two ways to change it. */
@@ -40,7 +37,6 @@ export interface StageProps {
   get: <T>(path: string) => Promise<T>;
   onSection: (key: string) => void;
   onRecruit: (pid: string) => void;
-  budgets?: ReactNode;
 }
 
 /**
@@ -50,7 +46,7 @@ export interface StageProps {
  * portal (worked on the Recruiting board), Development, Staff and job offers, Change Conferences, Edit Schedule, and
  * Ready, which starts the next season.
  */
-export default function Offseason({ season, teams, onSection, onRecruit, onStage, onNextSeason, budgets }: Props) {
+export default function Offseason({ season, teams, onSection, onRecruit, onStage, onNextSeason }: Props) {
   const [v, setV] = useState<OffView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -239,7 +235,6 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
               act={act}
               get={get}
               onSection={onSection}
-              budgets={budgets}
               onRecruit={onRecruit}
             />
           </>
