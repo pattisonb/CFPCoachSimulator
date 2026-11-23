@@ -17,12 +17,16 @@ interface Props {
   onBox?: (eventId: string) => void;
   /** the national championship, for the title week's tile when you are not in it: the two teams once set, the score once played */
   titleGame?: TitleGame | null;
+  /** your conference's championship game, for Championship Week's tile when you are not in it */
+  conferenceTitleGame?: TitleGame | null;
 }
 
 /** *tune* The season's last week (sim_js/season.js: the national championship). */
 const LAST_WEEK = 20;
 /** *tune* The first week after the regular season: the weeks from here get a placeholder until a game is set. */
 const FIRST_POST_WEEK = 15;
+/** *tune* Championship Week (sim_js/season.js: the conference championship games). */
+const CCG_WEEK = 15;
 
 /** *tune* How long a tile that has just got its result stays marked, in ms (index.css strip-flash). */
 const POP_MS = 1800;
@@ -43,7 +47,15 @@ const shortName = (g: ScheduleGame, team: TeamCard | undefined) =>
  * The season across the top of the game: one tile per week, played games with their result, the rest with their
  * date. The week you are in (a game or a bye) is raised and scrolled into view; arrows page through the rest.
  */
-export default function SeasonStrip({ games: schedule, teams, weekLabels, week, onBox, titleGame }: Props) {
+export default function SeasonStrip({
+  games: schedule,
+  teams,
+  weekLabels,
+  week,
+  onBox,
+  titleGame,
+  conferenceTitleGame,
+}: Props) {
   // the postseason weeks you have no game in yet (championship week, the bowls, the playoff) hold their place
   const games = useMemo(() => {
     const out = [...schedule];
@@ -161,8 +173,14 @@ export default function SeasonStrip({ games: schedule, teams, weekLabels, week, 
           const open = g.kind === "open";
           const bye = g.kind === "bye" || open;
           const isNext = g === next;
-          // the title week without you in it: the game itself, once its teams are known
-          const title = open && g.week === LAST_WEEK && titleGame ? titleGame : null;
+          // a championship week without you in it: the game itself, once its teams are known (the national title
+          // game in the last week, your conference's in Championship Week)
+          const title =
+            open && g.week === LAST_WEEK && titleGame
+              ? titleGame
+              : open && g.week === CCG_WEEK && conferenceTitleGame
+                ? conferenceTitleGame
+                : null;
           const box = title
             ? onBox && title.played && title.has_box
               ? title.event_id

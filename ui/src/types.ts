@@ -197,6 +197,8 @@ export interface SeasonSummary {
   champion_name: string | null;
   /** the national championship once its two teams are known; its score once played */
   title_game?: TitleGame | null;
+  /** your conference's championship game once its teams are known (none for a conference without one) */
+  conference_title_game?: TitleGame | null;
   offseason_stage: string | null;
   /** your team's injury report */
   injuries: unknown[];

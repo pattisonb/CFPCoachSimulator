@@ -617,6 +617,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
               <SeasonStrip
                 games={stripGames}
                 titleGame={season.title_game}
+                conferenceTitleGame={season.conference_title_game}
                 teams={bySlug}
                 weekLabels={season.week_labels}
                 week={stripWeek}

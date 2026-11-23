@@ -294,6 +294,7 @@ export class Maps {
     const real_names = new Set([...real_teams.map((t) => t["short_name"]), ...Object.keys(this.fcs_locations)]);
     for (const i of ids) {
       const old = get(get(sched_fcs, i) || {}, "name") || get(get(fmap, i) || {}, "name") || "";
+      if (old === "TBD") continue;                       // a placeholder for a game not yet announced, not a school: the word stays as it is everywhere
       const state = get(get(fmap, i) || {}, "state") || "";
       const avoid = new Set([...real_places, ...Object.keys(this.fcs_locations)]);
       const listed = get(cities, state, []);

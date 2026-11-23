@@ -533,6 +533,12 @@ function summary(state) {
     champion_name: truthy(get(state, "champion")) ? teams[state["champion"]]["name"] : null,
     // the national championship once its two teams are known (the season strip's Title Wk tile), with its score once played
     title_game: truthy(get(state["games"], "cfp-final")) ? season._game_line(state["games"]["cfp-final"], teams, state) : null,
+    // your conference's championship game once its two teams are known (the strip's Championship Week tile when you
+    // are not in it); none for a conference without one
+    conference_title_game: (() => {
+      const g = Object.values(state["games"]).find((x) => get(x, "kind") === "ccg" && get(x, "conference") === state["conference"]);
+      return g === undefined ? null : season._game_line(g, teams, state);
+    })(),
     record: rec, schedule, weeks, my_rank: season.current_rank(state),
     coach: season._coach_line(state, teams[state["team"]]),
     week_labels,
