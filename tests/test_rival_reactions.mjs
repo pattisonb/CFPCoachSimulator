@@ -346,7 +346,7 @@ test("the unpaid offer: a recruit with another offer does not commit to you on a
   equal(prospects.board_row(st, lone, me).unpaid, { school: null, name: null, flip: false });
   recruiting.UNPAID_STARS = 4;
   // one another school offers and does not pay: a hold, unless only real money counts (UNPAID_RIVAL "paid")
-  const cheap = by_rank(st).find((q) => free(q) && offering(st, q).length > 0
+  const cheap = by_rank(st).find((q) => free(q) && rc["prospects"][q]["stars"] === 3 && offering(st, q).length > 0
     && offering(st, q).every((x) => !((rc["nil"][x]["held"] || {})[q] > 0)));
   recruiting.act(st, me, cheap, "offer", null, 0);
   assert(offering(st, cheap).includes(recruiting.unpaid_hold(st, cheap)));
