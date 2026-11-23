@@ -4,7 +4,6 @@ export const messages = {
   offers: "Offers",
   commits: "Commits",
   scout: "Scouting",
-  scoutTip: "Your scouting points left this week. Sending a scout to look at a recruit spends them.",
 
   stages: "Stage",
   noneAtStage: "No one on your board is at this stage.",

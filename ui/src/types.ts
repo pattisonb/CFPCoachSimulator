@@ -716,8 +716,11 @@ export interface ProspectRow {
   favorite?: boolean;
   on_board: boolean;
   offered: boolean;
-  /** your staff's looks at him (a full report at 3) */
+  /** your staff's looks at him, in thirds of a report (a full report at 3) */
   looks: number;
+  /** ... and in his own count: how many he has and how many finish his report (2, 3 or 4, by your staff) */
+  looks_done?: number;
+  looks_needed?: number;
   /** your staff's potential read, low and high (letter grades); null before a look */
   our_potential: [string, string] | null;
   interest_level: "High" | "Medium" | "Low";
@@ -802,6 +805,8 @@ export interface ProspectDetail {
   };
   need: number | null;
   looks: number;
+  looks_done?: number;
+  looks_needed?: number;
   evaluation: { strengths: string[]; solid: string[]; weaknesses: string[]; outlook: string } | null;
   row: ProspectRow;
   /** who he is, as far as you have learned (each null until then) */
@@ -988,6 +993,8 @@ export interface BoardRow {
   history: RecruitEvent[];
   need: number | null;
   looks: number;
+  looks_done?: number;
+  looks_needed?: number;
   /** what he said about each topic you pitched him: sold, hit, fair, lukewarm, weak, not_his, no_read */
   pitch_marks: Record<string, { mark: string; week?: number; action?: string }>;
   /** you already promised him the starting job */
@@ -1133,6 +1140,8 @@ export interface ReportGroup {
   scout: string;
   area: string | null;
   looks: number;
+  looks_done?: number;
+  looks_needed?: number;
   changed: number;
   items: ReportItem[];
 }
@@ -1146,6 +1155,8 @@ export interface ScoutFlag {
   /** "generational", "gem", "bust" or "likes" */
   flag: string;
   looks: number;
+  looks_done?: number;
+  looks_needed?: number;
   likes: { who: string; text: string } | null;
   on_board: boolean;
   standing_word: string;

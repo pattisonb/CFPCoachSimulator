@@ -58,7 +58,6 @@ export const messages = {
   yourPull: "Your Program:",
   pullTip: (grade: string) =>
     grade ? `Your program's grade on this: ${grade}. He weighs it against what he wants.` : "",
-  looksCount: (n: number) => `${n} / 3`,
   priority: (i: number) => `${ORDINALS[i] ?? ""} Priority`,
   priorityHint: "A call may reveal it.",
   hisAsk: "His Ask",
@@ -71,7 +70,6 @@ export const messages = {
 
   // ----- Scouting -----
   report: "Scouting Report",
-  looksOf: (looks: string) => `${looks} / 3`,
   complete: "Report Complete",
   looksShort: {
     none: "Not Scouted Yet",
@@ -103,12 +101,12 @@ export const messages = {
   keyRatings: "Key Ratings",
   attributes: "Attributes",
   noRatings: "His ratings come with his first look.",
-  sendScout: (points: number) => `Send a Scout · ${points} Points`,
+  sendScout: (energy: number) => `Send a Scout · ${energy} Energy`,
   finishes: "This look finishes his report.",
-  noPoints: "Not enough scouting points left this week.",
+  noPoints: "Not enough energy left this week.",
   cantScout: "Your staff can't get to him this week.",
   finishFirst: "Finish your call or visit with him first.",
-  pointsLeft: (n: number) => `${n} scouting ${n === 1 ? "point" : "points"} left this week.`,
+  pointsLeft: (n: number) => `${n} energy left this week.`,
   looksLine: {
     none: "No look yet: send a scout, or put a staff member on his area.",
     one: "One more look finishes his report.",

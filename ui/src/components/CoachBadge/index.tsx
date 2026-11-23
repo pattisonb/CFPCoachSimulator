@@ -34,8 +34,9 @@ interface Props {
   alert?: number;
 }
 
-/** *tune* How many blocks the energy bar is drawn in. */
-const SEGMENTS = 10;
+/** *tune* How many blocks the energy bar is drawn in (twenty: a week's energy runs to 480 now, and ten blocks read
+ *  as full with 190 of 210 left). */
+const SEGMENTS = 20;
 
 /**
  * The week's energy on its own: the label, a bar of blocks and what is left ("ENERGY ▮▮▮▮▮▮▮▯▯▯ 105/150"). With a

@@ -27,7 +27,7 @@ programs.PRO_GROUP_ORDER = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "
 // A program's standing is said in stars, five at most and by halves: ten levels, from its rating. The floors are set
 // so the league spreads over them (four programs at five stars, about a dozen at half a star); the tiers below are
 // the game's own bands (the AD's goal, the coach a program can hire) and are never shown by name. *tune*
-programs.STARS = [[82, 5], [75, 4.5], [68, 4], [60, 3.5], [53, 3], [46, 2.5], [38, 2], [30, 1.5], [23, 1]];   // rating floors; below the last is half a star
+programs.STARS = [[82, 5], [75, 4.5], [68, 4], [60, 3.5], [53, 3], [46, 2.5], [38, 2], [30, 1.5], [23, 1], [18, 0.5]];   // rating floors; below the last is no stars (eleven levels: a school's energy a week follows them, recruiting.weekly_hours)
 programs.TIER_NAMES = { 1: "Blue Blood", 2: "Power", 3: "Solid", 4: "Modest", 5: "Bottom" };   // a standing, never a conference label: a Group of 6 program can be Solid or better
 programs.BASE_DEFAULT = { history: 15.0, prestige: 15.0, winning: 20.0, market: 25, nil: 15.0, conference: 10.0, coach: 55.0, pro: 0 };
 programs.RANK_BONUS = [[1, 0.8], [5, 0.5], [10, 0.35], [25, 0.35]];     // a season's score: win share plus these (cumulative), max 3.0
@@ -101,11 +101,11 @@ export function tier_of(rating) {
 
 
 export function stars_of(rating) {
-  // A program's stars from its rating: 0.5 to 5 by halves (programs.STARS).
+  // A program's stars from its rating: 0 to 5 by halves (programs.STARS).
   for (const [floor, s] of programs.STARS) {
     if (rating >= floor) return s;
   }
-  return 0.5;
+  return 0;
 }
 
 

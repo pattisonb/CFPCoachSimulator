@@ -256,7 +256,7 @@ function _weekly_step(state, week, auto_user) {
   }
   if (!dead) {
     recruiting.scout_week(state, truthy(get(rc, "portal")) ? week + 1 : week);   // the portal's week counter moves after the step
-    recruiting.spend_leftover(state, truthy(get(rc, "portal")) ? week + 1 : week);   // what you didn't spend, your staff does: half looks on your board
+    // (energy you did not spend is gone: your staff no longer turns it into looks, the player's ask)
   }
   const mine = get(state, "team");
   const mode = recruiting.auto_mode(state);
@@ -629,7 +629,7 @@ function _normalize_read(read) {
 
 
 // (weight's default is SEND_LOOK as it stands at the call)
-function look(state, pid, evaluator_rating, rng, by = null, week = null, weight = recruiting.SEND_LOOK) {
+function look(state, pid, evaluator_rating, rng, by = null, week = null, weight = recruiting.SEND_LOOK, area_cap = null) {
   // One look at a prospect by an evaluator, worth `weight` looks (SEND_LOOK for a trip, AREA_LOOK
   // for an area scout's week): every group's read moves toward what he saw, the step and the
   // confidence gained scaled by the weight, and `read["looks"]` grows by it. Nothing goes past
@@ -651,7 +651,7 @@ function look(state, pid, evaluator_rating, rng, by = null, week = null, weight 
   let read = get(rc["reads"], pid);
   if (read !== null) recruiting._normalize_read(read);
   let w = Math.min(Number(weight), recruiting.looks_left(read));
-  if (by !== "trip") w = Math.min(w, recruiting.AREA_CAP - recruiting.area_looks(read));
+  if (by !== "trip") w = Math.min(w, (area_cap === null ? recruiting.AREA_CAP : area_cap) - recruiting.area_looks(read));   // (`area_cap`: the staff's own ceiling on him, one of his looks)
   w = round(w, 3);
   if (w <= 0) {                                      // nothing left to add: no look, only the flag he holds refreshed
     if (read !== null) read["find"] = pr.find(state, pid);
@@ -740,7 +740,7 @@ function shown_range(state, pid, group, sharp = null) {
   if (!truthy(iv)) return null;
   if (group === "potential") {                                    // his overall potential is a letter grade (grades.js), never a number
     // a complete report settles on one grade: the letter is range enough
-    return grades.span(iv[0], iv[1], sharp === null || sharp === undefined ? grades.fine(state) : sharp);   // `sharp`: a caller reading many passes it once
+    return grades.span(iv[0], iv[1], sharp === null || sharp === undefined ? grades.fine(state, pid) : sharp);   // by your staff's blend for him (a caller may still pass `sharp`)
   }
   if (iv[0] === iv[1]) {                                          // a complete report: a narrow range, never one number
     const half = Math.max(2.0, recruiting.read_spread(state, pid, group)[1]);
@@ -836,6 +836,9 @@ function set_board(state, pid, on) {
     if (!rc["board"].includes(pid)) {                    // he has signed, he will not consider you, or you are not one of his finalists (part 6)
       const out = recruiting.blocked(state, me, pid);
       if (out !== null) throw new recruiting.RecruitingError(409, out["text"]);
+      if (rc["board"].length >= recruiting.BOARD_CAP) {
+        throw new recruiting.RecruitingError(409, `Your board is full at ${recruiting.BOARD_CAP}. Take someone off it first.`);
+      }
       rc["board"].push(pid);
     }
     if (dropped.includes(pid)) remove(dropped, pid);
@@ -859,10 +862,12 @@ function assign(state, staff_id, area) {
 
 
 function scout_week(state, week = null) {
-  // Every prospect in each staffed area gets half a look (AREA_LOOK) from the staff member there,
-  // logged at `week` (default: look_week; the portal's step passes the week it opens), until his
-  // area has put in AREA_CAP looks or his report is complete: then the scout passes him by. Looks
-  // older than the week before are dropped from the log and the counts first: the desk keeps this
+  // Your recruiters' own scouting for the week (the coordinators no longer scout): each gives half of one of his
+  // looks (AREA_LOOK of look_unit) to STAFF_LOOKS_WEEK prospects in his area, logged at `week` (default: look_week;
+  // the portal's step passes the week it opens). He takes the prospects on your board he has not finished first, the
+  // least-scouted of them first, then the best-ranked at a position you still need; never one whose report is
+  // complete, who has signed or is your commit, or whom the staff has already given one whole look (the rest is your
+  // energy). Looks older than the week before are dropped from the log and the counts first: the desk keeps this
   // week's and last week's.
   const staff = get(get(state, "career") || {}, "staff") || [];
   const rc = state["recruiting"];
@@ -872,23 +877,44 @@ function scout_week(state, week = null) {
     rc[key] = Object.fromEntries(Object.entries(get(rc, key) || {}).filter(([w]) => Math.trunc(Number(w)) >= week - 1));
   }
   const rng = new Random(`scout-${state["recruiting"]["seed"]}-${state["current_week"]}`);
-  const by_state = {};
   const me = get(state, "team");
-  for (const [pid, p] of Object.entries(state["recruiting"]["prospects"])) {
-    const st = state["recruiting"]["status"][pid];
-    if (!truthy(st["signed"]) && st["committed"] !== me) {        // a commit of yours: his file is what it was
-      setdefault(by_state, p["hometown"]["state"], []).push(pid);
-    }
-  }
+  const board = new Set(get(rc, "board") || []);
+  let need = null;                                  // worked out once, and only when a recruiter runs out of board
+  const taken = new Set();                          // one recruiter a prospect a week
   for (const member of staff) {
-    for (const code of get(recruiting.AREAS, get(member, "area"), [])) {
-      for (const pid of get(by_state, code, [])) {
-        if (recruiting.area_open(get(rc["reads"], pid))) {
-          recruiting.look(state, pid, member["evaluation"], rng, member["id"], week, recruiting.AREA_LOOK);
-        }
-      }
+    if (get(member, "role") !== "Recruiter") continue;
+    const codes = get(recruiting.AREAS, get(member, "area"), []);
+    if (!codes.length) continue;
+    const open = [];
+    for (const [pid, p] of Object.entries(rc["prospects"])) {
+      const st = rc["status"][pid];
+      if (taken.has(pid) || truthy(st["signed"]) || st["committed"] === me || !codes.includes(p["hometown"]["state"])) continue;
+      if (recruiting.staff_open(state, pid)) open.push(pid);
+    }
+    const looks_of = (pid) => recruiting.report_looks(get(rc["reads"], pid));
+    const mine = open.filter((pid) => board.has(pid));
+    mine.sort((a, b) => cmp([looks_of(a), rc["prospects"][a]["rank"]], [looks_of(b), rc["prospects"][b]["rank"]]));
+    let picks = mine.slice(0, recruiting.STAFF_LOOKS_WEEK);
+    if (picks.length < recruiting.STAFF_LOOKS_WEEK) {
+      if (need === null) need = truthy(me) ? recruiting.needs(state, me) : {};
+      const rest = open.filter((pid) => !board.has(pid) && get(need, recruiting._group_of(rc["prospects"][pid]), 0) > 0);
+      rest.sort((a, b) => cmp([rc["prospects"][a]["rank"], a], [rc["prospects"][b]["rank"], b]));
+      picks = picks.concat(rest.slice(0, recruiting.STAFF_LOOKS_WEEK - picks.length));
+    }
+    for (const pid of picks) {
+      taken.add(pid);
+      const unit = recruiting.look_unit(state, pid);
+      recruiting.look(state, pid, member["evaluation"], rng, member["id"], week, recruiting.AREA_LOOK * unit, unit);
     }
   }
+}
+
+
+function staff_open(state, pid) {
+  // Whether a recruiter's own look still adds to his report: it is not complete, and the staff has not yet put one
+  // whole look of his into it.
+  const read = get(state["recruiting"]["reads"], pid);
+  return !recruiting.report_complete(read) && recruiting.area_looks(read) < recruiting.look_unit(state, pid) - 1e-9;
 }
 
 
@@ -966,5 +992,5 @@ Object.assign(recruiting, {
   _title, no_room, _lost_why, lost_reason, lost_line, school_name, _season_line, portal_rc, _truths, word, word_band,
   look_week, _read_words, _flags, report_looks, area_looks, report_complete, looks_left, _normalize_read, look,
   look_notability, read_spread, read_interval, shown_range, grade_range, make_staff, set_favorite, set_board, assign,
-  scout_week, spend_leftover, area_open, visible, prospect_list, _set_record,
+  scout_week, staff_open, spend_leftover, area_open, visible, prospect_list, _set_record,
 });

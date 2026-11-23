@@ -1027,9 +1027,9 @@ function _view(state, position = null, status = null) {
       board: new_portal && _in(off["stage"], offseason.PORTAL_STAGES) ? offseason.portal_board(state) : null,
       rows: off["stage"] === "portal_1" || off["stage"] === "portal_2" ? offseason.portal_rows(state, position, status) : [] },
     portal_recap: offseason._portal_recap(state),
-    // the 25 biggest gains, and everyone who went backward (regress): a step back is news whatever the rest did
-    report: truthy(report) ? { mine: report["development"]["mine"].slice(0, 25)
-      .concat(report["development"]["mine"].slice(25).filter((r) => r["gain"] < 0)),
+    // every returning player of yours, biggest gain first (it was the 25 biggest gains and whoever went backward, so
+    // the page's "everyone" chart, its count and its average were of 26 to 30 players: the player's question)
+    report: truthy(report) ? { mine: Array.from(report["development"]["mine"]),
     transfers: (truthy(get(report["development"], "transfers")) ? report["development"]["transfers"]
       : report["development"]["mine"].filter((r) => truthy(get(r, "transfer")))),
     mean_gain_ea: report["development"]["mean_gain_ea"],

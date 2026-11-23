@@ -22,6 +22,7 @@ import {
   rowsFor,
   title,
 } from "./kit.tsx";
+import { looksOfTotal } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import {
   SAMPLE_BOARD,
@@ -83,11 +84,6 @@ function Resources({ d }: P) {
         label={m.nil}
         words={m.left(b.nil?.left ?? 0, b.nil?.budget ?? 0)}
         frac={frac(b.nil?.left ?? 0, b.nil?.budget ?? 0)}
-      />
-      <Meter
-        label={m.points}
-        words={m.left(b.points_left ?? 0, b.points_week ?? 0)}
-        frac={frac(b.points_left ?? 0, b.points_week ?? 0)}
       />
     </div>
   );
@@ -521,7 +517,7 @@ function ScoutQueue({ d, ctx }: P) {
             </RName>
             <span className="hq-sub">{posOf(r)}</span>
             <Stars n={r.stars ?? 0} size={10} />
-            <span className="hq-sub">{m.looks(r.looks || 0)}</span>
+            <span className="hq-sub">{m.looks(looksOfTotal(r))}</span>
             {pot}
           </li>
         );
@@ -656,7 +652,7 @@ function Scouted({ d, ctx }: P) {
           <StarsShort n={r.stars} />
           {tag(r) && <Tag solid>{tag(r)}</Tag>}
         </div>
-        {short(r) && <span className="hq-sub">{m.looks(r.looks || 0)}</span>}
+        {short(r) && <span className="hq-sub">{m.looks(looksOfTotal(r))}</span>}
         {report === "failed" ? (
           <Empty>{m.reportFailed}</Empty>
         ) : !mine ? (
@@ -699,7 +695,7 @@ function Scouted({ d, ctx }: P) {
           </span>
           <span className="hq-tile__line">
             {potentialTag(r.potential)}
-            {short(r) && <span className="hq-sub">{m.looks(r.looks || 0)}</span>}
+            {short(r) && <span className="hq-sub">{m.looks(looksOfTotal(r))}</span>}
           </span>
           {tag(r) && <Tag solid>{tag(r)}</Tag>}
         </button>

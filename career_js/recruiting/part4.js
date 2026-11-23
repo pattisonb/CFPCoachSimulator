@@ -381,7 +381,7 @@ function auto_recruit(state, slug, rng = null, commits = null, yours = false) {
       const worked = Object.entries(rc["contacts"]).filter(([pid, by]) => has(by, slug) && by[slug]["n"] !== (before.has(pid) ? before.get(pid) : null))
         .map(([pid, by]) => pid);
       for (const pid of Array.from(get(rc["offers"], slug, [])).concat(worked)) {
-        if (!rc["board"].includes(pid) && !dropped.has(pid) && !truthy(rc["status"][pid]["signed"])) rc["board"].push(pid);
+        if (!rc["board"].includes(pid) && !dropped.has(pid) && !truthy(rc["status"][pid]["signed"]) && rc["board"].length < recruiting.BOARD_CAP) rc["board"].push(pid);   // (never past the board's cap)
       }
     }
     return;

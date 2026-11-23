@@ -191,7 +191,9 @@ test("NIL you set by hand stays through Auto-recruit's weeks, on its offer and o
   const auto_offer = rc["offers"][ME].find((q) => !kept.has(q) && open(q));
   delete rc["nil"][ME]["held"][auto_offer];              // Auto's offer at no NIL, as the player saw it
   const group = rec._group_of(rc["prospects"][auto_offer]);
-  const own = rec.prospect_list(st).find((q) => open(q) && !rc["offers"][ME].includes(q) && rec._group_of(rc["prospects"][q]) === group);
+  const own = rec.prospect_list(st).find((q) => open(q) && !rc["offers"][ME].includes(q) && rec._group_of(rc["prospects"][q]) === group
+    && rec.blocked(st, ME, q) === null);                 // (one who will consider you: the board refuses the rest)
+  if (rc["board"].length >= rec.BOARD_CAP) rc["board"].pop();     // room on a full board
   R("board", { pid: own, on: true });
   rc["nil"][ME]["budget"] += 80 + Math.max(0, -rec.nil_left(st, ME));
   contact(own, "offer", { nil: 0 });

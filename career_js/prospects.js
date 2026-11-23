@@ -941,11 +941,12 @@ export function profile(state, pid, viewer) {
     our_grades,
     clear: clear.ratings(state, pid),                          // his key ratings in numbers
     looks: prospects.looks_out(read),
+    looks_done: recruiting.looks_done(state, pid), looks_needed: recruiting.looks_needed(state, pid),   // his report in his own looks (2, 3 or 4 finish it, by your staff)
     our_comp,
     likes: prospects.staff_likes(state, pid, viewer),
     can_scout: prospects.can_scout(state, viewer, pid),
-    scout_cost: recruiting.look_cost(state, viewer, pid),       // a Send's scouting points (as the board row's)
-    points_left: recruiting.scout_points_left(state, viewer),     // the week's scouting points left (a Send it cannot pay is disabled)
+    scout_cost: recruiting.look_cost(state, viewer, pid),       // a Send's energy (as the board row's)
+    points_left: recruiting.scout_points_left(state, viewer),     // the week's energy left (a Send it cannot pay is disabled)
     ratings: status["signed"] === viewer ? prospects.signed_ratings(state, p) : null,     // signing day shows what you got
     ask: recruiting.ask_view(state, viewer, pid), cooled: recruiting.cooled(state, viewer, pid),
     cooled_why: recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null,
@@ -988,7 +989,8 @@ export function row(state, pid, viewer) {
     // your offer is out but he hasn't read it yet: it lands at the week step (contact_week moves past it then)
     offer_landing: _in(pid, get(rc["offers"], viewer, [])) && get(get(rc, "offer_landing") || {}, pid) === recruiting.contact_week(state),
     group: recruiting.spot_of(p),              // his position as your pages count and filter him (recruiting.SPOTS)
-    looks: prospects.looks_out(read), scouted: recruiting.report_complete(read), likes: prospects.staff_likes(state, pid, viewer),
+    looks: prospects.looks_out(read), looks_done: recruiting.looks_done(state, pid), looks_needed: recruiting.looks_needed(state, pid),
+    scouted: recruiting.report_complete(read), likes: prospects.staff_likes(state, pid, viewer),
     trips: get(get(get(rc["contacts"], pid) || {}, viewer) || {}, "scouted", 0),
     our_potential: truthy(read) ? recruiting.shown_range(state, pid, "potential") : null,
     our_grades: null,
@@ -1125,6 +1127,7 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
   out.flip = seen["committed"] === viewer && !truthy(seen["signed"]) ? prospects._flip_risk(state, pid, viewer) : null;
   out.can_scout = prospects.can_scout(state, viewer, pid);
   out.scout_cost = recruiting.look_cost(state, viewer, pid);
+  out.looks_done = recruiting.looks_done(state, pid); out.looks_needed = recruiting.looks_needed(state, pid);   // his report in his own looks
   out.role = prospects._role(recruiting.depth_place(state, viewer, pid));
   out.standing = prospects.standing(state, pid, viewer);
   out.no_room = recruiting.no_room(state, viewer, pid);
@@ -1272,7 +1275,7 @@ export function _sort_key(state, viewer, key, keen) {
   }
   if (key === "sc") return (pid) => -recruiting.report_looks(get(rc["reads"], pid));
   if (key === "pot") {
-    const sharp = modules.grades.fine(state);                               // once, not once a prospect
+    const sharp = null;                                                     // by your staff's blend for each prospect (shown_range)
     return (pid) => {
       // by the letters the page shows (best first), never the number behind them: two B's tie, and rank breaks it
       const shown_ = truthy(get(rc["reads"], pid)) ? recruiting.shown_range(state, pid, "potential", sharp) : null;
@@ -1303,7 +1306,7 @@ export function search(state, viewer, position = null, stars = null, home = null
   if (_in("offers", span)) {
     for (const pids of Object.values(rc["offers"])) for (const x of pids) offers_n[x] = get(offers_n, x, 0) + 1;
   }
-  const sharp = truthy(get(cols, "pot")) ? modules.grades.fine(state) : null;
+  const sharp = null;                                                       // by your staff's blend for each prospect (shown_range)
   let keen, cuts;
 
   const within = (k, v) => {
@@ -1600,7 +1603,7 @@ export function recruiting_view(state) {
 // ----- the Scouting tab -------------------------------------------------------------------------------
 
 prospects.ROLE_NAMES = { OC: "Offensive Coordinator", DC: "Defensive Coordinator", Recruiter: "Recruiter" };
-prospects.NOT_ENOUGH_POINTS = "Not Enough Points";
+prospects.NOT_ENOUGH_POINTS = "Not Enough Energy";   // (a look is paid in energy: there are no scouting points)
 // the three below are built from recruiting's constants; recruiting may load after this file, so each is worked out
 // the first time it is read (and can still be set)
 function lazy(name, make) {
@@ -1722,7 +1725,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
     const mine = get(this_changes, m["id"]) || {};
     let looking_at = 0;                      // only the count is used, so the set's order does not matter
     for (const pid of live) {
-      if (codes.includes(rc["prospects"][pid]["hometown"]["state"]) && recruiting.area_open(get(rc["reads"], pid))) looking_at += 1;
+      if (get(m, "role") === "Recruiter" && codes.includes(rc["prospects"][pid]["hometown"]["state"]) && recruiting.staff_open(state, pid)) looking_at += 1;
     }
     scouts.push({ id: m["id"], name: m["name"], role: get(prospects.ROLE_NAMES, m["role"], m["role"]),
       evaluation_word: recruiting.word(m["evaluation"]), area: get(m, "area"), contract_until: get(m, "contract_until"),
@@ -1748,7 +1751,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
   const seen = [...recruiting.visible(state)].filter((pid) => _in(pid, rc["status"]));
   const rank_of = (pid) => rc["prospects"][pid]["rank"] || 10 ** 6;
   const need_of = (pid) => need[recruiting.spot_of(rc["prospects"][pid])];
-  const sharp = modules.grades.fine(state);                                   // once, not once a prospect
+  const sharp = null;                                                         // by your staff's blend for each prospect (shown_range)
 
   const potential_of = (pid) => {
     // by the letters shown (best first); a tie is broken by rank (below); no read sorts last
@@ -1785,7 +1788,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
     const gone = truthy(status["signed"]) ? prospects.SIGNED : status["committed"] === me ? prospects.COMMITTED_TO_YOU : null;
     queue.push({ pid, name: p["name"], position: p["position"], display_pos: prospects.display_pos(p["ea_position"]), stars: p["stars"],
       group: recruiting.spot_of(p), need: need[recruiting.spot_of(p)], national_rank: p["rank"],
-      looks: prospects.looks_out(read), trips, cost,
+      looks: prospects.looks_out(read), looks_done: recruiting.looks_done(state, pid), looks_needed: recruiting.looks_needed(state, pid), trips, cost,
       potential: truthy(read) ? recruiting.shown_range(state, pid, "potential") : null,
       can_send: !short && !done && !gone,
       why: gone || (done ? prospects.REPORT_COMPLETE : short ? prospects.NOT_ENOUGH_POINTS : null),
@@ -1799,7 +1802,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
     const likes = prospects.staff_likes(state, pid, me);
     for (const flag of [...recruiting._flags(state, pid), ...(truthy(likes) ? ["likes"] : [])]) {
       flags.push({ pid, name: p["name"], position: p["position"], stars: p["stars"], flag,
-        looks: prospects.looks_out(rc["reads"][pid]), likes, on_board: _in(pid, rc["board"]),
+        looks: prospects.looks_out(rc["reads"][pid]), looks_done: recruiting.looks_done(state, pid), looks_needed: recruiting.looks_needed(state, pid), likes, on_board: _in(pid, rc["board"]),
         standing_word: prospects._standing_word(state, pid, me) });
     }
   }

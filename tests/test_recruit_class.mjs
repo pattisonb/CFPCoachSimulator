@@ -210,10 +210,12 @@ test("the campus topics and Academics read the school's grades", () => {
   }
   assert(recruiting.academic("stanford") && !recruiting.academic("akron"));
   // a program the research has no row for pulls the same on every campus topic, and is academic only if the old list says so
-  const none = recruiting.pull(st, "ndsu", pid, false);
+  const bare = "fcs-plains";                              // (an FCS stand-in: every FBS program has a row now)
+  assert(programs.grades(bare) === null);
+  const none = recruiting.pull(st, bare, pid, false);
   for (const t of NEW_TOPICS) assert(none[t] === recruiting.NEUTRAL_PULL, J([t, none[t]]));
-  const listed = recruiting.ACADEMIC instanceof Set ? recruiting.ACADEMIC.has("ndsu") : recruiting.ACADEMIC.includes("ndsu");
-  assert(recruiting.academic("ndsu") === listed);
+  const listed = recruiting.ACADEMIC instanceof Set ? recruiting.ACADEMIC.has(bare) : recruiting.ACADEMIC.includes(bare);
+  assert(recruiting.academic(bare) === listed);
 });
 
 test("Location reads the school's setting and climate against his taste", () => {
@@ -326,12 +328,20 @@ test("a class saved before the campus topics keeps its deciders' old topics", ()
 
 // ----- hours, areas and the offer cap --------------------------------------------------------------------------------
 
-test("recruiting hours come in fives from your head coach's recruiting rating", () => {
+test("a school's energy a week follows its program's stars: 180 at none, 30 more a half star, 480 at five", () => {
+  equal([recruiting.ENERGY_ZERO, recruiting.ENERGY_PER_STAR], [180, 60]);
+  const stars = (slug) => programs.stars_of(programs.get(st, slug)["rating"]);
+  for (const slug of ["ohio-state", "texas-tech", "memphis", "kent-state", ME]) {
+    assert(recruiting.weekly_hours(st, slug) === 180 + 60 * stars(slug), J([slug, stars(slug), recruiting.weekly_hours(st, slug)]));
+  }
+  assert(stars("ohio-state") === 5 && recruiting.weekly_hours(st, "ohio-state") === 480, "sixteen video calls a week at the top");
+  // the stars run from none to five by halves, and the energy with them
+  equal([0, 0.5, 2.5, 5].map((s) => 180 + 60 * s), [180, 210, 330, 480]);
+  assert(programs.stars_of(0) === 0 && programs.stars_of(17.9) === 0 && programs.stars_of(18) === 0.5 && programs.stars_of(99) === 5);
+  // your head coach's recruiting rating no longer sets it
   const coach = (rating) => ({ id: "c1", first_name: "Pat", last_name: "Test", ratings: { recruiting: rating, evaluation: 60, offense: 70, defense: 70 } });
   const hours = (rating) => recruiting.weekly_hours(season.new_season("kent-state", "full", 6, undefined, coach(rating), true), "kent-state");
-  equal([50, 100, 30, 63, 92].map(hours), [140, 160, 140, 145, 155]);
-  const day = season.load_teams()[ME]["coaches"]["head_coach"]["ratings"]["recruiting"];
-  assert(recruiting.weekly_hours(st, ME) === 5 * round((140 + Math.max(0, day - 50) * 0.4) / 5), "the school's own head coach");
+  assert(hours(30) === hours(100));
 });
 
 test("the country is nine scouting areas and no state is in two", () => {

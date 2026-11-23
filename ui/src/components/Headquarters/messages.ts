@@ -98,7 +98,6 @@ export const messages = {
   offersOut: "Offers Out",
   hours: "Energy",
   nil: "NIL",
-  points: "Scouting Points",
   noTargets: "No targets yet. Add recruits to your board and offer them to see your chances here.",
   noTargetsMatch: "No targets match these filters.",
   noNeeds: "Your class has no open needs.",
@@ -131,7 +130,7 @@ export const messages = {
   flagGem: "Gem",
   flagBust: "Bust Risk",
   likesHim: (who: string) => `${who} Likes Him`,
-  looks: (n: number) => `${half(n)} of 3 Looks`,
+  looks: (ofTotal: string) => `${ofTotal} Looks`,
   queueDone: "Every prospect in view has a complete report.",
   noFlags: "No flags yet. Your staff flags prospects once their reports are complete.",
   noScouts: "You have no scouts on staff.",
@@ -280,7 +279,7 @@ export const messages = {
   // ----- the catalog: each widget's name and one line -----
   w: {
     classGlance: { title: "Class at a Glance", blurb: "Your commits, open spots, class rank and offers out." },
-    resources: { title: "Week's Resources", blurb: "Recruiting energy, NIL and scouting points left this week." },
+    resources: { title: "Week's Resources", blurb: "Recruiting energy and NIL left this week." },
     topTargets: { title: "Top Targets", blurb: "Your board's best chances, with where you stand with each." },
     classNeeds: {
       title: "Class Needs",

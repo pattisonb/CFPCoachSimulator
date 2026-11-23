@@ -8,7 +8,7 @@ import Meter from "../Meter/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace } from "../../faces.ts";
-import { formatClass } from "../../format.ts";
+import { formatClass, looksOfTotal } from "../../format.ts";
 import { cachedTeams } from "../../teams.ts";
 import type { ProspectDetail, ProspectRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -226,7 +226,7 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
           </div>
           <div className="prospect-card__half" title={looks ? undefined : m.unscoutedTip}>
             <dt className="label">{m.scouted}</dt>
-            <dd>{looks ? m.looksShort(looks) : m.unscouted}</dd>
+            <dd>{looks ? looksOfTotal(r ?? { looks }) : m.unscouted}</dd>
             <Meter value={looks / 3} label={m.scouted} />
           </div>
           <div className="prospect-card__half">

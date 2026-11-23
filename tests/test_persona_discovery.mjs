@@ -312,18 +312,21 @@ test("his key ratings read as ranges that narrow with every look, each with a co
   assert(clear.ratings(st, pid) === null, "no ratings before a look");
   const widths = [];
   let r = null;
-  for (let i = 0; i < recruiting.REPORT_LOOKS; i++) {
-    rc["scout_points"] = { [ME]: 100 };
+  const need = recruiting.looks_needed(st, pid);          // two, three or four of his looks finish the report, by your staff
+  for (let i = 0; i < need; i++) {
+    rc["hours"][ME] = 100;
     recruiting.act(st, ME, pid, "scout");
     r = clear.ratings(st, pid);
-    assert(r["rows"].length >= 4 && r["rows"].length <= 8 && r["potential"]["label"].startsWith("Potential at "), () => show(r));
+    // his position's own ratings, then the five physical traits every prospect is read on (a kicker's short list aside)
+    assert(r["rows"].length >= 4 && r["rows"].length <= 10 && r["potential"]["label"].startsWith("Potential at "), () => show(r));
+    if (r["rows"].length === 10) equal(r["rows"].slice(5).map((x) => x["key"]), clear.PHYSICAL);
     for (const x of r["rows"]) {
       assert(x["lo"] >= 1 && x["hi"] <= 99 && x["lo"] <= x["est"] && x["est"] <= x["hi"], () => show(x));
       assert(["High", "Medium", "Low"].includes(x["confidence"]), () => show(x));
     }
     widths.push(r["rows"].reduce((a, x) => a + x["hi"] - x["lo"], 0));
   }
-  assert(widths[0] >= widths[1] && widths[1] >= widths[2], `a read narrows with every look: ${widths}`);
+  assert(widths.every((w, i) => i === 0 || widths[i - 1] >= w), `a read narrows with every look: ${widths}`);
   assert(r["complete"] && r["looks"] === recruiting.REPORT_LOOKS, () => show([r["complete"], r["looks"]]));
   const view = prospects.profile(st, pid, ME);
   assert(view["clear"] && view["abilities"] !== null, "the profile carries Key Ratings and his abilities once scouted");

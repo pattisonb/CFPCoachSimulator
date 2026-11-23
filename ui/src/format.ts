@@ -91,3 +91,21 @@ export const firstNames = (name: string) => {
   const i = name.lastIndexOf(last);
   return i > 0 ? name.slice(0, i).trim() : "";
 };
+
+/** What a row says of a prospect's scouting report: his looks so far in thirds of a report, and in his own count. */
+export interface LooksRow {
+  looks?: number;
+  /** his looks so far and how many finish his report (2, 3 or 4, by your staff); a row without them counts in threes */
+  looks_done?: number;
+  looks_needed?: number;
+}
+
+/** How many looks finish his report, and how many he has: for "1½ / 4". */
+export const looksTotal = (r: LooksRow) => r.looks_needed ?? 3;
+export const looksDone = (r: LooksRow) => r.looks_done ?? Math.min(looksTotal(r), r.looks ?? 0);
+
+/** A count of looks to the half: "0", "½", "1½", "2". */
+export const halfLooks = (n: number) => `${Math.floor(n) || (n % 1 ? "" : "0")}${n % 1 ? "½" : ""}`;
+
+/** "1½ / 4": his looks of the looks his report takes. */
+export const looksOfTotal = (r: LooksRow) => `${halfLooks(looksDone(r))} / ${looksTotal(r)}`;

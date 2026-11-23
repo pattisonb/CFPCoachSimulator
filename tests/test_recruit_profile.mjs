@@ -171,9 +171,9 @@ test("the like rides on the board row, the profile, the scouting queue and the F
 
 const SIX = ["academics", "facilities", "location", "stability", "game_day", "exposure"];
 
-test("all 136 programs have six grades from 0 to 100", () => {
+test("all 138 programs have six grades from 0 to 100", () => {
   const slugs = Object.keys(programs.profile_rows());
-  assert(slugs.length === 136, String(slugs.length));
+  assert(slugs.length === 138, String(slugs.length));
   for (const s of slugs) {
     const g = programs.grades(s);
     equal(new Set(Object.keys(g)), new Set(SIX));

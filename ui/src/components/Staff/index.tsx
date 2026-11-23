@@ -10,6 +10,7 @@ import { setOnBoard } from "../../board.ts";
 import { playerFace, staffFace } from "../../faces.ts";
 import type { ReportGroup, ReportItem, Scout, ScoutFlag, ScoutingView } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import { looksOfTotal } from "../../format.ts";
 import "./index.css";
 
 type Tab = "scouts" | "reports";
@@ -414,7 +415,7 @@ function Find({ f, onBoard }: { f: ScoutFlag; onBoard: (pid: string, on: boolean
       <span className="find__tags">
         <FlagTags flags={f.flag === "likes" ? [] : [f.flag]} likes={f.flag === "likes" ? f.likes : null} />
       </span>
-      <span className="staff__soft">{m.looks(f.looks)}</span>
+      <span className="staff__soft">{m.looks(looksOfTotal(f))}</span>
       <span className="find__standing">{f.standing_word}</span>
     </li>
   );

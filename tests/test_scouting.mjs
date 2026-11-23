@@ -1,8 +1,8 @@
 // Scouting (career_js/recruiting/part5.js, career_js/prospects.js): your staff and their areas, reads that narrow
-// with looks but can be wrong, looks counted in trip units (a full report is three looks and never more: a Send adds
-// one, an area scout's week half a look up to two from his area), scouting points (a Send spends points, not hours;
-// what you leave unspent your staff spends on your board), and the badges that wait for a complete report (a gem, a
-// bust risk, your staff's own comp).
+// with looks but can be wrong, looks kept in thirds of a report (a full report is three and never more; how many of
+// HIS looks that takes is 2, 3 or 4 by your staff's blend for him), a Send paid in energy (5, wherever he is), your
+// recruiters' own week (half a look each to ten prospects in their areas, your board first, never past one look),
+// and the badges that wait for a complete report (a gem, a bust risk, your staff's own comp).
 // `node tests/test_scouting.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 import { Random, get } from "../engine_js/pyrt.js";
@@ -42,6 +42,11 @@ function send(st, pid) {
   st["recruiting"]["hours"][ME] = 100;
   st["recruiting"]["scout_points"] = { [ME]: 100 };
   return recruiting.act(st, ME, pid, "scout");
+}
+function set_eval(st, rating) {
+  st["coach"]["ratings"]["evaluation"] = rating;
+  for (const m of st["career"]["staff"]) m["evaluation"] = rating;
+  return st;
 }
 const full_read = (mean_, looks = REPORT) => ({ looks, by: { 95: looks }, g: Object.fromEntries(recruiting.GROUPS.map((g) => [g, [mean_, 100.0]])) });
 
@@ -158,36 +163,45 @@ test("every scouting badge waits for a complete report of three looks", () => {
   assert(recruiting.FIND_LOOKS === REPORT && prospects.OUR_COMP_LOOKS === REPORT);
 });
 
-test("a week in a scout's area is half a look, capped at two from the area; one Send then finishes the report", () => {
-  const st = fresh(), rc = st["recruiting"], staff = st["career"]["staff"];
+test("a recruiter's week is half a look each for ten prospects in his area, your board first; the staff stops at one look and your Sends finish the report", () => {
+  const st = set_eval(fresh(), 50), rc = st["recruiting"], staff = st["career"]["staff"];
   for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
-  const staffed = new Set(staff.map((m) => m["area"]));
+  rc["reads"] = {};
+  rc["board"] = [];
+  const recruiters = staff.filter((m) => m["role"] === "Recruiter");
+  const covered = new Set(recruiters.flatMap((m) => recruiting.AREAS[m["area"]]));
   const pids = Object.keys(rc["prospects"]);
-  const inside = pids.find((q) => live(rc, q) && staffed.has(area_of(st, q)));
-  const outside = pids.find((q) => live(rc, q) && !staffed.has(area_of(st, q)));
-  const scout = staff.find((m) => m["area"] === area_of(st, inside));
+  // a prospect far down the class in a recruiter's area, on your board: the recruiter takes him first
+  const mine = [...pids].reverse().find((q) => live(rc, q) && covered.has(rc["prospects"][q]["hometown"]["state"]));
+  rc["board"] = [mine];
   const week = (w) => { st["current_week"] = w; recruiting.scout_week(st); };
   week(0);
-  const read = rc["reads"][inside];
-  assert(read["looks"] === 0.5 && read["area"] === 0.5 && !(outside in rc["reads"]), J(read));
-  assert(rc["look_counts"]["0"][scout["id"]] === 0.5 * pids.filter((q) => live(rc, q) && area_of(st, q) === scout["area"]).length);
-  assert(prospects.row(st, inside, ME)["looks"] === 0.5 && prospects.profile(st, inside, ME)["looks"] === 0.5);
-  for (const w of [1, 2, 3]) week(w);
-  assert(read["looks"] === 2.0 && read["area"] === 2.0, J(read));
-  assert(!prospects.row(st, inside, ME)["scouted"] && prospects.find(st, inside) === null, "two of three is not scouted");
-  week(4);                                                // a fifth week adds nothing and is not counted
-  assert(read["looks"] === 2.0 && read["area"] === 2.0);
-  assert(get(get(rc["look_counts"], "4", {}), scout["id"], 0) === 0 && !(scout["id"] in get(rc["look_changes"], "4", {})));
-  assert(prospects.can_scout(st, ME, inside) === true);
-  const out = send(st, inside);
-  assert(out["look"]["by"] === "trip" && read["looks"] === 3.0 && read["area"] === 2.0, J(read));
-  assert(prospects.row(st, inside, ME)["scouted"] === true && prospects.can_scout(st, ME, inside) === false);
-  const prof = prospects.profile(st, inside, ME);
-  assert(prof["can_scout"] === false && prof["looks"] === 3);
-  assert(recruiting.GROUPS.every((g) => { const [lo, hi] = recruiting.read_interval(st, inside, g); return lo === hi; }), "one final grade per group");
-  const e = refused(() => send(st, inside), 409);
+  assert(recruiting.STAFF_LOOKS_WEEK === 10 && recruiting.looks_needed(st, mine) === 3 && recruiting.look_unit(st, mine) === 1);
+  const read = rc["reads"][mine];
+  assert(read && read["looks"] === 0.5 && read["area"] === 0.5, J(read));
+  const looked = Object.keys(rc["reads"]);
+  equal(looked.length, 10 * recruiters.length, "ten prospects a recruiter, and the coordinators look at nobody");
+  assert(looked.every((q) => covered.has(rc["prospects"][q]["hometown"]["state"]) && rc["reads"][q]["looks"] === 0.5), "only in the recruiters' areas, half a look each");
+  equal(Object.keys(rc["look_counts"]["0"]).sort(), recruiters.map((m) => m["id"]).sort());
+  assert(prospects.row(st, mine, ME)["looks"] === 0.5 && prospects.profile(st, mine, ME)["looks"] === 0.5);
+  week(1);
+  assert(read["looks"] === 1.0 && read["area"] === 1.0, J(read));
+  assert(!recruiting.staff_open(st, mine), "one whole look from the staff: the rest is your energy");
+  week(2);                                                // a third week adds nothing to him
+  assert(read["looks"] === 1.0 && read["area"] === 1.0);
+  assert(!prospects.row(st, mine, ME)["scouted"] && prospects.find(st, mine) === null && prospects.can_scout(st, ME, mine) === true);
+  let out = send(st, mine);
+  assert(out["look"]["by"] === "trip" && read["looks"] === 2.0 && read["area"] === 1.0, J(read));
+  out = send(st, mine);
+  assert(read["looks"] === 3.0 && prospects.row(st, mine, ME)["scouted"] === true && prospects.can_scout(st, ME, mine) === false);
+  const prof = prospects.profile(st, mine, ME);
+  assert(prof["can_scout"] === false && prof["looks"] === 3 && prof["looks_done"] === 3 && prof["looks_needed"] === 3);
+  assert(recruiting.GROUPS.every((g) => { const [lo, hi] = recruiting.read_interval(st, mine, g); return lo === hi; }), "one final grade per group");
+  const e = refused(() => send(st, mine), 409);
   assert(e.message.includes("his report is complete") && e.message.includes("3 of 3 looks"), e.message);
-  // outside every area: three Sends make the report, and a fourth is refused
+  // outside every recruiter's area: nobody looks on his own; three Sends make the report, and a fourth is refused
+  const outside = pids.find((q) => live(rc, q) && !covered.has(rc["prospects"][q]["hometown"]["state"]));
+  assert(!(outside in rc["reads"]));
   for (const n of [1, 2, 3]) {
     send(st, outside);
     assert(rc["reads"][outside]["looks"] === n && get(rc["reads"][outside], "area", 0) === 0);
@@ -195,17 +209,17 @@ test("a week in a scout's area is half a look, capped at two from the area; one 
   assert(prospects.row(st, outside, ME)["scouted"] === true);
   refused(() => send(st, outside), 409, "complete");
   // a Send adds only what his report still needs
-  const half_done = pids.find((q) => live(rc, q) && area_of(st, q) === scout["area"] && q !== inside && q in rc["reads"]);
+  const half_done = looked.find((q) => q !== mine);
   rc["reads"][half_done]["looks"] = 2.5;
   send(st, half_done);
   assert(rc["reads"][half_done]["looks"] === 3.0);
-  // weeks of area looks with trips along the way: nothing anywhere past three looks, or two from an area, and looks come in halves
-  for (let w = 5; w < 11; w++) {
+  // more weeks with trips along the way: nothing past three looks, no more than one from the staff, looks in halves
+  for (let w = 3; w < 9; w++) {
     week(w);
-    Object.keys(rc["reads"]).filter((_, i) => i >= w && (i - w) % 40 === 0).forEach((q) => { if (prospects.can_scout(st, ME, q)) send(st, q); });
+    Object.keys(rc["reads"]).filter((_, i) => i >= w && (i - w) % 7 === 0).forEach((q) => { if (prospects.can_scout(st, ME, q)) send(st, q); });
   }
   const reads = Object.values(rc["reads"]);
-  assert(reads.every((r) => r["looks"] > 0 && r["looks"] <= 3.0 && get(r, "area", 0) >= 0 && get(r, "area", 0) <= 2.0));
+  assert(reads.every((r) => r["looks"] > 0 && r["looks"] <= 3.0 && get(r, "area", 0) >= 0 && get(r, "area", 0) <= 1.0));
   assert(reads.some((r) => r["looks"] === 3.0) && reads.every((r) => Number.isInteger(r["looks"] * 2)));
 });
 
@@ -227,20 +241,43 @@ test("an old save's read past three looks counts as complete, costs nothing and 
 
 // ----- scouting points ------------------------------------------------------------------------------------------------------
 
-test("scouting points come in fives from your best evaluator: 150 for an average one, 250 for the best", () => {
-  const st = fresh();
-  const set = (rating) => {
-    st["coach"]["ratings"]["evaluation"] = rating;
-    for (const m of st["career"]["staff"]) m["evaluation"] = Math.min(get(m, "evaluation", 50), rating);
-  };
-  set(50);
-  assert(recruiting.best_evaluator(st) === 50 && recruiting.scout_points(st, ME) === 150);
-  st["coach"]["ratings"]["evaluation"] = 100;
-  assert(recruiting.best_evaluator(st) === 100 && recruiting.scout_points(st, ME) === 250);
-  for (const [rating, want] of [[63, 175], [77, 205]]) {
-    set(rating);
-    assert(recruiting.best_evaluator(st) === rating && recruiting.scout_points(st, ME) === want, J([rating, recruiting.scout_points(st, ME)]));
+test("how many looks finish a report follows your staff's blend for him: two at 85 or better, three from 70, else four", () => {
+  const st = fresh(), rc = st["recruiting"];
+  for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
+  rc["reads"] = {};
+  const [a, b, c] = Object.keys(rc["prospects"]).filter((q) => live(rc, q)).slice(0, 3);
+  equal(recruiting.LOOKS_BY_BLEND, [[85, 2], [70, 3]]);
+  equal(recruiting.BLEND_WEIGHTS, { scout: 0.5, coordinator: 0.25, coach: 0.25 });
+  // every evaluator the same: the blend is that rating as the page shows it (a stored 50 is a 70, 80 an 88, 30 a 57)
+  for (const [stored, blend, need] of [[50, 70, 3], [80, 88, 2], [30, 57, 4]]) {
+    set_eval(st, stored);
+    assert(Math.abs(recruiting.scout_blend(st, a) - blend) <= 1 && recruiting.looks_needed(st, a) === need, J([stored, recruiting.scout_blend(st, a), recruiting.looks_needed(st, a)]));
   }
+  // a plus or a minus on his potential waits for the same bar
+  assert(game.modules.grades.fine(set_eval(st, 80), a) === true && game.modules.grades.fine(set_eval(st, 50), a) === false);
+  // the recruiter who covers his state counts for half, the coordinator on his side of the ball and you a quarter each
+  set_eval(st, 50);
+  const home = rc["prospects"][a]["hometown"]["state"], area = Object.keys(recruiting.AREAS).find((x) => recruiting.AREAS[x].includes(home));
+  const scout = st["career"]["staff"].find((m) => m["role"] === "Recruiter");
+  scout["area"] = area;
+  scout["evaluation"] = 99;
+  const lifted = recruiting.scout_blend(st, a);
+  assert(lifted > 80 && lifted < 88, J(lifted));
+  // a strong staff: two of his looks, each worth half a report; a weak one: four
+  set_eval(st, 80);
+  send(st, a);
+  assert(rc["reads"][a]["looks"] === 1.5 && recruiting.looks_done(st, a) === 1 && recruiting.looks_needed(st, a) === 2);
+  send(st, a);
+  assert(rc["reads"][a]["looks"] === 3.0 && recruiting.report_complete(rc["reads"][a]) && recruiting.looks_done(st, a) === 2);
+  set_eval(st, 30);
+  for (const n of [1, 2, 3]) {
+    send(st, b);
+    assert(rc["reads"][b]["looks"] === 0.75 * n && recruiting.looks_done(st, b) === n && !recruiting.report_complete(rc["reads"][b]), J(rc["reads"][b]["looks"]));
+  }
+  send(st, b);
+  assert(recruiting.report_complete(rc["reads"][b]) && recruiting.looks_done(st, b) === 4);
+  const row = prospects.board_row(st, c, ME);
+  assert(row["looks"] === 0 && row["looks_done"] === 0 && row["looks_needed"] === 4 && row["scout_cost"] === 5, J([row["looks"], row["looks_done"], row["looks_needed"]]));
 });
 
 /** An unscouted, unsigned prospect: in your state (`home`), else in or out of a staffed area and not close to home. */
@@ -254,79 +291,35 @@ function pick(st, in_area, home = false) {
   });
 }
 
-test("a Send costs 5 points close to home, 10 in a staffed area, 15 away, 5 in the portal; half a look to go costs half", () => {
+test("a Send costs 5 energy wherever he is, at home, in a staffed area, away or in the portal", () => {
   const st = fresh(), rc = st["recruiting"];
   st["career"]["staff"][0]["area"] = "Midwest";
   const home = pick(st, true, true), near = pick(st, true), far = pick(st, false);
-  equal(recruiting.LOOK_COST, { home: 5, area: 10, away: 15, portal: 5 });
-  equal([home, near, far].map((q) => recruiting.look_cost(st, ME, q)), [5, 10, 15]);
-  const close = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["hometown"]["state"] !== "OH" && recruiting.near_home(st, ME, q));
-  assert(recruiting.look_cost(st, ME, close) === 5, "within driving distance of the campus is home too");
+  assert(recruiting.LOOK_ENERGY === 5);
+  equal([home, near, far].map((q) => recruiting.look_cost(st, ME, q)), [5, 5, 5]);
   assert(recruiting.look_cost({ ...st, recruiting: { ...rc, portal: true } }, ME, near) === 5);
-  for (const [q, full, half] of [[home, 5, 5], [near, 10, 5], [far, 15, 10]]) {
-    rc["reads"][q] = { looks: REPORT - 1, by: {}, g: Object.fromEntries(recruiting.GROUPS.map((g) => [g, [40.0, 60.0]])) };
-    assert(recruiting.look_cost(st, ME, q) === full, "a whole look still needed: the full price");
-    rc["reads"][q]["looks"] = REPORT - 0.5;
-    assert(recruiting.look_cost(st, ME, q) === half, "half a look: half the price, rounded up to a five");
-    delete rc["reads"][q];
-  }
+  rc["reads"][far] = { looks: REPORT - 0.5, by: {}, g: Object.fromEntries(recruiting.GROUPS.map((g) => [g, [40.0, 60.0]])) };
+  assert(recruiting.look_cost(st, ME, far) === 5, "the last half look costs the same");
 });
 
-test("a Send spends scouting points, not hours; short of points it is refused; the points refill at the week step", () => {
+test("a Send spends energy (there are no scouting points); short of energy it is refused", () => {
   const st = fresh(), rc = st["recruiting"];
-  st["career"]["staff"][0]["area"] = "Midwest";
-  const pid = pick(st, false), other = Object.keys(rc["prospects"]).find((q) => q !== pid && !rc["prospects"][q]["hidden"] && recruiting.look_cost(st, ME, q) === 15);
-  const h0 = recruiting._hours(st, ME), p0 = recruiting.scout_points_left(st, ME);
+  const pid = pick(st, false), other = Object.keys(rc["prospects"]).find((q) => q !== pid && !rc["prospects"][q]["hidden"] && !(q in rc["reads"]) && !rc["status"][q]["signed"]);
+  const h0 = recruiting._hours(st, ME);
   recruiting.act(st, ME, pid, "scout");
-  assert(recruiting._hours(st, ME) === h0 && recruiting.scout_points_left(st, ME) === p0 - 15);
-  rc["scout_points"] = { [ME]: 14 };
+  assert(recruiting._hours(st, ME) === h0 - 5 && recruiting.scout_points_left(st, ME) === recruiting.hours_free(st, ME));
+  rc["hours"][ME] = 4;
   const e = refused(() => recruiting.act(st, ME, other, "scout"), 409);
-  assert(e.message === "Not enough scouting points left this week.", e.message);
-  rc["scout_points"] = { [ME]: 15 };
+  assert(e.message === "Not enough energy left this week.", e.message);
+  rc["hours"][ME] = 5;
   recruiting.act(st, ME, other, "scout");
-  assert(recruiting.scout_points_left(st, ME) === 0);
-  delete rc["scout_points"];                              // a save from before scouting points: a full week's
-  assert(recruiting.scout_points_left(st, ME) === recruiting.scout_points(st, ME));
-});
-
-// ----- leftover points ---------------------------------------------------------------------------------------------------------
-
-function board_of(n = 3) {
-  const st = fresh(), rc = st["recruiting"];
-  st["current_week"] = 1;
-  const pids = Object.keys(rc["prospects"]).sort((a, b) => rc["prospects"][a]["rank"] - rc["prospects"][b]["rank"]).slice(60)
-    .filter((q) => !rc["prospects"][q]["hidden"]).slice(0, n);
-  rc["board"] = [...pids];
-  rc["reads"] = {};
-  return [st, pids];
-}
-
-test("points you leave unspent buy half looks on your board at a Send's price, one a prospect a week", () => {
-  let [st, pids] = board_of();
-  const cost = pids.reduce((a, q) => a + recruiting.look_cost(st, ME, q), 0);
-  st["recruiting"]["scout_points"][ME] = cost;
-  assert(recruiting.LEFTOVER_LOOK === 0.5);
-  assert(recruiting.spend_leftover(st, 2) === cost && pids.every((q) => looks_of(st, q) === 0.5), J(pids.map((q) => looks_of(st, q))));
-  [st, pids] = board_of();
-  st["recruiting"]["scout_points"][ME] = 0;
-  assert(recruiting.spend_leftover(st, 2) === 0 && pids.every((q) => looks_of(st, q) === 0), "nothing left, nothing done");
-  // a week you never opened the board (Sim to Signing Day, Auto-recruit): all the week's points were left over
-  [st, pids] = board_of();
-  st["recruiting"]["scout_points"] = {};
-  assert(recruiting.spend_leftover(st, 2) > 0 && pids.every((q) => looks_of(st, q) === 0.5));
-});
-
-test("short of points the least-scouted goes first, and a complete report gets none", () => {
-  let [st, [a, b, c]] = board_of();
-  st["recruiting"]["reads"][a] = { looks: 1.0, area: 0.0, by: {}, g: {} };
-  st["recruiting"]["scout_points"][ME] = recruiting.look_cost(st, ME, b);
-  recruiting.spend_leftover(st, 2);
-  equal([a, b, c].map((q) => looks_of(st, q)), [1.0, 0.5, 0], "one Send's worth goes to the least-scouted, by rank");
-  [st, [a, b, c]] = board_of();
-  st["recruiting"]["reads"][a] = { looks: REPORT, area: 0.0, by: {}, g: {} };
-  st["recruiting"]["scout_points"][ME] = 1000;
-  recruiting.spend_leftover(st, 2);
-  equal([a, b, c].map((q) => looks_of(st, q)), [REPORT, 0.5, 0.5]);
+  assert(recruiting._hours(st, ME) === 0);
+  // energy held by a quick action you ticked is not there for a look
+  rc["hours"][ME] = 10;
+  const third = Object.keys(rc["prospects"]).find((q) => ![pid, other].includes(q) && !rc["status"][q]["committed"] && recruiting.blocked(st, ME, q) === null && !recruiting.would_pester(st, ME, q));
+  recruiting.plan(st, third, "message", true);
+  recruiting.act(st, ME, third, "scout");
+  refused(() => recruiting.act(st, ME, pick(st, false), "scout"), 409, "Not enough energy");
 });
 
 // ----- hidden prospects, profiles and comps ---------------------------------------------------------------------------------
@@ -417,7 +410,7 @@ test("the Send queue puts your board first: one Send from complete, then the res
 // ----- he is yours, or signed -----------------------------------------------------------------------------------------------
 
 test("scouting stops once he is committed to you: no Send, and your area scout spends no look on him", () => {
-  const st = fresh(), rc = st["recruiting"], staff = st["career"]["staff"];
+  const st = set_eval(fresh(), 50), rc = st["recruiting"], staff = st["career"]["staff"];
   st["current_week"] = 1;
   for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
   const by_rank = Object.fromEntries(Object.entries(rc["prospects"]).map(([q, p]) => [p["rank"], q]));
@@ -435,14 +428,14 @@ test("scouting stops once he is committed to you: no Send, and your area scout s
   const area = Object.keys(recruiting.AREAS).find((a) => recruiting.AREAS[a].includes(home));
   staff[2]["area"] = area;
   const neighbor = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["hometown"]["state"] === home && rc["status"][q]["committed"] === null
-    && recruiting.area_open(get(rc["reads"], q)));
+    && recruiting.staff_open(st, q));
+  rc["board"] = [neighbor];                               // on your board: the recruiter there takes him first
   const before = looks_of(st, neighbor);
   recruiting.scout_week(st);
   assert(!(unscouted in rc["reads"]), "your area scout looked at your own commit");
   prof = prospects.profile(st, unscouted, ME);
   assert(prof["can_scout"] === false && prof["our_grades"] === null && prof["looks"] === 0);
-  const covering = staff.filter((m) => m["area"] === area).length;
-  assert(looks_of(st, neighbor) === before + recruiting.AREA_LOOK * covering, "an uncommitted prospect in the area still gets his half look");
+  assert(looks_of(st, neighbor) === before + recruiting.AREA_LOOK * recruiting.look_unit(st, neighbor), "an uncommitted prospect on your board in the area still gets his half look");
   // an uncommitted prospect gets his three looks from you and no more
   assert(prospects.profile(st, open, ME)["can_scout"] === true);
   let sends = 0;

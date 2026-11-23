@@ -113,7 +113,7 @@
 }
 
 .coach-badge__bar span {
-  width: 8px;
+  width: 6px; /* twenty of them: a longer bar than the ten 8px blocks it was */
   height: 10px;
   background: var(--line-soft);
 }

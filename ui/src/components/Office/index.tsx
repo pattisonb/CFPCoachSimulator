@@ -9,7 +9,6 @@ import {
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
-  Binoculars,
   CalendarDots,
   CaretRight,
   Check,
@@ -191,15 +190,6 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
           go: () => onSection("recruiting"),
         });
       }
-      todos.push({
-        key: "scout",
-        icon: Binoculars,
-        title: m.scout,
-        sub: v.points_left > 0 ? m.scoutSub(v.points_left) : m.scoutDone,
-        meta: m.points(v.points_left),
-        done: v.points_left <= 0,
-        go: () => onSection("staff"),
-      });
     }
     const hurt = s.injuries?.length ?? 0;
     if (hurt > 0)

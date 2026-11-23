@@ -7,7 +7,7 @@
 // game's own scale and is put on the shown one here. A plus or a minus is a finer read, a third of a band, and it takes
 // a sharp eye: your staff's and your own evaluating ability (`eye`) at PLUS_MINUS_EYE or better. Your own players always
 // show it: you coach them every day.
-import { round, int, get } from "../engine_js/pyrt.js";
+import { round, int, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { shown } from "../teamdata_js/shown.js";
 
@@ -87,8 +87,16 @@ function pyint(x) {
   throw new TypeError(`int() cannot read ${JSON.stringify(x)}`);
 }
 
-export function fine(state) {
-  // Whether your reads of a recruit carry a plus or a minus.
+export function fine(state, pid = null) {
+  // Whether your read carries a plus or a minus. Of a recruit (`pid`): your staff's blend for him (recruiting.scout_blend:
+  // his area's recruiter, the coordinator on his side of the ball, you) at recruiting.FINE_BLEND or better, the same
+  // bar that finishes his report in two looks. With no recruit named: your best evaluator at PLUS_MINUS_EYE, as before.
+  if (pid !== null && pid !== undefined) {
+    const recruiting = modules.recruiting;
+    if (truthy(get(get(state, "recruiting") || {}, "prospects")) && get(state["recruiting"]["prospects"], pid) !== undefined && get(state["recruiting"]["prospects"], pid) !== null) {
+      return recruiting.scout_blend(state, pid) >= recruiting.FINE_BLEND;
+    }
+  }
   return grades.eye(state) >= grades.PLUS_MINUS_EYE;
 }
 

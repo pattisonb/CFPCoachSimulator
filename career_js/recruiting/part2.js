@@ -19,6 +19,7 @@
 import { Random, round, int, floordiv, sum, cmp, sorted, maxBy, get, truthy, range } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { programs } from "../programs.js";
+import { shown } from "../../teamdata_js/shown.js";
 import { recruiting } from "../recruiting_ns.js";
 
 // ----- small helpers (local to this part) --------------------------------------------------------------------
@@ -799,8 +800,62 @@ function _recruiting_rating(state, slug) {
 
 
 function weekly_hours(state, slug) {
-  // A school's recruiting hours a week, a multiple of 5: WEEKLY_HOURS_BASE plus WEEKLY_HOURS_PER of its recruiting rating over 50.
-  return 5 * int(round((recruiting.WEEKLY_HOURS_BASE + Math.max(0, recruiting._recruiting_rating(state, slug) - 50) * recruiting.WEEKLY_HOURS_PER) / 5));
+  // A school's energy a week, by its program's stars: ENERGY_ZERO plus ENERGY_PER_STAR a star (180 at none, 480 at five).
+  let rating;
+  try {
+    rating = programs.get(state, slug)["rating"];
+  } catch (e) {
+    rating = programs.base(slug)["rating"];          // a school the career holds no program for
+  }
+  return int(round(recruiting.ENERGY_ZERO + recruiting.ENERGY_PER_STAR * programs.stars_of(rating)));
+}
+
+
+function scout_blend(state, pid) {
+  // Your staff's read of one prospect, on the scale the page shows (the average coach a 70): half the recruiter who
+  // covers his state (your best recruiter when none does), a quarter the coordinator on his side of the ball (both,
+  // averaged, for a kicker, a punter or an athlete), a quarter you. It sets how many looks finish his report
+  // (looks_needed) and whether his potential reads with a plus or a minus (grades.fine).
+  const staff = get(get(state, "career") || {}, "staff") || [];
+  const p = state["recruiting"]["prospects"][pid];
+  const home = get(get(p, "hometown") || {}, "state");
+  const rated = (m) => Number(get(m, "evaluation", 50) || 0);
+  const recruiters = staff.filter((m) => get(m, "role") === "Recruiter");
+  const there = recruiters.filter((m) => get(recruiting.AREAS, get(m, "area"), []).includes(home));
+  const pool = there.length ? there : recruiters;
+  const scout = pool.length ? Math.max(...pool.map(rated)) : 50;
+  const of = (role) => {
+    const m = staff.find((x) => get(x, "role") === role);
+    return m ? rated(m) : 50;
+  };
+  const g = recruiting._group_of(p);
+  const coordinator = recruiting.OFFENSE_GROUPS.includes(g) ? of("OC") : recruiting.DEFENSE_GROUPS.includes(g) ? of("DC") : (of("OC") + of("DC")) / 2;
+  const coach = Number(get(get(get(state, "coach") || {}, "ratings") || {}, "evaluation", 60) || 0);
+  const w = recruiting.BLEND_WEIGHTS;
+  return round(w["scout"] * shown.coach(scout) + w["coordinator"] * shown.coach(coordinator) + w["coach"] * shown.coach(coach), 1);
+}
+
+
+function looks_needed(state, pid) {
+  // How many looks finish his report with the staff you have now: 2 for a blend of 85 or better, 3 from 70, else 4.
+  const blend = recruiting.scout_blend(state, pid);
+  for (const [floor, n] of recruiting.LOOKS_BY_BLEND) if (blend >= floor) return n;
+  return recruiting.LOOKS_WORST;
+}
+
+
+function look_unit(state, pid) {
+  // What one of his looks is worth in a read's own units (a complete report is REPORT_LOOKS of them).
+  return recruiting.REPORT_LOOKS / recruiting.looks_needed(state, pid);
+}
+
+
+function looks_done(state, pid) {
+  // His report in his own looks, to the half look ("1.5" of looks_needed): what the page shows.
+  const read = get(state["recruiting"]["reads"], pid);
+  const n = recruiting.looks_needed(state, pid);
+  if (recruiting.report_complete(read)) return n;
+  return Math.min(n - 0.5, round((recruiting.report_looks(read) / recruiting.look_unit(state, pid)) * 2) / 2);
 }
 
 
@@ -812,16 +867,15 @@ function best_evaluator(state) {
 
 
 function scout_points(state, slug) {
-  // The week's scouting points, a multiple of 5: SCOUT_POINTS_BASE plus SCOUT_POINTS_PER of the best evaluator's rating over 50.
-  // Only your school scouts (the AI's do not send anyone), but the slug keeps the shape of `weekly_hours`.
-  return 5 * int(round((recruiting.SCOUT_POINTS_BASE + Math.max(0, recruiting.best_evaluator(state) - 50) * recruiting.SCOUT_POINTS_PER) / 5));
+  // There are no scouting points any more: a look is paid in energy (LOOK_ENERGY). Kept for the readers that still
+  // ask: the week's energy.
+  return recruiting.weekly_hours(state, slug);
 }
 
 
 function scout_points_left(state, slug) {
-  // Scouting points left this week (refilled at the week step; an old save without the key starts full).
-  const points = setdefault(state["recruiting"], "scout_points", {});
-  return setdefault(points, slug, recruiting.scout_points(state, slug));
+  // There are no scouting points any more: what a look is paid from is the week's energy left (less your plans).
+  return slug === get(state, "team") ? recruiting.hours_free(state, slug) : recruiting._hours(state, slug);
 }
 
 
@@ -850,24 +904,9 @@ function near_home(state, slug, pid) {
 
 
 function look_cost(state, slug, pid) {
-  // What a Send on `pid` costs in scouting points: a portal entrant's and a prospect's close to home (his state,
-  // or within HOME_MILES of your campus) are the cheapest, then one in an area a staff scout covers, then one away
-  // from your scouts. When less than a full look finishes his report (2.5 of 3 looks after a half-look week), the
-  // Send costs half its tier, rounded up to a multiple of 5 (5 stays 5, 10 -> 5, 15 -> 10).
-  let full;
-  if (recruiting.is_portal(state)) {
-    full = recruiting.LOOK_COST["portal"];
-  } else if (recruiting.near_home(state, slug, pid)) {
-    full = recruiting.LOOK_COST["home"];
-  } else {
-    const home = state["recruiting"]["prospects"][pid]["hometown"]["state"];
-    full = recruiting.LOOK_COST[recruiting.covered_states(state).has(home) ? "area" : "away"];
-  }
-  const looks = get(get(get(state["recruiting"], "reads", {}), pid) || {}, "looks", 0) || 0;
-  if (0 < recruiting.REPORT_LOOKS - looks && recruiting.REPORT_LOOKS - looks < recruiting.SEND_LOOK) {
-    return 5 * Math.ceil(full / 2 / 5);
-  }
-  return full;
+  // What a Send on `pid` costs, in energy: LOOK_ENERGY, whoever and wherever he is. (It was scouting points, by how
+  // far he was from your scouts; how good your staff is now sets how many looks his report takes: looks_needed.)
+  return recruiting.LOOK_ENERGY;
 }
 
 
@@ -1097,7 +1136,7 @@ Object.assign(recruiting, {
   needs_by_spot, recommended, need_factor, offers_by_group, group_cap, group_full, _returning, _coach_edge, pull,
   place_taste, _taste, _grade_pulls, academic_schools, academic, nil_room, known_ask, strengths, forced_strength,
   top_group, stage, on_field, _bump, weights, interest, reset_caches, _winning, RecruitingError, _recruiting_rating,
-  weekly_hours, best_evaluator, scout_points, scout_points_left, covered_states, near_home, look_cost, nil_budget,
+  weekly_hours, scout_blend, looks_needed, look_unit, looks_done, best_evaluator, scout_points, scout_points_left, covered_states, near_home, look_cost, nil_budget,
   _reward_lines, reward, reward_why, portal_pool, pool_record, portal_budget, carry_over, _five, open_spots,
   portal_room, portal_spots, portal_upgrade, _p4, _open_spots, offer_cap, _contact_points, _grade_points, best_pitch,
   _hours,

@@ -862,12 +862,12 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
     throw new recruiting.RecruitingError(409, "Done this week.");
   }
   if (action === "scout" && recruiting.report_complete(get(rc["reads"], pid))) {
-    throw new recruiting.RecruitingError(409, `his report is complete at ${recruiting.REPORT_LOOKS} of ${recruiting.REPORT_LOOKS} looks`);
+    throw new recruiting.RecruitingError(409, `his report is complete at ${recruiting.looks_needed(state, pid)} of ${recruiting.looks_needed(state, pid)} looks`);
   }
   if (truthy(opens) && has(get(get(rc, "scenes") || {}, slug) || {}, pid)) throw new recruiting.RecruitingError(409, "finish your call with him first");
   if (action === "scout") {
-    if (recruiting.scout_points_left(state, slug) < recruiting.look_cost(state, slug, pid)) {
-      throw new recruiting.RecruitingError(409, "Not enough scouting points left this week.");
+    if (recruiting.scout_points_left(state, slug) < recruiting.look_cost(state, slug, pid)) {      // (the week's energy: a look is paid from it)
+      throw new recruiting.RecruitingError(409, "Not enough energy left this week.");
     }
   } else if (recruiting._hours(state, slug) < recruiting.action_hours(state, slug, pid, action)) {
     throw new recruiting.RecruitingError(409, "Not enough energy left this week.");
@@ -981,9 +981,9 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
     contact["scouted"] = get(contact, "scouted", 0) + 1;       // trips sent, a tally; the gate is his report's looks
     if (you) recruiting._event(state, "contact", pid, slug, { action });
     const rating = recruiting.best_evaluator(state);
-    rc["scout_points"][slug] = recruiting.scout_points_left(state, slug) - recruiting.look_cost(state, slug, pid);
+    rc["hours"][slug] = recruiting._hours(state, slug) - recruiting.look_cost(state, slug, pid);      // a look is paid in energy
     const rng = new Random(`scout-${rc["seed"]}-${slug}-${pid}-${week}-${contact["scouted"]}`);
-    recruiting._LAST_LOOK[0] = recruiting.look(state, pid, rating, rng);          // one look, SEND_LOOK, or what is left of his report
+    recruiting._LAST_LOOK[0] = recruiting.look(state, pid, rating, rng, null, null, recruiting.look_unit(state, pid));   // one of his looks (2, 3 or 4 finish him), or what is left of his report
   } else {
     if (action === "hc_visit") {
       const last = recruiting.hc_visit_week(state, slug, pid);

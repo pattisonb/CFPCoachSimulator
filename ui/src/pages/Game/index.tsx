@@ -494,14 +494,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
   // box. The dead period has neither to spend, so they are left out
   const budgets =
     recruiting && !recruiting.closed ? (
-      <>
-        <Energy energy={energy || null} />
-        <Energy
-          energy={{ left: recruiting.points_left, total: recruiting.points_week }}
-          label={m.scouting}
-          hint={m.scoutingHint}
-        />
-      </>
+      // (energy alone: there are no scouting points, a look at a prospect is paid from it)
+      <Energy energy={energy || null} />
     ) : undefined;
   const openNotice = (n: Notice) => {
     if (n.kind === "injury") {

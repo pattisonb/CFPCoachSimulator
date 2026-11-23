@@ -134,7 +134,8 @@ test("a career saved before personas and scouting points opens every recruiting 
   const id = old["id"];
   api.call("GET", `/api/season/${id}`);
   const v = G(id, "recruiting");
-  assert(Number.isInteger(v["points_left"]) && Number.isInteger(v["points_week"]) && v["points_left"] === v["points_week"], () => show([v["points_left"], v["points_week"]]));
+  // (there are no scouting points: both read the week's energy, what is left of it and the whole of it)
+  assert(v["points_left"] === v["hours_left"] && v["points_week"] === v["hours"], () => show([v["points_left"], v["points_week"]]));
   assert(v["hours_left"] === 55, () => String(v["hours_left"]));
   const sv = G(id, "scouting");
   assert(Number.isInteger(sv["points_left"]) && sv["points_left"] > 0);

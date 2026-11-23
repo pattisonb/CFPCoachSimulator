@@ -23,6 +23,11 @@ const R = (p, body) => api.call("POST", `/api/season/${sid}/${p}`, body);
 let st = api.loaded_state(), rc = st["recruiting"];
 const staff = st["career"]["staff"];
 const ids = staff.map((m) => m["id"]);
+// every staff evaluator a stored 50 (a 70 on the page; the game's own head coach is a little better): every report takes
+// three looks, so one of his looks is one of the read's
+for (const m of staff) m["evaluation"] = 50;
+const recruiters = staff.filter((m) => m["role"] === "Recruiter");
+const TEN = recruiting.STAFF_LOOKS_WEEK;  // a recruiter's week: ten prospects in his area (the coordinators look at nobody)
 
 /** The prospects of a scout's area he could still be asked to look at (not signed, not committed to you). */
 function area_pids(member) {
@@ -55,32 +60,32 @@ test("before any look the desk shows your scouts, an empty report and the class 
   for (const s of v["scouts"]) {
     equal(keys(s), new Set(["id", "name", "role", "evaluation_word", "area", "looking_at", "yield", "contract_until"]), "a scout's card");
     assert(["Offensive Coordinator", "Defensive Coordinator", "Recruiter"].includes(s["role"]) && recruiting.WORDS.includes(s["evaluation_word"]), J(s));
-    assert(s["area"] in recruiting.AREAS && s["looking_at"] > 0);
+    assert(s["area"] in recruiting.AREAS && (s["role"] === "Recruiter" ? s["looking_at"] > 0 : s["looking_at"] === 0), J(s));
     equal(s["yield"], { looks: 0, narrowed: 0, flags: 0 });
   }
   assert(v["queue"].length === prospects.QUEUE_LIMIT && v["queue_total"] > 3000);
-  const row_keys = new Set(["cost", "pid", "name", "position", "display_pos", "stars", "group", "need", "national_rank", "looks", "trips", "potential",
+  const row_keys = new Set(["cost", "pid", "name", "position", "display_pos", "stars", "group", "need", "national_rank", "looks", "looks_done", "looks_needed", "trips", "potential",
     "can_send", "why", "state", "likes", "on_board", "flags"]);
   for (const r of v["queue"]) equal(keys(r), row_keys, "a queue row");
   assert(v["queue"].every((r) => r["can_send"] && r["why"] === null && r["looks"] === 0 && r["potential"] === null));
   assert(!("looks" in rc) && !("look_counts" in rc) && !("look_changes" in rc), "a read of the desk created the log");
 });
 
-test("a week of area looks: every scout's tally counts half a look a prospect, and the log keeps his most telling looks", () => {
+test("a week of the recruiters' looks: each one's tally counts half a look a prospect for ten prospects, and the log keeps them", () => {
   recruiting.scout_week(st);
   equal(Object.keys(rc["look_counts"]), ["0"]);
-  equal(rc["look_counts"]["0"], Object.fromEntries(staff.map((m) => [m["id"], HALF * area_pids(m).length])));
+  equal(rc["look_counts"]["0"], Object.fromEntries(recruiters.map((m) => [m["id"], HALF * TEN])));
   assert(Object.values(rc["reads"]).every((r) => r["looks"] === HALF && r["area"] === HALF));
-  equal(rc["look_changes"]["0"], Object.fromEntries(staff.map((m) => [m["id"], { changed: area_pids(m).length, flags: 0 }])), "a first look changes every grade");
-  assert(rc["looks"].length === staff.length * recruiting.LOOK_LOG_KEEP);
+  equal(rc["look_changes"]["0"], Object.fromEntries(recruiters.map((m) => [m["id"], { changed: TEN, flags: 0 }])), "a first look changes every grade");
+  assert(rc["looks"].length === recruiters.length * Math.min(TEN, recruiting.LOOK_LOG_KEEP));
   for (const e of rc["looks"]) {
     check_entry(e);
     assert(e["week"] === 0 && ids.includes(e["by"]) && !Object.keys(e["before"]).length);
     equal(keys(e["after"]), new Set(recruiting.GROUPS));
   }
-  for (const m of staff) {
+  for (const m of recruiters) {
     const kept = rc["looks"].filter((e) => e["by"] === m["id"]), area = new Set(area_pids(m));
-    assert(kept.length === recruiting.LOOK_LOG_KEEP && kept.every((e) => area.has(e["pid"])));
+    assert(kept.length === Math.min(TEN, recruiting.LOOK_LOG_KEEP) && kept.every((e) => area.has(e["pid"])));
   }
 });
 
@@ -100,14 +105,16 @@ test("the log and the tallies keep this week and last; a later look is logged on
     check_entry(e);
     assert(Object.keys(e["after"]).length || e["flags"].length, "a look that changed nothing was logged");
   }
-  const quiet = sum(Object.values(tally)) / HALF - sum(Object.values(moved).map((c) => c["changed"]));
-  assert(quiet > 0 && third.length, "some looks change nothing, and those are counted but not logged");
+  assert(third.length && sum(Object.values(tally)) / HALF >= sum(Object.values(moved).map((c) => c["changed"])), "every look is counted, logged or not");
   for (const [by, c] of Object.entries(moved)) {         // flagged looks are kept first, up to the cap
     const kept = third.filter((e) => e["by"] === by);
     assert(kept.length === Math.min(recruiting.LOOK_LOG_KEEP, c["changed"]));
     assert(kept.filter((e) => e["flags"].length).length === Math.min(recruiting.LOOK_LOG_KEEP, c["flags"]));
   }
-  assert(Object.values(rc["reads"]).every((r) => r["looks"] === 1.5 && r["area"] === 1.5), "three weeks in an area: one and a half of three");
+  // three weeks: the first ten of each recruiter got their one look from the staff in two, then he moved on
+  const looks = Object.values(rc["reads"]).map((r) => r["looks"]);
+  assert(Object.values(rc["reads"]).every((r) => [HALF, 1.0].includes(r["looks"]) && r["area"] === r["looks"]), "never past one look from the staff");
+  assert(looks.filter((x) => x === 1.0).length === recruiters.length * TEN && looks.filter((x) => x === HALF).length === recruiters.length * TEN, J(looks.length));
 });
 
 test("the desk's reports group this week's logged looks by scout, flags first, and each card's yield is his tally", () => {
@@ -136,7 +143,6 @@ test("the desk's reports group this week's logged looks by scout, flags first, a
   for (const card of v["scouts"]) {
     equal(card["yield"], { looks: get(tally, card["id"], 0), narrowed: get(get(moved, card["id"], {}), "changed", 0), flags: get(get(moved, card["id"], {}), "flags", 0) });
   }
-  assert(v["scouts"].some((c) => c["yield"]["looks"] / HALF > c["yield"]["narrowed"]), "a scout whose looks all moved a grade: the yield counts looks, not changes");
 });
 
 let total, rest, target, yours;
@@ -175,13 +181,13 @@ test("the queue: your board first, then the class by need and rank, paged and fi
   assert(none["queue"].length === 0 && none["queue_total"] === 0);
 });
 
-test("a Send from the desk spends points, is logged as your trip, and a complete report stays listed with no Send", () => {
+test("a Send from the desk spends energy, is logged as your trip, and a complete report stays listed with no Send", () => {
   let v = G("scouting?sort=board");
   target = rest.find((r) => r["can_send"]);
   const hours = v["hours_left"], points = v["points_left"];
-  assert(Object.values(recruiting.LOOK_COST).includes(target["cost"]) && v["points_week"] === recruiting.scout_points(st, ME));
+  assert(target["cost"] === recruiting.LOOK_ENERGY && points === hours && v["points_week"] === v["hours"]);
   const out = R("recruit", { pid: target["pid"], action: "scout" });
-  assert(out["hours_left"] === hours, "a Send spends scouting points, not hours");
+  assert(out["hours_left"] === hours - target["cost"], "a Send spends energy");
   assert(G("scouting?sort=board")["points_left"] === points - target["cost"]);
   assert("likes" in out["look"], "a Send also returns the like a completed report earned");
   const { likes, ...look } = out["look"];
@@ -223,9 +229,10 @@ test("a Send from the desk spends points, is logged as your trip, and a complete
   R("board", { pid: target["pid"], on: false });
 });
 
-test("short of points no row takes a Send, and each says why", () => {
-  const least = Math.min(...Object.values(recruiting.LOOK_COST)) - 1;
-  rc["scout_points"] = { [ME]: least };
+test("short of energy no row takes a Send, and each says why", () => {
+  const least = recruiting.LOOK_ENERGY - 1;
+  const had = rc["hours"][ME];
+  rc["hours"][ME] = least;
   const v = G("scouting?sort=board");
   assert(v["points_left"] === least);
   for (const r of v["queue"]) {
@@ -237,23 +244,25 @@ test("short of points no row takes a Send, and each says why", () => {
   const area = Object.keys(recruiting.AREAS).find((a) => recruiting.AREAS[a].includes(home));
   for (const s of v["scouts"]) {
     if (s["area"] !== area) continue;
-    const watching = area_pids({ area }).filter((q) => recruiting.area_open(get(rc["reads"], q))).length;
+    const watching = s["role"] === "Recruiter" ? area_pids({ area }).filter((q) => recruiting.staff_open(st, q)).length : 0;
     assert(s["looking_at"] === watching, J([s["looking_at"], watching]));
   }
-  rc["scout_points"] = { [ME]: 100 };
+  rc["hours"][ME] = had;
 });
 
 test("a flag waits for the complete report, then shows on the desk and on the trip that found it", () => {
   visible = new Set(recruiting.visible(st));
-  const threes = Object.keys(rc["prospects"]).filter((q) => rc["prospects"][q]["stars"] === 3 && scoutable(q) && q in rc["reads"]);
+  const threes = Object.keys(rc["prospects"]).filter((q) => rc["prospects"][q]["stars"] === 3 && scoutable(q) && !(q in rc["reads"]));
   const [gem, before_flag] = threes;
+  rc["hours"][ME] = 100;
+  for (const q of [gem, before_flag]) R("recruit", { pid: q, action: "scout" });       // one look each: a read to work on
   const cut = recruiting.flag_cuts(rc)[3][0];             // the gem cut is relative to his star tier
   rc["reads"][gem]["g"]["potential"] = [cut + 1.0, 1000.0];
-  assert(rc["reads"][gem]["looks"] === 1.5 && !G("scouting?sort=board")["flags"].some((f) => f["pid"] === gem), "no flag before the report is complete");
+  assert(rc["reads"][gem]["looks"] === 1 && !G("scouting?sort=board")["flags"].some((f) => f["pid"] === gem), "no flag before the report is complete");
   rc["reads"][gem]["looks"] = recruiting.FIND_LOOKS;
   const v = G("scouting?sort=board");
   for (const f of v["flags"]) {
-    equal(keys(f), new Set(["pid", "name", "position", "stars", "flag", "looks", "standing_word", "likes", "on_board"]), "a flag");
+    equal(keys(f), new Set(["pid", "name", "position", "stars", "flag", "looks", "looks_done", "looks_needed", "standing_word", "likes", "on_board"]), "a flag");
     assert(FLAGS.includes(f["flag"]) && f["looks"] <= 3);
   }
   const found = v["flags"].find((f) => f["pid"] === gem);

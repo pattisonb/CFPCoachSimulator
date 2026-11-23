@@ -274,7 +274,9 @@ test("only the last few seasons are kept, and changing schools keeps the old pla
   equal(years, [YEAR - 3, YEAR - 2, YEAR - 1, YEAR, YEAR + 1]);
   const here = new Set(Object.values(next["league"]["teams"]).flatMap((t) => t["roster"].map((c) => c["id"])));
   for (const x of next["career"]["game_logs"]) for (const id of Object.keys(x["players"])) assert(here.has(id), id);
-  const pr = season.player_profile(next, ME, null, null, Object.keys(next["career"]["game_logs"][4]["players"])[0]);
+  // (one of last season's players who is still yours: a player the roster limit let go has no season here)
+  const still = Object.keys(next["career"]["game_logs"][4]["players"]).find((id) => next["league"]["teams"][ME]["roster"].some((c) => c["id"] === id));
+  const pr = season.player_profile(next, ME, null, null, still);
   equal(pr["game_logs"].slice(0, 2).map((x) => [x["year"], x["rows"].length > 0]), [[YEAR + 2, false], [YEAR + 1, true]]);
   assert(pr["game_logs"].length <= offseason.GAME_LOG_SEASONS + 1);                  // this season and the kept ones
   // you take another job: the season is kept as any other, and at the new school the old one's players still have

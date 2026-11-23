@@ -6,10 +6,9 @@ export const messages = {
   loadError: (msg: string) => `Couldn't load your staff: ${msg}.`,
 
   // the week's numbers across the top
-  points: "Scouting Points",
+  points: "Energy",
   pointsOf: (left: number, week: number) => `${left} / ${week}`,
-  pointsTip: (left: number, week: number) =>
-    `${left} of ${week} scouting points left this week for trips to see a prospect yourself.`,
+  pointsTip: (left: number, week: number) => `${left} of ${week} energy left this week. A look at a prospect costs 5.`,
   trips: "Trips This Week",
   fullReports: "Full Reports",
   boardScouted: "Board Scouted",
@@ -62,7 +61,7 @@ export const messages = {
   } as Record<string, string>,
   likes: (who: string) => `${who} Likes Him`,
   complete: "Full Report",
-  looks: (n: number) => `${fmtLooks(n)} of 3 Looks`,
+  looks: (ofTotal: string) => `${ofTotal} Looks`,
   addBoard: (name: string) => `Add ${name} to your board.`,
   removeBoard: (name: string) => `Take ${name} off your board.`,
   boardError: (msg: string) => `Couldn't change your board: ${msg}.`,

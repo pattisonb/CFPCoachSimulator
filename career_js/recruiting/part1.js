@@ -109,6 +109,23 @@ recruiting.HC_MILES = [[250, 20], [750, 30], [1500, 40], [null, 50]];      // *t
 // board keeps their buttons off until he holds it. The rule is the page's, so a test or a tool can still make them.)
 recruiting.PLANNABLE = ["message", "call", "call_recruit"];     // *tune* the quick actions you plan from his row, sent at the week step: a message, a call
 //                                                                 to his coach ("call", the old quick call) and a call to him
+// A school's energy a week is set by its program's stars (programs.stars_of): ENERGY_ZERO at no stars and ENERGY_PER_STAR
+// more for each star, so 180, 210, ... 480 by halves (the player's numbers: a five-star program can make 16 video
+// calls a week). Every school's, yours and the AI's. *tune*
+recruiting.ENERGY_ZERO = 180;
+recruiting.ENERGY_PER_STAR = 60;
+recruiting.LOOK_ENERGY = 5;                            // *tune* a Send: one look at a prospect, in energy (there are no scouting points)
+// How many looks finish a report, by your staff's blend for that prospect (scout_blend, on the scale the page shows:
+// the average coach a 70): LOOKS_BY_BLEND's floors, else LOOKS_WORST. A read's `looks` are still kept in thirds of a
+// report (REPORT_LOOKS = 3 is a complete one), so a look is worth 3 / looks_needed of them. *tune*
+recruiting.LOOKS_BY_BLEND = [[85, 2], [70, 3]];
+recruiting.LOOKS_WORST = 4;
+recruiting.BLEND_WEIGHTS = { scout: 0.5, coordinator: 0.25, coach: 0.25 };   // *tune* the recruiter covering his state, the coordinator on his side of the ball, you
+recruiting.FINE_BLEND = 85;                            // *tune* a blend this good reads a recruit's potential with a plus or a minus
+recruiting.OFFENSE_GROUPS = ["QB", "RB", "WR", "TE", "OL"];   // his group's side of the ball (a kicker, a punter or an athlete: both coordinators' average)
+recruiting.DEFENSE_GROUPS = ["DL", "LB", "CB", "S"];
+recruiting.STAFF_LOOKS_WEEK = 10;                      // *tune* how many prospects each recruiter looks at on his own a week
+recruiting.BOARD_CAP = 50;                             // *tune* the most prospects your board holds
 recruiting.WEEKLY_HOURS_BASE = 140;                    // *tune* a school's recruiting hours a week at a recruiting rating of 50 ...
 recruiting.WEEKLY_HOURS_PER = 0.4;                     // *tune* ... plus this many per rating point over 50 (about 150 for most schools)
 recruiting.SCOUT_POINTS_BASE = 150;                    // *tune* your scouting points a week with a best evaluator of 50 (about four full reports away from your areas) ...
@@ -231,7 +248,7 @@ recruiting.FCS_LINE = 4.0;                             // best FBS interest unde
 recruiting.FCS_NO_OFFER_WEEK = 8;                      // from this week a prospect with no FBS offer leans FCS
 recruiting.COMMIT_ODDS = [[0, 0.02], [6, 0.05], [9, 0.095], [12, 0.11], [16, 0.12], [20, 0.30]];   // weekly base chance by week (raised from Week 9 on when a fifth of the class became Signing Day recruits) *tune*
 recruiting.COMMIT_FREEZE_WEEKS = 3;                     // nobody commits anywhere in the first weeks: time to scout and build a board before the class moves
-recruiting.LEAD_SCALE = 4.0;                           // interest lead worth a doubling of the base chance (4 with the commit styles; 5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
+recruiting.LEAD_SCALE = 6.0;                           // interest lead worth a doubling of the base chance (6 with energy by stars, 180 to 480 a week: leads run bigger still, and 4 had 91-93% signed by the early period; 5.5 sat on the 90% edge and 7 let one school sign nine five-stars. It was 4 with the commit styles; 5: with 140-160 hours a week leads run bigger, and 3 had over 92% signed by the early period) *tune*
 recruiting.VISIT_BOOST = 1.6;                          // after an official visit to the leader
 recruiting.DECOMMIT_RATE = 1.4;                        // weekly chance of a decommitment at an even race (1.4: Early Bird, Quiet Commit and Signing Day recruits flip less or never; 0.8: AI schools now message every commit weekly, so commits firm faster; 0.45 left 5% of the top 300 decommitting) *tune*
 // a commitment's firmness, 0-100: it starts soft and firms up only if the school keeps in touch *tune*

@@ -58,10 +58,13 @@ function check_recap(sid, v) {
   // who you got: every portal entrant now on your roster, marked with the school he came from
   const signed_ids = new Set(roster.filter((p) => truthy(p["transfer"]) && p["id"] in players).map((p) => p["id"]));
   assert(signed_ids.size, "seed 11 on Auto lands at least one portal signing");
-  assert(same_set(new Set(rec["signed"].map((r) => r["id"])), signed_ids));
+  // (the recap lists every transfer you signed; one the roster limit then let go is no longer on the roster)
+  const listed = new Set(rec["signed"].map((r) => r["id"]));
+  assert([...signed_ids].every((id) => listed.has(id)) && listed.size - signed_ids.size <= 2, `${listed.size} listed, ${signed_ids.size} on the roster`);
   const by_id = Object.fromEntries(roster.map((p) => [p["id"], p]));
   for (const r of rec["signed"]) {
     const p = by_id[r["id"]];
+    if (!p) continue;                                     // (signed, then let go at the roster limit)
     assert(r["from"] === p["transfer"] && p["transfer"] === players[r["id"]]["from"]);
     assert(r["from_name"] && r["from_name"] !== r["from"]);
     assert(r["name"] === p["n"] && r["pos"] === p["pos"] && r["cls"] === p["cls"] && r["overall"] > 0);
@@ -81,7 +84,7 @@ function check_recap(sid, v) {
   }
   assert(rec["entrants"] === Object.keys(players).length);
   assert(rec["signed_league"] === Object.values(players).filter((e) => truthy(e["signed"])).length);
-  // the development report: every transfer, marked, even past the top 25
+  // the development report: every transfer, marked
   const rep = v["report"];
   const dev = Object.fromEntries(rep["transfers"].map((r) => [r["id"], r]));
   assert([...signed_ids].every((pid) => pid in dev));
@@ -89,7 +92,9 @@ function check_recap(sid, v) {
     assert(dev[pid]["transfer"] === by_id[pid]["transfer"]);
     assert("gain" in dev[pid] && "why" in dev[pid]);
   }
-  for (const r of rep["mine"]) assert((r["transfer"] ?? null) === (by_id[r["id"]]["transfer"] ?? null));
+  // (the report is every returning player now; one the roster limit then let go developed and is no longer on the roster)
+  for (const r of rep["mine"]) if (by_id[r["id"]]) assert((r["transfer"] ?? null) === (by_id[r["id"]]["transfer"] ?? null));
+  assert(rep["mine"].length > 40, "every returning player, not the 25 biggest gains");
   // the roster rows the position-change picker reads
   const rows = Object.fromEntries(v["my_roster"].map((r) => [r["id"], r]));
   for (const pid of signed_ids) assert(rows[pid]["transfer"] === by_id[pid]["transfer"]);

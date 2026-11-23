@@ -39,6 +39,7 @@ import { cachedTeams } from "../../teams.ts";
 import { PITCH_NAMES, standingOf } from "../../standing.ts";
 import type { BoardRow, ListSchool, ProspectDetail, RecruitEvent } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import { halfLooks, looksDone, looksOfTotal, looksTotal } from "../../format.ts";
 import "./index.css";
 
 // A recruit's file, the four tabs of his panel on the board (web/recruiting.js overviewCards, scoutCards,
@@ -47,7 +48,6 @@ import "./index.css";
 // History: the timeline and who moved on his list. His offer, his ask and your chance are in the panel's head.
 
 /** Looks in words: 1, 2½, ½. */
-const fmtLooks = (n: number) => `${Math.floor(n) || (n % 1 ? "" : "0")}${n % 1 ? "½" : ""}`;
 const looksOf = (r: BoardRow, d: ProspectDetail | null) => Math.min(3, d?.looks ?? r.looks ?? 0);
 const teamOf = (slug: string | null | undefined) => cachedTeams()?.find((t) => t.slug === slug);
 const teamName = (slug: string | null | undefined, fallback?: string | null) =>
@@ -238,7 +238,7 @@ export function OverviewTab({
             </div>
             <div className="recruit-file__snap-cell recruit-file__snap-cell--end">
               <span className="label">{m.scouted}</span>
-              <b>{m.looksCount(looks)}</b>
+              <b>{looksOfTotal(detail ?? r)}</b>
               <Meter value={looks / 3} label={m.scouted} />
             </div>
             {[0, 1, 2].map((i) => {
@@ -310,7 +310,8 @@ export function ScoutingTab({
   const clear = detail.clear;
   const pot = clear?.potential;
   const yours = !!r.signed || r.committed === team;
-  const left = 3 - looks;
+  // (his own looks: 2, 3 or 4 finish his report, by your staff)
+  const left = looksTotal(detail) - looksDone(detail);
   const cant = looks >= 3 || !detail.can_scout || detail.points_left < detail.scout_cost || !!r.scene;
   const why =
     looks >= 3
@@ -358,11 +359,11 @@ export function ScoutingTab({
                   ? m.looksShort.none
                   : left <= 1
                     ? m.looksShort.one
-                    : m.looksShort.more(fmtLooks(left))
+                    : m.looksShort.more(halfLooks(left))
             }
           >
             <span className="label">{m.scouted}</span>
-            <b className="recruit-file__big">{m.looksOf(fmtLooks(looks))}</b>
+            <b className="recruit-file__big">{looksOfTotal(detail)}</b>
             <Meter value={looks / 3} label={m.scouted} />
           </div>
           {rep && (

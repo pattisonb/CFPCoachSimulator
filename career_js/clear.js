@@ -21,7 +21,7 @@ const CLEAR_CONFIDENCE = [[6.0, "High"], [10.0, "Medium"]];
 
 // each position group's key player-card ratings, most important first (up to eight); the card's own labels name them
 const KEYS = {
-  QB: ["arm_strength", "short_accuracy", "mid_accuracy", "deep_accuracy", "decision_making", "pocket_poise", "throw_on_move", "football_iq"],
+  QB: ["arm_strength", "short_accuracy", "mid_accuracy", "deep_accuracy", "throw_on_move", "decision_making", "pocket_poise", "football_iq"],
   RB: ["run_vision", "burst", "agility", "elusiveness", "ball_security", "power_running", "top_speed", "tackle_breaking"],
   FB: ["lead_block", "drive_block", "power_running", "strength", "run_vision", "hands", "ball_security", "football_iq"],
   WR: ["hands", "top_speed", "release", "short_routes", "mid_routes", "deep_routes", "contested_catch", "agility"],
@@ -34,6 +34,10 @@ const KEYS = {
   K: ["kick_power", "kick_accuracy", "football_iq", "stamina"],
   P: ["punt_power", "punt_accuracy", "football_iq", "stamina"],
 };
+
+// the physical traits shown for every prospect, after his position's own ratings *tune*
+const PHYSICAL = ["top_speed", "burst", "agility", "strength", "leaping"];
+const KEY_SKILLS = 5;                   // *tune* how many of his position's own ratings lead the list
 
 // growth by kind (the player's ask): athleticism is mostly set by the time he arrives, coaching shows in
 // technique and the mental game. SKILL_RATE is set so the average overall gain a year matches the game's.
@@ -129,7 +133,12 @@ export function ratings(state, pid) {
   const cards = pr.card_attributes(ours, p);
   const pos = pr.engine_position(p);
   const grp = own(season.SCALE_GROUP, pos, pos);
-  const keys = own(clear.KEYS, grp, []).filter((k) => k in cards).slice(0, 8);
+  // his position's own ratings first (KEY_SKILLS of them, the physical ones left for the end), then the physical traits
+  // every prospect is read on (PHYSICAL: the player's ask, "show those physical traits for all prospects"); a kicker's
+  // and a punter's stay their own short list
+  const listed = own(clear.KEYS, grp, []).filter((k) => k in cards);
+  const keys = ["K", "P"].includes(grp) ? listed.slice(0, 8)
+    : [...listed.filter((k) => !clear.PHYSICAL.includes(k)).slice(0, clear.KEY_SKILLS), ...clear.PHYSICAL.filter((k) => k in cards)];
   const card_grp = rv2.card_group(pos, pos);
 
   function row(key, label, truth, group) {
@@ -152,14 +161,14 @@ export function ratings(state, pid) {
   const pot = row("potential", `Potential at ${pos_label}`, Number(p["pot_ovr"]), "potential");   // his projected overall at his position
   pot["position"] = pos_label;
   if (truthy(get(pot, "ours"))) {                               // the page shows his potential as letters (grades.js), not these numbers
-    const sharp = grades.fine(state);
+    const sharp = grades.fine(state, pid);
     const [est_, lo_, hi_] = pot["ours"];
     delete pot["ours"];
     const ends = truthy(complete) ? [est_, est_] : [lo_, hi_];     // a complete report settles on one grade
     pot["grade"] = grades.span(ends[0], ends[1], sharp);
     pot["fine"] = sharp;
-    pot["eye"] = shown.coach(grades.eye(state));
-    pot["eye_needed"] = shown.coach(grades.PLUS_MINUS_EYE);
+    pot["eye"] = Math.round(modules.recruiting.scout_blend(state, pid));        // your staff's blend for him, as the page shows a rating
+    pot["eye_needed"] = modules.recruiting.FINE_BLEND;
   }
   const coach = clear._raw_half(state, pid, "coachability") !== null ? clear.confidence(state, pid, "coachability") : null;
   return { complete, looks: recruiting.report_looks(read), rows, potential: pot,
@@ -167,7 +176,7 @@ export function ratings(state, pid) {
 }
 
 export const clear = {
-  CLEAR_CONFIDENCE, KEYS, PHYS_RATE, SKILL_RATE, CEIL_STRUGGLE, CEIL_SOLID, CEIL_SOLID_Z, CEIL_STRUGGLE_Z, CEIL_SLOW,
+  CLEAR_CONFIDENCE, KEYS, PHYSICAL, KEY_SKILLS, PHYS_RATE, SKILL_RATE, CEIL_STRUGGLE, CEIL_SOLID, CEIL_SOLID_Z, CEIL_STRUGGLE_Z, CEIL_SLOW,
   CEIL_DRIFT_SD, SLOW_LEVELS, FAST_LEVELS, struggled, ceiling_drift, confidence, _raw_half, _group_of_key, ratings,
 };
 modules.clear = clear;
