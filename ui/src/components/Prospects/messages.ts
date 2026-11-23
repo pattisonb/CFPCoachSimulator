@@ -37,6 +37,7 @@ export const messages = {
     board: "Board",
   },
   askRange: (lo: number, hi: number) => `${lo}–${hi}`,
+  askTip: "Scout him fully to learn his number.",
   sortBy: (col: string) => `Sort by ${col}`,
   unscouted: "Unscouted",
   addBoard: (name: string) => `Add ${name} to your board.`,

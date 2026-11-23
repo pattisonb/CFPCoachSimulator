@@ -15,7 +15,7 @@ interface Props {
   /** the row under that: `HeadTag`s, stars, a word */
   tags?: ReactNode;
   /** three facts between his name and the tile; always three, so the head never changes size */
-  cells: { label: string; value: string }[];
+  cells: { label: string; value: string; /** said on hover in place of the value alone */ tip?: string }[];
   /** the square at the head's other end, the size of his face: a label over a big value */
   tile: {
     label: string;
@@ -106,7 +106,7 @@ export default function ProfileHead({ face, corner, name, beside, line, tags, ce
               <dt>{c.label}</dt>
               <dd>
                 {/* a value keeps one line: the whole of it is its tooltip */}
-                <Tooltip text={c.value} title={c.label} block className="profile-head__clip">
+                <Tooltip text={c.tip ?? c.value} title={c.label} block className="profile-head__clip">
                   {c.value}
                 </Tooltip>
               </dd>

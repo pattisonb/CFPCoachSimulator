@@ -340,7 +340,7 @@ export function promises_tracker(state) {
         status = "Kept";
       } else if (kind === "money") {
         const owed = recruiting.money_owed(state, me, pid);
-        if (truthy(owed)) what = `NIL ${owed["nil"]}`;
+        if (truthy(owed) && owed["nil"] !== null) what = `NIL ${owed["nil"]}`;     // the number only once your scouts know his ask (recruiting.money_owed)
         status = truthy(owed) ? `Due Week ${Math.max(0, owed["by_week"] - 1)}` : "Open";     // Week 0 opens the season
       } else if (signed && ["roster", "recruit"].includes(kind)) {
         status = "Owed Next Season";

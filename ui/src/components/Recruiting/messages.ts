@@ -76,13 +76,18 @@ export const messages = {
   hisAsk: "His Ask",
   ask: (lo?: number, hi?: number, exact?: number) =>
     exact != null ? `${exact} NIL` : lo != null && hi != null ? `${lo}–${hi} NIL` : "Not Known Yet",
+  // a range is your scouts' read so far: said on hover wherever one shows
+  askTip: (lo: number, hi: number) => `${lo}–${hi} NIL. Scout him fully to learn his number.`,
+  askScout: "Scout him fully to learn his number.",
   hoursLeft: (n: number) => `${n} Energy Left`,
   offBoardTip: "Take him off your board. An offer he holds is pulled.",
   offer: "Your Offer",
   cooled: (why: string | null) =>
     COOLED[why ?? ""] ?? "He's cooled on you. Contacts count half until he warms back up.",
-  moneyOwed: (nil: number, by: string) =>
-    `You talked money: put at least ${nil} NIL on your offer by ${by}, or he cools on you.`,
+  moneyOwed: (owed: { nil: number | null; sure?: number }, by: string) =>
+    owed.nil != null
+      ? `You talked money: put at least ${owed.nil} NIL on your offer by ${by}, or he cools on you.`
+      : `You talked money: put most of his ask on your offer by ${by}, or he cools on you. ${owed.sure ?? 0} NIL is sure to cover it. Scout him fully to learn his number.`,
   jobPromised: "Job Promised",
   jobPromisedTip:
     "You promised him a starting role. It is judged through his first season, and a broken promise costs you.",

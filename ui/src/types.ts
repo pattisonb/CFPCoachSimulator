@@ -672,7 +672,7 @@ export interface PlayerProfile {
 
 /** One prospect in the class (GET /api/season/{id}/prospects → rows[], career_js/prospects.js row) */
 export interface ProspectRow {
-  /** his NIL ask of you as you know it: the number after a call or visit, a range before */
+  /** his NIL ask of you as you know it: the number once he is fully scouted, a range before (narrower after a look) */
   ask?: { lo?: number; hi?: number; exact?: number };
   /** a transfer's class (FR, SORS, ...) */
   cls?: string;
@@ -933,7 +933,7 @@ export interface BoardRow {
   offer_landing: boolean;
   /** your NIL on the table */
   nil: number;
-  /** his NIL ask of you: a range until a visit pins it */
+  /** his NIL ask of you: a range until his scouting report is complete */
   ask: { lo?: number; hi?: number; exact?: number };
   standing: {
     place: number | null;
@@ -975,7 +975,8 @@ export interface BoardRow {
   /** you already promised him the starting job */
   job_promised: boolean;
   /** you talked money with him: the NIL you owe on your offer, and the week it is due by */
-  money_owed?: { nil: number; by_week: number } | null;
+  /** a money promise you owe: `nil` once you know his ask (fully scouted); before that `sure`, an amount that covers it */
+  money_owed?: MoneyOwed | null;
   /** your call or in-home visit this week, open until you pitch */
   scene: Scene | null;
 }
@@ -1314,4 +1315,13 @@ export interface StandingRow {
 
 export interface StandingsView {
   standings: Record<string, StandingRow[]>;
+}
+
+/** What a money promise asks of your offer, as you know his ask (recruiting.money_owed). */
+export interface MoneyOwed {
+  /** the NIL to put on your offer; null until he is fully scouted */
+  nil: number | null;
+  /** before that: an amount sure to cover it (the share of the top of the range you are shown) */
+  sure?: number;
+  by_week: number;
 }

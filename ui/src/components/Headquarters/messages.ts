@@ -172,6 +172,9 @@ export const messages = {
   },
   alerts: {
     money: (name: string, nil: number, by: string) => `${name} is owed money: put ${nil} NIL on your offer by ${by}.`,
+    // his ask is not known yet (not fully scouted): an amount sure to cover it
+    moneySure: (name: string, sure: number, by: string) =>
+      `${name} is owed money: put most of his ask on your offer by ${by}. ${sure} NIL is sure to cover it.`,
     cooled: (name: string) => `${name} has cooled on you.`,
     tuningOut: (name: string) => `${name} is tuning you out.`,
     lockedElsewhere: (name: string) => `${name} is locked in elsewhere, and your offer still holds a slot.`,
@@ -271,7 +274,7 @@ export const messages = {
   noPromises: "No promises out. A starting role you promise a player or a recruit shows here.",
   yourPlayers: "Your Players",
   recruits: "Recruits",
-  promiseWhat: { role: "Starting Role", nil: (n: number) => `NIL ${n}` },
+  promiseWhat: { role: "Starting Role", nil: (n: number | null) => (n != null ? `NIL ${n}` : "NIL Owed") },
   promiseStatus: { open: "Open", owed: "Owed Next Season", due: (by: string) => `Due ${by}` },
 
   // ----- the catalog: each widget's name and one line -----

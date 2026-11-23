@@ -17,7 +17,7 @@ import { cachedTeams, teamNamed } from "../../teams.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { byChance, standingOf, statusOf, topicPhrase } from "../../standing.ts";
-import type { BoardRow, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
+import type { BoardRow, MoneyOwed, ProspectDetail, RecruitingBoard, Scene } from "../../types.ts";
 import { useKept } from "../../kept.ts";
 import { formatClass } from "../../format.ts";
 import Swatch from "../Swatch/index.tsx";
@@ -585,7 +585,7 @@ function RecruitPanel({
   const weekOf = (w: number) => weekLabels[String(w)] ?? m.week(Math.max(0, w - 1));
   const alerts: { key: RecruitAlert; tip: string }[] = [];
   if (r.cooled) alerts.push({ key: "cooled", tip: m.cooled(r.cooled_why) });
-  if (r.money_owed) alerts.push({ key: "owed", tip: m.moneyOwed(r.money_owed.nil, weekOf(r.money_owed.by_week)) });
+  if (r.money_owed) alerts.push({ key: "owed", tip: m.moneyOwed(r.money_owed, weekOf(r.money_owed.by_week)) });
   if (r.pestering) alerts.push({ key: "pestered", tip: m.pestering });
   if (flipAlert(r)) alerts.push(flipAlert(r)!);
   const alertKeys = alerts.map((a) => a.key).join(",");
@@ -645,7 +645,7 @@ function RecruitPanel({
       const out = await api<{
         revealed?: string | null;
         scene?: Scene;
-        money_owed?: { nil: number; by_week: number } | null;
+        money_owed?: MoneyOwed | null;
       }>(`/api/season/${seasonId}/recruit`, {
         method: "POST",
         body: { pid: r.id, action, ...extra },
@@ -661,7 +661,7 @@ function RecruitPanel({
         action === "promise_role" ? m.promisedRole : (m.said[action]?.(r.name, n) ?? ""),
         out.revealed ? m.revealed(topicPhrase(out.revealed)) : "",
         // talking money is a promise: say so plainly
-        out.money_owed ? m.moneyOwed(out.money_owed.nil, weekName(out.money_owed.by_week)) : "",
+        out.money_owed ? m.moneyOwed(out.money_owed, weekName(out.money_owed.by_week)) : "",
       ];
       setNote(said.filter(Boolean).join(" "));
       await reload();
@@ -771,7 +771,12 @@ function RecruitPanel({
           cells={[
             { label: m.offer, value: r.offered ? m.nilAmount(r.nil) : m.noOffer },
             { label: m.chance, value: sd.odds ?? sd.word },
-            { label: m.hisAsk, value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact) },
+            {
+              label: m.hisAsk,
+              value: m.ask(r.ask.lo, r.ask.hi, r.ask.exact),
+              // a range is what your scouts know so far
+              tip: r.ask.exact == null && r.ask.lo != null && r.ask.hi != null ? m.askTip(r.ask.lo, r.ask.hi) : undefined,
+            },
           ]}
           tile={{
             label: m.hisList,
@@ -858,6 +863,7 @@ function RecruitPanel({
                       step={5}
                       value={nil}
                       aria-label={m.offer}
+                      title={r.ask.exact == null && !r.offered ? m.askScout : undefined}
                       onChange={(e) => setNil(Math.max(0, Number(e.target.value) || 0))}
                     />
                     {r.offered ? (

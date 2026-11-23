@@ -645,7 +645,7 @@ export default function Prospects({
                       {r.ask?.exact != null ? (
                         r.ask.exact
                       ) : r.ask?.hi ? (
-                        m.askRange(r.ask.lo ?? 0, r.ask.hi)
+                        <span title={m.askTip}>{m.askRange(r.ask.lo ?? 0, r.ask.hi)}</span>
                       ) : (
                         <span className="prospects__soft">–</span>
                       )}

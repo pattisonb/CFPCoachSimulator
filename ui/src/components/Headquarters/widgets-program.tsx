@@ -80,15 +80,21 @@ function alertsOf(board: HqBoard, contacts: Record<string, number>, ctx: Ctx): A
   // first what you owe: a money promise has a deadline
   for (const b of rows) {
     const mo = b.money_owed;
-    if (mo)
+    if (mo) {
+      // the number once he is fully scouted; before that, an amount sure to cover it
+      const nil = mo.nil ?? mo.sure ?? 0;
       out.push({
         kind: m.alertKinds.promise,
         pid: b.id,
         name: b.name,
-        text: m.alerts.money(b.name, mo.nil, wkLong(mo.by_week)),
-        task: m.tasksFor.money(b.name, mo.nil, wkLong(mo.by_week)),
-        do: { kind: "nil", pid: b.id, nil: mo.nil },
+        text:
+          mo.nil != null
+            ? m.alerts.money(b.name, nil, wkLong(mo.by_week))
+            : m.alerts.moneySure(b.name, nil, wkLong(mo.by_week)),
+        task: m.tasksFor.money(b.name, nil, wkLong(mo.by_week)),
+        do: { kind: "nil", pid: b.id, nil },
       });
+    }
   }
   // then who cooled on you, with what to do about it
   for (const b of rows) {
