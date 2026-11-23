@@ -115,7 +115,7 @@ else {
     say([view, got]);
   }
   // (the save's id and the clock are the two things that are not the seed's)
-  console.log(JSON.stringify(said).replaceAll(s.id, "ID").replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)?/g, "WHEN"));
+  console.log(JSON.stringify(said).replaceAll(s.id, "ID").replace(/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}(?:[.][0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})?/g, "WHEN"));
 }
 `;
 
