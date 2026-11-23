@@ -39,7 +39,7 @@ import { inkOn, teamAccent } from "../../colors.ts";
 import { currentParams, navigate, rememberDynasty, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
-import { cachedTeams, loadTeams } from "../../teams.ts";
+import { cachedStandIns, cachedTeams, loadTeams } from "../../teams.ts";
 import type { Theme } from "../../theme.ts";
 import type { RecruitingBoard, SavedCoach, SeasonCoach, SeasonSummary, TeamCard, ScheduleGame } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -245,7 +245,9 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
     [savedFace, coach, teams],
   );
 
-  const bySlug = useMemo(() => new Map(teams.map((t) => [t.slug, t])), [teams]);
+  // every team a game can show: the programs, and the FCS stand-ins a schedule plays (flagged `fictional`: a list
+  // to pick from leaves them out)
+  const bySlug = useMemo(() => new Map([...teams, ...cachedStandIns()].map((t) => [t.slug, t])), [teams]);
   // whose depth chart is open: yours (null), or another FBS team's to look at
   const [depthTeam, setDepthTeam] = useState<string | null>(null);
   const myTeam = season ? bySlug.get(season.team) : undefined;

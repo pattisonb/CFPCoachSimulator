@@ -307,8 +307,8 @@
 
 /* the row's top right corner: his offer or commitment as an icon */
 
-/* his picture, with where his offer or commitment stands stamped on its top left corner: a tile set a little askew,
-   its mark dead center */
+/* his picture, with where his offer or commitment stands stamped on its top left corner (RecruitStatus draws the
+   stamp, in his school's colors once he has one) */
 .recruiting__mug {
   position: relative;
   flex: none;
@@ -319,22 +319,13 @@
   top: -2px; /* inside his own row (never over the row above), hanging off its left edge */
   left: -10px;
   z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  background: var(--paper-hi);
-  border: var(--line) solid var(--ink);
-  box-shadow: 2px 2px 0 var(--shadow);
   line-height: 0;
-  transform: rotate(-8deg);
 }
 
-.recruiting__stamp > *,
-.recruiting__stamp .recruit-status {
-  display: grid;
-  place-items: center;
-  line-height: 0;
+/* your own signee's stamp is larger and double framed: set in, so it stays inside his row too */
+.recruiting__stamp:has(.is-signed.is-mine) {
+  top: 4px;
+  left: -8px;
 }
 
 /* under his stars: your place on his list */

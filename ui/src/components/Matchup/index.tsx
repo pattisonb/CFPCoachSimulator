@@ -4,7 +4,7 @@ import type { TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
-/** One side of a matchup: the team's card, or for an FCS stand-in (or a slot not filled yet) just a name. */
+/** One side of a matchup: the team's card (an FCS stand-in's has no record or ratings), or for a slot not filled yet just a name. */
 export interface MatchupSide {
   team: TeamCard | undefined;
   name: string;
@@ -55,19 +55,22 @@ function Side({ side, align }: { side: MatchupSide; align: "left" | "right" }) {
     "--c2": t?.colors.secondary ?? "var(--line-soft)",
     "--on": t ? inkOn(t.colors.primary) : "var(--ink)",
   } as CSSProperties;
+  // an FCS stand-in's name ends in its mascot ("New England Lobsters"): told in two lines like anyone else
+  const mascot = t?.mascot || "";
+  const school = t?.fictional && mascot && side.name.endsWith(` ${mascot}`) ? side.name.slice(0, -mascot.length - 1) : side.name;
   const name = (
     <>
       <span className="matchup__school">
         {side.rank ? <span className="matchup__rank">{side.rank}</span> : null}
-        {side.name}
+        {school}
       </span>
-      {real && t.mascot && <b className="matchup__mascot">{t.mascot}</b>}
+      {mascot && <b className="matchup__mascot">{mascot}</b>}
     </>
   );
   return (
     <div className={`matchup__side matchup__side--${align}`} style={style}>
       <span className="matchup__mark" aria-hidden="true">
-        {real ? t.abbreviation : side.name.slice(0, 3).toUpperCase()}
+        {t ? t.abbreviation : side.name.slice(0, 3).toUpperCase()}
       </span>
       <div className="matchup__text">
         {side.record && (

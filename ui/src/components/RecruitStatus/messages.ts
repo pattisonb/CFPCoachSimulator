@@ -12,7 +12,7 @@ export const messages = {
     offered: "He has your offer.",
     verbal: "He has committed to you, but he can still change his mind.",
     hard: "He is firmly committed to you.",
-    signed: "He has signed with you.",
+    signed: "Signed with you.",
   },
   /** committed or signed with another school */
   away: {
@@ -24,5 +24,11 @@ export const messages = {
     verbal: "He has committed to another school, but he could still flip to you.",
     hard: "He is firmly committed to another school.",
     signed: "He has signed with another school.",
+  },
+  /** the same, naming the school */
+  awayAt: {
+    verbal: (school: string) => `Verbal commit to ${school}. He could still flip to you.`,
+    hard: (school: string) => `Hard commit to ${school}.`,
+    signed: (school: string) => `Signed with ${school}.`,
   },
 } as const;

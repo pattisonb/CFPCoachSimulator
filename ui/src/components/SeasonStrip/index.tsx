@@ -35,7 +35,7 @@ const PAGE_TILES = 3;
 
 const DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
 
-/** An opponent's short name: the team's abbreviation, else its first word (an FCS stand-in). */
+/** An opponent's short name: the team's abbreviation, else its first word (a team the list does not carry). */
 const shortName = (g: ScheduleGame, team: TeamCard | undefined) =>
   team?.abbreviation ?? g.opponent_name.split(" ")[0].slice(0, 6).toUpperCase();
 

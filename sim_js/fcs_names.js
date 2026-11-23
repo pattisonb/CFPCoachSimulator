@@ -1,13 +1,17 @@
-// Saves from before the FCS stand-ins were renamed.
+// The FCS stand-ins: who they are, and the saves from before they were.
 //
-// The eight FCS stand-ins are named only for their region: slug `fcs-southeast`, name "FCS
-// Southeast", no mascot, no town. They once carried made-up school names, towns, mascots and
-// stadiums; a career saved then (its state, its box scores, a downloaded .ccsave, a cached league)
-// still holds those slugs and names. `rewrite_text` turns every one of them into
-// today's slug and label, once, when the save is read (season.load_season, season.load_box,
-// career.read_save, coaches.load).
+// The eight FCS stand-ins are one team per region, each with a name, a mascot, an abbreviation and two colors
+// of its own (TEAMS below: the New England Lobsters, the Plains Thunderheads, ...). Their slugs are their regions'
+// (`fcs-southeast`) and never change; they are still FCS (conference and level "FCS") and still no program a
+// career can pick, browse or recruit against.
 //
-// The old strings are kept here rot13-encoded so that none of them appears anywhere in the
+// They have been renamed twice. First they carried made-up school names, towns, mascots and stadiums; then
+// they were named only for their region ("FCS Southeast", abbreviation "FCS", no mascot). A career saved in
+// either time (its state, its box scores, a downloaded .ccsave, a cached league) still holds those slugs and
+// names. `rewrite_text` turns every one of them into today's slug and name, once, when the save is read
+// (season.load_season, season.load_box, career.read_save, coaches.load).
+//
+// The first set of old strings is kept here rot13-encoded so that none of them appears anywhere in the
 // repository as written (tests/test_no_standin_names.mjs checks every tracked file).
 //
 // Python's `json.loads` and `json.dumps` are written out here (_loads, _dumps): a rewritten save is the text
@@ -40,13 +44,54 @@ export function _r(s) {
   });
 }
 
+// The stand-ins as every page shows them, by region. The team files (cfb_sim_data/teams/fcs-*.json) say the
+// same (tests/test_no_standin_names.mjs holds them to it); season.stand_in_names puts these on a league's
+// teams whatever its file says, so a league cached by an older save shows them too. A name is its region and
+// its mascot, but for the Mountain West's: that is a real conference's name, so its team is the Rocky Mountain
+// Jackalopes. *tune* names and colors
+export const TEAMS = {
+  "New England": { slug: "fcs-new-england", name: "New England Lobsters", mascot: "Lobsters", abbreviation: "LOB", stadium: "The Lobster Pot",
+    colors: { primary: ["Lobster Red", "#C8322B"], secondary: ["Midnight Blue", "#14284B"], accent: ["White", "#FFFFFF"] } },
+  "Mid-Atlantic": { slug: "fcs-mid-atlantic", name: "Mid-Atlantic Blue Crabs", mascot: "Blue Crabs", abbreviation: "CRAB", stadium: "The Crab Trap",
+    colors: { primary: ["Crab Blue", "#1F6FB5"], secondary: ["Orange", "#F28C28"], accent: ["White", "#FFFFFF"] } },
+  "Southeast": { slug: "fcs-southeast", name: "Southeast Possums", mascot: "Possums", abbreviation: "POSS", stadium: "Possum Hollow",
+    colors: { primary: ["Charcoal", "#3A3D42"], secondary: ["Pink", "#F29CB7"], accent: ["White", "#FFFFFF"] } },
+  "Gulf Coast": { slug: "fcs-gulf-coast", name: "Gulf Coast Shrimpers", mascot: "Shrimpers", abbreviation: "SHMP", stadium: "Shrimp Boat Stadium",
+    colors: { primary: ["Coral", "#F26B5B"], secondary: ["Teal", "#0E7C7B"], accent: ["White", "#FFFFFF"] } },
+  "Great Lakes": { slug: "fcs-great-lakes", name: "Great Lakes Walleyes", mascot: "Walleyes", abbreviation: "WALL", stadium: "Walleye Landing",
+    colors: { primary: ["Lake Teal", "#0B5563"], secondary: ["Gold", "#E0B43A"], accent: ["White", "#FFFFFF"] } },
+  "Plains": { slug: "fcs-plains", name: "Plains Thunderheads", mascot: "Thunderheads", abbreviation: "THND", stadium: "Storm Cellar Field",
+    colors: { primary: ["Storm Gray", "#4A5560"], secondary: ["Lightning Yellow", "#FFD60A"], accent: ["White", "#FFFFFF"] } },
+  "Mountain West": { slug: "fcs-mountain-west", name: "Rocky Mountain Jackalopes", mascot: "Jackalopes", abbreviation: "JACK", stadium: "Jackalope Flats",
+    colors: { primary: ["Sage", "#8A9A78"], secondary: ["Burnt Orange", "#C2571A"], accent: ["White", "#FFFFFF"] } },
+  "Pacific Northwest": { slug: "fcs-pacific-northwest", name: "Pacific Northwest Sasquatch", mascot: "Sasquatch", abbreviation: "SASQ", stadium: "Sasquatch Woods",
+    colors: { primary: ["Evergreen", "#1E4D36"], secondary: ["Fog Cream", "#EDE6D3"], accent: ["White", "#FFFFFF"] } },
+};
+
 export function new_slug(region) {
-  // A stand-in's slug: 'fcs-' and its region, e.g. fcs-mid-atlantic.
-  return "fcs-" + region.toLowerCase().replaceAll(" ", "-");
+  // A stand-in's slug: 'fcs-' and its region, e.g. fcs-mid-atlantic (written out in TEAMS: a slug never changes).
+  return TEAMS[region].slug;
 }
 
 export function label(region) {
+  // A stand-in's name as every page shows it: "Plains Thunderheads".
+  return fcs_names.TEAMS[region].name;
+}
+
+export function old_label(region) {
+  // What a stand-in was called while it was named only for its region: "FCS Plains".
   return `FCS ${region}`;
+}
+
+export function brand(slug) {
+  // A stand-in's identity by its slug (name, mascot, abbreviation, stadium, colors), or null for anyone else.
+  const region = own(fcs_names.NEW_SLUGS, slug) ? fcs_names.NEW_SLUGS[slug] : null;
+  return region === null ? null : fcs_names.TEAMS[region];
+}
+
+export function hex_colors(region) {
+  // A stand-in's colors as a league's team carries them: {primary: "#rrggbb", secondary, accent}.
+  return Object.fromEntries(Object.entries(fcs_names.TEAMS[region].colors).map(([k, [, hex]]) => [k, hex]));
 }
 
 // re.escape: the characters Python puts a backslash before (the pattern's text is then Python's own)
@@ -57,14 +102,21 @@ export function _table() {
   // One pattern for every old token, longest first, and what each becomes. Returns [pattern, {old: new}].
   if (_table_made !== null) return _table_made;
   const to = {};
+  const whole = new Set();           // the region labels: only as whole words ("FCS Southeast", not the start of a longer word)
   for (const [region, [slug, names, mascot, stadium]] of Object.entries(fcs_names._OLD)) {
     to[_r(slug)] = new_slug(region);
     for (const n of names) to[_r(n)] = label(region);
     if (mascot) to[_r(mascot)] = label(region);
-    to[_r(stadium)] = `${label(region)} Stadium`;
+    to[_r(stadium)] = fcs_names.TEAMS[region].stadium;
   }
   for (const c of fcs_names._OLD_CONFERENCE) to[_r(c)] = "FCS";
-  const pat = new RegExp(sorted(Object.keys(to), (k) => Array.from(k).length, true).map(_escape).join("|"), "g");
+  for (const region of Object.keys(fcs_names.TEAMS)) {      // the names they had while named only for their regions
+    to[`${old_label(region)} Stadium`] = fcs_names.TEAMS[region].stadium;
+    to[old_label(region)] = label(region);
+    whole.add(old_label(region));
+  }
+  const pat = new RegExp(sorted(Object.keys(to), (k) => Array.from(k).length, true)
+    .map((k) => _escape(k) + (whole.has(k) ? "(?![A-Za-z])" : "")).join("|"), "g");
   _table_made = [pat, to];
   return _table_made;
 }
@@ -273,15 +325,16 @@ const _set = (o, k, v) => { if (o instanceof Map) o.set(k, v); else o[k] = v; };
 const _del = (o, k) => { if (o instanceof Map) o.delete(k); else delete o[k]; };
 
 export function _fix_records(o) {
-  // A stand-in's own team record (any dict whose slug is a stand-in's): its names become the
-  // label, its abbreviation "FCS", no mascot and no town.
+  // A stand-in's own team record (any dict whose slug is a stand-in's): its names, abbreviation and mascot
+  // become today's, and it has no town.
   if (_is_dict(o)) {
     const slug = _get(o, "slug");
     const region = typeof slug === "string" && own(fcs_names.NEW_SLUGS, slug) ? fcs_names.NEW_SLUGS[slug] : null;
     if (region && (_has(o, "fictional") || _has(o, "mascot") || _has(o, "school_name") || _has(o, "short_name"))) {
-      for (const k of ["name", "short_name", "school", "school_name"]) if (_has(o, k)) _set(o, k, label(region));
-      if (_has(o, "abbreviation")) _set(o, "abbreviation", "FCS");
-      if (_has(o, "mascot")) _set(o, "mascot", "");
+      const b = fcs_names.TEAMS[region];
+      for (const k of ["name", "short_name", "school", "school_name"]) if (_has(o, k)) _set(o, k, b.name);
+      if (_has(o, "abbreviation")) _set(o, "abbreviation", b.abbreviation);
+      if (_has(o, "mascot")) _set(o, "mascot", b.mascot);
       _del(o, "city");
     }
     for (const v of o instanceof Map ? o.values() : Object.values(o)) _fix_records(v);
@@ -308,8 +361,8 @@ export function rewrite_text(text) {
 }
 
 export const fcs_names = {
-  _OLD, _OLD_CONFERENCE, NEW_SLUGS,
-  _r, new_slug, label, _table, has_old, _fix_records, rewrite_text,
+  _OLD, _OLD_CONFERENCE, NEW_SLUGS, TEAMS,
+  _r, new_slug, label, old_label, brand, hex_colors, _table, has_old, _fix_records, rewrite_text,
   _loads, _dumps, _float_repr,
 };
 

@@ -938,10 +938,12 @@ function load_season(season_id) {
   }
   const state = parse_ordered(renamed, [["games"], ["my_boxes"]]);     // event ids look like numbers: keep the saved order
   season._with_class(state);
-  // seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"
+  // seasons saved before the FCS stand-ins were anonymised still carry "Duquesne (as ...)"; a stand-in's side of a
+  // game is its name today, whatever the save shows it as (a bare "FCS", a label rewrite_text does not know)
   for (const g of Object.values(state["games"])) {
     for (const side of ["home", "away"]) {
-      if ((get(g, `${side}_display`) || "").includes(" (as ")) g[`${side}_display`] = season.fcs_label(g[side]);
+      const shown = get(g, `${side}_display`) || "";
+      if (shown.includes(" (as ") || (has(season.TEAM_REGION, g[side]) && shown !== season.fcs_label(g[side]))) g[`${side}_display`] = season.fcs_label(g[side]);
     }
   }
   season.schedule_ahead(state);             // seasons saved before the postseason was set a week early

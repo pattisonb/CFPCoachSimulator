@@ -19,6 +19,8 @@ while (api.step() !== null) { /* the next week */ }
 const st = api.loaded_state();
 const fbs = season.fbs_only(season.load_teams());          // the FBS teams' slugs
 
+const STAND_INS = Object.values(season.load_teams()).filter((t) => t["fictional"]).flatMap((t) => [t["name"], t["mascot"]]);
+
 function check_items(state, items) {
   const weeks = items.map((i) => i["week"]);
   assert(weeks.every((w, k) => k === 0 || weeks[k - 1] <= w), show(weeks));
@@ -28,7 +30,7 @@ function check_items(state, items) {
     assert(i["week"] >= 1 && i["week"] <= state["current_week"], show(i));
     const t = i["text"];
     assert(t && /^[A-Z]/.test(t) && t.endsWith("."), t);
-    assert(!/\b(None|null|undefined|NaN)\b/.test(t) && !t.includes("FCS"), t);
+    assert(!/\b(None|null|undefined|NaN)\b/.test(t) && !t.includes("FCS") && !STAND_INS.some((n) => t.includes(n)), t);     // no stand-in makes the news
     if ("team" in i) assert(fbs.has(i["team"]), show(i));
     const link = i["link"];
     if (link) {

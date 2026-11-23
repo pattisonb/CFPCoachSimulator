@@ -17,12 +17,14 @@ import Face from "../Face/index.tsx";
 import Modal from "../Modal/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import ScoutMark from "../ScoutMark/index.tsx";
+import RecruitStatus from "../RecruitStatus/index.tsx";
 import ProspectCard, { Stars, statusOf, transferLine } from "../ProspectCard/index.tsx";
 import MinMax from "../MinMax/index.tsx";
 import TileMap, { MapMark } from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
+import { cachedTeams } from "../../teams.ts";
 import type { NeedGroup, ProspectRow, ProspectsView, TeamCard } from "../../types.ts";
 import { GradeRange } from "../Grade/index.tsx";
 import { useKept } from "../../kept.ts";
@@ -610,7 +612,24 @@ export default function Prospects({
                     {!narrow && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
                     <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
                     <td className="left prospects__status" title={statusOf(r)}>
-                      {statusOf(r)}
+                      {/* where he went: his school's stamp before the words */}
+                      {!r.pro && (r.signed || r.committed) ? (
+                        <span className="prospects__held">
+                          <RecruitStatus
+                            status={{
+                              key: r.signed ? "signed" : r.hard ? "hard" : "verbal",
+                              away: (r.signed || r.committed) !== school?.slug,
+                            }}
+                            size={10}
+                            stamp={18}
+                            school={cachedTeams()?.find((t) => t.slug === (r.signed || r.committed))}
+                            bare
+                          />
+                          <span>{statusOf(r)}</span>
+                        </span>
+                      ) : (
+                        statusOf(r)
+                      )}
                     </td>
                     <td className="prospects__offers">
                       {r.offers_n ? (

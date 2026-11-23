@@ -349,14 +349,14 @@ function test_determinism_and_rate() {
   const per_blue = starts.filter((e) => blue.has(e["pid"])).length / Math.max(1, blue.size);
   assert(0.5 <= per && per <= 1.5, per);
   assert(per_blue >= per, show([per_blue, per]));
-  // an FCS stand-in's placeholder name never reaches a line: it is only ever its region label ("FCS Gulf Coast"),
+  // an FCS stand-in's old placeholder name never reaches a line: it is only ever its own name ("Gulf Coast Shrimpers"),
   // and no recruit asks a school to beat an FCS team
   const fcs_names = game.modules.fcs_names;
   const texts = [...rc["log"].map((e) => get(e, "line") || ""), ...Object.values(get(rc, "twists") || {}).map((t) => persona.twist_label(t))];
   const leaked = texts.filter((x) => fcs_names.has_old(x));
   assert(!leaked.length, `FCS stand-in placeholder names in twist lines: ${show(leaked.slice(0, 3))}`);
   const labels = new Set(Object.values(season.load_teams()).filter((t) => get(t, "fictional")).map((t) => t["name"]));
-  assert(labels.size && [...labels].every((n) => n.startsWith("FCS ")), show([...labels]));
+  assert(labels.size && [...labels].every((n) => Object.values(fcs_names.TEAMS).some((b) => b.name === n)), show([...labels]));
   const fbs_only = starts.filter((e) => e["twist"] === "beat");
   assert(fbs_only.filter((e) => e["pid"] in (get(rc, "twists") || {}))
     .every((e) => !get(get(season.load_teams(), get(get(rc["twists"], e["pid"], {}), "o")) || {}, "fictional")));

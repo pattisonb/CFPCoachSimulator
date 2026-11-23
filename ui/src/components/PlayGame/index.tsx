@@ -79,7 +79,14 @@ export default function PlayGame({ open, onClose, seasonId, team, opponent, team
     setStatus({ kind: "idle" });
   }, [open, team, opponent]);
 
-  const options = useMemo(() => [...teams.values()].sort((a, b) => a.name.localeCompare(b.name)), [teams]);
+  // every program, and this week's opponent when it is an FCS stand-in (no other stand-in can be picked)
+  const options = useMemo(
+    () =>
+      [...teams.values()]
+        .filter((t) => !t.fictional || t.slug === opponent)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [teams, opponent],
+  );
   const name = (slug: string) => teams.get(slug)?.name ?? slug;
 
   const field = () => {

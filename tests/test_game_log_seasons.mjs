@@ -205,10 +205,10 @@ test("a player who graduated or left college has no log kept", () => {
   equal(sorted(Object.keys(kept)), sorted([...back, ...left].map((p) => p["slug"])));
 });
 
-test("an FCS stand-in in a kept season reads as its region, never a school", () => {
+test("an FCS stand-in in a kept season reads as its own name, never a real school", () => {
   const st = api.loaded_state();
   const teams = season.load_teams();
-  // every kept opponent is the name the schedule showed: a team's name, or a stand-in's region label
+  // every kept opponent is the name the schedule showed: a team's name, or a stand-in's own name
   const names = new Set(Object.values(first["games"]).flatMap((g) => [g["home_display"], g["away_display"]]));
   for (const g of st["career"]["game_logs"][0]["games"]) assert(names.has(g["opponent_name"]), g["opponent_name"]);
   const fcs = Object.values(first["games"]).find((g) => (g["home"] === ME || g["away"] === ME) && teams[g["home"] === ME ? g["away"] : g["home"]]?.["fictional"]);
@@ -219,7 +219,8 @@ test("an FCS stand-in in a kept season reads as its region, never a school", () 
     const side = Object.values(first["games"]).find((g) => g["event_id"] === Object.keys(first["my_boxes"])[0])["home"] === ME ? "home" : "away";
     const fake = { ...first, my_boxes: { [fcs["event_id"]]: { [fcs["home"] === ME ? "home" : "away"]: box[side] } } };
     const kept = season.team_game_logs(fake, ME);
-    assert(/^FCS /.test(kept["games"][0]["opponent_name"]), kept["games"][0]["opponent_name"]);
+    equal(kept["games"][0]["opponent_name"], season.fcs_label(fcs["home"] === ME ? fcs["away"] : fcs["home"]));
+    assert(!/FCS/.test(kept["games"][0]["opponent_name"]), kept["games"][0]["opponent_name"]);
   }
 });
 

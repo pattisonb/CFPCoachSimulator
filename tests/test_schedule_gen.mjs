@@ -148,10 +148,10 @@ test("schedule gen", () => {
     // Notre Dame's five ACC games and Navy
     const nd = by_team["notre-dame"].map((g) => (g["home"] === "notre-dame" ? g["away"] : g["home"]));
     assert(count(nd, (o) => get(conf_of, o) === "ACC") === 5 && nd.includes("navy") && nd.includes("clemson"), J(year, nd));
-    // a stand-in is shown as its region, never a real FCS school
+    // a stand-in is shown by its own name (a place and its mascot), never a real FCS school
     for (const g of all) {
       if (teams[g["away"]]["fictional"]) {
-        assert(g["away_display"].startsWith("FCS "), g["away_display"]);
+        assert(g["away_display"] === season.fcs_label(g["away"]) && g["away_display"].endsWith(" " + teams[g["away"]]["mascot"]), g["away_display"]);
         assert(g["home"] === g["home"] && !teams[g["home"]]["fictional"]);
       }
     }

@@ -56,15 +56,8 @@ interface Props {
   onRecruit: (pid: string) => void;
 }
 
-/** A team the league's list does not carry: an FCS stand-in by its region ("FCS Plains"), anyone else by four letters. */
-const short = (slug: string) =>
-  slug.startsWith("fcs-")
-    ? `FCS ${slug
-        .slice(4)
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ")}`
-    : slug.slice(0, 4).toUpperCase();
+/** A team the league's list does not carry (a save from another league): four letters of its slug. */
+const short = (slug: string) => slug.replace(/^fcs-/, "").slice(0, 4).toUpperCase();
 
 const POSITION = /\b(QB|RB|WR|TE|OT|OG|IOL|OL|EDGE|DT|DL|LB|CB|FS|SS|S|K|P)\b/;
 

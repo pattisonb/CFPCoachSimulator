@@ -11,3 +11,59 @@
 .recruit-status--soft {
   color: var(--ink-soft);
 }
+
+/* as a stamp: a tile set a little askew, its mark dead center; its side comes from the component */
+.recruit-status--stamp {
+  position: relative;
+  width: var(--side);
+  height: var(--side);
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  box-shadow: 2px 2px 0 var(--shadow);
+  line-height: 0;
+  transform: rotate(-8deg);
+}
+
+/* signed: the school's mark. Its first color, its second across the bottom right corner (the pen's empty corner), the
+   pen in black or white, whichever reads on the first */
+.recruit-status--stamp.is-signed.is-branded {
+  background: linear-gradient(135deg, var(--c) 71%, var(--c2) 71%);
+  color: var(--on);
+}
+
+/* signed with a school that has no colors on file (a stand-in): a plain gray stamp */
+.recruit-status--stamp.is-signed:not(.is-branded) {
+  background: var(--tile);
+}
+
+/* committed: not inked yet. The plain stamp, the school's colors as a band along its foot */
+.recruit-status--stamp.is-commit.is-branded {
+  padding-bottom: 5px;
+  background: linear-gradient(to top, var(--c) 5px, var(--c2) 5px, var(--c2) 7px, var(--paper-hi) 7px);
+}
+
+/* yours, signed: a second frame around the stamp, so your own class stands out of a list of everyone's */
+.recruit-status--stamp.is-signed.is-mine {
+  box-shadow:
+    0 0 0 2px var(--paper-hi),
+    0 0 0 4px var(--ink),
+    4px 4px 0 2px var(--shadow);
+}
+
+/* a small one, in a line of text (a table's cell): a thinner edge and shadow, the band and frame to scale */
+.recruit-status--stamp.is-small {
+  border-width: 1px;
+  box-shadow: 1px 1px 0 var(--shadow);
+  vertical-align: middle;
+}
+
+.recruit-status--stamp.is-small.is-commit.is-branded {
+  padding-bottom: 3px;
+  background: linear-gradient(to top, var(--c) 3px, var(--c2) 3px, var(--c2) 4px, var(--paper-hi) 4px);
+}
+
+.recruit-status--stamp.is-small.is-signed.is-mine {
+  box-shadow:
+    0 0 0 1px var(--paper-hi),
+    0 0 0 3px var(--ink);
+}

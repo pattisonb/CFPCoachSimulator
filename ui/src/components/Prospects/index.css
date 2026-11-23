@@ -241,7 +241,7 @@
 }
 
 .prospects__col-status {
-  width: 100px; /* a longer status is cut short, whole in its tip: the prospect's name and town have the room */
+  width: 124px; /* a longer status is cut short, whole in its tip: the prospect's name and town have the room */
 }
 
 .prospects__col-offers {
@@ -415,6 +415,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* a committed or signed one: his school's stamp, then the words */
+.prospects__held {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.prospects__held > :last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .prospects__int {
@@ -676,7 +689,7 @@
 }
 
 .prospects.is-narrow .prospects__col-status {
-  width: 92px;
+  width: 116px;
 }
 
 .prospects.is-narrow .prospects__col-offers {

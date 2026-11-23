@@ -250,8 +250,8 @@ test("the league from the file plays its games, has its standings, and goes thro
   ST = st;
 });
 
-// the stand-ins show only their region labels, and nothing of the names they once had
-test("FCS stand-ins on a custom league's schedule show only as their region labels", () => {
+// the stand-ins show only as the teams they are today, and nothing of the names they once had
+test("FCS stand-ins on a custom league's schedule show only by their own names", () => {
   const view = api_call("GET", `/api/season/${SID}`);
   assert(!fcs_names.has_old(JSON.stringify(view)));
   const fict = new Set(FCS_META.map((f) => f["slug"]));

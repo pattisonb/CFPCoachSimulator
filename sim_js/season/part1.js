@@ -28,6 +28,7 @@ import { modules, has as module_loaded } from "../../engine_js/modules.js";
 import { ratings as ratings_v2 } from "../../teamdata_js/ratings.js";
 import { shown as _shown } from "../../teamdata_js/shown.js";     // the scale ratings are shown on (a view's last step)
 import { polls } from "../polls.js";
+import { fcs_names } from "../fcs_names.js";
 import { teamnames } from "../teamnames.js";
 import { prospects } from "../../career_js/prospects.js";
 import { season } from "../season_ns.js";
@@ -113,10 +114,8 @@ function week_of_date(date_iso) {
   return Math.max(1, floordiv(days, 7) + 1);
 }
 
-// the FCS stand-ins: one per region, each named only for its region ("FCS Southeast")
-season.REGION_TEAM = Object.fromEntries([
-  "New England", "Mid-Atlantic", "Southeast", "Gulf Coast", "Great Lakes", "Plains", "Mountain West", "Pacific Northwest",
-].map((r) => [r, "fcs-" + r.toLowerCase().replaceAll(" ", "-")]));
+// the FCS stand-ins: one per region, each with a name and a mascot of its own ("Southeast Possums": fcs_names.TEAMS)
+season.REGION_TEAM = Object.fromEntries(Object.entries(fcs_names.TEAMS).map(([region, b]) => [region, b.slug]));
 season.STATE_REGION = {
   ...Object.fromEntries(["ME", "NH", "VT", "MA", "RI", "CT"].map((s) => [s, "New England"])),
   ...Object.fromEntries(["NY", "NJ", "PA", "DE", "MD", "DC", "VA", "WV"].map((s) => [s, "Mid-Atlantic"])),
@@ -387,19 +386,25 @@ function fcs_strength(name) {
 }
 
 function fcs_label(slug) {
-  // How a fictional FCS stand-in is shown on a schedule: 'FCS Southeast', never the
+  // How a fictional FCS stand-in is shown on a schedule: its own name ('Southeast Possums'), never the
   // real school it replaces.
-  const region = get(season.TEAM_REGION, slug);
-  return truthy(region) ? `FCS ${region}` : "FCS";
+  const b = fcs_names.brand(slug);
+  return b !== null ? b.name : "FCS";
 }
 
 function stand_in_names(teams) {
-  // `teams` with every FCS stand-in named only for its region, whatever its file says: name and
-  // school "FCS Southeast", abbreviation "FCS", no mascot, no town. Every page that shows a team's
-  // name reads these, so a stand-in can never show anything but its label.
+  // `teams` with every FCS stand-in as itself, whatever its file (or a league cached by an older save) says:
+  // name and school "Southeast Possums", its mascot, abbreviation and colors (fcs_names.TEAMS), no town.
+  // Every page that shows a team's name reads these, so a stand-in can never show anything else.
   for (const [slug, t] of Object.entries(teams)) {
     if (truthy(get(t, "fictional"))) {
-      Object.assign(t, { name: season.fcs_label(slug), school: season.fcs_label(slug), abbreviation: "FCS", mascot: "" });
+      const b = fcs_names.brand(slug);
+      const name = season.fcs_label(slug);
+      Object.assign(t, { name, school: name, abbreviation: b !== null ? b.abbreviation : "FCS", mascot: b !== null ? b.mascot : "" });
+      if (b !== null) {
+        t["colors"] = fcs_names.hex_colors(season.TEAM_REGION[slug]);
+        if (truthy(get(t, "stadium"))) t["stadium"] = { ...t["stadium"], name: b.stadium };
+      }
       delete t["city"];
     }
   }
@@ -407,10 +412,17 @@ function stand_in_names(teams) {
 }
 
 function team_display(slug, teams) {
-  // A team's name on a game line: the FCS stand-ins as their region label (fcs_label).
+  // A team's name on a game line: an FCS stand-in by its own name (fcs_label).
   const t = get(teams, slug);
   if (t === null) return slug;
   return truthy(get(t, "fictional")) ? season.fcs_label(slug) : t["name"];
+}
+
+function team_in_line(slug, teams) {
+  // A team's name inside a sentence: "Iowa State", but "the Plains Thunderheads" (a stand-in's name ends in its mascot).
+  const t = get(teams, slug);
+  const name = season.team_display(slug, teams);
+  return t !== null && truthy(get(t, "fictional")) && fcs_names.brand(slug) !== null ? `the ${name}` : name;
 }
 
 /** A hash of a text that is the same in every run: a number from the text alone. */
@@ -1169,7 +1181,7 @@ Object.assign(season, {
   week_of_date, load_teams, use_league, activate, season_year, _is_p4,
   _house_scale, return_value, house_value, house_to_engine, display_rating, engine_rating, shown_overall,
   page_attribute, page_overall, same_group, tier_of, _tiers,
-  fcs_strength, fcs_label, stand_in_names, team_display, fcs_map,
+  fcs_strength, fcs_label, stand_in_names, team_display, team_in_line, fcs_map,
   _real_polls_2026, _real_ap_votes_2026, _poll_seed, _ballot_poll,
   _spread_double_bookings, _saturday, _fill_open_dates, new_season, _rating_poll,
   _winner, _scores_for, _venue, _record_str, _poll_game, _ccg_event_id, _records, _opponents,

@@ -58,6 +58,8 @@ const GROUP_ORDER = [
   "ATH",
 ];
 const groupOf = (r: BoardRow) => r.group ?? r.display_pos;
+/** A school by its slug, for its colors (none for a stand-in). */
+const schoolOf = (slug: string | null) => (slug ? cachedTeams()?.find((t) => t.slug === slug) : undefined);
 
 interface Props {
   seasonId: string;
@@ -418,7 +420,13 @@ export default function Recruiting({
                           {/* where his offer or commitment stands, stamped on the picture's corner */}
                           {statusOf(r, team).key !== "none" && (
                             <span className="recruiting__stamp">
-                              <RecruitStatus status={statusOf(r, team)} size={14} />
+                              <RecruitStatus
+                                status={statusOf(r, team)}
+                                size={14}
+                                stamp={30}
+                                school={schoolOf(r.signed || r.committed)}
+                                schoolName={r.school_name}
+                              />
                             </span>
                           )}
                         </span>
