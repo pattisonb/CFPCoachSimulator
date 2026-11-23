@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { EnvelopeSimple, Handshake, Lock, PaperPlaneTilt, PenNib, type Icon } from "@phosphor-icons/react";
+import { EnvelopeSimple, Megaphone, Lock, PaperPlaneTilt, PenNib, type Icon } from "@phosphor-icons/react";
 import Tooltip from "../Tooltip/index.tsx";
 import { contrast, inkOn } from "../../colors.ts";
 import type { RecruitStatus as Status } from "../../standing.ts";
@@ -27,7 +27,7 @@ type Held = "verbal" | "hard" | "signed";
 const ICONS: Record<Shown, Icon> = {
   sent: PaperPlaneTilt,
   offered: EnvelopeSimple,
-  verbal: Handshake,
+  verbal: Megaphone,
   hard: Lock,
   signed: PenNib,
 };
@@ -49,7 +49,7 @@ function cornerOn(colors: TeamCard["colors"]): string {
 
 /**
  * Where a recruit's offer or commitment stands, as one small icon: a paper plane (your offer is on its way), an
- * envelope (offered), a handshake (verbal commit), a lock (hard commit), a pen (signed). Filled and in ink when it is
+ * envelope (offered), a megaphone (verbal commit: he has said it, nothing is locked), a lock (hard commit), a pen (signed). Filled and in ink when it is
  * with you; outlined and soft when it is with another school. Pointing at it says what it means. Not offered shows nothing.
  *
  * As a stamp (`stamp`) it carries the school: a signed one is that school's mark, its first color with its second
