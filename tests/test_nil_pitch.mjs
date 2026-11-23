@@ -6,7 +6,7 @@
 // yours to win.
 // `node tests/test_nil_pitch.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
-import { get, round } from "../engine_js/pyrt.js";
+import { Random, get, round } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting } = game;
@@ -121,20 +121,24 @@ const weeks_pass = (st, n = recruiting.NIL_PROMISE_WEEKS) => {
 };
 const log_of = (st, pid, kind) => st["recruiting"]["log"].filter((e) => e["pid"] === pid && e["kind"] === kind);
 
-test("pitching NIL with nothing on the offer opens a money promise: he names his number and you are told you owe it", () => {
+test("pitching NIL with nothing on the offer opens a money promise: you are told you owe it, and he names no number", () => {
   const st = fresh(), pid = nil_target(st);
   recruiting.set_board(st, pid, true);
   const r = money_pitch(st, pid);
   assert(promises(st, pid).length === 1 && r["reaction"]["kind"] !== "quiet", J(r["reaction"]));
   const ask = recruiting.ask_from(st, ME, pid);
-  assert("exact" in recruiting.ask_view(st, ME, pid), "he named his number");
+  assert(!("exact" in recruiting.ask_view(st, ME, pid)), "his number is your scouts' to learn, not his to tell");
   const lines = st["recruiting"]["log"].filter((e) => e["pid"] === pid).map((e) => get(e, "line"));
-  assert(lines.includes(`He told you he's looking for ${ask} in NIL.`) && lines.includes(scenes.MONEY_OWED_LINE), J(lines));
-  // the board row and the pitch's answer carry what is owed and by when; kept, it is gone
+  assert(lines.includes(scenes.MONEY_OWED_LINE) && !lines.some((l) => /looking for/.test(l || "")), J(lines));
+  // the board row and the pitch's answer carry what is owed and by when: before he is fully scouted, an amount sure to
+  // cover it (the share of the top of the range you are shown); fully scouted, the number. Kept, it is gone
+  const by_week = st["current_week"] + recruiting.NIL_PROMISE_WEEKS;
+  const sure = 5 * Math.ceil(recruiting.NIL_PROMISE_SHARE * recruiting.ask_view(st, ME, pid)["hi"] / 5);
+  equal(prospects.board_row(st, pid, ME)["money_owed"], { nil: null, sure, by_week });
+  equal(r["money_owed"], { nil: null, sure, by_week });
   const need = 5 * Math.ceil(recruiting.NIL_PROMISE_SHARE * ask / 5);
-  const owed = { nil: need, by_week: st["current_week"] + recruiting.NIL_PROMISE_WEEKS };
-  equal(prospects.board_row(st, pid, ME)["money_owed"], owed);
-  equal(r["money_owed"], owed);
+  for (let i = 0; i < recruiting.REPORT_LOOKS; i++) recruiting.look(st, pid, 80, new Random(`test-look-${i}`));
+  equal(prospects.board_row(st, pid, ME)["money_owed"], { nil: need, by_week });
   recruiting._nil(st, ME)["held"][pid] = need;
   recruiting._promises(st, st["current_week"] + 1);
   assert(prospects.board_row(st, pid, ME)["money_owed"] === null);

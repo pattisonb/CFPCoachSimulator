@@ -4,7 +4,7 @@
 // advances: points on his list, the weekly report, the stage arrows and a verbal commit firming up.
 // `node tests/test_recruit_actions.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
-import { get, round } from "../engine_js/pyrt.js";
+import { Random, get, round } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting, offseason } = game;
@@ -73,16 +73,18 @@ test("a call is not a confession: over many prospects it reveals a priority some
   assert(!get(get(rc, "scenes") || {}, "texas"), "another school's call opens no conversation");
 });
 
-test("a call narrows his NIL ask to a range; the in-home visit tells you the number and one priority for sure", () => {
-  const pid = fresh((p) => p["nil_ask"] >= 15);
+test("a call and an in-home visit never tell you his NIL ask (your scouts learn it); the visit tells you one priority for sure", () => {
+  const pid = fresh((p, q) => p["nil_ask"] >= 15 && !get(rc["reads"], q));
   P[pid]["persona"] = PLAIN();
   hours(200);
+  const before = recruiting.ask_view(st, ME, pid);
   act(pid, "call", { pitch: off_topics(pid)[0] });
   const ask = recruiting.ask_from(st, ME, pid), av = recruiting.ask_view(st, ME, pid);
-  assert(get(av, "exact") === null && av["lo"] < ask && ask < av["hi"] && av["hi"] - av["lo"] <= Math.max(10, 0.6 * ask), J([av, ask]));
+  assert(get(av, "exact") === null && av["lo"] < ask && ask < av["hi"] && av["hi"] - av["lo"] <= Math.max(10, 0.6 * ask + 5), J([av, ask]));
+  equal(av, before, "a call narrows nothing");
   const r = act(pid, "hc_visit", { pitch: off_topics(pid)[0] });
   assert(P[pid]["priorities"].includes(r["revealed"]), J(r));
-  assert(recruiting.ask_view(st, ME, pid)["exact"] === recruiting.ask_from(st, ME, pid));
+  equal(recruiting.ask_view(st, ME, pid), before, "nor does the visit");
   refused(() => act(pid, "hc_visit", { pitch: off_topics(pid)[0] }), 409, "One in-home visit a month");
 });
 
@@ -226,11 +228,16 @@ test("your school through Auto-recruit's path calls in one shot, at a call's bas
   assert(recruiting.pending(st, ME, pid) === recruiting.BASE_POINTS["call"], String(recruiting.pending(st, ME, pid)));
 });
 
-test("an in-home visit's conversation carries his exact number", () => {
-  const pid = fresh((p) => p["nil_ask"] >= 15);
+test("an in-home visit's conversation carries his ask as your scouts have it: a range, the number at a complete report", () => {
+  const pid = fresh((p, q) => p["nil_ask"] >= 15 && !get(rc["reads"], q));
   hours(100);
   const sc = act(pid, "hc_visit")["scene"];
-  assert(sc["action"] === "hc_visit" && sc["ask"]["exact"] === recruiting.ask_from(st, ME, pid), J(sc["ask"]));
+  assert(sc["action"] === "hc_visit" && get(sc["ask"], "exact") === null && sc["ask"]["lo"] < sc["ask"]["hi"], J(sc["ask"]));
+  recruiting.clear_scenes(st, ME);
+  const known = fresh((p, q) => p["nil_ask"] >= 15 && !get(rc["reads"], q));
+  for (let i = 0; i < recruiting.REPORT_LOOKS; i++) recruiting.look(st, known, 80, new Random(`test-look-${i}`));
+  const sc2 = act(known, "hc_visit")["scene"];
+  assert(sc2["ask"]["exact"] === recruiting.ask_from(st, ME, known), J(sc2["ask"]));
   recruiting.clear_scenes(st, ME);
 });
 

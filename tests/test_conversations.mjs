@@ -239,10 +239,12 @@ test("the visit's note on his NIL ask is in numerals and says where your NIL sta
   try {
     for (const [decider, who] of Object.entries(scenes.ASK_WHO)) {
       force(pid, "business", decider, decider === "self" ? null : persona.DECIDER_TOPICS[decider][0]);
-      equal(scenes.ask_note(st, ME, pid, { exact: 115 }), `${who} wants 115 in NIL, more than you have left (40).`);
-      const small = scenes.ask_note(st, ME, pid, { exact: 30 });
-      equal(small, `${who} wants to know about NIL: ${decider === "self" ? "he's" : "they're"} looking for 30. You have 40 NIL left.`);
-      assert(scenes.ask_note(st, ME, pid, { lo: 90, hi: 140 }).includes("about 115"), "before a number: the middle of the range His Ask shows");
+      // his ask is stated as your scouts have it (the profile's His Ask), never as something he said
+      equal(scenes.ask_note(st, ME, pid, { exact: 115 }), `${who} wants to know about NIL. Your scouts have his ask at 115, more than you have left (40).`);
+      equal(scenes.ask_note(st, ME, pid, { exact: 30 }), `${who} wants to know about NIL. Your scouts have his ask at 30. You have 40 NIL left.`);
+      // before a complete report: the range His Ask shows, never a number inside it
+      equal(scenes.ask_note(st, ME, pid, { lo: 20, hi: 55 }), `${who} wants to know about NIL. Your scouts have his ask between 20 and 55. You have 40 NIL left.`);
+      equal(scenes.ask_note(st, ME, pid, { lo: 90, hi: 140 }), `${who} wants to know about NIL. Your scouts have his ask between 90 and 140, more than you have left (40).`);
       equal(scenes.ask_note(st, ME, pid, { exact: 0 }), `${who} says the money isn't the point.`);
     }
   } finally {
