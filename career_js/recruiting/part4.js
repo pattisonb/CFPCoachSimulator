@@ -102,7 +102,7 @@ function _contact_land(state, slug, p, contact, action, pitch, auto = false, man
       return points;
     }
   }
-  const base = truthy(manual) && action === "message" ? recruiting._grade_points(state, slug, p, action)
+  const base = truthy(manual) && _in(action, recruiting.PLANNABLE) ? recruiting._grade_points(state, slug, p, action)     // your quick action: the blanket rate
     : recruiting._contact_points(state, slug, p, action, pitch, action === "call" && !truthy(get(contact, "calls")));
   let points = base / (1 + recruiting.DIMINISH * contact["n"]);
   if (points < 0) recruiting._event(state, "not_buying", pid, slug, { topic: pitch });
@@ -362,6 +362,8 @@ function auto_recruit(state, slug, rng = null, commits = null, yours = false) {
       board = board.filter((pid) => !truthy(persona.scared_off(state, slug, pid)));
     }
   }
+  const [win_, offered_] = [recruiting._winning(state), recruiting.finalists_size(state) === null ? null : recruiting._offers_by_prospect(state)];
+  board = board.filter((pid) => recruiting.blocked(state, slug, pid, win_, offered_) === null);   // one who will not consider the school, or has cut it, is off its board (part 6)
   rc["boards"][slug] = board;
   if (truthy(yours)) {
     const before = new Map();
@@ -466,6 +468,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
   }
   let targets = offers.filter((pid) => rc["status"][pid]["committed"] === null && !truthy(rc["status"][pid]["signed"]));
   targets = targets.concat(offers.filter((pid) => elsewhere(pid) && !truthy(rc["status"][pid]["signed"])));
+  targets = targets.filter((pid) => recruiting.blocked(state, slug, pid) === null);    // he has cut the school from his list, or will not consider it
   for (const pid of targets.slice(0, 2)) {
     if (!has(get(rc["visits"], pid, {}), slug)) {
       try {

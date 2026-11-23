@@ -950,6 +950,8 @@ export function profile(state, pid, viewer) {
     ask: recruiting.ask_view(state, viewer, pid), cooled: recruiting.cooled(state, viewer, pid),
     cooled_why: recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null,
     stage: recruiting.stage(state, viewer, pid), strength: recruiting.strengths(state, viewer, pid, true),
+    case: recruiting.case_letters(state, viewer, pid, true),     // your program's letter grade with him on every topic (the page shows these)
+    blocked: recruiting.blocked(state, viewer, pid), top_size: recruiting.top_size(state),
     pestering: recruiting.would_pester(state, viewer, pid), pesters: recruiting.pesters(state, viewer, pid),
   };
 }
@@ -977,6 +979,8 @@ export function row(state, pid, viewer) {
     ask: recruiting.ask_view(state, viewer, pid, true),     // his NIL ask of you as you know it: the number once he is fully scouted, a range before
     hard: truthy(get(st, "hard")) && !truthy(st["signed"]),          // a hard commit: the Status column says so, and sorts it over a verbal one
     stage: recruiting.stage(state, viewer, pid),              // where you stand with him: cold, contact, top, visited, committed
+    top_size: recruiting.top_size(state),                     // his top group's size this week (8, then his finalists: 5, 3)
+    blocked: recruiting.blocked(state, viewer, pid),          // why you cannot add or work him ({why, text}), or null
     school_name: truthy(get(st, "pro")) ? prospects.PRO : school === "FCS" ? "FCS" : (truthy(school) ? season.team_display(school, teams) : null),
     pro: truthy(get(st, "pro")),
     on_board: _in(pid, rc["board"]), offered: _in(pid, get(rc["offers"], viewer, [])),
@@ -1102,6 +1106,8 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
   out.money_owed = recruiting.money_owed(state, viewer, pid);
   out.cooled_why = recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null;
   out.stage = recruiting.stage(state, viewer, pid); out.strength = recruiting.strengths(state, viewer, pid, true);
+  out.case = recruiting.case_letters(state, viewer, pid, true);     // your program's letter grade with him on every topic
+  out.blocked = recruiting.blocked(state, viewer, pid); out.top_size = recruiting.top_size(state);
   out.pestering = recruiting.would_pester(state, viewer, pid); out.pesters = recruiting.pesters(state, viewer, pid);
   out.stage_move = prospects._stage_move(state, pid, viewer);
   out.scene = get(get(get(rc, "scenes") || {}, viewer) || {}, pid);

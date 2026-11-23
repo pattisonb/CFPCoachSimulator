@@ -379,7 +379,8 @@ function recommended(state, slug) {
   const rng = new Random(`recs-${pystr(state["id"])}-${pystr(get(rc, "year"))}-${pystr(get(state, "current_week"))}`);
   const board = slug === state["team"] ? new Set(rc["board"]) : new Set();
   const seen = slug === state["team"] ? new Set(recruiting.prospect_list(state)) : new Set(Object.keys(rc["prospects"]));     // only prospects you can see
-  const picks = recruiting._build_board(state, slug, rng, false).filter((pid) => !board.has(pid) && seen.has(pid));
+  const picks = recruiting._build_board(state, slug, rng, false).filter((pid) => !board.has(pid) && seen.has(pid)
+    && recruiting.blocked(state, slug, pid) === null);        // never one who will not consider the school, or has cut it
   const fits = recruiting._fits(state, slug);
   const need = recruiting.needs(state, slug);
   const tm = recruiting._team_model(slug);
@@ -644,13 +645,13 @@ class forced_strength {
 
 function top_group(state, pid, win = null) {
   // The schools he is seriously considering: his top TOP_GROUP by interest among those that
-  // have offered or worked him.
+  // have offered or worked him; from the weeks in FINALISTS his finalists, a shorter list (top_size).
   const rc = state["recruiting"];
   const schools = new Set(Object.keys(rc["lists"][pid]));
   for (const [s, pids] of Object.entries(rc["offers"])) if (pids.includes(pid)) schools.add(s);
   for (const s of Object.keys(get(get(rc, "pending") || {}, pid, {}))) schools.add(s);
   win = win != null ? win : recruiting._winning(state);
-  return sorted(schools, (s) => -(recruiting.interest(state, s, pid, win) + recruiting.pending(state, s, pid))).slice(0, recruiting.TOP_GROUP);
+  return sorted(schools, (s) => -(recruiting.interest(state, s, pid, win) + recruiting.pending(state, s, pid))).slice(0, recruiting.top_size(state));
 }
 
 
@@ -729,8 +730,10 @@ function interest(state, slug, pid, win = null) {
     static_ = sum(Object.entries(recruiting.pull(state, slug, pid, false)).map(([t, v]) => w[t] * v));
     recruiting._STATIC.set(key, static_);
   }
-  win = Math.min(1.0, get(win != null ? win : recruiting._winning(state), slug, 0.5));
-  const out = persona.story_interest(state, slug, pid, recruiting.PULL_SCALE * (static_ + recruiting.weights(p)["winning"] * win)) + get(rc["lists"][pid], slug, 0.0);
+  const wmap = win != null ? win : recruiting._winning(state);
+  win = Math.min(1.0, get(wmap, slug, 0.5));
+  const out = persona.story_interest(state, slug, pid, recruiting.PULL_SCALE * (static_ + recruiting.weights(p)["winning"] * win))
+    + recruiting.fit_interest(state, slug, pid, wmap, key) + get(rc["lists"][pid], slug, 0.0);       // the fit: the program against what he wants (part 6)
   let tw = get(rc, "twists");
   tw = truthy(tw) ? get(tw, pid) : null;
   return truthy(tw) && tw["k"] === "surprise" && tw["s"] === slug ? out + tw["b"] : out;      // persona.twist_bonus, inline: this runs often
@@ -744,6 +747,7 @@ function reset_caches() {
   // Forget everything worked out from the league's rosters (season.use_league switched it).
   recruiting._STATIC.clear();
   recruiting._PULLS.clear();
+  recruiting._FIT.clear();
   _clear(recruiting._ASKS);
   recruiting._WINNING = [null, {}];
   recruiting._FITS = [null, {}, null, null, {}];
@@ -1027,57 +1031,59 @@ function offer_cap(state, slug) {
 
 function _contact_points(state, slug, p, action, pitch, first_call = false) {
   // What one action is worth to the prospect before diminishing returns: the pitch on one of
-  // his priorities (or his decider's topic) counts by your strength there (and backfires where you
-  // are weak); any other topic counts a little. His personality scales it (persona.pitch_mult).
+  // his priorities (or his decider's topic) counts by how he takes it, your letter there against what he
+  // wants (reaction_kind, REACTION_WORTH; it backfires when he isn't buying it); any other topic counts a
+  // little. His personality scales it (persona.pitch_mult), and so does how well the program fits him (move_mult).
   const persona = modules.persona;
   const pid = p["id"];
   let mult = persona.pitch_mult(state, pid, action, pitch, first_call) * persona.story_mult(state, slug, pid, pitch) * persona.twist_mult(state, slug, pid, pitch);
   if (action === "offer") {
     mult *= persona.offer_mult(state, pid);
   }
+  mult *= recruiting.move_mult(state, slug, pid);        // the further the program is from what he wants, the less a contact moves him
   if (pitch == null) {
     return recruiting.BASE_POINTS[action] * mult;
   }
   const strength = recruiting.strengths(state, slug, pid)[pitch];
   if (persona.counts_as_priority(state, pid, pitch)) {
-    if (strength < recruiting.BACKFIRE) {
+    const kind = recruiting.reaction_kind(state, slug, pid, pitch, strength);      // your letter there against what he wants
+    if (kind === "quiet") {
       return -recruiting.BACKFIRE_COST * recruiting.BASE_POINTS[action];
     }
-    return recruiting.BASE_POINTS[action] * (recruiting.PITCH_PRIORITY[0] + recruiting.PITCH_PRIORITY[1] * strength) * mult;
+    return recruiting.BASE_POINTS[action] * recruiting.REACTION_WORTH[kind] * mult;
   }
   return recruiting.BASE_POINTS[action] * (recruiting.PITCH_OTHER[0] + recruiting.PITCH_OTHER[1] * strength) * mult;
 }
 
 
 function _grade_points(state, slug, p, action) {
-  // Your own message or offer, which carries no pitch (the player's ask): worth your grades on what he cares about,
-  // the mean of your strength on his priorities (and his decider's topic), as a pitch on one of them would be
-  // (PITCH_PRIORITY), never a backfire; his personality scales it as it scales a contact. Pitching him on a call or
-  // visit is how you move those grades' weight; Auto-recruit and the AI keep their one-pitch path.
+  // Your own quick action, which carries no topic (a message, a call or a video call from his row, an offer by hand):
+  // one blanket increase, the action's base (QUICK_BASE) scaled by how well your program fits him overall (quick_mult:
+  // your letters on his priorities against what he wants, his first weighing most, between QUICK_FLOOR and
+  // QUICK_CEIL), never a backfire; his personality scales it as it scales a contact. A conversation, where you pitch
+  // a topic, can beat it (He's Sold, He Lights Up) or fall under it. Auto-recruit and the AI keep their one-pitch path.
   const persona = modules.persona;
   const pid = p["id"];
   let mult = persona.pitch_mult(state, pid, action, null, false);
   if (action === "offer") {
     mult *= persona.offer_mult(state, pid);
   }
-  const st_ = recruiting.strengths(state, slug, pid);
-  let tops = recruiting.PITCHES.filter((t) => persona.counts_as_priority(state, pid, t));
-  if (!tops.length) tops = [...(get(p, "priorities") || [])];
-  const grade = tops.length ? sum(tops.map((t) => st_[t])) / tops.length : 0.0;
-  return recruiting.BASE_POINTS[action] * (recruiting.PITCH_PRIORITY[0] + recruiting.PITCH_PRIORITY[1] * grade) * mult;
+  return recruiting.BASE_POINTS[action] * get(recruiting.QUICK_BASE, action, 1.0) * recruiting.quick_mult(state, slug, pid) * mult;
 }
 
 
 function best_pitch(state, slug, pid, required = false) {
-  // The topic a staff pitches: the strongest of the priorities it knows that will not backfire;
-  // nothing in particular when it knows none (`required`, an offer: its strongest topic).
+  // The topic a staff pitches: of the priorities it knows, the one he takes best (reaction_kind; ties to its
+  // strongest) that will not backfire; nothing in particular when it knows none (`required`, an offer: its strongest topic).
   const known = get(get(state["recruiting"]["revealed"], slug) || {}, pid) || [];
   const st_ = recruiting.strengths(state, slug, pid);
-  const pool = known.filter((t) => st_[t] >= recruiting.BACKFIRE);
+  const kind = {};
+  for (const t of known) kind[t] = recruiting.reaction_kind(state, slug, pid, t, st_[t]);
+  const pool = known.filter((t) => kind[t] !== "quiet");
   if (!pool.length) {
     return required ? maxBy(recruiting.PITCHES, (t) => st_[t]) : null;
   }
-  return maxBy(pool, (t) => st_[t]);
+  return maxBy(pool, (t) => [-recruiting.REACTIONS.indexOf(kind[t]), st_[t]]);
 }
 
 

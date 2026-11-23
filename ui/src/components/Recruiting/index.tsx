@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CaretDown, CaretRight, Check, Handshake, Heart, House, MagnifyingGlass, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
+import ClosedDoor, { ClosedMark } from "../ClosedDoor/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Conversation from "../Conversation/index.tsx";
 import Face from "../Face/index.tsx";
@@ -193,7 +194,10 @@ export default function Recruiting({
   // once your whole class has signed (after a signing day), the stage reads Signed, not Committed
   const yours = all.filter((r) => stageOf(r, team) === "committed");
   const classSigned = yours.length > 0 && yours.every((r) => r.signed === team);
-  const stageName = (s: StageKey) => (s === "committed" && classSigned ? m.signedStage : m.stageNames[s]);
+  // his top group's size this week: 8, then his finalists (5, 3), as the game says
+  const topSize = all.find((r) => r.top_size != null)?.top_size ?? 8;
+  const stageName = (s: StageKey) =>
+    s === "committed" && classSigned ? m.signedStage : s === "top" ? m.topN(topSize) : m.stageNames[s];
   const groups = useMemo(
     () =>
       STAGES.filter((s) => stage === "all" || isAcross(stage) || stage === s)
@@ -409,8 +413,11 @@ export default function Recruiting({
                   const race = r.list.filter((x) => x.bar != null);
                   const mine = race.find((x) => x.you || x.school === team);
                   const rank = mine ? (mine.rank ?? race.indexOf(mine) + 1) : null;
+                  // the door is shut on you (he will not consider you, or cut his list without you): he stays on
+                  // your board, marked out, every action off
+                  const out = r.blocked && r.blocked.why !== "signed" ? r.blocked : null;
                   return (
-                    <li key={r.id}>
+                    <li key={r.id} className={out ? "is-out" : undefined}>
                       <button
                         type="button"
                         className="recruiting__row"
@@ -461,12 +468,25 @@ export default function Recruiting({
                           {rank != null && <span className="recruiting__soft recruiting__place">{m.onList(rank)}</span>}
                         </span>
                       </button>
+                      {/* every action is off: the shut door stands where his quick actions would */}
+                      {out && (
+                        <span className="recruiting__shut">
+                          <ClosedMark blocked={out} />
+                        </span>
+                      )}
                       <QuickActions
                         seasonId={seasonId}
                         r={r}
                         left={board?.hours_left ?? 0}
                         costs={board?.hours_cost ?? {}}
-                        off={!board || board.closed || !!(r.signed || (r.committed && r.committed !== team && r.hard))}
+                        off={
+                          !board ||
+                          board.closed ||
+                          !!(r.signed || (r.committed && r.committed !== team && r.hard)) ||
+                          !!out
+                        }
+                        offWhy={out?.text}
+                        hidden={!!out}
                         labels
                         onChange={(stale) => reload(true, stale)}
                         onPlan={(action, on) =>
@@ -637,6 +657,8 @@ function RecruitPanel({
   const left = board.hours_left;
   const cost = (a: string) => board.hours_cost[a] ?? 0;
   const closed = !!(r.signed || (r.committed && r.committed !== team && r.hard));
+  // the door is shut on you: he will not consider your program, or he cut his list without you
+  const out = !closed && r.blocked && r.blocked.why !== "signed" ? r.blocked : null;
 
   const act = async (action: string, extra: Record<string, unknown> = {}) => {
     setBusy(true);
@@ -751,8 +773,13 @@ function RecruitPanel({
           tags={
             <>
               <HeadTag solid={stage === "committed"}>
-                {stage === "committed" && r.signed === team ? m.signedStage : m.stageNames[stage]}
+                {stage === "committed" && r.signed === team
+                  ? m.signedStage
+                  : stage === "top"
+                    ? m.topN(r.top_size ?? 8)
+                    : m.stageNames[stage]}
               </HeadTag>
+              {out && <ClosedMark blocked={out} />}
               {/* a transfer has a class, not stars */}
               {r.portal ? r.cls && <HeadTag>{formatClass(r.cls)}</HeadTag> : <Stars n={r.stars} />}
               <RecruitFlags
@@ -843,7 +870,24 @@ function RecruitPanel({
                   <p className="recruiting__soft">{m.deadPeriod(board.signing ?? "")}</p>
                 </Panel>
               )}
-              {!closed && !board.closed && (
+              {out && !board.closed && (
+                <Panel title={m.work} className="recruit__work">
+                  <ClosedDoor blocked={out} />
+                  {/* your offer still stands until you pull it: the NIL it holds comes back */}
+                  {r.offered && (
+                    <div className="recruit__offer">
+                      <Button
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => window.confirm(m.pullConfirm(r.name)) && act("pull_offer")}
+                      >
+                        {m.pull}
+                      </Button>
+                    </div>
+                  )}
+                </Panel>
+              )}
+              {!closed && !out && !board.closed && (
                 <Panel title={m.work} aside={m.hoursLeft(Math.round(left))} className="recruit__work">
                   {r.scene && (
                     <div className="recruit__open">

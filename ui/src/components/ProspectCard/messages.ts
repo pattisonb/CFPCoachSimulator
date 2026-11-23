@@ -25,7 +25,9 @@ export const messages = {
   games: (n: number) => (n === 1 ? "1 Game" : `${n} Games`),
   from: (school: string) => `From ${school}`,
   open: "Open",
-  openAt: { visited: "Open · Visited", top: "Open · Top 8", contact: "Open · In Contact" } as Record<string, string>,
+  openAt: { visited: "Open · Visited", contact: "Open · In Contact" } as Record<string, string>,
+  /** in his top group, by its size this week: 8, then his finalists (5, 3) */
+  openTop: (n: number) => `Open · Top ${n}`,
   hardCommit: (school: string) => `Hard Commit: ${school}`,
   committedTo: (school: string) => `Verbal: ${school}`,
   signedWith: (school: string) => `Signed: ${school}`,
@@ -64,6 +66,8 @@ export const messages = {
   strengths: "Strengths",
   weaknesses: "To Develop",
   addBoard: "Add to My Board",
+  /** the add control when the door is shut on you (its tip is the game's sentence) */
+  closed: { locked: "Closed Door", finalists: "Not a Finalist", signed: "Signed" } as Record<string, string>,
   removeBoard: "Off My Board",
   loading: "Loading his file…",
   loadError: (msg: string) => `Couldn't load him: ${msg}.`,

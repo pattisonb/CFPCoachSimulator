@@ -473,6 +473,17 @@
   color: var(--ink);
 }
 
+/* the door is shut on you: no adding him (its tip says why) */
+.prospects__star.is-shut {
+  color: var(--warn);
+  cursor: not-allowed;
+}
+
+.prospects__star.is-shut:hover {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
 .prospects__star:active {
   transform: scale(0.9);
 }

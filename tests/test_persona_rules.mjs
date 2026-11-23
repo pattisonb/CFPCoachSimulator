@@ -9,6 +9,10 @@ const { season, recruiting } = game;
 const { persona } = game.modules;
 
 const ME = "ohio-state";
+// What a recruit wants leans with his personality and can shut the door (tests/test_standards.mjs): held level here, so
+// each rule below is seen alone on one prospect made Cocky, then Shy.
+recruiting.STANDARD_LEAN = {};
+recruiting.LOCKOUT_AT = 99;
 
 function fresh(seed = 5) {
   const st = season.new_season(ME, "full", seed, undefined, undefined, true);
@@ -38,7 +42,8 @@ function prospect(st, pitch_in_priorities = true, want = null) {
     if (p["hidden"] || rc["status"][pid]["committed"] || ME in rc["lists"][pid]) continue;
     const s = recruiting.strengths(st, ME, pid);
     for (const t of (want || recruiting.PITCHES)) {
-      if (p["priorities"].includes(t) === pitch_in_priorities && s[t] >= recruiting.BACKFIRE) return [pid, t];
+      if (p["priorities"].includes(t) === pitch_in_priorities && s[t] >= recruiting.BACKFIRE
+        && (!pitch_in_priorities || recruiting.reaction_kind(st, ME, pid, t) !== "quiet")) return [pid, t];
     }
   }
   throw new Error("no prospect fits");
@@ -77,11 +82,10 @@ test("persona rules", () => {
   assert(approx(pts(st, pid, "message", t, "cocky"), 1.3 * pts(st, pid, "message", t, "shy")));
   let [pid2, t2] = prospect(st, true, ["academics"]);
   assert(approx(pts(st, pid2, "message", t2, "cocky"), pts(st, pid2, "message", t2, "shy")));
-  // ... and your own message carries no pitch, so nothing for Cocky to like more: it is worth your grades on what he cares about
+  // ... and your own message carries no pitch, so nothing for Cocky to like more: it is one blanket increase, its base
+  // scaled by how well your program fits what he wants (recruiting.quick_mult)
   const hand = by_hand(st, pid, "cocky");
-  const s = recruiting.strengths(st, ME, pid);
-  const tops = rc["prospects"][pid]["priorities"];
-  assert(approx(hand, by_hand(st, pid, "shy")) && approx(hand, recruiting.BASE_POINTS["message"] * (recruiting.PITCH_PRIORITY[0] + recruiting.PITCH_PRIORITY[1] * sum(tops.map((x) => s[x])) / tops.length)), () => String(hand));
+  assert(approx(hand, by_hand(st, pid, "shy")) && approx(hand, recruiting.BASE_POINTS["message"] * recruiting.QUICK_BASE["message"] * recruiting.quick_mult(st, ME, pid)), () => String(hand));
   const last = rc["log"][rc["log"].length - 1];
   assert(last["kind"] === "contact" && last["pid"] === pid && last["action"] === "message" && !("pitch" in last), () => JSON.stringify(last));
 
@@ -161,7 +165,7 @@ test("persona rules", () => {
   assert(rc["revealed"][ME][pid3].length === 1 && rc["revealed"][ME][pid3][0] === t3, "a Yes tells you it is one of his");
   if (sc["question"] && !sc["question"]["answer"]) recruiting.act(st, ME, pid3, "answer", undefined, undefined, sc["id"], "deflect");
   const said = recruiting.act(st, ME, pid3, "pitch", t3, undefined, sc["id"])["reaction"];
-  assert(["hit", "fair"].includes(said["kind"]) && said["text"].includes("Yes, one of his priorities"), () => JSON.stringify(said));
+  assert(["sold", "hit", "fair", "lukewarm"].includes(said["kind"]) && said["text"].includes("Yes, one of his priorities"), () => JSON.stringify(said));
 
   // test_guarded_decommit_half
   [pid, _] = prospect(st);
@@ -224,10 +228,23 @@ test("persona rules", () => {
   assert(approx(by_hand(st, pid, "business"), 0.3 * by_hand(st, pid, "shy")), "a message by hand counts 0.3 too");
 
   // test_decider_topic_counts_as_priority: a pitch on Mom's topic scores like a priority
-  [pid, t] = prospect(st, false, ["proximity", "academics"]);
+  // (one whose mom would not turn the pitch down: on her topic he wants something too, and it is your letter against that)
+  [pid, t] = (() => {
+    for (const q of Object.keys(rc["prospects"])) {
+      for (const x of ["proximity", "academics"]) {
+        const p = rc["prospects"][q];
+        if (p["hidden"] || rc["status"][q]["committed"] || ME in rc["lists"][q] || p["priorities"].includes(x)) continue;
+        force(st, q, "shy", "mom", x);
+        const ok = recruiting.reaction_kind(st, ME, q, x) !== "quiet";
+        delete p["persona"];
+        if (ok) return [q, x];
+      }
+    }
+    throw new Error("no prospect fits");
+  })();
   const other = pts(st, pid, "message", t, "shy");
   const as_topic = pts(st, pid, "message", t, "shy", "mom", t);
-  assert(as_topic > other && approx(as_topic, recruiting.BASE_POINTS["message"] * (recruiting.PITCH_PRIORITY[0] + recruiting.PITCH_PRIORITY[1] * recruiting.strengths(st, ME, pid)[t])));
+  assert(as_topic > other && approx(as_topic, recruiting.BASE_POINTS["message"] * recruiting.REACTION_WORTH[recruiting.reaction_kind(st, ME, pid, t)] * recruiting.move_mult(st, ME, pid)));
   assert(persona.counts_as_priority(st, pid, t));
   force(st, pid, "shy", "dad", "nil");
   assert(!persona.counts_as_priority(st, pid, t));

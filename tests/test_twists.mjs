@@ -10,6 +10,7 @@ import { Random, sorted, minBy, get, fmt, json_dumps, is_odict, odict } from "..
 
 const game = await start();
 const { season, recruiting } = game;
+recruiting.LOCKOUT_AT = 99;        // nobody shuts the door here: the lockout has its own test (tests/test_standards.mjs)
 const { persona, prospects, news } = game.modules;
 
 const ME = "ohio-state";

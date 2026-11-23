@@ -2,25 +2,22 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowBendUpRight,
   ChatCenteredText,
-  Ear,
-  Fire,
   Handshake,
   HouseLine,
-  MoonStars,
   Phone,
   PhoneDisconnect,
-  SmileyMeh,
   Star,
-  ThumbsUp,
   type Icon,
 } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Face from "../Face/index.tsx";
 import Modal from "../Modal/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
+import Reaction, { markName, reactionMeaning, reactionName } from "../Reaction/index.tsx";
+import SchoolGrade from "../SchoolGrade/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
-import { PITCH_NAMES, pullOf, topicPhrase } from "../../standing.ts";
+import { PITCH_NAMES, topicPhrase } from "../../standing.ts";
 import type { BoardRow, Scene, SceneQuestion, SceneReaction } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -37,19 +34,11 @@ const BEAT = 260;
  *  when it is not there */
 const QUESTION_INTRO = "He has a question.";
 
-const REACTION_ICON: Record<string, Icon> = {
-  hit: Fire,
-  fair: Ear,
-  polite: ThumbsUp,
-  quiet: SmileyMeh,
-  tired: MoonStars,
-};
 const ANSWER_ICON: Record<string, Icon> = {
   straight: ChatCenteredText,
   promise: Handshake,
   deflect: ArrowBendUpRight,
 };
-const PULL_BLOCKS = { strong: 3, fair: 2, weak: 1 } as const;
 
 interface Props {
   open: boolean;
@@ -125,7 +114,7 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
     lines.push({
       who: reaction.kind === "tired" ? "note" : "him",
       text: reaction.text,
-      tag: m.reactions[reaction.kind] ?? reaction.kind,
+      tag: reactionName(reaction.kind),
       tone: reaction.kind,
     });
   }
@@ -305,7 +294,9 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
               </>
             )}
 
-            {step === "over" && reaction && !revealing && <Result reaction={reaction} pitched={chosen} />}
+            {step === "over" && reaction && !revealing && (
+              <Result reaction={reaction} pitched={chosen} grade={r.case?.[chosen]} />
+            )}
           </div>
 
           {error && (
@@ -385,21 +376,23 @@ function StepHead({ title, help }: { title: string; help: string }) {
   );
 }
 
-/** How the pitch went: a big stamp, what it means, and what he told you. */
-function Result({ reaction, pitched }: { reaction: SceneReaction; pitched: string }) {
-  const R = REACTION_ICON[reaction.kind] ?? ThumbsUp;
+/** How the pitch went: a big stamp in the reaction's own tone, its name, what it means and what he told you. */
+function Result({ reaction, pitched, grade }: { reaction: SceneReaction; pitched: string; grade?: string }) {
+  const mine = ["sold", "hit", "fair", "lukewarm", "quiet"].includes(reaction.kind);
   return (
     <div className={`talk__result is-${reaction.kind}`} role="status">
       <span className="talk__stamp">
-        <R size={36} weight="fill" aria-hidden="true" />
+        <Reaction kind={reaction.kind} size="lg" label={false} />
       </span>
       <div className="talk__result-text">
-        <span className="label">
+        <span className="label talk__result-kicker">
           {m.pitch}: {PITCH_NAMES[pitched] ?? pitched}
+          {mine && grade && <SchoolGrade grade={grade} size="sm" title={m.pullTip(topicPhrase(pitched), grade)} />}
         </span>
-        <b className="talk__result-word">{m.reactions[reaction.kind] ?? reaction.kind}</b>
+        <b className="talk__result-word">{reactionName(reaction.kind)}</b>
         <span className="talk__soft">
-          {reaction.revealed ? m.learned(topicPhrase(reaction.revealed)) : (m.meaning[reaction.kind] ?? "")}
+          {reactionMeaning(reaction.kind)}
+          {reaction.revealed ? ` ${m.learned(topicPhrase(reaction.revealed))}` : ""}
         </span>
       </div>
     </div>
@@ -459,7 +452,7 @@ function TalkLine({
   );
 }
 
-/** The topics as cards: your pull on each in blocks, and what you know (he cares, how he took it). */
+/** The topics as cards: your program's letter grade on each, and what you know (he cares, how he took it last). */
 function Topics({
   r,
   topics,
@@ -482,7 +475,7 @@ function Topics({
       {topics.map((t) => {
         const at = selected.indexOf(t);
         const on = at >= 0;
-        const pull = pullOf(r.strength[t]);
+        const grade = r.case?.[t];
         const known = r.priorities_known.includes(t);
         const mark = r.pitch_marks[t]?.mark;
         const full = multi && !on && selected.length >= OPENING;
@@ -496,8 +489,9 @@ function Topics({
             className={["talk__topic", on && "is-on", known && "is-known", full && "is-full"].filter(Boolean).join(" ")}
             disabled={disabled}
             title={[
-              m.pullTip(topicPhrase(t), m.pull[pull]),
-              known ? m.known : mark ? m.markTip(m.marks[mark] ?? mark) : "",
+              grade ? m.pullTip(topicPhrase(t), grade) : "",
+              known ? m.known : "",
+              mark && mark !== "no_read" ? m.markTip(markName(mark)) : "",
             ]
               .filter(Boolean)
               .join(" ")}
@@ -507,12 +501,12 @@ function Topics({
             {multi && on && <span className="talk__num">{at + 1}</span>}
             {known && <Star className="talk__star" size={14} weight="fill" aria-hidden="true" />}
             <span className="talk__topic-name">{PITCH_NAMES[t] ?? t}</span>
-            <span className="talk__pull" aria-label={m.pull[pull]}>
-              {[1, 2, 3].map((k) => (
-                <i key={k} className={k <= PULL_BLOCKS[pull] ? "is-on" : undefined} />
-              ))}
-            </span>
-            {mark && !known && <span className="talk__mark">{m.marks[mark] ?? mark}</span>}
+            <SchoolGrade grade={grade} size="sm" flip={on} />
+            {mark && mark !== "no_read" && (
+              <span className="talk__mark">
+                <Reaction kind={mark} mark label={false} />
+              </span>
+            )}
           </button>
         );
       })}

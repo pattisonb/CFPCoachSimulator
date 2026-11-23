@@ -1,6 +1,6 @@
 import { GradeRange } from "../Grade/index.tsx";
 import { useEffect, useState } from "react";
-import { EnvelopeSimple, Star, X } from "@phosphor-icons/react";
+import { Door, EnvelopeSimple, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
@@ -36,7 +36,7 @@ export function statusOf(r: ProspectRow): string {
   if (r.committed && r.school_name) return r.hard ? m.hardCommit(r.school_name) : m.committedTo(r.school_name);
   if (r.leaning_fcs) return m.leaningFcs;
   // uncommitted: where you stand with him, when you stand anywhere
-  return m.openAt[r.stage ?? ""] ?? m.open;
+  return r.stage === "top" ? m.openTop(r.top_size ?? 8) : (m.openAt[r.stage ?? ""] ?? m.open);
 }
 
 /** *tune* How many of the schools after him the card names (the rest are counted). */
@@ -177,7 +177,8 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
         <Button
           variant={r.on_board ? "outline" : "solid"}
           className="prospect-card__board"
-          disabled={changing}
+          disabled={changing || (!!r.blocked && !r.on_board)}
+          title={r.blocked && !r.on_board ? r.blocked.text : undefined}
           onClick={() => {
             setChanging(true);
             void onBoard(r, !r.on_board)
@@ -185,8 +186,12 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
               .finally(() => setChanging(false));
           }}
         >
-          <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
-          {r.on_board ? m.removeBoard : m.addBoard}
+          {r.blocked && !r.on_board && r.blocked.why !== "signed" ? (
+            <Door size={18} weight="fill" aria-hidden="true" />
+          ) : (
+            <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
+          )}
+          {r.on_board ? m.removeBoard : r.blocked ? m.closed[r.blocked.why] : m.addBoard}
         </Button>
       )}
 

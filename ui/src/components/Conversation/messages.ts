@@ -16,7 +16,7 @@ export const messages = {
   asks: "He Asks",
   asksHelp: "Answer him. A promise you can't keep will cost you.",
   leadWith: "Your Pitch",
-  leadHelp: "Lead with one thing. Hit what he cares about.",
+  leadHelp: "Lead with one thing. He weighs your grade on it against what he wants.",
   pitch: "Pitch",
   pickLead: "Pick what you lead with.",
   promiseJob: "Promise the Job",
@@ -30,34 +30,11 @@ export const messages = {
   failed: (msg: string) => `Couldn't do that: ${msg}.`,
 
   // on a topic card
-  pull: { strong: "Strong", fair: "Fair", weak: "Weak" } as Record<string, string>,
-  pullTip: (topic: string, word: string) => `Your program's case on ${topic}: ${word.toLowerCase()}.`,
+  pullTip: (topic: string, grade: string) => `Your program's grade on ${topic}: ${grade}.`,
   known: "He told you he cares about this.",
-  marks: {
-    hit: "Lit Up",
-    fair: "Listening",
-    weak: "Weak Case",
-    not_his: "Not His Thing",
-    no_read: "No Read",
-  } as Record<string, string>,
   markTip: (word: string) => `How he took it last time: ${word}.`,
   cueLine: "His Cue",
 
-  // how the pitch went: the big word, and a line on what it means
-  reactions: {
-    hit: "He Lit Up",
-    fair: "He's Listening",
-    polite: "Polite Nod",
-    quiet: "He Went Quiet",
-    tired: "Tired of the Calls",
-  } as Record<string, string>,
-  meaning: {
-    hit: "That's one of his. Keep pushing it.",
-    fair: "That's one of his, and your case there is fair. Build it up.",
-    polite: "Not his thing. Try another angle next time.",
-    quiet: "He cares about it, but your case there is weak.",
-    tired: "Too many calls. Give him some room.",
-  } as Record<string, string>,
   learned: (topic: string) => `He told you he cares about ${topic}.`,
 
   // your answers to his question (scenes.js ANSWER_LABELS, ANSWER_COPY)

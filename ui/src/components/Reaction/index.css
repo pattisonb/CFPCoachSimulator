@@ -1,0 +1,72 @@
+/* How he took a pitch: an icon on a tile in the reaction's own tone, then its name. */
+.reaction {
+  --rx: var(--paper-hi);
+  --rx-on: var(--ink);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reaction__tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: var(--rx);
+  color: var(--rx-on);
+  border: var(--line) solid var(--ink);
+}
+
+/* the conversation's stamp */
+.reaction--lg .reaction__tile {
+  width: 72px;
+  height: 72px;
+  box-shadow: 4px 4px 0 var(--shadow-soft);
+}
+
+/* sold: your team's color, the icon in the ink that reads on it */
+.reaction--sold {
+  --rx: var(--team, var(--ink));
+  --rx-on: var(--team-on, var(--paper-hi));
+}
+
+/* he lights up: the fire's orange */
+.reaction--hit {
+  --rx: var(--hot);
+  --rx-on: #111;
+}
+
+/* he's listening: gold, between the fire and the cold */
+.reaction--fair {
+  --rx: var(--gold);
+  --rx-on: #111;
+}
+
+/* lukewarm: the cold blue */
+.reaction--lukewarm {
+  --rx: var(--cold);
+  --rx-on: #fff;
+}
+
+/* he isn't buying it: the risk red */
+.reaction--quiet {
+  --rx: var(--warn);
+  --rx-on: #fff;
+}
+
+/* a polite nod, a tired recruit, no read: plain */
+.reaction--polite,
+.reaction--tired,
+.reaction--none {
+  color: var(--ink-soft);
+}
+
+.reaction--polite .reaction__tile,
+.reaction--tired .reaction__tile,
+.reaction--none .reaction__tile {
+  border-color: var(--ink-soft);
+}

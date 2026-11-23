@@ -174,9 +174,9 @@ export function open_scene(state, slug, pid, action, week) {
 
 export function present(state, slug, pid, sc, topics, hits, back, tired) {
   // Your opening lands on the scene: your turn (the three things), his Yes or No to each (a Yes: one of his
-  // priorities, strong or weak, and now you know it), your case on each Yes, on a visit the NIL note, and a note when
-  // he has a question. Returns the reaction's kind: lit up on a strong case, listening on a fair one, quiet on a weak
-  // one, polite when none was his, tired when the call pestered him.
+  // priorities, whatever your case, and now you know it), your letter grade on each Yes, on a visit the NIL note, and a
+  // note when he has a question. Returns the reaction's kind, the best of his that you pitched (recruiting.reaction_kind:
+  // sold, hit, fair, lukewarm or quiet), polite when none was his, tired when the call pestered him.
   const recruiting = modules.recruiting;
   const rc = state["recruiting"];
   hits = [...hits, ...back.filter((t) => !hits.includes(t))];      // every presented topic that is one of his priorities
@@ -188,13 +188,13 @@ export function present(state, slug, pid, sc, topics, hits, back, tired) {
     answer = "No answer: he is tired of your contact this week.";
     sc["turns"].push(scenes._turn("him", answer));
   } else {
-    const st_ = recruiting.strengths(state, slug, pid);
-    // the best of his that you pitched decides it: lit up on a strong case, listening on a fair one, quiet on a weak one
-    kind = hits.length ? scenes.case_kind(Math.max(...hits.map((t) => st_[t]))) : "polite";
+    const st_ = recruiting.case_letters(state, slug, pid, true);
+    // the best of his that you pitched decides it: your letter on each against what he wants there
+    kind = hits.length ? recruiting.best_reaction(hits.map((t) => scenes.case_kind(state, slug, pid, t))) : "polite";
     answer = topics.map((t) => `${get(scenes._TOPIC_NAME, t, t)}: ${hits.includes(t) ? "Yes" : "No"}`).join(" · ");
     sc["turns"].push(scenes._turn("him", answer));
     if (hits.length) {                             // your program's grade on each Yes: where you stand on what he wants
-      sc["turns"].push(scenes._turn("note", "Your case on his: " + hits.map((t) => `${get(scenes._TOPIC_NAME, t, t)} ${scenes._case_word(st_[t])}`).join(", ") + "."));
+      sc["turns"].push(scenes._turn("note", "Your case on his: " + hits.map((t) => `${get(scenes._TOPIC_NAME, t, t)} ${st_[t]}`).join(", ") + "."));
     }
     if (!own(rc["revealed"], slug)) rc["revealed"][slug] = {};
     if (!own(rc["revealed"][slug], pid)) rc["revealed"][slug][pid] = [];
@@ -216,7 +216,7 @@ export function present(state, slug, pid, sc, topics, hits, back, tired) {
 
 export function reaction(state, slug, pid, pitch, tired = false) {
   // How he takes your lead-with, said plainly: a priority (or his decider's topic, persona.counts_as_priority) is a
-  // Yes with your case there (hit on a strong case, fair, or quiet on a weak one); anything else a No (polite);
+  // Yes with your letter grade there (how he takes it: scenes.case_kind); anything else a No (polite);
   // `tired` (the call pestered him) and there is no answer. `you` is your line, for the conversation.
   const persona = modules.persona, recruiting = modules.recruiting;
   const name = get(scenes._TOPIC_NAME, pitch, pitch);
@@ -224,8 +224,8 @@ export function reaction(state, slug, pid, pitch, tired = false) {
   if (tired) return { kind: "tired", text: "No answer: he is tired of your contact this week.", you };
   let kind, text;
   if (persona.counts_as_priority(state, pid, pitch)) {
-    kind = scenes.case_kind(recruiting.strengths(state, slug, pid)[pitch]);
-    text = `${pystr(name)}: Yes, one of his priorities. Your case there: ${scenes._case_word(recruiting.strengths(state, slug, pid)[pitch])}.`;
+    kind = scenes.case_kind(state, slug, pid, pitch);
+    text = `${pystr(name)}: Yes, one of his priorities. Your case there: ${scenes._case_word(recruiting.strengths(state, slug, pid, true)[pitch])}.`;
   } else {
     kind = "polite"; text = `${pystr(name)}: No, not one of his priorities.`;
   }
@@ -233,16 +233,17 @@ export function reaction(state, slug, pid, pitch, tired = false) {
 }
 
 
-export function case_kind(sv) {
-  // How he takes a pitch on one of his priorities, by your case there: "hit" (he lights up: strong), "fair" (he is
-  // listening: fair) or "quiet" (he goes quiet: weak). The same cuts as the page's Strong, Fair and Weak.
-  const recruiting = modules.recruiting;
-  return sv >= recruiting.STRONG_CASE ? "hit" : sv < recruiting.BACKFIRE ? "quiet" : "fair";
+export function case_kind(state, slug, pid, topic) {
+  // How he takes a pitch on one of his priorities: your letter grade there against what he wants (his standards, never
+  // shown; recruiting.reaction_kind). "sold" (He's Sold: a full letter or more over), "hit" (He Lights Up: you meet
+  // it), "fair" (He's Listening: a little short), "lukewarm" (He's Lukewarm: one to two letters short) or "quiet"
+  // (He Isn't Buying It: further than that, or an F).
+  return modules.recruiting.reaction_kind(state, slug, pid, topic);
 }
 
 export function _case_word(sv) {
-  // Your program's case on a topic in a word, as the page says it (web/recruiting.js caseWord).
-  return sv >= 0.6 ? "Strong" : sv < 0.25 ? "Weak" : "Fair";
+  // Your program's case on a topic as the page says it: a letter grade, A+ to F (career_js/grades.js school_pull).
+  return modules.grades.school_pull(sv);
 }
 
 // the topics' names as the page shows them (web/recruiting.js PITCH_NAMES)

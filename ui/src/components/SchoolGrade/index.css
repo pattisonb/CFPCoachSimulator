@@ -1,0 +1,121 @@
+/* A school grade: a varsity patch in a team's colors. The better the grade, the more of the color it wears. */
+.sgrade {
+  --sg: var(--team, var(--ink));
+  --sg-on: var(--team-on, var(--paper-hi));
+  --sg-2: var(--team-2, var(--sg-on));
+  --sg-corner: 7px;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: 1px;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 5px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  font-size: var(--t-sm);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* the patch sits on your team color (a picked button): the two colors trade places */
+.sgrade.is-flip {
+  --sg: var(--team-on, var(--paper-hi));
+  --sg-on: var(--team, var(--ink));
+  --sg-2: var(--team, var(--ink));
+
+  border-color: var(--team-on, var(--paper-hi));
+}
+
+.sgrade b {
+  font-weight: 700;
+}
+
+/* the plus or the minus rides high on the letter, a size down */
+.sgrade i {
+  align-self: flex-start;
+  margin-top: 3px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.sgrade--sm {
+  --sg-corner: 6px;
+
+  min-width: 26px;
+  height: 20px;
+  padding: 0 4px;
+  font-size: var(--t-xs);
+}
+
+.sgrade--sm i {
+  margin-top: 2px;
+  font-size: 9px;
+}
+
+.sgrade--lg {
+  --sg-corner: 13px;
+
+  min-width: 52px;
+  height: 44px;
+  padding: 0 8px;
+  font-size: var(--t-xl);
+}
+
+.sgrade--lg i {
+  margin-top: 6px;
+  font-size: 18px;
+}
+
+/* an A: the full patch with a pennant corner in the team's second color (trim only: the letter never sits on it) */
+.sgrade--a {
+  background: linear-gradient(225deg, var(--sg-2) 0 var(--sg-corner), var(--sg) var(--sg-corner));
+  color: var(--sg-on);
+}
+
+/* a B: the solid color */
+.sgrade--b {
+  background: var(--sg);
+  color: var(--sg-on);
+}
+
+/* a C: a tint of the color, the letter in ink */
+.sgrade--c {
+  background: color-mix(in srgb, var(--sg) 24%, var(--paper-hi));
+}
+
+/* a D: a plain outline */
+.sgrade--d {
+  color: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
+
+/* an F: a dashed outline, struck in the risk color */
+.sgrade--f {
+  background: transparent;
+  color: var(--warn);
+  border: var(--line) dashed var(--warn);
+}
+
+.sgrade.is-flip.sgrade--c {
+  background: color-mix(in srgb, var(--sg) 24%, var(--sg-on));
+  color: var(--sg);
+}
+
+.sgrade.is-flip.sgrade--d,
+.sgrade.is-flip.sgrade--f {
+  background: transparent;
+  color: var(--sg);
+  border-color: var(--sg);
+}
+
+/* no grade on file */
+.sgrade--none {
+  color: var(--ink-soft);
+  border: var(--line) dotted var(--line-soft);
+}

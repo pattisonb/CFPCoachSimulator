@@ -22,7 +22,7 @@ programs.MARKET = "data/program_market.json";
 programs.HISTORY = "data/program_history.json";
 programs.WEIGHTS = { prestige: 0.30, winning: 0.15, nil: 0.15, market: 0.10, conference: 0.10, coach: 0.10, pro: 0.10 };
 programs.TIERS = [[76, 1], [65, 2], [50, 3], [35, 4]];         // rating floors; below the last is tier 5
-programs.WORD_FLOORS = [["Elite", 90], ["Excellent", 80], ["Strong", 70], ["Good", 60], ["Solid", 50], ["Fair", 40], ["Thin", 30], ["Weak", 0]];   // a metric's grade words, by floor *tune*
+programs.WORD_FLOORS = [["Elite", 90], ["Excellent", 80], ["Strong", 70], ["Good", 60], ["Solid", 50], ["Fair", 40], ["Thin", 30], ["Weak", 0]];   // the eight words your word's standing reads in (word.js); a program's grades are letters now (word_of) *tune*
 programs.PRO_GROUP_ORDER = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P"];   // offseason.DRAFT_GROUP's groups, in its order
 programs.TIER_NAMES = { 1: "Blue Blood", 2: "Power", 3: "Solid", 4: "Modest", 5: "Bottom" };   // a standing, never a conference label: a Group of 6 program can be Solid or better
 programs.BASE_DEFAULT = { history: 15.0, prestige: 15.0, winning: 20.0, market: 25, nil: 15.0, conference: 10.0, coach: 55.0, pro: 0 };
@@ -651,10 +651,21 @@ export function _tags(slug) {
 
 
 export function word_of(v) {
-  // The grade word for a 0-100 metric.
-  const found = programs.WORD_FLOORS.find(([, f]) => v >= f);
-  if (!found) throw new Error("StopIteration");      // (a value under every floor)
-  return found[0];
+  // The grade for a 0-100 measure: a letter, A+ to F, on the school-grade lines (career_js/grades.js SCHOOL_LINES).
+  return modules.grades.school(v);
+}
+
+
+export function letters(row) {
+  // A program's row as letters: every measure the page grades, the campus grades (null where the record has none)
+  // and the pro pipeline by draft position.
+  const out = {};
+  for (const k of ["prestige", "winning", "nil", "market", "conference", "coach", "pro"]) out[k] = programs.word_of(row[k]);
+  for (const [k, v] of Object.entries(get(row, "grades") || {})) out[k] = programs.word_of(v);
+  const groups = {};
+  for (const g of programs.PRO_GROUP_ORDER) groups[g] = programs.word_of(get(get(row, "pro_groups") || {}, g, 0));     // a position it never sent: an F
+  out["pro_groups"] = groups;
+  return out;
 }
 
 
@@ -671,6 +682,7 @@ export function rows(state) {
       rating: p["rating"], goal: programs.goal_for(p["tier"], p4, p["rating"], programs.INDEPENDENTS.has(get(bt, "conference")))["text"] };
     for (const k of ["prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups"]) row[k] = p[k];
     Object.assign(row, { grades: programs.grades_now(state, s), tags: programs.tags(s), grades_moved: truthy(get(p, "grades_moved")) ? p["grades_moved"] : null });
+    row["letters"] = programs.letters(row);                  // every grade as the page shows it: a letter
     out.push(row);
   }
   out.sort((a, b) => (-a["rating"]) - (-b["rating"]));
@@ -704,7 +716,7 @@ Object.assign(programs, {
   _pro_lines, pro_score, pro_group_scores, pro_recompute, pro_group_grade, season_score, init, upgrade,
   get: program_get, z, goal_for, final_ranks, draft_picks, update, nil_move,
   _profile, profile_rows, _num, _line, rank_score, recency, facilities_score, warmth, fill_score, grades, _grades,
-  _held, grades_now, _step, _move_grades, tags, _tags, word_of, rows, attract, coach_level, coach_ceiling,
+  _held, grades_now, _step, _move_grades, tags, _tags, word_of, letters, rows, attract, coach_level, coach_ceiling,
 });
 
 modules.programs = programs;

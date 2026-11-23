@@ -203,7 +203,7 @@ function _asks_for_more(state, week) {
   }
   for (const [pid, held] of Object.entries(by_pid)) {
     if (Object.keys(held).length < 2 || truthy(rc["status"][pid]["signed"]) || !truthy(rc["prospects"][pid]["nil_ask"])) continue;
-    const top = sorted(Object.keys(held), (s) => -recruiting.interest(state, s, pid, win)).slice(0, recruiting.TOP_GROUP);
+    const top = sorted(Object.keys(held), (s) => -recruiting.interest(state, s, pid, win)).slice(0, recruiting.top_size(state));
     for (const slug of top) {
       const c = recruiting._contact(state, slug, pid);
       const heard = setdefault(c, "heard", []);
@@ -829,7 +829,11 @@ function set_board(state, pid, on) {
     if (!truthy(st["signed"])) recruiting.act(state, me, pid, "pull_offer");
   }
   if (truthy(on)) {
-    if (!rc["board"].includes(pid)) rc["board"].push(pid);
+    if (!rc["board"].includes(pid)) {                    // he has signed, he will not consider you, or you are not one of his finalists (part 6)
+      const out = recruiting.blocked(state, me, pid);
+      if (out !== null) throw new recruiting.RecruitingError(409, out["text"]);
+      rc["board"].push(pid);
+    }
     if (dropped.includes(pid)) remove(dropped, pid);
   } else {
     if (rc["board"].includes(pid)) remove(rc["board"], pid);

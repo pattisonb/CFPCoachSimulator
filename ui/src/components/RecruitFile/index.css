@@ -59,7 +59,7 @@ dd.recruit-file__inline {
 .recruit-file__snap-line {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0 6px;
 }
@@ -92,8 +92,17 @@ dd.recruit-file__inline {
   font-weight: 400;
 }
 
-.recruit-file__snap-pull {
-  color: var(--ink-soft);
+/* how he took a pitch, after its line in his History: the dot and the mark stay together */
+.recruit-file__took {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: pre;
+  vertical-align: middle;
+}
+
+/* how he took your pitch on it last time */
+.recruit-file__snap-took {
   font-size: var(--t-xs);
 }
 

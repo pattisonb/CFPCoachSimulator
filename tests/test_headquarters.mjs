@@ -8,6 +8,7 @@ import { start, test, run, assert, equal } from "./harness.mjs";
 
 const game = await start();
 const { recruiting, offseason, api } = game;
+recruiting.LOCKOUT_AT = 99;        // nobody shuts the door here: the lockout has its own test (tests/test_standards.mjs)
 const { prospects } = game.modules;
 
 const ME = "ohio-state";

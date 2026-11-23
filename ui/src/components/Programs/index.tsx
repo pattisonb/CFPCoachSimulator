@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, CaretDown, CaretUp } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import Panel from "../Panel/index.tsx";
+import SchoolGrade, { gradePlace } from "../SchoolGrade/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
@@ -42,28 +43,18 @@ interface Program {
   tags?: { setting?: string; climate?: string; region?: string } | null;
   /** how far a grade moved this offseason */
   grades_moved?: Record<string, number> | null;
+  /** every grade as the page shows it, a letter (A+ to F) the game worked out: the measures, the campus grades, and
+   *  the pro pipeline by draft position */
+  letters?: Record<string, string | Record<string, string>>;
 }
 interface View {
   you: Program;
   rows: Program[];
   tiers: Record<string, string>;
-  /** the eight grade words by floor, best first */
-  words?: [string, number][];
   group_order?: string[];
 }
 
 type Key = keyof typeof m.measures;
-/** The eight grade words by floor (career_js/programs.js WORD_FLOORS; the game sends its own in `words`). */
-const WORD_FLOORS: [string, number][] = [
-  ["Elite", 90],
-  ["Excellent", 80],
-  ["Strong", 70],
-  ["Good", 60],
-  ["Solid", 50],
-  ["Fair", 40],
-  ["Thin", 30],
-  ["Weak", 0],
-];
 /** This browser remembers whether Your Program is open. */
 const OPEN_KEY = "cfp.programs.yours";
 const savedOpen = () => {
@@ -103,10 +94,21 @@ const PRO_ORDER = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB"
 const gradeOf = (p: Program, k: Key): number | null =>
   CAMPUS.includes(k) ? (p.grades ? (p.grades[k] ?? null) : null) : ((p[k as keyof Program] as number) ?? 0);
 
+/** A program's letter on a measure, as the game sent it (never worked out here); null when the record has none. */
+const letterOf = (p: Program, k: string): string | null => {
+  const v = p.letters?.[k];
+  return typeof v === "string" ? v : null;
+};
+const proLetter = (p: Program, g: string): string | null => {
+  const v = p.letters?.pro_groups;
+  return v && typeof v === "object" ? (v[g] ?? null) : null;
+};
+
 /**
- * Programs: Your Program (its standing, its three headline readings, its twelve school grades as bars in words, the
- * positions it sends to the pros, and your AD's goal), then Every Program on the same measures. Every grade is one of
- * eight words (Elite to Weak), never a number; a grade that moved this offseason carries an arrow.
+ * Programs: Your Program (its standing, its three headline readings, its twelve school grades as letters on a bar, the
+ * positions it sends to the pros, and your AD's goal), then Every Program on the same measures. Every grade is a
+ * letter, A+ to F (the game's own: career_js/grades.js), drawn as a patch in the program's colors, never a number; a
+ * grade that moved this offseason carries an arrow.
  */
 export default function Programs({ season, teams, onTeam }: Props) {
   const [view, setView] = useState<View | null>(null);
@@ -135,10 +137,6 @@ export default function Programs({ season, teams, onTeam }: Props) {
     };
   }, [season.id, season.current_week]);
 
-  const floors = view?.words?.length ? view.words : WORD_FLOORS;
-  const word = (v: number) => (floors.find(([, f]) => v >= f) ?? floors[floors.length - 1])[0];
-  /** how strong a word is, for its ink: the top three in bold, the bottom three soft */
-  const tone = (v: number) => (v >= 70 ? " is-high" : v < 50 ? " is-low" : "");
   const moved = (p: Program, k: Key) => {
     const d = p.grades_moved?.[k];
     if (d == null || Math.abs(d) < MOVED) return null;
@@ -152,13 +150,14 @@ export default function Programs({ season, teams, onTeam }: Props) {
       </span>
     );
   };
-  const grade = (p: Program, k: Key) => {
-    const v = gradeOf(p, k);
-    return v == null ? (
+  /** a grade as a patch: yours in your colors, another program's in its own */
+  const grade = (p: Program, k: Key, size: "sm" | "md" = "md") => {
+    const l = letterOf(p, k);
+    return l == null ? (
       <span className="programs__word is-low">{m.notGraded}</span>
     ) : (
-      <span className={`programs__word${tone(v)}`}>
-        {word(v)}
+      <span className="programs__word">
+        <SchoolGrade grade={l} size={size} colors={p.team === season.team ? undefined : teams.get(p.team)?.colors} />
         {moved(p, k)}
       </span>
     );
@@ -200,8 +199,8 @@ export default function Programs({ season, teams, onTeam }: Props) {
         label: m.short[k] ?? m.measures[k],
         num: true,
         tip: m.tips[k],
-        render: (p) => grade(p, k),
-        sort: (p) => gradeOf(p, k) ?? -1,
+        render: (p) => grade(p, k, "sm"),
+        sort: (p) => gradePlace(letterOf(p, k)) * 1000 + (gradeOf(p, k) ?? -1),
       }),
     ),
   ];
@@ -257,7 +256,9 @@ export default function Programs({ season, teams, onTeam }: Props) {
                   {HEADLINE.map((k) => (
                     <div key={k}>
                       <dt className="label">{m.measures[k]}</dt>
-                      <dd className={`programs__word${tone(gradeOf(you, k) ?? 0)}`}>{word(gradeOf(you, k) ?? 0)}</dd>
+                      <dd>
+                        <SchoolGrade grade={letterOf(you, k)} size="lg" />
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -312,10 +313,10 @@ export default function Programs({ season, teams, onTeam }: Props) {
                         </Tooltip>
                       </h3>
                       <ul className="programs__pros">
-                        {groups.map(({ g, v }) => (
+                        {groups.map(({ g }) => (
                           <li key={g}>
                             <b>{g}</b>
-                            <span className={`programs__word${tone(v)}`}>{word(v)}</span>
+                            <SchoolGrade grade={proLetter(you, g)} />
                           </li>
                         ))}
                       </ul>

@@ -113,17 +113,6 @@ export function byChance(me: string) {
   };
 }
 
-/** *tune* Your pull on a topic (its strength, 0 to 1) from which it reads Strong, and Fair: the engine's own case
- *  words (career_js/scenes.js _case_word, web/recruiting.js caseWord), so the panel and his lines agree. */
-const PULL_STRONG = 0.6;
-const PULL_FAIR = 0.25;
-
-/** Your program's pull on a topic in a word's key: strong, fair or weak. */
-export function pullOf(v: number | undefined): "strong" | "fair" | "weak" {
-  const x = v ?? 0;
-  return x >= PULL_STRONG ? "strong" : x >= PULL_FAIR ? "fair" : "weak";
-}
-
 /** A pitch named inside a sentence ("he cares about staying close to home"): its title would read wrong there. */
 const TOPIC_PHRASES: Record<string, string> = {
   proximity: "staying close to home",

@@ -679,6 +679,10 @@ export interface ProspectRow {
   /** a hard commit (not yet signed), and where you stand with him: cold, contact, top, visited, committed */
   hard?: boolean;
   stage?: string;
+  /** his top group's size this week: 8, then his finalists (5, 3) */
+  top_size?: number;
+  /** why you cannot add or work him (he has signed, he will not consider you, you are not one of his finalists), or null */
+  blocked?: Blocked | null;
   /** how many schools have offered him */
   offers_n?: number;
   /** the transfer portal: he is a transfer, with the school he left and what he did there last season */
@@ -947,6 +951,12 @@ export interface BoardRow {
   priorities_known: string[];
   /** your program's pull on each topic, 0 to 1 */
   strength: Record<string, number>;
+  /** your program's letter grade with him on each topic (A+ to F), as the game worked it out: what the page shows */
+  case?: Record<string, string>;
+  /** why you cannot add or work him (he has signed, he will not consider you, you are not one of his finalists), or null */
+  blocked?: Blocked | null;
+  /** his top group's size this week: 8, then his finalists (5, 3) */
+  top_size?: number;
   done_this_week: string[];
   /** the quick actions ticked on his row: sent when the week is simmed */
   planned?: string[];
@@ -970,7 +980,7 @@ export interface BoardRow {
   history: RecruitEvent[];
   need: number | null;
   looks: number;
-  /** what he said about each topic you pitched him: hit, fair, weak, not_his, no_read */
+  /** what he said about each topic you pitched him: sold, hit, fair, lukewarm, weak, not_his, no_read */
   pitch_marks: Record<string, { mark: string; week?: number; action?: string }>;
   /** you already promised him the starting job */
   job_promised: boolean;
@@ -1041,9 +1051,15 @@ export interface Scene {
   job?: boolean;
 }
 
+/** Why a recruit is closed to you (career_js/recruiting/part6.js blocked): the text is a plain sentence. */
+export interface Blocked {
+  why: "signed" | "locked" | "finalists";
+  text: string;
+}
+
 /** POST /recruit action "pitch": how he took what you led with */
 export interface SceneReaction {
-  kind: "hit" | "fair" | "polite" | "quiet" | "tired";
+  kind: "sold" | "hit" | "fair" | "lukewarm" | "polite" | "quiet" | "tired";
   text: string;
   /** your line */
   you: string;

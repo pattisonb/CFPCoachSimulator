@@ -1,0 +1,79 @@
+/* A recruit who is closed to you: a shut door. A heavy frame, a hatched panel behind it, a plate in the risk red. */
+.closed-door {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s3);
+  background: repeating-linear-gradient(
+      135deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--warn) 9%, transparent) 10px 20px
+    ),
+    var(--paper-hi);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+
+/* the door's plate: its icon on the risk red (white reads on it in both themes) */
+.closed-door__plate {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  background: var(--warn);
+  color: #fff;
+  border: var(--line) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow-soft);
+}
+
+/* he signed elsewhere: over, not shut on you. Plain ink */
+.closed-door--signed .closed-door__plate {
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+
+.closed-door__text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--t-sm);
+}
+
+.closed-door__kicker {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.closed-door--signed .closed-door__kicker {
+  color: var(--ink-soft);
+}
+
+.closed-door__title {
+  font-size: var(--t-lg);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.closed-door__next {
+  color: var(--ink-soft);
+}
+
+/* the small mark on a row */
+.closed-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 5px;
+  color: var(--warn);
+  border: 1px solid var(--warn);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.closed-mark--signed {
+  color: var(--ink-soft);
+  border-color: var(--ink-soft);
+}

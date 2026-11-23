@@ -22,6 +22,8 @@ export const messages = {
     cold: "Cold",
     gone: "Elsewhere",
   } as Record<string, string>,
+  /** the top-group stage by its size this week: his top 8, then his finalists (5, 3) */
+  topN: (n: number) => `Top ${n}`,
   /** the Committed stage once the class has signed */
   signedStage: "Signed",
   search: "Search Your Board",
@@ -106,7 +108,6 @@ export const messages = {
   work: "Work Him",
   deadPeriod: (signing: string) =>
     `Recruiting is closed until Signing Day${signing ? `, after the ${signing}` : ""}. No offers, messages, calls, visits or scouting. He is deciding among the offers he holds, and he can still commit or flip.`,
-  pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
   message: "Message",
   /** the quick actions on a recruit's row and card */
   quick: { message: "Message", call: "Call", call_recruit: "Video Call" } as Record<string, string>,

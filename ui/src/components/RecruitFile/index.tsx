@@ -23,6 +23,8 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { GradeRange, GradeScale } from "../Grade/index.tsx";
+import Reaction from "../Reaction/index.tsx";
+import SchoolGrade from "../SchoolGrade/index.tsx";
 import Meter from "../Meter/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import Button from "../Button/index.tsx";
@@ -32,7 +34,7 @@ import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { cachedTeams } from "../../teams.ts";
-import { PITCH_NAMES, pullOf, standingOf } from "../../standing.ts";
+import { PITCH_NAMES, standingOf } from "../../standing.ts";
 import type { BoardRow, ListSchool, ProspectDetail, RecruitEvent } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -210,18 +212,25 @@ export function OverviewTab({
             {[0, 1, 2].map((i) => {
               const t = known[i];
               const name = t ? (PITCH_NAMES[t] ?? t) : null;
-              const word = t ? m.pulls[pullOf(r.strength[t])] : null;
+              const grade = t ? (r.case?.[t] ?? null) : null;
+              const mark = t ? r.pitch_marks?.[t]?.mark : undefined;
               return (
                 <div
                   key={i}
                   className={`recruit-file__snap-cell${t ? "" : " is-unknown"}`}
-                  title={t ? m.pullTip(word ?? "") : m.priorityHint}
+                  title={t ? m.pullTip(grade ?? "") : m.priorityHint}
                 >
                   <span className="label">{m.priority(i)}</span>
                   <span className="recruit-file__snap-line">
                     <b className={t ? undefined : "recruit-file__snap-unknown"}>{name ?? m.unknown}</b>
-                    {t && <span className="recruit-file__snap-pull">{word}</span>}
+                    {t && <SchoolGrade grade={grade} size="sm" />}
                   </span>
+                  {/* how he took your pitch on it last time: what tells you where your grade sits against what he wants */}
+                  {mark && mark !== "no_read" && (
+                    <span className="recruit-file__snap-took">
+                      <Reaction kind={mark} mark />
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -612,11 +621,13 @@ const KIND_ICON: Record<string, Icon> = {
   pro: Star,
 };
 
-/** A line of his history, in the old board's order: "Call · Program Prestige · He Lit Up". */
+/** A line of his history, in the old board's order: "Call · Program Prestige", then how he took it. */
 interface Item {
   week: number;
   kind: string;
   text: string;
+  /** how he took a pitch (sold, hit, fair, lukewarm, quiet, polite, tired): drawn as its own mark after the line */
+  reaction?: string;
 }
 
 /** Kinds whose line the game wrote itself. */
@@ -662,12 +673,7 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
     const k = e.kind;
     const about = e.about ?? "";
     if (k === "contact") return [m.actions[e.action ?? ""] ?? e.action, topic(e.pitch)];
-    if (k === "pitch")
-      return [
-        m.actions[e.action ?? actionOf.get(i) ?? ""] ?? m.actions.pitch,
-        topic(e.pitch),
-        m.reactions[e.reaction ?? ""],
-      ];
+    if (k === "pitch") return [m.actions[e.action ?? actionOf.get(i) ?? ""] ?? m.actions.pitch, topic(e.pitch)];
     if (k === "offer")
       return e.school && e.school !== team ? [m.h.offeredBy(teamName(e.school))] : [m.actions.offer, m.h.nil(e.nil)];
     if (k === "raise_nil") return [m.actions.raise_nil, m.h.nil(e.nil)];
@@ -714,6 +720,7 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
             week: e.week,
             kind: e.kind === "contact" || e.kind === "pitch" ? (e.action ?? actionOf.get(i) ?? "pitch") : e.kind,
             text: line(e, i).filter(Boolean).join(" · "),
+            ...(e.kind === "pitch" && e.reaction ? { reaction: e.reaction } : {}),
           },
         ],
   );
@@ -735,6 +742,12 @@ export function RecruitTimeline({ events, team }: { events: RecruitEvent[]; team
             <Mark size={16} weight="bold" aria-hidden="true" />
             <span>
               <b>{m.week(Math.max(0, x.week - 1))}</b> · {x.text}
+              {x.reaction && (
+                <span className="recruit-file__took">
+                  {" · "}
+                  <Reaction kind={x.reaction} />
+                </span>
+              )}
             </span>
             <span className="recruit-file__tag">{m.chips[x.kind] ?? m.news}</span>
           </li>

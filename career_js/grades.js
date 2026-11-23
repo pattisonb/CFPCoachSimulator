@@ -16,6 +16,16 @@ const PLUS_FROM = 7, MINUS_UNDER = 3;      // *tune* inside a band's 10 points: 
 const NO_FINE = ["F"];                     // *tune* letters that take no plus or minus
 const PLUS_MINUS_EYE = 70;                 // *tune* your best evaluator (staff or you) at this or better reads plus and minus
 
+// School grades (the player's ask): every grade a school gets reads as a letter on this same scale, A+ down to F: the
+// Programs page's measures (0-100) and a program's case with one recruit on a pitch topic (a pull, 0-1). These lines are
+// the one place a value becomes a letter, for the game and the page alike (the page is sent the letter). They were set
+// from every program's grades (tools: the spread is F 11%, the D's 26%, the C's 32%, the B's 22%, the A's 10%, A+ 2.5%)
+// so that recruiting's two cut-offs sit on letter lines: a case from B- up is a strong one (recruiting.STRONG_CASE, 0.6)
+// and an F is a case that backfires (recruiting.BACKFIRE, 0.25).
+const SCHOOL_LINES = [["A+", 94], ["A", 87], ["A-", 80], ["B+", 74], ["B", 67], ["B-", 60], ["C+", 54], ["C", 47], ["C-", 40],
+  ["D+", 35], ["D", 30], ["D-", 25], ["F", 0]];   // *tune* a school grade and the lowest value (0-100) that earns it
+const LETTER_STEPS = 3;                    // the grades in a full letter (B- to A-): what "a letter better" means
+
 // every grade, worst first: its place is how it sorts
 const ORDER = [];
 for (const [letter] of [...BANDS].reverse()) ORDER.push(...(NO_FINE.includes(letter) ? [letter] : [letter + "-", letter, letter + "+"]));
@@ -27,6 +37,27 @@ export function letter(value, fine = false) {
   if (!fine || grades.NO_FINE.includes(name)) return name;
   const into = v - floor;
   return name + (into >= grades.PLUS_FROM ? "+" : into < grades.MINUS_UNDER ? "-" : "");
+}
+
+export function school(value) {
+  // The letter for a school grade on the 0-100 scale (programs.js: a measure of the program, a campus grade).
+  const v = Number(value);
+  for (const [name, floor] of grades.SCHOOL_LINES) if (v >= floor) return name;
+  return grades.SCHOOL_LINES[grades.SCHOOL_LINES.length - 1][0];
+}
+
+export function school_pull(pull) {
+  // The letter for a program's case on a topic, a pull of 0-1 (recruiting.strengths): the same lines, read as shares
+  // (60 / 100 is exactly the 0.6 a strength is compared with, where 0.6 * 100 is not always 60).
+  const v = Number(pull);
+  for (const [name, floor] of grades.SCHOOL_LINES) if (v >= floor / 100) return name;
+  return grades.SCHOOL_LINES[grades.SCHOOL_LINES.length - 1][0];
+}
+
+export function school_floor(grade) {
+  // The lowest value (0-100) that earns a school grade.
+  const found = grades.SCHOOL_LINES.find(([name]) => name === grade);
+  return found ? found[1] : 0;
 }
 
 export function place(grade) {
@@ -73,5 +104,5 @@ export function sort_key(grades_) {
   return -(grades.place(grades_[grades_.length - 1]) * 100 + grades.place(grades_[0]));
 }
 
-export const grades = { BANDS, PLUS_FROM, MINUS_UNDER, NO_FINE, PLUS_MINUS_EYE, ORDER, letter, place, eye, fine, span, sort_key };
+export const grades = { BANDS, PLUS_FROM, MINUS_UNDER, NO_FINE, PLUS_MINUS_EYE, ORDER, SCHOOL_LINES, LETTER_STEPS, letter, school, school_pull, school_floor, place, eye, fine, span, sort_key };
 modules.grades = grades;

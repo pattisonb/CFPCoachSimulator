@@ -67,7 +67,8 @@ test("a call with a pitch spends its hours and may tell you one of his prioritie
 
 test("a call is not a confession: over many prospects it reveals a priority some of the time, not always and not never", () => {
   rc["hours"]["texas"] = 10 ** 6;
-  const calls = Object.keys(P).slice(0, 60).map((q) => recruiting._act(st, "texas", q, "call", null, 0));
+  // (the recruits who will take its call: one who will not consider a school hears nothing from it)
+  const calls = Object.keys(P).filter((q) => recruiting.blocked(st, "texas", q) === null).slice(0, 60).map((q) => recruiting._act(st, "texas", q, "call", null, 0));
   const share = calls.filter((c) => c).length / calls.length;
   assert(share >= 0.25 && share <= 0.75, String(share));
   assert(!get(get(rc, "scenes") || {}, "texas"), "another school's call opens no conversation");
@@ -225,7 +226,10 @@ test("your school through Auto-recruit's path calls in one shot, at a call's bas
   hours(100);
   recruiting._act(st, ME, pid, "call", null, 0);
   assert(!(pid in (get(get(rc, "scenes") || {}, ME) || {})));
-  assert(recruiting.pending(st, ME, pid) === recruiting.BASE_POINTS["call"], String(recruiting.pending(st, ME, pid)));
+  // a call's base, scaled by how well your program fits what he wants (recruiting.move_mult), as any school's is
+  const want = recruiting.BASE_POINTS["call"] * recruiting.move_mult(st, ME, pid);
+  assert(Math.abs(recruiting.pending(st, ME, pid) - want) < 1e-9 && want >= recruiting.MOVE_FLOOR * recruiting.BASE_POINTS["call"]
+    && want <= recruiting.MOVE_CEIL * recruiting.BASE_POINTS["call"], String(recruiting.pending(st, ME, pid)));
 });
 
 test("an in-home visit's conversation carries his ask as your scouts have it: a range, the number at a complete report", () => {

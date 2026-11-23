@@ -99,8 +99,13 @@ test("the program list is every FBS program, best first, with its tier, goal and
   }
 });
 
-test("a grade is one of eight words by its number", () => {
-  equal([programs.word_of(92), programs.word_of(80), programs.word_of(69.9), programs.word_of(29)], ["Elite", "Excellent", "Good", "Weak"]);
+test("a grade is a letter by its number, A+ to F, and every row carries its own", () => {
+  equal([programs.word_of(97), programs.word_of(92), programs.word_of(80), programs.word_of(69.9), programs.word_of(60), programs.word_of(29), programs.word_of(24.9)],
+    ["A+", "A", "A-", "B", "B-", "D-", "F"]);
+  const row = programs.rows(career(1))[0];
+  for (const k of ["prestige", "winning", "nil", "market", "conference", "coach", "pro"]) equal(row["letters"][k], programs.word_of(row[k]));
+  for (const [k, v] of Object.entries(row["grades"] || {})) equal(row["letters"][k], programs.word_of(v));
+  equal(Object.keys(row["letters"]["pro_groups"]), programs.PRO_GROUP_ORDER, "every draft position has its letter (one never sent: an F)");
 });
 
 // ----- how it moves -----------------------------------------------------------------------------------------------

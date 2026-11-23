@@ -6,6 +6,7 @@ import {
   MagnifyingGlass,
   SortAscending,
   SortDescending,
+  Door,
   Heart,
   Star,
   X,
@@ -299,7 +300,7 @@ export default function Prospects({
 
   const addAll = async () => {
     if (!data) return;
-    const ids = rows.filter((r) => !r.on_board).map((r) => r.id);
+    const ids = rows.filter((r) => !r.on_board && !r.blocked).map((r) => r.id);
     setAdding(true);
     try {
       await setOnBoard(seasonId, ids, true);
@@ -353,7 +354,7 @@ export default function Prospects({
     [byState],
   );
   // Recommended: the ones on this page not yet on your board
-  const notOnBoard = rows.filter((r) => !r.on_board).length;
+  const notOnBoard = rows.filter((r) => !r.on_board && !r.blocked).length;
 
   const Th = ({ col, className }: { col: Col; className?: string }) => (
     <th className={className} aria-sort={ariaSort(col)} scope="col">
@@ -673,18 +674,28 @@ export default function Prospects({
                       >
                         <Heart size={18} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
                       </button>
+                      {/* the door is shut on you (he signed, he will not consider you, you missed his cut): no adding
+                          him, and the game's own sentence says why */}
                       <button
                         type="button"
-                        className={`prospects__star${r.on_board ? " is-on" : ""}`}
+                        className={`prospects__star${r.on_board ? " is-on" : ""}${r.blocked && !r.on_board ? " is-shut" : ""}`}
                         aria-pressed={r.on_board}
-                        aria-label={r.on_board ? m.removeBoard(r.name) : m.addBoard(r.name)}
-                        title={r.on_board ? m.removeBoard(r.name) : m.addBoard(r.name)}
+                        aria-label={
+                          r.on_board ? m.removeBoard(r.name) : r.blocked ? r.blocked.text : m.addBoard(r.name)
+                        }
+                        title={r.on_board ? m.removeBoard(r.name) : r.blocked ? r.blocked.text : m.addBoard(r.name)}
+                        aria-disabled={!!r.blocked && !r.on_board}
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (r.blocked && !r.on_board) return setNote(r.blocked.text);
                           setBoard(r, !r.on_board);
                         }}
                       >
-                        <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
+                        {r.blocked && !r.on_board && r.blocked.why !== "signed" ? (
+                          <Door size={18} weight="fill" aria-hidden="true" />
+                        ) : (
+                          <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
+                        )}
                       </button>
                     </td>
                   </tr>

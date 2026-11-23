@@ -164,7 +164,7 @@ export function call_worth(seed, team = "georgia") {
   const { season, recruiting } = game;
   const state = season.new_season(team, "full", seed, undefined, undefined, true);
   const rc = state["recruiting"];
-  const pids = [...recruiting.prospect_list(state)].filter((q) => !rc["prospects"][q]["hidden"]).slice(0, 100);
+  const pids = [...recruiting.prospect_list(state)].filter((q) => !rc["prospects"][q]["hidden"] && recruiting.blocked(state, team, q) === null).slice(0, 100);
   let yes = 0, present = 0.0, pitch = 0.0;
   for (const pid of pids) {
     rc["hours"][team] = 100;
@@ -192,7 +192,7 @@ export function question_mix(seed, team = "georgia") {
   const scenes = game.modules.scenes;
   const state = season.new_season(team, "full", seed, undefined, undefined, true);
   const rc = state["recruiting"];
-  const pids = [...recruiting.prospect_list(state)].filter((q) => !rc["prospects"][q]["hidden"]).slice(0, 300);
+  const pids = [...recruiting.prospect_list(state)].filter((q) => !rc["prospects"][q]["hidden"] && recruiting.blocked(state, team, q) === null).slice(0, 300);
   const out = { calls: pids.length, playing_time: 0, questions: 0, roster: 0, recruit: 0, promises: 0, hollow: 0 };
   for (const pid of pids) {
     rc["hours"][team] = 100;

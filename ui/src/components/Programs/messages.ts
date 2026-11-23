@@ -10,12 +10,12 @@ export const messages = {
   everyProgram: "Every Program",
   schoolGrades: "School Grades",
   schoolGradesTip:
-    "Your program in twelve measures, each in one of eight words: Elite, Excellent, Strong, Good, Solid, Fair, Thin, Weak. Football's six and NIL move with results; the campus grades come from the record.",
+    "Your program in twelve measures, each a letter grade from A+ down to F. Football's six and NIL move with results; the campus grades come from the record. A recruit weighs your grade on what he cares about against what he wants.",
   football: "Football",
   campus: "Campus",
   proPotential: "Position Pro Potential",
   proPotentialTip:
-    "Where your program's last ten drafts came from, by draft position, best first. A position it never sent reads Weak.",
+    "Where your program's last ten drafts came from, by draft position, best first. A position it never sent is an F.",
   adGoal: "Your AD's Goal",
   ultimatum: "Ultimatum Year",
   notGraded: "Not Graded",

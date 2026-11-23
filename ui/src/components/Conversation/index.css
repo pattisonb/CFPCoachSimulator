@@ -223,12 +223,43 @@
   animation: talk-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+.talk__line.is-sold .talk__bubble {
+  border-width: 3px;
+  box-shadow: 5px 5px 0 var(--team, var(--shadow));
+  animation: talk-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 .talk__line.is-quiet .talk__bubble p,
 .talk__line.is-polite .talk__bubble p {
   color: var(--ink-soft);
 }
 
-.talk__line.is-quiet .talk__tag,
+/* how he took it, over his line: the tag in the reaction's own tone (Reaction's colors) */
+.talk__line.is-sold .talk__tag {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+}
+
+.talk__line.is-hit .talk__tag {
+  background: var(--hot);
+  color: #111;
+}
+
+.talk__line.is-fair .talk__tag {
+  background: var(--gold);
+  color: #111;
+}
+
+.talk__line.is-lukewarm .talk__tag {
+  background: var(--cold);
+  color: #fff;
+}
+
+.talk__line.is-quiet .talk__tag {
+  background: var(--warn);
+  color: #fff;
+}
+
 .talk__line.is-polite .talk__tag {
   background: var(--ink-soft);
 }
@@ -378,32 +409,10 @@
   animation: talk-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-.talk__pull {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.talk__pull i {
-  width: 6px;
-  height: 10px;
-  border: 1px solid currentcolor;
-  opacity: 0.5;
-}
-
-.talk__pull i.is-on {
-  background: currentcolor;
-  opacity: 1;
-}
-
+/* how he took it last time: the reaction's tile, at the card's end */
 .talk__mark {
-  color: var(--ink-soft);
+  display: inline-flex;
   font-size: var(--t-xs);
-  font-weight: 400;
-}
-
-.talk__topic.is-on .talk__mark {
-  color: inherit;
-  opacity: 0.75;
 }
 
 /* his question's three answers */
@@ -464,43 +473,11 @@
   padding: var(--s1) 0;
 }
 
+/* the stamp: the reaction's own tile (Reaction), dropped in */
 .talk__stamp {
   display: grid;
   flex: none;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  background: var(--ink);
-  color: var(--paper-hi);
-  border: var(--line) solid var(--ink);
-  box-shadow: 4px 4px 0 var(--shadow-soft);
   animation: talk-stamp 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.talk__result.is-quiet .talk__stamp,
-.talk__result.is-polite .talk__stamp,
-.talk__result.is-tired .talk__stamp {
-  background: var(--paper-hi);
-  color: var(--ink);
-  box-shadow: 4px 4px 0 var(--shadow);
-}
-
-/* the stamp's icon in its own color: fire for a hit, green for polite, blue for tired */
-.talk__result.is-hit .talk__stamp {
-  color: var(--hot);
-}
-
-.talk__result.is-polite .talk__stamp {
-  color: var(--good);
-}
-
-/* listening: one of his, your case fair. Gold, between the fire and the quiet */
-.talk__result.is-fair .talk__stamp {
-  color: var(--gold);
-}
-
-.talk__result.is-tired .talk__stamp {
-  color: var(--cold);
 }
 
 .talk__result-text {
@@ -511,6 +488,13 @@
 
 .talk__result-text .label {
   color: var(--ink-soft);
+}
+
+/* what you pitched, with your grade on it */
+.talk__result-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .talk__result-word {
@@ -649,6 +633,7 @@
   .talk__stamp,
   .talk__result-text,
   .talk__line.is-hit .talk__bubble,
+  .talk__line.is-sold .talk__bubble,
   .talk__slots i.is-on,
   .talk__dot,
   .talk-head__live {

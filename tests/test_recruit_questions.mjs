@@ -11,6 +11,7 @@ const game = await start({ env: { CFP_QUESTION_RATE: "1" } });      // he always
 const { api, season, recruiting, offseason } = game;
 const { persona, word, scenes } = game.modules;
 
+recruiting.LOCKOUT_AT = 99;        // nobody shuts the door here: the lockout has its own test (tests/test_standards.mjs)
 const ME = "smu";
 const J = (v) => () => JSON.stringify(v);
 
@@ -106,7 +107,7 @@ test("a straight answer earns a little, tells you he cares about playing time, a
   assert(!promises(pid).length, "straight is not a promise");
   refused(() => answer(pid, sc, "straight"), 409, "you already answered");
   const r2 = R("recruit", { pid, action: "pitch", scene: sc["id"], pitch: "playing_time" });
-  assert(["hit", "polite", "quiet", "guarded"].includes(r2["reaction"]["kind"]) && !(pid in (get(get(rc, "scenes") || {}, ME) || {})));
+  assert(["sold", "hit", "fair", "lukewarm", "polite", "quiet", "guarded"].includes(r2["reaction"]["kind"]) && !(pid in (get(get(rc, "scenes") || {}, ME) || {})));
   assert(rc["contacts"][pid][ME]["n"] === 1, "the call is one contact");
   const ans = G("recruiting")["board"].find((x) => x["id"] === pid)["history"].find((h) => h["kind"] === "answer");
   assert(ans["answer"] === "straight" && ans["about"] === best_ahead(pid)["name"], J(ans));

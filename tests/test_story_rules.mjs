@@ -9,6 +9,7 @@ import { Random } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting } = game;
+recruiting.LOCKOUT_AT = 99;        // nobody shuts the door here: the lockout has its own test (tests/test_standards.mjs)
 const { persona, prospects } = game.modules;
 
 const ME = "ohio-state", OTHER = "michigan";
@@ -103,7 +104,9 @@ test("a Hometown Hero is pulled harder to his state's schools, and an out-of-sta
   assert(teams[OTHER]["state"] !== home);
   const pid = plain(st, [], home);
   const win = recruiting._winning(st);
-  const pull = (slug) => recruiting.interest(st, slug, pid, win) - (rc["lists"][pid][slug] ?? 0.0);
+  // his pull toward a school: his interest less his list points and less the fit (what he wants against the program,
+  // which rides on top of the pull and is no part of his story)
+  const pull = (slug) => recruiting.interest(st, slug, pid, win) - (rc["lists"][pid][slug] ?? 0.0) - recruiting.fit_interest(st, slug, pid, win);
   force(st, pid);
   const [pull_in, pull_out] = [pull(ME), pull(OTHER)];
   force(st, pid, "hero", { state: home });

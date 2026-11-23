@@ -56,11 +56,11 @@ export const messages = {
   scouted: "Scouted",
   priorities: "His Priorities",
   yourPull: "Your Program:",
-  pullTip: (word: string) => `Your program on this: ${word}.`,
+  pullTip: (grade: string) =>
+    grade ? `Your program's grade on this: ${grade}. He weighs it against what he wants.` : "",
   looksCount: (n: number) => `${n} / 3`,
   priority: (i: number) => `${ORDINALS[i] ?? ""} Priority`,
   priorityHint: "A call may reveal it.",
-  pulls: { strong: "Strong", fair: "Fair", weak: "Weak" },
   hisAsk: "His Ask",
   ask: (lo?: number, hi?: number, exact?: number) =>
     exact != null ? `He Wants ${exact} NIL` : lo != null && hi != null ? `He Wants ${lo}–${hi} NIL` : null,
@@ -238,13 +238,6 @@ export const messages = {
     pitch: "Pitch",
     call_recruit: "Video Call",
     promise_role: "Promised a Starting Role",
-  } as Record<string, string>,
-  reactions: {
-    hit: "He Lit Up",
-    fair: "He's Listening",
-    polite: "Polite Nod",
-    quiet: "He Went Quiet",
-    tired: "Tired of the Calls",
   } as Record<string, string>,
   h: {
     nil: (n?: number) => (n != null ? `${n} NIL` : null),

@@ -91,13 +91,14 @@ export interface ProgramRow {
   winning: number;
   nil: number;
   pro: number;
+  /** every grade as a letter (A+ to F), worked out by the game */
+  letters?: Record<string, string | Record<string, string>>;
 }
 
-/** GET /programs: your program, the rest by rating, and the floors that turn a grade into its word. */
+/** GET /programs: your program and the rest by rating; each row carries its grades as letters. */
 export interface HqPrograms {
   you?: ProgramRow | null;
   rows?: ProgramRow[];
-  words?: [string, number][];
 }
 
 export interface ClassSchool {

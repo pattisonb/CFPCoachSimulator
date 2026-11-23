@@ -103,6 +103,8 @@ function plan(state, pid, action, on) {
     if (truthy(st["signed"]) || (truthy(st["committed"]) && st["committed"] !== me && truthy(get(st, "hard")))) {
       throw new recruiting.RecruitingError(409, "He is not taking calls.");
     }
+    const out = recruiting.blocked(state, me, pid);
+    if (out !== null) throw new recruiting.RecruitingError(409, out["text"]);
     if (get(get(recruiting._contact(state, me, pid), "week") || {}, action) === recruiting.contact_week(state)) {
       throw new recruiting.RecruitingError(409, "Done this week.");
     }
@@ -146,7 +148,7 @@ function _carry_planned(state) {
   let left = recruiting.hours_free(state, me);
   for (const [pid, acts] of Object.entries(plans)) {
     const st = get(rc["status"], pid);
-    if (!truthy(st) || truthy(st["signed"]) || truthy(st["committed"])) continue;
+    if (!truthy(st) || truthy(st["signed"]) || truthy(st["committed"]) || recruiting.blocked(state, me, pid) !== null) continue;
     for (const action of acts) {
       if (_in(action, recruiting.PLANNABLE) && recruiting.HOURS[action] <= left && !get(recruiting.planned(state), pid, []).includes(action)) {
         setdefault(recruiting.planned(state), pid, []).push(action);
@@ -405,7 +407,7 @@ function _answer(state, slug, pid, scene, answer) {
 }
 
 
-recruiting.PITCH_MARK = { hit: "hit", fair: "fair", quiet: "weak", polite: "not_his", tired: "no_read" };   // his reaction -> the mark the page shows
+recruiting.PITCH_MARK = { sold: "sold", hit: "hit", fair: "fair", lukewarm: "lukewarm", quiet: "weak", polite: "not_his", tired: "no_read" };   // his reaction -> the mark the page shows
 
 
 recruiting._MARKS = new Map();       // (career, school, log identity, log length) -> {pid: marks}: one pass over the log per view
@@ -436,7 +438,8 @@ function _marks_index(state, slug) {
 
 function pitch_marks(state, slug, pid) {
   // What he said about each topic your school pitched him (your History): {topic: {"mark", "week", "action"}}. The mark
-  // is "hit" (He Lit Up), "weak" (Weak Case: he cares, your case is weak), "not_his" (Not His Thing: polite, not one of his
+  // is "sold", "hit" (He Lit Up), "fair", "lukewarm", "weak" (he isn't buying it: he cares, your case is too far from what
+  // he wants), "not_his" (Not His Thing: polite, not one of his
   // priorities) or "no_read" (tired, or one of your opening's three, which reads no single topic). The latest real
   // read wins and a No Read never hides one. A topic you never pitched has no entry. The log is read once per view
   // (_marks_index, cached on the log's length).
@@ -607,8 +610,9 @@ function _job_promise(state, slug, pid, action) {
 function _present(state, slug, pid, scene, topics) {
   // Your opening on the open scene (scenes.present), no hours: three different topics, scored
   // against his true priorities (he answers each with a Yes or No). Each that is one of his earns PRESENT_HIT of
-  // the action's base times (1 + your strength); one you are weak at (under BACKFIRE) costs
-  // BACKFIRE_COST of that share; the rest add nothing; the total caps at the base. His priorities
+  // the action's base times PRESENT_WORTH for how he takes it (reaction_kind: your letter there against what he
+  // wants); one he isn't buying costs BACKFIRE_COST of that share; the rest add nothing; the total caps at the
+  // base. His priorities
   // include his decider's topic, and his personality and decider scale each share and the cap as they
   // do a pitch (persona.pitch_mult: a Shy recruit's visit, his first call, a visit on the decider's
   // topic). The points are the
@@ -638,14 +642,16 @@ function _present(state, slug, pid, scene, topics) {
   let raw = 0.0;
   for (const t of topics) {
     if (!persona.counts_as_priority(state, pid, t)) continue;          // his priorities, or his decider's topic
-    if (st_[t] < recruiting.BACKFIRE) {
+    const kind = recruiting.reaction_kind(state, slug, pid, t, st_[t]);   // your letter there against what he wants
+    if (kind === "quiet") {
       back.push(t);
       raw -= recruiting.BACKFIRE_COST * recruiting.PRESENT_HIT * base;
     } else {
       hits.push(t);
-      raw += recruiting.PRESENT_HIT * base * (1 + st_[t]) * mult[t];
+      raw += recruiting.PRESENT_HIT * base * recruiting.PRESENT_WORTH[kind] * mult[t];
     }
   }
+  raw *= raw > 0 ? recruiting.move_mult(state, slug, pid) : 1.0;       // the further your program is from what he wants, the less it moves him
   const cap = base * Math.max(persona.pitch_mult(state, pid, action, null, first_call), ...topics.map((t) => mult[t]));   // his personality scales the cap too
   const tired = recruiting.would_pester(state, slug, pid);
   let points = truthy(tired) ? 0.0 : Math.min(raw, cap) / (1 + recruiting.DIMINISH * contact["n"]);
@@ -833,6 +839,10 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
   if (pitch !== null && !_in(pitch, recruiting.PITCHES)) throw new recruiting.RecruitingError(400, "unknown pitch");
   if (nil < 0) throw new recruiting.RecruitingError(400, "NIL points cannot be negative");
   if (truthy(rc["status"][pid]["signed"])) throw new recruiting.RecruitingError(409, "he has already signed");
+  if (action !== "pull_offer" && action !== "scout" && action !== "pitch") {     // (a call already open is finished) he will not consider the school, or it is not one of his finalists: nothing lands (part 6)
+    const out = recruiting.blocked(state, slug, pid);
+    if (out !== null) throw new recruiting.RecruitingError(409, out["text"]);
+  }
   if (action === "scout" && rc["status"][pid]["committed"] === slug) {
     throw new recruiting.RecruitingError(409, "he has committed to you, so no more looks are needed");
   }
@@ -993,7 +1003,7 @@ function _act(state, slug, pid, action, pitch = null, nil = 0, scale = 1.0, scen
     }
     if (!truthy(opens)) {
       contact["last_contact"] = week;
-      points = recruiting._contact_land(state, slug, p, contact, action, pitch, auto, manual) * (truthy(quick) ? recruiting.QUICK_CALL : 1.0);
+      points = recruiting._contact_land(state, slug, p, contact, action, pitch, auto, truthy(manual) || truthy(quick)) * (truthy(quick) ? recruiting.QUICK_CALL : 1.0);
     }
   }
   if (action !== "scout") {                         // a Send spends scouting points, not hours

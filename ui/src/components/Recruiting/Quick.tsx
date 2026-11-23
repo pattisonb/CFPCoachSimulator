@@ -19,6 +19,10 @@ interface Props {
   costs: Record<string, number>;
   /** the board is closed (the dead period), or he is past taking calls */
   off?: boolean;
+  /** why they are off, when it is not the usual reason (the door is shut on you): the game's own sentence */
+  offWhy?: string;
+  /** nothing is drawn (the door is shut on you: his row shows that instead) */
+  hidden?: boolean;
   /** each box says what it is and what it costs (his row); marks alone without */
   labels?: boolean;
   /** a plan changed: read the board again */
@@ -40,7 +44,19 @@ let line: Promise<unknown> = Promise.resolve();
 let flying = 0;
 let clicks = 0;
 
-export default function QuickActions({ seasonId, r, left, costs, off, labels, onChange, onPlan, onError }: Props) {
+export default function QuickActions({
+  seasonId,
+  r,
+  left,
+  costs,
+  off,
+  offWhy,
+  hidden,
+  labels,
+  onChange,
+  onPlan,
+  onError,
+}: Props) {
   // a tick shows at once (the player's ask: clicking through a board must not wait on the server): the page changes
   // his row and your Energy now, the save runs behind it, and the board's fresh read puts right a tick the server refused
   const planned = r.planned ?? [];
@@ -62,6 +78,7 @@ export default function QuickActions({ seasonId, r, left, costs, off, labels, on
       if (!flying) void Promise.resolve(onChange(() => clicks !== at)).catch(() => {}); // (refused mid-sim: read again after)
     }
   };
+  if (hidden) return null;
   return (
     <span className={`quick${labels ? " quick--labels" : ""}`} role="group" aria-label={m.quickLabel(r.name)}>
       {QUICK.map(({ key, Icon }) => {
@@ -74,7 +91,7 @@ export default function QuickActions({ seasonId, r, left, costs, off, labels, on
           : on
             ? m.quickPlanned(m.quick[key], cost)
             : off
-              ? m.quickOff
+              ? (offWhy ?? m.quickOff)
               : short
                 ? m.notEnough
                 : m.quickTip(m.quick[key], cost);

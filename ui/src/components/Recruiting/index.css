@@ -721,15 +721,37 @@
   position: relative;
 }
 
-.recruiting__rows li > .quick {
+.recruiting__rows li > .quick,
+.recruiting__rows li > .recruiting__shut {
   position: absolute;
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
 }
 
+/* the shut door, where his quick actions would be: on the page's own paper, so its words read over the hatching */
+.recruiting__shut .closed-mark {
+  padding: 4px 8px;
+  background: var(--paper-hi);
+  border-width: var(--line);
+}
+
 .recruiting__rows .recruiting__row {
   padding-right: 282px; /* the three named boxes */
+}
+
+/* the door is shut on you: he stays on your board, marked out (his face washed, his quick actions off) */
+.recruiting__rows li.is-out .recruiting__face,
+.recruiting__rows li.is-out .recruiting__who b {
+  opacity: 0.55;
+}
+
+.recruiting__rows li.is-out .recruiting__row {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 10px,
+    color-mix(in srgb, var(--warn) 7%, transparent) 10px 20px
+  );
 }
 
 /* his offer or commitment mark sits left of the boxes, not under them */

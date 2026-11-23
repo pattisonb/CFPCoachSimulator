@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Check, X } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
+import SchoolGrade from "../SchoolGrade/index.tsx";
 import { PITCH_NAMES, standingOf } from "../../standing.ts";
+import { cachedTeams } from "../../teams.ts";
 import {
   Empty,
   Filtered,
@@ -33,6 +35,7 @@ import type {
   HqBoard,
   HqRow,
   OutlookPlayer,
+  ProgramRow,
   Sources,
   Task,
   TaskDo,
@@ -662,28 +665,34 @@ function Goals({ d, ctx }: P) {
 }
 
 // ---------- Program Comparison ----------
-const gradeWord = (v: number, floors: [string, number][]) => {
-  for (const [w, f] of floors) if (v >= f) return w;
-  return floors.length ? floors[floors.length - 1][0] : "";
-};
 function ProgramCompare({ d, ctx }: P) {
   const pv = d.programs ?? {};
-  const floors = pv.words ?? [];
   const mine = pv.you?.team ?? ctx.team;
+  const colors = new Map((cachedTeams() ?? []).map((t) => [t.slug, t.colors]));
   const others = (pv.rows ?? []).filter((r) => r.team !== mine).slice(0, ctx.size === "L" ? 7 : 4);
   const rows = pv.you ? [pv.you, ...others] : others;
   if (!rows.length) return <Empty>{m.noPrograms}</Empty>;
-  const w = (v: number) => gradeWord(v, floors);
+  // each grade as the game sent it (a letter, A+ to F): yours in your colors, another program's in its own
+  const w = (r: ProgramRow, k: string) => {
+    const l = r.letters?.[k];
+    return (
+      <SchoolGrade
+        grade={typeof l === "string" ? l : null}
+        size="sm"
+        colors={r.team === mine ? undefined : colors.get(r.team)}
+      />
+    );
+  };
   return ctx.size === "L" ? (
     <Table
       heads={[m.program, m.tier, m.prestige, m.winning, m.nil, m.proPipeline]}
-      rows={rows.map((r) => [r.name, r.tier_name, w(r.prestige), w(r.winning), w(r.nil), w(r.pro)])}
+      rows={rows.map((r) => [r.name, r.tier_name, w(r, "prestige"), w(r, "winning"), w(r, "nil"), w(r, "pro")])}
       mine={(i) => rows[i].team === mine}
     />
   ) : (
     <Table
       heads={[m.program, m.prestige, m.winning, m.nil]}
-      rows={rows.map((r) => [r.name, w(r.prestige), w(r.winning), w(r.nil)])}
+      rows={rows.map((r) => [r.name, w(r, "prestige"), w(r, "winning"), w(r, "nil")])}
       mine={(i) => rows[i].team === mine}
     />
   );

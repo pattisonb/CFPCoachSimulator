@@ -488,6 +488,7 @@ function programs_view(p) {
   const me = rows.find((r) => r["team"] === st["team"]) ?? null;
   return {
     "you": me, "rows": rows, "tiers": programs.TIER_NAMES, "weights": programs.WEIGHTS,
+    "lines": Array.from(modules.grades.SCHOOL_LINES, (w) => [...w]),     // the letter lines (each row carries its letters: the page never works one out)
     "words": Array.from(programs.WORD_FLOORS, (w) => [...w]), "group_order": [...programs.PRO_GROUP_ORDER],
   };
 }

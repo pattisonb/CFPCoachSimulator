@@ -16,12 +16,15 @@ const st = season.new_season(ME, "full", 11, undefined, undefined, true);
 st["current_week"] = 1;
 const rc = st["recruiting"];
 const used = new Set();
+recruiting.LOCKOUT_AT = 99;        // nobody shuts the door here: the lockout has its own test (tests/test_standards.mjs)
 
 /** A visible, uncommitted prospect your school has not touched (and would not pester), passing `want`. */
 function cold(want = () => true) {
   for (const pid of recruiting.prospect_list(st)) {
     if (used.has(pid) || ME in (rc["contacts"][pid] || {}) || rc["status"][pid]["committed"] || rc["prospects"][pid]["hidden"]) continue;
-    if (persona.story(st, pid)[0] !== null || recruiting.would_pester(st, ME, pid) || !want(pid)) continue;
+    if (persona.story(st, pid)[0] !== null || recruiting.would_pester(st, ME, pid)) continue;
+    force(pid);                      // as the plain recruit the tests make him: what he wants leans with his personality
+    if (!want(pid)) { delete rc["prospects"][pid]["persona"]; continue; }
     used.add(pid);
     return pid;
   }
@@ -50,8 +53,10 @@ function refused(fn, code, message = null) {
 const strengths = (pid) => recruiting.strengths(st, ME, pid);
 const mine = (pid) => rc["prospects"][pid]["priorities"];
 const not_his = (pid, n) => recruiting.PITCHES.filter((t) => !persona.counts_as_priority(st, pid, t)).slice(0, n);
-const strong_one = (pid) => mine(pid).find((t) => strengths(pid)[t] >= recruiting.BACKFIRE);
-const weak_one = (pid) => mine(pid).find((t) => strengths(pid)[t] < recruiting.BACKFIRE);
+const kind_of = (pid, t) => recruiting.reaction_kind(st, ME, pid, t);       // how he takes a pitch on one of his: your letter against what he wants
+const letter = (pid, t) => scenes._case_word(recruiting.strengths(st, ME, pid, true)[t]);    // your case as the page shows it
+const strong_one = (pid) => mine(pid).find((t) => kind_of(pid, t) !== "quiet");
+const weak_one = (pid) => mine(pid).find((t) => kind_of(pid, t) === "quiet");
 const SMALL = ["a", "an", "the", "of", "to", "for", "and", "or", "in", "on", "at", "by"];
 const title_case = (text) => text.split(" ").every((w, i, ws) => /^[A-Z]/.test(w) || (SMALL.includes(w) && i > 0 && i < ws.length - 1));
 const whos = (sc) => sc["turns"].map((t) => t["who"]);
@@ -103,19 +108,22 @@ test("an opening on nothing of his gets three Nos and no points, and can be made
 test("a priority you are strong on is a Yes: it earns the call's points, names your case and is now known", () => {
   const pid = cold((q) => strong_one(q) !== undefined);
   force(pid);
-  const strong = strong_one(pid), s = strengths(pid)[strong];
+  const strong = strong_one(pid);
   const sc = act(pid, "call")["scene"];
   assert(!((rc["revealed"][ME] || {})[pid] || []).length, "opening the call tells nothing");
   const topics = [strong, ...not_his(pid, 2)];
   const r = act(pid, "present", { scene: sc["id"], topics });
-  const want = recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"] * (1 + s);
+  // its share of the call by how he takes it, scaled by how well your program fits him
+  const want = recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"] * recruiting.PRESENT_WORTH[kind_of(pid, strong)] * recruiting.move_mult(st, ME, pid);
   assert(Math.abs(r["points"] - want) < 1e-9, () => show([r["points"], want]));
   assert(Math.abs(recruiting.pending(st, ME, pid) - want) < 1e-9);
   equal(Object.keys(rc["why_week"][pid][ME]), ["call"], "the points sit on the call");
   equal(r["hit"], [strong]);
-  equal(r["scene"]["present"], { kind: scenes.case_kind(s), hit: [strong] });
+  equal(r["scene"]["present"], { kind: scenes.case_kind(st, ME, pid, strong), hit: [strong] });
+  assert(["sold", "hit", "fair", "lukewarm"].includes(r["scene"]["present"]["kind"]));
   assert(r["scene"]["turns"][2]["text"].startsWith(`${name(strong)}: Yes · `), r["scene"]["turns"][2]["text"]);
-  equal(r["scene"]["turns"][3], { who: "note", text: `Your case on his: ${name(strong)} ${scenes._case_word(s)}.` });
+  equal(r["scene"]["turns"][3], { who: "note", text: `Your case on his: ${name(strong)} ${letter(pid, strong)}.` });
+  assert(/^(A|B|C|D)[+-]?$|^F$/.test(letter(pid, strong)), "your case is a letter grade");
   equal(rc["revealed"][ME][pid], [strong], "a Yes tells you it is one of his");
   plain(r["scene"]);
 });
@@ -130,20 +138,22 @@ test("a priority you are weak on is still a Yes, but it costs you and he is not 
   const want = -recruiting.BACKFIRE_COST * recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"];
   assert(Math.abs(r["points"] - want) < 1e-9, () => show([r["points"], want]));
   equal([r["hit"], r["scene"]["present"]["kind"], r["scene"]["present"]["hit"]], [[], "quiet", [weak]]);
-  assert(r["scene"]["turns"][2]["text"].includes(`${name(weak)}: Yes`) && r["scene"]["turns"][3]["text"] === `Your case on his: ${name(weak)} Weak.`, () => show(r["scene"]["turns"]));
+  assert(r["scene"]["turns"][2]["text"].includes(`${name(weak)}: Yes`) && r["scene"]["turns"][3]["text"] === `Your case on his: ${name(weak)} ${letter(pid, weak)}.`, () => show(r["scene"]["turns"]));
   assert(last(pid, "not_buying")["topic"] === weak);
 });
 
 test("three strong priorities never earn more than the call itself is worth", () => {
   assert(recruiting.PRESENT_HIT * 3 * 2 > 1.0, "the cap matters: three strong hits would pass the base");
-  const pid = cold((q) => mine(q).filter((t) => strengths(q)[t] >= recruiting.STRONG_CASE).length >= 3);
+  const lands = (q, t) => ["sold", "hit"].includes(kind_of(q, t));
+  const worth = (q) => mine(q).reduce((a, t) => a + recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"] * recruiting.PRESENT_WORTH[kind_of(q, t)], 0) * recruiting.move_mult(st, ME, q);
+  const pid = cold((q) => mine(q).filter((t) => lands(q, t)).length >= 3 && worth(q) > recruiting.BASE_POINTS["call"]);
   force(pid);
-  const topics = mine(pid).filter((t) => strengths(pid)[t] >= recruiting.STRONG_CASE).slice(0, 3);
+  const topics = mine(pid).slice(0, 3);
   const sc = act(pid, "call")["scene"];
   const r = act(pid, "present", { scene: sc["id"], topics });
-  const raw = topics.reduce((a, t) => a + recruiting.PRESENT_HIT * recruiting.BASE_POINTS["call"] * (1 + strengths(pid)[t]), 0);
+  const raw = worth(pid);
   assert(raw > recruiting.BASE_POINTS["call"] && Math.abs(r["points"] - recruiting.BASE_POINTS["call"]) < 1e-9, () => show([raw, r["points"]]));
-  equal(r["scene"]["present"]["kind"], "hit");
+  equal(r["scene"]["present"]["kind"], recruiting.best_reaction(topics.map((t) => kind_of(pid, t))));
 });
 
 test("your lead-with gets a Yes with your case or a No, logs how he took it and ends the call", () => {
@@ -156,8 +166,8 @@ test("your lead-with gets a Yes with your case or a No, logs how he took it and 
   refused(() => act(pid, "pitch", { scene: sc["id"] }), 400);
   const before = recruiting.pending(st, ME, pid);
   const r = act(pid, "pitch", { pitch: strong, scene: sc["id"] });
-  const word = scenes._case_word(strengths(pid)[strong]);
-  equal(r["reaction"], { kind: scenes.case_kind(strengths(pid)[strong]), text: `${name(strong)}: Yes, one of his priorities. Your case there: ${word}.`,
+  const word = letter(pid, strong);
+  equal(r["reaction"], { kind: scenes.case_kind(st, ME, pid, strong), text: `${name(strong)}: Yes, one of his priorities. Your case there: ${word}.`,
     you: `You led with ${name(strong)}.`, revealed: strong });
   assert(recruiting.pending(st, ME, pid) > before, "the call's points land with the pitch");
   assert(!(pid in rc["scenes"][ME]), "the conversation is over");
@@ -177,7 +187,8 @@ test("your lead-with gets a Yes with your case or a No, logs how he took it and 
 
 test("what his decider cares about counts as one of his: a Yes in your opening and to your lead-with", () => {
   const fits = (q) => !mine(q).includes("academics") && strengths(q)["academics"] >= recruiting.BACKFIRE;
-  const pid = cold(fits);
+  // (what he wants on his mom's topic is drawn with it: the recruit is made hers before he is picked)
+  const pid = cold((q) => { force(q, "business", "mom", "academics"); return fits(q) && kind_of(q, "academics") !== "quiet"; });
   force(pid, "business", "mom", "academics");
   let sc = act(pid, "call")["scene"];
   const topics = ["academics", ...not_his(pid, 2)];

@@ -125,10 +125,10 @@ recruiting.CALL_REVEAL = 0.5;                          // a call tells you one o
 recruiting.ASK_NARROW = [0.85, 1.15];                  // *tune* the ask range once your staff has had a look at him (any look short of a complete report)
 recruiting.BASE_POINTS = { message: 1.0, call: 2.5, hc_visit: 6.0, offer: 4.0, official_visit: 8.0,
   call_recruit: 4.0 };             // *tune* the page's Video Call: more than a call ("call"), less than your head coach's visit
-recruiting.PITCH_PRIORITY = [1.0, 3.0];                // a pitch on one of his three priorities: 1 + 3 * your strength on it (1x weak, 4x strong) *tune*
+recruiting.PITCH_PRIORITY = [1.0, 3.0];                // no longer read: a pitch on one of his priorities is worth REACTION_WORTH by how he takes it (part 6); kept for old tools
 recruiting.PITCH_OTHER = [0.3, 0.4];                   // any other topic: 0.3 + 0.4 * strength
-recruiting.STRONG_CASE = 0.6;                          // a priority pitched at a strength from this lights him up; under it (and not under BACKFIRE) he is listening: your case is fair *tune*
-recruiting.BACKFIRE = 0.25;                            // a priority pitched at a strength under this backfires (he isn't buying it) ...
+recruiting.STRONG_CASE = 0.6;                          // a case from this up is a strong one: the bottom of the B's on the school-grade lines (grades.SCHOOL_LINES) *tune*
+recruiting.BACKFIRE = 0.25;                            // a priority pitched at a strength under this backfires (he isn't buying it): an F on the school-grade lines ...
 recruiting.BACKFIRE_COST = 0.5;                        // ... and costs this much of the action's base points
 recruiting.PRESENT_HIT = 0.25;                         // your opening on a call or visit (scenes.present): each of the three things that is one of his
 //                                                        priorities earns this share of the action's base times (1 + your strength); a weak one costs
@@ -169,7 +169,7 @@ recruiting.NIL_PROMISE_WEEKS = 2;                      // *tune* ... within this
 recruiting.MONEY_FORGIVE_CHANCE = { shy: 0.75, business: 0.35, guarded: 0.30, attention: 0.25, cocky: 0.10 };   // *tune* the chance each lets a broken money promise go at a small school
 recruiting.MONEY_FORGIVE_TIER = 4;                     // *tune* ... a school at this program tier or below (Group of 5 and the bottom)
 recruiting.ASK_MORE = [1.5, 1.25];                     // a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
-recruiting.TOP_GROUP = 8;                              // the schools he is seriously considering: his top this many by interest
+recruiting.TOP_GROUP = 8;                              // the schools he is seriously considering: his top this many by interest (fewer once he cuts his list: FINALISTS, part 6)
 // pestering: contacts past his patience from a school he is not considering cost it *tune*
 recruiting.PESTER_FREE = 3;                            // contacts (message, call, in-home visit; a scene's pitch is the contact it finishes) a school gets
 //                                                        before more count as pestering while he is not considering it (an offer in hand does not
@@ -820,8 +820,10 @@ function _pester_exempt(state, slug, pid) {
 function not_considering(state, slug, pid, win = null) {
   // He is not considering the school: among the schools that have worked or offered him (the set
   // `top_group` reads), ordered by interest plus this week's pending, it sits outside his top
-  // PESTER_TOP or under PESTER_SHARE of his leader's. His leader never is.
+  // PESTER_TOP or under PESTER_SHARE of his leader's. His leader never is. A school he will not consider at
+  // all (locked_out: too far from what he wants) or one he has cut from his finalists (cut_out) always is.
   const rc = state["recruiting"];
+  if (recruiting.locked_out(state, slug, pid, win) || recruiting.cut_out(state, slug, pid)) return true;
   const schools = new Set(Object.keys(rc["lists"][pid]));
   for (const [s, pids] of Object.entries(rc["offers"])) if (pids.includes(pid)) schools.add(s);
   for (const s of Object.keys(get(get(rc, "pending") || {}, pid, {}))) schools.add(s);
