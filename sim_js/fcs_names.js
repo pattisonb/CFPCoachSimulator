@@ -70,7 +70,7 @@ export const TEAMS = {
 
 export function new_slug(region) {
   // A stand-in's slug: 'fcs-' and its region, e.g. fcs-mid-atlantic (written out in TEAMS: a slug never changes).
-  return TEAMS[region].slug;
+  return TEAMS[region].slug;      // (the table itself: NEW_SLUGS is built from this before the namespace exists)
 }
 
 export function label(region) {

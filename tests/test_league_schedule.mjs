@@ -33,8 +33,11 @@ const ONE_TEAM_NO_GAMES = { format: FORMAT, remove: ["kent-state"],
 
 // The generator's output for the built-in league, seed 5, 2027 then 2028 (sha256 of the games and the history as
 // sorted JSON, a whole-number float written without its ".0": `"fcs_shift": 0`).
-const BUILTIN_DIGESTS = { 2027: "a3e087e6808e4aec8e9a06616b23fa5408f5f1d37d6079f49a655a6729282242",
-  2028: "cc83c7f7f777071fecd9ccaeb2b885cf0d7b127bba1f537c57b3512a89ab2a0f" };
+// Recorded again when the FCS stand-ins got their names: the text hashed differs only in the 90 and 88
+// `away_display` values that name one ("FCS Plains" then, "Plains Thunderheads" now); with the old labels put back it
+// gives the digests recorded before (a3e087e6... and cc83c7f7...), so not a game moved.
+const BUILTIN_DIGESTS = { 2027: "a2475fef38f16138f50d731ca48537d893413f2cda6656a0e2899c9195b682be",
+  2028: "214d75190a62d1e8f265fe148fb22b065b8e42fe6166c0513ce2c25bc00c6097" };
 
 const built_teams = (lgd) => league.build(lgd)["teams"];
 

@@ -53,7 +53,9 @@ async function main() {
   for (const [slug, t] of Object.entries(maps.real_teams)) {
     const made = maps.team[slug];
     assert(made.mascot !== t["mascot"], `${slug} keeps its real mascot`);
-    assert(made.slug !== slug, `${slug} keeps its real slug`);
+    // (a place-named school's slug is its place name, as the name it shows is)
+    if (tables.PLACES.has(slug)) assert(made.slug === slug, `${slug} goes by its place name, so its slug is that name's`);
+    else assert(made.slug !== slug, `${slug} keeps its real slug`);
     assert(made.school !== t["school_name"], `${slug} keeps its real full name`);
     if (tables.PLACES.has(slug)) {                 // named for its state or city: it goes by the place
       assert(made.short === t["short_name"], `${slug} is listed as a place but does not go by it`);
@@ -96,7 +98,7 @@ async function main() {
     const real = json(path.join(ROOT, "cfb_sim_data", "teams", "notre-dame.json"));
     assert(team["colors"]["primary"]["hex"] !== real["colors"]["primary"]["hex"]);          // a protected shade: moved a hair
     assert(Math.abs(parseInt(team["colors"]["primary"]["hex"].slice(1, 3), 16) - parseInt(real["colors"]["primary"]["hex"].slice(1, 3), 16)) <= tables.COLOR_NUDGE);
-    const kept = json(path.join(root, "cfb_sim_data", "teams", "iowa-city.json"));     // its old slug
+    const kept = json(path.join(root, "cfb_sim_data", "teams", "iowa.json"));          // a place-named school: its slug is its place name
     assert(kept["short_name"] === "Iowa" && kept["state"] === "IA" && kept["mascot"] === "Kernels", kept["short_name"]);
     assert(kept["school_name"] === "Iowa University" && kept["abbreviation"] === "IOWA");
     const states = fs.readFileSync(path.join(root, "ui", "src", "states.ts"), "utf8");      // the app's list of states
