@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Button from "../../components/Button/index.tsx";
 import Header from "../../components/Header/index.tsx";
+import SkinControl from "../../components/SkinControl/index.tsx";
 import TeamSelect from "../../components/TeamSelect/index.tsx";
 import { api } from "../../api.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
@@ -85,6 +86,7 @@ export default function Home({ theme, onToggleTheme }: Props) {
           >
             {m.loadSeason}
           </Button>
+          <SkinControl />
         </div>
         {error && (
           <p className="home__error" role="alert">

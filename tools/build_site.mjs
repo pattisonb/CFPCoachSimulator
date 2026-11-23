@@ -19,6 +19,11 @@
 // data/base_meta.json, and data/base_development.json for the Depth Chart's first read), so the 146 source rosters
 // stay out of the pack; only the fictional teams' files ship.
 //
+// A generic build also takes a skin (ui/public/skin.js: a file the player loads to give the game other names, in his
+// browser only): `write_names` publishes, beside game.js and the app's script, the list of the spots where a name
+// stands in each (`game.names.json`, `app.names.json`: places and marks, never a name) and has index.html start the
+// app through `Skin.boot`. No skin is ever part of a build: tools/make_skin.mjs makes one, to a git-ignored file.
+//
 // The dev server (ui/vite.config.ts) uses the same pieces: `bundle_game` for game.js and `dev_pack` for the data pack,
 // with the real rosters and nothing written to the repository.
 import fs from "node:fs";
@@ -54,6 +59,9 @@ export const PACK_GZIP = "game-data.gz";   // ... and the same pack as gzip, for
 const PACK_QUALITY = Number(process.env.CFP_PACK_QUALITY || 11);
 const PACK_WINDOW = 24;       // *tune* brotli's window, as a power of two (24: 16 MB, the most a browser reads)
 const UI_SKIP = new Set(["node_modules", "dist"]);      // never copied with the app's source
+export const GAME_NAMES = "game.names.json";      // where a skin's names go in game.js (ui/public/worker.js reads it)
+export const APP_NAMES = "app.names.json";        // ... and in the app's script (ui/public/skin.js `boot`)
+const APP_SCRIPT = /<script type="module" crossorigin src="(\.\/assets\/[^"]+\.js)"><\/script>/;      // the app's script in the built index.html
 
 function commit() {
   const r = spawnSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8", timeout: 30000 });
@@ -163,6 +171,54 @@ export function write_boot(root, dest) {
   return fs.readdirSync(path.join(dest, "teams")).filter((n) => n.endsWith(".json")).length;
 }
 
+/**
+ * What lets a generic build take a skin: the lists of where a name stands in `out`'s game.js and app script, and
+ * index.html starting the app through Skin.boot. The same two scripts are built again from the source names (in
+ * `tmp`, never published) and compared piece by piece with the published ones (tools/skin.mjs). Returns what was
+ * listed; a build this fails on is published as it was, and takes no skin.
+ */
+export async function write_names(tmp, out, env) {
+  try {
+    const skin = await import("./skin.mjs");
+    const { Maps } = await import("./generic/scrub.mjs");
+    const root = path.join(tmp, "names");
+    for (const d of JS_DIRS) copy_tree(path.join(ROOT, d), path.join(root, d));
+    copy_tree(path.join(ROOT, "ui"), path.join(root, "ui"), UI_SKIP);
+    copy_tree(path.join(ROOT, "pocket-faces"), path.join(root, "pocket-faces"), UI_SKIP);
+    const ui = path.join(root, "ui");
+    fs.symlinkSync(path.join(ROOT, "ui", "node_modules"), path.join(ui, "node_modules"), "junction");
+    run(process.execPath, [path.join(ui, "node_modules", "vite", "bin", "vite.js"), "build", "--logLevel", "warn"], ui, env);
+    bundle_game(ui, path.join(root, GAME_SCRIPT));
+    const page = fs.readFileSync(path.join(out, "index.html"), "utf8");
+    const entry = APP_SCRIPT.exec(page), real_entry = APP_SCRIPT.exec(fs.readFileSync(path.join(ui, "dist", "index.html"), "utf8"));
+    if (!entry || !real_entry) throw new Error("index.html does not load the app the way this expects");
+    const pairs = skin.pairs_of(new Maps(ROOT));
+    const report = {};
+    const lists = [
+      [GAME_NAMES, path.join(out, GAME_SCRIPT), path.join(root, GAME_SCRIPT)],
+      [APP_NAMES, path.join(out, entry[1]), path.join(ui, "dist", real_entry[1])],
+    ].map(([name, made, real]) => {
+      const a = fs.readFileSync(made, "utf8"), b = fs.readFileSync(real, "utf8");
+      const { names, problems } = skin.names_map(ui, a, b, pairs);
+      const proof = skin.check_map(ui, a, b, names, pairs);
+      problems.push(...proof.wrong);
+      if (proof.renamed) problems.push(`${proof.renamed} variables are not the same ones`);
+      names.complete = !problems.length;
+      for (const p of problems.slice(0, 12)) console.warn(`skins: ${name}: ${p}`);
+      report[name] = { spots: names.spots.length, complete: names.complete };
+      return [name, names];
+    });
+    for (const [name, names] of lists) fs.writeFileSync(path.join(out, name), JSON.stringify(names));
+    fs.writeFileSync(path.join(out, "index.html"), page.replace(APP_SCRIPT,
+      () => `<script src="./skin.js"></script>\n    <script>Skin.boot(${JSON.stringify(entry[1])}, ${JSON.stringify(`./${APP_NAMES}`)});</script>`));
+    return report;
+  } catch (err) {
+    console.warn("skins: the lists of names could not be made, so this build takes no skin:", err);
+    for (const name of [GAME_NAMES, APP_NAMES]) fs.rmSync(path.join(out, name), { force: true });
+    return null;
+  }
+}
+
 /** Write the site to `out` (wiped first). */
 export async function build({ out = path.join(ROOT, "ui", "dist"), generic = false } = {}) {
   const version = commit();
@@ -173,14 +229,16 @@ export async function build({ out = path.join(ROOT, "ui", "dist"), generic = fal
     const root = await stage(tmp, generic);
     const ui = path.join(root, "ui");
     fs.symlinkSync(modules, path.join(ui, "node_modules"), "junction");
-    run(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "build"], ui, { VITE_GAME_VERSION: version });
+    const env = { VITE_GAME_VERSION: version, ...(generic ? { VITE_SKINS: "1" } : {}) };      // (a skin is for the lookalike names only)
+    run(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "build"], ui, env);
     fs.rmSync(out, { recursive: true, force: true });
     copy_tree(path.join(ui, "dist"), out);
     bundle_game(ui, path.join(out, GAME_SCRIPT));
+    const skins = generic ? await write_names(tmp, out, env) : null;
     const pack = write_pack(root, out);
     const teams = write_boot(root, path.join(out, "boot"));
     fs.writeFileSync(path.join(out, "version.json"), JSON.stringify({ commit: version, generic }));
-    return { ...pack, teams, game_bytes: fs.statSync(path.join(out, GAME_SCRIPT)).size };
+    return { ...pack, teams, skins, game_bytes: fs.statSync(path.join(out, GAME_SCRIPT)).size };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -233,6 +291,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const out = at === -1 ? path.join(ROOT, "ui", "dist") : path.resolve(process.argv[at + 1]);
   build({ out, generic }).then((info) => {
     console.log(`${path.relative(ROOT, out) || out}/: ${PACK} ${mb(info.pack_bytes)} MB (${PACK_GZIP} ${mb(info.gzip_bytes)} MB, ${mb(info.raw_bytes)} MB unpacked), `
-      + `${info.files.length} files, ${GAME_SCRIPT} ${mb(info.game_bytes)} MB, ${info.teams} teams, ${generic ? "generic" : "real"} names`);
+      + `${info.files.length} files, ${GAME_SCRIPT} ${mb(info.game_bytes)} MB, ${info.teams} teams, ${generic ? "generic" : "real"} names`
+      + (generic ? `, ${info.skins ? `takes a skin (${Object.values(info.skins).map((v) => `${v.spots}${v.complete ? "" : " incomplete"}`).join(" and ")} names)` : "takes no skin"}` : ""));
   }).catch((err) => { console.error(err); process.exit(1); });
 }

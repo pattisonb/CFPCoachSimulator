@@ -12,7 +12,11 @@
    memory). One tab at a time holds the store: each worker has its own in-memory copy of the saved
    files and writes what it changed back, so a second tab would roll
    the first one's saves back. The worker takes the "cfp-game" Web Lock for its life before it
-   reads the store, waiting for it while another tab holds it (the page is told it is waiting). */
+   reads the store, waiting for it while another tab holds it (the page is told it is waiting).
+   A skin (skin.js says what one is): when the page's init says one is on, the game's script is loaded with the
+   skin's names written into it, the skin's files take the place of the site's own, and the saves are another store's
+   (see "a skin" below). Anything wrong with a skin is told to the page ({kind: "skin-failed", message}), which takes
+   the skin off and starts again without it. */
 "use strict";
 
 const GAME = "game.js";              // the game, one script (ui/game.entry.js): the global `Game`
@@ -24,6 +28,7 @@ const PACK_MAGIC = [0x43, 0x46, 0x50, 0x4b];      // "CFPK"
 // once a season, and without it every reopening of a career past its first season built it again).
 const KEPT = ["data/seasons/", "data/coaches/", "data/leagues/"];
 const DB_NAME = "cfp-game-files", DB_STORE = "files";     // path -> {t: the file's text, m: when it was written}
+let dbName = DB_NAME;      // a skin's careers are a store of their own (`${DB_NAME}@<the skin's id>`): team ids differ between skins
 
 const queue = [];          // messages from the page, served in order
 let wake = null;           // resolves the pump's wait for a message
@@ -134,7 +139,7 @@ const asked = (req) => new Promise((resolve, reject) => { req.onsuccess = () => 
 
 function openDb() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(dbName, 1);
     req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -265,6 +270,109 @@ function unpack(bytes) {
     put(path, decoder.decode(bytes.subarray(at, at + length)));
     at += length;
   }
+  return index.map(([path]) => path);
+}
+
+// ---- a skin -------------------------------------------------------------------------------------------------------
+// What a skin (skin.js; tools/make_skin.mjs makes one) changes here:
+//   - the game's script: game.js with the skin's names written into the spots the site lists (game.names.json);
+//   - the game's data: every path the skin lists (`pack`) and no other. The skin's own files (`files`) take the place
+//     of the site's, and the files the game makes itself (`generated`: the engine's teams, the base league) are made
+//     here from the skin's rosters (`sources`), by the game, the way the site's build makes its own: one step a
+//     worker (this script again, with `task`), as the build runs one step a process. They are kept (IndexedDB) and
+//     made again only when the site's own have changed, so a skin outlives a new version of the site;
+//   - the saves: a store of their own.
+const SKIN_NAMES = "game.names.json";
+const SKIN_STEPS = [["teams", "Making the skin's teams"], ["base", "Making the skin's league"]];
+let skin = null;           // the skin that is on: {meta, files, gameText, missed, mark, stale}
+
+const fetched = async (url, how) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url.split("?")[0]}: HTTP ${res.status}`);
+  return res[how]();
+};
+
+// The kept skin and the game's script with its names in it.
+async function readSkin(version) {
+  importScripts("./skin.js");
+  const kept = await self.Skin.read(["meta", "words", "files"]);
+  const meta = kept.meta;
+  if (!meta || !kept.words || !kept.files) throw new Error("no skin is kept in this browser");
+  if (meta.format !== self.Skin.FORMAT) throw new Error("the skin was made for another version of the game");
+  const v = `?v=${encodeURIComponent(version || "dev")}`;
+  const [text, names] = await Promise.all([fetched(`./${GAME}${v}`, "text"), fetched(`./${SKIN_NAMES}${v}`, "json")]);
+  const made = self.Skin.apply(text, names, self.Skin.lookup(kept.words), null);
+  return { meta, files: kept.files, gameText: made.text, missed: made.missed + (names.complete ? 0 : 1), mark: names.hash, stale: false };
+}
+
+// A failure that is the skin's: the page takes the skin off and starts again without it.
+function skinTrouble(err) { const e = err instanceof Error ? err : new Error(String(err)); e.skin = true; return e; }
+
+const scriptUrl = (text) => URL.createObjectURL(new Blob([text], { type: "text/javascript" }));
+
+// One step of making the skin's own data, in a worker of its own: it is given every file the game has (and reads the
+// skin's rosters itself) and answers with what the step wrote.
+function skinStep(task, files) {
+  return new Promise((resolve, reject) => {
+    if (typeof Worker === "undefined") { reject(new Error("this browser cannot make a skin's teams")); return; }
+    const w = new Worker("./worker.js");
+    const end = (err, written) => { w.terminate(); if (err) reject(err); else resolve(written); };
+    w.onerror = (e) => end(new Error(e.message || "the step failed"));
+    w.onmessage = (e) => {
+      if (e.data.kind === "task-done") end(null, e.data.written);
+      else if (e.data.kind === "task-failed") end(new Error(e.data.message));
+    };
+    w.postMessage({ kind: "init", task, gameText: skin.gameText, files });
+  });
+}
+
+// This worker as one step (`init.task`): the game with the files given and the skin's rosters, the step run, and
+// what it wrote sent back.
+async function runTask(init) {
+  try {
+    importScripts("./skin.js");
+    const kept = await self.Skin.read(["sources"]);
+    if (!kept.sources) throw new Error("the skin's rosters are not kept in this browser");
+    for (const [path, text] of init.files) put(path, text);
+    for (const path of Object.keys(kept.sources)) put(path, kept.sources[path]);
+    importScripts(scriptUrl(init.gameText));
+    const game = self.Game, written = new Map();
+    game.files.set_reader(store.read);
+    game.files.set_store({ ...store, write(path, text) { store.write(path, text); written.set(clean(path), String(text)); } });
+    if (init.task === "teams") game.modules.build_teams.main([]);
+    else if (init.task === "base") game.modules.league.write_base_files();
+    else throw new Error(`unknown step: ${init.task}`);
+    postMessage({ kind: "task-done", written: [...written] });
+  } catch (err) {
+    console.error(err);
+    postMessage({ kind: "task-failed", message: String((err && err.message) || err) });
+  }
+}
+
+// The game's data under the skin: `order` is the site's own data as it was unpacked.
+async function dressData(order) {
+  const S = self.Skin, meta = skin.meta;
+  const generated = new Set(meta.generated), pack = new Set(meta.pack);
+  // (a mark of the site's own data says whether the site has moved on since the skin was made, and another whether
+  // the kept made files are still the ones this site would make)
+  const { stale, key } = S.dress(order, { get: (path) => mem.get(path), put, drop }, meta, skin.files, skin.mark);
+  skin.stale = stale;
+  skin.files = null;
+  let made = (await S.read(["cache"])).cache;
+  if (!made || made.key !== key) {
+    const files = [...mem];
+    made = { key, files: {} };
+    for (const [task, saying] of SKIN_STEPS) {
+      loading(saying);
+      for (const [path, text] of await skinStep(task, files)) {
+        files.push([path, text]);
+        if (generated.has(path)) made.files[path] = text;
+      }
+    }
+    try { await S.write({ cache: made }); } catch (err) { console.warn("skin:", err); }      // not kept: made again next time
+  }
+  for (const path of Object.keys(made.files)) if (generated.has(path)) put(path, made.files[path]);
+  for (const path of pack) if (!mem.has(path)) throw new Error(`the skin has no ${path}`);
 }
 
 // ---- a week's games on several cores ----------------------------------------------------------------------------
@@ -316,7 +424,8 @@ function simStartHelpers() {
     sims.workers.push(helper);
     w.onmessage = (e) => { if (e.data.kind === "ready") startOne(k + 1); else if (e.data.kind === "failed") console.warn("sim helper:", e.data.message); };
     w.onerror = (e) => console.warn("sim helper:", e.message);
-    w.postMessage({ kind: "init", me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer, game: `./${GAME}?v=${encodeURIComponent(sims.version)}` });
+    w.postMessage({ kind: "init", me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer, game: `./${GAME}?v=${encodeURIComponent(sims.version)}`,
+      gameText: skin ? skin.gameText : null });      // (under a skin: the script with the skin's names in it)
   };
   setTimeout(() => startOne(0), SIM_START_MS);
 }
@@ -439,13 +548,20 @@ async function start(init) {
   let waitingTab = false;
   const locked = claimStore(() => { waitingTab = true; loading(WAITING_TAB, 0, 0, true); });
   locked.catch(() => {});
-  importScripts(`./${GAME}?v=${encodeURIComponent(sims.version)}`);
+  if (init.skin) {
+    try {
+      skin = await readSkin(init.version);
+      dbName = `${DB_NAME}@${skin.meta.id}`;
+      importScripts(scriptUrl(skin.gameText));
+    } catch (err) { throw skinTrouble(err); }
+  } else importScripts(`./${GAME}?v=${encodeURIComponent(sims.version)}`);
   const game = self.Game;
   scriptUp = true;       // from here the download says how far along it is
   loading("Downloading the game");
   const pack = await packing;
   loading("Unpacking the game");
-  unpack(pack);
+  const order = unpack(pack);
+  if (skin) { try { await dressData(order); } catch (err) { throw skinTrouble(err); } }
   if (waitingTab) loading(WAITING_TAB, 0, 0, true);      // the stages since took the notice over
   await locked;
   if (waitingTab) loading("Unpacking the game");
@@ -520,9 +636,15 @@ async function step() {
 
 async function main() {
   await untilMessage();
-  try { await start(queue.shift()); }
-  catch (err) { postMessage({ kind: "fatal", message: String((err && err.message) || err), plain: !!(err && err.plain) }); return; }
-  postMessage({ kind: "ready" });
+  const init = queue.shift();
+  if (init.task) { await runTask(init); return; }      // this worker is one step of making a skin's data
+  try { await start(init); }
+  catch (err) {
+    console.error(err);
+    postMessage({ kind: err && err.skin ? "skin-failed" : "fatal", message: String((err && err.message) || err), plain: !!(err && err.plain) });
+    return;
+  }
+  postMessage({ kind: "ready", skin: skin ? { id: skin.meta.id, name: skin.meta.name, stale: skin.stale, missed: skin.missed } : null });
   if (restoreError !== null) postMessage({ kind: "storage-error", message: restoreError, copy: NO_SAVES });
   try {
     for (;;) {

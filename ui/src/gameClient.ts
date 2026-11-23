@@ -1,5 +1,6 @@
 import { beginBusy } from "./busy.ts";
 import { ROOT } from "./router.ts";
+import { current as currentSkin, fail as failSkin, type SkinReport } from "./skin.ts";
 
 // The page's way to the game. There is no server: the game runs in this browser, in a Web Worker (public/worker.js,
 // the whole game as one script), and every call is a message to it, answered as a Response so api.ts reads it the way
@@ -8,6 +9,8 @@ import { ROOT } from "./router.ts";
 // The worker takes a moment to start (the game's data is downloaded and unpacked), so it starts with the page, and
 // until it is up the team picker's reads are answered from plain files the build wrote (boot/, tools/build_site.mjs):
 // the first screen shows at once and the game loads behind it.
+// With a skin on (skin.ts) those files are not read: they hold the site's own names, and the game answers with the
+// skin's once it is up.
 
 interface Reply {
   id: number;
@@ -41,6 +44,16 @@ let up = false;
 /** a read was answered from the build's files: a worker that then fails must say so itself, no call is waiting on it */
 let servedBoot = false;
 
+/** what the game said of its skin when it came up (null: none is on) */
+let skinReport: SkinReport | null = null;
+const skinWaiters: ((r: SkinReport | null) => void)[] = [];
+
+/** The skin the game is running on, once the game is up: null when none is on. */
+export function gameSkin(): Promise<SkinReport | null> {
+  if (up) return Promise.resolve(skinReport);
+  return new Promise((resolve) => skinWaiters.push(resolve));
+}
+
 /** how far the worker's start has come, in words; shown only while a call waits on it (or the start itself is held up) */
 let stageText = "";
 let waiting = 0;
@@ -56,7 +69,7 @@ function showStage() {
 // The team picker's reads while the worker is still starting: the answers the build wrote ahead (a game just started
 // gives the same ones). Anything else, or a file that is not there, waits for the worker.
 async function fromBoot(method: string, path: string): Promise<Response | null> {
-  if (up || dead || method !== "GET") return null;
+  if (up || dead || method !== "GET" || currentSkin()) return null;
   const m = /\/api\/teams(?:\/([^/]+))?$/.exec(new URL(path, location.href).pathname);
   if (!m) return null;
   try {
@@ -121,8 +134,13 @@ function start(): Promise<void> {
         showStage();
       } else if (m.kind === "ready") {
         up = true;
+        skinReport = m.skin ?? null;
+        for (const told of skinWaiters.splice(0)) told(skinReport);
         showStage();
         resolve();
+      } else if (m.kind === "skin-failed") {
+        // the game could not start on the skin: the skin comes off and the page starts again on the site's own names
+        void failSkin(String(m.message)).then(() => location.reload());
       } else if (m.kind === "fatal") die(m.message, m.plain);
       else if (m.kind === "status") snapshot = m.busy ? m.status : null;
       else if (m.kind === "storage-error") console.warn(m.copy || m.message);
@@ -132,7 +150,7 @@ function start(): Promise<void> {
         p.resolve(m as Reply);
       }
     };
-    w.postMessage({ kind: "init", version: import.meta.env.VITE_GAME_VERSION || "dev" });
+    w.postMessage({ kind: "init", version: import.meta.env.VITE_GAME_VERSION || "dev", skin: !!currentSkin() });
     worker = w;
   });
 }

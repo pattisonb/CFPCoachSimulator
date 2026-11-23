@@ -35,3 +35,9 @@ data/season_results.json
 
 # the built site (node tools/build_site.mjs writes ui/dist/)
 dist/
+
+# skins (node tools/make_skin.mjs): a skin holds the names the published site must not carry, so one is never
+# committed and never part of a build
+skins/
+*.skin.json
+*.skin.json.gz

@@ -2,8 +2,8 @@
    A helper is the game's one script (game.js, the same one worker.js loads: its engine and the whole game job,
    sim_js/game_job.js) and the league's teams, and no other file of the game.
 
-   From worker.js: {kind: "init", me, ctrl, data, game} once (its number, the two shared buffers and the game's
-   script), then for each week {kind: "jobs", gen, n, jobs, league: {path, sig, text?}}: the week's jobs as JSON
+   From worker.js: {kind: "init", me, ctrl, data, game, gameText} once (its number, the two shared buffers and the
+   game's script: where it is, or under a skin its text, with the skin's names in it), then for each week {kind: "jobs", gen, n, jobs, league: {path, sig, text?}}: the week's jobs as JSON
    (season._run_games' own) and the league they are played in (its teams file's text the first time it is played in
    here). The helper then claims games one at a time from the shared counter, plays each and writes its result, as
    JSON, into the shared data buffer; worker.js, which is inside the game's call for the whole week and cannot hear
@@ -28,7 +28,7 @@ function boot(init) {
   me = init.me;
   ctrl = new Int32Array(init.ctrl);
   data = new Uint8Array(init.data);
-  importScripts(init.game);
+  importScripts(init.gameText ? URL.createObjectURL(new Blob([init.gameText], { type: "text/javascript" })) : init.game);
   api = self.Game.engine;
   api.set_reader((path) => {
     const text = files.get(path);

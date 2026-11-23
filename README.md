@@ -51,6 +51,7 @@ Ratings are shown from 1 to 99, where the average player is about a 70.
 - **One tab at a time.** A second tab says the game is already open and waits, so two tabs never overwrite each
   other's saves.
 - **The published names are made up.** See [Names on the Published Site](#names-on-the-published-site).
+  A [skin](#skins) gives the game other names and rosters, in your browser only.
 
 ## Run It
 
@@ -86,6 +87,7 @@ when `--generic`, has the game make its own data, and writes a folder of plain f
 - `game-data.br` and `game-data.gz`: the game's data as one download, the data pack (brotli for a server that sends
   `Content-Encoding: br`, gzip for one that does not);
 - `boot/`: the team picker's answers worked out ahead, so the first screen shows before the game has loaded;
+- `skin.js`, `game.names.json` and `app.names.json` (a generic build): what lets the site take a [skin](#skins);
 - `version.json`: the commit.
 
 Packing the data is most of the build's time; `CFP_PACK_QUALITY=5` in the environment makes a quick build with a
@@ -127,7 +129,7 @@ the same code runs under either host.
 | `app_js/` | `api.js`, every call the app makes, as plain functions; `game.js`, the whole game for a host. |
 | `cfb_sim_data/` | The source rosters, coaches and preset faces. |
 | `data/` | The data the game reads (schedules, models, history). The game also writes generated files here, which are not committed. |
-| `tools/` | The site build, the game on Node, the name swap (`tools/generic/`) and the realism tools. |
+| `tools/` | The site build, the game on Node, the name swap (`tools/generic/`), skins (`make_skin.mjs`, `skin.mjs`, `skin_compare.mjs`) and the realism tools. |
 | `tests/` | The tests, plain Node scripts. |
 
 ## Tests
@@ -193,6 +195,49 @@ mascot, stadium and full name still swapped.
   the face parts alone.
 - `node tests/test_generic_names.mjs` is the gate: a new real name in the data or in the game's words needs a
   lookalike before it passes.
+
+## Skins
+
+A skin is one file a player loads on the published site's first screen (**Load a Skin**, beside Load Season) to see
+other names and rosters: teams, players, coaches, stadiums, conferences, bowls, trophies and awards, everywhere in
+the game. It stays in that browser (IndexedDB) and is there on the next visit; **Remove Skin** returns the site to
+its own names. The site reads `.json` and `.json.gz`.
+
+```
+node tools/make_skin.mjs                       # skins/real-names.skin.json and .json.gz (some 90 MB and 8 MB)
+node tools/make_skin.mjs --out FILE --name "Real Names" --id real-names
+```
+
+`make_skin.mjs` makes the skin that gives the published game the repository's own names and rosters: the game is
+staged with the swap and without, and the skin is what differs.
+
+**A skin is never published and never committed.** It holds exactly the names the published site must not carry.
+It is written to a git-ignored place (`skins/`, `*.skin.json*`) and goes from there to the player. No build
+contains one, and `tests/test_skin.mjs` holds the build to that.
+
+How it works (`ui/public/skin.js` is the part the page and the game's worker share; `tools/skin.mjs` is the build's):
+
+- **Data.** The skin holds the source data files that differ from the published ones, and the source rosters. The
+  files the game makes itself (the engine's teams, the base league) are not in it: the browser makes them from the
+  skin's rosters with the site's own code, the way the build does, once (some half a minute), and again only when a
+  new version of the site would make them differently. So a skin keeps working when the site is updated.
+- **Words in the site's scripts.** The generic build publishes, beside `game.js` and the app's script, a list of
+  the spots where a name stands (`game.names.json`, `app.names.json`: where, how long, and a 16-bit mark of the
+  name that belongs there; never a name). To make the lists the build builds both scripts a second time from the
+  source names (never published), reads the two as programs and compares them piece by piece. The browser writes
+  the skin's names into those spots before it runs the script.
+- **Careers.** A skin's careers are kept in a store of their own (team ids differ between skins), so the lists never
+  mix; taking a skin off deletes none of them, and they are back when it is loaded again.
+- **A skin cannot run code.** Its names are written only at the spots the site lists, each inside a string or a
+  property's name, and only when they are plain name text (no backslash, backtick, dollar sign, brace, angle
+  bracket or line break); a quote is written escaped. Its files can only stand in for the game's own data files
+  (`data/`, `cfb_sim_data/`), never a save. A file that is not a skin, or is one of another format (`FORMAT` in
+  `skin.js`: raise it when a skin made before a change can no longer be read), is refused with a sentence.
+- `npm run dev` and a build without `--generic` already show the source names: there the control is not shown.
+
+`node tests/test_skin.mjs` proves the round trip on Node (the skin applied to the generic build's data and script
+gives the source build's data, file for file, and the same career). `node tools/skin_compare.mjs` asks the same of
+two built sites in a browser: every answer of a seeded career and every page's text.
 
 ## Branches
 

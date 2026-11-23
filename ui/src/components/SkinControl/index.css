@@ -1,0 +1,33 @@
+/* Skins on the start screen: one control in the row of New Season and Load Season, and a line under the row. */
+.skin-control {
+  display: inline-flex;
+  align-items: stretch;
+  gap: var(--s2);
+}
+
+/* the skin that is on: a label the height of the buttons beside it */
+.skin-control__on {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control);
+  padding: 0 var(--s3);
+  border: var(--line) dashed var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.skin-control__file {
+  display: none;
+}
+
+/* what there is to say about a skin: the whole width of the hero, under its buttons */
+.skin-control__note {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s2);
+  border: var(--line) solid;
+  font-weight: 700;
+}
