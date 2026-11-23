@@ -21,7 +21,9 @@ export const messages = {
   notGraded: "Not Graded",
   moved: (up: boolean, n: number) => `${up ? "Up" : "Down"} ${n} since last season.`,
 
-  tierLabel: "Which tier",
+  tierLabel: "Which stars",
+  /** a pair of star levels, by its top: "4.5 to 5 Stars" */
+  band: (top: number) => `${top - 0.5} to ${top} Stars`,
   allTiers: "All",
   sortHint: "Click a Column to Sort",
   openResume: (team: string) => `Open ${team}'s resume.`,
@@ -47,7 +49,7 @@ export const messages = {
   short: { conference: "Conf" } as Record<string, string>,
   tips: {
     standing:
-      "Where the program stands: its name, results, NIL, market, league, coach and pro pipeline, moving slowly with what it does.",
+      "Where the program stands, in stars out of five: its name, results, NIL, market, league, coach and pro pipeline, moving slowly with what it does.",
     prestige: "History and a decade of results.",
     winning: "The last three seasons.",
     nil: "The collective's tier, set by the AD.",

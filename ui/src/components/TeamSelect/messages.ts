@@ -5,7 +5,7 @@ export const messages = {
   conference: "Conference",
   allConferences: "All Conferences",
   sort: "Sort",
-  sorts: { name: "By Name", state: "By State", overall: "By Overall", prestige: "By Prestige" },
+  sorts: { name: "By Name", state: "By State", overall: "By Overall", prestige: "By Stars" },
   noState: "No State",
   teamsLabel: "Teams",
   count: (n: number) => (n === 1 ? "1 Team" : `${n} Teams`),
@@ -13,7 +13,6 @@ export const messages = {
   random: "Random Team",
   newProgram: "Custom Program",
 
-  prestige: (n: number, of: number) => `Prestige ${n} of ${of}`,
   ovr: "OVR",
   off: "OFF",
   def: "DEF",

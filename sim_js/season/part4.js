@@ -528,7 +528,7 @@ function schedule_options(state, event_id, teams = null) {
     const accepts = theirs === "home" || gap >= -season.SCHEDULE_DRAW;
     const why = theirs === "home" ? "They Get the Home Game" : gap > season.SCHEDULE_DRAW ? "A Bigger Draw Than Them"
       : accepts ? "A Fair Trade" : "They Want the Home Game";
-    out.push({ slug, name: t["name"], conference: t["conference"], standing: programs.TIER_NAMES[programs.get(state, slug)["tier"]],
+    out.push({ slug, name: t["name"], conference: t["conference"], standing: programs.star_name(programs.stars_of(programs.get(state, slug)["rating"])),
       accepts, venue, why, displaced: other["away"] === slug ? other["home"] : other["away"] });
   }
   const key = (o) => [!o["accepts"], !fcs ? -programs.get(state, o["slug"])["rating"] : 0, o["name"]];

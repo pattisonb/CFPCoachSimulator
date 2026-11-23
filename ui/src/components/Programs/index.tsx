@@ -11,6 +11,7 @@ import { api } from "../../api.ts";
 import { titleCase } from "../../format.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import ProgramStars from "../ProgramStars/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -26,6 +27,8 @@ interface Program {
   name: string;
   tier: number;
   tier_name: string;
+  /** its standing in stars, 0.5 to 5 by halves */
+  stars: number;
   goal: string;
   rank: number;
   // the rating's own measures, 0 to 100
@@ -190,7 +193,7 @@ export default function Programs({ season, teams, onTeam }: Props) {
       key: "tier",
       label: m.cols.standing,
       tip: m.tips.standing,
-      render: (p) => <span className="programs__tag">{p.tier_name}</span>,
+      render: (p) => <ProgramStars stars={p.stars} size={13} />,
       sort: (p) => -p.rank,
     },
     ...TABLE.map(
@@ -207,7 +210,7 @@ export default function Programs({ season, teams, onTeam }: Props) {
 
   const you = view?.you;
   const job = season.job;
-  const rows = view ? view.rows.filter((p) => tier == null || p.tier === tier) : [];
+  const rows = view ? view.rows.filter((p) => tier == null || Math.ceil(p.stars) === tier) : [];
   const groups = you
     ? (view.group_order?.length ? view.group_order : PRO_ORDER)
         .map((g, i) => ({ g, v: you.pro_groups?.[g] ?? 0, i }))
@@ -233,7 +236,7 @@ export default function Programs({ season, teams, onTeam }: Props) {
               className={`programs__yours${open ? "" : " is-folded"}`}
               aside={
                 <span className="programs__head-tools">
-                  <span className="programs__tag is-solid">{you.tier_name}</span>
+                  <ProgramStars stars={you.stars} size={16} tip />
                   <button type="button" className="programs__fold" aria-expanded={open} onClick={toggle}>
                     {open ? m.hide : m.show}
                     {open ? (
@@ -342,14 +345,15 @@ export default function Programs({ season, teams, onTeam }: Props) {
                 <Chip on={tier == null} onClick={() => setTier(null)}>
                   {m.allTiers}
                 </Chip>
-                {Object.entries(view.tiers).map(([k, name]) => (
+                {/* the stars two levels at a time, by the band's top: 4.5 to 5 Stars, 3.5 to 4 Stars, ... */}
+                {[5, 4, 3, 2, 1].map((top) => (
                   <Chip
-                    key={k}
-                    on={tier === Number(k)}
-                    count={view.rows.filter((p) => p.tier === Number(k)).length}
-                    onClick={() => setTier(Number(k))}
+                    key={top}
+                    on={tier === top}
+                    count={view.rows.filter((p) => Math.ceil(p.stars) === top).length}
+                    onClick={() => setTier(top)}
                   >
-                    {name}
+                    {m.band(top)}
                   </Chip>
                 ))}
               </div>

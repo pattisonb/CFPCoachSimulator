@@ -307,7 +307,7 @@ export const SAMPLE_PROGRAMS = {
   you: {
     team: "you",
     name: "Your School",
-    tier_name: "Power",
+    tier_name: "4 Star",
     prestige: 74,
     winning: 68,
     nil: 71,
@@ -318,7 +318,7 @@ export const SAMPLE_PROGRAMS = {
     {
       team: "a",
       name: "Georgia",
-      tier_name: "Blue Blood",
+      tier_name: "5 Star",
       prestige: 95,
       winning: 93,
       nil: 92,
@@ -328,7 +328,7 @@ export const SAMPLE_PROGRAMS = {
     {
       team: "b",
       name: "Texas",
-      tier_name: "Blue Blood",
+      tier_name: "5 Star",
       prestige: 94,
       winning: 88,
       nil: 95,
@@ -338,7 +338,7 @@ export const SAMPLE_PROGRAMS = {
     {
       team: "you",
       name: "Your School",
-      tier_name: "Power",
+      tier_name: "4 Star",
       prestige: 74,
       winning: 68,
       nil: 71,
@@ -348,7 +348,7 @@ export const SAMPLE_PROGRAMS = {
     {
       team: "c",
       name: "Alabama",
-      tier_name: "Blue Blood",
+      tier_name: "5 Star",
       prestige: 97,
       winning: 86,
       nil: 90,

@@ -253,7 +253,7 @@ export const messages = {
   // ----- program widgets -----
   noPrograms: "No programs to compare yet.",
   program: "Program",
-  tier: "Tier",
+  tier: "Stars",
   prestige: "Prestige",
   winning: "Winning",
   proPipeline: "Pro Pipeline",

@@ -331,10 +331,6 @@
   margin: 2px 0 4px;
 }
 
-.team-banner__stars .is-off {
-  opacity: 0.45;
-}
-
 .team-banner__facts {
   display: flex;
   flex-wrap: wrap;

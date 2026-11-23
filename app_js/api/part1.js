@@ -818,6 +818,15 @@ function _team(slug) {
 
 // ----- teams -------------------------------------------------------------------
 
+function _card_stars(t) {
+  // A team's stars before any career: from its program's rating, or, for a program with no history on file (one a
+  // league file made), from the prestige it was given (1 to 6).
+  const p = api._programs();
+  if (truthy(get(p._history()["teams"], t["slug"]))) return p.stars_of(p.base(t["slug"])["rating"]);
+  return Math.max(0.5, Math.min(5, round(Number(get(t, "prestige") || 1) * 5 / 6 * 2) / 2));
+}
+
+
 function _team_card(t) {
   // What the team picker needs.
   const season = modules.season;
@@ -829,6 +838,7 @@ function _team_card(t) {
     group: polls.P4.has(t["conference"]) ? "P4" : polls.G6.has(t["conference"]) ? "G6" : "",
     fictional: t["fictional"], colors: t["colors"], stadium: t["stadium"],
     home_field_advantage: t["home_field_advantage"], prestige: t["prestige"],
+    stars: _card_stars(t),      // the program's standing, 0.5 to 5 by halves
     ratings: { ...shown.team_ratings(t["team_ratings"]), ...season.page_ratings(t) },   // the page's own: an average of the players' overalls
     head_coach: t["coaches"]["head_coach"]["name"],
     // his age as the career's first season starts (Your Coach opens on it); a copy, so the team is not marked

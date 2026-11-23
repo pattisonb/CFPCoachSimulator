@@ -14,6 +14,8 @@ export interface TeamCard {
   fictional: boolean;
   colors: { primary: string; secondary: string; accent?: string };
   prestige: number;
+  /** the program's standing in stars, 0.5 to 5 by halves */
+  stars?: number;
   ratings: { overall: number; offense: number; defense: number; special_teams: number };
   head_coach: string;
   /** his age as the first season starts */

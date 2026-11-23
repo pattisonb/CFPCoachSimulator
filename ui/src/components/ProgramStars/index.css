@@ -1,0 +1,12 @@
+/* A program's standing: five stars, filled by halves. */
+.program-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.program-stars .is-off {
+  opacity: 0.35;
+}

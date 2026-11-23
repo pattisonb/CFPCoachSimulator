@@ -24,6 +24,10 @@ programs.WEIGHTS = { prestige: 0.30, winning: 0.15, nil: 0.15, market: 0.10, con
 programs.TIERS = [[76, 1], [65, 2], [50, 3], [35, 4]];         // rating floors; below the last is tier 5
 programs.WORD_FLOORS = [["Elite", 90], ["Excellent", 80], ["Strong", 70], ["Good", 60], ["Solid", 50], ["Fair", 40], ["Thin", 30], ["Weak", 0]];   // the eight words your word's standing reads in (word.js); a program's grades are letters now (word_of) *tune*
 programs.PRO_GROUP_ORDER = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB", "S", "K", "P"];   // offseason.DRAFT_GROUP's groups, in its order
+// A program's standing is said in stars, five at most and by halves: ten levels, from its rating. The floors are set
+// so the league spreads over them (four programs at five stars, about a dozen at half a star); the tiers below are
+// the game's own bands (the AD's goal, the coach a program can hire) and are never shown by name. *tune*
+programs.STARS = [[82, 5], [75, 4.5], [68, 4], [60, 3.5], [53, 3], [46, 2.5], [38, 2], [30, 1.5], [23, 1]];   // rating floors; below the last is half a star
 programs.TIER_NAMES = { 1: "Blue Blood", 2: "Power", 3: "Solid", 4: "Modest", 5: "Bottom" };   // a standing, never a conference label: a Group of 6 program can be Solid or better
 programs.BASE_DEFAULT = { history: 15.0, prestige: 15.0, winning: 20.0, market: 25, nil: 15.0, conference: 10.0, coach: 55.0, pro: 0 };
 programs.RANK_BONUS = [[1, 0.8], [5, 0.5], [10, 0.35], [25, 0.35]];     // a season's score: win share plus these (cumulative), max 3.0
@@ -93,6 +97,21 @@ export function tier_of(rating) {
     if (rating >= floor) return t;
   }
   return 5;
+}
+
+
+export function stars_of(rating) {
+  // A program's stars from its rating: 0.5 to 5 by halves (programs.STARS).
+  for (const [floor, s] of programs.STARS) {
+    if (rating >= floor) return s;
+  }
+  return 0.5;
+}
+
+
+export function star_name(stars) {
+  // The stars in words, for a tag or a cell: "5 Star", "4.5 Star".
+  return `${stars} Star`;
 }
 
 
@@ -678,7 +697,7 @@ export function rows(state) {
     if (truthy(get(bt, "fictional"))) continue;
     const p = programs.get(state, s);
     const p4 = season._is_p4(s, bt);
-    const row = { team: s, name: bt["name"], conference: bt["conference"], tier: p["tier"], tier_name: programs.TIER_NAMES[p["tier"]],
+    const row = { team: s, name: bt["name"], conference: bt["conference"], tier: p["tier"], stars: programs.stars_of(p["rating"]), tier_name: programs.star_name(programs.stars_of(p["rating"])),
       rating: p["rating"], goal: programs.goal_for(p["tier"], p4, p["rating"], programs.INDEPENDENTS.has(get(bt, "conference")))["text"] };
     for (const k of ["prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups"]) row[k] = p[k];
     Object.assign(row, { grades: programs.grades_now(state, s), tags: programs.tags(s), grades_moved: truthy(get(p, "grades_moved")) ? p["grades_moved"] : null });
@@ -712,7 +731,7 @@ export function coach_ceiling(state, slug) {
 }
 
 Object.assign(programs, {
-  _market, market, market_row, mix, tier_of, _history, empty_drafts, base, z_of, scaled, pick_points, draft_line,
+  _market, market, market_row, mix, tier_of, stars_of, star_name, _history, empty_drafts, base, z_of, scaled, pick_points, draft_line,
   _pro_lines, pro_score, pro_group_scores, pro_recompute, pro_group_grade, season_score, init, upgrade,
   get: program_get, z, goal_for, final_ranks, draft_picks, update, nil_move,
   _profile, profile_rows, _num, _line, rank_score, recency, facilities_score, warmth, fill_score, grades, _grades,

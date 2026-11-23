@@ -29,7 +29,9 @@ function gameFiles(): Plugin {
       const build: Tools = await import(pathToFileURL(`${REPO_ROOT}tools/build_site.mjs`).href);
       mkdirSync(GAME_CACHE, { recursive: true });
       const pack = build.dev_pack(GAME_CACHE); // before the first page asks, so its load does not wait on it
-      const dirs = GAME_DIRS.map((d) => `${REPO_ROOT}${d}/`);
+      // (forward slashes throughout: on Windows REPO_ROOT has backslashes, and a changed file is compared with these
+      // after its own are turned, so a game file's change was never seen and the page kept the old game)
+      const dirs = GAME_DIRS.map((d) => `${REPO_ROOT}${d}/`.replaceAll("\\", "/"));
       server.watcher.add([...dirs, `${UI_ROOT}game.entry.js`]);
       server.watcher.on("all", (_event, file) => {
         const f = file.replaceAll("\\", "/");

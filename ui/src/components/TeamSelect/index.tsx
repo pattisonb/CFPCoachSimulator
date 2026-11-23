@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { CaretDown, MagnifyingGlass, Play, Shuffle, Star, X } from "@phosphor-icons/react";
+import { CaretDown, MagnifyingGlass, Play, Shuffle, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Helmet from "../Helmet/index.tsx";
 import { contrast, inkOn } from "../../colors.ts";
@@ -8,6 +8,7 @@ import { stateName } from "../../states.ts";
 import type { TeamCard } from "../../types.ts";
 import Details from "./Details.tsx";
 import { messages as m } from "./messages.ts";
+import ProgramStars from "../ProgramStars/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -15,9 +16,6 @@ interface Props {
 }
 
 type Sort = keyof typeof m.sorts;
-
-/** *tune* The top of the prestige scale (the teams' prestige runs 1 to this). */
-const PRESTIGE_MAX = 6;
 
 /** Conferences whose short name reads better in a menu. */
 const SHORT: Record<string, string> = {
@@ -30,7 +28,7 @@ const short = (c: string) => SHORT[c] ?? c;
 const SORTS: Record<Sort, (a: TeamCard, b: TeamCard) => number> = {
   name: (a, b) => a.name.localeCompare(b.name),
   overall: (a, b) => b.ratings.overall - a.ratings.overall || a.name.localeCompare(b.name),
-  prestige: (a, b) => b.prestige - a.prestige || b.ratings.overall - a.ratings.overall,
+  prestige: (a, b) => (b.stars ?? 0) - (a.stars ?? 0) || b.ratings.overall - a.ratings.overall,
   // a team with no state (a custom program can have none) goes last
   state: (a, b) =>
     Number(!a.state) - Number(!b.state) ||
@@ -347,21 +345,8 @@ function Banner({ team, onPlay }: { team: TeamCard; onPlay: () => void }) {
             .join(" · ")}
         </span>
         <h2 className="team-banner__mascot">{team.mascot}</h2>
-        <span
-          className="team-banner__stars"
-          role="img"
-          title={m.prestige(team.prestige, PRESTIGE_MAX)}
-          aria-label={m.prestige(team.prestige, PRESTIGE_MAX)}
-        >
-          {Array.from({ length: PRESTIGE_MAX }, (_, i) => (
-            <Star
-              key={i}
-              size={18}
-              weight={i < team.prestige ? "fill" : "regular"}
-              className={i < team.prestige ? undefined : "is-off"}
-              aria-hidden="true"
-            />
-          ))}
+        <span className="team-banner__stars">
+          <ProgramStars stars={team.stars ?? 0.5} size={18} />
         </span>
         <dl className="team-banner__facts">
           {facts.map(([k, v]) => (
