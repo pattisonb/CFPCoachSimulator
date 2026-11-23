@@ -35,7 +35,7 @@ import { useNotices, type Notice } from "../../notices.ts";
 import { useTab } from "../../tab.ts";
 import { faces, presetCoachFace, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
-import { inkOn, teamAccent } from "../../colors.ts";
+import { teamAccent, teamVars as teamColorVars } from "../../colors.ts";
 import { currentParams, navigate, rememberDynasty, replaceParams } from "../../router.ts";
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
@@ -95,9 +95,6 @@ const PASSING_MS = 8000;
 
 /** The offseason's stages before the portal opens (career_js/offseason.js STAGES). */
 const BEFORE_PORTAL = ["retention", "departures"];
-
-/** *tune* How much of your team's color the hard shadows under cards and buttons take, in percent. */
-const SHADOW_TINT = 34;
 
 export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNewSeason }: Props) {
   const [section, setSection] = useState(() => sectionOf(sectionKey));
@@ -254,24 +251,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
   // your team's colors for the whole game: the primary, or the secondary when the primary would vanish against this
   // theme's page; the text on it black or white, whichever reads
   const accent = myTeam ? teamAccent(myTeam.colors, theme) : null;
-  // the other two colors are for trim only (a stripe, a marker, a tint): words never sit on them without --team-2-on
-  const second =
-    myTeam && accent ? (accent === myTeam.colors.primary ? myTeam.colors.secondary : myTeam.colors.primary) : null;
-  const third = myTeam?.colors.accent ?? second;
-  const teamVars =
-    myTeam && accent && second && third
-      ? ({
-          "--team": accent,
-          "--team-2": second,
-          "--team-3": third,
-          "--team-on": inkOn(accent),
-          "--team-2-on": inkOn(second),
-          // the three colors as one stripe: mostly yours, then the second, a touch of the third
-          "--team-stripe": `linear-gradient(90deg, ${accent} 0 64%, ${second} 64% 88%, ${third} 88%)`,
-          // the hard pixel shadows lean toward your color
-          "--shadow": `color-mix(in srgb, ${accent} ${SHADOW_TINT}%, ${theme === "dark" ? "#0f0f0f" : "#37352f"})`,
-        } as CSSProperties)
-      : undefined;
+  const teamVars = teamColorVars(myTeam?.colors, theme) as CSSProperties | undefined;
   // while a sim runs, the week strip and your record follow it: each result lands on its tile as the week is played
   // (a game not on the schedule yet, a bowl or a playoff game, gets a tile of its own). Game Day keeps its score back
   // for the playback.

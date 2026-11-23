@@ -43,6 +43,36 @@ export function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** *tune* How much of a team's color the hard shadows under cards and buttons take, in percent. */
+const SHADOW_TINT = 34;
+
+/**
+ * A team's colors as the page's own (--team and the rest): on the game for your team, on a card for another's (a
+ * player's card wears his team's). Null when the team has none.
+ */
+export function teamVars(
+  colors: { primary: string; secondary: string; accent?: string } | null | undefined,
+  theme: "light" | "dark",
+): Record<string, string> | undefined {
+  if (!colors) return undefined;
+  // the primary, or the secondary when the primary would vanish against this theme's page
+  const accent = teamAccent(colors, theme);
+  // the other two colors are for trim only (a stripe, a marker, a tint): words never sit on them without --team-2-on
+  const second = accent === colors.primary ? colors.secondary : colors.primary;
+  const third = colors.accent ?? second;
+  return {
+    "--team": accent,
+    "--team-2": second,
+    "--team-3": third,
+    "--team-on": inkOn(accent),
+    "--team-2-on": inkOn(second),
+    // the three colors as one stripe: mostly the first, then the second, a touch of the third
+    "--team-stripe": `linear-gradient(90deg, ${accent} 0 64%, ${second} 64% 88%, ${third} 88%)`,
+    // the hard pixel shadows lean toward the color
+    "--shadow": `color-mix(in srgb, ${accent} ${SHADOW_TINT}%, ${theme === "dark" ? "#0f0f0f" : "#37352f"})`,
+  };
+}
+
 export type RGB = [number, number, number];
 
 /** A "#rrggbb" color as its three channels; mid-gray for anything else. */

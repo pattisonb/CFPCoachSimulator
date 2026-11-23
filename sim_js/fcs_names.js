@@ -50,21 +50,21 @@ export function _r(s) {
 // its mascot, but for the Mountain West's: that is a real conference's name, so its team is the Rocky Mountain
 // Jackalopes. *tune* names and colors
 export const TEAMS = {
-  "New England": { slug: "fcs-new-england", name: "New England Lobsters", mascot: "Lobsters", abbreviation: "LOB", stadium: "The Lobster Pot",
+  "New England": { slug: "fcs-new-england", name: "New England Lobsters", mascot: "Lobsters", abbreviation: "FCSL", stadium: "The Lobster Pot",
     colors: { primary: ["Lobster Red", "#C8322B"], secondary: ["Midnight Blue", "#14284B"], accent: ["White", "#FFFFFF"] } },
-  "Mid-Atlantic": { slug: "fcs-mid-atlantic", name: "Mid-Atlantic Blue Crabs", mascot: "Blue Crabs", abbreviation: "CRAB", stadium: "The Crab Trap",
+  "Mid-Atlantic": { slug: "fcs-mid-atlantic", name: "Mid-Atlantic Blue Crabs", mascot: "Blue Crabs", abbreviation: "FCSC", stadium: "The Crab Trap",
     colors: { primary: ["Crab Blue", "#1F6FB5"], secondary: ["Orange", "#F28C28"], accent: ["White", "#FFFFFF"] } },
-  "Southeast": { slug: "fcs-southeast", name: "Southeast Possums", mascot: "Possums", abbreviation: "POSS", stadium: "Possum Hollow",
+  "Southeast": { slug: "fcs-southeast", name: "Southeast Possums", mascot: "Possums", abbreviation: "FCSP", stadium: "Possum Hollow",
     colors: { primary: ["Charcoal", "#3A3D42"], secondary: ["Pink", "#F29CB7"], accent: ["White", "#FFFFFF"] } },
-  "Gulf Coast": { slug: "fcs-gulf-coast", name: "Gulf Coast Shrimpers", mascot: "Shrimpers", abbreviation: "SHMP", stadium: "Shrimp Boat Stadium",
+  "Gulf Coast": { slug: "fcs-gulf-coast", name: "Gulf Coast Shrimpers", mascot: "Shrimpers", abbreviation: "FCSS", stadium: "Shrimp Boat Stadium",
     colors: { primary: ["Coral", "#F26B5B"], secondary: ["Seafoam Teal", "#20B2AA"], accent: ["White", "#FFFFFF"] } },
-  "Great Lakes": { slug: "fcs-great-lakes", name: "Great Lakes Walleyes", mascot: "Walleyes", abbreviation: "WALL", stadium: "Walleye Landing",
+  "Great Lakes": { slug: "fcs-great-lakes", name: "Great Lakes Walleyes", mascot: "Walleyes", abbreviation: "FCSW", stadium: "Walleye Landing",
     colors: { primary: ["Lake Teal", "#0B5563"], secondary: ["Gold", "#E0B43A"], accent: ["White", "#FFFFFF"] } },
-  "Plains": { slug: "fcs-plains", name: "Plains Thunderheads", mascot: "Thunderheads", abbreviation: "THND", stadium: "Storm Cellar Field",
+  "Plains": { slug: "fcs-plains", name: "Plains Thunderheads", mascot: "Thunderheads", abbreviation: "FCST", stadium: "Storm Cellar Field",
     colors: { primary: ["Storm Gray", "#4A5560"], secondary: ["Lightning Yellow", "#FFD60A"], accent: ["White", "#FFFFFF"] } },
-  "Mountain West": { slug: "fcs-mountain-west", name: "Rocky Mountain Jackalopes", mascot: "Jackalopes", abbreviation: "JACK", stadium: "Jackalope Flats",
+  "Mountain West": { slug: "fcs-mountain-west", name: "Rocky Mountain Jackalopes", mascot: "Jackalopes", abbreviation: "FCSJ", stadium: "Jackalope Flats",
     colors: { primary: ["Sage", "#8A9A78"], secondary: ["Burnt Orange", "#C2571A"], accent: ["White", "#FFFFFF"] } },
-  "Pacific Northwest": { slug: "fcs-pacific-northwest", name: "Pacific Northwest Sasquatch", mascot: "Sasquatch", abbreviation: "SASQ", stadium: "Sasquatch Woods",
+  "Pacific Northwest": { slug: "fcs-pacific-northwest", name: "Pacific Northwest Sasquatch", mascot: "Sasquatch", abbreviation: "FCSQ", stadium: "Sasquatch Woods",
     colors: { primary: ["Evergreen", "#1E4D36"], secondary: ["Fog Cream", "#EDE6D3"], accent: ["White", "#FFFFFF"] } },
 };
 

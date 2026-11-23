@@ -29,12 +29,14 @@ interface Props {
 /** the game's answer for a player who has left the pool */
 const GONE = /unknown prospect/;
 
-/** "Open", "Committed: Texas", "Signed: SMU", "Leaning FCS", "Going Pro" */
+/** "Open", "Closed", "Committed: Texas", "Signed: SMU", "Leaning FCS", "Going Pro" */
 export function statusOf(r: ProspectRow): string {
   if (r.pro) return m.goingPro;
   if (r.signed && r.school_name) return m.signedWith(r.school_name);
   if (r.committed && r.school_name) return r.hard ? m.hardCommit(r.school_name) : m.committedTo(r.school_name);
   if (r.leaning_fcs) return m.leaningFcs;
+  // uncommitted, but not open to you: he will not consider you, or he cut his list without you
+  if (r.blocked && r.blocked.why !== "signed") return m.shut[r.blocked.why] ?? m.shut.locked;
   // uncommitted: where you stand with him, when you stand anywhere
   return r.stage === "top" ? m.openTop(r.top_size ?? 8) : (m.openAt[r.stage ?? ""] ?? m.open);
 }

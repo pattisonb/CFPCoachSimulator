@@ -55,13 +55,24 @@ dd.recruit-file__inline {
   background: var(--tile);
 }
 
-/* a priority's name, and your program's word on it at the line's end */
+/* a priority's name, and your program's word on it at the line's end: the grade keeps its place beside the name
+   (every name sits on two lines, or one with room for a second, and the grade never drops under it), so the three
+   tiles read alike and their grades line up */
 .recruit-file__snap-line {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0 6px;
+  gap: 6px;
+}
+
+.recruit-file__snap-line > b {
+  min-width: 0;
+  min-height: 32px; /* two lines, also under a one-word name */
+  line-height: 16px;
+}
+
+.recruit-file__snap-line > :not(b) {
+  flex: none;
 }
 
 .recruit-file__snap-cell--wide {

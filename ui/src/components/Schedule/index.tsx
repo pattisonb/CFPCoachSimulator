@@ -242,6 +242,7 @@ export default function Schedule({ season, teams, onBox }: Props) {
                   name={weekName(g)}
                   team={g.opponent ? teams.get(g.opponent) : undefined}
                   isNext={g === next}
+                  isNow={!g.played && g.week === week + 1}
                   picked={!!current && keyOf(g) === keyOf(current)}
                   onPick={() => setPicked(keyOf(g))}
                 />
@@ -260,6 +261,7 @@ function Row({
   name,
   team,
   isNext,
+  isNow,
   picked,
   onPick,
 }: {
@@ -267,13 +269,18 @@ function Row({
   name: string;
   team: TeamCard | undefined;
   isNext: boolean;
+  /** the week the season is in, a game or a bye */
+  isNow: boolean;
   picked: boolean;
   onPick: () => void;
 }) {
   if (!isGame(g))
     return (
       <li className="sched-row sched-row--bye">
-        <span className="sched-row__week">{name}</span>
+        <span className="sched-row__week">
+          {name}
+          {isNow && <span className="sched-row__tag">{m.thisWeek}</span>}
+        </span>
         <span />
         <span className="sched-col--kickoff" />
         <span className="sched-row__bye">{m.bye}</span>
@@ -294,7 +301,7 @@ function Row({
       >
         <span className="sched-row__week">
           {name}
-          {isNext && <span className="sched-row__tag">{m.next}</span>}
+          {(isNow || isNext) && <span className="sched-row__tag">{isNow ? m.thisWeek : m.next}</span>}
         </span>
         <span>{dateText(g.date) || m.tba}</span>
         <span className="sched-col--kickoff">{timeText(g.date) || m.tba}</span>

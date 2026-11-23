@@ -64,6 +64,8 @@ const keyOf = (role: string, slug: string) => `${role}|${slug}`;
  */
 export default function DepthChart({ seasonId, team, mine, teams, onTeam, weekLabels, colors }: Props) {
   const yours = team === mine;
+  // the team itself, for a player's card (its colors and its name)
+  const teamCard = teams?.get(team);
   // every FBS team, yours first, for the picker in the bar
   const teamOptions = useMemo(() => {
     const all = teams ? [...teams.values()].filter((t) => !t.fictional && t.subdivision === "FBS") : [];
@@ -381,6 +383,7 @@ export default function DepthChart({ seasonId, team, mine, teams, onTeam, weekLa
                 profile={profile?.kind === "ready" ? profile.profile : null}
                 error={profile?.kind === "error" ? profile.msg : null}
                 weekLabels={weekLabels}
+                team={teamCard}
                 onEditLook={() => navigate("playerEdit", { season: seasonId, team, player: picked.p.slug })}
               />
             )}
@@ -427,6 +430,7 @@ export default function DepthChart({ seasonId, team, mine, teams, onTeam, weekLa
                 profile={profile?.kind === "ready" ? profile.profile : null}
                 error={profile?.kind === "error" ? profile.msg : null}
                 weekLabels={weekLabels}
+                team={teamCard}
                 onEditLook={() => navigate("playerEdit", { season: seasonId, team, player: picked.p.slug })}
               />
             ) : (

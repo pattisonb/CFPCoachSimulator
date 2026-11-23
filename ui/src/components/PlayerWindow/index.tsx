@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Modal from "../Modal/index.tsx";
 import PlayerView from "../PlayerView/index.tsx";
 import { api } from "../../api.ts";
+import { cachedStandIns, cachedTeams } from "../../teams.ts";
 import type { DepthCard, PlayerProfile } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -69,6 +70,7 @@ export default function PlayerWindow({ seasonId, who, weekLabels, onClose }: Pro
           profile={ready.profile}
           error={ready.profile ? null : (ready.error ?? null)}
           weekLabels={weekLabels}
+          team={[...(cachedTeams() ?? []), ...cachedStandIns()].find((t) => t.slug === who?.team)}
         />
       )}
     </Modal>

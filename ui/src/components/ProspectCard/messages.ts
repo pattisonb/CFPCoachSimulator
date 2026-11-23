@@ -25,6 +25,8 @@ export const messages = {
   games: (n: number) => (n === 1 ? "1 Game" : `${n} Games`),
   from: (school: string) => `From ${school}`,
   open: "Open",
+  /** uncommitted, but the door is shut on you: he will not consider you, or you missed his cut */
+  shut: { locked: "Closed", finalists: "Cut You" } as Record<string, string>,
   openAt: { visited: "Open · Visited", contact: "Open · In Contact" } as Record<string, string>,
   /** in his top group, by its size this week: 8, then his finalists (5, 3) */
   openTop: (n: number) => `Open · Top ${n}`,

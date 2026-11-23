@@ -2,6 +2,9 @@ export const messages = {
   label: "Your Schedule",
   earlier: "Earlier Games",
   later: "Later Games",
+  /** the week you are in, a game or a bye */
+  now: "Now",
+  /** your next game, when the week you are in is a bye */
   next: "Next",
   bye: "Bye",
   at: "at",

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { Check, Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Blocks from "../Blocks/index.tsx";
@@ -7,9 +7,10 @@ import Grade, { isGrade } from "../Grade/index.tsx";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
 import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
+import { teamVars } from "../../colors.ts";
 import { lookOf } from "../../faces.ts";
 import { formatClass, ordinal } from "../../format.ts";
-import type { DepthCard, GameLogRow, PlayerProfile } from "../../types.ts";
+import type { DepthCard, GameLogRow, PlayerProfile, TeamCard } from "../../types.ts";
 import { Career, RecruitedHow, Recruitment } from "./History.tsx";
 import { messages as m } from "./messages.ts";
 import "./index.css";
@@ -25,6 +26,8 @@ interface Props {
   weekLabels?: Record<string, string>;
   /** open Edit Player Look for him */
   onEditLook?: () => void;
+  /** his team: the card wears its colors and names it in the head (without it, the game's own colors) */
+  team?: TeamCard;
 }
 
 const TABS = ["overview", "ratings", "development", "abilities", "history"] as const;
@@ -166,7 +169,7 @@ const BAD_PROMISE = new Set(["Slipping", "Broken"]);
  * History: this season's ranks, games and honors, and his past seasons. The card's facts show at once; the profile's
  * parts fill in when it comes.
  */
-export default function PlayerView({ card: p, profile: pr, error, weekLabels, onEditLook }: Props) {
+export default function PlayerView({ card: p, profile: pr, error, weekLabels, onEditLook, team }: Props) {
   const [picked, setTab] = useState<Tab>("overview");
   // another team's player: his ceilings are not yours to see, so Development is not offered
   const theirs = !!pr && !pr.attributes.some((x) => x.potential != null);
@@ -192,9 +195,12 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
   );
   const coachability = pr?.coachability ?? p.coachability;
   const potential = pr?.potential_word ?? p.potential_word;
+  // his own team's colors, on a card opened from anywhere (another team's player is not drawn in yours)
+  const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  const colors = teamVars(team?.colors, theme) as CSSProperties | undefined;
 
   return (
-    <article className="player-view" aria-label={p.name}>
+    <article className="player-view" aria-label={p.name} style={colors}>
       {/* his head and his tabs stay at the top while the tab under them scrolls */}
       <div className="pin-top">
         <ProfileHead
@@ -210,7 +216,9 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
           }
           name={p.name}
           beside={[p.jersey && m.jersey(p.jersey), p.position].filter(Boolean).join(" ")}
-          line={[formatClass(p.class), p.height, p.weight ? m.pounds(p.weight) : null].filter(Boolean).join(" · ")}
+          line={[team?.name ?? pr?.team.name, formatClass(p.class), p.height, p.weight ? m.pounds(p.weight) : null]
+            .filter(Boolean)
+            .join(" · ")}
           tags={
             <>
               {/* his place on the depth chart, as a tag: WR2 (a starter's in ink) */}

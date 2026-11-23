@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowRight,
   ArrowDown,
@@ -134,6 +134,14 @@ function Summary({ rep }: { rep: NonNullable<ProspectDetail["report"]> }) {
   );
 }
 
+/** A priority's name on two lines, split at the space nearest its middle ("Winning" / "Now"); one word stays whole. */
+function twoLines(name: string): string[] {
+  const spaces = [...name].flatMap((ch, i) => (ch === " " ? [i] : []));
+  if (!spaces.length) return [name];
+  const at = spaces.reduce((best, i) => (Math.abs(i - name.length / 2) < Math.abs(best - name.length / 2) ? i : best));
+  return [name.slice(0, at), name.slice(at + 1)];
+}
+
 /** Overview: the Recruiting Battle and the Recruit Snapshot, one under another (the scout's summary is on Scouting). */
 export function OverviewTab({
   r,
@@ -234,7 +242,14 @@ export function OverviewTab({
                 >
                   <span className="label">{m.priority(i)}</span>
                   <span className="recruit-file__snap-line">
-                    <b className={t ? undefined : "recruit-file__snap-unknown"}>{name ?? m.unknown}</b>
+                    <b className={t ? undefined : "recruit-file__snap-unknown"}>
+                      {twoLines(name ?? m.unknown).map((part, k) => (
+                        <Fragment key={k}>
+                          {k > 0 && <br />}
+                          {part}
+                        </Fragment>
+                      ))}
+                    </b>
                     {t && <SchoolGrade grade={grade} size="sm" />}
                   </span>
                   {/* how he took your pitch on it last time: what tells you where your grade sits against what he wants */}

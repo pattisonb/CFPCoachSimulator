@@ -69,6 +69,12 @@ export default function SeasonStrip({
   const next =
     games.find((g) => g.week === week + 1 && !g.played) ??
     games.find((g) => g.kind !== "bye" && g.kind !== "open" && !g.played);
+  // the week you are in is tagged Now; when it is a bye, the game after it is tagged Next
+  const isNow = !!next && next.week === week + 1;
+  const upcoming =
+    isNow && (next.kind === "bye" || next.kind === "open")
+      ? games.find((g) => g.kind !== "bye" && g.kind !== "open" && !g.played && g.week > next.week)
+      : undefined;
 
   // a postseason week with no game of yours is settled once it has been played, and so is every one after it once
   // the field is set and you have no game left (your bowl is played, or you were not picked)
@@ -206,7 +212,8 @@ export default function SeasonStrip({
                 <span className="season-strip__week-name" title={g.title ?? weekLabels[g.week] ?? undefined}>
                   {m.short[g.week] ?? g.title ?? weekLabels[g.week] ?? m.week(g.week)}
                 </span>
-                {isNext && <span className="season-strip__tag">{m.next}</span>}
+                {isNext && <span className="season-strip__tag">{isNow ? m.now : m.next}</span>}
+                {g === upcoming && <span className="season-strip__tag season-strip__tag--quiet">{m.next}</span>}
               </span>
               {title ? (
                 <span
