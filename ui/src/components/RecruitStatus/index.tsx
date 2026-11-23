@@ -32,11 +32,9 @@ const ICONS: Record<Shown, Icon> = {
   signed: PenNib,
 };
 
-/** *tune* How much larger your own signee's stamp is than another school's, in pixels a side. */
-const MINE_GROWS = 4;
 /** *tune* A school's second color shows on its first when the two stand this far apart (contrast ratio). */
 const SECOND_SHOWS = 1.35;
-/** *tune* A stamp under this many pixels a side is a small one (in a table's cell): lighter edges, yours no larger. */
+/** *tune* A stamp under this many pixels a side is a small one (in a table's cell): lighter edges. */
 const SMALL = 24;
 
 const isHex = (c?: string): c is string => !!c && /^#[0-9a-f]{6}$/i.test(c);
@@ -81,7 +79,7 @@ export default function RecruitStatus({ status, size = 18, stamp, school, school
   const mine = !!held && !status.away;
   const signed = status.key === "signed";
   const small = stamp < SMALL;
-  const side = stamp + (mine && signed && !small ? MINE_GROWS : 0);
+  const side = stamp;
   const style = {
     "--side": `${side}px`,
     ...(colors && { "--c": colors.primary, "--c2": cornerOn(colors), "--on": inkOn(colors.primary) }),

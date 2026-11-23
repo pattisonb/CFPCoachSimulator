@@ -42,12 +42,12 @@
   background: linear-gradient(to top, var(--c) 5px, var(--c2) 5px, var(--c2) 7px, var(--paper-hi) 7px);
 }
 
-/* yours, signed: a second frame around the stamp, so your own class stands out of a list of everyone's */
+/* yours, signed: a ring of your second color just inside the stamp's edge. The stamp is no bigger than anyone else's
+   (it must not cover more of his face), so your own class stands out by its frame, not its size */
 .recruit-status--stamp.is-signed.is-mine {
   box-shadow:
-    0 0 0 2px var(--paper-hi),
-    0 0 0 4px var(--ink),
-    4px 4px 0 2px var(--shadow);
+    inset 0 0 0 2px var(--c2),
+    2px 2px 0 var(--shadow);
 }
 
 /* a small one, in a line of text (a table's cell): a thinner edge and shadow, the band and frame to scale */
@@ -64,6 +64,6 @@
 
 .recruit-status--stamp.is-small.is-signed.is-mine {
   box-shadow:
-    0 0 0 1px var(--paper-hi),
-    0 0 0 3px var(--ink);
+    inset 0 0 0 1px var(--c2),
+    1px 1px 0 var(--shadow);
 }
