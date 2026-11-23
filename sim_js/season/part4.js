@@ -477,7 +477,7 @@ function _other_game(state, slug, week, skip) {
 }
 
 function _fcs_picker_names(teams) {
-  // slug -> how a stand-in is named in a picker: its region label, never its own name;
+  // slug -> how a stand-in is named in a picker: its name (fcs_label), never a real school's;
   // stand-ins that share a label get "· A", "· B" by slug order.
   const by_label = {};
   for (const slug of sorted(Object.entries(teams).filter(([, t]) => truthy(get(t, "fictional"))).map(([s]) => s))) {

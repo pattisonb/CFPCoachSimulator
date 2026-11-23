@@ -26,6 +26,10 @@ export const cachedStandIns = (): TeamCard[] => standIns;
 export const nameInLine = (name: string, slug: string | null | undefined): string =>
   standIns.some((t) => t.slug === slug) && !/^the /i.test(name) ? `the ${name}` : name;
 
+/** The team a game line names (a program or a stand-in), where only its name is at hand: for its colors and letters. */
+export const teamNamed = (name: string | null | undefined): TeamCard | undefined =>
+  [...(cache ?? []), ...standIns].find((t) => t.name === name);
+
 /** The teams (the FCS stand-ins left out); a failed load can be tried again. */
 export function loadTeams(): Promise<TeamCard[]> {
   if (cache) return Promise.resolve(cache);

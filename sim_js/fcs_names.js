@@ -57,7 +57,7 @@ export const TEAMS = {
   "Southeast": { slug: "fcs-southeast", name: "Southeast Possums", mascot: "Possums", abbreviation: "POSS", stadium: "Possum Hollow",
     colors: { primary: ["Charcoal", "#3A3D42"], secondary: ["Pink", "#F29CB7"], accent: ["White", "#FFFFFF"] } },
   "Gulf Coast": { slug: "fcs-gulf-coast", name: "Gulf Coast Shrimpers", mascot: "Shrimpers", abbreviation: "SHMP", stadium: "Shrimp Boat Stadium",
-    colors: { primary: ["Coral", "#F26B5B"], secondary: ["Teal", "#0E7C7B"], accent: ["White", "#FFFFFF"] } },
+    colors: { primary: ["Coral", "#F26B5B"], secondary: ["Seafoam Teal", "#20B2AA"], accent: ["White", "#FFFFFF"] } },
   "Great Lakes": { slug: "fcs-great-lakes", name: "Great Lakes Walleyes", mascot: "Walleyes", abbreviation: "WALL", stadium: "Walleye Landing",
     colors: { primary: ["Lake Teal", "#0B5563"], secondary: ["Gold", "#E0B43A"], accent: ["White", "#FFFFFF"] } },
   "Plains": { slug: "fcs-plains", name: "Plains Thunderheads", mascot: "Thunderheads", abbreviation: "THND", stadium: "Storm Cellar Field",

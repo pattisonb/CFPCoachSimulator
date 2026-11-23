@@ -1700,7 +1700,7 @@ function _check_merged(doc, blob, seed) {
   const engine = league.build(lgd);        // writes is then the one a rebuild from the saved league gives, byte for byte
   let games = null;
   if (merged["structural"]) {
-    // the teams as season.load_teams shows them (the stand-ins by region), as offseason.next_season passes them
+    // the teams as season.load_teams shows them (the stand-ins as themselves), as offseason.next_season passes them
     const teams = new_dict(engine["teams"]);
     for (const [s, t] of Object.entries(engine["teams"])) {
       teams[s] = truthy(get(t, "fictional")) ? season.stand_in_names({ [s]: { ...t } })[s] : t;

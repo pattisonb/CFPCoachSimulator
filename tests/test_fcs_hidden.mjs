@@ -1,7 +1,7 @@
 // The fictional FCS stand-ins and their players never show in a league-wide view: the injury report, team and player
 // stats, leaders, awards, standings, the review, the resume, the recruiting pages. A view of a stand-in itself (its
 // depth chart, a player page, its stats, injuries, rivalries, schedule) is refused, and a career cannot start there.
-// They show only as an opponent's region label and in the box score of a game they played.
+// They show only as an opponent, by their own names ("Plains Thunderheads"), and in the box score of a game they played.
 // `node tests/test_fcs_hidden.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 import { sorted } from "../engine_js/pyrt.js";
@@ -14,7 +14,7 @@ const show = (v) => JSON.stringify(v);
 const FICT = Object.fromEntries(Object.entries(season.load_teams()).filter(([, t]) => t["fictional"]));
 // the placeholder slugs, school names, towns, mascots and stadiums the stand-ins once had: none may show anywhere
 const OLD_NAMES = Object.keys(fcs_names._table()[1]);
-// a game line may point at the stand-in it played (by slug, shown as "FCS <region>")
+// a game line may point at the stand-in it played (by slug, shown by its name)
 const GAME_LINE_KEYS = new Set(["opponent", "opp", "home", "away"]);
 
 /** No stand-in as a row of its own (a slug outside a game line), and none of the old placeholder names anywhere. */
@@ -49,10 +49,10 @@ const base = `/api/season/${sid}`;
 const first = sorted(Object.values(api.loaded_state()["games"]).filter((g) => g["home"] in FICT || g["away"] in FICT), (g) => [g["week"], g["event_id"]])[0];
 let fslug = null;
 
-// before week 1 a game can be traded: an FCS date's picker offers the other stand-ins, by region only
-test("the schedule editor names a stand-in only by its region, each region once", () => {
+// before week 1 a game can be traded: an FCS date's picker offers the other stand-ins, each by its own name
+test("the schedule editor names a stand-in only by its own name, each stand-in once", () => {
   const edit = api.call("GET", `${base}/schedule_edit`);
-  clean("schedule edit", edit, ["slug"]);                     // a swap option's value, shown by its region
+  clean("schedule edit", edit, ["slug"]);                     // a swap option's value, shown by its name
   const options = edit["games"].flatMap((g) => g["options"]).filter((o) => o["slug"] in FICT);
   assert(options.length, "the FCS date offers no other stand-in");
   for (const o of options) equal(o["name"], season.fcs_label(o["slug"]));

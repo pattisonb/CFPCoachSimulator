@@ -13,7 +13,7 @@ import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
-import { cachedTeams } from "../../teams.ts";
+import { cachedTeams, teamNamed } from "../../teams.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace, type Face as FaceSpec } from "../../faces.ts";
 import { byChance, standingOf, statusOf, topicPhrase } from "../../standing.ts";
@@ -569,7 +569,7 @@ function RecruitPanel({
   const [nil, setNil] = useState(r.offered ? r.nil + 5 : askDefault);
   const openWeeks = r.visit_weeks.filter((w) => !w.taken_by && w.week > board.week);
   // a weekend's opponent by its letters, so the week and the team both show in the narrow picker
-  const abbrOf = (name: string) => cachedTeams()?.find((t) => t.name === name)?.abbreviation ?? name;
+  const abbrOf = (name: string) => teamNamed(name)?.abbreviation ?? name;
   const [visitWeek, setVisitWeek] = useState<number | null>(openWeeks[0]?.week ?? null);
   // an offer can carry the promise of a starting role (once per recruit)
   const [busy, setBusy] = useState(false);
@@ -911,12 +911,7 @@ function RecruitPanel({
                     <div className="recruit__visit">
                       <span className="label">{m.officialVisit}</span>
                       {/* the weekend's opponent in its colors, beside the picker */}
-                      <Swatch
-                        team={cachedTeams()?.find(
-                          (t) => t.name === openWeeks.find((w) => w.week === visitWeek)?.opponent_name,
-                        )}
-                        size={24}
-                      />
+                      <Swatch team={teamNamed(openWeeks.find((w) => w.week === visitWeek)?.opponent_name)} size={24} />
                       <select
                         aria-label={m.pickWeekend}
                         disabled={!r.offered}
