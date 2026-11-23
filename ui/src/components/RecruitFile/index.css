@@ -368,6 +368,12 @@ dd.recruit-file__inline {
   white-space: nowrap;
 }
 
+/* a range in words: a long one ("Elite – All-American") takes a second line, never past the panel's edge */
+.recruit-file__num.is-words {
+  line-height: 1.2;
+  white-space: normal;
+}
+
 .recruit-file__foot {
   color: var(--ink-soft);
   border-top: 1px solid var(--line-soft);

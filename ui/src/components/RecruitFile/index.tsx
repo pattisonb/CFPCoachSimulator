@@ -468,7 +468,7 @@ export function ScoutingTab({
                   mid={Math.round(coach.mid)}
                   soft={CONFIDENCE_OF[coach.uncertainty] === "Low"}
                 />
-                <b className="recruit-file__num">{m.wordRange(coach.words[0], coach.words[1])}</b>
+                <b className="recruit-file__num is-words">{m.wordRange(coach.words[0], coach.words[1])}</b>
               </Tooltip>
             )}
           </div>
@@ -484,7 +484,7 @@ export function ScoutingTab({
               >
                 <span className="recruit-file__rating-name">{x.label}</span>
                 <RangeBar lo={x.lo} hi={x.hi} mid={x.mid} soft={x.uncertainty === "High"} />
-                <b className="recruit-file__num">{m.wordRange(x.words[0], x.words[1])}</b>
+                <b className="recruit-file__num is-words">{m.wordRange(x.words[0], x.words[1])}</b>
               </Tooltip>
             ))}
           </div>
