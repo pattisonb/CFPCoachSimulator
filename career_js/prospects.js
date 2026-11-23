@@ -1037,7 +1037,7 @@ prospects.HISTORY_SHOWN = 40;                          // a board row's History:
 prospects.HIS_OWN = ["commit", "hard", "flip", "decommit", "signed", "leaning_fcs", "bloomed", "pro", "twist", "hat", "softened"];   // his own moves: every school's show (persona.shown_to: a quiet one, a private one, only its school)
 prospects.PRO = "Pro Baseball";                        // where a Two-Sport recruit who took the baseball money went
 prospects.HISTORY_KEYS = ["week", "portal_week", "kind", "action", "pitch", "nil", "reaction", "school", "answer", "about", "truthful", "topics", "hit", "line",
-  "question", "offered", "why", "how"];   // a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
+  "question", "offered", "why", "how", "live"];   // a Package Deal question's answer (about his mate, offered or not), a promise broken over his mate
 
 
 // a save from before his ask came from scouting holds History lines where he named his number on a call or visit:
@@ -1058,6 +1058,8 @@ export function history_index(state, viewer) {
       if (get(e, "how") === "offer") said.add(JSON.stringify([e["pid"], e["school"], e["week"]]));
     } else if (e["kind"] === "offer" && said.size && said.has(JSON.stringify([e["pid"], get(e, "school"), e["week"]]))) {
       continue;                                        // that offer's line is the answer's own ("... offered him after you took the lead.")
+    } else if (e["kind"] === "offer_gone") {           // another school pulled its offer to a recruit you are after: yours alone to read
+      if (viewer !== get(state, "team")) continue;
     } else if (get(e, "school") !== viewer && !prospects.HIS_OWN.includes(e["kind"]) && e["kind"] !== "offer") continue;
     if (!persona.shown_to(e, viewer)) continue;        // a Quiet Commit's moves, a twist he told another school
     if (e["kind"] === "learned" && prospects.OLD_ASK_LINE.test(get(e, "line") || "")) continue;   // an old save: his number is your scouts' to learn now

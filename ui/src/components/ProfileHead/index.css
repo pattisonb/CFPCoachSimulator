@@ -179,7 +179,7 @@
   align-content: center;
   align-self: stretch;
   gap: 6px;
-  width: 150px; /* *tune* wide enough for "Narrow Favorite" and a short stat line */
+  width: 232px; /* *tune* wide enough for the longest standing ("He Could Still Flip to You") */
   padding-left: var(--s3);
   border-left: var(--line) solid var(--line-soft);
 }

@@ -24,6 +24,7 @@ import Panel from "../Panel/index.tsx";
 import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
+import VisitTip from "../VisitTip/index.tsx";
 import { api } from "../../api.ts";
 import { cachedTeams, teamNamed } from "../../teams.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
@@ -32,6 +33,7 @@ import { byChance, standingOf, statusOf, topicPhrase } from "../../standing.ts";
 import type { BoardRow, MoneyOwed, ProspectDetail, RecruitingBoard, Scene, TeamCard } from "../../types.ts";
 import { inkOn } from "../../colors.ts";
 import { useKept } from "../../kept.ts";
+import ChangeBadge, { changesOf, seenOf, type Seen } from "../ChangeBadge/index.tsx";
 import { formatClass } from "../../format.ts";
 import Swatch from "../Swatch/index.tsx";
 import QuickActions from "./Quick.tsx";
@@ -239,6 +241,17 @@ export default function Recruiting({
   const shown = groups.flatMap((g) => g.rows);
   const current = shown.find((r) => r.id === picked) ?? shown[0] ?? null;
 
+  // what each recruit looked like when you last opened his card: a row whose recruit has changed since wears a bell.
+  // A recruit new to the board is taken as seen; the one whose card is open is seen as he is now.
+  const [seen, setSeen] = useKept<Record<string, Seen>>(`board.${seasonId}.seen`, {});
+  const seenKey = all.map((r) => r.id).join("|") + JSON.stringify(current ? seenOf(current, team) : null);
+  useEffect(() => {
+    if (!all.length) return;
+    const next: Record<string, Seen> = {};
+    for (const r of all) next[r.id] = r.id === current?.id || !seen[r.id] ? seenOf(r, team) : seen[r.id];
+    if (JSON.stringify(next) !== JSON.stringify(seen)) setSeen(next);
+  }, [seenKey]);
+
   // an empty board: the class's recommended prospects, onto it in one go
   const [adding, setAdding] = useState(false);
   const addRecommended = async () => {
@@ -440,7 +453,8 @@ export default function Recruiting({
                   // your place on his list, when you are on it
                   const race = r.list.filter((x) => x.bar != null);
                   const mine = race.find((x) => x.you || x.school === team);
-                  const rank = mine ? (mine.rank ?? race.indexOf(mine) + 1) : null;
+                  // (a signed recruit has no list any more)
+                  const rank = mine && !r.signed ? (mine.rank ?? race.indexOf(mine) + 1) : null;
                   // the door is shut on you (he will not consider you, or cut his list without you): he stays on
                   // your board, marked out, every action off
                   const out = r.blocked && r.blocked.why !== "signed" ? r.blocked : null;
@@ -461,6 +475,12 @@ export default function Recruiting({
                           <span className="face-tile recruiting__face">
                             <Face face={playerFace(r.id, r.display_pos)} scale={2} label="" />
                           </span>
+                          {/* something about him changed since you last opened his card: a bell on the picture's other corner */}
+                          {current?.id !== r.id && (
+                            <span className="recruiting__changed">
+                              <ChangeBadge changes={changesOf(seen[r.id], seenOf(r, team), team)} />
+                            </span>
+                          )}
                           {/* where his offer or commitment stands, stamped on the picture's corner */}
                           {statusOf(r, team).key !== "none" && (
                             <span className="recruiting__stamp">
@@ -619,12 +639,15 @@ function RecruitPanel({
   // his list: your place on it, or why you have none
   const race = r.list.filter((x) => x.bar != null);
   const mine = race.find((x) => x.you || x.school === team);
-  const place = mine ? (mine.rank ?? race.indexOf(mine) + 1) : null;
-  const listPlace = place
-    ? m.listPlace(place, Math.max(r.standing.of, race.length))
-    : r.offered && !(r.signed || r.committed)
-      ? m.outside
-      : m.notOnIt;
+  // once he has signed he has no list: the tile reads Yours (or Lost)
+  const place = mine && !r.signed ? (mine.rank ?? race.indexOf(mine) + 1) : null;
+  const listPlace = r.signed
+    ? sd.word
+    : place
+      ? m.listPlace(place, Math.max(r.standing.of, race.length))
+      : r.offered && !(r.signed || r.committed)
+        ? m.outside
+        : m.notOnIt;
   const askDefault = r.ask.exact ?? r.ask.hi ?? r.ask.lo ?? 0;
   const [nil, setNil] = useState(r.offered ? r.nil + 5 : askDefault);
   const openWeeks = r.visit_weeks.filter((w) => !w.taken_by && w.week > board.week);
@@ -813,13 +836,31 @@ function RecruitPanel({
             .join(" · ")}
           tags={
             <>
-              <HeadTag solid={stage === "committed"}>
-                {stage === "committed" && r.signed === team
-                  ? m.signedStage
-                  : stage === "top"
-                    ? m.topN(r.top_size ?? 8)
-                    : m.stageNames[stage]}
-              </HeadTag>
+              {/* Visited says when, and how the game went, on hover */}
+              {(() => {
+                const tag = (
+                  <HeadTag solid={stage === "committed"}>
+                    {stage === "committed" && r.signed === team
+                      ? m.signedStage
+                      : stage === "top"
+                        ? m.topN(r.top_size ?? 8)
+                        : m.stageNames[stage]}
+                  </HeadTag>
+                );
+                return stage === "visited" && r.visit?.done ? (
+                  <VisitTip
+                    seasonId={seasonId}
+                    school={team}
+                    week={r.visit.week}
+                    done
+                    weekName={weekLabels[String(r.visit.week)] ?? m.week(Math.max(0, r.visit.week - 1))}
+                  >
+                    {tag}
+                  </VisitTip>
+                ) : (
+                  tag
+                );
+              })()}
               {out && <ClosedMark blocked={out} />}
               {/* a transfer has a class, not stars */}
               {r.portal ? r.cls && <HeadTag>{formatClass(r.cls)}</HeadTag> : <Stars n={r.stars} />}
@@ -867,7 +908,7 @@ function RecruitPanel({
               </Chip>
             ))}
           </div>
-          <p className="recruit__note" role="status">
+          <p className="recruit__note" role="status" title={note ?? undefined}>
             {note}
           </p>
           <Tooltip title={m.favorite} text={r.favorite ? m.favoriteOnTip : m.favoriteTip}>
@@ -913,7 +954,14 @@ function RecruitPanel({
           {/* his recruitment is over: there is nothing to do beside the Overview, so it takes the whole width */}
           <div className={`recruit__cols${closed ? " is-closed" : ""}`}>
             <div className="recruit__col">
-              <OverviewTab r={r} detail={detail} team={team} weekLabels={weekLabels} wide={closed} />
+              <OverviewTab
+                r={r}
+                detail={detail}
+                team={team}
+                seasonId={seasonId}
+                weekLabels={weekLabels}
+                wide={closed}
+              />
             </div>
 
             <div className="recruit__col">

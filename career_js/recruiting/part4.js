@@ -165,9 +165,16 @@ function _rng(state, what) {
  * A line in the recruiting log. In the portal it also carries the portal week (`portal_week`):
  * the season's week stands still through the offseason. (`extra`: the event's other fields, as one object.)
  */
+const _LIVE_NEVER = ["commit", "hard", "flip", "decommit", "signed", "unsigned"];   // his own moves: a step's, whenever they are logged
+
+
 function _event(state, kind, pid, school = null, extra = {}) {
   const e = { week: state["current_week"], kind: kind, pid: pid, school: school, ...extra };
   if (truthy(get(state["recruiting"], "portal"))) e["portal_week"] = get(state["recruiting"], "week");
+  // your own action, made between two weeks' steps: it belongs to the week you are in (the one after `week`), where
+  // a step's event belongs to `week` itself. `live` says which, so his History names the right week (the stored
+  // week is unchanged: the month between visits and the week's contacts are counted from it).
+  else if (recruiting._STEP_WEEK[0] === null && school !== null && school === get(state, "team") && !_LIVE_NEVER.includes(kind)) e["live"] = true;
   state["recruiting"]["log"].push(e);
   return e;
 }
@@ -419,6 +426,7 @@ function _auto_week(state, slug, rng, board, spots_left, week) {
         && commits[recruiting._group_of(rc["prospects"][pid])] >= recruiting.group_cap(need, recruiting._group_of(rc["prospects"][pid]))) {   // a generational talent is never pulled for a full group
       _remove(offers, pid);
       delete recruiting._nil(state, slug)["held"][pid];
+      recruiting._offer_gone(state, slug, pid, "group");
     }
   }
   const open_ = recruiting.offers_by_group(state, slug);

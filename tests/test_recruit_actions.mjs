@@ -481,4 +481,27 @@ test("a verbal commit starts firmer after a visit and firms up every week, faste
   assert(recruiting.flip_weekly(st3, a, 50.0) === 0.0 && recruiting.flip_weekly(st3, b, 50.0) > 0.0, "a locked commit cannot flip");
 });
 
+test("your own action is marked for the week you are in (live), a step's event is not, and another school pulling its offer to a recruit on your board is in his History", () => {
+  const st4 = season.new_season(ME, "full", 4, undefined, undefined, true);
+  const rc4 = st4["recruiting"];
+  const pid = recruiting.prospect_list(st4).find((q) => !rc4["status"][q]["committed"] && recruiting.blocked(st4, ME, q) === null);
+  recruiting.act(st4, ME, pid, "offer", null, 5);
+  const mine = rc4["log"].filter((e) => e["pid"] === pid && e["school"] === ME && e["kind"] === "offer");
+  assert(mine.length === 1 && mine[0]["live"] === true && mine[0]["week"] === st4["current_week"], J(mine));
+  st4["career"]["settings"]["auto_recruit"] = "off";
+  const n = rc4["log"].length;
+  recruiting.weekly_step(st4, 0);
+  assert(rc4["log"].slice(n).every((e) => !("live" in e)), "a step's event is marked live");
+  // another school's pull, said to you alone and only for a recruit you are after
+  const other = Object.keys(rc4["offers"]).find((s) => s !== ME);
+  if (!rc4["board"].includes(pid)) rc4["board"].push(pid);
+  const gone = recruiting._offer_gone(st4, other, pid, "group");
+  assert(gone !== null && gone["kind"] === "offer_gone" && /pulled its offer: it is full at /.test(gone["line"]) && !("live" in gone), J(gone));
+  assert(prospects.board_row(st4, pid, ME).history.some((e) => e["kind"] === "offer_gone" && e["line"] === gone["line"]), "his History does not hold the pull");
+  assert(!prospects.board_row(st4, pid, other).history.some((e) => e["kind"] === "offer_gone"), "another school reads your line");
+  assert(prospects.board_row(st4, pid, ME).history.some((e) => e["kind"] === "offer" && e["live"] === true), "the row's History drops the mark");
+  const stranger = recruiting.prospect_list(st4).find((q) => !rc4["board"].includes(q) && !rc4["offers"][ME].includes(q) && !rc4["status"][q]["committed"]);
+  equal(recruiting._offer_gone(st4, other, stranger, "money"), null);
+});
+
 await run();

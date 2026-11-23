@@ -1,0 +1,30 @@
+/* What changed about him since you last opened his card: a small bell on your color, in its ink. */
+.change-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border: 1px solid var(--ink);
+  vertical-align: middle;
+  animation: change-badge-in 900ms steps(3, jump-none) 2;
+}
+
+@keyframes change-badge-in {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .change-badge {
+    animation: none;
+  }
+}

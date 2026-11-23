@@ -400,6 +400,7 @@
 /* ---------- a recruit's panel: his head (the shared ProfileHead), one row of tabs, then the tab ---------- */
 .recruit {
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a long note beside the tabs is cut short: it never widens the panel */
   align-content: start;
   gap: var(--s2);
 }
@@ -673,6 +674,14 @@
 .recruiting__fav {
   margin-left: 6px;
   vertical-align: baseline;
+}
+
+.recruiting__changed {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  z-index: 1;
+  line-height: 0;
 }
 
 .recruit__off.is-on {

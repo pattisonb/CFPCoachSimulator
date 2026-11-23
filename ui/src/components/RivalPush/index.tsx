@@ -35,7 +35,8 @@ interface Props {
   size?: "sm" | "md";
   /** how many pennants to draw before the rest fold into a count */
   most?: number;
-  /** leave the count out (a head with no room for it, where the schools are listed beside it anyway) */
+  /** a tight head: the school's short name alone ("ALA"), whole and never cut short, the sentence in its tip; the
+   *  count is left out (the schools are listed beside it anyway) */
   bare?: boolean;
 }
 
@@ -50,21 +51,28 @@ export default function RivalPush({ rivals, teamOf, size = "sm", most = 1, bare 
   const shown = rivals.slice(0, most);
   const rest = rivals.slice(most);
   return (
-    <span className={`rival-push rival-push--${size}`}>
+    <span className={`rival-push rival-push--${size}${bare ? " rival-push--bare" : ""}`}>
       {shown.map((r) => {
         const team = teamOf(r.school);
         const Mark = r.pressing ? PhoneCall : Lightning;
-        const label = r.pressing ? m.pressing(r.name) : m.pushing(r.name);
+        const full = r.pressing ? m.pressing(r.name) : m.pushing(r.name);
+        const label = bare ? (team?.abbreviation ?? r.name) : full;
         return (
-          <Tooltip key={r.school} text={r.pressing ? m.pressingTip(r.name) : m.pushingTip(r.name)}>
-            <span
-              className={`rival-push__pennant${r.pressing ? " is-pressing" : ""}${team ? "" : " is-plain"}`}
-              style={pennant(team)}
-            >
-              <span className="rival-push__mark" aria-hidden="true" />
-              <span className="rival-push__words">
-                <Mark className="rival-push__icon" size={size === "md" ? 14 : 12} weight="fill" aria-hidden="true" />
-                <span className="rival-push__label">{label}</span>
+          <Tooltip
+            key={r.school}
+            title={bare ? full : undefined}
+            text={r.pressing ? m.pressingTip(r.name) : m.pushingTip(r.name)}
+          >
+            <span className="rival-push__flag">
+              <span
+                className={`rival-push__pennant${r.pressing ? " is-pressing" : ""}${team ? "" : " is-plain"}`}
+                style={pennant(team)}
+              >
+                <span className="rival-push__mark" aria-hidden="true" />
+                <span className="rival-push__words">
+                  <Mark className="rival-push__icon" size={size === "md" ? 14 : 12} weight="fill" aria-hidden="true" />
+                  <span className="rival-push__label">{label}</span>
+                </span>
               </span>
             </span>
           </Tooltip>

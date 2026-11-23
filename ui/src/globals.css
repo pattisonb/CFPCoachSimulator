@@ -167,6 +167,7 @@ textarea {
   top: calc(-1 * var(--pin));
   z-index: 3;
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a long line in it is cut short: it never widens what it sits in */
   gap: var(--s2);
   margin-top: calc(-1 * var(--pin));
   padding: var(--pin) 0 var(--s2);

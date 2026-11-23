@@ -33,6 +33,7 @@ import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
 import RangeBar from "../RangeBar/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
+import VisitTip from "../VisitTip/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { cachedTeams } from "../../teams.ts";
 import { PITCH_NAMES, standingOf } from "../../standing.ts";
@@ -147,12 +148,14 @@ export function OverviewTab({
   r,
   detail,
   team,
+  seasonId,
   weekLabels,
   wide,
 }: {
   r: BoardRow;
   detail: ProspectDetail | null;
   team: string;
+  seasonId: string;
   weekLabels: Record<string, string>;
   /** his recruitment is over: the Overview has the whole width, the battle and the scout's summary side by side */
   wide?: boolean;
@@ -189,12 +192,21 @@ export function OverviewTab({
                         {push.pressing ? m.pressing : m.pushing}
                       </span>
                     )}
+                    {/* a visit: the week it is set for, or Visited; either says when, and the game, on hover */}
                     {x.visit && (
-                      <span className="recruit-file__tag">
-                        {x.visit.done
-                          ? m.visited
-                          : m.visit(weekLabels[String(x.visit.week)] ?? m.week(x.visit.week - 1))}
-                      </span>
+                      <VisitTip
+                        seasonId={seasonId}
+                        school={x.school}
+                        week={x.visit.week}
+                        done={x.visit.done}
+                        weekName={weekLabels[String(x.visit.week)] ?? m.week(x.visit.week - 1)}
+                      >
+                        <span className="recruit-file__tag">
+                          {x.visit.done
+                            ? m.visited
+                            : m.visit(weekLabels[String(x.visit.week)] ?? m.week(x.visit.week - 1))}
+                        </span>
+                      </VisitTip>
                     )}
                   </span>
                   {/* his pull, in the school's own color */}
@@ -633,6 +645,7 @@ const KIND_ICON: Record<string, Icon> = {
   offer: Scroll,
   raise_nil: CurrencyDollar,
   pull_offer: X,
+  offer_gone: X,
   learned: Binoculars,
   present: Phone,
   answer: Phone,
@@ -658,6 +671,8 @@ interface Item {
   reaction?: string;
   /** another school's answer to your recruiting: that school, whose mark and colors the line wears */
   rival?: string;
+  /** what that school did: offer, raise_nil, hc_visit, visit, a call, press, cost, gave_up */
+  how?: string;
 }
 
 /** Kinds whose line the game wrote itself. */
@@ -669,6 +684,7 @@ const LINE_KINDS = new Set([
   "hat",
   "softened",
   "rival_push",
+  "offer_gone",
   "promise_kept",
   "promise_strained",
 ]);
@@ -748,22 +764,56 @@ export function historyItems(events: RecruitEvent[], team: string): Item[] {
       ? []
       : [
           {
-            week: e.week,
+            // a step's event belongs to its week; your own action between steps (`live`) to the week after it
+            week: e.live ? e.week + 1 : e.week,
             kind: e.kind === "contact" || e.kind === "pitch" ? (e.action ?? actionOf.get(i) ?? "pitch") : e.kind,
             text: line(e, i).filter(Boolean).join(" · "),
             ...(e.kind === "pitch" && e.reaction ? { reaction: e.reaction } : {}),
-            ...(e.kind === "rival_push" && e.school ? { rival: e.school } : {}),
+            ...((e.kind === "rival_push" || e.kind === "offer_gone") && e.school ? { rival: e.school } : {}),
+            ...(e.kind === "rival_push" && e.how ? { how: e.how } : {}),
           },
         ],
   );
 }
 
 /**
- * A recruit's History as a scrolling list, newest first: an icon, the week and what happened, the kind as a tag. The
+ * *tune* What the Recruiting Timeline keeps: the offers (yours, a raise, one pulled, another school's), the visits
+ * (the head coach's and the official one) and where he committed, flipped or signed; a rival's answer to you counts
+ * when it is one of those (its offer, its raise, its visit: RIVAL_MOVES), not when it is a call. The messages, calls,
+ * scouting and what you learned are left out (the player: a week of work was twenty lines).
+ */
+const TIMELINE_KINDS = new Set([
+  "offer",
+  "raise_nil",
+  "pull_offer",
+  "offer_gone",
+  "hc_visit",
+  "official_visit",
+  "commit",
+  "hard",
+  "flip",
+  "decommit",
+  "signed",
+  "unsigned",
+  "leaning_fcs",
+]);
+
+/** A rival's moves that are milestones (career_js/recruiting/part7.js _push_line): an offer, a raise, a visit, and
+ *  giving up on him (its offer goes with it). */
+const RIVAL_MOVES = new Set(["offer", "raise_nil", "hc_visit", "visit", "gave_up"]);
+
+/** His history's milestones alone, newest first: what the Recruiting Timeline lists. */
+export const timelineItems = (events: RecruitEvent[], team: string): Item[] =>
+  historyItems(events, team).filter((x) =>
+    x.kind === "rival_push" ? RIVAL_MOVES.has(x.how ?? "") : TIMELINE_KINDS.has(x.kind),
+  );
+
+/**
+ * A recruit's timeline as a scrolling list, newest first: an icon, the week and what happened, the kind as a tag. The
  * recruiting page's History tab shows it, and a signed player's card keeps it (PlayerView's History).
  */
 export function RecruitTimeline({ events, team }: { events: RecruitEvent[]; team: string }) {
-  const items = historyItems(events, team);
+  const items = timelineItems(events, team);
   if (!items.length) return <p className="recruit-file__soft">{m.noHistory}</p>;
   return (
     <ul className="recruit-file__timeline" tabIndex={0}>
@@ -797,7 +847,7 @@ export function RecruitTimeline({ events, team }: { events: RecruitEvent[]; team
 /** History: the Recruiting Timeline and Recent Interest Changes. */
 export function HistoryTab({ r, team }: { r: BoardRow; team: string }) {
   const rows = raceOf(r);
-  const items = historyItems(r.history, team);
+  const items = timelineItems(r.history, team);
   return (
     <Panels label={m.tabs.history}>
       <Panel title={m.timeline} aside={items.length ? m.entries(items.length) : undefined}>

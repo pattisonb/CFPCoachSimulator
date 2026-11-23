@@ -180,7 +180,7 @@ function RecentCommits({ d, ctx }: P) {
       rows.push({
         pid: e.pid,
         name: e.name,
-        week: e.portal_week ?? e.week,
+        week: e.portal_week ?? (e.live ? e.week + 1 : e.week),
         portal: e.portal_week != null,
         b: byId.get(e.pid),
       });
@@ -227,7 +227,7 @@ function Activity({ d, ctx }: P) {
             {e.name}
           </RName>
           <span className="hq-grow hq-sub">{line(e)}</span>
-          <span className="hq-sub">{wkLong(e.portal_week ?? e.week)}</span>
+          <span className="hq-sub">{wkLong(e.portal_week ?? (e.live ? e.week + 1 : e.week))}</span>
         </li>
       ))}
     </List>

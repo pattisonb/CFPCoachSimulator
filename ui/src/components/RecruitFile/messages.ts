@@ -188,7 +188,7 @@ export const messages = {
   // ----- History -----
   timeline: "Recruiting Timeline",
   entries: (n: number) => `${n} ${n === 1 ? "Entry" : "Entries"}`,
-  noHistory: "Nothing with him yet: no contact, no offer.",
+  noHistory: "Nothing with him yet: no offer, no visit.",
   changes: "Recent Interest Changes",
   moves: {
     fresh: "New on His List",
@@ -207,6 +207,7 @@ export const messages = {
     offer: "Offer",
     raise_nil: "NIL",
     pull_offer: "Offer",
+    offer_gone: "Offer",
     learned: "Scout",
     scout: "Scout",
     call_recruit: "Call",

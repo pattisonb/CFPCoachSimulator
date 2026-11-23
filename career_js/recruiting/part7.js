@@ -183,8 +183,25 @@ function _fund(state, slug, pid, ask, win, offered) {
   rows.sort((a, b) => cmp([-a[0], a[1]], [-b[0], b[1]]));
   for (const [, , q] of rows) {
     if (held() + recruiting.nil_left(state, slug) >= ask) break;
-    _go(state, slug, q, "pull_offer", null, 0, 1.0);
+    if (_go(state, slug, q, "pull_offer", null, 0, 1.0)) recruiting._offer_gone(state, slug, q, "money");
   }
+}
+
+
+function _offer_gone(state, slug, pid, why) {
+  // Another school pulled its offer to a recruit you are after (on your board, or holding your offer) while he is
+  // still open: his History says so, and why. `why`: "group" (it is full at his position), "money" (it moved its NIL
+  // to a recruit it is closer to). Nothing for a school's offer to anyone else, or yours.
+  const rc = state["recruiting"];
+  const me = get(state, "team");
+  if (!truthy(me) || slug === me || truthy(recruiting.is_portal(state))) return null;
+  const st = rc["status"][pid];
+  if (truthy(st["signed"]) || st["committed"] !== null) return null;
+  if (!get(rc, "board", []).includes(pid) && !get(rc["offers"], me, []).includes(pid)) return null;
+  const name = recruiting.school_name(slug);
+  const group = get(recruiting.GROUP_WORDS, recruiting._group_of(rc["prospects"][pid]), "his position");
+  const line = why === "group" ? `${name} pulled its offer: it is full at ${group}.` : `${name} pulled its offer to spend its NIL on another recruit.`;
+  return recruiting._event(state, "offer_gone", pid, slug, { why, line });
 }
 
 
@@ -578,6 +595,6 @@ function _unpaid(state, final = false) {
 
 
 Object.assign(recruiting, {
-  _react_mine, racing, _race_join, _race_leave, gave_up, _push_line, _react_idle, _react_open, _react_week, _react_map, _pressing,
+  _react_mine, racing, _race_join, _race_leave, gave_up, _push_line, _offer_gone, _react_idle, _react_open, _react_week, _react_map, _pressing,
   _press_cost, rival_pushes, pressed_commits, unpaid_hold, _unpaid,
 });

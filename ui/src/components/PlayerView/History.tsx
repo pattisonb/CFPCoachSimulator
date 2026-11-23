@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowsLeftRight, Handshake, House, Medal, Star, TrendDown, TrendUp, type Icon } from "@phosphor-icons/react";
 import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
-import { RecruitTimeline } from "../RecruitFile/index.tsx";
+import { RecruitTimeline, timelineItems } from "../RecruitFile/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { cachedTeams } from "../../teams.ts";
 import { formatClass } from "../../format.ts";
@@ -113,7 +113,7 @@ export function RecruitedHow({ pr }: { pr: PlayerProfile }) {
   const school = portal?.to ?? rec?.school;
   if (!log?.length || !school) return null;
   return (
-    <Panel title={portal ? m.h.portalTimeline : m.h.timeline} aside={m.h.entries(log.length)}>
+    <Panel title={portal ? m.h.portalTimeline : m.h.timeline} aside={m.h.entries(timelineItems(log, school).length)}>
       <RecruitTimeline events={log} team={school} />
     </Panel>
   );

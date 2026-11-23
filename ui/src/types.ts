@@ -1023,6 +1023,8 @@ export interface RecruitEvent {
   nil?: number;
   /** a rival_push's move: offer, raise_nil, hc_visit, visit, call, press, cost, gave_up */
   how?: string;
+  /** your own action, made between two weeks' steps: it belongs to the week after `week` */
+  live?: boolean;
 }
 
 /** A turn of a call or visit: you, him, or a note on the room. */

@@ -14,48 +14,70 @@
   min-width: 0;
 }
 
-/* the pennant: the school's mark, then the words on its first color; a plain one (no colors on file) is ink on tile */
+/* the pennant's hard shadow: drawn outside its cut, so the swallowtail casts one too */
+.rival-push__flag {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  filter: drop-shadow(2px 2px 0 var(--shadow));
+}
+
+/* in a tight head it is the school's short name, whole: it keeps its width and is never cut short */
+.rival-push--bare,
+.rival-push--bare > .tooltip,
+.rival-push--bare .rival-push__flag {
+  flex: none;
+}
+
+/* the pennant: the school's mark, then the words on its first color; a plain one (no colors on file) is ink on tile.
+   The whole flag is cut to a swallowtail (a deep notch in its fly end), its ink outline following the cut */
 .rival-push__pennant {
   --rp: var(--tile);
   --rp-on: var(--ink);
   --rp-2: var(--ink);
   --h: 20px;
+  --notch: 9px; /* *tune* how deep the swallowtail is cut */
+  --tail: polygon(0 0, 100% 0, calc(100% - var(--notch)) 50%, 100% 100%, 0 100%);
 
   display: inline-flex;
   align-items: stretch;
   min-width: 0;
   height: var(--h);
-  border: var(--line) solid var(--ink);
-  box-shadow: 2px 2px 0 var(--shadow);
+  padding: var(--line);
+  background: var(--ink);
   font-size: var(--t-xs);
   font-weight: 700;
   line-height: 1;
+  clip-path: var(--tail);
 }
 
 .rival-push--md .rival-push__pennant {
   --h: 26px;
+  --notch: 12px;
 }
 
 /* its mark: the two colors split corner to corner, as every team tile in the game */
 .rival-push__mark {
   flex: none;
   width: calc(var(--h) - 2 * var(--line));
+  margin-right: var(--line);
   background: linear-gradient(135deg, var(--rp) 50%, var(--rp-2) 50%);
-  border-right: var(--line) solid var(--ink);
 }
 
-/* the words, on the school's color in the ink that reads on it; the tail is a swallowtail cut of its second color */
+/* the words, on the school's color in the ink that reads on it; the fly end is a band of its second color, cut to
+   the same swallowtail just inside the outline */
 .rival-push__words {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
-  padding: 0 14px 0 6px;
+  padding: 0 calc(var(--notch) + 12px) 0 6px;
   overflow: hidden;
   background: var(--rp);
   color: var(--rp-on);
   white-space: nowrap;
+  clip-path: var(--tail);
 }
 
 .rival-push__label {
@@ -70,9 +92,8 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 8px;
+  width: calc(var(--notch) + 6px);
   background: var(--rp-2);
-  clip-path: polygon(0 0, 100% 0, 35% 50%, 100% 100%, 0 100%);
 }
 
 .rival-push__icon {
