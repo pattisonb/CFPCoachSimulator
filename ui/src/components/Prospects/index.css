@@ -417,11 +417,15 @@
   white-space: nowrap;
 }
 
-/* a committed or signed one: his school's stamp, then the words */
+/* a committed or signed one: his school's stamp alone, in the middle of the column (its tilted corners are not cut) */
+.prospects__status:has(.prospects__held) {
+  overflow: visible;
+}
+
 .prospects__held {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .prospects__int {

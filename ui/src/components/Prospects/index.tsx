@@ -566,7 +566,7 @@ export default function Prospects({
                   {!narrow && <Th col="wt" />}
                   {/* the portal: a transfer's class where a recruit has his stars */}
                   <Th col={portal ? "cls" : "stars"} />
-                  <Th col="status" className="left" />
+                  <Th col="status" />
                   <Th col="offers" />
                   <Th col="ask" />
                   <Th col="int" />
@@ -611,7 +611,7 @@ export default function Prospects({
                     {!narrow && <td className="prospects__soft">{r.height_display}</td>}
                     {!narrow && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
                     <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
-                    <td className="left prospects__status" title={statusOf(r)}>
+                    <td className="prospects__status" title={statusOf(r)}>
                       {/* where he went: his school's stamp alone; the cell's tip says it in words ("Signed: Oregon") */}
                       {!r.pro && (r.signed || r.committed) ? (
                         <span className="prospects__held" role="img" aria-label={statusOf(r)}>
