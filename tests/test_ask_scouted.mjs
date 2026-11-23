@@ -294,7 +294,8 @@ test("the transfer portal follows the same rule: a range until his report is com
     if (row) equal(row["ask"], wide);
     // a campus visit (this week, no game): he sees it all, and you learn what he cares about, not his number
     rc["hours"][ME] = 1000;
-    recruiting._act(st, ME, pid, "offer", rc["prospects"][pid]["priorities"][0], 0);
+    recruiting._nil(st, ME)["budget"] += 1000;
+    recruiting._act(st, ME, pid, "offer", rc["prospects"][pid]["priorities"][0], ask);
     rc["lists"][pid][ME] = Math.max(...Object.values(rc["lists"][pid])) + 50;
     recruiting.reset_caches();
     recruiting._act(st, ME, pid, "official_visit");
