@@ -479,6 +479,7 @@ test("the portal plays by the same rules: transfers have standards, shut doors, 
   assert(prc["portal"] === true && ps["offseason"]["stage"] === "portal_w1");
   const ids = Object.keys(prc["prospects"]);
   // standards: from his own seed, by the standing his overall gives him, stored nowhere
+  assert(recruiting.STANDARD_PORTAL_STEP >= 0 && recruiting.PORTAL_FINALISTS.every(([w]) => w <= recruiting.PORTAL_WEEKS));
   for (const q of ids.slice(0, 100)) {
     const s = recruiting.standards(ps, q);
     equal(Object.keys(s).length >= 3 && Object.values(s).every((v) => Number.isInteger(v)), true);
@@ -500,7 +501,7 @@ test("the portal plays by the same rules: transfers have standards, shut doors, 
     levers.reverse().forEach((l) => l.__exit__());
   }
   const pid = rows.filter((r) => r["blocked"] === null)[1]["id"];
-  prc["lists"][pid] = { michigan: 60, "ohio-state": 45, texas: 30, alabama: 2 };
+  prc["lists"][pid] = { michigan: 60, "ohio-state": 45, texas: 30, alabama: 20, georgia: 12, oregon: 6 };      // more schools than his cut keeps
   const [from, n] = recruiting.PORTAL_FINALISTS.at(-1);
   prc["week"] = from;
   equal([recruiting.top_size(ps), recruiting.blocked(ps, ME, pid)?.["why"]], [n, "finalists"]);

@@ -26,13 +26,14 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 // ----- his standards -------------------------------------------------------------------------------------------
 
 recruiting.STANDARD_TOP = { 5: "A", 4: "B", 3: "C", 2: "D" };   // *tune* what a typical recruit wants on his top priority, by stars
-recruiting.STANDARD_DROP = { 5: [0, 1, 3], 4: [0, 1, 3], 3: [0, 2, 3], 2: [0, 1, 2] };   // *tune* how many grades easier his first, second and third priority are (a five-star holds real standards on all three)
-recruiting.STANDARD_DECIDER_DROP = { 5: 3, 4: 3, 3: 3, 2: 2 };   // *tune* ... and his decider's topic, when it is not one of his three
+recruiting.STANDARD_DROP = { 5: [0, 1, 2], 4: [0, 1, 3], 3: [0, 2, 3], 2: [0, 1, 2] };   // *tune* how many grades easier his first, second and third priority are (a five-star holds real standards on all three)
+recruiting.STANDARD_DECIDER_DROP = { 5: 2, 4: 3, 3: 3, 2: 2 };   // *tune* ... and his decider's topic, when it is not one of his three
 recruiting.STANDARD_ODDS = { easier: 0.25, harder: 0.20 };       // *tune* how many recruits are a notch easier or harder to please than their stars say
 recruiting.STANDARD_NOTCH = 3;                                   // *tune* a notch, in grades: a full letter (B to A, or B to C)
 recruiting.STANDARD_LEAN = { cocky: 0.15, business: 0.05, shy: -0.15 };   // *tune* his personality moves those odds: this much from easier to harder (a Cocky recruit wants more, a Shy one less)
 recruiting.STANDARD_JITTER = [-1, 0, 0, 1];                      // *tune* each standard lands a grade either side of its line this often (a plus or a minus)
 recruiting.STANDARD_EASE = { proximity: 3 };                     // *tune* grades easier on a topic whatever his stars: nobody needs an A in Close to Home (under 70 miles)
+recruiting.STANDARD_PORTAL_STEP = 1;                             // *tune* a transfer wants what a recruit this many stars lower would: he has seen college football and is after a fit
 recruiting.STANDARD_RANGE = ["D-", "A+"];                        // *tune* no recruit wants less than the first or more than the last
 
 // ----- what the standards do -----------------------------------------------------------------------------------
@@ -43,7 +44,7 @@ recruiting.FIT_INTEREST = 0.25;          // *tune* interest points per grade of 
 recruiting.FIT_CENTER = 0.5;             // *tune* the fit a school working a recruit usually has: interest and a contact's worth move around this
 recruiting.FIT_INTEREST_RANGE = [-1.5, 0.75];   // *tune* the most the fit takes from or adds to his interest
 recruiting.MOVE_PER_STEP = 0.07;         // *tune* a contact is worth this much more or less per grade of fit ...
-recruiting.MOVE_FLOOR = 0.7;             // *tune* ... never under this share of its usual worth (a program far short of what he wants)
+recruiting.MOVE_FLOOR = 0.6;             // *tune* ... never under this share of its usual worth (a program far short of what he wants)
 recruiting.MOVE_CEIL = 1.15;             // *tune* ... nor over this (a program well past it)
 recruiting.QUICK_BASE = { message: 2.3, offer: 2.3, call: 1.0, call_recruit: 1.0 };   // *tune* your quick action's worth at a program that fits him as usual, in the action's base points
 //                                          (a message and an offer by hand were worth 1 to 4 times their base by your grades: this is the middle)
@@ -63,7 +64,8 @@ recruiting.LOCKOUT_WINNING = 1.0;        // *tune* a season going well or badly 
 // His finalists: from these weeks he has cut his list to his top this many (the schools that offered or worked him, by
 // interest), and a school not on it cannot work him or add him. Before the first he is open to anyone.
 recruiting.FINALISTS = [[8, 8], [11, 5], [13, 3]];       // *tune* (from this week, his top this many)
-recruiting.PORTAL_FINALISTS = [[3, 5], [4, 3]];          // *tune* the same in the portal, by its week
+recruiting.PORTAL_FINALISTS = [[4, 5]];                  // *tune* the same in the portal, by its week: his top five in its last week (an earlier or
+//                                                          tighter cut sends the cut schools' offers to everyone else, and too many transfers find a school)
 recruiting.LOCKED_TEXT = "He will not consider your program: it is too far from what he wants.";
 
 recruiting._STANDARDS = new Map();       // (seed, portal, prospect, tier, priorities, decider's topic, personality) -> his standards
@@ -105,11 +107,13 @@ function standards(state, pid) {
   }
   const p = rc["prospects"][pid];
   const d = modules.persona.of(state, pid);
-  const key = _key(get(rc, "seed", 0), truthy(get(rc, "portal")), pid, recruiting.tier_of(p), p["priorities"], d["decider_topic"], d["personality"]);
+  const portal = truthy(get(rc, "portal"));
+  const tier = recruiting.tier_of(p) - (portal ? recruiting.STANDARD_PORTAL_STEP : 0);        // (a transfer's standing is read from his overall)
+  const key = _key(get(rc, "seed", 0), portal, pid, tier, p["priorities"], d["decider_topic"], d["personality"]);
   let out = recruiting._STANDARDS.get(key);
   if (out === undefined) {
     if (recruiting._STANDARDS.size > 200_000) recruiting._STANDARDS.clear();
-    out = _draw_standards(get(rc, "seed", 0), truthy(get(rc, "portal")), pid, recruiting.tier_of(p), p["priorities"], d["decider_topic"], d["personality"]);
+    out = _draw_standards(get(rc, "seed", 0), portal, pid, tier, p["priorities"], d["decider_topic"], d["personality"]);
     recruiting._STANDARDS.set(key, out);
   }
   return out;
