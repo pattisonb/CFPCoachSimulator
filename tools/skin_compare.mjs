@@ -18,6 +18,12 @@
 //   - opens every section of the career and every tab on it, and reads the page. The text must be the same, and no
 //     lookalike name (every one the swap makes: schools, mascots, stadiums, conferences, bowls, trophies, awards, the
 //     drawn players and coaches) may stand on a page of the skinned site more often than on the other's.
+//     node tools/skin_compare.mjs --generic /tmp/site-generic --skin FILE --hostile
+// loads the skin with its names turned into attacks instead: for every spot of both scripts a name that carries the
+// spot's own mark and tries to end the string it is written into and run code (with quotes, which are written
+// escaped; and with a backtick, a backslash, a line break and a template's ${}, which are never written). No code of
+// the skin's may run, in the page or in the game's worker.
+//
 // It also loads files that are not skins (each must be refused with a sentence), takes the skin off and puts it back
 // (the careers of each are kept apart), and exits with 1 when anything differs.
 import fs from "node:fs";
@@ -145,10 +151,15 @@ async function career(page, base) {
   const answers = [], seen = {};
   let id = "";
   const call = (method, p, body) => page.evaluate(([m, q, b]) => window.__call(m, q, b), [method, p, body]);
-  const plain = (text) => text.replaceAll(id || "\u0000", "ID").replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)?/g, "WHEN");
+  // what is not the seed's: the career's id (and the Office's forecast of your next game, which is seeded by that id:
+  // season._preview_prediction), each played game's own id and how long it took to play, and the clock
+  const plain = (text) => text.replaceAll(id || "\u0000", "ID").replace(/"id":"[0-9a-f]{12}","played_at"/g, '"id":"GAME","played_at"')
+    .replace(/"duration_ms":\d+/g, '"duration_ms":0').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)?/g, "WHEN");
   const ask = async (what, method, p, body) => {
     const r = await call(method, p, body);
-    answers.push([what, plain(r.ok ? r.json ?? "(bytes)" : `ERROR ${r.status}: ${r.message}`)]);
+    let text = r.ok ? r.json ?? "(bytes)" : `ERROR ${r.status}: ${r.message}`;
+    if (r.ok && p.endsWith("/preview")) text = text.replace(/"prediction":\{.*?\},"injuries"/s, '"prediction":"SEEDED BY THE ID","injuries"');
+    answers.push([what, plain(text)]);
     try { return r.ok && r.json ? JSON.parse(r.json) : null; } catch { return null; }
   };
   const until_idle = async () => {
@@ -245,7 +256,82 @@ function count_all(text, words) {
   return out;
 }
 
+/** The skin with every name of the site's scripts turned into an attack that carries the right mark. */
+async function hostile_skin(skin_json) {
+  await import("../ui/public/skin.js");
+  const Skin = globalThis.Skin;
+  const skin = JSON.parse(skin_json);
+  const page = fs.readFileSync(path.join(SITES.generic, "index.html"), "utf8");
+  const app = /Skin\.boot\("([^"]+)"/.exec(page)[1];
+  const attacks = [
+    (n) => `";self.postMessage({kind:"pwned"});self.__pwned=1;//${n}`, (n) => `';self.postMessage({kind:'pwned'});self.__pwned=1;//${n}`,
+    (n) => `\`;self.__pwned=1;//${n}`, (n) => `\${self.__pwned=1}${n}`, (n) => `x\\";self.__pwned=1;//${n}`, (n) => `x\nself.__pwned=1;//${n}`,
+    (n) => `x"];self.__pwned=1;[["${n}`, (n) => `</script><script>self.__pwned=1</script>${n}`,
+  ];
+  let made = 0, plain = 0;
+  for (const [script, list] of [["game.js", "game.names.json"], [app, "app.names.json"]]) {
+    const text = fs.readFileSync(path.join(SITES.generic, script), "utf8"), names = JSON.parse(fs.readFileSync(path.join(SITES.generic, list), "utf8"));
+    names.spots.forEach(([at, len, mark, kind], i) => {
+      const raw = text.substr(at, len);
+      const shown = kind === "s" ? raw.replace(/\\(['"])/g, "$1") : raw.replace(/^\./, "");
+      const attack = attacks[i % attacks.length];
+      let n = 0;
+      while (Skin.tag(attack(n)) !== mark) n++;
+      skin.words[shown] = [attack(n), ...(skin.words[shown] || []).filter((w) => Skin.tag(w) !== mark)];
+      made++;
+      if (Skin.plain(attack(n))) plain++;
+    });
+  }
+  return { text: JSON.stringify({ ...skin, id: "hostile", name: "Hostile" }), made, plain };
+}
+
+async function hostile() {
+  const good = fs.readFileSync(SKIN);
+  const json = good[0] === 0x1f ? (await import("node:zlib")).gunzipSync(good).toString("utf8") : good.toString("utf8");
+  const bad = await hostile_skin(json);
+  say(`a skin of ${bad.made} attacks, one for every spot (${bad.plain} of them plain text with quotes, the rest never written)`);
+  const server = await serve(SITES.generic, PORTS.generic);
+  const browser = await chromium.launch();
+  let wrong = 0;
+  try {
+    const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
+    await page.addInitScript(instrument);
+    await page.addInitScript(() => {
+      const W = window.Worker;      // (over instrument's: a worker that says "pwned" ran the skin's code)
+      window.Worker = function (url, opts) { const w = new W(url, opts); w.addEventListener("message", (e) => { if (e.data && e.data.kind === "pwned") window.__pwned = 2; }); return w; };
+      // kept across the page's own restarts
+      Object.defineProperty(window, "__pwned", { set(v) { sessionStorage.setItem("pwned", String(v)); }, get() { return sessionStorage.getItem("pwned"); } });
+    });
+    await page.goto(`http://localhost:${PORTS.generic}/`);
+    await ready(page);
+    await page.getByRole("button", { name: "Load a Skin" }).waitFor({ timeout: 30000 });
+    const file = path.join(path.dirname(SKIN), "hostile.skin.json");
+    fs.writeFileSync(file, bad.text);
+    try {
+      await Promise.all([page.waitForEvent("load", { timeout: 300000 }), page.locator(".skin-control__file").setInputFiles(file)]);
+    } finally { fs.rmSync(file, { force: true }); }
+    await ready(page);
+    await sleep(3000);
+    // (the game may refuse to start on such names, and take the skin off: then the page has started again)
+    await ready(page);
+    const got = await page.evaluate(async () => ({ pwned: window.__pwned ?? null, failed: window.__skin.failed, skin: window.__skin.skin, app: window.__skinApp ?? null,
+      flag: window.Skin.flag(), said: (document.querySelector(".home__error") || {}).innerText || null,
+      teams: window.__skin.ready ? (await window.__call("GET", "/api/teams")).ok : null }));
+    say(`  ${JSON.stringify(got)}`);
+    say(`  page errors: ${errors.length ? errors.join(" | ") : "none"}`);
+    if (got.pwned !== null) { wrong++; say("  THE SKIN'S CODE RAN"); }
+    else say("  no code of the skin's ran");
+  } finally {
+    await browser.close();
+    server.close();
+  }
+  process.exit(wrong ? 1 : 0);
+}
+
 async function main() {
+  if (args.includes("--hostile")) return hostile();
   for (const [k, dir] of Object.entries(SITES)) if (!fs.existsSync(path.join(dir, "index.html"))) throw new Error(`--${k}: no built site at ${dir}`);
   if (!fs.existsSync(SKIN)) throw new Error(`--skin: no file at ${SKIN}`);
   if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
@@ -268,7 +354,7 @@ async function main() {
 
     // ---- the generic site: the control, files that are not skins, then the skin ----
     const g = await open("generic");
-    await g.page.waitForSelector(".team-select, .window", { timeout: 60000 });
+    await g.page.waitForSelector(".chooser__tile", { timeout: 60000 });
     await settle(g.page);
     await g.page.getByRole("button", { name: "Load a Skin" }).waitFor({ timeout: 20000 });
     const stock = await g.page.evaluate(() => document.querySelector(".window").innerText);
@@ -290,8 +376,8 @@ async function main() {
     };
     for (const [what, text] of Object.entries(not_skins)) {
       await g.page.locator(".skin-control__file").setInputFiles({ name: "skin.json", mimeType: "application/json", buffer: Buffer.from(text) });
-      await g.page.waitForSelector(".skin-control__note", { timeout: 20000 });
-      const said = (await g.page.locator(".skin-control__note").innerText()).replace(/\s*Dismiss\s*$/, "").trim();
+      await g.page.waitForSelector(".home__error", { timeout: 20000 });
+      const said = (await g.page.locator(".home__error").innerText()).replace(/\s*Dismiss\s*$/, "").trim();
       result.refused[what] = said;
       say(`  refused (${what}): ${said}`);
       if (!/\.$/.test(said) || /undefined|null|NaN|Error/.test(said)) problem(`the refusal of "${what}" is not a plain sentence: ${said}`);
@@ -365,8 +451,8 @@ async function main() {
     say(`pages: ${same_pages} of ${result.pages.read} read the same; ${words.length} lookalike names looked for, ${leftovers} left over`);
 
     // the team picker, read on each
-    await g.page.goto(g.base); await ready(g.page); await g.page.waitForSelector(".team-select"); await settle(g.page);
-    await r.page.goto(r.base); await ready(r.page); await r.page.waitForSelector(".team-select"); await settle(r.page);
+    await g.page.goto(g.base); await ready(g.page); await g.page.waitForSelector(".chooser__tile"); await settle(g.page);
+    await r.page.goto(r.base); await ready(r.page); await r.page.waitForSelector(".chooser__tile"); await settle(r.page);
     const picker = [await g.page.evaluate(() => document.querySelector(".window").innerText), await r.page.evaluate(() => document.querySelector(".window").innerText)];
     if (picker[0] !== picker[1]) problem("the team picker reads differently");
     if (picker[0] === stock) problem("the team picker did not change with the skin");
@@ -377,7 +463,7 @@ async function main() {
     await g.page.getByRole("button", { name: "Remove Skin" }).click();
     await g.page.waitForEvent("load", { timeout: 60000 });
     await ready(g.page);
-    await g.page.waitForSelector(".team-select");
+    await g.page.waitForSelector(".chooser__tile");
     await settle(g.page);
     const after = await g.page.evaluate(async () => ({ flag: window.Skin.flag(), skin: window.__skin.skin, seasons: JSON.parse((await window.__call("GET", "/api/seasons")).json).seasons.length, text: document.querySelector(".window").innerText }));
     result.removed = { careers_listed: after.seasons, stock_names_back: after.text === stock };

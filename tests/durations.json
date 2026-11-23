@@ -109,6 +109,7 @@
  "test_scouting_desk.mjs": 12,
  "test_sim_golden.mjs": 15,
  "test_sim_progress.mjs": 54,
+ "test_skin.mjs": 130,
  "test_speed.mjs": 6,
  "test_staff_contracts.mjs": 24,
  "test_starter_year.mjs": 4,

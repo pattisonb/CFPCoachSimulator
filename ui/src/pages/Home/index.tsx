@@ -37,6 +37,7 @@ export default function Home({ theme, onToggleTheme }: Props) {
   const [mode, setMode] = useState<Mode>("new");
   const [seasons, setSeasons] = useState<SeasonCard[] | null>(null);
   const [attempt, setAttempt] = useState(0); // bumped by Try Again: every failed load runs again
+  const [skinNote, setSkinNote] = useState<string | null>(null); // what SkinControl has to say about a skin
 
   useEffect(() => {
     if (teams) return;
@@ -86,8 +87,16 @@ export default function Home({ theme, onToggleTheme }: Props) {
           >
             {m.loadSeason}
           </Button>
-          <SkinControl />
+          <SkinControl onNote={setSkinNote} />
         </div>
+        {skinNote && (
+          <p className="home__error" role="alert">
+            {skinNote}
+            <Button variant="outline" onClick={() => setSkinNote(null)}>
+              {m.dismiss}
+            </Button>
+          </p>
+        )}
         {error && (
           <p className="home__error" role="alert">
             {m.loadError(error)}

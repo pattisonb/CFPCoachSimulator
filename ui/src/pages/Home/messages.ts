@@ -26,6 +26,7 @@ export const messages = {
   loadingTeams: "Loading teams…",
 
   tryAgain: "Try Again",
+  dismiss: "Dismiss",
   // (the game's own sentence, its period dropped so there is one)
   loadError: (msg: string) => `Can't reach the game: ${msg.replace(/\.$/, "")}.`,
 } as const;

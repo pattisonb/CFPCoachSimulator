@@ -1,33 +1,46 @@
-/* Skins on the start screen: one control in the row of New Season and Load Season, and a line under the row. */
+/* Skins on the start screen: one control in the row of New Season and Load Season. */
+
+/* the skin that is on: its name and, at its end, the button that takes it off, as one box the height of the buttons */
 .skin-control {
   display: inline-flex;
   align-items: stretch;
-  gap: var(--s2);
+  min-height: var(--control);
+  border: var(--line) dashed var(--ink);
+  background: var(--paper-hi);
 }
 
-/* the skin that is on: a label the height of the buttons beside it */
 .skin-control__on {
   display: inline-flex;
   align-items: center;
-  min-height: var(--control);
-  padding: 0 var(--s3);
-  border: var(--line) dashed var(--ink);
+  height: 100%;
+  padding: 0 var(--s2) 0 var(--s3);
   font-weight: 700;
   white-space: nowrap;
 }
 
-.skin-control__file {
-  display: none;
+.skin-control__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control);
+  height: 100%;
+  border: 0;
+  border-left: var(--line) dashed var(--ink);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
 }
 
-/* what there is to say about a skin: the whole width of the hero, under its buttons */
-.skin-control__note {
-  display: flex;
-  flex-basis: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s3);
-  padding: var(--s2);
-  border: var(--line) solid;
-  font-weight: 700;
+.skin-control__remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.skin-control__remove:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.skin-control__file {
+  display: none;
 }
