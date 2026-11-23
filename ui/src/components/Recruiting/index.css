@@ -334,13 +334,14 @@
   font-weight: 700;
 }
 
-/* a school answering your recruiting of him: its pennant on a line of its own along the row's foot, running under
-   the quick actions (which move up to clear it) */
+/* a school answering your recruiting of him: its pennant on a line of its own along the row's foot, from under his
+   picture (flush with its left edge, so nothing hangs in the air beneath it) and on under the quick actions (which
+   move up to clear it) */
 .recruiting__rivals {
   position: absolute;
   right: 8px;
   bottom: 6px;
-  left: calc(72px + var(--s2)); /* beside his picture, under his name */
+  left: 4px; /* his picture's left edge */
   display: flex;
   line-height: 0;
 }
