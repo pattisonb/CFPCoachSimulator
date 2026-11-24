@@ -296,7 +296,8 @@ function* walk(dir, rel = "") {
 export function make(build, generic, real, maps, { id, name, commit }) {
   const read = (f) => fs.readFileSync(path.join(real, f), "utf8");
   const real_pack = build.game_files(read, (dir) => fs.readdirSync(path.join(real, dir)));
-  const generated = build.GENERATED.filter((f) => real_pack.includes(f));
+  // (the rosters are files like any other: a skin carries its own, and the browser makes only the league from them)
+  const generated = build.GENERATED.filter((f) => real_pack.includes(f) && !build.ROSTERS.includes(f));
   const in_generic = new Set(generic.files);
   const files = {}, sources = {};
   for (const f of real_pack) {

@@ -19,7 +19,7 @@
 (function (root) {
   "use strict";
 
-  var FORMAT = 1;                  // the skin file's format: a file of another format is refused
+  var FORMAT = 2;                  // the skin file's format: a file of another format is refused (2: a skin carries its rosters as the game reads them; the browser no longer makes them)
   var DB = "cfp-skin", STORE = "parts";      // IndexedDB: "meta", "words", "files", "sources", "cache"
   var FLAG = "cfp.skin";           // localStorage: {id, name} of the skin that is on (the page reads it before anything loads)
   var FAILED = "cfp.skin.failed";  // localStorage: why the last skin was taken off by the game itself, said once

@@ -46,7 +46,7 @@ export const JS_DIRS = ["engine_js", "sim_js", "teamdata_js", "career_js", "app_
 export const DATA_FILES = [
   "data/engine_teams.json", "data/player_potential.json", "data/recruiting_model.json", "data/history/polls.json",
   "data/schedules.json", "data/schedule_rules.json", "data/series.json", "data/rivalries.json", "data/bowls.json",
-  "data/fcs_map.json", "data/game_scale.json", "data/observed_tendencies.json", "data/manual_ratings.json",
+  "data/fcs_map.json", "data/game_scale.json", "data/observed_tendencies.json",
   "data/scheme_overrides.json", "data/poll_params.json", "data/program_history.json", "data/program_market.json",
   "data/program_profile.json", "data/real_adjustments.json", "data/coach_birth_years.json", "data/draft_targets.json",
   "data/major_cities.json", "data/base_league.json", "data/base_meta.json", "data/base_development.json",
@@ -54,11 +54,10 @@ export const DATA_FILES = [
 ];
 export const GENERATED = ["data/engine_teams.json", "data/player_potential.json", "data/base_league.json", "data/base_meta.json",
   "data/base_development.json"];
-// The rosters as the game reads them (the player's rule: a static file in the repository, not made again each time the
-// game runs). They are committed, made from cfb_sim_data/ by `node tools/game_host.mjs . teams` when a roster or the
-// builder changes (tests/test_static_rosters.mjs fails while they are behind). Nothing makes them again when the game
-// runs or the site is built: the dev server and a build with the real names read them as they are, and a generic
-// build swaps the names in its copy.
+// The rosters as the game reads them, and the one place a real player's ratings live (the player's rule: a static file
+// in the repository that he changes by hand, with nothing between a rating and the game). They are committed and
+// nothing makes them: not the game, not the dev server, not a build. The hand ratings and the real-usage depth charts
+// that once went into making them are part of them now. A generic build swaps the names in its copy.
 export const ROSTERS = ["data/engine_teams.json", "data/player_potential.json"];
 export const GAME_SCRIPT = "game.js";      // what ui/public/worker.js and sim-worker.js load
 export const PACK = "game-data.br";        // what ui/public/worker.js downloads: the data pack, brotli (vercel.json says so to the browser)
@@ -85,30 +84,25 @@ function run(cmd, args, cwd, env = {}) {
 
 const copy_tree = (from, to, skip = new Set()) => fs.cpSync(from, to, { recursive: true, filter: (src) => !skip.has(path.basename(src)) });
 
-/**
- * The generated data, by the game itself: the engine's teams and every player's potential (only with `rosters`: the
- * committed ones are read otherwise), then the base league.
- */
-export function generate(root, overlay = null, rosters = true) {
+/** The generated data, by the game itself: the base league (the rosters are committed files, never made here). */
+export function generate(root, overlay = null) {
   const more = overlay ? [overlay] : [];
-  if (rosters) run(process.execPath, [HOST, root, "teams", ...more], root);
   run(process.execPath, [HOST, root, "base", ...more], root);
 }
 
 /**
  * Copy the game (and the app's source) to `work`, swap the names there when `generic`, and build the data the game
  * reads from it: the base league. The rosters are the committed ones in every build (a generic build swaps the names
- * in its copy of them with everything else: tools/generic/scrub.mjs); `make_rosters` builds them from the source
- * rosters instead, as every generic build once did. Returns the staged project root.
+ * in its copy of them with everything else: tools/generic/scrub.mjs). Returns the staged project root.
  */
-export async function stage(work, generic, make_rosters = false) {
+export async function stage(work, generic) {
   const root = path.join(work, "project");
   for (const d of JS_DIRS) copy_tree(path.join(ROOT, d), path.join(root, d));
   // the preset faces go with the rosters (the player's ask): a face file holds face parts only, keyed by player id
   // and coach name, and a generic build's scrub renames those keys and the file with everything else
   copy_tree(path.join(ROOT, "cfb_sim_data"), path.join(root, "cfb_sim_data"));
   fs.mkdirSync(path.join(root, "data", "history"), { recursive: true });
-  const made = make_rosters ? GENERATED : GENERATED.filter((f) => !ROSTERS.includes(f));      // what this build makes itself
+  const made = GENERATED.filter((f) => !ROSTERS.includes(f));      // what a build makes itself
   for (const name of fs.readdirSync(path.join(ROOT, "data")).sort()) {
     if (name.endsWith(".json") && !made.includes(`data/${name}`)) fs.copyFileSync(path.join(ROOT, "data", name), path.join(root, "data", name));
   }
@@ -120,7 +114,7 @@ export async function stage(work, generic, make_rosters = false) {
     if (!fs.existsSync(scrub)) throw new Error("tools/generic/scrub.mjs is missing: a generic build cannot swap the names without it");
     await (await import(pathToFileURL(scrub).href)).run(root);
   }
-  generate(root, null, make_rosters);
+  generate(root);
   return root;
 }
 
@@ -296,7 +290,7 @@ export function dev_pack(cache) {
   const overlay = path.join(cache, "generated");
   fs.rmSync(overlay, { recursive: true, force: true });
   fs.mkdirSync(overlay, { recursive: true });
-  generate(ROOT, overlay, false);
+  generate(ROOT, overlay);
   const read = (f) => fs.readFileSync(fs.existsSync(path.join(overlay, f)) ? path.join(overlay, f) : path.join(ROOT, f), "utf8");
   fs.writeFileSync(file, pack_bytes(game_files(read, (dir) => fs.readdirSync(path.join(ROOT, dir))), read));
   fs.writeFileSync(key_file, key);

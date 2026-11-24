@@ -134,11 +134,7 @@ the same code runs under either host.
 
 ## Tests
 
-The rosters the game reads (`data/engine_teams.json`, `data/player_potential.json`) are committed, so a fresh clone runs the tests as it is. They are made from `cfb_sim_data/`; after a change to a roster or to the builder, make them again and commit them (`tests/test_static_rosters.mjs` fails while they are behind):
-
-```
-node tools/game_host.mjs . teams
-```
+The rosters the game reads (`data/engine_teams.json`, `data/player_potential.json`) are committed, so a fresh clone runs the tests as it is. They are the rosters themselves: nothing makes them, and a rating is changed by changing it there.
 
 Each test is a script that exits with 1 when something fails:
 

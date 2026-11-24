@@ -283,7 +283,7 @@ function unpack(bytes) {
 //     made again only when the site's own have changed, so a skin outlives a new version of the site;
 //   - the saves: a store of their own.
 const SKIN_NAMES = "game.names.json";
-const SKIN_STEPS = [["teams", "Making the skin's teams"], ["base", "Making the skin's league"]];
+const SKIN_STEPS = [["base", "Making the skin's league"]];      // (the rosters come in the skin itself: nothing makes them)
 let skin = null;           // the skin that is on: {meta, files, gameText, missed, mark, stale}
 
 const fetched = async (url, how) => {
@@ -339,8 +339,7 @@ async function runTask(init) {
     const game = self.Game, written = new Map();
     game.files.set_reader(store.read);
     game.files.set_store({ ...store, write(path, text) { store.write(path, text); written.set(clean(path), String(text)); } });
-    if (init.task === "teams") game.modules.build_teams.main([]);
-    else if (init.task === "base") game.modules.league.write_base_files();
+    if (init.task === "base") game.modules.league.write_base_files();
     else throw new Error(`unknown step: ${init.task}`);
     postMessage({ kind: "task-done", written: [...written] });
   } catch (err) {

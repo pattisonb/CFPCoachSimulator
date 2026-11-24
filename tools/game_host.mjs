@@ -6,8 +6,6 @@
 //   const game = await host(root, { overlay });       // ... but everything written lands under `overlay`, which is
 //                                                     //     read first (the dev server: nothing is written to the repo)
 //
-//   node tools/game_host.mjs ROOT teams [OVERLAY]     // data/engine_teams.json and data/player_potential.json (committed:
-//                                                     // run it and commit them when a roster or the builder changes)
 //   node tools/game_host.mjs ROOT base [OVERLAY]      // the base league's three files (career_js/league.js)
 //   node tools/game_host.mjs ROOT boot DEST [OVERLAY] // the team picker's answers, as files under DEST
 //
@@ -55,12 +53,13 @@ export async function host(root, { overlay = null, env = {} } = {}) {
 const compact = (v) => JSON.stringify(v);
 
 async function main([root, step, ...rest]) {
-  if (!root || !step) throw new Error("usage: node tools/game_host.mjs ROOT teams|base|boot [DEST] [OVERLAY]");
+  if (!root || !step) throw new Error("usage: node tools/game_host.mjs ROOT base|boot [DEST] [OVERLAY]");
   root = path.resolve(root);
-  if (step === "teams" || step === "base") {
+  if (step === "teams") {
+    throw new Error("the rosters are not made: data/engine_teams.json is the roster itself, changed by hand");
+  } else if (step === "base") {
     const game = await host(root, { overlay: rest[0] || null });
-    if (step === "teams") game.modules.build_teams.main([]);
-    else game.modules.league.write_base_files();
+    game.modules.league.write_base_files();
   } else if (step === "boot") {
     // The team picker's answers, asked of the game once (a game just started gives the same ones). A season it might
     // write goes to a folder of its own.

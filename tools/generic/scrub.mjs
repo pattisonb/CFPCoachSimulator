@@ -161,16 +161,14 @@ export class Maps {
         if (truthy(c) && truthy(get(c, "co_coordinator"))) coaches.add(c["co_coordinator"]);
       }
     }
-    // the real players the source rosters lack, added from real usage (data/real_adjustments.json "added"): each is
-    // a person and has an id the builder makes from his name ("real-" and his name, teamdata_js/build_teams.js
-    // add_real_player). They were in no map, so their real names reached a generic build untouched
-    const adj_file = path.join(root, "data", "real_adjustments.json");
-    if (is_file(adj_file)) {
-      for (const list of Object.values(get(_read(adj_file), "added") || {})) {
-        for (const a of list || []) {
-          if (!truthy(get(a, "name"))) continue;
-          const id = "real-" + Array.from(a["name"].toLowerCase(), (ch) => (/[a-z0-9]/.test(ch) ? ch : "-")).join("").replace(/^-+|-+$/g, "");
-          if (!(id in players)) players[id] = a["name"];
+    // the players the roster file has that no source roster does (real players added to it from real usage, their ids
+    // "real-" and the name): each is a person. They were in no map, so their real names reached a generic build
+    // untouched
+    const roster_file = path.join(root, "data", "engine_teams.json");
+    if (is_file(roster_file)) {
+      for (const t of Object.values(get(_read(roster_file), "teams") || {})) {
+        for (const p of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) {
+          if (truthy(get(p, "slug")) && truthy(get(p, "name")) && !(p["slug"] in players)) players[p["slug"]] = p["name"];
         }
       }
     }

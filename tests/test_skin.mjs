@@ -87,7 +87,8 @@ function hostile() {
 
 // ---- 2 and 3 ------------------------------------------------------------------------------------------------------
 
-// One step of the game on Node over a folder's files, with the game as one script (`game`): teams | base | play
+// One step of the game on Node over a folder's files, with the game as one script (`game`): base | play
+// (the rosters are never made: a skin carries its own)
 const STEP = `
 import { createRequire } from "node:module";
 import { fileStore } from ${JSON.stringify(pathToFileURL(path.join(ROOT, "tools", "game_host.mjs")).href)};
@@ -97,8 +98,7 @@ const store = fileStore(root);
 Game.files.set_reader(store.read);
 Game.files.set_store(store);
 Game.career.zip = Game.zip;
-if (step === "teams") Game.modules.build_teams.main([]);
-else if (step === "base") Game.modules.league.write_base_files();
+if (step === "base") Game.modules.league.write_base_files();
 else {
   const api = Game.api, said = [];
   const say = (v) => said.push(v);
@@ -153,7 +153,9 @@ async function round_trip() {
     const generic = unpack(zlib.gunzipSync(fs.readFileSync(path.join(site, build.PACK_GZIP))));
     const maps = new scrub.Maps(ROOT);
     const skin = JSON.parse(JSON.stringify(make(build, generic, real, maps, { id: "test-names", name: "Test Names", commit: "test" })));
-    assert(skin.format === Skin.FORMAT && skin.generated.length === build.GENERATED.length, () => JSON.stringify(skin.generated));
+    // what the browser makes under a skin: the base league alone. The rosters come in the skin itself, as files
+    assert(skin.format === Skin.FORMAT && skin.generated.length === build.GENERATED.length - build.ROSTERS.length, () => JSON.stringify(skin.generated));
+    assert(build.ROSTERS.every((f) => !skin.generated.includes(f) && typeof skin.files[f] === "string"), "the skin does not carry its rosters");
     const unplain = Object.values(skin.words).flat().filter((n) => !Skin.plain(n));
     assert(!unplain.length, () => `names the browser would not write: ${JSON.stringify(unplain.slice(0, 8))}`);
 
@@ -183,7 +185,6 @@ async function round_trip() {
       assert(r.status === 0, () => `${what}: ${String(r.stderr || r.error).slice(-2000)}`);
       return r.stdout;
     };
-    run(game, work, "teams");
     run(game, work, "base");
     const real_text = (f) => fs.readFileSync(path.join(real, f), "utf8");
     const differ = skin.pack.filter((f) => !fs.existsSync(path.join(work, f)) || fs.readFileSync(path.join(work, f), "utf8") !== real_text(f));
