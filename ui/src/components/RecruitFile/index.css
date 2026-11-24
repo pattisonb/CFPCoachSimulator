@@ -384,7 +384,7 @@ dd.recruit-file__inline {
    name beside it and its word under them; one not known yet is soft. What a trait means is the cell's tip ----- */
 .recruit-file__traits {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: var(--s2) 0 var(--s1);
   background: var(--paper);
   border: var(--line) solid var(--line-soft);
@@ -428,7 +428,7 @@ dd.recruit-file__inline {
 
 .recruit-file__trait-cell .label {
   overflow: hidden;
-  letter-spacing: 0; /* "Personality" whole in a quarter of the card */
+  letter-spacing: 0; /* "Personality" whole in a third of the card */
   color: var(--ink-soft);
   text-overflow: ellipsis;
   white-space: nowrap;

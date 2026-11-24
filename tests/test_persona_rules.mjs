@@ -7,6 +7,7 @@ import { start, test, run, assert } from "./harness.mjs";
 const game = await start();
 const { season, recruiting } = game;
 const { persona } = game.modules;
+persona.DECIDERS_ON = true;   // who decides is switched off in the game for now (persona.DECIDERS_ON): these tests hold what it does when it is on
 
 const ME = "ohio-state";
 // What a recruit wants leans with his personality and can shut the door (tests/test_standards.mjs): held level here, so
@@ -271,3 +272,17 @@ test("persona rules", () => {
 });
 
 await run();
+
+// ---- who decides is off in the game: every recruit decides himself, whatever was drawn or saved ----
+{
+  persona.DECIDERS_ON = false;
+  const draws = [];
+  for (let i = 0; i < 300; i++) draws.push(persona.draw(`off-${i}`, 7), persona.draw(`off-${i}`, 7, true));
+  if (!draws.every((d) => d["decider"] === "self" && d["decider_topic"] === null && persona.PERSONALITIES.includes(d["personality"]))) throw new Error("a recruit has a decider while who decides is off");
+  const st = { team: "x", recruiting: { seed: 7, prospects: { a: { persona: { personality: "shy", decider: "mom", decider_topic: "academics" } } } } };
+  const d = persona.of(st, "a");
+  if (d["decider"] !== "self" || d["decider_topic"] !== null || d["personality"] !== "shy") throw new Error("a saved decider is still read while who decides is off");
+  if (persona.learn(st, "x", "a", "decider")) throw new Error("who decides was learned while it is off");
+  console.log("ok: with who decides off, every recruit decides himself and nothing is learned about it");
+  persona.DECIDERS_ON = true;
+}

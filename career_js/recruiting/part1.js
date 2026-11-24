@@ -412,7 +412,7 @@ function tilt_for(p, d) {
   const lean = (topics) => {
     for (const t of topics) out[t] = get(out, t, 1.0) * recruiting.TILT;
   };
-  lean(get(recruiting.TILTS["decider"], get(d, "decider"), []));
+  if (modules.persona.DECIDERS_ON) lean(get(recruiting.TILTS["decider"], get(d, "decider"), []));   // (off: nobody leans by who decides)
   lean(get(recruiting.TILTS["personality"], get(d, "personality"), []));
   const stars = get(p, "stars") || get(p, "tier") || 0;
   lean(stars >= 5 ? ["nil", "exposure", "pro", "contender", "recruiting"] : stars === 4 ? ["contender"]

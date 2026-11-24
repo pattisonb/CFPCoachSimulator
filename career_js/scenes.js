@@ -147,7 +147,7 @@ export function open_scene(state, slug, pid, action, week) {
   const d = persona.of(state, pid);
   const sid = `${action}-${pid}-${pystr(week)}`;
   const turns = [scenes._turn("note", `${action === "hc_visit" ? "In-home visit" : "Call"} with ${pystr(p["name"])}.`)];
-  if (action === "hc_visit") {
+  if (action === "hc_visit" && persona.DECIDERS_ON) {
     turns.push(scenes._turn("note", `Decides: ${pystr(persona.DECIDER_LABEL[d["decider"]])}.`));
     persona.learn(state, slug, pid, "decider");
   }

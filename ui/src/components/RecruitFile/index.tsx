@@ -21,7 +21,6 @@ import {
   Snowflake,
   Star,
   User,
-  UsersThree,
   X,
 } from "@phosphor-icons/react";
 import { GradeRange, GradeScale } from "../Grade/index.tsx";
@@ -517,7 +516,6 @@ function statusText(r: BoardRow, d: ProspectDetail): string {
 
 const TRAIT_ICON: Record<string, Icon> = {
   personality: User,
-  decider: UsersThree,
   story: BookOpen,
   commit_style: Handshake,
 };
@@ -555,7 +553,6 @@ export function ProfileTab({
   const story = tr.story ? (tr.story_detail ? `${tr.story} · ${tr.story_detail}` : tr.story) : null;
   const traits: [string, string | null][] = [
     ["personality", tr.personality],
-    ["decider", tr.decider],
     ["story", story],
     ["commit_style", tr.commit_style],
   ];

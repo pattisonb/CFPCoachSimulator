@@ -11,6 +11,7 @@ import { Random } from "../engine_js/pyrt.js";
 const game = await start();
 const { season, recruiting } = game;
 const { persona, prospects, clear, news } = game.modules;
+persona.DECIDERS_ON = true;   // who decides is switched off in the game for now (persona.DECIDERS_ON): these tests hold what it does when it is on
 
 const ME = "ohio-state";
 const show = (v) => JSON.stringify(v);

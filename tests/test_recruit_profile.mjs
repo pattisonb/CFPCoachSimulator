@@ -51,7 +51,7 @@ test("the Scouting Report is written from your staff's reads, never his true gra
   let pr = prospects.profile(st, pid, ME);
   assert(pr["report"] === null, "no report before a look");
   const hints = pr["trait_hints"];
-  assert(["personality", "decider", "story"].every((k) => k in hints) && Object.values(hints).every((h) => h.endsWith(".") && /^[A-Z]/.test(h)), J(hints));
+  assert(["personality", "story"].every((k) => k in hints) && !("decider" in hints) && Object.values(hints).every((h) => h.endsWith(".") && /^[A-Z]/.test(h)), J(hints));
   rc["reads"][pid] = tight(p, 2);
   let rep = prospects.profile(st, pid, ME)["report"];
   assert(rep["headline"] && rep["verdict"], J(rep));

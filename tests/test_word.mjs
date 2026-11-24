@@ -9,6 +9,7 @@ import { Random, get, sorted } from "../engine_js/pyrt.js";
 const game = await start();
 const { season, recruiting, offseason } = game;
 const { word, persona, scenes, promises, office } = game.modules;
+persona.DECIDERS_ON = true;   // who decides is switched off in the game for now (persona.DECIDERS_ON): this file holds what it does when it is on
 
 const ME = "iowa";
 const J = (v) => () => JSON.stringify(v);

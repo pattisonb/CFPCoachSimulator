@@ -9,6 +9,7 @@ import { start, test, run, assert, equal } from "./harness.mjs";
 const game = await start();
 const { season, recruiting } = game;
 const { persona, scenes, prospects } = game.modules;
+persona.DECIDERS_ON = true;   // who decides is switched off in the game for now (persona.DECIDERS_ON): these tests hold what it does when it is on
 
 const ME = "smu";
 const show = (v) => JSON.stringify(v);

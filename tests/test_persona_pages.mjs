@@ -8,6 +8,7 @@ import { start, test, run, assert, equal } from "./harness.mjs";
 const game = await start();
 const { season, recruiting, api } = game;
 const { persona } = game.modules;
+persona.DECIDERS_ON = true;   // who decides is switched off in the game for now (persona.DECIDERS_ON): these tests hold what it does when it is on
 
 const show = (v) => JSON.stringify(v);
 const G = (sid, p) => api.call("GET", `/api/season/${sid}/${p}`);

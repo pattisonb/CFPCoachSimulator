@@ -38,6 +38,7 @@ const PERSONALITY_LABEL = { cocky: "Cocky", shy: "Shy", guarded: "Guarded", atte
 
 const DECIDERS = { self: 0.30, mom: 0.20, dad: 0.15, grandma: 0.10, hs_coach: 0.15, trainer: 0.10 };   // who decides, by share *tune*
 const DECIDER_LABEL = { self: "Himself", mom: "Mom", dad: "Dad", grandma: "Grandmother", hs_coach: "High School Coach", trainer: "Trainer" };
+const DECIDERS_ON = false;              // *tune* off: every recruit decides himself, with no topic, and nothing about who decides is shown or learned (the player's call, for now)
 const PORTAL_DECIDERS = ["self", "mom", "dad", "trainer"];   // a transfer's decider: no high school coach or grandmother (their shares renormalized)
 const _TOPICS_BEFORE_GRADES = { self: [], mom: ["proximity", "academics"], dad: ["nil", "playing_time", "pro"], grandma: ["proximity", "coach"],
   hs_coach: ["coach", "playing_time", "winning", "pro"], trainer: ["nil", "pro"] };
@@ -69,6 +70,7 @@ export function draw(pid, seed, portal = false, grades = true) {
     const g = new Random(`persona-grades-${pystr(seed)}-${pystr(pid)}`);
     if (g.random() < fresh.length / topics.length) topic = g.choice(fresh);
   }
+  if (!persona.DECIDERS_ON) return { personality, decider: "self", decider_topic: null };
   return { personality, decider, decider_topic: topic };
 }
 
@@ -92,7 +94,12 @@ export function of(state, pid) {
   // otherwise his fixed draw (the portal's for a transfer), cached in memory and not written into the state.
   const rc = state["recruiting"];
   const p = rc["prospects"][pid];
-  return p["persona"] !== undefined ? p["persona"] : persona._drawn(pid, get(rc, "seed", 0), truthy(get(rc, "portal")), get(rc, "topics_v") === 2);
+  if (p["persona"] !== undefined) {                 // (one a save or a test set: his decider is himself too while they are off)
+    const own = p["persona"];
+    return persona.DECIDERS_ON || (get(own, "decider", "self") === "self" && get(own, "decider_topic") === null) ? own
+      : { ...own, decider: "self", decider_topic: null };
+  }
+  return persona._drawn(pid, get(rc, "seed", 0), truthy(get(rc, "portal")), get(rc, "topics_v") === 2);
 }
 
 
@@ -247,7 +254,7 @@ export function known(state, slug, pid) {
   const rc = state["recruiting"];
   const k = or_(get(or_(get(or_(get(rc, "traits_known"), {}), slug), {}), pid), {});
   const looks = slug === get(state, "team") ? recruiting.report_looks(get(or_(get(rc, "reads"), {}), pid)) : 0.0;
-  return { personality: truthy(get(k, "personality")), decider: truthy(get(k, "decider")) || looks >= persona.DECIDER_LOOKS,
+  return { personality: truthy(get(k, "personality")), decider: persona.DECIDERS_ON && (truthy(get(k, "decider")) || looks >= persona.DECIDER_LOOKS),
     story: truthy(get(k, "story")) || looks >= recruiting.REPORT_LOOKS || persona.story_public(state, pid),
     style: truthy(get(k, "style")) && persona.style(state, pid) !== null };
 }
@@ -258,6 +265,7 @@ export function learn(state, slug, pid, trait) {
   // (nothing reads an AI school's yet), and only the player's learning is logged for his History.
   const recruiting = modules.recruiting;
   if (slug !== get(state, "team")) return false;
+  if (trait === "decider" && !persona.DECIDERS_ON) return false;
   const rc = state["recruiting"];
   if (rc["traits_known"] === undefined) rc["traits_known"] = {};
   if (rc["traits_known"][slug] === undefined) rc["traits_known"][slug] = {};
@@ -1333,7 +1341,7 @@ export function twist_view(state, viewer, pid) {
 
 
 export const persona = {
-  PERSONALITIES, PERSONALITY_LABEL, DECIDERS, DECIDER_LABEL, PORTAL_DECIDERS, _TOPICS_BEFORE_GRADES, DECIDER_TOPICS, _TOPICS_BEFORE_PRO,
+  DECIDERS_ON, PERSONALITIES, PERSONALITY_LABEL, DECIDERS, DECIDER_LABEL, PORTAL_DECIDERS, _TOPICS_BEFORE_GRADES, DECIDER_TOPICS, _TOPICS_BEFORE_PRO,
   draw, _drawn, of,
   ATTENTION_GAP, COCKY_PITCH, SHY_VISIT, SHY_FIRST_CALL, BUSINESS_MESSAGE, BUSINESS_OFFER, DECIDER_VISIT, COCKY_LOWBALL, TRAINER_LOWBALL,
   TRAINER_OVER, COCKY_HOLLOW, ATTENTION_PESTER_FREE, GUARDED_DECOMMIT,

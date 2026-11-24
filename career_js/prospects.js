@@ -423,7 +423,6 @@ prospects.NO_CONCERN = "There is no glaring hole in his game.";
 prospects.UNCERTAINTY = [[6.0, "Low"], [12.0, "Medium"]];   // *tune* a read's half-width in grade points: under this, the word; past both, High
 prospects.TRAIT_HINTS = {      // how an unknown trait is revealed, a sentence under "Not Known Yet"
   personality: "Your first call or in-home visit shows it.",
-  decider: "Two looks from your staff tell you.",
   story: "A complete report finds it.",
   commit_style: "An official visit, or four weeks holding your offer, shows it.",
 };

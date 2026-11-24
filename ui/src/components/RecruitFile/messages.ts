@@ -124,20 +124,15 @@ export const messages = {
   traits: "Who He Is",
   knownOf: (known: number, all: number) => `${known} of ${all} Known`,
   /** a trait's name short enough for a quarter of the card; its full name is the tip's title */
-  traitShort: { personality: "Personality", decider: "Decider", story: "Story", commit_style: "Commits" } as Record<
-    string,
-    string
-  >,
+  traitShort: { personality: "Personality", story: "Story", commit_style: "Commits" } as Record<string, string>,
   traitNames: {
     personality: "Personality",
-    decider: "Who Decides",
     story: "His Story",
     commit_style: "How He Commits",
   } as Record<string, string>,
   /** what each trait is, when there is nothing more particular to say */
   traitAbout: {
     personality: "How he sounds on a call and how he reacts to you.",
-    decider: "Who makes the final call on where he goes.",
     story: "Something about him that changes how his recruitment goes.",
     commit_style: "When and how he commits.",
   } as Record<string, string>,
