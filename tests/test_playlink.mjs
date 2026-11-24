@@ -21,13 +21,27 @@ const next = Object.values(st["games"]).filter((g) => (g["home"] === ME || g["aw
 const OPP = next["home"] === ME ? next["away"] : next["home"];
 const link = (slug) => api.call("GET", `/api/season/${sid}/playlink/${slug}`);
 
-test("the roster is what the link has always carried: the depth chart, and every player with his 54 skills", () => {
+test("the roster is what the link has always carried: the depth chart, and every player with his 54 skills", async () => {
   const t = link(ME);
   equal([t["slug"], typeof t["name"], typeof t["abbr"]], [ME, "string", "string"]);
   assert(t["players"].length >= 70 && t["depth"]["QB"].length >= 1 && t["colors"]["primary"], show(Object.keys(t)));
   for (const p of t["players"]) {
     assert(p["slug"] && p["name"] && p["pos"] && p["skills"].length === 54 && p["ovr"] >= 1 && p["ovr"] <= 99, show(p));
   }
+  // the skills are the numbers the roster file holds and the card shows (the one scale), in game_scale.keys() order
+  const fs = await import("node:fs");
+  const filed = JSON.parse(fs.readFileSync(new URL("../data/engine_teams.json", import.meta.url), "utf8"))["teams"][ME];
+  const keys = game.modules.game_scale ? game.modules.game_scale.keys() : (await import("../teamdata_js/game_scale.js")).game_scale.keys();
+  let same = 0, all = 0;
+  for (const src of [...filed["offense"], ...filed["defense"]]) {
+    const p = t["players"].find((x) => x["slug"] === src["slug"]);
+    if (!p) continue;
+    const by_skill = game.modules.rosters.skills_of(src);
+    keys.forEach((k, i) => { all += 1; if (p["skills"][i] === by_skill[k]) same += 1; });
+  }
+  assert(all > 3000 && same === all, `${same} of ${all} skills in the link are the file's numbers`);
+  const smith = t["players"].find((x) => x["slug"] === "jeremiah-smith");
+  equal(smith["skills"][keys.indexOf("speed")], [...filed["offense"]].find((x) => x["slug"] === "jeremiah-smith")["ratings"]["Top Speed"]);
   const slugs = new Set(t["players"].map((p) => p["slug"]));
   assert(Object.values(t["depth"]).every((group) => group.every((s) => slugs.has(s))), "the depth chart names a player the link does not have");
 });

@@ -34,7 +34,7 @@ test("the game reads every player worked out from his ratings: the engine's numb
         const src = f[unit][i];
         const who = `${slug} ${p["name"]}`;
         equal([p["slug"], p["role"], p["depth"], p["in_game"]], [src["slug"], src["role"], src["depth"], src["in_game"]], who);
-        equal(p["skills"], rosters.stored(src["ratings"], src["source_position"]), who);
+        equal(p["skills"], rosters.stored(rosters.skills_of(src), src["source_position"]), who);
         const ours = Object.fromEntries(attrs.map((k, j) => [k, p["skills"][j]]));
         equal(p["ovr"], game_scale.overall(ours, src["source_position"]), who);       // the overall the game has always used, on his stored skills
         assert(Number.isInteger(p["speed"]) && p["speed"] >= 1 && p["speed"] <= 99, who);
@@ -56,16 +56,20 @@ test("the number in the file is the number on his card and in the list of his ra
     const f = file["teams"][slug];
     [...data["teams"][slug]["offense"], ...data["teams"][slug]["defense"]].forEach((p, i) => {
       const src = [...f["offense"], ...f["defense"]][i];
+      // every rating his card prints is in his line of the file under the card's own name, with the card's number
+      // (Decision Making alone is not a rating of the file: the card works it out from Football IQ and Pocket Poise)
       for (const [key, v] of Object.entries(p["attributes"])) {
-        const from = rv2.ATTRIBUTES[key][3].sources;
-        if (from.length !== 1) continue;                       // (a blend of two ratings is not one number of the file)
-        equal(season.page_attribute(p, key, v), src["ratings"][from[0]], `${slug} ${p["name"]} ${key}`);
+        const name = rv2.ATTRIBUTES[key][0];
+        if (key === "decision_making") { assert(!(name in src["ratings"]), "Decision Making is stored"); continue; }
+        assert(name in src["ratings"], `${slug} ${p["name"]}: his card's ${name} is not in the file`);
+        equal(season.page_attribute(p, key, v), src["ratings"][name], `${slug} ${p["name"]} ${name}`);
         cards += 1;
       }
-      const listed = skill_rows(p);
+      // ... and the list of all his ratings shows the file's numbers too
+      const by_skill = rosters.skills_of(src), listed = skill_rows(p);
       for (const k of attrs) {
         if (!(k in listed)) continue;
-        equal(listed[k], src["ratings"][k], `${slug} ${p["name"]} ${k}`);
+        equal(listed[k], by_skill[k], `${slug} ${p["name"]} ${k}`);
         rows += 1;
       }
     });
@@ -73,17 +77,51 @@ test("the number in the file is the number on his card and in the list of his ra
   assert(cards > 5000 && rows > 5000, `${cards} ${rows}`);
 });
 
-test("Jeremiah Smith's speed set to 50 in the file: his card's Top Speed reads 50, the engine has him slow, his overall drops, and only his", () => {
+test("find Kevin Jennings in the file, find Pocket Poise, type 99: his card says Pocket Poise 99", () => {
+  // (the player's own words: Control-F the player, the rating as the card says it, change it, and the card shows it)
+  const text = fs.readFileSync(path.join(ROOT, "data", "engine_teams.json"), "utf8");
+  const line = text.split("\n").find((l) => l.startsWith('{"name":"Kevin Jennings"'));
+  assert(line && /"Pocket Poise":\d+/.test(line), "his line has no Pocket Poise");
+  const typed = text.replace(line, line.replace(/"Pocket Poise":\d+/, '"Pocket Poise":99'));
+  const data = rosters.derive(JSON.parse(typed));
+  const p = find(data, "smu", "kevin-jennings"), was = find(rosters.derive(copy(file)), "smu", "kevin-jennings");
+  equal(season.page_attribute(p, "pocket_poise", p["attributes"]["pocket_poise"]), 99);
+  assert(p["ovr"] >= was["ovr"] && p["decision_making"] >= was["decision_making"], "a better Pocket Poise made him worse");
+  // every name on his card is a name in his line, so each can be found the same way
+  for (const key of Object.keys(p["attributes"])) {
+    if (key !== "decision_making") assert(line.includes(`"${rv2.ATTRIBUTES[key][0]}":`), `his line has no ${rv2.ATTRIBUTES[key][0]}`);
+  }
+});
+
+test("a card's name is the file's name at every position: a corner's Ball Skills, a punter's Punt Power, a blend as one rating", () => {
+  const names = (pos, role = null) => rosters.names_for(pos, role).map(([n]) => n);
+  assert(names("CB").includes("Ball Skills") && !names("CB").includes("Hands") && names("WR").includes("Hands"));
+  assert(names("P").includes("Punt Power") && names("P").includes("Punt Accuracy") && names("K").includes("Kick Power"));
+  for (const pos of ["QB", "RB", "WR", "TE", "OL", "DL", "MLB", "CB", "S", "K", "P"]) {
+    const all = rosters.names_for(pos);
+    equal(all.flatMap(([, skills]) => skills).sort(), [...attrs].sort(), pos);            // every skill is in the file once, under one name
+    equal(new Set(all.map(([n]) => n)).size, all.length, pos);
+  }
+  // Agility, Durability and Elusiveness are one rating each (the card shows one number under each name)
+  equal(rosters.names_for("RB").filter(([, skills]) => skills.length > 1).map(([n]) => n).sort(), ["Agility", "Durability", "Elusiveness"]);
+  const edited = copy(file);
+  const rb = edited["teams"]["texas"]["offense"].find((x) => x["position"] === "RB");
+  rb["ratings"]["Elusiveness"] = 97;
+  const got = find(rosters.derive(edited), "texas", rb["slug"]);
+  equal(season.page_attribute(got, "elusiveness", got["attributes"]["elusiveness"]), 97);
+});
+
+test("Jeremiah Smith's Top Speed set to 50 in the file: his card reads 50, the engine has him slow, his overall drops, and only his", () => {
   const before = rosters.derive(copy(file));
   const edited = copy(file);
   const mine = find(edited, "ohio-state", "jeremiah-smith");
-  assert(mine && mine["ratings"]["speed"] > 85, "the file's Jeremiah Smith is not the fast one");
-  mine["ratings"]["speed"] = 50;
+  assert(mine && mine["ratings"]["Top Speed"] > 85, "the file's Jeremiah Smith is not the fast one");
+  mine["ratings"]["Top Speed"] = 50;
   const after = rosters.derive(edited);
   const a = find(before, "ohio-state", "jeremiah-smith"), b = find(after, "ohio-state", "jeremiah-smith");
   equal(season.page_attribute(b, "top_speed", b["attributes"]["top_speed"]), 50);
   equal(skill_rows(b)["speed"], 50);
-  equal(season.page_attribute(b, "burst", b["attributes"]["burst"]), mine["ratings"]["acceleration"]);     // what he did not touch reads as it did
+  equal(season.page_attribute(b, "burst", b["attributes"]["burst"]), mine["ratings"]["Burst"]);     // what he did not touch reads as it did
   assert(b["speed"] < a["speed"] - 15, `engine speed ${a["speed"]} -> ${b["speed"]}`);
   assert(b["ovr"] < a["ovr"] && b["ratings_at"]["WR"] < a["ratings_at"]["WR"], `overall ${a["ovr"]} -> ${b["ovr"]}`);
   equal([b["hands"], b["route_running"], b["attributes"]["hands"]], [a["hands"], a["route_running"], a["attributes"]["hands"]]);
@@ -98,20 +136,20 @@ test("a quarterback's arm changed in the file moves his passing, his card and hi
   const before = rosters.derive(copy(file));
   const edited = copy(file);
   const mine = qb_of(edited, "texas");
-  for (const k of ["throw_power", "throw_accuracy_short", "throw_accuracy_mid", "throw_accuracy_deep"]) mine["ratings"][k] = Math.max(1, mine["ratings"][k] - 20);
+  for (const k of ["Arm Strength", "Short Accuracy", "Intermediate Accuracy", "Deep Accuracy"]) mine["ratings"][k] = Math.max(1, mine["ratings"][k] - 20);
   const a = qb_of(before, "texas"), b = qb_of(rosters.derive(edited), "texas");
   assert(b["passing"] < a["passing"] - 8, `passing ${a["passing"]} -> ${b["passing"]}`);
   assert(b["attributes"]["arm_strength"] < a["attributes"]["arm_strength"] && b["ovr"] < a["ovr"] && b["ratings_at"]["QB"] < a["ratings_at"]["QB"]);
-  equal(season.page_attribute(b, "arm_strength", b["attributes"]["arm_strength"]), mine["ratings"]["throw_power"]);
+  equal(season.page_attribute(b, "arm_strength", b["attributes"]["arm_strength"]), mine["ratings"]["Arm Strength"]);
   equal([b["speed"], b["strength"]], [a["speed"], a["strength"]]);
 });
 
 test("a rating typed loosely is put right, and one left out is an ordinary one", () => {
   const edited = copy(file);
   const mine = qb_of(edited, "texas");
-  mine["ratings"]["speed"] = 140;
-  mine["ratings"]["strength"] = 61.4;
-  delete mine["ratings"]["stamina"];
+  mine["ratings"]["Top Speed"] = 140;
+  mine["ratings"]["Strength"] = 61.4;
+  delete mine["ratings"]["Stamina"];
   const p = qb_of(rosters.derive(edited), "texas");
   equal([p["filed"]["speed"], p["filed"]["strength"], p["filed"]["stamina"]], [99, 61, rosters.MISSING]);
 });
@@ -128,7 +166,7 @@ test("every reader gets a copy of its own, and a career's later season (its numb
 test("a career's league takes every real player's ratings from the roster file, by team and player", () => {
   const rated = league._roster_ratings();
   const p = qb_of(file, "texas");
-  equal(rated["texas"][p["slug"]], rosters.stored(p["ratings"], p["source_position"]));
+  equal(rated["texas"][p["slug"]], rosters.stored(rosters.skills_of(p), p["source_position"]));
   equal(rated["texas"][p["slug"]], qb_of(rosters.read(), "texas")["skills"]);          // the same skills season one shows and plays
   const n = Object.values(rated).reduce((k, t) => k + Object.keys(t).length, 0);
   assert(n > 10000, `${n} players`);
@@ -137,7 +175,8 @@ test("a career's league takes every real player's ratings from the roster file, 
   // ... and they are on the page what the file has (a career shows a stored skill through shown.skill)
   const grp = game_scale.group(p["source_position"]);
   let same = 0;
-  attrs.forEach((k, i) => { if (shown.skill(as_file[i], grp, k) === p["ratings"][k]) same += 1; });
+  const by_skill = rosters.skills_of(p);
+  attrs.forEach((k, i) => { if (shown.skill(as_file[i], grp, k) === by_skill[k]) same += 1; });
   assert(same >= attrs.length - 12, `${same} of ${attrs.length} read as the file has them`);
 });
 
@@ -155,7 +194,7 @@ test("a career's first league is read straight from the roster file: every playe
     // each as the general path makes a league player (compact), to the letter
     [...f["offense"], ...f["defense"]].forEach((x, i) => {
       if (i % 9) return;
-      const general = league.compact(league._as_source(x), attrs, f["state"], rosters.stored(x["ratings"], x["source_position"]));
+      const general = league.compact(league._as_source(x), attrs, f["state"], rosters.stored(rosters.skills_of(x), x["source_position"]));
       equal(t["roster"][i], general, `${slug} ${x["name"]}`);
     });
   }

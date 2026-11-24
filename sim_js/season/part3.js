@@ -455,7 +455,8 @@ function _playlink_playbook(state, slug) {
 function playlink_team(state, slug) {
   // One team in the shape of a Pocket Franchise roster link (the reader is pocket-franchise lib/game/roster-link.ts,
   // which keeps the fields it knows and drops the rest): the depth chart as this season has it, starter first, and
-  // every player with his current skills (game_scale's 54, after development) and what his card shows. `_position`
+  // every player with his current skills (the 54, after development, on the scale the game shows: the roster file's
+  // and the card's numbers, never the kept ones) and what his card shows. `_position`
   // and `_look` (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim.
   // An FCS stand-in has a full roster too (the sim plays it), so it can be played against on the field.
   //
@@ -483,7 +484,16 @@ function playlink_team(state, slug) {
   const sits = new Set(Object.values(sitting).map((v) => `${v["name"]}|${v["position"]}`));
 
   function player(p) {
-    const out = { slug: p["slug"], name: p["name"], pos: get(p, "role") || p["position"], skills: [...(get(p, "skills") || [])] };
+    // his 54 skills as the game shows them (the one scale: the roster file's numbers, the card's numbers), in
+    // game_scale.keys() order: the file's own number while his skill is still the one the file gave him, as the page
+    // shows it (season.all_skills)
+    const ks = game_scale.keys(), grp = game_scale.group(get(p, "role") || p["position"]);
+    const from_file = truthy(get(p, "filed"));
+    const skills = (get(p, "skills") || []).map((v, i) => {
+      const filed = from_file ? modules.rosters.shown_skill(p, ks[i], v) : null;
+      return filed !== null ? filed : _shown.skill(v, grp, ks[i]);
+    });
+    const out = { slug: p["slug"], name: p["name"], pos: get(p, "role") || p["position"], skills };
     const who = `${p["name"]}|${p["position"]}`;
     out["form"] = mood === null ? 0 : round(get(mood["players"], who, 0.0), 3);
     out["factor"] = round(season.morale_factor(state, slug, p["name"], p["position"]), 3);

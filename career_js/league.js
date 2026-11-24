@@ -329,7 +329,7 @@ export function _as_source(p) {
   }
   return { slug: p["slug"], name: p["name"], position: p["source_position"], "class": get(p, "class"),
     height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"), archetype: get(p, "archetype"),
-    dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: p["ratings"], target_mult: get(p, "target_mult") };
+    dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: modules.rosters.skills_of(p), target_mult: get(p, "target_mult") };
 }
 
 export function _filed_player(p, attrs, home, o = null) {
@@ -337,7 +337,8 @@ export function _filed_player(p, attrs, home, o = null) {
   // (tests/test_roster_source.mjs holds the two together), worked out directly: a league is 12,000 of them, read the
   // first time a career needs it. `o`: his overall when it is already known.
   const pos = p["source_position"], cls = get(p, "class") || "FR";
-  const r = modules.rosters.stored(p["ratings"], pos);
+  const filed = modules.rosters.skills_of(p);            // his ratings by skill, as the file's names give them
+  const r = modules.rosters.stored(filed, pos);
   const seeded = get(league._potentials(), p["slug"], {});
   const seeded_ea = get(seeded, "potential_ea") || {};
   const g = new Array(attrs.length).fill(0);
@@ -346,7 +347,7 @@ export function _filed_player(p, attrs, home, o = null) {
     const more = league.REAL_ROOM_CLASSES.includes(cls);          // seeded room runs short of a generated player's at the same stage
     for (let i = 0; i < attrs.length; i++) {
       const k = attrs[i], ours = r[i];
-      const ea = seeded_ea[k] !== undefined ? seeded_ea[k] : p["ratings"][k];
+      const ea = seeded_ea[k] !== undefined ? seeded_ea[k] : filed[k];
       if (ea === undefined) { g[i] = Math.max(0, 50 - ours); continue; }
       const v = Number.isInteger(ea) && ea >= 0 && ea <= 99 ? game_scale.ea_row(pos, k)[ea] : game_scale.from_ea({ [k]: ea }, pos)[k];
       let pot = int(round(Math.min(99, ours + room * Math.max(0, v - ours))));

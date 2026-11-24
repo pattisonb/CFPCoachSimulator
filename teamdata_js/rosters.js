@@ -1,8 +1,10 @@
 // The roster file as the game reads it (data/engine_teams.json): the one place a real player's ratings live.
 //
-// Each player in the file has one set of ratings, by name ("speed": 88, "throw_power": 92: game_scale.keys()), on the
-// scale every rating is shown on (teamdata_js/shown.js: the average player about a 70, the best in the 90s). The
-// number in the file is the number on his card. Nothing else about how good he is is stored. Everything the game plays
+// Each player in the file has one set of ratings, by the names his card prints ("Top Speed": 88, "Arm Strength": 92,
+// "Pocket Poise": 82: `names_for`), on the scale every rating is shown on (teamdata_js/shown.js: the average player
+// about a 70, the best in the 90s). The name in the file is the name on his card and the number in the file is the
+// number on his card (the player's rule: find the player, find the rating as the card says it, change it, and the
+// card shows it). Nothing else about how good he is is stored. Everything the game plays
 // and keeps is worked out from that one set when the file is read: the numbers the play engine reads (speed, passing,
 // hands...), his card's attributes, his overall, what he would be at every other position, and his ratings as a
 // career's league keeps them. So a rating changed in the file by hand is his rating everywhere (the player's rule),
@@ -25,9 +27,72 @@ import { build_teams } from "./build_teams.js";
 import { prospects } from "../career_js/prospects.js";
 
 const FILE = "data/engine_teams.json";
-const FORMAT = 2;            // the roster file's format: 2 has one labeled set of ratings a player and nothing worked out
+const FORMAT = 3;            // the roster file's format: one set of ratings a player, by the names his card prints, and nothing worked out
 const MISSING = 60;          // a rating the file leaves out (on the shown scale)
 const NEAR = 3;              // how far a kept number may be moved so the page shows the file's own number
+
+// ----- the names: a rating in the file is called what the player's card calls it ---------------------------------------
+//
+// The game keeps 54 skills (game_scale.keys()). A card attribute that is one skill gives the skill its name in the
+// file ("Top Speed" is speed, "Pocket Poise" is throw_under_pressure); where two cards name one skill differently the
+// player's own card decides (a corner's catching is "Ball Skills", a receiver's "Hands"; a punter's leg is "Punt
+// Power"). A card attribute that is two skills together (BLENDS) is one rating in the file, and both skills are it:
+// the card cannot show two numbers under one name. A skill no card shows goes by its own name ("Run Block").
+
+const BLENDS = { agility: ["agility", "change_of_direction"], durability: ["injury", "toughness"], elusiveness: ["juke_move", "spin_move"] };
+const _names = new Map();                // card group -> [[name in the file, [the skills it is]], ...], the card's own ratings first
+
+const _title = (key) => key.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+export function names_for(position, role = null) {
+  // Every rating of a player at engine position `position` (depth-chart role `role`), as the file names it and the
+  // skills each is: [[name, [skill, ...]], ...]. His card's ratings first, in the card's order, then the rest by name.
+  const group = rv2.card_group(position, role);
+  let out = _names.get(group);
+  if (out !== undefined) return out;
+  const card = Object.hasOwn(rv2.POSITION_ATTRIBUTES, group) ? rv2.POSITION_ATTRIBUTES[group] : rv2.PHYSICAL;
+  const blended = {};
+  for (const [attr, skills] of Object.entries(BLENDS)) for (const s of skills) blended[s] = attr;
+  const of_skill = {};                   // skill -> the card attribute that names it for this player
+  for (const attr of [...card, ...Object.keys(rv2.ATTRIBUTES)]) {
+    const src = rv2.ATTRIBUTES[attr][3].sources;
+    if (Object.hasOwn(BLENDS, attr)) { for (const s of BLENDS[attr]) if (!(s in of_skill)) of_skill[s] = attr; continue; }
+    if (src.length === 1 && !(src[0] in of_skill) && !(src[0] in blended)) of_skill[src[0]] = attr;
+  }
+  const by_name = new Map();
+  for (const k of game_scale.keys()) {
+    const name = k in of_skill ? rv2.ATTRIBUTES[of_skill[k]][0] : _title(k);
+    if (!by_name.has(name)) by_name.set(name, []);
+    by_name.get(name).push(k);
+  }
+  const first = card.map((a) => rv2.ATTRIBUTES[a][0]).filter((n) => by_name.has(n));
+  const rest = [...by_name.keys()].filter((n) => !first.includes(n)).sort();
+  out = [...new Set([...first, ...rest])].map((n) => [n, by_name.get(n)]);
+  _names.set(group, out);
+  return out;
+}
+
+export function skills_of(p) {
+  // A file player's ratings by skill (game_scale.keys()), from the names his line carries: each a whole number 1-99
+  // (one typed as 61.5 or 140 is put right; one left out is MISSING).
+  const filed = get(p, "ratings") || {}, out = {};
+  for (const [name, skills] of names_for(p["position"], get(p, "role"))) {
+    const v = filed[name];
+    const whole = Number.isInteger(v) && v >= 1 && v <= 99 ? v : isNumber(v) ? Math.max(1, Math.min(99, int(round(v)))) : rosters.MISSING;
+    for (const s of skills) out[s] = whole;
+  }
+  return out;
+}
+
+export function file_ratings(by_skill, position, role = null) {
+  // The other way: ratings by skill as a player's line carries them, by the names his card prints (a rating that is
+  // two skills together is their mean).
+  const out = {};
+  for (const [name, skills] of names_for(position, role)) {
+    out[name] = int(round(sum(skills.map((s) => get(by_skill, s, rosters.MISSING))) / skills.length));
+  }
+  return out;
+}
 
 // ----- the tables: a rating in the file is a whole number 1-99, so each step is worked out once a number ---------------
 
@@ -82,7 +147,7 @@ function _tenth_rows(grp, ks) {
 }
 
 export function stored(named, source_position) {
-  // A player's ratings from the file as a career's league keeps them: the stored skills, a list in
+  // A player's ratings (by skill: skills_of) as a career's league keeps them: the stored skills, a list in
   // game_scale.keys() order, for the position his ratings are for.
   const ks = game_scale.keys(), rows = _ours_rows(game_scale.group(source_position), ks);
   const whole = _whole(named, ks);
@@ -120,7 +185,7 @@ function _attribute(kept, scale_group, key, base, named, exact) {
     v = round(v, 1);
     const [m, hi, lo] = get(build_teams.ATTR_SCALE, `${scale_group}|${key}`, [v, 1.5, 0.9]);
     out = build_teams.clamp_rating(50 + (v - m) * (v >= m ? hi : lo));
-    if (exact && src.length === 1) {
+    if (exact && src.every((s) => named[s] === named[src[0]])) {      // one number of the file (a blend's skills are one rating there)
       const want = named[src[0]];
       search: for (let d = 0; d <= rosters.NEAR; d++) {
         for (const o of d ? [out + d, out - d] : [out]) {
@@ -176,14 +241,15 @@ export function shown_attribute(p, key, value) {
   const filed = get(p, "filed");
   if (!truthy(filed) || !Object.hasOwn(rv2.ATTRIBUTES, key)) return null;
   const src = rv2.ATTRIBUTES[key][3].sources;
-  if (src.length !== 1 || !isNumber(filed[src[0]])) return null;
+  if (!isNumber(filed[src[0]]) || !src.every((s) => filed[s] === filed[src[0]])) return null;     // (not one number of the file)
   const group = rv2.card_group(p["position"], get(p, "role"));
   const scale_group = group === "FB" ? "RB" : group;
   const at = `${scale_group}|file`;
   let kept = _attr_cache.get(at);
   if (kept === undefined) _attr_cache.set(at, kept = {});
   if (!Object.keys(build_teams.ATTR_SCALE).length) Object.assign(build_teams.ATTR_SCALE, game_scale.card_scale());
-  const base = { [src[0]]: _base_of()[filed[src[0]]] };
+  const base = {};
+  for (const s of src) base[s] = _base_of()[filed[s]];
   return _attribute(kept, scale_group, key, base, filed, true) === value ? filed[src[0]] : null;
 }
 
@@ -275,7 +341,7 @@ export function derive_team(t, means) {
       : build_teams.DEF_STATS.concat(build_teams.SHARED_STATS);
     t[unit] = (get(t, unit) || []).map((p) => {
       if (!truthy(get(p, "ratings"))) return p;              // already worked out
-      const named = _whole(p["ratings"], ks);
+      const named = skills_of(p);
       const [m, base, grp] = _mapped(p, named, ks);
       const skills = m["skills"];
       delete m["skills"];
@@ -365,6 +431,7 @@ export function forget() {
   _attr_cache.clear();
   _ours.clear();
   _tenths.clear();
+  _names.clear();
   _bases = null;
 }
 
@@ -377,14 +444,14 @@ export function stored_ratings(path = rosters.FILE) {
     const by = out[slug] = {};
     for (const p of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) {
       if (!truthy(get(p, "slug"))) continue;
-      if (truthy(get(p, "ratings")) && !Array.isArray(p["ratings"])) by[p["slug"]] = stored(p["ratings"], p["source_position"]);
+      if (truthy(get(p, "ratings")) && !Array.isArray(p["ratings"])) by[p["slug"]] = stored(skills_of(p), p["source_position"]);
       else if (Array.isArray(get(p, "skills"))) by[p["slug"]] = p["skills"];
     }
   }
   return out;
 }
 
-export const rosters = { FILE, FORMAT, MISSING, NEAR, stored, labeled, overall, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
+export const rosters = { FILE, FORMAT, MISSING, NEAR, BLENDS, names_for, skills_of, file_ratings, stored, labeled, overall, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
   read, shared, loaded, forget, stored_ratings };
 
 modules.rosters = rosters;
