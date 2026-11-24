@@ -508,6 +508,7 @@ function is_generational(state, pid) {
 
 
 recruiting._STEP_WEEK = [null];        // the season week whose step is running (weekly_step), else None
+recruiting._STEP_AUTO = [false];       // whether that step recruits for your school too (a simmed season, an auto offseason): Room
 
 
 function contact_week(state) {

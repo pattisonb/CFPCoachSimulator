@@ -31,11 +31,11 @@ const KNOWN_FAILURES = {
   // standards: over 30 draws of that pool the mean is 4.6 (4.0 before) and one draw in 30 passes five. For the player
   // to decide: tune the draft or allow six in a single draft
   test_draft_positions: "six quarterbacks in round one of one seeded draft (limit five) since the recruiting overhaul",
-  // on seed 1 the coach's own school (played for him by the test) signs seven linebackers with room for four: three
-  // past its room, where the limit is two. Every school the game recruits for is inside it. Since a career's first
-  // league is read from the roster file (27 more real players in it, so the seed's class fell differently). For the
-  // player to decide: hold your own auto-recruited class to its room, or allow three
-  test_recruiting_realism: "on one seed the coach's own auto-recruited class signs three past its room at one position (limit two)",
+  // on seed 2, 15 of the 138 schools sign no quarterback (10.9%; the limit is 10%, which is 13 schools). It was inside
+  // the limit on both seeds until the classes fell differently (a career's first league now holds 27 more real
+  // players, and your own school on Auto is held to its room). For the player to decide: leave it, or have a school
+  // with no quarterback committed late take one
+  test_recruiting_realism: "on one seed 15 of 138 schools sign no quarterback (limit 13)",
 };
 
 const stem = (name) => path.basename(name).replace(/\.(mjs|js|py)$/, "");

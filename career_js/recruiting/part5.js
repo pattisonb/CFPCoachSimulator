@@ -227,10 +227,12 @@ function weekly_step(state, week, auto_user = false) {
   // commitment draws, signing, then the hours reset. Returns the week's events. In the portal
   // `week` is the portal week (1-4) and entrants decide at each step instead of committing.
   recruiting._STEP_WEEK[0] = state["current_week"];    // the contacts made in the step count against the week it lands (contact_week)
+  recruiting._STEP_AUTO[0] = truthy(auto_user);        // your school is being recruited for this week (a simmed season, an auto offseason)
   try {
     return recruiting._weekly_step(state, week, auto_user);
   } finally {
     recruiting._STEP_WEEK[0] = null;
+    recruiting._STEP_AUTO[0] = false;
   }
 }
 

@@ -854,7 +854,9 @@ function _Room(state, flier = false) {
   self.commits = recruiting._commits(state);
   self.groups = {};
   self.slack = truthy(flier) ? 1 : 0;
-  self.yours = recruiting.auto_mode(state) === "off" ? get(state, "team") : null;
+  // (only a class you are recruiting by hand may oversign a group: on Auto-recruit, or in a week the game recruits
+  // for you, your school is held to its room at each position as every other school is: the player's rule)
+  self.yours = recruiting.auto_mode(state) === "off" && !recruiting._STEP_AUTO[0] ? get(state, "team") : null;
   self.portal = recruiting.is_portal(state);
 
   self._at = (slug) => {
