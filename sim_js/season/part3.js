@@ -466,7 +466,8 @@ function playlink_team(state, slug) {
   //               when it is your team), "tendencies" (how it calls a game: pass rate, tempo, fourth downs, blitz...),
   //               "playbook" (its schemes and the formations it lines up in most, each slot a player), "out" (who is
   //               unavailable: the injured and the redshirting);
-  //   a player:   "form" (his hot or cold streak, -1 to 1) and "factor" (what the sim multiplies his ratings by
+  //   a player:   "card" (his card's ratings by the names the card prints, the numbers it shows),
+  //               "form" (his hot or cold streak, -1 to 1) and "factor" (what the sim multiplies his ratings by
   //               entering the game: his form and his team's mood together, 0.9 to 1.1; the skills sent are his plain
   //               ones, without it), "injury" ({type, weeks_left}) or "redshirting", and "fatigue" (the season
   //               carries none between games: every player starts a game fresh, so it is 0).
@@ -516,6 +517,13 @@ function playlink_team(state, slug) {
       if (truthy(get(p, field))) out[key] = p[field];
     }
     out["ovr"] = season.page_overall(p);          // what his card shows
+    // his card's ratings as the card prints them, name and number ("Pocket Poise": 82), Decision Making among them
+    // (the one the card works out from two others): the field need not work any of them out
+    const card = {};
+    for (const [k, v] of Object.entries(get(p, "attributes") || {})) {
+      if (has(ratings_v2.ATTRIBUTES, k)) card[ratings_v2.ATTRIBUTES[k][0]] = season.page_attribute(p, k, v);
+    }
+    if (Object.keys(card).length) out["card"] = card;
     const earned = [];
     for (const x of get(p, "traits") || []) {
       const key = get(x, "key"), tier = get(x, "tier");

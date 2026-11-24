@@ -40,6 +40,19 @@ test("the roster is what the link has always carried: the depth chart, and every
     keys.forEach((k, i) => { all += 1; if (p["skills"][i] === by_skill[k]) same += 1; });
   }
   assert(all > 3000 && same === all, `${same} of ${all} skills in the link are the file's numbers`);
+  // ... and his card as the card prints it: every name and number of the file's that his card shows, and Decision
+  // Making, which the card works out
+  for (const src of [...filed["offense"], ...filed["defense"]]) {
+    const p = t["players"].find((x) => x["slug"] === src["slug"]);
+    if (!p) continue;
+    assert(Object.keys(p["card"]).length >= 4, show(p["card"]));
+    for (const [name, v] of Object.entries(p["card"])) {
+      assert(Number.isInteger(v) && v >= 1 && v <= 99, `${p["name"]} ${name} ${v}`);
+      if (name !== "Decision Making") equal(v, src["ratings"][name], `${p["name"]} ${name}`);
+    }
+  }
+  const qb = t["players"].find((x) => x["pos"] === "QB");
+  assert(Object.keys(qb["card"]).length === 20 && qb["card"]["Decision Making"] >= 1 && "Pocket Poise" in qb["card"] && "Football IQ" in qb["card"], show(qb["card"]));
   const smith = t["players"].find((x) => x["slug"] === "jeremiah-smith");
   equal(smith["skills"][keys.indexOf("speed")], [...filed["offense"]].find((x) => x["slug"] === "jeremiah-smith")["ratings"]["Top Speed"]);
   const slugs = new Set(t["players"].map((p) => p["slug"]));
