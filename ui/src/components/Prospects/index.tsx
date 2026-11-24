@@ -25,7 +25,7 @@ import FitText from "../FitText/index.tsx";
 import RangeBar from "../RangeBar/index.tsx";
 import TileMap, { MapMark } from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
-import { setOnBoard } from "../../board.ts";
+import { setFavorite, setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import { cachedTeams } from "../../teams.ts";
 import type { NeedGroup, ProspectRow, ProspectsView, TeamCard } from "../../types.ts";
@@ -287,6 +287,19 @@ export default function Prospects({
       );
       setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
       load();
+      onBoardChange?.();
+    } catch (e) {
+      setNote(m.boardError((e as Error).message));
+    }
+  };
+
+  // your favorites (♥): marked or cleared from his card
+  const setFav = async (r: ProspectRow, on: boolean) => {
+    try {
+      await setFavorite(seasonId, r.id, on);
+      setData((d) => d && { ...d, rows: d.rows.map((x) => (x.id === r.id ? { ...x, favorite: on } : x)) });
+      setNote(on ? m.favOn(r.name) : m.favOff(r.name));
+      if (view === "favorites") load();
       onBoardChange?.();
     } catch (e) {
       setNote(m.boardError((e as Error).message));
@@ -833,6 +846,7 @@ export default function Prospects({
             row={rows.find((r) => r.id === picked)}
             onClose={() => setPicked(null)}
             onBoard={setBoard}
+            onFavorite={setFav}
             // a file left open when the pool changed under it (the portal closed): it shuts, and the list is read again
             onGone={() => {
               setPicked(null);

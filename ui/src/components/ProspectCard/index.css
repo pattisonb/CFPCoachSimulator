@@ -139,10 +139,58 @@
   display: none;
 }
 
+/* his two marks: the board's button takes the row, the favorite's heart is a square at its end */
+.prospect-card__marks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s2);
+  align-items: stretch;
+}
+
 .prospect-card__board {
   justify-content: center;
   width: 100%;
-  min-height: 36px;
+  min-height: 40px;
+}
+
+/* taking him off: quiet until you reach for it, then the warning color */
+.prospect-card__board.is-remove:hover:enabled {
+  background: var(--warn);
+  color: var(--paper-hi);
+  border-color: var(--warn);
+}
+
+.prospect-card__fav {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: var(--paper-hi);
+  color: var(--ink-soft);
+  border: var(--line) solid var(--ink);
+  cursor: pointer;
+  transition: transform 0.08s;
+}
+
+.prospect-card__fav:hover {
+  color: var(--warn);
+}
+
+.prospect-card__fav.is-on {
+  background: var(--warn);
+  color: var(--paper-hi);
+  border-color: var(--warn);
+}
+
+.prospect-card__fav:active {
+  transform: scale(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prospect-card__fav {
+    transition: none;
+  }
 }
 
 /* a section: its name over your three colors, as a group's name on the board */

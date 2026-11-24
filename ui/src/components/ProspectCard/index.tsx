@@ -1,6 +1,6 @@
 import { GradeRange } from "../Grade/index.tsx";
 import { useEffect, useState } from "react";
-import { Door, EnvelopeSimple, Star, X } from "@phosphor-icons/react";
+import { Door, EnvelopeSimple, Heart, Minus, Plus, Star, X } from "@phosphor-icons/react";
 import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
@@ -22,6 +22,8 @@ interface Props {
   onClose: () => void;
   /** add or remove him; his file reloads after */
   onBoard: (row: ProspectRow, on: boolean) => Promise<void>;
+  /** mark him a favorite or clear the mark; the heart is drawn only when the page can do it */
+  onFavorite?: (row: ProspectRow, on: boolean) => Promise<void>;
   /** he is not in the pool any more (the portal closed, the class signed and left): the card has nothing to show */
   onGone?: () => void;
 }
@@ -89,7 +91,7 @@ export function Stars({ n, size = 12 }: { n: number; size?: number }) {
  * is and where he ranks, who's recruiting him, your scouting so far and the scouting service's read, and the board
  * toggle. Shared by Prospects now; Scouting and Recruiting add their own tabs later.
  */
-export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onGone }: Props) {
+export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onFavorite, onGone }: Props) {
   const [detail, setDetail] = useState<ProspectDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
@@ -176,25 +178,43 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
       )}
 
       {r && (
-        <Button
-          variant={r.on_board ? "outline" : "solid"}
-          className="prospect-card__board"
-          disabled={changing || (!!r.blocked && !r.on_board)}
-          title={r.blocked && !r.on_board ? r.blocked.text : undefined}
-          onClick={() => {
-            setChanging(true);
-            void onBoard(r, !r.on_board)
-              .then(() => setVersion((v) => v + 1))
-              .finally(() => setChanging(false));
-          }}
-        >
-          {r.blocked && !r.on_board && r.blocked.why !== "signed" ? (
-            <Door size={18} weight="fill" aria-hidden="true" />
-          ) : (
-            <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
+        // his two marks, side by side: on your board or off it (adding is the solid one; taking him off warns as you
+        // reach for it), and your favorite's heart
+        <div className="prospect-card__marks">
+          <Button
+            variant={r.on_board ? "outline" : "solid"}
+            className={`prospect-card__board${r.on_board ? " is-remove" : ""}`}
+            disabled={changing || (!!r.blocked && !r.on_board)}
+            title={r.blocked && !r.on_board ? r.blocked.text : undefined}
+            onClick={() => {
+              setChanging(true);
+              void onBoard(r, !r.on_board)
+                .then(() => setVersion((v) => v + 1))
+                .finally(() => setChanging(false));
+            }}
+          >
+            {r.on_board ? (
+              <Minus size={18} weight="bold" aria-hidden="true" />
+            ) : r.blocked && r.blocked.why !== "signed" ? (
+              <Door size={18} weight="fill" aria-hidden="true" />
+            ) : (
+              <Plus size={18} weight="bold" aria-hidden="true" />
+            )}
+            {r.on_board ? m.removeBoard : r.blocked ? m.closed[r.blocked.why] : m.addBoard}
+          </Button>
+          {onFavorite && (
+            <button
+              type="button"
+              className={`prospect-card__fav${r.favorite ? " is-on" : ""}`}
+              aria-pressed={!!r.favorite}
+              aria-label={r.favorite ? m.removeFav : m.addFav}
+              title={r.favorite ? m.removeFav : m.addFav}
+              onClick={() => void onFavorite(r, !r.favorite)}
+            >
+              <Heart size={20} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
+            </button>
           )}
-          {r.on_board ? m.removeBoard : r.blocked ? m.closed[r.blocked.why] : m.addBoard}
-        </Button>
+        </div>
       )}
 
       {error && <p className="prospect-card__soft">{m.loadError(error)}</p>}

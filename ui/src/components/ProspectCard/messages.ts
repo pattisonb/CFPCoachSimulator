@@ -71,7 +71,9 @@ export const messages = {
   addBoard: "Add to My Board",
   /** the add control when the door is shut on you (its tip is the game's sentence) */
   closed: { locked: "Closed Door", finalists: "Not a Finalist", signed: "Signed" } as Record<string, string>,
-  removeBoard: "Off My Board",
+  removeBoard: "Remove From My Board",
+  addFav: "Add him to your favorites.",
+  removeFav: "Take him off your favorites.",
   loading: "Loading his file…",
   loadError: (msg: string) => `Couldn't load him: ${msg}.`,
 } as const;

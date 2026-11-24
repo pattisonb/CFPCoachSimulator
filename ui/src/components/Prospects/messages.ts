@@ -61,6 +61,8 @@ export const messages = {
     `${name} holds your offer. Taking him off your board pulls it (and a soft commit to you ends). Go ahead?`,
   boardOn: (name: string) => `${name} is on your board.`,
   boardOff: (name: string) => `${name} is off your board.`,
+  favOn: (name: string) => `${name} is one of your favorites.`,
+  favOff: (name: string) => `${name} is off your favorites.`,
   boardError: (msg: string) => `Couldn't change your board: ${msg}.`,
   gone: "He is no longer in this pool.",
   none: "Nobody matches. Clear the search or a filter.",
