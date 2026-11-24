@@ -161,6 +161,19 @@ export class Maps {
         if (truthy(c) && truthy(get(c, "co_coordinator"))) coaches.add(c["co_coordinator"]);
       }
     }
+    // the real players the source rosters lack, added from real usage (data/real_adjustments.json "added"): each is
+    // a person and has an id the builder makes from his name ("real-" and his name, teamdata_js/build_teams.js
+    // add_real_player). They were in no map, so their real names reached a generic build untouched
+    const adj_file = path.join(root, "data", "real_adjustments.json");
+    if (is_file(adj_file)) {
+      for (const list of Object.values(get(_read(adj_file), "added") || {})) {
+        for (const a of list || []) {
+          if (!truthy(get(a, "name"))) continue;
+          const id = "real-" + Array.from(a["name"].toLowerCase(), (ch) => (/[a-z0-9]/.test(ch) ? ch : "-")).join("").replace(/^-+|-+$/g, "");
+          if (!(id in players)) players[id] = a["name"];
+        }
+      }
+    }
     for (const c of _read(path.join(root, "cfb_sim_data", "coaches.json"))) coaches.add(c["name"]);
     for (const c of Object.keys(get(_read(path.join(root, "data", "coach_birth_years.json")), "birth_years", {}))) coaches.add(c);
     const model = _read(path.join(root, "data", "recruiting_model.json"));
@@ -439,6 +452,33 @@ export function _fields(root, m) {
     const faces = path.join(root, "cfb_sim_data", "faces", `${slug}.json`);
     if (is_file(faces) && made.slug !== slug) fs.renameSync(faces, path.join(root, "cfb_sim_data", "faces", `${made.slug}.json`));
   }
+  // the rosters as the game reads them (data/engine_teams.json), when the staged project carries them: each team's
+  // identity there is the builder's own shape of the same fields (name, school, mascot, abbreviation, city, the
+  // stadium's name, the colors as plain hex), so they take the same edits. The players' and coaches' names are
+  // swapped with every other JSON file in run()
+  const engine = path.join(root, "data", "engine_teams.json");
+  if (is_file(engine)) {
+    const doc = _read(engine);
+    for (const [slug, t] of Object.entries(get(doc, "teams") || {})) {
+      const made = get(m.team, slug);
+      if (!truthy(made) || !(slug in m.real_teams)) continue;
+      for (const c of Object.values(get(t, "coaches") || {})) {
+        if (truthy(c)) _coach(c, m, shorts, old_shorts);
+      }
+      t["name"] = DONE + made.short;
+      t["mascot"] = DONE + made.mascot;
+      t["abbreviation"] = DONE + made.abbr;
+      if (is_dict(get(t, "stadium"))) t["stadium"]["name"] = DONE + made.stadium;
+      if (Object.hasOwn(tables.CITIES, slug)) t["city"] = DONE + tables.CITIES[slug];
+      if (tables.NUDGE_COLORS.has(slug) && is_dict(get(t, "colors"))) {
+        for (const [k, hex] of Object.entries(t["colors"])) {
+          if (typeof hex === "string" && hex.startsWith("#")) t["colors"][k] = _nudge(hex, slug);
+        }
+      }
+    }
+    _write(engine, doc);
+  }
+
   let file = path.join(root, "cfb_sim_data", "coaches.json");
   const coaches = _read(file);
   for (const c of coaches) _coach(c, m, shorts, old_shorts);

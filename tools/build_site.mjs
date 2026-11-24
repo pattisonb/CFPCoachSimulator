@@ -27,8 +27,8 @@
 // The dev server (ui/vite.config.ts) uses the same pieces: `bundle_game` for game.js and `dev_pack` for the data pack,
 // with the real rosters and nothing written to the repository.
 //
-// The rosters the game reads (ROSTERS: data/engine_teams.json, data/player_potential.json) are committed files. Only
-// a generic build makes its own, from the rosters whose names it has just swapped.
+// The rosters the game reads (ROSTERS: data/engine_teams.json, data/player_potential.json) are committed files: no
+// build makes them. A generic build swaps the names in its staged copy of them.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -56,9 +56,9 @@ export const GENERATED = ["data/engine_teams.json", "data/player_potential.json"
   "data/base_development.json"];
 // The rosters as the game reads them (the player's rule: a static file in the repository, not made again each time the
 // game runs). They are committed, made from cfb_sim_data/ by `node tools/game_host.mjs . teams` when a roster or the
-// builder changes (tests/test_static_rosters.mjs fails while they are behind). The dev server and a build with the
-// real names read them as they are. A generic build still makes its own: its rosters carry the lookalike names, so
-// they are other rosters than these.
+// builder changes (tests/test_static_rosters.mjs fails while they are behind). Nothing makes them again when the game
+// runs or the site is built: the dev server and a build with the real names read them as they are, and a generic
+// build swaps the names in its copy.
 export const ROSTERS = ["data/engine_teams.json", "data/player_potential.json"];
 export const GAME_SCRIPT = "game.js";      // what ui/public/worker.js and sim-worker.js load
 export const PACK = "game-data.br";        // what ui/public/worker.js downloads: the data pack, brotli (vercel.json says so to the browser)
@@ -97,17 +97,18 @@ export function generate(root, overlay = null, rosters = true) {
 
 /**
  * Copy the game (and the app's source) to `work`, swap the names there when `generic`, and build the data the game
- * reads: the base league, and for a generic build the engine's teams too (from the rosters whose names were just
- * swapped; a build with the real names copies the committed ones). Returns the staged project root.
+ * reads from it: the base league. The rosters are the committed ones in every build (a generic build swaps the names
+ * in its copy of them with everything else: tools/generic/scrub.mjs); `make_rosters` builds them from the source
+ * rosters instead, as every generic build once did. Returns the staged project root.
  */
-export async function stage(work, generic) {
+export async function stage(work, generic, make_rosters = false) {
   const root = path.join(work, "project");
   for (const d of JS_DIRS) copy_tree(path.join(ROOT, d), path.join(root, d));
   // the preset faces go with the rosters (the player's ask): a face file holds face parts only, keyed by player id
   // and coach name, and a generic build's scrub renames those keys and the file with everything else
   copy_tree(path.join(ROOT, "cfb_sim_data"), path.join(root, "cfb_sim_data"));
   fs.mkdirSync(path.join(root, "data", "history"), { recursive: true });
-  const made = generic ? GENERATED : GENERATED.filter((f) => !ROSTERS.includes(f));      // what this build makes itself
+  const made = make_rosters ? GENERATED : GENERATED.filter((f) => !ROSTERS.includes(f));      // what this build makes itself
   for (const name of fs.readdirSync(path.join(ROOT, "data")).sort()) {
     if (name.endsWith(".json") && !made.includes(`data/${name}`)) fs.copyFileSync(path.join(ROOT, "data", name), path.join(root, "data", name));
   }
@@ -119,7 +120,7 @@ export async function stage(work, generic) {
     if (!fs.existsSync(scrub)) throw new Error("tools/generic/scrub.mjs is missing: a generic build cannot swap the names without it");
     await (await import(pathToFileURL(scrub).href)).run(root);
   }
-  generate(root, null, generic);
+  generate(root, null, make_rosters);
   return root;
 }
 
