@@ -21,6 +21,7 @@ import ScoutMark from "../ScoutMark/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
 import ProspectCard, { Stars, statusOf, transferLine } from "../ProspectCard/index.tsx";
 import MinMax from "../MinMax/index.tsx";
+import FitText from "../FitText/index.tsx";
 import RangeBar from "../RangeBar/index.tsx";
 import TileMap, { MapMark } from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
@@ -398,13 +399,23 @@ export default function Prospects({
         <header className="prospects__head">
           <p className="prospects__lede">{m.classOf(year + 1, s?.total ?? 0)}</p>
           {s && (
-            <div className="prospects__class">
-              <span className="label">{m.yourBoard}</span>
-              <b>
-                {m.onBoardOf(s.footprint.board, s.footprint.cap ?? 30)} <small>{m.onBoard}</small>
-              </b>
-              <span className="prospects__soft">{m.footprint(s.footprint.contact, s.footprint.evaluated)}</span>
-            </div>
+            // your footprint in the class: three counts said one way, a name over each number
+            <dl className="prospects__class" aria-label={m.yourBoard}>
+              <div title={m.onBoardTip}>
+                <dt className="label">{m.onBoard}</dt>
+                <dd>
+                  {s.footprint.board} <small>{m.ofCap(s.footprint.cap ?? 30)}</small>
+                </dd>
+              </div>
+              <div title={m.inContactTip}>
+                <dt className="label">{m.inContact}</dt>
+                <dd>{s.footprint.contact}</dd>
+              </div>
+              <div title={m.scoutedTip}>
+                <dt className="label">{m.scoutedN}</dt>
+                <dd>{s.footprint.evaluated}</dd>
+              </div>
+            </dl>
           )}
           {/* the map's column folded away: this button, in the page's corner, brings it back (no rail down the side) */}
           {sideShut && !picked && (
@@ -463,19 +474,18 @@ export default function Prospects({
               onChange={(v) => setView(v as View)}
             />
           </span>
-          <select
-            className="prospects__select"
-            aria-label={m.stars}
-            value={stars ?? ""}
-            onChange={(e) => setStars(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="">{m.anyStars}</option>
-            {[5, 4, 3, 2].map((n) => (
-              <option key={n} value={n}>
-                {m.starsN(n)}
-              </option>
-            ))}
-          </select>
+          {/* (the same menu as its neighbors: it was the one plain select in the row) */}
+          <Dropdown
+            label={m.stars}
+            hideLabel
+            size="md"
+            value={stars ? String(stars) : ""}
+            options={[
+              { value: "", label: m.anyStars },
+              ...[5, 4, 3, 2].map((n) => ({ value: String(n), label: m.starsN(n) })),
+            ]}
+            onChange={(v) => setStars(v ? Number(v) : null)}
+          />
           {/* rank the list by one scouted rating: it gets a column of its own */}
           <span title={m.measureTip}>
             <Dropdown
@@ -575,7 +585,7 @@ export default function Prospects({
           ) : rows.length === 0 ? (
             <p className="prospects__soft prospects__empty">{m.none}</p>
           ) : (
-            <table className="prospects__table">
+            <table className={`prospects__table${measured ? " has-measure" : ""}`}>
               {/* fixed widths: a new page, filter or state never moves a column */}
               <colgroup>
                 <col className="prospects__col-rank" />
@@ -656,13 +666,15 @@ export default function Prospects({
                           <Face face={playerFace(r.id, r.display_pos)} scale={1} label="" />
                         </span>
                         <span className="prospects__name">
+                          {/* one line each, always: a long name or town is set a little smaller, never wrapped
+                              (rows of one height) and never cut short */}
                           <b>
-                            {r.name}{" "}
+                            <FitText min={0.6}>{r.name}</FitText>
                             <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={12} />
                           </b>
-                          <span className="prospects__soft">
+                          <FitText className="prospects__soft">
                             {r.portal ? transferLine(r) : `${r.hometown.city}, ${r.hometown.state}`}
-                          </span>
+                          </FitText>
                         </span>
                       </button>
                     </td>
@@ -684,8 +696,8 @@ export default function Prospects({
                             <span className="prospects__soft">{m.measureRange(r.measure.lo, r.measure.hi)}</span>
                           </span>
                         ) : (
-                          <span className="prospects__soft" title={m.notScoutedTip}>
-                            {m.notScouted}
+                          <span className="prospects__soft" title={`${m.notScouted}. ${m.notScoutedTip}`}>
+                            –
                           </span>
                         )}
                       </td>
@@ -738,7 +750,10 @@ export default function Prospects({
                       {r.our_potential ? (
                         <GradeRange read={r.our_potential} size="sm" />
                       ) : (
-                        <span className="prospects__soft">{m.unscouted}</span>
+                        // (a dash, as the columns beside it: a column of the word "Unscouted" was the table's noise)
+                        <span className="prospects__soft" title={m.unscouted}>
+                          –
+                        </span>
                       )}
                     </td>
                     <td className="prospects__marks">

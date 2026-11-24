@@ -116,7 +116,11 @@ export const messages = {
   needsTip: "Spots to fill at each position; pick one to list only those prospects.",
   need: (n: number) => (n > 0 ? `${n}` : "Set"),
   yourBoard: "Your Board",
-  onBoardOf: (n: number, cap: number) => `${n} / ${cap}`,
   onBoard: "On Board",
-  footprint: (contact: number, scouted: number) => `${contact} in Contact · ${scouted} Scouted`,
+  inContact: "In Contact",
+  scoutedN: "Scouted",
+  ofCap: (cap: number) => `/ ${cap}`,
+  onBoardTip: "The prospects on your board, of the most it holds.",
+  inContactTip: "The ones on your board you have reached or offered.",
+  scoutedTip: "The prospects in this class your staff has looked at.",
 } as const;

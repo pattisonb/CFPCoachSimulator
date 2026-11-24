@@ -41,22 +41,37 @@
   text-transform: uppercase;
 }
 
+/* your footprint in the class: three counts in a row, a name over each number, a rule between them */
 .prospects__class {
-  display: flex; /* one line: the label, the count, then the footprint */
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: 0 var(--s3);
+  display: flex;
+  align-items: stretch;
   margin-left: auto; /* it keeps the right, with or without the map button after it */
-  text-align: right;
 }
 
-.prospects__class .label {
+.prospects__class > div {
+  display: grid;
+  gap: 2px;
+  padding: 0 var(--s3);
+  border-left: 1px solid var(--line-soft);
+}
+
+.prospects__class > div:first-child {
+  border-left: 0;
+}
+
+.prospects__class > div:last-child {
+  padding-right: 0;
+}
+
+.prospects__class dt {
   color: var(--ink-soft);
 }
 
-.prospects__class b {
+.prospects__class dd {
   font-size: var(--t-lg);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .prospects__class small {
@@ -229,12 +244,12 @@
 
 /* the rating the table measures by: his best guess, the read as a range on a track, its ends */
 .prospects__col-measure {
-  width: 184px;
+  width: 164px;
 }
 
 .prospects__measure {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) 48px;
+  grid-template-columns: 26px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 8px;
   font-variant-numeric: tabular-nums;
@@ -381,7 +396,7 @@
 
 .prospects__who {
   display: flex;
-  max-width: 100%;
+  width: 100%; /* the cell's whole width, whatever his name's length: the name is fitted to it (FitText) */
   align-items: center;
   gap: var(--s2);
   min-width: 0;
@@ -406,14 +421,23 @@
 
 .prospects__name {
   display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   min-width: 0;
 }
 
-/* a long name breaks inside its own column, never out over the next one */
+/* his name and its flags on one line: the name gives way (set smaller: FitText), the flags keep their size */
 .prospects__name b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   min-width: 0;
-  overflow-wrap: anywhere;
+}
+
+.prospects__name b > .fit-text {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .prospects__name .prospects__soft {
@@ -701,6 +725,11 @@
 /* narrow: no Ht or Wt, so less is needed before the name is squeezed */
 .prospects.is-narrow .prospects__table {
   min-width: 920px;
+}
+
+/* (measuring adds a column where the narrow table had already given up Height and Weight: it is that much wider) */
+.prospects.is-narrow .prospects__table.has-measure {
+  min-width: 1084px;
 }
 
 .prospects.is-narrow .prospects__col-rank {
