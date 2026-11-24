@@ -198,7 +198,8 @@ function athletes_mine(state) {
   // position already (the player's report: no old transfers here).
   const year = get(get(state, "offseason") || {}, "year");
   const roster = get(get(get(get(state, "league") || {}, "teams") || {}, get(state, "team")) || {}, "roster") || [];
-  return roster.filter((c) => truthy(get(c, "ath")) && get(c, "joined") === year && get(c, "cls") === "FR");
+  // (a signee is marked `signed` until Progress stamps the year he joined: either says he is this year's)
+  return roster.filter((c) => truthy(get(c, "ath")) && (get(c, "joined") === year || truthy(get(c, "signed"))) && get(c, "cls") === "FR");
 }
 
 offseason.ATHLETE_OPTIONS = 6;        // *tune* how many positions the Place Your Athletes stage offers a player (his best)
@@ -1172,9 +1173,9 @@ function _view(state, position = null, status = null) {
   const jobs = offseason._your_jobs(off);
   const out = {
     stage: off["stage"], stage_name: offseason.STAGE_NAMES[off["stage"]], year: off["year"],
-    // (Place Your Athletes is a stage only in a year you signed one: it is on the list once you are there or past it
-    // with athletes to show, never as a step you will not take)
-    stages: STAGES.filter((s) => s !== "athletes" || cur === "athletes" || (_index(STAGES, cur) > _index(STAGES, "athletes") && offseason.athletes_mine(state).length > 0))
+    // (Place Your Athletes is a stage only in a year you signed one: then it is on the list from the start, so the
+    // step before it names it as what comes next; in any other year it is never a step at all)
+    stages: STAGES.filter((s) => s !== "athletes" || cur === "athletes" || offseason.athletes_mine(state).length > 0)
       .map((s) => ({ key: s, name: offseason.STAGE_NAMES[s], done: _index(STAGES, s) < _index(STAGES, cur), current: s === cur })),
     athletes: _index(STAGES, cur) >= _index(STAGES, "athletes") ? offseason.athletes_view(state) : null,
     // what happened: shown once the draft has run (after Keep Them Home); your players you kept are "stayed"

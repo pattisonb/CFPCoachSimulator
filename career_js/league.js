@@ -246,7 +246,7 @@ export function height_in(h) {
 }
 
 
-export function compact(p, attrs, home = null) {
+export function compact(p, attrs, home = null, rated = null) {
   // A player in the league's form. `p` is a real 2026 source player (his base ratings are
   // converted to ours once; his seeded potential likewise), or carries our ratings already as
   // "ours" and "potential_ours" (signees, walk-ons, transfers from lower levels).
@@ -256,7 +256,9 @@ export function compact(p, attrs, home = null) {
     ours = p["ours"];
     pot = truthy(get(p, "potential_ours")) ? p["potential_ours"] : p["ours"];
   } else {
-    ours = game_scale.ours_from_base(p["ratings"], pos);
+    // his ratings as the roster file has them (`rated`: in `attrs` order), else converted from his source ratings
+    ours = Array.isArray(rated) && rated.length === attrs.length
+      ? Object.fromEntries(attrs.map((k, i) => [k, rated[i]])) : game_scale.ours_from_base(p["ratings"], pos);
     const seeded = get(get(league._potentials(), p["slug"], {}), "potential_ea") || {};
     pot = truthy(seeded) ? game_scale.potential_from_ea({ ...p["ratings_ea"], ...seeded }, ours, pos) : ours;
     if (league.REAL_ROOM_CLASSES.includes(get(p, "class") || "FR")) {   // seeded room runs short of a generated player's at the same stage
@@ -355,9 +357,28 @@ export function from_base(year = league.FIRST_YEAR + 1) {
 }
 
 
+league.ROSTER_FILE = "data/engine_teams.json";
+
+export function _roster_ratings() {
+  // team slug -> player slug -> his ratings on our scale, from the roster file the game plays (ROSTER_FILE: each
+  // player's `skills`, in game_scale.keys() order). The roster file is the one place a rating lives (the player's
+  // rule: change a rating there and it is his rating): a career's league takes every real player's ratings from it,
+  // not from the source rosters. {} when the file is not there.
+  if (!exists(league.ROSTER_FILE)) return {};
+  const out = {};
+  for (const [slug, t] of Object.entries(get(JSON.parse(read_text(league.ROSTER_FILE)), "teams") || {})) {
+    const by = out[slug] = {};
+    for (const p of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) {
+      if (Array.isArray(get(p, "skills")) && truthy(get(p, "slug"))) by[p["slug"]] = p["skills"];
+    }
+  }
+  return out;
+}
+
 export function _compute_base(year) {
   const build_teams = modules.build_teams;
   const attrs = game_scale.keys();
+  const rated = league._roster_ratings();
   const usage = league._real_usage();            // receivers' real target shares (the lead-back use goes with the style, source_team)
   const teams = {};
   for (const slug of league._source_slugs()) {
@@ -367,7 +388,7 @@ export function _compute_base(year) {
     const tm = get(get(usage, slug) || {}, "targets") || {};
     teams[slug] = {
       roster: t["roster"].filter((p) => truthy(get(p, "ratings")))
-        .map((p) => league.compact({ ...p, target_mult: get(tm, p["slug"]) }, attrs, get(t, "state"))),
+        .map((p) => league.compact({ ...p, target_mult: get(tm, p["slug"]) }, attrs, get(t, "state"), get(get(rated, slug) || {}, p["slug"]))),
       coaches: coaches, formation: league.formation(t),
     };
   }
@@ -593,7 +614,7 @@ export function forget(career_id) {
 Object.assign(league, {
   base_team, base_meta, team_meta, base_slugs, league_slugs, is_imported, _meta_of, _source_slugs, _meta_file,
   write_base_files, _potentials, _development_of, base_development, height_in, compact, ratings, potential, overall,
-  expand, formation, from_base, _compute_base, _real_usage, _role_players, lineup, team_ratings, source_team,
+  expand, formation, from_base, _roster_ratings, _compute_base, _real_usage, _role_players, lineup, team_ratings, source_team,
   source_teams, build, path, ensure_built, forget,
 });
 

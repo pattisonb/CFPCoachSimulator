@@ -57,7 +57,10 @@ test("in a year you signed athletes, the offseason stops at Place Your Athletes 
   const order = offseason.STAGES;
   assert(order.indexOf("development") < order.indexOf("athletes") && order.indexOf("athletes") < order.indexOf("cuts"), J(order));
   const [early] = to_stage(sid, ["development"]);
-  assert(early["athletes"] === null && !early["stages"].some((s) => s["key"] === "athletes"), "not a step before you are there");
+  assert(early["athletes"] === null, "nothing to place before you are there");
+  // ... but the step is on the bar already, right after Progress: what comes next is named as it is
+  const keys = early["stages"].map((s) => s["key"]);
+  equal(keys[keys.indexOf("development") + 1], "athletes");
   const [v, seen] = to_stage(sid, ["athletes", "cuts"]);
   equal(v["stage"], "athletes", J(seen));
   assert(v["stages"].some((s) => s["key"] === "athletes" && s["current"]), "it is a step on the bar now");
