@@ -67,6 +67,7 @@ recruiting.FINALISTS = [[10, 5], [13, 3]];                // *tune* (from this w
 recruiting.LOCKOUT_ON = true;                            // shutting a school out for its grades (locked_out); a test of the lists alone turns it off
 // His list of ten as the class opens (tens): the schools that would recruit a player like him (each school's best
 // LIST_REACH fits: its footprint, the stars it signs, his position), the ten of them he likes most.
+recruiting.LIST_MIN = 6;                                 // *tune* a recruit fewer schools than this would chase has no list (a school was 1st of 3 for dozens of recruits nobody else wanted: the academies most, whose footprint is the whole country)
 recruiting.LIST_REACH = [150, 400];                      // *tune* how many recruits a school is a candidate for: the least prestigious program, the most
 recruiting.PORTAL_FINALISTS = [[4, 5]];                  // *tune* the same in the portal, by its week: his top five in its last week (an earlier or
 //                                                          tighter cut sends the cut schools' offers to everyone else, and too many transfers find a school)
@@ -340,7 +341,7 @@ function tens(state) {
   // candidate for the LIST_REACH recruits it fits best (what its own board is drawn from: _fits), more of them the more
   // prestigious the program; he keeps the ten candidates he likes most (interest: the school's grades by what he
   // wants, home counting for a recruit who wants to stay near it). So a small school is on few lists, mostly recruits
-  // near it, and a recruit nobody would chase has a short list or none. Stored with the class (keep_tens); a class
+  // near it, and a recruit few schools would chase (under LIST_MIN) has none. Stored with the class (keep_tens); a class
   // from before lists has it worked out as it stands, in memory. The portal has none: a transfer's list is who is
   // recruiting him.
   const rc = state["recruiting"];
@@ -366,7 +367,7 @@ function tens(state) {
     const c = cand[pid];
     if (!c) continue;
     const rows = c.filter((s) => !recruiting.locked_out(state, s, pid, win)).map((s) => [recruiting.interest(state, s, pid, win), s]);   // (never a school he will not consider)
-    if (!rows.length) continue;
+    if (rows.length < recruiting.LIST_MIN) continue;        // too few schools would chase him to make a list: he is open to everyone
     rows.sort((a, b) => (b[0] - a[0]) || (a[1] < b[1] ? -1 : 1));
     out[pid] = rows.slice(0, recruiting.TOP_GROUP).map(([, s]) => s);
   }

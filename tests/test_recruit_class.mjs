@@ -353,11 +353,14 @@ test("real head coaches recruit as they really do", () => {
 test("every recruit has a list of ten schools: a small school is on few of them, mostly recruits near it, and a blue blood on the best players'", () => {
   const stk = season.new_season("kent-state", "full", 11, undefined, undefined, true);
   const rck = stk["recruiting"], tens = rck["tens"], Pk = rck["prospects"];
-  assert(tens && Object.values(tens).every((t) => t.length >= 1 && t.length <= recruiting.TOP_GROUP && new Set(t).size === t.length));
+  assert(tens && Object.values(tens).every((t) => t.length >= recruiting.LIST_MIN && t.length <= recruiting.TOP_GROUP && new Set(t).size === t.length));
   const on = (slug) => Object.keys(tens).filter((q) => tens[q].includes(slug));
   const small = on("kent-state"), big = on("georgia");
   assert(small.length >= 20 && small.length <= 200 && big.length > small.length, J([small.length, big.length]));
   assert(small.every((q) => Pk[q]["stars"] <= 3) && big.every((q) => Pk[q]["stars"] >= 3), "a school is on the lists of the players it signs");
+  // no school is on far more lists, or first on far more, than the schools of its own standing (the academies were)
+  const top2 = (slug) => Object.values(tens).filter((t) => t.slice(0, 2).includes(slug)).length;
+  for (const slug of ["air-force", "navy", "army"]) assert(on(slug).length <= 2 * small.length && top2(slug) <= 25, J([slug, on(slug).length, top2(slug)]));
   const blue = Object.keys(Pk).filter((q) => Pk[q]["stars"] === 5);
   assert(blue.filter((q) => (tens[q] || []).length === recruiting.TOP_GROUP).length >= 0.6 * blue.length, "most five-stars' lists are full");
   // his list is in his own order, and your place on it is what the page shows; off it you are Open, never shut out
