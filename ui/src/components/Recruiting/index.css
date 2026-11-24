@@ -709,31 +709,19 @@
   cursor: pointer;
 }
 
-/* named: each box says what it is over what it costs (his row), wide enough for "HS Coach" */
+/* on his row: each box is its mark beside what it costs in energy, small enough that four leave his name whole */
 .quick--labels .quick__box {
-  grid-template-columns: auto auto;
-  place-content: center center;
-  gap: 1px 5px;
-  width: 76px;
-  height: 44px;
+  grid-auto-flow: column;
+  gap: 5px;
+  width: 50px;
+  height: 32px;
   padding: 0 4px;
-  font-size: var(--t-xs);
-}
-
-.quick--labels .quick__box b {
-  white-space: nowrap;
 }
 
 .quick--labels .quick__box span {
-  grid-column: 1 / -1;
-  font-size: 11px;
+  font-size: var(--t-xs);
+  font-weight: 700;
   line-height: 1;
-  opacity: 0.8;
-}
-
-/* the scout's box stands a little apart: it goes now, where the three before it are plans for the week's end */
-.quick__box--scout {
-  margin-left: 4px;
 }
 
 .quick__box:hover:enabled {
@@ -749,7 +737,7 @@
 .quick__box.is-done {
   background: var(--tile);
   color: var(--ink-soft);
-  border-style: dashed;
+  border-color: var(--line-soft);
   cursor: default;
 }
 
@@ -785,7 +773,7 @@
 }
 
 .recruiting__rows .recruiting__row {
-  padding-right: 334px; /* the four named boxes */
+  padding-right: 232px; /* the four boxes */
 }
 
 /* ... and the row makes room for it */
@@ -813,20 +801,17 @@
    takes a second line, so nothing is covered */
 @container recruit-list (width < 500px) {
   .quick--labels .quick__box {
-    grid-template-columns: auto;
-    width: 38px;
-    height: 38px;
+    width: 34px;
     padding: 0;
   }
 
   /* four boxes in a narrow list: each is its mark alone (its tip says what it is and what it costs) */
-  .quick--labels .quick__box b,
   .quick--labels .quick__box span {
     display: none;
   }
 
   .recruiting__rows .recruiting__row {
-    padding-right: 188px;
+    padding-right: 172px;
   }
 
   .recruiting__rows .recruiting__who b {

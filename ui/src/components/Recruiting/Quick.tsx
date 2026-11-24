@@ -27,7 +27,7 @@ interface Props {
   offWhy?: string;
   /** nothing is drawn (the door is shut on you: his row shows that instead) */
   hidden?: boolean;
-  /** each box says what it is and what it costs (his row); marks alone without */
+  /** each box shows its mark and its energy (his row); marks alone without */
   labels?: boolean;
   /** a fourth box sends a scout to him now (his row on the board) */
   scout?: boolean;
@@ -152,19 +152,15 @@ export default function QuickActions({
             ) : (
               <Icon size={labels ? 16 : 14} weight={on ? "fill" : "bold"} aria-hidden="true" />
             )}
-            {labels && (
-              <>
-                <b>{m.quickShort[key]}</b>
-                <span>{done ? m.done : m.energy(cost)}</span>
-              </>
-            )}
+            {/* his row: the mark and what it costs, nothing more (the tip names it) */}
+            {labels && !done && <span>{cost}</span>}
           </button>
         );
       })}
       {scout && (
         <button
           type="button"
-          className={`quick__box quick__box--scout${scouted ? " is-done" : ""}`}
+          className={`quick__box${scouted ? " is-done" : ""}`}
           aria-label={scoutTip}
           title={scoutTip}
           disabled={scoutOff}
@@ -178,12 +174,7 @@ export default function QuickActions({
           ) : (
             <Binoculars size={labels ? 16 : 14} weight="bold" aria-hidden="true" />
           )}
-          {labels && (
-            <>
-              <b>{m.scoutShort}</b>
-              <span>{scouted ? m.scoutDone : m.energy(scoutCost)}</span>
-            </>
-          )}
+          {labels && !scouted && <span>{scoutCost}</span>}
         </button>
       )}
     </span>

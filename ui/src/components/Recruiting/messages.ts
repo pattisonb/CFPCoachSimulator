@@ -125,8 +125,6 @@ export const messages = {
   quickDone: (what: string) => `${what}: done this week.`,
   quickOff: "He is not taking calls.",
   /** the row's fourth box: a scout sent to him now */
-  scoutShort: "Scout",
-  scoutDone: "Full",
   scoutTip: (n: number) => `Send a scout to him now for ${n} Energy. Each look tells you more about him.`,
   scoutFull: "Your report on him is complete.",
   scoutCant: "Your staff can't get to him this week.",
