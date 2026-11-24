@@ -300,10 +300,6 @@
   width: 108px;
 }
 
-.prospects__col-board {
-  width: 44px; /* the favorite's heart alone: the board's button leads the row */
-}
-
 .prospects__col-add {
   width: 44px;
 }
@@ -495,9 +491,6 @@
 }
 
 /* the two marks in a row's last cell: your favorite (a heart), then your board (a star) */
-.prospects__marks {
-  white-space: nowrap;
-}
 
 /* on your board or not, the row's first cell: a square to tick, inked once he is on it */
 .prospects__tick-cell {
@@ -535,48 +528,6 @@
   border-style: dashed;
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.prospects__star {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin: 0 1px;
-  vertical-align: middle;
-  padding: 0;
-  background: none;
-  color: var(--ink-soft);
-  border: var(--line) solid transparent;
-  cursor: pointer;
-  transition:
-    color 120ms ease-out,
-    border-color 120ms ease-out,
-    transform 120ms ease-out;
-}
-
-.prospects__star:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-
-.prospects__star.is-on {
-  color: var(--ink);
-}
-
-/* the door is shut on you: no adding him (its tip says why) */
-.prospects__star.is-shut {
-  color: var(--warn);
-  cursor: not-allowed;
-}
-
-.prospects__star.is-shut:hover {
-  color: var(--warn);
-  border-color: var(--warn);
-}
-
-.prospects__star:active {
-  transform: scale(0.9);
 }
 
 .prospects__foot {
@@ -813,14 +764,9 @@
   width: 96px;
 }
 
-.prospects.is-narrow .prospects__col-board {
-  width: 40px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .prospects__table-wrap,
-  .prospects__table tbody tr,
-  .prospects__star {
+  .prospects__table tbody tr {
     transition: none;
   }
 }

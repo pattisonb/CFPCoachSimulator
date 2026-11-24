@@ -7,7 +7,6 @@ import {
   SortAscending,
   SortDescending,
   Door,
-  Heart,
   Check,
   Plus,
   X,
@@ -26,7 +25,7 @@ import FitText from "../FitText/index.tsx";
 import RangeBar from "../RangeBar/index.tsx";
 import TileMap, { MapMark } from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
-import { setFavorite, setOnBoard } from "../../board.ts";
+import { setOnBoard } from "../../board.ts";
 import { playerFace } from "../../faces.ts";
 import { cachedTeams } from "../../teams.ts";
 import type { NeedGroup, ProspectRow, ProspectsView, TeamCard } from "../../types.ts";
@@ -289,19 +288,6 @@ export default function Prospects({
       );
       setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
       load();
-      onBoardChange?.();
-    } catch (e) {
-      setNote(m.boardError((e as Error).message));
-    }
-  };
-
-  // your favorites (♥): marked or cleared in place
-  const setFav = async (r: ProspectRow, on: boolean) => {
-    try {
-      await setFavorite(seasonId, r.id, on);
-      setData((d) => d && { ...d, rows: d.rows.map((x) => (x.id === r.id ? { ...x, favorite: on } : x)) });
-      setNote(on ? m.favOn(r.name) : m.favOff(r.name));
-      if (view === "favorites") load();
       onBoardChange?.();
     } catch (e) {
       setNote(m.boardError((e as Error).message));
@@ -607,7 +593,6 @@ export default function Prospects({
                 <col className="prospects__col-int" />
                 <col className="prospects__col-sc" />
                 <col className="prospects__col-pot" />
-                <col className="prospects__col-board" />
               </colgroup>
               <thead>
                 <tr>
@@ -648,7 +633,6 @@ export default function Prospects({
                   <Th col="int" />
                   <Th col="sc" />
                   <Th col="pot" />
-                  <th scope="col" aria-label={m.favCol} />
                 </tr>
               </thead>
               <tbody>
@@ -792,21 +776,6 @@ export default function Prospects({
                     <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : null}</td>
                     <td className="prospects__pot">
                       {r.our_potential ? <GradeRange read={r.our_potential} size="sm" /> : null}
-                    </td>
-                    <td className="prospects__marks">
-                      <button
-                        type="button"
-                        className={`prospects__star${r.favorite ? " is-on" : ""}`}
-                        aria-pressed={!!r.favorite}
-                        aria-label={r.favorite ? m.removeFav(r.name) : m.addFav(r.name)}
-                        title={r.favorite ? m.removeFav(r.name) : m.addFav(r.name)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFav(r, !r.favorite);
-                        }}
-                      >
-                        <Heart size={18} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
-                      </button>
                     </td>
                   </tr>
                 ))}
