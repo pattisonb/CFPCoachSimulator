@@ -6,6 +6,7 @@
 - **A value that starts with a word starts with a capital** ("He wants 105", not "wants 105").
 - **American spelling everywhere** (favorite, color, defense, center).
 - No numbers out of 100 for moods or chances where the game uses words; no "null"/"undefined"/"NaN" ever reaches the page.
+- **Say "his ratings", never a count of them, and never explain how the ratings are stored underneath** (the player's standing rule: he has heard the "54 skills are 52 names because three are two skills together" explanation in too many conversations and does not want it again). The player's model is the whole truth to him: a player has ratings, the roster file names each as his card does, the number there is the number on the card. Answer a question about the count or the storage only when he asks that question.
 
 ## Engine
 - The game is JavaScript throughout: `engine_js/` (the play-by-play engine and the runtime: `pyrt.js`, `pystat.js`, `files.js`, `modules.js`), `sim_js/` (the season), `teamdata_js/` (ratings, the team builder), `career_js/` (recruiting, the offseason, the career), `app_js/` (`api.js` the API, `game.js` the whole game for a host). It was ported from Python file for file and keeps Python's names, numbers and dict order; `engine_js/PORTING.md` says why and holds the rules for working in it. No Python comes back.

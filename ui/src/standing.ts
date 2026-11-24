@@ -119,6 +119,10 @@ const TOPIC_PHRASES: Record<string, string> = {
   coach: "the head coach",
   pro: "a path to the league",
   nil: "NIL",
+  contender: "playing for a title",
+  recruiting: "the class around him",
+  development: "getting better as a player",
+  culture: "the culture in the building",
 };
 export const topicPhrase = (key: string): string => TOPIC_PHRASES[key] ?? (PITCH_NAMES[key] ?? key).toLowerCase();
 
@@ -137,4 +141,8 @@ export const PITCH_NAMES: Record<string, string> = {
   stability: "Stability",
   game_day: "Game Day",
   exposure: "Exposure",
+  contender: "A Title Contender",
+  recruiting: "The Class Around Him",
+  development: "Player Development",
+  culture: "Culture",
 };

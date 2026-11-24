@@ -10,9 +10,19 @@ export const messages = {
   everyProgram: "Every Program",
   schoolGrades: "School Grades",
   schoolGradesTip:
-    "Your program in twelve measures, each a letter grade from A+ down to F. Football's six and NIL move with results; the campus grades come from the record. A recruit weighs your grade on what he cares about against what he wants.",
-  football: "Football",
-  campus: "Campus",
+    "Your program in seventeen measures, each a letter grade from A+ down to F. This season's three move every week; the rest move each offseason or come from the record. A recruit weighs your grade on what he cares about against what he wants.",
+  groups: {
+    season: "This Season",
+    program: "Program",
+    players: "Players",
+    campus: "Campus",
+  },
+  groupNotes: {
+    season: "Moves Every Week",
+    program: "Moves Each Offseason",
+    players: "Moves Each Offseason",
+    campus: "From the Record",
+  },
   proPotential: "Position Pro Potential",
   proPotentialTip:
     "Where your program's last ten drafts came from, by draft position, best first. A position it never sent is an F.",
@@ -20,6 +30,7 @@ export const messages = {
   ultimatum: "Ultimatum Year",
   notGraded: "Not Graded",
   moved: (up: boolean, n: number) => `${up ? "Up" : "Down"} ${n} since last season.`,
+  movedWeek: (up: boolean) => (up ? "It rose this week." : "It fell this week."),
 
   tierLabel: "Which stars",
   starCount: (stars: number, n: number) => `${stars} Star · ${n} ${n === 1 ? "Program" : "Programs"}`,
@@ -28,8 +39,12 @@ export const messages = {
   openResume: (team: string) => `Open ${team}'s resume.`,
   cols: { program: "Program", standing: "Standing" },
 
-  /** the twelve measures, and the market (a headline reading and a column) */
+  /** the seventeen measures */
   measures: {
+    contender: "Contender",
+    recruiting: "Recruiting",
+    development: "Player Development",
+    culture: "Culture",
     prestige: "Prestige",
     winning: "Winning",
     coach: "Coach",
@@ -45,12 +60,16 @@ export const messages = {
     market: "Market",
   },
   /** a shorter name for a table's header */
-  short: { conference: "Conf" } as Record<string, string>,
+  short: { conference: "Conf", development: "Player Dev" } as Record<string, string>,
   tips: {
     standing:
       "Where the program stands, in stars out of five: its name, results, NIL, market, league, coach and pro pipeline, moving slowly with what it does.",
-    prestige: "History and a decade of results.",
-    winning: "The last three seasons.",
+    prestige: "History and the last five seasons of results.",
+    winning: "This season's record and ranking. Before the first game it starts from last season.",
+    contender: "Whether the program is in the playoff picture: its ranking, its record and how many games it has lost.",
+    recruiting: "Its last three signed classes by national rank, and the class it is building now.",
+    development: "How much its players grow, against the rest of the league. It starts from the head coach.",
+    culture: "How well it keeps its players: transfers out, players kept home and promises broken.",
     nil: "The collective's tier, set by the AD.",
     market: "Crowds and TV.",
     conference: "The league's strength.",

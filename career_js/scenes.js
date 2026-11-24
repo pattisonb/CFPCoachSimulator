@@ -249,7 +249,8 @@ export function _case_word(sv) {
 // the topics' names as the page shows them (web/recruiting.js PITCH_NAMES)
 scenes._TOPIC_NAME = {"proximity": "Close to Home", "playing_time": "Playing Time", "prestige": "Program Prestige", "winning": "Winning Now",
                "nil": "NIL", "coach": "The Head Coach", "academics": "Academics", "pro": "Path to the League", "facilities": "Facilities",
-               "location": "Location", "stability": "Stability", "game_day": "Game Day", "exposure": "Exposure"};
+               "location": "Location", "stability": "Stability", "game_day": "Game Day", "exposure": "Exposure",
+               "contender": "A Title Contender", "recruiting": "The Class Around Him", "development": "Player Development", "culture": "Culture"};
 
 export function _lines(sc) {
   sc["lines"] = sc["turns"].filter((t) => t["who"] === "him").map((t) => t["text"]);

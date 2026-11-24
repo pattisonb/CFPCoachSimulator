@@ -92,7 +92,7 @@ const EVENT_WORDS: Record<string, string> = {
   promise_broken: "feels a promise was broken by",
 };
 /** Events that carry their own sentence. */
-const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened"]);
+const LINE_KINDS = new Set(["bloomed", "pro", "twist", "hat", "softened", "cooled", "door_closed", "door_open"]);
 
 const confShort = (c: string) => CONF_SHORT[c] ?? c;
 const recordText = (r: { wins: number; losses: number }) => `${r.wins}-${r.losses}`;

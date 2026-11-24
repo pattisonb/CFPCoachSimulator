@@ -11,6 +11,7 @@ import { recruits, pypow } from "../recruits.js";
 import { prospects as pr } from "../prospects.js";
 import { coach_names } from "../coach_names.js";
 import { grades } from "../grades.js";
+import { programs } from "../programs.js";
 import { recruiting } from "../recruiting_ns.js";
 
 // ----- small helpers (local to this part) --------------------------------------------------------------------
@@ -226,6 +227,56 @@ function _asks_for_more(state, week) {
 }
 
 
+recruiting.GRADE_NAMES = { winning: "Winning", contender: "Contender", recruiting: "Recruiting" };
+
+function _grade_news(state, week) {
+  // The season's grades moved with the week's games and commitments (programs.snapshot_week keeps this week's beside
+  // last week's). For your school: each prospect on your board who holds a priority on one that fell under what he
+  // wants gets a "cooled" line (only a priority you know of is named), and one who will no longer hear from you
+  // (locked_out: the program is now too far from what he wants) a "door_closed" line; one who would again, a
+  // "door_open". The door is the rule that has always stood: it opens again when your grades come back.
+  programs.snapshot_week(state);
+  const rc = state["recruiting"], me = get(state, "team");
+  if (!truthy(me) || truthy(get(rc, "portal"))) return;
+  const snap = get(state, "grades_week") || {};
+  const now = get(get(snap, "now") || {}, me), prev = get(get(snap, "prev") || {}, me);
+  const letters = (v) => (truthy(v) ? v.map((x) => grades.school_pull(Math.max(0.0, Math.min(1.0, x)))) : null);
+  const [l_now, l_prev] = [letters(now), letters(prev)];
+  const fell = [];                               // the season's topics whose letter dropped this week
+  if (l_now && l_prev) programs.SEASON.forEach((t, i) => { if (grades.place(l_now[i]) < grades.place(l_prev[i])) fell.push([t, l_now[i]]); });
+  const win = recruiting._winning(state), offered = recruiting.finalists_size(state) === null ? null : recruiting._offers_by_prospect(state);
+  const shut_before = new Set(get(rc, "doors_shut") || []), shut_now = [];
+  const known = get(rc["revealed"], me) || {};
+  const watch = new Set([...(get(rc, "board") || []), ...get(rc["offers"], me, [])]);
+  for (const pid of watch) {
+    const st = get(rc["status"], pid);
+    if (!truthy(st) || truthy(st["signed"]) || (truthy(st["committed"]) && st["committed"] !== me)) continue;
+    const locked = recruiting.locked_out(state, me, pid, win);
+    if (locked) shut_now.push(pid);
+    if (locked && !shut_before.has(pid)) {
+      recruiting._event(state, "door_closed", pid, me, { line: "He has stopped taking your calls: your program has fallen too far from what he wants." });
+      continue;
+    }
+    if (!locked && shut_before.has(pid)) {
+      recruiting._event(state, "door_open", pid, me, { line: "He is listening again: your program is back within reach of what he wants." });
+      continue;
+    }
+    if (locked || !fell.length) continue;
+    const mine = get(rc["prospects"], pid);
+    const seen = get(known, pid) || [];
+    for (const [t, letter] of fell) {
+      if (!truthy(mine) || !(mine["priorities"] || []).includes(t)) continue;
+      if (grades.place(letter) >= recruiting.standard_of(state, pid, t)) continue;       // still what he wants
+      const named = seen.includes(t);
+      recruiting._event(state, "cooled", pid, me, { ...(named ? { topic: t, grade: letter } : {}),
+        line: named ? `Your ${recruiting.GRADE_NAMES[t]} grade fell to ${letter}, under what he wants, and he has cooled on you.`
+          : "He has cooled on you after this week: something he cares about slipped." });
+      break;
+    }
+  }
+  rc["doors_shut"] = shut_now;
+}
+
 function weekly_step(state, week, auto_user = false) {
   // The recruiting week after `week`'s games: visits, every AI school (and yours on Auto),
   // commitment draws, signing, then the hours reset. Returns the week's events. In the portal
@@ -295,6 +346,7 @@ function _weekly_step(state, week, auto_user) {
     if (!dead) persona.roll_twists(state, week); // the week's twists (their own stream, after every other draw)
   }
   recruiting._snapshot_ranks(state, week);
+  recruiting._grade_news(state, week);         // this week's grades against last week's: who it cost you, who shut the door
   recruiting._report(state, week);
   rc["hours"] = {};
   rc["scout_points"] = {};
@@ -1007,7 +1059,7 @@ function _set_record(state, slug, wins, losses) {
 
 
 Object.assign(recruiting, {
-  _hat, _pair_ok, _last_quarterbacks, _sign, auto_mode, _asks_for_more, weekly_step, _weekly_step, _portal_draws,
+  _hat, _pair_ok, _last_quarterbacks, _sign, auto_mode, _asks_for_more, _grade_news, weekly_step, _weekly_step, _portal_draws,
   _title, no_room, _lost_why, lost_reason, lost_line, school_name, _season_line, portal_rc, _truths, word, word_band,
   look_week, _read_words, _flags, report_looks, area_looks, report_complete, looks_left, _normalize_read, look,
   look_notability, read_spread, read_interval, shown_range, grade_range, make_staff, set_favorite, set_board, assign,

@@ -31,8 +31,20 @@
   color: var(--ink-soft);
 }
 
+/* the arrow's slot: one width whether or not the grade moved, so every patch sits in the same column */
 .programs__moved {
   display: inline-grid;
+  place-items: center;
+  width: 12px;
+  color: var(--ink-soft);
+}
+
+.programs__moved.is-up {
+  color: var(--good);
+}
+
+.programs__moved.is-down {
+  color: var(--warn);
 }
 
 .programs__tag {
@@ -106,6 +118,7 @@
 .programs__names {
   display: grid;
   flex: 1;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -115,72 +128,107 @@
   text-transform: uppercase;
 }
 
-.programs__stats {
+/* where it plays and what kind of place it is: the conference, then the location's tags */
+.programs__where {
   display: flex;
-}
-
-.programs__stats > div {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  padding: 0 clamp(8px, 2vw, 32px); /* narrower on a tablet, so the three readings stay inside the panel */
-  border-left: 1px solid var(--line-soft);
-}
-
-.programs__stats dt {
-  color: var(--ink-soft);
-}
-
-.programs__stats dd {
-  font-size: var(--t-xl);
-  font-weight: 700;
-}
-
-.programs__body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--s4);
-  padding: var(--s3) 0;
-}
-
-.programs__col {
-  display: grid;
-  align-content: start;
-  gap: var(--s2);
-  min-width: 0;
-}
-
-.programs__col + .programs__col {
-  padding-left: var(--s4);
-  border-left: 1px solid var(--line-soft);
-}
-
-.programs__group {
-  display: grid;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
 }
 
-.programs__group-name {
-  color: var(--ink-soft);
+/* what your AD wants this year, at the hero's right */
+.programs__goal {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  padding-left: var(--s4);
+  border-left: 1px solid var(--line-soft);
+  text-align: right;
 }
 
-/* the grades, two to a row: the measure, its bar and its word */
+.programs__goal b {
+  font-size: var(--t-md);
+}
+
+.programs__section {
+  margin: var(--s3) 0 var(--s2);
+}
+
+/* the grades in four columns of one height (the player's rule: containers side by side end on one line) */
+.programs__groups {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--s3);
+}
+
+.programs__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+}
+
+/* this season's column is the one that moves every week: it wears the team's color on top */
+.programs__group.is-live {
+  border-top: 3px solid var(--team, var(--ink));
+  padding-top: 8px;
+}
+
+.programs__group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.programs__group-head .programs__soft {
+  font-size: var(--t-xs);
+}
+
 .programs__bars {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px var(--s3);
+  gap: 7px;
 }
 
+/* a row: the measure, its bar, its grade and the arrow's slot, in the same four lanes in every column */
 .programs__bar {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) 52px;
+  grid-template-columns: 152px minmax(24px, 1fr) auto;
   align-items: center;
   gap: 8px;
+  min-height: 26px;
   font-size: var(--t-sm);
+  cursor: default;
+}
+
+/* this season's three are the ones that move under you: taller rows and a heavier name, so the column reads first
+   and stands as tall as the ones beside it */
+.programs__group.is-live .programs__bars {
+  gap: 12px;
+}
+
+.programs__group.is-live .programs__bar {
+  min-height: 34px;
+  font-size: var(--t-md);
+  font-weight: 700;
+}
+
+.programs__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .programs__bar .programs__word {
   justify-content: flex-end;
+  min-width: 46px;
 }
 
 .programs__track {
@@ -195,17 +243,14 @@
   background: var(--team, var(--ink));
 }
 
-/* a location's setting, climate and region, under its bar */
-.programs__tags {
-  display: flex;
-  flex-wrap: wrap;
-  grid-column: 2 / -1;
-  gap: 4px;
+.programs__group.is-live .programs__track {
+  height: 12px;
 }
 
+/* every position it sends to the pros in one strip across the card */
 .programs__pros {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(13, minmax(0, 1fr));
   gap: 6px;
   list-style: none;
 }
@@ -213,24 +258,11 @@
 .programs__pros li {
   display: grid;
   justify-items: center;
-  gap: 2px;
-  padding: 8px 4px;
+  gap: 3px;
+  padding: 6px 2px;
   background: var(--paper);
   border: 1px solid var(--line-soft);
   font-size: var(--t-sm);
-}
-
-.programs__job {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2);
-  padding-top: var(--s2);
-  border-top: 1px solid var(--line-soft);
-}
-
-.programs__job .programs__tag {
-  margin-left: auto;
 }
 
 /* Every Program fills what is left of the screen: its filters stay put, the table scrolls in its own box */
@@ -340,14 +372,25 @@
   text-decoration: underline;
 }
 
-@media (width <= 1100px) {
-  .programs__body,
-  .programs__bars {
+@media (width <= 1500px) {
+  .programs__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .programs__pros {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 760px) {
+  .programs__groups {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .programs__col + .programs__col {
+  .programs__goal {
+    justify-items: start;
     padding-left: 0;
     border-left: 0;
+    text-align: left;
   }
 }

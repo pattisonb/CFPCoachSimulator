@@ -53,7 +53,11 @@ const _RAD = Math.PI / 180.0;
 
 recruiting.ROOT = ".";   // the project root
 recruiting.PITCHES = ["proximity", "playing_time", "prestige", "winning", "nil", "coach", "pro", "academics",
-  "facilities", "location", "stability", "game_day", "exposure"];   // School Grades Phase 2: the five campus grades are topics too
+  "facilities", "location", "stability", "game_day", "exposure",   // School Grades Phase 2: the five campus grades are topics too
+  "contender", "recruiting", "development", "culture"];            // ... and the four added with the weekly grades (last: a saved class's draws read the list in order)
+// This season's topics: a school's standing on each moves every week (recruiting.weekly), and a recruit's interest,
+// his fit and whether he will hear from a school at all move with it (the player's rule).
+recruiting.WEEKLY = ["winning", "contender", "recruiting"];
 recruiting.NEUTRAL_PULL = 0.5;                         // *tune* a grade topic's pull at a program the research has no row for
 recruiting.LOCATION_MATCH = 0.15;                      // *tune* Location's pull gains this for each tag (setting, climate) that matches his taste ...
 recruiting.LOCATION_CLASH = 0.05;                      // *tune* ... and loses this for each that does not
@@ -63,8 +67,9 @@ recruiting.WARM_STATES = new Set("AL AZ CA FL GA HI LA MS SC TX".split(" "));
 recruiting.COLD_STATES = new Set("IA ID IL IN MA ME MI MN MT ND NE NH NY OH PA SD VT WI WY".split(" "));
 recruiting.HOME_CLIMATE = 0.7;                         // *tune* how often he wants the climate he grew up in
 // how often each topic is a prospect's priority (drawn without replacement for his top three) *tune*
-recruiting.PRIORITY_ODDS = { proximity: 0.13, playing_time: 0.13, prestige: 0.10, winning: 0.10, nil: 0.10, pro: 0.08, coach: 0.07,
-  academics: 0.06, facilities: 0.06, location: 0.05, stability: 0.04, game_day: 0.04, exposure: 0.04 };
+recruiting.PRIORITY_ODDS = { proximity: 0.11, playing_time: 0.11, prestige: 0.08, winning: 0.08, nil: 0.08, pro: 0.07, coach: 0.06,
+  academics: 0.05, facilities: 0.05, location: 0.04, stability: 0.04, game_day: 0.03, exposure: 0.03,
+  development: 0.06, contender: 0.05, culture: 0.04, recruiting: 0.02 };   // *tune* the four newer topics: a contender and a place that develops players matter to many, the class around him to a few
 recruiting.PRIORITY_WEIGHTS = [0.35, 0.25, 0.15];      // his first, second and third priority; the rest share 0.25 *tune*
 recruiting.OTHER_WEIGHT = 0.25;
 recruiting.PRO_PULL_K = 1.2;                           // how steeply a Pro Pipeline grade away from 50 moves the Path to the League pull *tune*
@@ -222,10 +227,12 @@ recruiting.FLAG_HOLD = 4.0;                            // a flag found stays unt
 recruiting.LOOK_LOG_KEEP = 30;                         // the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 // the transfer portal as recruiting (offseason.js runs it): four weeks after signing day *tune*
 recruiting.PORTAL_WEEKS = 4;
-recruiting.PORTAL_PRIORITY_ODDS = { playing_time: 0.34, nil: 0.18, winning: 0.13, proximity: 0.08, prestige: 0.06, pro: 0.05, stability: 0.04,
-  coach: 0.03, exposure: 0.03, facilities: 0.02, location: 0.02, academics: 0.01, game_day: 0.01 };
-recruiting.PORTAL_TOP_PRIORITY_ODDS = { nil: 0.25, winning: 0.20, playing_time: 0.16, prestige: 0.10, pro: 0.08, exposure: 0.06, proximity: 0.05,
-  coach: 0.03, facilities: 0.02, stability: 0.02, academics: 0.01, location: 0.01, game_day: 0.01 };
+recruiting.PORTAL_PRIORITY_ODDS = { playing_time: 0.30, nil: 0.16, winning: 0.11, proximity: 0.07, prestige: 0.05, pro: 0.05, stability: 0.04,
+  coach: 0.03, exposure: 0.03, facilities: 0.02, location: 0.02, academics: 0.01, game_day: 0.01,
+  contender: 0.04, development: 0.03, culture: 0.02, recruiting: 0.01 };
+recruiting.PORTAL_TOP_PRIORITY_ODDS = { nil: 0.22, winning: 0.17, playing_time: 0.14, prestige: 0.08, pro: 0.07, exposure: 0.05, proximity: 0.04,
+  coach: 0.03, facilities: 0.02, stability: 0.02, academics: 0.01, location: 0.01, game_day: 0.01,
+  contender: 0.09, development: 0.02, culture: 0.01, recruiting: 0.01 };   // the best transfers chase a title
 recruiting.PORTAL_TOP_TIER = 4;                        // an entrant rated a four-star or better draws his priorities from PORTAL_TOP_PRIORITY_ODDS: the best transfers chase NIL and a contender
 recruiting.PORTAL_NATIONAL = 40;                       // the best entrants by portal rank are on every Power 4 board (the whole country chases them)
 recruiting.PORTAL_STARTERS = { QB: 1, RB: 1, WR: 3, TE: 1, OL: 5, DL: 4, LB: 3, CB: 2, S: 2, K: 1, P: 1 };   // a group's starters: an entrant better than the last of them is an upgrade, taken past the group's cap
@@ -388,11 +395,11 @@ function _home(p) {
 
 recruiting.TILT = 1.5;                                 // *tune* each lean (who decides, personality, stars, position) multiplies a topic's odds by this
 recruiting.TILTS = {                                   // the spec's Tilts: what each kind of kid leans toward
-  decider: { mom: ["proximity", "academics", "stability"], dad: ["nil", "playing_time", "pro", "exposure"],
-    grandma: ["proximity", "coach", "academics"], hs_coach: ["stability"], trainer: ["facilities", "exposure"],
+  decider: { mom: ["proximity", "academics", "stability", "culture"], dad: ["nil", "playing_time", "pro", "exposure"],
+    grandma: ["proximity", "coach", "academics"], hs_coach: ["stability", "development"], trainer: ["facilities", "exposure", "development"],
     self: ["facilities", "game_day", "location"] },
-  personality: { attention: ["exposure", "game_day"], cocky: ["playing_time", "exposure"], shy: ["proximity", "stability"],
-    guarded: ["stability", "coach"], business: ["nil", "pro"] },
+  personality: { attention: ["exposure", "game_day"], cocky: ["playing_time", "exposure", "contender"], shy: ["proximity", "stability", "culture"],
+    guarded: ["stability", "coach"], business: ["nil", "pro", "development"] },
   group: { QB: ["coach", "exposure"], OL: ["stability", "coach"], RB: ["exposure", "game_day"], WR: ["exposure", "game_day"],
     TE: ["exposure", "game_day"] },
 };
@@ -408,7 +415,8 @@ function tilt_for(p, d) {
   lean(get(recruiting.TILTS["decider"], get(d, "decider"), []));
   lean(get(recruiting.TILTS["personality"], get(d, "personality"), []));
   const stars = get(p, "stars") || get(p, "tier") || 0;
-  lean(stars >= 5 ? ["nil", "exposure", "pro"] : stars === 2 || stars === 3 ? ["playing_time", "proximity"] : []);
+  lean(stars >= 5 ? ["nil", "exposure", "pro", "contender", "recruiting"] : stars === 4 ? ["contender"]
+    : stars === 2 || stars === 3 ? ["playing_time", "proximity", "development"] : []);
   lean(get(recruiting.TILTS["group"], truthy(get(p, "group")) || truthy(get(p, "ea_position")) ? recruiting._group_of(p) : null, []));
   return out;
 }

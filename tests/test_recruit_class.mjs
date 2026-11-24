@@ -164,9 +164,11 @@ test("every prospect has an NIL ask from his stars and position; what he wants f
 
 // ----- the thirteen topics and a school's pull -----------------------------------------------------------------------
 
-test("there are thirteen topics, the five campus ones last, and a pull has every one of them", () => {
-  assert(recruiting.PITCHES.length === 13, String(recruiting.PITCHES.length));
-  equal([...recruiting.PITCHES].slice(-5), NEW_TOPICS);
+test("there are seventeen topics, the five campus ones and then the four of the weekly grades last, and a pull has every one of them", () => {
+  assert(recruiting.PITCHES.length === 17, String(recruiting.PITCHES.length));
+  equal([...recruiting.PITCHES].slice(-9, -4), NEW_TOPICS);
+  equal([...recruiting.PITCHES].slice(-4), ["contender", "recruiting", "development", "culture"]);
+  equal(recruiting.WEEKLY, ["winning", "contender", "recruiting"]);
   const pid = Object.keys(rc["prospects"])[40];
   equal(new Set(Object.keys(recruiting.pull(st, ME, pid))), new Set(recruiting.PITCHES));
   const s = recruiting.strengths(st, ME, pid);
@@ -229,13 +231,15 @@ test("his taste in a place is his own and stable, and leans to the climate he gr
   assert(warm >= 60, String(warm));
 });
 
-test("the priority odds tables each cover the thirteen topics and add up to one", () => {
+test("the priority odds tables each cover the seventeen topics and add up to one", () => {
   for (const t of [recruiting.PRIORITY_ODDS, recruiting.PORTAL_PRIORITY_ODDS, recruiting.PORTAL_TOP_PRIORITY_ODDS]) {
     const total = Object.values(t).reduce((a, b) => a + b, 0);
     assert(Math.abs(total - 1.0) < 1e-9, String(total));
     equal(new Set(Object.keys(t)), new Set(recruiting.PITCHES));
   }
-  assert(recruiting.PORTAL_PRIORITY_ODDS["playing_time"] === 0.34 && recruiting.PORTAL_TOP_PRIORITY_ODDS["nil"] === 0.25);
+  assert(recruiting.PORTAL_PRIORITY_ODDS["playing_time"] === 0.30 && recruiting.PORTAL_TOP_PRIORITY_ODDS["nil"] === 0.22);
+  // the best transfers chase a title more than anyone
+  assert(recruiting.PORTAL_TOP_PRIORITY_ODDS["contender"] > recruiting.PRIORITY_ODDS["contender"]);
 });
 
 test("first priorities come out at the table's odds", () => {
@@ -256,7 +260,7 @@ test("who he is tilts what he wants: mom leans to home, school and stability, a 
     return k / n;
   };
   const mom = recruiting.tilt_for({ stars: 4, ea_position: "K" }, { decider: "mom", personality: null });
-  equal(mom, { proximity: recruiting.TILT, academics: recruiting.TILT, stability: recruiting.TILT });
+  equal(mom, { proximity: recruiting.TILT, academics: recruiting.TILT, stability: recruiting.TILT, culture: recruiting.TILT, contender: recruiting.TILT });   // (a four-star leans to a contender too)
   assert(share("stability", mom) > share("stability", null) + 0.01);
   const qb = recruiting.tilt_for({ stars: 4, ea_position: "QB" }, { decider: "hs_coach", personality: null });
   assert(share("coach", qb) > share("coach", null) + 0.01);
@@ -268,11 +272,11 @@ test("who he is tilts what he wants: mom leans to home, school and stability, a 
   assert(new Set(pri).size === 3 && pri.every((t) => recruiting.PITCHES.includes(t)));
 });
 
-test("his three priorities carry the set weights and the other ten topics share the rest", () => {
+test("his three priorities carry the set weights and the other fourteen topics share the rest", () => {
   const p = { ...Object.values(rc["prospects"])[40], priorities: ["nil", "coach", "academics"] };
   const w = recruiting.weights(p);
   assert(Math.abs(Object.values(w).reduce((a, b) => a + b, 0) - 1.0) < 1e-9);
-  assert(w["nil"] === recruiting.PRIORITY_WEIGHTS[0] && Math.abs(w["facilities"] - recruiting.OTHER_WEIGHT / 10) < 1e-9, J(w));
+  assert(w["nil"] === recruiting.PRIORITY_WEIGHTS[0] && Math.abs(w["facilities"] - recruiting.OTHER_WEIGHT / 14) < 1e-9, J(w));
 });
 
 test("whoever decides for him cares about a topic that fits, and a recruit who decides himself has none", () => {

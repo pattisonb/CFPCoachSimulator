@@ -47,6 +47,11 @@ interface Program {
   tags?: { setting?: string; climate?: string; region?: string } | null;
   /** how far a grade moved this offseason */
   grades_moved?: Record<string, number> | null;
+  /** this season's grades as they stand this week, 0 to 100 (a career's) */
+  contender?: number;
+  recruiting?: number;
+  /** how far each of this season's grades moved over the week just played */
+  week_moved?: Record<string, number> | null;
   /** every grade as the page shows it, a letter (A+ to F) the game worked out: the measures, the campus grades, and
    *  the pro pipeline by draft position */
   letters?: Record<string, string | Record<string, string>>;
@@ -70,25 +75,43 @@ const savedOpen = () => {
 };
 /** *tune* A grade that moved this much or more since last season gets an arrow. */
 const MOVED = 0.5;
-/** The measures the campus record grades (in `grades`); the rest sit on the program itself. */
-const CAMPUS: Key[] = ["academics", "facilities", "location", "stability", "game_day", "exposure"];
-const GROUPS: [string, Key[]][] = [
-  [m.football, ["prestige", "winning", "coach", "stability", "conference", "pro"]],
-  [m.campus, ["academics", "facilities", "location", "game_day", "exposure", "nil"]],
+/** The measures kept in `grades` (the record's, and the two about its players); the rest sit on the program itself. */
+const CAMPUS: Key[] = [
+  "academics",
+  "facilities",
+  "location",
+  "stability",
+  "game_day",
+  "exposure",
+  "development",
+  "culture",
 ];
-const HEADLINE: Key[] = ["prestige", "market", "pro"];
+type GroupKey = keyof typeof m.groups;
+/** Your Program's four columns: what moves every week first, then the program, its players and its campus. */
+const GROUPS: [GroupKey, Key[]][] = [
+  ["season", ["winning", "contender", "recruiting"]],
+  ["program", ["prestige", "coach", "conference", "market", "pro"]],
+  ["players", ["development", "culture", "stability", "academics", "nil"]],
+  ["campus", ["facilities", "location", "game_day", "exposure"]],
+];
+/** This season's grades: an arrow says what the week did, not the offseason. */
+const WEEKLY: Key[] = ["winning", "contender", "recruiting"];
 const TABLE: Key[] = [
-  "prestige",
   "winning",
+  "contender",
+  "recruiting",
+  "prestige",
   "nil",
   "market",
   "conference",
   "coach",
   "pro",
+  "development",
+  "culture",
+  "stability",
   "academics",
   "facilities",
   "location",
-  "stability",
   "game_day",
   "exposure",
 ];
@@ -96,7 +119,11 @@ const PRO_ORDER = ["QB", "RB", "WR", "TE", "OT", "IOL", "EDGE", "DL", "LB", "CB"
 
 /** A program's value on a measure, or null when the record has no grade for it. */
 const gradeOf = (p: Program, k: Key): number | null =>
-  CAMPUS.includes(k) ? (p.grades ? (p.grades[k] ?? null) : null) : ((p[k as keyof Program] as number) ?? 0);
+  CAMPUS.includes(k)
+    ? p.grades
+      ? (p.grades[k] ?? null)
+      : null
+    : ((p[k as keyof Program] as number | undefined) ?? null);
 
 /** A program's letter on a measure, as the game sent it (never worked out here); null when the record has none. */
 const letterOf = (p: Program, k: string): string | null => {
@@ -141,19 +168,29 @@ export default function Programs({ season, teams, onTeam }: Props) {
     };
   }, [season.id, season.current_week]);
 
-  const moved = (p: Program, k: Key) => {
-    const d = p.grades_moved?.[k];
+  /** how far a grade moved, and since when: this season's over the week just played, the rest over the offseason */
+  const moveOf = (p: Program, k: Key): { up: boolean; text: string } | null => {
+    const weekly = WEEKLY.includes(k);
+    const d = weekly ? p.week_moved?.[k] : p.grades_moved?.[k];
     if (d == null || Math.abs(d) < MOVED) return null;
+    return { up: d > 0, text: weekly ? m.movedWeek(d > 0) : m.moved(d > 0, Math.round(Math.abs(d))) };
+  };
+  /** the arrow, in a slot of its own width whether or not the grade moved (so the patches stay in one column) */
+  const moved = (p: Program, k: Key) => {
+    const mv = moveOf(p, k);
     return (
-      <span className="programs__moved" title={m.moved(d > 0, Math.round(Math.abs(d)))}>
-        {d > 0 ? (
-          <ArrowUp size={10} weight="bold" aria-hidden="true" />
-        ) : (
-          <ArrowDown size={10} weight="bold" aria-hidden="true" />
-        )}
+      <span className={`programs__moved${mv ? (mv.up ? " is-up" : " is-down") : ""}`} aria-hidden="true">
+        {mv &&
+          (mv.up ? (
+            <ArrowUp size={11} weight="bold" aria-hidden="true" />
+          ) : (
+            <ArrowDown size={11} weight="bold" aria-hidden="true" />
+          ))}
       </span>
     );
   };
+  /** a measure's tip: what it is, and what it just did */
+  const tipOf = (p: Program, k: Key) => [m.tips[k], moveOf(p, k)?.text].filter(Boolean).join(" ");
   /** a grade as a patch: yours in your colors, another program's in its own (the player: "we lost team branding"
    *  when every row wore yours) */
   const grade = (p: Program, k: Key, size: "sm" | "md" = "md") => {
@@ -250,94 +287,81 @@ export default function Programs({ season, teams, onTeam }: Props) {
                 </span>
               }
             >
-              {/* the hero: who you are, and the three readings recruits ask about first */}
+              {/* the hero: who you are and where you are, with what your AD wants of you this year */}
               <div className="programs__hero">
                 <Swatch team={teams.get(you.team)} size={56} />
                 <div className="programs__names">
                   <h2>{you.name}</h2>
-                  <span className="programs__soft">{teams.get(you.team)?.conference ?? season.conference}</span>
+                  <span className="programs__where">
+                    <span className="programs__soft">{teams.get(you.team)?.conference ?? season.conference}</span>
+                    {[you.tags?.setting, you.tags?.climate, you.tags?.region].filter(Boolean).map((t) => (
+                      <span key={t} className="programs__tag">
+                        {t}
+                      </span>
+                    ))}
+                  </span>
                 </div>
-                <dl className="programs__stats">
-                  {HEADLINE.map((k) => (
-                    <div key={k}>
-                      <dt className="label">{m.measures[k]}</dt>
-                      <dd>
-                        <SchoolGrade grade={letterOf(you, k)} size="lg" />
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
+                <div className="programs__goal">
+                  <span className="label programs__kicker">{m.adGoal}</span>
+                  <b>{titleCase(job?.goal ?? you.goal)}</b>
+                  {job && (
+                    <span className="programs__tag is-solid">
+                      {job.mood}
+                      {job.ultimatum ? ` · ${m.ultimatum}` : ""}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {open && (
                 <>
-                  <div className="programs__body">
-                    <section className="programs__col">
-                      <h3 className="label programs__kicker">
-                        <Tooltip title={m.schoolGrades} text={m.schoolGradesTip}>
-                          <span>{m.schoolGrades}</span>
-                        </Tooltip>
-                      </h3>
-                      {GROUPS.map(([title, keys]) => (
-                        <div key={title} className="programs__group">
-                          <h4 className="label programs__group-name">{title}</h4>
-                          <div className="programs__bars">
-                            {keys.map((k) => {
-                              const v = gradeOf(you, k);
-                              const tags =
-                                k === "location"
-                                  ? [you.tags?.setting, you.tags?.climate, you.tags?.region].filter(Boolean)
-                                  : [];
-                              return (
-                                <div key={k} className="programs__bar" title={m.tips[k]}>
+                  <h3 className="label programs__kicker programs__section">
+                    <Tooltip title={m.schoolGrades} text={m.schoolGradesTip}>
+                      <span>{m.schoolGrades}</span>
+                    </Tooltip>
+                  </h3>
+                  {/* four columns of one height: every row is a name, a bar, a grade and an arrow's slot */}
+                  <div className="programs__groups">
+                    {GROUPS.map(([g, keys]) => (
+                      <section key={g} className={`programs__group${g === "season" ? " is-live" : ""}`}>
+                        <header className="programs__group-head">
+                          <h4 className="label">{m.groups[g]}</h4>
+                          <span className="programs__soft">{m.groupNotes[g]}</span>
+                        </header>
+                        <div className="programs__bars">
+                          {keys.map((k) => {
+                            const v = gradeOf(you, k);
+                            return (
+                              <Tooltip key={k} block title={m.measures[k]} text={tipOf(you, k)}>
+                                <div className="programs__bar">
                                   <span className="programs__label">{m.measures[k]}</span>
                                   <span className="programs__track" aria-hidden="true">
                                     <i style={{ width: `${v == null ? 0 : Math.max(2, Math.min(100, v))}%` }} />
                                   </span>
                                   {grade(you, k)}
-                                  {tags.length > 0 && (
-                                    <span className="programs__tags">
-                                      {tags.map((t) => (
-                                        <span key={t} className="programs__tag">
-                                          {t}
-                                        </span>
-                                      ))}
-                                    </span>
-                                  )}
                                 </div>
-                              );
-                            })}
-                          </div>
+                              </Tooltip>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </section>
-                    <section className="programs__col">
-                      <h3 className="label programs__kicker">
-                        <Tooltip title={m.proPotential} text={m.proPotentialTip}>
-                          <span>{m.proPotential}</span>
-                        </Tooltip>
-                      </h3>
-                      <ul className="programs__pros">
-                        {groups.map(({ g }) => (
-                          <li key={g}>
-                            <b>{g}</b>
-                            <SchoolGrade grade={proLetter(you, g)} />
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+                      </section>
+                    ))}
                   </div>
 
-                  <footer className="programs__job">
-                    <span className="label programs__kicker">{m.adGoal}</span>
-                    <b>{titleCase(job?.goal ?? you.goal)}</b>
-                    {job && (
-                      <span className="programs__tag">
-                        {job.mood}
-                        {job.ultimatum ? ` · ${m.ultimatum}` : ""}
-                      </span>
-                    )}
-                  </footer>
+                  <h3 className="label programs__kicker programs__section">
+                    <Tooltip title={m.proPotential} text={m.proPotentialTip}>
+                      <span>{m.proPotential}</span>
+                    </Tooltip>
+                  </h3>
+                  {/* one strip across the card: every position it sends to the pros, best first */}
+                  <ul className="programs__pros">
+                    {groups.map(({ g }) => (
+                      <li key={g}>
+                        <b>{g}</b>
+                        <SchoolGrade grade={proLetter(you, g)} size="sm" />
+                      </li>
+                    ))}
+                  </ul>
                 </>
               )}
             </Panel>

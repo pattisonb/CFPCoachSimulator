@@ -505,7 +505,10 @@ function pull(state, slug, pid, winning = true) {
   out["proximity"] = Math.max(recruiting.PROXIMITY_FLOOR, Math.exp(-miles / recruiting.PROXIMITY_MILES));
   out["playing_time"] = Math.max(0.1, 1 - recruiting._ahead(state, slug, group, p["ovr"]) / (2 * starters + 1));
   out["prestige"] = recruiting._logistic(1.2 * z);
-  if (winning) out["winning"] = Math.min(1.0, recruiting.on_field(state, slug, state["current_week"]));
+  if (winning) {                                                 // this season's topics: they move every week (weekly)
+    const wk = recruiting.weekly(state);
+    for (const t of recruiting.WEEKLY) out[t] = Math.min(1.0, get(wk[t], slug, 0.5));
+  }
   out["nil"] = recruiting._logistic(1.4 * zn);
   out["coach"] = Math.min(1.0, Math.max(0.0, 0.5 + 1.5 * recruiting._coach_edge(state, slug)));
   out["pro"] = recruiting._logistic(recruiting.PRO_PULL_K * (programs.pro_group_grade(pr, group) - 50) / 25);
@@ -540,10 +543,12 @@ function _grade_pulls(state, slug, p) {
   if (g === null) {
     const out = { "academics": _in(slug, recruiting.ACADEMIC) ? 0.9 : 0.5 };
     for (const t of ["facilities", "location", "stability", "game_day", "exposure"]) out[t] = recruiting.NEUTRAL_PULL;
+    const people = programs.people_base(state, slug);        // Player Development and Culture start from its head coach
+    for (const t of ["development", "culture"]) out[t] = people[t] / 100;
     return out;
   }
   const out = {};
-  for (const t of ["academics", "facilities", "location", "stability", "game_day", "exposure"]) out[t] = g[t] / 100;
+  for (const t of ["academics", "facilities", "location", "stability", "game_day", "exposure", "development", "culture"]) out[t] = get(g, t, 50.0) / 100;
   const tags = programs.tags(slug) || {}, taste = recruiting.place_taste(p);
   for (const k of ["setting", "climate"]) {
     if (truthy(get(tags, k))) {
@@ -611,7 +616,8 @@ function strengths(state, slug, pid, known = false) {
     recruiting._PULLS.set(key, static_);
   }
   const out = { ...static_ };
-  out["winning"] = Math.min(1.0, get(recruiting._winning(state), slug, 0.5));
+  const wk = recruiting.weekly(state);
+  for (const t of recruiting.WEEKLY) out[t] = Math.min(1.0, get(wk[t], slug, 0.5));
   const held = get(get(get(state["recruiting"]["nil"], slug, {}), "held", {}), pid) || 0;
   const ask = known ? recruiting.known_ask(state, slug, pid) : recruiting.ask_from(state, slug, pid, undefined, true);
   out["nil"] = !ask ? 1.0 : Math.min(1.0, (held > 0 ? held : recruiting.nil_room(state, slug)) / ask);
@@ -734,7 +740,10 @@ function interest(state, slug, pid, win = null) {
   }
   const wmap = win != null ? win : recruiting._winning(state);
   win = Math.min(1.0, get(wmap, slug, 0.5));
-  const out = persona.story_interest(state, slug, pid, recruiting.PULL_SCALE * (static_ + recruiting.weights(p)["winning"] * win))
+  const wts = recruiting.weights(p), wk = recruiting.weekly(state);
+  const season_part = wts["winning"] * win + wts["contender"] * Math.min(1.0, get(wk["contender"], slug, 0.5))
+    + wts["recruiting"] * Math.min(1.0, get(wk["recruiting"], slug, 0.5));       // this season's standing: it moves every week
+  const out = persona.story_interest(state, slug, pid, recruiting.PULL_SCALE * (static_ + season_part))
     + recruiting.fit_interest(state, slug, pid, wmap, key) + get(rc["lists"][pid], slug, 0.0);       // the fit: the program against what he wants (part 6)
   let tw = get(rc, "twists");
   tw = truthy(tw) ? get(tw, pid) : null;
@@ -752,6 +761,8 @@ function reset_caches() {
   recruiting._FIT.clear();
   _clear(recruiting._ASKS);
   recruiting._WINNING = [null, {}];
+  recruiting._WEEKLY = [null, null];
+  recruiting._BASE_CLASS = null;
   recruiting._FITS = [null, {}, null, null, {}];
   recruiting._GROUP_COUNTS = [null, {}];
   recruiting._LEAVER_CUT = [null, 0];
@@ -774,6 +785,78 @@ function _winning(state) {
     value[slug] = recruiting.on_field(state, slug, state["current_week"], records, ranks);
   }
   recruiting._WINNING = [key, value];
+  return value;
+}
+
+
+recruiting._WEEKLY = [null, null];   // (career, week and commitments; this week's standings of every school on the season's topics)
+recruiting._BASE_CLASS = null;       // every school's standing in recruiting before the career's own classes (the model's baseline)
+
+
+function _base_class() {
+  // A school's recruiting standing going into the career, 0-1: its place among the schools by the model's baseline
+  // strength (how it has really recruited), read as a class of that rank (programs.class_standing).
+  if (recruiting._BASE_CLASS === null) {
+    const schools = Object.keys(recruiting.model()["teams"]);
+    const order = sorted(schools, (s) => [-recruiting._baseline(s), s]);
+    const out = {};
+    order.forEach((s, i) => { out[s] = programs.class_standing(1 + Math.floor(i * 138 / Math.max(1, order.length))); });
+    recruiting._BASE_CLASS = out;
+  }
+  return recruiting._BASE_CLASS;
+}
+
+
+function weekly(state) {
+  // Every school's standing this week on the season's topics (WEEKLY), each 0-1: {"winning": {slug: v}, "contender":
+  // {...}, "recruiting": {...}}.
+  //   winning:    this season's record and ranking, last season counting less every week (on_field);
+  //   contender:  is it in the playoff picture: its ranking, else its record, never more than its losses allow
+  //               (programs.contender_of), blended with how last season ended the same way;
+  //   recruiting: its last three signed classes by national rank, newest counting most, with the class it is building
+  //               now counting more as the cycle goes (half by Signing Day).
+  const season = modules.season, prospects = modules.prospects;
+  const rc = state["recruiting"];
+  // (asked for with every interest and every fit: the key is compared part by part, never built as text)
+  const key = [state["id"], get(state, "year"), state["current_week"], truthy(get(state, "done")), recruiting._ck(rc), get(rc, "commits_v", 0),
+    get(rc, "week", 0)];
+  const cached_ = recruiting._WEEKLY;
+  const had = cached_[0];
+  if (had !== null && had[0] === key[0] && had[1] === key[1] && had[2] === key[2] && had[3] === key[3] && had[4] === key[4] && had[5] === key[5]
+      && had[6] === key[6]) return cached_[1];
+  const week = state["current_week"];
+  const records = season._records(state), ranks = season.rank_map(state, week);
+  const winning = recruiting._winning(state);
+  const w_last = recruiting._interp(recruiting.LAST_SEASON_WEIGHT, week);
+  const w_now = truthy(get(rc, "portal")) ? programs.CLASS_NOW[programs.CLASS_NOW.length - 1][1] : recruiting._interp(programs.CLASS_NOW, week);
+  let table = {};
+  try {
+    table = prospects.class_table(state, null);
+  } catch (err) {
+    table = {};
+  }
+  const base = _base_class();
+  const lgd = get(state, "league") || {};
+  const contender = {}, classes = {};
+  for (const slug of recruiting.fbs_schools(state)) {
+    const ls = get(recruiting._team_model(slug), "last_season");
+    const last = truthy(ls) && ls["wins"] + ls["losses"] ? programs.contender_of(get(ls, "final_rank"), ls["wins"], ls["losses"], false)
+      : programs.CONTENDER_UNRANKED[0] + programs.CONTENDER_UNRANKED[1] * 0.5;
+    const rec = get(records, slug) || { wins: 0, losses: 0 };
+    const games = rec["wins"] + rec["losses"];
+    const now = games ? programs.contender_of(get(ranks, slug), rec["wins"], rec["losses"]) : truthy(get(ranks, slug)) ? programs.contender_of(ranks[slug], 0, 0) : last;
+    contender[slug] = w_last * last + (1 - w_last) * now;
+    const before = get(base, slug, 0.4);
+    const signed = (get(get(get(get(lgd, "teams") || {}, slug) || {}, "program") || {}, "classes") || []).map(([, r]) => programs.class_standing(r)).reverse();   // newest first
+    let past = 0.0, total = 0.0;
+    programs.CLASS_WEIGHTS.forEach((wt, i) => { past += wt * (i < signed.length ? signed[i] : before); total += wt; });
+    past /= total;
+    const row = get(table, slug);
+    const building = truthy(row) && get(row, "pids", []).length ? programs.class_standing(row["rank"]) : past;
+    classes[slug] = (1 - w_now) * past + w_now * building;
+  }
+  const value = { winning: winning, contender: contender, recruiting: classes };
+  recruiting._WEEKLY = [key, value];
   return value;
 }
 
@@ -1142,7 +1225,7 @@ Object.assign(recruiting, {
   _group_of, commits_by_group, needs, needs_detail, spot_of, spot_of_player, need_levels, spot_matches, _share,
   needs_by_spot, recommended, need_factor, offers_by_group, group_cap, group_full, _returning, _coach_edge, pull,
   place_taste, _taste, _grade_pulls, academic_schools, academic, nil_room, known_ask, strengths, forced_strength,
-  top_group, stage, on_field, _bump, weights, interest, reset_caches, _winning, RecruitingError, _recruiting_rating,
+  top_group, stage, on_field, _bump, weights, interest, reset_caches, _winning, _base_class, weekly, RecruitingError, _recruiting_rating,
   weekly_hours, scout_blend, looks_needed, look_unit, looks_done, best_evaluator, scout_points, scout_points_left, covered_states, near_home, look_cost, nil_budget,
   _reward_lines, reward, reward_why, portal_pool, pool_record, portal_budget, carry_over, _five, open_spots,
   portal_room, portal_spots, portal_upgrade, _p4, _open_spots, offer_cap, _contact_points, _grade_points, best_pitch,

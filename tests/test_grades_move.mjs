@@ -1,6 +1,7 @@
-// School Grades Phase 3 (docs/superpowers/plans/2026-11-11-school-grades-phase-3.md): Game Day, Exposure, Stability
-// and Academics move each offseason with results, each held to its floor; Location and Facilities stay; recruits and the
-// Programs tab read the live grades.
+// School Grades Phase 3 (docs/superpowers/plans/2026-11-11-school-grades-phase-3.md): Game Day, Exposure and Stability
+// move each offseason with results, each held to its floor; Location, Facilities and Academics stay; recruits and the
+// Programs tab read the live grades. Player Development and Culture start from the head coach and move each offseason
+// with how the program's players grew and who it kept (the transfers that once moved Academics are Culture's).
 // `node tests/test_grades_move.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 import { Random, round, sorted } from "../engine_js/pyrt.js";
@@ -42,8 +43,10 @@ function finished(st) {
 
 test("test_old_save_reads_base", () => {
   const st = { league: { teams: { [SLUG]: { program: { winning: 40.0 } } } } };
-  equal(P.grades_now(st, SLUG), P.grades(SLUG));
-  equal(P.grades_now({}, SLUG), P.grades(SLUG), "no league: the base");
+  const base = { ...P.grades(SLUG), ...P.people_base({}, SLUG) };       // the record's six, and the two that start from the head coach
+  equal(P.grades_now(st, SLUG), base);
+  equal(P.grades_now({}, SLUG), base, "no league: the base");
+  assert(base["development"] >= 5 && base["development"] <= 98 && base["culture"] >= 5 && base["culture"] <= 98, JSON.stringify(base));
 });
 
 test("test_winning_raises_game_day_and_exposure", () => {
@@ -86,11 +89,52 @@ test("test_stability", () => {
   assert(live(p)["stability"] === 10.0, "never under 10");
 });
 
-test("test_academics_band", () => {
+test("Academics no longer moves with who transfers: that is Culture's", () => {
   const base = P.grades(SLUG)["academics"];
   const p = prog();
-  for (let y = 2027; y < 2047; y++) P._move_grades(p, SLUG, y, null, 2020, P.CHURN_MEAN * 4);
-  assert(Math.abs(live(p)["academics"] - Math.max(0.0, base - 10)) <= 0.1, () => JSON.stringify([live(p)["academics"], base]));
+  for (let y = 2027; y < 2047; y++) P._move_grades(p, SLUG, y, null, 2020, P.CHURN_MEAN * 4, { base: P.people_base({}, SLUG), gain: 0, kept: 0, broken: 0 });
+  equal(live(p)["academics"], base);
+});
+
+test("Culture falls with players transferring out and promises broken, rises with players kept home, inside its band", () => {
+  const start_ = P.people_base({}, SLUG)["culture"];
+  const people = (more) => ({ base: P.people_base({}, SLUG), gain: 0, kept: 0, broken: 0, ...more });
+  let p = prog();
+  P._move_grades(p, SLUG, 2027, null, 2020, P.CHURN_MEAN + 4, people());
+  const lost = live(p)["culture"];
+  assert(lost < start_ && start_ - lost <= P.CULTURE_STEP + 0.05, JSON.stringify([start_, lost]));
+  assert(p["grades_moved"]["culture"] < 0, JSON.stringify(p["grades_moved"]));
+  p = prog();
+  P._move_grades(p, SLUG, 2027, null, 2020, P.CHURN_MEAN, people({ kept: 2 }));
+  assert(live(p)["culture"] > start_, "keeping players home did not lift it");
+  p = prog();
+  P._move_grades(p, SLUG, 2027, null, 2020, P.CHURN_MEAN, people({ broken: 1 }));
+  assert(live(p)["culture"] < start_, "a broken promise did not cost it");
+  p = prog();
+  for (let y = 2027; y < 2060; y++) P._move_grades(p, SLUG, y, null, 2020, P.CHURN_MEAN * 5, people());
+  assert(live(p)["culture"] >= Math.max(0, start_ - P.CULTURE_BAND) - 0.05, "under its band");
+  // a quiet year drifts back toward where the head coach starts it
+  const low = live(p)["culture"];
+  P._move_grades(p, SLUG, 2061, null, 2020, P.CHURN_MEAN, people());
+  assert(live(p)["culture"] > low, "a quiet year did not let it recover");
+});
+
+test("Player Development follows how much the program's players grew against the league's, a step a year, inside its band", () => {
+  const start_ = P.people_base({}, SLUG)["development"];
+  const people = (gain) => ({ base: P.people_base({}, SLUG), gain, kept: 0, broken: 0 });
+  let p = prog();
+  P._move_grades(p, SLUG, 2027, null, 2020, P.CHURN_MEAN, people(1.0));
+  const up = live(p)["development"];
+  assert(up > start_ && up - start_ <= P.DEVELOPMENT_STEP + 0.05, JSON.stringify([start_, up]));
+  p = prog();
+  P._move_grades(p, SLUG, 2027, null, 2020, P.CHURN_MEAN, people(-1.0));
+  assert(live(p)["development"] < start_);
+  p = prog();
+  for (let y = 2027; y < 2060; y++) P._move_grades(p, SLUG, y, null, 2020, P.CHURN_MEAN, people(5.0));
+  assert(live(p)["development"] <= Math.min(100, start_ + P.DEVELOPMENT_BAND) + 0.05, "over its band");
+  // it starts from the head coach: a better developer of players starts higher
+  const of = (pd) => P.people_base({ league: { teams: { [SLUG]: { coaches: { head_coach: { ratings: { player_development: pd } } } } } } }, SLUG)["development"];
+  assert(of(90) > of(50) && of(50) > of(20));
 });
 
 test("test_moved_recorded", () => {

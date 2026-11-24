@@ -199,11 +199,14 @@ function fit(state, slug, pid, win = null, key = null) {
     const p = state["recruiting"]["prospects"][pid];
     const wants = recruiting.standards(state, pid);
     let fixed = 0.0, total = 0.0, win_w = 0.0, win_wants = 0, win_forced = null;
+    const more = [];                 // his other priorities that move every week (Contender, Recruiting): [topic, weight, what he wants]
     const n = Math.min(p["priorities"].length, recruiting.PRIORITY_WEIGHTS.length);
     for (let i = 0; i < n; i++) {
       const t = p["priorities"][i], w = recruiting.PRIORITY_WEIGHTS[i];
       total += w;
-      if (t === "winning" && !has(pulls, "winning")) {
+      if (t !== "winning" && recruiting.WEEKLY.includes(t) && !has(pulls, t)) {
+        more.push([t, w, get(wants, t, 0)]);
+      } else if (t === "winning" && !has(pulls, "winning")) {
         win_w = w; win_wants = get(wants, t, 0);
       } else if (t === "winning" && forced) {
         win_w = w; win_wants = get(wants, t, 0); win_forced = pulls["winning"];
@@ -211,14 +214,19 @@ function fit(state, slug, pid, win = null, key = null) {
         fixed += w * _gap(grades.place(grades.school_pull(clamp(get(pulls, t, 0.0), 0.0, 1.0))), get(wants, t, 0));
       }
     }
-    parts = [fixed, total, win_w, win_wants, win_forced];
+    parts = [fixed, total, win_w, win_wants, win_forced, more];
     if (!forced) {
       if (recruiting._FIT.size > 2_000_000) recruiting._FIT.clear();
       recruiting._FIT.set(key, parts);
     }
   }
-  const [fixed, total, win_w, win_wants, win_forced] = parts;
+  const [fixed0, total, win_w, win_wants, win_forced, more] = parts;
   if (!total) return 0.0;
+  let fixed = fixed0;
+  if (more && more.length) {         // this week's standing on them
+    const wk = recruiting.weekly(state);
+    for (const [t, w, wants] of more) fixed += w * _gap(grades.place(grades.school_pull(clamp(get(wk[t], slug, 0.5), 0.0, 1.0))), wants);
+  }
   if (!win_w) return fixed / total;
   const w = win_forced !== null ? win_forced : Math.min(1.0, get(win !== null && win !== undefined ? win : recruiting._winning(state), slug, 0.5));
   return (fixed + win_w * _gap(grades.place(grades.school_pull(w)), win_wants)) / total;

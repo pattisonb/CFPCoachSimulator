@@ -814,7 +814,7 @@ function _report(state, week) {
 
 
 recruiting.REPORT_KINDS = ["offer", "commit", "hard", "flip", "decommit", "signed", "asked_more", "not_buying", "hung_up", "pester", "promise_broken",
-  "promise_kept", "bloomed", "pro", "twist", "hat", "softened", "rival_push"];
+  "promise_kept", "bloomed", "pro", "twist", "hat", "softened", "rival_push", "cooled", "door_closed", "door_open"];
 recruiting.CONTACT_KINDS = ["contact", "pitch", "raise_nil", "pull_offer", "answer", "present"];   // your actions, logged for his History (not news)
 recruiting.HISTORY_ONLY = [...recruiting.CONTACT_KINDS, "learned"];   // his History's alone: never the week's news (what your staff learned is his, not news)
 

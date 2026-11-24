@@ -32,7 +32,8 @@ programs.TIER_NAMES = { 1: "Blue Blood", 2: "Power", 3: "Solid", 4: "Modest", 5:
 programs.BASE_DEFAULT = { history: 15.0, prestige: 15.0, winning: 20.0, market: 25, nil: 15.0, conference: 10.0, coach: 55.0, pro: 0 };
 programs.RANK_BONUS = [[1, 0.8], [5, 0.5], [10, 0.35], [25, 0.35]];     // a season's score: win share plus these (cumulative), max 3.0
 programs.PRESTIGE_STEP = 3.0;              // prestige moves at most this much a year toward its target *tune*
-programs.PRESTIGE_HISTORY = 0.7;           // the target: history's share (the rest a ten-season mean of winning)
+programs.PRESTIGE_HISTORY = 0.7;           // the target: history's share (the rest the last PRESTIGE_SEASONS' winning)
+programs.PRESTIGE_SEASONS = 5;             // *tune* how many seasons of winning Prestige looks back on (the player's rule: Winning is this season, Prestige the last five)
 programs.WINNING_WEIGHTS = [3, 2, 1];      // the last three seasons
 programs.MARKET_STEP = 3.0;                // the market's live part moves at most this much a year
 programs.MARKET_LIVE = 0.3;                // the live part's target: this much of (winning - 40); a decade of 100-winning +18
@@ -354,6 +355,7 @@ export function update(state, results, ranks, year = null, only = null) {
     moved[c] = (truthy(get(conf_start, c)) ? sum(conf_start[c]) / conf_start[c].length : v) + (v - get(lgd["conference_start"], c, v)) * 0.5;
   }
   conf_score = moved;
+  const gains = programs._gains(lgd, year), class_ranks = programs._class_ranks(state);
   for (const [s, t] of Object.entries(lgd["teams"])) {
     if (truthy(only) && !holds(only, s)) continue;
     const p = t["program"];
@@ -365,7 +367,7 @@ export function update(state, results, ranks, year = null, only = null) {
     const recent = p["seasons"].slice(-3).map(([, v]) => v).reverse();                     // latest first
     const ws = programs.WINNING_WEIGHTS.slice(0, recent.length);
     p["winning"] = round(sum(ws.map((w, i) => w * recent[i])) / sum(ws), 1);
-    const ten = p["seasons"].map(([, v]) => v);
+    const ten = p["seasons"].slice(-programs.PRESTIGE_SEASONS).map(([, v]) => v);       // (the last five: PRESTIGE_SEASONS)
     const wb = get(p, "winning_base", 40.0);                                    // the start is the fixed point: results like the real ones move nothing
     const target = p["history"] + (1 - programs.PRESTIGE_HISTORY) * (sum(ten) / ten.length - wb);
     p["prestige"] = round(Math.max(0.0, Math.min(100.0, p["prestige"] + Math.max(-programs.PRESTIGE_STEP, Math.min(programs.PRESTIGE_STEP, target - p["prestige"])))), 1);
@@ -382,12 +384,50 @@ export function update(state, results, ranks, year = null, only = null) {
     if (truthy(bt) && has(conf_score, bt["conference"])) p["conference"] = round(conf_score[bt["conference"]], 1);
     if (!("drafts" in p)) p["drafts"] = programs.empty_drafts(year - 2);
     const churn = (get(get(state, "offseason") || {}, "departures") || []).filter((d) => get(d, "team") === s && get(d, "kind") === "portal").length;
-    programs._move_grades(p, s, year, get(ranks, s), get(hc, "since"), churn);     // School Grades Phase 3: the moving grades
+    const mine = s === get(state, "team") ? (get(get(get(state, "offseason") || {}, "retention") || {}, "results") || []) : [];
+    programs._move_grades(p, s, year, get(ranks, s), get(hc, "since"), churn, { base: programs.people_base(state, s),
+      gain: get(gains["by"], s, gains["mean"]) - gains["mean"],
+      kept: mine.filter((r) => get(r, "status") === "stayed").length,
+      broken: (get(t, "roster") || []).filter((c) => (get(c, "life") || []).some((row) => row["kind"] === "promise" && row["year"] === year - 1 && get(row, "band") === "broken")).length });     // School Grades: the moving grades
+    const rank_now = get(class_ranks, s);          // the class it just signed, kept with its last two (Recruiting)
+    if (truthy(rank_now)) p["classes"] = (get(p, "classes") || []).filter(([y]) => y !== year).concat([[year, rank_now]]).slice(-programs.CLASS_KEEP);
     p["drafts"] = p["drafts"].concat([programs.draft_line(year - 1, get(picks, s, []))]).slice(-programs.PRO_YEARS);    // a new list: a probe's copy never writes back
     programs.pro_recompute(p, year - 1);
     p["rating"] = round(programs.mix(p), 1);
     p["tier"] = programs.tier_of(p["rating"]);
     p["year"] = year;
+  }
+}
+
+
+export function _gains(lgd, year) {
+  // How much each program's players gained in overall this offseason (their Progress lines for the season before
+  // `year`): {"by": {slug: mean gain}, "mean": the league's}. Nobody has grown yet in a first offseason's probe: {}.
+  const by = {}, all = [];
+  for (const [s, t] of Object.entries(lgd["teams"])) {
+    const got = [];
+    for (const c of get(t, "roster") || []) {
+      for (const row of get(c, "life") || []) {
+        if (row["kind"] === "progress" && row["year"] === year - 1 && typeof row["gain"] === "number") got.push(row["gain"]);
+      }
+    }
+    if (got.length) { by[s] = sum(got) / got.length; all.push(...got); }
+  }
+  return { by: by, mean: all.length ? sum(all) / all.length : 0.0 };
+}
+
+
+export function _class_ranks(state) {
+  // Every school's national rank for the class it just signed (prospects.class_table, everything counted), or {}.
+  const prospects = modules.prospects;
+  if (!is_dict(state) || !truthy(get(state, "recruiting")) || !prospects) return {};
+  try {
+    const table = prospects.class_table(state, null);
+    const out = {};
+    for (const [s, row] of Object.entries(table)) out[s] = row["rank"];
+    return out;
+  } catch (err) {
+    return {};
   }
 }
 
@@ -570,15 +610,62 @@ programs.EXPOSURE_FLOOR = 0.75;         // Exposure never under this share of it
 programs.STABILITY_CHANGE = 15.0;       // *tune* a new head coach this year costs this ...
 programs.STABILITY_REBUILD = 5.0;       // *tune* ... and each year he stays rebuilds this, up to the researched value
 programs.STABILITY_FLOOR = 10.0;        // Stability never under this
-programs.ACADEMICS_STEP = 1.0;          // *tune* churn above or below CHURN_MEAN moves Academics this much a year ...
-programs.ACADEMICS_BAND = 10.0;         // ... never more than this from its researched value
+programs.ACADEMICS_BAND = 10.0;         // a save's live Academics (from when transfers moved it) is held inside this of its researched value
 programs.CHURN_MEAN = 6;                // *tune* the portal entrants a program loses in a typical offseason
-programs.MOVING = ["game_day", "exposure", "stability", "academics"];
+// Player Development: how much a program's players grow. It starts from the head coach's own rating for it and moves
+// each offseason with how much its players really gained against the league's.
+programs.DEVELOPMENT_COACH = [22.0, 0.72];   // *tune* its start: this plus this much of the head coach's player development rating
+programs.DEVELOPMENT_LIVE = 9.0;        // *tune* its live target: this many points per point of overall its players gained over the league's mean ...
+programs.DEVELOPMENT_STEP = 4.0;        // *tune* ... moving at most this much a year ...
+programs.DEVELOPMENT_BAND = 22.0;       // ... never more than this from its start
+// Culture: how well a program keeps its players. It starts from the head coach's motivation and discipline and moves
+// each offseason with who left through the portal, who you talked into staying and the promises you broke.
+programs.CULTURE_COACH = [24.0, 0.68];  // *tune* its start: this plus this much of the mean of the head coach's motivation and discipline
+programs.CULTURE_CHURN = 0.8;           // *tune* each portal entrant fewer (or more) than CHURN_MEAN moves it this much ...
+programs.CULTURE_KEPT = 1.5;            // *tune* ... each player kept home at Keep Them Home adds this ...
+programs.CULTURE_BROKEN = 3.0;          // *tune* ... each promise broken takes this ...
+programs.CULTURE_STEP = 5.0;            // *tune* ... at most this much a year ...
+programs.CULTURE_BAND = 25.0;           // ... never more than this from its start
+programs.CULTURE_HOME = 0.25;           // *tune* a year's move fades this share of the way back to its start the next year
+programs.MOVING = ["game_day", "exposure", "stability", "development", "culture"];
+// This season's grades (the player's rule: they move every week, and recruits move with them). Each is a standing, 0-1.
+programs.SEASON = ["winning", "contender", "recruiting"];
+programs.CONTENDER_RANK = [[4, 1.0], [8, 0.93], [12, 0.86], [16, 0.74], [25, 0.62]];   // *tune* Contender by ranking (the playoff takes twelve): at this rank or better, this standing
+programs.CONTENDER_UNRANKED = [0.16, 0.34];      // *tune* an unranked team: this plus this much of its share of games won
+programs.CONTENDER_LOSSES = [[2, 0.90], [3, 0.62], [4, 0.44], [5, 0.32], [6, 0.22]];   // *tune* with this many losses a team is never above this (three losses is the bubble, four is out)
+programs.CLASS_RANK = [[1, 1.0], [5, 0.95], [10, 0.88], [25, 0.78], [40, 0.68], [65, 0.55], [90, 0.42], [115, 0.28], [140, 0.12]];   // *tune* Recruiting by a class's national rank
+programs.CLASS_WEIGHTS = [3, 2, 1];              // *tune* the last three signed classes, newest first
+programs.CLASS_NOW = [[0, 0.10], [8, 0.30], [15, 0.50]];   // *tune* how much the class being built counts, by week (it is half the grade by Signing Day)
+programs.CLASS_KEEP = 3;                         // signed classes kept a program
+
+
+export function _coach_of(state, slug) {
+  // The program's head coach as the career has him (the league's, your own when it is your team), else the roster file's.
+  const lgd = is_dict(state) ? get(state, "league") : null;
+  const t = get(get(lgd || {}, "teams") || {}, slug);
+  if (truthy(get(get(t || {}, "coaches") || {}, "head_coach"))) return t["coaches"]["head_coach"];
+  const bt = get(modules.season.load_teams(), slug);
+  return get(get(bt || {}, "coaches") || {}, "head_coach") || {};
+}
+
+
+export function people_base(state, slug) {
+  // Where Player Development and Culture start for the program: its head coach's own ratings (his player development;
+  // the mean of his motivation and discipline). They move from there each offseason (_move_grades).
+  const r = get(programs._coach_of(state, slug), "ratings") || {};
+  const rate = (k) => Number(get(r, k, 55));
+  const dc = programs.DEVELOPMENT_COACH, cc = programs.CULTURE_COACH;
+  return { development: round(Math.max(5.0, Math.min(98.0, dc[0] + dc[1] * rate("player_development"))), 1),
+    culture: round(Math.max(5.0, Math.min(98.0, cc[0] + cc[1] * (rate("motivation") + rate("discipline")) / 2)), 1) };
+}
 
 
 export function _held(base_, gl) {
   // The base grades plus their live parts, each held to its floor (and 100).
   const out = { ...base_ };
+  for (const [k, band] of [["development", programs.DEVELOPMENT_BAND], ["culture", programs.CULTURE_BAND]]) {
+    if (has(base_, k)) out[k] = Math.max(0.0, Math.min(100.0, base_[k] + Math.max(-band, Math.min(band, get(gl, k, 0.0)))));
+  }
   const gd = base_["game_day"] + get(gl, "game_day", 0.0), ex = base_["exposure"] + get(gl, "exposure", 0.0);
   out["game_day"] = Math.min(100.0, Math.max(base_["game_day"] * programs.GAME_DAY_FLOOR, gd));
   out["exposure"] = Math.min(100.0, Math.max(base_["exposure"] * programs.EXPOSURE_FLOOR, ex));
@@ -590,13 +677,88 @@ export function _held(base_, gl) {
 
 
 export function grades_now(state, slug) {
-  // The grades as they stand in this career: the researched base (grades) plus each moving grade's live part
-  // (program["grades_live"], from programs.update), held to its floor. No league, or an old save: the base. Read only.
+  // The grades as they stand in this career: the researched base (grades) and where Player Development and Culture
+  // start (people_base), plus each moving grade's live part (program["grades_live"], from programs.update), held to
+  // its floor. No league, or an old save: the base. Read only.
   const base_ = programs.grades(slug);
   if (base_ === null) return null;
   const lgd = is_dict(state) ? get(state, "league") : null;
   const prog = get(get(get(lgd || {}, "teams") || {}, slug) || {}, "program") || {};
-  return programs._held(base_, get(prog, "grades_live") || {});
+  return programs._held({ ...base_, ...programs.people_base(state, slug) }, get(prog, "grades_live") || {});
+}
+
+
+export function _line_of(table, x) {
+  // `x` on a table of (rank at or better, standing): straight lines between the rows, held at the ends.
+  if (x <= table[0][0]) return table[0][1];
+  for (let i = 1; i < table.length; i++) {
+    if (x <= table[i][0]) {
+      const [x0, y0] = table[i - 1], [x1, y1] = table[i];
+      return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
+    }
+  }
+  return table[table.length - 1][1];
+}
+
+
+export function contender_of(rank, wins, losses, capped = true) {
+  // A team's standing as a contender, 0-1: its ranking (the playoff takes twelve), else its share of games won, and
+  // never more than its losses allow (`capped`: a finished season is read without that, by where it ended).
+  let v;
+  if (truthy(rank)) {
+    v = programs.CONTENDER_RANK[programs.CONTENDER_RANK.length - 1][1];
+    for (const [top, s] of programs.CONTENDER_RANK) if (rank <= top) { v = s; break; }
+  } else {
+    const games = wins + losses;
+    v = programs.CONTENDER_UNRANKED[0] + programs.CONTENDER_UNRANKED[1] * (games ? wins / games : 0.5);
+  }
+  if (capped) for (const [n, cap] of programs.CONTENDER_LOSSES) if (losses >= n) v = Math.min(v, cap);
+  return v;
+}
+
+
+export function class_standing(rank) {
+  // A recruiting class's standing, 0-1, by its national rank.
+  return programs._line_of(programs.CLASS_RANK, Math.max(1, Number(rank) || 999));
+}
+
+
+export function season_grades(state, slug) {
+  // This season's grades for the page, 0-100: Winning, Contender and Recruiting as they stand this week
+  // (recruiting.weekly: what every recruit weighs). null without a class to recruit (a season that is not a career).
+  const recruiting = modules.recruiting;
+  if (!is_dict(state) || !truthy(get(state, "recruiting"))) return null;
+  const w = recruiting.weekly(state);
+  const out = {};
+  for (const k of programs.SEASON) out[k] = round(100 * Math.max(0.0, Math.min(1.0, get(w[k], slug, 0.5))), 1);
+  return out;
+}
+
+
+export function season_moved(state, slug) {
+  // How far each of this season's grades moved over the week just played, in points (0-100): {} before a week has.
+  const snap = get(state, "grades_week");
+  if (!truthy(snap) || !truthy(get(snap, "prev")) || !truthy(get(snap, "now"))) return {};
+  const a = get(snap["prev"], slug), b = get(snap["now"], slug);
+  if (!truthy(a) || !truthy(b)) return {};
+  const out = {};
+  programs.SEASON.forEach((k, i) => { out[k] = round(100 * (b[i] - a[i]), 1); });
+  return out;
+}
+
+
+export function snapshot_week(state) {
+  // Keep this week's standings beside last week's (state["grades_week"]: {"week", "now", "prev"}, a school's three
+  // in SEASON order), so the page can say what moved and recruiting can say who it cost you. Once a week.
+  const recruiting = modules.recruiting;
+  if (!truthy(get(state, "recruiting"))) return;
+  const w = recruiting.weekly(state);
+  const now = {};
+  for (const slug of Object.keys(w["winning"])) now[slug] = programs.SEASON.map((k) => round(Math.max(0.0, Math.min(1.0, get(w[k], slug, 0.5))), 4));
+  const had = get(state, "grades_week");
+  const key = [get(state, "year") || 2026, state["current_week"]].join("|");
+  if (truthy(had) && get(had, "week") === key) { had["now"] = now; return; }
+  state["grades_week"] = { week: key, now: now, prev: truthy(had) ? had["now"] : null };
 }
 
 
@@ -605,12 +767,22 @@ export function _step(cur, target, step) {
 }
 
 
-export function _move_grades(p, slug, year, rank, coach_since, churn) {
+export function _move_grades(p, slug, year, rank, coach_since, churn, people = null) {
   // One offseason's move of a program's live grades (p["grades_live"]); p["grades_moved"] keeps each grade's change.
-  const base_ = programs.grades(slug);
-  if (base_ === null) return;
+  // `people`: {"base": where Player Development and Culture start (people_base), "gain": how much more its players
+  // gained in overall than the league's did, "kept": players kept home, "broken": promises broken}.
+  const researched = programs.grades(slug);
+  if (researched === null) return;
+  const base_ = { ...researched, ...(get(people || {}, "base") || {}) };
   const gl = p["grades_live"] = { ...(get(p, "grades_live") || {}) };     // a new dict: a probe's shallow copy never writes back (as drafts)
   const before = programs._held(base_, gl);
+  if (truthy(people)) {
+    gl["development"] = programs._step(get(gl, "development", 0.0), programs.DEVELOPMENT_LIVE * get(people, "gain", 0.0), programs.DEVELOPMENT_STEP);
+    gl["development"] = Math.max(-programs.DEVELOPMENT_BAND, Math.min(programs.DEVELOPMENT_BAND, gl["development"]));
+    const move = programs.CULTURE_CHURN * (programs.CHURN_MEAN - churn) + programs.CULTURE_KEPT * get(people, "kept", 0) - programs.CULTURE_BROKEN * get(people, "broken", 0);
+    const faded = get(gl, "culture", 0.0) * (1 - programs.CULTURE_HOME);
+    gl["culture"] = Math.max(-programs.CULTURE_BAND, Math.min(programs.CULTURE_BAND, faded + Math.max(-programs.CULTURE_STEP, Math.min(programs.CULTURE_STEP, move))));
+  }
   const lead = get(p, "winning", 40.0) - get(p, "winning_base", 40.0);
   gl["game_day"] = programs._step(get(gl, "game_day", 0.0), programs.GAME_DAY_LIVE * lead, programs.GAME_DAY_STEP);
   const ranked = programs.EXPOSURE_RANKED.find(([top]) => truthy(rank) && rank <= top);
@@ -621,9 +793,7 @@ export function _move_grades(p, slug, year, rank, coach_since, churn) {
   } else {
     gl["stability"] = Math.min(0.0, get(gl, "stability", 0.0) + programs.STABILITY_REBUILD);
   }
-  if (churn !== programs.CHURN_MEAN) {
-    gl["academics"] = get(gl, "academics", 0.0) + (churn < programs.CHURN_MEAN ? programs.ACADEMICS_STEP : -programs.ACADEMICS_STEP);
-  }
+  // (Academics no longer moves with who transfers: that is Culture's. A save's live part stays as it was.)
   // a live part never runs past what its floor or cap holds (so a floor reached is left by the first good year)
   gl["game_day"] = Math.max(base_["game_day"] * (programs.GAME_DAY_FLOOR - 1), Math.min(100 - base_["game_day"], gl["game_day"]));
   gl["exposure"] = Math.max(base_["exposure"] * (programs.EXPOSURE_FLOOR - 1), Math.min(100 - base_["exposure"], gl["exposure"]));
@@ -680,6 +850,7 @@ export function letters(row) {
   // and the pro pipeline by draft position.
   const out = {};
   for (const k of ["prestige", "winning", "nil", "market", "conference", "coach", "pro"]) out[k] = programs.word_of(row[k]);
+  for (const k of ["contender", "recruiting"]) if (typeof get(row, k) === "number") out[k] = programs.word_of(row[k]);
   for (const [k, v] of Object.entries(get(row, "grades") || {})) out[k] = programs.word_of(v);
   const groups = {};
   for (const g of programs.PRO_GROUP_ORDER) groups[g] = programs.word_of(get(get(row, "pro_groups") || {}, g, 0));     // a position it never sent: an F
@@ -701,6 +872,12 @@ export function rows(state) {
       rating: p["rating"], goal: programs.goal_for(p["tier"], p4, p["rating"], programs.INDEPENDENTS.has(get(bt, "conference")))["text"] };
     for (const k of ["prestige", "winning", "nil", "market", "conference", "coach", "history", "pro", "pro_groups"]) row[k] = p[k];
     Object.assign(row, { grades: programs.grades_now(state, s), tags: programs.tags(s), grades_moved: truthy(get(p, "grades_moved")) ? p["grades_moved"] : null });
+    // this season's grades as they stand this week: Winning is this season (the three-year measure that Prestige, the
+    // collective and the crowd follow stays underneath as `winning_years`), with Contender and Recruiting beside it,
+    // and what each moved over the week just played
+    const now = programs.season_grades(state, s);
+    row["winning_years"] = p["winning"];
+    if (now !== null) Object.assign(row, now, { week_moved: programs.season_moved(state, s) });
     row["letters"] = programs.letters(row);                  // every grade as the page shows it: a letter
     out.push(row);
   }
@@ -735,7 +912,8 @@ Object.assign(programs, {
   _pro_lines, pro_score, pro_group_scores, pro_recompute, pro_group_grade, season_score, init, upgrade,
   get: program_get, z, goal_for, final_ranks, draft_picks, update, nil_move,
   _profile, profile_rows, _num, _line, rank_score, recency, facilities_score, warmth, fill_score, grades, _grades,
-  _held, grades_now, _step, _move_grades, tags, _tags, word_of, letters, rows, attract, coach_level, coach_ceiling,
+  _coach_of, people_base, _held, grades_now, _line_of, contender_of, class_standing, season_grades, season_moved, snapshot_week,
+  _gains, _class_ranks, _step, _move_grades, tags, _tags, word_of, letters, rows, attract, coach_level, coach_ceiling,
 });
 
 modules.programs = programs;

@@ -503,6 +503,17 @@ test("your recruiters never spend a look on a prospect who has closed you out, o
   for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
   rc["reads"] = {};
   const areas = staff.filter((m) => m["role"] === "Recruiter").map((m) => m["area"]);
+  // five prospects in your recruiters' areas who will not hear from you: each wants an A+ on everything he cares about
+  // and your program is an F to him on all of it
+  const picked = Object.keys(rc["prospects"]).filter((q) => live(rc, q) && areas.includes(area_of(st, q))).slice(0, 5);
+  const levers = [];
+  for (const q of picked) {
+    const wants = Object.fromEntries(rc["prospects"][q]["priorities"].map((t) => [t, "A+"]));
+    levers.push(new recruiting.forced_standards(st, q, wants));
+    for (const t of rc["prospects"][q]["priorities"]) levers.push(new recruiting.forced_strength(st, ME, q, t, 0.01));
+  }
+  levers.forEach((l) => l.__enter__());
+  try {
   const shut = Object.keys(rc["prospects"]).filter((q) => live(rc, q) && areas.includes(area_of(st, q)) && recruiting.blocked(st, ME, q));
   assert(shut.length > 0, "nobody in your recruiters' areas has closed you out");
   rc["board"] = shut.slice(0, 5);                          // on your board, where a recruiter looks first
@@ -510,6 +521,9 @@ test("your recruiters never spend a look on a prospect who has closed you out, o
   const looked = Object.keys(rc["reads"]);
   assert(looked.length > 0, "the recruiters looked at nobody");
   assert(looked.every((q) => !recruiting.blocked(st, ME, q)), `a look at ${looked.filter((q) => recruiting.blocked(st, ME, q)).length} who closed you out`);
+  } finally {
+    levers.forEach((l) => l.__exit__());
+  }
 });
 
 await run();

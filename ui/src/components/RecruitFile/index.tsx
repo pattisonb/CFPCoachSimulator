@@ -18,6 +18,7 @@ import {
   Plus,
   Phone,
   Scroll,
+  Snowflake,
   Star,
   User,
   UsersThree,
@@ -661,6 +662,9 @@ const KIND_ICON: Record<string, Icon> = {
   bloomed: Star,
   pro: Star,
   rival_push: Lightning,
+  cooled: Snowflake,
+  door_closed: X,
+  door_open: Flag,
 };
 
 /** A line of his history, in the old board's order: "Call · Program Prestige", then how he took it. */
@@ -688,6 +692,9 @@ const LINE_KINDS = new Set([
   "offer_gone",
   "promise_kept",
   "promise_strained",
+  "cooled",
+  "door_closed",
+  "door_open",
 ]);
 
 /**
