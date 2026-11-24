@@ -1,14 +1,35 @@
-/* How far a prospect has been scouted: binoculars in outline, the filled pair over it cut off at his progress. */
+/* How far a prospect has been scouted: binoculars inside a ring that closes as the looks come in. */
 .scout-mark {
   position: relative;
-  display: inline-flex;
+  display: inline-grid;
+  place-items: center;
   flex: none;
   vertical-align: middle;
 }
 
-.scout-mark__fill {
+.scout-mark svg {
   position: absolute;
   inset: 0;
-  display: inline-flex;
+}
+
+.scout-mark__track,
+.scout-mark__ring {
+  fill: none;
+}
+
+.scout-mark__track {
+  stroke: var(--line-soft);
+}
+
+.scout-mark__ring {
+  stroke: var(--good);
+}
+
+.scout-mark__icon {
+  position: relative;
+  color: var(--ink-soft);
+}
+
+.scout-mark.is-full .scout-mark__icon {
   color: var(--good);
 }

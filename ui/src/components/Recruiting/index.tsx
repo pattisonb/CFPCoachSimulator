@@ -508,7 +508,7 @@ export default function Recruiting({
                             ) : (
                               <Stars n={r.stars} size={10} />
                             )}
-                            <ScoutMark looks={r.looks} size={12} />
+                            <ScoutMark looks={r.looks} size={20} />
                             <RecruitFlags
                               generational={r.generational}
                               find={r.find}
