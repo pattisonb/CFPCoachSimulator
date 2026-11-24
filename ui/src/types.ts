@@ -618,6 +618,8 @@ export interface PlayerProfile {
     position: string;
     games: number;
     honors: { kind: string; name: string }[];
+    /** that season's main numbers at his position (the This Season card's year chips) */
+    rows?: { key: string; label: string; value: number }[];
   }[];
   /** every rating he has, by group (General, Ballcarrier, Receiving, Blocking, Passing, Defense, Kicking) */
   skills?: { group: string; rows: { key: string; label: string; value: number }[] }[];

@@ -30,6 +30,11 @@ export const messages = {
   pounds: (lb: number) => `${lb} lbs`,
   status: "Status",
   thisSeason: "This Season",
+  seasonsTitle: "Seasons",
+  seasonYears: "Season",
+  pastLead: (team: string, pos: string, cls: string, games: number) =>
+    [team, pos, cls, `${games} ${games === 1 ? "Game" : "Games"}`].filter(Boolean).join(" · "),
+  noPastRows: "No numbers were kept for that season.",
   form: "Form",
   coachability: "Coachability",
   potential: "Potential",

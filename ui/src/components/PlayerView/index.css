@@ -44,6 +44,20 @@
   font-weight: 700;
 }
 
+/* his seasons by year, over the card's numbers: this one first */
+.player-view__year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--s2);
+}
+
+.player-view__year-tabs .chip {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: var(--t-xs);
+}
+
 /* a rating: its name, a bar (the ceiling faint behind it), its number; a hairline under each */
 .player-view__bar {
   display: grid;

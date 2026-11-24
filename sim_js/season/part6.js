@@ -617,6 +617,19 @@ function derived_stat(st, key) {
   return isNumber(v) ? Number(v) : null;
 }
 
+function season_rows(position, stats) {
+  // A finished season's main numbers at his position, as the page's This Season card lists a past year (the player's
+  // ask): [{key, label, value}], the same stats his ranks are on (RANK_STATS), without the ranks (a past season keeps
+  // his own line, not the league's).
+  const out = [];
+  for (const [key, label] of get(season.RANK_STATS, season._rank_group(position), [])) {
+    const v = season.derived_stat(stats || {}, key);
+    if (v === null) continue;
+    out.push({ key, label, value: Number.isInteger(v) ? v : round(v, 1) });
+  }
+  return out;
+}
+
 function _rank_group(position) {
   return ["DL", "MLB", "ROLB", "LOLB", "OLB", "CB", "S"].includes(position) ? "DEF" : position;
 }
@@ -1086,7 +1099,8 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   const history = [];
   const entry = get(get(get(get(state, "league") || {}, "teams") || {}, team) || {}, "roster", []).find((c) => get(c, "id") === get(p, "slug")) ?? null;
   for (const h of get(entry || {}, "hist") || []) {
-    history.push({ ...h, team_name: get(get(teams, h["team"]) || {}, "name") || h["team"] });
+    history.push({ ...h, team_name: get(get(teams, h["team"]) || {}, "name") || h["team"],
+      rows: season.season_rows(get(h, "position"), get(h, "stats")) });
   }
   const promises = modules.promises, ability_goals = modules.ability_goals;
   const promise = truthy(get(state, "career")) && team === get(state, "team") ? get(promises.tags_now(state), get(p, "slug")) : null;
@@ -1177,6 +1191,6 @@ Object.assign(season, {
   settings, update_settings, morale_on, _morale_store, team_morale, player_form, morale_factor, morale_payload,
   _perf_score, _decay_morale, _update_morale, morale_view, player_edits, preset_faces, all_preset_faces, player_faces,
   set_player_face, _attr_to_source, _edit_attributes, team_edits, team_data, attribute_ceilings, _attribute_ceilings,
-  development_reads, edit_player, derived_stat, _rank_group, player_ranks, player_honors, player_game_log, mark_best, game_line, team_game_logs, player_game_logs,
+  development_reads, edit_player, derived_stat, season_rows, _rank_group, player_ranks, player_honors, player_game_log, mark_best, game_line, team_game_logs, player_game_logs,
   recruit_stars, our_rating, all_skills, player_profile,
 });

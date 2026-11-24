@@ -180,6 +180,10 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
   const status = p.injury ? m.injured(back!) : p.redshirt?.on ? m.redshirting : m.healthy;
   const spot = p.role && p.depth ? m.spot(p.role, p.depth) : null;
   const season = p.headline || (p.games ? m.games(p.games) : m.noGames);
+  // the season the card's stats are showing: this one, or a past year of his (History's year chips)
+  const [year, setYear] = useState<number | null>(null);
+  const pastYears = [...(pr?.history ?? [])].sort((a, b) => b.year - a.year);
+  const past = pastYears.find((h) => h.year === year) ?? null;
 
   const goal = pr?.ability_goal;
   const goalLine = goal ? m.goalLine(goal.name, goal.tier_name, goal.have, goal.need) : null;
@@ -473,31 +477,82 @@ ${m.ceiling(a.potential)}.`
           <Recruitment pr={pr} />
           <RecruitedHow pr={pr} />
           <Career pr={pr} />
-          <Panel title={m.thisSeason} aside={pr.team.record ? `${pr.team.name} · ${pr.team.record}` : pr.team.name}>
-            <p className="player-view__lead">{season}</p>
-            {pr.ranks?.length ? (
-              <table className="player-view__table">
-                <thead>
-                  <tr>
-                    <th scope="col">{m.stat}</th>
-                    <th scope="col">{m.value}</th>
-                    <th scope="col">{m.fbs}</th>
-                    <th scope="col">{m.conf}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pr.ranks.map((x) => (
-                    <tr key={x.key}>
-                      <th scope="row">{x.label}</th>
-                      <td>{x.value.toLocaleString("en-US")}</td>
-                      <td>{m.rankOf(x.fbs_rank, x.fbs_n)}</td>
-                      <td>{m.rankOf(x.conf_rank, x.conf_n)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <Panel
+            title={past ? m.seasonsTitle : m.thisSeason}
+            aside={past ? past.team_name : pr.team.record ? `${pr.team.name} · ${pr.team.record}` : pr.team.name}
+          >
+            {/* his seasons by year (the player's ask): this one first, then each he has played, newest first */}
+            {pastYears.length > 0 && (
+              <div className="player-view__year-tabs" role="group" aria-label={m.seasonYears}>
+                <Chip on={!past} onClick={() => setYear(null)}>
+                  {m.thisSeason}
+                </Chip>
+                {pastYears.map((h) => (
+                  <Chip key={h.year} on={past?.year === h.year} onClick={() => setYear(h.year)}>
+                    {h.year}
+                  </Chip>
+                ))}
+              </div>
+            )}
+            {past ? (
+              <>
+                <p className="player-view__lead">
+                  {m.pastLead(
+                    past.team_name ?? "",
+                    past.position ?? "",
+                    formatClass(past.class ?? null),
+                    past.games ?? 0,
+                  )}
+                </p>
+                {past.rows?.length ? (
+                  <table className="player-view__table">
+                    <thead>
+                      <tr>
+                        <th scope="col">{m.stat}</th>
+                        <th scope="col">{m.value}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {past.rows.map((x) => (
+                        <tr key={x.key}>
+                          <th scope="row">{x.label}</th>
+                          <td>{x.value.toLocaleString("en-US")}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="player-view__soft">{m.noPastRows}</p>
+                )}
+              </>
             ) : (
-              <p className="player-view__soft">{m.noRanks}</p>
+              <>
+                <p className="player-view__lead">{season}</p>
+                {pr.ranks?.length ? (
+                  <table className="player-view__table">
+                    <thead>
+                      <tr>
+                        <th scope="col">{m.stat}</th>
+                        <th scope="col">{m.value}</th>
+                        <th scope="col">{m.fbs}</th>
+                        <th scope="col">{m.conf}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pr.ranks.map((x) => (
+                        <tr key={x.key}>
+                          <th scope="row">{x.label}</th>
+                          <td>{x.value.toLocaleString("en-US")}</td>
+                          <td>{m.rankOf(x.fbs_rank, x.fbs_n)}</td>
+                          <td>{m.rankOf(x.conf_rank, x.conf_n)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="player-view__soft">{m.noRanks}</p>
+                )}
+              </>
             )}
           </Panel>
           <GameLog pr={pr} weekLabels={weekLabels} />
