@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowDown, ArrowUp, Medal, Trophy } from "@phosphor-icons/react";
+import { ArrowDown, ArrowRight, ArrowUp, Medal, Trophy } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
@@ -23,6 +23,8 @@ interface Props {
   teams: Map<string, TeamCard>;
   /** open the Bracket (the champion's banner links to it: the playoff's rounds are told there) */
   onBracket?: () => void;
+  /** the season is over: on to the Offseason (the big button in the page's corner) */
+  onOffseason?: () => void;
   /** open a game's box score (This Week's games and lines) */
   onBox?: (eventId: string) => void;
   /** a panel's name opens the page that tells it in full: your schedule, the stats (yours, or everyone's), the
@@ -141,7 +143,7 @@ const NATIONAL: [string, (s: Record<string, number>) => string][] = [
  * week just played, and any week before it by the stepper at the bar's end), the season so far on a second tab. Once
  * the season ends it is the Season Recap alone.
  */
-export default function Recap({ season, teams, onBracket, onBox, onOpen }: Props) {
+export default function Recap({ season, teams, onBracket, onBox, onOffseason, onOpen }: Props) {
   const go = (to: Parameters<NonNullable<Props["onOpen"]>>[0]) => (onOpen ? () => onOpen(to) : undefined);
   const [view, setView] = useState<Review | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -226,6 +228,16 @@ export default function Recap({ season, teams, onBracket, onBox, onOpen }: Props
         }
         aside={status}
       />
+      {/* the season told, the next thing is the offseason: a big button in the page's corner (the player's ask) */}
+      {view?.done && onOffseason && (
+        <button type="button" className="recap__onward" onClick={onOffseason}>
+          <span className="recap__onward-kicker">{m.onwardKicker(view.year + 1)}</span>
+          <b>
+            {m.onward}
+            <ArrowRight size={20} weight="bold" aria-hidden="true" />
+          </b>
+        </button>
+      )}
       <div className={`recap${showWeek ? " recap--week" : ""}`}>
         {!view || !me ? (
           <p className="recap__soft">{error ? m.loadError(error) : m.loading}</p>

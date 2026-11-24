@@ -7,6 +7,8 @@ const ordinal = (k: number) => {
 export const messages = {
   title: "Season Recap",
   weekly: "Weekly Recap",
+  onward: "On to the Offseason",
+  onwardKicker: (year: number) => `Next: Building ${year}`,
   tabs: { week: "This Week", season: "Season So Far" },
   weekN: (w: number) => `Week ${w}`,
   through: (week: string) => `Through ${week}`,

@@ -676,3 +676,59 @@
     grid-column: span 2;
   }
 }
+
+/* ---- the season is over: on to the Offseason, a big button in the page's bottom right corner ----------------- */
+.recap__onward {
+  /* it hangs off the page's corner, over the frame's edge: the cards keep their whole height (the player's note:
+     nothing is squeezed to make room for it) */
+  position: absolute;
+  right: -10px;
+  bottom: -14px;
+  z-index: 4;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 10px var(--s3) 12px;
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border: var(--line) solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.recap__onward b {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--t-lg);
+  letter-spacing: 1px;
+}
+
+.recap__onward-kicker {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0.85;
+}
+
+/* it leans into the press: up and left on hover, down onto its shadow when pressed */
+.recap__onward:hover,
+.recap__onward:focus-visible {
+  box-shadow: 9px 9px 0 var(--shadow);
+  transform: translate(-3px, -3px);
+}
+
+.recap__onward:active {
+  box-shadow: 2px 2px 0 var(--shadow);
+  transform: translate(4px, 4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recap__onward {
+    transition: none;
+  }
+}

@@ -702,6 +702,12 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
                         teams={bySlug}
                         onBracket={() => open("bracket")}
                         onBox={openBox}
+                        // the way on, while the offseason is still at its start (the player's rule: not for the rest of it)
+                        onOffseason={
+                          ["", "retention"].includes(offStage || season.offseason_stage || "")
+                            ? () => open("offseason")
+                            : undefined
+                        }
                         onOpen={(to) => {
                           // the stats open on the players, yours alone or the whole league's
                           if (to === "stats" || to === "stats-mine")

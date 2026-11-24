@@ -1,5 +1,6 @@
 /* A section with tabs (Recruiting, Staff): the bar, then the panes, all mounted, the ones not shown hidden. */
 .section-tabs__wrap {
+  position: relative; /* a page may pin something to its corner (the recap's way on) */
   display: flex;
   flex: 1;
   flex-direction: column;
