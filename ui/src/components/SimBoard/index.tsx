@@ -1,9 +1,10 @@
 import type { SimResult } from "../../types.ts";
+import FitText from "../FitText/index.tsx";
 import "./index.css";
 import { messages as m } from "./messages.ts";
 
-/** *tune* How many of your latest results the board carries. */
-const RESULTS = 6;
+/** *tune* How many of your results the board carries: a whole season's, so a chip never leaves once it is on. */
+const RESULTS = 18;
 
 interface Props {
   /** the week the sim is on ("Week 9", "Champ Week") */
@@ -21,14 +22,20 @@ interface Props {
 /**
  * The Office while a sim runs: one big board in place of the game card, the actions and the to-dos (the player's
  * ask). Only what the sim sends with its own progress, so it keeps up with the weeks: the week it is on, your record,
- * where you stand, and your latest results.
+ * where you stand, and your results.
+ *
+ * Nothing on it moves while the weeks pass (the player's report: the sim was jumpy): the week's name is always one
+ * line in a box of one height (a long one, "Championship Week", is set smaller: FitText), the results keep their room
+ * whether there are none or a season's, and each result stays where it first appeared, the next one after it.
  */
 export default function SimBoard({ week, record, conference, place, rank, results }: Props) {
-  const last = results.slice(-RESULTS).reverse();
+  const last = results.slice(-RESULTS);
   return (
     <section className="sim-board" aria-label={m.label} aria-live="off">
       <p className="sim-board__kicker label">{m.kicker}</p>
-      <h1 className="sim-board__week">{week}</h1>
+      <h1 className="sim-board__week">
+        <FitText min={0.4}>{week}</FitText>
+      </h1>
       <dl className="sim-board__stats">
         <div>
           <dt className="label">{m.record}</dt>

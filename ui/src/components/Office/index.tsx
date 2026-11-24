@@ -115,6 +115,8 @@ interface Todo {
  */
 /** *tune* How long the next to-do must hold still before the highlight moves to it, in ms. */
 const NOW_SETTLE_MS = 450;
+/** *tune* The longest the sim's board stays up after a sim ends, waiting for the new week's Office to arrive, in ms. */
+const BOARD_SETTLE_MS = 2500;
 
 export default function Office({ season: s, recruiting: v, teams, sim, onSection, onBox }: Props) {
   const [office, setOffice] = useState<OfficeView | null>(null);
@@ -251,6 +253,32 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const signing = s.current_week >= CLOSE_WEEK;
   /** the sim's own progress, while one runs: the Office shows the board and nothing to press */
   const board = sim.running ? sim.status : null;
+  // The board stays up for the moment after a sim ends, until the new week's Office and recruiting numbers have both
+  // arrived (the player's report: the Office came back in two steps, grayed with last week's numbers and then filled
+  // in). So the Office is shown once, whole. It never waits longer than BOARD_SETTLE_MS.
+  const ran = useRef(false);
+  const atEnd = useRef<{ office: OfficeView | null; v: typeof v } | null>(null);
+  const [settling, setSettling] = useState(false);
+  useEffect(() => {
+    if (sim.running) {
+      ran.current = true;
+      return;
+    }
+    if (!ran.current) return;
+    ran.current = false;
+    atEnd.current = { office, v };
+    setSettling(true);
+    const t = window.setTimeout(() => setSettling(false), BOARD_SETTLE_MS);
+    return () => window.clearTimeout(t);
+    // (only the sim starting and ending: what the Office held at the end is read once, then)
+  }, [sim.running]);
+  useEffect(() => {
+    // (and the to-do in ink has caught up with the new week: the Office is never shown with nothing marked)
+    const arrived = !!atEnd.current && office !== atEnd.current.office && (v !== atEnd.current.v || !v);
+    if (settling && arrived && !holding && nowHeld === first) setSettling(false);
+  }, [settling, office, v, holding, nowHeld, first]);
+  // (the sim has ended and the effect above has not run yet: one draw, still the board)
+  const boardOn = !!board || settling || (ran.current && !sim.running);
   // The board changes all at once, when the sim finishes a week (the player's ask): the sim counts a week's games
   // into your record before it calls the week over, so the record and the rank are held as they were until the week
   // itself moves. Your place in the conference comes with that week's feed.
@@ -261,10 +289,10 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
     results: SimResult[];
   } | null>(null);
   const heldPlace = useRef<string | null | undefined>(undefined);
-  if (!board) {
+  if (!boardOn) {
     held.current = null;
     heldPlace.current = undefined;
-  } else {
+  } else if (board) {
     const wk = board.current_week ?? s.current_week;
     if (!held.current || held.current.week !== wk) {
       const rank = board.my_rank === undefined ? s.my_rank?.rank : board.my_rank?.rank;
@@ -292,9 +320,9 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
     : [weekName(w), dateText(thisWeek?.date ?? s.week_dates[String(w)]?.main)].filter(Boolean).join(" · ");
 
   return (
-    <div className={board ? "office is-simming" : "office"}>
+    <div className={boardOn ? "office is-simming" : "office"}>
       {/* a sim running: one big board in place of the game, the actions and the to-dos (the player's ask) */}
-      {board && (
+      {boardOn && (
         <div className="office__board">
           <SimBoard
             week={weekName((held.current?.week ?? s.current_week) + 1)}
@@ -307,7 +335,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
         </div>
       )}
       {/* ---------- left: the game, then the actions ---------- */}
-      <aside className="office__col office__left" hidden={!!board}>
+      <aside className="office__col office__left" hidden={boardOn}>
         {s.done ? (
           <WrapCard s={s} teams={teams} />
         ) : (
@@ -325,7 +353,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       </aside>
 
       {/* ---------- middle: the week and its to-dos ---------- */}
-      <section className="office__col office__mid" aria-label={m.todo} hidden={!!board}>
+      <section className="office__col office__mid" aria-label={m.todo} hidden={boardOn}>
         <header className="office__hero">
           <h1 className="office__title">
             <span>{title}</span>
