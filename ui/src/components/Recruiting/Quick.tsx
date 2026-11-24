@@ -1,7 +1,11 @@
-import { Chat, Check, Phone, VideoCamera } from "@phosphor-icons/react";
+import { useState } from "react";
+import { Binoculars, Chat, Check, Phone, VideoCamera } from "@phosphor-icons/react";
 import { api } from "../../api.ts";
 import type { BoardRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+
+/** *tune* Looks that make a full scouting report (recruiting.REPORT_LOOKS). */
+const FULL_REPORT = 3;
 
 /** The quick actions, lightest first: a message, a call, a video call. */
 const QUICK = [
@@ -23,8 +27,10 @@ interface Props {
   offWhy?: string;
   /** nothing is drawn (the door is shut on you: his row shows that instead) */
   hidden?: boolean;
-  /** each box says what it is and what it costs (his row); marks alone without */
+  /** each box shows its mark and its energy (his row); marks alone without */
   labels?: boolean;
+  /** a fourth box sends a scout to him now (his row on the board) */
+  scout?: boolean;
   /** a plan changed: read the board again */
   onChange: (stale: () => boolean) => Promise<void> | void;
   /** a box was clicked: show it (his row, your Energy) at once, ahead of the server */
@@ -53,6 +59,7 @@ export default function QuickActions({
   offWhy,
   hidden,
   labels,
+  scout,
   onChange,
   onPlan,
   onError,
@@ -60,6 +67,37 @@ export default function QuickActions({
   // a tick shows at once (the player's ask: clicking through a board must not wait on the server): the page changes
   // his row and your Energy now, the save runs behind it, and the board's fresh read puts right a tick the server refused
   const planned = r.planned ?? [];
+  // a scout goes now, not at the week's end (a look is not a contact): the board is read again when he is back
+  const [sending, setSending] = useState(false);
+  const sendScout = async () => {
+    setSending(true);
+    try {
+      await api(`/api/season/${seasonId}/recruit`, {
+        method: "POST",
+        quiet: true,
+        body: { pid: r.id, action: "scout" },
+      });
+    } catch (e) {
+      onError?.((e as Error).message);
+    } finally {
+      setSending(false);
+      void Promise.resolve(onChange(() => false)).catch(() => {});
+    }
+  };
+  const scoutCost = r.scout_cost ?? 0;
+  const scouted = (r.looks ?? 0) >= FULL_REPORT;
+  const scoutTip = scouted
+    ? m.scoutFull
+    : off
+      ? (offWhy ?? m.quickOff)
+      : r.scene
+        ? m.scoutAfterTalk
+        : r.can_scout === false
+          ? m.scoutCant
+          : left < scoutCost
+            ? m.notEnough
+            : m.scoutTip(scoutCost);
+  const scoutOff = scouted || sending || !!off || !!r.scene || r.can_scout === false || left < scoutCost;
   const toggle = async (action: string, on: boolean) => {
     onPlan?.(action, on);
     flying += 1;
@@ -114,15 +152,31 @@ export default function QuickActions({
             ) : (
               <Icon size={labels ? 16 : 14} weight={on ? "fill" : "bold"} aria-hidden="true" />
             )}
-            {labels && (
-              <>
-                <b>{m.quickShort[key]}</b>
-                <span>{done ? m.done : m.energy(cost)}</span>
-              </>
-            )}
+            {/* his row: the mark and what it costs, nothing more (the tip names it) */}
+            {labels && !done && <span>{cost}</span>}
           </button>
         );
       })}
+      {scout && (
+        <button
+          type="button"
+          className={`quick__box${scouted ? " is-done" : ""}`}
+          aria-label={scoutTip}
+          title={scoutTip}
+          disabled={scoutOff}
+          onClick={(e) => {
+            e.stopPropagation();
+            void sendScout();
+          }}
+        >
+          {scouted ? (
+            <Check size={14} weight="bold" aria-hidden="true" />
+          ) : (
+            <Binoculars size={labels ? 16 : 14} weight="bold" aria-hidden="true" />
+          )}
+          {labels && !scouted && <span>{scoutCost}</span>}
+        </button>
+      )}
     </span>
   );
 }

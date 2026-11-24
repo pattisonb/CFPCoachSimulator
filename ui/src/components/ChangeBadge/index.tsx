@@ -30,7 +30,7 @@ export function seenOf(r: BoardRow, team: string): Seen {
   const school = r.signed || r.committed || null;
   return {
     chance: sd.odds ?? sd.word,
-    place: mine && !r.signed ? (mine.rank ?? race.indexOf(mine) + 1) : null,
+    place: mine && !r.signed ? (mine.place ?? race.indexOf(mine) + 1) : null,
     school,
     schoolName: school ? (school === team ? null : (r.school_name ?? null)) : null,
     hold: !school ? null : r.signed ? "signed" : r.hard ? "hard" : "verbal",

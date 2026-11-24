@@ -37,14 +37,14 @@ export function standingOf(b: BoardRow, me: string): Standing {
       tone: "warn",
       pct: st.pct,
     };
-  const rows = b.list.filter((x) => x.bar != null).map((x, i) => ({ ...x, at: x.rank ?? i + 1 }));
+  const rows = b.list.filter((x) => x.bar != null).map((x, i) => ({ ...x, at: x.place ?? i + 1 }));
   const mine = rows.find((x) => x.you || x.school === me);
   const landing = b.offered && b.offer_landing;
   const offered = b.offered && !landing;
   if (landing) return { word: "Offer Sent", text: "He reads your offer at the week's end.", tone: "warn" };
   if (!mine)
     return offered
-      ? { word: "Long Shot", text: "Outside his top five.", odds: "Long Shot", tone: "muted", pct: st.pct }
+      ? { word: "Long Shot", text: "Not on his list.", odds: "Long Shot", tone: "muted", pct: st.pct }
       : { word: "Not Offered", text: "Not on his list yet.", tone: "muted" };
   const leader = rows.filter((x) => x !== mine).sort((a, c) => a.at - c.at)[0];
   if (!leader || mine.at < leader.at) {

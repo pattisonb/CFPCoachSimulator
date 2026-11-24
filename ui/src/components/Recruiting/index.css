@@ -709,26 +709,19 @@
   cursor: pointer;
 }
 
-/* named: each box says what it is over what it costs (his row), wide enough for "HS Coach" */
+/* on his row: each box is its mark beside what it costs in energy, small enough that four leave his name whole */
 .quick--labels .quick__box {
-  grid-template-columns: auto auto;
-  place-content: center center;
-  gap: 1px 5px;
-  width: 84px;
-  height: 44px;
+  grid-auto-flow: column;
+  gap: 5px;
+  width: 50px;
+  height: 32px;
   padding: 0 4px;
-  font-size: var(--t-xs);
-}
-
-.quick--labels .quick__box b {
-  white-space: nowrap;
 }
 
 .quick--labels .quick__box span {
-  grid-column: 1 / -1;
-  font-size: 11px;
+  font-size: var(--t-xs);
+  font-weight: 700;
   line-height: 1;
-  opacity: 0.8;
 }
 
 .quick__box:hover:enabled {
@@ -744,7 +737,7 @@
 .quick__box.is-done {
   background: var(--tile);
   color: var(--ink-soft);
-  border-style: dashed;
+  border-color: var(--line-soft);
   cursor: default;
 }
 
@@ -780,7 +773,7 @@
 }
 
 .recruiting__rows .recruiting__row {
-  padding-right: 282px; /* the three named boxes */
+  padding-right: 232px; /* the four boxes */
 }
 
 /* ... and the row makes room for it */
@@ -804,21 +797,21 @@
 
 /* his offer or commitment mark sits left of the boxes, not under them */
 
-/* a narrow list (two fifths of a 1440 window): the boxes lose their marks and narrow to their words, and a long name
+/* a narrow list (two fifths of a 1440 window): the boxes narrow to their marks, and a long name
    takes a second line, so nothing is covered */
 @container recruit-list (width < 500px) {
   .quick--labels .quick__box {
-    grid-template-columns: auto;
-    width: 62px;
-    padding: 0 2px;
+    width: 34px;
+    padding: 0;
   }
 
-  .quick--labels .quick__box svg {
+  /* four boxes in a narrow list: each is its mark alone (its tip says what it is and what it costs) */
+  .quick--labels .quick__box span {
     display: none;
   }
 
   .recruiting__rows .recruiting__row {
-    padding-right: 204px;
+    padding-right: 172px;
   }
 
   .recruiting__rows .recruiting__who b {

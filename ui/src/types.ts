@@ -727,7 +727,8 @@ export interface ProspectRow {
   looks_needed?: number;
   /** your staff's potential read, low and high (letter grades); null before a look */
   our_potential: [string, string] | null;
-  interest_level: "High" | "Medium" | "Low";
+  /** your place on his list of ten (1 the favorite), or null: you are not on it (he is open to you all the same) */
+  list_place: number | null;
   generational: boolean;
   /** a full report's flag: gem, bust */
   find: string | null;
@@ -907,6 +908,8 @@ export interface ListSchool {
   bar: number | null;
   pct: number | null;
   rank: number | null;
+  /** its place on his list today, 1 the favorite */
+  place?: number;
   offered: boolean;
   you?: boolean;
   /** places moved on his list since last week (up is positive), and whether the school is new on it */
@@ -917,6 +920,9 @@ export interface ListSchool {
 
 /** One recruit on your board (GET /api/season/{id}/recruiting → board[], career_js/prospects.js board_row) */
 export interface BoardRow {
+  /** whether your staff can scout him this week, and the energy one trip costs (his row's Scout box) */
+  can_scout?: boolean;
+  scout_cost?: number;
   /** a transfer's class (FR, SORS, ...) */
   cls?: string;
   /** your commit, with a rival working him: how likely a flip is (Slim, Real, Likely) and the school nearest to it */

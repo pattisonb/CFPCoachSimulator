@@ -8,7 +8,8 @@ import {
   SortDescending,
   Door,
   Heart,
-  Star,
+  Check,
+  Plus,
   X,
   Funnel,
 } from "@phosphor-icons/react";
@@ -31,7 +32,7 @@ import { cachedTeams } from "../../teams.ts";
 import type { NeedGroup, ProspectRow, ProspectsView, TeamCard } from "../../types.ts";
 import { GradeRange } from "../Grade/index.tsx";
 import { useKept } from "../../kept.ts";
-import { formatClass } from "../../format.ts";
+import { formatClass, ordinal } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -73,6 +74,10 @@ const VIEW_STATUS: Record<View, string | null> = {
 };
 type Col = keyof typeof m.cols;
 /** columns the server sorts by (prospects._sort_key), best first */
+/** His status has nothing to add: he is open to you or shut to you, and His List says which. */
+const quietStatus = (r: ProspectRow) =>
+  !r.pro && !r.leaning_fcs && (r.blocked ? r.blocked.why !== "signed" : !r.stage || r.stage === "cold");
+
 const SORTS: Partial<Record<Col, string>> = {
   rank: "rank",
   who: "who",
@@ -571,7 +576,7 @@ export default function Prospects({
           ))}
           {view === "recommended" && notOnBoard > 0 && (
             <Button variant="outline" className="prospects__add" disabled={adding} onClick={addAll}>
-              <Star size={16} weight="bold" aria-hidden="true" />
+              <Plus size={16} weight="bold" aria-hidden="true" />
               {adding ? m.adding : m.addAll(notOnBoard)}
             </Button>
           )}
@@ -588,6 +593,7 @@ export default function Prospects({
             <table className={`prospects__table${measured ? " has-measure" : ""}`}>
               {/* fixed widths: a new page, filter or state never moves a column */}
               <colgroup>
+                <col className="prospects__col-add" />
                 <col className="prospects__col-rank" />
                 <col />
                 <col className="prospects__col-pos" />
@@ -605,6 +611,7 @@ export default function Prospects({
               </colgroup>
               <thead>
                 <tr>
+                  <th scope="col" aria-label={m.cols.board} />
                   <Th col="rank" className="num" />
                   <Th col="who" className="left" />
                   <Th col="pos" />
@@ -641,7 +648,7 @@ export default function Prospects({
                   <Th col="int" />
                   <Th col="sc" />
                   <Th col="pot" />
-                  <Th col="board" />
+                  <th scope="col" aria-label={m.favCol} />
                 </tr>
               </thead>
               <tbody>
@@ -651,6 +658,34 @@ export default function Prospects({
                     className={r.id === picked ? "is-on" : undefined}
                     onClick={() => setPicked(r.id === picked ? null : r.id)}
                   >
+                    {/* on your board or not, first in the row (the player's ask: adding one is the page's commonest click).
+                        The door is shut on you (he signed, he will not consider you, you missed his cut): no adding him,
+                        and the game's own sentence says why */}
+                    <td className="prospects__tick-cell">
+                      <button
+                        type="button"
+                        className={`prospects__tick${r.on_board ? " is-on" : ""}${r.blocked && !r.on_board ? " is-shut" : ""}`}
+                        aria-pressed={r.on_board}
+                        aria-label={
+                          r.on_board ? m.removeBoard(r.name) : r.blocked ? r.blocked.text : m.addBoard(r.name)
+                        }
+                        title={r.on_board ? m.removeBoard(r.name) : r.blocked ? r.blocked.text : m.addBoard(r.name)}
+                        aria-disabled={!!r.blocked && !r.on_board}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (r.blocked && !r.on_board) return setNote(r.blocked.text);
+                          setBoard(r, !r.on_board);
+                        }}
+                      >
+                        {r.on_board ? (
+                          <Check size={14} weight="bold" aria-hidden="true" />
+                        ) : r.blocked && r.blocked.why !== "signed" ? (
+                          <Door size={14} weight="fill" aria-hidden="true" />
+                        ) : (
+                          <Plus size={14} weight="bold" aria-hidden="true" />
+                        )}
+                      </button>
+                    </td>
                     <td className="num prospects__soft">{r.national_rank}</td>
                     <td className="left">
                       <button
@@ -720,7 +755,7 @@ export default function Prospects({
                             bare
                           />
                         </span>
-                      ) : (
+                      ) : quietStatus(r) ? null : (
                         statusOf(r)
                       )}
                     </td>
@@ -731,30 +766,32 @@ export default function Prospects({
                         ) : (
                           r.offers_n
                         )
-                      ) : (
-                        <span className="prospects__soft">–</span>
-                      )}
+                      ) : null}
                     </td>
                     <td className="prospects__ask">
                       {r.ask?.exact != null ? (
                         r.ask.exact
                       ) : r.ask?.hi ? (
                         <span title={m.askTip}>{m.askRange(r.ask.lo ?? 0, r.ask.hi)}</span>
-                      ) : (
-                        <span className="prospects__soft">–</span>
-                      )}
+                      ) : null}
                     </td>
-                    <td className={`prospects__int is-${r.interest_level.toLowerCase()}`}>{r.interest_level}</td>
-                    <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : <span className="prospects__soft">–</span>}</td>
+                    <td
+                      className={`prospects__int is-${r.blocked || r.list_place == null ? "low" : r.list_place <= 3 ? "high" : "medium"}`}
+                      title={
+                        r.blocked ? r.blocked.text : r.list_place == null ? m.listOpenTip : m.listPlaceTip(r.list_place)
+                      }
+                    >
+                      {r.blocked
+                        ? r.blocked.why === "signed"
+                          ? m.listNone
+                          : m.listClosed
+                        : r.list_place == null
+                          ? m.listOpen
+                          : ordinal(r.list_place)}
+                    </td>
+                    <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : null}</td>
                     <td className="prospects__pot">
-                      {r.our_potential ? (
-                        <GradeRange read={r.our_potential} size="sm" />
-                      ) : (
-                        // (a dash, as the columns beside it: a column of the word "Unscouted" was the table's noise)
-                        <span className="prospects__soft" title={m.unscouted}>
-                          –
-                        </span>
-                      )}
+                      {r.our_potential ? <GradeRange read={r.our_potential} size="sm" /> : null}
                     </td>
                     <td className="prospects__marks">
                       <button
@@ -769,29 +806,6 @@ export default function Prospects({
                         }}
                       >
                         <Heart size={18} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
-                      </button>
-                      {/* the door is shut on you (he signed, he will not consider you, you missed his cut): no adding
-                          him, and the game's own sentence says why */}
-                      <button
-                        type="button"
-                        className={`prospects__star${r.on_board ? " is-on" : ""}${r.blocked && !r.on_board ? " is-shut" : ""}`}
-                        aria-pressed={r.on_board}
-                        aria-label={
-                          r.on_board ? m.removeBoard(r.name) : r.blocked ? r.blocked.text : m.addBoard(r.name)
-                        }
-                        title={r.on_board ? m.removeBoard(r.name) : r.blocked ? r.blocked.text : m.addBoard(r.name)}
-                        aria-disabled={!!r.blocked && !r.on_board}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (r.blocked && !r.on_board) return setNote(r.blocked.text);
-                          setBoard(r, !r.on_board);
-                        }}
-                      >
-                        {r.blocked && !r.on_board && r.blocked.why !== "signed" ? (
-                          <Door size={18} weight="fill" aria-hidden="true" />
-                        ) : (
-                          <Star size={18} weight={r.on_board ? "fill" : "bold"} aria-hidden="true" />
-                        )}
                       </button>
                     </td>
                   </tr>

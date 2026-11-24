@@ -8,6 +8,7 @@ import { get } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { api, season, recruiting } = game;
+recruiting.LOCKOUT_AT = 5.0;   // the line these tests were written at: the game's own shuts more doors (test_standards holds it), and these pick recruits a mid program could then not work
 
 const ME = "ohio-state";
 const J = (v) => () => JSON.stringify(v);
@@ -68,14 +69,17 @@ test("the class: paged by national rank, filtered by state and stars, searched b
   refused(() => R("recruit", { pid: hidden, action: "message" }), 404);
 });
 
-test("Interested in You keeps the sort you picked: national rank by default, interest when you sort by it", () => {
+test("On His List keeps the sort you picked: national rank by default, your place on his list when you sort by it", () => {
   const keen = search({ status: "interested", limit: 50 });
-  assert(keen["total"] > 200 && keen["total"] < 1200 && keen["rows"].every((r) => r["interest_level"] === "High"), String(keen["total"]));
+  assert(keen["total"] > 20 && keen["total"] < 1200 && keen["rows"].every((r) => r["list_place"] >= 1 && r["list_place"] <= 10), String(keen["total"]));
   const ranks = keen["rows"].map((r) => r["national_rank"]);
   equal(ranks, [...ranks].sort((a, b) => a - b));
   for (const q of [{ status: "interested", sort: "interest", limit: 50 }, { sort: "interest", limit: 20 }]) {
-    const vals = search(q)["rows"].map((r) => r["interest_in_you"]);
-    equal(vals, [...vals].sort((a, b) => b - a));
+    const rows = search(q)["rows"];
+    const listed = rows.filter((r) => r["list_place"] !== null), open = rows.filter((r) => r["list_place"] === null);
+    equal(rows, [...listed, ...open], "the recruits whose list you are on come first");
+    equal(listed.map((r) => r["list_place"]), listed.map((r) => r["list_place"]).sort((a, b) => a - b));
+    equal(open.map((r) => r["interest_in_you"]), open.map((r) => r["interest_in_you"]).sort((a, b) => b - a));
   }
 });
 

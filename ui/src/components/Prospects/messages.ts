@@ -1,3 +1,5 @@
+import { ordinal } from "../../format.ts";
+
 export const messages = {
   title: "Prospects",
   classOf: (year: number, n: number) => `Class of ${year} · ${n.toLocaleString("en-US")} Prospects`,
@@ -8,10 +10,16 @@ export const messages = {
     recommended: "Recommended",
     board: "My Board",
     favorites: "Favorites",
-    interested: "Interested in You",
+    interested: "On His List",
     open: "Uncommitted",
   },
   stars: "Stars",
+  listOpen: "Open",
+  favCol: "Favorite",
+  listClosed: "Closed",
+  listNone: "–",
+  listOpenTip: "You are not on his list of ten schools. You can recruit him all the same: you start further back.",
+  listPlaceTip: (at: number) => `You are ${ordinal(at)} on his list of ten schools.`,
   anyStars: "Any Stars",
   measure: "Measure",
   noMeasure: "No Measure",
@@ -42,7 +50,7 @@ export const messages = {
     ask: "His Ask",
     status: "Status",
     offers: "Offers",
-    int: "Interest",
+    int: "His List",
     sc: "Scouted",
     pot: "Potential",
     board: "Board",
@@ -88,7 +96,7 @@ export const messages = {
   any: "Any",
   colNames: {
     commit: "Status",
-    interest: "Interest",
+    interest: "His List",
     scouted: "Scouted",
     pot: "Potential",
     ht: "Height",
@@ -97,8 +105,8 @@ export const messages = {
     ask: "His Ask",
   },
   colWords: {
-    commit: { open: "Open", committed: "Committed", signed: "Signed" },
-    interest: { High: "High", Medium: "Medium", Low: "Low" },
+    commit: { open: "Open", closed: "Closed", committed: "Committed", signed: "Signed" },
+    interest: { listed: "On His List", open: "Open", closed: "Closed" },
     scouted: { none: "Not Scouted", partly: "Partly Scouted", fully: "Fully Scouted" },
     pot: { A: "A", B: "B", C: "C", D: "D" },
   } as Record<string, Record<string, string>>,

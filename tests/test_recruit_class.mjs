@@ -350,21 +350,37 @@ test("real head coaches recruit as they really do", () => {
   assert(rr("oregon") > rr("oklahoma"), J([rr("oregon"), rr("oklahoma")]));
 });
 
-test("interest is graded inside a star band: about 15% of each band is High, so a small school is not shown a top class that all loves it", () => {
+test("every recruit has a list of ten schools: a small school is on few of them, mostly recruits near it, and a blue blood on the best players'", () => {
   const stk = season.new_season("kent-state", "full", 11, undefined, undefined, true);
-  const vis = recruiting.prospect_list(stk);
-  const [vals, cuts] = prospects.your_interest(stk, "kent-state", vis);
-  const level = (q) => prospects._level(vals[q], stk["recruiting"]["prospects"][q]["stars"], cuts);
-  const bands = {};
-  for (const q of vis) (bands[stk["recruiting"]["prospects"][q]["stars"]] ||= []).push(level(q));
-  for (const [stars, levels] of Object.entries(bands)) {
-    if (levels.length < 30) continue;
-    const share = levels.filter((l) => l === "High").length / levels.length;
-    assert(share >= 0.10 && share <= 0.20, J([stars, share]));
-  }
-  assert(vis.slice(0, 50).filter((q) => level(q) === "High").length < 25);
-  const keen = prospects.search(stk, "kent-state", null, null, null, "interested", null, 0, 100)["rows"];
-  assert(keen.length && keen.every((r) => r["interest_level"] === "High"));
+  const rck = stk["recruiting"], tens = rck["tens"], Pk = rck["prospects"];
+  assert(tens && Object.values(tens).every((t) => t.length >= recruiting.LIST_MIN && t.length <= recruiting.TOP_GROUP && new Set(t).size === t.length));
+  const on = (slug) => Object.keys(tens).filter((q) => tens[q].includes(slug));
+  const small = on("kent-state"), big = on("georgia");
+  assert(small.length >= 20 && small.length <= 200 && big.length > small.length, J([small.length, big.length]));
+  assert(small.every((q) => Pk[q]["stars"] <= 3) && big.every((q) => Pk[q]["stars"] >= 3), "a school is on the lists of the players it signs");
+  // no school is on far more lists, or first on far more, than the schools of its own standing (the academies were)
+  const top2 = (slug) => Object.values(tens).filter((t) => t.slice(0, 2).includes(slug)).length;
+  for (const slug of ["air-force", "navy", "army"]) assert(on(slug).length <= 2 * small.length && top2(slug) <= 25, J([slug, on(slug).length, top2(slug)]));
+  const blue = Object.keys(Pk).filter((q) => Pk[q]["stars"] === 5);
+  assert(blue.filter((q) => (tens[q] || []).length === recruiting.TOP_GROUP).length >= 0.6 * blue.length, "most five-stars' lists are full");
+  // his list is in his own order, and your place on it is what the page shows; off it you are Open, never shut out
+  const q0 = small[0], list = recruiting.his_list(stk, q0);
+  equal(list, tens[q0]);
+  const vals = list.map((s) => recruiting.interest(stk, s, q0));
+  equal(vals, [...vals].sort((a, b) => b - a));
+  assert(recruiting.list_place(stk, "kent-state", q0) === list.indexOf("kent-state") + 1);
+  const off = Object.keys(Pk).find((q) => !(tens[q] || []).includes("kent-state") && recruiting.blocked(stk, "kent-state", q) === null);
+  assert(off && recruiting.list_place(stk, "kent-state", off) === null, "off his list and still open to you");
+  assert(small.every((q) => recruiting.blocked(stk, "kent-state", q) === null), "a school on his list is never one he will not consider");
+  const shut = Object.keys(Pk).filter((q) => recruiting.blocked(stk, "kent-state", q)?.["why"] === "locked");
+  assert(shut.length > 300 && shut.length < 1500 && shut.every((q) => recruiting.list_place(stk, "kent-state", q) === null), String(shut.length));
+  const keen = prospects.search(stk, "kent-state", null, null, null, "interested", null, 0, 5000)["rows"];
+  assert(keen.length > 0 && keen.length <= small.length && keen.every((r) => small.includes(r["id"])) && keen.every((r) => r["list_place"] >= 1 && r["list_place"] <= recruiting.TOP_GROUP), J([keen.length, small.length]));
+  const all = prospects.search(stk, "kent-state", null, null, null, null, null, 0, 100)["rows"];
+  assert(all.every((r) => !("interest_level" in r) && (r["list_place"] === null || r["list_place"] >= 1)));
+  // working him puts you on his list when he likes you enough
+  rck["lists"][off]["kent-state"] = 500;
+  assert(recruiting.list_place(stk, "kent-state", off) === 1 && recruiting.his_list(stk, off).length <= recruiting.TOP_GROUP);
 });
 
 await run();

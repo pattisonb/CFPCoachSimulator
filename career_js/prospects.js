@@ -764,14 +764,13 @@ export function visit_view(state, slug, v) {
 }
 
 export function _schools(state, pid, viewer = null) {
-  // His list: the ten schools he likes most among those recruiting him, the leader first.
+  // His list (recruiting.his_list): his ten and the schools recruiting him, the ten he likes most, the leader first;
+  // his finalists once he has cut it.
   const recruiting = modules.recruiting, season = modules.season;
   const rc = state["recruiting"];
   const teams = season.load_teams();
   const offers = new Set(Object.entries(rc["offers"]).filter(([, pids]) => _in(pid, pids)).map(([s]) => s));
-  const schools = new Set([...offers, ...members(rc["lists"][pid])]);
-  // (the Set's order does not matter: the sort below is by (interest, school), which orders them all)
-  const rows = sorted([...schools].map((s) => [recruiting.interest(state, s, pid), s]), undefined, true).slice(0, 10);
+  const rows = recruiting.his_list(state, pid).map((s) => [recruiting.interest(state, s, pid), s]);
   const visits = get(rc["visits"], pid, {});
   const pct = {};
   for (const o of prospects.odds(state, pid, undefined, viewer)["schools"]) pct[o["school"]] = o;
@@ -779,9 +778,10 @@ export function _schools(state, pid, viewer = null) {
   const now = get(ranks, "now") || {}, prev = get(ranks, "prev") || {};
   const why = get(get(rc, "why", {}), pid) || {};
   const top = rows.length && rows[0][0] > 0 ? rows[0][0] : 1.0;
+  let place = 1;
   return rows.map(([v, s]) => ({ school: s, name: teams[s]["name"], interest: round(v, 1), offered: offers.has(s),
     visit: prospects.visit_view(state, s, get(visits, s)), pct: _in(s, pct) ? round(pct[s]["pct"], 3) : null,
-    bar: round(Math.max(0.0, Math.min(1.0, v / top)), 3), rank: get(now, s),
+    bar: round(Math.max(0.0, Math.min(1.0, v / top)), 3), rank: get(now, s), place: place++,
     move: _in(s, prev) && _in(s, now) ? prev[s] - now[s] : null,
     new: truthy(now) && _in(s, now) && !_in(s, prev),
     why: get(get(why, s) || {}, "action") }));
@@ -951,7 +951,7 @@ export function profile(state, pid, viewer) {
     cooled_why: recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null,
     stage: recruiting.stage(state, viewer, pid), strength: recruiting.strengths(state, viewer, pid, true),
     case: recruiting.case_letters(state, viewer, pid, true),     // your program's letter grade with him on every topic (the page shows these)
-    blocked: recruiting.blocked(state, viewer, pid), top_size: recruiting.top_size(state),
+    blocked: recruiting.blocked(state, viewer, pid), top_size: recruiting.top_size(state, pid),
     pestering: recruiting.would_pester(state, viewer, pid), pesters: recruiting.pesters(state, viewer, pid),
   };
 }
@@ -979,7 +979,7 @@ export function row(state, pid, viewer) {
     ask: recruiting.ask_view(state, viewer, pid, true),     // his NIL ask of you as you know it: the number once he is fully scouted, a range before
     hard: truthy(get(st, "hard")) && !truthy(st["signed"]),          // a hard commit: the Status column says so, and sorts it over a verbal one
     stage: recruiting.stage(state, viewer, pid),              // where you stand with him: cold, contact, top, visited, committed
-    top_size: recruiting.top_size(state),                     // his top group's size this week (8, then his finalists: 5, 3)
+    top_size: recruiting.top_size(state, pid),                // his list's size this week (10, then his finalists: 5, 3)
     blocked: recruiting.blocked(state, viewer, pid),          // why you cannot add or work him ({why, text}), or null
     school_name: truthy(get(st, "pro")) ? prospects.PRO : school === "FCS" ? "FCS" : (truthy(school) ? season.team_display(school, teams) : null),
     pro: truthy(get(st, "pro")),
@@ -1116,11 +1116,11 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
   out.cooled_why = recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null;
   out.stage = recruiting.stage(state, viewer, pid); out.strength = recruiting.strengths(state, viewer, pid, true);
   out.case = recruiting.case_letters(state, viewer, pid, true);     // your program's letter grade with him on every topic
-  out.blocked = recruiting.blocked(state, viewer, pid); out.top_size = recruiting.top_size(state);
+  out.blocked = recruiting.blocked(state, viewer, pid); out.top_size = recruiting.top_size(state, pid);
   out.pestering = recruiting.would_pester(state, viewer, pid); out.pesters = recruiting.pesters(state, viewer, pid);
   out.stage_move = prospects._stage_move(state, pid, viewer);
   out.scene = get(get(get(rc, "scenes") || {}, viewer) || {}, pid);
-  out.list = schools.slice(0, 5).map((x) => ({ ...x, you: x["school"] === viewer }));
+  out.list = schools.map((x) => ({ ...x, you: x["school"] === viewer }));
   out.firmness = seen["committed"] === viewer && !truthy(seen["signed"]) ? get(seen, "firmness") : null;
   out.hard = truthy(get(seen, "hard")) && !truthy(seen["signed"]);
   out.flip = seen["committed"] === viewer && !truthy(seen["signed"]) ? prospects._flip_risk(state, pid, viewer) : null;
@@ -1184,43 +1184,6 @@ export function standing(state, pid, viewer) {
 }
 
 
-prospects.INTEREST_LEVELS = [[0.15, "High"], [0.5, "Medium"], [1.0, "Low"]];   // *tune* the shares of a star band shown High, then Medium; the rest Low
-
-
-export function your_interest(state, viewer, pids) {
-  // Each prospect's interest in your school, and the cut-offs of the levels shown, per star rating:
-  // a prospect is graded against the prospects of his own star rating you can see (High for the top
-  // 15% of his star band, Medium for the next 35%, Low for the rest), so High means he likes you more
-  // than most recruits of his caliber do, whatever his caliber. Returns `(values, cuts)`, `cuts` a
-  // dict star -> the levels' cut-offs; a band with no prospects is graded Low.
-  const recruiting = modules.recruiting;
-  const win = recruiting._winning(state);
-  const rc = state["recruiting"];
-  const vals = odict();                      // by prospect id, in the order asked
-  for (const pid of pids) vals[pid] = recruiting.interest(state, viewer, pid, win);
-  const bands = odict();                     // by stars (5, 4, ... or None in the portal), in the order met
-  for (const pid of pids) {
-    const stars = rc["prospects"][pid]["stars"];
-    if (bands[stars] === undefined) bands[stars] = [];
-    bands[stars].push(vals[pid]);
-  }
-  const cuts = odict();
-  for (const [stars, values] of Object.entries(bands)) {
-    const ordered = sorted(values, undefined, true);
-    cuts[stars] = prospects.INTEREST_LEVELS.map(([share]) => ordered[Math.min(ordered.length - 1, int(share * ordered.length))]);
-  }
-  return [vals, cuts];
-}
-
-export function _level(value, stars, cuts) {
-  // The level shown for `value` against the cut-offs of his star band (`cuts[stars]`).
-  const band = get(cuts, stars);
-  if (!truthy(band)) return "Low";
-  const n = Math.min(prospects.INTEREST_LEVELS.length, band.length);
-  for (let i = 0; i < n; i++) if (value >= band[i]) return prospects.INTEREST_LEVELS[i][1];
-  return "Low";
-}
-
 export function _height_in(h) {
   // Inches (a class stores 74; a portal entrant 6'2"); 0 when unknown.
   if (isNumber(h)) return int(h);
@@ -1239,13 +1202,14 @@ export function _height_in(h) {
 prospects.STATUS_ORDER = { signed: 0, hard: 1, committed: 2, visited: 3, top: 4, contact: 5, cold: 6, leaning_fcs: 7, finalists: 8, locked: 9 };
 
 
-export function _sort_key(state, viewer, key, keen) {
+export function _sort_key(state, viewer, key, keen, place = null) {
   // A Prospects column's sort key (best or first on top; ties by national rank): rank, interest, name, pos, ht, wt,
   // stars, status, offers (the schools that have offered), ask (his NIL ask of you), sc (your looks), pot (your potential read; unscouted last).
   const recruiting = modules.recruiting;
   const rc = state["recruiting"];
   const P = rc["prospects"];
-  if (key === "interest" || key === "int") return (pid) => -keen[pid];
+  // (your place on his list, 1st on top; then the recruits whose list you are not on, the ones who like you most first)
+  if (key === "interest" || key === "int") return (pid) => { const n = place === null ? null : place(pid); return n !== null ? n - 1000 : -keen[pid]; };
   if (key === "name" || key === "who") return (pid) => P[pid]["name"].toLowerCase();
   if (key === "pos") return (pid) => P[pid]["position"];
   if (key === "ht") return (pid) => -prospects._height_in(P[pid]["height"]);
@@ -1297,9 +1261,9 @@ export function search(state, viewer, position = null, stars = null, home = null
   // "measure" orders by its best guess, the prospects you have not scouted last either way. `measures` in the answer
   // is what the menu offers: the physical traits always, and a position's own ratings once the list is one position.
   // The class you can see, filtered and paged, by national rank or any column (`sort`: _sort_key's names, "-" first to
-  // reverse; "interest" is interest in your school). `status="interested"` keeps those graded High: the prospects your
-  // school appeals to most among recruits of their star rating. `cols` filters by the table's columns (the player's
-  // ask): `commit` (open, committed, signed), `interest` (High, Medium, Low), `scouted` (none, partly, fully), `pot` (a
+  // reverse; "interest" is interest in your school). `status="interested"` keeps the recruits whose list you are on
+  // (recruiting.list_place). `cols` filters by the table's columns (the player's
+  // ask): `commit` (open, committed, signed), `interest` ("listed": you are on his list; "open": you are not, and he will hear from you; "closed": he will not), `scouted` (none, partly, fully), `pot` (a
   // letter: your read's best grade starts with it), and a low and a high end for ht (inches), wt, offers (the schools
   // that have offered) and ask (his NIL ask of you as you know it, a range by its middle): ht_min, ht_max and so on.
   const recruiting = modules.recruiting;
@@ -1315,7 +1279,19 @@ export function search(state, viewer, position = null, stars = null, home = null
     for (const pids of Object.values(rc["offers"])) for (const x of pids) offers_n[x] = get(offers_n, x, 0) + 1;
   }
   const sharp = null;                                                       // by your staff's blend for each prospect (shown_range)
-  let keen, cuts;
+  let keen;
+  const win = recruiting._winning(state), places = new Map();
+  const place = (pid) => {                  // your place on his list, asked once a prospect
+    let n = places.get(pid);
+    if (n === undefined) places.set(pid, n = recruiting.list_place(state, viewer, pid, win));
+    return n;
+  };
+  const shuts = new Map();
+  const shut = (pid) => {                   // he will not hear from you: the door is closed, or he cut his list without you
+    let b = shuts.get(pid);
+    if (b === undefined) shuts.set(pid, b = recruiting.blocked(state, viewer, pid, win) !== null);
+    return b;
+  };
 
   const within = (k, v) => {
     const [lo, hi] = span[k];
@@ -1324,10 +1300,15 @@ export function search(state, viewer, position = null, stars = null, home = null
 
   const col_ok = (pid, p, st) => {
     const c = get(cols, "commit");
-    if (c === "open" && (truthy(st["committed"]) || truthy(st["signed"]))) return false;
+    // (Open is open to you: uncommitted, and he has not shut the door on you; Closed is the ones who have)
+    if (c === "open" && (truthy(st["committed"]) || truthy(st["signed"]) || shut(pid))) return false;
+    if (c === "closed" && (truthy(st["signed"]) || !shut(pid))) return false;
     if (c === "committed" && !(truthy(st["committed"]) && !truthy(st["signed"]))) return false;
     if (c === "signed" && !truthy(st["signed"])) return false;
-    if (truthy(get(cols, "interest")) && prospects._level(keen[pid], p["stars"], cuts) !== cols["interest"]) return false;
+    const li = get(cols, "interest");
+    if (li === "listed" && (place(pid) === null || shut(pid))) return false;
+    if (li === "open" && (place(pid) !== null || shut(pid) || truthy(st["signed"]))) return false;
+    if (li === "closed" && (truthy(st["signed"]) || !shut(pid))) return false;
     if (truthy(get(cols, "scouted"))) {
       const read = get(rc["reads"], pid);
       const n = recruiting.report_looks(read);
@@ -1350,7 +1331,8 @@ export function search(state, viewer, position = null, stars = null, home = null
   q = (q || "").trim().toLowerCase();
   let out = [];
   const visible = recruiting.prospect_list(state);
-  [keen, cuts] = prospects.your_interest(state, viewer, visible);
+  keen = odict();
+  for (const pid of visible) keen[pid] = recruiting.interest(state, viewer, pid, win);
   const recs = odict();                      // by prospect id, in the recommendations' order
   if (status === "recommended") for (const r of recruiting.recommended(state, viewer)) recs[r["pid"]] = r;
   const has_cols = Object.keys(cols).length > 0;
@@ -1369,7 +1351,7 @@ export function search(state, viewer, position = null, stars = null, home = null
     if (status === "offered" && !_in(pid, get(rc["offers"], viewer, []))) continue;
     if (status === "favorites" && !_in(pid, get(rc, "favorites") || [])) continue;
     if (status === "board" && !_in(pid, rc["board"])) continue;
-    if (status === "interested" && (prospects._level(keen[pid], p["stars"], cuts) !== "High" || truthy(st["signed"]))) continue;
+    if (status === "interested" && (place(pid) === null || truthy(st["signed"]))) continue;
     if (has_cols && !col_ok(pid, p, st)) continue;
     out.push(pid);
   }
@@ -1391,7 +1373,7 @@ export function search(state, viewer, position = null, stars = null, home = null
   } else if (key === "rank" && status === "recommended" && !desc) {
     out = sorted(out, (pid) => -recs[pid]["fit"]);
   } else {
-    const fn = prospects._sort_key(state, viewer, key, keen);
+    const fn = prospects._sort_key(state, viewer, key, keen, place);
     out = sorted(out, (pid) => rc["prospects"][pid]["rank"]);     // ties stay in national rank order either way (a stable sort)
     out = sorted(out, fn, desc);
   }
@@ -1399,7 +1381,7 @@ export function search(state, viewer, position = null, stars = null, home = null
   const rows = [];
   for (const pid of out.slice(offset, offset + limit)) {
     const r = prospects.row(state, pid, viewer);
-    r.interest_in_you = round(keen[pid], 1); r.interest_level = prospects._level(keen[pid], rc["prospects"][pid]["stars"], cuts);
+    r.interest_in_you = round(keen[pid], 1); r.list_place = place(pid);       // your place on his list (1 the favorite), or null: you are not on it
     r.can_scout = prospects.can_scout(state, viewer, pid); r.hard = truthy(get(rc["status"][pid], "hard")) && !truthy(rc["status"][pid]["signed"]);
     if (_in(pid, recs)) r["why"] = recs[pid]["why"];
     r["offers_n"] = sum(Object.values(rc["offers"]).map((pids) => (_in(pid, pids) ? 1 : 0)));     // how many schools have offered him
@@ -1981,7 +1963,7 @@ Object.assign(prospects, {
   _public_grades, _ranks, grade_detail, reset_caches, league_values, league_rank, engine_position, group_keys, game_attributes,
   card_attributes, _card, _middle, _high_school, seen_status, visit_view, _schools, _evaluation, generational_seen, find,
   flip_word, flip_view, _abilities_seen, profile, row, _flip_risk, _role, _stage_move, history_index, board_row, looks_out,
-  can_scout, signed_ratings, standing, your_interest, _level, _height_in, _sort_key, search, class_summary, class_block,
+  can_scout, signed_ratings, standing, _height_in, _sort_key, search, class_summary, class_block,
   class_rc, national_classes, class_detail, season_week_label, recruiting_view, _look_change, _report_groups, scouting_view,
   _standing_word, odds, _committed_odds, class_points, class_table, class_rank,
 });

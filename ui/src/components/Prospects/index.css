@@ -301,7 +301,11 @@
 }
 
 .prospects__col-board {
-  width: 76px;
+  width: 44px; /* the favorite's heart alone: the board's button leads the row */
+}
+
+.prospects__col-add {
+  width: 44px;
 }
 
 /* the head: sticky, small caps; each header sits over its cells (centered, or left over the text columns) */
@@ -493,6 +497,44 @@
 /* the two marks in a row's last cell: your favorite (a heart), then your board (a star) */
 .prospects__marks {
   white-space: nowrap;
+}
+
+/* on your board or not, the row's first cell: a square to tick, inked once he is on it */
+.prospects__tick-cell {
+  padding-right: 0;
+}
+
+.prospects__tick {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  vertical-align: middle;
+  background: var(--paper-hi);
+  color: var(--ink-soft);
+  border: var(--line) solid var(--ink-soft);
+  cursor: pointer;
+}
+
+.prospects__tick:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.prospects__tick.is-on {
+  background: var(--ink);
+  color: var(--paper-hi);
+  border-color: var(--ink);
+}
+
+/* the door is shut on you: no adding him (its tip says why) */
+.prospects__tick.is-shut {
+  background: none;
+  color: var(--ink-soft);
+  border-style: dashed;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .prospects__star {
@@ -772,7 +814,7 @@
 }
 
 .prospects.is-narrow .prospects__col-board {
-  width: 76px;
+  width: 40px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -659,7 +659,7 @@ function top_group(state, pid, win = null) {
   for (const [s, pids] of Object.entries(rc["offers"])) if (pids.includes(pid)) schools.add(s);
   for (const s of Object.keys(get(get(rc, "pending") || {}, pid, {}))) schools.add(s);
   win = win != null ? win : recruiting._winning(state);
-  return sorted(schools, (s) => -(recruiting.interest(state, s, pid, win) + recruiting.pending(state, s, pid))).slice(0, recruiting.top_size(state));
+  return sorted(schools, (s) => -(recruiting.interest(state, s, pid, win) + recruiting.pending(state, s, pid))).slice(0, recruiting.top_size(state, pid));
 }
 
 

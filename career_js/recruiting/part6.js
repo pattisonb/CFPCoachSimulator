@@ -13,7 +13,7 @@
 //
 // Every name of recruiting is reached through the `recruiting` namespace, whichever part defines it
 // (engine_js/PORTING.md, "Big Files in Parts").
-import { Random, sorted, get, truthy } from "../../engine_js/pyrt.js";
+import { Random, sorted, get, truthy, int, round } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { grades } from "../grades.js";
 import { recruiting } from "../recruiting_ns.js";
@@ -59,11 +59,16 @@ recruiting.REACTIONS = ["sold", "hit", "fair", "lukewarm", "quiet"];       // be
 recruiting.REACTION_WORTH = { sold: 3.4, hit: 2.75, fair: 2.0, lukewarm: 1.3 };   // *tune* a pitch on one of his priorities, in the action's base points, by how he takes it
 //                                          (it was 1 + 3 times your strength: 1.75 to 4); He Isn't Buying It costs BACKFIRE_COST
 recruiting.PRESENT_WORTH = { sold: 2.0, hit: 1.75, fair: 1.5, lukewarm: 1.25 };  // *tune* your opening's share for each of his priorities, by how he takes it (it was 1 + your strength)
-recruiting.LOCKOUT_AT = 5.0;             // *tune* a program this many grades short of what he wants, over his priorities, is one he will not consider
+recruiting.LOCKOUT_AT = 3.5;             // *tune* a program this many grades short of what he wants, over his priorities, is one he will not consider (it was 5.0: the player's ask, more recruits shut the door)
 recruiting.LOCKOUT_WINNING = 1.0;        // *tune* a season going well or badly moves that by up to this many grades (a lockout near the edge lifts when you win)
 // His finalists: from these weeks he has cut his list to his top this many (the schools that offered or worked him, by
 // interest), and a school not on it cannot work him or add him. Before the first he is open to anyone.
-recruiting.FINALISTS = [[8, 8], [11, 5], [13, 3]];       // *tune* (from this week, his top this many)
+recruiting.FINALISTS = [[10, 5], [13, 3]];                // *tune* (from this week, his top this many); only a recruit who holds an offer cuts his list
+recruiting.LOCKOUT_ON = true;                            // shutting a school out for its grades (locked_out); a test of the lists alone turns it off
+// His list of ten as the class opens (tens): the schools that would recruit a player like him (each school's best
+// LIST_REACH fits: its footprint, the stars it signs, his position), the ten of them he likes most.
+recruiting.LIST_MIN = 6;                                 // *tune* a recruit fewer schools than this would chase has no list (a school was 1st of 3 for dozens of recruits nobody else wanted: the academies most, whose footprint is the whole country)
+recruiting.LIST_REACH = [150, 400];                      // *tune* how many recruits a school is a candidate for: the least prestigious program, the most
 recruiting.PORTAL_FINALISTS = [[4, 5]];                  // *tune* the same in the portal, by its week: his top five in its last week (an earlier or
 //                                                          tighter cut sends the cut schools' offers to everyone else, and too many transfers find a school)
 recruiting.LOCKED_TEXT = "He will not consider your program: it is too far from what he wants.";
@@ -295,7 +300,7 @@ function locked_out(state, slug, pid, win = null) {
   // He will not consider the school: it is LOCKOUT_AT grades or more short of what he wants over his priorities
   // (the fit), a good season counting for it and a bad one against (LOCKOUT_WINNING). Never the school he committed
   // to, signed with or visited. From week 0; it lifts when the program's case improves.
-  if (truthy(recruiting._pester_exempt(state, slug, pid))) return false;
+  if (!recruiting.LOCKOUT_ON || truthy(recruiting._pester_exempt(state, slug, pid))) return false;
   const w = Math.min(1.0, get(win !== null && win !== undefined ? win : recruiting._winning(state), slug, 0.5));
   return recruiting.fit(state, slug, pid, win) + recruiting.LOCKOUT_WINNING * (2 * w - 1) <= -recruiting.LOCKOUT_AT;
 }
@@ -312,10 +317,93 @@ function finalists_size(state) {
 }
 
 
-function top_size(state) {
-  // His top group's size this week: TOP_GROUP until he cuts his list, then his finalists'.
+function top_size(state, pid = null) {
+  // His list's size this week: TOP_GROUP until he cuts his list, then his finalists'. With `pid`: his own, and a
+  // recruit nobody has offered has not cut his list.
   const n = recruiting.finalists_size(state);
-  return n === null ? recruiting.TOP_GROUP : Math.min(n, recruiting.TOP_GROUP);
+  if (n === null || (pid !== null && !recruiting.has_offer(state, pid))) return recruiting.TOP_GROUP;
+  return Math.min(n, recruiting.TOP_GROUP);
+}
+
+
+function has_offer(state, pid, offered = null) {
+  // Whether any school has offered him. `offered`: every prospect's offers (_offers_by_prospect), when the caller has them.
+  if (offered !== null) return truthy(get(offered, pid)) && [...get(offered, pid)].length > 0;
+  for (const pids of Object.values(state["recruiting"]["offers"])) if (pids.includes(pid)) return true;
+  return false;
+}
+
+
+recruiting._TENS = [null, null];         // (career and class, every recruit's ten) worked out in this sitting, for a class that has none stored
+
+function tens(state) {
+  // Every recruit's list of ten schools as his class opened, his favorite first: {pid: [school, ...]}. A school is a
+  // candidate for the LIST_REACH recruits it fits best (what its own board is drawn from: _fits), more of them the more
+  // prestigious the program; he keeps the ten candidates he likes most (interest: the school's grades by what he
+  // wants, home counting for a recruit who wants to stay near it). So a small school is on few lists, mostly recruits
+  // near it, and a recruit few schools would chase (under LIST_MIN) has none. Stored with the class (keep_tens); a class
+  // from before lists has it worked out as it stands, in memory. The portal has none: a transfer's list is who is
+  // recruiting him.
+  const rc = state["recruiting"];
+  const kept = get(rc, "tens");
+  if (truthy(kept)) return kept;
+  if (truthy(get(rc, "portal"))) return {};
+  const key = `${state["id"]}|${recruiting._ck(rc)}`;
+  if (recruiting._TENS[0] === key) return recruiting._TENS[1];
+  const teams = modules.season.load_teams();
+  const schools = recruiting.fbs_schools(state);
+  const prestige = schools.map((s) => Number(get(teams[s], "prestige") || 0));
+  const lo = Math.min(...prestige), span = Math.max(1e-9, Math.max(...prestige) - lo);
+  const [few, many] = recruiting.LIST_REACH;
+  const cand = {};
+  schools.forEach((s, i) => {
+    const reach = int(round(few + (many - few) * (prestige[i] - lo) / span));
+    const best = Object.entries(recruiting._fits(state, s)).filter(([, f]) => f > 0).sort((a, b) => b[1] - a[1]).slice(0, reach);
+    for (const [pid] of best) (cand[pid] || (cand[pid] = [])).push(s);
+  });
+  const win = recruiting._winning(state);
+  const out = {};
+  for (const pid of Object.keys(rc["prospects"])) {
+    const c = cand[pid];
+    if (!c) continue;
+    const rows = c.filter((s) => !recruiting.locked_out(state, s, pid, win)).map((s) => [recruiting.interest(state, s, pid, win), s]);   // (never a school he will not consider)
+    if (rows.length < recruiting.LIST_MIN) continue;        // too few schools would chase him to make a list: he is open to everyone
+    rows.sort((a, b) => (b[0] - a[0]) || (a[1] < b[1] ? -1 : 1));
+    out[pid] = rows.slice(0, recruiting.TOP_GROUP).map(([, s]) => s);
+  }
+  recruiting._TENS = [key, out];
+  return out;
+}
+
+
+function keep_tens(state) {
+  // Store the class's lists of ten with it (a class start, and the first week step of a class from before lists).
+  const rc = state["recruiting"];
+  if (!truthy(get(rc, "tens")) && !truthy(get(rc, "portal"))) rc["tens"] = recruiting.tens(state);
+}
+
+
+function his_list(state, pid, win = null, offered = null) {
+  // His list today, his favorite first: the schools of his ten and the schools that have offered or worked him, the
+  // TOP_GROUP of them he likes most; once he has cut it (he holds an offer, from the weeks in FINALISTS), his finalists.
+  if (recruiting.finalists_size(state) !== null && recruiting.has_offer(state, pid, offered)) return recruiting.top_group(state, pid, win);
+  const schools = _suitors(state, pid, offered);
+  for (const s of get(recruiting.tens(state), pid) || []) schools.add(s);
+  win = win !== null && win !== undefined ? win : recruiting._winning(state);
+  const rows = [...schools].map((s) => [recruiting.interest(state, s, pid, win), s]);
+  rows.sort((a, b) => (b[0] - a[0]) || (a[1] < b[1] ? -1 : 1));
+  return rows.slice(0, recruiting.TOP_GROUP).map(([, s]) => s);
+}
+
+
+function list_place(state, slug, pid, win = null, offered = null) {
+  // The school's place on his list (1 the favorite), or null: it is not on it. A school that is not one of his ten
+  // and has not offered or worked him is never on it (asked first: the Prospects page asks this of the whole class).
+  const rc = state["recruiting"];
+  if (!(get(recruiting.tens(state), pid) || []).includes(slug) && get(rc["lists"][pid], slug) === null
+    && !get(rc["offers"], slug, []).includes(pid) && get(get(get(rc, "pending") || {}, pid, {}), slug) === null) return null;
+  const i = recruiting.his_list(state, pid, win, offered).indexOf(slug);
+  return i < 0 ? null : i + 1;
 }
 
 
@@ -336,6 +424,7 @@ function cut_out(state, slug, pid, offered = null) {
   // finalists) and the school is outside his top group. Never the school he committed to or signed with.
   const n = recruiting.finalists_size(state);
   if (n === null) return false;
+  if (!recruiting.has_offer(state, pid, offered)) return false;        // nobody has offered him: he has not cut his list
   const st = state["recruiting"]["status"][pid];
   if (st["committed"] === slug || st["signed"] === slug) return false;
   const schools = _suitors(state, pid, offered);
@@ -367,4 +456,5 @@ function blocked(state, slug, pid, win = null, offered = null) {
 Object.assign(recruiting, {
   _draw_standards, standards, forced_standards, standard_of, fit, fit_interest, move_mult, quick_mult, reaction_kind,
   best_reaction, case_letters, locked_out, finalists_size, top_size, cut_out, blocked,
+  has_offer, tens, keep_tens, his_list, list_place,
 });

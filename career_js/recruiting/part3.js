@@ -729,6 +729,8 @@ function _snapshot_ranks(state, week) {
   const rc = state["recruiting"];
   const win = recruiting._winning(state);
   const ranks = setdefault(rc, "ranks", {});
+  recruiting.keep_tens(state);
+  const tens = recruiting.tens(state);
   let changed = 0;
   const offered = {};                      // each prospect's offers, turned round once (asking every school about every prospect took a quarter second)
   for (const [s, pids] of Object.entries(rc["offers"])) {
@@ -739,6 +741,7 @@ function _snapshot_ranks(state, week) {
     // only shows between two schools of exactly equal interest)
     const schools = new Set([...Object.keys(lst), ...(offered[pid] || [])]);
     if (!schools.size) continue;
+    for (const s of get(tens, pid) || []) schools.add(s);              // his ten are on his list too (a recruit nobody works keeps no ranks)
     const order = sorted(schools, (s) => -recruiting.interest(state, s, pid, win));
     const now = {};
     order.forEach((s, i) => { now[s] = i + 1; });
