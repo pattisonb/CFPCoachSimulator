@@ -123,7 +123,11 @@ export function RecruitedHow({ pr }: { pr: PlayerProfile }) {
   const school = portal?.to ?? rec?.school;
   if (!log?.length || !school) return null;
   return (
-    <Panel title={portal ? m.h.portalTimeline : m.h.timeline} aside={m.h.entries(timelineItems(log, school).length)}>
+    <Panel
+      title={portal ? m.h.portalTimeline : m.h.timeline}
+      aside={m.h.entries(timelineItems(log, school).length)}
+      className="is-wide"
+    >
       <RecruitTimeline events={log} team={school} />
     </Panel>
   );

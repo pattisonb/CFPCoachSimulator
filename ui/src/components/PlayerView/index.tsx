@@ -473,9 +473,9 @@ ${m.ceiling(a.potential)}.`
 
       {pr && tab === "history" && (
         <Panels split label={m.tabs.history}>
-          {/* where he came from, how you got him, and his seasons with what came after each */}
-          <Recruitment pr={pr} />
-          <RecruitedHow pr={pr} />
+          {/* what he has done first, in pairs of a like size (the player's note: too much blank white): his career
+              beside his seasons' numbers, his games across the whole width under them, then where he came from
+              beside his honors, and how he was recruited last */}
           <Career pr={pr} />
           <Panel
             title={past ? m.seasonsTitle : m.thisSeason}
@@ -556,7 +556,8 @@ ${m.ceiling(a.potential)}.`
             )}
           </Panel>
           <GameLog pr={pr} weekLabels={weekLabels} />
-          <Panel title={m.honors}>
+          <Recruitment pr={pr} />
+          <Panel title={m.honors} className="is-half">
             {pr.honors?.length ? (
               <ul className="player-view__list">
                 {pr.honors.map((h, i) => (
@@ -570,6 +571,7 @@ ${m.ceiling(a.potential)}.`
               <p className="player-view__soft">{m.noHonors}</p>
             )}
           </Panel>
+          <RecruitedHow pr={pr} />
         </Panels>
       )}
     </article>
@@ -590,6 +592,7 @@ function GameLog({ pr, weekLabels }: { pr: PlayerProfile; weekLabels?: Record<st
   return (
     <Panel
       title={m.gameLog}
+      className="is-wide"
       aside={
         seasons.length > 1 ? (
           <span className="player-view__seasons" role="tablist" aria-label={m.gameLogSeasons}>
