@@ -495,6 +495,10 @@ function _attribute_ceilings(state, slug) {
     const top = pr.card_attributes(lg.potential(c, attrs), who);
     const row = {};
     for (const k of Object.keys(top)) row[k] = Math.max(0, top[k] - get(now, k, top[k]));
+    if (isNumber(get(c, "dmv")) && row["decision_making"] !== undefined) {      // a quarterback's Decision Making: its own number and its own room
+      row["decision_making"] = Math.max(0, _shown.attribute_back(Math.min(99, c["dmv"] + (get(c, "dmg") || 0)), "QB", "decision_making")
+        - _shown.attribute_back(c["dmv"], "QB", "decision_making"));
+    }
     out[c["id"]] = row;
   }
   return out;
@@ -516,7 +520,7 @@ function development_reads(state, slug) {
   if (truthy(roster)) {
     const attrs = truthy(get(lgd, "attrs")) ? lgd["attrs"] : game_scale.keys();
     pairs = {};
-    for (const c of roster) pairs[c["id"]] = [get(c, "c"), game_scale.overall(lg.potential(c, attrs), c["pos"])];
+    for (const c of roster) pairs[c["id"]] = [get(c, "c"), game_scale.overall(lg.potential(c, attrs), c["pos"], lg.decision_top(c))];
   } else {
     pairs = lg.base_development();
   }

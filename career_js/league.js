@@ -24,19 +24,21 @@
 //     {"id": slug, "n": name, "pos": position (LT, MIKE, ...), "cls": FR..SRRS, "ht": inches, "wt": lbs, "j": jersey,
 //      "a": archetype, "dev": trait, "ab": ["name|tier"], "r": [ratings], "g": [room to potential], "c": coachability,
 //      "s": stars, "o": our overall (kept in step with the ratings), "home": state, "yrs": seasons in the program,
-//      "tm": target share (real receivers)}
+//      "tm": target share (real receivers),
+//      "dmv", "dmg": a quarterback's Decision Making and its room, a rating of its own, on the scale the game shows}
 // The real 2026 players are taken from the roster file once, when the career takes its league.
 // The FCS stand-ins (fictional teams) always play the roster file's rosters.
 //
 // Every constant, variable and function is on the `league` namespace and is reached through it, here too. Paths are
 // text from the project's root (files.js); a function that keeps its answers is wrapped in `cached` below (each has
 // a `cache_clear`).
-import { Random, round, int, floordiv, mod, sorted, get, truthy } from "../engine_js/pyrt.js";
+import { Random, round, int, floordiv, mod, sorted, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { mean } from "../engine_js/pystat.js";
 import { read_text, write_text, exists, remove, list_dir } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
+import { shown } from "../teamdata_js/shown.js";
 import { recruits } from "./recruits.js";
 
 export const league = {};
@@ -153,7 +155,7 @@ export function _development_of(lgd) {
   const out = {};
   for (const t of Object.values(lgd["teams"])) {
     for (const c of t["roster"]) {
-      out[c["id"]] = [get(c, "c") || "Steady Grinder", modules.rosters.overall(c["r"].map((v, i) => v + c["g"][i]), c["pos"])];
+      out[c["id"]] = [get(c, "c") || "Steady Grinder", modules.rosters.overall(c["r"].map((v, i) => v + c["g"][i]), c["pos"], league.decision_top(c))];
     }
   }
   return out;
@@ -224,7 +226,38 @@ export function compact(p, attrs, home = null, rated = null) {
   if (truthy(get(p, "abilities"))) out["ab"] = p["abilities"].map((a) => `${pystr(get(a, "name"))}|${pystr(get(a, "tier"))}`);
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
   if (truthy(get(p, "dm"))) out["dm"] = p["dm"];
+  league.own_decision(out, attrs, get(p, "dmv"));
+  if (isNumber(get(out, "dmv"))) out["o"] = modules.rosters.overall(out["r"], pos, out["dmv"]);     // his overall reads the one he has
   return out;
+}
+
+export function decision_top(c) {
+  // Where a quarterback's Decision Making could reach (null for a player who has none): his potential overall reads it.
+  return isNumber(get(c, "dmv")) ? Math.min(99, c["dmv"] + (get(c, "dmg") || 0)) : null;
+}
+
+
+export function own_decision(c, attrs, value = null) {
+  // A quarterback's Decision Making is a rating of its own (the player's rule: none is worked out from others): "dmv",
+  // on the scale the game shows, and "dmg", its room to grow, kept with him like his other ratings and grown on their
+  // own (offseason.develop). `value`: the number he has (the roster file's). A quarterback who has none yet (a signee,
+  // a generated player, a save from before) is given one once, from where his Football IQ and Pocket Poise stand that
+  // day, and it is its own from then on. Its room is set once the same way, from where those two could reach. Returns
+  // whether he was given one now.
+  if (c["pos"] !== "QB" || isNumber(get(c, "dmv"))) return false;
+  const mix = (ours) => {
+    const base = game_scale.base_from_ours(ours, "QB");
+    return 0.6 * get(base, "awareness", 50) + 0.4 * get(base, "throw_under_pressure", 50);
+  };
+  const whole = (v) => Math.max(1, Math.min(99, int(round(v))));
+  const now = league.ratings(c, attrs);
+  const had = isNumber(value) ? whole(value)
+    : whole(shown.from_base_exact(mix(now)) + (get(c, "dm") || 0));      // ("dm": how far a save from before kept his from the two)
+  const top = whole(shown.from_base_exact(mix(league.potential(c, attrs))) + (isNumber(value) ? 0 : get(c, "dm") || 0));
+  c["dmv"] = had;
+  c["dmg"] = Math.max(0, top - had);
+  delete c["dm"];
+  return true;
 }
 
 
@@ -246,7 +279,7 @@ export function potential(c, attrs) {
 
 export function overall(c, attrs) {
   // His overall: our formula on his ratings (game_scale.overall).
-  return game_scale.overall(league.ratings(c, attrs), c["pos"]);
+  return game_scale.overall(league.ratings(c, attrs), c["pos"], get(c, "dmv"));
 }
 
 
@@ -255,7 +288,7 @@ export function expand(c, attrs, team) {
   // frozen scale into the base values the engine's formulas were tuned on, and our overall.
   const ours = league.ratings(c, attrs);
   const h = get(c, "ht") || 72;
-  const ovr = game_scale.overall(ours, c["pos"]);
+  const ovr = game_scale.overall(ours, c["pos"], get(c, "dmv"));
   return {
     slug: c["id"], name: c["n"], position: c["pos"], class: c["cls"], class_year: get(league.CLASS_YEAR, c["cls"], "Freshman"),
     team_slug: team["slug"], team: get(team, "short_name"), jersey: get(c, "j"),
@@ -270,6 +303,7 @@ export function expand(c, attrs, team) {
     coachability: get(c, "c"), stars: get(c, "s"),
     ...(truthy(get(c, "tm")) ? { target_mult: c["tm"] } : {}),
     ...(truthy(get(c, "dm")) ? { dm: c["dm"] } : {}),
+    ...(isNumber(get(c, "dmv")) ? { dmv: c["dmv"] } : {}),         // his own Decision Making: what the sim plays (build_teams.own_decision)
   };
 }
 
@@ -332,7 +366,7 @@ export function _as_source(p) {
   return { slug: p["slug"], name: p["name"], position: p["source_position"], "class": get(p, "class"),
     height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"), archetype: get(p, "archetype"),
     dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: modules.rosters.skills_of(p), target_mult: get(p, "target_mult"),
-    dm: modules.rosters.decision_moved(p) || null };
+    dmv: modules.rosters.decision_of(p) };
 }
 
 export function _filed_player(p, attrs, home, o = null) {
@@ -374,8 +408,8 @@ export function _filed_player(p, attrs, home, o = null) {
   }
   if (ab.length) out["ab"] = ab;
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
-  const moved = modules.rosters.decision_moved(p, filed);        // his own Decision Making, kept with him (build_teams.decision_making)
-  if (moved) out["dm"] = moved;
+  league.own_decision(out, attrs, modules.rosters.decision_of(p));   // his own Decision Making, kept with him and grown on its own
+  if (o === null && isNumber(get(out, "dmv"))) out["o"] = modules.rosters.overall(r, pos, out["dmv"]);
   return out;
 }
 
@@ -650,7 +684,7 @@ export function forget(career_id) {
 
 Object.assign(league, {
   base_meta, team_meta, base_slugs, league_slugs, is_imported, _meta_file,
-  _potentials, _development_of, base_development, height_in, compact, ratings, potential, overall,
+  _potentials, _development_of, base_development, height_in, compact, own_decision, decision_top, ratings, potential, overall,
   expand, formation, from_base, _filed, _as_source, _filed_player, _entry_of, _stand_ins, _filed_entry, _roster_ratings, _compute_base, _lead_feature, _role_players, lineup, team_ratings, source_team,
   source_teams, build, path, ensure_built, forget,
 });

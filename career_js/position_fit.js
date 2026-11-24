@@ -11,6 +11,7 @@
 import { round, int, get, isNumber, truthy, cmp } from "../engine_js/pyrt.js";
 import { mean, pstdev } from "../engine_js/pystat.js";
 import { read_json } from "../engine_js/files.js";
+import { modules } from "../engine_js/modules.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
 
 const ENGINE_FILE = "data/engine_teams.json";
@@ -186,7 +187,7 @@ export function move_row(c, pos, attrs) {
     delete c["moved_attrs"];
     delete c["moved_from"];
     c["pos"] = pos;
-    c["o"] = game_scale.overall(zipped(attrs, c["r"]), pos);
+    c["o"] = game_scale.overall(zipped(attrs, c["r"]), pos, pos === "QB" ? get(c, "dmv") : null);
     return;
   }
   if (!truthy(get(c, "moved_from"))) {
@@ -200,6 +201,8 @@ export function move_row(c, pos, attrs) {
   c["r"] = attrs.map((k) => get(fresh, k, 50));
   c["pos"] = pos;
   c["o"] = position_fit.project(ours, get(c, "ht"), get(c, "wt"), origin, pos);
+  // a player moved to quarterback is given a Decision Making of his own the day he moves (league.own_decision)
+  if (modules.league) modules.league.own_decision(c, attrs);
 }
 
 export function season_move(p, origin, pos) {

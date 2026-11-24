@@ -57,7 +57,8 @@ test("every built player's overall is his card's, scored at the position his ski
     if (at in position && !["K", "P"].includes(p["position"])) assert(game_scale.card_position(p) === position[at], `${at} is scored at ${game_scale.card_position(p)}`);
     if (typeof p["ovr"] === "number" && p["skills"]) {
       const ours = Object.fromEntries(keys.map((k, i) => [k, p["skills"][i]]).filter(([, v]) => v !== undefined));
-      assert(game_scale.overall(ours, game_scale.card_position(p)) === p["ovr"], at);
+      // (a quarterback's Decision Making is a rating of its own, not one of his skills: his overall reads the one he has)
+      assert(game_scale.overall(ours, game_scale.card_position(p), p["dmv"] ?? null) === p["ovr"], at);
       n++;
     }
   }

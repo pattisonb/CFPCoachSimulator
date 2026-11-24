@@ -520,7 +520,7 @@ export function _with_ratings(c, ours, room, gpot, attrs) {
   c["r"] = attrs.map((k) => int(ours[k]));
   c["g"] = attrs.map((k) => (gpot[k] !== undefined ? Math.max(0, int(Number(gpot[k])) - ours[k])
     : Math.max(0, Math.min(99, ours[k] + room[k]) - ours[k])));
-  c["o"] = game_scale.overall(ours, c["pos"]);
+  c["o"] = game_scale.overall(ours, c["pos"], get(c, "dmv"));
   return c;
 }
 

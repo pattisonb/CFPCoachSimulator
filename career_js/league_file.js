@@ -414,6 +414,10 @@ function player_doc(c, attrs) {
     }),
     coachability: get(c, "c"), hometown: get(c, "home"), years: get(c, "yrs") });
   if (truthy(get(c, "tm"))) out["target_share"] = c["tm"];
+  if (typeof get(c, "dmv") === "number") {                       // a quarterback's Decision Making, a rating of its own, and where it could reach
+    out["decision_making"] = c["dmv"];
+    out["decision_making_potential"] = c["dmv"] + (get(c, "dmg") || 0);
+  }
   return out;
 }
 
@@ -436,6 +440,12 @@ function player_compact(p, attrs) {
     });
   }
   if (truthy(get(p, "target_share"))) out["tm"] = p["target_share"];
+  if (typeof get(p, "decision_making") === "number") {
+    out["dmv"] = Math.max(1, Math.min(99, int(p["decision_making"])));
+    out["dmg"] = Math.max(0, Math.min(99, int(get(p, "decision_making_potential") || 0)) - out["dmv"]);
+  } else {
+    modules.league.own_decision(out, attrs);                     // a file from before: given once, his own from then on
+  }
   return out;
 }
 

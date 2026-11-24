@@ -38,8 +38,8 @@ const NEAR = 3;              // how far a kept number may be moved so the page s
 // player's own card decides (a corner's catching is "Ball Skills", a receiver's "Hands"; a punter's leg is "Punt
 // Power"). Every skill is a rating of its own, on its own name: none is two together, in the file or on a card (the
 // player's rule: 54 skills, 54 ratings). A skill no card shows goes by its own name ("Run Block").
-// A quarterback's Decision Making is a rating of the file too (OWN: no skill is it; the card once worked it out from
-// two others, and the player's rule is that every rating a card prints is one that is stored).
+// A quarterback's Decision Making is a rating of the file too (OWN: no skill is it; the card and the sim once worked
+// it out from two others, and the player's rule is that every rating a card prints is one that is stored and played).
 
 const BLENDS = {};                       // none: a card attribute is one skill (it once held three that were two skills together)
 const OWN = ["decision_making"];         // card attributes stored under their own name with no skill behind them
@@ -98,17 +98,13 @@ export function file_ratings(by_skill, position, role = null, own = {}) {
   return out;
 }
 
-export function decision_moved(p, named = null) {
-  // How far a file quarterback's Decision Making stands from what his Football IQ and Pocket Poise give (the card's
-  // own formula), in points of the scale the game shows: 0 for nearly everyone (it is typed in the file only to be
-  // changed), and for a player with no Decision Making on his card.
+export function decision_of(p) {
+  // A file quarterback's Decision Making as his line has it (a whole number 1-99), or null: a player with none on his
+  // card, or a line that leaves it out. It is a rating of its own: the card shows it and the sim plays it, and
+  // nothing of his Football IQ or his Pocket Poise is in it.
   const want = get(get(p, "ratings") || {}, rv2.ATTRIBUTES["decision_making"][0]);
-  if (!isNumber(want) || rv2.card_group(p["position"], get(p, "role")) !== "QB") return 0;
-  named = named || skills_of(p);
-  const bases = _base_of(), base = { awareness: bases[named["awareness"]], throw_under_pressure: bases[named["throw_under_pressure"]] };
-  const mix = _card_one("QB", "decision_making", base, named);
-  const now = mix === _NONE ? null : shown.attribute(mix, "QB", "decision_making");
-  return now === null ? 0 : Math.max(1, Math.min(99, int(round(want)))) - now;
+  if (!isNumber(want) || rv2.card_group(p["position"], get(p, "role")) !== "QB") return null;
+  return Math.max(1, Math.min(99, int(round(want))));
 }
 
 // ----- the tables: a rating in the file is a whole number 1-99, so each step is worked out once a number ---------------
@@ -202,7 +198,9 @@ function _attribute(kept, scale_group, key, base, named, exact) {
     v = round(v, 1);
     const [m, hi, lo] = get(build_teams.ATTR_SCALE, `${scale_group}|${key}`, [v, 1.5, 0.9]);
     out = build_teams.clamp_rating(50 + (v - m) * (v >= m ? hi : lo));
-    if (exact && src.every((s) => named[s] === named[src[0]])) {      // one number of the file (a blend's skills are one rating there)
+    // one number of the file. Never a rating of its own (OWN): a quarterback's Decision Making is the file's Decision
+    // Making, not his Football IQ's number when his Football IQ and Pocket Poise happen to be the same
+    if (exact && !OWN.includes(key) && src.every((s) => named[s] === named[src[0]])) {
       const want = named[src[0]];
       search: for (let d = 0; d <= rosters.NEAR; d++) {
         for (const o of d ? [out + d, out - d] : [out]) {
@@ -213,18 +211,6 @@ function _attribute(kept, scale_group, key, base, named, exact) {
   }
   row.set(at, out);
   return out;
-}
-
-function _card_one(scale_group, key, base, named) {
-  // One card attribute from the file's ratings, as _card gives it.
-  const at = `${scale_group}|file`;
-  let kept = _attr_cache.get(at);
-  if (kept === undefined) _attr_cache.set(at, kept = {});
-  if (!_scale_ready) {
-    if (!Object.keys(build_teams.ATTR_SCALE).length) Object.assign(build_teams.ATTR_SCALE, game_scale.card_scale());
-    _scale_ready = true;
-  }
-  return _attribute(kept, scale_group, key, base, named, true);
 }
 
 function _card(position, role, whose, base, named, exact) {
@@ -247,9 +233,10 @@ function _card(position, role, whose, base, named, exact) {
   return out;
 }
 
-function _overall(source_position, grp, skills, ks) {
+function _overall(source_position, grp, skills, ks, own = null) {
   // Our overall at the position his ratings are for: game_scale.overall's own sum on his stored skills, on the card
-  // it reads (prospects._card), without working that card out again from nothing.
+  // it reads (prospects._card), without working that card out again from nothing. `own`: a quarterback's Decision
+  // Making, the number he has.
   const ours = {}, base = {}, rows = _tenth_rows(grp, ks);
   for (let i = 0; i < ks.length; i++) {
     ours[ks[i]] = skills[i];
@@ -259,6 +246,7 @@ function _overall(source_position, grp, skills, ks) {
   if (!f) return game_scale.legacy_overall(ours, source_position) || 1;
   const pos = prospects.engine_position({ ea_position: f["pos"], position: f["pos"] });
   const card = _card(pos, pos, `stored ${grp}`, base, ours, false);
+  if (isNumber(own) && f["pos"] === "QB" && card["decision_making"] !== undefined) card["decision_making"] = game_scale.decision_card(own);
   return int(round(Math.max(1, Math.min(99, f["const"] + sum(Object.entries(f["w"]).map(([k, w]) => w * get(card, k, 50)))))));
 }
 
@@ -267,10 +255,13 @@ export function shown_attribute(p, key, value) {
   // the value the file gave it: the file's own number for an attribute that is one rating (the kept card scale cannot
   // say every number: a receiver's Speed of 50 is below the lowest his card's scale reaches). null otherwise (the
   // caller shows the kept value as ever): a blend of ratings, a value changed since, a player not from the file.
-  const filed = get(p, "filed");
-  if (!truthy(filed) || !Object.hasOwn(rv2.ATTRIBUTES, key)) return null;
-  const own = get(get(p, "filed_own") || {}, key);            // a rating with no skill behind it (his Decision Making)
+  if (!Object.hasOwn(rv2.ATTRIBUTES, key)) return null;
+  // a rating with no skill behind it (his Decision Making): the number he has, in the file or in a career's league
+  const own = get(get(p, "filed_own") || {}, key);
   if (own !== null) return own[0] === value ? own[1] : null;
+  if (OWN.includes(key)) return null;                          // (his own rating: never another rating's number)
+  const filed = get(p, "filed");
+  if (!truthy(filed)) return null;
   const src = rv2.ATTRIBUTES[key][3].sources;
   if (!isNumber(filed[src[0]]) || !src.every((s) => filed[s] === filed[src[0]])) return null;     // (not one number of the file)
   const group = rv2.card_group(p["position"], get(p, "role"));
@@ -294,15 +285,15 @@ export function shown_skill(p, key, value) {
   return _ours_rows(game_scale.group(p["source_position"]), ks)[i][filed[key]] === value ? filed[key] : null;
 }
 
-export function overall(skills, source_position) {
+export function overall(skills, source_position, own = null) {
   // Our overall for stored skills (a list in game_scale.keys() order, each a whole number 1-99) at the position they
   // are for: game_scale.overall's answer, quickly (a league of 12,000 players asks it of every one, twice).
   const ks = game_scale.keys();
   for (let i = 0; i < ks.length; i++) {
     const v = skills[i];
-    if (!Number.isInteger(v) || v < 1 || v > 99) return game_scale.overall(Object.fromEntries(ks.map((k, j) => [k, get(skills, j, 50)])), source_position);
+    if (!Number.isInteger(v) || v < 1 || v > 99) return game_scale.overall(Object.fromEntries(ks.map((k, j) => [k, get(skills, j, 50)])), source_position, own);
   }
-  return _overall(source_position, game_scale.group(source_position), skills, ks);
+  return _overall(source_position, game_scale.group(source_position), skills, ks, own);
 }
 
 function _means(data) {
@@ -376,17 +367,16 @@ export function derive_team(t, means) {
       const [m, base, grp] = _mapped(p, named, ks);
       const skills = m["skills"];
       delete m["skills"];
-      m["ovr"] = _overall(p["source_position"], grp, skills, ks);
+      m["ovr"] = _overall(p["source_position"], grp, skills, ks, decision_of(p));
       m["role"] = get(p, "role");
       m["depth"] = get(p, "depth");
       m["skills"] = skills;
       // (a key the file leaves out stays out, as every reader that gives one a default expects)
       for (const k of ["height_in", "traits", "archetype"]) if (p[k] !== undefined) m[k] = p[k];
       m["attributes"] = _card(m["position"], m["role"], "file", base, named, true);
-      const moved = decision_moved(p, named);                // his own Decision Making, where the file's is not the mix
-      if (moved) {
-        const want = Math.max(1, Math.min(99, int(round(p["ratings"][rv2.ATTRIBUTES["decision_making"][0]]))));
-        m["decision_making"] = build_teams.decision_making(m["decision_making"], moved);        // (still on the source scale: _onto_engine below)
+      const want = decision_of(p);                           // his own Decision Making: the file's number, played and shown
+      if (want !== null) {
+        m["decision_making"] = shown.to_base(want);            // (still on the source scale: _onto_engine below)
         const [mid, hi, lo] = get(build_teams.ATTR_SCALE, "QB|decision_making", [50, 1.5, 0.9]);
         const v = round(shown.to_base(want), 1);
         let house = build_teams.clamp_rating(50 + (v - mid) * (v >= mid ? hi : lo));
@@ -396,7 +386,7 @@ export function derive_team(t, means) {
           }
         }
         m["attributes"]["decision_making"] = house;
-        m["dm"] = moved;
+        m["dmv"] = want;
         m["filed_own"] = { decision_making: [house, want] };   // what the page shows while his card holds this value (shown_attribute)
       }
       for (const k of ["target_mult", "order", "added"]) if (p[k] !== undefined) m[k] = p[k];
@@ -498,7 +488,7 @@ export function stored_ratings(path = rosters.FILE) {
   return out;
 }
 
-export const rosters = { FILE, FORMAT, MISSING, NEAR, BLENDS, OWN, names_for, skills_of, file_ratings, decision_moved, stored, labeled, overall, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
+export const rosters = { FILE, FORMAT, MISSING, NEAR, BLENDS, OWN, names_for, skills_of, file_ratings, decision_of, stored, labeled, overall, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
   read, shared, loaded, forget, stored_ratings };
 
 modules.rosters = rosters;
