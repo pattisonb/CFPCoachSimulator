@@ -492,9 +492,15 @@
 
 /* the two marks in a row's last cell: your favorite (a heart), then your board (a star) */
 
-/* nothing known yet: a faint dash, so a row reads across without a hole in it */
+/* nothing known yet: a dash in the soft ink (the faintest line color was too hard to see), so a row reads across
+   without a hole in it */
 .prospects__none {
-  color: var(--line-soft);
+  color: var(--ink-soft);
+}
+
+/* ... and on a washed-out row it fades with the rest */
+.prospects__table tbody tr.is-shut .prospects__none {
+  opacity: 0.6;
 }
 
 /* the door is shut on you: his row is washed out (he cannot be worked), his status still plain to read */
