@@ -73,9 +73,8 @@ const VIEW_STATUS: Record<View, string | null> = {
 };
 type Col = keyof typeof m.cols;
 /** columns the server sorts by (prospects._sort_key), best first */
-/** His status has nothing to add: he is open to you or shut to you, and His List says which. */
-const quietStatus = (r: ProspectRow) =>
-  !r.pro && !r.leaning_fcs && (r.blocked ? r.blocked.why !== "signed" : !r.stage || r.stage === "cold");
+/** The door is shut on you: he will not consider you, or he cut his list without you. */
+const shut = (r: ProspectRow) => !!r.blocked && r.blocked.why !== "signed";
 
 const SORTS: Partial<Record<Col, string>> = {
   rank: "rank",
@@ -639,7 +638,9 @@ export default function Prospects({
                 {rows.map((r) => (
                   <tr
                     key={r.id}
-                    className={r.id === picked ? "is-on" : undefined}
+                    className={
+                      [r.id === picked && "is-on", shut(r) && "is-shut"].filter(Boolean).join(" ") || undefined
+                    }
                     onClick={() => setPicked(r.id === picked ? null : r.id)}
                   >
                     {/* on your board or not, first in the row (the player's ask: adding one is the page's commonest click).
@@ -723,7 +724,9 @@ export default function Prospects({
                     )}
                     {sized && <td className="prospects__soft">{r.height_display}</td>}
                     {sized && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
-                    <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
+                    <td className="prospects__stars">
+                      {r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}
+                    </td>
                     <td className="prospects__status" title={r.blocked ? r.blocked.text : statusOf(r)}>
                       {/* where he went: his school's stamp alone; the cell's tip says it in words ("Signed: Oregon") */}
                       {!r.pro && (r.signed || r.committed) ? (
@@ -739,7 +742,7 @@ export default function Prospects({
                             bare
                           />
                         </span>
-                      ) : quietStatus(r) ? null : (
+                      ) : (
                         statusOf(r)
                       )}
                     </td>
@@ -750,14 +753,18 @@ export default function Prospects({
                         ) : (
                           r.offers_n
                         )
-                      ) : null}
+                      ) : (
+                        <span className="prospects__none">–</span>
+                      )}
                     </td>
                     <td className="prospects__ask">
                       {r.ask?.exact != null ? (
                         r.ask.exact
                       ) : r.ask?.hi ? (
                         <span title={m.askTip}>{m.askRange(r.ask.lo ?? 0, r.ask.hi)}</span>
-                      ) : null}
+                      ) : (
+                        <span className="prospects__none">–</span>
+                      )}
                     </td>
                     <td
                       className={`prospects__int is-${r.blocked || r.list_place == null ? "low" : r.list_place <= 3 ? "high" : "medium"}`}
@@ -765,17 +772,19 @@ export default function Prospects({
                         r.blocked ? r.blocked.text : r.list_place == null ? m.listOpenTip : m.listPlaceTip(r.list_place)
                       }
                     >
-                      {r.blocked
-                        ? r.blocked.why === "signed"
-                          ? m.listNone
-                          : m.listClosed
-                        : r.list_place == null
-                          ? m.listOpen
-                          : ordinal(r.list_place)}
+                      {!r.blocked && r.list_place != null ? (
+                        ordinal(r.list_place)
+                      ) : (
+                        <span className="prospects__none">–</span>
+                      )}
                     </td>
-                    <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : null}</td>
+                    <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : <span className="prospects__none">–</span>}</td>
                     <td className="prospects__pot">
-                      {r.our_potential ? <GradeRange read={r.our_potential} size="sm" /> : null}
+                      {r.our_potential ? (
+                        <GradeRange read={r.our_potential} size="sm" />
+                      ) : (
+                        <span className="prospects__none">–</span>
+                      )}
                     </td>
                   </tr>
                 ))}

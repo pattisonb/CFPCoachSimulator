@@ -492,6 +492,26 @@
 
 /* the two marks in a row's last cell: your favorite (a heart), then your board (a star) */
 
+/* nothing known yet: a faint dash, so a row reads across without a hole in it */
+.prospects__none {
+  color: var(--line-soft);
+}
+
+/* the door is shut on you: his row is washed out (he cannot be worked), his status still plain to read */
+.prospects__table tbody tr.is-shut > td {
+  color: var(--ink-soft);
+}
+
+.prospects__table tbody tr.is-shut .prospects__who,
+.prospects__table tbody tr.is-shut .prospects__stars {
+  opacity: 0.45;
+}
+
+.prospects__table tbody tr.is-shut .prospects__status {
+  color: var(--warn);
+  font-weight: 700;
+}
+
 /* on your board or not, the row's first cell: a square to tick, inked once he is on it */
 .prospects__tick-cell {
   padding-right: 0;
