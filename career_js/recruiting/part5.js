@@ -543,7 +543,7 @@ function portal_rc(state, entrants, year) {
       from: e["from"], from_name: get(e, "from_name") || e["from"], cls: c["cls"], usage: get(e, "usage"),
       line: recruiting._season_line(state, e["from"], c["n"], group),
       coachability: get(c, "c") || "Steady Grinder", ratings, potential,
-      ovr: c["o"], pot_ovr: game_scale.overall(Object.fromEntries(attrs.slice(0, potential.length).map((k, i) => [k, potential[i]])), c["pos"]),
+      ovr: c["o"], pot_ovr: game_scale.overall(Object.fromEntries(attrs.slice(0, potential.length).map((k, i) => [k, potential[i]])), c["pos"], modules.league.decision_top(c)),
       hidden: false, group };
     p["tier"] = recruiting.tier_of(p);
     p["priorities"] = recruiting._priorities(pid, p["tier"] >= recruiting.PORTAL_TOP_TIER ? recruiting.PORTAL_TOP_PRIORITY_ODDS : recruiting.PORTAL_PRIORITY_ODDS,

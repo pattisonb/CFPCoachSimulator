@@ -209,7 +209,7 @@ export function map_player(p, pos = null) {
     // our overall (game_scale.js: the game's own 1-99 scale, 50 the middle Power 4 starter):
     // the player card's overall. The engine never reads it.
     "ovr": get(p, "ovr") !== null ? p["ovr"] : (game_scale.has_overall()
-      ? game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"]) : null),
+      ? game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"], get(p, "dmv")) : null),
     // identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
     "class": get(p, "class"),
     "height": get(p, "height"),

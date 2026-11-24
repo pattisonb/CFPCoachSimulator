@@ -10,10 +10,11 @@
 // them, and the engine reads them back through `to_base` (the frozen inverse) into the formulas it
 // was tuned on. Generated recruits are drawn by a model learned from real players and converted
 // with `from_ea` the moment they are made.
-import { round, int, sum, get, truthy } from "../engine_js/pyrt.js";
+import { round, int, sum, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { prospects } from "../career_js/prospects.js";
 import { recruits } from "../career_js/recruits.js";
+import { shown } from "./shown.js";
 
 const FILE = "data/game_scale.json";
 const ABOVE = 15.0, BELOW = 9.0;         // scale points per standard deviation above and below the middle starter
@@ -137,12 +138,21 @@ export function card_attributes(ours, pos) {
   return prospects.card_attributes(ours, { ea_position: pos, position: pos });
 }
 
-export function overall(ours, pos) {
+export function decision_card(own) {
+  // A quarterback's own Decision Making (`own`: the number he has, on the scale the game shows) on his card's scale,
+  // as his card keeps its attributes: what his overall reads for it.
+  const [m, hi, lo] = get(card_scale(), "QB|decision_making", [50, 1.5, 0.9]);
+  const v = round(shown.to_base(Math.max(1, Math.min(99, own))), 1);
+  return int(round(Math.max(1, Math.min(99, 50 + (v - m) * (v >= m ? hi : lo)))));
+}
+
+export function overall(ours, pos, own = null) {
   // Our overall for a player at EA position `pos` (or his engine position's group): a weighted sum of his card's
   // attributes, the same ones the sim plays with and the card shows (card_formula). Every attribute on his position's
   // card counts (OVERALL_FLOOR at the least); some count for much more (football IQ, a position's main skills).
+  // `own`: a quarterback's Decision Making, the number he has (a rating of its own: his skills do not say it).
   const f = card_formula(pos);
-  if (f) return _card_overall(f["pos"], keys().map((k) => get(ours, k, 50)));
+  if (f) return _card_overall(f["pos"], keys().map((k) => get(ours, k, 50)), own);
   return legacy_overall(ours, pos) || 1;                                                 // a scale file from before
 }
 
@@ -180,15 +190,17 @@ const _card_overall_cache = new Map();
 
 // the same players are asked again and again (the base league is 12,000 of them)
 // `skills`: his skills in keys() order.
-export function _card_overall(pos, skills) {
-  const at = `${pos}|${skills.join(",")}`;
+export function _card_overall(pos, skills, own = null) {
+  const mine = isNumber(own) && pos === "QB";            // his own Decision Making, in place of what his skills would give
+  const at = mine ? `${pos}|${skills.join(",")}|${own}` : `${pos}|${skills.join(",")}`;
   const kept = _card_overall_cache.get(at);
   if (kept !== undefined) return kept;
   const f = game_scale.data()["card_overall"][pos];
   const ks = keys();
   const ours = {};
   for (let i = 0; i < ks.length && i < skills.length; i++) ours[ks[i]] = skills[i];
-  const card = game_scale.card_attributes(ours, pos);
+  let card = game_scale.card_attributes(ours, pos);
+  if (mine && card["decision_making"] !== undefined) card = { ...card, decision_making: decision_card(own) };
   const out = int(round(Math.max(1, Math.min(99, f["const"] + sum(Object.entries(f["w"]).map(([k, w]) => w * get(card, k, 50)))))));
   if (_card_overall_cache.size >= _CARD_OVERALL_MAX) _card_overall_cache.clear();
   _card_overall_cache.set(at, out);
@@ -237,7 +249,7 @@ export function upgrade_overalls(state) {
     let players = [];
     for (const t of Object.values(lg["teams"])) for (const c of t["roster"]) players.push(c);
     players = players.concat(_portal_players(state));
-    const os = players.map((c) => overall(_zip_dict(attrs, c["r"]), c["pos"]));
+    const os = players.map((c) => overall(_zip_dict(attrs, c["r"]), c["pos"], get(c, "dmv")));
     const moved = players.some((c, i) => os[i] !== c["o"]);
     if (moved) _module("league");        // asked for before anything is written, so a refusal leaves the save as it was
     players.forEach((c, i) => { c["o"] = os[i]; });
@@ -345,6 +357,6 @@ export function upgrade(state) {
 export const game_scale = {
   FILE, ABOVE, BELOW, GROUP_OF, ROOM, OVERALL_FLOOR, _FIRST, modules,
   data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, from_ea, ea_row, potential_from_ea,
-  has_overall, card_formula, card_attributes, overall, legacy_overall, position_skills, card_position, _card_overall,
+  has_overall, card_formula, card_attributes, decision_card, overall, legacy_overall, position_skills, card_position, _card_overall,
   overall_version, upgrade_overalls, engine_means, card_scale, _convert, upgrade,
 };

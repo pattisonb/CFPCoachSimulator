@@ -187,7 +187,7 @@ export function move_row(c, pos, attrs) {
     delete c["moved_attrs"];
     delete c["moved_from"];
     c["pos"] = pos;
-    c["o"] = game_scale.overall(zipped(attrs, c["r"]), pos);
+    c["o"] = game_scale.overall(zipped(attrs, c["r"]), pos, pos === "QB" ? get(c, "dmv") : null);
     return;
   }
   if (!truthy(get(c, "moved_from"))) {

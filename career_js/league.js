@@ -155,7 +155,7 @@ export function _development_of(lgd) {
   const out = {};
   for (const t of Object.values(lgd["teams"])) {
     for (const c of t["roster"]) {
-      out[c["id"]] = [get(c, "c") || "Steady Grinder", modules.rosters.overall(c["r"].map((v, i) => v + c["g"][i]), c["pos"])];
+      out[c["id"]] = [get(c, "c") || "Steady Grinder", modules.rosters.overall(c["r"].map((v, i) => v + c["g"][i]), c["pos"], league.decision_top(c))];
     }
   }
   return out;
@@ -227,7 +227,13 @@ export function compact(p, attrs, home = null, rated = null) {
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
   if (truthy(get(p, "dm"))) out["dm"] = p["dm"];
   league.own_decision(out, attrs, get(p, "dmv"));
+  if (isNumber(get(out, "dmv"))) out["o"] = modules.rosters.overall(out["r"], pos, out["dmv"]);     // his overall reads the one he has
   return out;
+}
+
+export function decision_top(c) {
+  // Where a quarterback's Decision Making could reach (null for a player who has none): his potential overall reads it.
+  return isNumber(get(c, "dmv")) ? Math.min(99, c["dmv"] + (get(c, "dmg") || 0)) : null;
 }
 
 
@@ -273,7 +279,7 @@ export function potential(c, attrs) {
 
 export function overall(c, attrs) {
   // His overall: our formula on his ratings (game_scale.overall).
-  return game_scale.overall(league.ratings(c, attrs), c["pos"]);
+  return game_scale.overall(league.ratings(c, attrs), c["pos"], get(c, "dmv"));
 }
 
 
@@ -282,7 +288,7 @@ export function expand(c, attrs, team) {
   // frozen scale into the base values the engine's formulas were tuned on, and our overall.
   const ours = league.ratings(c, attrs);
   const h = get(c, "ht") || 72;
-  const ovr = game_scale.overall(ours, c["pos"]);
+  const ovr = game_scale.overall(ours, c["pos"], get(c, "dmv"));
   return {
     slug: c["id"], name: c["n"], position: c["pos"], class: c["cls"], class_year: get(league.CLASS_YEAR, c["cls"], "Freshman"),
     team_slug: team["slug"], team: get(team, "short_name"), jersey: get(c, "j"),
@@ -403,6 +409,7 @@ export function _filed_player(p, attrs, home, o = null) {
   if (ab.length) out["ab"] = ab;
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
   league.own_decision(out, attrs, modules.rosters.decision_of(p));   // his own Decision Making, kept with him and grown on its own
+  if (o === null && isNumber(get(out, "dmv"))) out["o"] = modules.rosters.overall(r, pos, out["dmv"]);
   return out;
 }
 
@@ -677,7 +684,7 @@ export function forget(career_id) {
 
 Object.assign(league, {
   base_meta, team_meta, base_slugs, league_slugs, is_imported, _meta_file,
-  _potentials, _development_of, base_development, height_in, compact, own_decision, ratings, potential, overall,
+  _potentials, _development_of, base_development, height_in, compact, own_decision, decision_top, ratings, potential, overall,
   expand, formation, from_base, _filed, _as_source, _filed_player, _entry_of, _stand_ins, _filed_entry, _roster_ratings, _compute_base, _lead_feature, _role_players, lineup, team_ratings, source_team,
   source_teams, build, path, ensure_built, forget,
 });

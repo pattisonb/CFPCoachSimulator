@@ -520,7 +520,7 @@ function development_reads(state, slug) {
   if (truthy(roster)) {
     const attrs = truthy(get(lgd, "attrs")) ? lgd["attrs"] : game_scale.keys();
     pairs = {};
-    for (const c of roster) pairs[c["id"]] = [get(c, "c"), game_scale.overall(lg.potential(c, attrs), c["pos"])];
+    for (const c of roster) pairs[c["id"]] = [get(c, "c"), game_scale.overall(lg.potential(c, attrs), c["pos"], lg.decision_top(c))];
   } else {
     pairs = lg.base_development();
   }

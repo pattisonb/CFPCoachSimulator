@@ -233,9 +233,10 @@ function _card(position, role, whose, base, named, exact) {
   return out;
 }
 
-function _overall(source_position, grp, skills, ks) {
+function _overall(source_position, grp, skills, ks, own = null) {
   // Our overall at the position his ratings are for: game_scale.overall's own sum on his stored skills, on the card
-  // it reads (prospects._card), without working that card out again from nothing.
+  // it reads (prospects._card), without working that card out again from nothing. `own`: a quarterback's Decision
+  // Making, the number he has.
   const ours = {}, base = {}, rows = _tenth_rows(grp, ks);
   for (let i = 0; i < ks.length; i++) {
     ours[ks[i]] = skills[i];
@@ -245,6 +246,7 @@ function _overall(source_position, grp, skills, ks) {
   if (!f) return game_scale.legacy_overall(ours, source_position) || 1;
   const pos = prospects.engine_position({ ea_position: f["pos"], position: f["pos"] });
   const card = _card(pos, pos, `stored ${grp}`, base, ours, false);
+  if (isNumber(own) && f["pos"] === "QB" && card["decision_making"] !== undefined) card["decision_making"] = game_scale.decision_card(own);
   return int(round(Math.max(1, Math.min(99, f["const"] + sum(Object.entries(f["w"]).map(([k, w]) => w * get(card, k, 50)))))));
 }
 
@@ -283,15 +285,15 @@ export function shown_skill(p, key, value) {
   return _ours_rows(game_scale.group(p["source_position"]), ks)[i][filed[key]] === value ? filed[key] : null;
 }
 
-export function overall(skills, source_position) {
+export function overall(skills, source_position, own = null) {
   // Our overall for stored skills (a list in game_scale.keys() order, each a whole number 1-99) at the position they
   // are for: game_scale.overall's answer, quickly (a league of 12,000 players asks it of every one, twice).
   const ks = game_scale.keys();
   for (let i = 0; i < ks.length; i++) {
     const v = skills[i];
-    if (!Number.isInteger(v) || v < 1 || v > 99) return game_scale.overall(Object.fromEntries(ks.map((k, j) => [k, get(skills, j, 50)])), source_position);
+    if (!Number.isInteger(v) || v < 1 || v > 99) return game_scale.overall(Object.fromEntries(ks.map((k, j) => [k, get(skills, j, 50)])), source_position, own);
   }
-  return _overall(source_position, game_scale.group(source_position), skills, ks);
+  return _overall(source_position, game_scale.group(source_position), skills, ks, own);
 }
 
 function _means(data) {
@@ -365,7 +367,7 @@ export function derive_team(t, means) {
       const [m, base, grp] = _mapped(p, named, ks);
       const skills = m["skills"];
       delete m["skills"];
-      m["ovr"] = _overall(p["source_position"], grp, skills, ks);
+      m["ovr"] = _overall(p["source_position"], grp, skills, ks, decision_of(p));
       m["role"] = get(p, "role");
       m["depth"] = get(p, "depth");
       m["skills"] = skills;
