@@ -17,7 +17,6 @@ import ClosedDoor, { ClosedMark } from "../ClosedDoor/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Conversation from "../Conversation/index.tsx";
 import Face from "../Face/index.tsx";
-import ScoutMark from "../ScoutMark/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
 import { HistoryTab, OverviewTab, ProfileTab, ScoutingTab } from "../RecruitFile/index.tsx";
 import Panel from "../Panel/index.tsx";
@@ -508,7 +507,6 @@ export default function Recruiting({
                             ) : (
                               <Stars n={r.stars} size={10} />
                             )}
-                            <ScoutMark looks={r.looks} size={20} />
                             <RecruitFlags
                               generational={r.generational}
                               find={r.find}
