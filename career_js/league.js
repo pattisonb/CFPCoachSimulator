@@ -360,19 +360,12 @@ export function from_base(year = league.FIRST_YEAR + 1) {
 league.ROSTER_FILE = "data/engine_teams.json";
 
 export function _roster_ratings() {
-  // team slug -> player slug -> his ratings on our scale, from the roster file the game plays (ROSTER_FILE: each
-  // player's `skills`, in game_scale.keys() order). The roster file is the one place a rating lives (the player's
-  // rule: change a rating there and it is his rating): a career's league takes every real player's ratings from it,
-  // not from the source rosters. {} when the file is not there.
+  // team slug -> player slug -> his ratings on our scale, in game_scale.keys() order, from the roster file the game
+  // plays (ROSTER_FILE: each player's `ratings`, by name). The roster file is the one place a rating lives (the
+  // player's rule: change a rating there and it is his rating): a career's league takes every real player's ratings
+  // from it, not from the source rosters. {} when the file is not there.
   if (!exists(league.ROSTER_FILE)) return {};
-  const out = {};
-  for (const [slug, t] of Object.entries(get(JSON.parse(read_text(league.ROSTER_FILE)), "teams") || {})) {
-    const by = out[slug] = {};
-    for (const p of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) {
-      if (Array.isArray(get(p, "skills")) && truthy(get(p, "slug"))) by[p["slug"]] = p["skills"];
-    }
-  }
-  return out;
+  return modules.rosters.stored_ratings(league.ROSTER_FILE);
 }
 
 export function _compute_base(year) {

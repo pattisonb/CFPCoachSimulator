@@ -12,6 +12,7 @@ import { game_scale } from "../teamdata_js/game_scale.js";
 import { ratings } from "../teamdata_js/ratings.js";
 import { shown } from "../teamdata_js/shown.js";
 import "../teamdata_js/build_teams.js";
+import "../teamdata_js/rosters.js";
 import * as game_job from "../sim_js/game_job.js";
 import "../sim_js/polls.js";
 import "../sim_js/awards.js";

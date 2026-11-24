@@ -52,7 +52,7 @@ test("once the rosters are settled, every player has a number he may wear that n
   // the kinds of trouble a roster carries by then: a starter with no number, a receiver in 69, a lineman in 94, two in 7
   const roster = api.loaded_state()["league"]["teams"][ME]["roster"];
   const at = (pos, k = 0) => roster.filter((c) => c["pos"] === pos)[k];
-  at("WR", 0)["j"] = null; at("WR", 1)["j"] = "69"; at("C", 0)["j"] = "94"; at("CB", 0)["j"] = "7"; at("CB", 1)["j"] = "7";
+  at("WR", 0)["j"] = null; at("WR", 1)["j"] = "69"; at(["C", "LG", "RG", "LT", "RT"].find((pos) => at(pos)), 0)["j"] = "94"; at("CB", 0)["j"] = "7"; at("CB", 1)["j"] = "7";
   const kept = at("QB", 0);
   const kept_j = String(kept["j"]);
   api._save_loaded();

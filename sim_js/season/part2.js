@@ -56,7 +56,7 @@ function _use(path) {
 
 function _init(path) {
   season._TEAMS_PATH = path;
-  season._TEAMS = read_json(path)["teams"];
+  season._TEAMS = modules.rosters.shared(path)["teams"];
 }
 
 
@@ -260,7 +260,7 @@ function _game_team(slug, shift, edits, morale, depth, injured) {
   // One side of a game as the engine plays it: the real FCS school's strength for a stand-in (`shift`), then
   // god-mode edits and your coach, morale, the depth chart and the injury list. (sim_js/game_job.js has it, with
   // the league's teams as its first argument: here they are this process's, read when they are not yet.)
-  if (!truthy(season._TEAMS)) season._TEAMS = read_json(teams_path())["teams"];
+  if (!truthy(season._TEAMS)) season._TEAMS = modules.rosters.shared(teams_path())["teams"];
   return game_job._game_team(season._TEAMS, slug, shift, edits, morale, depth, injured);
 }
 
@@ -274,7 +274,7 @@ season.EXTERNAL_POOL = null;   // never set: a host that shares a week's games r
 function _sim_one(args) {
   // One game job, played whole by sim_js/game_job.js (both teams as this week has them, the game, the result
   // boiled down) against the league's teams.
-  const teams = read_json(teams_path())["teams"];
+  const teams = modules.rosters.shared(teams_path())["teams"];
   return game_job._sim_one(teams, args);
 }
 

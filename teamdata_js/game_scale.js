@@ -52,8 +52,15 @@ export function ours_from_base(ratings, pos) {
   return out;
 }
 
+const _tenths = new Map();     // "group|skill" -> the answers by rating (a whole 1-99 one is asked for again and again)
+
 export function _base_tenth(ours, grp, key) {
-  return round(to_base(ours, grp, key), 1);
+  if (!Number.isInteger(ours) || ours < 0 || ours > 99) return round(to_base(ours, grp, key), 1);
+  const at = `${grp}|${key}`;
+  let row = _tenths.get(at);
+  if (row === undefined) _tenths.set(at, row = new Array(100));
+  if (row[ours] === undefined) row[ours] = round(to_base(ours, grp, key), 1);
+  return row[ours];
 }
 
 export function base_from_ours(ours, pos) {

@@ -89,6 +89,14 @@ export function leaves(ts, text) {
         key(n.name);
         rest(n, [n.name]);
         return;
+      case K.ShorthandPropertyAssignment:
+        // `{n}` is `{n: n}`: the minifier writes the short one only when a variable happens to be given the name of
+        // the property it fills, which it may be in one build and not in the other (it names variables by how often
+        // each letter is used in the script, names included). Read as the long one, so the two stay the same program.
+        out.push({ t: "n", v: K.PropertyAssignment });
+        out.push({ t: "prop", v: n.name.text, s: start(n.name), e: n.name.end, form: "short" });
+        out.push({ t: "id", v: n.name.text });
+        return;
       case K.BindingElement:
         if (n.propertyName) {
           out.push({ t: "n", v: n.kind });
@@ -237,6 +245,7 @@ export function names_map(ui, generic, real, pairs) {
       }
     } else {
       if (swaps.length !== 1 || swaps[0][1] !== g.v) { problems.push(`a bare property name is only part of a swap: ${g.v}`); continue; }
+      if (g.form === "short") { problems.push(`a name is a property written short: {${g.v}}`); continue; }
       const dot = g.form === "dot";
       if (dot && generic[g.s - 1] !== ".") { problems.push(`no dot before .${g.v}`); continue; }
       names.spots.push([dot ? g.s - 1 : g.s, dot ? g.e - g.s + 1 : g.e - g.s, marks(g.v, r.v), g.form === "id" ? "k" : "b"]);

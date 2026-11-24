@@ -136,6 +136,8 @@ the same code runs under either host.
 
 The rosters the game reads (`data/engine_teams.json`, `data/player_potential.json`) are committed, so a fresh clone runs the tests as it is. They are the rosters themselves: nothing makes them, and a rating is changed by changing it there.
 
+In `data/engine_teams.json` a player is one line, and his ratings are one labeled set on it (`"ratings": {"acceleration": 96, "agility": 95, ... "speed": 95, ...}`): 54 of them, each 1-99 on the scale the game shows, where the average player is about a 70. The number in the file is the number on his card. Nothing else about how good he is is stored: the numbers the play engine reads, his card, his overall and what he would be at every other position are worked out from that set when the game reads the file (`teamdata_js/rosters.js`). To change a rating, find the player's line, change the number, and restart `npm run dev`: it is his rating in the first season and, through a career's league, in every later one, and it is what the published site ships. A new career takes it; a career already past its first season keeps the league it has.
+
 Each test is a script that exits with 1 when something fails:
 
 ```

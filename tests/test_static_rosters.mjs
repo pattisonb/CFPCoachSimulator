@@ -38,21 +38,33 @@ test("nothing makes them: no build step, no host command, and the files that fed
   assert(!build.DATA_FILES.includes("data/manual_ratings.json"));
 });
 
-test("every player in them has his ratings, an id and a name, and his team an identity", () => {
-  const teams = JSON.parse(read("data/engine_teams.json"))["teams"];
+test("every player in them has one labeled set of ratings, an id and a name, and nothing worked out from his ratings", () => {
+  const file = JSON.parse(read("data/engine_teams.json"));
+  const keys = JSON.parse(read("data/game_scale.json"))["keys"];
+  equal(file["format"], 2);
+  const teams = file["teams"];
   assert(Object.keys(teams).length >= 138, String(Object.keys(teams).length));
+  const worked_out = ["skills", "ovr", "attributes", "ratings_at", "speed", "strength", "passing", "hands", "coverage", "tackling", "stats"];
   let n = 0;
   for (const [slug, t] of Object.entries(teams)) {
     assert(t["slug"] === slug && t["name"] && t["abbreviation"], slug);
-    if (t["fictional"]) continue;
     for (const p of [...t["offense"], ...t["defense"]]) {
-      assert(p["slug"] && p["name"] && p["position"], `${slug} ${p["name"]}`);
-      // (a real player added to a roster from real usage plays on a stand-in's numbers: he has no ratings of his own)
-      if (!String(p["slug"]).startsWith("real-")) assert(Array.isArray(p["skills"]) && p["skills"].length === 54, `${slug} ${p["name"]}`);
+      const who = `${slug} ${p["name"]}`;
+      assert(p["slug"] && p["name"] && p["position"] && p["source_position"], who);
+      equal(Object.keys(p["ratings"]), keys, who);                       // every rating, by name, in the scale's order
+      assert(Object.values(p["ratings"]).every((v) => Number.isInteger(v) && v >= 1 && v <= 99), who);
+      for (const k of worked_out) assert(!(k in p), `${who} stores ${k}`);
       n += 1;
     }
   }
   assert(n > 10000, `${n} players`);
+});
+
+test("a player is a line of the file: a rating changed by hand is one line changed", () => {
+  const lines = read("data/engine_teams.json").split("\n");
+  const mine = lines.filter((l) => l.startsWith('{"name":'));
+  assert(mine.length > 10000, String(mine.length));
+  assert(mine.every((l) => l.includes('"ratings":{"acceleration":')), "a player without his ratings on his line");
 });
 
 await run();

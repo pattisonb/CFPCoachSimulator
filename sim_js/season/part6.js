@@ -1036,7 +1036,13 @@ function all_skills(p) {
   // onto the scale ratings are shown on (teamdata_js/shown.js): a skill is the skill itself there, not where he stands
   // among his own position, so a receiver's Throw Power reads low; ours are read off those, and his card's are the card's
   const grp = game_scale.group(get(p, "role") || p["position"]);
-  skills = Object.fromEntries(Object.entries(skills).map(([k, v]) => [k, _shown.skill(v, grp, k)]));
+  // (a rating from the roster file shows as the file has it, while his kept skill is still the one the file gave
+  // him: rosters.js shown_skill)
+  const from_file = truthy(get(p, "filed"));
+  skills = Object.fromEntries(Object.entries(skills).map(([k, v]) => {
+    const filed = from_file ? modules.rosters.shown_skill(p, k, v) : null;
+    return [k, filed !== null ? filed : _shown.skill(v, grp, k)];
+  }));
   const card = {};
   for (const [k, v] of Object.entries(get(p, "attributes") || {})) card[k] = season.page_attribute(p, k, v);
   const who = get(p, "slug") || get(p, "name");

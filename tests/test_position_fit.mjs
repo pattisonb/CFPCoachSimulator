@@ -34,7 +34,7 @@ function finished(st) {
   Object.assign(st, { done: true, current_week: season.FINAL_WEEK, champion: "ohio-state" });
 }
 
-const TEAMS = JSON.parse(files.read_text(pf.ENGINE_FILE))["teams"];
+const TEAMS = game.modules.rosters.read(pf.ENGINE_FILE)["teams"];      // the rosters as the game reads them (each player worked out from his ratings)
 /** The player of the game's rosters nearest a build at a position, rated in a band. */
 function nearest(role, height_in, weight, lo, hi) {
   const pool = Object.values(TEAMS).flatMap((t) => [...t["offense"], ...t["defense"]])

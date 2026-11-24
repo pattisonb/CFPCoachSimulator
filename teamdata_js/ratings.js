@@ -14,22 +14,26 @@ const own = (o, k, d = null) => (typeof k === "string" && Object.hasOwn(o, k) ? 
 
 export function _avg(...keys) {
   // A source formula: the mean of the source ratings present.
-  return function f(r) {
+  function f(r) {
     const vals = [];
     for (const k of keys) if (isNumber(get(r, k))) vals.push(r[k]);
     return vals.length ? sum(vals) / vals.length : null;
-  };
+  }
+  f.sources = keys;                // the source ratings it reads (rosters.js keeps an answer by them)
+  return f;
 }
 
 export function _mix(weights) {
   // A source formula: a weighted mean of the source ratings present. `weights` is [[source rating, weight], ...]
   // (in the order written).
-  return function f(r) {
+  function f(r) {
     const got = [];
     for (const [k, w] of weights) if (isNumber(get(r, k))) got.push([r[k], w]);
     const tot = sum(got.map(([, w]) => w));
     return tot ? sum(got.map(([v, w]) => v * w)) / tot : null;
-  };
+  }
+  f.sources = weights.map(([k]) => k);
+  return f;
 }
 
 // key: [label, group, what it does, source formula]

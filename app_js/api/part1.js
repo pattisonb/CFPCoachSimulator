@@ -803,7 +803,7 @@ function _all_teams() {
   // The 2026 teams by slug (every team drop-down and the team pages read these).
   if (!Object.keys(api._teams).length) {
     const season = modules.season;
-    api._teams = season.stand_in_names(JSON.parse(read_text(season.TEAMS_FILE))["teams"]);     // (its own copy: the stand-ins are renamed in it)
+    api._teams = season.stand_in_names(modules.rosters.read(season.TEAMS_FILE)["teams"]);     // (its own copy: the stand-ins are renamed in it)
   }
   return api._teams;
 }

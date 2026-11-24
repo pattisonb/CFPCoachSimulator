@@ -27,6 +27,7 @@ import { read_text, read_json, write_text, exists, env } from "../../engine_js/f
 import { modules, has as module_loaded } from "../../engine_js/modules.js";
 import { ratings as ratings_v2 } from "../../teamdata_js/ratings.js";
 import { shown as _shown } from "../../teamdata_js/shown.js";     // the scale ratings are shown on (a view's last step)
+import "../../teamdata_js/rosters.js";                           // the roster file's reader (modules.rosters: load_teams)
 import { polls } from "../polls.js";
 import { fcs_names } from "../fcs_names.js";
 import { teamnames } from "../teamnames.js";
@@ -159,7 +160,9 @@ season._league_path = season.TEAMS_FILE;   // the league every view and sim read
 
 function load_teams() {
   if (empty(season._teams_cache)) {
-    const data = JSON.parse(read_text(season._league_path));      // (its own copy: the teams are changed below)
+    // (its own copy: the teams are changed below. The roster file holds each player's ratings and nothing worked out:
+    // rosters.js works the rest out as it is read; a career's later season is read as it is)
+    const data = modules.rosters.read(season._league_path);
     season._teams_cache = season.stand_in_names(data["teams"]);
     for (const t of Object.values(season._teams_cache)) {          // the game's own team ratings, by the one average every page shows
       if (!truthy(get(t, "fictional")) && truthy(get(t, "team_ratings")) && truthy(get(t, "offense"))) {
@@ -324,7 +327,11 @@ function shown_overall(p, base = null) {
 }
 
 function page_attribute(p, key, value) {
-  // One of his card's attributes as the page shows it (teamdata_js/shown.js), at his card's position group.
+  // One of his card's attributes as the page shows it (teamdata_js/shown.js), at his card's position group. A rating
+  // that is one rating in the roster file shows as the file has it (rosters.js shown_attribute), while the card still
+  // holds the value the file gave it: the number in the file is the number on the card.
+  const filed = truthy(get(p, "filed")) ? modules.rosters.shown_attribute(p, key, value) : null;
+  if (filed !== null) return filed;
   return _shown.attribute(value, ratings_v2.card_group(p["position"], get(p, "role")), key);
 }
 
