@@ -1054,14 +1054,30 @@ api.route("GET", "/api/season/{season_id}/depth/{slug}", season_depth_chart);
 
 
 function season_playlink(p) {
-  // One team in a Pocket Franchise roster link's shape (docs/PLAY_ON_THE_FIELD.md): its depth chart and every
-  // player's current skills, for Play It on the Field. A read only.
+  // One team in a Pocket Franchise roster link's shape (season.playlink_team says what each field is): its depth
+  // chart and every player's current skills, with what the sim takes into a game (form and morale, injuries, coaches,
+  // tendencies, schemes and formations), for Play It on the Field. A read only.
   const season = modules.season;
   const state = api._season_state(p.path["season_id"]);
   if (!has(season.load_teams(), p.path["slug"])) throw new api.ApiError(404, "unknown team");   // (an FCS stand-in is fine here: it has a roster to play against)
   return season.playlink_team(state, p.path["slug"]);
 }
 api.route("GET", "/api/season/{season_id}/playlink/{slug}", season_playlink);
+
+
+function season_playlink_game(p) {
+  // The game a roster link is for: the two teams' game this season when they have one still to play, with the
+  // season's week and each side's record, rank and ratings (season.playlink_game). `offense`, and `defense` when one
+  // was picked.
+  const season = modules.season;
+  const state = api._season_state(p.path["season_id"]);
+  const offense = api._need(p, "offense"), defense = p.q("defense") || null;
+  for (const slug of [offense, defense]) {       // (an FCS stand-in is fine here, as for its roster)
+    if (slug && !has(season.load_teams(), slug)) throw new api.ApiError(404, "unknown team");
+  }
+  return season.playlink_game(state, offense, defense);
+}
+api.route("GET", "/api/season/{season_id}/playlink_game", season_playlink_game);
 
 
 function season_depth_formations(p) {
@@ -1208,6 +1224,6 @@ Object.assign(api, {
   offseason_retain, offseason_review, offseason_job, offseason_hire, offseason_conferences, offseason_conference,
   offseason_schedule, offseason_schedule_trade, offseason_schedule_move, offseason_open_role,
   season_player_edit, season_player_face, season_preview, season_rivalries, season_team_stats, season_depth_chart,
-  season_playlink, season_depth_formations, season_depth_roster, season_depth_position, season_depth_change,
+  season_playlink, season_playlink_game, season_depth_formations, season_depth_roster, season_depth_position, season_depth_change,
   season_injuries, season_awards, season_player, season_player_leaders, season_player_stats,
 });

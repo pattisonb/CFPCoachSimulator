@@ -431,12 +431,44 @@ season._TIER_NAMES = Object.fromEntries(Object.entries(ratings_v2.TRAIT_TIERS).m
 
 const _WHOLE = /^\s*[+-]?\d+(?:_\d+)*\s*$/;      // what Python's int(text) takes
 
+function _playlink_playbook(state, slug) {
+  // A team's formations for a roster link (formations_view, each slot as the player's slug): {"offense", "defense",
+  // "special": {"scheme", "formations": [{id, name, personnel, note, usage, slots: [{slot, label, slug}]}]}}. null
+  // when the view cannot be made for the team.
+  let view;
+  try {
+    view = season.formations_view(state, slug);
+  } catch (err) {
+    return null;
+  }
+  const out = {};
+  for (const unit of ["offense", "defense", "special"]) {
+    const u = get(view, unit) || {};
+    out[unit] = { scheme: get(u, "scheme"), formations: (get(u, "formations") || []).map((f) => ({
+      id: f["id"], name: f["name"], personnel: get(f, "personnel"), note: get(f, "note"),
+      ...(get(f, "usage") !== null ? { usage: f["usage"] } : {}),
+      slots: (get(f, "slots") || []).map((s) => ({ slot: s["slot"], label: s["label"], slug: get(get(s, "player") || {}, "slug") })) })) };
+  }
+  return out;
+}
+
 function playlink_team(state, slug) {
-  // One team in the shape of a Pocket Franchise roster link (docs/PLAY_ON_THE_FIELD.md; the reader is
-  // sprite-test/lib/game/roster-link.ts): the depth chart as this season has it, starter first, and every player
-  // with his current skills (game_scale's 54, after development) and what his card shows. `_position` and `_look`
-  // (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim.
+  // One team in the shape of a Pocket Franchise roster link (the reader is pocket-franchise lib/game/roster-link.ts,
+  // which keeps the fields it knows and drops the rest): the depth chart as this season has it, starter first, and
+  // every player with his current skills (game_scale's 54, after development) and what his card shows. `_position`
+  // and `_look` (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim.
   // An FCS stand-in has a full roster too (the sim plays it), so it can be played against on the field.
+  //
+  // Beside the roster, what the sim itself takes into a game (the player's ask: the field gets what the sim gets):
+  //   the team:   "morale" (its mood, -1 to 1; null with the setting off), "home_field" (its stadium's advantage, 50
+  //               ordinary) and "stadium", "coaches" (the three: name, ratings, tendencies, scheme; your own coach
+  //               when it is your team), "tendencies" (how it calls a game: pass rate, tempo, fourth downs, blitz...),
+  //               "playbook" (its schemes and the formations it lines up in most, each slot a player), "out" (who is
+  //               unavailable: the injured and the redshirting);
+  //   a player:   "form" (his hot or cold streak, -1 to 1) and "factor" (what the sim multiplies his ratings by
+  //               entering the game: his form and his team's mood together, 0.9 to 1.1; the skills sent are his plain
+  //               ones, without it), "injury" ({type, weeks_left}) or "redshirting", and "fatigue" (the season
+  //               carries none between games: every player starts a game fresh, so it is 0).
   const t = season.apply_depth(season.team_data(state, slug), get(get(state, "depth") || {}, slug));
   const players = [...t["offense"], ...t["defense"]];
   const depth = {};
@@ -445,9 +477,20 @@ function playlink_team(state, slug) {
   }
 
   const looks = season.player_faces(state, slug);
+  const mood = season.morale_payload(state, slug);                        // null with the setting off
+  const hurt = get(get(state, "injuries") || {}, slug) || {};             // "Name|POS" -> the injury
+  const sitting = get(get(state, "redshirting") || {}, slug) || {};
+  const sits = new Set(Object.values(sitting).map((v) => `${v["name"]}|${v["position"]}`));
 
   function player(p) {
     const out = { slug: p["slug"], name: p["name"], pos: get(p, "role") || p["position"], skills: [...(get(p, "skills") || [])] };
+    const who = `${p["name"]}|${p["position"]}`;
+    out["form"] = mood === null ? 0 : round(get(mood["players"], who, 0.0), 3);
+    out["factor"] = round(season.morale_factor(state, slug, p["name"], p["position"]), 3);
+    out["fatigue"] = get(p, "fatigue", 0) || 0;
+    const inj = get(hurt, who);
+    if (truthy(inj)) out["injury"] = { type: get(inj, "type"), weeks_left: get(inj, "weeks_left") };
+    if (sits.has(who)) out["redshirting"] = true;
     // for the page to draw his face from (lookOf: a saved look, else rolled from slug and position); it puts the
     // pocket-faces face and skin on the link and drops these two
     out["_position"] = p["position"];
@@ -474,8 +517,56 @@ function playlink_team(state, slug) {
     return out;
   }
 
+  const by_name = {};
+  for (const p of players) by_name[`${p["name"]}|${p["position"]}`] = p["slug"];
+  const out_list = [];
+  for (const [who, inj] of Object.entries(hurt)) {
+    out_list.push({ slug: get(by_name, who), name: inj["name"], pos: inj["position"], why: "injury", type: get(inj, "type"), weeks_left: get(inj, "weeks_left") });
+  }
+  for (const v of Object.values(sitting)) {
+    out_list.push({ slug: get(by_name, `${v["name"]}|${v["position"]}`), name: v["name"], pos: v["position"], why: "redshirt" });
+  }
+  const coaches = {};
+  for (const [role, c] of Object.entries(get(t, "coaches") || {})) {
+    if (!truthy(c)) continue;
+    coaches[role] = { name: get(c, "name"), ratings: get(c, "ratings") || {}, tendencies: get(c, "tendencies") || {}, scheme: get(c, "scheme") || {},
+      ...(get(c, "since") !== null ? { since: c["since"] } : {}) };
+  }
   return { slug, name: t["name"], abbr: get(t, "abbreviation"), colors: get(t, "colors") || {},
-    depth, players: players.filter((p) => truthy(get(p, "slug")) && truthy(get(p, "skills"))).map((p) => player(p)) };
+    depth, players: players.filter((p) => truthy(get(p, "slug")) && truthy(get(p, "skills"))).map((p) => player(p)),
+    morale: mood === null ? null : round(mood["team"], 3),
+    home_field: get(t, "home_field_advantage"), stadium: get(t, "stadium") || null,
+    coaches, tendencies: { ...(get(t, "tendencies") || {}) }, playbook: _playlink_playbook(state, slug), out: out_list };
+}
+
+function playlink_game(state, offense, defense) {
+  // The game a roster link is for (the player's ask: the field gets the game itself): the season's year and coming
+  // week, each side's record, rank and unit ratings, and, when the two teams have a game still to play this season,
+  // that game: when and where it is, who is at home, what kind it is (regular, a title game, a bowl, the playoff),
+  // whether it is a conference game or a rivalry, and the home field's advantage (0 on a neutral field). Any two
+  // teams can be taken to the field: without a game between them "scheduled" is false and there is no home side.
+  const teams = season.load_teams();
+  const ranks = season.rank_map(state, state["current_week"]);
+  const rec = season._records(state, undefined, true);
+  const side = (slug) => (truthy(slug) && has(teams, slug) ? { slug, name: teams[slug]["name"], rank: get(ranks, slug),
+    record: rec[slug] !== undefined && !truthy(get(teams[slug], "fictional")) ? season._record_str(rec[slug]) : "",
+    ratings: truthy(get(teams[slug], "fictional")) ? null : season._unit_overalls(state, slug) } : null);
+  const out = { year: season.season_year(state), week: state["current_week"] + 1, done: truthy(state["done"]),
+    offense: side(offense), defense: side(defense), scheduled: false };
+  if (!truthy(offense) || !truthy(defense)) return out;
+  let g = null;
+  for (const x of Object.values(state["games"])) {
+    const these = (x["home"] === offense && x["away"] === defense) || (x["home"] === defense && x["away"] === offense);
+    if (these && !truthy(x["played"]) && (g === null || x["week"] < g["week"])) g = x;
+  }
+  if (g === null) return out;
+  const neutral = truthy(g["neutral"]);
+  Object.assign(out, { scheduled: true, event_id: g["event_id"], game_week: g["week"], date: get(g, "date"), kind: g["kind"],
+    title: get(g, "title"), site: get(g, "site"), neutral, home: g["home"], away: g["away"],
+    conference_game: truthy(get(g, "conference_game")), rivalry: season.game_rivalry(state, g, false),
+    stadium: neutral ? null : get(teams[g["home"]], "stadium") || null,
+    home_field: neutral ? 0 : get(teams[g["home"]], "home_field_advantage") });
+  return out;
 }
 
 function depth_roster_view(state, slug) {
@@ -967,7 +1058,7 @@ function load_season(season_id) {
 Object.assign(season, {
   week_work, progress_part, _heal, injury_report, _award_step, player_overall, overall_at, apply_depth, role_starters,
   position_candidates, depth_order, set_depth_order, move_depth, reset_depth, _depth_card, _players_by_role,
-  depth_changed, depth_chart_view, playlink_team, depth_roster_view, _number_labels, formations_view, awards_view,
+  depth_changed, depth_chart_view, playlink_team, playlink_game, depth_roster_view, _number_labels, formations_view, awards_view,
   _with_player_ids, _heisman_with_final_lines, shared_pool, close_pool, advance_to, my_results, box_dir, save_box,
   forget_fresh_boxes, load_box, box_names, _rename_stand_ins_files, has_box, save_season, _class_path, _class_key,
   _without_class, _with_class, _file_key, _note_current, load_season,

@@ -2,9 +2,11 @@ import data from "pocket-faces/data";
 import { api } from "./api.ts";
 import { lookOf } from "./faces.ts";
 
-// Play It on the Field: a roster link to Pocket Franchise's practice field (docs/PLAY_ON_THE_FIELD.md; the reader is
-// sprite-test/lib/game/roster-link.ts). Two teams' depth charts and current skills, as raw DEFLATE + base64url in
-// the link's fragment, so nothing is uploaded: it opens in the player's own browser and goes nowhere else.
+// Play It on the Field: a roster link to Pocket Franchise's practice field (the reader is pocket-franchise
+// lib/game/roster-link.ts: it keeps the fields it knows and drops the rest). Two teams as the sim would take them into
+// a game (depth charts, current skills, form and morale, injuries, coaches, tendencies, schemes and formations) and
+// the game itself (sim_js/season/part3.js playlink_team and playlink_game say what each field is), as raw DEFLATE +
+// base64url in the link's fragment, so nothing is uploaded: it opens in the player's own browser and goes nowhere else.
 
 /** *tune* Where Pocket Franchise lives; VITE_POCKET_FRANCHISE_URL points it elsewhere (http://localhost:3000). */
 export const FRANCHISE_URL: string =
@@ -55,12 +57,15 @@ export async function playOnTheField(seasonId: string, offense: string, defense:
   const tab = window.open("", "_blank");
   if (!tab) throw new PopupBlocked();
   try {
-    const [o, d] = await Promise.all([
+    const [o, d, game] = await Promise.all([
       api<LinkTeam>(`/api/season/${seasonId}/playlink/${offense}`),
       defense ? api<LinkTeam>(`/api/season/${seasonId}/playlink/${defense}`) : Promise.resolve(null),
+      api<Record<string, unknown>>(
+        `/api/season/${seasonId}/playlink_game?offense=${encodeURIComponent(offense)}${defense ? `&defense=${encodeURIComponent(defense)}` : ""}`,
+      ),
     ]);
     const payload = await pack(
-      d ? { v: 1, offense: withLooks(o), defense: withLooks(d) } : { v: 1, offense: withLooks(o) },
+      d ? { v: 1, offense: withLooks(o), defense: withLooks(d), game } : { v: 1, offense: withLooks(o), game },
     );
     tab.opener = null;
     tab.location.href = `${FRANCHISE_URL}/play#roster=${payload}`;
