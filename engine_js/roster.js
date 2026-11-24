@@ -402,7 +402,7 @@ export class Team {
       if (get(td, "rb1_share") !== null && get(td, "rb1_share") !== undefined) {
         feature = lead_feature_for_share(td["rb1_share"]);    // observed share (data/observed_tendencies.json)
       } else if (get(td, "rb_lead_feature") !== null && get(td, "rb_lead_feature") !== undefined) {
-        feature = td["rb_lead_feature"];                       // data/real_adjustments.json, when there is no observed share
+        feature = td["rb_lead_feature"];                       // the roster file's own (the team's real 2026 use of its lead back), when there is no observed share
       }
     }
     const [ret_lo, ret_hi] = cfg.RB_LEAD_RETURN_CHANCE;

@@ -128,9 +128,15 @@ const _QUOTED = /(["'`])((?:(?!\1)[^\\\n]){1,80})\1/gu;
 export class Maps {
   constructor(root) {
     this.root = root;
-    const teams_dir = path.join(root, "cfb_sim_data", "teams");
-    const names_here = sorted_text(fs.readdirSync(teams_dir).filter((n) => n.endsWith(".json")));
-    this.teams = dict(names_here.map((n) => [stem(n), _read(path.join(teams_dir, n))]));
+    // every team as it is known (data/base_meta.json: its identity) with its people from the roster file (its
+    // coaches, and its players as {slug, name}): `meta` is the identity file itself, edited in place by _fields
+    this.meta = _read(path.join(root, "data", "base_meta.json"));
+    const filed = get(_read(path.join(root, "data", "engine_teams.json")), "teams") || {};
+    this.teams = dict(sorted_text(Object.keys(this.meta)).map((slug) => {
+      const f = get(filed, slug) || {};
+      return [slug, { ...this.meta[slug], coaches: get(f, "coaches") || {},
+        roster: [...(get(f, "offense") || []), ...(get(f, "defense") || [])].map((p) => ({ slug: p["slug"], name: p["name"] })) }];
+    }));
     this.real_teams = dict(Object.entries(this.teams).filter(([, t]) => !truthy(get(t, "fictional"))));
     const real_teams = Object.values(this.real_teams);
     const missing = sorted_text(Object.keys(this.real_teams).filter((s) => !Object.hasOwn(tables.TEAMS, s)));
@@ -426,13 +432,9 @@ function _pair(m, teams) {
 export function _fields(root, m) {
   const old_shorts = dict(Object.entries(m.team_exact));
   const shorts = longest_first(new Set(Object.values(old_shorts)));
-  const teams_dir = path.join(root, "cfb_sim_data", "teams");
-  for (const [slug, t] of Object.entries(m.real_teams)) {
+  for (const slug of Object.keys(m.real_teams)) {
     const made = m.team[slug];
-    for (const c of Object.values(get(t, "coaches") || {})) {
-      if (truthy(c)) _coach(c, m, shorts, old_shorts);
-    }
-    for (const p of get(t, "roster", [])) p["team"] = DONE + made.short;
+    const t = m.meta[slug];               // the team's identity, in the identity file (its coaches are in the roster file: below)
     t["short_name"] = DONE + made.short;
     t["school_name"] = DONE + made.school;
     t["mascot"] = DONE + made.mascot;
@@ -443,13 +445,12 @@ export function _fields(root, m) {
       c["name"] = table(tables.COLOR_NAMES, c["name"], c["name"]);
       if (tables.NUDGE_COLORS.has(slug)) c["hex"] = _nudge(c["hex"], slug);
     }
-    fs.unlinkSync(path.join(teams_dir, `${slug}.json`));
-    _write(path.join(teams_dir, `${made.slug}.json`), t);
     // the team's preset faces follow it to its lookalike name (the keys inside, player ids and coach names, are
     // swapped with every other JSON file in run())
     const faces = path.join(root, "cfb_sim_data", "faces", `${slug}.json`);
     if (is_file(faces) && made.slug !== slug) fs.renameSync(faces, path.join(root, "cfb_sim_data", "faces", `${made.slug}.json`));
   }
+  _write(path.join(root, "data", "base_meta.json"), m.meta);
   // the rosters as the game reads them (data/engine_teams.json), when the staged project carries them: each team's
   // identity there is the builder's own shape of the same fields (name, school, mascot, abbreviation, city, the
   // stadium's name, the colors as plain hex), so they take the same edits. The players' and coaches' names are

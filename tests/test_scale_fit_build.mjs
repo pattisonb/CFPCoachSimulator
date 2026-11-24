@@ -21,8 +21,10 @@ function write_scale(out) {
 }
 
 test("scale_fit_build", () => {
-  const src_dir = "cfb_sim_data/teams";
-  const sources = ["ohio-state", "georgia", "boise-state"].map((s) => JSON.parse(files.read_text(`${src_dir}/${s}.json`)));
+  // three teams in the source format the build reads (a league's teams), each player's overall left for the build
+  const lgd = game.modules.league.from_base(2027);
+  const sources = ["ohio-state", "georgia", "boise-state"].map((s) => game.modules.league.source_team(lgd, s));
+  for (const t of sources) for (const p of t["roster"]) { delete p["ovr"]; delete p["overall"]; }
   let with_ratings = 0;
   for (const t of sources) for (const p of t["roster"]) if (truthy(get(p, "ratings"))) with_ratings++;
   // There is one copy of game_scale (the one build_teams reads), so the writer is the helper above; the scale file

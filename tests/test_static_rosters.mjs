@@ -16,7 +16,8 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 test("the rosters are two files among the data the game is packed with", () => {
   equal(build.ROSTERS, ["data/engine_teams.json", "data/player_potential.json"]);
-  assert(build.ROSTERS.every((f) => build.GENERATED.includes(f) && build.DATA_FILES.includes(f)));
+  assert(build.ROSTERS.every((f) => build.DATA_FILES.includes(f)));
+  equal(build.GENERATED, []);                                    // no build makes any data from other data
   for (const f of build.ROSTERS) assert(fs.existsSync(path.join(ROOT, f)), `${f} is missing`);
 });
 
@@ -32,10 +33,14 @@ test("nothing makes them: no build step, no host command, and the files that fed
   assert(!/\[HOST, root, "teams"/.test(site), "the site build runs the roster builder");
   assert(!/build_teams\.main\(/.test(host) && !/build_teams\.main\(/.test(worker), "a host still calls the roster builder");
   const r = spawnSync(process.execPath, [path.join(ROOT, "tools", "game_host.mjs"), ROOT, "teams"], { cwd: ROOT, encoding: "utf8" });
-  assert(r.status !== 0 && /not made/.test(r.stderr), "the old command still runs");
+  assert(r.status !== 0 && /nothing is made/.test(r.stderr), "the old command still runs");
   assert(!fs.existsSync(path.join(ROOT, "data", "manual_ratings.json")), "the hand ratings file is back");
-  equal(Object.keys(JSON.parse(read("data/real_adjustments.json"))).sort(), ["built_from", "usage"]);
-  assert(!build.DATA_FILES.includes("data/manual_ratings.json"));
+  // the source rosters they were once made from, and the files of adjustments laid over them, are gone too
+  for (const f of ["cfb_sim_data/teams", "data/real_adjustments.json", "data/scheme_overrides.json", "data/base_league.json"]) {
+    assert(!fs.existsSync(path.join(ROOT, f)), `${f} is back`);
+    assert(!build.DATA_FILES.some((d) => d.startsWith(f)), `${f} is packed`);
+  }
+  assert(!/base_team|write_base_files|cfb_sim_data\/teams/.test(read("career_js/league.js")), "the league reads source rosters");
 });
 
 test("every player in them has one labeled set of ratings, an id and a name, and nothing worked out from his ratings", () => {

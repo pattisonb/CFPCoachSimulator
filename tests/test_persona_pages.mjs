@@ -114,12 +114,14 @@ test("a career saved before personas and scouting points opens every recruiting 
   const seen = recruiting.visible(old);
   const free = recruiting.prospect_list(old).filter((q) => !orc["prospects"][q]["hidden"] && seen.has(q) && !(orc["reads"][q] || {})["looks"]
     && !orc["status"][q]["committed"]);
-  const [read, fresh] = free;
+  const read = free[0];
   while (recruiting.report_looks(orc["reads"][read]) < persona.DECIDER_LOOKS) {
     orc["scout_points"] = { [me]: 999 };
     recruiting.act(old, me, read, "scout");
   }
-  recruiting.act(old, me, fresh, "call");                   // a contact, its conversation left open
+  // a contact, its conversation left open: the first other prospect who takes the call (one may not consider the program)
+  const fresh = free.slice(1).find((q) => { try { recruiting.act(old, me, q, "call"); return true; } catch { return false; } });
+  assert(fresh, "nobody takes a call");
   orc["board"] = [read, fresh];
   // the old save: none of the newer keys
   for (const k of ["scout_points", "traits_known", "cooled_why"]) delete orc[k];

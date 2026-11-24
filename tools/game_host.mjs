@@ -6,7 +6,6 @@
 //   const game = await host(root, { overlay });       // ... but everything written lands under `overlay`, which is
 //                                                     //     read first (the dev server: nothing is written to the repo)
 //
-//   node tools/game_host.mjs ROOT base [OVERLAY]      // the base league's three files (career_js/league.js)
 //   node tools/game_host.mjs ROOT boot DEST [OVERLAY] // the team picker's answers, as files under DEST
 //
 // Each command is a process of its own: nothing one step read is still in memory for the next.
@@ -53,13 +52,10 @@ export async function host(root, { overlay = null, env = {} } = {}) {
 const compact = (v) => JSON.stringify(v);
 
 async function main([root, step, ...rest]) {
-  if (!root || !step) throw new Error("usage: node tools/game_host.mjs ROOT base|boot [DEST] [OVERLAY]");
+  if (!root || !step) throw new Error("usage: node tools/game_host.mjs ROOT boot DEST [OVERLAY]");
   root = path.resolve(root);
-  if (step === "teams") {
-    throw new Error("the rosters are not made: data/engine_teams.json is the roster itself, changed by hand");
-  } else if (step === "base") {
-    const game = await host(root, { overlay: rest[0] || null });
-    game.modules.league.write_base_files();
+  if (step === "teams" || step === "base") {
+    throw new Error("nothing is made: data/engine_teams.json is the roster itself, changed by hand, and a career's first league is read from it");
   } else if (step === "boot") {
     // The team picker's answers, asked of the game once (a game just started gives the same ones). A season it might
     // write goes to a folder of its own.

@@ -8,10 +8,10 @@
 // teams play without the real-2026-only adjustments), with a team's own identity in "meta"
 // (team_meta), the file's depth chart as "depth" for season one only (offseason.start drops it), and
 // new or moved teams' recruiting models in "recruiting_models" (recruiting.use_league_models).
-// Otherwise at its first offseason the career takes a copy of every FBS roster into `state["league"]`, and from then on
-// players leave, transfer, sign and develop there. Each season the league is turned back into the
-// source format (cfb_sim_data/teams/*.json) and built by the same pipeline as the real data
-// (build_teams.build), cached per career and year in data/leagues/ and rebuilt from the state
+// Otherwise at its first offseason the career takes a copy of every FBS roster into `state["league"]`, read straight
+// from the roster file (from_base: every player's ratings as the file has them), and from then on players leave,
+// transfer, sign and develop there. Each season the league is turned into the source format the team builder reads
+// and built (build_teams.build), cached per career and year in data/leagues/ and rebuilt from the state
 // whenever the cache is missing (a save loaded on another machine).
 //
 //     state["league"] = {"year": 2027, "attrs": [the game's 54 skills], "scale": "ours",
@@ -25,17 +25,18 @@
 //      "a": archetype, "dev": trait, "ab": ["name|tier"], "r": [ratings], "g": [room to potential], "c": coachability,
 //      "s": stars, "o": our overall (kept in step with the ratings), "home": state, "yrs": seasons in the program,
 //      "tm": target share (real receivers)}
-// The real 2026 players are converted once, when the career takes its league; nothing reads EA after that.
-// The FCS stand-ins (fictional teams) always play their base rosters.
+// The real 2026 players are taken from the roster file once, when the career takes its league.
+// The FCS stand-ins (fictional teams) always play the roster file's rosters.
 //
 // Every constant, variable and function is on the `league` namespace and is reached through it, here too. Paths are
 // text from the project's root (files.js); a function that keeps its answers is wrapped in `cached` below (each has
 // a `cache_clear`).
-import { Random, round, int, floordiv, mod, sorted, get, truthy, json_dumps } from "../engine_js/pyrt.js";
+import { Random, round, int, floordiv, mod, sorted, get, truthy } from "../engine_js/pyrt.js";
 import { mean } from "../engine_js/pystat.js";
 import { read_text, write_text, exists, remove, list_dir } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
+import { ratings as rv2 } from "../teamdata_js/ratings.js";
 import { recruits } from "./recruits.js";
 
 export const league = {};
@@ -56,13 +57,11 @@ function cached(fn) {
 const pystr = (v) => (v === null || v === undefined ? "None" : v === true ? "True" : v === false ? "False" : String(v));
 
 league.ROOT = ".";   // the project root: files.js reads paths from it
-league.SOURCE_DIR = "cfb_sim_data/teams";
 league.CACHE_DIR = "data/leagues";
-// from_base()'s league and every team's identity, precomputed (write_base_files) so the browser
-// bundle never reads the 146 source rosters; without them both are computed from the source files
-league.BASE_LEAGUE_FILE = "data/base_league.json";
+// every team's identity (names, place, conference, colors, program, stadium...): a committed file, the teams as they
+// are known. The rosters are the roster file (ROSTER_FILE): a career's first league is read straight from it.
 league.BASE_META_FILE = "data/base_meta.json";
-league.BASE_DEVELOPMENT_NAME = "base_development.json";   // base_development()'s answer, written beside BASE_LEAGUE_FILE
+league.ROSTER_FILE = "data/engine_teams.json";
 league.FIRST_YEAR = 2026;
 // The coaches' own judgment in a depth chart, in overall points (one draw per player a year): real
 // 2026 usage starts players well below the top overall at most positions (rotations, fits, what
@@ -100,24 +99,12 @@ league.GROUP_OF = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE", LT: "OL", 
 league.BULK = ["roster", "starters", "depth_chart", "coaches", "team_ratings", "verification"];   // the parts of a source file the league replaces
 
 
-export function base_team(slug) {
-  // The real 2026 source team, read from its file each time: the roster and lineup are only
-  // needed to build a league (once) or for a fictional stand-in, so the 146 files (68 MB of JSON,
-  // about 200 MB decoded) are never kept in memory. For a team's identity use base_meta.
-  return JSON.parse(read_text(`${league.SOURCE_DIR}/${slug}.json`));
-}
-
-
 export const base_meta = cached((slug) => {
-  // A source team's identity (slug, names, state, conference, colors, program, ...): everything
-  // but the roster and lineup, cached since every name lookup and every league team starts from it.
-  // From BASE_META_FILE when it exists.
-  if (exists(league.BASE_META_FILE)) {
-    const meta = league._meta_file(String(league.BASE_META_FILE))[slug];
-    if (meta === undefined) throw new Error(`KeyError: '${slug}'`);
-    return meta;
-  }
-  return league._meta_of(league.base_team(slug));
+  // A team's identity (slug, names, state, conference, colors, program, ...): BASE_META_FILE's, cached since every
+  // name lookup and every league team starts from it.
+  const meta = league._meta_file(String(league.BASE_META_FILE))[slug];
+  if (meta === undefined) throw new Error(`KeyError: '${slug}'`);
+  return meta;
 });
 
 
@@ -131,10 +118,7 @@ export function team_meta(lgd, slug) {
 }
 
 
-export const base_slugs = cached(() => {
-  if (exists(league.BASE_META_FILE)) return sorted(Object.keys(league._meta_file(String(league.BASE_META_FILE))));
-  return league._source_slugs();
-});
+export const base_slugs = cached(() => sorted(Object.keys(league._meta_file(String(league.BASE_META_FILE)))));
 
 
 export function league_slugs(lgd) {
@@ -152,41 +136,10 @@ export function is_imported(lgd) {
 }
 
 
-export function _meta_of(t) {
-  const out = {};
-  for (const [k, v] of Object.entries(t)) if (!league.BULK.includes(k)) out[k] = v;
-  return out;
-}
-
-
-export function _source_slugs() {
-  return sorted(list_dir(league.SOURCE_DIR).filter((n) => n.endsWith(".json")).map((n) => n.slice(0, -5)));
-}
-
-
 export const _meta_file = cached((path) => {
   // BASE_META_FILE's slug -> identity, read once per path.
   return JSON.parse(read_text(path));
 });
-
-
-export function write_base_files() {
-  // Compute from_base()'s league and every team's identity from the source files (never from
-  // files already written) and write them to BASE_LEAGUE_FILE and BASE_META_FILE.
-  const lgd = league._compute_base(league.FIRST_YEAR + 1);
-  const meta = {};
-  for (const slug of league._source_slugs()) meta[slug] = league._meta_of(league.base_team(slug));
-  const compact_json = { separators: [",", ":"] };
-  write_text(league.BASE_LEAGUE_FILE, json_dumps(lgd, compact_json));
-  write_text(league.BASE_META_FILE, json_dumps(meta, compact_json));
-  // every player's development read, worked out here once: in the browser it cost the first Depth Chart two seconds
-  write_text(_beside(league.BASE_LEAGUE_FILE, league.BASE_DEVELOPMENT_NAME), json_dumps(league._development_of(lgd), compact_json));
-  league._meta_file.cache_clear();
-  league.base_development.cache_clear();
-}
-
-// Path.with_name: the file of that name in the same folder
-const _beside = (path, name) => (path.includes("/") ? `${path.slice(0, path.lastIndexOf("/"))}/${name}` : name);
 
 
 export const _potentials = cached(() => {
@@ -200,7 +153,7 @@ export function _development_of(lgd) {
   const out = {};
   for (const t of Object.values(lgd["teams"])) {
     for (const c of t["roster"]) {
-      out[c["id"]] = [get(c, "c") || "Steady Grinder", game_scale.overall(league.potential(c, attrs), c["pos"])];
+      out[c["id"]] = [get(c, "c") || "Steady Grinder", modules.rosters.overall(c["r"].map((v, i) => v + c["g"][i]), c["pos"])];
     }
   }
   return out;
@@ -208,20 +161,10 @@ export function _development_of(lgd) {
 
 
 export const base_development = cached(() => {
-  // slug -> (coachability, projected overall at his potential) for every real 2026 player, read once: from the
-  // file write_base_files keeps beside BASE_LEAGUE_FILE, else worked out from BASE_LEAGUE_FILE (the first season has
-  // no league of its own yet). Without either, the seeded coachability alone (no projection: 0).
-  const ready = _beside(league.BASE_LEAGUE_FILE, league.BASE_DEVELOPMENT_NAME);
+  // slug -> (coachability, projected overall at his potential) for every real 2026 player, worked out once from the
+  // first league (the first season has no league of its own yet).
   const out = {};
-  if (exists(ready)) {
-    for (const [s, v] of Object.entries(JSON.parse(read_text(ready)))) out[s] = [v[0], v[1]];
-    return out;
-  }
-  if (exists(league.BASE_LEAGUE_FILE)) {
-    for (const [s, v] of Object.entries(league._development_of(JSON.parse(read_text(league.BASE_LEAGUE_FILE))))) out[s] = [v[0], v[1]];
-    return out;
-  }
-  for (const [s, v] of Object.entries(league._potentials())) if (truthy(get(v, "coachability"))) out[s] = [v["coachability"], 0];
+  for (const [s, v] of Object.entries(league._development_of(league.from_base()))) out[s] = [v[0], v[1]];
   return out;
 });
 
@@ -274,7 +217,7 @@ export function compact(p, attrs, home = null, rated = null) {
     r: attrs.map((k) => int(get(ours, k, 50))),
     g: attrs.map((k) => int(Math.max(0, get(pot, k, 50) - get(ours, k, 50)))),
     c: get(p, "coachability") || get(seeded, "coachability") || "Steady Grinder",
-    s: get(p, "stars") || get(seeded, "stars"), o: game_scale.overall(ours, pos),
+    s: get(p, "stars") || get(seeded, "stars"), o: modules.rosters.overall(attrs.map((k) => int(get(ours, k, 50))), pos),
     home: get(get(p, "hometown") || {}, "state") || home,
     yrs: get(p, "yrs") !== null ? int(Number(p["yrs"])) : get(league.EXPERIENCE, get(p, "class") || "FR", 0),
   };
@@ -340,50 +283,138 @@ export function formation(t) {
 }
 
 
+const _base_text = cached(() => JSON.stringify(league._compute_base(league.FIRST_YEAR + 1)));
+
 export function from_base(year = league.FIRST_YEAR + 1) {
-  // Every FBS team's real 2026 roster, coaches and lineup shape as a league (before the first
-  // offseason's departures). Head coaches keep the recruiting ratings the build measured. From
-  // BASE_LEAGUE_FILE (a fresh copy each call) when it exists, else computed from the source files.
-  if (exists(league.BASE_LEAGUE_FILE)) {
-    const lgd = JSON.parse(read_text(league.BASE_LEAGUE_FILE));
-    lgd["year"] = year;
-    if (!("overall_v" in lgd)) lgd["overall_v"] = game_scale.overall_version();   // written by this build, on this build's formula
-    for (const t of Object.values(lgd["teams"])) {   // as programs.init sets it for this year
-      t["program"]["year"] = year - 1;
-    }
-    return lgd;
+  // Every FBS team's real 2026 roster, coaches and lineup shape as a league (before the first offseason's
+  // departures), read straight from the roster file: worked out once and kept, a fresh copy each call.
+  const lgd = JSON.parse(_base_text());
+  lgd["year"] = year;
+  for (const t of Object.values(lgd["teams"])) {   // as programs.init sets it for this year
+    t["program"]["year"] = year - 1;
   }
-  return league._compute_base(year);
+  return lgd;
 }
 
 
-league.ROSTER_FILE = "data/engine_teams.json";
+export function _filed() {
+  // The roster file as it is written (nothing worked out): parsed for the caller, not kept (it is 16 MB of text, read
+  // when a career's first league is made and for the eight stand-ins).
+  return JSON.parse(read_text(league.ROSTER_FILE));
+}
 
 export function _roster_ratings() {
-  // team slug -> player slug -> his ratings on our scale, in game_scale.keys() order, from the roster file the game
-  // plays (ROSTER_FILE: each player's `ratings`, by name). The roster file is the one place a rating lives (the
-  // player's rule: change a rating there and it is his rating): a career's league takes every real player's ratings
-  // from it, not from the source rosters. {} when the file is not there.
+  // team slug -> player slug -> his stored skills, in game_scale.keys() order, from the roster file's ratings.
   if (!exists(league.ROSTER_FILE)) return {};
   return modules.rosters.stored_ratings(league.ROSTER_FILE);
+}
+
+// a trait's key -> the ability name a league player carries it under (the first of ratings.js TRAITS that gives it)
+let _ability_names = null;
+function _ability_of(key) {
+  if (_ability_names === null) {
+    _ability_names = {};
+    for (const [name, t] of rv2.TRAITS) if (!(t[0] in _ability_names)) _ability_names[t[0]] = name;
+  }
+  return get(_ability_names, key);
+}
+
+export function _as_source(p) {
+  // A roster-file player as `compact` reads a source player: his position the one his ratings are for, the file's
+  // ratings where the source had its EA-scale ones (the file's numbers are on that scale), his traits as abilities.
+  const abilities = [];
+  for (const tr of get(p, "traits") || []) {
+    const name = _ability_of(tr["key"]);
+    if (name !== null) abilities.push({ name: name, tier: get(rv2.TIER_NAMES, tr["tier"]) });
+  }
+  return { slug: p["slug"], name: p["name"], position: p["source_position"], "class": get(p, "class"),
+    height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"), archetype: get(p, "archetype"),
+    dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: p["ratings"], target_mult: get(p, "target_mult") };
+}
+
+export function _filed_player(p, attrs, home, o = null) {
+  // One roster-file player in the league's form: what compact(_as_source(p), attrs, home, his stored skills) gives
+  // (tests/test_roster_source.mjs holds the two together), worked out directly: a league is 12,000 of them, read the
+  // first time a career needs it. `o`: his overall when it is already known.
+  const pos = p["source_position"], cls = get(p, "class") || "FR";
+  const r = modules.rosters.stored(p["ratings"], pos);
+  const seeded = get(league._potentials(), p["slug"], {});
+  const seeded_ea = get(seeded, "potential_ea") || {};
+  const g = new Array(attrs.length).fill(0);
+  if (truthy(seeded_ea)) {
+    const room = get(game_scale.ROOM, game_scale.group(pos), 1.0);
+    const more = league.REAL_ROOM_CLASSES.includes(cls);          // seeded room runs short of a generated player's at the same stage
+    for (let i = 0; i < attrs.length; i++) {
+      const k = attrs[i], ours = r[i];
+      const ea = seeded_ea[k] !== undefined ? seeded_ea[k] : p["ratings"][k];
+      if (ea === undefined) { g[i] = Math.max(0, 50 - ours); continue; }
+      const v = Number.isInteger(ea) && ea >= 0 && ea <= 99 ? game_scale.ea_row(pos, k)[ea] : game_scale.from_ea({ [k]: ea }, pos)[k];
+      let pot = int(round(Math.min(99, ours + room * Math.max(0, v - ours))));
+      if (more) pot = int(round(Math.min(99, ours + league.REAL_ROOM * (pot - ours))));
+      g[i] = int(Math.max(0, pot - ours));
+    }
+  }
+  const out = {
+    id: p["slug"], n: p["name"], pos: pos, cls: cls, ht: league.height_in(get(p, "height")),
+    wt: get(p, "weight"), j: get(p, "jersey"), a: get(p, "archetype"), dev: get(p, "dev_trait") || "Normal",
+    r: r, g: g,
+    c: get(seeded, "coachability") || "Steady Grinder",
+    s: get(seeded, "stars"), o: o !== null ? o : modules.rosters.overall(r, pos),
+    home: home,
+    yrs: get(league.EXPERIENCE, cls, 0),
+  };
+  const ab = [];
+  for (const tr of get(p, "traits") || []) {
+    const name = _ability_of(tr["key"]);
+    if (name !== null) ab.push(`${name}|${pystr(get(rv2.TIER_NAMES, tr["tier"]))}`);
+  }
+  if (ab.length) out["ab"] = ab;
+  if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
+  return out;
+}
+
+export function _entry_of(t, slug) {
+  // One team of the roster file (`t`) as a league keeps a team: {"roster": every player in the league's form
+  // (compact), "coaches", "formation"}. His ratings are the file's (rosters.stored), his room to grow is measured
+  // from them (the file's numbers are on the scale his seeded potential is on), his traits go as the abilities they
+  // came from.
+  const attrs = game_scale.keys();
+  // his overall as the game reads the roster file, when it has (worked out once there: rosters.js)
+  const read = get(get(modules.rosters.loaded(league.ROSTER_FILE) || {}, "teams") || {}, slug) || {};
+  const overalls = {};
+  for (const q of [...(get(read, "offense") || []), ...(get(read, "defense") || [])]) overalls[q["slug"]] = q["ovr"];
+  const roster = [];
+  for (const p of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) {
+    if (!truthy(get(p, "ratings"))) continue;
+    roster.push(league._filed_player(p, attrs, get(t, "state"), get(overalls, p["slug"])));
+  }
+  return { roster: roster, coaches: JSON.parse(JSON.stringify(t["coaches"])), formation: JSON.parse(JSON.stringify(t["formation"])) };
+}
+
+export const _stand_ins = cached(() => {
+  // The FCS stand-ins' teams as a league keeps a team (they are in no league: each plays the roster file's roster
+  // every year), kept: slug -> entry.
+  const filed = league._filed()["teams"], out = {};
+  for (const slug of league.base_slugs()) if (truthy(league.base_meta(slug)["fictional"])) out[slug] = league._entry_of(filed[slug], slug);
+  return out;
+});
+
+export function _filed_entry(slug) {
+  // One team of the roster file as a league keeps a team (a stand-in's is kept; any other is read from the file).
+  if (truthy(league.base_meta(slug)["fictional"])) return league._stand_ins()[slug];
+  const t = get(league._filed()["teams"], slug);
+  if (t === null) throw new Error(`KeyError: '${slug}'`);
+  return league._entry_of(t, slug);
 }
 
 export function _compute_base(year) {
   const build_teams = modules.build_teams;
   const attrs = game_scale.keys();
-  const rated = league._roster_ratings();
-  const usage = league._real_usage();            // receivers' real target shares (the lead-back use goes with the style, source_team)
   const teams = {};
-  for (const slug of league._source_slugs()) {
-    const t = league.base_team(slug);
-    if (truthy(t["fictional"])) continue;
-    const coaches = JSON.parse(JSON.stringify(t["coaches"]));
-    const tm = get(get(usage, slug) || {}, "targets") || {};
-    teams[slug] = {
-      roster: t["roster"].filter((p) => truthy(get(p, "ratings")))
-        .map((p) => league.compact({ ...p, target_mult: get(tm, p["slug"]) }, attrs, get(t, "state"), get(get(rated, slug) || {}, p["slug"]))),
-      coaches: coaches, formation: league.formation(t),
-    };
+  const filed = league._filed()["teams"];
+  for (const slug of league.base_slugs()) {
+    if (truthy(league.base_meta(slug)["fictional"])) continue;
+    teams[slug] = league._entry_of(filed[slug], slug);
   }
   build_teams.measured_recruiting(Object.entries(teams).map(([s, v]) => ({ slug: s, coaches: v["coaches"] })));
   const lgd = { year: year, attrs: attrs, scale: "ours", overall_v: game_scale.overall_version(), teams: teams };
@@ -392,10 +423,15 @@ export function _compute_base(year) {
 }
 
 
-export function _real_usage() {
-  // The real 2026 usage (data/real_adjustments.json): receivers' target shares, each team's lead-back use.
-  const f = "data/real_adjustments.json";
-  return exists(f) ? get(JSON.parse(read_text(f)), "usage", {}) : {};
+const _lead_features = cached(() => {
+  const out = {};
+  for (const [slug, t] of Object.entries(league._filed()["teams"])) out[slug] = get(get(t, "tendencies") || {}, "rb_lead_feature");
+  return out;
+});
+
+export function _lead_feature(slug) {
+  // How much a real program's 2026 offense leaned on its lead back (the roster file's team tendencies), or null.
+  return get(_lead_features(), slug);
 }
 
 
@@ -535,7 +571,7 @@ export function source_team(lg, slug, by_overall = false) {
   }
   const out = { ...base };
   const style = get(entry, "style", slug);                                 // the real program whose 2026 style the staff plays
-  const lead = get(get(league._real_usage(), style) || {}, "rb_lead_feature");
+  const lead = league._lead_feature(style);
   if (lead !== null) out["rb_lead_feature"] = lead;
   Object.assign(out, { roster: roster, starters: starters, depth_chart: depth, coaches: entry["coaches"],
     team_ratings: league.team_ratings(roster, starters), roster_size: roster.length });
@@ -544,7 +580,9 @@ export function source_team(lg, slug, by_overall = false) {
 
 
 export function source_teams(lg, me = null) {
-  return league.league_slugs(lg).map((s) => (s in lg["teams"] ? league.source_team(lg, s, s === me) : league.base_team(s)));
+  // (an FCS stand-in is not a league team: it plays the roster file's own roster, every year)
+  const stand_in = (s) => league.source_team({ attrs: lg["attrs"], year: lg["year"], teams: { [s]: league._filed_entry(s) } }, s);
+  return league.league_slugs(lg).map((s) => (s in lg["teams"] ? league.source_team(lg, s, s === me) : stand_in(s)));
 }
 
 
@@ -605,9 +643,9 @@ export function forget(career_id) {
 }
 
 Object.assign(league, {
-  base_team, base_meta, team_meta, base_slugs, league_slugs, is_imported, _meta_of, _source_slugs, _meta_file,
-  write_base_files, _potentials, _development_of, base_development, height_in, compact, ratings, potential, overall,
-  expand, formation, from_base, _roster_ratings, _compute_base, _real_usage, _role_players, lineup, team_ratings, source_team,
+  base_meta, team_meta, base_slugs, league_slugs, is_imported, _meta_file,
+  _potentials, _development_of, base_development, height_in, compact, ratings, potential, overall,
+  expand, formation, from_base, _filed, _as_source, _filed_player, _entry_of, _stand_ins, _filed_entry, _roster_ratings, _compute_base, _lead_feature, _role_players, lineup, team_ratings, source_team,
   source_teams, build, path, ensure_built, forget,
 });
 

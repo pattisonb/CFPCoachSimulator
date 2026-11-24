@@ -63,18 +63,18 @@ npm install        # once
 npm run dev        # the game on http://localhost:5173
 ```
 
-`npm run dev` is the only process: Vite serves the app and the game the app's worker loads. The first start builds
-the game's data from the rosters in `cfb_sim_data/` (some fifteen seconds), and so does the next start after a
-roster or the game's code has changed. A change to the game's code while it runs rebuilds the game's script and
-reloads the page. On Windows, `run.bat` does the last step. Run this way the game uses the source rosters, not the
-lookalike names, and its saves are kept by the browser like anywhere else.
+`npm run dev` is the only process: Vite serves the app and the game the app's worker loads. Nothing is built from
+the data: the game reads the repository's own files (the rosters in `data/engine_teams.json`), so a start is a start.
+A change to the game's code while it runs rebuilds the game's script and reloads the page; a change to a data file
+needs the server restarted. On Windows, `run.bat` does the last step. Run this way the game uses the repository's
+rosters, not the lookalike names, and its saves are kept by the browser like anywhere else.
 
 ## How It Is Built and Published
 
 ```
 cd ui && npm ci && cd ..
 node tools/build_site.mjs --generic      # the published site, to ui/dist/
-node tools/build_site.mjs                # the same with the source rosters' names
+node tools/build_site.mjs                # the same with the repository's own names
 node tools/build_site.mjs --out DIR      # ... to another folder
 ```
 
@@ -127,8 +127,8 @@ the same code runs under either host.
 | `teamdata_js/` | The rating scale, and the builder that makes the engine's teams from the rosters. |
 | `career_js/` | The career: recruiting, the offseason, prospects, personas and scenes, the league, programs, the coaching carousel. |
 | `app_js/` | `api.js`, every call the app makes, as plain functions; `game.js`, the whole game for a host. |
-| `cfb_sim_data/` | The source rosters, coaches and preset faces. |
-| `data/` | The data the game reads (schedules, models, history). The rosters as the game reads them are here too, committed (`engine_teams.json`, `player_potential.json`). The base league, saves and built leagues the game writes here are not committed. |
+| `cfb_sim_data/` | The coaches' histories, the rating curve and the preset faces. |
+| `data/` | The data the game reads (schedules, models, history). The rosters are here, committed (`engine_teams.json`, `player_potential.json`), and so is every team's identity (`base_meta.json`). Nothing is made from them: a career's first league is read from the roster file as the game runs. The saves and built leagues the game writes here are not committed. |
 | `tools/` | The site build, the game on Node, the name swap (`tools/generic/`), skins (`make_skin.mjs`, `skin.mjs`, `skin_compare.mjs`) and the realism tools. |
 | `tests/` | The tests, plain Node scripts. |
 
@@ -215,10 +215,9 @@ contains one, and `tests/test_skin.mjs` holds the build to that.
 
 How it works (`ui/public/skin.js` is the part the page and the game's worker share; `tools/skin.mjs` is the build's):
 
-- **Data.** The skin holds the source data files that differ from the published ones, and the source rosters. The
-  files the game makes itself (the engine's teams, the base league) are not in it: the browser makes them from the
-  skin's rosters with the site's own code, the way the build does, once (some half a minute), and again only when a
-  new version of the site would make them differently. So a skin keeps working when the site is updated.
+- **Data.** The skin holds the data files that differ from the published ones: its rosters and its teams'
+  identities among them. Nothing is made from them in the browser: the game reads them as it reads the site's own.
+  So a skin keeps working when the site is updated.
 - **Words in the site's scripts.** The generic build publishes, beside `game.js` and the app's script, a list of
   the spots where a name stands (`game.names.json`, `app.names.json`: where, how long, and a 16-bit mark of the
   name that belongs there; never a name). To make the lists the build builds both scripts a second time from the

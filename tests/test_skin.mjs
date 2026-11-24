@@ -98,8 +98,7 @@ const store = fileStore(root);
 Game.files.set_reader(store.read);
 Game.files.set_store(store);
 Game.career.zip = Game.zip;
-if (step === "base") Game.modules.league.write_base_files();
-else {
+{
   const api = Game.api, said = [];
   const say = (v) => said.push(v);
   const teams = api.call("GET", "/api/teams");
@@ -153,8 +152,9 @@ async function round_trip() {
     const generic = unpack(zlib.gunzipSync(fs.readFileSync(path.join(site, build.PACK_GZIP))));
     const maps = new scrub.Maps(ROOT);
     const skin = JSON.parse(JSON.stringify(make(build, generic, real, maps, { id: "test-names", name: "Test Names", commit: "test" })));
-    // what the browser makes under a skin: the base league alone. The rosters come in the skin itself, as files
-    assert(skin.format === Skin.FORMAT && skin.generated.length === build.GENERATED.length - build.ROSTERS.length, () => JSON.stringify(skin.generated));
+    // the browser makes nothing under a skin: its rosters and its teams' identities come in it, as files, and the
+    // game reads a career's first league from them as it runs
+    assert(skin.format === Skin.FORMAT && skin.generated.length === 0 && build.GENERATED.length === 0, () => JSON.stringify(skin.generated));
     assert(build.ROSTERS.every((f) => !skin.generated.includes(f) && typeof skin.files[f] === "string"), "the skin does not carry its rosters");
     const unplain = Object.values(skin.words).flat().filter((n) => !Skin.plain(n));
     assert(!unplain.length, () => `names the browser would not write: ${JSON.stringify(unplain.slice(0, 8))}`);
@@ -185,7 +185,6 @@ async function round_trip() {
       assert(r.status === 0, () => `${what}: ${String(r.stderr || r.error).slice(-2000)}`);
       return r.stdout;
     };
-    run(game, work, "base");
     const real_text = (f) => fs.readFileSync(path.join(real, f), "utf8");
     const differ = skin.pack.filter((f) => !fs.existsSync(path.join(work, f)) || fs.readFileSync(path.join(work, f), "utf8") !== real_text(f));
     assert(!differ.length, () => `under the skin these files are not the source build's: ${differ.slice(0, 10).join(", ")} (${differ.length} of ${skin.pack.length})`);

@@ -44,7 +44,7 @@ export function _r(s) {
   });
 }
 
-// The stand-ins as every page shows them, by region. The team files (cfb_sim_data/teams/fcs-*.json) say the
+// The stand-ins as every page shows them, by region. The teams' identity file and the roster file (data/base_meta.json, data/engine_teams.json) say the
 // same (tests/test_no_standin_names.mjs holds them to it); season.stand_in_names puts these on a league's
 // teams whatever its file says, so a league cached by an older save shows them too. A name is its region and
 // its mascot, but for the Mountain West's: that is a real conference's name, so its team is the Rocky Mountain

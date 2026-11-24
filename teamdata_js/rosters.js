@@ -99,6 +99,7 @@ export function labeled(skills, source_position) {
 // ----- one card attribute, kept: most are one rating through one line, asked for thousands of times -----------------
 
 const _attr_cache = new Map();          // "card scale group|whose numbers" -> card attribute -> the answers, by the ratings it reads
+let _scale_ready = false;
 const _NONE = -1;                        // (an attribute with nothing to read: kept as this, never as a hole)
 
 function _attribute(kept, scale_group, key, base, named, exact) {
@@ -140,6 +141,10 @@ function _card(position, role, whose, base, named, exact) {
   const at = `${scale_group}|${whose}`;
   let kept = _attr_cache.get(at);
   if (kept === undefined) _attr_cache.set(at, kept = {});
+  if (!_scale_ready) {                   // the card's frozen scale, where the build keeps it
+    if (!Object.keys(build_teams.ATTR_SCALE).length) Object.assign(build_teams.ATTR_SCALE, game_scale.card_scale());
+    _scale_ready = true;
+  }
   const out = {};
   for (const key of (Object.hasOwn(rv2.POSITION_ATTRIBUTES, group) ? rv2.POSITION_ATTRIBUTES[group] : rv2.PHYSICAL)) {
     const v = _attribute(kept, scale_group, key, base, named, exact);
@@ -190,6 +195,17 @@ export function shown_skill(p, key, value) {
   const ks = game_scale.keys(), i = ks.indexOf(key);
   if (i < 0) return null;
   return _ours_rows(game_scale.group(p["source_position"]), ks)[i][filed[key]] === value ? filed[key] : null;
+}
+
+export function overall(skills, source_position) {
+  // Our overall for stored skills (a list in game_scale.keys() order, each a whole number 1-99) at the position they
+  // are for: game_scale.overall's answer, quickly (a league of 12,000 players asks it of every one, twice).
+  const ks = game_scale.keys();
+  for (let i = 0; i < ks.length; i++) {
+    const v = skills[i];
+    if (!Number.isInteger(v) || v < 1 || v > 99) return game_scale.overall(Object.fromEntries(ks.map((k, j) => [k, get(skills, j, 50)])), source_position);
+  }
+  return _overall(source_position, game_scale.group(source_position), skills, ks);
 }
 
 function _means(data) {
@@ -316,21 +332,36 @@ export function read(path = rosters.FILE) {
   return data;
 }
 
-const _one = { path: null, raw: null, data: null };
+const _one = { path: null, data: null };
+const _is_roster = new Map();            // path -> whether the file there is the roster file (asked of the file once)
+const _FORMAT_AT_START = /^\s*\{\s*"format"\s*:\s*(\d+)\b/;
 
 export function shared(path = rosters.FILE) {
-  // The same data for readers that only read it (the games: files.js read_json's place): one object, kept. A teams
-  // file that is not the roster file is files.js's own parsed copy, as before.
-  const plain = read_json(path);
-  if (get(plain, "format") !== rosters.FORMAT) return plain;
-  const raw = read_text(path);
-  if (_one.path !== path || _one.raw !== raw) Object.assign(_one, { path: path, raw: raw, data: read(path) });
+  // The same data for readers that only read it (the games: files.js read_json's place): one object, kept until
+  // `forget`. A teams file that is not the roster file (a career's later season) is files.js's own parsed copy, as
+  // before. The file itself is read once: a game asks this for every game it plays.
+  if (_one.path === path) return _one.data;
+  let roster = _is_roster.get(path);
+  if (roster === undefined) {
+    const m = _FORMAT_AT_START.exec(read_text(path).slice(0, 80));
+    roster = m !== null && Number(m[1]) === rosters.FORMAT;
+    _is_roster.set(path, roster);
+  }
+  if (!roster) return read_json(path);
+  Object.assign(_one, { path: path, data: read(path) });
   return _one.data;
+}
+
+export function loaded(path = rosters.FILE) {
+  // The kept copy when the game has already read the roster file (shared), else null: for a reader that can do
+  // without it.
+  return _one.path === path ? _one.data : null;
 }
 
 export function forget() {
   Object.assign(_kept, { path: null, raw: null, text: null });
-  Object.assign(_one, { path: null, raw: null, data: null });
+  Object.assign(_one, { path: null, data: null });
+  _is_roster.clear();
   _attr_cache.clear();
   _ours.clear();
   _tenths.clear();
@@ -353,7 +384,7 @@ export function stored_ratings(path = rosters.FILE) {
   return out;
 }
 
-export const rosters = { FILE, FORMAT, MISSING, NEAR, stored, labeled, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
-  read, shared, forget, stored_ratings };
+export const rosters = { FILE, FORMAT, MISSING, NEAR, stored, labeled, overall, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
+  read, shared, loaded, forget, stored_ratings };
 
 modules.rosters = rosters;

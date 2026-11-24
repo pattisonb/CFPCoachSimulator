@@ -12,12 +12,6 @@ const game = await start();
 const { season, offseason } = game;
 const { recruits, grades, league } = game.modules;
 
-// The first season reads each player's projection from the base league's files; a fresh checkout has none, so they
-// are made here (into the test's own folder, as everything the game writes under the harness).
-if (!game.files.exists(league.BASE_LEAGUE_FILE)) {
-  league.write_base_files();
-  league.base_development.cache_clear();
-}
 
 const TEAM = "ohio-state", OTHER = "michigan";
 const LEVELS = recruits.COACHABILITY.map(([n]) => n);

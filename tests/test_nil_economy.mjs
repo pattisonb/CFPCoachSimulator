@@ -74,7 +74,7 @@ test("a playoff run pays a small collective real money: the flat points are the 
   assert(recruiting.reward_why(facts({ playoff: true, host: true })).some((w) => w.includes("hosted a playoff game")));
 });
 
-const st = season.new_season(ME, "full", 5, undefined, undefined, true);
+const st = season.new_season(ME, "full", 7, undefined, undefined, true);
 finished(st);
 const base = Object.fromEntries(Object.keys(season.load_teams()).map((s) => [s, recruiting.nil_budget(st, s)]));
 let off, pools, pool_me, carry, tiers, t1, t5, small;

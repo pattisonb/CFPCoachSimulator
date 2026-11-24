@@ -132,10 +132,8 @@ test("a career's league takes every real player's ratings from the roster file, 
   equal(rated["texas"][p["slug"]], qb_of(rosters.read(), "texas")["skills"]);          // the same skills season one shows and plays
   const n = Object.values(rated).reduce((k, t) => k + Object.keys(t).length, 0);
   assert(n > 10000, `${n} players`);
-  const src = league.base_team("texas");
-  const sp = src["roster"].find((x) => x["position"] === "QB" && x["ratings"]);
-  const as_file = rated["texas"][sp["slug"]];
-  equal(league.compact(sp, attrs, "TX", as_file)["r"], as_file);
+  const as_file = rated["texas"][p["slug"]];
+  equal(league.compact(league._as_source(p), attrs, "TX", as_file)["r"], as_file);
   // ... and they are on the page what the file has (a career shows a stored skill through shown.skill)
   const grp = game_scale.group(p["source_position"]);
   let same = 0;
@@ -143,7 +141,32 @@ test("a career's league takes every real player's ratings from the roster file, 
   assert(same >= attrs.length - 12, `${same} of ${attrs.length} read as the file has them`);
 });
 
-test("the first offseason's league is built from the roster file's ratings", () => {
+test("a career's first league is read straight from the roster file: every player, his team's coaches and its lineup shape", () => {
+  const first = league.from_base(2028), again = league.from_base(2027);
+  equal([first["year"], again["year"]], [2028, 2027]);
+  equal(new Set(Object.values(first["teams"]).map((t) => t["program"]["year"])), new Set([2027]));     // as programs.init sets it
+  first["teams"]["texas"]["roster"][0]["n"] = "Changed";
+  assert(again["teams"]["texas"]["roster"][0]["n"] !== "Changed" && league.from_base()["teams"]["texas"]["roster"][0]["n"] !== "Changed", "a copy of its own each time");
+  equal(Object.keys(again["teams"]).sort(), league.base_slugs().filter((s) => !league.base_meta(s)["fictional"]));
+  for (const slug of ["texas", "akron", "army"]) {
+    const f = file["teams"][slug], t = again["teams"][slug];
+    equal(t["roster"].map((c) => c["id"]), [...f["offense"], ...f["defense"]].map((x) => x["slug"]), slug);       // every player of the file, the added ones too
+    equal([t["formation"], t["coaches"]["head_coach"]["name"]], [f["formation"], f["coaches"]["head_coach"]["name"]], slug);
+    // each as the general path makes a league player (compact), to the letter
+    [...f["offense"], ...f["defense"]].forEach((x, i) => {
+      if (i % 9) return;
+      const general = league.compact(league._as_source(x), attrs, f["state"], rosters.stored(x["ratings"], x["source_position"]));
+      equal(t["roster"][i], general, `${slug} ${x["name"]}`);
+    });
+  }
+  assert(!("roster" in league.base_meta("smu")) && league.base_meta("smu")["conference"]);
+  // an FCS stand-in is no league team: it plays the roster file's roster in every later season
+  const fict = league.base_slugs().find((s) => league.base_meta(s)["fictional"]);
+  const src = league.source_teams(again).find((t) => t["slug"] === fict);
+  assert(src["roster"].length >= 60 && Object.keys(src["starters"]).length === 3, fict);
+});
+
+test("the first league's ratings are the roster file's", () => {
   const lgd = league._compute_base(league.FIRST_YEAR + 1);
   const rated = league._roster_ratings();
   let checked = 0;

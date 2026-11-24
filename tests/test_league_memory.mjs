@@ -37,10 +37,10 @@ test("league_memory", () => {
   // a league team in the source format still carries the base identity and the league's roster
   const t = league.source_team(lgd, "ohio-state");
   assert(t["short_name"] === "Ohio State" && t["roster"].length >= 70 && Object.keys(t["coaches"]).length && Object.keys(t["starters"]).length);
-  // the full base file is still there for a fictional stand-in (never in the league)
+  // a fictional stand-in (never in the league) is read from the roster file
   const fict = league.base_slugs().find((s) => league.base_meta(s)["fictional"]);
   assert(fict !== undefined, "StopIteration");
-  assert(league.base_team(fict)["roster"].length);
+  assert(league._filed_entry(fict)["roster"].length);
   // a league file checked for New Career: the pending league holds the league alone until Start (not its
   // engine teams file, Start builds that again), and the built-in copies the check read are let go
   before = traced();

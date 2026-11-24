@@ -12,8 +12,8 @@ const ISOLATION = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-E
 
 // `npm run dev` serves the game the worker loads (public/worker.js), as the published site has it but with the real
 // rosters: `game.js`, the whole game as one script, made again when a file of the game changes (the page reloads),
-// and the data pack, made by the game itself when a source file has changed since the last one (tools/build_site.mjs
-// dev_pack; some fifteen seconds, the first time). Nothing is written outside node_modules/.cache.
+// and the data pack, the repository's data files put in one file when one has changed since the last time
+// (tools/build_site.mjs dev_pack: nothing is made from them). Nothing is written outside node_modules/.cache.
 function gameFiles(): Plugin {
   type Tools = {
     bundle_game: (ui: string, outfile: string, minify?: boolean) => void;

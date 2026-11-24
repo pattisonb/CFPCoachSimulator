@@ -37,7 +37,7 @@ function opened(seed) {
   return [st, offseason.start(st)];
 }
 
-const [st, off] = opened(5);
+const [st, off] = opened(7);
 const me = st["team"], lg = st["league"];
 const players = off["retention"]["players"];
 const roster_ids = () => new Set(lg["teams"][me]["roster"].map((p) => p["id"]));
@@ -130,7 +130,7 @@ test("on Auto nobody is talked to, so every leaver goes", () => {
 });
 
 test("a save from before this step existed (at Departures, with no Keep Them Home) goes straight on to the portal", () => {
-  const [st3, off3] = opened(7);
+  const [st3, off3] = opened(8);
   delete off3["retention"];
   delete off3["draft"];
   off3["stage"] = "departures";

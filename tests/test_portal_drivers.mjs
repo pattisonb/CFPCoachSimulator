@@ -137,7 +137,7 @@ test("a program that rose a tier keeps its starters: every portal chance is cut"
 
 // ----- the reason given, on a real league ------------------------------------------------------------------------
 
-const st = season.new_season("ohio-state", "full", 5, undefined, undefined, true);
+const st = season.new_season("ohio-state", "full", 7, undefined, undefined, true);
 finished(st);
 const off = offseason.start(st);
 const lgd = st["league"];

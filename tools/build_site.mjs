@@ -15,9 +15,8 @@
 // first screen shows before the game has loaded: `boot/teams.json` and one `boot/teams/<slug>.json` a team) and
 // `version.json` (the commit).
 //
-// The first offseason's league comes precomputed (league.write_base_files writes data/base_league.json and
-// data/base_meta.json, and data/base_development.json for the Depth Chart's first read), so the 146 source rosters
-// stay out of the pack; only the fictional teams' files ship.
+// Nothing is made from the data: the pack is the repository's data files as they are (a generic build's with the names
+// swapped). A career's first league is read from the roster file by the game as it runs (career_js/league.js).
 //
 // A generic build also takes a skin (ui/public/skin.js: a file the player loads to give the game other names, in his
 // browser only): `write_names` publishes, beside game.js and the app's script, the list of the spots where a name
@@ -47,13 +46,14 @@ export const DATA_FILES = [
   "data/engine_teams.json", "data/player_potential.json", "data/recruiting_model.json", "data/history/polls.json",
   "data/schedules.json", "data/schedule_rules.json", "data/series.json", "data/rivalries.json", "data/bowls.json",
   "data/fcs_map.json", "data/game_scale.json", "data/observed_tendencies.json",
-  "data/scheme_overrides.json", "data/poll_params.json", "data/program_history.json", "data/program_market.json",
-  "data/program_profile.json", "data/real_adjustments.json", "data/coach_birth_years.json", "data/draft_targets.json",
-  "data/major_cities.json", "data/base_league.json", "data/base_meta.json", "data/base_development.json",
+  "data/poll_params.json", "data/program_history.json", "data/program_market.json",
+  "data/program_profile.json", "data/coach_birth_years.json", "data/draft_targets.json",
+  "data/major_cities.json", "data/base_meta.json",
   "cfb_sim_data/coaches.json", "cfb_sim_data/league.json",
 ];
-export const GENERATED = ["data/engine_teams.json", "data/player_potential.json", "data/base_league.json", "data/base_meta.json",
-  "data/base_development.json"];
+// What a build makes itself from other data: nothing. The rosters and the teams' identities are committed files, and
+// a career's first league is read from the roster file by the game as it runs (career_js/league.js from_base).
+export const GENERATED = [];
 // The rosters as the game reads them, and the one place a real player's ratings live (the player's rule: a static file
 // in the repository that he changes by hand, with nothing between a rating and the game). They are committed and
 // nothing makes them: not the game, not the dev server, not a build. The hand ratings and the real-usage depth charts
@@ -84,16 +84,10 @@ function run(cmd, args, cwd, env = {}) {
 
 const copy_tree = (from, to, skip = new Set()) => fs.cpSync(from, to, { recursive: true, filter: (src) => !skip.has(path.basename(src)) });
 
-/** The generated data, by the game itself: the base league (the rosters are committed files, never made here). */
-export function generate(root, overlay = null) {
-  const more = overlay ? [overlay] : [];
-  run(process.execPath, [HOST, root, "base", ...more], root);
-}
-
 /**
- * Copy the game (and the app's source) to `work`, swap the names there when `generic`, and build the data the game
- * reads from it: the base league. The rosters are the committed ones in every build (a generic build swaps the names
- * in its copy of them with everything else: tools/generic/scrub.mjs). Returns the staged project root.
+ * Copy the game (and the app's source) to `work` and swap the names there when `generic`. The rosters and the teams'
+ * identities are the committed ones in every build (a generic build swaps the names in its copy of them with
+ * everything else: tools/generic/scrub.mjs), and nothing is made from them. Returns the staged project root.
  */
 export async function stage(work, generic) {
   const root = path.join(work, "project");
@@ -102,9 +96,8 @@ export async function stage(work, generic) {
   // and coach name, and a generic build's scrub renames those keys and the file with everything else
   copy_tree(path.join(ROOT, "cfb_sim_data"), path.join(root, "cfb_sim_data"));
   fs.mkdirSync(path.join(root, "data", "history"), { recursive: true });
-  const made = GENERATED.filter((f) => !ROSTERS.includes(f));      // what a build makes itself
   for (const name of fs.readdirSync(path.join(ROOT, "data")).sort()) {
-    if (name.endsWith(".json") && !made.includes(`data/${name}`)) fs.copyFileSync(path.join(ROOT, "data", name), path.join(root, "data", name));
+    if (name.endsWith(".json")) fs.copyFileSync(path.join(ROOT, "data", name), path.join(root, "data", name));
   }
   fs.copyFileSync(path.join(ROOT, "data", "history", "polls.json"), path.join(root, "data", "history", "polls.json"));
   copy_tree(path.join(ROOT, "ui"), path.join(root, "ui"), UI_SKIP);
@@ -114,16 +107,13 @@ export async function stage(work, generic) {
     if (!fs.existsSync(scrub)) throw new Error("tools/generic/scrub.mjs is missing: a generic build cannot swap the names without it");
     await (await import(pathToFileURL(scrub).href)).run(root);
   }
-  generate(root);
   return root;
 }
 
 /** Every path the data pack holds, relative to the project root; `read(path)` gives a file's text. */
 export function game_files(read, list) {
-  const meta = JSON.parse(read("data/base_meta.json"));
   return [
     ...DATA_FILES,
-    ...Object.keys(meta).sort().filter((s) => meta[s].fictional).map((s) => `cfb_sim_data/teams/${s}.json`),
     ...list("cfb_sim_data/faces").filter((n) => n.endsWith(".json")).sort().map((n) => `cfb_sim_data/faces/${n}`),
   ];
 }
@@ -262,16 +252,12 @@ function* walk(dir) {
   }
 }
 
-/**
- * What the dev server's generated data (the base league) is made from, as one word: it changes when the game's own
- * code, the committed rosters or another data file does.
- */
+/** What the dev server's data pack holds, as one word: it changes when a data file does. */
 function sources_key() {
   const h = crypto.createHash("sha1");
   const add = (f) => { const s = fs.statSync(f); h.update(`${path.relative(ROOT, f)}:${s.size}:${Math.round(s.mtimeMs)}\n`); };
-  for (const d of [...JS_DIRS, "cfb_sim_data"]) for (const f of walk(path.join(ROOT, d))) add(f);
-  const made = GENERATED.filter((f) => !ROSTERS.includes(f));
-  for (const name of fs.readdirSync(path.join(ROOT, "data")).sort()) if (name.endsWith(".json") && !made.includes(`data/${name}`)) add(path.join(ROOT, "data", name));
+  for (const f of walk(path.join(ROOT, "cfb_sim_data"))) add(f);
+  for (const name of fs.readdirSync(path.join(ROOT, "data")).sort()) if (name.endsWith(".json")) add(path.join(ROOT, "data", name));
   add(path.join(ROOT, "data", "history", "polls.json"));
   add(fileURLToPath(import.meta.url));
   return h.digest("hex");
@@ -279,19 +265,15 @@ function sources_key() {
 
 /**
  * The data pack for `npm run dev`, with the real rosters: the path of the pack (not compressed: it never leaves this
- * computer). The rosters are the committed ones, read as they are. The base league is written under `cache` (never
- * into the repository) and made again only when the game's code or a data file has changed since.
+ * computer). It is the repository's data files as they are, put in one file under `cache` (never into the
+ * repository) and put together again only when one of them has changed. Nothing is made from them.
  */
 export function dev_pack(cache) {
   const key = sources_key();
   const file = path.join(cache, "game-data.pack"), key_file = path.join(cache, "key.txt");
   if (fs.existsSync(file) && fs.existsSync(key_file) && fs.readFileSync(key_file, "utf8") === key) return file;
-  console.log("  Game data: making the base league (the game's code or its data has changed since the last time)");
-  const overlay = path.join(cache, "generated");
-  fs.rmSync(overlay, { recursive: true, force: true });
-  fs.mkdirSync(overlay, { recursive: true });
-  generate(ROOT, overlay);
-  const read = (f) => fs.readFileSync(fs.existsSync(path.join(overlay, f)) ? path.join(overlay, f) : path.join(ROOT, f), "utf8");
+  fs.mkdirSync(cache, { recursive: true });
+  const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
   fs.writeFileSync(file, pack_bytes(game_files(read, (dir) => fs.readdirSync(path.join(ROOT, dir))), read));
   fs.writeFileSync(key_file, key);
   return file;

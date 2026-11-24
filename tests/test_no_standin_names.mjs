@@ -48,8 +48,10 @@ test("no tracked file of the repository holds one of the stand-ins' old names", 
   assert(read > 300, `only ${read} files were read`);
 });
 
-const TEAM_DIR = path.join(ROOT, "cfb_sim_data", "teams");
-const FILES = fs.readdirSync(TEAM_DIR).filter((n) => n.endsWith(".json")).map((n) => JSON.parse(fs.readFileSync(path.join(TEAM_DIR, n), "utf8")));
+// every team as the repository has it: its identity (data/base_meta.json) and its players (the roster file)
+const META = JSON.parse(fs.readFileSync(path.join(ROOT, "data", "base_meta.json"), "utf8"));
+const FILED = JSON.parse(fs.readFileSync(path.join(ROOT, "data", "engine_teams.json"), "utf8"))["teams"];
+const FILES = Object.entries(META).map(([slug, t]) => ({ ...t, roster: [...FILED[slug]["offense"], ...FILED[slug]["defense"]] }));
 const HEX = /^#[0-9A-F]{6}$/;
 
 test("each stand-in has its region's slug and a name, mascot, abbreviation and two colors of its own, in its file and in the game", () => {
@@ -67,7 +69,8 @@ test("each stand-in has its region's slug and a name, mascot, abbreviation and t
     const { primary, secondary } = fcs_names.hex_colors(t["region"]);
     assert(HEX.test(primary) && HEX.test(secondary) && primary !== secondary, show([t["slug"], primary, secondary]));
     assert(!t["city"] && t["conference"] === "FCS" && t["subdivision"] === "FCS", t["slug"]);       // still FCS, still no town
-    assert(t["roster"].every((p) => p["team"] === b.name && p["slug"].endsWith(t["slug"])), t["slug"]);
+    assert(t["roster"].length >= 60 && t["roster"].every((p) => p["slug"].endsWith(t["slug"])), t["slug"]);
+    equal([FILED[t["slug"]]["name"], FILED[t["slug"]]["mascot"], FILED[t["slug"]]["abbreviation"]], [b.name, b.mascot, b.abbreviation], t["slug"]);
   }
   for (const key of ["name", "mascot", "abbreviation", "stadium"]) equal(new Set(Object.values(fcs_names.TEAMS).map((b) => b[key])).size, 8, `two stand-ins share a ${key}`);
   equal(new Set(Object.keys(fcs_names.TEAMS).map((r) => fcs_names.hex_colors(r)["primary"])).size, 8, "two stand-ins share a primary color");

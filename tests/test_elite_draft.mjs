@@ -93,11 +93,11 @@ test("as another school's player he declares and goes too", () => {
   assert(d["kind"] === "draft" && d["pick"] <= 3, show(d));
 });
 
-// The regression, on its seed (13). The offseason's first random draws are the draft board's, so the seed alone
+// The regression, on its seed (31). The offseason's first random draws are the draft board's, so the seed alone
 // decided it: he ranked first and drew the no-declare roll. The first half of the season is played for real, so his
 // games come from real box scores; the rest is made up.
-test("seed 13: the old odds kept the country's best player in school; now he declares and goes first", () => {
-  const st = season.new_season("smu", "full", 13, undefined, undefined, true);
+test("seed 31: the old odds kept the country's best player in school; now he declares and goes first", () => {
+  const st = season.new_season("smu", "full", 31, undefined, undefined, true);
   st["career"]["settings"]["auto_recruit"] = "season";
   while (((offseason._games_played(st)["ohio-state"] || {})[STAR] || 0) < offseason.ELITE_MIN_GAMES) {
     assert(st["current_week"] < 12, "he has not played the minimum by week 12");
@@ -110,7 +110,7 @@ test("seed 13: the old odds kept the country's best player in school; now he dec
   offseason.ELITE_DECLARE = 10 ** 6;                                                         // the elite rule off
   let pool, declared;
   try { [pool, declared] = offseason.draft_scores(lgd, offseason._rng(st, "departures")); } finally { [offseason.DECLARE, offseason.ELITE_DECLARE] = old; }
-  assert(pool[0][2]["id"] === STAR && !declared.has(STAR), "seed 13 no longer reproduces the old miss");
+  assert(pool[0][2]["id"] === STAR && !declared.has(STAR), "seed 31 no longer reproduces the old miss");
   finished(st);
   const off = offseason.start(st);
   off["auto"] = true;
@@ -120,8 +120,8 @@ test("seed 13: the old odds kept the country's best player in school; now he dec
   league.forget(st["id"]);
 });
 
-test("seed 13 as his own coach: he waits at Keep Them Home as an elite entrant and still goes first", () => {
-  const st = season.new_season("ohio-state", "full", 13, undefined, undefined, true);
+test("seed 31 as his own coach: he waits at Keep Them Home as an elite entrant and still goes first", () => {
+  const st = season.new_season("ohio-state", "full", 31, undefined, undefined, true);
   finished(st);
   const off = offseason.start(st);
   const e = off["retention"]["players"].find((x) => x["id"] === STAR);

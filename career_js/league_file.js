@@ -632,7 +632,8 @@ const _words = cached(() => {
   const game_config = cfg;
   return { offense: Object.keys(sim_coaches.OFFENSE_SCHEMES), defense: Object.keys(sim_coaches.DEFENSE_SCHEMES),
     dev: Array.from(season.DEV_TRAITS), coachability: recruits.COACHABILITY.map(([n, _a, _b]) => n),
-    archetype: new Set(Object.keys(rv.ARCHETYPES)), ability: new Set(rv.TRAITS.keys()),
+    // (a play style by either of its names: the game's own rosters carry the one the game shows)
+    archetype: new Set([...Object.keys(rv.ARCHETYPES), ...Object.values(rv.ARCHETYPES)]), ability: new Set(rv.TRAITS.keys()),
     target_max: Number(game_config.TARGET_MULT_MAX) };
 });
 
@@ -1056,7 +1057,10 @@ function problems(doc) {
       continue;
     }
     if (is_builtin) replaced_roster.add(slug);
-    if (roster.length > offseason.ROSTER_LIMIT) add(`${label}: the roster has ${roster.length} players; the limit is ${offseason.ROSTER_LIMIT}.`);
+    // (the game's own roster for the team is taken as it is: a few carry a real player or two past the limit, and the
+    // first offseason's cuts bring every roster to it)
+    const own_roster = is_builtin && pyeq(roster, get(dget(league_file._builtin_docs(), slug) || {}, "roster"));
+    if (roster.length > offseason.ROSTER_LIMIT && !own_roster) add(`${label}: the roster has ${roster.length} players; the limit is ${offseason.ROSTER_LIMIT}.`);
     const names = new Map();
     const known = new Set();
     const attrs = new Set(game_scale.keys());

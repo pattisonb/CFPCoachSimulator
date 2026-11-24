@@ -72,9 +72,29 @@ export function base_from_ours(ours, pos) {
 
 export function from_ea(ratings_ea, pos) {
   // A generated recruit's EA-scale draw, converted once (the source curve, then our scale).
-  const curved = {};
-  for (const [k, v] of Object.entries(ratings_ea)) curved[k] = recruits.curve(v);
-  return ours_from_base(curved, pos);
+  // (a whole rating is asked for again and again: a league's 12,000 players, 54 ratings each, twice: kept by rating)
+  const g = group(pos), out = {};
+  for (const k of keys()) {
+    const v = ratings_ea[k];
+    if (v === undefined) continue;
+    if (!Number.isInteger(v) || v < 0 || v > 99) { out[k] = to_ours(recruits.curve(v), g, k); continue; }
+    const at = `${g}|${k}`;
+    let row = _from_ea.get(at);
+    if (row === undefined) _from_ea.set(at, row = new Array(100));
+    if (row[v] === undefined) row[v] = to_ours(recruits.curve(v), g, k);
+    out[k] = row[v];
+  }
+  return out;
+}
+const _from_ea = new Map();
+
+export function ea_row(pos, key) {
+  // from_ea for one rating at every whole value: row[v] is our rating for an EA-scale `v` (0-99) at `pos`'s group.
+  const g = group(pos), at = `${g}|${key}`;
+  let row = _from_ea.get(at);
+  if (row === undefined) _from_ea.set(at, row = new Array(100));
+  for (let v = 0; v <= 99; v++) if (row[v] === undefined) row[v] = to_ours(recruits.curve(v), g, key);
+  return row;
 }
 
 // How far a generated player grows, by position group: his drawn room to potential times this. Set
@@ -324,7 +344,7 @@ export function upgrade(state) {
 
 export const game_scale = {
   FILE, ABOVE, BELOW, GROUP_OF, ROOM, OVERALL_FLOOR, _FIRST, modules,
-  data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, from_ea, potential_from_ea,
+  data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, from_ea, ea_row, potential_from_ea,
   has_overall, card_formula, card_attributes, overall, legacy_overall, position_skills, card_position, _card_overall,
   overall_version, upgrade_overalls, engine_means, card_scale, _convert, upgrade,
 };

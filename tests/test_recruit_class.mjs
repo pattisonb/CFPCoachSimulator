@@ -20,9 +20,10 @@ const J = (v) => () => JSON.stringify(v);
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 const NEW_TOPICS = ["facilities", "location", "stability", "game_day", "exposure"];
 
-const team_files = fs.readdirSync(path.join(ROOT, "cfb_sim_data", "teams")).filter((n) => n.endsWith(".json"));
-const team_file = (name) => JSON.parse(fs.readFileSync(path.join(ROOT, "cfb_sim_data", "teams", name), "utf8"));
-const real_roster = team_files.flatMap((n) => team_file(n)["roster"]);
+// the real players, in the source format the seeding and the team builder read (a league's teams: career_js/league.js)
+const source_teams = game.modules.league.source_teams(game.modules.league.from_base(2027));
+const team_file = (slug) => source_teams.find((t) => t["slug"] === slug);
+const real_roster = source_teams.flatMap((t) => t["roster"]);
 const real_names = new Set(real_roster.map((p) => p["name"].toLowerCase()));
 
 const cls = recruits.generate_class(2027, 7, new Set(real_names));
@@ -88,29 +89,12 @@ test("development closes the gap to potential, never passes it, and is faster fo
 });
 
 test("a signed recruit joins a roster in the format the team builder reads", () => {
-  const team = team_file("ohio-state.json");
+  const team = team_file("ohio-state");
   cls.slice(0, 200).forEach((p, i) => {
     const m = build_teams.map_player(recruits.as_roster_player(p, team, `gen-${i}`));
     assert(m && typeof m["speed"] === "number", p["name"]);
   });
 });
-
-test("the real players are seeded the same way twice, in the set coachability shares, the best traits on top", () => {
-  const seeded = recruits.seed_real_players(real_roster);
-  equal(seeded, recruits.seed_real_players(real_roster), "seeding is not deterministic");
-  const n = Object.keys(seeded).length;
-  const levels = {};
-  for (const v of Object.values(seeded)) levels[v["coachability"]] = (levels[v["coachability"]] || 0) + 1;
-  for (const [name, , share] of recruits.COACHABILITY) assert(Math.abs((levels[name] || 0) / n - share) < 0.001, J([name, levels[name]]));
-  const by_slug = Object.fromEntries(real_roster.map((p) => [p["slug"], p]));
-  assert(Object.entries(seeded).every(([s, v]) => by_slug[s]["dev_trait"] !== "Elite" || v["coachability"] === "Coach's Dream"));
-  const of_year = (year) => Object.entries(seeded).filter(([s]) => by_slug[s]["class_year"] === year).map(([, v]) => v);
-  const fifth = of_year("Senior (RS)");
-  assert(fifth.length && fifth.every((v) => !Object.keys(v["potential_ea"]).length), "a fifth-year player has room to grow");
-  assert(mean(of_year("Freshman").map((v) => Object.keys(v["potential_ea"]).length)) > 10);
-});
-
-// ----- the class in a career -----------------------------------------------------------------------------------------
 
 test("a career's class is 4092 prospects, nobody committed, each with three different priorities", () => {
   assert(Object.keys(rc["prospects"]).length === 4092, String(Object.keys(rc["prospects"]).length));

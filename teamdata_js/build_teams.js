@@ -1,9 +1,7 @@
-// Convert cfb_sim_data (EA-derived player ratings, coaches, stadiums) into the engine's
-// roster format and write data/engine_teams.json.
-//
-// Why a build step: the source is 146 files of about 490 KB each (72 MB). The engine needs
-// about 20 attributes per player, so the converted league is a few megabytes and loads in
-// well under a second.
+// A league's teams as the play engine reads them: each team in the source format (a career's league.js makes it from
+// the league: the players' ratings back on the scale the engine's formulas were tuned on) converted to the engine's
+// roster format. The first season's teams are not built: they are the roster file, read by rosters.js with these same
+// formulas.
 //
 // Rating map (source ratings are 0-99 with 50 = average FBS player):
 //
@@ -28,25 +26,15 @@
 // position group sits at NEUTRAL (the engine's reference point), with the spread scaled by
 // SPREAD_SCALE. The engine was calibrated on rating differences, so this keeps a league
 // of these teams playing like FBS football while preserving who is better than whom.
-//
-// Notes:
-//   - the three data files read only when they exist (observed tendencies, real adjustments, manual ratings) and
-//     the scheme overrides are read with files.js and count as missing when the host throws; the scheme overrides are
-//     read at the first use, not at load (a host sets its reader after the modules load);
-//   - `build`'s "source" is the folder's path from the project's root ("cfb_sim_data"); nothing reads it;
-//   - `main(argv)` is the build command (`[spread_scale]`): it needs a host with a file store (files.js set_store)
-//     to list the source folder and write the two files.
 import { round, int, sum, sorted, minBy, maxBy, get, isNumber, truthy, cmp, fmt, pyfloat } from "../engine_js/pyrt.js";
 import { mean, median, pstdev } from "../engine_js/pystat.js";
-import { read_json, read_text, write_text, list_dir, env } from "../engine_js/files.js";
+import { read_json, env } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "./game_scale.js";
 import { ratings as rv2 } from "./ratings.js";   // ratings v2: the player attributes (docs/RATINGS_V2.md)
 import { recruits, pypow } from "../career_js/recruits.js";
 
 const ROOT = ".";   // the project root: files.js reads paths from it
-const SRC = "cfb_sim_data";
-const OUT = "data/engine_teams.json";
 
 const NEUTRAL = 55;          // engine reference rating (engine_js/game_config.js)
 const SPREAD_SCALE = 1.50;   // rating points of spread kept per source point; tuned with tools/realism.mjs
@@ -292,15 +280,6 @@ export function team_from_source(t) {
     players.push(m);
   }
   const hc = t["coaches"]["head_coach"], oc = t["coaches"]["offensive_coordinator"], dc = t["coaches"]["defensive_coordinator"];
-  const fix = get(build_teams.SCHEME_OVERRIDES, t["slug"]) || {};
-  if (truthy(get(fix, "offense"))) {
-    hc["scheme"] = { ...hc["scheme"], "offensive_philosophy": fix["offense"] };
-    oc["scheme"] = { ...oc["scheme"], "offensive_scheme": fix["offense"] };
-  }
-  if (truthy(get(fix, "defense"))) {
-    hc["scheme"] = { ...hc["scheme"], "defensive_philosophy": fix["defense"] };
-    dc["scheme"] = { ...dc["scheme"], "defensive_scheme": fix["defense"] };
-  }
   // Returners are roles, not roster slots: a starter can also return kicks.
   const kr_list = get(st_special, "KR"), pr_list = get(st_special, "PR");
   const kr = (truthy(kr_list) ? kr_list : [null])[0];
@@ -444,180 +423,7 @@ export function apply_observed_tendencies(teams, only = null, styles = null) {
   return n;
 }
 
-const REAL_ADJUSTMENTS = "data/real_adjustments.json";
-const SCHEME_FILE = "data/scheme_overrides.json";     // schemes the source codes wrong (section 6 of the review)
-// (SCHEME_OVERRIDES is on the namespace below: the file read at the first use, {} when it is not there.)
-
 const LB_ROLES = ["SAM", "MIKE", "WILL"];
-const LB_POOL = "LB_POOL";             // real_adjustments: every linebacker by real usage, across the three roles
-const SPECIALISTS = "SPECIALISTS";     // real_adjustments: {"K" or "P": slug} for a specialist listed at the other spot
-
-const MANUAL_RATINGS = "data/manual_ratings.json";
-
-export function apply_manual_ratings(teams, manual = null) {
-  // Hand edits from data/manual_ratings.json ({"ratings": {team: {player: {attr: delta}}}}), in
-  // engine points on the normalized scale, applied after the real adjustments so the tuning tool
-  // never overwrites them. A player or attribute that is not there is skipped. Returns the
-  // number of attribute edits applied.
-  if (manual === null || manual === undefined) {
-    manual = _file_or_null(build_teams.MANUAL_RATINGS);
-    if (manual === null) return 0;
-  }
-  let applied = 0;
-  for (const t of teams) {
-    const edits = get(get(manual, "ratings") || {}, t["slug"]) || {};
-    if (!Object.keys(edits).length) continue;
-    const by_slug = new Map(t["players"].map((p) => [p["slug"], p]));
-    for (const [ps, deltas] of Object.entries(edits)) {
-      const p = by_slug.get(ps);
-      if (!p) continue;
-      for (const [attr, d] of Object.entries(deltas)) {
-        if (build_teams.ATTRS.includes(attr) && isNumber(get(p, attr))) {
-          p[attr] = clamp_rating(p[attr] + d);
-          applied += 1;
-        }
-      }
-    }
-  }
-  return applied;
-}
-
-// -> [players nudged, roles reordered]
-export function apply_real_adjustments(teams, means) {
-  // Apply data/real_adjustments.json (tuned from the real 2026 box scores): rating nudges in engine
-  // points, then depth orders by real usage, keeping each role's number of starters.
-  // Linebacker starters are picked across SAM, MIKE and WILL from one usage order (the
-  // engine plays them in that order), and a real kicker or punter listed at the other
-  // spot is moved there. Returns (players nudged, roles reordered).
-  const adj = _file_or_null(build_teams.REAL_ADJUSTMENTS);
-  if (adj === null) return [0, 0];
-  let nudged = 0, reordered = 0;
-  for (const t of teams) {
-    for (const a of get(get(adj, "added") || {}, t["slug"], [])) add_real_player(t, a);
-    const by_slug = {};
-    for (const p of t["players"]) by_slug[p["slug"]] = p;
-    const usage = get(get(adj, "usage") || {}, t["slug"]) || {};
-    if (get(usage, "rb_lead_feature") !== null) t["tendencies"]["rb_lead_feature"] = usage["rb_lead_feature"];
-    const form = get(usage, "pass_form") || {};       // how the team really throws beyond its ratings
-    if (Object.keys(form).length) {
-      t["tendencies"]["pass_form_completion"] = get(form, "completion", 0.0);
-      t["tendencies"]["pass_form_yards"] = get(form, "yards", 1.0);
-    }
-    for (const [ps, m] of Object.entries(get(usage, "targets") || {})) {
-      if (by_slug[ps] !== undefined) by_slug[ps]["target_mult"] = m;
-    }
-    for (const [ps, deltas] of Object.entries(get(get(adj, "ratings") || {}, t["slug"], {}))) {
-      const p = get(by_slug, ps);
-      if (!truthy(p)) continue;
-      for (const [attr, d] of Object.entries(deltas)) {
-        if (isNumber(get(p, attr))) p[attr] = clamp_rating(p[attr] + d);
-      }
-      nudged += 1;
-    }
-    const changes = get(get(adj, "depth") || {}, t["slug"], {});
-    for (const [role, order] of Object.entries(changes)) {
-      if (role === build_teams.LB_POOL || role === build_teams.SPECIALISTS) continue;
-      const group = t["players"].filter((p) => get(p, "role") === role);
-      if (!group.length) continue;
-      const n_start = group.filter((p) => p["starter"]).length;
-      usage_ranked(group, order, by_slug, [role]).forEach((p, i) => {
-        p["depth"] = i + 1;
-        p["starter"] = i < n_start;
-      });
-      reordered += 1;
-    }
-    if (truthy(get(changes, build_teams.LB_POOL))) reordered += pool_linebackers(t, changes[build_teams.LB_POOL], by_slug);
-    for (const [pos, slug] of Object.entries(get(changes, build_teams.SPECIALISTS) || {})) {
-      if (by_slug[slug] !== undefined) reordered += move_specialist(t, by_slug[slug], pos, means);
-    }
-  }
-  return [nudged, reordered];
-}
-
-export function usage_ranked(group, order, by_slug, roles) {
-  // `group` in real-usage order: the players `order` names (at one of `roles`) first, then
-  // the rest of the group in depth order.
-  const ranked = [];
-  for (const s of order) if (by_slug[s] !== undefined && roles.includes(get(by_slug[s], "role"))) ranked.push(by_slug[s]);
-  for (const p of sorted(group, depth_key)) if (!ranked.includes(p)) ranked.push(p);
-  return ranked;
-}
-
-// Python's str.isalnum() of one character: a letter or a number of any script.
-const _ALNUM = /^[\p{L}\p{N}]$/u;
-
-export function add_real_player(t, a) {
-  // A real 2026 player the source rosters lack (data/real_adjustments.json "added"), listed
-  // last at his role; the depth order by real usage then puts him where he plays.
-  const slug = "real-" + Array.from(a["name"].toLowerCase(), (ch) => (_ALNUM.test(ch) ? ch : "-")).join("").replace(/^-+|-+$/g, "");
-  if (t["players"].some((p) => p["slug"] === slug || (p["name"] === a["name"] && p["position"] === a["position"]))) return;
-  const group = sorted(t["players"].filter((p) => get(p, "role") === a["role"]), depth_key);
-  let template = null;
-  if (group.length) template = group[0];
-  else {
-    for (const p of t["players"]) if (p["position"] === a["position"]) { template = p; break; }
-  }
-  // His ratings are the ones of the player at the top of his role: the team plays as
-  // strong as it did, and the real player's line goes to the right name. (Rated as an
-  // average FBS starter instead, the added quarterbacks lifted NIU from 1.5 to 2.1 sim
-  // wins at week 8 against a real 0-6, and picks got worse.)
-  let attrs = {};
-  for (const k of build_teams.ATTRS) if (template && isNumber(get(template, k))) attrs[k] = template[k];
-  if (!Object.keys(attrs).length) {
-    attrs = {};
-    for (const k of build_teams.ATTRS) attrs[k] = build_teams.NEUTRAL;
-  }
-  attrs["attributes"] = { ...(get(template || {}, "attributes") || {}) };   // ratings v2, from the same template
-  let top = 0;
-  for (const q of group) top = Math.max(top, get(q, "depth") || 0);
-  const p = { "name": a["name"], "slug": slug, "position": a["position"], "source_position": a["position"],
-    "ovr": null, "class": null, "height": null, "weight": null, "jersey": null, "dev_trait": "Normal",
-    ...attrs, [build_teams.RETURN_ATTR]: 30, "role": a["role"],
-    "depth": top + 1, "starter": false, "added": true };
-  p["overall"] = player_overall(p);
-  t["players"].push(p);
-}
-
-export function pool_linebackers(t, order, by_slug) {
-  // Pick a team's linebacker starters from one usage order across SAM, MIKE and WILL
-  // (EA's starter count per role can leave its real leading tackler on the bench). Each
-  // linebacker's `order` is his place in that pool, which the engine plays by.
-  const lbs = t["players"].filter((p) => build_teams.LB_ROLES.includes(get(p, "role")));
-  if (!lbs.length) return 0;
-  const n_start = lbs.filter((p) => p["starter"]).length;
-  usage_ranked(lbs, order, by_slug, build_teams.LB_ROLES).forEach((p, i) => {
-    p["order"] = i + 1;
-    p["starter"] = i < n_start;
-  });
-  return 1;
-}
-
-export function move_specialist(t, p, pos, means) {
-  // Make `p` the starting kicker (pos "K") or punter ("P"): his attributes are rebuilt for
-  // that spot from the source ratings, and both spots' depth charts close up behind the move.
-  const old_role = get(p, "role");
-  if (p["position"] === pos || p["_src"] === undefined) return 0;
-  const raw = map_player(p["_src"], pos);
-  for (const a of build_teams.ATTRS) delete p[a];
-  for (const [a, v] of Object.entries(raw)) {
-    if (build_teams.ATTRS.includes(a) && isNumber(v)) {
-      p[a] = clamp_rating(to_engine(v, get(means, `${pos}:${a}`, 50.0)));
-    }
-  }
-  p["position"] = pos;
-  p["role"] = pos;
-  p["_attr_raw"] = rv2.raw_attributes(p["_src"]["ratings"], pos, pos);
-  p["attributes"] = house_attributes_of(p);
-  for (const [role, first] of [[pos, p], [old_role, null]]) {
-    if (role === null) continue;
-    const rest = sorted(t["players"].filter((q) => get(q, "role") === role && q !== first), depth_key);
-    (first ? [first] : []).concat(rest).forEach((q, i) => {
-      q["depth"] = i + 1;
-      q["starter"] = i === 0;
-    });
-  }
-  return 1;
-}
 
 export function depth_sort(t) {
   // Put a team's roster in depth-chart order (the source lists are not), so the engine's
@@ -630,7 +436,7 @@ export function depth_sort(t) {
 export function established(p) {
   // Whether the core-skill floor is his (CORE_FLOOR_OVR): read off his skills by the overall as first fit, at the
   // position they were made for. The card's overall ("ovr") is not asked: the engine never reads it.
-  if (!truthy(get(p, "skills"))) return false;                  // a player added by hand carries his template's ratings as they are
+  if (!truthy(get(p, "skills"))) return false;
   const ours = {};
   const keys = game_scale.keys();
   for (let i = 0; i < Math.min(keys.length, p["skills"].length); i++) ours[keys[i]] = p["skills"][i];
@@ -864,7 +670,7 @@ export function ratings_at_every_position(teams, means) {
     for (const m of t["players"]) {
       const src = m["_src"] === undefined ? null : m["_src"];
       delete m["_src"];
-      if (src === null) {              // an added real player: no source card to convert
+      if (src === null) {              // no source card to convert
         m["ratings_at"] = {};
         for (const pos of build_teams.ENGINE_POSITIONS) m["ratings_at"][pos] = pos === m["position"] ? m["overall"] : 16;
         m["ratings_at"]["KR"] = m[build_teams.RETURN_ATTR];
@@ -954,10 +760,10 @@ const _dict_text = (d) => "{" + Object.entries(d).map(([k, v]) => `'${k}': ${_fl
 
 // `observed`: a Set (or an array) of slugs, or null.
 export function build(sources, real = true, observed = null, quiet = false, styles = null) {
-  // The engine's teams file from source-format teams. `real`: the real 2026 data's own
-  // adjustments (depth by real usage, rating nudges, coaches' measured recruiting); a career's
-  // later seasons build without them. `observed`: the teams whose observed 2026 tendencies still
-  // apply (None: all of them; a career drops a team's when its head coach changes).
+  // The engine's teams file from source-format teams. `real`: centred on this league's own starter means and the
+  // head coaches' recruiting ratings measured again; a career's seasons build without it (the frozen means).
+  // `observed`: the teams whose observed 2026 tendencies still apply (None: all of them; a career drops a team's
+  // when its head coach changes).
   const say = quiet ? () => null : (...a) => console.log(...a);
   const teams = sources.map((t) => team_from_source(t));
   const means = normalize(teams, real ? null : game_scale.engine_means());
@@ -968,13 +774,7 @@ export function build(sources, real = true, observed = null, quiet = false, styl
       + `${_fmt1(minBy(Object.values(shifts)))} to ${_fmt1(moved.length ? maxBy(moved) : 0)} engine points (top scale ${_float_text(build_teams.TEAM_LEVEL_TOP_SCALE)})`);
   }
   house_attributes(teams);
-  const [nudged, reordered] = real ? apply_real_adjustments(teams, means) : [0, 0];
-  const manual_applied = real ? apply_manual_ratings(teams) : 0;
   for (const t of teams) depth_sort(t);
-  house_attributes(teams);                     // again, from today's starters (the real depth charts moved some)
-  if (nudged || reordered) {
-    say(`real 2026 adjustments: ${reordered} depth-chart roles reordered` + (nudged ? `, ${nudged} players' ratings nudged` : ""));
-  }
   ratings_at_every_position(teams, means);
   const tendency_means = normalize_tendencies(teams);
   decouple_discipline(teams);
@@ -984,9 +784,8 @@ export function build(sources, real = true, observed = null, quiet = false, styl
   if (real) {
     say("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams));
   }
-  const out = { "source": build_teams.SRC, "neutral": build_teams.NEUTRAL, "spread_scale": build_teams.SPREAD_SCALE,
+  const out = { "neutral": build_teams.NEUTRAL, "spread_scale": build_teams.SPREAD_SCALE,
     "team_level_top_scale": build_teams.TEAM_LEVEL_TOP_SCALE,
-    "manual_ratings_applied": manual_applied,
     "starter_means_before_normalization": means, "tendency_means": tendency_means,
     "attribute_scale": { ...build_teams.ATTR_SCALE }, "teams": {} };
   for (const t of teams) {
@@ -1000,45 +799,17 @@ export function build(sources, real = true, observed = null, quiet = false, styl
   return out;
 }
 
-// `argv`: what follows the script's name ([spread_scale]), which sets SPREAD_SCALE before the build.
-export function main(argv = []) {
-  if (argv.length > 0) build_teams.SPREAD_SCALE = Number(argv[0]);
-  const dir = `${build_teams.SRC}/teams`;
-  const names = list_dir(dir).filter((n) => n.endsWith(".json")).sort((a, b) => cmp(a, b));
-  const out = build(names.map((n) => JSON.parse(read_text(`${dir}/${n}`))));
-  const text = JSON.stringify(out);
-  write_text(build_teams.OUT, text);
-  const size = new TextEncoder().encode(text).length;
-  console.log(`wrote ${build_teams.OUT} with ${Object.keys(out["teams"]).length} teams (${fmt(size / 1e6, 1)} MB)`);
-  // potential and coachability (docs/PLAYER_DEVELOPMENT.md)
-  const n = recruits.write_player_potential(list_dir, write_text);
-  console.log(`wrote ${recruits.POTENTIAL_FILE.split("/").pop()}: potential and coachability for ${n} players`);
-}
-
 export const build_teams = {
-  ROOT, SRC, OUT, NEUTRAL, SPREAD_SCALE, TEAM_LEVEL_TOP_SCALE, POSITION_MAP, OFFENSE, OFF_STATS, DEF_STATS, SHARED_STATS,
+  ROOT, NEUTRAL, SPREAD_SCALE, TEAM_LEVEL_TOP_SCALE, POSITION_MAP, OFFENSE, OFF_STATS, DEF_STATS, SHARED_STATS,
   SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, to_engine, depth_key, _skills_at, map_player,
   ATTRS, RETURN_ATTR, PHYSICAL, OFF_SKILL_RANGE, CORE_FLOOR, CORE_FLOOR_OVR, CLAMP_EXTREMES,
   starter_slugs, team_from_source, TENDENCY_KEYS, normalize_tendencies, decouple_discipline,
   OBSERVED, GAME_SCRIPT_PASS, FOURTH_PER_MARGIN, PASS_RATE_SLOPE, TEMPO_SLOPE, SCRAMBLE_SHARE, apply_observed_tendencies,
-  REAL_ADJUSTMENTS, SCHEME_FILE, LB_ROLES, LB_POOL, SPECIALISTS, MANUAL_RATINGS,
-  apply_manual_ratings, apply_real_adjustments, usage_ranked, add_real_player, pool_linebackers, move_specialist,
+  LB_ROLES,
   depth_sort, established, clamp_extremes,
   P4_CONFERENCES, ATTR_BELOW, USE_FROZEN, ATTR_SCALE, _attr_group, attribute_scale, house_attributes_of, house_attributes,
   normalize, team_level, ENGINE_POSITIONS, CORE_SKILLS, player_overall, ratings_at_every_position, measured_recruiting,
-  engine_roster, build, main,
+  engine_roster, build,
 };
-
-// SCHEME_OVERRIDES: data/scheme_overrides.json when it is there, read once at the first use (not when the
-// module loads: the host's reader is set after that). It can be set, as any module variable.
-let _scheme_overrides;
-Object.defineProperty(build_teams, "SCHEME_OVERRIDES", {
-  enumerable: true,
-  get() {
-    if (_scheme_overrides === undefined) _scheme_overrides = _file_or_null(build_teams.SCHEME_FILE) || {};
-    return _scheme_overrides;
-  },
-  set(v) { _scheme_overrides = v; },
-});
 
 modules.build_teams = build_teams;

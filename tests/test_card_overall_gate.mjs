@@ -11,8 +11,10 @@ const game = await start();
 const { build_teams, game_scale } = game.modules;
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
-const dir = path.join(ROOT, build_teams.SRC, "teams");
-const sources = fs.readdirSync(dir).filter((n) => n.endsWith(".json")).sort().map((n) => JSON.parse(fs.readFileSync(path.join(dir, n), "utf8")));
+// every team in the source format the build reads (a league's teams: career_js/league.js), each player's overall
+// left for the build to score
+const sources = game.modules.league.source_teams(game.modules.league.from_base(2027));
+for (const t of sources) for (const p of t["roster"]) { delete p["ovr"]; delete p["overall"]; }
 const players_of = (built) => Object.entries(built["teams"]).flatMap(([s, t]) => [...t["offense"], ...t["defense"]].map((p) => [s, p]));
 /** A build as text with every player's "ovr" taken out, its keys in one order. */
 function without_ovr(built) {

@@ -44,7 +44,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const some = (found) => JSON.stringify(Object.fromEntries(Object.entries(found).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).slice(0, 12))])));
 
 async function main() {
-  const before = fs.statSync(path.join(ROOT, "cfb_sim_data", "teams", "notre-dame.json")).mtimeMs;
+  const before = fs.statSync(path.join(ROOT, "data", "base_meta.json")).mtimeMs;
   const terms = scrub.terms(ROOT);
   assert(terms.people.size > 10000 && terms.phrases.size > 500, () => JSON.stringify(Object.fromEntries(Object.entries(terms).map(([k, v]) => [k, v.size]))));
 
@@ -92,21 +92,27 @@ async function main() {
     const files = build_site.game_files((f) => fs.readFileSync(path.join(root, f), "utf8"), (dir) => fs.readdirSync(path.join(root, dir)));
     let found = check.leaks(root, terms, files);
     assert(!Object.keys(found).length, () => "real names in the generic build: " + some(found));
-    assert(!fs.existsSync(path.join(root, "cfb_sim_data", "teams", "notre-dame.json")));
-    const team = json(path.join(root, "cfb_sim_data", "teams", "north-dome.json"));
-    assert(team["short_name"] === "North Dome" && team["abbreviation"] === "NDM", team["short_name"]);
-    const real = json(path.join(ROOT, "cfb_sim_data", "teams", "notre-dame.json"));
+    // the teams' identities (data/base_meta.json) and the rosters (data/engine_teams.json), both under the lookalike's slug
+    const metas = json(path.join(root, "data", "base_meta.json")), filed = json(path.join(root, "data", "engine_teams.json"))["teams"];
+    const real_filed = json(path.join(ROOT, "data", "engine_teams.json"))["teams"];
+    assert(!("notre-dame" in metas) && !("notre-dame" in filed), "a real slug is still a key");
+    const team = metas["north-dome"];
+    assert(team["short_name"] === "North Dome" && team["abbreviation"] === "NDM" && team["slug"] === "north-dome", team["short_name"]);
+    assert(filed["north-dome"]["name"] === "North Dome" && filed["north-dome"]["abbreviation"] === "NDM");
+    const real = json(path.join(ROOT, "data", "base_meta.json"))["notre-dame"];
     assert(team["colors"]["primary"]["hex"] !== real["colors"]["primary"]["hex"]);          // a protected shade: moved a hair
     assert(Math.abs(parseInt(team["colors"]["primary"]["hex"].slice(1, 3), 16) - parseInt(real["colors"]["primary"]["hex"].slice(1, 3), 16)) <= tables.COLOR_NUDGE);
-    const kept = json(path.join(root, "cfb_sim_data", "teams", "iowa.json"));          // a place-named school: its slug is its place name
+    const kept = metas["iowa"];          // a place-named school: its slug is its place name
     assert(kept["short_name"] === "Iowa" && kept["state"] === "IA" && kept["mascot"] === "Kernels", kept["short_name"]);
     assert(kept["school_name"] === "Iowa University" && kept["abbreviation"] === "IOWA");
     const states = fs.readFileSync(path.join(root, "ui", "src", "states.ts"), "utf8");      // the app's list of states
     assert(states.includes('TX: "Texas"') && states.includes('MT: "Montana"') && states.includes('RI: "Rhode Island"'), "a state lost its name to a school's swap");
     assert(!fs.readFileSync(path.join(root, "sim_js", "season", "part1.js"), "utf8").includes('"Montana": "MT"'), "an FCS school kept its state's name");
-    assert(same(kept["colors"], json(path.join(ROOT, "cfb_sim_data", "teams", "iowa.json"))["colors"]));
-    assert(team["roster"].length === real["roster"].length);
-    assert(same(team["roster"].map((p) => p["overall"]), real["roster"].map((p) => p["overall"])));   // only the names change
+    assert(same(kept["colors"], json(path.join(ROOT, "data", "base_meta.json"))["iowa"]["colors"]));
+    const players = (t) => [...t["offense"], ...t["defense"]];
+    assert(players(filed["north-dome"]).length === players(real_filed["notre-dame"]).length);
+    assert(same(players(filed["north-dome"]).map((p) => p["ratings"]), players(real_filed["notre-dame"]).map((p) => p["ratings"])));   // only the names change
+    assert(players(filed["north-dome"]).every((p, i) => p["name"] !== players(real_filed["notre-dame"])[i]["name"]), "a player kept his name");
 
     // the swapped game plays: a career at a renamed school, one week
     const play = path.join(tmp, "play.mjs");
@@ -124,7 +130,7 @@ async function main() {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 
-  assert(fs.statSync(path.join(ROOT, "cfb_sim_data", "teams", "notre-dame.json")).mtimeMs === before, "the repository's data was touched");
+  assert(fs.statSync(path.join(ROOT, "data", "base_meta.json")).mtimeMs === before, "the repository's data was touched");
   console.log("test_generic_names: ok");
 }
 

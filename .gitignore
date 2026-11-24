@@ -1,14 +1,8 @@
 .claude/
 *.log
 
-# (data/engine_teams.json and data/player_potential.json, the rosters as the game reads them, are committed: made from
-# cfb_sim_data/ with `node tools/game_host.mjs . teams` and committed again when a roster or the builder changes;
-# tests/test_static_rosters.mjs fails when they are behind)
-
-# the precomputed base league (node tools/game_host.mjs . base); the site build makes its own in a scratch folder
-data/base_league.json
-data/base_meta.json
-data/base_development.json
+# (data/engine_teams.json and data/player_potential.json, the rosters, and data/base_meta.json, the teams' identities,
+# are committed and are the thing itself: nothing makes them, and a rating is changed by changing it in the roster file)
 
 # saves, custom coaches and a career's built leagues, when the game runs on Node against this folder
 data/seasons/

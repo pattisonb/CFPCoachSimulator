@@ -16,7 +16,7 @@
 // Ratings are on EA's scale (ratings_ea, overall_ea) like the source rosters, plus the source
 // curve's scale (`ratings`, `overall`) that build_teams.js reads.
 import { Random, round, int, sum, get, truthy, floordiv, mod, fmt, cmp } from "../engine_js/pyrt.js";
-import { read_json, read_text, forget } from "../engine_js/files.js";
+import { read_json } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 
 const ROOT = ".";                              // the project's root: files.js reads paths from it
@@ -318,93 +318,7 @@ const UNKNOWN_STAR_ROOM = 1.4;            // no recruiting record (walk-ons, old
 const AHEAD_ROOM = 0.02;                  // each point of overall above the norm for his stars and years: 2% more room *tune*
 const LEVEL_RANGE = [0.2, 3.0];
 
-// -> [by_stars, by_years]
-export function _norms() {
-  // The real overall (source scale) by stars and years in college, and by years alone.
-  const t = recruits.model()["players"]["targets"]["overall_by_stars_and_years"];
-  const by_stars = {};
-  for (const [s, ys] of Object.entries(t)) {
-    by_stars[s] = {};
-    for (const [y, v] of Object.entries(ys)) by_stars[s][y] = v[0];
-  }
-  const by_years = {};
-  for (let y = 0; y < 5; y++) {
-    const cells = [];
-    for (const ys of Object.values(t)) if (ys[String(y)] !== undefined) cells.push(ys[String(y)]);
-    by_years[y] = pysum(cells.map(([m, n]) => m * n)) / sum(cells.map(([_, n]) => n));
-  }
-  return [by_stars, by_years];
-}
-
-export function seed_real_players(players) {
-  // slug -> {"coachability", "potential_ea", "stars"} for source roster players (cfb_sim_data).
-  // Coachability: the league is ranked by EA development trait, then within a trait by how far
-  // ahead of the norm for his stars and years a player already is, and cut into the six levels'
-  // shares. Potential: each attribute's room is its real career gain at his position times the
-  // share of his career still to come, divided by what an average player realizes in that time,
-  // times a player level from his stars, trait and how far ahead he is. Same players, same answer.
-  const stars_of = recruits.model()["players"]["real_stars"];
-  const gains = recruits.model()["players"]["career_gain"];
-  const [by_stars, by_years] = recruits._norms();
-  const rows = [];
-  for (const p of players) {
-    if (!truthy(get(p, "ratings_ea")) || !Object.hasOwn(recruits.YEARS_IN, get(p, "class_year"))) continue;
-    const y = recruits.YEARS_IN[p["class_year"]];
-    const s = get(stars_of, p["slug"]);
-    const norm = s ? get(get(by_stars, s, {}), y, by_years[y]) : by_years[y];
-    rows.push([p, y, s, (get(p, "overall") || 0) - norm]);
-  }
-  // coachability: best trait first, then furthest ahead, cut into the levels' shares
-  rows.sort((a, b) => cmp([-get(recruits.TRAIT_ORDER, get(a[0], "dev_trait"), 0), -a[3]],
-    [-get(recruits.TRAIT_ORDER, get(b[0], "dev_trait"), 0), -b[3]]));
-  const cuts = [];
-  let acc = 0.0;
-  for (const [name, _, share] of recruits.COACHABILITY) {
-    acc += share;
-    cuts.push([round(acc * rows.length), name]);
-  }
-  const last = recruits.COACHABILITY[recruits.COACHABILITY.length - 1];
-  const out = {};
-  for (let i = 0; i < rows.length; i++) {
-    const [p, y, s, ahead] = rows[i];
-    const level_name = i < cuts[cuts.length - 1][0] ? cuts.find(([cut, _]) => i < cut)[1] : last[0];
-    const rng = new Random(`real-${p["slug"]}`);
-    const left = Math.max(0, recruits.CAREER_YEARS - y);
-    let realized = left ? pysum(recruits.COACHABILITY.map(([_, rate, share]) => share * (1 - pypow(1 - rate, left)))) : 1.0;
-    // ... and a quick learner realizes his room faster than the mix: his room is what he realizes at
-    // his own pace, so a Coach's Dream junior does not gain twice his position's real career gain
-    realized = left ? Math.max(realized, 1 - pypow(1 - recruits.RATE[level_name], left)) : 1.0;
-    let level = Math.exp(rng.gauss(-pypow(recruits.POTENTIAL_SD, 2) / 2, recruits.POTENTIAL_SD));
-    level *= get(recruits.STAR_ROOM, s, recruits.UNKNOWN_STAR_ROOM) * get(recruits.TRAIT_ROOM, get(p, "dev_trait"), 1.0)
-      * Math.exp(recruits.AHEAD_ROOM * ahead);
-    level = Math.max(recruits.LEVEL_RANGE[0], Math.min(recruits.LEVEL_RANGE[1], level));
-    const gain = get(gains, p["position"], {});
-    const pot = {};
-    for (const [k, v] of Object.entries(p["ratings_ea"])) {
-      const room = Math.max(0.0, get(gain, k, 0.0)) * recruits.SURVIVOR_TRIM * (left / recruits.CAREER_YEARS) / realized * level
-        * rng.uniform(recruits.ATTRIBUTE_SPREAD[0], recruits.ATTRIBUTE_SPREAD[1]);
-      const top = int(round(Math.min(99, v + room)));
-      if (top > v) pot[k] = top;               // attributes with no room are left out: potential = current
-    }
-    out[p["slug"]] = { "coachability": level_name, "potential_ea": pot, ...(s ? { "stars": s } : {}) };
-  }
-  return out;
-}
-
-// files.js only reads one file by its path, so whoever calls this says how a folder is listed and a file written:
-// `list_files(dir)` -> the names of the files in a folder of the project, `write_text(path, text)` writes one.
-export function write_player_potential(list_files, write_text) {
-  // Seed every source roster player and write data/player_potential.json (build_teams.js runs this).
-  let players = [];
-  const names = list_files("cfb_sim_data/teams").filter((n) => n.endsWith(".json")).sort((a, b) => cmp(a, b));
-  for (const name of names) {
-    players = players.concat(JSON.parse(read_text(`cfb_sim_data/teams/${name}`))["roster"]);
-  }
-  const seeded = recruits.seed_real_players(players);
-  write_text(recruits.POTENTIAL_FILE, JSON.stringify(seeded));
-  forget(recruits.POTENTIAL_FILE);
-  return Object.keys(seeded).length;
-}
+// (the real players' coachability and potential are data/player_potential.json: a committed file, not made here)
 
 // `argv`: what follows the script's name ([year, seed]).
 export function main(argv = []) {
@@ -427,7 +341,7 @@ export const recruits = {
   model, curve, _CUMULATIVE, weighted, from_quantiles, overall_ea, rescore, _name, _attributes, _potential, recruit,
   generate_class, develop, as_roster_player,
   POTENTIAL_FILE, YEARS_IN, TRAIT_ORDER, TRAIT_ROOM, UNKNOWN_STAR_ROOM, AHEAD_ROOM, LEVEL_RANGE,
-  _norms, seed_real_players, write_player_potential, main,
+  main,
 };
 
 modules.recruits = recruits;

@@ -277,13 +277,12 @@ function unpack(bytes) {
 // What a skin (skin.js; tools/make_skin.mjs makes one) changes here:
 //   - the game's script: game.js with the skin's names written into the spots the site lists (game.names.json);
 //   - the game's data: every path the skin lists (`pack`) and no other. The skin's own files (`files`) take the place
-//     of the site's, and the files the game makes itself (`generated`: the engine's teams, the base league) are made
-//     here from the skin's rosters (`sources`), by the game, the way the site's build makes its own: one step a
-//     worker (this script again, with `task`), as the build runs one step a process. They are kept (IndexedDB) and
-//     made again only when the site's own have changed, so a skin outlives a new version of the site;
+//     of the site's: its rosters and its teams' identities among them. Nothing is made from them (`generated` is
+//     empty: the game reads a career's first league from the rosters as it runs), so a skin outlives a new version
+//     of the site;
 //   - the saves: a store of their own.
 const SKIN_NAMES = "game.names.json";
-const SKIN_STEPS = [["base", "Making the skin's league"]];      // (the rosters come in the skin itself: nothing makes them)
+const SKIN_STEPS = [];      // (nothing is made for a skin: its rosters come in it, and the game reads a career's first league from them)
 let skin = null;           // the skin that is on: {meta, files, gameText, missed, mark, stale}
 
 const fetched = async (url, how) => {
@@ -339,8 +338,7 @@ async function runTask(init) {
     const game = self.Game, written = new Map();
     game.files.set_reader(store.read);
     game.files.set_store({ ...store, write(path, text) { store.write(path, text); written.set(clean(path), String(text)); } });
-    if (init.task === "base") game.modules.league.write_base_files();
-    else throw new Error(`unknown step: ${init.task}`);
+    throw new Error(`unknown step: ${init.task}`);
     postMessage({ kind: "task-done", written: [...written] });
   } catch (err) {
     console.error(err);

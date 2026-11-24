@@ -408,7 +408,7 @@ cfg.KICKOFF_RETURN_TD_CHANCE = 0.004;
 cfg.TARGET_WEIGHT_POWER = 2.3;        // *tune* receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
 // full-season receiving leaders 17% over 2023-2025, 3.5 15% over, 2.5 8% once pass-heavy
 // teams threw as much as they really do: tools/realism.mjs)
-cfg.TARGET_MULT_MAX = 1.3;            // *tune* cap on a receiver's real-usage target weight (data/real_adjustments.json); 2.0 fed the
+cfg.TARGET_MULT_MAX = 1.3;            // *tune* cap on a receiver's real-usage target weight (his `target_mult` in the roster file); 2.0 fed the
 // top receivers too much (the leader had 2,100 yards where real leaders have 1,500)
 
 // ----- Who gets the defensive stats (tools/realism.mjs: season leaders against real seasons) -----
