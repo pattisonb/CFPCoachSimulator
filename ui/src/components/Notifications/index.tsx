@@ -144,7 +144,7 @@ interface ToastsProps {
 }
 
 /**
- * The notices that have just landed, under your coach: the newest as a card, the rest stacked behind it as a deck
+ * The notices that have just landed, out of your coach's card to its left: the newest as a card, the rest stacked behind it as a deck
  * (its edges show, and a line says how many). A busy stretch (an offseason stage) is one card to read, not a column
  * of them: Show All fans the deck out, Dismiss All puts it away.
  */
