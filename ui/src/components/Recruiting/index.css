@@ -724,6 +724,16 @@
   line-height: 1;
 }
 
+/* the scout's box holds his report's ring, so it is a little wider; a full report keeps its ring, quietly */
+.quick--labels .quick__box--scout {
+  width: 58px;
+}
+
+.quick__box--scout.is-done {
+  background: none;
+  border-color: transparent;
+}
+
 .quick__box:hover:enabled {
   border-color: var(--ink);
 }
@@ -773,7 +783,7 @@
 }
 
 .recruiting__rows .recruiting__row {
-  padding-right: 232px; /* the four boxes */
+  padding-right: 240px; /* the four boxes */
 }
 
 /* ... and the row makes room for it */

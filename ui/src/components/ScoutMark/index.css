@@ -7,7 +7,8 @@
   vertical-align: middle;
 }
 
-.scout-mark svg {
+/* (the ring alone: the binoculars are an svg too, and sit in the middle of it) */
+.scout-mark__rings {
   position: absolute;
   inset: 0;
 }
@@ -27,7 +28,8 @@
 
 .scout-mark__icon {
   position: relative;
-  color: var(--ink-soft);
+  display: block;
+  color: var(--ink);
 }
 
 .scout-mark.is-full .scout-mark__icon {

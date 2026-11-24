@@ -9,6 +9,10 @@ interface Props {
   need?: number;
   /** the ring's width across, in pixels */
   size?: number;
+  /** draw it for a prospect nobody has looked at too: an empty ring (the board's Scout box) */
+  always?: boolean;
+  /** no tip or label of its own (it sits inside a button that has them) */
+  bare?: boolean;
 }
 
 /**
@@ -16,8 +20,8 @@ interface Props {
  * player's ask: a loading circle around the mark, clearer than binoculars filling from the left), the ring whole and
  * the binoculars inked green once his report is complete. Nothing at all for a prospect nobody has looked at.
  */
-export default function ScoutMark({ looks, need = 3, size = 24 }: Props) {
-  if (!(looks > 0)) return null;
+export default function ScoutMark({ looks, need = 3, size = 24, always, bare }: Props) {
+  if (!(looks > 0) && !always) return null;
   const share = Math.min(1, looks / need);
   const pct = Math.round(share * 100);
   const stroke = Math.max(2, Math.round(size / 9));
@@ -27,11 +31,12 @@ export default function ScoutMark({ looks, need = 3, size = 24 }: Props) {
     <span
       className={`scout-mark${pct >= 100 ? " is-full" : ""}`}
       style={{ width: size, height: size }}
-      role="img"
-      aria-label={m.scouted(pct)}
-      title={m.scouted(pct)}
+      role={bare ? undefined : "img"}
+      aria-hidden={bare ? true : undefined}
+      aria-label={bare ? undefined : m.scouted(pct)}
+      title={bare ? undefined : m.scouted(pct)}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <svg className="scout-mark__rings" width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <circle className="scout-mark__track" cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} />
         <circle
           className="scout-mark__ring"

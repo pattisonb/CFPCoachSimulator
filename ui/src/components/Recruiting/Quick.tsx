@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Binoculars, Chat, Check, Phone, VideoCamera } from "@phosphor-icons/react";
 import { api } from "../../api.ts";
+import ScoutMark from "../ScoutMark/index.tsx";
 import type { BoardRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 
@@ -160,7 +161,7 @@ export default function QuickActions({
       {scout && (
         <button
           type="button"
-          className={`quick__box${scouted ? " is-done" : ""}`}
+          className={`quick__box quick__box--scout${scouted ? " is-done" : ""}`}
           aria-label={scoutTip}
           title={scoutTip}
           disabled={scoutOff}
@@ -169,10 +170,13 @@ export default function QuickActions({
             void sendScout();
           }}
         >
-          {scouted ? (
+          {/* how far his report is, on the box that adds to it: a ring closing around the binoculars */}
+          {labels ? (
+            <ScoutMark looks={r.looks ?? 0} size={24} always bare />
+          ) : scouted ? (
             <Check size={14} weight="bold" aria-hidden="true" />
           ) : (
-            <Binoculars size={labels ? 16 : 14} weight="bold" aria-hidden="true" />
+            <Binoculars size={14} weight="bold" aria-hidden="true" />
           )}
           {labels && !scouted && <span>{scoutCost}</span>}
         </button>
