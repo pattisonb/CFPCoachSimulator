@@ -517,8 +517,8 @@ function playlink_team(state, slug) {
       if (truthy(get(p, field))) out[key] = p[field];
     }
     out["ovr"] = season.page_overall(p);          // what his card shows
-    // his card's ratings as the card prints them, name and number ("Pocket Poise": 82), Decision Making among them
-    // (the one the card works out from two others): the field need not work any of them out
+    // his card's ratings as the card prints them, name and number ("Pocket Poise": 82), a quarterback's Decision
+    // Making among them (a rating of its own in the roster file): the field need not work any of them out
     const card = {};
     for (const [k, v] of Object.entries(get(p, "attributes") || {})) {
       if (has(ratings_v2.ATTRIBUTES, k)) card[ratings_v2.ATTRIBUTES[k][0]] = season.page_attribute(p, k, v);

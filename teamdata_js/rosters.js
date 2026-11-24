@@ -202,7 +202,9 @@ function _attribute(kept, scale_group, key, base, named, exact) {
     v = round(v, 1);
     const [m, hi, lo] = get(build_teams.ATTR_SCALE, `${scale_group}|${key}`, [v, 1.5, 0.9]);
     out = build_teams.clamp_rating(50 + (v - m) * (v >= m ? hi : lo));
-    if (exact && src.every((s) => named[s] === named[src[0]])) {      // one number of the file (a blend's skills are one rating there)
+    // one number of the file. Never a rating of its own (OWN): a quarterback's Decision Making is the file's Decision
+    // Making, not his Football IQ's number when his Football IQ and Pocket Poise happen to be the same
+    if (exact && !OWN.includes(key) && src.every((s) => named[s] === named[src[0]])) {
       const want = named[src[0]];
       search: for (let d = 0; d <= rosters.NEAR; d++) {
         for (const o of d ? [out + d, out - d] : [out]) {
@@ -271,6 +273,7 @@ export function shown_attribute(p, key, value) {
   if (!truthy(filed) || !Object.hasOwn(rv2.ATTRIBUTES, key)) return null;
   const own = get(get(p, "filed_own") || {}, key);            // a rating with no skill behind it (his Decision Making)
   if (own !== null) return own[0] === value ? own[1] : null;
+  if (OWN.includes(key)) return null;                          // (his own rating: never another rating's number)
   const src = rv2.ATTRIBUTES[key][3].sources;
   if (!isNumber(filed[src[0]]) || !src.every((s) => filed[s] === filed[src[0]])) return null;     // (not one number of the file)
   const group = rv2.card_group(p["position"], get(p, "role"));

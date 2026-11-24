@@ -40,19 +40,32 @@ test("the roster is what the link has always carried: the depth chart, and every
     keys.forEach((k, i) => { all += 1; if (p["skills"][i] === by_skill[k]) same += 1; });
   }
   assert(all > 3000 && same === all, `${same} of ${all} skills in the link are the file's numbers`);
-  // ... and his card as the card prints it: every name and number of the file's that his card shows, and Decision
-  // Making, which the card works out
+  // ... and his card as the card prints it: every name and number of the file's that his card shows, a quarterback's
+  // Decision Making among them (a rating of its own: the file's number, whatever his Football IQ and Pocket Poise are)
   for (const src of [...filed["offense"], ...filed["defense"]]) {
     const p = t["players"].find((x) => x["slug"] === src["slug"]);
     if (!p) continue;
     assert(Object.keys(p["card"]).length >= 4, show(p["card"]));
     for (const [name, v] of Object.entries(p["card"])) {
       assert(Number.isInteger(v) && v >= 1 && v <= 99, `${p["name"]} ${name} ${v}`);
-      if (name !== "Decision Making") equal(v, src["ratings"][name], `${p["name"]} ${name}`);
+      equal(v, src["ratings"][name], `${p["name"]} ${name}`);
     }
   }
   const qb = t["players"].find((x) => x["pos"] === "QB");
   assert(Object.keys(qb["card"]).length === 23 && qb["card"]["Decision Making"] >= 1 && "Juke Move" in qb["card"] && "Spin Move" in qb["card"] && "Toughness" in qb["card"] && "Pocket Poise" in qb["card"] && "Football IQ" in qb["card"], show(qb["card"]));
+  // every quarterback in the file, the ones whose Football IQ and Pocket Poise are one number among them (the link
+  // once sent that number as their Decision Making)
+  const every = JSON.parse(fs.readFileSync(new URL("../data/engine_teams.json", import.meta.url), "utf8"))["teams"];
+  let qbs = 0;
+  for (const [slug, team] of Object.entries(every)) {
+    const sent = link(slug)["players"];
+    for (const src of team["offense"]) {
+      if (!("Decision Making" in src["ratings"])) continue;
+      qbs += 1;
+      equal(sent.find((x) => x["slug"] === src["slug"])["card"]["Decision Making"], src["ratings"]["Decision Making"], `${src["name"]} Decision Making`);
+    }
+  }
+  assert(qbs > 500, `${qbs} quarterbacks`);
   const smith = t["players"].find((x) => x["slug"] === "jeremiah-smith");
   equal(smith["skills"][keys.indexOf("speed")], [...filed["offense"]].find((x) => x["slug"] === "jeremiah-smith")["ratings"]["Top Speed"]);
   const slugs = new Set(t["players"].map((p) => p["slug"]));
