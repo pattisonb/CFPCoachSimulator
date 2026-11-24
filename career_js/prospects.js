@@ -1287,7 +1287,11 @@ export function _sort_key(state, viewer, key, keen) {
 }
 
 export function search(state, viewer, position = null, stars = null, home = null, status = null, q = null,
-  offset = 0, limit = 50, sort = "rank", group = null, cols = null) {
+  offset = 0, limit = 50, sort = "rank", group = null, cols = null, measure = null) {
+  // `measure` (the player's ask: find the fastest running backs): one of the scouted ratings by its key ("top_speed").
+  // Each row then carries your staff's read of it (`measure`: est, lo and hi, or null before a look), and the sort
+  // "measure" orders by its best guess, the prospects you have not scouted last either way. `measures` in the answer
+  // is what the menu offers: the physical traits always, and a position's own ratings once the list is one position.
   // The class you can see, filtered and paged, by national rank or any column (`sort`: _sort_key's names, "-" first to
   // reverse; "interest" is interest in your school). `status="interested"` keeps those graded High: the prospects your
   // school appeals to most among recruits of their star rating. `cols` filters by the table's columns (the player's
@@ -1369,7 +1373,18 @@ export function search(state, viewer, position = null, stars = null, home = null
   // column's key, "-" first for the other way. Recommended keeps its fit order until you pick another sort.
   const desc = sort.startsWith("-");
   const key = sort.replace(/^-+/, "") || "rank";
-  if (key === "rank" && status === "recommended" && !desc) {
+  const clear = modules.clear;
+  const read_of = {};                         // his read of the measure, worked out once a prospect
+  const measured = (pid) => {
+    if (!truthy(measure)) return null;
+    if (!_in(pid, read_of)) read_of[pid] = truthy(get(rc["reads"], pid)) ? clear.measure(state, pid, measure) : null;
+    return read_of[pid];
+  };
+  if (key === "measure" && truthy(measure)) {
+    out = sorted(out, (pid) => rc["prospects"][pid]["rank"]);
+    const known = out.filter((pid) => measured(pid) !== null), unknown = out.filter((pid) => measured(pid) === null);
+    out = [...sorted(known, (pid) => -measured(pid)["est"], desc), ...unknown];       // not scouted: last, whichever way
+  } else if (key === "rank" && status === "recommended" && !desc) {
     out = sorted(out, (pid) => -recs[pid]["fit"]);
   } else {
     const fn = prospects._sort_key(state, viewer, key, keen);
@@ -1384,10 +1399,17 @@ export function search(state, viewer, position = null, stars = null, home = null
     r.can_scout = prospects.can_scout(state, viewer, pid); r.hard = truthy(get(rc["status"][pid], "hard")) && !truthy(rc["status"][pid]["signed"]);
     if (_in(pid, recs)) r["why"] = recs[pid]["why"];
     r["offers_n"] = sum(Object.values(rc["offers"]).map((pids) => (_in(pid, pids) ? 1 : 0)));     // how many schools have offered him
+    if (truthy(measure)) r["measure"] = measured(pid);
     rows.push(r);
   }
   const needs = recruiting.needs_by_spot(state, viewer);                   // by position: OT, OG and C, EDGE and DT, MIKE and WILL, FS and SS
-  return { total: out.length, rows, needs, recommended_ids: Object.keys(recs),
+  // what the Measure menu offers: the physical traits, and the one position's own ratings when the list is one position
+  let measures = clear.PHYSICAL.map((k) => ({ key: k, label: rv2.ATTRIBUTES[k][0], physical: true }));
+  if ((truthy(group) || truthy(position)) && out.length) {
+    const own_ = clear.measures(state, rc["prospects"][out[0]]).filter((x) => !clear.PHYSICAL.includes(x["key"]));
+    measures = [...own_.map((x) => ({ ...x, physical: false })), ...measures];
+  }
+  return { total: out.length, rows, needs, recommended_ids: Object.keys(recs), measures,
     summary: prospects.class_summary(state, viewer, visible, needs) };
 }
 
@@ -1438,7 +1460,9 @@ export function class_summary(state, viewer, visible, needs) {
       }
     }
     const c = get(get(rc["contacts"], pid) || {}, viewer) || {};
-    if (truthy(get(c, "n")) || offers.has(pid)) contact += 1;
+    // in contact: the ones on your board you have reached or offered (the player's report: 73 in contact against 20
+    // on the board counted everyone ever messaged, long after they left it)
+    if (board.has(pid) && (truthy(get(c, "n")) || offers.has(pid))) contact += 1;
     if (truthy(get(rc["reads"], pid))) evaluated += 1;
     if ((st["signed"] || st["committed"]) === viewer && _in(k, mine)) mine[k] += 1;
     if (!(truthy(st["signed"]) || truthy(st["committed"]) || truthy(get(st, "pro")))) {
@@ -1459,7 +1483,7 @@ export function class_summary(state, viewer, visible, needs) {
     cities[st] = sorted(Object.entries(ts), (kv) => [-kv[1][0], kv[0]]).slice(0, prospects.MAP_CITIES).map(([name, v]) => [name, v[1], v[2], v[0]]);
   }
   return { stars, total: visible.length,
-    footprint: { board: rc["board"].length, contact, evaluated },
+    footprint: { board: rc["board"].length, cap: modules.recruiting.BOARD_CAP, contact, evaluated },
     outlook: { commits, spots: commits + sum(Object.values(needs).map((r) => Math.max(0, r["need"]))), by_stars: mine },
     top, top_in, board_at, by_state, cities };
 }

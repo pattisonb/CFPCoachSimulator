@@ -21,6 +21,7 @@ import ScoutMark from "../ScoutMark/index.tsx";
 import RecruitStatus from "../RecruitStatus/index.tsx";
 import ProspectCard, { Stars, statusOf, transferLine } from "../ProspectCard/index.tsx";
 import MinMax from "../MinMax/index.tsx";
+import RangeBar from "../RangeBar/index.tsx";
 import TileMap, { MapMark } from "../TileMap/index.tsx";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
@@ -183,6 +184,8 @@ export default function Prospects({
   /** what the map's dots show: one value for the small map and the big one */
   const [mapShow, setMapShow] = useKept(`prospects.${seasonId}.mapShow`, "none");
   const [sort, setSort] = useKept(`prospects.${seasonId}.sort`, "rank");
+  /** the scouted rating the table measures by (a column of its own, and the sort): "" for none */
+  const [gauge, setGauge] = useKept(`prospects.${seasonId}.measure`, "");
   /** the columns' own filters (a word for Status, Interest, Scouted and Potential; a low and a high end for the rest) */
   const [cols, setCols] = useKept<Record<string, string | number>>(`prospects.${seasonId}.cols`, {});
   const [colsOpen, setColsOpen] = useKept(`prospects.${seasonId}.colsOpen`, false);
@@ -216,7 +219,7 @@ export default function Prospects({
   // a new filter starts at the first page
   useEffect(() => {
     setPage(0);
-  }, [view, q, group, stars, home, sort, colsKey]);
+  }, [view, q, group, stars, home, sort, gauge, colsKey]);
 
   const load = useCallback(() => {
     const token = ++seq.current;
@@ -228,6 +231,7 @@ export default function Prospects({
     if (stars) params.set("stars", String(stars));
     if (home) params.set("state", home);
     for (const [k, v] of Object.entries(cols)) params.set(k, String(v));
+    if (gauge) params.set("measure", gauge);
     setLoading(true);
     api<ProspectsView>(`/api/season/${seasonId}/prospects?${params}`)
       .then((d) => {
@@ -237,7 +241,7 @@ export default function Prospects({
       })
       .catch((e: Error) => token === seq.current && setError(e.message))
       .finally(() => token === seq.current && setLoading(false));
-  }, [seasonId, view, q, group, stars, home, sort, page, colsKey]);
+  }, [seasonId, view, q, group, stars, home, sort, gauge, page, colsKey]);
 
   // the class is read once this tab has been opened (the Board tab does not pay for it), and from then on whenever
   // a filter changes
@@ -314,6 +318,21 @@ export default function Prospects({
     }
   };
 
+  // the Measure menu: the ratings the list can be ranked by. Picking one ranks by it; a position's own rating that
+  // the list no longer offers (another position picked) is let go, and the sort with it
+  const measures = data?.measures ?? [];
+  const measured = measures.find((x) => x.key === gauge);
+  // measuring takes a column: Height and Weight give theirs up for it, so a prospect's name keeps its room
+  const sized = !narrow && !measured;
+  const pickMeasure = (key: string) => {
+    setGauge(key);
+    if (key) setSort("measure");
+    else if (sort.replace("-", "") === "measure") setSort("rank");
+  };
+  useEffect(() => {
+    if (gauge && data?.measures && !data.measures.some((x) => x.key === gauge)) pickMeasure("");
+  }, [data?.measures, gauge]);
+
   const sortBy = (col: Col) => {
     const key = SORTS[col];
     if (!key) return;
@@ -380,13 +399,11 @@ export default function Prospects({
           <p className="prospects__lede">{m.classOf(year + 1, s?.total ?? 0)}</p>
           {s && (
             <div className="prospects__class">
-              <span className="label">{m.yourClass}</span>
+              <span className="label">{m.yourBoard}</span>
               <b>
-                {m.commits(s.outlook.commits, s.outlook.spots)} <small>{m.committed}</small>
+                {m.onBoardOf(s.footprint.board, s.footprint.cap ?? 30)} <small>{m.onBoard}</small>
               </b>
-              <span className="prospects__soft">
-                {m.footprint(s.footprint.board, s.footprint.contact, s.footprint.evaluated)}
-              </span>
+              <span className="prospects__soft">{m.footprint(s.footprint.contact, s.footprint.evaluated)}</span>
             </div>
           )}
           {/* the map's column folded away: this button, in the page's corner, brings it back (no rail down the side) */}
@@ -459,6 +476,23 @@ export default function Prospects({
               </option>
             ))}
           </select>
+          {/* rank the list by one scouted rating: it gets a column of its own */}
+          <span title={m.measureTip}>
+            <Dropdown
+              label={m.measure}
+              size="md"
+              value={gauge}
+              options={[
+                { value: "", label: m.noMeasure },
+                ...measures.map((x) => ({
+                  value: x.key,
+                  label: x.label,
+                  hint: x.physical ? m.measureBody : m.measureOwn,
+                })),
+              ]}
+              onChange={pickMeasure}
+            />
+          </span>
           {/* the columns' own filters open under this row; the button counts the ones set */}
           <Chip on={colsOpen || colsOn > 0} count={colsOn || undefined} onClick={() => setColsOpen(!colsOpen)}>
             <Funnel size={14} weight="bold" aria-hidden="true" />
@@ -547,8 +581,9 @@ export default function Prospects({
                 <col className="prospects__col-rank" />
                 <col />
                 <col className="prospects__col-pos" />
-                {!narrow && <col className="prospects__col-size" />}
-                {!narrow && <col className="prospects__col-size" />}
+                {measured && <col className="prospects__col-measure" />}
+                {sized && <col className="prospects__col-size" />}
+                {sized && <col className="prospects__col-size" />}
                 <col className="prospects__col-stars" />
                 <col className="prospects__col-status" />
                 <col className="prospects__col-offers" />
@@ -563,8 +598,31 @@ export default function Prospects({
                   <Th col="rank" className="num" />
                   <Th col="who" className="left" />
                   <Th col="pos" />
-                  {!narrow && <Th col="ht" />}
-                  {!narrow && <Th col="wt" />}
+                  {measured && (
+                    <th
+                      className="left"
+                      scope="col"
+                      aria-sort={sort === "measure" ? "descending" : sort === "-measure" ? "ascending" : undefined}
+                    >
+                      <button
+                        type="button"
+                        className="prospects__sort"
+                        title={m.sortBy(measured.label)}
+                        onClick={() => setSort(sort === "measure" ? "-measure" : "measure")}
+                      >
+                        <span className="prospects__sort-label">
+                          {measured.label}
+                          {sort === "measure" ? (
+                            <SortDescending size={14} weight="bold" aria-hidden="true" />
+                          ) : sort === "-measure" ? (
+                            <SortAscending size={14} weight="bold" aria-hidden="true" />
+                          ) : null}
+                        </span>
+                      </button>
+                    </th>
+                  )}
+                  {sized && <Th col="ht" />}
+                  {sized && <Th col="wt" />}
                   {/* the portal: a transfer's class where a recruit has his stars */}
                   <Th col={portal ? "cls" : "stars"} />
                   <Th col="status" />
@@ -609,8 +667,31 @@ export default function Prospects({
                       </button>
                     </td>
                     <td>{r.display_pos}</td>
-                    {!narrow && <td className="prospects__soft">{r.height_display}</td>}
-                    {!narrow && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
+                    {measured && (
+                      <td className="left">
+                        {r.measure ? (
+                          <span
+                            className="prospects__measure"
+                            title={m.measureRead(measured.label, r.measure.est, r.measure.lo, r.measure.hi)}
+                          >
+                            <b>{r.measure.est}</b>
+                            <RangeBar
+                              lo={r.measure.lo}
+                              hi={r.measure.hi}
+                              mid={r.measure.est}
+                              soft={r.measure.confidence === "Low"}
+                            />
+                            <span className="prospects__soft">{m.measureRange(r.measure.lo, r.measure.hi)}</span>
+                          </span>
+                        ) : (
+                          <span className="prospects__soft" title={m.notScoutedTip}>
+                            {m.notScouted}
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    {sized && <td className="prospects__soft">{r.height_display}</td>}
+                    {sized && <td className="prospects__soft">{r.weight_display.replace(" lbs", "")}</td>}
                     <td>{r.portal ? formatClass(r.cls ?? null) : <Stars n={r.stars} size={10} />}</td>
                     <td className="prospects__status" title={r.blocked ? r.blocked.text : statusOf(r)}>
                       {/* where he went: his school's stamp alone; the cell's tip says it in words ("Signed: Oregon") */}

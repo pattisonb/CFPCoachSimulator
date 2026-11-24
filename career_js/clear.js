@@ -116,6 +116,31 @@ export function _group_of_key(p, key) {
   return "technique";
 }
 
+export function measures(state, p) {
+  // The ratings a prospect is read on, in the order his card lists them, as [{key, label}]: his position's own first,
+  // then the physical traits (what Key Ratings shows; the Prospects table's Measure menu offers the same).
+  const pr = modules.prospects, season = modules.season;
+  const attrs = get(state["recruiting"], "attrs");
+  const ours = {};
+  for (let i = 0; i < Math.min(attrs.length, p["ratings"].length); i++) ours[attrs[i]] = p["ratings"][i];
+  const cards = pr.card_attributes(ours, p);
+  const pos = pr.engine_position(p);
+  const grp = own(season.SCALE_GROUP, pos, pos);
+  const listed = own(clear.KEYS, grp, []).filter((k) => k in cards);
+  const keys = ["K", "P"].includes(grp) ? listed.slice(0, 8)
+    : [...listed.filter((k) => !clear.PHYSICAL.includes(k)).slice(0, clear.KEY_SKILLS), ...clear.PHYSICAL.filter((k) => k in cards)];
+  return keys.map((k) => ({ key: k, label: rv2.ATTRIBUTES[k][0] }));
+}
+
+export function measure(state, pid, key) {
+  // One of his key ratings as your staff reads it ({key, label, est, lo, hi, confidence}), or null before any look or
+  // when his position is not read on it.
+  const r = clear.ratings(state, pid);
+  if (r === null) return null;
+  const row = r["rows"].find((x) => x["key"] === key);
+  return row !== undefined && row["est"] !== null ? row : null;
+}
+
 export function ratings(state, pid) {
   // His key ratings as the staff reads them, or null before any look: {"complete", "rows": [{key, label, est, lo, hi,
   // confidence}], "overall": {...}, "potential": {...}}. A rating's estimate is his true card rating moved by the staff's
@@ -176,6 +201,7 @@ export function ratings(state, pid) {
 }
 
 export const clear = {
+  measures, measure,
   CLEAR_CONFIDENCE, KEYS, PHYSICAL, KEY_SKILLS, PHYS_RATE, SKILL_RATE, CEIL_STRUGGLE, CEIL_SOLID, CEIL_SOLID_Z, CEIL_STRUGGLE_Z, CEIL_SLOW,
   CEIL_DRIFT_SD, SLOW_LEVELS, FAST_LEVELS, struggled, ceiling_drift, confidence, _raw_half, _group_of_key, ratings,
 };

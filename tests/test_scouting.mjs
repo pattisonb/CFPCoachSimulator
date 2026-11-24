@@ -498,4 +498,18 @@ test("a save from before grades moved to the game's scale converts on load: true
   assert(orc["reads"][pid]["looks"] === 3);
 });
 
+test("your recruiters never spend a look on a prospect who has closed you out, on your board or off it", () => {
+  const st = fresh(), rc = st["recruiting"], staff = st["career"]["staff"];
+  for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
+  rc["reads"] = {};
+  const areas = staff.filter((m) => m["role"] === "Recruiter").map((m) => m["area"]);
+  const shut = Object.keys(rc["prospects"]).filter((q) => live(rc, q) && areas.includes(area_of(st, q)) && recruiting.blocked(st, ME, q));
+  assert(shut.length > 0, "nobody in your recruiters' areas has closed you out");
+  rc["board"] = shut.slice(0, 5);                          // on your board, where a recruiter looks first
+  recruiting.scout_week(st);
+  const looked = Object.keys(rc["reads"]);
+  assert(looked.length > 0, "the recruiters looked at nobody");
+  assert(looked.every((q) => !recruiting.blocked(st, ME, q)), `a look at ${looked.filter((q) => recruiting.blocked(st, ME, q)).length} who closed you out`);
+});
+
 await run();

@@ -689,6 +689,8 @@ export interface ProspectRow {
   blocked?: Blocked | null;
   /** how many schools have offered him */
   offers_n?: number;
+  /** your staff's read of the rating the table is measuring by (Prospects' Measure menu), null before a look */
+  measure?: { key: string; label: string; est: number; lo: number; hi: number; confidence: string | null } | null;
   /** the transfer portal: he is a transfer, with the school he left and what he did there last season */
   portal?: boolean;
   from_name?: string;
@@ -746,13 +748,15 @@ export interface NeedGroup {
 /** GET /api/season/{id}/prospects */
 export interface ProspectsView {
   total: number;
+  /** the ratings the table can measure by: the physical traits, and one position's own when the list is one position */
+  measures?: { key: string; label: string; physical: boolean }[];
   rows: ProspectRow[];
   needs: Record<string, NeedGroup>;
   recommended_ids: string[];
   summary: {
     total: number;
     stars: Record<string, number>;
-    footprint: { board: number; contact: number; evaluated: number };
+    footprint: { board: number; cap?: number; contact: number; evaluated: number };
     outlook: { commits: number; spots: number; by_stars: Record<string, number> };
     top: TopLine[];
     /** the best uncommitted of each home state */

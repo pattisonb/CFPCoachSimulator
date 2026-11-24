@@ -13,6 +13,17 @@ export const messages = {
   },
   stars: "Stars",
   anyStars: "Any Stars",
+  measure: "Measure",
+  noMeasure: "No Measure",
+  measureTip:
+    "Rank the list by one scouted rating: the fastest running backs, the strongest tackles. A prospect you have not scouted has no read and sits at the foot.",
+  measureOwn: "His Position's Own",
+  measureBody: "Physical",
+  notScouted: "Not Scouted",
+  notScoutedTip: "Send a scout to read this.",
+  measureRange: (lo: number, hi: number) => `${lo}–${hi}`,
+  measureRead: (label: string, est: number, lo: number, hi: number) =>
+    `${label}: about ${est}, somewhere from ${lo} to ${hi}.`,
   starsN: (n: number) => `${n} Stars`,
   group: "Position",
   allGroups: "All",
@@ -104,9 +115,8 @@ export const messages = {
   needs: "Your Needs",
   needsTip: "Spots to fill at each position; pick one to list only those prospects.",
   need: (n: number) => (n > 0 ? `${n}` : "Set"),
-  yourClass: "Your Class",
-  commits: (n: number, spots: number) => `${n} / ${spots}`,
-  committed: "Committed",
-  footprint: (board: number, contact: number, scouted: number) =>
-    `${board} on Your Board · ${contact} in Contact · ${scouted} Scouted`,
+  yourBoard: "Your Board",
+  onBoardOf: (n: number, cap: number) => `${n} / ${cap}`,
+  onBoard: "On Board",
+  footprint: (contact: number, scouted: number) => `${contact} in Contact · ${scouted} Scouted`,
 } as const;

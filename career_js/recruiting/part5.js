@@ -866,7 +866,7 @@ function scout_week(state, week = null) {
   // looks (AREA_LOOK of look_unit) to STAFF_LOOKS_WEEK prospects in his area, logged at `week` (default: look_week;
   // the portal's step passes the week it opens). He takes the prospects on your board he has not finished first, the
   // least-scouted of them first, then the best-ranked at a position you still need; never one whose report is
-  // complete, who has signed or is your commit, or whom the staff has already given one whole look (the rest is your
+  // complete, who has signed or is your commit, who has closed you out, or whom the staff has already given one whole look (the rest is your
   // energy). Looks older than the week before are dropped from the log and the counts first: the desk keeps this
   // week's and last week's.
   const staff = get(get(state, "career") || {}, "staff") || [];
@@ -881,6 +881,7 @@ function scout_week(state, week = null) {
   const board = new Set(get(rc, "board") || []);
   let need = null;                                  // worked out once, and only when a recruiter runs out of board
   const taken = new Set();                          // one recruiter a prospect a week
+  let win = null;                                   // every school's season so far, worked out once if it is asked for
   for (const member of staff) {
     if (get(member, "role") !== "Recruiter") continue;
     const codes = get(recruiting.AREAS, get(member, "area"), []);
@@ -894,12 +895,24 @@ function scout_week(state, week = null) {
     const looks_of = (pid) => recruiting.report_looks(get(rc["reads"], pid));
     const mine = open.filter((pid) => board.has(pid));
     mine.sort((a, b) => cmp([looks_of(a), rc["prospects"][a]["rank"]], [looks_of(b), rc["prospects"][b]["rank"]]));
-    let picks = mine.slice(0, recruiting.STAFF_LOOKS_WEEK);
+    // never one who has closed you out (his list is locked without you, or you missed his final cut): a look there
+    // is a look wasted (the player's report). Asked only of the ones about to be picked: it is not a cheap question
+    const first = (pids, n) => {
+      const out = [];
+      for (const pid of pids) {
+        if (out.length >= n) break;
+        if (!truthy(me)) { out.push(pid); continue; }
+        if (win === null) win = recruiting._winning(state);
+        if (!truthy(recruiting.blocked(state, me, pid, win))) out.push(pid);
+      }
+      return out;
+    };
+    let picks = first(mine, recruiting.STAFF_LOOKS_WEEK);
     if (picks.length < recruiting.STAFF_LOOKS_WEEK) {
       if (need === null) need = truthy(me) ? recruiting.needs(state, me) : {};
       const rest = open.filter((pid) => !board.has(pid) && get(need, recruiting._group_of(rc["prospects"][pid]), 0) > 0);
       rest.sort((a, b) => cmp([rc["prospects"][a]["rank"], a], [rc["prospects"][b]["rank"], b]));
-      picks = picks.concat(rest.slice(0, recruiting.STAFF_LOOKS_WEEK - picks.length));
+      picks = picks.concat(first(rest, recruiting.STAFF_LOOKS_WEEK - picks.length));
     }
     for (const pid of picks) {
       taken.add(pid);

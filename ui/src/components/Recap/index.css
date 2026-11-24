@@ -555,10 +555,9 @@
   gap: 2px 8px;
 }
 
+/* (a long name and position take a second line: never cut short) */
 .recap__boom-who {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .recap__boom-line {

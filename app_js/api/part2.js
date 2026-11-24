@@ -595,7 +595,7 @@ function prospect_search(p) {
   const cols = {};
   for (const k of ["commit", "interest", "scouted", "pot"]) cols[k] = p.q(k);
   for (const k of ["ht", "wt", "offers", "ask"]) for (const end of ["min", "max"]) cols[`${k}_${end}`] = p.q(`${k}_${end}`, int);
-  return prospects.search(st, st["team"], position, stars, home, status, q, offset, limit, sort, group, cols);
+  return prospects.search(st, st["team"], position, stars, home, status, q, offset, limit, sort, group, cols, p.q("measure"));
 }
 api.route("GET", "/api/season/{season_id}/prospects", prospect_search);
 
