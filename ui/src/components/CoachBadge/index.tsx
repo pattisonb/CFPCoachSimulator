@@ -164,7 +164,7 @@ export default function CoachBadge({ name, team, face, word, budgets, nil, ratin
           </div>
         </div>
       )}
-      {below}
+      {below && <div className="coach-badge__below">{below}</div>}
     </div>
   );
 }

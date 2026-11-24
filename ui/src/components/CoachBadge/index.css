@@ -268,18 +268,34 @@
 }
 
 /* ---------- out: pointed at, tabbed to, or with a menu of its own open ---------- */
-.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__alert {
+
+/* what hangs off the card (the notices beside it) is not the card: the pointer or the focus there does not open it
+   (the player's report: Show All, Dismiss All or a notice itself slid the whole card out) */
+.coach-badge__below {
+  display: contents;
+}
+
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])):not(
+    :has(.coach-badge__below:is(:hover, :focus-within))
+  )
+  .coach-badge__alert {
   display: none;
 }
 
-.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__who {
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])):not(
+    :has(.coach-badge__below:is(:hover, :focus-within))
+  )
+  .coach-badge__who {
   min-width: 236px; /* *tune* room for the ratings' bars under a short name */
   max-width: 300px; /* *tune* wider than the longest name and team */
   margin: 0 4px 0 var(--s2);
 }
 
 /* the corner's controls come up as the card lands */
-.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__corner {
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])):not(
+    :has(.coach-badge__below:is(:hover, :focus-within))
+  )
+  .coach-badge__corner {
   opacity: 1;
   visibility: visible;
   transition:
@@ -287,7 +303,10 @@
     visibility 0s;
 }
 
-.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])) .coach-badge__more {
+.coach-badge:is(:hover, :focus-within, :has([aria-expanded="true"])):not(
+    :has(.coach-badge__below:is(:hover, :focus-within))
+  )
+  .coach-badge__more {
   grid-template-rows: 1fr;
 }
 
