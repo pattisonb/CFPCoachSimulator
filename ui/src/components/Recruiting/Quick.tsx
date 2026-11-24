@@ -5,6 +5,9 @@ import ScoutMark from "../ScoutMark/index.tsx";
 import type { BoardRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 
+/** *tune* How long the Scout box stays after the look that completes his report, in milliseconds. */
+const SCOUT_LINGER = 2500;
+
 /** *tune* Looks that make a full scouting report (recruiting.REPORT_LOOKS). */
 const FULL_REPORT = 3;
 
@@ -70,8 +73,13 @@ export default function QuickActions({
   const planned = r.planned ?? [];
   // a scout goes now, not at the week's end (a look is not a contact): the board is read again when he is back
   const [sending, setSending] = useState(false);
+  // his report is complete: the box has nothing left to do, so it goes (the player's ask). It stays a moment after the
+  // look that finished it, so the ring is seen to close; his row then carries the full mark beside his stars
+  const [justSent, setJustSent] = useState(false);
   const sendScout = async () => {
     setSending(true);
+    setJustSent(true);
+    window.setTimeout(() => setJustSent(false), SCOUT_LINGER);
     try {
       await api(`/api/season/${seasonId}/recruit`, {
         method: "POST",
@@ -158,7 +166,9 @@ export default function QuickActions({
           </button>
         );
       })}
-      {scout && (
+      {/* (its place is kept once it has gone, so the three before it stand in the same columns down the board) */}
+      {scout && scouted && !justSent && <span className="quick__gap" aria-hidden="true" />}
+      {scout && (!scouted || justSent) && (
         <button
           type="button"
           className={`quick__box quick__box--scout${scouted ? " is-done" : ""}`}

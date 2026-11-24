@@ -729,6 +729,10 @@
   width: 58px;
 }
 
+.quick--labels .quick__gap {
+  width: 58px;
+}
+
 .quick__box--scout.is-done {
   background: none;
   border-color: transparent;
@@ -818,6 +822,11 @@
   /* four boxes in a narrow list: each is its mark alone (its tip says what it is and what it costs) */
   .quick--labels .quick__box span {
     display: none;
+  }
+
+  .quick--labels .quick__box--scout,
+  .quick--labels .quick__gap {
+    width: 34px;
   }
 
   .recruiting__rows .recruiting__row {

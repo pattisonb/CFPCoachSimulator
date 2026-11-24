@@ -48,9 +48,10 @@ export default function ScoutMark({ looks, need = 3, size = 24, always, bare }: 
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </svg>
+      {/* (an even size inside an even ring: the same whole pixels on every side of it) */}
       <Binoculars
         className="scout-mark__icon"
-        size={Math.round(size * 0.54)}
+        size={2 * Math.round(size * 0.25)}
         weight={pct >= 100 ? "fill" : "bold"}
         aria-hidden="true"
       />

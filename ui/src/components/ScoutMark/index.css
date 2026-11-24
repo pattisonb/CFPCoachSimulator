@@ -26,10 +26,14 @@
   stroke: var(--good);
 }
 
+/* dead center: placed from the ring's middle, not left to the line it sits on */
 .scout-mark__icon {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: block;
   color: var(--ink);
+  transform: translate(-50%, -50%);
 }
 
 .scout-mark.is-full .scout-mark__icon {

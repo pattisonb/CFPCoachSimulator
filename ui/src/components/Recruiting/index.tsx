@@ -18,6 +18,7 @@ import Dropdown from "../Dropdown/index.tsx";
 import Conversation from "../Conversation/index.tsx";
 import Face from "../Face/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
+import ScoutMark from "../ScoutMark/index.tsx";
 import { HistoryTab, OverviewTab, ProfileTab, ScoutingTab } from "../RecruitFile/index.tsx";
 import Panel from "../Panel/index.tsx";
 import ProfileHead, { HeadTag } from "../ProfileHead/index.tsx";
@@ -507,6 +508,8 @@ export default function Recruiting({
                             ) : (
                               <Stars n={r.stars} size={10} />
                             )}
+                            {/* a full report: its mark beside his stars (a report still open is on his Scout box) */}
+                            {(r.looks ?? 0) >= FULL_REPORT && <ScoutMark looks={r.looks} size={18} />}
                             <RecruitFlags
                               generational={r.generational}
                               find={r.find}
