@@ -126,6 +126,12 @@ export function from_base(base) {
   return int(round(Math.max(shown.LOW, Math.min(shown.HIGH, _line(curve_flipped, float(base))))));
 }
 
+export function from_base_exact(base) {
+  // The same, unrounded and unheld: for a difference of two.
+  _curve();
+  return _line(curve_flipped, float(base));
+}
+
 export function to_base(shown_value) {
   // The inverse: a shown rating on the source scale.
   return _line(_curve(), float(shown_value));
@@ -168,5 +174,5 @@ export function attribute_back(shown_value, group, key) {
 
 export const shown = {
   OVERALL_KNOTS, LOW, HIGH, TEAM_KNOTS, COACH_KNOTS, _line, overall_exact, overall, overall_back, team, team_ratings,
-  coach, gain, _curve, from_base, to_base, skill, skill_back, _card, attribute, attribute_back,
+  coach, gain, _curve, from_base, from_base_exact, to_base, skill, skill_back, _card, attribute, attribute_back,
 };

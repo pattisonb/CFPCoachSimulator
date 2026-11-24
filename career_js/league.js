@@ -223,6 +223,7 @@ export function compact(p, attrs, home = null, rated = null) {
   };
   if (truthy(get(p, "abilities"))) out["ab"] = p["abilities"].map((a) => `${pystr(get(a, "name"))}|${pystr(get(a, "tier"))}`);
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
+  if (truthy(get(p, "dm"))) out["dm"] = p["dm"];
   return out;
 }
 
@@ -268,6 +269,7 @@ export function expand(c, attrs, team) {
     }),
     coachability: get(c, "c"), stars: get(c, "s"),
     ...(truthy(get(c, "tm")) ? { target_mult: c["tm"] } : {}),
+    ...(truthy(get(c, "dm")) ? { dm: c["dm"] } : {}),
   };
 }
 
@@ -329,7 +331,8 @@ export function _as_source(p) {
   }
   return { slug: p["slug"], name: p["name"], position: p["source_position"], "class": get(p, "class"),
     height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"), archetype: get(p, "archetype"),
-    dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: modules.rosters.skills_of(p), target_mult: get(p, "target_mult") };
+    dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: modules.rosters.skills_of(p), target_mult: get(p, "target_mult"),
+    dm: modules.rosters.decision_moved(p) || null };
 }
 
 export function _filed_player(p, attrs, home, o = null) {
@@ -371,6 +374,8 @@ export function _filed_player(p, attrs, home, o = null) {
   }
   if (ab.length) out["ab"] = ab;
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
+  const moved = modules.rosters.decision_moved(p, filed);        // his own Decision Making, kept with him (build_teams.decision_making)
+  if (moved) out["dm"] = moved;
   return out;
 }
 

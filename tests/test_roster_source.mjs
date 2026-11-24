@@ -56,11 +56,10 @@ test("the number in the file is the number on his card and in the list of his ra
     const f = file["teams"][slug];
     [...data["teams"][slug]["offense"], ...data["teams"][slug]["defense"]].forEach((p, i) => {
       const src = [...f["offense"], ...f["defense"]][i];
-      // every rating his card prints is in his line of the file under the card's own name, with the card's number
-      // (Decision Making alone is not a rating of the file: the card works it out from Football IQ and Pocket Poise)
+      // every rating his card prints is in his line of the file under the card's own name, with the card's number:
+      // none is worked out from others (a quarterback's Decision Making is a rating of its own, as the rest are)
       for (const [key, v] of Object.entries(p["attributes"])) {
         const name = rv2.ATTRIBUTES[key][0];
-        if (key === "decision_making") { assert(!(name in src["ratings"]), "Decision Making is stored"); continue; }
         assert(name in src["ratings"], `${slug} ${p["name"]}: his card's ${name} is not in the file`);
         equal(season.page_attribute(p, key, v), src["ratings"][name], `${slug} ${p["name"]} ${name}`);
         cards += 1;
@@ -88,9 +87,37 @@ test("find Kevin Jennings in the file, find Pocket Poise, type 99: his card says
   equal(season.page_attribute(p, "pocket_poise", p["attributes"]["pocket_poise"]), 99);
   assert(p["ovr"] >= was["ovr"] && p["decision_making"] >= was["decision_making"], "a better Pocket Poise made him worse");
   // every name on his card is a name in his line, so each can be found the same way
-  for (const key of Object.keys(p["attributes"])) {
-    if (key !== "decision_making") assert(line.includes(`"${rv2.ATTRIBUTES[key][0]}":`), `his line has no ${rv2.ATTRIBUTES[key][0]}`);
+  for (const key of Object.keys(p["attributes"])) assert(line.includes(`"${rv2.ATTRIBUTES[key][0]}":`), `his line has no ${rv2.ATTRIBUTES[key][0]}`);
+});
+
+test("Decision Making is a rating of its own: typed in the file it is his card's and the sim's, whatever his Football IQ and Pocket Poise", () => {
+  const before = rosters.derive(copy(file));
+  const was = find(before, "smu", "kevin-jennings");
+  const shows = (p) => season.page_attribute(p, "decision_making", p["attributes"]["decision_making"]);
+  const src = find(file, "smu", "kevin-jennings");
+  equal(shows(was), src["ratings"]["Decision Making"]);                       // as the file has it today
+  assert(!("dm" in was), "a quarterback nobody changed carries a move");
+  for (const typed of [99, 40]) {
+    const edited = copy(file);
+    const mine = find(edited, "smu", "kevin-jennings");
+    mine["ratings"]["Decision Making"] = typed;
+    const p = find(rosters.derive(edited), "smu", "kevin-jennings");
+    equal(shows(p), typed);
+    assert(typed > src["ratings"]["Decision Making"] ? p["decision_making"] > was["decision_making"] : p["decision_making"] < was["decision_making"],
+      `the sim's decision making ${was["decision_making"]} -> ${p["decision_making"]} at ${typed}`);
+    // nothing else of his moved: his Football IQ and Pocket Poise are their own ratings
+    equal([shows(p) === typed, season.page_attribute(p, "football_iq", p["attributes"]["football_iq"]), season.page_attribute(p, "pocket_poise", p["attributes"]["pocket_poise"]), p["passing"], p["intelligence"]],
+      [true, src["ratings"]["Football IQ"], src["ratings"]["Pocket Poise"], was["passing"], was["intelligence"]]);
+    // ... and it goes with him into a career: the league keeps how far his own stands from the two, and the team
+    // builder plays and shows it in every later season
+    const c = league._filed_player(mine, attrs, "TX");
+    equal(c["dm"], typed - src["ratings"]["Decision Making"]);
+    const expanded = league.expand(c, attrs, { slug: "smu", short_name: "SMU" });
+    const plain = league.expand(league._filed_player(src, attrs, "TX"), attrs, { slug: "smu", short_name: "SMU" });
+    const [a, b] = [build_teams.map_player(plain)["decision_making"], build_teams.map_player(expanded)["decision_making"]];
+    assert(typed > src["ratings"]["Decision Making"] ? b > a : b < a, `a career's builder: ${a} -> ${b}`);
   }
+  assert(!("dm" in league._filed_player(src, attrs, "TX")), "a quarterback nobody changed carries a move into the league");
 });
 
 test("a card's name is the file's name at every position: a corner's Ball Skills, a punter's Punt Power, a blend as one rating", () => {

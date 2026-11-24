@@ -32,6 +32,7 @@ import { read_json, env } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "./game_scale.js";
 import { ratings as rv2 } from "./ratings.js";   // ratings v2: the player attributes (docs/RATINGS_V2.md)
+import { shown } from "./shown.js";
 import { recruits, pypow } from "../career_js/recruits.js";
 
 const ROOT = ".";   // the project root: files.js reads paths from it
@@ -176,6 +177,16 @@ export function _skills_at(r, pos, out) {
   }
 }
 
+export function decision_making(mix, moved) {
+  // A quarterback's Decision Making on the source scale: `mix`, what his awareness and his poise under pressure give
+  // (the card's formula), moved by `moved` points of the scale the game shows. His Decision Making is a rating of its
+  // own in the roster file (the player's rule: every rating a card prints is one that is stored): `moved` is how far
+  // the stored one stands from the mix, kept with him through a career (league.js "dm"), so it still grows as its
+  // two parts do.
+  if (!truthy(moved)) return mix;
+  return shown.to_base(Math.max(1, Math.min(99, shown.from_base_exact(mix) + moved)));
+}
+
 export function map_player(p, pos = null) {
   // Raw engine attributes (before normalization) for one source player, at his own
   // position or, with `pos`, as if he played another engine position.
@@ -209,6 +220,7 @@ export function map_player(p, pos = null) {
                       + 0.10 * get(r, "bc_vision", 50) + 0.05 * get(r, "carrying", 50)),
   };
   _skills_at(r, pos, out);
+  if (pos === "QB" && truthy(get(p, "dm"))) out["decision_making"] = decision_making(out["decision_making"], p["dm"]);
   return out;
 }
 
@@ -270,6 +282,9 @@ export function team_from_source(t) {
     // ratings v2: the attributes on the source scale (house_attributes puts them on ours),
     // the measurables, the earned traits and the play style
     m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], m["role"]);
+    if (truthy(get(p, "dm")) && isNumber(get(m["_attr_raw"], "decision_making"))) {       // his own Decision Making (decision_making above)
+      m["_attr_raw"]["decision_making"] = round(decision_making(m["_attr_raw"]["decision_making"], p["dm"]), 1);
+    }
     m["height_in"] = rv2.height_inches(get(p, "height"));
     m["traits"] = rv2.traits_of(get(p, "abilities") || []);
     m["archetype"] = get(rv2.ARCHETYPES, get(p, "archetype") || "", get(p, "archetype"));
@@ -801,7 +816,7 @@ export function build(sources, real = true, observed = null, quiet = false, styl
 
 export const build_teams = {
   ROOT, NEUTRAL, SPREAD_SCALE, TEAM_LEVEL_TOP_SCALE, POSITION_MAP, OFFENSE, OFF_STATS, DEF_STATS, SHARED_STATS,
-  SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, to_engine, depth_key, _skills_at, map_player,
+  SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, to_engine, depth_key, _skills_at, decision_making, map_player,
   ATTRS, RETURN_ATTR, PHYSICAL, OFF_SKILL_RANGE, CORE_FLOOR, CORE_FLOOR_OVR, CLAMP_EXTREMES,
   starter_slugs, team_from_source, TENDENCY_KEYS, normalize_tendencies, decouple_discipline,
   OBSERVED, GAME_SCRIPT_PASS, FOURTH_PER_MARGIN, PASS_RATE_SLOPE, TEMPO_SLOPE, SCRAMBLE_SHARE, apply_observed_tendencies,
