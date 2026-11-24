@@ -8,7 +8,7 @@ import Meter from "../Meter/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace } from "../../faces.ts";
-import { formatClass, looksOfTotal } from "../../format.ts";
+import { formatClass, looksOfTotal, ordinal } from "../../format.ts";
 import { cachedTeams } from "../../teams.ts";
 import type { ProspectDetail, ProspectRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -210,7 +210,15 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onG
           </div>
           <div title={m.interest}>
             <dt className="label">{m.interestShort}</dt>
-            <dd>{r?.interest_level ?? "–"}</dd>
+            <dd>
+              {!r || r.blocked?.why === "signed"
+                ? "–"
+                : r.blocked
+                  ? m.listClosed
+                  : r.list_place == null
+                    ? m.listOpen
+                    : ordinal(r.list_place)}
+            </dd>
           </div>
           <div title={m.need}>
             <dt className="label">{m.needShort}</dt>

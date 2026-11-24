@@ -8,6 +8,7 @@ import { Random, get, round } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting, offseason } = game;
+recruiting.LOCKOUT_AT = 5.0;   // the line these tests were written at: the game's own shuts more doors (test_standards holds it), and these pick recruits a mid program could then not work
 const { prospects } = game.modules;
 
 const ME = "ohio-state";
@@ -35,7 +36,7 @@ const used = new Set();
 /** An uncommitted prospect nobody at your school has touched, whom a contact will not pester; each is handed out once. */
 function fresh(want = () => true) {
   const pid = recruiting.prospect_list(st).find((q) => !used.has(q) && !get(get(rc["contacts"], q, {}), ME) && !rc["status"][q]["committed"]
-    && !rc["offers"][ME]?.includes(q) && !recruiting.would_pester(st, ME, q) && want(P[q], q));
+    && !rc["offers"][ME]?.includes(q) && !recruiting.would_pester(st, ME, q) && recruiting.blocked(st, ME, q) === null && want(P[q], q));
   assert(pid !== undefined, "no prospect fits");
   used.add(pid);
   return pid;
@@ -181,7 +182,8 @@ test("the pitch finishes the call: a priority at strength lights him up and is r
 });
 
 test("a pitch that is not his thing gets a polite answer; one he cares about where you are weak falls quiet and is logged", () => {
-  const pid = fresh();
+  // (a plain recruit who will still hear from you as one: his standards lean with his personality)
+  const pid = fresh((p, q) => { const was = p["persona"]; p["persona"] = PLAIN(); const open = recruiting.blocked(st, ME, q) === null; if (was === undefined) delete p["persona"]; else p["persona"] = was; return open; });
   P[pid]["persona"] = PLAIN();
   hours(100);
   let sc = opened(pid);
@@ -288,7 +290,7 @@ test("an official visit needs you in his top group", () => {
   const pid = fresh((p) => p["stars"] === 2);
   hours(200);
   act(pid, "message");
-  const crowd = recruiting.fbs_schools(st).filter((x) => x !== ME).slice(0, 8);
+  const crowd = recruiting.fbs_schools(st).filter((x) => x !== ME).slice(0, recruiting.TOP_GROUP);
   for (const x of crowd) rc["lists"][pid][x] = 10000.0;
   recruiting.reset_caches();
   refused(() => act(pid, "official_visit"), 409);

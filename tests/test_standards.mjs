@@ -12,6 +12,10 @@ import { Random, sorted } from "../engine_js/pyrt.js";
 const game = await start();
 const { api, season, recruiting } = game;
 const { grades, persona, prospects, programs, scenes } = game.modules;
+const LOCKOUT_GAME = recruiting.LOCKOUT_AT;
+assert(LOCKOUT_GAME === 3.5, "the game's line: more recruits shut the door than at the first 5.0");
+recruiting.LOCKOUT_AT = 5.0;   // these tests hold the rule at the line they were written at (forced standards a set distance from it); the game's own is LOCKOUT_GAME
+
 
 const ME = "iowa";
 const show = (v) => () => JSON.stringify(v);
@@ -404,9 +408,10 @@ test("the AI and your Auto-recruit leave a recruit alone who will not consider t
   }
 });
 
-test("he cuts his list as signing day nears: 8, then 5, then 3, and a school not on it cannot add or work him", () => {
+test("once he holds an offer he cuts his list as signing day nears: 5, then 3, and a school not on it cannot add or work him", () => {
   const weeks = recruiting.FINALISTS.map(([w]) => w), sizes = recruiting.FINALISTS.map(([, n]) => n);
-  equal(sizes, [8, 5, 3]);
+  equal(sizes, [5, 3]);
+  assert(recruiting.TOP_GROUP === 10);
   assert(weeks.every((w, i) => i === 0 || w > weeks[i - 1]) && weeks.at(-1) < recruiting.close_week(), show(weeks));
   const pid = plain((q) => recruiting.blocked(st, ME, q) === null && P[q]["stars"] === 3);
   const week = st["current_week"], lists = rc["lists"][pid];
@@ -414,12 +419,13 @@ test("he cuts his list as signing day nears: 8, then 5, then 3, and a school not
     rc["lists"][pid] = { michigan: 60, "ohio-state": 45, texas: 30, alabama: 2 };             // four schools have worked him
     st["current_week"] = weeks[0] - 1;
     equal([recruiting.finalists_size(st), recruiting.top_size(st), recruiting.cut_out(st, ME, pid)], [null, recruiting.TOP_GROUP, false], "before the first cut he is open to anyone");
-    st["current_week"] = weeks[0];
-    equal([recruiting.top_size(st), recruiting.cut_out(st, ME, pid)], [8, false], "his top 8 has room");
     st["current_week"] = weeks[1];
-    equal([recruiting.top_size(st), recruiting.cut_out(st, ME, pid)], [5, false], "his top 5 has room for one more");
-    st["current_week"] = weeks[2];
-    equal([recruiting.top_size(st), recruiting.top_group(st, pid), recruiting.cut_out(st, ME, pid)], [3, ["michigan", "ohio-state", "texas"], true]);
+    equal([recruiting.top_size(st, pid), recruiting.cut_out(st, ME, pid)], [recruiting.TOP_GROUP, false], "nobody has offered him: he has not cut his list");
+    (rc["offers"]["michigan"] ||= []).push(pid);                                              // his first offer: now he narrows
+    st["current_week"] = weeks[0];
+    equal([recruiting.top_size(st, pid), recruiting.cut_out(st, ME, pid)], [5, false], "his top 5 has room for one more");
+    st["current_week"] = weeks[1];
+    equal([recruiting.top_size(st, pid), recruiting.top_group(st, pid), recruiting.cut_out(st, ME, pid)], [3, ["michigan", "ohio-state", "texas"], true]);
     assert(recruiting.cut_out(st, "alabama", pid) && !recruiting.cut_out(st, "texas", pid), "the fourth school is cut, the third is a finalist");
     equal(recruiting.blocked(st, ME, pid), { why: "finalists", text: "He has cut his list to his top 3, and you are not on it." });
     assert(G("prospects?limit=5000")["rows"].find((r) => r["id"] === pid)["top_size"] === 3);
@@ -434,12 +440,13 @@ test("he cuts his list as signing day nears: 8, then 5, then 3, and a school not
     // one already on your board who cuts you stays, marked out
     st["current_week"] = weeks[0] - 1;
     R("board", { pid, on: true });
-    st["current_week"] = weeks[2];
+    st["current_week"] = weeks[1];
     const row = G("recruiting")["board"].find((b) => b["id"] === pid);
     assert(row && row["blocked"]["why"] === "finalists" && row["top_size"] === 3);
     refused(() => R("recruit", { pid, action: "message" }), 409, "cut his list");
     R("board", { pid, on: false });
   } finally {
+    rc["offers"]["michigan"] = (rc["offers"]["michigan"] || []).filter((q) => q !== pid);
     st["current_week"] = week; rc["lists"][pid] = lists; rc["pending"] = {}; delete rc["contacts"][pid];
     rc["status"][pid]["committed"] = null;
   }
@@ -504,7 +511,9 @@ test("the portal plays by the same rules: transfers have standards, shut doors, 
   prc["lists"][pid] = { michigan: 60, "ohio-state": 45, texas: 30, alabama: 20, georgia: 12, oregon: 6 };      // more schools than his cut keeps
   const [from, n] = recruiting.PORTAL_FINALISTS.at(-1);
   prc["week"] = from;
-  equal([recruiting.top_size(ps), recruiting.blocked(ps, ME, pid)?.["why"]], [n, "finalists"]);
+  equal([recruiting.top_size(ps, pid), recruiting.blocked(ps, ME, pid)], [recruiting.TOP_GROUP, null], "nobody has offered him: he has not cut his list");
+  (prc["offers"]["michigan"] ||= []).push(pid);
+  equal([recruiting.top_size(ps, pid), recruiting.blocked(ps, ME, pid)?.["why"]], [n, "finalists"]);
   refused(() => R("board", { pid, on: true }), 409, `cut his list to his top ${n}`);
   prc["week"] = 1;
   equal(recruiting.blocked(ps, ME, pid), null, "before the portal's cut he is open");

@@ -172,14 +172,14 @@ export function OverviewTab({
         <CommitBanner r={r} d={detail} />
         {rows.length ? (
           <ol className="recruit-file__battle">
-            {rows.slice(0, 8).map((x, i) => {
+            {rows.slice(0, 10).map((x, i) => {
               const you = x.you || x.school === team;
               // a school answering your recruiting of him says so, on its own color
               const push = (r.rival_push ?? []).find((p) => p.school === x.school);
               const worn = push ? teamOf(x.school)?.colors.primary : undefined;
               return (
                 <li key={x.school} className={you ? "is-you" : undefined}>
-                  <span className="recruit-file__place">{x.rank ?? i + 1}</span>
+                  <span className="recruit-file__place">{x.place ?? i + 1}</span>
                   <span className="recruit-file__school">
                     <Swatch team={teamOf(x.school)} size={16} />
                     <b>{x.name}</b>
@@ -862,13 +862,13 @@ export function HistoryTab({ r, team }: { r: BoardRow; team: string }) {
       <Panel title={m.changes}>
         {rows.length ? (
           <ol className="recruit-file__battle recruit-file__battle--moves">
-            {rows.slice(0, 8).map((x, i) => {
+            {rows.slice(0, 10).map((x, i) => {
               const you = x.you || x.school === team;
               const move = x.move ?? 0;
               const Arrow = x.new ? Star : move > 0 ? ArrowUp : move < 0 ? ArrowDown : Minus;
               return (
                 <li key={x.school} className={you ? "is-you" : undefined}>
-                  <span className="recruit-file__place">{x.rank ?? i + 1}</span>
+                  <span className="recruit-file__place">{x.place ?? i + 1}</span>
                   <span className="recruit-file__school">
                     <Swatch team={teamOf(x.school)} size={16} />
                     <b>{x.name}</b>

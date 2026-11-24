@@ -210,7 +210,7 @@ function _asks_for_more(state, week) {
   }
   for (const [pid, held] of Object.entries(by_pid)) {
     if (Object.keys(held).length < 2 || truthy(rc["status"][pid]["signed"]) || !truthy(rc["prospects"][pid]["nil_ask"])) continue;
-    const top = sorted(Object.keys(held), (s) => -recruiting.interest(state, s, pid, win)).slice(0, recruiting.top_size(state));
+    const top = sorted(Object.keys(held), (s) => -recruiting.interest(state, s, pid, win)).slice(0, recruiting.top_size(state, pid));
     for (const slug of top) {
       const c = recruiting._contact(state, slug, pid);
       const heard = setdefault(c, "heard", []);

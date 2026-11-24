@@ -198,7 +198,7 @@ recruiting.NIL_PROMISE_WEEKS = 2;                      // *tune* ... within this
 recruiting.MONEY_FORGIVE_CHANCE = { shy: 0.75, business: 0.35, guarded: 0.30, attention: 0.25, cocky: 0.10 };   // *tune* the chance each lets a broken money promise go at a small school
 recruiting.MONEY_FORGIVE_TIER = 4;                     // *tune* ... a school at this program tier or below (Group of 5 and the bottom)
 recruiting.ASK_MORE = [1.5, 1.25];                     // a rival's NIL this much over yours, with you in his top group: his ask from you rises this much
-recruiting.TOP_GROUP = 8;                              // the schools he is seriously considering: his top this many by interest (fewer once he cuts his list: FINALISTS, part 6)
+recruiting.TOP_GROUP = 10;                             // *tune* his list: his top this many schools by interest (fewer once he cuts it: FINALISTS, part 6)
 // pestering: contacts past his patience from a school he is not considering cost it *tune*
 recruiting.PESTER_FREE = 3;                            // contacts (message, call, in-home visit; a scene's pitch is the contact it finishes) a school gets
 //                                                        before more count as pestering while he is not considering it (an offer in hand does not
@@ -486,6 +486,7 @@ function start(state, year = 2027) {
   };
   state["recruiting"]["generational"] = recruiting.draw_generational(state["recruiting"]);
   persona.apply_stories(state);       // his story: a comeback and a bloomer shown low, the class re-ranked
+  recruiting.keep_tens(state);        // every recruit's list of ten schools as the class opens (part 6)
 }
 
 

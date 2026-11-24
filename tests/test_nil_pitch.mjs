@@ -10,6 +10,7 @@ import { Random, get, round } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting } = game;
+recruiting.LOCKOUT_AT = 5.0;   // the line these tests were written at: the game's own shuts more doors (test_standards holds it), and these pick recruits a mid program could then not work
 const { prospects, scenes, persona } = game.modules;
 
 const ME = "iowa";

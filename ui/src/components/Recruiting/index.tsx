@@ -448,7 +448,7 @@ export default function Recruiting({
                   const race = r.list.filter((x) => x.bar != null);
                   const mine = race.find((x) => x.you || x.school === team);
                   // (a signed recruit has no list any more)
-                  const rank = mine && !r.signed ? (mine.rank ?? race.indexOf(mine) + 1) : null;
+                  const rank = mine && !r.signed ? (mine.place ?? race.indexOf(mine) + 1) : null;
                   // the door is shut on you (he will not consider you, or cut his list without you): he stays on
                   // your board, marked out, every action off
                   const out = r.blocked && r.blocked.why !== "signed" ? r.blocked : null;
@@ -639,11 +639,11 @@ function RecruitPanel({
   const race = r.list.filter((x) => x.bar != null);
   const mine = race.find((x) => x.you || x.school === team);
   // once he has signed he has no list: the tile reads Yours (or Lost)
-  const place = mine && !r.signed ? (mine.rank ?? race.indexOf(mine) + 1) : null;
+  const place = mine && !r.signed ? (mine.place ?? race.indexOf(mine) + 1) : null;
   const listPlace = r.signed
     ? sd.word
     : place
-      ? m.listPlace(place, Math.max(r.standing.of, race.length))
+      ? m.listPlace(place, race.length)
       : r.offered && !(r.signed || r.committed)
         ? m.outside
         : m.notOnIt;

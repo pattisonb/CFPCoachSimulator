@@ -31,7 +31,7 @@ import { cachedTeams } from "../../teams.ts";
 import type { NeedGroup, ProspectRow, ProspectsView, TeamCard } from "../../types.ts";
 import { GradeRange } from "../Grade/index.tsx";
 import { useKept } from "../../kept.ts";
-import { formatClass } from "../../format.ts";
+import { formatClass, ordinal } from "../../format.ts";
 import { messages as m } from "./messages.ts";
 import RecruitFlags from "../RecruitFlags/index.tsx";
 import "./index.css";
@@ -744,7 +744,20 @@ export default function Prospects({
                         <span className="prospects__soft">–</span>
                       )}
                     </td>
-                    <td className={`prospects__int is-${r.interest_level.toLowerCase()}`}>{r.interest_level}</td>
+                    <td
+                      className={`prospects__int is-${r.blocked || r.list_place == null ? "low" : r.list_place <= 3 ? "high" : "medium"}`}
+                      title={
+                        r.blocked ? r.blocked.text : r.list_place == null ? m.listOpenTip : m.listPlaceTip(r.list_place)
+                      }
+                    >
+                      {r.blocked
+                        ? r.blocked.why === "signed"
+                          ? m.listNone
+                          : m.listClosed
+                        : r.list_place == null
+                          ? m.listOpen
+                          : ordinal(r.list_place)}
+                    </td>
                     <td>{r.looks > 0 ? <ScoutMark looks={r.looks} /> : <span className="prospects__soft">–</span>}</td>
                     <td className="prospects__pot">
                       {r.our_potential ? (
