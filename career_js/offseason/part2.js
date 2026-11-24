@@ -751,7 +751,20 @@ function _sign_classes(state, lgd) {
     c["signed"] = true;
     // listed as an athlete: he arrives at the position he was drawn at, and you place him yourself at the Place Your
     // Athletes stage (the player's design; his build is an athlete's, so the drawn spot can be a poor fit)
-    if (get(rc["prospects"][pid], "position") === "ATH") c["ath"] = true;
+    if (get(rc["prospects"][pid], "position") === "ATH") {
+      c["ath"] = true;
+      // another school's staff places him itself, where he projects best (the player's rule: the CPU assigns its
+      // athletes too); from then on that is simply his position
+      if (slug !== get(state, "team")) {
+        const opts = position_fit.options(_zipped(attrs, c["r"]), get(c, "ht"), get(c, "wt"), c["pos"], c["pos"], offseason.GROUP);
+        const best = opts.reduce((a, b) => (b["overall"] > a["overall"] ? b : a), opts[0]);
+        if (best !== undefined && best["pos"] !== c["pos"]) {
+          offseason.move_row(c, best["pos"], attrs);
+          delete c["moved_from"];
+          delete c["moved_attrs"];
+        }
+      }
+    }
     if (has(stories, pid)) {
       c["rec"] = { ...stories[pid], "overall": offseason.house(c["pos"], c["o"]) };     // how he was recruited, and what he was when he arrived
     }

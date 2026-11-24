@@ -328,6 +328,8 @@ export const messages = {
     hardYear: "Lost a step and some of his ceiling after a hard year as a starter",
     unitLabel: "Which unit",
     units: { all: "All", offense: "Offense", defense: "Defense", special: "Special Teams" },
+    position: "Position",
+    allPositions: "All Positions",
     was: "Where He Was",
     gained: "What He Gained",
     noneInUnit: "Nobody on this unit is in the report.",

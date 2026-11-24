@@ -5,6 +5,7 @@
 // `node tests/test_athletes.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 import { Random } from "../engine_js/pyrt.js";
+import { position_fit } from "../career_js/position_fit.js";
 
 const game = await start();
 const { api, season } = game;
@@ -30,6 +31,7 @@ function career(seed, mine_athletes) {
   rest.slice(schools.length * 20, schools.length * 20 + 18).forEach((pid) => { rc["status"][pid]["signed"] = ME; });
   const signed = aths.slice(0, mine_athletes);
   for (const pid of signed) rc["status"][pid]["signed"] = ME;
+  aths.slice(mine_athletes, mine_athletes + 12).forEach((pid, i) => { rc["status"][pid]["signed"] = schools[i]; });      // and a dozen elsewhere
   Object.assign(st, { done: true, current_week: season.FINAL_WEEK, champion: ME });
   api._save_loaded();
   return { sid, signed, names: signed.map((p) => rc["prospects"][p]["name"]) };
@@ -90,6 +92,22 @@ test("in a year you signed none, the stage is never stopped at and never on the 
   assert(!seen.includes("athletes"), J(seen));
   assert(!v["stages"].some((s) => s["key"] === "athletes"), "no step for it");
   equal(v["athletes"]["players"], []);
+});
+
+test("another school places its own athletes where they project best, and an old athlete who transfers in is not yours to place", () => {
+  const st = api.loaded_state(), lgd = st["league"];
+  const year = st["offseason"]["year"];
+  const theirs = Object.entries(lgd["teams"]).filter(([slug]) => slug !== ME).flatMap(([, t]) => t["roster"].filter((c) => c["ath"]));
+  assert(theirs.length > 0, "no other school signed an athlete");
+  const zip = (r) => Object.fromEntries(lgd["attrs"].map((k, i) => [k, r[i]]));
+  for (const c of theirs) {
+    assert(!("moved_from" in c) && !("moved_attrs" in c), "where the staff put him is simply his position");
+    const opts = position_fit.options(zip(c["r"]), c["ht"], c["wt"], c["pos"], c["pos"], offseason.GROUP);
+    assert(opts.every((o) => o["overall"] <= opts.find((x) => x["current"])["overall"]), `${c["n"]} at ${c["pos"]}: ${J(opts.slice(0, 3))}`);
+  }
+  // an athlete from a year ago, now a sophomore, who has just transferred to you
+  lgd["teams"][ME]["roster"].push({ ...JSON.parse(JSON.stringify(theirs[0])), id: "old-athlete", n: "Old Athlete", cls: "SO", joined: year });
+  assert(!offseason.athletes_mine(st).some((c) => c["id"] === "old-athlete"));
 });
 
 await run();

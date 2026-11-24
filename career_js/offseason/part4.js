@@ -193,10 +193,12 @@ function advance(state) {
 // The cut players are walk-ons a school short at their position takes (_fill_rosters); the rest are out of football.
 
 function athletes_mine(state) {
-  // This year's signees of yours who were listed as athletes (league rows marked `ath` by _sign_classes).
+  // This year's high school signees of yours who were listed as athletes (league rows marked `ath` by _sign_classes).
+  // Freshmen only: an athlete signed somewhere a year ago keeps the mark, and coming to you as a transfer he has a
+  // position already (the player's report: no old transfers here).
   const year = get(get(state, "offseason") || {}, "year");
   const roster = get(get(get(get(state, "league") || {}, "teams") || {}, get(state, "team")) || {}, "roster") || [];
-  return roster.filter((c) => truthy(get(c, "ath")) && get(c, "joined") === year);
+  return roster.filter((c) => truthy(get(c, "ath")) && get(c, "joined") === year && get(c, "cls") === "FR");
 }
 
 offseason.ATHLETE_OPTIONS = 6;        // *tune* how many positions the Place Your Athletes stage offers a player (his best)

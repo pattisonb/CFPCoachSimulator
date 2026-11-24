@@ -116,7 +116,7 @@ interface Todo {
 /** *tune* How long the next to-do must hold still before the highlight moves to it, in ms. */
 const NOW_SETTLE_MS = 450;
 /** *tune* The longest the sim's board stays up after a sim ends, waiting for the new week's Office to arrive, in ms. */
-const BOARD_SETTLE_MS = 2500;
+const BOARD_SETTLE_MS = 900;
 
 export default function Office({ season: s, recruiting: v, teams, sim, onSection, onBox }: Props) {
   const [office, setOffice] = useState<OfficeView | null>(null);
@@ -261,12 +261,15 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   const [settling, setSettling] = useState(false);
   useEffect(() => {
     if (sim.running) {
+      // what the Office held when the sim began: the new week's has arrived once both differ from these (read at the
+      // sim's end instead, an answer already in by then was never seen to change, and the board sat out the whole
+      // wait: the player's report of a hang after every week)
+      if (!ran.current) atEnd.current = { office, v };
       ran.current = true;
       return;
     }
     if (!ran.current) return;
     ran.current = false;
-    atEnd.current = { office, v };
     setSettling(true);
     const t = window.setTimeout(() => setSettling(false), BOARD_SETTLE_MS);
     return () => window.clearTimeout(t);

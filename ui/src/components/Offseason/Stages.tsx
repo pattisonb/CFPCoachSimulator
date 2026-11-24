@@ -857,6 +857,77 @@ type Unit = "all" | "offense" | "defense" | "special";
 const OFFENSE = new Set(["QB", "HB", "RB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT", "OL", "OT", "IOL"]);
 const SPECIAL = new Set(["K", "P", "KR", "PR"]);
 const unitOf = (pos: string): Unit => (SPECIAL.has(pos) ? "special" : OFFENSE.has(pos) ? "offense" : "defense");
+/** the positions in depth-chart order, for the position menu beside the unit buttons */
+const POS_ORDER = [
+  "QB",
+  "HB",
+  "RB",
+  "FB",
+  "WR",
+  "TE",
+  "LT",
+  "LG",
+  "C",
+  "RG",
+  "RT",
+  "OL",
+  "EDGE",
+  "LEDG",
+  "REDG",
+  "DT",
+  "DL",
+];
+const posRank = (pos: string) => (POS_ORDER.includes(pos) ? POS_ORDER.indexOf(pos) : POS_ORDER.length);
+
+/**
+ * Which players a stage's list shows (Progress, Roster Cuts): the unit (All, Offense, Defense, Special Teams) and,
+ * beside it, one position of that unit (the player's ask). The menu offers the positions the list has.
+ */
+function UnitPick({
+  label,
+  unit,
+  onUnit,
+  pos,
+  onPos,
+  players,
+}: {
+  label: string;
+  unit: Unit;
+  onUnit: (u: Unit) => void;
+  pos: string;
+  onPos: (p: string) => void;
+  players: { pos: string }[];
+}) {
+  const units: Unit[] = ["all", "offense", "defense", "special"];
+  const here = [...new Set(players.filter((x) => unit === "all" || unitOf(x.pos) === unit).map((x) => x.pos))].sort(
+    (a, b) => posRank(a) - posRank(b) || a.localeCompare(b),
+  );
+  return (
+    <div className="off__row" role="group" aria-label={label}>
+      {units.map((u) => (
+        <button
+          key={u}
+          type="button"
+          className={`off__btn${unit === u ? " is-on" : ""}`}
+          aria-pressed={unit === u}
+          onClick={() => {
+            onUnit(u);
+            onPos("");
+          }}
+        >
+          {m.dev.units[u]}
+        </button>
+      ))}
+      <Dropdown
+        label={m.dev.position}
+        hideLabel
+        value={pos}
+        options={[{ value: "", label: m.dev.allPositions }, ...here.map((p) => ({ value: p, label: p }))]}
+        onChange={onPos}
+      />
+    </div>
+  );
+}
 /**
  * The game's notes on a player's offseason (career_js/offseason.js growth_terms and the coachability roll), sorted
  * by what they say: what sped his growth up, what held it back, and a change to how coachable he is (which shapes the
@@ -905,6 +976,7 @@ const TOP_JUMPS = 5;
  */
 function Development({ v }: P) {
   const [unit, setUnit] = useState<Unit>("all");
+  const [pos, setPos] = useState("");
   /** the player whose growth is open in a window */
   const [open, setOpen] = useState<Grown | null>(null);
   const rep = v.report;
@@ -915,7 +987,7 @@ function Development({ v }: P) {
   const best = all[0];
   const avg = all.reduce((s, x) => s + x.gain, 0) / all.length;
   const top = all.slice(0, TOP_JUMPS).filter((x) => x.gain > 0);
-  const shown = all.filter((x) => unit === "all" || unitOf(x.pos) === unit);
+  const shown = all.filter((x) => (unit === "all" || unitOf(x.pos) === unit) && (!pos || x.pos === pos));
   // the chart's scale: the best rating on it, so the longest bar fills its track
   const max = Math.max(...all.map((x) => Math.max(x.overall, x.overall - x.gain)), 1);
   const cardStyle = {
@@ -923,7 +995,6 @@ function Development({ v }: P) {
     "--on": "var(--team-on, var(--paper-hi))",
   } as CSSProperties;
   const signed = (x: number) => (x > 0 ? `+${x}` : String(x));
-  const units: Unit[] = ["all", "offense", "defense", "special"];
 
   return (
     <div className="dev">
@@ -989,19 +1060,7 @@ function Development({ v }: P) {
       <section className="dev__chart" aria-label={m.dev.title}>
         <header className="dev__chart-head">
           <h3 className="label dev__kicker">{m.dev.title}</h3>
-          <div className="off__row" role="group" aria-label={m.dev.unitLabel}>
-            {units.map((u) => (
-              <button
-                key={u}
-                type="button"
-                className={`off__btn${unit === u ? " is-on" : ""}`}
-                aria-pressed={unit === u}
-                onClick={() => setUnit(u)}
-              >
-                {m.dev.units[u]}
-              </button>
-            ))}
-          </div>
+          <UnitPick label={m.dev.unitLabel} unit={unit} onUnit={setUnit} pos={pos} onPos={setPos} players={all} />
           <span className="dev__legend" aria-hidden="true">
             <i className="dev__key dev__key--was" />
             {m.dev.was}
@@ -1240,9 +1299,9 @@ function Athletes({ v, season, busy, live, act }: P) {
  */
 function Cuts({ v, teams, busy, live, act }: P) {
   const [unit, setUnit] = useState<Unit>("all");
+  const [pos, setPos] = useState("");
   const c = v.cuts;
   if (!c) return <Empty>{m.cuts.none}</Empty>;
-  const units: Unit[] = ["all", "offense", "defense", "special"];
 
   if (c.done || !live) {
     const landed = c.out.filter((x) => x.to);
@@ -1335,7 +1394,7 @@ function Cuts({ v, teams, busy, live, act }: P) {
   const safe = c.players.filter((x) => x.protected);
   // how many of a group would be left with your marks made
   const leftAt = (group: string) => c.players.filter((x) => x.group === group && !x.marked).length;
-  const shown = open.filter((x) => unit === "all" || unitOf(x.pos) === unit);
+  const shown = open.filter((x) => (unit === "all" || unitOf(x.pos) === unit) && (!pos || x.pos === pos));
   return (
     <div className="dev">
       <dl className="dev__stats">
@@ -1365,19 +1424,7 @@ function Cuts({ v, teams, busy, live, act }: P) {
       <section className="dev__chart" aria-label={m.cuts.list}>
         <header className="dev__chart-head">
           <h3 className="label dev__kicker">{m.cuts.list}</h3>
-          <div className="off__row" role="group" aria-label={m.cuts.unitLabel}>
-            {units.map((u) => (
-              <button
-                key={u}
-                type="button"
-                className={`off__btn${unit === u ? " is-on" : ""}`}
-                aria-pressed={unit === u}
-                onClick={() => setUnit(u)}
-              >
-                {m.dev.units[u]}
-              </button>
-            ))}
-          </div>
+          <UnitPick label={m.cuts.unitLabel} unit={unit} onUnit={setUnit} pos={pos} onPos={setPos} players={open} />
         </header>
         <ul className="dev__jumps">
           {shown.map((x) => {
