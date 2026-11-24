@@ -1235,7 +1235,9 @@ export function _height_in(h) {
 
 // the Status column's order, furthest along first: signed, a hard commit, a verbal one, then where you stand with the
 // uncommitted (recruiting.stage: visited, his top group, in contact, cold), the FCS leaners last
-prospects.STATUS_ORDER = { signed: 0, hard: 1, committed: 2, visited: 3, top: 4, contact: 5, cold: 6, leaning_fcs: 7 };
+// (the ones who have shut you out come last, as the column says them: Cut You, then Closed. The player's report:
+// sorting by Status left a Closed prospect in among the Open ones, so the sort looked like it did nothing)
+prospects.STATUS_ORDER = { signed: 0, hard: 1, committed: 2, visited: 3, top: 4, contact: 5, cold: 6, leaning_fcs: 7, finalists: 8, locked: 9 };
 
 
 export function _sort_key(state, viewer, key, keen) {
@@ -1254,11 +1256,14 @@ export function _sort_key(state, viewer, key, keen) {
     return (pid) => (get(P[pid], "stars") !== null ? -(P[pid]["stars"] || 0) : get(cls, get(P[pid], "cls"), 9));
   }
   if (key === "status") {
+    const win = recruiting._winning(state);          // every school's season so far, worked out once for the lot
     return (pid) => {
       const x = prospects.seen_status(state, pid, viewer);
       if (truthy(x["signed"]) || truthy(x["committed"])) {
         return prospects.STATUS_ORDER[truthy(x["signed"]) ? "signed" : truthy(get(x, "hard")) ? "hard" : "committed"];
       }
+      const shut = recruiting.blocked(state, viewer, pid, win);
+      if (truthy(shut) && _in(shut["why"], prospects.STATUS_ORDER)) return prospects.STATUS_ORDER[shut["why"]];
       return prospects.STATUS_ORDER[truthy(x["fcs"]) ? "leaning_fcs" : recruiting.stage(state, viewer, pid)];
     };
   }

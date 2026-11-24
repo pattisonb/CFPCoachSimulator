@@ -60,4 +60,19 @@ test("the class line counts your board against its cap, and In Contact is counte
   equal([f["board"], f["cap"], f["contact"]], [1, recruiting.BOARD_CAP, 1]);
 });
 
+test("sorted by Status, the prospects who have shut you out come last: Cut You, then Closed, as the column says them", () => {
+  const order = game.modules.prospects.STATUS_ORDER;
+  assert(order["cold"] < order["finalists"] && order["finalists"] < order["locked"], show(order));
+  const place = (r) => (r["signed"] ? order["signed"] : r["committed"] ? (r["hard"] ? order["hard"] : order["committed"])
+    : r["blocked"] && r["blocked"]["why"] in order ? order[r["blocked"]["why"]] : r["leaning_fcs"] ? order["leaning_fcs"] : order[r["stage"]]);
+  const rows = G("prospects?limit=5000&sort=status")["rows"];
+  const shut = rows.filter((r) => r["blocked"] && !r["signed"] && !r["committed"]);
+  assert(shut.length > 0, "nobody has shut you out");
+  const places = rows.map(place);
+  assert(places.every((v, i) => i === 0 || places[i - 1] <= v), "the list is not in the column's order");
+  assert(rows.slice(-shut.length).every((r) => r["blocked"]), "the shut-out are the list's foot");
+  const back = G("prospects?limit=5000&sort=-status")["rows"];
+  assert(back.slice(0, shut.length).every((r) => r["blocked"]), "and its head the other way");
+});
+
 await run();
