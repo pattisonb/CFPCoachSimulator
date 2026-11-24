@@ -547,6 +547,7 @@ export default function Recruiting({
                         offWhy={out?.text}
                         hidden={!!out}
                         labels
+                        scout
                         onChange={(stale) => reload(true, stale)}
                         onPlan={(action, on) =>
                           patch?.((b) => ({

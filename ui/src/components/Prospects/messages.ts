@@ -15,6 +15,7 @@ export const messages = {
   },
   stars: "Stars",
   listOpen: "Open",
+  favCol: "Favorite",
   listClosed: "Closed",
   listNone: "–",
   listOpenTip: "You are not on his list of ten schools. You can recruit him all the same: you start further back.",

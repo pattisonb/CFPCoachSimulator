@@ -920,6 +920,9 @@ export interface ListSchool {
 
 /** One recruit on your board (GET /api/season/{id}/recruiting → board[], career_js/prospects.js board_row) */
 export interface BoardRow {
+  /** whether your staff can scout him this week, and the energy one trip costs (his row's Scout box) */
+  can_scout?: boolean;
+  scout_cost?: number;
   /** a transfer's class (FR, SORS, ...) */
   cls?: string;
   /** your commit, with a rival working him: how likely a flip is (Slim, Real, Likely) and the school nearest to it */
