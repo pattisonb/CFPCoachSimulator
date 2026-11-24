@@ -3,3 +3,10 @@
   image-rendering: pixelated;
   user-select: none;
 }
+
+/* a face in a tile smaller than it is (a 30px tile, a card's cropped square) sits in the tile's middle, trimmed evenly
+   all round: a tile that only centered its item lined an oversized face up with its top left corner and cut the
+   mouth off (the player's report). Any box that holds a face directly gets this, whatever it is called */
+:where(:has(> .face)) {
+  place-content: center;
+}
