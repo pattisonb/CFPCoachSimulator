@@ -41,11 +41,13 @@ const ATTRIBUTES = {
     // physical and mental: every position
     top_speed: ["Top Speed", "Physical", "Long runs, deep routes and pursuit: separation over distance.", _avg("speed")],
     burst: ["Burst", "Physical", "The first steps: hitting the hole, getting off the line, closing on the ball.", _avg("acceleration")],
-    agility: ["Agility", "Physical", "Cutting and changing direction: jukes, route breaks, staying with a cut.", _avg("agility", "change_of_direction")],
+    agility: ["Agility", "Physical", "Quick feet in a small space: route breaks, staying with a cut.", _avg("agility")],
+    change_of_direction: ["Change of Direction", "Physical", "Planting and going the other way at speed.", _avg("change_of_direction")],
     strength: ["Strength", "Physical", "Winning at the point of contact: blocks, sheds, tackles, broken tackles.", _avg("strength")],
     leaping: ["Leaping", "Physical", "Contested catches, high-point throws, batted passes, blocked kicks.", _avg("jumping")],
     stamina: ["Stamina", "Physical", "How fast he tires and how fast he recovers on the sideline.", _avg("stamina")],
-    durability: ["Durability", "Physical", "How often he gets hurt and how long injuries last.", _avg("injury", "toughness")],
+    durability: ["Durability", "Physical", "How often he gets hurt and how long injuries last.", _avg("injury")],
+    toughness: ["Toughness", "Physical", "Playing through contact and a long season.", _avg("toughness")],
     football_iq: ["Football IQ", "Physical", "Penalties, fumbles, busted assignments, reading the play.", _avg("awareness")],
     // passing
     arm_strength: ["Arm Strength", "Passing", "Distance and velocity: deep and outside throws, tight windows.", _avg("throw_power")],
@@ -61,7 +63,8 @@ const ATTRIBUTES = {
     // ball carrying
     run_vision: ["Running Vision", "Ball Carrying", "Finding the hole and the cutback lane: yards before contact.", _avg("bc_vision")],
     ball_security: ["Ball Security", "Ball Carrying", "Fumbles, above all against hard hitters.", _avg("carrying")],
-    elusiveness: ["Elusiveness", "Ball Carrying", "Making the first tackler miss in space.", _avg("juke_move", "spin_move")],
+    elusiveness: ["Juke Move", "Ball Carrying", "Making the first tackler miss with a cut in space.", _avg("juke_move")],
+    spin_move: ["Spin Move", "Ball Carrying", "Spinning off a tackler who has a hand on him.", _avg("spin_move")],
     power_running: ["Power Running", "Ball Carrying", "Yards after contact and short-yardage pushes.", _avg("trucking")],
     stiff_arm: ["Stiff Arm", "Ball Carrying", "Shedding arm tackles on the edge.", _avg("stiff_arm")],
     tackle_breaking: ["Tackle Breaking", "Ball Carrying", "Broken tackles of any kind.", _avg("break_tackle")],
@@ -100,18 +103,18 @@ const ATTRIBUTES = {
     return_skill: ["Return Skill", "Special Teams", "Kick and punt return yards.", _avg("kick_return")],
 };
 
-const PHYSICAL = ["top_speed", "burst", "agility", "strength", "leaping", "stamina", "durability", "football_iq"];
+const PHYSICAL = ["top_speed", "burst", "agility", "change_of_direction", "strength", "leaping", "stamina", "durability", "toughness", "football_iq"];
 
 // What each position carries and shows on its card (height and weight come with every player).
 const POSITION_ATTRIBUTES = {
     QB: [...PHYSICAL, "arm_strength", "short_accuracy", "mid_accuracy", "deep_accuracy", "throw_on_move", "pocket_poise",
-                      "play_action", "sack_escape", "decision_making", "run_vision", "ball_security", "elusiveness"],
-    RB: [...PHYSICAL, "run_vision", "ball_security", "elusiveness", "power_running", "stiff_arm", "tackle_breaking",
+                      "play_action", "sack_escape", "decision_making", "run_vision", "ball_security", "elusiveness", "spin_move"],
+    RB: [...PHYSICAL, "run_vision", "ball_security", "elusiveness", "spin_move", "power_running", "stiff_arm", "tackle_breaking",
                       "hands", "short_routes", "pass_footwork", "return_skill"],
     FB: [...PHYSICAL, "run_vision", "ball_security", "power_running", "tackle_breaking", "hands", "short_routes",
                       "lead_block", "drive_block", "pass_anchor"],
     WR: [...PHYSICAL, "hands", "contested_catch", "highlight_catch", "short_routes", "mid_routes", "deep_routes", "release",
-                      "elusiveness", "tackle_breaking", "reach_block", "return_skill"],
+                      "elusiveness", "spin_move", "tackle_breaking", "reach_block", "return_skill"],
     TE: [...PHYSICAL, "hands", "contested_catch", "short_routes", "mid_routes", "release", "drive_block", "reach_block",
                       "pass_anchor", "tackle_breaking"],
     OL: [...PHYSICAL, "drive_block", "reach_block", "pass_anchor", "pass_footwork", "lead_block", "finish_block"],

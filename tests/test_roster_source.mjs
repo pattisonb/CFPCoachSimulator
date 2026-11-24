@@ -120,7 +120,7 @@ test("Decision Making is a rating of its own: typed in the file it is his card's
   assert(!("dm" in league._filed_player(src, attrs, "TX")), "a quarterback nobody changed carries a move into the league");
 });
 
-test("a card's name is the file's name at every position: a corner's Ball Skills, a punter's Punt Power, a blend as one rating", () => {
+test("54 skills are 54 ratings, each on its own name: none is two together, in the file or on a card", () => {
   const names = (pos, role = null) => rosters.names_for(pos, role).map(([n]) => n);
   assert(names("CB").includes("Ball Skills") && !names("CB").includes("Hands") && names("WR").includes("Hands"));
   assert(names("P").includes("Punt Power") && names("P").includes("Punt Accuracy") && names("K").includes("Kick Power"));
@@ -128,14 +128,33 @@ test("a card's name is the file's name at every position: a corner's Ball Skills
     const all = rosters.names_for(pos);
     equal(all.flatMap(([, skills]) => skills).sort(), [...attrs].sort(), pos);            // every skill is in the file once, under one name
     equal(new Set(all.map(([n]) => n)).size, all.length, pos);
+    assert(all.every(([, skills]) => skills.length <= 1), `${pos}: a rating that is two skills`);
+    equal(all.filter(([, skills]) => skills.length === 1).length, 54, pos);
+    equal(all.filter(([, skills]) => !skills.length).map(([n]) => n), pos === "QB" ? ["Decision Making"] : [], pos);   // a quarterback's own, beside the 54
   }
-  // Agility, Durability and Elusiveness are one rating each (the card shows one number under each name)
-  equal(rosters.names_for("RB").filter(([, skills]) => skills.length > 1).map(([n]) => n).sort(), ["Agility", "Durability", "Elusiveness"]);
+  // every player's line: 54 ratings (a quarterback's Decision Making makes his 55)
+  for (const t of Object.values(file["teams"])) {
+    for (const p of [...t["offense"], ...t["defense"]]) equal(Object.keys(p["ratings"]).length, p["position"] === "QB" ? 55 : 54, p["name"]);
+  }
+  // the six that were once three: each its own number, on the card as in the file
   const edited = copy(file);
   const rb = edited["teams"]["texas"]["offense"].find((x) => x["position"] === "RB");
-  rb["ratings"]["Elusiveness"] = 97;
+  Object.assign(rb["ratings"], { Agility: 91, "Change of Direction": 62, Durability: 88, Toughness: 55, "Juke Move": 97, "Spin Move": 41 });
   const got = find(rosters.derive(edited), "texas", rb["slug"]);
-  equal(season.page_attribute(got, "elusiveness", got["attributes"]["elusiveness"]), 97);
+  const shows = (key) => season.page_attribute(got, key, got["attributes"][key]);
+  equal([shows("agility"), shows("change_of_direction"), shows("durability"), shows("toughness"), shows("elusiveness"), shows("spin_move")], [91, 62, 88, 55, 97, 41]);
+  // no card attribute is read from more than one skill, but a quarterback's Decision Making, which is stored
+  for (const [key, a] of Object.entries(rv2.ATTRIBUTES)) assert(a[3].sources.length === 1 || key === "decision_making", `${key} is worked out from ${a[3].sources}`);
+});
+
+test("the list of all his ratings is his ratings and nothing else: the file's names, the file's numbers, none worked out", () => {
+  const data = rosters.read();
+  for (const [slug, who] of [["smu", "kevin-jennings"], ["ohio-state", "jeremiah-smith"]]) {
+    const p = find(data, slug, who), src = find(file, slug, who);
+    const rows = season.all_skills(p).flatMap((g) => g["rows"]);
+    equal(Object.fromEntries(rows.map((r) => [r["label"], r["value"]])), Object.fromEntries(Object.entries(src["ratings"])), who);
+    equal(rows.length, Object.keys(src["ratings"]).length, who);
+  }
 });
 
 test("Jeremiah Smith's Top Speed set to 50 in the file: his card reads 50, the engine has him slow, his overall drops, and only his", () => {

@@ -36,12 +36,12 @@ const NEAR = 3;              // how far a kept number may be moved so the page s
 // The game keeps 54 skills (game_scale.keys()). A card attribute that is one skill gives the skill its name in the
 // file ("Top Speed" is speed, "Pocket Poise" is throw_under_pressure); where two cards name one skill differently the
 // player's own card decides (a corner's catching is "Ball Skills", a receiver's "Hands"; a punter's leg is "Punt
-// Power"). A card attribute that is two skills together (BLENDS) is one rating in the file, and both skills are it:
-// the card cannot show two numbers under one name. A skill no card shows goes by its own name ("Run Block").
+// Power"). Every skill is a rating of its own, on its own name: none is two together, in the file or on a card (the
+// player's rule: 54 skills, 54 ratings). A skill no card shows goes by its own name ("Run Block").
 // A quarterback's Decision Making is a rating of the file too (OWN: no skill is it; the card once worked it out from
 // two others, and the player's rule is that every rating a card prints is one that is stored).
 
-const BLENDS = { agility: ["agility", "change_of_direction"], durability: ["injury", "toughness"], elusiveness: ["juke_move", "spin_move"] };
+const BLENDS = {};                       // none: a card attribute is one skill (it once held three that were two skills together)
 const OWN = ["decision_making"];         // card attributes stored under their own name with no skill behind them
 const _names = new Map();                // card group -> [[name in the file, [the skills it is]], ...], the card's own ratings first
 

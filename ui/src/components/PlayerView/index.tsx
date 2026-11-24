@@ -157,7 +157,6 @@ const OWN_GROUP: Record<string, string> = {
 };
 
 /** the group a passer's ratings sit in, on his card and in the full list */
-const PASSING = "Passing";
 
 /** a promise going wrong: its tag reads in red */
 const BAD_PROMISE = new Set(["Slipping", "Broken"]);
@@ -188,7 +187,6 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
   const goal = pr?.ability_goal;
   const goalLine = goal ? m.goalLine(goal.name, goal.tier_name, goal.have, goal.need) : null;
   const groups = pr ? [...new Set(pr.attributes.map((a) => a.group))] : [];
-  const passing = pr?.skills?.find((g) => g.group === PASSING)?.rows ?? [];
   // General first, then his position's own group beside it, then the rest in their usual order
   const ownGroup = OWN_GROUP[p.role ?? ""] ?? OWN_GROUP[p.position];
   const skillGroups = [...(pr?.skills ?? [])].sort(
@@ -299,11 +297,6 @@ ${m.ceiling(a.potential)}.`
                     }
                   />
                 ))}
-              {/* a passer's rating that is ours (Release Speed), with the rest of his passing */}
-              {g === PASSING &&
-                passing
-                  .filter((x) => x.key in m.passerTips)
-                  .map((x) => <Bar key={x.key} label={x.label} value={x.value} tip={m.passerTips[x.key]} />)}
             </Panel>
           ))}
           <Panel title={m.other}>

@@ -52,7 +52,7 @@ test("the roster is what the link has always carried: the depth chart, and every
     }
   }
   const qb = t["players"].find((x) => x["pos"] === "QB");
-  assert(Object.keys(qb["card"]).length === 20 && qb["card"]["Decision Making"] >= 1 && "Pocket Poise" in qb["card"] && "Football IQ" in qb["card"], show(qb["card"]));
+  assert(Object.keys(qb["card"]).length === 23 && qb["card"]["Decision Making"] >= 1 && "Juke Move" in qb["card"] && "Spin Move" in qb["card"] && "Toughness" in qb["card"] && "Pocket Poise" in qb["card"] && "Football IQ" in qb["card"], show(qb["card"]));
   const smith = t["players"].find((x) => x["slug"] === "jeremiah-smith");
   equal(smith["skills"][keys.indexOf("speed")], [...filed["offense"]].find((x) => x["slug"] === "jeremiah-smith")["ratings"]["Top Speed"]);
   const slugs = new Set(t["players"].map((p) => p["slug"]));

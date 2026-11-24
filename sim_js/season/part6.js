@@ -1043,12 +1043,16 @@ function all_skills(p) {
     const filed = from_file ? modules.rosters.shown_skill(p, k, v) : null;
     return [k, filed !== null ? filed : _shown.skill(v, grp, k)];
   }));
-  const card = {};
-  for (const [k, v] of Object.entries(get(p, "attributes") || {})) card[k] = season.page_attribute(p, k, v);
-  const who = get(p, "slug") || get(p, "name");
-  for (const key of Object.keys(season.OUR_RATINGS)) skills[key] = season.our_rating(key, skills, who, card);
+  // Only what he has: his skills, each under the name his card and the roster file give it (rosters.names_for), and a
+  // quarterback's Decision Making, a rating of its own. Nothing here is worked out from other ratings (the player's
+  // rule: the list once carried twenty that were, Balance and Separation and Touch among them).
+  const called = {};
+  for (const [name, of] of modules.rosters.names_for(p["position"], get(p, "role"))) for (const k of of) called[k] = name;
+  const dm = get(get(p, "attributes") || {}, "decision_making");
+  if (isNumber(dm)) skills["decision_making"] = season.page_attribute(p, "decision_making", dm);
   return season.SKILL_GROUPS.map(([g, rows]) => ({ group: g,
-    rows: rows.filter(([k]) => own(skills, k)).map(([k, label]) => ({ key: k, label, value: int(round(skills[k])) })) }));
+    rows: rows.filter(([k]) => own(skills, k)).map(([k, label]) => ({ key: k, label: get(called, k) || label, value: int(round(skills[k])) })) }))
+    .filter((g) => g["rows"].length);
 }
 
 function player_profile(state, team, name = null, position = null, slug = null) {

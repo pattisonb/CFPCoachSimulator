@@ -198,7 +198,7 @@ season.DEPTH_COLUMNS = {
 };
 season.COLUMN_SHORT = { top_speed: "SPD", burst: "ACC", agility: "AGI", strength: "STR", football_iq: "IQ",
   arm_strength: "THP", short_accuracy: "SAC", mid_accuracy: "MAC", deep_accuracy: "DAC",
-  pocket_poise: "POI", decision_making: "DEC", run_vision: "VIS", elusiveness: "ELU",
+  pocket_poise: "POI", decision_making: "DEC", run_vision: "VIS", elusiveness: "JUK",
   power_running: "POW", ball_security: "CAR", hands: "CTH", contested_catch: "CIT",
   short_routes: "SRR", mid_routes: "MRR", deep_routes: "DRR", release: "REL",
   drive_block: "RBP", reach_block: "RBF", pass_anchor: "PBP", pass_footwork: "PBF",
