@@ -29,7 +29,8 @@ export function Stage({ stage, ...p }: P & { stage: string }) {
   if (stage === "portal_recap") return <PortalRecap {...p} />;
   if (stage.startsWith("portal")) return <Portal {...p} />;
   if (stage === "development") return <Development {...p} />;
-  if (stage === "cuts") return <Cuts {...p} />;
+  if (stage === "cuts" || stage === "cuts_recap") return <Cuts {...p} />;
+  if (stage === "athletes") return <Athletes {...p} />;
   if (stage === "staff") return <Staff {...p} />;
   if (stage === "conferences") return <Conferences {...p} />;
   if (stage === "schedule") return <Schedule {...p} />;
@@ -1162,6 +1163,71 @@ function Notes({ why }: { why: string[] }) {
   );
 }
 
+// ---------- Place Your Athletes ----------
+
+const feet = (inches: number | null) => (inches ? `${Math.floor(inches / 12)}'${inches % 12}"` : "");
+
+/**
+ * Place Your Athletes (the player's design): a stage only in a year you signed a prospect listed as an athlete. A card
+ * each: his face, his build and what he is listed at now, then his best positions as a row of tiles, each with the
+ * overall he projects to there (his size counted against the spot: a 5'9" tight end reads as the poor fit he is).
+ * Pressing a tile moves him; the one he plays is filled in your color, his best fit flagged.
+ */
+function Athletes({ v, season, busy, live, act }: P) {
+  const a = v.athletes;
+  if (!a || !a.players.length) return <Empty>{m.ath.none}</Empty>;
+  return (
+    <div className="dev">
+      <dl className="dev__stats">
+        <Stat label={m.ath.signed}>{a.players.length}</Stat>
+        <Stat label={m.ath.moved}>{a.players.filter((p) => p.moved_from).length}</Stat>
+      </dl>
+      <p className="off__soft ath__lead">{m.ath.lead}</p>
+      <ul className="ath__list">
+        {a.players.map((p) => (
+          <li key={p.id} className="dev-card ath-card" style={MINE}>
+            <header className="dev-card__top">
+              <span className="face-tile dev-card__face">
+                <Face face={playerFace(p.id, p.pos)} scale={2} label="" />
+              </span>
+              <b className="dev-card__gain">{p.overall}</b>
+            </header>
+            <b className="dev-card__name">
+              <PlayerLink team={season.team} name={p.name} position={p.pos} />
+            </b>
+            <span className="off__soft">
+              {[m.ath.listed(p.pos), m.ath.build(feet(p.ht), p.wt), p.stars ? m.ath.stars(p.stars) : ""]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+            {p.best !== p.pos && (
+              <span className="dev-card__line" title={m.ath.bestTip}>
+                <span className="off__tag is-warn">{m.ath.best(p.best)}</span>
+              </span>
+            )}
+            <div className="ath-card__opts" role="group" aria-label={p.name}>
+              {p.options.map((o) => (
+                <button
+                  key={o.pos}
+                  type="button"
+                  className={`ath-card__opt${o.current ? " is-on" : ""}${o.pos === p.best ? " is-best" : ""}`}
+                  aria-pressed={o.current}
+                  disabled={busy || !live || o.current}
+                  title={o.current ? m.ath.here : m.ath.move(p.name, o.pos, o.overall)}
+                  onClick={() => act("/position", { pid: p.id, pos: o.pos })}
+                >
+                  <span className="label">{o.pos}</span>
+                  <b>{o.overall}</b>
+                </button>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ---------- Roster Cuts ----------
 
 /**
@@ -1183,6 +1249,9 @@ function Cuts({ v, teams, busy, live, act }: P) {
     return (
       <div className="dev">
         <dl className="dev__stats">
+          <Stat label={m.cuts.rosterNow}>
+            {c.roster} <small>{m.cuts.ofLimit(c.limit)}</small>
+          </Stat>
           <Stat label={m.cuts.doneCut}>{c.out.length}</Stat>
           <Stat label={m.cuts.doneLanded}>{landed.length}</Stat>
           <Stat label={m.cuts.doneGone}>{c.out.length - landed.length}</Stat>

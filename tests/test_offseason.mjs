@@ -184,12 +184,16 @@ test("most transfers find a school, the best mostly at strong programs, and smal
 // a team must be able to line up next year whatever it lost
 test("after Roster Cuts every roster ends between 70 and the limit with every position floor met, preferred walk-ons filling in", () => {
   // Progress is done: Roster Cuts is next, and the rosters are filled once it is settled (here the staff decides)
+  // (Place Your Athletes comes first in a year you signed one)
   offseason.advance(st);
+  if (off["stage"] === "athletes") offseason.advance(st);
   equal(off["stage"], "cuts");
   offseason.cuts_auto(st);
   offseason.advance(st);
-  equal(off["stage"], "staff");
+  equal(off["stage"], "cuts_recap");                       // Roster Moves: where everyone went, a stage of its own
   assert(off["cuts"]["done"] === true);
+  offseason.advance(st);
+  equal(off["stage"], "staff");
   assert(rosters().some((r) => r.some((p) => p["walk_on"] && p["preferred"])), "no preferred walk-ons");
   const sizes = rosters().map((r) => r.length);
   assert(Math.min(...sizes) >= 70 && Math.max(...sizes) <= offseason.ROSTER_LIMIT, show([Math.min(...sizes), Math.max(...sizes)]));

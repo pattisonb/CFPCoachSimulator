@@ -114,8 +114,10 @@ test("portal recap", () => {
     while (api.loaded_state()["offseason"]["stage"] !== "development") advance(sid);
     v = G(sid, "offseason");
     rec = check_recap(sid, v);
-    advance(sid);                             // Roster Cuts: the staff decides, then on to Staff
+    // Roster Cuts (past Place Your Athletes, in a year you signed one): the staff decides, then Roster Moves, then Staff
+    while (api.loaded_state()["offseason"]["stage"] !== "cuts") advance(sid);
     api.call("POST", `/api/season/${sid}/offseason/cut`, { auto: true });
+    advance(sid);
     advance(sid);
     const v2 = G(sid, "offseason");
     assert(v2["stage"] === "staff");

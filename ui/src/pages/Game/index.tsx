@@ -410,6 +410,12 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
     setVisited((v) => (v.includes(next.key) ? v : [...v, next.key]));
     writeAddress(next.key, hubTab);
   };
+  /** the season is over: the Office's place in the sidebar is the Offseason's until the next one starts */
+  const offseasonOn = !!season?.done;
+  // (the Office itself has nothing to do then: its address shows the Offseason)
+  useEffect(() => {
+    if (offseasonOn && section.key === "office") open("offseason");
+  }, [offseasonOn, section.key]);
   // the season ending while you watch (the last week played) takes you to its recap; a season already over when the
   // page opens stays where the address says
   const wasDone = useRef<{ season: string; done: boolean } | null>(null);
@@ -557,16 +563,19 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
         <GameNav
           team={navTeam}
           loading={load.kind === "loading"}
-          active={section.key}
-          onSection={open}
+          // once the season is over the Office's place in the list is the Offseason's (the player's ask), and it is the
+          // Office's again when the next season starts
+          active={offseasonOn && section.key === "offseason" ? "office" : section.key}
+          onSection={(key) => open(offseasonOn && key === "office" ? "offseason" : key)}
           // the offseason's portal: the same page works the portal, so it goes by that name (the player's ask)
           // and the recap is the week's while the season is played, the season's once it is over
           names={{
             ...(portalNamed && { recruiting: m.portal }),
             ...(season && !season.done && { recap: m.weeklyRecap }),
+            ...(offseasonOn && { office: m.offseason }),
           }}
           // the Offseason joins the list when the season is over (it stays while you are on it, an address typed by hand)
-          hide={season && !season.done && section.key !== "offseason" ? ["offseason"] : undefined}
+          hide={season && (season.done || section.key !== "offseason") ? ["offseason"] : undefined}
           theme={theme}
           onToggleTheme={onToggleTheme}
           mode={navMode}

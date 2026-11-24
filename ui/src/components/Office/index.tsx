@@ -278,7 +278,8 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
     if (settling && arrived && !holding && nowHeld === first) setSettling(false);
   }, [settling, office, v, holding, nowHeld, first]);
   // (the sim has ended and the effect above has not run yet: one draw, still the board)
-  const boardOn = !!board || settling || (ran.current && !sim.running);
+  // (a season that has just ended goes straight to its recap: nothing to settle)
+  const boardOn = !!board || (!s.done && (settling || (ran.current && !sim.running)));
   // The board changes all at once, when the sim finishes a week (the player's ask): the sim counts a week's games
   // into your record before it calls the week over, so the record and the rank are held as they were until the week
   // itself moves. Your place in the conference comes with that week's feed.
@@ -312,6 +313,10 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       : office?.conference.independent || !st
         ? null
         : m.confPlace(ordinal(st.conf_rank), st.of);
+  // the week on the board: the one being played. Past the last week there is none (the player's report: a sim to the
+  // season's end flashed "Week 20" before the recap), so the last one named stays
+  const boardAt = (held.current?.week ?? s.current_week) + 1;
+  const boardWeek = s.week_labels[String(boardAt)] ? weekName(boardAt) : weekName(boardAt - 1);
   const title = s.done ? m.seasonComplete(s.year) : m.thisWeek;
   const subtitle = s.done
     ? s.champion_name
@@ -325,7 +330,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
       {boardOn && (
         <div className="office__board">
           <SimBoard
-            week={weekName((held.current?.week ?? s.current_week) + 1)}
+            week={boardWeek}
             record={held.current?.record ?? s.record}
             conference={conf}
             place={boardPlace}

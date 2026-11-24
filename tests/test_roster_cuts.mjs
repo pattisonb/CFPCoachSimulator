@@ -130,7 +130,9 @@ test("the cuts are made: the roster is at the limit, a broken promise costs your
   const before = word.reading(api.loaded_state());
   const marked = [...v["cuts"]["marked"]];
   v = R("offseason/advance", {});
-  assert(v["stage"] === "staff", v["stage"]);
+  assert(v["stage"] === "cuts_recap", v["stage"]);        // Roster Moves: a stage of its own, before the staff
+  equal(offseason.STAGE_NAMES["cuts_recap"], "Roster Moves");
+  assert(v["stages"].some((s) => s["key"] === "cuts_recap" && s["current"]), "Roster Moves is a step on the bar");
   const st = api.loaded_state();
   const teams = st["league"]["teams"];
   const roster = teams[ME]["roster"];
@@ -158,7 +160,9 @@ test("the cuts are made: the roster is at the limit, a broken promise costs your
   for (const x of c["joined"]) assert(roster.some((p) => p["id"] === x["id"] && p["cut_from"] === x["from"]) && x["from_name"]);
   assert(v["report"]["walk_ons"] >= 0);
   // read back from a later stage, the stage says where they went
-  assert(G("offseason")["cuts"]["out"].length === marked.length);
+  const later = R("offseason/advance", {});
+  assert(later["stage"] === "staff", later["stage"]);
+  assert(later["cuts"]["out"].length === marked.length);
 });
 
 test("on Auto the staff makes the cuts, and a past season keeps no game logs", () => {

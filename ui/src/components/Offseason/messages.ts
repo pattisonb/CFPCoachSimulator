@@ -22,7 +22,6 @@ export const messages = {
   // Roster Cuts is two screens: the cuts themselves, then where everyone went (the player's note: both said Advance
   // to Staff, so the first press looked like it had done nothing)
   makeCuts: "Make the Cuts",
-  cutsResults: "Roster Cuts: The Results",
   meetingName: "Your Meeting With the AD",
 
   /** each stage's short name on the stepper */
@@ -36,7 +35,9 @@ export const messages = {
     portal_w4: "Portal 4",
     portal_recap: "Recap",
     development: "Progress",
+    athletes: "Athletes",
     cuts: "Cuts",
+    cuts_recap: "Moves",
     staff: "Staff",
     conferences: "Leagues",
     schedule: "Schedule",
@@ -53,13 +54,30 @@ export const messages = {
     portal_w4: "The last week of the portal. Anyone unsigned after it stays where he is or walks on.",
     portal_recap: "The portal is shut. Who you got, who you lost, and the biggest moves around the country.",
     development: "A winter and a spring in the weight room: who grew, and who took a step back.",
+    athletes: "You signed an athlete. See what he would be at each position, and say where he plays.",
     cuts: "Your roster comes down to the limit. You have seen who grew: now choose who goes.",
+    cuts_recap: "The cuts are made. Where each player went, and who walked on with you.",
     staff: "Contracts, coaches leaving and the candidates to replace them, and any job offers for you.",
     conferences: "Next season's conferences. Move a program to another one if you want a different league.",
     schedule: "Next season's schedule. Trade a non-conference game for another school's that week.",
     ready: "Everything is settled. Start the season when you are.",
   } as Record<string, string>,
 
+  // Place Your Athletes: the signees listed as athletes, and where each plays
+  ath: {
+    none: "You signed no athletes this year.",
+    signed: "Athletes Signed",
+    moved: "Moved by You",
+    lead: "An athlete arrives without a set position. Each number is what he projects to be there, with his size counted against the spot. Pick where he plays; you can change it until you move on.",
+    build: (ht: string, wt: number | null) => [ht, wt ? `${wt} lbs` : ""].filter(Boolean).join(" · "),
+    listed: (pos: string) => `Listed at ${pos}`,
+    best: (pos: string) => `Best Fit: ${pos}`,
+    bestTip: "His highest projected overall is here.",
+    here: "He plays here now.",
+    move: (name: string, pos: string, overall: number) =>
+      `Move ${name} to ${pos}: he projects to a ${overall} overall there.`,
+    stars: (n: number) => `${n} ${n === 1 ? "Star" : "Stars"}`,
+  },
   cuts: {
     none: "Roster Cuts opens after Progress.",
     roster: "Your Roster",
@@ -95,6 +113,8 @@ export const messages = {
     signee: "Signee",
     transfer: "Transfer",
     // once the cuts are made
+    rosterNow: "Your Roster",
+    ofLimit: (n: number) => `/ ${n}`,
     doneCut: "Players Cut",
     doneLanded: "Walked On Elsewhere",
     doneGone: "Out of Football",

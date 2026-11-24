@@ -188,6 +188,8 @@ export interface OffView {
   } | null;
   /** Roster Cuts (after Progress): null before the stage */
   cuts: CutsView | null;
+  /** the athletes you signed and where each could play (Place Your Athletes), from that stage on; else null */
+  athletes?: AthletesView | null;
   your_staff: StaffMember[];
   staff: {
     leaving: StaffMember[];
@@ -269,6 +271,34 @@ export interface CutPlayer extends OffPlayer {
 }
 
 /** Roster Cuts (GET /offseason `cuts`): the limit, your roster, your marks, and once it is settled where each went. */
+/** One position an athlete could play: his projected overall there, and whether he is there now. */
+export interface AthleteOption {
+  pos: string;
+  group: string;
+  overall: number;
+  current: boolean;
+}
+/** A signee listed as an athlete: his build, where he is listed now, and his best positions. */
+export interface AthletePlayer {
+  id: string;
+  name: string;
+  pos: string;
+  cls: string;
+  ht: number | null;
+  wt: number | null;
+  stars: number | null;
+  overall: number;
+  archetype: string | null;
+  /** where he was listed before you moved him this offseason, or null */
+  moved_from: string | null;
+  /** the position he projects best at */
+  best: string;
+  options: AthleteOption[];
+}
+export interface AthletesView {
+  players: AthletePlayer[];
+}
+
 export interface CutsView {
   limit: number;
   roster: number;

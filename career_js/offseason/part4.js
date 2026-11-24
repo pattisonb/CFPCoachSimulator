@@ -147,11 +147,15 @@ function advance(state) {
     off["report"] = { development, walk_ons: 0, released: 0 };
     off["report"]["coaches"] = offseason._develop_coaches(state);
     off["stage"] = "development";
-  } else if (stage === "development") {
+  } else if (stage === "development" && offseason.athletes_mine(state).length) {
+    off["stage"] = "athletes";                              // you signed an athlete: where he plays is yours to say
+  } else if (stage === "development" || stage === "athletes") {
     off["cuts"] = { marked: [], done: false, out: [] };     // Roster Cuts: yours to make, now that you have seen who grew
     off["stage"] = "cuts";
   } else if (stage === "cuts") {
     offseason._finish_cuts(state);
+    off["stage"] = "cuts_recap";                            // where everyone went: a stage of its own before the staff (the player's ask)
+  } else if (stage === "cuts_recap") {
     const car = carousel.run(state);
     off["carousel"] = car;
     off["coaching_changes"] = car["changes"];
@@ -187,6 +191,32 @@ function advance(state) {
 // anyone but this year's signees and transfers. A cut is free, but for a player you promised a starting job this
 // coming season: that breaks the promise (word.apply). Every other school's roster comes down by the game's own rule.
 // The cut players are walk-ons a school short at their position takes (_fill_rosters); the rest are out of football.
+
+function athletes_mine(state) {
+  // This year's signees of yours who were listed as athletes (league rows marked `ath` by _sign_classes).
+  const year = get(get(state, "offseason") || {}, "year");
+  const roster = get(get(get(get(state, "league") || {}, "teams") || {}, get(state, "team")) || {}, "roster") || [];
+  return roster.filter((c) => truthy(get(c, "ath")) && get(c, "joined") === year);
+}
+
+offseason.ATHLETE_OPTIONS = 6;        // *tune* how many positions the Place Your Athletes stage offers a player (his best)
+
+function athletes_view(state) {
+  // The Place Your Athletes stage: each athlete you signed, where he is listed now, and what he would be at his best
+  // positions (position_options: his ratings on that group's scale, his size against the spot's), where he is first.
+  const out = [];
+  for (const c of offseason.athletes_mine(state)) {
+    const options = offseason.position_options(state, c["id"]);
+    const here = options.find((o) => o["current"]);
+    const rest = options.filter((o) => !o["current"]).slice(0, offseason.ATHLETE_OPTIONS - 1);
+    const best = options.reduce((a, b) => (b["overall"] > a["overall"] ? b : a), options[0]);
+    out.push({ id: c["id"], name: c["n"], pos: c["pos"], cls: c["cls"], ht: get(c, "ht"), wt: get(c, "wt"), stars: get(c, "s"),
+      overall: here !== undefined ? here["overall"] : offseason.house(c["pos"], c["o"]), archetype: get(c, "a"), moved_from: get(c, "moved_from") || null,
+      best: best["pos"], options: [here, ...rest].filter((o) => o !== undefined) });
+  }
+  out.sort((a, b) => cmp(-a["overall"], -b["overall"]) || cmp(a["name"], b["name"]));
+  return { players: out };
+}
 
 function _cut_protected(state, c) {
   // Why a player of yours cannot be cut this offseason: "signee" (he signed with you this year), "transfer" (he
@@ -1139,8 +1169,11 @@ function _view(state, position = null, status = null) {
   const jobs = offseason._your_jobs(off);
   const out = {
     stage: off["stage"], stage_name: offseason.STAGE_NAMES[off["stage"]], year: off["year"],
-    stages: STAGES.map((s) => ({ key: s, name: offseason.STAGE_NAMES[s], done: _index(STAGES, s) < _index(STAGES, cur),
-      current: s === cur })),
+    // (Place Your Athletes is a stage only in a year you signed one: it is on the list once you are there or past it
+    // with athletes to show, never as a step you will not take)
+    stages: STAGES.filter((s) => s !== "athletes" || cur === "athletes" || (_index(STAGES, cur) > _index(STAGES, "athletes") && offseason.athletes_mine(state).length > 0))
+      .map((s) => ({ key: s, name: offseason.STAGE_NAMES[s], done: _index(STAGES, s) < _index(STAGES, cur), current: s === cur })),
+    athletes: _index(STAGES, cur) >= _index(STAGES, "athletes") ? offseason.athletes_view(state) : null,
     // what happened: shown once the draft has run (after Keep Them Home); your players you kept are "stayed"
     departures: { mine: deps.filter((d) => d["team"] === me).map((d) => ({ ...d, kind_name: offseason.KIND_NAMES[d["kind"]] })),
       league: kinds, first_round: sorted(deps.filter((d) => d["kind"] === "draft"), (d) => d["pick"]).slice(0, 32),
@@ -1233,7 +1266,7 @@ Object.assign(offseason, {
   _your_jobs, choose_job, _take_job, advance, next_teams, conferences_view, move_conference, _draw_schedule, _schedule_shim,
   schedule_view, schedule_move, schedule_trade, migrate, run_all, summary, keep_game_logs, next_season, portal_offer, recruiting_spots,
   player_next, _player_next, recruiting_offer_cap, portal_rows, _school_name, portal_away, portal_board, _portal_recap,
-  _stayed, _new_transfer, page, view, _view, cuts_view, cut_mark, cuts_auto, _finish_cuts, _cut_protected,
+  _stayed, _new_transfer, page, view, _view, athletes_mine, athletes_view, cuts_view, cut_mark, cuts_auto, _finish_cuts, _cut_protected,
   KeyError, OverflowError,          // (as portal_offer throws them: for the caller that tells them apart)
 });
 

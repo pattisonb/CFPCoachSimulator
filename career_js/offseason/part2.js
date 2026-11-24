@@ -749,6 +749,9 @@ function _sign_classes(state, lgd) {
     const c = offseason._compact_prospect(state, rc["prospects"][pid], attrs);
     c["j"] = offseason._jersey(team["roster"], c["pos"], rng);
     c["signed"] = true;
+    // listed as an athlete: he arrives at the position he was drawn at, and you place him yourself at the Place Your
+    // Athletes stage (the player's design; his build is an athlete's, so the drawn spot can be a poor fit)
+    if (get(rc["prospects"][pid], "position") === "ATH") c["ath"] = true;
     if (has(stories, pid)) {
       c["rec"] = { ...stories[pid], "overall": offseason.house(c["pos"], c["o"]) };     // how he was recruited, and what he was when he arrived
     }

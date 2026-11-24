@@ -168,9 +168,10 @@ test("coach development", () => {
     }
   }
   // the Staff step view carries the rows, one per staff member (past Roster Cuts, where the staff decides here)
-  offseason.advance(a);
+  while (a["offseason"]["stage"] !== "cuts") offseason.advance(a);
   offseason.cuts_auto(a);
-  offseason.advance(a);
+  offseason.advance(a);                    // Roster Moves
+  offseason.advance(a);                    // Staff
   const v = offseason.view(a);
   const developed = new Set(v["staff"]["developed"].map((r) => r["id"]));
   assert(truthy(v["staff"]) && a["career"]["staff"].every((s) => developed.has(s["id"])));
