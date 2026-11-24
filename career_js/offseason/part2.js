@@ -633,22 +633,60 @@ function fill_roles(state, teams = null) {
   return out;
 }
 
+// The numbers a position wears (the player's report: a receiver in 69, linemen in the 90s, a starter with none).
+// *tune* A new player draws from his group's own first; the rule itself is college football's: an offensive lineman
+// wears 50 to 79, and a quarterback, back, receiver or tight end never does. A defender may wear anything.
+offseason.JERSEYS = { "QB": [[0, 19]], "RB": [[0, 49]], "WR": [[0, 19], [80, 89]], "TE": [[80, 89], [40, 49]], "OL": [[50, 79]],
+  "DL": [[90, 99], [50, 59]], "LB": [[30, 59]], "CB": [[0, 49]], "S": [[0, 49]], "K": [[0, 49], [90, 99]], "P": [[0, 49], [90, 99]] };
+const _LINE = [50, 79];
+const _ELIGIBLE = new Set(["QB", "RB", "WR", "TE"]);
+
+function jersey_legal(pos, n) {
+  // Whether a player at `pos` may wear `n` (a whole number from 0 to 99, as text or a number).
+  const k = Number(n);
+  if (n === null || n === undefined || n === "" || !Number.isInteger(k) || k < 0 || k > 99) return false;
+  const group = get(offseason.GROUP, pos, pos);
+  const line = k >= _LINE[0] && k <= _LINE[1];
+  if (group === "OL") return line;
+  if (_ELIGIBLE.has(group)) return !line;
+  return true;
+}
+
 function _jersey(roster, pos, rng) {
+  // A free number for a player at `pos`: one of his group's own (JERSEYS), else any he may wear, else any free one.
   // (str(None) is "None" there and "null" here: neither is a number, and only numbers are looked for)
   const used = new Set(roster.map((p) => String(get(p, "j"))));
-  const ranges = { "QB": range(1, 20), "HB": range(1, 50), "WR": range(1, 90), "TE": range(80, 90), "K": range(1, 50),
-    "P": range(1, 50), "CB": range(1, 50), "FS": range(1, 50), "SS": range(1, 50) };
-  let rng_nums;
-  if (offseason.GROUP[pos] === "OL") {
-    rng_nums = range(50, 80);
-  } else if (offseason.GROUP[pos] === "DL" || offseason.GROUP[pos] === "LB") {
-    rng_nums = range(1, 100);
-  } else {
-    rng_nums = get(ranges, pos, range(1, 100));
-  }
-  let free = rng_nums.map((n) => String(n)).filter((n) => !used.has(n));
+  const group = get(offseason.GROUP, pos, pos);
+  const own = [];
+  for (const [lo, hi] of get(offseason.JERSEYS, group, [[0, 99]])) for (const n of range(lo, hi + 1)) own.push(String(n));
+  let free = own.filter((n) => !used.has(n));
+  if (!free.length) free = range(100).map((n) => String(n)).filter((n) => !used.has(n) && offseason.jersey_legal(pos, n));
   if (!free.length) free = range(100).map((n) => String(n)).filter((n) => !used.has(n));
   return free.length ? rng.choice(free) : null;
+}
+
+function renumber(state) {
+  // Every roster's numbers put right once the rosters are settled for the year: a player with no number, one his
+  // position may not wear (a lineman moved to the line keeps his old 94 otherwise), or one a teammate listed before
+  // him already has, draws a new one. Everyone else keeps his. Returns how many changed. Its own seeded stream.
+  const rng = offseason._rng(state, "renumber");
+  let n = 0;
+  for (const slug of sorted(Object.keys(state["league"]["teams"]))) {
+    const roster = state["league"]["teams"][slug]["roster"];
+    const seen = new Set();
+    const redo = [];
+    for (const c of roster) {
+      const j = get(c, "j");
+      if (!offseason.jersey_legal(c["pos"], j) || seen.has(String(j))) redo.push(c);
+      else seen.add(String(j));
+    }
+    for (const c of redo) c["j"] = null;
+    for (const c of redo) {
+      c["j"] = offseason._jersey(roster, c["pos"], rng);
+      n += 1;
+    }
+  }
+  return n;
 }
 
 // ----- his story: how he was recruited and what has happened since (the player card's History) -----
@@ -1052,7 +1090,7 @@ Object.assign(offseason, {
   program_shifts, _program_context, portal_odds, _departures, _would_start, draft_grades, draft_score, elite, draft_scores,
   draft_board, ai_keep_chance, _run_draft, _next_class, _redshirt_candidate, _games_played, _redshirt_block, redshirt,
   _apply_redshirts, position_options, move_row, _season_moves, change_position, defense_scheme, has_sam, empty_roles,
-  fill_roles, _jersey, life, _recruit_stories, _sign_classes, _compact_prospect, p4_school, open_spots, churn_left, my_spots,
+  fill_roles, _jersey, jersey_legal, renumber, life, _recruit_stories, _sign_classes, _compact_prospect, p4_school, open_spots, churn_left, my_spots,
   _group_counts, _depth_values, playing_time, _prestige, entrant_interest, ai_offers, resolve_round, _close_portal_rounds,
   _close_portal,
 });

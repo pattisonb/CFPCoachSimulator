@@ -340,6 +340,7 @@ function _finish_cuts(state) {
     return { id: e["id"], name: c["n"], pos: c["pos"], cls: c["cls"], overall: offseason.house(c["pos"], c["o"]), from: e["from"], from_name: offseason._school_name(state, e["from"]) };
   });
   Object.assign(cuts, { marked: [], done: true, out, joined: here });
+  offseason.renumber(state);                           // the rosters are settled: every number is one its wearer may wear
   if (truthy(get(off, "report"))) Object.assign(off["report"], { walk_ons: fill["walk_ons"], released: fill["released"] });
 }
 

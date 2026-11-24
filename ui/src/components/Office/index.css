@@ -117,26 +117,25 @@
   padding-block: var(--s1);
 }
 
+/* a side of the game: its colors, its letters under them, then its rank and record. Stacked and centered, so a
+   narrow card (a final with an overtime score between the two) never cuts a team down to one letter (the player's
+   report, after a game played on the field) */
 .office__side {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 2px 8px;
+  justify-items: center;
+  gap: 2px;
   min-width: 0;
+  text-align: center;
 }
 
 .office__side-name {
-  overflow: hidden;
   font-size: var(--t-lg);
-  text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .office__side-line {
-  grid-column: 1 / -1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--t-xs);
   white-space: nowrap;
 }
 
