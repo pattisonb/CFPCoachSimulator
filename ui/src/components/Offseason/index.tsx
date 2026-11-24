@@ -205,7 +205,7 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
 
               <header className="off__head">
                 <div>
-                  <h2 title={m.about[showing.key]}>{showing.name}</h2>
+                  <h2 title={m.about[showing.key]}>{showing.key === results ? m.cutsResults : showing.name}</h2>
                 </div>
                 {showing.key === "review" && inMeeting ? (
                   <button type="button" className="off__next" onClick={leaveMeeting}>
@@ -214,7 +214,15 @@ export default function Offseason({ season, teams, onSection, onRecruit, onStage
                   </button>
                 ) : showing.key === stage ? (
                   <button type="button" className="off__next" disabled={busy} onClick={advance}>
-                    {busy ? m.working : ready ? m.startSeason(v.year) : next ? m.onTo(next.name) : m.advance}
+                    {busy
+                      ? m.working
+                      : ready
+                        ? m.startSeason(v.year)
+                        : stage === "cuts"
+                          ? m.makeCuts
+                          : next
+                            ? m.onTo(next.name)
+                            : m.advance}
                     <ArrowRight size={16} weight="bold" aria-hidden="true" />
                   </button>
                 ) : showing.key === results ? (

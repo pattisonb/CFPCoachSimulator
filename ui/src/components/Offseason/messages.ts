@@ -19,6 +19,10 @@ export const messages = {
   onTo: (stage: string) => `Advance to ${stage.replace(/^Transfer Portal, /, "Portal ")}`,
   backTo: (stage: string) => `Back to ${stage}`,
   startSeason: (year: number) => `Start the ${year} Season`,
+  // Roster Cuts is two screens: the cuts themselves, then where everyone went (the player's note: both said Advance
+  // to Staff, so the first press looked like it had done nothing)
+  makeCuts: "Make the Cuts",
+  cutsResults: "Roster Cuts: The Results",
   meetingName: "Your Meeting With the AD",
 
   /** each stage's short name on the stepper */
