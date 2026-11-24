@@ -6,7 +6,7 @@
 // - Players grow by kind (athleticism slowly, technique and the mental game faster), and a year's ceilings can fall too.
 //
 // Nothing here changes how a game or a recruit plays; it is what the player is shown, and how a roster develops.
-import { Random, round, int, sum, get, truthy } from "../engine_js/pyrt.js";
+import { Random, round, int, sum, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
 import { shown } from "../teamdata_js/shown.js";
@@ -84,6 +84,8 @@ export function ceiling_drift(p, attrs, perf, year, physical) {
     g_new.push(is_physical(k) ? g : Math.max(0, Math.min(99 - v, g + step)));
   }
   p["g"] = g_new;
+  // a quarterback's Decision Making is a rating of its own: its room moves with the rest (not in the sum returned)
+  if (isNumber(get(p, "dmv"))) p["dmg"] = Math.max(0, Math.min(99 - p["dmv"], (get(p, "dmg") || 0) + step));
   return sum(p["g"]) - before;
 }
 

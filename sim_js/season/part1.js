@@ -330,7 +330,7 @@ function page_attribute(p, key, value) {
   // One of his card's attributes as the page shows it (teamdata_js/shown.js), at his card's position group. A rating
   // that is one rating in the roster file shows as the file has it (rosters.js shown_attribute), while the card still
   // holds the value the file gave it: the number in the file is the number on the card.
-  const filed = truthy(get(p, "filed")) ? modules.rosters.shown_attribute(p, key, value) : null;
+  const filed = truthy(get(p, "filed")) || truthy(get(p, "filed_own")) ? modules.rosters.shown_attribute(p, key, value) : null;
   if (filed !== null) return filed;
   return _shown.attribute(value, ratings_v2.card_group(p["position"], get(p, "role")), key);
 }

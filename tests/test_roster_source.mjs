@@ -96,7 +96,7 @@ test("Decision Making is a rating of its own: typed in the file it is his card's
   const shows = (p) => season.page_attribute(p, "decision_making", p["attributes"]["decision_making"]);
   const src = find(file, "smu", "kevin-jennings");
   equal(shows(was), src["ratings"]["Decision Making"]);                       // as the file has it today
-  assert(!("dm" in was), "a quarterback nobody changed carries a move");
+  equal(was["dmv"], src["ratings"]["Decision Making"]);
   for (const typed of [99, 40]) {
     const edited = copy(file);
     const mine = find(edited, "smu", "kevin-jennings");
@@ -108,16 +108,58 @@ test("Decision Making is a rating of its own: typed in the file it is his card's
     // nothing else of his moved: his Football IQ and Pocket Poise are their own ratings
     equal([shows(p) === typed, season.page_attribute(p, "football_iq", p["attributes"]["football_iq"]), season.page_attribute(p, "pocket_poise", p["attributes"]["pocket_poise"]), p["passing"], p["intelligence"]],
       [true, src["ratings"]["Football IQ"], src["ratings"]["Pocket Poise"], was["passing"], was["intelligence"]]);
-    // ... and it goes with him into a career: the league keeps how far his own stands from the two, and the team
-    // builder plays and shows it in every later season
+    // ... and it goes with him into a career: the league keeps the number itself, and the team builder plays and
+    // shows it in every later season
     const c = league._filed_player(mine, attrs, "TX");
-    equal(c["dm"], typed - src["ratings"]["Decision Making"]);
+    equal([c["dmv"], "dm" in c, c["dmg"] >= 0], [typed, false, true]);
     const expanded = league.expand(c, attrs, { slug: "smu", short_name: "SMU" });
     const plain = league.expand(league._filed_player(src, attrs, "TX"), attrs, { slug: "smu", short_name: "SMU" });
     const [a, b] = [build_teams.map_player(plain)["decision_making"], build_teams.map_player(expanded)["decision_making"]];
     assert(typed > src["ratings"]["Decision Making"] ? b > a : b < a, `a career's builder: ${a} -> ${b}`);
   }
-  assert(!("dm" in league._filed_player(src, attrs, "TX")), "a quarterback nobody changed carries a move into the league");
+});
+
+test("the sim plays a quarterback's own Decision Making: his Football IQ and Pocket Poise do not move it, in the file or in a career", () => {
+  const was = find(rosters.derive(copy(file)), "smu", "kevin-jennings");
+  const src = find(file, "smu", "kevin-jennings");
+  // the two it was once worked out from, typed far from where they are: his Decision Making, as the sim plays it and
+  // as his card shows it, is what it was
+  for (const [iq, poise] of [[99, 99], [40, 40], [99, 40]]) {
+    const edited = copy(file);
+    const mine = find(edited, "smu", "kevin-jennings");
+    mine["ratings"]["Football IQ"] = iq;
+    mine["ratings"]["Pocket Poise"] = poise;
+    const p = find(rosters.derive(edited), "smu", "kevin-jennings");
+    equal([p["decision_making"], season.page_attribute(p, "decision_making", p["attributes"]["decision_making"])],
+      [was["decision_making"], src["ratings"]["Decision Making"]], `Football IQ ${iq}, Pocket Poise ${poise}`);
+    // ... and in a career's league: the same number kept, and the same number played by the team builder
+    const c = league._filed_player(mine, attrs, "TX");
+    equal(c["dmv"], src["ratings"]["Decision Making"]);
+    const base = build_teams.map_player(league.expand(league._filed_player(src, attrs, "TX"), attrs, { slug: "smu", short_name: "SMU" }));
+    equal(build_teams.map_player(league.expand(c, attrs, { slug: "smu", short_name: "SMU" }))["decision_making"], base["decision_making"]);
+  }
+  // every quarterback of the file: the league keeps the file's number, and a first season plays exactly what the
+  // league's later seasons would
+  let n = 0;
+  for (const [slug, t] of Object.entries(file["teams"])) {
+    for (const q of t["offense"]) {
+      const want = rosters.decision_of(q);
+      if (want === null) continue;
+      n += 1;
+      const c = league._filed_player(q, attrs, "TX");
+      equal([c["dmv"], c["dmg"] >= 0 && c["dmv"] + c["dmg"] <= 99], [want, true], `${slug} ${q["name"]}`);
+    }
+  }
+  assert(n > 500, `${n} quarterbacks`);
+  // a player who is not a quarterback has none
+  assert(!("dmv" in league._filed_player(find(file, "smu", file["teams"]["smu"]["defense"][0]["slug"]), attrs, "TX")));
+  // a quarterback with none yet (a signee, a save from before) is given one once, and it is then his own
+  const c = league._filed_player(src, attrs, "TX");
+  delete c["dmv"]; delete c["dmg"];
+  assert(league.own_decision(c, attrs) && Number.isInteger(c["dmv"]) && c["dmv"] >= 1 && c["dmv"] <= 99 && c["dmg"] >= 0, JSON.stringify([c["dmv"], c["dmg"]]));
+  const given = c["dmv"];
+  c["r"] = c["r"].map(() => 99);
+  assert(!league.own_decision(c, attrs) && c["dmv"] === given, "given twice");
 });
 
 test("54 skills are 54 ratings, each on its own name: none is two together, in the file or on a card", () => {

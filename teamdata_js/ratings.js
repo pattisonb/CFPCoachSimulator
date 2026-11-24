@@ -58,6 +58,9 @@ const ATTRIBUTES = {
     pocket_poise: ["Pocket Poise", "Passing", "Accuracy and decisions when pressured.", _avg("throw_under_pressure")],
     play_action: ["Play-Action", "Passing", "How well a fake holds the linebackers.", _avg("play_action")],
     sack_escape: ["Sack Escape", "Passing", "Slipping a sack that is about to land.", _avg("break_sack")],
+    // A rating of its own for every quarterback on a roster (the roster file's "Decision Making", a career league's
+    // "dmv"): the sim plays that number and the card shows it. The mix below is only where a player who has none yet
+    // starts (a recruit's card, a signee the day he arrives, another position's player rated as a quarterback).
     decision_making: ["Decision Making", "Passing", "Interceptions and throwaways against forced throws; reading coverage.",
                         _mix([["awareness", 0.6], ["throw_under_pressure", 0.4]])],
     // ball carrying

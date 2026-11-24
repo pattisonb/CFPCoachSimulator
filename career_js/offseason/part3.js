@@ -4,13 +4,14 @@
 //
 // Every name of the offseason is reached through the `offseason` namespace, whichever part defines it
 // (engine_js/PORTING.md, "Big Files in Parts").
-import { Random, round, int, sum, cmp, sorted, maxBy, range, get, truthy } from "../../engine_js/pyrt.js";
+import { Random, round, int, sum, cmp, sorted, maxBy, range, get, isNumber, truthy } from "../../engine_js/pyrt.js";
 import { mean } from "../../engine_js/pystat.js";
 import { modules } from "../../engine_js/modules.js";
 import { cfg } from "../../engine_js/game_config.js";
 import { ValueError } from "../../sim_js/coaches.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
 import { ratings as rv2 } from "../../teamdata_js/ratings.js";
+import { shown } from "../../teamdata_js/shown.js";
 import { clear } from "../clear.js";
 import { league as lg } from "../league.js";
 import { recruits, pypow } from "../recruits.js";
@@ -172,10 +173,15 @@ function _zip_dict(keys, values) {
   return out;
 }
 
-function _card_growth(was, now, attrs, pos) {
+function _card_growth(was, now, attrs, pos, own = null) {
   // Each attribute on his card that moved over the offseason: where it was and is, its name, and its weight in his
   // position's overall (teamdata_js/game_scale.js card_formula: the weight times the change is what it added).
+  // `own`: a quarterback's Decision Making before and after (a rating of its own, not read from his skills).
   const a = game_scale.card_attributes(_zip_dict(attrs, was), pos), b = game_scale.card_attributes(_zip_dict(attrs, now), pos);
+  if (own !== null && isNumber(own[0]) && isNumber(own[1]) && has(b, "decision_making")) {
+    a["decision_making"] = shown.attribute_back(own[0], "QB", "decision_making");
+    b["decision_making"] = shown.attribute_back(own[1], "QB", "decision_making");
+  }
   const weights = get(game_scale.card_formula(pos) || {}, "w") || {};
   const out = [];
   for (const [k, v] of Object.entries(b)) {
@@ -184,10 +190,12 @@ function _card_growth(was, now, attrs, pos) {
   return out;
 }
 
-function develop(p, attrs, factor, rng, starter = false) {
+function develop(p, attrs, factor, rng, starter = false, year = null) {
   // One offseason's growth on our scale: each skill closes part of its gap to potential at his
   // coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
   // year_pace); his overall follows (our formula). Returns the overall gained.
+  // With `year`, a quarterback's Decision Making grows too, on its own: toward its own ceiling at the pace of a skill,
+  // by a draw of its own stream (`decision-{year}-{id}`), so no other draw moves.
   let rate = get(recruits.RATE, get(p, "c"), 0.27) * factor * offseason.DEV_RATE * offseason.year_pace(p, starter);
   rate /= 1 + Math.max(0, p["o"] - offseason.DEV_TOP) / offseason.DEV_TOP_SPAN;       // the last points come slowest (DEV_TOP)
   rate *= get(offseason.DEV_PACE, get(offseason.DRAFT_GROUP, p["pos"], ""), 1.0);     // ... and by position (DEV_PACE)
@@ -209,6 +217,13 @@ function develop(p, attrs, factor, rng, starter = false) {
     const step = g > 0 ? int(round(Math.min(g, g * r_k * rng.uniform(0.8, 1.2)))) : 0;
     new_r.push(Math.min(99, v + step));
     new_g.push(g - step);
+  }
+  if (year !== null && isNumber(get(p, "dmv"))) {
+    const room = get(p, "dmg") || 0;
+    const pace = Math.min(offseason.DEV_YEAR_CAP, base * clear.SKILL_RATE);
+    const step = room > 0 ? int(round(Math.min(room, room * pace * new Random(`decision-${year}-${p["id"]}`).uniform(0.8, 1.2)))) : 0;
+    p["dmv"] = Math.min(99, p["dmv"] + step);
+    p["dmg"] = room - step;
   }
   const before = p["o"];
   p["r"] = new_r; p["g"] = new_g;
@@ -510,6 +525,7 @@ function _develop_all(state) {
         p["joined"] = year;                     // this year's signee: Roster Cuts leaves him be
         continue;
       }
+      lg.own_decision(p, attrs);                // a quarterback without a Decision Making of his own (a save from before) is given his
       let [mult, room, why, level_up] = offseason.growth_terms(get(perf, p["id"]));
       mult *= team_year * Math.exp(rng.gauss(-sq(offseason.PLAYER_YEAR_SD) / 2, offseason.PLAYER_YEAR_SD));
       if (truthy(room)) {                       // a big year raises his ceiling where it shows: skill and football IQ
@@ -520,6 +536,7 @@ function _develop_all(state) {
         const capped = [];
         for (let i = 0; i < m; i++) capped.push(Math.min(lifted[i], 99 - p["r"][i]));
         p["g"] = capped;
+        if (isNumber(get(p, "dmv"))) p["dmg"] = Math.min((get(p, "dmg") || 0) + room, 99 - p["dmv"]);
         breakouts += 1;
       }
       // ceilings move both ways (a struggling year, a slow learner, a drift)
@@ -550,8 +567,9 @@ function _develop_all(state) {
       }
       const was = slug === state["team"] ? Array.from(p["r"]) : null;          // your players' ratings before, for the report
       const r0 = Array.from(p["r"]), g0 = Array.from(p["g"]), o0 = p["o"];     // ... and everyone's, for a step back (below)
+      const d0 = [get(p, "dmv"), get(p, "dmg")];
       const factor = offseason.coach_factor(t["coaches"], p["pos"]) * mult * offseason.program_factor(state, slug);
-      let g = offseason.develop(p, attrs, factor, rng, starter);
+      let g = offseason.develop(p, attrs, factor, rng, starter, year);
       // ... and a step back for some (regress: its own stream, after every other draw). The report's gain is the net
       const g2_ = GROUP[p["pos"]];
       const buried = depth !== null && sum(depth[g2_].map((v) => (v > p["o"] ? 1 : 0))) >= STARTERS[g2_] + 2;
@@ -566,6 +584,7 @@ function _develop_all(state) {
             p["g"][i] = g0[i] + (r0[i] - p["r"][i]);
           }
         });
+        if (isNumber(d0[0])) [p["dmv"], p["dmg"]] = d0;       // (his Decision Making with them: no growth in a year he stepped back)
         p["o"] = lg.overall(p, attrs);
         why.push(slipped);
         g = p["o"] - o0;
@@ -583,7 +602,7 @@ function _develop_all(state) {
       gains.push(g);
       if (slug === state["team"]) {
         // each card attribute that moved, with where it was and is (the Development card): a view, never read back
-        const grew = offseason._card_growth(was !== null && was.length ? was : p["r"], p["r"], attrs, p["pos"]);
+        const grew = offseason._card_growth(was !== null && was.length ? was : p["r"], p["r"], attrs, p["pos"], [d0[0], get(p, "dmv")]);
         offseason.life(p, year - 1, "progress", { gain: g, overall: offseason.house(p["pos"], p["o"]), why: why.length ? Array.from(why) : null });
         mine.push({ id: p["id"], name: p["n"], pos: p["pos"], cls: p["cls"], gain: g, overall: p["o"], why: why, grew: grew,
           transfer: offseason._new_transfer(state["offseason"], p, slug) ? get(p, "transfer") : null });

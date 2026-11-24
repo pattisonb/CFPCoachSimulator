@@ -178,13 +178,20 @@ export function _skills_at(r, pos, out) {
 }
 
 export function decision_making(mix, moved) {
-  // A quarterback's Decision Making on the source scale: `mix`, what his awareness and his poise under pressure give
-  // (the card's formula), moved by `moved` points of the scale the game shows. His Decision Making is a rating of its
-  // own in the roster file (the player's rule: every rating a card prints is one that is stored): `moved` is how far
-  // the stored one stands from the mix, kept with him through a career (league.js "dm"), so it still grows as its
-  // two parts do.
+  // What a save from before Decision Making was a rating of its own kept for a quarterback whose file number was
+  // typed by hand: `mix` (what his awareness and his poise under pressure gave), moved by `moved` points of the scale
+  // the game shows (league.js "dm"). Read only for a player who has no Decision Making of his own yet (own_decision).
   if (!truthy(moved)) return mix;
   return shown.to_base(Math.max(1, Math.min(99, shown.from_base_exact(mix) + moved)));
+}
+
+export function own_decision(p) {
+  // A quarterback's own Decision Making on the source scale, or null when he has none stored. It is a rating of its
+  // own (the player's rule: every rating a card prints is one that is stored, and the sim plays that one): the roster
+  // file's "Decision Making", and in a career the league's "dmv", on the scale the game shows. Nothing of his Football
+  // IQ or his Pocket Poise is in it.
+  const v = get(p, "dmv");
+  return isNumber(v) ? shown.to_base(Math.max(1, Math.min(99, v))) : null;
 }
 
 export function map_player(p, pos = null) {
@@ -220,7 +227,14 @@ export function map_player(p, pos = null) {
                       + 0.10 * get(r, "bc_vision", 50) + 0.05 * get(r, "carrying", 50)),
   };
   _skills_at(r, pos, out);
-  if (pos === "QB" && truthy(get(p, "dm"))) out["decision_making"] = decision_making(out["decision_making"], p["dm"]);
+  if (pos === "QB") {
+    // his own Decision Making when he has one (every quarterback of the roster file and of a career's league); a
+    // player who has none (another position's player rated as a quarterback, a save from before) keeps what
+    // _skills_at gave him
+    const own = own_decision(p);
+    if (own !== null) out["decision_making"] = own;
+    else if (truthy(get(p, "dm"))) out["decision_making"] = decision_making(out["decision_making"], p["dm"]);
+  }
   return out;
 }
 
@@ -282,8 +296,14 @@ export function team_from_source(t) {
     // ratings v2: the attributes on the source scale (house_attributes puts them on ours),
     // the measurables, the earned traits and the play style
     m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], m["role"]);
-    if (truthy(get(p, "dm")) && isNumber(get(m["_attr_raw"], "decision_making"))) {       // his own Decision Making (decision_making above)
-      m["_attr_raw"]["decision_making"] = round(decision_making(m["_attr_raw"]["decision_making"], p["dm"]), 1);
+    if (isNumber(get(m["_attr_raw"], "decision_making"))) {       // his own Decision Making (own_decision above)
+      const own = own_decision(p);
+      if (own !== null) {
+        m["_attr_raw"]["decision_making"] = round(own, 1);
+        m["dmv"] = Math.max(1, Math.min(99, p["dmv"]));
+      } else if (truthy(get(p, "dm"))) {
+        m["_attr_raw"]["decision_making"] = round(decision_making(m["_attr_raw"]["decision_making"], p["dm"]), 1);
+      }
     }
     m["height_in"] = rv2.height_inches(get(p, "height"));
     m["traits"] = rv2.traits_of(get(p, "abilities") || []);
@@ -546,7 +566,14 @@ export function house_attributes_of(p) {
 export function house_attributes(teams) {
   attribute_scale(teams);
   for (const t of teams) {
-    for (const p of t["players"]) p["attributes"] = house_attributes_of(p);
+    for (const p of t["players"]) {
+      p["attributes"] = house_attributes_of(p);
+      // his own Decision Making shows as the number he has, while his card holds this value (rosters.shown_attribute:
+      // the card's scale cannot say every number)
+      if (isNumber(get(p, "dmv")) && isNumber(get(p["attributes"], "decision_making"))) {
+        p["filed_own"] = { decision_making: [p["attributes"]["decision_making"], p["dmv"]] };
+      }
+    }
   }
 }
 
@@ -816,7 +843,7 @@ export function build(sources, real = true, observed = null, quiet = false, styl
 
 export const build_teams = {
   ROOT, NEUTRAL, SPREAD_SCALE, TEAM_LEVEL_TOP_SCALE, POSITION_MAP, OFFENSE, OFF_STATS, DEF_STATS, SHARED_STATS,
-  SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, to_engine, depth_key, _skills_at, decision_making, map_player,
+  SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, to_engine, depth_key, _skills_at, decision_making, own_decision, map_player,
   ATTRS, RETURN_ATTR, PHYSICAL, OFF_SKILL_RANGE, CORE_FLOOR, CORE_FLOOR_OVR, CLAMP_EXTREMES,
   starter_slugs, team_from_source, TENDENCY_KEYS, normalize_tendencies, decouple_discipline,
   OBSERVED, GAME_SCRIPT_PASS, FOURTH_PER_MARGIN, PASS_RATE_SLOPE, TEMPO_SLOPE, SCRAMBLE_SHARE, apply_observed_tendencies,
