@@ -255,6 +255,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* the track on paper with a firm edge: it reads the same on a plain row, a hovered one and the selected one (the
+   player's note: on the selected row the track was the row's own color and vanished) */
+.prospects__measure .range-bar {
+  background: var(--paper-hi);
+  border-color: var(--ink-soft);
+}
+
 .prospects__measure > b {
   font-size: var(--t-lg);
   line-height: 1;
