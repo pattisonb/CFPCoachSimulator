@@ -523,6 +523,7 @@
 /* the Game Log: only the opponent's name and a second line (his returns) may wrap; the season's team (when not his
    now) sits over the table */
 .player-view__table--log :is(th, td):not(:nth-child(2)) {
+  width: 1%; /* as wide as what it holds and no wider: the opponent takes the rest */
   white-space: nowrap;
 }
 
@@ -535,9 +536,11 @@
   padding-left: 8px;
 }
 
-/* the line's column has the room its second line needs before the opponent's takes the slack */
-.player-view__line-col {
-  width: 40%;
+/* the week, the result, the start and the line are as wide as what they hold and no wider; the opponent takes the
+   rest, from the left, on one line where it fits (the player's note: a wide empty Week column beside opponents
+   wrapped to three lines) */
+.player-view__table--log :is(th, td):nth-child(2) {
+  text-align: left;
 }
 
 /* a game he did not play: the whole row steps back */
