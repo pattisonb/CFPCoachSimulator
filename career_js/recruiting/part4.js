@@ -889,6 +889,10 @@ function _Room(state, flier = false) {
     const [need, com] = self._at(slug);
     const p = self.state["recruiting"]["prospects"][pid];
     const g = recruiting._group_of(p);
+    // a thin quarterback room (QB_THIN_NEED short of a full one) with no quarterback in the class yet: the class's
+    // last spot is held for one (the player's rule: only the thin rooms; never a class you recruit by hand)
+    if (g !== "QB" && !truthy(self.portal) && slug !== self.yours && com["QB"] === 0 && need["QB"] >= recruiting.QB_THIN_NEED
+        && get(self.commits, slug, 0) >= self._limit(slug) - 1) return "roster";
     return com[g] < recruiting.group_cap(need, g) + self.slack || truthy(recruiting.portal_upgrade(self.state, slug, p)) ? null : "group";
   };
 

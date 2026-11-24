@@ -85,6 +85,7 @@ recruiting.NEED_FLOOR = 0.25;
 recruiting.ONE_A_CLASS = ["QB", "K", "P"];              // groups a class takes one of unless the need is higher
 recruiting.QB_CLASS_MAX = 3;                            // *tune* the most quarterbacks a CPU school signs in a class, however thin its room (you sign as many as you offer)
 recruiting.OFFER_ROOM = 2.0;                            // open offers a school keeps out at a group: this times its cap there (it offers more than it takes)
+recruiting.QB_THIN_NEED = 2;                            // *tune* a quarterback room this many short of a full one is thin: on the last Signing Day such a school with no quarterback in its class takes the best one left, however lukewarm he is
 recruiting.QB_EVERY_CLASS = true;                       // a class takes a quarterback whatever the room (the one-starter spot turns over)
 recruiting.FIVE_STAR_FLOOR = 0.6;                       // a blue blood's board pull on a five-star never drops below this for need
 recruiting.LEAVING = new Set(["SR", "SRRS"]);          // seniors: gone after the season (the open spots rule)

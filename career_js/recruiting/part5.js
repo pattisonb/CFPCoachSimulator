@@ -85,6 +85,9 @@ function _last_quarterbacks(state, room, win, offered) {
   // never yours, whose class is your own to fill) takes the uncommitted quarterback most interested in it, when he
   // would rather come than play FCS (it need not have offered him: a late call to a quarterback with nowhere to go). Recruiting closes after Championship Week, so a
   // school short a quarterback then has no weeks left to find one. Schools go in name order, each taking one.
+  // A school whose quarterback room is thin (QB_THIN_NEED short of a full one: two or fewer coming back) takes the
+  // most interested one left even when he is lukewarm: it cannot go a year without one, and a quarterback with no
+  // other FBS offer takes the scholarship (the player's rule: only the thin rooms).
   const rc = state["recruiting"];
   const free = Object.entries(rc["prospects"]).filter(([pid, p]) => recruiting._group_of(p) === "QB" && !truthy(rc["status"][pid]["committed"])
     && !truthy(rc["status"][pid]["signed"])).map(([pid]) => pid);
@@ -96,7 +99,8 @@ function _last_quarterbacks(state, room, win, offered) {
       if (_has_room(room, s, pid) && recruiting._pair_ok(state, s, pid, offered, room)) found.push([recruiting.interest(state, s, pid, win), pid]);
     }
     const best = found.length ? maxBy(found) : null;
-    if (best && best[0] >= recruiting.FCS_LINE) {
+    const thin = best && best[0] < recruiting.FCS_LINE && recruiting.needs(state, s)["QB"] >= recruiting.QB_THIN_NEED;
+    if (best && (best[0] >= recruiting.FCS_LINE || thin)) {
       const pair = recruiting._commit(state, best[1], s);
       room.took(s, best[1]);
       remove(free, best[1]);
