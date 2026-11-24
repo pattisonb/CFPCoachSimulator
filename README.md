@@ -128,13 +128,13 @@ the same code runs under either host.
 | `career_js/` | The career: recruiting, the offseason, prospects, personas and scenes, the league, programs, the coaching carousel. |
 | `app_js/` | `api.js`, every call the app makes, as plain functions; `game.js`, the whole game for a host. |
 | `cfb_sim_data/` | The source rosters, coaches and preset faces. |
-| `data/` | The data the game reads (schedules, models, history). The game also writes generated files here, which are not committed. |
+| `data/` | The data the game reads (schedules, models, history). The rosters as the game reads them are here too, committed (`engine_teams.json`, `player_potential.json`). The base league, saves and built leagues the game writes here are not committed. |
 | `tools/` | The site build, the game on Node, the name swap (`tools/generic/`), skins (`make_skin.mjs`, `skin.mjs`, `skin_compare.mjs`) and the realism tools. |
 | `tests/` | The tests, plain Node scripts. |
 
 ## Tests
 
-A fresh clone needs the engine's teams built once (`data/engine_teams.json`, not committed, about six seconds):
+The rosters the game reads (`data/engine_teams.json`, `data/player_potential.json`) are committed, so a fresh clone runs the tests as it is. They are made from `cfb_sim_data/`; after a change to a roster or to the builder, make them again and commit them (`tests/test_static_rosters.mjs` fails while they are behind):
 
 ```
 node tools/game_host.mjs . teams

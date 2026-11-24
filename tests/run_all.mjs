@@ -11,8 +11,7 @@
 // A line per test with its seconds; a failing test's output is printed under its line. Exit code 1 when a test
 // failed. On GitHub (GITHUB_STEP_SUMMARY set) the table is also written to the run's summary.
 //
-// A fresh clone has no data/engine_teams.json (the game makes it from the rosters): `node tools/game_host.mjs . teams`
-// once before the tests.
+// The rosters the game reads (data/engine_teams.json) are committed: a fresh clone runs the tests as it is.
 import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";

@@ -6,7 +6,8 @@
 //   const game = await host(root, { overlay });       // ... but everything written lands under `overlay`, which is
 //                                                     //     read first (the dev server: nothing is written to the repo)
 //
-//   node tools/game_host.mjs ROOT teams [OVERLAY]     // data/engine_teams.json and data/player_potential.json
+//   node tools/game_host.mjs ROOT teams [OVERLAY]     // data/engine_teams.json and data/player_potential.json (committed:
+//                                                     // run it and commit them when a roster or the builder changes)
 //   node tools/game_host.mjs ROOT base [OVERLAY]      // the base league's three files (career_js/league.js)
 //   node tools/game_host.mjs ROOT boot DEST [OVERLAY] // the team picker's answers, as files under DEST
 //
