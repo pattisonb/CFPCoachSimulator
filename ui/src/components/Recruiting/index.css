@@ -729,44 +729,46 @@
   width: 58px;
 }
 
-.quick--labels .quick__gap {
-  width: 58px;
-}
-
 .quick__box--scout.is-done {
   background: none;
   border-color: transparent;
 }
 
-/* his two marks at the row's end, a step apart from what you do to him: your favorite's heart, and off your board */
+/* his two marks at the row's end, boxes like the ones before them and a step apart: your favorite's heart (inked in
+   the warning color once he is one) and off your board (the warning color as you reach for it) */
 .quick__mark {
   display: inline-grid;
   place-items: center;
-  width: 28px;
+  width: 32px;
   height: 32px;
   padding: 0;
-  background: none;
-  color: var(--ink-soft);
-  border: var(--line) solid transparent;
+  background: var(--paper-hi);
+  color: var(--ink);
+  border: var(--line) solid var(--ink-soft);
   cursor: pointer;
 }
 
 .quick__mark--fav {
-  margin-left: 6px;
+  margin-left: 8px;
 }
 
 .quick__mark:hover {
-  color: var(--ink);
-  border-color: var(--ink-soft);
+  border-color: var(--ink);
 }
 
-.quick__mark--fav.is-on,
-.quick__mark--fav:hover,
-.quick__mark--off:hover {
+.quick__mark--fav:hover {
   color: var(--warn);
 }
 
+.quick__mark--fav.is-on {
+  background: var(--warn);
+  color: var(--paper-hi);
+  border-color: var(--warn);
+}
+
 .quick__mark--off:hover {
+  background: var(--warn);
+  color: var(--paper-hi);
   border-color: var(--warn);
 }
 
@@ -819,7 +821,7 @@
 }
 
 .recruiting__rows .recruiting__row {
-  padding-right: 310px; /* the four boxes and his two marks */
+  padding-right: 316px; /* the four boxes and his two marks */
 }
 
 /* ... and the row makes room for it */
@@ -856,8 +858,7 @@
     display: none;
   }
 
-  .quick--labels .quick__box--scout,
-  .quick--labels .quick__gap {
+  .quick--labels .quick__box--scout {
     width: 34px;
   }
 

@@ -42,6 +42,8 @@ interface Props {
   onChange: (stale: () => boolean) => Promise<void> | void;
   /** a box was clicked: show it (his row, your Energy) at once, ahead of the server */
   onPlan?: (action: string, on: boolean) => void;
+  /** the Scout box was clicked: his file opens on its report, beside the board */
+  onScout?: () => void;
   onError?: (msg: string) => void;
 }
 
@@ -70,6 +72,7 @@ export default function QuickActions({
   marks,
   onChange,
   onPlan,
+  onScout,
   onError,
 }: Props) {
   // a tick shows at once (the player's ask: clicking through a board must not wait on the server): the page changes
@@ -142,6 +145,31 @@ export default function QuickActions({
   if (hidden) return null;
   return (
     <span className={`quick${labels ? " quick--labels" : ""}`} role="group" aria-label={m.quickLabel(r.name)}>
+      {/* the scout's box leads the strip: when his report is full it goes, and nothing after it moves or leaves a hole */}
+      {scout && (!scouted || justSent) && (
+        <button
+          type="button"
+          className={`quick__box quick__box--scout${scouted ? " is-done" : ""}`}
+          aria-label={scoutTip}
+          title={scoutTip}
+          disabled={scoutOff}
+          onClick={(e) => {
+            e.stopPropagation();
+            onScout?.();
+            void sendScout();
+          }}
+        >
+          {/* how far his report is, on the box that adds to it: a ring closing around the binoculars */}
+          {labels ? (
+            <ScoutMark looks={r.looks ?? 0} size={24} always bare />
+          ) : scouted ? (
+            <Check size={14} weight="bold" aria-hidden="true" />
+          ) : (
+            <Binoculars size={14} weight="bold" aria-hidden="true" />
+          )}
+          {labels && !scouted && <span>{scoutCost}</span>}
+        </button>
+      )}
       {QUICK.map(({ key, Icon }) => {
         const cost = costs[key] ?? 0;
         const on = planned.includes(key);
@@ -180,31 +208,6 @@ export default function QuickActions({
           </button>
         );
       })}
-      {/* (its place is kept once it has gone, so the three before it stand in the same columns down the board) */}
-      {scout && scouted && !justSent && <span className="quick__gap" aria-hidden="true" />}
-      {scout && (!scouted || justSent) && (
-        <button
-          type="button"
-          className={`quick__box quick__box--scout${scouted ? " is-done" : ""}`}
-          aria-label={scoutTip}
-          title={scoutTip}
-          disabled={scoutOff}
-          onClick={(e) => {
-            e.stopPropagation();
-            void sendScout();
-          }}
-        >
-          {/* how far his report is, on the box that adds to it: a ring closing around the binoculars */}
-          {labels ? (
-            <ScoutMark looks={r.looks ?? 0} size={24} always bare />
-          ) : scouted ? (
-            <Check size={14} weight="bold" aria-hidden="true" />
-          ) : (
-            <Binoculars size={14} weight="bold" aria-hidden="true" />
-          )}
-          {labels && !scouted && <span>{scoutCost}</span>}
-        </button>
-      )}
       {marks && (
         <>
           <button

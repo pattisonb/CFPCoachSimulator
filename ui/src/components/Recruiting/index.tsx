@@ -161,6 +161,7 @@ export default function Recruiting({
   const [q, setQ] = useState("");
   const [pos, setPos] = useKept(`board.${seasonId}.pos`, "all");
   const [picked, setPicked] = useState<string | null>(null);
+  const [toScouting, setToScouting] = useState(0);
   // another section asked for him: show every stage (he may not be in the one filtered to) and pick him
   useEffect(() => {
     if (!pick) return;
@@ -545,6 +546,12 @@ export default function Recruiting({
                         labels
                         scout
                         marks
+                        onScout={() => {
+                          // his file opens on its report, where the look you just sent lands
+                          lastTab = "scouting";
+                          setPicked(r.id);
+                          setToScouting((n) => n + 1);
+                        }}
                         onChange={(stale) => reload(true, stale)}
                         onPlan={(action, on) =>
                           patch?.((b) => ({
@@ -576,6 +583,7 @@ export default function Recruiting({
         {current && board ? (
           <RecruitPanel
             key={current.id}
+            toScouting={toScouting}
             r={current}
             board={board}
             team={team}
@@ -618,7 +626,10 @@ function RecruitPanel({
   coach,
   onBoard,
   onPick,
+  toScouting,
 }: {
+  /** counts the scouts sent from his row: each turns his file to its report */
+  toScouting: number;
   r: BoardRow;
   board: RecruitingBoard;
   team: string;
@@ -685,6 +696,10 @@ function RecruitPanel({
   // the call or visit in its window: the one just opened, or the open one Finish brings back
   const [talk, setTalk] = useState<Scene | null>(null);
   const [tab, setTabState] = useState<Tab>(() => lastTab);
+  // a scout sent from his row: his file turns to its report (it may be open on another tab already)
+  useEffect(() => {
+    if (toScouting) setTabState("scouting");
+  }, [toScouting]);
   const setTab = (t: Tab) => {
     lastTab = t;
     setTabState(t);
