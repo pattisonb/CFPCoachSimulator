@@ -168,7 +168,7 @@ export default function QuickActions({
             <Binoculars size={14} weight="bold" aria-hidden="true" />
           )}
           {labels && !scouted && (
-            <span>
+            <span className="quick__cost">
               <Lightning size={9} weight="fill" aria-hidden="true" />
               {scoutCost}
             </span>
@@ -210,7 +210,7 @@ export default function QuickActions({
             )}
             {/* his row: the mark and what it costs, nothing more (the tip names it) */}
             {labels && !done && (
-              <span>
+              <span className="quick__cost">
                 <Lightning size={9} weight="fill" aria-hidden="true" />
                 {cost}
               </span>
