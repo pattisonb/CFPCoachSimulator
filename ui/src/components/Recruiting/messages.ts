@@ -124,6 +124,7 @@ export const messages = {
   quickPlanned: (what: string, n: number) => `${what} is planned (${n} Energy held). Click to take it back.`,
   quickDone: (what: string) => `${what}: done this week.`,
   quickOff: "He is not taking calls.",
+  offBoardRow: (name: string) => `Take ${name} off your board.`,
   /** the row's fourth box: a scout sent to him now */
   scoutTip: (n: number) => `Send a scout to him now for ${n} Energy. Each look tells you more about him.`,
   scoutFull: "Your report on him is complete.",

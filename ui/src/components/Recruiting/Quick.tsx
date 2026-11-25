@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Binoculars, Chat, Check, Phone, VideoCamera } from "@phosphor-icons/react";
+import { Binoculars, Chat, Check, Heart, Phone, VideoCamera, X } from "@phosphor-icons/react";
 import { api } from "../../api.ts";
+import { setFavorite, setOnBoard } from "../../board.ts";
 import ScoutMark from "../ScoutMark/index.tsx";
 import type { BoardRow } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -35,6 +36,8 @@ interface Props {
   labels?: boolean;
   /** a fourth box sends a scout to him now (his row on the board) */
   scout?: boolean;
+  /** his row ends on two marks: your favorite's heart, and a cross that takes him off your board */
+  marks?: boolean;
   /** a plan changed: read the board again */
   onChange: (stale: () => boolean) => Promise<void> | void;
   /** a box was clicked: show it (his row, your Energy) at once, ahead of the server */
@@ -64,6 +67,7 @@ export default function QuickActions({
   hidden,
   labels,
   scout,
+  marks,
   onChange,
   onPlan,
   onError,
@@ -90,6 +94,16 @@ export default function QuickActions({
       onError?.((e as Error).message);
     } finally {
       setSending(false);
+      void Promise.resolve(onChange(() => false)).catch(() => {});
+    }
+  };
+  // his two marks: done at once, and the board is read again
+  const mark = async (what: () => Promise<void>) => {
+    try {
+      await what();
+    } catch (e) {
+      onError?.((e as Error).message);
+    } finally {
       void Promise.resolve(onChange(() => false)).catch(() => {});
     }
   };
@@ -190,6 +204,36 @@ export default function QuickActions({
           )}
           {labels && !scouted && <span>{scoutCost}</span>}
         </button>
+      )}
+      {marks && (
+        <>
+          <button
+            type="button"
+            className={`quick__mark quick__mark--fav${r.favorite ? " is-on" : ""}`}
+            aria-pressed={!!r.favorite}
+            aria-label={r.favorite ? m.removeFavorite(r.name) : m.addFavorite(r.name)}
+            title={r.favorite ? m.removeFavorite(r.name) : m.addFavorite(r.name)}
+            onClick={(e) => {
+              e.stopPropagation();
+              void mark(() => setFavorite(seasonId, r.id, !r.favorite));
+            }}
+          >
+            <Heart size={16} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="quick__mark quick__mark--off"
+            aria-label={m.offBoardRow(r.name)}
+            title={m.offBoardRow(r.name)}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (r.offered && !window.confirm(m.offBoardConfirm(r.name))) return;
+              void mark(() => setOnBoard(seasonId, [r.id], false));
+            }}
+          >
+            <X size={16} weight="bold" aria-hidden="true" />
+          </button>
+        </>
       )}
     </span>
   );

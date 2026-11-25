@@ -738,6 +738,38 @@
   border-color: transparent;
 }
 
+/* his two marks at the row's end, a step apart from what you do to him: your favorite's heart, and off your board */
+.quick__mark {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  border: var(--line) solid transparent;
+  cursor: pointer;
+}
+
+.quick__mark--fav {
+  margin-left: 6px;
+}
+
+.quick__mark:hover {
+  color: var(--ink);
+  border-color: var(--ink-soft);
+}
+
+.quick__mark--fav.is-on,
+.quick__mark--fav:hover,
+.quick__mark--off:hover {
+  color: var(--warn);
+}
+
+.quick__mark--off:hover {
+  border-color: var(--warn);
+}
+
 .quick__box:hover:enabled {
   border-color: var(--ink);
 }
@@ -787,7 +819,7 @@
 }
 
 .recruiting__rows .recruiting__row {
-  padding-right: 240px; /* the four boxes */
+  padding-right: 310px; /* the four boxes and his two marks */
 }
 
 /* ... and the row makes room for it */
@@ -827,6 +859,11 @@
   .quick--labels .quick__box--scout,
   .quick--labels .quick__gap {
     width: 34px;
+  }
+
+  /* no room for his two marks in a narrow list: they are on his file beside it */
+  .quick__mark {
+    display: none;
   }
 
   .recruiting__rows .recruiting__row {

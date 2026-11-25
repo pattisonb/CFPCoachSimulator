@@ -489,12 +489,7 @@ export default function Recruiting({
                           )}
                         </span>
                         <span className="recruiting__who">
-                          <b>
-                            {r.name}
-                            {r.favorite && (
-                              <Heart className="recruiting__fav" size={11} weight="fill" aria-label={m.favorite} />
-                            )}
-                          </b>
+                          <b>{r.name}</b>
                           <span className="recruiting__soft recruiting__facts">
                             {r.display_pos}
                             {/* a transfer: his year (they are not all freshmen) and the school he left (his season's numbers are on his file; they do not fit a card) */}
@@ -549,6 +544,7 @@ export default function Recruiting({
                         hidden={!!out}
                         labels
                         scout
+                        marks
                         onChange={(stale) => reload(true, stale)}
                         onPlan={(action, on) =>
                           patch?.((b) => ({
