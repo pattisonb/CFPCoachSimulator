@@ -334,6 +334,7 @@ function has_offer(state, pid, offered = null) {
 }
 
 
+recruiting._NO_TENS = {};               // the portal's: a transfer has no list of ten
 recruiting._TENS = [null, null];         // (career and class, every recruit's ten) worked out in this sitting, for a class that has none stored
 
 function tens(state) {
@@ -345,9 +346,10 @@ function tens(state) {
   // from before lists has it worked out as it stands, in memory. The portal has none: a transfer's list is who is
   // recruiting him.
   const rc = state["recruiting"];
-  const kept = get(rc, "tens");
-  if (truthy(kept)) return kept;
-  if (truthy(get(rc, "portal"))) return {};
+  const kept = rc["tens"];
+  // (asked for every prospect on a page: never `truthy` here, which counts the class's lists each time, 0.6 seconds a page)
+  if (kept !== null && kept !== undefined) return kept;
+  if (truthy(get(rc, "portal"))) return recruiting._NO_TENS;
   const key = `${state["id"]}|${recruiting._ck(rc)}`;
   if (recruiting._TENS[0] === key) return recruiting._TENS[1];
   const teams = modules.season.load_teams();
@@ -379,7 +381,7 @@ function tens(state) {
 function keep_tens(state) {
   // Store the class's lists of ten with it (a class start, and the first week step of a class from before lists).
   const rc = state["recruiting"];
-  if (!truthy(get(rc, "tens")) && !truthy(get(rc, "portal"))) rc["tens"] = recruiting.tens(state);
+  if ((rc["tens"] === null || rc["tens"] === undefined) && !truthy(get(rc, "portal"))) rc["tens"] = recruiting.tens(state);
 }
 
 

@@ -959,7 +959,9 @@ function _draws(state, week, rng) {
     }
     scores = scores.filter(([v, s]) => !held_out(s, pid) && room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room)));
     const lean_is_list = !scores.length && !(week >= recruiting.FCS_NO_OFFER_WEEK);
-    const lean = (!scores.length && week >= recruiting.FCS_NO_OFFER_WEEK) || (scores.length > 0 && scores[0][0] < recruiting.FCS_LINE);
+    // (a blue chip never leans FCS: a school he likes makes room for him on signing day, part 5 BLUE_CHIP_HOME)
+    const lean = !(recruiting.BLUE_CHIP_HOME && !recruiting.is_portal(state) && recruiting.tier_of(rc["prospects"][pid]) >= 4)
+      && ((!scores.length && week >= recruiting.FCS_NO_OFFER_WEEK) || (scores.length > 0 && scores[0][0] < recruiting.FCS_LINE));
     const fcs = st["fcs"];
     if (lean_is_list || !((typeof fcs === "boolean" || typeof fcs === "number") && Number(fcs) === Number(lean))) {
       st["fcs"] = lean;

@@ -125,6 +125,7 @@ function _sign(state, final) {
     if (recruiting.QB_EVERY_CLASS) {                 // first, a school still without a quarterback takes the best one left who would come
       recruiting._last_quarterbacks(state, room, win, offered);
     }
+    const made_room = new Set();                     // "school|position group": where a blue chip was made room for (below)
     const unpaid = recruiting._unpaid(state, true);  // the unpaid offer (part 7): he does not sign with you on your standing lowball
     for (const pid of sorted(Object.keys(rc["prospects"]), (q) => rc["prospects"][q]["rank"])) {
       const st = rc["status"][pid];
@@ -141,7 +142,21 @@ function _sign(state, final) {
       for (const s of schools) {
         if (_has_room(room, s, pid) && recruiting._pair_ok(state, s, pid, offered, room)) found.push([recruiting.interest(state, s, pid, win), s]);
       }
-      const scores = sorted(found, undefined, true);
+      let scores = sorted(found, undefined, true);
+      if (!(scores.length && scores[0][0] >= recruiting.FCS_LINE) && recruiting.BLUE_CHIP_HOME && !recruiting.is_portal(state)
+        && recruiting.tier_of(rc["prospects"][pid]) >= 4) {
+        // A four- or five-star is never left for an FCS school (dozens a class were, when the few schools they would
+        // sign with had filled his position): the school he likes most of those recruiting him, or of his list of
+        // ten, makes room for him. Never one he will not consider.
+        const wide = new Set([...schools, ...(get(recruiting.tens(state), pid) || [])]);
+        const g = recruiting._group_of(rc["prospects"][pid]);
+        // (one made room for at a position, a school: never a pile of them where one school is everyone's favorite)
+        scores = sorted([...wide].filter((s) => !recruiting.locked_out(state, s, pid, win) && !made_room.has(`${s}|${g}`)
+          && get(recruiting.needs(state, s), g, 0) >= -1)                    // (and never a school two past its room there already)
+          .map((s) => [recruiting.interest(state, s, pid, win), s]), undefined, true).slice(0, 1)
+          .map(([v, s]) => [Math.max(recruiting.FCS_LINE, v), s]);          // (the one he likes most, however little)
+        if (scores.length) made_room.add(`${scores[0][1]}|${g}`);
+      }
       if (scores.length && scores[0][0] >= recruiting.FCS_LINE) {
         const pair = recruiting._commit(state, pid, scores[0][1]);
         room.took(scores[0][1], pid);

@@ -73,6 +73,9 @@ const VIEW_STATUS: Record<View, string | null> = {
 };
 type Col = keyof typeof m.cols;
 /** columns the server sorts by (prospects._sort_key), best first */
+/** *tune* How long after the last board change lands the list and the board are read again, in milliseconds. */
+const SETTLE_MS = 400;
+
 /** The door is shut on you: he will not consider you, or he cut his list without you. */
 const shut = (r: ProspectRow) => !!r.blocked && r.blocked.why !== "signed";
 
@@ -278,6 +281,24 @@ export default function Prospects({
     if (classTotal != null) onClassSize?.(classTotal);
   }, [classTotal, onClassSize]);
 
+  // A run of ticks is read back once (the player: adding and taking off a bunch at a time, the page could not keep up:
+  // every tick read the whole list and the board again). The list and the board are read a moment after the last save
+  // lands, and not at all while another is still on its way.
+  const saving = useRef(0);
+  const settleTimer = useRef<number | undefined>(undefined);
+  const settleNow = useRef<() => void>(() => {});
+  settleNow.current = () => {
+    load(true);
+    onBoardChange?.();
+  };
+  const settle = () => {
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      if (!saving.current) settleNow.current();
+    }, SETTLE_MS);
+  };
+  useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+
   // the board: on or off, in place, then the counts again
   const setBoard = async (r: ProspectRow, on: boolean) => {
     if (!on && r.offered && !window.confirm(m.pullsOffer(r.name))) return;
@@ -293,13 +314,15 @@ export default function Prospects({
       );
     flip(on);
     setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
+    saving.current += 1;
     try {
       await setOnBoard(seasonId, [r.id], on, true);
-      load(true);
-      onBoardChange?.();
     } catch (e) {
       flip(!on);
       setNote(m.boardError((e as Error).message));
+    } finally {
+      saving.current -= 1;
+      settle();
     }
   };
 

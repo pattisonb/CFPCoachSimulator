@@ -281,7 +281,7 @@
 }
 
 .prospects__col-status {
-  width: 100px; /* a longer status is cut short, whole in its tip: the prospect's name and town have the room */
+  width: 124px; /* "Leaning FCS" whole; a longer status is cut short, whole in its tip */
 }
 
 .prospects__col-offers {
@@ -771,7 +771,7 @@
 }
 
 .prospects.is-narrow .prospects__col-status {
-  width: 92px;
+  width: 116px;
 }
 
 .prospects.is-narrow .prospects__col-offers {
