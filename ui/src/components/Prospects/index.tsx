@@ -225,27 +225,32 @@ export default function Prospects({
     setPage(0);
   }, [view, q, group, stars, home, sort, gauge, colsKey]);
 
-  const load = useCallback(() => {
-    const token = ++seq.current;
-    const params = new URLSearchParams({ offset: String(page * PAGE), limit: String(PAGE), sort });
-    const status = VIEW_STATUS[view];
-    if (status) params.set("status", status);
-    if (q) params.set("q", q);
-    if (group) params.set("group", group);
-    if (stars) params.set("stars", String(stars));
-    if (home) params.set("state", home);
-    for (const [k, v] of Object.entries(cols)) params.set(k, String(v));
-    if (gauge) params.set("measure", gauge);
-    setLoading(true);
-    api<ProspectsView>(`/api/season/${seasonId}/prospects?${params}`)
-      .then((d) => {
-        if (token !== seq.current) return;
-        setData(d);
-        setError(null);
-      })
-      .catch((e: Error) => token === seq.current && setError(e.message))
-      .finally(() => token === seq.current && setLoading(false));
-  }, [seasonId, view, q, group, stars, home, sort, gauge, page, colsKey]);
+  // (`quiet`: the list is read again behind the page, with no "Loading…" and nothing dimmed: after a tick on a row,
+  // which the page has shown already)
+  const load = useCallback(
+    (quiet = false) => {
+      const token = ++seq.current;
+      const params = new URLSearchParams({ offset: String(page * PAGE), limit: String(PAGE), sort });
+      const status = VIEW_STATUS[view];
+      if (status) params.set("status", status);
+      if (q) params.set("q", q);
+      if (group) params.set("group", group);
+      if (stars) params.set("stars", String(stars));
+      if (home) params.set("state", home);
+      for (const [k, v] of Object.entries(cols)) params.set(k, String(v));
+      if (gauge) params.set("measure", gauge);
+      if (!quiet) setLoading(true);
+      api<ProspectsView>(`/api/season/${seasonId}/prospects?${params}`, { quiet })
+        .then((d) => {
+          if (token !== seq.current) return;
+          setData(d);
+          setError(null);
+        })
+        .catch((e: Error) => token === seq.current && setError(e.message))
+        .finally(() => token === seq.current && setLoading(false));
+    },
+    [seasonId, view, q, group, stars, home, sort, gauge, page, colsKey],
+  );
 
   // the class is read once this tab has been opened (the Board tab does not pay for it), and from then on whenever
   // a filter changes
@@ -258,7 +263,7 @@ export default function Prospects({
   // reload it as they land, so only coming back to it checks)
   const shownBoard = data?.summary.footprint.board;
   useEffect(() => {
-    if (active && boardSize !== undefined && shownBoard !== undefined && boardSize !== shownBoard) load();
+    if (active && boardSize !== undefined && shownBoard !== undefined && boardSize !== shownBoard) load(true);
   }, [active]);
   // block bodies only: newer browsers' scrollTo returns a promise, and an effect may return nothing but its cleanup
   useEffect(() => {
@@ -276,19 +281,24 @@ export default function Prospects({
   // the board: on or off, in place, then the counts again
   const setBoard = async (r: ProspectRow, on: boolean) => {
     if (!on && r.offered && !window.confirm(m.pullsOffer(r.name))) return;
-    try {
-      await setOnBoard(seasonId, [r.id], on);
+    // at once (the player: adding a prospect is an instant action): his row and the note change now, the save and the
+    // counts follow behind the page, and a change the game refuses is put back
+    const flip = (to: boolean) =>
       setData(
         (d) =>
           d && {
             ...d,
-            rows: d.rows.map((x) => (x.id === r.id ? { ...x, on_board: on, offered: on && x.offered } : x)),
+            rows: d.rows.map((x) => (x.id === r.id ? { ...x, on_board: to, offered: to && x.offered } : x)),
           },
       );
-      setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
-      load();
+    flip(on);
+    setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
+    try {
+      await setOnBoard(seasonId, [r.id], on, true);
+      load(true);
       onBoardChange?.();
     } catch (e) {
+      flip(!on);
       setNote(m.boardError((e as Error).message));
     }
   };
@@ -296,10 +306,10 @@ export default function Prospects({
   // your favorites (♥): marked or cleared from his card
   const setFav = async (r: ProspectRow, on: boolean) => {
     try {
-      await setFavorite(seasonId, r.id, on);
       setData((d) => d && { ...d, rows: d.rows.map((x) => (x.id === r.id ? { ...x, favorite: on } : x)) });
       setNote(on ? m.favOn(r.name) : m.favOff(r.name));
-      if (view === "favorites") load();
+      await setFavorite(seasonId, r.id, on, true);
+      if (view === "favorites") load(true);
       onBoardChange?.();
     } catch (e) {
       setNote(m.boardError((e as Error).message));

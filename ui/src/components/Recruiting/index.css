@@ -689,8 +689,8 @@
   color: var(--paper-hi);
 }
 
-/* a recruit's quick actions: three tick-boxes at his row's end (a message, a call to his coach, a call to him). One
-   ticked is planned, in ink; one made this week is done, soft with a check */
+/* a recruit's quick actions: boxes to tick (a message, a call, a video call) and a scout to send. One ticked is
+   planned, in ink; one made this week is done, soft with a check */
 
 .quick {
   display: inline-flex;
@@ -707,69 +707,6 @@
   color: var(--ink);
   border: var(--line) solid var(--ink-soft);
   cursor: pointer;
-}
-
-/* on his row: each box is its mark beside what it costs in energy, small enough that four leave his name whole */
-.quick--labels .quick__box {
-  grid-auto-flow: column;
-  gap: 5px;
-  width: 50px;
-  height: 32px;
-  padding: 0 4px;
-}
-
-.quick--labels .quick__box span {
-  font-size: var(--t-xs);
-  font-weight: 700;
-  line-height: 1;
-}
-
-/* the scout's box holds his report's ring, so it is a little wider; a full report keeps its ring, quietly */
-.quick--labels .quick__box--scout {
-  width: 58px;
-}
-
-.quick__box--scout.is-done {
-  background: none;
-  border-color: transparent;
-}
-
-/* his two marks at the row's end, boxes like the ones before them and a step apart: your favorite's heart (inked in
-   the warning color once he is one) and off your board (the warning color as you reach for it) */
-.quick__mark {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: var(--paper-hi);
-  color: var(--ink);
-  border: var(--line) solid var(--ink-soft);
-  cursor: pointer;
-}
-
-.quick__mark--fav {
-  margin-left: 8px;
-}
-
-.quick__mark:hover {
-  border-color: var(--ink);
-}
-
-.quick__mark--fav:hover {
-  color: var(--warn);
-}
-
-.quick__mark--fav.is-on {
-  background: var(--warn);
-  color: var(--paper-hi);
-  border-color: var(--warn);
-}
-
-.quick__mark--off:hover {
-  background: var(--warn);
-  color: var(--paper-hi);
-  border-color: var(--warn);
 }
 
 .quick__box:hover:enabled {
@@ -792,6 +729,98 @@
 .quick__box:disabled:not(.is-done, .is-on) {
   opacity: 0.45;
   cursor: default;
+}
+
+/* on his row: the things you can do to him are one dock (the player: a row of plain boxes was boring), its cells
+   joined under one hard shadow like the page's cards. Each cell is its mark over what it costs in energy; one you
+   have planned is inked in your school's color */
+.quick--labels {
+  align-items: center;
+  gap: 8px;
+}
+
+.quick__dock {
+  display: inline-flex;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.quick__dock > button {
+  grid-template-rows: auto auto;
+  place-content: center;
+  gap: 3px;
+  width: 46px;
+  height: 46px;
+  border-color: var(--ink);
+  transition: background-color 100ms ease-out;
+}
+
+.quick__dock > button + button {
+  margin-left: calc(-1 * var(--line));
+}
+
+.quick__dock > button span {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.quick__dock > button:hover:enabled {
+  z-index: 1;
+  background: var(--tile);
+}
+
+.quick__dock > button.is-on {
+  z-index: 1;
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+}
+
+.quick__dock > button.is-done {
+  border-color: var(--ink);
+}
+
+/* his two marks: a small stack at the strip's end, his favorite's heart over the cross that takes him off your board */
+.quick__marks {
+  display: inline-grid;
+  gap: 2px;
+}
+
+.quick__mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.quick__mark:hover {
+  background: var(--tile);
+  color: var(--ink);
+}
+
+.quick__mark--fav:hover,
+.quick__mark--fav.is-on {
+  color: var(--warn);
+}
+
+.quick__mark--off:hover {
+  background: var(--warn);
+  color: var(--paper-hi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick__dock > button {
+    transition: none;
+  }
 }
 
 /* on his row: at its end, beside the button that opens him */
@@ -821,7 +850,7 @@
 }
 
 .recruiting__rows .recruiting__row {
-  padding-right: 316px; /* the four boxes and his two marks */
+  padding-right: 234px; /* the dock of four and his two marks */
 }
 
 /* ... and the row makes room for it */
@@ -848,27 +877,20 @@
 /* a narrow list (two fifths of a 1440 window): the boxes narrow to their marks, and a long name
    takes a second line, so nothing is covered */
 @container recruit-list (width < 500px) {
-  .quick--labels .quick__box {
+  .quick__dock > button {
     width: 34px;
-    padding: 0;
+    height: 34px;
   }
 
-  /* four boxes in a narrow list: each is its mark alone (its tip says what it is and what it costs) */
-  .quick--labels .quick__box span {
-    display: none;
-  }
-
-  .quick--labels .quick__box--scout {
-    width: 34px;
-  }
-
-  /* no room for his two marks in a narrow list: they are on his file beside it */
-  .quick__mark {
+  /* a narrow list: each cell is its mark alone (its tip says what it is and what it costs), and his two marks are
+     left to his file beside it */
+  .quick__dock > button span,
+  .quick__marks {
     display: none;
   }
 
   .recruiting__rows .recruiting__row {
-    padding-right: 172px;
+    padding-right: 152px;
   }
 
   .recruiting__rows .recruiting__who b {

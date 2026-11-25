@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Binoculars, Chat, Check, Heart, Phone, VideoCamera, X } from "@phosphor-icons/react";
+import { Binoculars, Chat, Check, Heart, Lightning, Phone, VideoCamera, X } from "@phosphor-icons/react";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import ScoutMark from "../ScoutMark/index.tsx";
@@ -143,8 +143,8 @@ export default function QuickActions({
     }
   };
   if (hidden) return null;
-  return (
-    <span className={`quick${labels ? " quick--labels" : ""}`} role="group" aria-label={m.quickLabel(r.name)}>
+  const boxes = (
+    <>
       {/* the scout's box leads the strip: when his report is full it goes, and nothing after it moves or leaves a hole */}
       {scout && (!scouted || justSent) && (
         <button
@@ -161,13 +161,18 @@ export default function QuickActions({
         >
           {/* how far his report is, on the box that adds to it: a ring closing around the binoculars */}
           {labels ? (
-            <ScoutMark looks={r.looks ?? 0} size={24} always bare />
+            <ScoutMark looks={r.looks ?? 0} size={22} always bare />
           ) : scouted ? (
             <Check size={14} weight="bold" aria-hidden="true" />
           ) : (
             <Binoculars size={14} weight="bold" aria-hidden="true" />
           )}
-          {labels && !scouted && <span>{scoutCost}</span>}
+          {labels && !scouted && (
+            <span>
+              <Lightning size={9} weight="fill" aria-hidden="true" />
+              {scoutCost}
+            </span>
+          )}
         </button>
       )}
       {QUICK.map(({ key, Icon }) => {
@@ -201,15 +206,25 @@ export default function QuickActions({
             {done ? (
               <Check size={14} weight="bold" aria-hidden="true" />
             ) : (
-              <Icon size={labels ? 16 : 14} weight={on ? "fill" : "bold"} aria-hidden="true" />
+              <Icon size={labels ? 18 : 14} weight={on ? "fill" : "bold"} aria-hidden="true" />
             )}
             {/* his row: the mark and what it costs, nothing more (the tip names it) */}
-            {labels && !done && <span>{cost}</span>}
+            {labels && !done && (
+              <span>
+                <Lightning size={9} weight="fill" aria-hidden="true" />
+                {cost}
+              </span>
+            )}
           </button>
         );
       })}
+    </>
+  );
+  return (
+    <span className={`quick${labels ? " quick--labels" : ""}`} role="group" aria-label={m.quickLabel(r.name)}>
+      {labels ? <span className="quick__dock">{boxes}</span> : boxes}
       {marks && (
-        <>
+        <span className="quick__marks">
           <button
             type="button"
             className={`quick__mark quick__mark--fav${r.favorite ? " is-on" : ""}`}
@@ -221,7 +236,7 @@ export default function QuickActions({
               void mark(() => setFavorite(seasonId, r.id, !r.favorite));
             }}
           >
-            <Heart size={16} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
+            <Heart size={15} weight={r.favorite ? "fill" : "bold"} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -234,9 +249,9 @@ export default function QuickActions({
               void mark(() => setOnBoard(seasonId, [r.id], false));
             }}
           >
-            <X size={16} weight="bold" aria-hidden="true" />
+            <X size={13} weight="bold" aria-hidden="true" />
           </button>
-        </>
+        </span>
       )}
     </span>
   );

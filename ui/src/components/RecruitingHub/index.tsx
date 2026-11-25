@@ -93,7 +93,7 @@ export default function RecruitingHub({
           boardSize={board?.board.length}
           school={teams.get(team)}
           // (refused while a sim runs: the board is read again when it ends, so that is no error to raise)
-          onBoardChange={() => void reload().catch(() => {})}
+          onBoardChange={() => void reload(true).catch(() => {})}
         />
       </SectionPane>
       <SectionPane shown={tab === "classes"}>
