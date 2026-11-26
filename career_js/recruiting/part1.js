@@ -366,16 +366,21 @@ function fbs_schools(state) {
 // ----- scouting (spec section 6) *tune* -----
 recruiting.GROUPS = ["athleticism", "size_strength", "technique", "football_iq", "potential", "coachability"];
 recruiting.WORDS = ["All-American", "Elite", "Strong", "Solid", "Fair", "Weak"];
-// words on the game's 1-99 scale (50 is the middle Power 4 starter at the position, 65 one standard
-// deviation better, 80 two): Solid is that starter, Strong a clearly better one, Elite an all-conference level
-recruiting.WORD_FLOORS = [90, 80, 65, 50, 40, -1e9];
+// A read's words: a group of his card's attributes reads against his position (each position's floors are card numbers,
+// game_scale's read_words: Solid a Power 4 starter there, Strong a clearly better one, Elite an all-conference level),
+// his potential against an overall (POTENTIAL_FLOORS) and his coachability against its points (COACHABILITY_FLOORS).
+// recruiting.read_floors has them. *tune*
+recruiting.POTENTIAL_FLOORS = [93, 90, 85, 79, 74];
+recruiting.COACHABILITY_FLOORS = [90, 80, 65, 50, 40];
+recruiting.STAFF_FLOORS = [94, 88, 79, 70, 63];        // a coach's evaluating ability in words (the average coach a 70: Solid)
+recruiting.POTENTIAL_STEP = 0.45;                      // a potential read's errors and widths: overall points per step of LOOK_SD and WORD_SLACK
 recruiting.GRADE_LOW = 1.0;                // grades run the whole scale
 recruiting.GRADE_SPAN = 98.0;
 recruiting.COACHABILITY_POINTS = { "Coach's Dream": 90, "Film Junkie": 80, "Quick Study": 68, "Steady Grinder": 52,
   "Slow to Click": 37, "Set in His Ways": 20 };
-recruiting.LOOK_SD = [16.0, 4.0];                      // a look's error sd in grade points: 16 * (1 - s) + 4, s from his rating (LOOK_EYE)
+recruiting.LOOK_SD = [16.0, 4.0];                      // a look's error sd in steps (read_scale): 16 * (1 - s) + 4, s from his rating (LOOK_EYE)
 recruiting.LOOK_EYE = [40, 99];                        // *tune* an evaluator rated the first reads with no sharpness, the second with all (LOOK_SD)
-recruiting.WORD_SLACK = 4.0;                           // a word range already spans its end words' width, so the read narrows by this much
+recruiting.WORD_SLACK = 4.0;                           // a word range already spans its end words' width, so the read narrows by this many steps
 recruiting.CONFIDENCE_NOISE = 0.5;                     // how far a look's own confidence strays (log sd, times 1 - s)
 recruiting.HIDDEN_RATE = 0.15;                         // two-stars and three-stars under this composite, hidden until a look
 recruiting.HIDDEN_BELOW = 0.82;

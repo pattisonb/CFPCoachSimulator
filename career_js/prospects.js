@@ -112,8 +112,9 @@ prospects.COMP_ATTRIBUTES = 10;              // the attributes compared: those t
 prospects.COMP_CHOICES = 6;                  // a comp is one of this many nearest players, picked by the recruit's own seed, so a class's best do not all share one comp *tune*
 prospects.COMP_YEARS = 4;                    // a comp is who he projects to be after this many offseasons of average growth *tune*
 prospects.OUR_COMP_LOOKS = 3;                // looks before your staff offer their own comp
-prospects.READ_SHIFT = 0.5;                  // rating points an attribute moves per grade point a read is off *tune*
-prospects.PUBLIC_SD = 3.0;                   // the national rankings' error on his grades, in grade points *tune*
+prospects.READ_SHIFT = 1.0;                  // rating points an attribute moves per point its group's read is off *tune*
+prospects.POTENTIAL_SHIFT = 0.5;             // ... and per point of overall his potential's read is off *tune*
+prospects.PUBLIC_SD = 3.0;                   // the national rankings' error on his grades, in steps (recruiting.read_scale) *tune*
 prospects.EVAL_GROUPS = ["athleticism", "size_strength", "technique", "football_iq", "potential"];
 prospects.GROUP_NAMES = { athleticism: "athleticism", size_strength: "size and strength", technique: "technique",
   football_iq: "football IQ", potential: "upside", coachability: "coachability" };
@@ -132,7 +133,9 @@ prospects.WEAKNESS_TEXT = {
   football_iq: "His football IQ is still developing; his processing can be slow.",
   potential: "Less upside than most: he is closer to his ceiling at this stage.",
 };
-prospects.STRENGTH_FROM = 60; prospects.WEAKNESS_BELOW = 45;      // the game's scale: a Solid-and-up read is a strength (60), below 45 a weakness
+// a public grade two thirds of the way from Solid to Strong is a strength, one under halfway from Fair to Solid a weakness
+// (each read's own words: recruiting.between) *tune*
+prospects.STRENGTH_FROM = ["Solid", "Strong", 0.67]; prospects.WEAKNESS_BELOW = ["Fair", "Solid", 0.5];
 prospects.SOLID_TEXT = "Solid {group} for {a_noun} at this level; not a concern.";
 // these two are odicts: their keys are listed 5 first, where a plain object would list 2 first
 prospects.OUTLOOK = odict([
@@ -265,7 +268,7 @@ export function _shifted(state, p, grades, field = "potential") {
   for (const [k, v] of Object.entries(recruiting.attributes(state, p, field))) {
     let g = "technique";
     for (const [name, keys] of Object.entries(groups)) if (_in(k, keys)) { g = name; break; }
-    const off = prospects.READ_SHIFT * (grades[g] - p["truth"][g]) + prospects.READ_SHIFT / 2 * (grades["potential"] - p["truth"]["potential"]);
+    const off = prospects.READ_SHIFT * (grades[g] - p["truth"][g]) + prospects.POTENTIAL_SHIFT * (grades["potential"] - p["truth"]["potential"]);
     out[k] = Math.max(0, Math.min(99, v + off));
   }
   return out;
@@ -385,7 +388,7 @@ prospects.POS_NOUNS = { QB: "quarterback", RB: "running back", WR: "receiver", T
 prospects.REPORT_LABELS = { athleticism: "Athleticism", football_iq: "Football IQ", technique: "Technique",
   size_strength: "Size / Strength", coachability: "Coachability", potential: "Upside" };
 prospects.ATTRIBUTE_GROUPS = ["athleticism", "football_iq", "technique", "size_strength", "coachability"];   // the Attributes card, in order
-prospects.GOOD_FROM = 65; prospects.SOLID_FROM = 50;     // a read's midpoint: Strong and up is green, Solid and Fair yellow, Weak red (recruiting.WORD_FLOORS)
+prospects.GOOD_FROM = "Strong"; prospects.SOLID_FROM = "Solid";     // a read's midpoint: Strong and up is green, Solid and Fair yellow, Weak red
 prospects.OPENING = {      // the verdict's first sentence, by the potential read's midpoint word
   "All-American": "A rare {noun} with first-round NFL upside.",
   Elite: "A gifted {noun} with early-round NFL upside.",
@@ -419,7 +422,7 @@ prospects.CONCERN_LINE = {
   coachability: "Coaches will have to work to get through to him.",
 };
 prospects.NO_CONCERN = "There is no glaring hole in his game.";
-prospects.UNCERTAINTY = [[6.0, "Low"], [12.0, "Medium"]];   // *tune* a read's half-width in grade points: under this, the word; past both, High
+prospects.UNCERTAINTY = [[6.0, "Low"], [12.0, "Medium"]];   // *tune* a read's half-width in steps (recruiting.read_scale): under this, the word; past both, High
 prospects.TRAIT_HINTS = {      // how an unknown trait is revealed, a sentence under "Not Known Yet"
   personality: "Your first call or in-home visit shows it.",
   story: "A complete report finds it.",
@@ -467,7 +470,8 @@ export function uncertainty(state, pid, group) {
   const spread = recruiting.read_spread(state, pid, group);
   if (spread === null) return null;
   if (recruiting.report_complete(get(state["recruiting"]["reads"], pid))) return "Low";
-  for (const [edge, w] of prospects.UNCERTAINTY) if (spread[1] < edge) return w;
+  const step = recruiting.read_scale(recruiting.read_key(state["recruiting"]["prospects"][pid], group));
+  for (const [edge, w] of prospects.UNCERTAINTY) if (spread[1] < edge * step) return w;
   return "High";
 }
 
@@ -487,27 +491,29 @@ export function report(state, pid) {
   for (const g of recruiting.GROUPS) words[g] = [...recruiting.grade_range(state, pid, g)];
   const pot = words["potential"];
   const order = sorted(recruiting.GROUPS, (g) => -mid[g]);
-  const strengths = order.filter((g) => mid[g] >= prospects.SOLID_FROM).slice(0, 3);
-  const develop = order.slice().reverse().filter((g) => mid[g] < prospects.SOLID_FROM && !strengths.includes(g)).slice(0, 3);
+  const floor = (g, w) => recruiting.read_floors(recruiting.read_key(p, g))[recruiting.WORDS.indexOf(w)];
+  const solid = (g) => mid[g] >= floor(g, prospects.SOLID_FROM), good = (g) => mid[g] >= floor(g, prospects.GOOD_FROM);
+  const strengths = order.filter((g) => solid(g)).slice(0, 3);
+  const develop = order.slice().reverse().filter((g) => !solid(g) && !strengths.includes(g)).slice(0, 3);
   const skills = order.filter((g) => prospects.ATTRIBUTE_GROUPS.includes(g));
   const best = skills[0], worst = skills[skills.length - 1];
   const a_noun = `${"aeiou".includes(noun.slice(0, 1).toLowerCase()) ? "An" : "A"} ${noun}`;
-  const word = recruiting.word(mid["potential"]);
+  const word = recruiting.word(mid["potential"], "potential");
   const opening = truthy(get(p, "portal")) ? prospects.OPENING_PORTAL
     : (pos === "K" || pos === "P") && _in(word, prospects.OPENING_KICK) ? prospects.OPENING_KICK : prospects.OPENING;
   const lines = [format(opening[word], { noun, pos, A_noun: a_noun })];
-  if (mid[best] >= prospects.GOOD_FROM) lines.push(format(prospects.STRENGTH_LINE[best], { pos, noun }));
-  lines.push(mid[worst] < prospects.SOLID_FROM ? prospects.CONCERN_LINE[worst] : prospects.NO_CONCERN);
+  if (good(best)) lines.push(format(prospects.STRENGTH_LINE[best], { pos, noun }));
+  lines.push(!solid(worst) ? prospects.CONCERN_LINE[worst] : prospects.NO_CONCERN);
   const clamp = (x) => round(Math.max(0.0, Math.min(100.0, x)), 1);
-  const tone = (m) => (m >= prospects.GOOD_FROM ? "good" : m >= recruiting.WORD_FLOORS[4] ? "warn" : "bad");
+  const tone = (g) => (good(g) ? "good" : mid[g] >= floor(g, "Fair") ? "warn" : "bad");
   return {
     headline: pot[0] === pot[1] ? pot[0] : `${pot[0]} – ${pot[1]}`,
-    potential: pot, potential_tone: tone(mid["potential"]),
+    potential: pot, potential_tone: tone("potential"),
     verdict: lines.join(" "),
     strengths: strengths.map((g) => prospects.REPORT_LABELS[g]),
     develop: develop.map((g) => prospects.REPORT_LABELS[g]),
     attributes: prospects.ATTRIBUTE_GROUPS.map((g) => ({ group: g, label: prospects.REPORT_LABELS[g], words: words[g], lo: clamp(iv[g][0]), hi: clamp(iv[g][1]),
-      mid: clamp(mid[g]), word: recruiting.word(mid[g]), tone: tone(mid[g]), uncertainty: prospects.uncertainty(state, pid, g) })),
+      mid: clamp(mid[g]), word: recruiting.word(mid[g], recruiting.read_key(p, g)), tone: tone(g), uncertainty: prospects.uncertainty(state, pid, g) })),
     certainty: prospects.uncertainty(state, pid, "potential"),
   };
 }
@@ -533,9 +539,13 @@ export function _public_grades(p) {
   // The national rankings' grades: his true ones with their error; a prospect shown low for his story
   // (an Injury Comeback, a Late Bloomer before his jump: p["real"]) understated by persona.SHOWN_BAND.
   const rng = new Random(`public-${p["id"]}`);
+  const recruiting = modules.recruiting;
   const low = truthy(get(p, "real")) ? modules.persona.SHOWN_BAND : 0.0;
   const out = {};
-  for (const g of modules.recruiting.GROUPS) out[g] = p["truth"][g] + rng.gauss(0, prospects.PUBLIC_SD) - low;
+  for (const g of recruiting.GROUPS) {
+    const step = recruiting.read_scale(recruiting.read_key(p, g));
+    out[g] = p["truth"][g] + rng.gauss(0, prospects.PUBLIC_SD) * step - low * step;
+  }
   return out;
 }
 
@@ -572,7 +582,7 @@ export function grade_detail(state, p, group, lo, hi) {
   const recruiting = modules.recruiting;
   const rc = state["recruiting"];
   if (lo === hi && group !== "coachability") {                     // one final grade: the prospects graded like that
-    [lo, hi] = recruiting.word_band(lo);
+    [lo, hi] = recruiting.word_band(lo, recruiting.read_key(p, group));
   }
   lo = Math.max(recruiting.GRADE_LOW, lo); hi = Math.min(recruiting.GRADE_LOW + recruiting.GRADE_SPAN, hi);
   if (group === "coachability") {
@@ -780,8 +790,9 @@ export function _schools(state, pid, viewer = null) {
 }
 
 export function _evaluation(p, public_) {
-  // His three best and two weakest groups, written up: a strength only from Strong/Solid up (60), a weakness
-  // only below Fair (45); anything between is "solid" (a five-star's lowest grade is often still good). His position
+  // His three best and two weakest groups, written up: a strength only from well between Solid and Strong up, a
+  // weakness only well under Solid (STRENGTH_FROM, WEAKNESS_BELOW); anything between is "solid" (a five-star's lowest
+  // grade is often still good). His position
   // is the game's display (display_pos), as on the rest of his profile.
   const order = sorted(prospects.EVAL_GROUPS, (g) => -public_[g]);
   const pos = prospects.display_pos(p["ea_position"]);
@@ -789,11 +800,15 @@ export function _evaluation(p, public_) {
   const a_noun = `${"aeiou".includes(noun[0].toLowerCase()) ? "an" : "a"} ${noun}`;
   const text = (t, g) => format(t, { pos, noun, a_noun, group: prospects.GROUP_NAMES[g] });
   const strengths = [], solid = [], weaknesses = [];
+  const recruiting = modules.recruiting;
+  const line = (g, at) => recruiting.between(recruiting.read_key(p, g), ...at);
   for (const g of order.slice(0, 3)) {
-    (public_[g] >= prospects.STRENGTH_FROM ? strengths : solid).push(text(public_[g] >= prospects.STRENGTH_FROM ? prospects.STRENGTH_TEXT[g] : prospects.SOLID_TEXT, g));
+    const strong = public_[g] >= line(g, prospects.STRENGTH_FROM);
+    (strong ? strengths : solid).push(text(strong ? prospects.STRENGTH_TEXT[g] : prospects.SOLID_TEXT, g));
   }
   for (const g of order.slice(-2)) {
-    (public_[g] < prospects.WEAKNESS_BELOW ? weaknesses : solid).push(text(public_[g] < prospects.WEAKNESS_BELOW ? prospects.WEAKNESS_TEXT[g] : prospects.SOLID_TEXT, g));
+    const weak = public_[g] < line(g, prospects.WEAKNESS_BELOW);
+    (weak ? weaknesses : solid).push(text(weak ? prospects.WEAKNESS_TEXT[g] : prospects.SOLID_TEXT, g));
   }
   const table = pos === "K" || pos === "P" ? prospects.OUTLOOK_KICK : prospects.OUTLOOK;
   return { strengths, solid, weaknesses, outlook: format(get(table, modules.recruiting.tier_of(p), prospects.OUTLOOK[2]), { pos, noun }) };
@@ -824,8 +839,9 @@ export function find(state, pid) {
   const lo = mean - half, hi = mean + half;
   const [gem_cut, bust_cut] = get(recruiting.flag_cuts(rc), p["stars"], [99.0, -1.0]);
   const held = get(read, "find");
-  if (p["stars"] <= 3 && p["rank"] > recruiting.GEM_RANK && lo >= gem_cut - (held === "gem" ? recruiting.FLAG_HOLD : 0.0)) return "gem";
-  if (p["stars"] >= 4 && hi < bust_cut + (held === "bust" ? recruiting.FLAG_HOLD : 0.0)) return "bust";
+  const hold = recruiting.FLAG_HOLD * recruiting.POTENTIAL_STEP;
+  if (p["stars"] <= 3 && p["rank"] > recruiting.GEM_RANK && lo >= gem_cut - (held === "gem" ? hold : 0.0)) return "gem";
+  if (p["stars"] >= 4 && hi < bust_cut + (held === "bust" ? hold : 0.0)) return "bust";
   return null;
 }
 
@@ -1539,7 +1555,8 @@ export function class_detail(state, slug, viewer) {
   for (const r of rows) {                           // his real ratings show once he signs with you: did the find hold?
     if (r["signed"] === viewer) {
       const truth = rc["prospects"][r["id"]]["truth"]["potential"];
-      r["find_held"] = r["find"] === null ? null : (r["find"] === "gem" ? truth >= 80 : truth < 50);
+      const floors = modules.recruiting.POTENTIAL_FLOORS;          // a gem held at an Elite potential; a bust at under Solid
+      r["find_held"] = r["find"] === null ? null : (r["find"] === "gem" ? truth >= floors[1] : truth < floors[3]);
     }
   }
   return rows;
@@ -1730,7 +1747,7 @@ export function scouting_view(state, q = null, position = null, group = null, of
       if (get(m, "role") === "Recruiter" && codes.includes(rc["prospects"][pid]["hometown"]["state"]) && recruiting.staff_open(state, pid)) looking_at += 1;
     }
     scouts.push({ id: m["id"], name: m["name"], role: get(prospects.ROLE_NAMES, m["role"], m["role"]),
-      evaluation_word: recruiting.word(m["evaluation"]), area: get(m, "area"), contract_until: get(m, "contract_until"),
+      evaluation_word: recruiting.staff_word(m["evaluation"]), area: get(m, "area"), contract_until: get(m, "contract_until"),
       looking_at,
       yield: { looks: get(this_count, m["id"], 0), narrowed: get(mine, "changed", 0),
         flags: get(mine, "flags", 0) } });

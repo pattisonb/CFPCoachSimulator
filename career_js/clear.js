@@ -16,7 +16,7 @@ const own = (o, k, d = null) => (typeof k === "string" && Object.hasOwn(o, k) ? 
 
 // confidence is judged on the range the page shows (the read plus WORD_SLACK each side), not the word read's own
 // width: half-widths under these are High, then Medium, else Low; a complete report is High *tune*
-const CLEAR_CONFIDENCE = [[6.0, "High"], [10.0, "Medium"]];
+const CLEAR_CONFIDENCE = [[6.0, "High"], [10.0, "Medium"]];   // a read's half-width in steps (recruiting.read_scale)
 
 // each position group's key player-card ratings, most important first (up to eight); the card's own labels name them
 const KEYS = {
@@ -95,7 +95,8 @@ export function confidence(state, pid, group) {
   if (mh === null) return "High";
   if (truthy(recruiting.report_complete(get(state["recruiting"]["reads"], pid)))) return "High";
   const half = Math.max(2.0, mh[1]);                          // the half-width the row shows (ratings' row: at least a couple of points)
-  for (const [edge, w] of clear.CLEAR_CONFIDENCE) if (half < edge) return w;
+  const step = recruiting.read_scale(recruiting.read_key(state["recruiting"]["prospects"][pid], group));
+  for (const [edge, w] of clear.CLEAR_CONFIDENCE) if (half < edge * step) return w;
   return "Low";
 }
 
@@ -105,7 +106,7 @@ export function _raw_half(state, pid, group) {
   const spread = recruiting.read_spread(state, pid, group);
   if (spread === null || spread === undefined) return null;
   const [mean, half] = spread;
-  return [mean, half + recruiting.WORD_SLACK];
+  return [mean, half + recruiting.WORD_SLACK * recruiting.read_scale(recruiting.read_key(state["recruiting"]["prospects"][pid], group))];
 }
 
 export function _group_of_key(p, key) {

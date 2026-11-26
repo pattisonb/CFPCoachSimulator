@@ -601,21 +601,68 @@ function _truths(prospects, attrs) {
 }
 
 
-function word(points) {
-  for (let i = 0; i < Math.min(recruiting.WORDS.length, recruiting.WORD_FLOORS.length); i++) {
-    if (points >= recruiting.WORD_FLOORS[i]) return recruiting.WORDS[i];
+function read_key(p, group) {
+  // Which read a group of his is: "potential" (his overall at his ceiling), "coachability" (his label), or his card
+  // group's (QB, RB, ... LB, CB, S, K, P) and the group's, "OL|technique" (card numbers against his position's words).
+  if (group === "potential" || group === "coachability") return group;
+  const season = modules.season, pos = pr.engine_position(p);
+  return `${get(get(season || {}, "SCALE_GROUP") || {}, pos, pos)}|${group}`;
+}
+
+
+function read_floors(key) {
+  // A read's word floors, best first, for recruiting.WORDS (the last open-ended): his position's group's (card numbers,
+  // game_scale's read_words), his potential's (an overall) or his coachability's (its points).
+  if (key === "potential") return [...recruiting.POTENTIAL_FLOORS, -1e9];
+  if (key === "coachability") return [...recruiting.COACHABILITY_FLOORS, -1e9];
+  const row = get(get(game_scale.data(), "read_words") || {}, key);
+  return [...(row ? row["floors"] : recruiting.POTENTIAL_FLOORS), -1e9];
+}
+
+
+function read_scale(key) {
+  // How many card points (an overall's for his potential, points for his coachability) a read's widths and errors are
+  // stated in per step of LOOK_SD, WORD_SLACK and the public grades' error: his position's group's spread (game_scale's
+  // read_words), POTENTIAL_STEP for his potential, 1 for his coachability.
+  if (key === "potential") return recruiting.POTENTIAL_STEP;
+  if (key === "coachability") return 1.0;
+  const row = get(get(game_scale.data(), "read_words") || {}, key);
+  return row ? row["per_point"] : recruiting.POTENTIAL_STEP;
+}
+
+
+function word(points, key = "potential") {
+  const floors = recruiting.read_floors(key);
+  for (let i = 0; i < Math.min(recruiting.WORDS.length, floors.length); i++) {
+    if (points >= floors[i]) return recruiting.WORDS[i];
   }
   throw new Error("StopIteration");
 }
 
 
-function word_band(points) {
-  // The grade points that carry the same word as `points`: [its floor, the next word's floor), on
-  // the grade scale (Weak from GRADE_LOW, All-American to its top).
-  const i = recruiting.WORDS.indexOf(recruiting.word(points));
-  const lo = i < recruiting.WORDS.length - 1 ? recruiting.WORD_FLOORS[i] : recruiting.GRADE_LOW;
-  const hi = i > 0 ? recruiting.WORD_FLOORS[i - 1] - 1e-9 : recruiting.GRADE_LOW + recruiting.GRADE_SPAN;
+function word_band(points, key = "potential") {
+  // The read points that carry the same word as `points`: [its floor, the next word's floor) (Weak from GRADE_LOW,
+  // All-American to the top).
+  const floors = recruiting.read_floors(key);
+  const i = recruiting.WORDS.indexOf(recruiting.word(points, key));
+  const lo = i < recruiting.WORDS.length - 1 ? floors[i] : recruiting.GRADE_LOW;
+  const hi = i > 0 ? floors[i - 1] - 1e-9 : recruiting.GRADE_LOW + recruiting.GRADE_SPAN;
   return [lo, hi];
+}
+
+
+function staff_word(rating) {
+  // A coach's evaluating ability in a word (the Staff page): STAFF_FLOORS on his rating.
+  for (let i = 0; i < recruiting.STAFF_FLOORS.length; i++) if (rating >= recruiting.STAFF_FLOORS[i]) return recruiting.WORDS[i];
+  return recruiting.WORDS[recruiting.WORDS.length - 1];
+}
+
+
+function between(key, lower, upper, share) {
+  // The read points `share` of the way from word `lower`'s floor up to word `upper`'s (a strength's line, a weakness's).
+  const floors = recruiting.read_floors(key);
+  const a = floors[recruiting.WORDS.indexOf(lower)], b = floors[recruiting.WORDS.indexOf(upper)];
+  return a + share * (b - a);
 }
 
 
@@ -627,7 +674,9 @@ function look_week(state) {
 
 
 /** The best evaluator behind a read as a share of 99: max(read["by"].items(), key=(looks, rating)), its rating. */
-const _best_share = (read) => Math.trunc(Number(maxBy(Object.entries(read["by"]), (kv) => [kv[1], Math.trunc(Number(kv[0]))])[0])) / 99;
+// the best evaluator a read has had, as LOOK_EYE reads him (0 to 1)
+const _best_share = (read) => Math.max(0, Math.min(1, (Math.trunc(Number(maxBy(Object.entries(read["by"]), (kv) => [kv[1], Math.trunc(Number(kv[0]))])[0]))
+  - recruiting.LOOK_EYE[0]) / (recruiting.LOOK_EYE[1] - recruiting.LOOK_EYE[0])));
 
 
 function _read_words(state, pid) {
@@ -643,13 +692,15 @@ function _read_words(state, pid) {
   // the report is complete are the same for all six, and a look asks for all six twice
   const s = _best_share(read);
   const complete = recruiting.report_complete(read);
+  const p = state["recruiting"]["prospects"][pid];
   for (const g of recruiting.GROUPS) {
     const [mean, prec] = read["g"][g];
+    const key = recruiting.read_key(p, g);
     if (complete) {
-      out[g] = [recruiting.word(mean), recruiting.word(mean)];
+      out[g] = [recruiting.word(mean, key), recruiting.word(mean, key)];
     } else {
-      const half = Math.max(0.0, (0.6 + 1.1 * s) / Math.sqrt(prec) - recruiting.WORD_SLACK);
-      out[g] = [recruiting.word(mean - half), recruiting.word(mean + half)];
+      const half = Math.max(0.0, (0.6 + 1.1 * s) / Math.sqrt(prec) - recruiting.WORD_SLACK * recruiting.read_scale(key));
+      out[g] = [recruiting.word(mean - half, key), recruiting.word(mean + half, key)];
     }
   }
   return out;
@@ -735,7 +786,7 @@ function look(state, pid, evaluator_rating, rng, by = null, week = null, weight 
   const s = Math.max(0, Math.min(1, (evaluator_rating - recruiting.LOOK_EYE[0]) / (recruiting.LOOK_EYE[1] - recruiting.LOOK_EYE[0])));
   const sd = (recruiting.LOOK_SD[0] * (1 - s) + recruiting.LOOK_SD[1]) * (recruiting.is_portal(state) ? recruiting.PORTAL_LOOK : 1.0);
   for (const g of recruiting.GROUPS) {
-    const sd_g = sd * persona.read_mult(state, pid, g);          // an Injury Comeback's potential: a wider error (the same draws)
+    const sd_g = sd * recruiting.read_scale(recruiting.read_key(p, g)) * persona.read_mult(state, pid, g);    // (an Injury Comeback's potential: a wider error, the same draws)
     const seen = p["truth"][g] + rng.gauss(0, sd_g);
     const felt = sd_g * Math.exp(rng.gauss(0, recruiting.CONFIDENCE_NOISE * (1 - s)));
     const add = w / pypow(felt, 2);
@@ -787,7 +838,8 @@ function read_spread(state, pid, group) {
   if (!truthy(read)) return null;
   const s = _best_share(read);
   const [mean, prec] = read["g"][group];
-  const half = Math.max(0.0, (0.6 + 1.1 * s) / Math.sqrt(prec) - recruiting.WORD_SLACK);
+  const slack = recruiting.WORD_SLACK * recruiting.read_scale(recruiting.read_key(state["recruiting"]["prospects"][pid], group));
+  const half = Math.max(0.0, (0.6 + 1.1 * s) / Math.sqrt(prec) - slack);
   return [mean, half];
 }
 
@@ -827,7 +879,8 @@ function grade_range(state, pid, group) {
   // (low, high) grade words, e.g. ("Solid", "Strong"); the same word twice once his report is
   // complete (one final grade); None before any look.
   const iv = recruiting.read_interval(state, pid, group);
-  return truthy(iv) ? [recruiting.word(iv[0]), recruiting.word(iv[1])] : null;
+  const key = recruiting.read_key(state["recruiting"]["prospects"][pid], group);
+  return truthy(iv) ? [recruiting.word(iv[0], key), recruiting.word(iv[1], key)] : null;
 }
 
 
@@ -1074,6 +1127,7 @@ function _set_record(state, slug, wins, losses) {
 
 
 Object.assign(recruiting, {
+  read_key, read_floors, read_scale, between, staff_word,
   _hat, _pair_ok, _last_quarterbacks, _sign, auto_mode, _asks_for_more, _grade_news, weekly_step, _weekly_step, _portal_draws,
   _title, no_room, _lost_why, lost_reason, lost_line, school_name, _season_line, portal_rc, _truths, word, word_band,
   look_week, _read_words, _flags, report_looks, area_looks, report_complete, looks_left, _normalize_read, look,
