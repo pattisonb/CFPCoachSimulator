@@ -10,25 +10,35 @@ export function _add_stat(player, key, n = 1) {
 }
 
 
+// How tired a player gets, in the fatigue formulas' own units: TIRE_AVG for an average starter, TIRE_PER_POINT less a
+// card point of endurance over him. *tune*
+const TIRE_AVG = 45, TIRE_PER_POINT = 2.5;
+
+export function _tired(player) {
+  return game_functions.TIRE_AVG - game_functions.TIRE_PER_POINT * (player.endurance || 0);
+}
+
+
 export function sim_kickoff(kicker, return_team = null) {
   // Kickoff from the 35 under college rules: touchbacks and fair catches inside the 25
   // come out to the 25; otherwise the designated returner brings it out.
   // Returns: [receiving team's yardline, returner, return_yards, is_touchdown]
   const kick_power_mult = cfg.sliders.get_multiplier(cfg.sliders.kickoff_power);
-  const kick_power = (kicker.kick_power || cfg.NEUTRAL) * kick_power_mult;
-  const kick_accuracy = kicker.kick_accuracy || cfg.NEUTRAL;
+  // (card points over the average kicker; the slider scales his leg read from REF_POINTS under the average)
+  const kick_power = (kicker.kick_power || 0) * kick_power_mult + cfg.REF_POINTS * (kick_power_mult - 1);
+  const kick_accuracy = kicker.kick_accuracy || 0;
   const returner = return_team ? return_team.get_kick_returner() : null;
   if (returner !== null) {
     return_team.refresh_ratings([returner]);
   }
 
   // Out of bounds: receiving team takes it at the 40.
-  if (random.random() < Math.max(0.01, cfg.KICKOFF_OOB_CHANCE - (kick_accuracy - cfg.NEUTRAL) * 0.0005)) {
+  if (random.random() < Math.max(0.01, cfg.KICKOFF_OOB_CHANCE - kick_accuracy * 0.00125)) {
     return [40, null, 0, false];
   }
 
   // Where the ball comes down, measured from the receiving team's goal line.
-  const distance = random.gauss(cfg.KICKOFF_DISTANCE, cfg.KICKOFF_DISTANCE_SD) + (kick_power - cfg.NEUTRAL) * cfg.KICKOFF_PER_POWER_POINT;
+  const distance = random.gauss(cfg.KICKOFF_DISTANCE, cfg.KICKOFF_DISTANCE_SD) + kick_power * cfg.KICKOFF_PER_POWER_POINT;
   const landing = 65 - distance;
   if (landing <= 0 && random.random() < cfg.KICKOFF_TOUCHBACK_FROM_END_ZONE) {
     return [25, null, 0, false];
@@ -72,8 +82,8 @@ export function sim_pat(kicker, verbose = false) {
   const kick_acc_mult = cfg.sliders.get_multiplier(cfg.sliders.kicking_accuracy);
   const base_chance = 0.975 * kick_acc_mult;  // College PAT success rate ~97-98%
 
-  // Adjust based on kicker accuracy (scale 50 = avg, 100 = elite)
-  const accuracy_adjustment = ((kicker.kick_accuracy - 50) * 0.003) * kick_acc_mult;
+  // Adjust based on kicker accuracy: card points over the average kicker (a little over the average is the line)
+  const accuracy_adjustment = (((kicker.kick_accuracy || 0) + 2) * 0.0075) * kick_acc_mult;
   const make_chance = Math.max(0.94, Math.min(0.995, base_chance + accuracy_adjustment));  // Tight range for college PATs
 
   kicker.stats["pat_attempts"] += 1;
@@ -116,15 +126,19 @@ export function sim_two_point_conversion(offense_list, defense_list, verbose = f
 
     // High completion chance due to short distance
     const base_completion = 0.50;  // Base 50% completion rate for 2-pt conversion
-    const qb_skill = (qb.passing + qb.decision_making + qb.intelligence) / 300;
-    const defense_coverage = sum(defense_list.filter((p) => p.position === "CB" || p.position === "S").map((p) => p.coverage)) / 2000;
+    // (card points over the average starter: an average quarterback's skill is 0.55, a defensive back's coverage 0.0275)
+    const qb_skill = 0.55 + ((qb.passing || 0) + (qb.decision_making || 0) + (qb.intelligence || 0)) / 120;
+    const dbs = defense_list.filter((p) => p.position === "CB" || p.position === "S");
+    const defense_coverage = 0.0275 * dbs.length + sum(dbs.map((p) => p.coverage || 0)) / 800;
     success_chance = Math.max(0.25, Math.min(0.75, base_completion + qb_skill - defense_coverage));
   } else {
     // Run attempt from 3-yard line
     // Higher success rate for runs in short yardage
     const base_success = 0.45;  // Base 45% success rate
-    const offense_line = sum(offense_list.filter((p) => p.position === "OL").map((p) => p.run_blocking)) / 500;
-    const defense_line = sum(defense_list.filter((p) => ["DL", "OLB", "MLB", "ROLB"].includes(p.position)).map((p) => p.tackling)) / 800;
+    const line = offense_list.filter((p) => p.position === "OL");
+    const front = defense_list.filter((p) => ["DL", "OLB", "MLB", "ROLB"].includes(p.position));
+    const offense_line = 0.11 * line.length + sum(line.map((p) => p.run_blocking || 0)) / 200;
+    const defense_line = 0.06875 * front.length + sum(front.map((p) => p.tackling || 0)) / 320;
     success_chance = Math.max(0.30, Math.min(0.70, base_success + offense_line - defense_line));
   }
 
@@ -142,7 +156,7 @@ export function fg_max_distance(kicker) {
   let long_range = get(getattr(kicker, "traits", null) || {}, "long_range", 0) * cfg.TRAIT_FX["long_range"];
   // a cannon leg kicks from farther
   long_range += get(getattr(kicker, "traits", null) || {}, "cannon_leg", 0) * cfg.TRAIT_FX["cannon_leg"];
-  return round(cfg.FG_MAX_DISTANCE * power_mult + ((kicker.kick_power || 50) * power_mult - 50) / 8 + long_range);
+  return round(cfg.FG_MAX_DISTANCE * power_mult + ((kicker.kick_power || 0) * power_mult + cfg.REF_POINTS * (power_mult - 1) + 2) / 3.2 + long_range);
 }
 
 
@@ -152,13 +166,13 @@ export function get_punt_distance(punter) {
   let punt_distance = int(random.gauss(mean * punt_power_mult, sd));
   // a cannon leg punts farther
   punt_distance += get(getattr(punter, "traits", null) || {}, "cannon_leg", 0) * cfg.TRAIT_FX["cannon_leg"];
-  return round(punt_distance + (((punter.punt_power || 50) * punt_power_mult) - 50) / 5);
+  return round(punt_distance + ((punter.punt_power || 0) * punt_power_mult + cfg.REF_POINTS * (punt_power_mult - 1) + 2) / 2);
 }
 
 
 export function apply_baseline_fatigue(team) {
   for (const player of [...team.offense, ...team.defense]) {
-    const base_chance = (100 - player.endurance) / 10;  // chance out of 100
+    const base_chance = game_functions._tired(player) / 10;  // chance out of 100
     if (random.random() < base_chance / 100) {
       const max_fatigue = Math.max(1, round(base_chance));  // capped by the same amount, at least 1
       player.fatigue = random.randint(1, max_fatigue);
@@ -180,7 +194,7 @@ export function apply_general_fatigue(offense, defense) {
       base_fatigue = 0.1;  // linemen/special teams, etc.
     }
 
-    const endurance_factor = (100 - player.endurance) / 100;  // 0.0–1.0
+    const endurance_factor = game_functions._tired(player) / 100;  // 0.0–1.0
     const fatigue = base_fatigue + (endurance_factor * base_fatigue);
     player.fatigue = Math.min(100, player.fatigue + fatigue);
   }
@@ -194,12 +208,12 @@ export function apply_pass_fatigue(offense, defense, receiver = null, yards = 0)
       continue;
     }
 
-    const base_fatigue = 1 + (100 - player.endurance) / 80;
+    const base_fatigue = 1 + game_functions._tired(player) / 80;
 
     let fatigue;
     if (receiver !== null && player === receiver) {
       const effort = 1 + (yards / 10);
-      fatigue = base_fatigue + effort * (1 + (100 - player.endurance) / 100);
+      fatigue = base_fatigue + effort * (1 + game_functions._tired(player) / 100);
     } else {
       fatigue = base_fatigue;
     }
@@ -213,7 +227,7 @@ export function apply_pass_fatigue(offense, defense, receiver = null, yards = 0)
       continue;
     }
 
-    const fatigue = 0.5 + (100 - player.endurance) / 120;  // ~0.5–1.3 range
+    const fatigue = 0.5 + game_functions._tired(player) / 120;  // ~0.5–1.3 range
     player.fatigue = Math.min(100, player.fatigue + round(fatigue, 1));
   }
 }
@@ -226,12 +240,12 @@ export function apply_run_fatigue(offense, defense, rusher = null, yards = 0) {
       continue;
     }
 
-    const base_fatigue = 1 + (100 - player.endurance) / 80;  // ~1–2.25
+    const base_fatigue = 1 + game_functions._tired(player) / 80;  // ~1–2.25
 
     let fatigue;
     if (rusher !== null && player === rusher) {
       const effort = 1 + (yards / 7);  // Runs are more tiring per yard than catches
-      fatigue = base_fatigue + effort * (1 + (100 - player.endurance) / 100);
+      fatigue = base_fatigue + effort * (1 + game_functions._tired(player) / 100);
     } else {
       fatigue = base_fatigue * 0.75;  // lighter if just blocking/running a decoy route
     }
@@ -242,7 +256,7 @@ export function apply_run_fatigue(offense, defense, rusher = null, yards = 0) {
   // Apply fatigue to front-seven defenders
   for (const player of defense) {
     if (["DL", "OLB", "MLB", "ROLB", "LOLB", "S"].includes(player.position)) {
-      const fatigue = 0.6 + (100 - player.endurance) / 110;  // slightly higher than pass D
+      const fatigue = 0.6 + game_functions._tired(player) / 110;  // slightly higher than pass D
       player.fatigue = Math.min(100, player.fatigue + round(fatigue, 1));
     }
   }
@@ -310,6 +324,7 @@ export function summarize_stats(team) {
 }
 
 export const game_functions = {
+  TIRE_AVG, TIRE_PER_POINT, _tired,
   _add_stat,
   sim_kickoff,
   sim_pat,

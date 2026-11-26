@@ -10,7 +10,6 @@ import { exists, remove } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
 import { ValueError } from "../../sim_js/coaches.js";
 import { polls } from "../../sim_js/polls.js";
-import { shown } from "../../teamdata_js/shown.js";
 import { ratings as rv2 } from "../../teamdata_js/ratings.js";
 import { league as lg } from "../league.js";
 import { position_fit } from "../position_fit.js";
@@ -1089,8 +1088,7 @@ function _new_transfer(off, c, me) {
 
 
 function page(obj) {
-  // A view's players as the page shows a rating (teamdata_js/shown.js): a copy of `obj` in which every player row's
-  // `grew` attributes are at his card's group.
+  // A view's rows as the page reads them: a copy of `obj` (every number in it is already the one the page shows).
   if (Array.isArray(obj)) {
     return obj.map((x) => offseason.page(x));
   }
@@ -1099,15 +1097,6 @@ function page(obj) {
   }
   const out = is_odict(obj) ? odict() : {};
   for (const [k, v] of Object.entries(obj)) out[k] = offseason.page(v);
-  const pos = get(obj, "pos") || get(obj, "position");
-  const o = get(obj, "overall");
-  if (truthy(pos) && is_num(o)) {
-    if (Array.isArray(get(obj, "grew"))) {
-      const grp = rv2.card_group(pos, pos);
-      out["grew"] = obj["grew"].map((x) => (is_dict(x) && has(x, "key")
-        ? { ...x, from: shown.attribute(x["from"], grp, x["key"]), to: shown.attribute(x["to"], grp, x["key"]) } : x));
-    }
-  }
   return out;
 }
 

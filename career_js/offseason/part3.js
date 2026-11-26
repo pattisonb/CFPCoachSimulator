@@ -11,7 +11,6 @@ import { cfg } from "../../engine_js/game_config.js";
 import { ValueError } from "../../sim_js/coaches.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
 import { ratings as rv2 } from "../../teamdata_js/ratings.js";
-import { shown } from "../../teamdata_js/shown.js";
 import { clear } from "../clear.js";
 import { league as lg } from "../league.js";
 import { recruits, pypow } from "../recruits.js";
@@ -179,8 +178,8 @@ function _card_growth(was, now, attrs, pos, own = null) {
   // `own`: a quarterback's Decision Making before and after (a rating of its own, not read from his skills).
   const a = game_scale.card_attributes(_zip_dict(attrs, was), pos), b = game_scale.card_attributes(_zip_dict(attrs, now), pos);
   if (own !== null && isNumber(own[0]) && isNumber(own[1]) && has(b, "decision_making")) {
-    a["decision_making"] = shown.attribute_back(own[0], "QB", "decision_making");
-    b["decision_making"] = shown.attribute_back(own[1], "QB", "decision_making");
+    a["decision_making"] = own[0];
+    b["decision_making"] = own[1];
   }
   const weights = get(game_scale.card_formula(pos) || {}, "w") || {};
   const out = [];

@@ -221,6 +221,13 @@ const modules = { league: null, recruiting: null };
 
 const _FIRST = { QB: "QB", RB: "HB", WR: "WR", TE: "TE", OL: "LG", DL: "DT", LB: "MIKE", CB: "CB", S: "FS", K: "K", P: "P" };
 
+export function starter_means() {
+  // The average FBS starter at each engine position, in card numbers ("POS:attr" -> mean; "returners:return_rating"
+  // the league's designated returners'), frozen from the real 2026 rosters: what the play engine reads a player
+  // against (build_teams.normalize).
+  return get(game_scale.data(), "starter_means") || {};
+}
+
 export function engine_means() {
   // The real 2026 build's FBS starter means of the engine's attributes ("POS:attr" -> mean),
   // frozen: a career's later seasons go onto the engine scale through them (build_teams.normalize).
@@ -236,5 +243,5 @@ export const game_scale = {
   FILE, ABOVE, BELOW, GROUP_OF, ROOM, MISSING, _FIRST, modules,
   data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, whole, from_ea, potential_from_ea,
   has_overall, card_formula, card_value, card_attributes, decision_card, overall, skill_weights, position_skills, card_position, base_from_card, card_from_base,
-  overall_version, engine_means, card_scale,
+  overall_version, starter_means, engine_means, card_scale,
 };

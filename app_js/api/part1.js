@@ -11,7 +11,6 @@
 import { round, sum, cmp, sorted, get, truthy, is_odict, odict, int as _pyrt_int } from "../../engine_js/pyrt.js";
 import { read_text, write_text, exists } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
-import { shown } from "../../teamdata_js/shown.js";
 import { career } from "../../career_js/career.js";
 import { carousel } from "../../career_js/carousel.js";
 import { league } from "../../career_js/league.js";

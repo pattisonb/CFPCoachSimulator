@@ -11,7 +11,6 @@ import { awards } from "../awards.js";
 import { fcs_names } from "../fcs_names.js";
 import { ValueError } from "../coaches.js";
 import { ratings as ratings_v2 } from "../../teamdata_js/ratings.js";
-import { shown as _shown } from "../../teamdata_js/shown.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
 import { old_saves } from "../../teamdata_js/old_saves.js";
 import { season } from "../season_ns.js";
@@ -121,35 +120,6 @@ function _award_step(state, teams, week) {
   aw["given_through"] = week;
 }
 
-function player_overall(p) {
-  // A display rating from the engine attributes that matter at the position.
-  const pos = p["position"];
-  let primary, secondary;
-  if (pos === "K") [primary, secondary] = [["kick_power", "kick_accuracy"], []];
-  else if (pos === "P") [primary, secondary] = [["punt_power", "punt_accuracy"], []];
-  else if (pos === "QB") [primary, secondary] = [["passing", "decision_making", "intelligence"], ["speed", "elusiveness"]];
-  else if (pos === "RB") [primary, secondary] = [["speed", "elusiveness", "vision", "strength"], ["hands", "pass_blocking"]];
-  else if (pos === "WR" || pos === "TE") [primary, secondary] = [["hands", "route_running", "speed"], ["run_blocking", "elusiveness"]];
-  else if (pos === "OL") [primary, secondary] = [["run_blocking", "pass_blocking", "strength"], ["intelligence"]];
-  else if (pos === "DL") [primary, secondary] = [["rushing", "tackling", "strength"], ["intelligence", "speed"]];
-  else if (pos === "MLB" || pos === "ROLB" || pos === "LOLB") [primary, secondary] = [["tackling", "rushing", "coverage", "speed"], ["intelligence"]];
-  else [primary, secondary] = [["coverage", "speed", "tackling"], ["intelligence", "hands"]];
-  let total = 0, count = 0;
-  for (const k of primary) {
-    if (isNumber(get(p, k))) {
-      total += p[k] * 3;
-      count += 3;
-    }
-  }
-  for (const k of secondary) {
-    if (isNumber(get(p, k))) {
-      total += p[k];
-      count += 1;
-    }
-  }
-  return count ? round(total / count) : 0;
-}
-
 season.DEPTH_ROWS = [
   ["Offense", [["QB", "Quarterback"], ["HB", "Running Back"], ["FB", "Fullback"], ["WR", "Wide Receiver"], ["TE", "Tight End"],
     ["LT", "Left Tackle"], ["LG", "Left Guard"], ["C", "Center"], ["RG", "Right Guard"], ["RT", "Right Tackle"]]],
@@ -164,11 +134,9 @@ season.OFFENSE_POSITIONS = game_job.OFFENSE_POSITIONS;
 season.RATING_KEY = { MLB: "MLB", ROLB: "MLB", LOLB: "MLB" };   // linebacker roles share one rating
 
 function overall_at(p, pos) {
-  // A player's rating at an engine position (his own, or another one he could be moved to).
-  const ra = get(p, "ratings_at") || {};
-  const key = get(season.RATING_KEY, pos, pos);
-  if (has(ra, key)) return int(ra[key]);
-  return pos === p["position"] ? season.player_overall(p) : 0;
+  // A player's overall at an engine position (his own, or another one he could be moved to: build_teams.rated_at).
+  if (pos === p["position"]) return season.shown_overall(p);
+  return int(modules.build_teams.rated_at(p, get(season.RATING_KEY, pos, pos)));
 }
 
 // A copy of the team with the season's depth-chart changes applied. Players named in an
@@ -236,8 +204,8 @@ function position_candidates(state, slug, role) {
     if (pos === "KR" && season.RETURN_POSITIONS_OUT.includes(p["position"]) && !current.includes(p["slug"])) {
       continue;                                  // linemen, quarterbacks and kickers never return (the engine agrees)
     }
-    const rating = season.same_group(pos, p["position"]) && pos !== "KR" ? season.shown_overall(p)
-      : _shown.overall(pos === "KR" ? season.house_value("KR", "return_rating", season.return_value(p)) : season.house_value(pos, "overall", season.overall_at(p, pos)));
+    const rating = pos === "KR" ? season.return_value(p)
+      : season.same_group(pos, p["position"]) ? season.shown_overall(p) : season.overall_at(p, pos);
     const rec = get(ss, `${p["name"]}|${p["position"]}`);
     const st = truthy(rec) ? rec["stats"] : {};
     const group = awards.Pool._group(p["position"], get(p, "role"), st) || p["position"];
@@ -367,7 +335,7 @@ function _players_by_role(t, players) {
     }
   }
   for (const [role, group] of Object.entries(by_role)) {
-    by_role[role] = sorted(group, (p) => [get(p, "depth") || 99, -season.player_overall(p)]);
+    by_role[role] = sorted(group, (p) => [get(p, "depth") || 99, -season.shown_overall(p)]);
   }
   for (const [role, key] of [["KR", "kick_returner"], ["PR", "punt_returner"]]) {
     by_role[role] = players.filter((p) => get(p, "slug") === get(t, key));
@@ -1065,7 +1033,7 @@ function load_season(season_id) {
 }
 
 Object.assign(season, {
-  week_work, progress_part, _heal, injury_report, _award_step, player_overall, overall_at, apply_depth, role_starters,
+  week_work, progress_part, _heal, injury_report, _award_step, overall_at, apply_depth, role_starters,
   position_candidates, depth_order, set_depth_order, move_depth, reset_depth, _depth_card, _players_by_role,
   depth_changed, depth_chart_view, playlink_team, playlink_game, depth_roster_view, _number_labels, formations_view, awards_view,
   _with_player_ids, _heisman_with_final_lines, shared_pool, close_pool, advance_to, my_results, box_dir, save_box,

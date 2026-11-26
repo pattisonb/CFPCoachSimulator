@@ -5318,5 +5318,737 @@
 "diagnosis": 0.02272
 }
 }
+},
+"starter_means": {
+"CB:coverage": 75.3,
+"CB:endurance": 88.5,
+"CB:hands": 67.1,
+"CB:intelligence": 75.1,
+"CB:rushing": 41.6,
+"CB:speed": 89.6,
+"CB:strength": 57.9,
+"CB:tackling": 70,
+"DL:coverage": 38,
+"DL:endurance": 83.5,
+"DL:intelligence": 76.2,
+"DL:rushing": 75.4,
+"DL:speed": 74.8,
+"DL:strength": 80.5,
+"DL:tackling": 79.9,
+"K:endurance": 85.1,
+"K:intelligence": 61.3,
+"K:kick_accuracy": 79,
+"K:kick_power": 88,
+"K:speed": 64.2,
+"K:strength": 46.5,
+"LOLB:coverage": 71.2,
+"LOLB:endurance": 86.6,
+"LOLB:intelligence": 79.7,
+"LOLB:rushing": 66.9,
+"LOLB:speed": 83.5,
+"LOLB:strength": 70.9,
+"LOLB:tackling": 81,
+"MLB:coverage": 70.7,
+"MLB:endurance": 86.6,
+"MLB:intelligence": 80.5,
+"MLB:rushing": 67.1,
+"MLB:speed": 82.9,
+"MLB:strength": 75,
+"MLB:tackling": 83.8,
+"OL:endurance": 86.5,
+"OL:intelligence": 80.1,
+"OL:pass_blocking": 79.1,
+"OL:run_blocking": 78.2,
+"OL:speed": 65.4,
+"OL:strength": 86.9,
+"P:endurance": 84.5,
+"P:intelligence": 59.6,
+"P:punt_accuracy": 76.8,
+"P:punt_power": 87.6,
+"P:speed": 63.5,
+"P:strength": 52,
+"QB:decision_making": 78.4,
+"QB:elusiveness": 78.1,
+"QB:endurance": 89,
+"QB:hands": 69.9,
+"QB:intelligence": 80.3,
+"QB:passing": 82.9,
+"QB:speed": 82.3,
+"QB:strength": 67.4,
+"QB:vision": 75.5,
+"RB:elusiveness": 82.9,
+"RB:endurance": 87.3,
+"RB:hands": 67.1,
+"RB:intelligence": 76.2,
+"RB:pass_blocking": 55,
+"RB:route_running": 61.4,
+"RB:run_blocking": 46.8,
+"RB:speed": 89.6,
+"RB:strength": 71.4,
+"RB:vision": 79.7,
+"ROLB:coverage": 70.6,
+"ROLB:endurance": 87.1,
+"ROLB:intelligence": 80.4,
+"ROLB:rushing": 66,
+"ROLB:speed": 83.3,
+"ROLB:strength": 74.6,
+"ROLB:tackling": 83.1,
+"S:coverage": 73.5,
+"S:endurance": 88.8,
+"S:hands": 68.5,
+"S:intelligence": 77.4,
+"S:rushing": 46.1,
+"S:speed": 88.2,
+"S:strength": 65.5,
+"S:tackling": 76.4,
+"TE:elusiveness": 75.1,
+"TE:endurance": 87.7,
+"TE:hands": 78.4,
+"TE:intelligence": 75.4,
+"TE:pass_blocking": 58.9,
+"TE:route_running": 68.7,
+"TE:run_blocking": 62.6,
+"TE:speed": 81.1,
+"TE:strength": 73.3,
+"TE:vision": 71.8,
+"WR:elusiveness": 85.3,
+"WR:endurance": 86.8,
+"WR:hands": 79.7,
+"WR:intelligence": 75.9,
+"WR:pass_blocking": 34.3,
+"WR:route_running": 76.7,
+"WR:run_blocking": 43.1,
+"WR:speed": 89.9,
+"WR:strength": 60.4,
+"WR:vision": 77.1,
+"returners:return_rating": 87.5
+},
+"attribute_means": {
+"CB|agility": 88.2,
+"CB|ball_skills": 67.1,
+"CB|burst": 91,
+"CB|change_of_direction": 86.7,
+"CB|diagnosis": 74.9,
+"CB|durability": 85.4,
+"CB|football_iq": 75.3,
+"CB|hit_power": 66.2,
+"CB|leaping": 88.3,
+"CB|man_coverage": 74.7,
+"CB|press": 73.8,
+"CB|pursuit": 76.1,
+"CB|return_skill": 61.2,
+"CB|stamina": 88.5,
+"CB|strength": 57.9,
+"CB|tackling": 64,
+"CB|top_speed": 89,
+"CB|toughness": 85.2,
+"CB|zone_coverage": 75.8,
+"DL|agility": 71.2,
+"DL|block_shedding": 75.2,
+"DL|burst": 79.9,
+"DL|change_of_direction": 63.5,
+"DL|diagnosis": 75.9,
+"DL|durability": 88,
+"DL|football_iq": 76.5,
+"DL|hit_power": 80.1,
+"DL|leaping": 76.1,
+"DL|power_rush": 78,
+"DL|pursuit": 80.3,
+"DL|speed_rush": 73.1,
+"DL|stamina": 83.5,
+"DL|strength": 80.5,
+"DL|tackling": 79.6,
+"DL|top_speed": 72.7,
+"DL|toughness": 87.1,
+"K|football_iq": 61.3,
+"K|kick_accuracy": 79,
+"K|kick_power": 88,
+"K|stamina": 85.1,
+"LB|agility": 80.2,
+"LB|ball_skills": 61.3,
+"LB|block_shedding": 73.1,
+"LB|burst": 85.9,
+"LB|change_of_direction": 77.4,
+"LB|diagnosis": 80.2,
+"LB|durability": 88.1,
+"LB|football_iq": 80.6,
+"LB|hit_power": 82.2,
+"LB|leaping": 83.1,
+"LB|man_coverage": 67.5,
+"LB|power_rush": 63.2,
+"LB|pursuit": 84.4,
+"LB|speed_rush": 63.6,
+"LB|stamina": 86.8,
+"LB|strength": 74.6,
+"LB|tackling": 83.5,
+"LB|top_speed": 81.9,
+"LB|toughness": 87.7,
+"LB|zone_coverage": 73.8,
+"OL|agility": 62.3,
+"OL|burst": 72,
+"OL|change_of_direction": 54.3,
+"OL|drive_block": 78.3,
+"OL|durability": 87.5,
+"OL|finish_block": 84.8,
+"OL|football_iq": 80.1,
+"OL|lead_block": 80.8,
+"OL|leaping": 69.8,
+"OL|pass_anchor": 81.3,
+"OL|pass_footwork": 77.1,
+"OL|reach_block": 78.4,
+"OL|stamina": 86.5,
+"OL|strength": 86.9,
+"OL|top_speed": 62.6,
+"OL|toughness": 87.9,
+"P|football_iq": 59.6,
+"P|punt_accuracy": 76.8,
+"P|punt_power": 87.6,
+"P|stamina": 84.5,
+"QB|agility": 82.4,
+"QB|arm_strength": 86.9,
+"QB|ball_security": 69.9,
+"QB|burst": 84.5,
+"QB|change_of_direction": 81,
+"QB|decision_making": 78.4,
+"QB|deep_accuracy": 79.5,
+"QB|durability": 87.6,
+"QB|elusiveness": 76.6,
+"QB|football_iq": 80.3,
+"QB|leaping": 80,
+"QB|mid_accuracy": 82.3,
+"QB|play_action": 77.5,
+"QB|pocket_poise": 75.2,
+"QB|run_vision": 75.5,
+"QB|sack_escape": 75.2,
+"QB|short_accuracy": 83.9,
+"QB|spin_move": 73.7,
+"QB|stamina": 89,
+"QB|strength": 67.4,
+"QB|throw_on_move": 80.7,
+"QB|top_speed": 81.4,
+"QB|toughness": 87.9,
+"RB|agility": 87.1,
+"RB|ball_security": 80.4,
+"RB|burst": 91.2,
+"RB|change_of_direction": 85.6,
+"RB|durability": 88.5,
+"RB|elusiveness": 82.7,
+"RB|football_iq": 76.2,
+"RB|hands": 67.1,
+"RB|leaping": 85.7,
+"RB|pass_footwork": 46.9,
+"RB|power_running": 73,
+"RB|return_skill": 75.2,
+"RB|run_vision": 79.7,
+"RB|short_routes": 64.7,
+"RB|spin_move": 79.8,
+"RB|stamina": 87.3,
+"RB|stiff_arm": 70.6,
+"RB|strength": 70.5,
+"RB|tackle_breaking": 79.2,
+"RB|top_speed": 89,
+"RB|toughness": 87.3,
+"S|agility": 86.2,
+"S|ball_skills": 68.5,
+"S|block_shedding": 58.8,
+"S|burst": 89.8,
+"S|change_of_direction": 84.3,
+"S|diagnosis": 77.4,
+"S|durability": 87.6,
+"S|football_iq": 77.5,
+"S|hit_power": 77.3,
+"S|leaping": 86.8,
+"S|man_coverage": 70.9,
+"S|pursuit": 80.7,
+"S|return_skill": 57.6,
+"S|stamina": 88.8,
+"S|strength": 65.5,
+"S|tackling": 72.2,
+"S|top_speed": 87.5,
+"S|toughness": 87.2,
+"S|zone_coverage": 76,
+"TE|agility": 79.6,
+"TE|burst": 84,
+"TE|change_of_direction": 75.2,
+"TE|contested_catch": 76.1,
+"TE|drive_block": 58.7,
+"TE|durability": 87,
+"TE|football_iq": 75.4,
+"TE|hands": 79.3,
+"TE|leaping": 83.2,
+"TE|mid_routes": 70.2,
+"TE|pass_anchor": 55,
+"TE|reach_block": 58.1,
+"TE|release": 67.2,
+"TE|short_routes": 74,
+"TE|stamina": 87.7,
+"TE|strength": 73.3,
+"TE|tackle_breaking": 70.3,
+"TE|top_speed": 79.9,
+"TE|toughness": 87.6,
+"WR|agility": 88.1,
+"WR|burst": 90.9,
+"WR|change_of_direction": 86.4,
+"WR|contested_catch": 75.8,
+"WR|deep_routes": 76,
+"WR|durability": 86.2,
+"WR|elusiveness": 81.3,
+"WR|football_iq": 75.9,
+"WR|hands": 80,
+"WR|highlight_catch": 83.3,
+"WR|leaping": 88,
+"WR|mid_routes": 77.7,
+"WR|reach_block": 37.7,
+"WR|release": 74.5,
+"WR|return_skill": 77.7,
+"WR|short_routes": 78.5,
+"WR|spin_move": 78,
+"WR|stamina": 86.8,
+"WR|strength": 60.4,
+"WR|tackle_breaking": 72.7,
+"WR|top_speed": 89.4,
+"WR|toughness": 83.9
+},
+"read_words": {
+"CB|athleticism": {
+"floors": [
+97,
+94,
+90,
+89.9,
+87.6
+],
+"per_point": 0.228
+},
+"CB|football_iq": {
+"floors": [
+97,
+94,
+87.6,
+76.2,
+68.6
+],
+"per_point": 0.76
+},
+"CB|size_strength": {
+"floors": [
+97,
+92.9,
+85.3,
+77.7,
+72.7
+],
+"per_point": 0.506
+},
+"CB|technique": {
+"floors": [
+97,
+93.3,
+83.8,
+74.2,
+67.8
+],
+"per_point": 0.639
+},
+"DL|athleticism": {
+"floors": [
+97,
+94,
+85.4,
+75.5,
+69
+],
+"per_point": 0.658
+},
+"DL|football_iq": {
+"floors": [
+97,
+94,
+88.6,
+76.8,
+68.9
+],
+"per_point": 0.791
+},
+"DL|size_strength": {
+"floors": [
+97,
+94,
+90,
+84.2,
+79.3
+],
+"per_point": 0.487
+},
+"DL|technique": {
+"floors": [
+97,
+94,
+87.3,
+77.9,
+71.6
+],
+"per_point": 0.629
+},
+"K|athleticism": {
+"floors": [
+94.5,
+92,
+88.2,
+84.5,
+82
+],
+"per_point": 0.252
+},
+"K|football_iq": {
+"floors": [
+91.2,
+84,
+73.2,
+62.4,
+55.3
+],
+"per_point": 0.719
+},
+"K|size_strength": {
+"floors": [
+94.5,
+92,
+88.2,
+84.5,
+82
+],
+"per_point": 0.252
+},
+"K|technique": {
+"floors": [
+97,
+94,
+90,
+85.9,
+80.9
+],
+"per_point": 0.497
+},
+"LB|athleticism": {
+"floors": [
+94.1,
+91.4,
+87.3,
+83.2,
+80.5
+],
+"per_point": 0.271
+},
+"LB|football_iq": {
+"floors": [
+97,
+94,
+90,
+81.8,
+72.8
+],
+"per_point": 0.904
+},
+"LB|size_strength": {
+"floors": [
+97,
+94,
+90,
+83.5,
+79
+],
+"per_point": 0.442
+},
+"LB|technique": {
+"floors": [
+97,
+94,
+90,
+83.3,
+77.4
+],
+"per_point": 0.589
+},
+"OL|athleticism": {
+"floors": [
+86,
+81.1,
+73.7,
+66.4,
+61.5
+],
+"per_point": 0.489
+},
+"OL|football_iq": {
+"floors": [
+97,
+94,
+90,
+80.5,
+73.1
+],
+"per_point": 0.741
+},
+"OL|size_strength": {
+"floors": [
+97,
+94,
+90,
+86.9,
+83.1
+],
+"per_point": 0.381
+},
+"OL|technique": {
+"floors": [
+97,
+94,
+88,
+79.5,
+73.8
+],
+"per_point": 0.568
+},
+"P|athleticism": {
+"floors": [
+95.8,
+93,
+88.8,
+84.6,
+81.8
+],
+"per_point": 0.281
+},
+"P|football_iq": {
+"floors": [
+91.9,
+84.4,
+73.1,
+61.8,
+54.3
+],
+"per_point": 0.753
+},
+"P|size_strength": {
+"floors": [
+95.8,
+93,
+88.8,
+84.6,
+81.8
+],
+"per_point": 0.281
+},
+"P|technique": {
+"floors": [
+97,
+94,
+88.6,
+81.7,
+77.1
+],
+"per_point": 0.462
+},
+"QB|athleticism": {
+"floors": [
+97,
+94,
+90,
+83.4,
+78.5
+],
+"per_point": 0.492
+},
+"QB|football_iq": {
+"floors": [
+97,
+94,
+90,
+81.7,
+72.7
+],
+"per_point": 0.903
+},
+"QB|size_strength": {
+"floors": [
+97,
+94,
+88.4,
+81.7,
+77.2
+],
+"per_point": 0.448
+},
+"QB|technique": {
+"floors": [
+97,
+94,
+90,
+84.2,
+79.7
+],
+"per_point": 0.459
+},
+"RB|athleticism": {
+"floors": [
+97,
+94,
+90,
+88.8,
+86.4
+],
+"per_point": 0.248
+},
+"RB|football_iq": {
+"floors": [
+97,
+94,
+90,
+77,
+66.8
+],
+"per_point": 1.017
+},
+"RB|size_strength": {
+"floors": [
+97,
+94,
+88.1,
+81.1,
+76.5
+],
+"per_point": 0.462
+},
+"RB|technique": {
+"floors": [
+97,
+94,
+90,
+82.4,
+76.5
+],
+"per_point": 0.588
+},
+"S|athleticism": {
+"floors": [
+96.5,
+94,
+90,
+88,
+85.9
+],
+"per_point": 0.212
+},
+"S|football_iq": {
+"floors": [
+97,
+94,
+89,
+76.3,
+67.7
+],
+"per_point": 0.853
+},
+"S|size_strength": {
+"floors": [
+97,
+94,
+88.9,
+81.8,
+77
+],
+"per_point": 0.473
+},
+"S|technique": {
+"floors": [
+97,
+92.6,
+82.9,
+73.3,
+66.8
+],
+"per_point": 0.643
+},
+"TE|athleticism": {
+"floors": [
+97,
+94,
+88.6,
+82.6,
+78.5
+],
+"per_point": 0.404
+},
+"TE|football_iq": {
+"floors": [
+97,
+94,
+85,
+73,
+65.1
+],
+"per_point": 0.794
+},
+"TE|size_strength": {
+"floors": [
+97,
+93.8,
+87.5,
+81.2,
+77
+],
+"per_point": 0.422
+},
+"TE|technique": {
+"floors": [
+93.9,
+88.8,
+81.2,
+73.5,
+68.4
+],
+"per_point": 0.51
+},
+"WR|athleticism": {
+"floors": [
+97,
+94,
+90,
+89.8,
+87.1
+],
+"per_point": 0.269
+},
+"WR|football_iq": {
+"floors": [
+97,
+94,
+90,
+76.6,
+67.3
+],
+"per_point": 0.929
+},
+"WR|size_strength": {
+"floors": [
+97,
+94,
+86.6,
+77.7,
+71.8
+],
+"per_point": 0.589
+},
+"WR|technique": {
+"floors": [
+97,
+94,
+90,
+80.5,
+74.1
+],
+"per_point": 0.639
+}
 }
 }

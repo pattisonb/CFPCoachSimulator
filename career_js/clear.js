@@ -9,7 +9,6 @@
 import { Random, round, int, sum, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
-import { shown } from "../teamdata_js/shown.js";
 import { grades } from "./grades.js";
 
 /** d.get(k, default) for one of this file's own tables asked with a key from outside: only a key the table holds. */
@@ -166,7 +165,6 @@ export function ratings(state, pid) {
   const listed = own(clear.KEYS, grp, []).filter((k) => k in cards);
   const keys = ["K", "P"].includes(grp) ? listed.slice(0, 8)
     : [...listed.filter((k) => !clear.PHYSICAL.includes(k)).slice(0, clear.KEY_SKILLS), ...clear.PHYSICAL.filter((k) => k in cards)];
-  const card_grp = rv2.card_group(pos, pos);
 
   function row(key, label, truth, group) {
     const mh = clear._raw_half(state, pid, group);
@@ -176,9 +174,7 @@ export function ratings(state, pid) {
     const est = Math.max(1, Math.min(99, int(round(truth + err))));
     half = Math.max(2.0, half);                        // never a single number: the read's own width, at least a couple of points
     const lo = Math.max(1, int(round(est - half))), hi = Math.min(99, int(round(est + half)));
-    // as the page shows a rating (teamdata_js/shown.js): a card attribute at his card's group; his potential is an overall
-    const put = key === "potential" ? (v) => v : (v) => shown.attribute(v, card_grp, key);
-    const out = { key, label, est: put(est), lo: put(lo), hi: put(hi), confidence: clear.confidence(state, pid, group) };
+    const out = { key, label, est, lo, hi, confidence: clear.confidence(state, pid, group) };
     if (key === "potential") out["ends"] = [est, lo, hi];              // the letter grades are cut from these
     return out;
   }

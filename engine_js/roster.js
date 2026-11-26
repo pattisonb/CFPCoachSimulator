@@ -3,12 +3,11 @@ import { cfg } from "./game_config.js";
 import { random, round, cmp, sorted, maxBy, minBy, get, getattr, isNumber, truthy, sum } from "./pyrt.js";
 
 export function return_skill(player) {
-  // 0-1 return ability: the return rating when the roster has one, else speed and elusiveness.
+  // 0-1 return ability: RETURN_SKILL_AVG for the league's average returner, RETURN_SKILL_PER_POINT more a card point
+  // of return rating over his (speed and elusiveness for a player without one).
   const rating = getattr(player, "return_rating", null);
-  if (isNumber(rating)) {
-    return rating / 100;
-  }
-  return ((player.speed || 50) + (getattr(player, "elusiveness", null) || 50)) / 200;
+  const edge = isNumber(rating) ? rating : ((player.speed || 0) + (getattr(player, "elusiveness", null) || 0)) / 2;
+  return cfg.RETURN_SKILL_AVG + edge * cfg.RETURN_SKILL_PER_POINT;
 }
 
 
@@ -55,10 +54,12 @@ export class Player {
     this.name = data["name"];
     this.slug = get(data, "slug", data["name"]);
     this.position = data["position"];
-    this.speed = get(data, "speed", 50);
-    this.strength = get(data, "strength", 50);
-    this.intelligence = get(data, "intelligence", 50);
-    this.endurance = get(data, "endurance", 50);
+    // what the engine reads of him: card points over the average FBS starter at his position (build_teams), so 0 is
+    // an average starter
+    this.speed = get(data, "speed", 0);
+    this.strength = get(data, "strength", 0);
+    this.intelligence = get(data, "intelligence", 0);
+    this.endurance = get(data, "endurance", 0);
     this.fatigue = get(data, "fatigue", 0);
     this.in_game = get(data, "in_game", false);
     this.role = get(data, "role");          // depth-chart role: LT, LG, C, RG, RT, LEDG, REDG, DT, SAM, MIKE, WILL, CB, FS, SS, HB, FB...
@@ -71,9 +72,9 @@ export class Player {
     this.injury = null;
     this.stats = { ...(get(data, "stats") || {}) };   // own copy: the source roster is shared between games
     this.target_mult = Math.min(cfg.TARGET_MULT_MAX, get(data, "target_mult", 1.0));  // real 2026 share of his team's catches against his ratings' share
-    // ratings v2 (teamdata_js/ratings.js): the position's attributes on the house scale (50 = an average
-    // Power 4 starter) and the measurables. The engine reads them where a part of the game
-    // has moved onto them (docs/RATINGS_V2.md); elsewhere it reads the composites above.
+    // ratings v2 (teamdata_js/ratings.js): his card's attributes, card points over the average FBS starter in his card
+    // group, and the measurables. The engine reads them where a part of the game has moved onto them
+    // (docs/RATINGS_V2.md); elsewhere it reads the mixes above.
     this.attrs = { ...(get(data, "attributes") || {}) };
     // traits (phase 6): key -> tier 1-4; an Iron Horse tires slower, a Quick Recovery rests faster
     this.traits = {};
@@ -81,7 +82,7 @@ export class Player {
       if (t !== null && typeof t === "object" && !Array.isArray(t)) this.traits[t["key"]] = t["tier"];
     }
     if (truthy(get(this.traits, "iron_horse"))) {
-      this.endurance = Math.min(99, this.endurance + cfg.TRAIT_FX["iron_horse"] * this.traits["iron_horse"]);
+      this.endurance = this.endurance + cfg.TRAIT_FX["iron_horse"] * this.traits["iron_horse"];
     }
     this.recovery_mult = 1 + cfg.TRAIT_FX["quick_recovery"] * get(this.traits, "quick_recovery", 0);
     this.height_in = truthy(get(data, "height_in")) ? get(data, "height_in") : 74;
@@ -118,18 +119,20 @@ export class Player {
       "tackling": this.tackling,
       "coverage": this.coverage,
     };
-    // (attribute, original value, floor) for the fatigue penalty, and the fatigue it was last applied at
+    // (attribute, original value, floor) for the fatigue penalty, and the scale it was last applied at: a tired
+    // player's attribute is his own times the scale, read from REF_POINTS under the average starter, never under two
+    // thirds of his own the same way
     this._penalty_attrs = [];
     for (const attr of Object.keys(this._original_attrs)) {
       const v = this._original_attrs[attr];
-      if (v !== null && v !== undefined) this._penalty_attrs.push([attr, v, round(v * (2 / 3))]);
+      if (v !== null && v !== undefined) this._penalty_attrs.push([attr, v, round(v * (2 / 3) - cfg.REF_POINTS / 3, 1)]);
     }
-    this._penalty_fatigue = [1e9, -1e9];    // the scale interval the current values hold over: empty until the first refresh
+    this._penalty_fatigue = null;           // the scale the current values were worked out at
     // what never changes inside a game, read once: trait sums by key tuple (play_functions._tr),
     // the injury durability factor (drive_functions.roll_injuries) and Football IQ (_unit_iq)
     this._tr_cache = {};
-    this._durable = Math.max(0.4, 1 - (get(this.attrs, "durability", 50) - cfg.ATTR_LEAGUE_AVG) * cfg.INJURY_DURABILITY_EFFECT);
-    this._iq = get(this.attrs, "football_iq", 50);
+    this._durable = Math.max(0.4, 1 - get(this.attrs, "durability", 0) * cfg.INJURY_DURABILITY_EFFECT);
+    this._iq = get(this.attrs, "football_iq", 0);
   }
 }
 
@@ -361,7 +364,7 @@ export class Team {
     // every player with fatigue is in _active (the penalty pass keeps it current)
     for (const p of this._active) {
       if (!p.in_game && p.fatigue) {
-        let rate = p.endurance / 10 * getattr(p, "recovery_mult", 1.0);
+        let rate = Math.max(0, cfg.REF_POINTS + p.endurance) / 4 * getattr(p, "recovery_mult", 1.0);   // 5.5 a snap for an average starter
         if (p.position === "RB") {
           rate *= cfg.RB_BENCH_RECOVERY;
         }
@@ -389,7 +392,7 @@ export class Team {
 
     const rating = (p) => {
       const o = p._original_attrs;
-      return sum(["speed", "strength", "elusiveness", "vision"].map((k) => o[k] || 50)) / 4;
+      return sum(["speed", "strength", "elusiveness", "vision"].map((k) => o[k] || 0)) / 4;
     };
 
     let others = backs.filter((p) => p !== lead && p.role !== "FB");
@@ -632,35 +635,30 @@ export class Team {
     // about to be read: the snap's lineups, a returner. Anyone whose fatigue and the
     // factor are unchanged since his last refresh is skipped.
     const factor = this.momentum_factor();
-    const eps = 1e-9;
+    const q = cfg.FATIGUE_STEP, eps = 1e-9;
     let changed = false;
     for (const player of players) {
       const scale = (1 - player.fatigue / 100 * 0.15) * factor;
-      // Every penalised attribute is a rounded, clamped multiple of the scale, so each one
-      // holds its value over an interval of scales. While the scale stays inside the
-      // intersection of those intervals (shrunk by eps against floating-point edges and
-      // round-half-even ties) nothing can change and the player is skipped: the values a
-      // recompute would write are, by construction, the ones already there.
-      let [lo, hi] = player._penalty_fatigue;
-      if (lo <= scale && scale < hi) {
-        continue;
-      }
+      // Every penalised attribute is his own read from REF_POINTS under the average, times the scale, in steps of
+      // FATIGUE_STEP and never under its floor: each holds its value over an interval of scales. While the scale stays
+      // inside all of them nothing can change and the player is skipped.
+      let [lo, hi] = player._penalty_fatigue || [1e9, -1e9];
+      if (lo <= scale && scale < hi) continue;
       changed = true;
-      const values = player;      // the player's own properties
       lo = -1e9;
       hi = 1e9;
       for (const [attr, original_value, min_allowed] of player._penalty_attrs) {
-        const r = round(original_value * scale);
-        if (r >= 99) {
-          values[attr] = 99;
-          lo = Math.max(lo, 98.5 / original_value + eps);
-        } else if (r <= min_allowed) {
-          values[attr] = min_allowed;
-          hi = Math.min(hi, (min_allowed + 0.5) / original_value - eps);
+        const span = original_value + cfg.REF_POINTS;            // the value is scale * span - REF_POINTS
+        if (span <= 0) { player[attr] = min_allowed; continue; }
+        const k = round((scale * span - cfg.REF_POINTS) / q);
+        const v = round(k * q, 1);
+        if (v <= min_allowed) {
+          player[attr] = min_allowed;
+          hi = Math.min(hi, ((min_allowed + 0.5 * q) + cfg.REF_POINTS) / span - eps);
         } else {
-          values[attr] = r;
-          lo = Math.max(lo, (r - 0.5) / original_value + eps);
-          hi = Math.min(hi, (r + 0.5) / original_value - eps);
+          player[attr] = v;
+          lo = Math.max(lo, ((k - 0.5) * q + cfg.REF_POINTS) / span + eps);
+          hi = Math.min(hi, ((k + 0.5) * q + cfg.REF_POINTS) / span - eps);
         }
       }
       player._penalty_fatigue = [lo, hi];

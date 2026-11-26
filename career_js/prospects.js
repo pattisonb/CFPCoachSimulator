@@ -15,7 +15,6 @@ import { modules } from "../engine_js/modules.js";
 import { build_teams } from "../teamdata_js/build_teams.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
-import { shown as shown_scale } from "../teamdata_js/shown.js";       // teamdata_js/shown.js (this file has its own `shown`)
 import { recruits } from "./recruits.js";
 
 export const prospects = {};
@@ -701,15 +700,9 @@ export function _card(pos, ea_position, skills) {
   const at = `${pos}|${ea_position}|${skills.map((kv) => `${kv[0]}:${kv[1]}`).join(",")}`;
   const kept = _card_cache.get(at);
   if (kept !== undefined) return kept;
-  const raw = rv2.raw_attributes(game_scale.base_from_card(Object.fromEntries(skills)), pos, pos);
-  let group = rv2.card_group(pos, pos);
-  group = group === "FB" ? "RB" : group;
-  const scale = game_scale.card_scale();
+  const card = Object.fromEntries(skills);
   const out = {};
-  for (const [k, v] of Object.entries(raw)) {
-    const [m, hi, lo] = get(scale, `${group}|${k}`, [v, 1.5, 0.9]);
-    out[k] = int(round(Math.max(1, Math.min(99, 50 + (v - m) * (v >= m ? hi : lo)))));
-  }
+  for (const k of Object.keys(rv2.raw_attributes(card, pos, pos))) out[k] = int(round(game_scale.card_value(card, k)));
   if (_card_cache.size >= _CARD_MAX) _card_cache.clear();
   _card_cache.set(at, out);
   return out;

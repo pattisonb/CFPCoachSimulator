@@ -7,6 +7,7 @@ import { round, int, sum, sorted, get, isNumber, truthy } from "../engine_js/pyr
 import { drive_functions } from "../engine_js/drive_functions.js";
 import { simulate_game } from "../engine_js/game.js";
 import { position_fit } from "../career_js/position_fit.js";
+import { cfg } from "../engine_js/game_config.js";
 
 // the ratings a whole-team shift moves (sim_js/form.js ATTRS)
 export const FORM_ATTRS = ["speed", "strength", "intelligence", "passing", "decision_making", "elusiveness", "vision", "hands",
@@ -28,18 +29,18 @@ export class NotHere extends Error {}
 
 // ---- the form shift (sim_js/form.js) ----
 function _moved(p, keys, shift) {
-  // A copy of the player with the ratings in `keys` moved by `shift` (held to 1-99).
+  // A copy of the player with the ratings in `keys` moved by `shift` card points.
   const q = { ...p };
   for (const k of keys) {
     const v = get(p, k);
-    if (isNumber(v)) q[k] = Math.max(1, Math.min(99, int(round(v + shift))));
+    if (isNumber(v)) q[k] = round(v + shift, 1);
   }
   return q;
 }
 
 export function with_form(team, shift) {
-  // A copy of the team with every player's ratings moved by `shift` rating points (nothing when it rounds to zero).
-  if (Math.abs(shift) < 0.5) return team;
+  // A copy of the team with every player's ratings moved by `shift` card points (nothing when it is under a tenth).
+  if (Math.abs(shift) < 0.1) return team;
   const out = { ...team };
   for (const unit of ["offense", "defense"]) out[unit] = team[unit].map((p) => _moved(p, FORM_ATTRS, shift));
   return out;
@@ -194,9 +195,9 @@ export function with_morale(team, morale) {
       const f = Math.max(0.9, Math.min(1.1, 1.0 + MORALE_PLAYER_EFFECT * form + MORALE_TEAM_EFFECT * tm));
       if (Math.abs(f - 1.0) < 0.004) { rows.push(p); continue; }
       const q = { ...p };
-      for (const k of RATING_KEYS) {
+      for (const k of RATING_KEYS) {               // (his card points over the average, scaled from REF_POINTS under it)
         const v = get(p, k);
-        if (isNumber(v)) q[k] = Math.max(1, Math.min(99, round(v * f)));
+        if (isNumber(v)) q[k] = round(v * f + cfg.REF_POINTS * (f - 1), 1);
       }
       rows.push(q);
     }

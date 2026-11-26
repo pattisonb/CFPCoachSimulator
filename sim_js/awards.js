@@ -308,7 +308,7 @@ export class Pool {
       out[g] = (0.08 * get("receiving_yards", 0) + 4.0 * get("receiving_touchdowns", 0) + 0.45 * get("receptions", 0)
                 + 1.2 * get("explosive_catches", 0) + 0.04 * get("rush_yards", 0) + 3.0 * get("rushing_touchdowns", 0)
                 - 3.0 * get("fumbles", 0));
-      if (g === "TE") out[g] += 0.08 * (Number(dict_get(p["ratings"], "run_blocking") || 50) - 50);
+      if (g === "TE") out[g] += 0.08 * (5 + 2.5 * Number(dict_get(p["ratings"], "run_blocking") || 0));   // (card points over the average tight end)
     } else if (g === "EDGE" || g === "DT") {
       out[g] = (1.0 * get("solo_tackles", 0) + 0.5 * get("assisted_tackles", 0) + 3.0 * get("tackles_for_loss", 0)
                 + 5.0 * get("sacks", 0) + 1.2 * get("hurries", 0) + 4.0 * get("forced_fumbles", 0)
@@ -340,9 +340,9 @@ export class Pool {
       }
     } else if (g === "OL") {
       const r = p["ratings"];
-      const block = 0.5 * Number(dict_get(r, "run_blocking") || 50) + 0.5 * Number(dict_get(r, "pass_blocking") || 50);
+      const block = 0.5 * Number(dict_get(r, "run_blocking") || 0) + 0.5 * Number(dict_get(r, "pass_blocking") || 0);   // card points over the average lineman
       const snaps = get("snaps", 0);
-      out[g] = ((block - 50) * 1.2 * Math.min(1.0, snaps / 650.0) + 2.0 * get("key_blocks", 0)
+      out[g] = ((5 + 2.5 * block) * 1.2 * Math.min(1.0, snaps / 650.0) + 2.0 * get("key_blocks", 0)
                 - 3.0 * get("sacks_allowed", 0) - 0.8 * get("pressures_allowed", 0) - 1.0 * get("stuffs_allowed", 0)
                 + 0.02 * snaps);
     }

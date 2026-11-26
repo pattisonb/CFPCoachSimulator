@@ -10,7 +10,7 @@ import * as game_job from "../game_job.js";
 import { awards } from "../awards.js";
 import { coaches } from "../coaches.js";
 import { ratings as ratings_v2 } from "../../teamdata_js/ratings.js";
-import { shown as _shown } from "../../teamdata_js/shown.js";
+import { cfg } from "../../engine_js/game_config.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
 import { recruits } from "../../career_js/recruits.js";
 import { prospects } from "../../career_js/prospects.js";
@@ -90,28 +90,6 @@ function py_eq(a, b) {
 // Everything about one player: bio and ratings from the roster, season totals, league and
 // conference ranks, the game log (your own team's games keep full box scores), honors.
 
-// the ratings that matter at each position, most important first: the player card shows
-// these; the All ratings view shows everything the player carries
-season.POSITION_RATINGS = {
-  QB: ["passing", "decision_making", "intelligence", "speed", "elusiveness", "strength", "endurance"],
-  RB: ["speed", "elusiveness", "vision", "strength", "hands", "pass_blocking", "endurance"],
-  WR: ["hands", "route_running", "speed", "elusiveness", "run_blocking", "strength", "endurance"],
-  TE: ["hands", "route_running", "run_blocking", "pass_blocking", "speed", "strength", "endurance"],
-  OL: ["run_blocking", "pass_blocking", "strength", "intelligence", "speed", "endurance"],
-  DL: ["rushing", "tackling", "strength", "speed", "intelligence", "endurance"],
-  MLB: ["tackling", "rushing", "coverage", "speed", "intelligence", "strength", "endurance"],
-  ROLB: ["tackling", "rushing", "coverage", "speed", "intelligence", "strength", "endurance"],
-  LOLB: ["tackling", "rushing", "coverage", "speed", "intelligence", "strength", "endurance"],
-  CB: ["coverage", "speed", "tackling", "hands", "intelligence", "endurance"],
-  S: ["coverage", "tackling", "speed", "hands", "intelligence", "strength", "endurance"],
-  K: ["kick_power", "kick_accuracy"],
-  P: ["punt_power", "punt_accuracy"],
-};
-season.RATING_LABELS = [["speed", "Speed"], ["strength", "Strength"], ["intelligence", "Awareness"], ["endurance", "Stamina"],
-  ["passing", "Passing"], ["decision_making", "Decisions"], ["elusiveness", "Elusiveness"], ["vision", "Vision"],
-  ["hands", "Hands"], ["route_running", "Route Running"], ["run_blocking", "Run Blocking"], ["pass_blocking", "Pass Blocking"],
-  ["rushing", "Pass Rush"], ["tackling", "Tackling"], ["coverage", "Coverage"], ["kick_power", "Kick Power"],
-  ["kick_accuracy", "Kick Accuracy"], ["punt_power", "Punt Power"], ["punt_accuracy", "Punt Accuracy"], ["return_rating", "Returns"]];
 season.CLASS_NAMES = { FR: "Freshman", FRRS: "Redshirt Freshman", SO: "Sophomore", SORS: "Redshirt Sophomore", JR: "Junior",
   JRRS: "Redshirt Junior", SR: "Senior", SRRS: "Redshirt Senior" };
 
@@ -119,8 +97,7 @@ season.CLASS_NAMES = { FR: "Freshman", FRRS: "Redshirt Freshman", SO: "Sophomore
 
 season.DEFAULT_SETTINGS = { god_mode: false, morale: false };   // new seasons turn morale on (see new_season)
 season.DEV_TRAITS = ["Normal", "Impact", "Star", "Elite"];
-season.EDITABLE_RATINGS = season.RATING_LABELS.map(([k]) => k);
-season.EDITABLE_FIELDS = [...season.EDITABLE_RATINGS, "jersey", "class", "height", "weight", "dev_trait", "attributes"];
+season.EDITABLE_FIELDS = ["ratings", "jersey", "class", "height", "weight", "dev_trait"];   // ratings: {name his card prints: card number}
 
 function settings(state) {
   return { ...season.DEFAULT_SETTINGS, ...(get(state, "settings") || {}) };
@@ -397,50 +374,49 @@ function set_player_face(state, slug, player_slug, face) {
 // player's own; the engine composites they move are stored with them), and your coach on your team (game_job.js has it)
 season.with_edits = game_job.with_edits;
 
-function _attr_to_source(p, key, v) {
-  // A house-scale attribute value back on the source scale (build_teams.house_attributes_of
-  // run backwards).
-  season.load_teams();
-  const group = ratings_v2.card_group(p["position"], get(p, "role"));
-  const [m, hi, lo] = get(get(season._teams_meta, "attribute_scale") || {}, `${group === "FB" ? "RB" : group}|${key}`, [50.0, 1.5, 0.9]);
-  return m + (v - 50) / (v >= 50 ? hi : lo);
-}
-
-function _edit_attributes(base, cur, changes) {
-  // God mode: store edited attributes (house scale) in `cur`, and the engine composites
-  // they feed moved to match (ratings.COMPOSITES), so the sim plays the edit. A composite the
-  // player has no attribute edits for goes back to its base value.
-  if (!is_dict(changes)) throw new ValueError("attributes must be a mapping");
-  const have = get(base, "attributes") || {};
-  const attrs = { ...(get(cur, "attributes") || {}) };
-  for (let [key, v] of Object.entries(changes)) {
-    if (!own(have, key)) throw new ValueError(`${base["name"]} has no ${key} attribute`);
+function _edit_ratings(team, base, cur, changes) {
+  // God mode: change his ratings (card numbers, by the names his card prints or a rating's own key; "Decision Making"
+  // is a quarterback's own). Stored with the edit: his ratings as they now are ("skills", "dmv"), his overall, and what
+  // the engine reads for them (card points over his position's average starters, build_teams), so a game plays the edit
+  // wherever it runs. Ratings put back as they were drop the edit.
+  if (!is_dict(changes)) throw new ValueError("ratings must be a mapping");
+  const keys = game_scale.keys(), rosters = modules.rosters;
+  const named = season.card_of({ skills: get(cur, "skills") || get(base, "skills") || [] });
+  let dmv = isNumber(get(cur, "dmv")) ? cur["dmv"] : get(base, "dmv");
+  const by_name = {};
+  for (const [name, skills] of rosters.names_for(base["position"], get(base, "role"))) by_name[name] = skills;
+  for (const [name, raw] of Object.entries(changes)) {
+    let v;
     try {
-      v = Math.max(1, Math.min(99, py_round_int(py_float(v))));
+      v = Math.max(1, Math.min(99, py_round_int(py_float(raw))));
     } catch (err) {
-      if (err instanceof NotANumber) throw new ValueError(`${key} must be a number`);
+      if (err instanceof NotANumber) throw new ValueError(`${name} must be a number`);
       throw err;
     }
-    if (v === have[key]) delete attrs[key];
-    else attrs[key] = v;
-  }
-  const spread = get(season._teams_meta, "spread_scale") || 1.5;
-  for (const [comp, weights] of Object.entries(ratings_v2.composite_weights(base["position"], get(base, "role")))) {
-    if (!isNumber(get(base, comp)) || !Object.keys(weights).some((a) => own(attrs, a))) continue;
-    const terms = [];
-    for (const [a, w] of Object.entries(weights)) {
-      if (own(attrs, a) && own(have, a)) terms.push(w * (season._attr_to_source(base, a, attrs[a]) - season._attr_to_source(base, a, have[a])));
+    if (name === "Decision Making" || name === "decision_making") {
+      if (!isNumber(dmv)) throw new ValueError(`${base["name"]} has no Decision Making`);
+      dmv = v;
+      continue;
     }
-    const delta = sum(terms);
-    cur[comp] = int(round(Math.max(1, Math.min(99, base[comp] + spread * delta))));
+    const ks = own(by_name, name) ? by_name[name] : keys.includes(name) ? [name] : null;
+    if (!truthy(ks)) throw new ValueError(`${base["name"]} has no ${name} rating`);
+    for (const k of ks) named[k] = v;
   }
-  for (const [comp, weights] of Object.entries(ratings_v2.composite_weights(base["position"], get(base, "role")))) {
-    if (own(cur, comp) && !Object.keys(weights).some((a) => own(attrs, a)) && season.EDITABLE_RATINGS.includes(comp) && own(cur, "attributes")) {
-      delete cur[comp];          // its attribute edits were undone
-    }
-  }
-  if (Object.keys(attrs).length) cur["attributes"] = attrs;
-  else delete cur["attributes"];
+  for (const k of ["skills", "ovr", "dmv", "attributes", ...game_job.RATING_KEYS]) delete cur[k];
+  const skills = keys.map((k) => get(named, k, game_scale.MISSING));
+  if (JSON.stringify(skills) === JSON.stringify(get(base, "skills") || []) && dmv === get(base, "dmv")) return;
+  const src = { name: base["name"], slug: base["slug"], source_position: get(base, "source_position") || base["position"],
+    position: base["position"], role: get(base, "role"), "class": get(base, "class"), height: get(base, "height"),
+    weight: get(base, "weight"), jersey: get(base, "jersey"), dev_trait: get(base, "dev_trait"),
+    ratings: isNumber(dmv) ? { "Decision Making": dmv } : {} };
+  const m = rosters.engine_attributes(src, named, get(team, "level_shift") || 0, game_scale.starter_means());
+  for (const k of game_job.RATING_KEYS) if (isNumber(get(m, k))) cur[k] = m[k];
+  const raw = {};
+  for (const k of Object.keys(get(base, "attributes") || {})) raw[k] = game_scale.card_value(named, k, dmv);
+  cur["attributes"] = modules.build_teams.attributes_of({ position: base["position"], role: get(base, "role"), _attr_raw: raw });
+  cur["skills"] = skills;
+  cur["ovr"] = game_scale.overall(named, src["source_position"], dmv);
+  if (isNumber(dmv)) cur["dmv"] = dmv;
 }
 
 function team_edits(state, slug) {
@@ -496,8 +472,7 @@ function _attribute_ceilings(state, slug) {
     const row = {};
     for (const k of Object.keys(top)) row[k] = Math.max(0, top[k] - get(now, k, top[k]));
     if (isNumber(get(c, "dmv")) && row["decision_making"] !== undefined) {      // a quarterback's Decision Making: its own number and its own room
-      row["decision_making"] = Math.max(0, _shown.attribute_back(Math.min(99, c["dmv"] + (get(c, "dmg") || 0)), "QB", "decision_making")
-        - _shown.attribute_back(c["dmv"], "QB", "decision_making"));
+      row["decision_making"] = Math.max(0, Math.min(99, c["dmv"] + (get(c, "dmg") || 0)) - c["dmv"]);
     }
     out[c["id"]] = row;
   }
@@ -536,7 +511,7 @@ function development_reads(state, slug) {
 }
 
 function edit_player(state, slug, player_slug, changes) {
-  // Store god-mode changes to one player. Ratings are whole numbers 0-99; the class, the
+  // Store god-mode changes to one player. Ratings are whole numbers 1-99 (card numbers); the class, the
   // development trait and the size must be real values. Names and positions stay as they
   // are (the season's stats are keyed on them). Returns the stored edits for the player.
   season.check_fbs(slug);
@@ -547,20 +522,11 @@ function edit_player(state, slug, player_slug, changes) {
   const cur = { ...(get(season.player_edits(state, slug), player_slug) || {}) };
   for (let [k, v] of Object.entries(changes)) {
     if (!season.EDITABLE_FIELDS.includes(k)) throw new ValueError(`${k} cannot be edited`);
-    if (k === "attributes") {
-      season._edit_attributes(base, cur, v);
+    if (k === "ratings") {
+      season._edit_ratings(team, base, cur, v);
       continue;
     }
-    if (season.EDITABLE_RATINGS.includes(k)) {
-      if (!isNumber(get(base, k))) throw new ValueError(`${base["name"]} has no ${k} rating`);
-      try {
-        v = py_round_int(py_float(v));
-      } catch (err) {
-        if (err instanceof NotANumber) throw new ValueError(`${k} must be a number`);
-        throw err;
-      }
-      v = season.engine_rating(base, k, Math.max(0, Math.min(99, v)));   // the form shows the EA scale; the engine keeps its own
-    } else if (k === "class") {
+    if (k === "class") {
       if (typeof v !== "string" || !own(season.CLASS_NAMES, v)) throw new ValueError("class must be one of " + Object.keys(season.CLASS_NAMES).join(", "));
     } else if (k === "dev_trait") {
       if (!season.DEV_TRAITS.includes(v)) throw new ValueError("development trait must be one of " + season.DEV_TRAITS.join(", "));
@@ -1078,17 +1044,6 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   const mf = season.morale_factor(state, team, name, position);
   const ceil = get(season.attribute_ceilings(state, team), get(p, "slug"), {});      // his room to grow per attribute
   const base_p = [...teams[team]["offense"], ...teams[team]["defense"]].find((x) => get(x, "slug") === get(p, "slug")) ?? p;
-  const ratings = [];
-  for (const [k, lbl] of season.RATING_LABELS) {
-    if (!isNumber(get(p, k))) continue;
-    ratings.push({ key: k, label: lbl, value: season.display_rating(p, k),
-      boost: season.display_rating(p, k, Math.max(1, Math.min(99, round(p[k] * mf)))) - season.display_rating(p, k) });
-  }
-  const have = new Set(ratings.map((r) => r["key"]));
-  const key_ratings = get(season.POSITION_RATINGS, position, []).filter((k) => have.has(k));
-  if (truthy(get(p, "slug")) && (p["slug"] === get(t, "kick_returner") || p["slug"] === get(t, "punt_returner")) && have.has("return_rating")) {
-    key_ratings.push("return_rating");
-  }
   const injuries = get(state, "injuries") || {};
   let injured = false;
   // (the season keeps a team's injured as a dict by "Name|POS": the loop then walks its keys, which are text,
@@ -1136,17 +1091,17 @@ function player_profile(state, team, name = null, position = null, slug = null) 
     name, slug: get(p, "slug"), position, role: get(p, "role"), depth: get(p, "depth"),
     class: get(p, "class"), class_name: get(season.CLASS_NAMES, get(p, "class") || "", get(p, "class")), height: get(p, "height"),
     weight: get(p, "weight"), jersey: get(p, "jersey"), dev_trait: get(p, "dev_trait"), starter: truthy(get(p, "in_game")),
-    injured, overall: season.page_overall(p, base_p), stars: season.recruit_stars(base_p), ratings,
+    injured, overall: season.page_overall(p, base_p), stars: season.recruit_stars(base_p),
     edited: sorted(Object.keys(get(season.player_edits(state, team), get(p, "slug"), {}))), editable_classes: Object.keys(season.CLASS_NAMES),
     ...get(season.development_reads(state, team), get(p, "slug"), {}),
-    key_ratings,
     // ratings v2: the position's attributes, the measurables, play style and traits
     attributes: Object.entries(p_attrs()).filter(([k]) => own(ratings_v2.ATTRIBUTES, k)).map(([k, v]) => ({
       key: k, label: ratings_v2.ATTRIBUTES[k][0], group: ratings_v2.ATTRIBUTES[k][1],
       about: ratings_v2.ATTRIBUTES[k][2], value: season.page_attribute(p, k, v),
-      boost: mf !== 1.0 ? season.page_attribute(p, k, Math.max(1, Math.min(99, round(v * mf)))) - season.page_attribute(p, k, v) : 0,
+      // what his form and the team's mood add today (card points, read from REF_POINTS under the average as the sim does)
+      boost: mf !== 1.0 ? int(round((cfg.REF_POINTS + v) * (mf - 1))) : 0,
       // your own player: his ceiling there (the bar's unfilled part shows it)
-      ...(own(ceil, k) ? { potential: season.page_attribute(p, k, Math.min(99, v + ceil[k])) } : {}),
+      ...(own(ceil, k) ? { potential: Math.min(99, season.page_attribute(p, k, v) + ceil[k]) } : {}),
       // how much of his overall it is, in percent (game_scale.card_formula's weights)
       weight: round(100 * get(built_on, k, 0.0) / built_total, 1),
     })),
@@ -1164,13 +1119,16 @@ function player_profile(state, team, name = null, position = null, slug = null) 
     })),
     // the ability he works toward and how far along he is
     ability_goal: ability_goals.goal_view(state, team, `${name}|${position}`, position, trait_tiers()),
-    edited_attributes: sorted(Object.keys(get(get(season.player_edits(state, team), get(p, "slug"), {}), "attributes") || {})),
+    edited_attributes: (() => {                    // the card attributes his edited ratings changed
+      const e = get(season.player_edits(state, team), get(p, "slug"), {});
+      if (!truthy(get(e, "skills"))) return [];
+      const was = season.card_of(base_p), now = season.card_of(e);
+      return sorted(Object.keys(get(p, "attributes") || {}).filter((k) => game_scale.card_value(was, k, get(base_p, "dmv")) !== game_scale.card_value(now, k, get(e, "dmv") ?? get(base_p, "dmv"))));
+    })(),
     morale: season.morale_view(state, team, name, position),
     // rated at every position; at his own position it is the card's overall
-    ratings_at: Object.fromEntries(Object.entries(get(p, "ratings_at") || {}).filter(([, v]) => isNumber(v)).map(([k, v]) => [k,
-      k !== "KR" && season.same_group(get(season.RATING_KEY, k, k), position)
-        ? season.shown_overall(p, base_p)
-        : _shown.overall(season.house_value(k !== "KR" ? get(season.RATING_KEY, k, k) : "KR", k === "KR" ? "return_rating" : "overall", int(v)))])),
+    ratings_at: Object.fromEntries([...modules.build_teams.ENGINE_POSITIONS, "KR"].map((k) => [k,
+      k !== "KR" && season.same_group(get(season.RATING_KEY, k, k), position) ? season.shown_overall(p, base_p) : int(modules.build_teams.rated_at(p, k))])),
     team: { slug: team, name: t["name"], conference: t["conference"], coach: get(hc, "name"),
       record: `${rec["wins"]}-${rec["losses"]}`, rank: truthy(ss) ? new awards.Pool(state, teams, season._records(state)).rank_of(team) : null },
     games: truthy(line) ? line["games"] : 0, team_games: get(ss, "games", 0), stats,
@@ -1187,7 +1145,7 @@ function player_profile(state, team, name = null, position = null, slug = null) 
 Object.assign(season, {
   settings, update_settings, morale_on, _morale_store, team_morale, player_form, morale_factor, morale_payload,
   _perf_score, _decay_morale, _update_morale, morale_view, player_edits, preset_faces, all_preset_faces, player_faces,
-  set_player_face, _attr_to_source, _edit_attributes, team_edits, team_data, attribute_ceilings, _attribute_ceilings,
+  set_player_face, _edit_ratings, team_edits, team_data, attribute_ceilings, _attribute_ceilings,
   development_reads, edit_player, derived_stat, season_rows, _rank_group, player_ranks, player_honors, player_game_log, mark_best, game_line, team_game_logs, player_game_logs,
   recruit_stars, our_rating, all_skills, player_profile,
 });

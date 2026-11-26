@@ -1,8 +1,7 @@
 // The roster file as the game reads it (data/engine_teams.json): the one place a real player's ratings live.
 //
 // Each player in the file has one set of ratings, by the names his card prints ("Top Speed": 88, "Arm Strength": 92,
-// "Pocket Poise": 82: `names_for`), on the scale every rating is shown on (teamdata_js/shown.js: the average player
-// about a 70, the best in the 90s). The name in the file is the name on his card and the number in the file is the
+// "Pocket Poise": 82: `names_for`), card numbers (the average player about a 70, the best in the 90s). The name in the file is the name on his card and the number in the file is the
 // number on his card (the player's rule: find the player, find the rating as the card says it, change it, and the
 // card shows it). Nothing else about how good he is is stored. Everything the game plays
 // and keeps is worked out from that one set when the file is read: the numbers the play engine reads (speed, passing,
@@ -11,8 +10,8 @@
 // in the first season as in every later one.
 //
 // It is worked out with the build's own formulas (teamdata_js/build_teams.js, as a career's later seasons work their
-// teams out): each rating off the shown scale (shown.to_base), the engine's attributes centred on the frozen starter
-// means, the team's stored `level_shift`. A team's depth chart, its starters (`in_game`), its tendencies and its
+// teams out): the engine reads card points over the average starter at his position (frozen card numbers), with the
+// team's stored `level_shift` (card points). A team's depth chart, its starters (`in_game`), its tendencies and its
 // coaches are stored as they are and read as they are.
 //
 // A teams file whose players already carry those numbers (a career's later season, data/leagues/) has no "format"
@@ -21,7 +20,6 @@ import { round, int, sum, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { read_text, read_json } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "./game_scale.js";
-import { shown } from "./shown.js";
 import { ratings as rv2 } from "./ratings.js";
 import { build_teams } from "./build_teams.js";
 import { prospects } from "../career_js/prospects.js";
@@ -29,7 +27,6 @@ import { prospects } from "../career_js/prospects.js";
 const FILE = "data/engine_teams.json";
 const FORMAT = 3;            // the roster file's format: one set of ratings a player, by the names his card prints, and nothing worked out
 const MISSING = 60;          // a rating the file leaves out (on the shown scale)
-const NEAR = 3;              // how far a kept number may be moved so the page shows the file's own number
 
 // ----- the names: a rating in the file is called what the player's card calls it ---------------------------------------
 //
@@ -107,17 +104,6 @@ export function decision_of(p) {
   return Math.max(1, Math.min(99, int(round(want))));
 }
 
-// ----- the tables: a rating in the file is a whole number 1-99, so each step is worked out once a number ---------------
-
-let _bases = null;                       // the file's number -> what the engine's formulas read (shown.to_base)
-function _base_of() {
-  if (_bases === null) {
-    _bases = new Array(100).fill(0);
-    for (let v = 1; v <= 99; v++) _bases[v] = shown.to_base(v);
-  }
-  return _bases;
-}
-
 export function stored(named, source_position = null) {
   // A player's ratings (by skill: skills_of) as a career's league keeps them: a list in game_scale.keys() order, each
   // the file's own number.
@@ -132,61 +118,15 @@ export function labeled(skills, source_position = null) {
   return out;
 }
 
-// ----- one card attribute, kept: most are one rating through one line, asked for thousands of times -----------------
+// ----- his card's attributes: each is one of his ratings (ratings.js), put against his card group's average starters --
 
-const _attr_cache = new Map();          // "card scale group|whose numbers" -> card attribute -> the answers, by the ratings it reads
-let _scale_ready = false;
-const _NONE = -1;                        // (an attribute with nothing to read: kept as this, never as a hole)
-
-function _attribute(kept, scale_group, key, base, named, exact) {
-  // Card attribute `key` on the house scale (build_teams.house_attributes_of's line, ratings.js raw_attributes's
-  // rounding). `kept`: the answers so far. `exact`: an attribute that is one rating is the house value the page shows
-  // as that rating's own number in the file (shown.attribute), the nearest such when rounding leaves it a point off.
-  const f = rv2.ATTRIBUTES[key][3];
-  const src = f.sources;
-  let at = 0;                            // the ratings it reads, as one number (each is 1-99)
-  for (let i = 0; i < src.length; i++) at = at * 100 + named[src[i]];
-  let row = kept[key];
-  if (row === undefined) row = kept[key] = new Map();
-  let out = row.get(at);
-  if (out !== undefined) return out;
-  let v = f(base);
-  out = _NONE;
-  if (v !== null) {
-    v = round(v, 1);
-    const [m, hi, lo] = get(build_teams.ATTR_SCALE, `${scale_group}|${key}`, [v, 1.5, 0.9]);
-    out = build_teams.clamp_rating(50 + (v - m) * (v >= m ? hi : lo));
-    // one number of the file. Never a rating of its own (OWN): a quarterback's Decision Making is the file's Decision
-    // Making, not his Football IQ's number when his Football IQ and Pocket Poise happen to be the same
-    if (exact && !OWN.includes(key) && src.every((s) => named[s] === named[src[0]])) {
-      const want = named[src[0]];
-      search: for (let d = 0; d <= rosters.NEAR; d++) {
-        for (const o of d ? [out + d, out - d] : [out]) {
-          if (o >= 1 && o <= 99 && shown.attribute(o, scale_group, key) === want) { out = o; break search; }
-        }
-      }
-    }
-  }
-  row.set(at, out);
-  return out;
-}
-
-function _card(position, role, whose, base, named, exact) {
-  // His card's attributes: his position's set (ratings.js POSITION_ATTRIBUTES), each on the house scale. `whose`:
-  // which numbers `named` holds (the answers are kept by them).
+function _card(position, role, named, own = null) {
+  // His card's attributes in card numbers (his position's set, ratings.js POSITION_ATTRIBUTES), from his ratings
+  // `named`; his own Decision Making when he has one.
   const group = rv2.card_group(position, role);
-  const scale_group = group === "FB" ? "RB" : group;
-  const at = `${scale_group}|${whose}`;
-  let kept = _attr_cache.get(at);
-  if (kept === undefined) _attr_cache.set(at, kept = {});
-  if (!_scale_ready) {                   // the card's frozen scale, where the build keeps it
-    if (!Object.keys(build_teams.ATTR_SCALE).length) Object.assign(build_teams.ATTR_SCALE, game_scale.card_scale());
-    _scale_ready = true;
-  }
   const out = {};
   for (const key of (Object.hasOwn(rv2.POSITION_ATTRIBUTES, group) ? rv2.POSITION_ATTRIBUTES[group] : rv2.PHYSICAL)) {
-    const v = _attribute(kept, scale_group, key, base, named, exact);
-    if (v !== _NONE) out[key] = v;
+    out[key] = game_scale.card_value(named, key, own);
   }
   return out;
 }
@@ -198,31 +138,6 @@ function _overall(source_position, skills, ks, own = null) {
   return game_scale.overall(card, source_position, own);
 }
 
-export function shown_attribute(p, key, value) {
-  // What the page shows for card attribute `key` of a player read from the roster file, while the card still holds
-  // the value the file gave it: the file's own number for an attribute that is one rating (the kept card scale cannot
-  // say every number: a receiver's Speed of 50 is below the lowest his card's scale reaches). null otherwise (the
-  // caller shows the kept value as ever): a blend of ratings, a value changed since, a player not from the file.
-  if (!Object.hasOwn(rv2.ATTRIBUTES, key)) return null;
-  // a rating with no skill behind it (his Decision Making): the number he has, in the file or in a career's league
-  const own = get(get(p, "filed_own") || {}, key);
-  if (own !== null) return own[0] === value ? own[1] : null;
-  if (OWN.includes(key)) return null;                          // (his own rating: never another rating's number)
-  const filed = get(p, "filed");
-  if (!truthy(filed)) return null;
-  const src = rv2.ATTRIBUTES[key][3].sources;
-  if (!isNumber(filed[src[0]]) || !src.every((s) => filed[s] === filed[src[0]])) return null;     // (not one number of the file)
-  const group = rv2.card_group(p["position"], get(p, "role"));
-  const scale_group = group === "FB" ? "RB" : group;
-  const at = `${scale_group}|file`;
-  let kept = _attr_cache.get(at);
-  if (kept === undefined) _attr_cache.set(at, kept = {});
-  if (!Object.keys(build_teams.ATTR_SCALE).length) Object.assign(build_teams.ATTR_SCALE, game_scale.card_scale());
-  const base = {};
-  for (const s of src) base[s] = _base_of()[filed[s]];
-  return _attribute(kept, scale_group, key, base, filed, true) === value ? filed[src[0]] : null;
-}
-
 export function overall(skills, source_position, own = null) {
   // His overall from a league's list of his ratings (game_scale.keys() order) at the position they are for.
   const ks = game_scale.keys();
@@ -230,9 +145,9 @@ export function overall(skills, source_position, own = null) {
 }
 
 function _means(data) {
-  // The starter means the engine's numbers are centred on: the file's own (the real 2026 rosters'), else the frozen ones.
-  const m = get(data, "starter_means_before_normalization");
-  return truthy(m) ? m : game_scale.engine_means();
+  // The averages the engine reads a player against: a teams file's own, else the frozen ones (card numbers).
+  const m = get(data, "starter_means");
+  return truthy(m) ? m : game_scale.starter_means();
 }
 
 function _whole(named, ks) {
@@ -254,29 +169,23 @@ function _whole(named, ks) {
 
 function _mapped(p, named, ks) {
   // Player `p` with ratings `named` through the build's own map (build_teams.map_player), his engine attributes still
-  // on the source scale: [the mapped player, his ratings on the source scale, the scale group they are for].
-  const grp = game_scale.group(p["source_position"]);
-  const base = {}, skills = new Array(ks.length), bases = _base_of();
-  for (let i = 0; i < ks.length; i++) {
-    const v = named[ks[i]];
-    base[ks[i]] = bases[v];
-    skills[i] = v;
-  }
-  const m = build_teams.map_player({ name: p["name"], slug: p["slug"], position: p["source_position"], ratings: base, ovr: 0,
+  // card numbers: [the mapped player, his ratings by skill].
+  const skills = ks.map((k) => named[k]);
+  const m = build_teams.map_player({ name: p["name"], slug: p["slug"], position: p["source_position"], ratings: named, ovr: 0,
     "class": get(p, "class"), height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"),
-    dev_trait: get(p, "dev_trait") }, p["position"]);
+    dev_trait: get(p, "dev_trait"), dmv: decision_of(p) }, p["position"]);
   delete m["overall"];
   m["skills"] = skills;                                       // (the core-skill floor asks them: build_teams.established)
-  return [m, base, grp];
+  return [m, named];
 }
 
 function _onto_engine(players, shift, means) {
-  // Mapped players onto the engine's scale, as the build does it: centred on the starter means and held inside
-  // sensible bounds (build_teams.normalize), then the team's level shift (build_teams.team_level's last step).
+  // Mapped players as the engine reads them, as the build does it: against their positions' average starters and held
+  // inside sensible bounds (build_teams.normalize), then the team's level shift (build_teams.team_level's last step).
   build_teams.normalize([{ players: players }], means);
   if (!shift) return;
   for (const m of players) {
-    for (const a of build_teams.ATTRS) if (isNumber(get(m, a))) m[a] = build_teams.clamp_rating(m[a] + shift);
+    for (const a of build_teams.ATTRS) if (isNumber(get(m, a))) m[a] = round(m[a] + shift, 1);
   }
 }
 
@@ -297,34 +206,21 @@ export function derive_team(t, means) {
     t[unit] = (get(t, unit) || []).map((p) => {
       if (!truthy(get(p, "ratings"))) return p;              // already worked out
       const named = skills_of(p);
-      const [m, base, grp] = _mapped(p, named, ks);
+      const [m] = _mapped(p, named, ks);
       const skills = m["skills"];
       delete m["skills"];
-      m["ovr"] = _overall(p["source_position"], skills, ks, decision_of(p));
+      const want = decision_of(p);                           // his own Decision Making: the file's number, played and shown
+      m["ovr"] = _overall(p["source_position"], skills, ks, want);
       m["role"] = get(p, "role");
       m["depth"] = get(p, "depth");
       m["skills"] = skills;
       // (a key the file leaves out stays out, as every reader that gives one a default expects)
       for (const k of ["height_in", "traits", "archetype"]) if (p[k] !== undefined) m[k] = p[k];
-      m["attributes"] = _card(m["position"], m["role"], "file", base, named, true);
-      const want = decision_of(p);                           // his own Decision Making: the file's number, played and shown
-      if (want !== null) {
-        m["decision_making"] = shown.to_base(want);            // (still on the source scale: _onto_engine below)
-        const [mid, hi, lo] = get(build_teams.ATTR_SCALE, "QB|decision_making", [50, 1.5, 0.9]);
-        const v = round(shown.to_base(want), 1);
-        let house = build_teams.clamp_rating(50 + (v - mid) * (v >= mid ? hi : lo));
-        search: for (let d = 0; d <= rosters.NEAR; d++) {
-          for (const o of d ? [house + d, house - d] : [house]) {
-            if (o >= 1 && o <= 99 && shown.attribute(o, "QB", "decision_making") === want) { house = o; break search; }
-          }
-        }
-        m["attributes"]["decision_making"] = house;
-        m["dmv"] = want;
-        m["filed_own"] = { decision_making: [house, want] };   // what the page shows while his card holds this value (shown_attribute)
-      }
+      m["_attr_raw"] = _card(m["position"], m["role"], named, want);
+      m["attributes"] = build_teams.attributes_of(m);
+      delete m["_attr_raw"];
+      if (want !== null) m["dmv"] = want;
       for (const k of ["target_mult", "order", "added"]) if (p[k] !== undefined) m[k] = p[k];
-      m["filed"] = named;                                    // his ratings as the file has them: what the page shows (shown_attribute, shown_skill)
-      m["_src"] = { ratings: base };
       m["_stats"] = stats_keys;
       m["_in_game"] = truthy(get(p, "in_game"));
       made.push(m);
@@ -332,8 +228,8 @@ export function derive_team(t, means) {
     });
   }
   _onto_engine(made, shift, means);
-  // what he would be at every position (the build's own pass: it reads each player's source-scale ratings)
-  build_teams.ratings_at_every_position([{ players: made, level_shift: shift }], means);
+  // his overall at every position (the build's own pass)
+  build_teams.ratings_at_every_position([{ players: made, level_shift: shift }]);
   for (const m of made) {
     m["in_game"] = m["_in_game"];
     m["fatigue"] = 0;
@@ -348,7 +244,6 @@ export function derive_team(t, means) {
 export function derive(data) {
   // A roster file's data as the game reads it (in place). A file of another format is returned as it is.
   if (get(data, "format") !== rosters.FORMAT) return data;
-  if (!Object.keys(build_teams.ATTR_SCALE).length) Object.assign(build_teams.ATTR_SCALE, game_scale.card_scale());
   const means = _means(data);
   for (const t of Object.values(get(data, "teams") || {})) derive_team(t, means);
   return data;
@@ -398,9 +293,7 @@ export function forget() {
   Object.assign(_kept, { path: null, raw: null, text: null });
   Object.assign(_one, { path: null, data: null });
   _is_roster.clear();
-  _attr_cache.clear();
   _names.clear();
-  _bases = null;
 }
 
 export function stored_ratings(path = rosters.FILE) {
@@ -419,7 +312,7 @@ export function stored_ratings(path = rosters.FILE) {
   return out;
 }
 
-export const rosters = { FILE, FORMAT, MISSING, NEAR, BLENDS, OWN, names_for, skills_of, file_ratings, decision_of, stored, labeled, overall, shown_attribute, engine_attributes, derive_team, derive,
+export const rosters = { FILE, FORMAT, MISSING, BLENDS, OWN, names_for, skills_of, file_ratings, decision_of, stored, labeled, overall, engine_attributes, derive_team, derive,
   read, shared, loaded, forget, stored_ratings };
 
 modules.rosters = rosters;

@@ -49,7 +49,7 @@ export function assign_forced_fumble(defense, base_yards, verbose = false) {
 
   // Weight by tackling and strength (or just tackling if you want it simpler)
   const weights = [];
-  for (const p of candidates) weights.push((p.tackling + p.strength) / 2);
+  for (const p of candidates) weights.push(_rel((p.tackling + p.strength) / 2));
 
   // Choose one
   const forced_by = random.choices(candidates, { weights: weights, k: 1 })[0];
@@ -93,7 +93,7 @@ export function _tackle_pool(defense, weight_table) {
 
     if (Object.prototype.hasOwnProperty.call(weight_profile, pos_group)) {
       // the better tackler at a spot gets clearly more of them (real leaders stand out)
-      const skill_weight = Math.pow((p.tackling + p.intelligence) / 2 / cfg.NEUTRAL, cfg.TACKLE_SKILL_POWER);
+      const skill_weight = Math.pow(_rel((p.tackling + p.intelligence) / 2), cfg.TACKLE_SKILL_POWER);
       const position_weight = weight_profile[pos_group];
       candidates.push(p);
       weights.push(position_weight * skill_weight);
@@ -104,7 +104,7 @@ export function _tackle_pool(defense, weight_table) {
   if (!candidates.length) {
     candidates = defense;
     weights = [];
-    for (const p of defense) weights.push((p.tackling + p.intelligence) / 2);
+    for (const p of defense) weights.push(_rel((p.tackling + p.intelligence) / 2));
   }
   return [candidates, weights];
 }
@@ -189,7 +189,7 @@ export function assign_sack(defense, guessed_play = false, rushers = null, blitz
 
   // Pick 1 or 2 players based on is_half
   const sack_weights = [];
-  for (const p of candidates) sack_weights.push(Math.pow(Math.max(1, p.rushing) / cfg.NEUTRAL, cfg.SACK_SKILL_POWER));
+  for (const p of candidates) sack_weights.push(Math.pow(_rel(p.rushing), cfg.SACK_SKILL_POWER));
   const selected = random.choices(candidates, { weights: sack_weights, k: is_half ? 2 : 1 });
 
   // A blitzing corner or safety gets the credit now and then, more for a team that blitzes
@@ -198,7 +198,7 @@ export function assign_sack(defense, guessed_play = false, rushers = null, blitz
   for (const p of defense) if (p.position === "CB" || p.position === "S") dbs.push(p);
   if (dbs.length && cfg.stat_rng.random() < cfg.DB_SACK_SHARE * blitz_rate / 50) {
     const db_weights = [];
-    for (const p of dbs) db_weights.push(Math.max(1, p.rushing || 1));
+    for (const p of dbs) db_weights.push(_rel(p.rushing));
     selected[0] = cfg.stat_rng.choices(dbs, { weights: db_weights, k: 1 })[0];
   }
 
@@ -249,8 +249,8 @@ export function _credit_lineman(offense, key, attr, worse = false, run = false) 
     return;
   }
   const w = (p) => {
-    const r = getattr(p, attr, null) || cfg.NEUTRAL;
-    const base = Math.max(1.0, worse ? 101 - r : r);
+    const r = getattr(p, attr, null) || 0;          // card points over the average starter
+    const base = Math.max(0.4, worse ? cfg.BLAME_REF - r : cfg.REF_POINTS + r);
     return base * (p.position === "OL" ? 1.0 : cfg.TE_BLOCK_CREDIT_SHARE);
   };
   const pool = [...line, ...extra];
@@ -262,8 +262,8 @@ export function _credit_lineman(offense, key, attr, worse = false, run = false) 
 
 // ===================== rating helpers =====================
 
-/** Average of the given attributes that the player actually has. */
-export function _rating(player, keys, default_ = cfg.NEUTRAL) {
+/** Average of the given attributes that the player actually has (card points over the average starter; 0 is average). */
+export function _rating(player, keys, default_ = 0) {
   // a Player's ratings are plain instance attributes
   const vals = [];
   for (const k of keys) {
@@ -274,10 +274,16 @@ export function _rating(player, keys, default_ = cfg.NEUTRAL) {
 }
 
 
-/** A ratings v2 attribute (house scale, 50 = an average Power 4 starter); 50 when he has none. */
-export function _attr(player, key, default_ = 50.0) {
+/** A ratings v2 attribute (card points over the average FBS starter in his card group); 0 when he has none. */
+export function _attr(player, key, default_ = 0) {
   const a = player.attrs;
   return a ? get(a, key, default_) : default_;
+}
+
+
+/** A rating read against the average starter (`v`: his card points over him): 1 for the average, more above. */
+export function _rel(v) {
+  return Math.max(0.05, (cfg.REF_POINTS + (v || 0)) / cfg.REF_POINTS);
 }
 
 
@@ -318,7 +324,7 @@ export function _throw_depth(target, tendencies, play_action = false) {
   }
   const style = get(cfg.SCHEME_STYLE, get(tendencies, "offense_scheme"), {});
   const r = _routes(target);
-  let tilt = Math.pow(target.speed / cfg.NEUTRAL, cfg.PASS_DEEP_SPEED_TILT)
+  let tilt = Math.pow(_rel(target.speed), cfg.PASS_DEEP_SPEED_TILT)
     * Math.max(0.3, 1 + cfg.PASS_DEEP_ROUTE_TILT * (r["deep"] - sum([r.short, r.mid, r.deep]) / 3));
   if (truthy(get(tendencies, "conservative"))) {
     tilt *= cfg.GARBAGE_BIG_PLAY;
@@ -398,10 +404,10 @@ export function _fumble_mult(carrier, tacklers) {
     for (const p of tacklers) acc += _attr(p, "hit_power");
     hit = acc / tacklers.length;
   } else {
-    hit = 50.0;
+    hit = 0.0;
   }
-  return Math.max(0.3, 1 - (_attr(carrier, "ball_security") - cfg.ATTR_LEAGUE_AVG) * cfg.FUMBLE_SECURITY_EFFECT)
-    * Math.max(0.5, 1 + (hit - cfg.ATTR_LEAGUE_AVG) * cfg.FUMBLE_HIT_EFFECT)
+  return Math.max(0.3, 1 - _attr(carrier, "ball_security") * cfg.FUMBLE_SECURITY_EFFECT)
+    * Math.max(0.5, 1 + hit * cfg.FUMBLE_HIT_EFFECT)
     * Math.max(0.2, 1 - _tr(carrier, "ball_protector") * cfg.TRAIT_FX["ball_protector"])
     * (1 + _tr_points(tacklers, cfg.HIT_TRAITS) * cfg.TRAIT_FX["hitter"]);
 }
@@ -480,8 +486,8 @@ export function _rushers(defense) {
 }
 
 
-/** Average rating of the players at the given positions (on-field players only). */
-export function _group_rating(players, positions, keys, default_ = cfg.NEUTRAL) {
+/** Average rating of the players at the given positions (on-field players only; card points over the average starter). */
+export function _group_rating(players, positions, keys, default_ = 0) {
   const group = _members(players, positions);
   if (!group.length) {
     return default_;
@@ -495,7 +501,7 @@ export function _group_rating(players, positions, keys, default_ = cfg.NEUTRAL) 
 
 
 /** Turn a 0-100 slider into rating points: 50 = 0, 100 = +scale, 0 = -scale. */
-export function _slider_points(slider_value, scale = 20.0) {
+export function _slider_points(slider_value, scale = 8.0) {
   return (cfg.sliders.get_multiplier(slider_value) - 1.0) * 2 * scale;
 }
 
@@ -584,7 +590,7 @@ export function _lose_fumble(offense, defense, fumbler, spot, forcer_positions, 
   for (const p of defense) if (forcer_positions.includes(p.position)) candidates.push(p);
   if (!candidates.length) candidates = defense;
   const weights = [];
-  for (const p of candidates) weights.push((p.speed + p.intelligence) / 2);
+  for (const p of candidates) weights.push(_rel((p.speed + p.intelligence) / 2));
   const recoverer = random.choices(candidates, { weights: weights, k: 1 })[0];
   _stat(recoverer, "fumble_recoveries");
   last_play["recovered_by"] = recoverer.name;
@@ -725,9 +731,9 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
   if (line.length) {
     yards_style += (_static(line, "finish_block", (ps) => {
       let acc = 0;
-      for (const p of ps) acc += _attr(p, "finish_block", cfg.ATTR_LEAGUE_AVG);
+      for (const p of ps) acc += _attr(p, "finish_block");
       return acc / ps.length;
-    }) - cfg.ATTR_LEAGUE_AVG) * cfg.FINISH_BLOCK_EFFECT;
+    })) * cfg.FINISH_BLOCK_EFFECT;
   }
   if (outside) {
     const leads = [];
@@ -737,7 +743,7 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
     if (leads.length) {
       let acc = 0;
       for (const p of leads) acc += _attr(p, "lead_block");
-      yards_style += (acc / leads.length - cfg.ATTR_LEAGUE_AVG) * cfg.LEAD_BLOCK_EFFECT;
+      yards_style += acc / leads.length * cfg.LEAD_BLOCK_EFFECT;
     }
   }
 
@@ -754,7 +760,7 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
     yards += _tr(carrier, "closer") * cfg.TRAIT_FX["closer"] * 40;
   }
 
-  let big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * Math.pow(carrier.speed / cfg.NEUTRAL, cfg.RUSH_BIG_PLAY_SPEED_POWER) * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"]);
+  let big_play_chance = cfg.RUSH_BIG_PLAY_CHANCE * Math.pow(_rel(carrier.speed), cfg.RUSH_BIG_PLAY_SPEED_POWER) * (1 + _tr(carrier, "breakaway_speed") * cfg.TRAIT_FX["breakaway"]);
   if (!guessed_play) {
     big_play_chance *= 1.3;
   }
@@ -767,7 +773,7 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
   }
 
   // Short yardage: a push for the line often gets there.
-  const push = (_attr(carrier, "power_running") - cfg.ATTR_LEAGUE_AVG + line_lean - front_lean) * cfg.SHORT_YARDAGE_STYLE_EFFECT
+  const push = (_attr(carrier, "power_running") + line_lean - front_lean) * cfg.SHORT_YARDAGE_STYLE_EFFECT
     + _tr(carrier, "bulldozer") * cfg.TRAIT_FX["bulldozer_push"];
   if (first_down <= 2 && down >= 3 && yards < first_down && random.random() < cfg.RUSH_SHORT_YARDAGE_CONVERT + push) {
     yards = first_down + random.uniform(0, 1.5);
@@ -781,7 +787,7 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
 
   // Fumble (checked before the touchdown is awarded)
   let fumble_chance = cfg.sliders.get_inverse_percentage_adjustment(cfg.sliders.fumble_frequency, cfg.RUSH_FUMBLE_CHANCE);
-  fumble_chance *= 1 + (cfg.NEUTRAL - carrier.strength) / 150 + (cfg.NEUTRAL - carrier.intelligence) / 150;
+  fumble_chance *= 1 - ((carrier.strength || 0) + (carrier.intelligence || 0)) / 60;
   fumble_chance *= _fumble_mult(carrier, front_players);
   if (random.random() < Math.max(0.002, fumble_chance)) {
     const spot = Math.max(1, Math.min(99, yardline + Math.max(0, yards)));
@@ -852,7 +858,9 @@ export function _target_pool(offense) {
   let weights = [];
   for (const p of receivers) {
     // Steep in rating so a real number-one receiver gets a number-one share of targets.
-    let w = Math.pow(Math.max(1.0, _rating(p, ["route_running", "hands"]) + p.speed / 2) / 100, cfg.TARGET_WEIGHT_POWER);
+    // (0.825 for an average starting receiver, a fortieth more for each card point of routes and hands over his, half
+    // that for speed)
+    let w = Math.pow(Math.max(0.01, 0.825 + (_rating(p, ["route_running", "hands"]) + (p.speed || 0) / 2) / 40), cfg.TARGET_WEIGHT_POWER);
     if (p.position === "TE") {
       w *= cfg.TE_TARGET_WEIGHT;
     }
@@ -897,9 +905,9 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     return ["incomplete", 0];
   }
   _note({ qb: qb.name });
-  let qb_accuracy = 0.6 * (qb.passing || cfg.NEUTRAL) + 0.25 * (qb.decision_making || cfg.NEUTRAL) + 0.15 * qb.intelligence;
+  let qb_accuracy = 0.6 * (qb.passing || 0) + 0.25 * (qb.decision_making || 0) + 0.15 * (qb.intelligence || 0);
   qb_accuracy += _slider_points(cfg.sliders.qb_accuracy);
-  const qb_decisions = qb.decision_making || cfg.NEUTRAL;
+  const qb_decisions = qb.decision_making || 0;
 
   // --- Throwaway ---
   if (random.random() < cfg.THROWAWAY_CHANCE) {
@@ -918,11 +926,11 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     for (const p of rushers) acc += _rating(p, ["strength", "rushing"]);
     rush_mean = acc / rushers.length;
   } else {
-    rush_mean = cfg.NEUTRAL;
+    rush_mean = 0;
   }
   const rush = rush_mean + _slider_points(cfg.sliders.pass_rush);
   let sack_rate = cfg.SACK_BASE + (rush - protection) * cfg.SACK_PER_LINE_POINT;
-  sack_rate -= (qb_decisions - cfg.NEUTRAL) * cfg.SACK_PER_QB_POINT;
+  sack_rate -= qb_decisions * cfg.SACK_PER_QB_POINT;
   // ratings v2: power rush against anchor or speed rush against footwork, then sack escape
   const linemen = _members(offense, ["OL"]);
   if (rushers.length && linemen.length) {
@@ -941,7 +949,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     sack_rate += sign * (rush_lean - line_lean) * cfg.RUSH_MATCHUP_EFFECT;
     last_play["rush"] = power ? "power" : "speed";
   }
-  sack_rate *= Math.max(0.5, 1 - (_attr(qb, "sack_escape") - cfg.ATTR_LEAGUE_AVG) * cfg.SACK_ESCAPE_EFFECT);
+  sack_rate *= Math.max(0.5, 1 - _attr(qb, "sack_escape") * cfg.SACK_ESCAPE_EFFECT);
   sack_rate *= Math.max(0.4, 1 - _tr(qb, "steps_up", "escape_artist", "play_extender") * cfg.TRAIT_FX["sack_avoid"]);
   // coach styles: the DC's blitz (more sacks, more big plays behind it) and the OC's play-action
   const blitz = random.random() < Math.min(0.7, cfg.BLITZ_BASE * blitz_rate / 50);
@@ -975,7 +983,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     qb.stats["sacks_taken"] += 1;
     game_functions.apply_pass_fatigue(offense, defense);
     let strip_chance = cfg.sliders.get_inverse_percentage_adjustment(cfg.sliders.fumble_frequency, cfg.SACK_FUMBLE_CHANCE);
-    strip_chance *= 1 + (cfg.NEUTRAL - qb.strength) / 150;
+    strip_chance *= 1 - (qb.strength || 0) / 60;
     if (random.random() < strip_chance) {
       const spot = Math.max(1, yardline + sack_yards);
       const [result, new_spot] = _lose_fumble(offense, defense, qb, spot, ["DL", "MLB", "ROLB", "LOLB"], 0);
@@ -993,7 +1001,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     last_play["pressured"] = true;
     if (rushers.length) {
       const hurry_weights = [];
-      for (const p of rushers) hurry_weights.push(Math.max(1, p.rushing || 1));
+      for (const p of rushers) hurry_weights.push(_rel(p.rushing));
       _stat(cfg.stat_rng.choices(rushers, { weights: hurry_weights, k: 1 })[0], "hurries");
       _credit_lineman(offense, "pressures_allowed", "pass_blocking", true);
     }
@@ -1049,7 +1057,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   if (covers.length && random.random() < cfg.CONTESTED_SHARE[depth]) {
     // a defender on him at the catch point: hands in traffic, leaping and height against his
     const cover_weights = [];
-    for (const p of covers) cover_weights.push(Math.max(1, p.coverage || 1));
+    for (const p of covers) cover_weights.push(_rel(p.coverage));
     const defender = random.choices(covers, { weights: cover_weights, k: 1 })[0];
     let catch_ = _attr(target, "contested_catch");     // with his highlight catches in it, when his position has them
     catch_ += (_attr(target, "highlight_catch", catch_) - catch_) * cfg.HIGHLIGHT_CATCH_SHARE;
@@ -1060,8 +1068,8 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     last_play["contested"] = true;
   }
   if (pressured) {
-    completion += cfg.PRESSURE_COMPLETION + (_attr(qb, "pocket_poise") - cfg.ATTR_LEAGUE_AVG) * cfg.POISE_EFFECT
-      + (_attr(qb, "throw_on_move", cfg.ATTR_LEAGUE_AVG) - cfg.ATTR_LEAGUE_AVG) * cfg.THROW_ON_MOVE_EFFECT;
+    completion += cfg.PRESSURE_COMPLETION + _attr(qb, "pocket_poise") * cfg.POISE_EFFECT
+      + _attr(qb, "throw_on_move") * cfg.THROW_ON_MOVE_EFFECT;
     completion += _tr(qb, "unflappable") * cfg.TRAIT_FX["unflappable"]
       + _tr(qb, "accurate_on_the_run", "poised_on_the_run", "off_platform") * cfg.TRAIT_FX["on_the_move"];
   } else {
@@ -1092,7 +1100,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   if (play_action && depth !== "short") {
     const front_iq = _members(defense, ["MLB", "ROLB", "LOLB", "S"]);
     const diag = _static(front_iq, "diag", (ps) => {
-      if (!ps.length) return cfg.ATTR_LEAGUE_AVG;
+      if (!ps.length) return 0;
       let acc = 0;
       for (const p of ps) acc += _attr(p, "diagnosis");
       return acc / ps.length;
@@ -1113,9 +1121,9 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   if (play_functions.CLUTCH_NOW[0]) {
     completion += _tr(qb, "closer") * fx["closer"];
   }
-  completion += (qb_accuracy - cfg.NEUTRAL) * cfg.COMPLETION_PER_QB_POINT;
-  completion += (receiver_skill - cfg.NEUTRAL) * cfg.COMPLETION_PER_RECV_POINT;
-  completion -= (coverage - cfg.NEUTRAL) * cfg.COMPLETION_PER_COV_POINT;
+  completion += qb_accuracy * cfg.COMPLETION_PER_QB_POINT;
+  completion += receiver_skill * cfg.COMPLETION_PER_RECV_POINT;
+  completion -= coverage * cfg.COMPLETION_PER_COV_POINT;
   completion += guessed_play ? cfg.COMPLETION_GUESSED : cfg.COMPLETION_NOT_GUESSED;
   if (down >= 3 && first_down >= 7) {
     completion += cfg.COMPLETION_LONG_3RD;
@@ -1151,9 +1159,9 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     }
     yards *= get(tendencies, "pass_form_yards", 1.0);
     yards *= 1 + (target.speed - db_speed) * cfg.PASS_SPEED_EFFECT
-      - (_group_rating(defense, db_positions, ["tackling"]) - cfg.NEUTRAL) * cfg.PASS_TACKLE_EFFECT;
+      - _group_rating(defense, db_positions, ["tackling"]) * cfg.PASS_TACKLE_EFFECT;
     // a short or intermediate catch broken for a long gain (deep throws have their own yards)
-    let big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * (target.speed / cfg.NEUTRAL)
+    let big_play_chance = cfg.PASS_BREAKAWAY_CHANCE * _rel(target.speed)
       * (1 + _tr(target, "breakaway_speed") * cfg.TRAIT_FX["breakaway"])
       * (blitz ? cfg.BLITZ_BIG_PLAY[0] : cfg.BLITZ_BIG_PLAY[1]);
     if (truthy(get(tendencies, "conservative"))) {
@@ -1217,8 +1225,8 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
 
   // --- Incomplete: interception? ---
   const int_mult = cfg.sliders.get_multiplier(cfg.sliders.interceptions);
-  let int_chance = cfg.INT_BASE + (coverage - cfg.NEUTRAL) * cfg.INT_PER_COV_POINT;
-  int_chance -= (qb_decisions - cfg.NEUTRAL) * cfg.INT_PER_QB_POINT;
+  let int_chance = cfg.INT_BASE + coverage * cfg.INT_PER_COV_POINT;
+  int_chance -= qb_decisions * cfg.INT_PER_QB_POINT;
   if (guessed_play) {
     int_chance += cfg.INT_GUESSED_BONUS;
   }
@@ -1226,18 +1234,18 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   // ratings v2: deep and hurried throws are picked off more, ball-hawking defenders pick more
   int_chance *= cfg.INT_DEPTH_MULT[depth];
   if (pressured) {
-    int_chance *= Math.max(1.0, cfg.INT_PRESSURE_MULT - (_attr(qb, "pocket_poise") - cfg.ATTR_LEAGUE_AVG) * cfg.INT_POISE_EFFECT);
+    int_chance *= Math.max(1.0, cfg.INT_PRESSURE_MULT - _attr(qb, "pocket_poise") * cfg.INT_POISE_EFFECT);
   }
   int_chance *= 1 + _tr_points(covers, ["turnover_magnet", "pick_six"]) * cfg.TRAIT_FX["ballhawk"];
   if (covers.length) {
     let acc = 0;
     for (const p of covers) acc += _attr(p, "ball_skills");
     const skills = acc / covers.length;
-    int_chance *= Math.max(0.5, 1 + (skills - cfg.ATTR_LEAGUE_AVG) * cfg.INT_BALL_SKILLS_EFFECT);
+    int_chance *= Math.max(0.5, 1 + skills * cfg.INT_BALL_SKILLS_EFFECT);
   }
   if (covers.length && random.random() < int_chance) {
     const pick_weights = [];
-    for (const p of covers) pick_weights.push(Math.pow(Math.max(1, p.coverage || 1) / cfg.NEUTRAL, cfg.INT_SKILL_POWER));
+    for (const p of covers) pick_weights.push(Math.pow(_rel(p.coverage), cfg.INT_SKILL_POWER));
     const picker = random.choices(covers, { weights: pick_weights, k: 1 })[0];
     last_play["picked_by"] = picker.name;
     qb.stats["interceptions_thrown"] += 1;
@@ -1245,13 +1253,13 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     _stat(picker, "passes_defended");
     game_functions.apply_pass_fatigue(offense, defense);
     const spot = Math.max(1, Math.min(99, yardline + random.randint(5, 25)));   // where the ball was caught
-    if (spot < 60 && random.random() < cfg.PICK_SIX_CHANCE * (picker.speed / cfg.NEUTRAL)) {
+    if (spot < 60 && random.random() < cfg.PICK_SIX_CHANCE * _rel(picker.speed)) {
       _stat(picker, "defensive_touchdowns");
       _stat(picker, "interception_return_yards", spot);    // the spot is the yards the defense must return it
       play_functions.debug_td_stats.push({ type: "defensive_interception", player: picker.name, position: picker.position });
       return ["defensive_touchdown", 100];
     }
-    const return_yards = random.randint(0, 15) + int(picker.speed / 10);
+    const return_yards = random.randint(0, 15) + int(Math.max(0, cfg.REF_POINTS + (picker.speed || 0)) / 4);
     _stat(picker, "interception_return_yards", return_yards);
     if (verbose) {
       console.log("Intercepted by", picker.name);
@@ -1264,12 +1272,12 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   // a running quarterback scrambles more; defenders who read it, less
   const scramble_mult = (1 + _tr(qb, "option_maestro", "tuck_and_run") * cfg.TRAIT_FX["scramble"])
     * Math.max(0.5, 1 - _tr_points(_members(defense, ["MLB", "ROLB", "LOLB", "S", "DE"]), ["option_killer"]) * cfg.TRAIT_FX["option_killer"]);
-  if (random.random() < cfg.SCRAMBLE_CHANCE * (qb.speed / cfg.NEUTRAL) * scramble_mult) {
+  if (random.random() < cfg.SCRAMBLE_CHANCE * _rel(qb.speed) * scramble_mult) {
     qb.stats["pass_attempts"] -= 1;
     target.stats["targets"] -= 1;
     last_play["scramble"] = true;
     let yards;
-    if (random.random() < 0.5 + (qb.speed - 50) / 100) {
+    if (random.random() < 0.55 + (qb.speed || 0) / 40) {
       yards = random.randint(1, 12);
     } else {
       yards = -random.randint(1, 5);
@@ -1294,7 +1302,7 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
   // About a third of incompletions are a defender's play on the ball (stat only).
   if (covers.length && cfg.stat_rng.random() < 0.35) {
     const pd_weights = [];
-    for (const p of covers) pd_weights.push(Math.max(1, p.coverage || 1));
+    for (const p of covers) pd_weights.push(_rel(p.coverage));
     _stat(cfg.stat_rng.choices(covers, { weights: pd_weights, k: 1 })[0], "passes_defended");
   }
   return ["incomplete", 0];
@@ -1313,6 +1321,7 @@ Object.assign(play_functions, {
   _rating,
   _attr,
   _attr_mean,
+  _rel,
   _routes,
   _throw_depth,
   _tr,

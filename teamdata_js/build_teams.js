@@ -1,16 +1,15 @@
 // A league's teams as the play engine reads them: each team in the source format (a career's league.js makes it from
-// the league: the players' ratings back on the scale the engine's formulas were tuned on) converted to the engine's
-// roster format. The first season's teams are not built: they are the roster file, read by rosters.js with these same
-// formulas.
+// the league: every player's card numbers) converted to the engine's roster format. The first season's teams are not
+// built: they are the roster file, read by rosters.js with these same formulas.
 //
-// Rating map (source ratings are 0-99 with 50 = average FBS player):
+// What the engine plays with, from a player's card numbers:
 //
 //     speed            0.7 speed + 0.3 acceleration
 //     strength         strength (RB: average with trucking and stiff arm)
 //     intelligence     awareness (defense: average of awareness and play recognition)
 //     endurance        stamina
 //     QB passing       0.3 short + 0.35 mid + 0.2 deep accuracy + 0.15 throw power
-//     QB decisions     0.6 awareness + 0.4 throw under pressure
+//     QB decisions     his own Decision Making
 //     RB elusiveness   agility, juke, spin, break tackle, change of direction
 //     RB vision        ball carrier vision
 //     WR/TE hands      catching, catch in traffic, spectacular catch
@@ -22,23 +21,22 @@
 //     coverage         man coverage, zone coverage
 //     K / P            kick power, kick accuracy
 //
-// Every mapped attribute is then re-centred so that the league-average FBS starter at that
-// position group sits at NEUTRAL (the engine's reference point), with the spread scaled by
-// SPREAD_SCALE. The engine was calibrated on rating differences, so this keeps a league
-// of these teams playing like FBS football while preserving who is better than whom.
+// Each is put against the average FBS starter at his position (card numbers, frozen: game_scale's starter_means):
+// the engine reads card points over that average, so a 0 is an average starter wherever he plays and a point is a
+// card point. His card's attributes go the same way (game_scale's attribute_means).
 import { round, int, sum, sorted, minBy, maxBy, get, isNumber, truthy, cmp, fmt, pyfloat } from "../engine_js/pyrt.js";
 import { mean, median, pstdev } from "../engine_js/pystat.js";
 import { read_json, env } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "./game_scale.js";
 import { ratings as rv2 } from "./ratings.js";   // ratings v2: the player attributes (docs/RATINGS_V2.md)
-import { shown } from "./shown.js";
 import { recruits, pypow } from "../career_js/recruits.js";
 
 const ROOT = ".";   // the project root: files.js reads paths from it
 
-const NEUTRAL = 55;          // engine reference rating (engine_js/game_config.js)
-const SPREAD_SCALE = 1.50;   // rating points of spread kept per source point; tuned with tools/realism.mjs
+// What the play engine reads for a player: card points over the average FBS starter at his position (each position's
+// averages are card numbers, game_scale's starter_means), so a 0 is an average starter wherever he plays and a point
+// is a card point.
 // Diminishing returns at the top (team_level): of a team's talent above the FBS starter average,
 // only this share counts. Through week 8 of 2026 a point of rating gap was worth 1.4 real points
 // of margin between Power 4 teams and 3.1 between Group of Five teams; the sim paid 2.0 in both,
@@ -97,7 +95,7 @@ export function display_school(name) {
 }
 
 // avg(r, *keys, default=50.0): `keys` is an array here, the default after it.
-export function avg(r, keys, default_ = 50.0) {
+export function avg(r, keys, default_ = game_scale.MISSING) {
   const vals = [];
   for (const k of keys) if (isNumber(get(r, k))) vals.push(r[k]);
   return vals.length ? sum(vals) / vals.length : default_;
@@ -113,9 +111,9 @@ export function clamp_tendency(x) {
   return int(round(Math.max(0, Math.min(100, x))));
 }
 
-export function to_engine(v, mean_) {
-  // A source value on the engine scale: `mean` lands on NEUTRAL, the spread is scaled by SPREAD_SCALE.
-  return build_teams.NEUTRAL + (v - mean_) * build_teams.SPREAD_SCALE;
+export function edge(v, mean_) {
+  // Card points over the average starter (`mean_`, a card number), to a tenth.
+  return round(v - mean_, 1);
 }
 
 export function depth_key(p) {
@@ -124,31 +122,31 @@ export function depth_key(p) {
 }
 
 export function _skills_at(r, pos, out) {
-  // The attributes engine position `pos` plays with, from source ratings `r`, written into `out` (over the ones
+  // The attributes engine position `pos` plays with, from card numbers `r`, written into `out` (over the ones
   // every position shares). Its own function so rating a player at every position (ratings_at_every_position) does
   // not rebuild his whole card eleven times.
   if (pos === "QB") {
-    out["passing"] = (0.3 * get(r, "throw_accuracy_short", 50) + 0.35 * get(r, "throw_accuracy_mid", 50)
-                      + 0.2 * get(r, "throw_accuracy_deep", 50) + 0.15 * get(r, "throw_power", 50));
-    out["decision_making"] = 0.6 * get(r, "awareness", 50) + 0.4 * get(r, "throw_under_pressure", 50);
+    out["passing"] = (0.3 * get(r, "throw_accuracy_short", game_scale.MISSING) + 0.35 * get(r, "throw_accuracy_mid", game_scale.MISSING)
+                      + 0.2 * get(r, "throw_accuracy_deep", game_scale.MISSING) + 0.15 * get(r, "throw_power", game_scale.MISSING));
+    out["decision_making"] = 0.6 * get(r, "awareness", game_scale.MISSING) + 0.4 * get(r, "throw_under_pressure", game_scale.MISSING);
     out["elusiveness"] = avg(r, ["agility", "juke_move", "break_sack"]);
-    out["vision"] = get(r, "bc_vision", 50);
-    out["hands"] = get(r, "carrying", 50);
+    out["vision"] = get(r, "bc_vision", game_scale.MISSING);
+    out["hands"] = get(r, "carrying", game_scale.MISSING);
   } else if (pos === "RB") {
     out["strength"] = avg(r, ["strength", "trucking", "stiff_arm"]);
     out["elusiveness"] = avg(r, ["agility", "juke_move", "spin_move", "break_tackle", "change_of_direction"]);
-    out["vision"] = get(r, "bc_vision", 50);
-    out["hands"] = get(r, "catching", 50);
+    out["vision"] = get(r, "bc_vision", game_scale.MISSING);
+    out["hands"] = get(r, "catching", game_scale.MISSING);
     out["route_running"] = avg(r, ["short_route_running", "medium_route_running"]);
-    out["run_blocking"] = get(r, "run_block", 50);
-    out["pass_blocking"] = get(r, "pass_block", 50);
+    out["run_blocking"] = get(r, "run_block", game_scale.MISSING);
+    out["pass_blocking"] = get(r, "pass_block", game_scale.MISSING);
   } else if (pos === "WR" || pos === "TE") {
     out["hands"] = avg(r, ["catching", "catch_in_traffic", "spectacular_catch"]);
     out["route_running"] = avg(r, ["short_route_running", "medium_route_running", "deep_route_running", "release"]);
     out["elusiveness"] = avg(r, ["agility", "juke_move", "change_of_direction"]);
-    out["vision"] = get(r, "bc_vision", 50);
+    out["vision"] = get(r, "bc_vision", game_scale.MISSING);
     out["run_blocking"] = avg(r, ["run_block", "impact_blocking"]);
-    out["pass_blocking"] = get(r, "pass_block", 50);
+    out["pass_blocking"] = get(r, "pass_block", game_scale.MISSING);
   } else if (pos === "OL") {
     out["run_blocking"] = avg(r, ["run_block", "run_block_power", "run_block_finesse"]);
     out["pass_blocking"] = avg(r, ["pass_block", "pass_block_power", "pass_block_finesse"]);
@@ -166,37 +164,28 @@ export function _skills_at(r, pos, out) {
     out["intelligence"] = avg(r, ["awareness", "play_recognition"]);
     out["coverage"] = avg(r, ["man_coverage", "zone_coverage"]);
     out["tackling"] = avg(r, ["tackle", "pursuit"]);
-    out["hands"] = get(r, "catching", 50);
+    out["hands"] = get(r, "catching", game_scale.MISSING);
     out["rushing"] = avg(r, ["power_moves", "finesse_moves", "block_shedding"]);
   } else if (pos === "K") {
-    out["kick_power"] = get(r, "kick_power", 50);
-    out["kick_accuracy"] = get(r, "kick_accuracy", 50);
+    out["kick_power"] = get(r, "kick_power", game_scale.MISSING);
+    out["kick_accuracy"] = get(r, "kick_accuracy", game_scale.MISSING);
   } else if (pos === "P") {
-    out["punt_power"] = get(r, "kick_power", 50);
-    out["punt_accuracy"] = get(r, "kick_accuracy", 50);
+    out["punt_power"] = get(r, "kick_power", game_scale.MISSING);
+    out["punt_accuracy"] = get(r, "kick_accuracy", game_scale.MISSING);
   }
 }
 
-export function decision_making(mix, moved) {
-  // What a save from before Decision Making was a rating of its own kept for a quarterback whose file number was
-  // typed by hand: `mix` (what his awareness and his poise under pressure gave), moved by `moved` points of the scale
-  // the game shows (league.js "dm"). Read only for a player who has no Decision Making of his own yet (own_decision).
-  if (!truthy(moved)) return mix;
-  return shown.to_base(Math.max(1, Math.min(99, shown.from_base_exact(mix) + moved)));
-}
-
 export function own_decision(p) {
-  // A quarterback's own Decision Making on the source scale, or null when he has none stored. It is a rating of its
-  // own (the player's rule: every rating a card prints is one that is stored, and the sim plays that one): the roster
-  // file's "Decision Making", and in a career the league's "dmv", on the scale the game shows. Nothing of his Football
-  // IQ or his Pocket Poise is in it.
+  // A quarterback's own Decision Making, or null when he has none stored. It is a rating of its own (the player's
+  // rule: every rating a card prints is one that is stored, and the sim plays that one): the roster file's "Decision
+  // Making", and in a career the league's "dmv". Nothing of his Football IQ or his Pocket Poise is in it.
   const v = get(p, "dmv");
-  return isNumber(v) ? shown.to_base(Math.max(1, Math.min(99, v))) : null;
+  return isNumber(v) ? Math.max(1, Math.min(99, v)) : null;
 }
 
 export function map_player(p, pos = null) {
-  // Raw engine attributes (before normalization) for one source player, at his own
-  // position or, with `pos`, as if he played another engine position.
+  // A player's engine attributes in card numbers (before they are put against his position's average starters), at
+  // his own position or, with `pos`, as if he played another engine position. `p["ratings"]`: his card numbers.
   const r = p["ratings"];
   pos = pos || get(build_teams.POSITION_MAP, p["position"]);
   if (pos === null) return {};
@@ -208,22 +197,22 @@ export function map_player(p, pos = null) {
     "overall": p["overall"],
     // his overall (game_scale.overall on his card numbers): the player card's overall. The engine never reads it.
     "ovr": get(p, "ovr") !== null ? p["ovr"] : (game_scale.has_overall()
-      ? game_scale.overall(game_scale.card_from_base(r), p["position"], get(p, "dmv")) : null),
+      ? game_scale.overall(r, p["position"], get(p, "dmv")) : null),
     // identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
     "class": get(p, "class"),
     "height": get(p, "height"),
     "weight": get(p, "weight_lbs"),
     "jersey": get(p, "jersey"),
     "dev_trait": get(p, "dev_trait"),
-    "speed": 0.7 * get(r, "speed", 50) + 0.3 * get(r, "acceleration", 50),
-    "strength": get(r, "strength", 50),
-    "intelligence": get(r, "awareness", 50),
-    "endurance": get(r, "stamina", 50),
+    "speed": 0.7 * get(r, "speed", game_scale.MISSING) + 0.3 * get(r, "acceleration", game_scale.MISSING),
+    "strength": get(r, "strength", game_scale.MISSING),
+    "intelligence": get(r, "awareness", game_scale.MISSING),
+    "endurance": get(r, "stamina", game_scale.MISSING),
     // Return rating: the EA kick-return skill plus the traits a returner uses.
-    "return_rating": (0.35 * get(r, "kick_return", 50) + 0.20 * get(r, "speed", 50)
-                      + 0.15 * get(r, "acceleration", 50)
+    "return_rating": (0.35 * get(r, "kick_return", game_scale.MISSING) + 0.20 * get(r, "speed", game_scale.MISSING)
+                      + 0.15 * get(r, "acceleration", game_scale.MISSING)
                       + 0.15 * avg(r, ["agility", "juke_move", "change_of_direction"])
-                      + 0.10 * get(r, "bc_vision", 50) + 0.05 * get(r, "carrying", 50)),
+                      + 0.10 * get(r, "bc_vision", game_scale.MISSING) + 0.05 * get(r, "carrying", game_scale.MISSING)),
   };
   _skills_at(r, pos, out);
   if (pos === "QB") {
@@ -232,7 +221,6 @@ export function map_player(p, pos = null) {
     // _skills_at gave him
     const own = own_decision(p);
     if (own !== null) out["decision_making"] = own;
-    else if (truthy(get(p, "dm"))) out["decision_making"] = decision_making(out["decision_making"], p["dm"]);
   }
   return out;
 }
@@ -243,15 +231,14 @@ const ATTRS = ["speed", "strength", "intelligence", "endurance", "passing", "dec
 // Return rating is centred on the league's designated returners rather than per position.
 const RETURN_ATTR = "return_rating";
 
-// After normalization (overnight review, bug 8). Re-centring on the starter mean and
-// stretching by SPREAD_SCALE turns an ordinary raw value into an extreme one when the
-// position's starters bunch: linemen got coverage of 90-99 and a few starting receivers
-// route running of 1. A skill a position does not use is held to OFF_SKILL_RANGE; a core
+// Held inside sensible bounds (overnight review, bug 8): against his position's average starters an ordinary value
+// is an extreme one when the position's starters bunch (linemen far above average in coverage, a few starting
+// receivers far below in route running). A skill a position does not use is held to OFF_SKILL_RANGE; a core
 // skill (CORE_SKILLS, below) of an established player (an overall of CORE_FLOOR_OVR or more) keeps CORE_FLOOR.
 // Speed, strength, intelligence and endurance are left alone.
 const PHYSICAL = ["speed", "strength", "intelligence", "endurance"];   // every position uses these
-const OFF_SKILL_RANGE = [25, 85];
-const CORE_FLOOR = 20, CORE_FLOOR_OVR = 60;   // *tune* an overall of 60 or more (the rule as first set)
+const OFF_SKILL_RANGE = [-12, 12];           // card points either side of the position's average starter
+const CORE_FLOOR = -14, CORE_FLOOR_OVR = 60;  // *tune* card points under the average starter; an overall of 60 or more (the rule as first set)
 const CLAMP_EXTREMES = !env.BUILD_NO_CLAMP;   // BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 // -> a Set of slugs
@@ -286,20 +273,18 @@ export function team_from_source(t) {
     [m["role"], m["depth"]] = roles.has(p["slug"]) ? roles.get(p["slug"]) : [null, null];
     m["_src"] = p;
     // his ratings as card numbers (game_scale.keys() order), what comps and the card overall read
-    m["skills"] = truthy(get(p, "skills")) ? p["skills"] : game_scale.keys().map((k) => get(game_scale.card_from_base(p["ratings"]), k, game_scale.MISSING));
+    m["skills"] = truthy(get(p, "skills")) ? p["skills"] : game_scale.keys().map((k) => get(p["ratings"], k, game_scale.MISSING));
     if (get(p, "target_mult") !== null) {          // a career's league: his share of targets, kept with him
       m["target_mult"] = p["target_mult"];
     }
-    // ratings v2: the attributes on the source scale (house_attributes puts them on ours),
-    // the measurables, the earned traits and the play style
+    // ratings v2: his card's attributes in card numbers (house_attributes puts them against his group's average
+    // starters), the measurables, the earned traits and the play style
     m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], m["role"]);
     if (isNumber(get(m["_attr_raw"], "decision_making"))) {       // his own Decision Making (own_decision above)
       const own = own_decision(p);
       if (own !== null) {
-        m["_attr_raw"]["decision_making"] = round(own, 1);
-        m["dmv"] = Math.max(1, Math.min(99, p["dmv"]));
-      } else if (truthy(get(p, "dm"))) {
-        m["_attr_raw"]["decision_making"] = round(decision_making(m["_attr_raw"]["decision_making"], p["dm"]), 1);
+        m["_attr_raw"]["decision_making"] = own;
+        m["dmv"] = own;
       }
     }
     m["height_in"] = rv2.height_inches(get(p, "height"));
@@ -326,14 +311,14 @@ export function team_from_source(t) {
       "tempo": get(oc["tendencies"], "tempo", 50),
       "fourth_down_go_rate": get(hc["tendencies"], "fourth_down_go_rate", 50),
       "blitz_rate": get(dc["tendencies"], "blitz_rate", 50),
-      "oc_play_calling": get(oc["ratings"], "play_calling", 50),
-      "dc_play_calling": get(dc["ratings"], "play_calling", 50),
+      "oc_play_calling": get(oc["ratings"], "play_calling", 70),
+      "dc_play_calling": get(dc["ratings"], "play_calling", 70),
       // coach styles: what the coordinators like to call and the head coach's discipline
       "deep_shot_rate": get(oc["tendencies"], "deep_shot_rate", 50),
       "play_action_rate": get(oc["tendencies"], "play_action_rate", 50),
       "man_coverage_rate": get(dc["tendencies"], "man_coverage_rate", 50),
       "press_rate": get(dc["tendencies"], "press_rate", 50),
-      "discipline": get(hc["ratings"], "discipline", 50),
+      "discipline": get(hc["ratings"], "discipline", 70),
       ...(get(t, "rb_lead_feature") !== null ? { "rb_lead_feature": t["rb_lead_feature"] } : {}),
     },
     "slug": t["slug"],
@@ -496,159 +481,75 @@ export function clamp_extremes(p) {
 }
 
 const P4_CONFERENCES = new Set(["ACC", "Big Ten", "Big 12", "SEC"]);
-const ATTR_BELOW = 0.6;          // below the Power 4 starter mean a standard deviation is worth 60% as much (season.BELOW)
-const USE_FROZEN = true;         // game_scale.fit() builds once without the frozen scale, to measure it
-const ATTR_SCALE = {};           // "group|attribute" -> [Power 4 starter mean, slope above, slope below]
-
 export function _attr_group(p) {
-  // The scale group for a player's attributes (fullbacks are measured against the backs).
+  // The group a player's card attributes are put against (fullbacks against the backs).
   const g = rv2.card_group(p["position"], get(p, "role"));
   return g === "FB" ? "RB" : g;
 }
 
-// Whether the frozen scale's file is there: a host without it throws.
-function _scale_file_exists() {
-  try {
-    game_scale.data();
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-export function attribute_scale(teams) {
-  // Ratings v2: the house scale for every attribute at every position group, from the
-  // Power 4 starters (50 at the middle one, 15 a standard deviation above, 9 below).
-  const vals = {}, p4 = {};
-  for (const t of teams) {
-    if (t["fictional"]) continue;
-    const top = build_teams.P4_CONFERENCES.has(t["conference"]) || t["slug"] === "notre-dame";
-    for (const p of t["players"]) {
-      for (const [k, v] of Object.entries(get(p, "_attr_raw") || {})) {
-        const key = `${_attr_group(p)}|${k}`;
-        if (vals[key] === undefined) vals[key] = [];
-        vals[key].push(v);
-        if (top && p["starter"]) {
-          if (p4[key] === undefined) p4[key] = [];
-          p4[key].push(v);
-        }
-      }
-    }
-  }
-  const scale = build_teams.ATTR_SCALE;
-  for (const k of Object.keys(scale)) delete scale[k];
-  if (build_teams.USE_FROZEN && _scale_file_exists()) {   // the game's scale is frozen (game_scale.js): every season reads it the same
-    Object.assign(scale, game_scale.card_scale());
-    return scale;
-  }
-  for (const [key, v] of Object.entries(vals)) {
-    const ref = get(p4, key, []).length >= 10 ? p4[key] : v;
-    const sd = ref.length > 1 ? Math.max(2.0, pstdev(ref)) : 6.0;
-    scale[key] = [round(median(ref), 2), round(15 / sd, 4), round(15 / sd * build_teams.ATTR_BELOW, 4)];
-  }
-  return scale;
-}
-
-export function house_attributes_of(p) {
-  // One player's attributes on the house scale (1-99).
+export function attributes_of(p) {
+  // One player's card attributes as the engine reads them: card points over the average FBS starter in his card group
+  // (game_scale's attribute_means), a tenth at a time.
   const out = {};
-  const g = _attr_group(p);
-  for (const [k, v] of Object.entries(get(p, "_attr_raw") || {})) {
-    const [m, hi, lo] = get(build_teams.ATTR_SCALE, `${g}|${k}`, [v, 1.5, 0.9]);
-    out[k] = clamp_rating(50 + (v - m) * (v >= m ? hi : lo));
-  }
+  const g = _attr_group(p), means = get(game_scale.data(), "attribute_means") || {};
+  for (const [k, v] of Object.entries(get(p, "_attr_raw") || {})) out[k] = edge(v, get(means, `${g}|${k}`, v));
   return out;
 }
 
 export function house_attributes(teams) {
-  attribute_scale(teams);
-  for (const t of teams) {
-    for (const p of t["players"]) {
-      p["attributes"] = house_attributes_of(p);
-      // his own Decision Making shows as the number he has, while his card holds this value (rosters.shown_attribute:
-      // the card's scale cannot say every number)
-      if (isNumber(get(p, "dmv")) && isNumber(get(p["attributes"], "decision_making"))) {
-        p["filed_own"] = { decision_making: [p["attributes"]["decision_making"], p["dmv"]] };
-      }
-    }
-  }
+  for (const t of teams) for (const p of t["players"]) p["attributes"] = attributes_of(p);
 }
 
 export function normalize(teams, frozen = null) {
-  // Re-centre every attribute per position group on the FBS starter mean: this build's own
-  // (the real 2026 rosters), or `frozen` ("POS:attr" -> mean; a career's later seasons read the
-  // real 2026 build's, so a league's talent and its depth charts show in the engine as they are).
-  // (The means are keyed by "position:attribute", the same text the frozen means and the answer are keyed by.)
+  // Every engine attribute as card points over the average FBS starter at his position: the frozen averages
+  // (game_scale's starter_means, "POS:attr" -> a card number), or with `frozen` false this build's own starters'
+  // (the roster file's, to measure them). The return rating is put against the league's designated returners.
   const ATTRS_ = build_teams.ATTRS, RETURN = build_teams.RETURN_ATTR;
-  if (truthy(frozen)) {
-    const means_f = { ...frozen };
-    const return_mean_f = get(means_f, `returners:${RETURN}`, 50.0);
-    delete means_f[`returners:${RETURN}`];
+  let means = frozen === false ? null : { ...(truthy(frozen) ? frozen : game_scale.starter_means()) };
+  if (means === null) {
+    const groups = new Map();
     for (const t of teams) {
+      if (t["fictional"]) continue;
       for (const p of t["players"]) {
-        for (const a of ATTRS_) {
-          if (p[a] !== undefined) p[a] = clamp_rating(to_engine(p[a], get(means_f, `${p["position"]}:${a}`, 50.0)));
-        }
-        p[RETURN] = clamp_rating(to_engine(p[RETURN], return_mean_f));
-        clamp_extremes(p);
-      }
-    }
-    return { ...frozen };
-  }
-  const groups = new Map();       // "position:attribute" -> [position, attribute, values]
-  for (const t of teams) {
-    if (t["fictional"]) continue;
-    for (const p of t["players"]) {
-      if (p["starter"]) {
-        for (const a of ATTRS_) {
-          if (p[a] !== undefined) {
-            const k = `${p["position"]}:${a}`;
-            if (!groups.has(k)) groups.set(k, [p["position"], a, []]);
-            groups.get(k)[2].push(p[a]);
-          }
+        if (!p["starter"]) continue;
+        for (const a of ATTRS_) if (p[a] !== undefined) {
+          const k = `${p["position"]}:${a}`;
+          if (!groups.has(k)) groups.set(k, []);
+          groups.get(k).push(p[a]);
         }
       }
     }
-  }
-  const means = new Map();        // "position:attribute" -> [position, attribute, mean]
-  for (const [k, [pos, a, v]] of groups) means.set(k, [pos, a, mean(v)]);
-  const returners = [];
-  for (const t of teams) {
-    if (t["fictional"]) continue;
-    for (const p of t["players"]) {
-      if (p["slug"] === t["kick_returner"] || p["slug"] === t["punt_returner"]) returners.push(p[RETURN]);
+    means = {};
+    for (const [k, v] of sorted([...groups.entries()], (e) => e[0])) means[k] = round(mean(v), 1);
+    const returners = [];
+    for (const t of teams) {
+      if (t["fictional"]) continue;
+      for (const p of t["players"]) if (p["slug"] === t["kick_returner"] || p["slug"] === t["punt_returner"]) returners.push(p[RETURN]);
     }
+    means[`returners:${RETURN}`] = returners.length ? round(mean(returners), 1) : game_scale.MISSING;
   }
-  const return_mean = returners.length ? mean(returners) : 50.0;
+  const return_mean = get(means, `returners:${RETURN}`, game_scale.MISSING);
   for (const t of teams) {
     for (const p of t["players"]) {
-      for (const a of ATTRS_) {
-        if (p[a] !== undefined) {
-          const m = means.get(`${p["position"]}:${a}`);
-          p[a] = clamp_rating(to_engine(p[a], m === undefined ? 50.0 : m[2]));
-        }
-      }
-      p[RETURN] = clamp_rating(to_engine(p[RETURN], return_mean));
+      for (const a of ATTRS_) if (p[a] !== undefined) p[a] = edge(p[a], get(means, `${p["position"]}:${a}`, p[a]));
+      p[RETURN] = edge(p[RETURN], return_mean);
       clamp_extremes(p);
     }
   }
-  means.set(`returners:${RETURN}`, ["returners", RETURN, return_mean]);
-  const out = {};
-  for (const [pos, a, m] of sorted(means.values(), (e) => [e[0], e[1]])) out[`${pos}:${a}`] = round(m, 1);
-  return out;
+  return means;
 }
 
 export function team_level(teams) {
-  // Diminishing returns at the top. A team's level is its starters' mean engine rating over
-  // NEUTRAL across the composites; above zero only TEAM_LEVEL_TOP_SCALE of it counts, and every
-  // player on the team moves down by the rest (the same amount, so who is better than whom on
-  // the roster does not change). Returns {slug: shift} in engine points.
+  // Diminishing returns at the top. A team's level is its starters' mean edge over their positions' average starters
+  // across the engine attributes; above zero only TEAM_LEVEL_TOP_SCALE of it counts, and every player on the team
+  // moves down by the rest (the same amount, so who is better than whom on the roster does not change). Returns
+  // {slug: shift} in card points.
   const shifts = {};
   for (const t of teams) {
     const vals = [];
     for (const p of t["players"]) {
       if (!p["starter"]) continue;
-      for (const a of build_teams.ATTRS) if (isNumber(get(p, a))) vals.push(p[a] - build_teams.NEUTRAL);
+      for (const a of build_teams.ATTRS) if (isNumber(get(p, a))) vals.push(p[a]);
     }
     const level = vals.length ? mean(vals) : 0.0;
     const shift = level > 0 ? -(1.0 - build_teams.TEAM_LEVEL_TOP_SCALE) * level : 0.0;
@@ -656,9 +557,7 @@ export function team_level(teams) {
     shifts[t["slug"]] = shift;
     if (shift) {
       for (const p of t["players"]) {
-        for (const a of build_teams.ATTRS) {
-          if (isNumber(get(p, a))) p[a] = clamp_rating(p[a] + shift);
-        }
+        for (const a of build_teams.ATTRS) if (isNumber(get(p, a))) p[a] = round(p[a] + shift, 1);
       }
     }
   }
@@ -670,83 +569,24 @@ const CORE_SKILLS = { QB: ["passing", "decision_making"], RB: ["elusiveness", "v
   OL: ["run_blocking", "pass_blocking"], DL: ["rushing", "tackling"], MLB: ["tackling", "coverage"], CB: ["coverage"],
   S: ["coverage", "tackling"], K: ["kick_power", "kick_accuracy"], P: ["punt_power", "punt_accuracy"] };
 
-export function player_overall(p) {
-  // A display rating from the engine attributes that matter at the position (the same
-  // formula as season.player_overall).
-  const pos = p["position"];
-  let primary, secondary;
-  if (pos === "K") [primary, secondary] = [["kick_power", "kick_accuracy"], []];
-  else if (pos === "P") [primary, secondary] = [["punt_power", "punt_accuracy"], []];
-  else if (pos === "QB") [primary, secondary] = [["passing", "decision_making", "intelligence"], ["speed", "elusiveness"]];
-  else if (pos === "RB") [primary, secondary] = [["speed", "elusiveness", "vision", "strength"], ["hands", "pass_blocking"]];
-  else if (pos === "WR" || pos === "TE") [primary, secondary] = [["hands", "route_running", "speed"], ["run_blocking", "elusiveness"]];
-  else if (pos === "OL") [primary, secondary] = [["run_blocking", "pass_blocking", "strength"], ["intelligence"]];
-  else if (pos === "DL") [primary, secondary] = [["rushing", "tackling", "strength"], ["intelligence", "speed"]];
-  else if (pos === "MLB" || pos === "ROLB" || pos === "LOLB") [primary, secondary] = [["tackling", "rushing", "coverage", "speed"], ["intelligence"]];
-  else [primary, secondary] = [["coverage", "speed", "tackling"], ["intelligence", "hands"]];
-  let total = 0, count = 0;
-  for (const k of primary) {
-    if (isNumber(get(p, k))) {
-      total += p[k] * 3;
-      count += 3;
-    }
-  }
-  for (const k of secondary) {
-    if (isNumber(get(p, k))) {
-      total += p[k];
-      count += 1;
-    }
-  }
-  return count ? round(total / count) : 0;
+// the EA position a player is rated at for each engine position (linebackers share the middle one's)
+const RATED_AS = { QB: "QB", RB: "HB", WR: "WR", TE: "TE", OL: "LG", DL: "DT", MLB: "MIKE", CB: "CB", S: "FS", K: "K", P: "P" };
+
+export function rated_at(m, pos) {
+  // A player's overall at engine position `pos` (what he would be moved there: position_fit.project on his card
+  // numbers, his build against the spot's); "KR" his Return Skill. At his own position it is his overall.
+  const keys = game_scale.keys(), card = {};
+  (get(m, "skills") || []).forEach((v, i) => { if (i < keys.length) card[keys[i]] = v; });
+  if (pos === "KR") return get(card, "kick_return", game_scale.MISSING);
+  if (pos === m["position"] && isNumber(get(m, "ovr"))) return m["ovr"];
+  const to = get(build_teams.RATED_AS, pos, pos), pf = modules.position_fit;
+  const own_pos = get(m, "source_position") || get(m, "role") || m["position"];
+  return pf ? pf.project(card, get(m, "height_in"), get(m, "weight"), own_pos, to) : game_scale.overall(card, to);
 }
 
-export function ratings_at_every_position(teams, means) {
-  // Give every player a rating at every engine position: his source ratings run through
-  // that position's attribute formulas, normalized with that position's starter means,
-  // then scored like a native player. Linebacker roles share the MLB rating.
-  const mean_at = {};       // position -> each attribute's starter mean there
-  for (const t of teams) {
-    for (const m of t["players"]) {
-      const src = m["_src"] === undefined ? null : m["_src"];
-      delete m["_src"];
-      if (src === null) {              // no source card to convert
-        m["ratings_at"] = {};
-        for (const pos of build_teams.ENGINE_POSITIONS) m["ratings_at"][pos] = pos === m["position"] ? m["overall"] : 16;
-        m["ratings_at"]["KR"] = m[build_teams.RETURN_ATTR];
-        continue;
-      }
-      const out = {};
-      const r = src["ratings"];
-      const shift = get(t, "level_shift", 0.0);
-      // what every position shares, worked out once (map_player's own lines)
-      const shared = { "speed": 0.7 * get(r, "speed", 50) + 0.3 * get(r, "acceleration", 50), "strength": get(r, "strength", 50),
-        "intelligence": get(r, "awareness", 50), "endurance": get(r, "stamina", 50) };
-      for (const pos of build_teams.ENGINE_POSITIONS) {
-        const raw = { ...shared };
-        _skills_at(r, pos, raw);
-        let at = mean_at[pos];
-        if (at === undefined) {
-          at = mean_at[pos] = {};
-          for (const a of build_teams.ATTRS) at[a] = get(means, `${pos}:${a}`, 50.0);
-        }
-        const attrs = {};
-        for (const [a, v] of Object.entries(raw)) {
-          if (isNumber(v)) attrs[a] = clamp_rating(to_engine(v, at[a]) + shift);
-        }
-        attrs["position"] = pos;
-        let rating = player_overall(attrs);
-        if (pos !== m["position"]) {
-          // away from his own position a player is no better than his weakest core skill allows
-          const core = [];
-          for (const a of get(build_teams.CORE_SKILLS, pos, [])) if (attrs[a] !== undefined) core.push(attrs[a]);
-          if (core.length) rating = Math.min(rating, Math.min(...core) + 15);
-        }
-        out[pos] = rating;
-      }
-      out["KR"] = m[build_teams.RETURN_ATTR];
-      m["ratings_at"] = out;
-    }
-  }
+export function ratings_at_every_position(teams) {
+  // (A player's overall at another position is worked out when a page asks: rated_at.)
+  for (const t of teams) for (const m of t["players"]) delete m["_src"];
 }
 
 export function measured_recruiting(teams) {
@@ -805,16 +645,16 @@ export function build(sources, real = true, observed = null, quiet = false, styl
   // when its head coach changes).
   const say = quiet ? () => null : (...a) => console.log(...a);
   const teams = sources.map((t) => team_from_source(t));
-  const means = normalize(teams, real ? null : game_scale.engine_means());
+  const means = normalize(teams, real ? false : null);
   const shifts = team_level(teams);
   const moved = Object.values(shifts).filter((v) => v);
   if (!quiet) {
     say(`team level: ${moved.length} teams above the FBS starter average shifted `
-      + `${_fmt1(minBy(Object.values(shifts)))} to ${_fmt1(moved.length ? maxBy(moved) : 0)} engine points (top scale ${_float_text(build_teams.TEAM_LEVEL_TOP_SCALE)})`);
+      + `${_fmt1(minBy(Object.values(shifts)))} to ${_fmt1(moved.length ? maxBy(moved) : 0)} card points (top scale ${_float_text(build_teams.TEAM_LEVEL_TOP_SCALE)})`);
   }
   house_attributes(teams);
   for (const t of teams) depth_sort(t);
-  ratings_at_every_position(teams, means);
+  ratings_at_every_position(teams);
   const tendency_means = normalize_tendencies(teams);
   decouple_discipline(teams);
   if (!quiet) say("league tendency means before centring:", _dict_text(tendency_means));
@@ -823,10 +663,8 @@ export function build(sources, real = true, observed = null, quiet = false, styl
   if (real) {
     say("head coaches' recruiting ratings from their measured edge:", measured_recruiting(teams));
   }
-  const out = { "neutral": build_teams.NEUTRAL, "spread_scale": build_teams.SPREAD_SCALE,
-    "team_level_top_scale": build_teams.TEAM_LEVEL_TOP_SCALE,
-    "starter_means_before_normalization": means, "tendency_means": tendency_means,
-    "attribute_scale": { ...build_teams.ATTR_SCALE }, "teams": {} };
+  const out = { "team_level_top_scale": build_teams.TEAM_LEVEL_TOP_SCALE, "starter_means": means,
+    "tendency_means": tendency_means, "teams": {} };
   for (const t of teams) {
     const [offense, defense] = engine_roster(t);
     const rec = {};
@@ -839,15 +677,15 @@ export function build(sources, real = true, observed = null, quiet = false, styl
 }
 
 export const build_teams = {
-  ROOT, NEUTRAL, SPREAD_SCALE, TEAM_LEVEL_TOP_SCALE, POSITION_MAP, OFFENSE, OFF_STATS, DEF_STATS, SHARED_STATS,
-  SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, to_engine, depth_key, _skills_at, decision_making, own_decision, map_player,
+  ROOT, TEAM_LEVEL_TOP_SCALE, POSITION_MAP, OFFENSE, OFF_STATS, DEF_STATS, SHARED_STATS,
+  SCHOOL_DISPLAY, display_school, avg, clamp_rating, clamp_tendency, edge, depth_key, _skills_at, own_decision, map_player,
   ATTRS, RETURN_ATTR, PHYSICAL, OFF_SKILL_RANGE, CORE_FLOOR, CORE_FLOOR_OVR, CLAMP_EXTREMES,
   starter_slugs, team_from_source, TENDENCY_KEYS, normalize_tendencies, decouple_discipline,
   OBSERVED, GAME_SCRIPT_PASS, FOURTH_PER_MARGIN, PASS_RATE_SLOPE, TEMPO_SLOPE, SCRAMBLE_SHARE, apply_observed_tendencies,
   LB_ROLES,
   depth_sort, established, clamp_extremes,
-  P4_CONFERENCES, ATTR_BELOW, USE_FROZEN, ATTR_SCALE, _attr_group, attribute_scale, house_attributes_of, house_attributes,
-  normalize, team_level, ENGINE_POSITIONS, CORE_SKILLS, player_overall, ratings_at_every_position, measured_recruiting,
+  P4_CONFERENCES, _attr_group, attributes_of, house_attributes,
+  normalize, team_level, ENGINE_POSITIONS, CORE_SKILLS, RATED_AS, rated_at, ratings_at_every_position, measured_recruiting,
   engine_roster, build,
 };
 

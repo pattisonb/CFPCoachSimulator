@@ -26,7 +26,7 @@ import { pstdev, median } from "../../engine_js/pystat.js";
 import { read_text, read_json, write_text, exists, env } from "../../engine_js/files.js";
 import { modules, has as module_loaded } from "../../engine_js/modules.js";
 import { ratings as ratings_v2 } from "../../teamdata_js/ratings.js";
-import { shown as _shown } from "../../teamdata_js/shown.js";     // the scale ratings are shown on (a view's last step)
+import { game_scale } from "../../teamdata_js/game_scale.js";
 import "../../teamdata_js/rosters.js";                           // the roster file's reader (modules.rosters: load_teams)
 import { polls } from "../polls.js";
 import { fcs_names } from "../fcs_names.js";
@@ -168,9 +168,6 @@ function load_teams() {
       if (truthy(get(t, "offense"))) t["team_ratings"] = season.game_ratings(t);
     }
     clear(season._teams_meta);
-    const attribute_scale = get(data, "attribute_scale"), spread_scale = get(data, "spread_scale");
-    Object.assign(season._teams_meta, { attribute_scale: truthy(attribute_scale) ? attribute_scale : {},
-      spread_scale: truthy(spread_scale) ? spread_scale : 1.5 });
   }
   return season._teams_cache;
 }
@@ -184,7 +181,7 @@ function use_league(path) {
   season._teams_cache = {};
   season._TEAMS = {};
   season._STAR_CUTS = null;
-  for (const c of [season._teams_meta, season._scale_cache, season._race_cache, season._preview_cache]) clear(c);
+  for (const c of [season._teams_meta, season._race_cache, season._preview_cache]) clear(c);
   season.close_pool();                              // the workers hold the old league
   // (a module that is not loaded has cached nothing)
   if (module_loaded("recruiting")) modules.recruiting.reset_caches();
@@ -208,129 +205,37 @@ function _is_p4(slug, team) {
   return polls.P4.has(team["conference"]) || slug === "notre-dame";
 }
 
-// ----- the house rating scale ------------------------------------------------------------
-// What the pages show. The engine keeps position-relative values (a
-// typical FBS starter at the position is 55); the house scale puts the middle Power 4
-// starter (the median: half are better, half worse) at 50, and a Power 4 starter one, two and three standard deviations better at 65,
-// 80 and 95. Below the Power 4 starter average a standard deviation is worth 60% as much
-// (BELOW): a typical Power 4 backup or Group of 5 starter reads about 40, not the 20s.
-// A card's overall is our overall (game_scale.js: a fixed formula on our ratings, frozen from the
-// 2026 rosters); "rated at" numbers come from the engine values on the same shape. One pair of
-// slopes per position group, computed once.
+// ----- a player's numbers on the page: his card numbers -------------------------------------------------------------
 
 season.SCALE_GROUP = { MLB: "LB", ROLB: "LB", LOLB: "LB" };    // linebackers share one group (the roles are small)
-season.BELOW = 0.6;      // below the Power 4 starter average, a standard deviation is worth 60% as much
-// (the keys are the text "group|key", and a value is [p4_mean, slope_above, slope_below])
-season._scale_cache = {};
-
-function _house_scale() {
-  // "group|key" -> [p4_mean, slope_above, slope_below] for every attribute and 'overall'.
-  if (!empty(season._scale_cache)) return season._scale_cache;
-  const teams = season.load_teams();
-  const all_vals = {};
-  const p4_vals = {};
-  for (const [slug, t] of Object.entries(teams)) {
-    if (truthy(t["fictional"])) continue;
-    const p4 = season._is_p4(slug, t);
-    for (const p of [...t["offense"], ...t["defense"]]) {
-      const g = get(season.SCALE_GROUP, p["position"], p["position"]);
-      const keys = [];
-      for (const [k] of season.RATING_LABELS) if (isNumber(get(p, k))) keys.push([k, p[k]]);
-      keys.push(["overall", season.player_overall(p)]);
-      for (const [k, v] of keys) {
-        const gk = `${g}|${k}`;
-        (all_vals[gk] ??= []).push(v);
-        if (p4 && truthy(get(p, "in_game"))) (p4_vals[gk] ??= []).push(v);
-      }
-    }
-  }
-  // the slopes come from the position's overall, so a player's attributes keep their
-  // proportions; each attribute has its own Power 4 starter mean as the 50 mark
-  const slopes = {};
-  for (const [gk, vals] of Object.entries(all_vals)) {
-    const [g, k] = gk.split("|");
-    if (k !== "overall") continue;
-    const p4 = truthy(get(p4_vals, gk)) ? p4_vals[gk] : vals;
-    const sd4 = p4.length > 1 ? pstdev(p4) : 0.0;
-    const k_hi = Math.max(0.5, Math.min(4.0, sd4 > 1.0 ? 15 / sd4 : 2.0));
-    slopes[g] = [k_hi, k_hi * season.BELOW];
-  }
-  for (const [gk, vals] of Object.entries(all_vals)) {
-    const p4 = truthy(get(p4_vals, gk)) ? p4_vals[gk] : vals;
-    const [k_hi, k_lo] = get(slopes, gk.split("|")[0], [1.5, 1.5]);
-    season._scale_cache[gk] = [median(p4), k_hi, k_lo];
-  }
-  // the returner scale is one scale for every position (a linebacker's own would put any return
-  // rating above the linebackers' 1 at 99): the league's designated returners are its 50 mark
-  const rets = [];
-  for (const t of Object.values(teams)) {
-    if (truthy(t["fictional"])) continue;
-    for (const p of [...t["offense"], ...t["defense"]]) {
-      if (![get(t, "kick_returner"), get(t, "punt_returner")].includes(get(p, "slug"))) continue;
-      const v = get(p, "return_rating");
-      if (isNumber(v)) rets.push(v);
-    }
-  }
-  if (rets.length > 1) {
-    const sd = pstdev(rets);
-    const k_hi = Math.max(0.5, Math.min(4.0, sd > 1.0 ? 15 / sd : 2.0));
-    season._scale_cache["KR|return_rating"] = [median(rets), k_hi, k_hi * season.BELOW];
-  }
-  return season._scale_cache;
-}
 
 season.RETURN_POSITIONS_OUT = ["K", "P", "OL", "DL", "QB"];   // never returners, as the engine's best_returner has it
 
+function card_of(p) {
+  // His ratings by skill (game_scale.keys() order in "skills"), the card numbers everything on the page reads.
+  const out = {}, keys = game_scale.keys(), v = get(p, "skills") || [];
+  for (let i = 0; i < keys.length && i < v.length; i++) out[keys[i]] = v[i];
+  return out;
+}
+
 function return_value(p) {
-  // A player's return rating in engine units: the roster's, else what the engine falls back to
-  // (speed and elusiveness, roster.return_skill).
-  const v = get(p, "return_rating");
-  if (isNumber(v)) return int(v);
-  return int(round(((get(p, "speed") || 50) + (get(get(p, "attributes") || {}, "elusiveness") || get(p, "elusiveness") || 50)) / 2));
-}
-
-function house_value(pos, key, v) {
-  // An engine value of attribute `key` (or 'overall') at `pos` on the house scale.
-  const [m4, k_hi, k_lo] = get(season._house_scale(), `${get(season.SCALE_GROUP, pos, pos)}|${key}`, [55.0, 1.5, 1.5]);
-  const out = 50 + (v - m4) * (v >= m4 ? k_hi : k_lo);
-  return int(round(Math.max(1, Math.min(99, out))));
-}
-
-function house_to_engine(pos, key, ours) {
-  // The inverse: a house-scale rating typed in god mode back into engine units.
-  const [m4, k_hi, k_lo] = get(season._house_scale(), `${get(season.SCALE_GROUP, pos, pos)}|${key}`, [55.0, 1.5, 1.5]);
-  const v = m4 + (ours - 50) / (ours >= 50 ? k_hi : k_lo);
-  return int(round(Math.max(1, Math.min(99, v))));
-}
-
-function display_rating(p, key, value = null) {
-  const pos = key === "return_rating" ? "KR" : p["position"];      // the return rating is on the returners' scale, whoever he is
-  return season.house_value(pos, key, value === null || value === undefined ? get(p, key) : value);
-}
-
-function engine_rating(p, key, ours) {
-  return season.house_to_engine(p["position"], key, ours);
+  // His Return Skill (a returner's own rating).
+  return int(get(season.card_of(p), "kick_return", game_scale.MISSING));
 }
 
 function shown_overall(p, base = null) {
-  // The overall on the card (game_scale.overall, built onto every player as "ovr"). A
-  // god-mode edit moves it by what the edit does to the engine composite (`base` is the unedited
-  // player). A player without one (added from real box scores) shows the engine composite.
-  if (!isNumber(get(p, "ovr"))) return season.house_value(p["position"], "overall", season.player_overall(p));
-  let out = p["ovr"];
-  if (base !== null && base !== undefined && base !== p && base["position"] === p["position"]) {   // a position change recomputes "ovr" itself
-    out += season.house_value(p["position"], "overall", season.player_overall(p)) - season.house_value(base["position"], "overall", season.player_overall(base));
-  }
-  return int(Math.max(1, Math.min(99, out)));
+  // The overall on the card (game_scale.overall, built onto every player as "ovr", and worked out again from his
+  // ratings when an edit changed them). `base` is unused (a god-mode edit changes his ratings themselves).
+  if (isNumber(get(p, "ovr"))) return int(Math.max(1, Math.min(99, p["ovr"])));
+  const card = season.card_of(p);
+  return Object.keys(card).length ? game_scale.overall(card, game_scale.card_position(p), get(p, "dmv")) : game_scale.MISSING;
 }
 
-function page_attribute(p, key, value) {
-  // One of his card's attributes as the page shows it (teamdata_js/shown.js), at his card's position group. A rating
-  // that is one rating in the roster file shows as the file has it (rosters.js shown_attribute), while the card still
-  // holds the value the file gave it: the number in the file is the number on the card.
-  const filed = truthy(get(p, "filed")) || truthy(get(p, "filed_own")) ? modules.rosters.shown_attribute(p, key, value) : null;
-  if (filed !== null) return filed;
-  return _shown.attribute(value, ratings_v2.card_group(p["position"], get(p, "role")), key);
+function page_attribute(p, key, value = null) {
+  // One of his card's attributes as the page shows it: the card number of the rating it is (his own Decision Making
+  // for a quarterback who has one).
+  const card = season.card_of(p);
+  return Object.keys(card).length ? int(round(game_scale.card_value(card, key, get(p, "dmv")))) : value;
 }
 
 function page_overall(p, base = null) {
@@ -379,7 +284,7 @@ season.FCS_TIERS = {
     "Fordham", "Stony Brook", "Bryant", "Prairie View", "Alcorn State", "Grambling", "Alabama State",
     "Hampton", "Howard", "Tennessee State", "Portland State", "Southeast Missouri", "Colgate"],
 };
-season.FCS_TIER_SHIFT = { strong: 9.0, good: 3.0, weak: -7.0 };
+season.FCS_TIER_SHIFT = { strong: 3.6, good: 1.2, weak: -2.8 };   // card points
 
 function fcs_strength(name) {
   // Rating shift for the real FCS school `name` (ESPN display name); 0 when unlisted.
@@ -1183,7 +1088,7 @@ function _update_polls_after_week(state, teams, week) {
 
 Object.assign(season, {
   week_of_date, load_teams, use_league, activate, season_year, _is_p4,
-  _house_scale, return_value, house_value, house_to_engine, display_rating, engine_rating, shown_overall,
+  card_of, return_value, shown_overall,
   page_attribute, page_overall, same_group, tier_of, _tiers,
   fcs_strength, fcs_label, stand_in_names, team_display, team_in_line, fcs_map,
   _real_polls_2026, _real_ap_votes_2026, _poll_seed, _ballot_poll,

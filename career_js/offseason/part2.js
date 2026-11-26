@@ -9,7 +9,6 @@ import { round, int, sum, cmp, sorted, maxBy, get, truthy, range, floordiv } fro
 import { mean as st_mean, pstdev as st_pstdev } from "../../engine_js/pystat.js";
 import { modules } from "../../engine_js/modules.js";
 import { personnel } from "../../engine_js/personnel.js";
-import { shown } from "../../teamdata_js/shown.js";
 import { league as lg } from "../league.js";
 import { position_fit } from "../position_fit.js";
 import { programs } from "../programs.js";

@@ -262,7 +262,7 @@ export function sim_play(offense_team, defense_team, down, first_down_yardage, y
   _clear_dict(play_functions.last_play);
   let off_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.offensive_penalties, cfg.OFF_PENALTY_CHANCE);
   // ratings v2: a smart unit commits fewer penalties
-  off_penalty_chance *= Math.max(0.5, 1 - (_unit_iq(offense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT);
+  off_penalty_chance *= Math.max(0.5, 1 - _unit_iq(offense) * cfg.PENALTY_IQ_EFFECT);
   off_penalty_chance *= Math.max(0.5, 1 - (get(off_tendencies, "discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT);
   if (random.random() < off_penalty_chance) {
     const penalty_type = random.choices(
@@ -279,7 +279,7 @@ export function sim_play(offense_team, defense_team, down, first_down_yardage, y
   }
 
   let def_penalty_chance = sliders.get_inverse_percentage_adjustment(sliders.defensive_penalties, cfg.DEF_PENALTY_CHANCE);
-  def_penalty_chance *= Math.max(0.5, 1 - (_unit_iq(defense) - cfg.ATTR_LEAGUE_AVG) * cfg.PENALTY_IQ_EFFECT);
+  def_penalty_chance *= Math.max(0.5, 1 - _unit_iq(defense) * cfg.PENALTY_IQ_EFFECT);
   def_penalty_chance *= Math.max(0.5, 1 - (get(def_tendencies, "discipline", 50) - 50) * cfg.DISCIPLINE_EFFECT);
   if (random.random() < def_penalty_chance) {
     const penalty_type = random.choices(["offside", "pass_interference", "facemask"], { weights: [0.4, 0.4, 0.2], k: 1 })[0];
@@ -354,11 +354,11 @@ export function sim_play(offense_team, defense_team, down, first_down_yardage, y
   return [play_ran, result, yards_gained, ...clock(result, oob, first_down)];
 }
 
-/** The on-field unit's average Football IQ (ratings v2, house scale). */
+/** The on-field unit's average Football IQ (card points over the average starter in each one's card group). */
 export function _unit_iq(players) {
   const vals = [];
   for (const p of players) vals.push(p._iq);
-  return vals.length ? sum(vals) / vals.length : 50.0;
+  return vals.length ? sum(vals) / vals.length : 0.0;
 }
 
 /**
@@ -506,7 +506,7 @@ export function attempt_kick(yardline, kicker, defense_team = null) {
   }
   if (!found) throw new Error("StopIteration");
   make *= sliders.get_multiplier(sliders.kicking_accuracy);
-  make += ((kicker.kick_accuracy || cfg.NEUTRAL) - cfg.NEUTRAL) * cfg.FG_PER_ACCURACY_POINT;
+  make += (kicker.kick_accuracy || 0) * cfg.FG_PER_ACCURACY_POINT;
   if (distance < 40) {
     make += get(_traits_of(kicker), "automatic", 0) * cfg.TRAIT_FX["automatic"];
   }
@@ -619,7 +619,7 @@ export function _attempt_punt(yardline, punter, defense_team = null, return_team
   // Would carry inside the 10: the punter aims short of the goal line (a pooch or a
   // coffin-corner kick) and either pins the receiving team or loses it into the end zone.
   if (landing >= 90) {
-    let pin = cfg.PUNT_PIN_CHANCE + ((punter.punt_accuracy || cfg.NEUTRAL) - cfg.NEUTRAL) / 100;
+    let pin = cfg.PUNT_PIN_CHANCE + (punter.punt_accuracy || 0) * cfg.PUNT_PIN_PER_POINT;
     pin += get(_traits_of(punter), "pin_artist", 0) * cfg.TRAIT_FX["pin_artist"];   // a pin artist pins more
     if (random.random() < pin) {
       const spot = Math.min(landing, random.randint(88, 99));
@@ -694,12 +694,12 @@ export function _hail_mary(offense, defense, yardline, seconds_remaining) {
   if (qb === null || !targets.length) {
     return ["pass", "end_of_half", yardline, seconds_remaining];
   }
-  const target = maxBy(targets, (p) => (p.hands || 50) + (p.speed || 50));
+  const target = maxBy(targets, (p) => (p.hands || 0) + (p.speed || 0));
   _clear_dict(play_functions.last_play);
   const hm = _log({ type: "pass", result: "incomplete", down: null, dist: null, yl: yardline, yards: 0, to: yardline, left: seconds_remaining, hail_mary: true, qb: qb.name, target: target.name, target_pos: target.position });
   qb.stats["pass_attempts"] += 1;
   target.stats["targets"] += 1;
-  if (random.random() < cfg.HAIL_MARY_SUCCESS * (1 + (getattr(qb, "passing", 50) - cfg.NEUTRAL) / 100)) {
+  if (random.random() < cfg.HAIL_MARY_SUCCESS * (1 + getattr(qb, "passing", 0) * cfg.HAIL_MARY_PER_POINT)) {
     const yards = 100 - yardline;
     qb.stats["completions"] += 1;
     qb.stats["pass_yards"] += yards;

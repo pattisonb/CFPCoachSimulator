@@ -10,11 +10,11 @@ import { FORM_ATTRS, with_form } from "./game_job.js";
 const ATTRS = FORM_ATTRS;
 
 export function _moved(p, keys, shift) {
-  // A copy of the player with the ratings in `keys` moved by `shift` (held to 1-99).
+  // A copy of the player with the ratings in `keys` moved by `shift` card points.
   const q = { ...p };
   for (const k of keys) {
     const v = get(p, k);
-    if (isNumber(v)) q[k] = Math.max(1, Math.min(99, int(round(v + shift))));
+    if (isNumber(v)) q[k] = round(v + shift, 1);
   }
   return q;
 }

@@ -12,7 +12,6 @@ import { awards } from "../awards.js";
 import { bowls } from "../bowls.js";
 import { coaches } from "../coaches.js";
 import { polls } from "../polls.js";
-import { shown as _shown } from "../../teamdata_js/shown.js";
 
 // ----- small helpers (this file's own, not on the namespace) ----------------------------------------------------
 

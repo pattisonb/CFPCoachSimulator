@@ -5,9 +5,9 @@ All values range from 0-100, where 50 = default/normal
 Adjusting above 50 increases that attribute, below 50 decreases it
 
 The TUNING block below holds every calibration constant the engine uses. They were
-calibrated against FBS averages. Ratings are 0-100 and the
-formulas are written as differences from NEUTRAL, so a league of better or worse teams
-still plays like football; only the gap between the two teams decides the game.
+calibrated against FBS averages. The engine reads each player's card numbers as card points
+over the average FBS starter at his position, so a league of better or worse teams still
+plays like football; only the gap between the two teams decides the game.
 */
 
 import { Random } from "./pyrt.js";
@@ -130,24 +130,30 @@ cfg.QUARTER_SECONDS = 900;
 // The seconds a play takes are set in the "Situational football" block below.
 cfg.LATE_GAME_DRAG = 0.10;            // plays take up to this much longer at the end of a half
 
-// The rating that formulas treat as "average FBS starter".
-cfg.NEUTRAL = 55;
+// What the engine reads of a player is card points over the average FBS starter at his position (0 is an average
+// starter: teamdata_js/build_teams.js). A formula that weighs a player against the average does it against REF_POINTS:
+// (REF_POINTS + his points) / REF_POINTS is 1 for the average starter. *tune*
+cfg.REF_POINTS = 22;
+cfg.FATIGUE_STEP = 0.4;                // a tired player's attributes move in steps of this many card points
+cfg.BLAME_REF = 18.4;                  // a blocker's weight for a sack or a stuffed run he is blamed for: this less his points
+// A return rating as return_skill reads it (0-1): the league's average returner's, and how much a card point over him adds
+cfg.RETURN_SKILL_AVG = 0.55;
+cfg.RETURN_SKILL_PER_POINT = 0.025;
 
 // Penalties per snap (before the sliders).
 cfg.OFF_PENALTY_CHANCE = 0.050;
 cfg.DEF_PENALTY_CHANCE = 0.035;
 // ----- Turnovers, injuries and penalties (ratings v2, phase 5) -----
-// Multipliers around 1 that average out over the league, per house-scale point over the FBS
-// starter average (ATTR_LEAGUE_AVG; 50 is the Power 4 starter average, FBS starters sit at 45-48).
-cfg.ATTR_LEAGUE_AVG = 46;
-cfg.FUMBLE_SECURITY_EFFECT = 0.0072;    // fumble chance x (1 - this per point of the carrier's Ball Security)
-cfg.FUMBLE_HIT_EFFECT = 0.0048;         // ... x (1 + this per point of the tacklers' Hit Power)
+// Multipliers around 1 that average out over the league, per card point of an attribute over the average FBS starter
+// in his card group.
+cfg.FUMBLE_SECURITY_EFFECT = 0.0144;    // fumble chance x (1 - this per point of the carrier's Ball Security)
+cfg.FUMBLE_HIT_EFFECT = 0.0096;         // ... x (1 + this per point of the tacklers' Hit Power)
 cfg.INT_DEPTH_MULT = {"short": 0.75, "mid": 1.05, "deep": 1.65};    // deep throws are picked off more (averages about 1)
 cfg.INT_PRESSURE_MULT = 1.3;           // a hurried throw ...
-cfg.INT_POISE_EFFECT = 0.006;          // ... less so for a poised quarterback (per point of Pocket Poise)
-cfg.INT_BALL_SKILLS_EFFECT = 0.004;    // x (1 + this per point of the coverage players' Ball Skills)
-cfg.INJURY_DURABILITY_EFFECT = 0.012;  // injury chance x (1 - this per point of Durability)
-cfg.PENALTY_IQ_EFFECT = 0.006;         // penalty chance x (1 - this per point of the unit's Football IQ)
+cfg.INT_POISE_EFFECT = 0.012;          // ... less so for a poised quarterback (per point of Pocket Poise)
+cfg.INT_BALL_SKILLS_EFFECT = 0.008;    // x (1 + this per point of the coverage players' Ball Skills)
+cfg.INJURY_DURABILITY_EFFECT = 0.024;  // injury chance x (1 - this per point of Durability)
+cfg.PENALTY_IQ_EFFECT = 0.012;         // penalty chance x (1 - this per point of the unit's Football IQ)
 // ----- Traits (ratings v2, phase 6) -----
 // Each trait (ratings.TRAITS) has a tier, 1 bronze to 4 platinum; the effects below are per
 // tier. A unit's traits add up ("points" = the sum of the tiers on the field).
@@ -176,7 +182,7 @@ cfg.TRAIT_FX = {
     "ballhawk": 0.006,            // interception x (1 + this per point)
     "tackle": 0.009,              // run yards - this per point of the front's tackling and shedding traits
     "hitter": 0.012,              // fumble x (1 + this per point) of the hitters on the field
-    "iron_horse": 0.9,             // stamina (endurance) points
+    "iron_horse": 0.36,            // endurance, card points a tier
     "quick_recovery": 0.045,      // sideline recovery x (1 + this)
     "long_range": 0.6,             // field-goal range, yards
     "automatic": 0.006,           // make chance on kicks under 40 yards
@@ -228,12 +234,12 @@ cfg.DEEP_SHOT_EFFECT = 0.012;          // deep share x (1 + this per point of th
 cfg.PLAY_ACTION_BASE = 0.20;           // share of first- and second-down dropbacks with a play-action fake
 cfg.PLAY_ACTION_RATE_EFFECT = 0.015;   // ... x (1 + this per point of the OC's play-action rate over 50)
 cfg.PLAY_ACTION_COMPLETION = 0.05;     // intermediate and deep throws off a fake that holds
-cfg.PLAY_ACTION_SKILL = 0.0015;        // ... per point of the QB's Play-Action over the front's Diagnosis
+cfg.PLAY_ACTION_SKILL = 0.003;        // ... per point of the QB's Play-Action over the front's Diagnosis
 cfg.PLAY_ACTION_DEEP = 1.3;            // deep share x this off a fake
 cfg.PLAY_ACTION_SACK = 1.15;           // sack rate x this (the longer dropback)
 cfg.MAN_RATE_EFFECT = 0.008;           // man share + this per point of the DC's man-coverage rate over 50
 cfg.PRESS_RATE = 0.5;                  // share of man calls with press at a press rate of 50 (x rate / 50)
-cfg.PRESS_EFFECT = 0.00125;            // short and intermediate completion per point of Release over the coverage's Press
+cfg.PRESS_EFFECT = 0.0025;            // short and intermediate completion per point of Release over the coverage's Press
 cfg.BLITZ_BASE = 0.25;                 // share of dropbacks blitzed at a blitz rate of 50 (x rate / 50)
 cfg.BLITZ_SACK = [1.35, 0.883];        // sack rate x (blitz, no blitz): about 1 on average (1.6/0.8 magnified talent edges)
 cfg.BLITZ_BIG_PLAY = [1.35, 0.883];    // long-gain chance x (blitz, no blitz): fewer men in coverage
@@ -243,31 +249,30 @@ cfg.DISCIPLINE_EFFECT = 0.01;          // penalty chance x (1 - this per point o
 // ----- Passing -----
 cfg.THROWAWAY_CHANCE = 0.03;
 cfg.SACK_BASE = 0.050;                // per dropback with equal lines
-cfg.SACK_PER_LINE_POINT = 0.0015;     // per point of (pass rush - pass protection)
-cfg.SACK_PER_QB_POINT = 0.0004;       // per point of QB decision making above neutral (fewer sacks)
+cfg.SACK_PER_LINE_POINT = 0.00375;     // per point of (pass rush - pass protection)
+cfg.SACK_PER_QB_POINT = 0.001;       // per point of QB decision making above neutral (fewer sacks)
 cfg.SACK_GUESSED_BONUS = 0.035;       // defense called a pass defense
 // ----- Pass rush and protection (ratings v2, phase 4) -----
 // Each dropback the rush is a power rush or a speed rush (the rushers' style tilts it). Power
 // Rush meets Pass Pro: Anchor and Speed Rush meets Footwork, each as the side's lean over its
 // own average of the two (the composites still set the level). Rates per house-scale point.
 cfg.RUSH_POWER_SHARE = 0.5;
-cfg.RUSH_STYLE_TILT = 0.01;            // power share + this per point of the rushers' power over speed
-cfg.RUSH_MATCHUP_EFFECT = 0.0012;      // sack rate per point of (the rushers' lean in this rush - the line's lean against it)
-cfg.SACK_ESCAPE_EFFECT = 0.0024;        // sack rate x (1 - this per point of Sack Escape over 50)
+cfg.RUSH_STYLE_TILT = 0.02;            // power share + this per point of the rushers' power over speed
+cfg.RUSH_MATCHUP_EFFECT = 0.0024;      // sack rate per point of (the rushers' lean in this rush - the line's lean against it)
+cfg.SACK_ESCAPE_EFFECT = 0.0048;        // sack rate x (1 - this per point of Sack Escape over the average quarterback)
 // Pressure that does not become a sack now hurries the throw: completion falls, less for a
 // poised quarterback, and the stat credit follows the same pressure.
 cfg.PRESSURE_PER_SACK_RATE = 2.5;      // pressure chance = this x the sack rate (at most 0.6)
 cfg.PRESSURE_COMPLETION = -0.08;       // completion change when pressured
-cfg.POISE_EFFECT = 0.0015;             // ... back by this per point of Pocket Poise over 50
-cfg.THROW_ON_MOVE_EFFECT = 0.0010;     // *tune* ... and by this per point of Throwing on the Move over the league average (a pressured throw is off platform)
+cfg.POISE_EFFECT = 0.003;             // ... back by this per point of Pocket Poise over the average quarterback
+cfg.THROW_ON_MOVE_EFFECT = 0.002;     // *tune* ... and by this per point of Throwing on the Move over the league average (a pressured throw is off platform)
 cfg.SACK_YARDS = [7.5, 2.0];          // gauss mean, sd (loss)
 cfg.SACK_FUMBLE_CHANCE = 0.13;
 cfg.COMPLETION_BASE = 0.652;          // equal QB, receiver and coverage (0.641 before pressure cost completions)
-cfg.COMPLETION_PER_QB_POINT = 0.0013;    // was 0.0026: per engine point of the starting QB, team completion % moved 0.20 in the
-// sim against 0.095 real (2026 through week 8, all units in the fit), and the sim's margin
-// paid the QB 0.155 points per point beyond the team overall against 0.05 real
-cfg.COMPLETION_PER_RECV_POINT = 0.0015;
-cfg.COMPLETION_PER_COV_POINT = 0.0032;    // was 0.0025: points allowed per defense-rating point -0.28 in the sim vs -0.50 real
+cfg.COMPLETION_PER_QB_POINT = 0.00325;    // per card point of the starting QB over the average (fit so the QB's pull on team
+// completion % and margin matched the real 2026 seasons through week 8)
+cfg.COMPLETION_PER_RECV_POINT = 0.00375;
+cfg.COMPLETION_PER_COV_POINT = 0.008;    // per card point of the coverage over the average (fit to points allowed by defense rating)
 cfg.COMPLETION_GUESSED = -0.055;
 cfg.COMPLETION_NOT_GUESSED = 0.015;
 cfg.COMPLETION_LONG_3RD = -0.05;      // 3rd/4th and 7+
@@ -277,8 +282,8 @@ cfg.COMPLETION_MIN = 0.25; cfg.COMPLETION_MAX = 0.86;
 cfg.RB_TARGET_SHARE = 0.16;           // share of targets that go to running backs
 cfg.TE_TARGET_WEIGHT = 0.75;          // tight ends targeted a bit less than their ratings imply
 cfg.INT_BASE = 0.045;                 // per incompletion (not throwaways); 0.055 gave 2.8 picks per 100 attempts (real 2.24)
-cfg.INT_PER_COV_POINT = 0.0004;        // was 0.0013: interception rate per point of the secondary moved +0.067 in the sim, -0.007 real
-cfg.INT_PER_QB_POINT = 0.0004;         // per point of decision making above neutral (fewer picks); was 0.0013: interception
+cfg.INT_PER_COV_POINT = 0.001;        // was 0.0013: interception rate per point of the secondary moved +0.067 in the sim, -0.007 real
+cfg.INT_PER_QB_POINT = 0.001;         // per point of decision making above neutral (fewer picks); was 0.0013: interception
 // rate per QB point moved -0.055 in the sim, -0.004 real
 cfg.INT_GUESSED_BONUS = 0.02;
 cfg.INT_MIN = 0.02; cfg.INT_MAX = 0.22;
@@ -288,7 +293,7 @@ cfg.PICK_SIX_CHANCE = 0.09;           // of interceptions
 // (10-20) or deep (20+). The share of each, before the receiver's speed and Deep Routes tilt it:
 cfg.PASS_DEPTH_SHARE = {"WR": [0.50, 0.32, 0.18], "TE": [0.58, 0.35, 0.07]};
 cfg.PASS_DEEP_SPEED_TILT = 1.0;        // deep share x (receiver speed / neutral) ** this
-cfg.PASS_DEEP_ROUTE_TILT = 0.006;      // deep share x (1 + this per point of Deep Routes over his route average)
+cfg.PASS_DEEP_ROUTE_TILT = 0.012;      // deep share x (1 + this per point of Deep Routes over his route average)
 cfg.DEPTH_COMPLETION = {"short": 0.08, "mid": -0.05, "deep": -0.24};    // added to the completion chance
 cfg.PASS_YARDS_SHORT = [7.0, 3.0];     // gauss mean, sd of the catch point plus run, before yards after the catch
 cfg.PASS_YARDS_MID = [15.5, 3.5];
@@ -296,20 +301,20 @@ cfg.PASS_YARDS_DEEP = [22, 56];        // uniform
 cfg.PASS_BREAKAWAY_CHANCE = 0.05;      // a short or intermediate catch broken for a long gain (x speed / neutral)
 // The attributes add how a player differs from his own average at each depth (the composites
 // above already set his level), in completion chance per house-scale point:
-cfg.DEPTH_ACCURACY_EFFECT = 0.0025;    // QB accuracy at the throw's depth over his accuracy average
-cfg.ARM_DEEP_EFFECT = 0.0012;          // deep throws: arm strength over his accuracy average
-cfg.ROUTE_DEPTH_EFFECT = 0.0020;       // receiver's route skill at the depth over his route average
+cfg.DEPTH_ACCURACY_EFFECT = 0.005;    // QB accuracy at the throw's depth over his accuracy average
+cfg.ARM_DEEP_EFFECT = 0.0024;          // deep throws: arm strength over his accuracy average
+cfg.ROUTE_DEPTH_EFFECT = 0.004;       // receiver's route skill at the depth over his route average
 // Man or zone, called each pass play; the coverage players' Man or Zone over their average of the two
 cfg.MAN_COVERAGE_SHARE = 0.45;
-cfg.COVERAGE_TYPE_EFFECT = 0.0025;
+cfg.COVERAGE_TYPE_EFFECT = 0.005;
 // Contested catches: a defender on the receiver at the catch point, more often deeper
 cfg.CONTESTED_SHARE = {"short": 0.10, "mid": 0.25, "deep": 0.45};
-cfg.CONTESTED_EFFECT = 0.0035;         // per point of (Contested Catches - defender's Ball Skills) / 2 + leaping and height edge
-cfg.CONTESTED_HEIGHT_POINTS = 2.0;     // an inch of height is worth this many rating points at the catch point
+cfg.CONTESTED_EFFECT = 0.007;         // per point of (Contested Catches - defender's Ball Skills) / 2 + leaping and height edge
+cfg.CONTESTED_HEIGHT_POINTS = 1;     // an inch of height is worth this many rating points at the catch point
 cfg.PASS_YARDS_RB = [5.0, 4.0];       // gauss mean, sd for completions to running backs (receivers and tight ends: by depth above)
-cfg.PASS_SPEED_EFFECT = 0.0035;       // *tune* yards multiplier per point of receiver speed minus DB speed (0.007 ran the top
+cfg.PASS_SPEED_EFFECT = 0.00875;       // *tune* yards multiplier per point of receiver speed minus DB speed (0.007 ran the top
 // receivers' yards a catch over the real leaders': tools/realism.mjs)
-cfg.PASS_TACKLE_EFFECT = 0.006;       // yards multiplier per point of the coverage players' tackling below neutral (yards after the catch)
+cfg.PASS_TACKLE_EFFECT = 0.015;       // yards multiplier per point of the coverage players' tackling below their average (yards after the catch)
 cfg.PASS_BIG_PLAY_YARDS = [22, 65];   // a short or intermediate catch broken for a long gain (PASS_BREAKAWAY_CHANCE)
 cfg.PASS_MIN_YARDS = -2;
 cfg.SCRAMBLE_CHANCE = 0.13;           // of plays with no completion and no pick
@@ -317,25 +322,25 @@ cfg.RECEPTION_FUMBLE_CHANCE = 0.010;
 
 // ----- Rushing -----
 cfg.RUSH_BASE_YARDS = [3.9, 2.7];     // *tune* gauss mean, sd (official YPC counts sacks as runs; 3.75 before the carrier's share below came down)
-cfg.RUSH_PER_LINE_POINT = 0.040;      // yards per point of (run blocking - run defense)
-cfg.RUSH_PER_CARRIER_POINT = 0.020;   // *tune* yards per point of carrier rating above the front seven's pursuit (speed and tackling);
+cfg.RUSH_PER_LINE_POINT = 0.1;      // yards per point of (run blocking - run defense)
+cfg.RUSH_PER_CARRIER_POINT = 0.05;   // *tune* yards per point of carrier rating above the front seven's pursuit (speed and tackling);
 // 0.035 put the 5th and 10th rushers 10-16% over real seasons with the 50th under
 // ----- Running by direction (ratings v2, phase 3) -----
 // Each carry goes inside or outside. Blocking, the front and the carrier's style read
 // differently in each; like the pass game, the attributes add how a player differs from his
 // own average (the composites above still set his level), in yards per house-scale point.
 cfg.RUN_OUTSIDE_SHARE = 0.40;          // of carries, before the carrier's style tilts it
-cfg.RUN_STYLE_TILT = 0.006;            // outside share + this per point of his speed style over his power style
-cfg.RUN_LINE_STYLE_EFFECT = 0.025;     // yards per point: the line's drive (inside) or reach (outside) over its average of the two
-cfg.RUN_FRONT_STYLE_EFFECT = 0.020;    // yards per point: the front's shedding (inside) or pursuit (outside) over its average
+cfg.RUN_STYLE_TILT = 0.012;            // outside share + this per point of his speed style over his power style
+cfg.RUN_LINE_STYLE_EFFECT = 0.05;     // yards per point: the line's drive (inside) or reach (outside) over its average of the two
+cfg.RUN_FRONT_STYLE_EFFECT = 0.04;    // yards per point: the front's shedding (inside) or pursuit (outside) over its average
 cfg.RUN_WEIGHT_EFFECT = 0.015;         // inside runs: yards per pound of line weight over the front's, against the usual gap
 cfg.LINE_WEIGHT_GAP = 52;              // the usual gap: FBS starting linemen 312 lb, starting fronts 260
-cfg.RUN_CARRIER_STYLE_EFFECT = 0.020;  // yards per point: power style inside, speed style outside, over his own average
-cfg.RUN_VISION_EFFECT = 0.015;         // yards per point of Running Vision over his ball-carrying average
-cfg.FINISH_BLOCK_EFFECT = 0.010;       // *tune* yards per point of the line's Finishing Blocks over the league average, every run
-cfg.LEAD_BLOCK_EFFECT = 0.010;         // *tune* yards per point of the lead blockers' Lead Blocking (linemen and a fullback) over the league average, outside runs
+cfg.RUN_CARRIER_STYLE_EFFECT = 0.04;  // yards per point: power style inside, speed style outside, over his own average
+cfg.RUN_VISION_EFFECT = 0.03;         // yards per point of Running Vision over his ball-carrying average
+cfg.FINISH_BLOCK_EFFECT = 0.02;       // *tune* yards per point of the line's Finishing Blocks over the league average, every run
+cfg.LEAD_BLOCK_EFFECT = 0.02;         // *tune* yards per point of the lead blockers' Lead Blocking (linemen and a fullback) over the league average, outside runs
 cfg.HIGHLIGHT_CATCH_SHARE = 0.3;       // *tune* how much of a contested catch is Highlight Catches (the rest Contested Catches)
-cfg.SHORT_YARDAGE_STYLE_EFFECT = 0.0024;    // conversion chance per point of power running and drive blocking over shedding
+cfg.SHORT_YARDAGE_STYLE_EFFECT = 0.0048;    // conversion chance per point of power running and drive blocking over shedding
 cfg.RUSH_GUESSED = -0.9;
 cfg.RUSH_NOT_GUESSED = 0.5;
 cfg.RUSH_BIG_PLAY_CHANCE = 0.045;     // per carry (scaled by carrier speed)
@@ -352,15 +357,16 @@ cfg.FUMBLE_RETURN_TD_CHANCE = 0.05;   // of fumbles lost beyond midfield
 cfg.FG_MAX_DISTANCE = 52;             // yards, average kicker; + (kick_power - 50) / 8
 cfg.FG_LONG_ATTEMPT_CHANCE = 0.6;     // chance to attempt (rather than punt) from 50+ yards (was 0.45: 1.4 tries a game, real 1.6)
 cfg.FG_MAKE = [[30, 0.95], [39, 0.86], [46, 0.74], [52, 0.58], [999, 0.40]];    // average kicker, by distance
-cfg.FG_PER_ACCURACY_POINT = 0.004;    // make chance per point of kick accuracy above neutral
+cfg.FG_PER_ACCURACY_POINT = 0.01;     // make chance per point of kick accuracy over the average kicker
 cfg.TRAILING_LATE_SECONDS = 420;      // trailing in the 2nd half with this much left: go for it
 cfg.TYING_KICK_MAX_DISTANCE = 50;     // down 1-3 late: kick from this distance or closer instead of going for it
 cfg.TRAILING_DESPERATE_SECONDS = 240;   // down one score: desperation fourth downs only inside 4:00
 cfg.TRAILING_ONE_SCORE_BOLDNESS = 1.4;   // down one score with more time: this much likelier to go than usual
 // Punts, tuned so gross and net match real FBS (about 43 and 39.5 yards).
-cfg.PUNT_DISTANCE = [44.2, 5.0];      // full kick in the air (mean, sd), + (punt_power - 50) / 5
-cfg.PUNT_PIN_CHANCE = 0.75;           // would carry inside the 10: chance to stop it short of the goal line
-// (+ (punt_accuracy - NEUTRAL) / 100), else a touchback (real: about 7% of punts)
+cfg.PUNT_DISTANCE = [44.2, 5.0];      // full kick in the air (mean, sd), + half a yard a card point of punt power over the average punter
+cfg.PUNT_PIN_CHANCE = 0.75;           // would carry inside the 10: chance to stop it short of the goal line ...
+cfg.PUNT_PIN_PER_POINT = 0.025;       // ... and this more a point of punt accuracy over the average punter
+// else a touchback (real: about 7% of punts)
 cfg.PUNT_RETURN_CHANCE = [0.54, 0.28];    // chance a punt is returned, landing outside / inside the receiving 20
 cfg.PUNT_UNRETURNED = [0.55, 0.30, 0.15];    // the rest: fair catch, downed after a roll, out of bounds
 cfg.PUNT_ROLL = [4.0, 4.0];           // yards a downed punt rolls on (mean, sd)
@@ -395,7 +401,7 @@ cfg.RUN_CHANCE_MAX_OPTION = 0.96;      // a team that almost never throws (pass_
 // ----- Kickoffs (college rules: kick from the 35, touchback to the 25) -----
 cfg.KICKOFF_DISTANCE = 63.0;              // yards from the 35 for an average leg (lands at the 2)
 cfg.KICKOFF_DISTANCE_SD = 5.0;
-cfg.KICKOFF_PER_POWER_POINT = 0.25;       // yards per point of kick power above neutral
+cfg.KICKOFF_PER_POWER_POINT = 0.625;      // yards per point of kick power over the average kicker
 cfg.KICKOFF_TOUCHBACK_FROM_END_ZONE = 0.75;
 cfg.KICKOFF_FAIR_CATCH_CHANCE = 0.55;     // inside the 25: fair catch comes out to the 25
 cfg.KICKOFF_OOB_CHANCE = 0.02;
@@ -467,7 +473,7 @@ cfg.RB_LEAD_RETURN_FATIGUE = 40;
 cfg.RB_LEAD_OUT_CHANCE = 0.14;              // committee: per-snap chance the fresh lead back comes out for a series (workhorse 0)
 cfg.RB_LEAD_OUT_CURVE = 2;                  // series rotation fades as (1 - feature) ** this
 cfg.RB_LEAD_RETURN_CHANCE = [0.07, 0.6];    // committee .. workhorse, per snap once rested (workhorse was 1.0: lead backs took 42% of carries, real 38%)
-cfg.RB_LEAD_GAP_RANGE = [-4.0, 24.0];       // lead-minus-next-back carrier rating: committee .. workhorse
+cfg.RB_LEAD_GAP_RANGE = [-1.6, 9.6];        // lead-minus-next-back carrier rating (card points): committee .. workhorse
 cfg.RB_LEAD_CURVE = 4;                      // return chance rises as feature ** this
 cfg.RB_BENCH_RECOVERY = 2.0;                // bench recovery multiplier for running backs
 cfg.RB_SECOND_BACK_CARRY_WEIGHT = 0.45;     // a second halfback on the field, next to the lead back's 0.80
@@ -525,6 +531,7 @@ cfg.FG_NOW_SECONDS = 10;
 cfg.HAIL_MARY_SECONDS = 8;
 cfg.HAIL_MARY_MIN_YARDLINE = 40;
 cfg.HAIL_MARY_SUCCESS = 0.05;
+cfg.HAIL_MARY_PER_POINT = 0.025;      // ... times 1 plus this a point of the passer's passing over the average starter
 cfg.SPIKE_SECONDS = 40;
 cfg.ONSIDE_ONE_SCORE_SECONDS = 120;
 cfg.ONSIDE_TWO_SCORE_SECONDS = 300;

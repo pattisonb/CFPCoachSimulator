@@ -10,7 +10,6 @@ import * as game_job from "../game_job.js";
 import { polls } from "../polls.js";
 import { bowls } from "../bowls.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
-import { shown as _shown } from "../../teamdata_js/shown.js";     // the scale ratings are shown on (a view's last step)
 import { position_fit } from "../../career_js/position_fit.js";
 
 // ---- `k in c`, for the containers of this file (a dict's own keys, a set, a list) ----

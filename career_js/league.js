@@ -38,7 +38,6 @@ import { read_text, write_text, exists, remove, list_dir } from "../engine_js/fi
 import { modules } from "../engine_js/modules.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
 import { ratings as rv2 } from "../teamdata_js/ratings.js";
-import { shown } from "../teamdata_js/shown.js";
 import { recruits } from "./recruits.js";
 
 export const league = {};
@@ -276,8 +275,8 @@ export function overall(c, attrs) {
 
 
 export function expand(c, attrs, team) {
-  // A league player in the source roster format build_teams reads: his card numbers, what the engine's formulas read
-  // for them (game_scale.base_from_card), and his overall.
+  // A league player in the source roster format build_teams reads: his card numbers ("ratings", by skill, and
+  // "skills", in game_scale.keys() order) and his overall.
   const card = league.ratings(c, attrs);
   const h = get(c, "ht") || 72;
   const ovr = game_scale.overall(card, c["pos"], get(c, "dmv"));
@@ -285,7 +284,7 @@ export function expand(c, attrs, team) {
     slug: c["id"], name: c["n"], position: c["pos"], class: c["cls"], class_year: get(league.CLASS_YEAR, c["cls"], "Freshman"),
     team_slug: team["slug"], team: get(team, "short_name"), jersey: get(c, "j"),
     height: `${floordiv(h, 12)}'${mod(h, 12)}"`, weight_lbs: get(c, "wt"), archetype: get(c, "a"), dev_trait: get(c, "dev") || "Normal",
-    ovr: ovr, overall: ovr, ratings: game_scale.base_from_card(card), skills: [...c["r"]],
+    ovr: ovr, overall: ovr, ratings: card, skills: [...c["r"]],
     abilities: (get(c, "ab") || []).map((a) => {
       const parts = a.split("|"), one = {};
       if (parts.length > 0) one["name"] = parts[0];
@@ -540,8 +539,8 @@ export function lineup(roster, shape, year = league.FIRST_YEAR + 1, by_overall =
     }
   }
   const ret = sorted(roster.filter((p) => ["HB", "WR", "CB", "FS", "SS"].includes(p["position"])),
-    (p) => -(0.5 * get(p["ratings"], "kick_return", 40) + 0.3 * get(p["ratings"], "speed", 60)
-      + 0.2 * get(p["ratings"], "agility", 60)));
+    (p) => -(0.5 * get(p["ratings"], "kick_return", game_scale.MISSING) + 0.3 * get(p["ratings"], "speed", game_scale.MISSING)
+      + 0.2 * get(p["ratings"], "agility", game_scale.MISSING)));
   special["KR"] = ret.length ? [ret[0]["slug"]] : [];
   special["PR"] = ret.length ? [ret.length > 1 ? ret[1]["slug"] : ret[0]["slug"]] : [];
   starters["special_teams"] = special;
