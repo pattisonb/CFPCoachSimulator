@@ -1,6 +1,6 @@
 // What a player would be at another position (career_js/position_fit.js). A 197-pound free safety must not project
-// 67 at guard: his ratings go onto the new group's scale, the skills he has never used are discounted, his build is
-// charged against the spot's, and his own position stays exact. Both places a position changes (in season and in the
+// as a fair guard: his ratings stay his own, the skills he has never used are discounted, his build is charged
+// against the spot's, and his own position stays exact. Both places a position changes (in season and in the
 // offseason) use it: the change writes the transferred ratings, and moving back the same season restores them.
 // `node tests/test_position_fit.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
@@ -21,7 +21,7 @@ function finished(st) {
   for (const g of Object.values(st["games"])) {
     const [h, a] = [teams[g["home"]]["team_ratings"]["overall"], teams[g["away"]]["team_ratings"]["overall"]];
     const hs = rng.randint(10, 45);
-    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 12));
+    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 7));
     g["played"] = true;
     g["home_score"] = win ? hs : Math.max(0, hs - rng.randint(1, 20));
     g["away_score"] = win ? hs - rng.randint(1, 20) : hs;
@@ -53,48 +53,48 @@ const pick = (t, keys) => keys.map((k) => t[k]);
 test("a 197-pound safety projects far below himself on the line, and close to himself at the other secondary spots", () => {
   const sizes = pf.sizes();
   assert(sizes["LG"][1][0] > 300 && sizes["LG"][1][0] < 320 && sizes["FS"][1][0] > 185 && sizes["FS"][1][0] < 200, "the real builds were not read");
-  const fs = nearest("FS", 73, 197, 45, 52);
+  const fs = nearest("FS", 73, 197, 77, 80);
   const t = table(fs), own = fs["ovr"];
   assert(t["FS"] === own && own === gs.overall(attrs_of(fs), "FS"), "his own position is exact");
-  assert(OL.every((pos) => t[pos] >= 20 && t[pos] <= 39), show(pick(t, OL)));
-  assert(t["TE"] >= 25 && t["TE"] <= 49 && t["QB"] >= 25 && t["QB"] <= 39, show([t["TE"], t["QB"]]));
-  assert(Math.abs(t["SS"] - own) <= 8 && Math.abs(t["CB"] - own) <= 14, show([t["SS"], t["CB"], own]));
+  assert(OL.every((pos) => t[pos] >= 45 && t[pos] <= 66), show(pick(t, OL)));
+  assert(t["TE"] >= 55 && t["TE"] <= 76 && t["QB"] >= 45 && t["QB"] <= 70, show([t["TE"], t["QB"]]));
+  assert(Math.abs(t["SS"] - own) <= 4 && Math.abs(t["CB"] - own) <= 7, show([t["SS"], t["CB"], own]));
   assert(t["LG"] < t["SS"] && t["LG"] < t["CB"], "a safety is a better corner than a guard");
 });
 
 test("a 300-pound defensive tackle is a fair lineman or edge and no corner; a linebacker is close to himself on the edge", () => {
-  const dt = nearest("DT", 77, 300, 50, 65);
+  const dt = nearest("DT", 77, 300, 79, 85);
   let t = table(dt), own = dt["ovr"];
-  assert(OL.every((pos) => t[pos] >= own - 28 && t[pos] <= own - 8), show([pick(t, OL), own]));      // his skills discounted, his size fine
-  assert(EDGE.every((pos) => t[pos] >= own - 18 && t[pos] <= own), show([pick(t, EDGE), own]));
-  assert(t["CB"] <= 25 && t["WR"] <= 30, "a 300-pound tackle is no corner");
-  const lb = nearest("MIKE", 75, 240, 48, 60);
+  assert(OL.every((pos) => t[pos] >= own - 15 && t[pos] <= own - 4), show([pick(t, OL), own]));      // his skills discounted, his size fine
+  assert(EDGE.every((pos) => t[pos] >= own - 9 && t[pos] <= own), show([pick(t, EDGE), own]));
+  assert(t["CB"] <= 64 && t["WR"] <= 67, "a 300-pound tackle is no corner");
+  const lb = nearest("MIKE", 75, 240, 78, 84);
   t = table(lb); own = lb["ovr"];
-  assert(EDGE.every((pos) => Math.abs(t[pos] - own) <= 6), show([pick(t, EDGE), own]));
-  assert(["SAM", "WILL"].every((pos) => Math.abs(t[pos] - own) <= 3), "the other linebacker spots share his skills");
-  const wr = nearest("WR", 73, 190, 52, 60);
+  assert(EDGE.every((pos) => Math.abs(t[pos] - own) <= 3), show([pick(t, EDGE), own]));
+  assert(["SAM", "WILL"].every((pos) => Math.abs(t[pos] - own) <= 2), "the other linebacker spots share his skills");
+  const wr = nearest("WR", 73, 190, 80, 84);
   t = table(wr); own = wr["ovr"];
-  assert(t["CB"] >= own - 22 && t["CB"] <= own - 6, show([t["CB"], own]));                           // a receiver to corner: a middling discount
-  assert(OL.every((pos) => t[pos] <= 30), "a 190-pound receiver is no lineman");
+  assert(t["CB"] >= own - 12 && t["CB"] <= own - 3, show([t["CB"], own]));                           // a receiver to corner: a middling discount
+  assert(OL.every((pos) => t[pos] <= 67), "a 190-pound receiver is no lineman");
 });
 
 test("build is charged against the spot: too light costs more than too heavy on the line, and no build costs nothing", () => {
-  const hb = nearest("HB", 71, 215, 50, 60);
+  const hb = nearest("HB", 71, 215, 79, 84);
   const attrs = attrs_of(hb);
-  assert(pf.size_penalty(71, 230, "HB") > 0 && pf.size_penalty(71, 230, "HB") <= pf.SIZE_PENALTY && pf.size_penalty(71, 150, "HB") > 12);
+  assert(pf.size_penalty(71, 230, "HB") > 0 && pf.size_penalty(71, 230, "HB") <= pf.SIZE_PENALTY && pf.size_penalty(71, 150, "HB") > 5);
   assert(pf.size_penalty(76, 340, "LG") < pf.size_penalty(76, 280, "LG"), "heavy costs a lineman less than light");
-  assert(pf.project(attrs, 71, 230, "HB", "FB") >= pf.project(attrs, 71, 190, "HB", "FB") + 5);
+  assert(pf.project(attrs, 71, 230, "HB", "FB") >= pf.project(attrs, 71, 190, "HB", "FB") + 2);
   assert(pf.size_penalty(null, null, "LG") === 0 && pf.project(attrs, 71, 215, "HB", "HB") === hb["ovr"]);
 });
 
-test("within his group every skill carries over whole; across units unused skills start from a floor and speed is re-read", () => {
-  const attrs = attrs_of(nearest("HB", 71, 215, 50, 60));
+test("within his group every skill carries over whole; across units unused skills start from a floor and speed stays his", () => {
+  const attrs = attrs_of(nearest("HB", 71, 215, 79, 84));
   assert(same(pf.transfer(attrs, "HB", "FB"), attrs), "a back's skills go whole to fullback");
   const near = pf.transfer(attrs, "HB", "LG"), far = pf.transfer(attrs, "HB", "DT");
   const athletic = (k) => (pf.ATHLETIC instanceof Set ? pf.ATHLETIC.has(k) : pf.ATHLETIC.includes(k));
   assert(Object.keys(near).every((k) => athletic(k) || near[k] >= pf.POSITION_FLOOR["LG"]), "a back's blocking at guard starts from the floor");
   assert(Object.keys(far).every((k) => athletic(k) || far[k] >= pf.POSITION_FLOOR["DT"]));
-  equal(near["speed"], gs.to_ours(gs.to_base(attrs["speed"], "RB", "speed"), "OL", "speed"));         // speed is read against the new group
+  equal(near["speed"], attrs["speed"]);                                    // a rating is the same at every position
 });
 
 const st = season.new_season("ohio-state", "full", 4, undefined, undefined, true);
@@ -104,9 +104,8 @@ test("in season: the options show the projection, the change writes his transfer
   season.advance(st); season.advance(st);
   const team = season.load_teams()[me];
   const fs = team["defense"].find((p) => p["role"] === "FS" && p["skills"] && p["weight"]);
-  const bare_guard = gs.overall(season._skills(fs), "LG");                   // the bare formula, which the projection must not exceed
   const want = pf.project(season._skills(fs), fs["height_in"], fs["weight"], "FS", "LG");
-  assert(want <= 40 && want <= bare_guard, show([want, bare_guard]));
+  assert(want <= 66 && want < fs["ovr"] - 8, show([want, fs["ovr"]]));             // far below himself: no fair guard
   const r = season.change_position(st, me, fs["slug"], "LG");
   assert(r["position"] === "LG" && r["moved_from"] === "FS", show(r));
   const moved = season.team_data(st, me)["offense"].find((p) => p["slug"] === fs["slug"]);
@@ -130,7 +129,7 @@ test("in the offseason: the same projection, a second move starts from where he 
   const r0 = [...c["r"]], o0 = c["o"];
   const want = (pos) => pf.project(league.ratings(c, attrs), c["ht"], c["wt"], "FS", pos);
   const [guard, tight_end] = [want("LG"), want("TE")];
-  assert(guard <= 40 && guard <= gs.overall(league.ratings(c, attrs), "LG"));
+  assert(guard <= 66 && guard < o0 - 8, show([guard, o0]));
   const opts = Object.fromEntries(offseason.position_options(st, c["id"]).map((o) => [o["pos"], o]));
   assert(opts["FS"]["current"] && opts["LG"]["overall"] < opts["FS"]["overall"]);
   offseason.change_position(st, c["id"], "LG");

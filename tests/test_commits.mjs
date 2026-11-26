@@ -7,7 +7,7 @@ import { sorted, floordiv } from "../engine_js/pyrt.js";
 
 const game = await start();
 const { season, recruiting } = game;
-const { persona, prospects, shown, game_scale } = game.modules;
+const { persona, prospects, game_scale } = game.modules;
 
 test("commits", () => {
   const st = season.new_season("ohio-state", "full", 9, undefined, undefined, true);
@@ -71,13 +71,12 @@ test("commits", () => {
   rc["status"][quiet]["signed"] = me;
   prof = prospects.profile(st, quiet, me);
   const p = rc["prospects"][quiet];
-  // a signed recruit's ratings are on the scale the page shows
-  assert(prof["ratings"]["overall"] === shown.overall(p["ovr"]) && prof["ratings"]["potential_overall"] === shown.overall(p["pot_ovr"]));
+  // a signed recruit's ratings are his own numbers
+  assert(prof["ratings"]["overall"] === p["ovr"] && prof["ratings"]["potential_overall"] === p["pot_ovr"]);
   const rows = prof["ratings"]["attributes"];
   assert(rows.length === p["ratings"].length && rows.every((r) => ["key", "label", "value", "potential"].every((k) => k in r)));
-  const grp = game_scale.group(p["ea_position"]);
   const keys = game_scale.keys();
-  equal(rows.map((r) => r["value"]), p["ratings"].slice(0, keys.length).map((v, i) => shown.skill(v, grp, keys[i])));
+  equal(rows.map((r) => r["value"]), p["ratings"].slice(0, keys.length));
   assert(prof["public"]["hard"] === false);
   assert(prospects.profile(st, quiet, "georgia")["ratings"] === null);
   console.log(`commits ok: quiet verbal hard after ${weeks_quiet} weeks, with contact after ${weeks_touched}; `

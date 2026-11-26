@@ -36,12 +36,12 @@ const chances = (a) => o.coachability_chances(a.level, a.cls, a.z, a.rated, a.re
 const empty = (d) => Object.keys(d).length === 0;
 
 test("check_each_case", () => {
-  const base = { level: "Steady Grinder", cls: "SO", z: null, rated: 50, redshirted: false, benched: false };
+  const base = { level: "Steady Grinder", cls: "SO", z: null, rated: 70, redshirted: false, benched: false };
   const cases = [["breakout", { z: 1.4 }, o.COACH_UP_BREAKOUT],
-    ["developer", { rated: 84 }, o.COACH_UP_DEVELOPER[1][1]],
-    ["developer", { rated: 93 }, o.COACH_UP_DEVELOPER[0][1]],
+    ["developer", { rated: 90 }, o.COACH_UP_DEVELOPER[1][1]],
+    ["developer", { rated: 95 }, o.COACH_UP_DEVELOPER[0][1]],
     ["maturity", { cls: "SRRS", z: 0.1 }, o.COACH_UP_MATURITY],
-    ["redshirt", { cls: "SORS", redshirted: true, rated: 72 }, o.COACH_UP_REDSHIRT]];
+    ["redshirt", { cls: "SORS", redshirted: true, rated: 83 }, o.COACH_UP_REDSHIRT]];
   for (const [key, extra, want] of cases) {
     const [ch, drop] = chances({ ...base, ...extra });
     equal(Object.keys(ch), [key], JSON.stringify([key, ch, drop]));
@@ -62,7 +62,7 @@ test("check_each_case", () => {
   assert(empty(chances({ ...base, cls: "SR", z: null })[0]));                     // did not play
   assert(empty(chances({ ...base, level: "Film Junkie", cls: "SR", z: 0.0 })[0]));  // one level from the top
   assert(empty(chances({ ...base, redshirted: true, rated: 69 })[0]));
-  console.log("each case fires at its chance: breakout, developer (80 and 90), maturity, redshirt");
+  console.log("each case fires at its chance: breakout, developer (88 and 94), maturity, redshirt");
 });
 
 test("check_one_level_and_cap", () => {

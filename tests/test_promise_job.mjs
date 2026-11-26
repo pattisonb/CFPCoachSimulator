@@ -79,7 +79,7 @@ function finished(st) {
   for (const g of Object.values(st["games"])) {
     const [h, a] = [teams[g["home"]]["team_ratings"]["overall"], teams[g["away"]]["team_ratings"]["overall"]];
     const hs = rng.randint(10, 45);
-    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 12));
+    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 7));
     g["played"] = true;
     g["home_score"] = win ? hs : Math.max(0, hs - rng.randint(1, 20));
     g["away_score"] = win ? hs - rng.randint(1, 20) : hs;

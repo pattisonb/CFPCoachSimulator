@@ -20,7 +20,7 @@ function finished(st) {
   for (const g of Object.values(st["games"])) {
     const h = teams[g["home"]]["team_ratings"]["overall"], a = teams[g["away"]]["team_ratings"]["overall"];
     const hs = rng.randint(10, 45);
-    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 12));
+    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 7));
     const home_score = win ? hs : Math.max(0, hs - rng.randint(1, 20));
     const away_score = win ? hs - rng.randint(1, 20) : hs;
     Object.assign(g, { played: true, home_score, away_score });
@@ -57,8 +57,8 @@ test("coach development", () => {
   // the expected change a year, per age and year cell: 400 seeded coaches a cell, ratings drawn from the
   // real league's coaches (those at or over the floor: a rating under it is held by design), the level
   // drawn as the league pass draws it, the same coaches across the three years. A staff member under 55
-  // with an average year holds or climbs (0 to +1), a top-third year gains 2-4, a bottom-third year loses
-  // 1-2; the young (under 40) gain 2-3 on average, the old (63+) lose 1-2.
+  // with an average year holds or climbs (0 to +0.6), a top-third year gains 1-2.4, a bottom-third year loses
+  // 0.6-1.2; the young (under 40) gain 1.2-1.8 on average, the old (63+) lose 0.6-1.2 (card points).
   const pool = [];
   for (const t of Object.values(league.from_base()["teams"])) {
     for (const c of Object.values(t["coaches"])) {
@@ -92,11 +92,11 @@ test("coach development", () => {
   const cell = (lo, mark) => cells[`${lo},${mark}`];
   const between = (a, x, b) => a <= x && x <= b;
   const shown = () => JSON.stringify(cells);
-  assert(between(0.0, cell(40, avg), 1.0) && between(2.0, cell(40, top), 4.0) && between(-2.0, cell(40, bot), -1.0), shown);
-  assert(between(2.0, cell(30, avg), 3.0) && between(3.0, cell(30, top), 5.0) && between(-1.0, cell(30, bot), 1.0), shown);
-  assert(between(-1.0, cell(55, avg), 0.5) && cell(55, top) > 0.5 && between(-3.0, cell(55, bot), -1.0), shown);
+  assert(between(0.0, cell(40, avg), 0.6) && between(1.0, cell(40, top), 2.4) && between(-1.2, cell(40, bot), -0.6), shown);
+  assert(between(1.2, cell(30, avg), 1.8) && between(1.8, cell(30, top), 3.0) && between(-0.6, cell(30, bot), 0.6), shown);
+  assert(between(-0.6, cell(55, avg), 0.3) && cell(55, top) > 0.3 && between(-1.8, cell(55, bot), -0.6), shown);
   const old = sum([top, avg, bot].map((m) => cell(63, m))) / 3;
-  assert(between(-2.0, old, -1.0) && cell(63, top) <= 0.0, () => `${old} ${shown()}`);
+  assert(between(-1.2, old, -0.6) && cell(63, top) <= 0.0, () => `${old} ${shown()}`);
   // the climb cap: a young coach with room and a top-third year every year never passes where he started + COACH_CLIMB
   let r = fill(60);
   let c = {};
@@ -106,17 +106,17 @@ test("coach development", () => {
     offseason.grow_coach(r, pot, 30 + i, offseason.COACH_PERF[offseason.STAFF_MARK], new Random(i), c["base"]);
   }
   assert(Object.values(r).every((v) => v === 60 + offseason.COACH_CLIMB), () => JSON.stringify(r));
-  // a 66-year-old never gains, even after a top-third year, and loses a point or two a year on an average one
+  // a 66-year-old never gains, even after a top-third year, and loses about a point a year on an average one
   const gains = [];
   for (let i = 0; i < 60; i++) {
-    r = fill(60);
-    const d = offseason.grow_coach(r, fill(72), 66, offseason.COACH_PERF[offseason.STAFF_MARK], new Random(i));
+    r = fill(70);
+    const d = offseason.grow_coach(r, fill(80), 66, offseason.COACH_PERF[offseason.STAFF_MARK], new Random(i));
     for (const k of KEYS) gains.push(d[k] ?? 0);
   }
   assert(Math.max(...gains) <= 0 && Math.min(...gains) < 0, () => JSON.stringify([...new Set(gains)].sort((a, b) => a - b)));
-  r = fill(60);
-  offseason.grow_coach(r, fill(72), 66, 0.0, new Random(3));
-  assert(Object.values(r).every((v) => between(58, v, 59)), () => JSON.stringify(r));
+  r = fill(70);
+  offseason.grow_coach(r, fill(80), 66, 0.0, new Random(3));
+  assert(Object.values(r).every((v) => between(68, v, 70)), () => JSON.stringify(r));
   // ... and never below the floor
   r = fill(offseason.COACH_FLOOR);
   for (let i = 0; i < 30; i++) offseason.grow_coach(r, fill(99), 70, 0.0, new Random(i));

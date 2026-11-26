@@ -234,11 +234,12 @@ const RETURN_ATTR = "return_rating";
 // Held inside sensible bounds (overnight review, bug 8): against his position's average starters an ordinary value
 // is an extreme one when the position's starters bunch (linemen far above average in coverage, a few starting
 // receivers far below in route running). A skill a position does not use is held to OFF_SKILL_RANGE; a core
-// skill (CORE_SKILLS, below) of an established player (an overall of CORE_FLOOR_OVR or more) keeps CORE_FLOOR.
+// skill (CORE_SKILLS, below) of an established player (his card's ratings averaging CORE_FLOOR_OVR or more) keeps
+// CORE_FLOOR.
 // Speed, strength, intelligence and endurance are left alone.
 const PHYSICAL = ["speed", "strength", "intelligence", "endurance"];   // every position uses these
 const OFF_SKILL_RANGE = [-12, 12];           // card points either side of the position's average starter
-const CORE_FLOOR = -14, CORE_FLOOR_OVR = 60;  // *tune* card points under the average starter; an overall of 60 or more (the rule as first set)
+const CORE_FLOOR = -14, CORE_FLOOR_OVR = 60;  // *tune* card points under the average starter; his card's ratings averaging 60 or more
 const CLAMP_EXTREMES = !env.BUILD_NO_CLAMP;   // BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 // -> a Set of slugs
@@ -451,13 +452,13 @@ export function depth_sort(t) {
 }
 
 export function established(p) {
-  // Whether the core-skill floor is his (CORE_FLOOR_OVR): his overall from his ratings, at the position they were
-  // made for.
+  // Whether the core-skill floor is his (CORE_FLOOR_OVR): the mean of the ratings his position's card shows, at the
+  // position they were made for (never his overall: its formula can be refit without moving an engine number).
   if (!truthy(get(p, "skills"))) return false;
-  const card = {};
-  const keys = game_scale.keys();
-  for (let i = 0; i < Math.min(keys.length, p["skills"].length); i++) card[keys[i]] = p["skills"][i];
-  return game_scale.overall(card, p["source_position"]) >= build_teams.CORE_FLOOR_OVR;
+  const keys = game_scale.keys(), on_card = game_scale.position_skills(p["source_position"]);
+  const vals = [];
+  for (let i = 0; i < Math.min(keys.length, p["skills"].length); i++) if (on_card.has(keys[i])) vals.push(p["skills"][i]);
+  return vals.length > 0 && mean(vals) >= build_teams.CORE_FLOOR_OVR;
 }
 
 export function clamp_extremes(p) {

@@ -33,11 +33,9 @@ test("moving the card-overall constants moves the overalls shown and nothing els
   let moved;
   try {                                                   // the scale file itself is not touched
     game_scale.data = () => scale;
-    game_scale._card_overall.cache_clear();
     moved = build_teams.build(clone(sources), true, null, true);
   } finally {
     game_scale.data = real;
-    game_scale._card_overall.cache_clear();
   }
   const theirs = Object.fromEntries(players_of(moved).map(([s, p]) => [`${s}/${p["slug"]}`, p]));
   const players = players_of(as_is);

@@ -315,7 +315,7 @@ function grow_coach(ratings, pot, age, perf, rng, base = null, pace = 1.0) {
     const pf = is_dict(perf) ? get(perf, k, 0.0) : perf;
     let d;
     if (f === 0) {
-      d = -offseason._round(offseason.COACH_DECLINE, rng) + offseason._round(pf * offseason.COACH_PERF_OLD * pace, rng);
+      d = Math.min(0, -offseason._round(offseason.COACH_DECLINE, rng) + offseason._round(pf * offseason.COACH_PERF_OLD * pace, rng));   // (he gains nothing)
     } else {
       const gap = level - v;
       d = offseason._round(offseason.COACH_RATE * gap * f * pace, rng);

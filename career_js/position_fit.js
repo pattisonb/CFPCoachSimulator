@@ -17,7 +17,7 @@ const HEAVY_PENALTY = 1.4;       // *tune* per standard deviation heavy beyond t
 const SIZE_CAP = 14.0;           // *tune* the most size can cost
 const NEAR_DISCOUNT = 0.85;      // *tune* position skills kept on a move within the unit (S -> CB, WR -> TE, DT -> EDGE)
 const FAR_DISCOUNT = 0.6;        // *tune* position skills kept on a move across units (S -> OL), above the position's floor
-const FLOOR = 60;                // *tune* the lowest projection
+const FLOOR = 45;                // *tune* the lowest projection
 const SPEED_POSITIONS = ["WR", "CB", "HB", "FS", "SS"];   // where extra weight costs as much as missing weight
 
 // attributes every position uses the same way: they move with him untouched

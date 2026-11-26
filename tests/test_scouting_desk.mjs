@@ -285,7 +285,7 @@ function finished(state) {
   for (const g of Object.values(state["games"])) {
     const h = teams[g["home"]]["team_ratings"]["overall"], a = teams[g["away"]]["team_ratings"]["overall"];
     const hs = rng.randint(10, 45);
-    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 12));
+    const win = rng.random() < 1 / (1 + Math.pow(10, (a - h) / 7));
     Object.assign(g, { played: true, home_score: win ? hs : Math.max(0, hs - rng.randint(1, 20)), away_score: win ? hs - rng.randint(1, 20) : hs });
     if (g["home_score"] === g["away_score"]) g["home_score"] += 3;
   }

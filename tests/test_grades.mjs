@@ -3,12 +3,10 @@
 import { start, test, run, assert, equal } from "./harness.mjs";
 
 const game = await start();
-const { grades, shown } = game.modules;
+const { grades } = game.modules;
 
-/** A potential on the game's own scale that shows as `v`. */
-function shown_at(v) {
-  return shown.overall_back(v);
-}
+/** A potential of `v` (an overall: the number his card shows). */
+const shown_at = (v) => v;
 
 test("test_bands", () => {
   const want = new Map([[99, "A"], [90, "A"], [89, "B"], [80, "B"], [79, "C"], [70, "C"], [69, "D"], [60, "D"], [59, "F"], [41, "F"]]);
