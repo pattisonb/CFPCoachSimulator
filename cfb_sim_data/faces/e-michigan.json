@@ -87,9 +87,9 @@
   "zach-mowchan": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "coaches": {
-  "Chris Creighton": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
+  "Chris Creighton": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
   "Mike Piatkowski": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
-  "Kasey Teegardin": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "black", "eyeColor": "hazel", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
+  "Kasey Teegardin": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "gray", "eyeColor": "hazel", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "rolled": {
  }

@@ -87,7 +87,7 @@
   "zion-hudson": {"faceShape": "face_shape_04", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  },
  "coaches": {
-  "Billy Napier": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
+  "Billy Napier": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_09", "hairFade": false, "flip": []},
   "Cam Aiken": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
   "Robert Bala": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []}
  },

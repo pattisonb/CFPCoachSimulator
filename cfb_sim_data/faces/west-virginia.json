@@ -87,7 +87,7 @@
   "zeke-durham-campbell": {"faceShape": "face_shape_05", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_06", "hairFade": true, "flip": []}
  },
  "coaches": {
-  "Rich Rodriguez": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "black", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
+  "Rich Rodriguez": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "gray", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
   "Zac Alley": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "rolled": {

@@ -87,7 +87,7 @@
   "zion-ferguson": {"faceShape": "face_shape_02", "skinTone": "deep", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []}
  },
  "coaches": {
-  "Pat Narduzzi": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
+  "Pat Narduzzi": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
   "Kade Bell": {"faceShape": "face_shape_05", "skinTone": "porcelain", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
   "Cory Sanders": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []}
  },

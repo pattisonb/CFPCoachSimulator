@@ -58,7 +58,7 @@ A face is one flat object. Each field holds an id from the data, and `null` mean
 |---|---|---|---|
 | `faceShape` | `face_shape_00`–`02` (narrow), `03`–`05` (medium), `06`–`07` (wide) | no | required |
 | `skinTone` | `porcelain` `light` `tan` `brown` `dark` `deep` | no | required |
-| `hairColor` | `black` `darkbrown` `brown` `blond` `red` `auburn` | no | required (it also colours the beard and brows) |
+| `hairColor` | `black` `darkbrown` `brown` `blond` `red` `auburn` `gray` | no | required (it also colours the beard and brows) |
 | `eyeColor` | `brown` `dark` `hazel` `green` `blue` `gray` | no | `brown` |
 | `ears` | `ears_00`–`ears_03` | no | `ears_00` |
 | `chin` | `chin_01` (a dimple) | yes | none |
@@ -89,11 +89,17 @@ A face is one flat object. Each field holds an id from the data, and `null` mean
 ### Random faces and seeds
 
 `random(id)` always gives the same face for the same id **with the same data**. Adding, removing or reordering
-parts changes which face an id rolls, so 0.2 rolls different faces than 0.1 did. Treat the stored JSON as the
+parts changes which face an id rolls, so each of 0.2 and 0.3 rolls different faces than the version before. Treat the stored JSON as the
 player's face, and use the id only to create a face the first time.
 
-Random faces never pick a part marked `random: false` (the frown), or a hair colour that's too close to the skin
-tone. When random picks a style with a fade it fades it half the time, and it flips each asymmetric part half
+Random faces never pick a part marked `random: false` (the frown). A random face's **hair colour follows its
+skin tone**: each skin tone lists the colours it can get, with weights (`data.skinTones[].hair`), so a dark skin
+never rolls blond or red hair and beard, and no face rolls a colour too close to its skin. Any face can still be
+given any colour by hand.
+
+**Gray hair is for coaches.** `random(id, { group: "coach" })` gives the face `random(id)` gives, with gray hair
+about a third of the time. Without the group nobody rolls gray, and `options()` and `catalog()` leave it out;
+pass them the same `{ group: "coach" }` for a coach's customiser. When random picks a style with a fade it fades it half the time, and it flips each asymmetric part half
 the time.
 
 ## The API
@@ -102,7 +108,7 @@ the time.
 
 | | |
 |---|---|
-| `random(idOrSeed)` | Face JSON from a string id, or from a 32-bit number seed. |
+| `random(idOrSeed, { group }?)` | Face JSON from a string id, or from a 32-bit number seed. `group: "coach"` allows gray hair. |
 | `parse(json)` | A JSON string or object to face JSON, checked. Throws on a bad id. |
 | `validate(json)` | A `string[]` of problems, `[]` if the face is fine. |
 | `repair(json)` | `{ face, fixed }`: each bad field replaced by its first option (an optional part becomes none), plus a line per change. |
@@ -134,6 +140,15 @@ for (const entry of faces.catalog()) {
 ```
 
 `examples/index.html` builds a working version of this. New parts and categories show up in it with no code change.
+
+## Upgrading from 0.2
+
+1. **Nothing in the API was removed**, and saved faces load unchanged.
+2. **`random(id)` gives different faces than 0.2** for many ids, because hair colour is now drawn by skin tone.
+   Store each player's face JSON, as before.
+3. **Coaches:** make them with `random(id, { group: "coach" })` to get gray hair.
+4. **Red is now a copper.** A saved face with red hair keeps the id and draws in the new colour.
+5. **A full beard on the two wide faces is redrawn** to follow the jaw. Saved faces pick it up.
 
 ## Upgrading from 0.1
 

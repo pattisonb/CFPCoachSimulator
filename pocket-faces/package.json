@@ -1,6 +1,6 @@
 {
   "name": "pocket-faces",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Seeded 48x48 pixel-art faces from layered parts, stored as a small JSON per player.",
   "type": "module",
   "sideEffects": false,

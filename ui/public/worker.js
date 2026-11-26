@@ -1,7 +1,8 @@
 /* The game in a Web Worker: the whole game is JavaScript (game.js, one script: app_js/game.js bundled by
    tools/build_site.mjs or the dev server), with its files in memory. The game's own data (the teams, the base league,
    the faces) is one download, the data pack; the seasons, coaches and leagues folders are kept in IndexedDB, written
-   after every call that changed a file.
+   after every call that changed a file. A career's box scores and its own league are in memory only while it is the one
+   being played (see "the game's files").
    Messages from the page (ui/src/gameClient.ts): first {kind: "init", version, breakStorage,
    breakRestore, breakStep}, then {id, method, path, bodyJson, bodyBytes, background}, answered with {id, ok,
    status, json | bytes, message} (`json`: the answer as JSON text, which the page reads as it reads a server's).
@@ -72,6 +73,18 @@ function loading(stage, loaded, total, blocked) { postMessage({ kind: "loading",
 // the kept folders' (KEPT), which are also in IndexedDB. The game reads and writes at once (engine_js/files.js), so
 // everything is in memory; `changes` is what the store has not been told yet.
 const mem = new Map();          // path -> text
+// A career's heavy files (its box scores, some 70 MB a season, and its own league, some 20 MB) are in memory only
+// while that career is the one being played: every career's were, and a browser with a dozen saves held a gigabyte
+// of games nobody was looking at. `away`: the files that are in the store and not in memory (the game still sees
+// that they exist, and when they were written); `heavy`: the ones in memory, by career. A call that names a career
+// has its files read before the game runs (bringHome), and the other careers' go back (sendAway).
+const HEAVY = /^data\/(?:seasons\/([^/]+)\/boxes\/|leagues\/([^/-]+)-)/;
+const heavyOf = (path) => { const m = HEAVY.exec(path); return m ? m[1] || m[2] : null; };
+const away = new Map();         // career -> the paths of its heavy files that are only in the store
+const awayPaths = new Set();
+const heavy = new Map();        // career -> the paths of its heavy files in memory
+const tally = (map, id, path) => { let set = map.get(id); if (!set) map.set(id, (set = new Set())); set.add(path); };
+const untally = (map, id, path) => { const set = map.get(id); if (set) { set.delete(path); if (!set.size) map.delete(id); } };
 const times = new Map();        // path -> when it was written (ms), for the files written here or read from the store
 const folders = new Map();      // folder -> the names of the files in it (a folder made by a write is in here)
 const changes = new Map();      // path -> true (written) | false (removed), for the kept folders
@@ -80,6 +93,17 @@ const clean = (path) => { let p = String(path); while (p.startsWith("./")) p = p
 const kept = (path) => KEPT.some((dir) => path.startsWith(dir));
 
 function put(path, text, when) {
+  const id = heavyOf(path);
+  if (id !== null) {
+    tally(heavy, id, path);
+    if (awayPaths.delete(path)) untally(away, id, path);
+  }
+  if (text === null) {            // in the store, not in memory: known to be there, read when its career is opened
+    heavy.get(id).delete(path);
+    if (!heavy.get(id).size) heavy.delete(id);
+    tally(away, id, path);
+    awayPaths.add(path);
+  }
   if (!mem.has(path)) {
     let at = path.lastIndexOf("/"), name = path.slice(at + 1);
     for (;;) {                                   // the file in its folder, and that folder in the ones above it
@@ -93,12 +117,15 @@ function put(path, text, when) {
       at = dir.lastIndexOf("/");
     }
   }
-  mem.set(path, text);
+  if (text !== null) mem.set(path, text);
   if (when !== undefined) times.set(path, when);
 }
 
 function drop(path) {
-  if (!mem.delete(path)) return false;
+  const id = heavyOf(path);
+  const gone = mem.delete(path), wasAway = awayPaths.delete(path);
+  if (!gone && !wasAway) return false;
+  if (id !== null) untally(gone ? heavy : away, id, path);
   times.delete(path);
   const at = path.lastIndexOf("/");
   const names = folders.get(at < 0 ? "" : path.slice(0, at));
@@ -109,6 +136,7 @@ function drop(path) {
 const store = {
   read(path) {
     const text = mem.get(clean(path));
+    if (text === undefined && awayPaths.has(clean(path))) console.warn("a career's file was asked for while its career was not open:", path);
     if (text === undefined) throw new Error(`${path} is not here`);
     return text;
   },
@@ -117,18 +145,18 @@ const store = {
     put(p, String(text), Date.now());
     if (kept(p)) changes.set(p, true);
   },
-  exists(path) { const p = clean(path); return mem.has(p) || folders.has(p); },
+  exists(path) { const p = clean(path); return mem.has(p) || awayPaths.has(p) || folders.has(p); },
   remove(path) {
     const p = clean(path);
     if (drop(p) && kept(p)) changes.set(p, false);
   },
   remove_dir(path) {
     const dir = clean(path), head = dir + "/";
-    for (const p of [...mem.keys()]) if (p.startsWith(head)) store.remove(p);
+    for (const p of [...mem.keys(), ...awayPaths]) if (p.startsWith(head)) store.remove(p);
     for (const d of [...folders.keys()]) if (d === dir || d.startsWith(head)) folders.delete(d);
   },
   list(path) { const names = folders.get(clean(path)); return names ? [...names].sort() : []; },
-  mtime(path) { const p = clean(path); return mem.has(p) ? times.get(p) || 0 : null; },
+  mtime(path) { const p = clean(path); return mem.has(p) || awayPaths.has(p) ? times.get(p) || 0 : null; },
 };
 
 // ---- IndexedDB ----------------------------------------------------------------------------------------------------
@@ -152,8 +180,53 @@ async function restore() {
   if (breakRestore) throw new Error("the saved files could not be read");
   db = await openDb();
   const from = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE);
-  const [paths, values] = await Promise.all([asked(from.getAllKeys()), asked(from.getAll())]);
-  for (let i = 0; i < paths.length; i++) if (values[i] && typeof values[i].t === "string") put(String(paths[i]), values[i].t, values[i].m || 0);
+  const paths = (await asked(from.getAllKeys())).map(String);
+  const light = paths.filter((path) => heavyOf(path) === null);
+  const values = await Promise.all(light.map((path) => asked(from.get(path))));
+  for (let i = 0; i < light.length; i++) if (values[i] && typeof values[i].t === "string") put(light[i], values[i].t, values[i].m || 0);
+  for (const path of paths) if (heavyOf(path) !== null) put(path, null);      // a career's heavy files wait for it to be opened
+}
+
+// A career's heavy files into memory, from the store (its box scores are one read, its league's files a few).
+async function bringHome(id) {
+  const paths = away.get(id);
+  if (!paths || !db) return;
+  const from = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE);
+  const boxes = `data/seasons/${id}/boxes/`;
+  const range = IDBKeyRange.bound(boxes, `${boxes}￿`);
+  const [keys, values] = await Promise.all([asked(from.getAllKeys(range)), asked(from.getAll(range))]);
+  const got = new Map(keys.map((k, i) => [String(k), values[i]]));
+  const rest = [...paths].filter((path) => !got.has(path));
+  const others = await Promise.all(rest.map((path) => asked(from.get(path))));
+  rest.forEach((path, i) => got.set(path, others[i]));
+  for (const path of [...paths]) {
+    const v = got.get(path);
+    if (v && typeof v.t === "string") put(path, v.t, v.m || 0);
+    else drop(path);                    // (gone from the store: it is not there for the game either)
+  }
+}
+
+// Every other career's heavy files out of memory: each is in the store as it is here (nothing is waiting to be
+// written), so only its text goes.
+function sendAway(keep) {
+  if (changes.size || !db || restoreError !== null) return;
+  for (const [id, paths] of [...heavy]) {
+    if (keep.has(id)) continue;
+    for (const path of [...paths]) { mem.delete(path); put(path, null); }
+  }
+}
+
+// Before a call: the careers it names (in its path or its body) have their files in memory, and when it is a
+// career's own call (/api/season/<id>/...), the others' go back. Never while a sim runs: its career stays whole.
+async function openCareers(msg) {
+  const text = `${msg.path} ${typeof msg.bodyJson === "string" ? msg.bodyJson : ""}`;
+  for (const id of [...away.keys()]) if (text.includes(id)) await bringHome(id);
+  const named = /\/api\/season\/([^/?]+)/.exec(msg.path);
+  if (!named || (api && api.running())) return;
+  const keep = new Set();
+  for (const id of heavy.keys()) if (text.includes(id)) keep.add(id);
+  keep.add(named[1]);
+  sendAway(keep);
 }
 
 // What changed since the last write goes to the store in one transaction; a failure is reported once, the game keeps
@@ -586,6 +659,7 @@ async function handle(msg) {
   const saved = async () => { const t = performance.now(); await persist(); ms.save = Math.round(performance.now() - t); };
   if (!sims.asked && msg.path.includes("/api/season/")) simStartHelpers();     // a career is open: sims are coming
   try {
+    await openCareers(msg);
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
     ms.run = Math.round(performance.now() - t0);
     if (typeof out === "string") {

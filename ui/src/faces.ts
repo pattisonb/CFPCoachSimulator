@@ -9,11 +9,20 @@ export type Face = FaceJSON;
 export type FaceField = string;
 export type { CatalogEntry, Category };
 
-/** Every option, grouped by field, with names (pocket-faces 0.2 `catalog()`). */
+/** Every option, grouped by field, with names (pocket-faces `catalog()`). */
 export const CATALOG: CatalogEntry[] = faces.catalog();
+
+/** A coach's or a scout's face is drawn for this group: it can have the hair colors kept for coaches (gray). */
+const COACH = { group: "coach" };
+/** The same options for a coach: gray hair is one of his choices, never a player's. */
+export const COACH_CATALOG: CatalogEntry[] = faces.catalog(COACH);
 
 /** A new random face (a fresh seed each call). */
 export const randomFace = (): Face => faces.random(Math.floor(Math.random() * 2 ** 32));
+/** A new random coach's face (a fresh seed each call): some are gray. */
+export const randomCoachFace = (): Face => faces.random(Math.floor(Math.random() * 2 ** 32), COACH);
+/** A coach's face from his name, the same every time: some are gray. */
+export const coachFace = (name: string): Face => faces.random(`coach-${name}`, COACH);
 
 /** A face with one layer flipped or not; resolve drops a flip that changes nothing. */
 export const withFlip = (face: Face, category: Category, on: boolean): Face =>
@@ -104,7 +113,7 @@ export const presetCoachFace = (name: string): Face | null => coachPresets.get(n
 export function staffFace(name: string): Face {
   let face = staffFaces.get(name);
   if (!face) {
-    face = coachPresets.get(name) ?? faces.resolve(faces.random(`staff-${name}`));
+    face = coachPresets.get(name) ?? faces.resolve(faces.random(`staff-${name}`, COACH));
     staffFaces.set(name, face);
   }
   return face;

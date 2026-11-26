@@ -64,8 +64,13 @@ export interface Manifest {
   widthClasses: Record<string, number>;
   categories: Record<Category, CategoryInfo>;
   parts: Record<Category, Part[]>;
-  skinTones: { id: string; label: string; skin: RGB; skinShadow: RGB }[];
-  hairColors: { id: string; label: string; black: RGB; shade: RGB; fade?: RGB }[];
+  /** `hair`: the hair colours a random face with this skin gets, each with its weight (one not listed is never picked for it) */
+  skinTones: { id: string; label: string; skin: RGB; skinShadow: RGB; hair?: Record<string, number> }[];
+  /**
+   * `groups`: a colour only some kinds of face get (gray: coaches). A random face picks it only when asked for
+   * that group, and then `chance` of the time; options() and catalog() list it only for that group.
+   */
+  hairColors: { id: string; label: string; black: RGB; shade: RGB; fade?: RGB; groups?: string[]; chance?: number }[];
   eyeColors: { id: string; label: string; iris: RGB }[];
   /** skin tone and hair colour pairs too close to tell apart, and the edge such hair gets where it meets skin */
   lowContrast: { skinTone: string; hairColor: string; difference: number; edge: RGB }[];

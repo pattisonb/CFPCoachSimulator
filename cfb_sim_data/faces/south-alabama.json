@@ -88,7 +88,7 @@
  },
  "coaches": {
   "Major Applewhite": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
-  "Todd Orlando": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
+  "Todd Orlando": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "gray", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "rolled": {
  }

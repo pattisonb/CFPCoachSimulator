@@ -87,7 +87,7 @@
   "zerian-hudson": {"faceShape": "face_shape_07", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_01", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "coaches": {
-  "Blake Anderson": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
+  "Blake Anderson": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
   "Kyle Cefalo": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
   "Joe Bolden": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []}
  },

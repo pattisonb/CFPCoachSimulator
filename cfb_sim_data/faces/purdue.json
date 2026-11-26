@@ -88,7 +88,7 @@
  },
  "coaches": {
   "Barry Odom": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
-  "Josh Henson": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_14", "hairFade": true, "flip": []},
+  "Josh Henson": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_14", "hairFade": true, "flip": []},
   "Kevin Kane": {"faceShape": "face_shape_02", "skinTone": "light", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []}
  },
  "rolled": {

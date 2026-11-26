@@ -90,26 +90,29 @@ function chosen(m: Manifest, spec: FaceSpec, c: Category): string | null {
 }
 
 /**
- * A face from a seed: the same seed always gives the same face, for the same data (derive it from a player's id
- * with seedOf). The draws, in this order:
- *   face shape, skin tone, hair colour (one too close to the skin tone, `lowContrast`, moves on to the next in the
- *   list without another draw); then each category in the data's order, after the face shape, that has parts a
+ * A face from a seed: the same seed always gives the same face, for the same data and group (derive it from a
+ * player's id with seedOf). The draws, in this order:
+ *   face shape, skin tone, hair colour (one draw, by the skin tone's `hair` weights: a colour it doesn't list is
+ *   never picked for it, so a dark skin gets no light or red beard; data with no weights draws evenly, and one
+ *   too close to the skin, `lowContrast`, moves on to the next in the list); then each category in the data's order, after the face shape, that has parts a
  *   random face can pick: an optional one draws whether it's there (`chance`), then which part; any other
  *   draws which part; then the eye colour; then always one draw for the fade and one for each category that can
  *   flip (kept only where the hair has a fade, or the part is asymmetric).
  * Parts marked `random: false` are never picked (a face can still be given one). Adding, removing or reordering
  * parts changes which face a seed gives: store a player's face JSON, not only the seed.
+ *
+ * `group` (say "coach"): after all of those, one draw for each hair colour kept for that group (gray), which
+ * replaces the hair colour `chance` of the time. Without a group those colours are never picked, and a face
+ * with a group is otherwise the face the same seed gives without one.
  */
-export function randomFace(m: Manifest, seed: number): FaceSpec {
+export function randomFace(m: Manifest, seed: number, { group }: RandomOptions = {}): FaceSpec {
   const rnd = mulberry32(seed);
   const spec: FaceSpec = {
     faceShape: pick(rnd, pickable(m, "face_shape")).id,
     skinTone: pick(rnd, m.skinTones).id,
     hairColor: "",
   };
-  let hc = Math.floor(rnd() * m.hairColors.length);
-  for (let i = 0; i < m.hairColors.length && tooClose(m, spec.skinTone, m.hairColors[hc].id); i++) hc = (hc + 1) % m.hairColors.length;
-  spec.hairColor = m.hairColors[hc].id;
+  spec.hairColor = pickHair(m, spec.skinTone, rnd());
   for (const c of m.order) {
     if (c === "face_shape") continue;
     const list = pickable(m, c);
@@ -127,7 +130,39 @@ export function randomFace(m: Manifest, seed: number): FaceSpec {
     if (rnd() < FLIP_CHANCE && partOf(m, c, chosen(m, spec, c))?.asymmetric) flip.push(c);
   }
   if (flip.length) spec.flip = flip;
+  if (group) {
+    for (const h of m.hairColors) {
+      if (!h.groups?.includes(group)) continue;
+      if (rnd() < (h.chance ?? 0)) spec.hairColor = h.id;
+    }
+  }
   return spec;
+}
+
+/** what a random face is for: a `group` gets the hair colours kept for it (coaches: gray) */
+export interface RandomOptions { group?: string }
+
+/** the hair colours anyone can have (not kept for a group), or with a group, those and that group's */
+export const hairColorsFor = (m: Manifest, group?: string) =>
+  m.hairColors.filter((h) => !h.groups || (group !== undefined && h.groups.includes(group)));
+
+/** a random face's hair colour for a skin tone, from one draw `u` in [0, 1) */
+function pickHair(m: Manifest, skinTone: string, u: number): string {
+  const open = hairColorsFor(m);
+  const weights = m.skinTones.find((t) => t.id === skinTone)?.hair;
+  const listed = weights ? open.filter((h) => (weights[h.id] ?? 0) > 0) : [];
+  if (listed.length) {
+    let at = u * listed.reduce((sum, h) => sum + weights![h.id], 0);
+    for (const h of listed) {
+      at -= weights![h.id];
+      if (at < 0) return h.id;
+    }
+    return listed[listed.length - 1].id;
+  }
+  // data with no weights: evenly, moving on from a colour too close to the skin
+  let hc = Math.floor(u * open.length);
+  for (let i = 0; i < open.length && tooClose(m, skinTone, open[hc].id); i++) hc = (hc + 1) % open.length;
+  return open[hc].id;
 }
 
 /** RGBA pixels, size × size × 4, transparent where nothing is drawn */

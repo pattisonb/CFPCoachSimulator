@@ -29,7 +29,7 @@
   "ethan-tierney": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_12", "hairFade": false, "flip": []},
   "ezekiel-avit": {"faceShape": "face_shape_04", "skinTone": "dark", "hairColor": "darkbrown", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_01", "hairFade": true, "flip": []},
   "gavin-correia": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_02", "hairFade": false, "flip": []},
-  "gerayas-grimes": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "blond", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_02", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
+  "gerayas-grimes": {"faceShape": "face_shape_04", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_02", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "gino-quinones": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_02", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_04", "hairFade": false, "flip": []},
   "harold-duvall": {"faceShape": "face_shape_02", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_24", "hairFade": false, "flip": []},
   "isaiah-lucero": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_01", "hairFade": true, "flip": []},
@@ -88,7 +88,7 @@
  },
  "coaches": {
   "Matt Entz": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "red", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_03", "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []},
-  "Josh Davis": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
+  "Josh Davis": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_03", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
   "Nick Benedetto": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "rolled": {

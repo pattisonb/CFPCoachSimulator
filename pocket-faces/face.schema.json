@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "pocket-faces/0.2.0/face.schema.json",
+  "$id": "pocket-faces/0.3.0/face.schema.json",
   "title": "A pocket-faces face",
   "description": "A player's look: one id per field (null: none). Made by createFaces().random(id) or resolve(spec).",
   "type": "object",
@@ -42,7 +42,8 @@
         "brown",
         "blond",
         "red",
-        "auburn"
+        "auburn",
+        "gray"
       ]
     },
     "eyeColor": {

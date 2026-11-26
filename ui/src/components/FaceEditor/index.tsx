@@ -4,6 +4,7 @@ import Face from "../Face/index.tsx";
 import FolderTabs from "../FolderTabs/index.tsx";
 import {
   CATALOG,
+  COACH_CATALOG,
   faces,
   titleCase,
   withFlip,
@@ -39,21 +40,30 @@ const groupOf = (field: string): Group => GROUP_OF[field] ?? GROUP_KEYS[GROUP_KE
 const fieldLabel = (e: CatalogEntry) => (m.fields as Record<string, string>)[e.field] ?? titleCase(e.label);
 
 /** The fields a customizer shows: those with more than one choice. */
-const ENTRIES = CATALOG.filter((e) => e.choices.length > 1).sort((a, b) => rank(a.field) - rank(b.field));
+const shown = (catalog: CatalogEntry[]) =>
+  catalog.filter((e) => e.choices.length > 1).sort((a, b) => rank(a.field) - rank(b.field));
+const ENTRIES = shown(CATALOG);
+/** A coach's fields: the same, with the hair colors kept for coaches (gray). */
+const COACH_ENTRIES = shown(COACH_CATALOG);
 const rgb = (c: [number, number, number]) => `rgb(${c.join(" ")})`;
 
 interface Props {
   face: FaceSpec;
   onChange: (face: FaceSpec) => void;
+  /** the face is a coach's: gray hair is one of his colors */
+  coach?: boolean;
 }
 
 /**
  * The face parts, shared by Your Coach and Edit Player Look: one tab per group (Head, Hair, Features), a row of
  * choices per field, each shown as a thumbnail of the face with that part (or a color swatch).
  */
-export default function FaceEditor({ face, onChange }: Props) {
+export default function FaceEditor({ face, onChange, coach }: Props) {
   const [group, setGroup] = useState<Group>("head");
-  const entries = useMemo(() => ENTRIES.filter((e) => groupOf(e.field) === group), [group]);
+  const entries = useMemo(
+    () => (coach ? COACH_ENTRIES : ENTRIES).filter((e) => groupOf(e.field) === group),
+    [group, coach],
+  );
   return (
     <FolderTabs
       label={m.partsLabel}

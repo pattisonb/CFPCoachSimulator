@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0
+
+### Fixed
+- **Random faces no longer make a blackface caricature.** 0.2 drew hair colour independently of skin tone, and
+  moved a colour too close to the skin on to the next in the list, which for dark skin was blond: half of all
+  deep-skinned faces were blond, and one face in 21 had dark skin with a blond or red beard round the mouth.
+  Hair colour is now drawn from each skin tone's own weighted list (`skinTones[].hair`). Brown, dark and deep
+  skin get black and dark brown only. A face can still be given any colour by hand.
+- **The full beard fits the wide faces.** It was drawn once, on a narrow face, and stretched. Wide 1 and Wide 2
+  have their own drawings that follow the jaw.
+
+### Added
+- **Gray hair, for coaches only:** `random(id, { group: "coach" })`. `options()` and `catalog()` take the same
+  option and list gray only with it. `hairColors[].groups` and `.chance` in the data.
+
+### Changed
+- **Red is a copper** (188, 94, 42), not a lipstick red: a red goatee read as lips.
+- `random(id)` gives different faces than 0.2 for the same id; stored face JSON is unaffected.
+
 ## 0.2.0
 
 ### Added
