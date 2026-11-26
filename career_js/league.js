@@ -32,7 +32,7 @@
 // Every constant, variable and function is on the `league` namespace and is reached through it, here too. Paths are
 // text from the project's root (files.js); a function that keeps its answers is wrapped in `cached` below (each has
 // a `cache_clear`).
-import { Random, round, int, floordiv, mod, sorted, get, isNumber, truthy } from "../engine_js/pyrt.js";
+import { Random, round, int, sum, floordiv, mod, sorted, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { mean } from "../engine_js/pystat.js";
 import { read_text, write_text, exists, remove, list_dir } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
