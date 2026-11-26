@@ -89,7 +89,7 @@
  "coaches": {
   "Kyle Whittingham": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
   "Jason Beck": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
-  "Jay Hill": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_07", "hairFade": true, "flip": []}
+  "Jay Hill": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_07", "hairFade": true, "flip": []}
  },
  "rolled": {
  }

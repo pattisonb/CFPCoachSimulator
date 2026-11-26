@@ -87,7 +87,7 @@
   "zheric-hill": {"faceShape": "face_shape_04", "skinTone": "deep", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_06", "hairFade": false, "flip": []}
  },
  "coaches": {
-  "Nathan Young": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "black", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
+  "Nathan Young": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "gray", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
   "Luke Olson": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
   "Sonny Cumbie": {"faceShape": "face_shape_02", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_17", "hairFade": false, "flip": []}
  },

@@ -88,7 +88,7 @@
  },
  "coaches": {
   "Lance Taylor": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []},
-  "Walt Bell": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
+  "Walt Bell": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "gray", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
   "Greer Martini": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []}
  },
  "rolled": {

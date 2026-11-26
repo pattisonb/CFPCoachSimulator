@@ -87,7 +87,7 @@
   "zaydrius-rainey-sale": {"faceShape": "face_shape_03", "skinTone": "brown", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_01", "hairFade": false, "flip": []}
  },
  "coaches": {
-  "Jedd Fisch": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
+  "Jedd Fisch": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
   "Ryan Walters": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "black", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_09", "hairFade": true, "flip": []}
  },
  "rolled": {

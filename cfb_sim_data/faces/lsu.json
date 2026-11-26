@@ -87,7 +87,7 @@
   "zach-weeks": {"faceShape": "face_shape_02", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_26", "hairFade": false, "flip": []}
  },
  "coaches": {
-  "Lane Kiffin": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
+  "Lane Kiffin": {"faceShape": "face_shape_03", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_14", "hairFade": false, "flip": []},
   "Charlie Weis Jr.": {"faceShape": "face_shape_02", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "brown", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []},
   "Blake Baker": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []}
  },
