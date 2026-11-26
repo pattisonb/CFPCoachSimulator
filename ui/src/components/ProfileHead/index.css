@@ -212,13 +212,17 @@
 
 /* most cards: what was beside his name goes under it, so the name has the whole line */
 @container profile-head (width < 1360px) {
+  /* (one column that can narrow: sized to the name, a long one would run on over the cells instead of shrinking) */
   .profile-head__title {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }
 
   .profile-head__beside {
+    overflow: hidden;
     font-size: var(--t-md);
+    text-overflow: ellipsis;
   }
 
   .profile-head__who {
@@ -226,9 +230,9 @@
   }
 }
 
-/* a narrow card (Recruiting's, in three fifths of the window): the face and the tile at 2x, a smaller name, the cells
-   in a row under them */
-@container profile-head (width < 640px) {
+/* a narrow card (Recruiting's, in three fifths of a laptop's window): the face and the tile at 2x, a smaller name, the
+   cells in a row under them. *tune* Below this width the cells in their own column leave his name too little room. */
+@container profile-head (width < 800px) {
   .profile-head__card {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }

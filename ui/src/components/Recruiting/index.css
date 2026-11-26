@@ -758,7 +758,7 @@
   margin-left: calc(-1 * var(--line));
 }
 
-.quick__dock > button span {
+.quick__dock .quick__cost {
   display: inline-flex;
   align-items: center;
   gap: 1px;
@@ -884,7 +884,7 @@
 
   /* a narrow list: each cell is its mark alone (its tip says what it is and what it costs), and his two marks are
      left to his file beside it */
-  .quick__dock > button span,
+  .quick__dock .quick__cost,
   .quick__marks {
     display: none;
   }
