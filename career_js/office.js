@@ -12,7 +12,6 @@
 // Persona, recruiting and the season are reached at the call, through `modules`.
 import { cmp, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
-import { shown } from "../teamdata_js/shown.js";
 import { ability_goals } from "./ability_goals.js";
 import { promises } from "./promises.js";
 import { word } from "./word.js";
@@ -125,7 +124,7 @@ export function office_view(state) {
   // you, for your coach's card: your ratings as a head coach (the league's in a later season, the teams file's before)
   const out = { news: office.program_news(state), conference: office.conference_view(state), word: word.view(state) };
   const ratings = {};
-  for (const [k, v] of Object.entries(get(hc, "ratings") || {})) if (isNumber(v)) ratings[k] = shown.coach(v);
+  for (const [k, v] of Object.entries(get(hc, "ratings") || {})) if (isNumber(v)) ratings[k] = v;
   out["coach"] = { ratings };
   out["pressed"] = modules.recruiting.pressed_commits(state);     // your commits another school is still calling (recruiting part 7)
   return out;

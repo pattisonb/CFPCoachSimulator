@@ -164,10 +164,8 @@ function load_teams() {
     // rosters.js works the rest out as it is read; a career's later season is read as it is)
     const data = modules.rosters.read(season._league_path);
     season._teams_cache = season.stand_in_names(data["teams"]);
-    for (const t of Object.values(season._teams_cache)) {          // the game's own team ratings, by the one average every page shows
-      if (!truthy(get(t, "fictional")) && truthy(get(t, "team_ratings")) && truthy(get(t, "offense"))) {
-        t["team_ratings"] = { ...t["team_ratings"], ...season.game_ratings(t) };
-      }
+    for (const t of Object.values(season._teams_cache)) {          // every team's ratings, by the one average every page shows
+      if (truthy(get(t, "offense"))) t["team_ratings"] = season.game_ratings(t);
     }
     clear(season._teams_meta);
     const attribute_scale = get(data, "attribute_scale"), spread_scale = get(data, "spread_scale");

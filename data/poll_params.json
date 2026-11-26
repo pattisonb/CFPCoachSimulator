@@ -2,7 +2,7 @@
  "ap": {
   "rank_points": 16,
   "unranked_floor": 15,
-  "rating_weight": 6.0,
+  "rating_weight": 10.0,
   "win_base": 20,
   "win_ranked_bonus": 7.0,
   "win_road_bonus": 0,

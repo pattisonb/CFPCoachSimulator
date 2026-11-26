@@ -17,7 +17,6 @@ import { modules } from "../engine_js/modules.js";
 import { read_json, exists } from "../engine_js/files.js";
 import { ValueError } from "../sim_js/coaches.js";
 import { build_teams } from "../teamdata_js/build_teams.js";
-import { shown } from "../teamdata_js/shown.js";
 import { recruits } from "./recruits.js";
 
 /** A value inside seed or key text, for the ones that can be null or a boolean ("None", "True": as the seeds have always had them). */
@@ -43,18 +42,19 @@ const LEAGUE_FIRE_BELOW = 40;          // *tune* the other head coaches are at r
 const RETIRE = 0.06;                   // a year from RETIRE_FROM on, more after 12 seasons in the job and with every year past it (an age drawn when unknown)
 const RETIRE_FROM = 60;                // *tune* the age retirement starts at: a younger coach steps away only at RETIRE_YOUNG
 const RETIRE_YOUNG = 0.015;            // *tune* a year, for a head coach under RETIRE_FROM
-const NFL_CHANCE = 0.05;               // *tune* a 80+ head coach after 10 wins
+const NFL_CHANCE = 0.05;               // *tune* a head coach rated NFL_FROM or more after 10 wins
+const NFL_FROM = 88;                   // *tune* ... rated this or more
 const STAY_TIER = 1;                   // *tune* a head coach at a program of this tier or better is not hired away by another college; one tier below it leaves only for a better tier
 const COORD_MOVE = 0.13;               // coordinators leaving for other jobs on their own
 const HC_MOVE_PCT = 0.55;              // a sitting head coach with this winning share over three years is a candidate elsewhere
 const MOVE_UP = 3;                     // a sitting head coach takes an opening this much more attractive than his own job
 const COORD_UP = -15;                  // a coordinator takes a head coaching job at any program within this of his own
-const HC_PROVEN = 8;                   // a sitting head coach's edge over a coordinator or a market coach
+const HC_PROVEN = 4.8;                 // a sitting head coach's edge over a coordinator or a market coach
 const OFFER_FROM = 80;                 // your security this high, and better programs with an opening call
 const FIRED_PICKS = 6;                 // openings offered to you after you are fired (the lower ones)
 const MARKET_SIZE = 150;               // coaches for hire the market is topped up to each offseason *tune*
 const MARKET_STALE = 3;                // years in the market before a coach retires from it
-const SUPPLY_LEVEL = -10.0, SUPPLY_SPREAD = 10.0;   // the generated supply's level against the league's coaches: most are bottom-tier material
+const SUPPLY_LEVEL = -6.0, SUPPLY_SPREAD = 6.0;   // the generated supply's level against the league's coaches: most are bottom-tier material
 const OWN_STAFF = 0.5;                 // a new head coach brings his own coordinator this often
 const COORD_ROLES = ["offensive_coordinator", "defensive_coordinator"];
 const ROLE_WORDS = { "head_coach": "head coach", "offensive_coordinator": "offensive coordinator",
@@ -155,7 +155,7 @@ export function new_style(rng, lgd, slug) {
 
 export function _rating(c) {
   const r = get(c, "ratings") || {};
-  return get(r, "overall") || (get(r, "play_calling", 60) + get(r, "player_development", 60) + get(r, "recruiting", 60)) / 3;
+  return get(r, "overall") || (get(r, "play_calling", 76) + get(r, "player_development", 76) + get(r, "recruiting", 76)) / 3;
 }
 
 const BIRTH_YEARS = "data/coach_birth_years.json";
@@ -198,7 +198,7 @@ export function generated(rng, lgd, role, slug, year, like = null, level = 0.0) 
   const model = rng.choice(holders(lgd, role));
   const base = deep(truthy(like) ? like : model);
   const ratings = {};
-  for (const [k, v] of Object.entries(model["ratings"])) ratings[k] = int(Math.max(30, Math.min(95, v + rng.gauss(level - 2, 6))));
+  for (const [k, v] of Object.entries(model["ratings"])) ratings[k] = int(Math.max(56, Math.min(97, v + rng.gauss(level - 1.2, 3.6))));
   const name = recruits._name(rng, carousel._taken_names(lgd));
   const previous_job = rng.choice(["NFL assistant", "Coordinator at an FCS program", "Assistant head coach",
     "Position coach", "Head coach at a lower level"]);
@@ -230,7 +230,7 @@ export function _ratings_for(lgd, role, coach, rng, level = 0.0) {
   if (truthy(own)) return { ...own };
   const model = rng.choice(holders(lgd, role));
   const ratings = {};
-  for (const [k, v] of Object.entries(model["ratings"])) ratings[k] = int(Math.max(20, Math.min(95, v + rng.gauss(level - 2, 6))));
+  for (const [k, v] of Object.entries(model["ratings"])) ratings[k] = int(Math.max(49, Math.min(97, v + rng.gauss(level - 1.2, 3.6))));
   for (const [k, v] of Object.entries(get(coach, "ratings") || {})) {
     if (k in ratings && k !== "overall") ratings[k] = v;
   }
@@ -262,17 +262,17 @@ export function market(state) {
 // where a generated coach for hire comes from: (roles he would take, previous job words, level shift, age range)
 const SUPPLY = [
   [["head_coach", "offensive_coordinator", "defensive_coordinator"], "Head coach at an FCS program", 0, [38, 58], 2],
-  [["head_coach", "offensive_coordinator", "defensive_coordinator"], "Head coach at a Division II program", -4, [36, 56], 1],
-  [["head_coach", "offensive_coordinator"], "NFL offensive assistant", 2, [34, 52], 2],
-  [["head_coach", "defensive_coordinator"], "NFL defensive assistant", 2, [34, 52], 2],
-  [["offensive_coordinator"], "Offensive coordinator at an FCS program", -2, [32, 50], 3],
-  [["defensive_coordinator"], "Defensive coordinator at an FCS program", -2, [32, 50], 3],
+  [["head_coach", "offensive_coordinator", "defensive_coordinator"], "Head coach at a Division II program", -2.4, [36, 56], 1],
+  [["head_coach", "offensive_coordinator"], "NFL offensive assistant", 1.2, [34, 52], 2],
+  [["head_coach", "defensive_coordinator"], "NFL defensive assistant", 1.2, [34, 52], 2],
+  [["offensive_coordinator"], "Offensive coordinator at an FCS program", -1.2, [32, 50], 3],
+  [["defensive_coordinator"], "Defensive coordinator at an FCS program", -1.2, [32, 50], 3],
   [["offensive_coordinator"], "Quarterbacks coach at a Power 4 program", 0, [32, 48], 3],
-  [["offensive_coordinator"], "Offensive line coach", -1, [34, 54], 2],
+  [["offensive_coordinator"], "Offensive line coach", -0.6, [34, 54], 2],
   [["defensive_coordinator"], "Linebackers coach at a Power 4 program", 0, [32, 48], 3],
-  [["defensive_coordinator"], "Secondary coach", -1, [33, 52], 2],
-  [["offensive_coordinator", "defensive_coordinator"], "Assistant head coach at a Group of 5 program", 1, [38, 56], 2],
-  [["head_coach"], "Former head coach, out of the game a year", -3, [48, 64], 1],
+  [["defensive_coordinator"], "Secondary coach", -0.6, [33, 52], 2],
+  [["offensive_coordinator", "defensive_coordinator"], "Assistant head coach at a Group of 5 program", 0.6, [38, 56], 2],
+  [["head_coach"], "Former head coach, out of the game a year", -1.8, [48, 64], 1],
 ];
 
 const WHY_GENERATED = { "head_coach": ["Ready for a bigger job", "Wants back into college football", "Looking for his first FBS job",
@@ -358,7 +358,7 @@ export function market_candidates(state, slug, role, n, rng = null, year = null)
     if (carousel._rating({ "ratings": r }) > ceiling && role === "head_coach") {
       continue;                                        // a coach that good waits for a bigger job
     }
-    const score = carousel._rating({ "ratings": r }) - (e["last_role"] !== role && role === "head_coach" ? 3 : 0) + rng.gauss(0, 3);
+    const score = carousel._rating({ "ratings": r }) - (e["last_role"] !== role && role === "head_coach" ? 1.8 : 0) + rng.gauss(0, 1.8);
     out.push([score, e]);
   }
   return sorted(out, (x) => -x[0]).slice(0, n);
@@ -408,7 +408,7 @@ export function market_rows(state, role = null) {
   for (const e of mk["coaches"]) {
     if (truthy(role) && !e["roles"].includes(role)) continue;
     rows.push({ "id": e["id"], "name": e["name"], "roles": e["roles"].map((r) => carousel.ROLE_WORDS[r]), "age": e["age"] + (mk["year"] - e["year"]),
-      "why": e["why"], "previous_job": carousel._previous_job(e), "rating": shown.coach(carousel._rating({ "ratings": e["ratings"] })),
+      "why": e["why"], "previous_job": carousel._previous_job(e), "rating": carousel._rating({ "ratings": e["ratings"] }),
       "history": e["history"].map((h) => ({ ...h, "team_name": carousel._name(h["team"]) })),
       "sits_out": get(e, "sits_out") === mk["year"] && e["last_role"] === "head_coach" });
   }
@@ -479,7 +479,7 @@ export function run(state) {
     const r = get(res, slug, {});
     if ((sec < carousel.LEAGUE_FIRE_BELOW && v["tenure"] >= 2 && rng.random() < carousel.FIRE_CHANCE) || sec < carousel.MUST_FIRE) {
       leave(slug, "fired", carousel._fired_why(slug, r));
-    } else if (carousel._rating(hc) >= 80 && get(r, "wins", 0) >= 10 && rng.random() < carousel.NFL_CHANCE) {
+    } else if (carousel._rating(hc) >= carousel.NFL_FROM && get(r, "wins", 0) >= 10 && rng.random() < carousel.NFL_CHANCE) {
       leave(slug, "left for the NFL");
     } else {
       const u = rng.random();                                   // (drawn before the odds are worked out: the order of the draws is kept)
@@ -631,19 +631,19 @@ export function _pick_head_coach(state, slug, verdicts, res, filled, rng, year, 
     const pct = w / Math.max(1, sum(recs.map((r) => r[0] + r[1])));
     // you are never hired away behind your back (your offers come in step 4); your coordinators are fair game
     if (s !== me && !stays && !taken.has(hc["name"]) && carousel.attract(state, s) + carousel.MOVE_UP <= a && pct >= carousel.HC_MOVE_PCT && verdicts[s]["tenure"] >= 2) {
-      cands.push([carousel._rating(hc) + carousel.HC_PROVEN + 20 * (pct - carousel.HC_MOVE_PCT) + rng.gauss(0, 3), hc, { "kind": "head_coach", "team": s,
+      cands.push([carousel._rating(hc) + carousel.HC_PROVEN + 12 * (pct - carousel.HC_MOVE_PCT) + rng.gauss(0, 1.8), hc, { "kind": "head_coach", "team": s,
         "text": `head coach at ${carousel._name(s)}` }]);
     }
     for (const role of carousel.COORD_ROLES) {
       const c = get(t["coaches"], role);
       if (truthy(c) && truthy(get(c, "name")) && !taken.has(c["name"]) && c["name"] !== hc["name"] && carousel.attract(state, s) >= a + carousel.COORD_UP && get(get(res, s, {}), "wins", 0) >= 9) {
-        cands.push([carousel._rating(c) - 4 + rng.gauss(0, 3), c, { "kind": "coordinator", "team": s, "role": role,
+        cands.push([carousel._rating(c) - 2.4 + rng.gauss(0, 1.8), c, { "kind": "coordinator", "team": s, "role": role,
           "text": `${carousel.ROLE_WORDS[role]} at ${carousel._name(s)}` }]);
       }
     }
   }
   for (const [score, e] of carousel.market_candidates(state, slug, "head_coach", 3, rng, year)) {
-    cands.push([score - 2, e, { "kind": "market", "text": carousel._previous_job(e), "id": e["id"] }]);
+    cands.push([score - 1.2, e, { "kind": "market", "text": carousel._previous_job(e), "id": e["id"] }]);
   }
   if (!cands.length) {
     const g = carousel.generated(rng, lgd, "head_coach", slug, year, undefined, programs.coach_level(state, slug));
@@ -709,7 +709,7 @@ export function job_rows(state, slugs) {
 
 export const carousel = {
   GOALS, G5_TITLE_FROM, START_SECURITY, STANDING, MAX_DROP, DROP_TIER, HONEYMOON, WIN_STEP, BONUS, FIRE_BELOW, FIRE_CHANCE, MUST_FIRE,
-  LEAGUE_FIRE_BELOW, RETIRE, RETIRE_FROM, RETIRE_YOUNG, NFL_CHANCE, STAY_TIER, COORD_MOVE, HC_MOVE_PCT, MOVE_UP, COORD_UP, HC_PROVEN,
+  LEAGUE_FIRE_BELOW, RETIRE, RETIRE_FROM, RETIRE_YOUNG, NFL_CHANCE, NFL_FROM, STAY_TIER, COORD_MOVE, HC_MOVE_PCT, MOVE_UP, COORD_UP, HC_PROVEN,
   OFFER_FROM, FIRED_PICKS, MARKET_SIZE, MARKET_STALE, SUPPLY_LEVEL, SUPPLY_SPREAD, OWN_STAFF, COORD_ROLES, ROLE_WORDS,
   _rng, baseline, goal, attract, ad, _results, judge, new_style, _rating, BIRTH_YEARS, _BIRTHS, _HOMETOWNS, hometown, _birth_years, _age,
   generated, _taken_names, _ratings_for, _entry, market, SUPPLY, WHY_GENERATED, _why_generated, market_refresh, _seasons, market_add,

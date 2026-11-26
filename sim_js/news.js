@@ -65,7 +65,7 @@ export function _pregame_chance(teams, g, side) {
   const home = get(get(get(teams, g["home"]) || {}, "team_ratings") || {}, "overall");
   const away = get(get(get(teams, g["away"]) || {}, "team_ratings") || {}, "overall");
   if (typeof home !== "number" || typeof away !== "number" || g["neutral"] === undefined) return 0.5;
-  const edge = (home - away) / 60
+  const edge = (home - away) / 36
     + (truthy(g["neutral"]) ? 0.0 : 0.04);
   const p_home = Math.max(0.05, Math.min(0.95, 0.5 + edge));
   return side === "home" ? p_home : 1.0 - p_home;

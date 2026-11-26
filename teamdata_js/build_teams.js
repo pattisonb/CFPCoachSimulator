@@ -760,7 +760,7 @@ export function measured_recruiting(teams) {
     const c = get(current, t["slug"]);
     if (!truthy(c) || get(c, "edge") === null) continue;
     const shrunk = c["edge"] * c["classes"] / (c["classes"] + 3);
-    t["coaches"]["head_coach"]["ratings"]["recruiting"] = Math.max(30, Math.min(95, round(50 + 40 * shrunk / 0.25)));
+    t["coaches"]["head_coach"]["ratings"]["recruiting"] = Math.max(56, Math.min(97, round(70 + 24 * shrunk / 0.25)));
     n += 1;
   }
   return n;

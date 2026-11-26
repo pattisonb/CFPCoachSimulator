@@ -881,7 +881,7 @@ function _prestige(state, slug) {
   // The program's pull on a transfer: its living rating (NIL, brand; about -2 to +2) and its team now.
   const season = modules.season;
   const t = get(season.load_teams(), slug) || {};
-  return offseason.PRESTIGE_WEIGHT * programs.z(state, slug) + offseason.RATING_WEIGHT * (get(get(t, "team_ratings") || {}, "overall", 60) - 60) / 10;
+  return offseason.PRESTIGE_WEIGHT * programs.z(state, slug) + offseason.RATING_WEIGHT * (get(get(t, "team_ratings") || {}, "overall", 76) - 76) / 6;
 }
 
 function entrant_interest(state, lgd, slug, e, rng = null) {

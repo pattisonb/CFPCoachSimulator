@@ -82,15 +82,15 @@ function _dev_side(pos) {
 
 function dev_rating(coaches, pos) {
   // His coaches' player development: the head coach's with the coordinator on his side of the ball.
-  const hc = get(get(get(coaches, "head_coach") || {}, "ratings", {}), "player_development", 50);
+  const hc = get(get(get(coaches, "head_coach") || {}, "ratings", {}), "player_development", 70);
   const co = get(get(get(coaches, offseason._dev_side(pos)) || {}, "ratings", {}), "player_development", hc);
   return (1 - offseason.COORD_SHARE) * hc + offseason.COORD_SHARE * co;
 }
 
 function coach_factor(coaches, pos) {
-  // His coaches' factor on development (dev_rating); about 0.8 at 30, 1.0 at 50, 1.2 at 90.
+  // His coaches' factor on development (dev_rating); about 0.8 at 56, 1.0 at 70, 1.2 at 94.
   const r = offseason.dev_rating(coaches, pos);
-  return r >= 50 ? 1 + (r - 50) / 200 : 1 + (r - 50) / 100;
+  return r >= 70 ? 1 + (r - 70) / 120 : 1 + (r - 70) / 70;
 }
 
 function coachability_chances(level, cls, z, rated, redshirted, benched) {
@@ -303,7 +303,7 @@ function grow_coach(ratings, pot, age, perf, rng, base = null, pace = 1.0) {
   // level (up, or down when he is rated over it) at his age's pace times `pace`, never past the level,
   // plus a point of noise, plus his year's verdict (`perf`: the points a top- or bottom-third year adds,
   // one number or one per rating); from 63 he gains nothing toward his level, each rating drops a
-  // point (a second one COACH_DECLINE of the time) and his year counts COACH_PERF_OLD. A rating never
+  // point COACH_DECLINE of the time and his year counts COACH_PERF_OLD. A rating never
   // climbs more than COACH_CLIMB over `base` (where he was first seen; without it, over his level).
   // His overall follows. Floors COACH_FLOOR (a rating already under it is held, not lifted), caps
   // COACH_CAP. Returns {rating: change}.
@@ -316,13 +316,13 @@ function grow_coach(ratings, pot, age, perf, rng, base = null, pace = 1.0) {
     const pf = is_dict(perf) ? get(perf, k, 0.0) : perf;
     let d;
     if (f === 0) {
-      d = -1 - (rng.random() < offseason.COACH_DECLINE ? 1 : 0) + offseason._round(pf * offseason.COACH_PERF_OLD * pace, rng);
+      d = -offseason._round(offseason.COACH_DECLINE, rng) + offseason._round(pf * offseason.COACH_PERF_OLD * pace, rng);
     } else {
       const gap = level - v;
       d = offseason._round(offseason.COACH_RATE * gap * f * pace, rng);
       d = gap > 0 ? Math.min(d, gap) : Math.max(d, gap);                 // toward his level, never past it ...
       const year_ = offseason._round(pf * pace, rng);
-      d += year_ + (v >= offseason.COACH_FLOOR ? rng.choice([-1, 0, 0, 1]) : 0);   // ... then his year and a point of noise
+      d += year_ + (v >= offseason.COACH_FLOOR ? rng.choice(offseason.COACH_WOBBLE) : 0);   // ... then his year and a point of noise
     }
     const top = Math.min(offseason.COACH_CAP, get(base || {}, k, Math.max(v, level) - offseason.COACH_CLIMB) + offseason.COACH_CLIMB);
     const new_ = int(Math.max(Math.min(offseason.COACH_FLOOR, v), Math.min(Math.max(top, v), v + d)));   // under the floor he is only held; the climb cap never cuts him
@@ -888,8 +888,8 @@ function _candidates(state, s, rng, taken) {
   const out = [];
   for (const [score, e] of carousel.market_candidates(state, state["team"], role, offseason.STAFF_CANDIDATES, rng, year)) {
     const r = e["ratings_by_role"][role];
-    out.push({ name: e["name"], role: s["role"], evaluation: int(get(r, "player_development", 60)),
-      recruiting: int(get(r, "recruiting", 60)), play_calling: int(get(r, "play_calling", 60)),
+    out.push({ name: e["name"], role: s["role"], evaluation: int(get(r, "player_development", 76)),
+      recruiting: int(get(r, "recruiting", 76)), play_calling: int(get(r, "play_calling", 76)),
       why: e["why"], previous_job: carousel._previous_job(e), from_market: true, market_id: e["id"],
       age: e["age"] + (year - e["year"]), history: e["history"].map((h) => ({ ...h, team_name: carousel._name(h["team"]) })) });
   }
@@ -907,8 +907,8 @@ function _candidate(rng, s, taken) {
   taken.add(name);
   const prev = rng.choice(["Position coach at a Group of 5 program", "Recruiting coordinator at an FCS program",
     "High school head coach", "Position coach at a Power 4 program", "Graduate assistant turned recruiter"]);
-  const evaluation = int(Math.max(40, Math.min(92, rng.gauss(64, 10))));
-  const recruiting_ = int(Math.max(40, Math.min(92, rng.gauss(64, 10))));
+  const evaluation = int(Math.max(63, Math.min(95, rng.gauss(78, 6))));
+  const recruiting_ = int(Math.max(63, Math.min(95, rng.gauss(78, 6))));
   const term = offseason.term_of(s["role"]);
   return { name: name, role: s["role"], evaluation: evaluation,
     recruiting: recruiting_, why: "Looking for a step up", previous_job: prev,

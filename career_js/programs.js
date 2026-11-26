@@ -48,9 +48,11 @@ programs.NIL_PUSH = 6.0;                   // the AD's push above (goal met) or 
 programs.NIL_PLAYOFF_PUSH = 12.0;          // *tune* a playoff the AD did not ask for (his goal is not the playoff) pushes the target this much further
 programs.NIL_PLAYOFF_UP = 10.0;            // *tune* ... and the collective may rise this much that year: the boosters open their wallets
 programs.NIL_FLOOR_TIER = 10.0;
-programs.COACH_TENURE = 3.0;               // coach appeal: overall + this a year of tenure (up to five) - 5
-programs.COACH_TIER_MEAN = { 1: 77, 2: 65, 3: 60, 4: 48, 5: 40 };   // real 2026 head coaches' overall by tier: what a program of that tier can hire
-programs.COACH_LEAGUE_MEAN = 52;           // the real 2026 head coaches' mean overall
+programs.COACH_TENURE = 3.0;               // coach appeal: COACH_APPEAL's line on his overall, plus this a year of tenure (up to five), - 5
+programs.COACH_APPEAL = [-66.7, 1.667];    // *tune* coach appeal from the head coach's overall: this plus this much of it
+programs.COACH_TIER_MEAN = { 1: 86, 2: 79, 3: 76, 4: 69, 5: 63 };   // real 2026 head coaches' overall by tier: what a program of that tier can hire
+programs.COACH_LEAGUE_MEAN = 71;           // the real 2026 head coaches' mean overall
+programs.COACH_ROOM = 7;                   // *tune* a coach rated this far over a program's tier mean is not interested in the job
 programs.GOALS = { 1: ["playoff", 10, "Make the College Football Playoff"], 2: ["wins", 9, "Win Nine Games"],
   3: ["wins", 8, "Win Eight Games"], 4: ["wins", 7, "Win Seven Games and Go Bowling"], 5: ["wins", 6, "Reach a Bowl Game"] };
 programs.G5_TITLE_FROM = 42.0;             // a Group of 5 program rated this high expects to win its conference
@@ -325,7 +327,7 @@ export function update(state, results, ranks, year = null, only = null) {
   year = year || get(get(state, "offseason") || {}, "year") || get(lgd, "year", 2026);
   const sc = get(programs._history(), "scales") || {};
   const wsc = get(sc, "winning") || { lo: 0.0, hi: 3.0, k: 1.0 };
-  const csc = get(sc, "conference") || { lo: 40.0, hi: 70.0, k: 1.0 };
+  const csc = get(sc, "conference") || { lo: 64.0, hi: 82.0, k: 1.0 };
   const teams = season.load_teams();
   const picks = programs.draft_picks(state);
   const conf_members = {};
@@ -379,7 +381,8 @@ export function update(state, results, ranks, year = null, only = null) {
     p["live"] = round(Math.max(-cap, Math.min(cap, live)), 1);
     p["market"] = int(round(Math.max(0, Math.min(100, p["market_base"] + p["live"]))));
     const tenure = Math.max(0, year - (get(hc, "since") || year));
-    p["coach"] = round(Math.max(0.0, Math.min(100.0, get(get(hc, "ratings") || {}, "overall", 60) + programs.COACH_TENURE * Math.min(5, tenure) - 5)), 1);
+    const appeal = programs.COACH_APPEAL[0] + programs.COACH_APPEAL[1] * get(get(hc, "ratings") || {}, "overall", 76);
+    p["coach"] = round(Math.max(0.0, Math.min(100.0, appeal + programs.COACH_TENURE * Math.min(5, tenure) - 5)), 1);
     const bt = get(teams, s);
     if (truthy(bt) && has(conf_score, bt["conference"])) p["conference"] = round(conf_score[bt["conference"]], 1);
     if (!("drafts" in p)) p["drafts"] = programs.empty_drafts(year - 2);
@@ -614,13 +617,13 @@ programs.ACADEMICS_BAND = 10.0;         // a save's live Academics (from when tr
 programs.CHURN_MEAN = 6;                // *tune* the portal entrants a program loses in a typical offseason
 // Player Development: how much a program's players grow. It starts from the head coach's own rating for it and moves
 // each offseason with how much its players really gained against the league's.
-programs.DEVELOPMENT_COACH = [22.0, 0.72];   // *tune* its start: this plus this much of the head coach's player development rating
+programs.DEVELOPMENT_COACH = [-26.0, 1.2];   // *tune* its start: this plus this much of the head coach's player development rating
 programs.DEVELOPMENT_LIVE = 15.0;       // *tune* its live target: this many points per point of overall its players gained over the league's mean ...
 programs.DEVELOPMENT_STEP = 4.0;        // *tune* ... moving at most this much a year ...
 programs.DEVELOPMENT_BAND = 22.0;       // ... never more than this from its start
 // Culture: how well a program keeps its players. It starts from the head coach's motivation and discipline and moves
 // each offseason with who left through the portal, who you talked into staying and the promises you broke.
-programs.CULTURE_COACH = [24.0, 0.68];  // *tune* its start: this plus this much of the mean of the head coach's motivation and discipline
+programs.CULTURE_COACH = [-21.3, 1.133];  // *tune* its start: this plus this much of the mean of the head coach's motivation and discipline
 programs.CULTURE_CHURN = 0.8;           // *tune* each portal entrant fewer (or more) than CHURN_MEAN moves it this much ...
 programs.CULTURE_KEPT = 1.5;            // *tune* ... each player kept home at Keep Them Home adds this ...
 programs.CULTURE_BROKEN = 3.0;          // *tune* ... each promise broken takes this ...
@@ -653,7 +656,7 @@ export function people_base(state, slug) {
   // Where Player Development and Culture start for the program: its head coach's own ratings (his player development;
   // the mean of his motivation and discipline). They move from there each offseason (_move_grades).
   const r = get(programs._coach_of(state, slug), "ratings") || {};
-  const rate = (k) => Number(get(r, k, 55));
+  const rate = (k) => Number(get(r, k, 73));
   const dc = programs.DEVELOPMENT_COACH, cc = programs.CULTURE_COACH;
   return { development: round(Math.max(5.0, Math.min(98.0, dc[0] + dc[1] * rate("player_development"))), 1),
     culture: round(Math.max(5.0, Math.min(98.0, cc[0] + cc[1] * (rate("motivation") + rate("discipline")) / 2)), 1) };
@@ -904,7 +907,7 @@ export function coach_level(state, slug) {
 
 export function coach_ceiling(state, slug) {
   // A coach rated this far above the program's tier is not interested in the job.
-  return programs.COACH_TIER_MEAN[programs.get(state, slug)["tier"]] + 12;
+  return programs.COACH_TIER_MEAN[programs.get(state, slug)["tier"]] + programs.COACH_ROOM;
 }
 
 Object.assign(programs, {

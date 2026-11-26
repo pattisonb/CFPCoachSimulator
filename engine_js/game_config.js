@@ -237,7 +237,7 @@ cfg.PRESS_EFFECT = 0.00125;            // short and intermediate completion per 
 cfg.BLITZ_BASE = 0.25;                 // share of dropbacks blitzed at a blitz rate of 50 (x rate / 50)
 cfg.BLITZ_SACK = [1.35, 0.883];        // sack rate x (blitz, no blitz): about 1 on average (1.6/0.8 magnified talent edges)
 cfg.BLITZ_BIG_PLAY = [1.35, 0.883];    // long-gain chance x (blitz, no blitz): fewer men in coverage
-cfg.DISCIPLINE_EFFECT = 0.006;         // penalty chance x (1 - this per point of discipline over 50; discipline is the
+cfg.DISCIPLINE_EFFECT = 0.01;          // penalty chance x (1 - this per point of discipline over 50; discipline is the
 // head coach's rating beyond what the team's talent predicts, build_teams.decouple_discipline)
 
 // ----- Passing -----
@@ -388,7 +388,7 @@ cfg.TEMPO_EFFECT = 0.80;              // clock multiplier range for tempo 0..100
 cfg.FOURTH_DOWN_TENDENCY_EFFECT = 0.8;    // go-for-it odds scale for the fourth_down_go_rate tendency
 cfg.FOURTH_DOWN_AGGRESSION = 1.8;        // x the go-for-it odds short of the opponent 40 or on 4th and 1-2 (not trailing late):
 // the tables gave 1.5 tries a game, real 2.1
-cfg.PLAY_CALLING_EFFECT = 0.5;        // chance the better play caller wins the guessing game
+cfg.PLAY_CALLING_EFFECT = 0.83;       // chance the better play caller wins the guessing game (per 100 points of play calling between them)
 cfg.RUN_CHANCE_MIN = 0.08; cfg.RUN_CHANCE_MAX = 0.92;
 cfg.RUN_CHANCE_MAX_OPTION = 0.96;      // a team that almost never throws (pass_rate 5 or lower) runs up to this often
 

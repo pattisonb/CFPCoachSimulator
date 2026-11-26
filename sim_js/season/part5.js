@@ -293,7 +293,7 @@ function team_ratings_now(state, slug) {
   // A team's ratings as it would line up today (the player's ask): its depth chart as it is set, anyone hurt stepping
   // aside for the next man, every edit to a player in. The same sum as the ratings built with the team
   // (game_ratings, which rates every team as its file loads), so an untouched, healthy team reads exactly as it was
-  // built. None for an FCS stand-in. On the game's own scale: the page's is _unit_overalls.
+  // built. None for an FCS stand-in. The page's is _unit_overalls (the same, whole).
   const base = truthy(slug) ? get(season.load_teams(), slug) : null;
   if (base === null || truthy(get(base, "fictional"))) return null;
   const hurt = get(get(state, "injuries") || {}, slug) || {};
@@ -312,13 +312,14 @@ function team_ratings_now(state, slug) {
 
 
 function game_ratings(t, hurt = []) {
-  // A team's offense, defense, special teams and overall on the game's own scale (what the polls, the odds, the awards
-  // and an AD's expectations read), from the same average the page shows (the player's ask: one rating everywhere): its
-  // players' overalls weighted by position (PAGE_POS_VALUE), the starters in full and one backup a starting spot a
-  // little (PAGE_DEPTH_WEIGHT), each unit through league.TEAM_FIT. Every team is rated this way as its file loads
-  // (load_teams), so a team as it was built and as it lines up today are the same sum.
+  // A team's offense, defense, special teams and overall (what the polls, the odds, the awards and an AD's expectations
+  // read, and what the page shows: one rating everywhere): its players' overalls weighted by position (PAGE_POS_VALUE),
+  // the starters in full and one backup a starting spot a little (PAGE_DEPTH_WEIGHT). So an offense of mid-80s starters
+  // reads in the mid 80s. With its roster's mean overall and its position groups' starters' means. Every team is rated
+  // this way as its file loads (load_teams), so a team as it was built and as it lines up today are the same sum.
   const league = modules.league;
   const units = { offense: [], defense: [], special_teams: [] };
+  const groups = {};
   for (const [role, group] of Object.entries(season._players_by_role(t, t["offense"].concat(t["defense"])))) {
     if (role === "KR" || role === "PR") continue;
     const fit = group.filter((p) => !_in(`${p["name"]}|${p["position"]}`, hurt));
@@ -327,15 +328,15 @@ function game_ratings(t, hurt = []) {
     fit.slice(0, 2 * n).forEach((p, i) => {
       units[unit].push([season.shown_overall(p), i < n ? value : value * season.PAGE_DEPTH_WEIGHT]);
     });
+    const g = role === "K" || role === "P" ? role : get(league.GROUP_OF, role, "DB");
+    for (const p of fit.slice(0, n)) (groups[g] ??= []).push(season.shown_overall(p));
   }
-  const out = {};
-  for (const [unit, rows] of Object.entries(units)) {
-    const [a, b] = league.TEAM_FIT[unit];
-    out[unit] = rows.length
-      ? round(Math.max(1.0, Math.min(99.0, a * sum(rows.map(([o, w]) => o * w)) / sum(rows.map(([, w]) => w)) + b)), 1)
-      : 40.0;
-  }
-  out["overall"] = round(0.45 * out["offense"] + 0.45 * out["defense"] + 0.1 * out["special_teams"], 1);
+  const mean = (rows) => (rows.length ? round(sum(rows.map(([o, w]) => o * w)) / sum(rows.map(([, w]) => w)), 1) : 40.0);
+  const everyone = t["offense"].concat(t["defense"]).map((p) => season.shown_overall(p));
+  const out = { offense: mean(units["offense"]), defense: mean(units["defense"]), special_teams: mean(units["special_teams"]),
+    overall: mean(units["offense"].concat(units["defense"], units["special_teams"])),
+    roster_avg: everyone.length ? round(sum(everyone) / everyone.length, 1) : 0.0, position_groups: {} };
+  for (const [g, v] of Object.entries(groups)) out["position_groups"][g] = round(sum(v) / v.length, 1);
   return out;
 }
 
@@ -356,25 +357,9 @@ season._PAGE_NOW = {};
 
 
 function page_ratings(t, hurt = []) {
-  // A team's overall, offense and defense as the page shows them (the player's ask): an average of its players'
-  // overalls as their cards show them, each weighted by what his position is worth (PAGE_POS_VALUE), the starters in
-  // full and one backup a starting spot a little (PAGE_DEPTH_WEIGHT). So an offense of mid-80s starters reads in the
-  // mid 80s. The game's own ratings (team_ratings_now, which the sim, the polls and the odds read) are untouched.
-  const league = modules.league;
-  const units = { offense: [], defense: [], special_teams: [] };
-  for (const [role, group] of Object.entries(season._players_by_role(t, t["offense"].concat(t["defense"])))) {
-    if (role === "KR" || role === "PR") continue;
-    const fit = group.filter((p) => !_in(`${p["name"]}|${p["position"]}`, hurt));
-    const n = season.role_starters(t, role), value = get(season.PAGE_POS_VALUE, role, 1.0);
-    const unit = role === "K" || role === "P" ? "special_teams" : _in(role, league.OFFENSE_ROLES) ? "offense" : "defense";
-    fit.slice(0, 2 * n).forEach((p, i) => {
-      units[unit].push([season.shown_overall(p), i < n ? value : value * season.PAGE_DEPTH_WEIGHT]);
-    });
-  }
-
-  const mean = (rows) => (rows.length ? round(sum(rows.map(([o, w]) => o * w)) / sum(rows.map(([, w]) => w))) : 40);
-  return { overall: mean(units["offense"].concat(units["defense"], units["special_teams"])),
-    offense: mean(units["offense"]), defense: mean(units["defense"]) };
+  // A team's overall, offense and defense as the page shows them: game_ratings, whole.
+  const r = season.game_ratings(t, hurt);
+  return { overall: round(r["overall"]), offense: round(r["offense"]), defense: round(r["defense"]) };
 }
 
 
@@ -768,7 +753,7 @@ function bowl_projection(state, early = false) {
   for (const slug of Object.keys(teams)) expected[slug] = 0.0;
   for (const g of Object.values(state["games"])) {
     if (truthy(g["played"]) || g["week"] > season.LAST_REGULAR_WEEK) continue;
-    const edge = (ratings[g["home"]] - ratings[g["away"]]) / 60 + (truthy(g["neutral"]) ? 0.0 : 0.04);
+    const edge = (ratings[g["home"]] - ratings[g["away"]]) / 36 + (truthy(g["neutral"]) ? 0.0 : 0.04);
     const p_home = Math.max(0.08, Math.min(0.92, 0.5 + edge));
     expected[g["home"]] += p_home;
     expected[g["away"]] += 1 - p_home;

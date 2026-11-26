@@ -114,7 +114,7 @@ offseason.NIL_PULL = 0.25;                                    // a starter's or 
 offseason.NIL_PULL_CAP = 0.30;                                // ... at most this (a kept player was paid: exempt the next year)
 offseason.PROGRAM_PULL = 0.10;                                // ... and this when the program is slipping: a tier lost this year, a new head coach's first year,
 offseason.PROGRAM_FLOOR = 77;                                 // or a losing year under a weak developer (WEAK_COACH); for players rated at least this (overall)
-offseason.WEAK_COACH = 50;                                    // a head coach's player development under this, after a losing year: players want a better coach
+offseason.WEAK_COACH = 70;                                    // a head coach's player development under this, after a losing year: players want a better coach
 offseason.RISING_STAY = 0.5;                                  // a program that rose a tier this year: its starters' portal chances, times this
 offseason.RETAIN_ASK = [25, 1.8, 79];                         // what a leaver wants to stay: this plus this per overall point over the third, times his position
 offseason.RETAIN_PLAYING_TIME = 1.5;                          // ... times this when what he really wants is snaps (NIL can still buy him)
@@ -181,19 +181,20 @@ offseason.COORD_SHOP = 0.25;                                  // a coordinator w
 offseason.TERM = { "coordinator": [2, 4], "recruiter": [1, 3] };   // the years a new contract runs (candidates ask the same ranges)
 // ----- coach development *tune*: every coach in the league (head coaches, coordinators, your recruiters, the market) -----
 offseason.COACH_RATE = 0.33;                                  // the share of the gap to his hidden level a rating closes in a year
-offseason.COACH_POT = [[40, 7.0], [55, 1.0], [63, -5.0], [null, -8.0]];   // his level against his rating when first seen: N(mean by age, COACH_POT_SD):
+offseason.COACH_POT = [[40, 4.2], [55, 0.6], [63, -3.0], [null, -4.8]];   // his level against his rating when first seen: N(mean by age, COACH_POT_SD):
                                                               // the young have room, the old are rated over where they are heading (a mean-zero or
-                                                              // ceiling-only draw inflated the league's head coaches 4-14 points in ten seasons, and
-                                                              // +2 at 40-54 with sd 8 still +5: the carousel's hiring harvests the spread)
-offseason.COACH_POT_SD = 6.0;
-offseason.COACH_CLIMB = 12;                                   // a rating never climbs more than this over where he was first seen (the level is capped there too)
+                                                              // ceiling-only draw inflated the league's head coaches in ten seasons: the carousel's
+                                                              // hiring harvests the spread)
+offseason.COACH_POT_SD = 3.6;
+offseason.COACH_CLIMB = 7;                                   // a rating never climbs more than this over where he was first seen (the level is capped there too)
 offseason.COACH_AGE = [[40, 1.3], [55, 1.0], [63, 0.6]];      // the pace under 40, 40-54 and 55-62; from 63 he gains nothing ...
-offseason.COACH_DECLINE = 0.5;                                // ... each rating drops a point a year, and a second one this often
-offseason.COACH_PERF = { 2: 2.0, 0: 0.0, "-1": -1.0, "-2": -2.0 };  // the points his year's verdict adds to each rating, on the _staff_marks scale (+2 top third,
+offseason.COACH_DECLINE = 0.9;                                // ... each rating drops this many points a year (a point this often)
+offseason.COACH_WOBBLE = [-1, 0, 0, 0, 0, 0, 0, 1];          // a rating's point of noise a year (one picked)
+offseason.COACH_PERF = { 2: 1.2, 0: 0.0, "-1": -0.6, "-2": -1.2 };  // the points his year's verdict adds to each rating, on the _staff_marks scale (+2 top third,
 offseason.COACH_PERF_OLD = 0.5;                               // -2 bottom third, -1 a weak class); from 63 it counts this much
 offseason.COACH_IDLE = 0.5;                                   // a coach for hire (the market) develops at this pace, his year neither good nor bad
 offseason.CLASS_MARK_MIN = 70;                                // the class verdict needs this many schools with a class (none: no school ranked "first" on nothing)
-offseason.COACH_FLOOR = 35; offseason.COACH_CAP = 99;
+offseason.COACH_FLOOR = 60; offseason.COACH_CAP = 99;
 offseason.COACH_AGE_UNKNOWN = [32, 58];                       // a recruiter's age when first seen (the league's coaches: carousel._age)
 offseason.RATING_WORDS = { "player_development": "Evaluation", "recruiting": "Recruiting", "play_calling": "Play Calling", "offense": "Offense",
   "defense": "Defense", "discipline": "Discipline", "game_management": "Game Management", "motivation": "Motivation",
@@ -780,11 +781,11 @@ offseason.HONOR_NAMES = { "heisman": "Heisman Trophy", "all_america_1": "All-Ame
 offseason.ROOM_CAP = 12;                     // the most a year's honors and production add to his ceiling
 offseason.LEVEL_UP = 0.4;                   // a national award winner or All-American moves up a coachability level this often
 offseason.COACH_UP_BREAKOUT = 0.20;          // a breakout year (production BREAKOUT_FROM over the average starter) moves him up a level this often
-offseason.COACH_UP_DEVELOPER = [[90, 0.12], [80, 0.08]];   // his coaches' player development (coach_factor's blend) at least this: a level up this often a year
+offseason.COACH_UP_DEVELOPER = [[94, 0.12], [88, 0.08]];   // his coaches' player development (coach_factor's blend) at least this: a level up this often a year
 offseason.COACH_UP_MATURITY = 0.06;          // a junior or senior who played, two or more levels from the top, grows up a level this often
 offseason.COACH_UP_MATURITY_GAP = 2;         // ... the levels he must be below Coach's Dream
 offseason.COACH_UP_REDSHIRT = 0.10;          // a redshirt year under a staff at REDSHIRT_STAFF or better player development moves him up this often
-offseason.REDSHIRT_STAFF = 70;               // ... the staff's player development that makes the year one of learning
+offseason.REDSHIRT_STAFF = 82;               // ... the staff's player development that makes the year one of learning
 offseason.COACH_DOWN_BENCHED = 0.05;         // a starter who struggled and fell off the depth chart drops a level this often
 offseason.COACH_CASES = ["breakout", "developer", "maturity", "redshirt"];   // the order a player's draws are taken in (fixed: one each, always)
 offseason.PHYSICAL = new Set(["speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",

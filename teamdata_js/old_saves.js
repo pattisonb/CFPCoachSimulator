@@ -53,6 +53,34 @@ function league_player(c, attrs, earlier) {
   c["o"] = game_scale.overall(zipped(attrs, c["r"]), c["pos"], get(c, "dmv"));
 }
 
+function coach_numbers(r) {
+  // A coach's ratings (or his hidden ceilings, `pot`) as the card numbers they showed as.
+  if (r === null || typeof r !== "object") return;
+  for (const [k, v] of Object.entries(r)) if (isNumber(v)) r[k] = int(round(shown.coach(v)));
+}
+
+function coach(c) {
+  if (c === null || typeof c !== "object") return;
+  coach_numbers(get(c, "ratings"));
+  for (const r of Object.values(get(c, "ratings_by_role") || {})) coach_numbers(r);
+  coach_numbers(get(c, "pot"));
+  coach_numbers(get(c, "base"));
+}
+
+function coaches(state, lg) {
+  // Every coach the career keeps (the league's staffs, the coaching market, your staff and its candidates) on card numbers.
+  for (const t of Object.values(lg["teams"])) for (const c of Object.values(get(t, "coaches") || {})) coach(c);
+  for (const c of get(get(lg, "market") || {}, "coaches") || []) coach(c);
+  const staff_numbers = (m) => {
+    if (m === null || typeof m !== "object") return;
+    for (const k of ["evaluation", "recruiting", "play_calling"]) if (isNumber(get(m, k))) m[k] = int(round(shown.coach(m[k])));
+    coach_numbers(get(m, "pot"));
+    coach_numbers(get(m, "base"));
+  };
+  for (const m of get(get(state, "career") || {}, "staff") || []) staff_numbers(m);
+  for (const list of Object.values(get(get(state, "offseason") || {}, "candidates") || {})) for (const m of list || []) staff_numbers(m);
+}
+
 function records(obj) {
   // Every player row in a career's records (a dict with an overall and a position): its overall, and a gain with it.
   if (Array.isArray(obj)) { for (const x of obj) records(x); return; }
@@ -78,6 +106,7 @@ export function upgrade(state) {
     for (const e of Object.values(get(get(get(state, "offseason") || {}, "portal") || {}, "players", {}))) {
       if (truthy(get(e, "player"))) league_player(e["player"], attrs, earlier);
     }
+    coaches(state, lg);                                   // (coaches were on the earlier numbers in every save before)
     if (earlier) {
       records(get(state, "offseason"));
       records(get(get(state, "career") || {}, "history"));

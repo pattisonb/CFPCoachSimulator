@@ -36,7 +36,7 @@ polls.INDEPENDENT = new Set(["FBS Independents", "Independent", "Independents"])
 polls.AP_PARAMS = {
   rank_points: 40.0,        // preseason: score gap per poll spot
   unranked_floor: -60.0,    // preseason score of the best unranked team relative to No. 25
-  rating_weight: 6.0,       // preseason: points per rating point above the league (sim only)
+  rating_weight: 10.0,      // preseason: points per rating point above the league (sim only)
   win_base: 14.0,
   win_ranked_bonus: 1.2,    // x (26 - opponent rank) / 25
   win_road_bonus: 0.15,

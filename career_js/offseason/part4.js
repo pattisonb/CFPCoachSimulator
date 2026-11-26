@@ -724,8 +724,8 @@ function next_season(state) {
       if (truthy(c)) {
         const r = get(c, "ratings") || {};
         s["name"] = get(c, "name") || s["name"];
-        s["evaluation"] = int(get(r, "player_development", 60));
-        s["recruiting"] = int(get(r, "recruiting", 60));
+        s["evaluation"] = int(get(r, "player_development", 76));
+        s["recruiting"] = int(get(r, "recruiting", 76));
         const term = offseason.term_of(s["role"]);
         s["contract_until"] = year + new Random(`contract-${offseason.seed_key(state)}-${year}-${s["id"]}`).randint(term[0], term[1]) - 1;
         delete s["pot"];
@@ -1100,17 +1100,6 @@ function page(obj) {
   const out = is_odict(obj) ? odict() : {};
   for (const [k, v] of Object.entries(obj)) out[k] = offseason.page(v);
   const pos = get(obj, "pos") || get(obj, "position");
-  if (!truthy(pos)) {                     // a staff member's ratings go on the coaches' line (shown.coach)
-    if (has(obj, "evaluation")) {                                        // a staff member or a candidate for his job
-      for (const k of ["evaluation", "recruiting"]) {
-        out[k] = shown.coach(get(obj, k));
-      }
-    }
-    if (typeof get(obj, "rating") === "string" && has(obj, "from") && has(obj, "to")) {     // a staff rating that moved
-      out["from"] = shown.coach(obj["from"]);
-      out["to"] = shown.coach(obj["to"]);
-    }
-  }
   const o = get(obj, "overall");
   if (truthy(pos) && is_num(o)) {
     if (Array.isArray(get(obj, "grew"))) {

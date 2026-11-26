@@ -12,7 +12,7 @@ import { modules } from "../engine_js/modules.js";
 const BANDS = [["A", 90], ["B", 80], ["C", 70], ["D", 60], ["F", 0]];   // *tune* a letter and the lowest shown potential that earns it
 const PLUS_FROM = 7, MINUS_UNDER = 3;      // *tune* inside a band's 10 points: this far up is a plus, under this a minus
 const NO_FINE = ["F"];                     // *tune* letters that take no plus or minus
-const PLUS_MINUS_EYE = 70;                 // *tune* your best evaluator (staff or you) at this or better reads plus and minus
+const PLUS_MINUS_EYE = 82;                 // *tune* your best evaluator (staff or you) at this or better reads plus and minus
 
 // School grades (the player's ask): every grade a school gets reads as a letter on this same scale, A+ down to F: the
 // Programs page's measures (0-100) and a program's case with one recruit on a pitch topic (a pull, 0-1). These lines are

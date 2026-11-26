@@ -91,8 +91,6 @@ league.FALLBACK = { LT: ["RT", "LG", "RG", "C"], RT: ["LT", "RG", "LG", "C"], LG
   HB: ["FB", "WR"], FB: ["HB", "TE"], WR: ["TE", "HB"], TE: ["WR", "FB"], QB: [], K: ["P"], P: ["K"] };
 league.LB_ROLES = ["SAM", "MIKE", "WILL"];
 league.OFFENSE_ROLES = new Set(["QB", "HB", "FB", "WR", "TE", "LT", "LG", "C", "RG", "RT"]);
-// team ratings from the starters' overall (ours), fit to the real 2026 team ratings on the starters real usage played (r 0.95 offense, 0.96 defense)
-league.TEAM_FIT = { offense: [0.8745, 20.143], defense: [0.7531, 24.734], special_teams: [0.8058, 15.1] };
 league.GROUP_OF = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE", LT: "OL", LG: "OL", C: "OL", RG: "OL",
   RT: "OL", LEDG: "DL", REDG: "DL", DT: "DL", SAM: "LB", MIKE: "LB", WILL: "LB", CB: "DB",
   FS: "DB", SS: "DB", K: "K", P: "P" };
@@ -552,33 +550,30 @@ export function lineup(roster, shape, year = league.FIRST_YEAR + 1, by_overall =
 }
 
 
-export function team_ratings(roster, starters) {
-  // Team ratings from the starters' overall (TEAM_FIT), with the position groups' starters' mean overall.
+export function team_ratings(roster, starters, depth = {}) {
+  // Team ratings as the game rates a team (season.game_ratings): its players' overalls weighted by position, the
+  // starters in full and one backup a starting spot a little, with the roster's mean overall and the position groups'
+  // starters' means.
+  const season = modules.season;
+  const value_of = (role) => get(get(season || {}, "PAGE_POS_VALUE") || {}, role, 1.0);
+  const backup = get(season || {}, "PAGE_DEPTH_WEIGHT") || 0.15;
   const by = new Map(roster.map((p) => [p["slug"], p]));
-  const out = {};
-  for (const [unit, key] of [["offense", "offense"], ["defense", "defense"], ["special_teams", "special_teams"]]) {
-    const vals = [];
+  const units = { offense: [], defense: [], special_teams: [] };
+  const groups = {};
+  for (const unit of ["offense", "defense", "special_teams"]) {
     for (const [role, slugs] of Object.entries(starters[unit])) {
       if (role === "KR" || role === "PR") continue;
-      for (const s of slugs) if (by.has(s)) vals.push(by.get(s)["ovr"]);
+      const n = slugs.length;
+      const order = [...slugs, ...(get(depth, role) || []).filter((s) => !slugs.includes(s))].filter((s) => by.has(s)).slice(0, 2 * n);
+      order.forEach((s, i) => units[unit].push([by.get(s)["ovr"], i < n ? value_of(role) : value_of(role) * backup]));
+      const g = role === "K" || role === "P" ? role : null;
+      for (const s of slugs) if (by.has(s)) (groups[g || get(league.GROUP_OF, by.get(s)["position"], "DB")] ??= []).push(by.get(s)["ovr"]);
     }
-    const [a, b] = league.TEAM_FIT[key];
-    out[key] = round(vals.length ? Math.max(1.0, Math.min(99.0, a * mean(vals) + b)) : 40.0, 1);
   }
-  out["overall"] = round(0.45 * out["offense"] + 0.45 * out["defense"] + 0.1 * out["special_teams"], 1);
+  const avg = (rows) => (rows.length ? round(sum(rows.map(([o, w]) => o * w)) / sum(rows.map(([, w]) => w)), 1) : 40.0);
+  const out = { offense: avg(units["offense"]), defense: avg(units["defense"]), special_teams: avg(units["special_teams"]),
+    overall: avg(units["offense"].concat(units["defense"], units["special_teams"])) };
   out["roster_avg"] = roster.length ? round(mean(roster.map((p) => p["ovr"])), 1) : 0.0;
-  const groups = {};
-  const add = (g, v) => { if (!(g in groups)) groups[g] = []; groups[g].push(v); };
-  for (const unit of ["offense", "defense"]) {
-    for (const slugs of Object.values(starters[unit])) {
-      for (const s of slugs) {
-        if (by.has(s)) add(get(league.GROUP_OF, by.get(s)["position"], "DB"), by.get(s)["ovr"]);
-      }
-    }
-  }
-  for (const role of ["K", "P"]) {
-    for (const s of get(starters["special_teams"], role, [])) add(role, by.get(s)["ovr"]);
-  }
   out["position_groups"] = {};
   for (const [g, v] of Object.entries(groups)) out["position_groups"][g] = round(mean(v), 1);
   return out;
@@ -607,7 +602,7 @@ export function source_team(lg, slug, by_overall = false) {
   const lead = league._lead_feature(style);
   if (lead !== null) out["rb_lead_feature"] = lead;
   Object.assign(out, { roster: roster, starters: starters, depth_chart: depth, coaches: entry["coaches"],
-    team_ratings: league.team_ratings(roster, starters), roster_size: roster.length });
+    team_ratings: league.team_ratings(roster, starters, depth), roster_size: roster.length });
   return out;
 }
 

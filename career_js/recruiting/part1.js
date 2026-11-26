@@ -122,8 +122,7 @@ recruiting.PLANNABLE = ["message", "call", "call_recruit"];     // *tune* the qu
 recruiting.ENERGY_ZERO = 180;
 recruiting.ENERGY_PER_STAR = 60;
 recruiting.LOOK_ENERGY = 5;                            // *tune* a Send: one look at a prospect, in energy (there are no scouting points)
-// How many looks finish a report, by your staff's blend for that prospect (scout_blend, on the scale the page shows:
-// the average coach a 70): LOOKS_BY_BLEND's floors, else LOOKS_WORST. A read's `looks` are still kept in thirds of a
+// How many looks finish a report, by your staff's blend for that prospect (scout_blend: the average coach a 70): LOOKS_BY_BLEND's floors, else LOOKS_WORST. A read's `looks` are still kept in thirds of a
 // report (REPORT_LOOKS = 3 is a complete one), so a look is worth 3 / looks_needed of them. *tune*
 recruiting.LOOKS_BY_BLEND = [[85, 2], [70, 3]];
 recruiting.LOOKS_WORST = 4;
@@ -374,7 +373,8 @@ recruiting.GRADE_LOW = 1.0;                // grades run the whole scale
 recruiting.GRADE_SPAN = 98.0;
 recruiting.COACHABILITY_POINTS = { "Coach's Dream": 90, "Film Junkie": 80, "Quick Study": 68, "Steady Grinder": 52,
   "Slow to Click": 37, "Set in His Ways": 20 };
-recruiting.LOOK_SD = [16.0, 4.0];                      // a look's error sd in grade points: 16 * (1 - s) + 4, s = rating / 99
+recruiting.LOOK_SD = [16.0, 4.0];                      // a look's error sd in grade points: 16 * (1 - s) + 4, s from his rating (LOOK_EYE)
+recruiting.LOOK_EYE = [40, 99];                        // *tune* an evaluator rated the first reads with no sharpness, the second with all (LOOK_SD)
 recruiting.WORD_SLACK = 4.0;                           // a word range already spans its end words' width, so the read narrows by this much
 recruiting.CONFIDENCE_NOISE = 0.5;                     // how far a look's own confidence strays (log sd, times 1 - s)
 recruiting.HIDDEN_RATE = 0.15;                         // two-stars and three-stars under this composite, hidden until a look

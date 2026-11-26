@@ -24,10 +24,9 @@ const CLASS_STEP = { "FR": -3.0, "FRRS": -2.4, "SO": -1.5, "SORS": -0.9, "JR": 0
 const STAR_STEP = { 5: 3.6, 4: 1.8, 3: 0.0, 2: -1.8, 1: -3.0 };  // *tune* given stars' lift
 const PLAYER_SD = 1.8;  // *tune* spread of a generated overall around its slot
 const OVERALL_RANGE = [64, 96];            // a generated player's overall stays in this range
-const UNIT_WEIGHT = { "offense": 0.45, "defense": 0.45, "special_teams": 0.1 };   // league.team_ratings' overall
 const NUDGE_RANGE = [-18.0, 18.0];         // the common shift of the generated players' overalls, searched by bisection
 const NUDGE_STEPS = 20;
-const NUDGE_CLOSE = 0.5;                   // team overall points from the target that end the search
+const NUDGE_CLOSE = 0.3;                   // team overall points from the target that end the search
 const CLASS_MIX = { "FR": 0.151, "FRRS": 0.122, "SO": 0.086, "SORS": 0.149, "JR": 0.086, "JRRS": 0.153, "SR": 0.069, "SRRS": 0.185 };  // *tune* added players' classes (the built-in FBS rosters' mix)
 const CLASS_LEAD = { "SRRS": 0.0, "JRRS": 0.1, "SR": 0.15, "JR": 0.2, "SORS": 0.3, "SO": 0.4, "FRRS": 0.7, "FR": 0.85 };  // *tune* how late in a group's order each class's first player comes (older first, so starters are mostly upperclassmen, as on the built-in rosters)
 const ROOM_BY_CLASS = { "FR": 0.84, "FRRS": 0.93, "SO": 0.86, "SORS": 0.82, "JR": 0.86, "JRRS": 0.65, "SR": 0.61, "SRRS": 0.0 };  // *tune* a generated player's share of a recruit's room to potential, by class (fit to the built-in rosters)
@@ -225,11 +224,9 @@ export function fit_overall(card, pos, target, keys) {
 }
 
 export function starter_level(target) {
-  // The starters' overall that gives this team overall through league.TEAM_FIT.
-  const TEAM_FIT = modules.league.TEAM_FIT;
-  const a = sum(Object.entries(league_fill.UNIT_WEIGHT).map(([u, w]) => w * TEAM_FIT[u][0]));
-  const b = sum(Object.entries(league_fill.UNIT_WEIGHT).map(([u, w]) => w * TEAM_FIT[u][1]));
-  return (target - b) / a;
+  // The starters' overall that gives about this team overall (a team's rating sits a little under its starters': its
+  // backups count a little).
+  return target + 0.5;
 }
 
 export function _slugify(name) {
@@ -1041,7 +1038,7 @@ export function league_seed(blob, seed) {
 }
 
 export const league_fill = {
-  STRENGTH_GRADE, SLOT_STEP, CLASS_STEP, STAR_STEP, PLAYER_SD, OVERALL_RANGE, UNIT_WEIGHT, NUDGE_RANGE, NUDGE_STEPS, NUDGE_CLOSE,
+  STRENGTH_GRADE, SLOT_STEP, CLASS_STEP, STAR_STEP, PLAYER_SD, OVERALL_RANGE, NUDGE_RANGE, NUDGE_STEPS, NUDGE_CLOSE,
   CLASS_MIX, CLASS_LEAD, ROOM_BY_CLASS, _TEMPLATE_POS, _LB,
   _base_tables, base_strengths, _percentile, strength_target, fit_overall, starter_level, _slugify, _unique_id, _starters_at,
   _group_positions, _home, _default_formation, _team_overall, fill_roster, _class_order, _clamp_overall, _with_ratings, _compact,

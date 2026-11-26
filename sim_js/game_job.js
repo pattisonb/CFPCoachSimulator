@@ -65,21 +65,27 @@ export function apply_coach(team, coach) {
   const tend = t["tendencies"];
   // discipline on the team is relative to its talent: move it by how much more or less disciplined he is than the
   // coach he replaces
-  const old_disc = get(get(get(get(team, "coaches") || {}, "head_coach") || {}, "ratings") || {}, "discipline", 50);
+  const old_disc = get(get(get(get(team, "coaches") || {}, "head_coach") || {}, "ratings") || {}, "discipline", 70);
   const disc = Math.max(0, Math.min(100, get(tend, "discipline", 50) + r["discipline"] - old_disc));
   Object.assign(tend, { fourth_down_go_rate: s["fourth_down_go_rate"], discipline: disc, observed: false });
+  // his play calling likewise: the team's moved by how much better or worse he calls plays than the coordinator he
+  // replaces
+  const called = (side, rating) => {
+    const was = get(get(get(get(team, "coaches") || {}, side) || {}, "ratings") || {}, "play_calling", 70);
+    return Math.max(0, Math.min(100, get(tend, side === "offensive_coordinator" ? "oc_play_calling" : "dc_play_calling", 50) + rating - was));
+  };
   if (truthy(get(coach, "calls_offense"))) {
     const oc = get(t["coaches"], "offensive_coordinator") || {};
     t["coaches"]["offensive_coordinator"] = { ...oc, scheme: { ...(get(oc, "scheme") || {}), offensive_scheme: coach["offense_scheme"] } };
     Object.assign(tend, { pass_rate: s["pass_rate"], tempo: s["tempo"], deep_shot_rate: s["deep_shot_rate"],
-      play_action_rate: s["play_action_rate"], oc_play_calling: r["offense"] });
+      play_action_rate: s["play_action_rate"], oc_play_calling: called("offensive_coordinator", r["offense"]) });
     if (coach["offense_scheme"] !== "Spread Option") delete tend["qb_run_share"];
   }
   if (truthy(get(coach, "calls_defense"))) {
     const dc = get(t["coaches"], "defensive_coordinator") || {};
     t["coaches"]["defensive_coordinator"] = { ...dc, scheme: { ...(get(dc, "scheme") || {}), defensive_scheme: coach["defense_scheme"] } };
     Object.assign(tend, { blitz_rate: s["blitz_rate"], man_coverage_rate: s["man_coverage_rate"], press_rate: s["press_rate"],
-      dc_play_calling: r["defense"] });
+      dc_play_calling: called("defensive_coordinator", r["defense"]) });
   }
   return t;
 }

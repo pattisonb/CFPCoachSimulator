@@ -732,7 +732,7 @@ function look(state, pid, evaluator_rating, rng, by = null, week = null, weight 
   }
   const before = recruiting._read_words(state, pid), flags_before = recruiting._flags(state, pid);     // before his first look: no words, no flags
   read = setdefault(rc["reads"], pid, { looks: 0.0, area: 0.0, by: {}, g: {} });
-  const s = evaluator_rating / 99;
+  const s = Math.max(0, Math.min(1, (evaluator_rating - recruiting.LOOK_EYE[0]) / (recruiting.LOOK_EYE[1] - recruiting.LOOK_EYE[0])));
   const sd = (recruiting.LOOK_SD[0] * (1 - s) + recruiting.LOOK_SD[1]) * (recruiting.is_portal(state) ? recruiting.PORTAL_LOOK : 1.0);
   for (const g of recruiting.GROUPS) {
     const sd_g = sd * persona.read_mult(state, pid, g);          // an Injury Comeback's potential: a wider error (the same draws)
@@ -849,13 +849,13 @@ function make_staff(state) {
     const r = get(c, "ratings") || {};
     const name = coach_names.coordinator_name(state["team"], key, get(c, "name") || "", hc_name, truthy(you)) || role;
     taken.add(name.toLowerCase());
-    staff.push({ id: sid, role, name, evaluation: Math.trunc(get(r, "player_development", 60)),
-      recruiting: Math.trunc(get(r, "recruiting", 60)) });
+    staff.push({ id: sid, role, name, evaluation: Math.trunc(get(r, "player_development", 76)),
+      recruiting: Math.trunc(get(r, "recruiting", 76)) });
   }
   for (let i = 1; i < 4; i++) {
     const name = recruits._name(rng, taken);
-    const evaluation = rng.randint(40, 80);
-    staff.push({ id: `r${i}`, role: "Recruiter", name, evaluation, recruiting: rng.randint(40, 80) });
+    const evaluation = rng.randint(63, 88);
+    staff.push({ id: `r${i}`, role: "Recruiter", name, evaluation, recruiting: rng.randint(63, 88) });
   }
   const order = [];
   for (const [st_code] of [...(get(recruiting._team_model(state["team"]), "top_states") || []), [[get(t, "state")], 0]]) {

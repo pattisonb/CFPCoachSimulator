@@ -19,7 +19,6 @@
 import { Random, round, int, floordiv, sum, cmp, sorted, maxBy, get, truthy, range } from "../../engine_js/pyrt.js";
 import { modules } from "../../engine_js/modules.js";
 import { programs } from "../programs.js";
-import { shown } from "../../teamdata_js/shown.js";
 import { recruiting } from "../recruiting_ns.js";
 
 // ----- small helpers (local to this part) --------------------------------------------------------------------
@@ -477,12 +476,12 @@ const _returning = cached((slug, group) => {
 
 function _coach_edge(state, slug) {
   if (slug === get(state, "team") && truthy(get(get(state, "coach") || {}, "ratings"))) {
-    return (get(state["coach"]["ratings"], "recruiting", 50) - 50) / 160;      // your created coach
+    return (get(state["coach"]["ratings"], "recruiting", 70) - 70) / 96;       // your created coach
   }
   const season = modules.season;
   const hc = get(get(get(season.load_teams(), slug) || {}, "coaches") || {}, "head_coach") || {};
   if ((get(hc, "since") || 0) > 2026) {                 // a career's new hire: his rating is all there is to go on
-    return (get(get(hc, "ratings") || {}, "recruiting", 50) - 50) / 160;
+    return (get(get(hc, "ratings") || {}, "recruiting", 70) - 70) / 96;
   }
   const cur = get(recruiting.model()["coaches"]["current"], slug) || {};
   return get(cur, "edge") || 0.0;
@@ -875,11 +874,11 @@ class RecruitingError extends Error {
 
 function _recruiting_rating(state, slug) {
   if (slug === get(state, "team") && truthy(get(get(state, "coach") || {}, "ratings"))) {
-    return get(state["coach"]["ratings"], "recruiting", 50);
+    return get(state["coach"]["ratings"], "recruiting", 70);
   }
   const season = modules.season;
   const hc = get(get(season.load_teams()[slug], "coaches") || {}, "head_coach") || {};
-  return get(get(hc, "ratings") || {}, "recruiting", 50);
+  return get(get(hc, "ratings") || {}, "recruiting", 70);
 }
 
 
@@ -896,27 +895,27 @@ function weekly_hours(state, slug) {
 
 
 function scout_blend(state, pid) {
-  // Your staff's read of one prospect, on the scale the page shows (the average coach a 70): half the recruiter who
+  // Your staff's read of one prospect (the average coach a 70): half the recruiter who
   // covers his state (your best recruiter when none does), a quarter the coordinator on his side of the ball (both,
   // averaged, for a kicker, a punter or an athlete), a quarter you. It sets how many looks finish his report
   // (looks_needed) and whether his potential reads with a plus or a minus (grades.fine).
   const staff = get(get(state, "career") || {}, "staff") || [];
   const p = state["recruiting"]["prospects"][pid];
   const home = get(get(p, "hometown") || {}, "state");
-  const rated = (m) => Number(get(m, "evaluation", 50) || 0);
+  const rated = (m) => Number(get(m, "evaluation", 70) || 0);
   const recruiters = staff.filter((m) => get(m, "role") === "Recruiter");
   const there = recruiters.filter((m) => get(recruiting.AREAS, get(m, "area"), []).includes(home));
   const pool = there.length ? there : recruiters;
-  const scout = pool.length ? Math.max(...pool.map(rated)) : 50;
+  const scout = pool.length ? Math.max(...pool.map(rated)) : 70;
   const of = (role) => {
     const m = staff.find((x) => get(x, "role") === role);
-    return m ? rated(m) : 50;
+    return m ? rated(m) : 70;
   };
   const g = recruiting._group_of(p);
   const coordinator = recruiting.OFFENSE_GROUPS.includes(g) ? of("OC") : recruiting.DEFENSE_GROUPS.includes(g) ? of("DC") : (of("OC") + of("DC")) / 2;
-  const coach = Number(get(get(get(state, "coach") || {}, "ratings") || {}, "evaluation", 60) || 0);
+  const coach = Number(get(get(get(state, "coach") || {}, "ratings") || {}, "evaluation", 76) || 0);
   const w = recruiting.BLEND_WEIGHTS;
-  return round(w["scout"] * shown.coach(scout) + w["coordinator"] * shown.coach(coordinator) + w["coach"] * shown.coach(coach), 1);
+  return round(w["scout"] * scout + w["coordinator"] * coordinator + w["coach"] * coach, 1);
 }
 
 
@@ -946,7 +945,7 @@ function looks_done(state, pid) {
 function best_evaluator(state) {
   // The best evaluation rating on your side: your staff and your coach.
   const staff = get(get(state, "career") || {}, "staff") || [];
-  return Math.max(...staff.map((m) => get(m, "evaluation", 50)), get(get(get(state, "coach") || {}, "ratings") || {}, "evaluation", 60));
+  return Math.max(...staff.map((m) => get(m, "evaluation", 70)), get(get(get(state, "coach") || {}, "ratings") || {}, "evaluation", 76));
 }
 
 

@@ -233,7 +233,7 @@ function _update_morale(state, g, lines, before) {
   const teams = m["teams"];
   const all_teams = season.load_teams();
   const margin = g["home_score"] - g["away_score"];
-  const edge = (all_teams[g["home"]]["team_ratings"]["overall"] - all_teams[g["away"]]["team_ratings"]["overall"]) / 60
+  const edge = (all_teams[g["home"]]["team_ratings"]["overall"] - all_teams[g["away"]]["team_ratings"]["overall"]) / 36
     + (truthy(g["neutral"]) ? 0.0 : 0.04);
   const p_home = Math.max(0.05, Math.min(0.95, 0.5 + edge));     // the same pre-game chance the bracket projection uses
   for (const [side, opp] of [["home", "away"], ["away", "home"]]) {

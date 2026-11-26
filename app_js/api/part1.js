@@ -839,7 +839,7 @@ function _team_card(t) {
     fictional: t["fictional"], colors: t["colors"], stadium: t["stadium"],
     home_field_advantage: t["home_field_advantage"], prestige: t["prestige"],
     stars: _card_stars(t),      // the program's standing, 0.5 to 5 by halves
-    ratings: { ...shown.team_ratings(t["team_ratings"]), ...season.page_ratings(t) },   // the page's own: an average of the players' overalls
+    ratings: { ...t["team_ratings"], ...season.page_ratings(t) },   // an average of the players' overalls, whole
     head_coach: t["coaches"]["head_coach"]["name"],
     // his age as the career's first season starts (Your Coach opens on it); a copy, so the team is not marked
     head_coach_age: carousel._age({ ...t["coaches"]["head_coach"] }, league.FIRST_YEAR),
