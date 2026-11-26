@@ -609,7 +609,7 @@ function _develop_all(state) {
     }
   }
   mine.sort((a, b) => cmp(-a["gain"], -b["gain"]));
-  return { mean_gain_ea: gains.length ? round(mean(gains), 2) : 0.0, mine: mine, raised_ceilings: breakouts,
+  return { mean_gain: gains.length ? round(mean(gains), 2) : 0.0, mine: mine, raised_ceilings: breakouts,
     coachability: moves, transfers: mine.filter((r) => truthy(r["transfer"])) };
 }
 

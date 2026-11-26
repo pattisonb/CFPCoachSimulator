@@ -162,8 +162,8 @@ test("development varies by team and by player, and players improve on the whole
   const eras = Object.values(lg["teams"]).map((t) => t["era"]);
   assert(eras.every((e) => e != null) && pstdev(eras) >= 0.1);
   const sophomores = rosters().flatMap((r) => gain(r.filter((p) => ["SO", "SORS"].includes(p["cls"]))));
-  assert(pstdev(sophomores) >= 2.5, String(pstdev(sophomores)));
-  assert(off["report"]["development"]["mean_gain_ea"] > 0);
+  assert(pstdev(sophomores) >= 1.6, String(pstdev(sophomores)));         // card overall points
+  assert(off["report"]["development"]["mean_gain"] > 0);
 });
 
 // real: about 70% of the top 50 transfers land at top-25 programs; one offseason is noisy, so 30% here

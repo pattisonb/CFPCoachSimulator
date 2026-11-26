@@ -36,8 +36,10 @@ const ONE_TEAM_NO_GAMES = { format: FORMAT, remove: ["kent-state"],
 // Recorded again when the FCS stand-ins got their names: the text hashed differs only in the 90 and 88
 // `away_display` values that name one ("FCS Plains" then, "Plains Thunderheads" now); with the old labels put back it
 // gives the digests recorded before (a3e087e6... and cc83c7f7...), so not a game moved.
-const BUILTIN_DIGESTS = { 2027: "a2475fef38f16138f50d731ca48537d893413f2cda6656a0e2899c9195b682be",
-  2028: "214d75190a62d1e8f265fe148fb22b065b8e42fe6166c0513ce2c25bc00c6097" };
+// Recorded again when the FCS stand-ins' shifts became card points (9, 3 and -7 then, 3.6, 1.2 and -2.8 now): with the
+// old shifts put back it gives the digests before (a2475fef... and 214d7519...), so again not a game moved.
+const BUILTIN_DIGESTS = { 2027: "52eed37b1a9cd1fe1088852eb1d605e1d2f703de9e82532d413d3c41a7236107",
+  2028: "462b14231b6962bccd834d79a78b944df4f7f6dc98f0860db9ed56855cf195e3" };
 
 const built_teams = (lgd) => league.build(lgd)["teams"];
 

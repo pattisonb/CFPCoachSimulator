@@ -19,14 +19,14 @@ const N = 300;                                      // seeded offseasons per cas
 
 /** Two schools of sophomores (no draft, no graduation): a lineup of mid-rated players and one QB rated like a
  * five-star (the player under test) on each, with a bench behind them. */
-function mini_league({ tier_top = 1, tier_low = 5, dev = 70, since = 2019 } = {}) {
+function mini_league({ tier_top = 1, tier_low = 5, dev = 82, since = 2019 } = {}) {
   const teams = {};
   for (const [slug, tier] of [[TOP, tier_top], [LOW, tier_low]]) {
     const roster = [];
-    POSITIONS.forEach((pos, i) => roster.push({ id: `${slug}-${i}`, n: `Player ${i}`, pos, cls: "SO", o: pos === "QB" ? 70 : 40, s: 3, r: [] }));
-    POSITIONS.forEach((pos, i) => roster.push({ id: `${slug}-${i + POSITIONS.length}`, n: `Backup ${i + POSITIONS.length}`, pos, cls: "SO", o: 30, s: 2, r: [] }));
+    POSITIONS.forEach((pos, i) => roster.push({ id: `${slug}-${i}`, n: `Player ${i}`, pos, cls: "SO", o: pos === "QB" ? 90 : 74, s: 3, r: [] }));
+    POSITIONS.forEach((pos, i) => roster.push({ id: `${slug}-${i + POSITIONS.length}`, n: `Backup ${i + POSITIONS.length}`, pos, cls: "SO", o: 67, s: 2, r: [] }));
     teams[slug] = { roster, program: { tier, nil: tier === 1 ? 90.0 : 20.0, rating: tier === 1 ? 80.0 : 20.0 },
-      coaches: { head_coach: { name: "Coach", since, ratings: { overall: 60, player_development: dev } } } };
+      coaches: { head_coach: { name: "Coach", since, ratings: { overall: 76, player_development: dev } } } };
   }
   return { teams, attrs: [], year: YEAR };
 }
@@ -59,7 +59,7 @@ function entries({ shifts = {}, losing = [], kept = false, ...league } = {}) {
   return out;
 }
 const total = (counts) => Object.values(counts).reduce((a, b) => a + b, 0);
-const QB = { id: "x", pos: "QB", cls: "SO", o: 70 };
+const QB = { id: "x", pos: "QB", cls: "SO", o: 90 };
 const CTX = { losing: false, p4: true, year: YEAR, tier: 5, slipping: null, rising: false };
 const odds = (p, use, ctx) => Object.fromEntries(offseason.portal_odds(p, use, ctx));
 
@@ -86,8 +86,8 @@ function finished(st) {
 // ----- the odds -------------------------------------------------------------------------------------------------
 
 test("a five-star-level QB has a five-star's market; a bench-level player has none", () => {
-  assert(recruiting.market_value("QB", 70) === recruiting.ASK[5] * recruiting.ASK_POS["QB"]);
-  assert(recruiting.market_value("C", 40) === 0);
+  assert(recruiting.market_value("QB", 90) === recruiting.ASK[5] * recruiting.ASK_POS["QB"]);
+  assert(recruiting.market_value("C", 67) === 0);
 });
 
 const same = entries({ tier_top: 3, tier_low: 3 });      // two level programs, nothing moving: the baseline
@@ -98,7 +98,7 @@ test("the same QB leaves a bottom-tier program far more often than a top one, ch
   assert(low > 0 && low / Math.max(1, top) > 1.5, () => show(r));
   assert((r[LOW]["deal"] || 0) >= 0.6 * low, () => show(r[LOW]));
   // the deal's share of his chance: his shortfall's share of his market, NIL_PULL times, capped
-  const mv = recruiting.market_value("QB", 70);
+  const mv = recruiting.market_value("QB", 90);
   const want = Math.min(offseason.NIL_PULL_CAP, offseason.NIL_PULL * (mv - offseason.NIL_TIER_PAY[5]) / mv);
   assert(Math.abs(odds(QB, "starter", CTX)["deal"] - want) < 1e-9, () => show(odds(QB, "starter", CTX)));
   assert(!("deal" in odds(QB, "bench", CTX)), "a bench player has no market to chase");
@@ -122,9 +122,9 @@ test("a new head coach's first year reads as slipping too", () => {
 });
 
 test("a weak developer after a losing year loses starters who want a better coach", () => {
-  const weak = entries({ tier_top: 3, tier_low: 3, dev: 35, losing: [LOW] });
+  const weak = entries({ tier_top: 3, tier_low: 3, dev: 60, losing: [LOW] });
   assert(weak[LOW]["better_coach"] > 0 && !weak[TOP]["better_coach"], () => show(weak));
-  const strong = entries({ tier_top: 3, tier_low: 3, dev: 70, losing: [LOW] });
+  const strong = entries({ tier_top: 3, tier_low: 3, dev: 82, losing: [LOW] });
   assert(!strong[LOW]["better_coach"] && total(weak[LOW]) > total(strong[LOW]), () => show([weak[LOW], strong[LOW]]));
 });
 

@@ -23,7 +23,7 @@ test("starter year", () => {
   outer:
   for (const t of Object.values(lgd["teams"])) {
     for (const p of t["roster"]) {
-      if (p["cls"] === "FR" && (p["pos"] === "QB" || p["pos"] === "HB") && sum(p["g"]) >= 400 && p["o"] < 55) {
+      if (p["cls"] === "FR" && (p["pos"] === "QB" || p["pos"] === "HB") && sum(p["g"]) >= 400 && p["o"] < 81) {
         const bench = structuredClone(p), starter = structuredClone(p);
         const g_bench = offseason.develop(bench, attrs, 1.0, new Random(7));
         const g_start = offseason.develop(starter, attrs, 1.0, new Random(7), true);

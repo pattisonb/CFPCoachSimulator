@@ -1183,7 +1183,7 @@ function _view(state, position = null, status = null) {
     report: truthy(report) ? { mine: Array.from(report["development"]["mine"]),
     transfers: (truthy(get(report["development"], "transfers")) ? report["development"]["transfers"]
       : report["development"]["mine"].filter((r) => truthy(get(r, "transfer")))),
-    mean_gain_ea: report["development"]["mean_gain_ea"],
+    mean_gain: get(report["development"], "mean_gain") ?? get(report["development"], "mean_gain_ea") ?? 0.0,   // (an offseason saved before named it mean_gain_ea)
     walk_ons: report["walk_ons"] } : report,
     staff: null,
     review: Object.keys(review).length ? review : null,

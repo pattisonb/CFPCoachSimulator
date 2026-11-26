@@ -36,7 +36,7 @@ const rc = st["recruiting"];
 test("the same year and seed give the same class, another seed a different one", () => {
   const again = recruits.generate_class(2027, 7, new Set(real_names));
   equal(cls.map((p) => p["name"]), again.map((p) => p["name"]));
-  equal(cls[0]["ratings_ea"], again[0]["ratings_ea"]);
+  equal(cls[0]["ratings"], again[0]["ratings"]);
   const other = recruits.generate_class(2027, 8);
   assert(other[0]["name"] !== cls[0]["name"] || other[1]["name"] !== cls[1]["name"]);
 });
@@ -58,15 +58,15 @@ test("every prospect has a name of his own that no real player has", () => {
 test("ratings stay on the scale, potential is never under a rating, and every coachability level appears", () => {
   equal(new Set(cls.map((p) => p["coachability"])), new Set(Object.keys(recruits.RATE)));
   for (const p of cls) {
-    assert(Object.values(p["ratings_ea"]).every((v) => v >= 0 && v <= 99), p["name"]);
-    assert(Object.entries(p["ratings_ea"]).every(([k, v]) => p["potential_ea"][k] >= v), p["name"]);
-    assert(p["overall_ea"] >= 1 && p["overall_ea"] <= 99 && p["hometown"]["state"], p["name"]);
+    assert(Object.values(p["ratings"]).every((v) => v >= 0 && v <= 99), p["name"]);
+    assert(Object.entries(p["ratings"]).every(([k, v]) => p["potential"][k] >= v), p["name"]);
+    assert(p["overall"] >= 1 && p["overall"] <= 99 && p["hometown"]["state"], p["name"]);
   }
 });
 
 test("athleticism is mostly set by high school: speed has little room to grow, awareness a lot", () => {
   const wr = cls.filter((p) => p["ea_position"] === "WR");
-  const room = (k) => mean(wr.map((p) => p["potential_ea"][k] - p["ratings_ea"][k]));
+  const room = (k) => mean(wr.map((p) => p["potential"][k] - p["ratings"][k]));
   assert(room("speed") < 2 && 2 < room("awareness") - 5, J([room("speed"), room("awareness")]));
 });
 
@@ -81,10 +81,10 @@ test("development closes the gap to potential, never passes it, and is faster fo
   const copy = (p) => JSON.parse(JSON.stringify(p));
   const fast = copy(cls.find((p) => p["coachability"] === "Coach's Dream" && p["stars"] === 3));
   const slow = copy(cls.find((p) => p["coachability"] === "Set in His Ways" && p["stars"] === 3));
-  const gap = (p) => Object.entries(p["ratings_ea"]).reduce((a, [k, v]) => a + p["potential_ea"][k] - v, 0);
+  const gap = (p) => Object.entries(p["ratings"]).reduce((a, [k, v]) => a + p["potential"][k] - v, 0);
   const gap0 = [gap(fast), gap(slow)];
   for (let i = 0; i < 3; i++) for (const p of [fast, slow]) recruits.develop(p, rng);
-  for (const p of [fast, slow]) assert(Object.entries(p["ratings_ea"]).every(([k, v]) => v <= p["potential_ea"][k]), "past his potential");
+  for (const p of [fast, slow]) assert(Object.entries(p["ratings"]).every(([k, v]) => v <= p["potential"][k]), "past his potential");
   const closed = [1 - gap(fast) / Math.max(1, gap0[0]), 1 - gap(slow) / Math.max(1, gap0[1])];
   assert(closed[0] > closed[1] + 0.3, J(closed));
 });

@@ -73,9 +73,21 @@ test("once the league exists the goal and the budget read its living values", ()
 
 test("a sitting head coach leaves only for a clearly better job, and the carousel moves every program a year on", () => {
   const off = reader["offseason"];
-  const attract = Object.fromEntries(Object.keys(reader["league"]["teams"]).map((s) => [s, programs.attract(reader, s)]));   // as the jobs stood before anyone moved
+  // as the jobs stood before anyone moved: read when the carousel first weighs a job, once this year's program update
+  // and the ADs' NIL moves have run
+  let attract = null;
+  const weigh = carousel.attract;
+  carousel.attract = (st, slug) => {
+    attract ??= Object.fromEntries(Object.keys(reader["league"]["teams"]).map((s) => [s, weigh(st, s)]));
+    return weigh(st, slug);
+  };
   off["auto"] = true;
-  while (off["stage"] !== "staff") offseason.advance(reader);
+  try {
+    while (off["stage"] !== "staff") offseason.advance(reader);
+  } finally {
+    carousel.attract = weigh;
+  }
+  assert(attract !== null, "the carousel did not update the programs");
   const changes = off["carousel"]["changes"];
   const names = Object.fromEntries(Object.entries(season.load_teams()).map(([s, t]) => [t["name"], s]));
   const moves = changes.filter((c) => c["role"] === "head_coach" && c["reason"].startsWith("left for ") && c["reason"] !== "left for the NFL");

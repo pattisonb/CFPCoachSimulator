@@ -41,9 +41,9 @@ const signed2 = (x) => (x < 0 ? "-" : "+") + round(Math.abs(x), 2).toFixed(2);  
 
 test("morale", () => {
   const base = fingerprint();
-  console.log("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 65beeff3e905b13d)");
+  console.log("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 8a45ab9155938354)");
   // the engine's own fingerprint with momentum off: the same five games tests/test_play_log.mjs prints
-  assert(base === "65beeff3e905b13d");
+  assert(base === "8a45ab9155938354");
 
   // in-game momentum changes a game and leaves the flag off afterwards
   season._init(String(season.TEAMS_FILE));
@@ -80,9 +80,9 @@ test("morale", () => {
   const [name, pos] = hot[0][0].split("|");
   const prof = season.player_profile(st, "ohio-state", name, pos);
   const f = prof["morale"]["factor"];
-  console.log(name, pos, "form", prof["morale"]["form"], "factor", f, "label", prof["morale"]["label"], "boosts", JSON.stringify(prof["ratings"].filter((r) => r["boost"]).map((r) => [r["key"], r["boost"]]).slice(0, 4)));
+  console.log(name, pos, "form", prof["morale"]["form"], "factor", f, "label", prof["morale"]["label"], "boosts", JSON.stringify(prof["attributes"].filter((r) => r["boost"]).map((r) => [r["key"], r["boost"]]).slice(0, 4)));
   assert(prof["morale"]["enabled"] && 0.9 <= f && f <= 1.1);
-  if (f > 1.0) assert(prof["ratings"].some((r) => r["boost"] > 0));
+  if (f > 1.0) assert(prof["attributes"].some((r) => r["boost"] > 0));
   const data = season.with_morale(season.team_data(st, "ohio-state"), season.morale_payload(st, "ohio-state"));
   const raw_team = season.team_data(st, "ohio-state");
   const raw = [...raw_team["offense"], ...raw_team["defense"]].find((p) => p["name"] === name);

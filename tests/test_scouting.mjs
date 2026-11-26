@@ -29,7 +29,7 @@ function refused(fn, code, words = "") {
   throw new Error(`not refused (${code} ${words})`);
 }
 
-const COACH = { id: "c1", first_name: "Pat", last_name: "Test", ratings: { recruiting: 50, evaluation: 60, offense: 70, defense: 70 } };
+const COACH = { id: "c1", first_name: "Pat", last_name: "Test", ratings: { recruiting: 70, evaluation: 70, offense: 75, defense: 75 } };
 const base = season.new_season(ME, "full", 7, undefined, clone(COACH), true);
 const fresh = () => clone(base);
 const area_of = (st, pid) => {
@@ -89,13 +89,14 @@ function coverage(st, rating, pids) {
     assert(recruiting.report_complete(rc["reads"][pid]));
     for (const g of recruiting.GROUPS) {
       const [m, half] = recruiting.read_spread(st, pid, g);
-      const t = W.indexOf(recruiting.word(truth[g]));
-      rows.push([2 * half, W.indexOf(recruiting.word(m + half)) <= t && t <= W.indexOf(recruiting.word(m - half))]);
+      const key = recruiting.read_key(rc["prospects"][pid], g);
+      const t = W.indexOf(recruiting.word(truth[g], key));
+      rows.push([2 * half, W.indexOf(recruiting.word(m + half, key)) <= t && t <= W.indexOf(recruiting.word(m - half, key))]);
       const [lo, hi] = recruiting.read_interval(st, pid, g);
       assert(lo === hi && hi === m, "a complete report's read is one point: the staff's final grade");
-      equal(recruiting.grade_range(st, pid, g), [recruiting.word(m), recruiting.word(m)]);
+      equal(recruiting.grade_range(st, pid, g), [recruiting.word(m, key), recruiting.word(m, key)]);
       errs.push(Math.abs(m - truth[g]));
-      halves.push(half + recruiting.WORD_SLACK);
+      halves.push(half + recruiting.WORD_SLACK * recruiting.read_scale(key));
     }
   }
   return { held: rows.filter((r) => r[1]).length / rows.length, width: mean(rows.map((r) => r[0])), rows, err: mean(errs), half: mean(halves) };
@@ -104,7 +105,7 @@ function coverage(st, rating, pids) {
 test("a better evaluator's ranges hold the truth more often and his final grade is closer; a weak one is wider and still misses more", () => {
   const st = fresh();
   const pids = Object.keys(st["recruiting"]["prospects"]).slice(0, 500);
-  const avg = coverage(st, 60, pids), elite = coverage(st, 95, pids), weak = coverage(st, 40, pids);
+  const avg = coverage(st, 76, pids), elite = coverage(st, 97, pids), weak = coverage(st, 63, pids);
   for (const c of [avg, elite, weak]) assert(c.err <= c.half, J([c.err, c.half]));      // the final grade lands inside the range it had
   assert(elite.err < avg.err && avg.err < weak.err, J([elite.err, avg.err, weak.err]));
   assert(avg.held >= 0.72 && avg.held <= 0.88, String(avg.held));
@@ -122,20 +123,25 @@ test("a better evaluator's ranges hold the truth more often and his final grade 
 test("a half look moves the read half as far as a full one", () => {
   const st = fresh(), rc = st["recruiting"];
   const pid = Object.keys(rc["prospects"])[10];
-  recruiting.look(st, pid, 80, new Random(1), undefined, undefined, recruiting.AREA_LOOK);
+  recruiting.look(st, pid, 88, new Random(1), undefined, undefined, recruiting.AREA_LOOK);
   const before = [...rc["reads"][pid]["g"]["potential"]];
   const full = clone(st), half = clone(st);
-  recruiting.look(full, pid, 80, new Random(5));
-  recruiting.look(half, pid, 80, new Random(5), undefined, undefined, recruiting.AREA_LOOK);
+  recruiting.look(full, pid, 88, new Random(5));
+  recruiting.look(half, pid, 88, new Random(5), undefined, undefined, recruiting.AREA_LOOK);
   const gf = full["recruiting"]["reads"][pid]["g"]["potential"], gh = half["recruiting"]["reads"][pid]["g"]["potential"];
   assert(Math.abs((gh[1] - before[1]) * 2 - (gf[1] - before[1])) < 1e-3, J([before, gf, gh]));     // half the precision gained
   assert(Math.abs(gh[0] - before[0]) < Math.abs(gf[0] - before[0]), J([before, gf, gh]));
   assert(full["recruiting"]["reads"][pid]["looks"] === 1.5 && half["recruiting"]["reads"][pid]["looks"] === 1.0);
 });
 
-test("grade words are cut on the game's scale: 50 is Solid, 65 Strong, 80 Elite", () => {
-  equal([95, 90, 85, 80, 70, 65, 55, 50, 45, 40, 30].map((v) => recruiting.word(v)),
-    ["All-American", "All-American", "Elite", "Elite", "Strong", "Strong", "Solid", "Solid", "Fair", "Fair", "Weak"]);
+test("a potential's words are cut on overalls (93 All-American, 90 Elite, 85 Strong, 79 Solid, 74 Fair) and each position's groups on its own card numbers", () => {
+  equal([95, 93, 92, 90, 89, 85, 84, 79, 78, 74, 73, 50].map((v) => recruiting.word(v)),
+    ["All-American", "All-American", "Elite", "Elite", "Strong", "Strong", "Solid", "Solid", "Fair", "Fair", "Weak", "Weak"]);
+  // every position's group words run best to worst, a word wide enough to mean something, the best under 99
+  for (const [key, row] of Object.entries(game.modules.game_scale.data()["read_words"])) {
+    const f = row["floors"];
+    assert(f.length === 5 && f[0] <= 97 && f.every((v, i) => i === 0 || f[i - 1] - v >= 1.5) && row["per_point"] > 0, J([key, row]));
+  }
   assert(!recruiting.WORDS.includes("Generational"));
   const band = recruiting.word_band(72);
   assert(band[0] <= 72 && 72 <= band[1] && recruiting.word(band[0]) === recruiting.word(band[1]));
@@ -152,8 +158,9 @@ test("a true grade is the average of the card ratings behind it", () => {
       assert(Math.abs(q["truth"][g] - mean(keys.map((k) => cards[k]))) < 0.6, J([q["ea_position"], g, q["truth"][g]]));
     }
   }
-  const eighties = Object.values(rc["prospects"]).filter((q) => q["truth"]["athleticism"] >= 80);
-  assert(eighties.length && eighties.every((q) => ["All-American", "Elite"].includes(recruiting.word(q["truth"]["athleticism"]))));
+  // a true grade at or past his position's Elite floor reads Elite or better
+  const elite = Object.values(rc["prospects"]).filter((q) => q["truth"]["athleticism"] >= recruiting.read_floors(recruiting.read_key(q, "athleticism"))[1]);
+  assert(elite.length && elite.every((q) => ["All-American", "Elite"].includes(recruiting.word(q["truth"]["athleticism"], recruiting.read_key(q, "athleticism")))));
 });
 
 // ----- looks in trip units -----------------------------------------------------------------------------------------------
@@ -164,7 +171,7 @@ test("every scouting badge waits for a complete report of three looks", () => {
 });
 
 test("a recruiter's week is half a look each for ten prospects in his area, your board first; the staff stops at one look and your Sends finish the report", () => {
-  const st = set_eval(fresh(), 50), rc = st["recruiting"], staff = st["career"]["staff"];
+  const st = set_eval(fresh(), 70), rc = st["recruiting"], staff = st["career"]["staff"];
   for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
   rc["reads"] = {};
   rc["board"] = [];
@@ -248,15 +255,15 @@ test("how many looks finish a report follows your staff's blend for him: two at 
   const [a, b, c] = Object.keys(rc["prospects"]).filter((q) => live(rc, q)).slice(0, 3);
   equal(recruiting.LOOKS_BY_BLEND, [[85, 2], [70, 3]]);
   equal(recruiting.BLEND_WEIGHTS, { scout: 0.5, coordinator: 0.25, coach: 0.25 });
-  // every evaluator the same: the blend is that rating as the page shows it (a stored 50 is a 70, 80 an 88, 30 a 57)
-  for (const [stored, blend, need] of [[50, 70, 3], [80, 88, 2], [30, 57, 4]]) {
+  // every evaluator the same: the blend is that rating
+  for (const [stored, blend, need] of [[70, 70, 3], [88, 88, 2], [56, 56, 4]]) {
     set_eval(st, stored);
     assert(Math.abs(recruiting.scout_blend(st, a) - blend) <= 1 && recruiting.looks_needed(st, a) === need, J([stored, recruiting.scout_blend(st, a), recruiting.looks_needed(st, a)]));
   }
   // a plus or a minus on his potential waits for the same bar
-  assert(game.modules.grades.fine(set_eval(st, 80), a) === true && game.modules.grades.fine(set_eval(st, 50), a) === false);
+  assert(game.modules.grades.fine(set_eval(st, 88), a) === true && game.modules.grades.fine(set_eval(st, 70), a) === false);
   // the recruiter who covers his state counts for half, the coordinator on his side of the ball and you a quarter each
-  set_eval(st, 50);
+  set_eval(st, 70);
   const home = rc["prospects"][a]["hometown"]["state"], area = Object.keys(recruiting.AREAS).find((x) => recruiting.AREAS[x].includes(home));
   const scout = st["career"]["staff"].find((m) => m["role"] === "Recruiter");
   scout["area"] = area;
@@ -264,12 +271,12 @@ test("how many looks finish a report follows your staff's blend for him: two at 
   const lifted = recruiting.scout_blend(st, a);
   assert(lifted > 80 && lifted < 88, J(lifted));
   // a strong staff: two of his looks, each worth half a report; a weak one: four
-  set_eval(st, 80);
+  set_eval(st, 88);
   send(st, a);
   assert(rc["reads"][a]["looks"] === 1.5 && recruiting.looks_done(st, a) === 1 && recruiting.looks_needed(st, a) === 2);
   send(st, a);
   assert(rc["reads"][a]["looks"] === 3.0 && recruiting.report_complete(rc["reads"][a]) && recruiting.looks_done(st, a) === 2);
-  set_eval(st, 30);
+  set_eval(st, 56);
   for (const n of [1, 2, 3]) {
     send(st, b);
     assert(rc["reads"][b]["looks"] === 0.75 * n && recruiting.looks_done(st, b) === n && !recruiting.report_complete(rc["reads"][b]), J(rc["reads"][b]["looks"]));
@@ -333,7 +340,7 @@ test("about one in seven lower-ranked prospects is hidden from the public list u
   assert(!recruiting.prospect_list(st).includes(h));
   const e = refused(() => prospects.profile(st, h, ME), 404);
   assert(e.code === 404);
-  recruiting.look(st, h, 60, new Random(1));
+  recruiting.look(st, h, 76, new Random(1));
   assert(recruiting.prospect_list(st).includes(h));
 });
 
@@ -365,7 +372,7 @@ test("your staff's own comp and grades wait for his complete report", () => {
   delete rc["reads"][pid];
   let prof = prospects.profile(st, pid, ME);
   assert(prof["our_comp"] === null && prof["our_grades"] === null);
-  for (let i = 0; i < 3; i++) recruiting.look(st, pid, 90, new Random(i));
+  for (let i = 0; i < 3; i++) recruiting.look(st, pid, 94, new Random(i));
   prof = prospects.profile(st, pid, ME);
   assert(prof["our_comp"] !== null && !("overall_ea" in prof["our_comp"]) && prof["our_comp"]["overall"] !== undefined, J(prof["our_comp"]));
   equal(new Set(Object.keys(prof["our_grades"])), new Set(recruiting.GROUPS));
@@ -375,7 +382,7 @@ test("your staff's own comp and grades wait for his complete report", () => {
 test("hovering a grade shows what prospects graded like that look like, on the game's own ratings, placed among today's players", () => {
   const st = fresh(), rc = st["recruiting"];
   const pid = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["rank"] === 5);
-  for (let i = 0; i < 3; i++) recruiting.look(st, pid, 90, new Random(i));
+  for (let i = 0; i < 3; i++) recruiting.look(st, pid, 94, new Random(i));
   const prof = prospects.profile(st, pid, ME), det = prof["grade_details"];
   assert(Object.values(prof["our_grades"]).every(([lo, hi]) => lo === hi), "a complete report is one grade a group");
   equal(new Set(Object.keys(det)), new Set(recruiting.GROUPS));
@@ -388,7 +395,7 @@ test("hovering a grade shows what prospects graded like that look like, on the g
   assert(lg["rank"] >= 1 && lg["rank"] <= lg["of"] && lg["starter_rank"] >= 1 && lg["starter_rank"] <= lg["starters"] + 1 && lg["of"] > lg["starters"] && lg["starters"] > 20, J(lg));
   assert(det["coachability"]["labels"]);
   const lb = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["ea_position"] === "MIKE" && !rc["prospects"][q]["hidden"]);
-  for (let i = 0; i < 3; i++) recruiting.look(st, lb, 90, new Random(i));
+  for (let i = 0; i < 3; i++) recruiting.look(st, lb, 94, new Random(i));
   assert(Object.keys(prospects.profile(st, lb, ME)["grade_details"]["technique"]["ratings"]).length, "a linebacker's technique showed no ratings");
 });
 
@@ -410,7 +417,7 @@ test("the Send queue puts your board first: one Send from complete, then the res
 // ----- he is yours, or signed -----------------------------------------------------------------------------------------------
 
 test("scouting stops once he is committed to you: no Send, and your area scout spends no look on him", () => {
-  const st = set_eval(fresh(), 50), rc = st["recruiting"], staff = st["career"]["staff"];
+  const st = set_eval(fresh(), 70), rc = st["recruiting"], staff = st["career"]["staff"];
   st["current_week"] = 1;
   for (const p of Object.values(rc["prospects"])) p["hidden"] = false;
   const by_rank = Object.fromEntries(Object.entries(rc["prospects"]).map(([q, p]) => [p["rank"], q]));
@@ -451,8 +458,8 @@ test("a gem or a bust risk is your staff's read against his star tier, never the
   const two = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["stars"] === 2 && !rc["prospects"][q]["hidden"]);
   rc["reads"][two] = full_read(cuts[2][0] + 1.0);
   assert(prospects.find(st, two) === "gem" && prospects.row(st, two, ME)["find"] === "gem");
-  rc["reads"][two]["g"]["potential"] = [88.0, 100.0];
-  assert(prospects.find(st, two) === null, "a read far above the cut is not a gem: the cut is a band relative to his star tier");
+  rc["reads"][two]["g"]["potential"] = [cuts[2][0] - 3.0, 100.0];
+  assert(prospects.find(st, two) === null, "a read under his star tier's cut is not a gem, however well it reads");
   rc["reads"][two]["g"]["potential"] = [cuts[2][0] + 1.0, 100.0];
   for (const looks of [1, 2, 2.5]) {
     rc["reads"][two]["looks"] = looks;
@@ -462,26 +469,26 @@ test("a gem or a bust risk is your staff's read against his star tier, never the
   const five = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["stars"] === 5);
   rc["reads"][five] = full_read(cuts[5][1] - 1.0);
   assert(prospects.find(st, five) === "bust");
-  rc["reads"][five]["g"]["potential"] = [88.0, 100.0];
+  rc["reads"][five]["g"]["potential"] = [91.0, 100.0];
   assert(prospects.find(st, five) === null, "a five-star reading Elite is just a five-star");
   Object.assign(rc["status"][two], { signed: ME, committed: ME });
   const held = prospects.class_detail(st, ME, ME).find((r) => r["id"] === two)["find_held"];
-  assert(held === (rc["prospects"][two]["truth"]["potential"] >= 80), "the gem call is held to the truth");
+  assert(held === (rc["prospects"][two]["truth"]["potential"] >= recruiting.POTENTIAL_FLOORS[1]), "the gem call is held to the truth: Elite or better");
   const four = Object.keys(rc["prospects"]).find((q) => rc["prospects"][q]["stars"] === 4 && !rc["prospects"][q]["hidden"]);
   rc["reads"][four] = full_read(cuts[4][1] - 1.0);
   assert(prospects.find(st, four) === "bust");
   Object.assign(rc["status"][four], { signed: ME, committed: ME });
   const row4 = prospects.class_detail(st, ME, ME).find((r) => r["id"] === four);
-  assert(row4["find"] === "bust" && row4["find_held"] === (rc["prospects"][four]["truth"]["potential"] < 50));
+  assert(row4["find"] === "bust" && row4["find_held"] === (rc["prospects"][four]["truth"]["potential"] < recruiting.POTENTIAL_FLOORS[3]));
 });
 
 // ----- old saves ----------------------------------------------------------------------------------------------------------------
 
-test("a save from before grades moved to the game's scale converts on load: true grades recomputed, each read as far off as it was", () => {
+test("a save from before card numbers converts its class on load: true grades worked out again, each read as far off as it was", () => {
   const st = fresh(), rc = st["recruiting"];
-  assert(rc["grades"] === "game");
+  assert(rc["grades"] === "game" && rc["scale"] === "card");
   const pid = Object.keys(rc["prospects"])[5];
-  for (let i = 0; i < 3; i++) recruiting.look(st, pid, 90, new Random(i));
+  for (let i = 0; i < 3; i++) recruiting.look(st, pid, 94, new Random(i));
   const now = { ...rc["prospects"][pid]["truth"] };
   const off = Object.fromEntries(recruiting.GROUPS.map((g) => [g, rc["reads"][pid]["g"][g][0] - now[g]]));
   for (const g of recruiting.GROUPS) {                    // as an old save held them
@@ -489,10 +496,11 @@ test("a save from before grades moved to the game's scale converts on load: true
     rc["reads"][pid]["g"][g][0] = 70.0 + off[g];
   }
   delete rc["grades"];
+  delete rc["scale"];
   st["id"] = "oldgradesave01";
   season.save_season(st);
   const orc = season.load_season(st["id"])["recruiting"];
-  assert(orc["grades"] === "game");
+  assert(orc["grades"] === "game" && orc["scale"] === "card");
   equal(orc["prospects"][pid]["truth"], now);
   assert(recruiting.GROUPS.every((g) => Math.abs(orc["reads"][pid]["g"][g][0] - (now[g] + off[g])) < 0.01));
   assert(orc["reads"][pid]["looks"] === 3);

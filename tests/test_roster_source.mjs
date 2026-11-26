@@ -1,5 +1,5 @@
 // The roster file is where a real player's ratings live (the player's rule), and the only place: each player has one
-// labeled set (data/engine_teams.json `ratings`), on the scale the game shows (the average player about a 70), and
+// labeled set (data/engine_teams.json `ratings`), card numbers (the average player about a 70), and
 // everything else about how good he is, is worked out from it when the file is read (teamdata_js/rosters.js): the
 // numbers the play engine reads, his card, his overall, what he would be at every position. So a rating changed in the
 // file by hand is his rating everywhere, and the number in the file is the number on his card: in the first season
@@ -15,7 +15,6 @@ const game = await start();
 const { season } = game;
 const { league, rosters, build_teams } = game.modules;
 const game_scale = game.modules.game_scale ?? (await import("../teamdata_js/game_scale.js")).game_scale;
-const shown = (await import("../teamdata_js/shown.js")).shown;
 const rv2 = (await import("../teamdata_js/ratings.js")).ratings;
 const file = JSON.parse(fs.readFileSync(path.join(ROOT, "data", "engine_teams.json"), "utf8"));
 const attrs = game_scale.keys();
@@ -37,16 +36,17 @@ test("the game reads every player worked out from his ratings: the engine's numb
         equal(p["skills"], rosters.stored(rosters.skills_of(src), src["source_position"]), who);
         const ours = Object.fromEntries(attrs.map((k, j) => [k, p["skills"][j]]));
         equal(p["ovr"], game_scale.overall(ours, src["source_position"]), who);       // the overall the game has always used, on his stored skills
-        assert(Number.isInteger(p["speed"]) && p["speed"] >= 1 && p["speed"] <= 99, who);
-        assert(Object.keys(p["attributes"]).length >= 4 && Object.values(p["attributes"]).every((v) => v >= 1 && v <= 99), who);
-        equal(Object.keys(p["ratings_at"]), [...build_teams.ENGINE_POSITIONS, "KR"], who);
+        assert(Number.isFinite(p["speed"]) && Math.abs(p["speed"]) <= 60, who);        // card points over his position's average starter
+        assert(Object.keys(p["attributes"]).length >= 4 && Object.values(p["attributes"]).every((v) => Number.isFinite(v) && Math.abs(v) <= 60), who);   // card points over the average
+        equal(build_teams.rated_at(p, p["position"]), p["ovr"], who);
+        equal(build_teams.rated_at(p, "KR"), ours["kick_return"], who);                // his overall at a spot, worked out when asked
         assert(p["fatigue"] === 0 && Object.values(p["stats"]).every((v) => v === 0) && !("ratings" in p), who);
         n += 1;
       });
     }
   }
   assert(n > 300, String(n));
-  assert(Number.isInteger(qb_of(data, "texas")["passing"]) && qb_of(data, "texas")["attributes"]["arm_strength"] > 0);
+  assert(Number.isFinite(qb_of(data, "texas")["passing"]) && qb_of(data, "texas")["attributes"]["arm_strength"] > 0);
 });
 
 test("the number in the file is the number on his card and in the list of his ratings, for every player", () => {
@@ -211,13 +211,11 @@ test("Jeremiah Smith's Top Speed set to 50 in the file: his card reads 50, the e
   equal(skill_rows(b)["speed"], 50);
   equal(season.page_attribute(b, "burst", b["attributes"]["burst"]), mine["ratings"]["Burst"]);     // what he did not touch reads as it did
   assert(b["speed"] < a["speed"] - 15, `engine speed ${a["speed"]} -> ${b["speed"]}`);
-  assert(b["ovr"] < a["ovr"] && b["ratings_at"]["WR"] < a["ratings_at"]["WR"], `overall ${a["ovr"]} -> ${b["ovr"]}`);
+  assert(b["ovr"] < a["ovr"] && build_teams.rated_at(b, "WR") < build_teams.rated_at(a, "WR"), `overall ${a["ovr"]} -> ${b["ovr"]}`);
   equal([b["hands"], b["route_running"], b["attributes"]["hands"]], [a["hands"], a["route_running"], a["attributes"]["hands"]]);
   // everyone else on the team, and every other team, is as he was
   const rest = (d) => JSON.stringify([d["teams"]["ohio-state"]["offense"].filter((p) => p["slug"] !== a["slug"]), d["teams"]["ohio-state"]["defense"], d["teams"]["michigan"]]);
   assert(rest(before) === rest(after), "another player moved");
-  // a value changed since (a god-mode edit of the card) shows as that value, not as the file's
-  assert(season.page_attribute(b, "top_speed", 80) !== 50);
 });
 
 test("a quarterback's arm changed in the file moves his passing, his card and his overall", () => {
@@ -227,7 +225,7 @@ test("a quarterback's arm changed in the file moves his passing, his card and hi
   for (const k of ["Arm Strength", "Short Accuracy", "Intermediate Accuracy", "Deep Accuracy"]) mine["ratings"][k] = Math.max(1, mine["ratings"][k] - 20);
   const a = qb_of(before, "texas"), b = qb_of(rosters.derive(edited), "texas");
   assert(b["passing"] < a["passing"] - 8, `passing ${a["passing"]} -> ${b["passing"]}`);
-  assert(b["attributes"]["arm_strength"] < a["attributes"]["arm_strength"] && b["ovr"] < a["ovr"] && b["ratings_at"]["QB"] < a["ratings_at"]["QB"]);
+  assert(b["attributes"]["arm_strength"] < a["attributes"]["arm_strength"] && b["ovr"] < a["ovr"] && build_teams.rated_at(b, "QB") < build_teams.rated_at(a, "QB"));
   equal(season.page_attribute(b, "arm_strength", b["attributes"]["arm_strength"]), mine["ratings"]["Arm Strength"]);
   equal([b["speed"], b["strength"]], [a["speed"], a["strength"]]);
 });
@@ -239,7 +237,8 @@ test("a rating typed loosely is put right, and one left out is an ordinary one",
   mine["ratings"]["Strength"] = 61.4;
   delete mine["ratings"]["Stamina"];
   const p = qb_of(rosters.derive(edited), "texas");
-  equal([p["filed"]["speed"], p["filed"]["strength"], p["filed"]["stamina"]], [99, 61, rosters.MISSING]);
+  const rows = skill_rows(p);
+  equal([rows["speed"], rows["strength"], rows["stamina"]], [99, 61, rosters.MISSING]);
 });
 
 test("every reader gets a copy of its own, and a career's later season (its numbers already worked out) is read as it is", () => {

@@ -29,8 +29,7 @@ test("depth views", () => {
     assert(row["starters"] === row["players"].filter((p) => p["starter"]).length || role === "KR" || role === "PR", () => JSON.stringify([role, row["starters"]]));
   }
   assert(rows["WR"]["starters"] >= 2 && rows["QB"]["starters"] === 1 && rows["KR"]["starters"] === 1);
-  // the returner list: one scale for everyone (a linebacker's own scale read any return rating as 99),
-  // the league's designated returners at its 50 mark, and no linemen, quarterbacks or kickers
+  // the returner list: each player's Return Skill, and no linemen, quarterbacks or kickers
   const kr = season.position_candidates(st, "ohio-state", "KR")["players"];
   assert(!kr.some((r) => ["OL", "DL", "QB", "K", "P"].includes(r["position"])), () => JSON.stringify(kr.map((r) => r["position"])));
   const best = kr.reduce((a, r) => (r["rating"] > a["rating"] ? r : a));      // the first of equals, as Python's max
@@ -38,8 +37,7 @@ test("depth views", () => {
   for (const r of kr) {
     if (["MLB", "ROLB", "LOLB"].includes(r["position"])) assert(r["rating"] <= best["rating"], () => JSON.stringify([r, best]));
   }
-  const scale = season._house_scale()["KR|return_rating"];      // (the key is the text "group|key")
-  assert(40 <= scale[0] && scale[0] <= 70, () => JSON.stringify(scale));     // a typical designated returner, in engine units, is the 50 mark
+  assert(kr.every((r) => Number.isInteger(r["rating"]) && r["rating"] >= 1 && r["rating"] <= 99), () => JSON.stringify(kr.map((r) => r["rating"])));
 
   const wr = season.position_candidates(st, "ohio-state", "WR");
   assert(wr["starters"] === rows["WR"]["starters"]);

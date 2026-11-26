@@ -86,7 +86,7 @@ const tight = (mean) => ({ looks: recruiting.FIND_LOOKS - 1, by: { 95: recruitin
 test("a flag needs a complete report, then holds through a small move of the read and lets go after a clear one", () => {
   for (const st of careers) {
     const rc = st["recruiting"], me = st["team"];
-    const cuts = recruiting.flag_cuts(rc), hold = recruiting.FLAG_HOLD;
+    const cuts = recruiting.flag_cuts(rc), hold = recruiting.FLAG_HOLD * recruiting.POTENTIAL_STEP;   // (in overall points)
     // (a read this high also wins a coordinator's liking, which is another kind of flag)
     const in_view = (pid) => new Set(prospects.scouting_view(st)["flags"].filter((f) => f["pid"] === pid && f["flag"] !== "likes").map((f) => f["flag"]));
 

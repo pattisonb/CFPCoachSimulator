@@ -776,82 +776,82 @@
 "CB|athleticism": {
 "floors": [
 97,
-94,
-90,
-89.9,
+95.1,
+92.3,
+89.5,
 87.6
 ],
-"per_point": 0.228
+"per_point": 0.186
 },
 "CB|football_iq": {
 "floors": [
 97,
-94,
-87.6,
-76.2,
+91.3,
+82.8,
+74.3,
 68.6
 ],
-"per_point": 0.76
+"per_point": 0.568
 },
 "CB|size_strength": {
 "floors": [
 97,
-92.9,
-85.3,
-77.7,
+92.1,
+84.8,
+77.5,
 72.7
 ],
-"per_point": 0.506
+"per_point": 0.486
 },
 "CB|technique": {
 "floors": [
 97,
-93.3,
-83.8,
-74.2,
+91.1,
+82.4,
+73.7,
 67.8
 ],
-"per_point": 0.639
+"per_point": 0.585
 },
 "DL|athleticism": {
 "floors": [
 97,
-94,
-85.4,
-75.5,
+91.4,
+83,
+74.5,
 69
 ],
-"per_point": 0.658
+"per_point": 0.56
 },
 "DL|football_iq": {
 "floors": [
 97,
-94,
-88.6,
-76.8,
+91.4,
+82.9,
+74.5,
 68.9
 ],
-"per_point": 0.791
+"per_point": 0.563
 },
 "DL|size_strength": {
 "floors": [
 97,
-94,
-90,
-84.2,
+93.4,
+88.2,
+82.9,
 79.3
 ],
-"per_point": 0.487
+"per_point": 0.353
 },
 "DL|technique": {
 "floors": [
 97,
-94,
-87.3,
-77.9,
+91.9,
+84.3,
+76.7,
 71.6
 ],
-"per_point": 0.629
+"per_point": 0.507
 },
 "K|athleticism": {
 "floors": [
@@ -886,12 +886,12 @@
 "K|technique": {
 "floors": [
 97,
-94,
-90,
-85.9,
+93.8,
+89,
+84.1,
 80.9
 ],
-"per_point": 0.497
+"per_point": 0.323
 },
 "LB|athleticism": {
 "floors": [
@@ -906,32 +906,32 @@
 "LB|football_iq": {
 "floors": [
 97,
-94,
-90,
-81.8,
+92.2,
+84.9,
+77.6,
 72.8
 ],
-"per_point": 0.904
+"per_point": 0.484
 },
 "LB|size_strength": {
 "floors": [
 97,
-94,
-90,
-83.5,
+93.4,
+88,
+82.7,
 79
 ],
-"per_point": 0.442
+"per_point": 0.36
 },
 "LB|technique": {
 "floors": [
 97,
-94,
-90,
-83.3,
+93.1,
+87.2,
+81.3,
 77.4
 ],
-"per_point": 0.589
+"per_point": 0.393
 },
 "OL|athleticism": {
 "floors": [
@@ -946,32 +946,32 @@
 "OL|football_iq": {
 "floors": [
 97,
-94,
-90,
-80.5,
+92.2,
+85,
+77.9,
 73.1
 ],
-"per_point": 0.741
+"per_point": 0.477
 },
 "OL|size_strength": {
 "floors": [
 97,
-94,
+94.2,
 90,
-86.9,
+85.9,
 83.1
 ],
-"per_point": 0.381
+"per_point": 0.277
 },
 "OL|technique": {
 "floors": [
 97,
-94,
-88,
-79.5,
+92.3,
+85.4,
+78.5,
 73.8
 ],
-"per_point": 0.568
+"per_point": 0.464
 },
 "P|athleticism": {
 "floors": [
@@ -1006,98 +1006,98 @@
 "P|technique": {
 "floors": [
 97,
-94,
-88.6,
-81.7,
+93,
+87,
+81.1,
 77.1
 ],
-"per_point": 0.462
+"per_point": 0.398
 },
 "QB|athleticism": {
 "floors": [
 97,
-94,
-90,
-83.4,
+93.2,
+87.8,
+82.2,
 78.5
 ],
-"per_point": 0.492
+"per_point": 0.37
 },
 "QB|football_iq": {
 "floors": [
 97,
-94,
-90,
-81.7,
+92.2,
+84.8,
+77.5,
 72.7
 ],
-"per_point": 0.903
+"per_point": 0.487
 },
 "QB|size_strength": {
 "floors": [
 97,
-94,
-88.4,
-81.7,
+93.1,
+87.1,
+81.2,
 77.2
 ],
-"per_point": 0.448
+"per_point": 0.396
 },
 "QB|technique": {
 "floors": [
 97,
-94,
-90,
-84.2,
+93.5,
+88.3,
+83.1,
 79.7
 ],
-"per_point": 0.459
+"per_point": 0.347
 },
 "RB|athleticism": {
 "floors": [
 97,
-94,
-90,
-88.8,
+94.9,
+91.7,
+88.5,
 86.4
 ],
-"per_point": 0.248
+"per_point": 0.214
 },
 "RB|football_iq": {
 "floors": [
 97,
-94,
-90,
-77,
+90.9,
+81.9,
+72.9,
 66.8
 ],
-"per_point": 1.017
+"per_point": 0.603
 },
 "RB|size_strength": {
 "floors": [
 97,
-94,
-88.1,
-81.1,
+92.9,
+86.8,
+80.6,
 76.5
 ],
-"per_point": 0.462
+"per_point": 0.41
 },
 "RB|technique": {
 "floors": [
 97,
-94,
-90,
-82.4,
+93,
+86.8,
+80.6,
 76.5
 ],
-"per_point": 0.588
+"per_point": 0.41
 },
 "S|athleticism": {
 "floors": [
 96.5,
-94,
-90,
+94.4,
+91.2,
 88,
 85.9
 ],
@@ -1106,62 +1106,62 @@
 "S|football_iq": {
 "floors": [
 97,
-94,
-89,
-76.3,
+91.1,
+82.3,
+73.6,
 67.7
 ],
-"per_point": 0.853
+"per_point": 0.585
 },
 "S|size_strength": {
 "floors": [
 97,
-94,
-88.9,
-81.8,
+93,
+87,
+81.1,
 77
 ],
-"per_point": 0.473
+"per_point": 0.399
 },
 "S|technique": {
 "floors": [
 97,
-92.6,
-82.9,
-73.3,
+91,
+81.9,
+72.9,
 66.8
 ],
-"per_point": 0.643
+"per_point": 0.603
 },
 "TE|athleticism": {
 "floors": [
 97,
-94,
-88.6,
-82.6,
+93.3,
+87.8,
+82.3,
 78.5
 ],
-"per_point": 0.404
+"per_point": 0.37
 },
 "TE|football_iq": {
 "floors": [
 97,
-94,
-85,
-73,
+90.7,
+81.1,
+71.4,
 65.1
 ],
-"per_point": 0.794
+"per_point": 0.638
 },
 "TE|size_strength": {
 "floors": [
 97,
-93.8,
-87.5,
-81.2,
+92.9,
+87,
+81,
 77
 ],
-"per_point": 0.422
+"per_point": 0.4
 },
 "TE|technique": {
 "floors": [
@@ -1176,42 +1176,42 @@
 "WR|athleticism": {
 "floors": [
 97,
-94,
-90,
-89.8,
+95,
+92.1,
+89.1,
 87.1
 ],
-"per_point": 0.269
+"per_point": 0.197
 },
 "WR|football_iq": {
 "floors": [
 97,
-94,
-90,
-76.6,
+91,
+82.2,
+73.3,
 67.3
 ],
-"per_point": 0.929
+"per_point": 0.595
 },
 "WR|size_strength": {
 "floors": [
 97,
-94,
-86.6,
-77.7,
+92,
+84.4,
+76.8,
 71.8
 ],
-"per_point": 0.589
+"per_point": 0.503
 },
 "WR|technique": {
 "floors": [
 97,
-94,
-90,
-80.5,
+92.4,
+85.6,
+78.7,
 74.1
 ],
-"per_point": 0.639
+"per_point": 0.459
 }
 }
 }

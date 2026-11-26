@@ -407,9 +407,10 @@ test("a commit's chance to flip is never over one: his school's share is never n
 
 test("an evaluation calls only a genuinely low grade a weakness; a strong player's lowest is just solid", () => {
   const star = { ea_position: "WR", stars: 5 };
-  const high = prospects._evaluation(star, { athleticism: 88, size_strength: 66, technique: 82, football_iq: 70, potential: 86 });
+  // (a receiver's own lines, card numbers: athleticism and technique past Strong, size and football IQ just past Solid)
+  const high = prospects._evaluation(star, { athleticism: 95, size_strength: 78, technique: 87, football_iq: 75, potential: 88 });
   assert(high["weaknesses"].length === 0 && high["solid"].length === 2, J(high));
-  const low = prospects._evaluation(star, { athleticism: 88, size_strength: 40, technique: 82, football_iq: 70, potential: 86 });
+  const low = prospects._evaluation(star, { athleticism: 95, size_strength: 60, technique: 87, football_iq: 75, potential: 88 });
   assert(low["weaknesses"].length === 1 && low["weaknesses"][0].toLowerCase().includes("size and strength"), J(low));
 });
 

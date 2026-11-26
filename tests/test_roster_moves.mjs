@@ -55,8 +55,7 @@ test("roster moves", () => {
   assert("pos" in opts[0] && "overall" in opts[0] && opts.some((o) => o["pos"] === "CB") && opts.some((o) => o["pos"] === "SAM"));
   const cb = opts.find((o) => o["pos"] === "CB");
   offseason.change_position(st, mover["id"], "CB");
-  const shown = game.modules.shown;          // the preview is on the shown scale; the roster keeps the stored one
-  assert(mover["pos"] === "CB" && shown.overall(mover["o"]) === cb["overall"] && mover["moved_from"] === "FS");
+  assert(mover["pos"] === "CB" && mover["o"] === cb["overall"] && mover["moved_from"] === "FS");   // the preview's overall is the one the roster keeps
   assert(off["position_changes"].some((m) => m["id"] === mover["id"] && m["to"] === "CB"));
   raises(() => { offseason.change_position(st, mover["id"], "XX"); assert(false, "a made-up position"); }, offseason.RosterError);
   // advancing applies the redshirts: the chosen one keeps his year, the other moves up

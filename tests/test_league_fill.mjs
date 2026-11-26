@@ -90,7 +90,7 @@ test("an overall or a rating the file gives is kept exactly, and the made-up ski
   const given = [{ name: "Max Lee", pos: "WR", class: "SO", overall: 74, stars: 4 },
     { name: "Al Cruz", pos: "LT", class: "SR", ratings: { pass_block: 82, run_block: 78 } },
     { name: "Ty West", pos: "CB", class: "JR", overall: 70, ratings: { speed: 90 } }];
-  const [roster] = fill(alder({ roster: [...given, ...names_only_rest] }), 58.0);
+  const [roster] = fill(alder({ roster: [...given, ...names_only_rest] }), 78.0);
   const by = by_name(roster);
   assert(by["Max Lee"]["o"] === 74 && league.overall(by["Max Lee"], ATTRS) === 74);
   let r = rated(by["Al Cruz"]);
@@ -103,43 +103,43 @@ test("an overall or a rating the file gives is kept exactly, and the made-up ski
 test("a player given in full is kept as he is; one whose overall disagrees is moved to it, and the summary says so", () => {
   const c = league.from_base(2027)["teams"]["rice"]["roster"][0];
   const doc = league_file.player_doc(c, ATTRS);
-  let [roster, lines] = fill(alder({ roster: [doc, ...names_only_rest] }), 55.0);
+  let [roster, lines] = fill(alder({ roster: [doc, ...names_only_rest] }), 76.0);
   assert(same(roster[0], c) && !lines.some((ln) => ln.includes("ratings were moved")));
   const off = { ...doc, name: "Max Lee", id: null, overall: Math.min(99, doc["overall"] + 9) };
-  [roster, lines] = fill(alder({ roster: [off, ...names_only_rest] }), 55.0);
+  [roster, lines] = fill(alder({ roster: [off, ...names_only_rest] }), 76.0);
   assert(roster[0]["o"] === off["overall"] && league.overall(roster[0], ATTRS) === off["overall"]);
   assert(lines.includes(`Alder Tech: Max Lee's ratings were moved to match his overall ${off["overall"]}.`), show(lines));
 });
 
 test("fitting ratings to an overall hits it, moves only the skills allowed, and leaves a fit alone", () => {
-  const ours = Object.fromEntries(ATTRS.map((k) => [k, 50]));
-  for (const target of [30, 50, 77]) equal(game_scale.overall(league_fill.fit_overall(ours, "QB", target, ATTRS), "QB"), target);
+  const ours = Object.fromEntries(ATTRS.map((k) => [k, 70]));
+  for (const target of [60, 75, 90]) equal(game_scale.overall(league_fill.fit_overall(ours, "QB", target, ATTRS), "QB"), target);
   const keys = ["awareness", "throw_accuracy_deep"];
-  const out = league_fill.fit_overall(ours, "QB", 60, keys);
-  assert(ATTRS.every((k) => keys.includes(k) || out[k] === 50) && Math.abs(out[keys[0]] - out[keys[1]]) <= 1);
+  const out = league_fill.fit_overall(ours, "QB", 80, keys);
+  assert(ATTRS.every((k) => keys.includes(k) || out[k] === 70) && Math.abs(out[keys[0]] - out[keys[1]]) <= 1);
   assert(same(league_fill.fit_overall(ours, "QB", game_scale.overall(ours, "QB"), ATTRS), ours));
 });
 
 test("an empty roster becomes 85 players by the position targets, each with his own id and name", () => {
-  const [roster, lines] = fill(alder({ roster: [] }), 55.0);
+  const [roster, lines] = fill(alder({ roster: [] }), 76.0);
   equal(roster.length, 85);
   equal(group_counts(roster), { ...offseason.TARGET });
   assert(lines.includes("Alder Tech: 85 players generated (the roster was empty)."), show(lines));
   assert(new Set(roster.map((c) => c["id"])).size === 85 && new Set(roster.map((c) => c["n"])).size === 85);
   assert(roster.every((c) => c["id"].startsWith("alder-tech-")));
-  assert(Math.abs(team_overall(roster) - 55.0) <= 2);
+  assert(Math.abs(team_overall(roster) - 76.0) <= 2);
 });
 
 // a team must be able to line up: the fill adds what a short roster lacks and says how many
 test("a short roster is topped up to the position floors, the file's players first", () => {
   const two = [{ name: "Jay Smith", pos: "QB", class: "JR" }, { name: "Bo Jones", pos: "QB", class: "SO" }];
-  let [roster, lines] = fill(alder({ roster: two }), 55.0);
+  let [roster, lines] = fill(alder({ roster: two }), 76.0);
   const counts = group_counts(roster);
   assert(Object.entries(offseason.FLOOR).every(([g, n]) => counts[g] >= n), show(counts));
   equal(roster.slice(0, 2).map((c) => c["n"]), ["Jay Smith", "Bo Jones"]);
   const added = Object.values(offseason.FLOOR).reduce((a, b) => a + b, 0) - 2;
   assert(lines.includes(`Alder Tech: ${added} players added to reach the position floors (1 QB, 3 RB, 6 WR, 3 TE, 10 OL, 9 DL, 5 LB, 5 CB, 4 S, 1 K, 1 P).`), show(lines));
-  [roster, lines] = fill(alder({ roster: names(POSITIONS_85.filter((p) => p !== "K")) }), 55.0);
+  [roster, lines] = fill(alder({ roster: names(POSITIONS_85.filter((p) => p !== "K")) }), 76.0);
   assert(lines.includes("Alder Tech: 1 player added to reach the position floors (1 K)."), show(lines));
   equal(group_counts(roster)["K"], 1);
 });
@@ -147,23 +147,23 @@ test("a short roster is topped up to the position floors, the file's players fir
 test("a player's id is made from his team and name, a given id is kept, and none is used twice", () => {
   const taken = new Set(["alder-tech-p1"]);
   const team = alder({ roster: [{ name: "P1", pos: "QB", class: "JR" }, { name: "Zed", pos: "QB", class: "JR", id: "zed-9" }] });
-  const [roster] = league_fill.fill_roster(team, 50.0, new Random(1), ATTRS, taken);
+  const [roster] = league_fill.fill_roster(team, 74.0, new Random(1), ATTRS, taken);
   assert(roster[0]["id"] === "alder-tech-p1-2" && roster[1]["id"] === "zed-9", show(roster.slice(0, 2).map((c) => c["id"])));
   equal(new Set(roster.map((c) => c["id"])).size, roster.length);
 });
 
 test("the file's depth chart decides who is made the best at a position", () => {
   const qbs = range(3).map((i) => ({ name: `Q${i}`, pos: "QB", class: "JR" }));
-  const [roster] = fill(alder({ roster: [...qbs, ...names_only_rest.slice(4)], depth_chart: { QB: ["Q2"] } }), 55.0);
+  const [roster] = fill(alder({ roster: [...qbs, ...names_only_rest.slice(4)], depth_chart: { QB: ["Q2"] } }), 76.0);
   const by = by_name(roster);
   assert(by["Q2"]["o"] > by["Q0"]["o"] && by["Q2"]["o"] > by["Q1"]["o"]);
 });
 
 test("the same roster and seed give the same players; another seed gives others", () => {
-  const a = fill(names_only, 55.0, new Random("league-7-alder-tech"));
-  const b = fill(names_only, 55.0, new Random("league-7-alder-tech"));
+  const a = fill(names_only, 76.0, new Random("league-7-alder-tech"));
+  const b = fill(names_only, 76.0, new Random("league-7-alder-tech"));
   assert(dumps(a) === dumps(b));
-  assert(dumps(a) !== dumps(fill(names_only, 55.0, new Random("league-8-alder-tech"))));
+  assert(dumps(a) !== dumps(fill(names_only, 76.0, new Random("league-8-alder-tech"))));
 });
 
 // generated rosters must look like the game's own: the same class mix, the same room to grow by class, and
@@ -181,7 +181,7 @@ function built_in_by_class() {
   return BUILT;
 }
 function empty_rosters() {
-  if (EMPTY === null) EMPTY = [52.0, 56.0, 60.0, 64.0, 68.0, 72.0].map((tgt, i) => fill(alder({ roster: [] }), tgt, new Random(`league-${i + 1}-alder-tech`))[0]);
+  if (EMPTY === null) EMPTY = [72.0, 74.0, 76.0, 78.0, 80.0, 82.0].map((tgt, i) => fill(alder({ roster: [] }), tgt, new Random(`league-${i + 1}-alder-tech`))[0]);
   return EMPTY;
 }
 

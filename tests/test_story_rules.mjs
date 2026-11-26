@@ -242,7 +242,8 @@ test("a prospect shown under his real stars has public grades that understate hi
   const shown = prospects._public_grades(p);
   const { real, ...rest } = p;
   const as_is = prospects._public_grades(rest);
-  for (const g of recruiting.GROUPS) assert(approx(shown[g], as_is[g] - persona.SHOWN_BAND), () => show([g, shown[g], as_is[g]]));
+  // (SHOWN_BAND steps of each group's read, recruiting.read_scale: card points of his position's words)
+  for (const g of recruiting.GROUPS) assert(approx(shown[g], as_is[g] - persona.SHOWN_BAND * recruiting.read_scale(recruiting.read_key(p, g))), () => show([g, shown[g], as_is[g]]));
 });
 
 test("a Late Bloomer jumps once to his real stars: the class is re-ranked, his ask follows and AI schools take notice", () => {

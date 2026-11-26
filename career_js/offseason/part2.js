@@ -77,7 +77,7 @@ function _program_context(lgd, slug, losing, p4, shifts) {
   let slipping;
   if (shift > 0 || get(hc, "since") === lgd["year"] - 1) {
     slipping = "slipping";                                      // a tier lost this year, or a new head coach's first year
-  } else if (losing && get(get(hc, "ratings") || {}, "player_development", 60) < offseason.WEAK_COACH) {
+  } else if (losing && get(get(hc, "ratings") || {}, "player_development", 76) < offseason.WEAK_COACH) {
     slipping = "better_coach";
   } else {
     slipping = null;

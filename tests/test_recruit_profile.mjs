@@ -68,11 +68,13 @@ test("the Scouting Report is written from your staff's reads, never his true gra
   Object.assign(p["truth"], saved);
   assert(after === before, "the report changed with the truth");
   // a weak read is an area to develop, a strong one a strength; with nothing weak there is nothing to develop
-  rc["reads"][pid]["g"] = Object.fromEntries(recruiting.GROUPS.map((g) => [g, [g === "technique" ? 30.0 : 85.0, 2.0]]));
+  // (each group's words are its own: his position's floors, card numbers)
+  const floor = (g, i) => recruiting.read_floors(recruiting.read_key(p, g))[i];
+  rc["reads"][pid]["g"] = Object.fromEntries(recruiting.GROUPS.map((g) => [g, [g === "technique" ? floor(g, 4) - 10 : floor(g, 1) + 0.5, 2.0]]));
   rep = prospects.profile(st, pid, ME)["report"];
   assert(rep["develop"].includes("Technique") && !rep["strengths"].includes("Technique"), J(rep));
   assert(rep["attributes"].find((a) => a["group"] === "technique")["tone"] === "bad" && rep["attributes"].find((a) => a["group"] === "athleticism")["tone"] === "good");
-  rc["reads"][pid]["g"] = Object.fromEntries(recruiting.GROUPS.map((g) => [g, [70.0, 2.0]]));
+  rc["reads"][pid]["g"] = Object.fromEntries(recruiting.GROUPS.map((g) => [g, [floor(g, 3) + 0.5, 2.0]]));
   equal(prospects.profile(st, pid, ME)["report"]["develop"], []);
   delete rc["reads"][pid];
 });

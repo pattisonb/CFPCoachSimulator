@@ -23,9 +23,9 @@ const R = (p, body) => api.call("POST", `/api/season/${sid}/${p}`, body);
 let st = api.loaded_state(), rc = st["recruiting"];
 const staff = st["career"]["staff"];
 const ids = staff.map((m) => m["id"]);
-// every staff evaluator a stored 50 (a 70 on the page; the game's own head coach is a little better): every report takes
+// every staff evaluator a 70 (the average coach; the game's own head coach is a little better): every report takes
 // three looks, so one of his looks is one of the read's
-for (const m of staff) m["evaluation"] = 50;
+for (const m of staff) m["evaluation"] = 70;
 const recruiters = staff.filter((m) => m["role"] === "Recruiter");
 const TEN = recruiting.STAFF_LOOKS_WEEK;  // a recruiter's week: ten prospects in his area (the coordinators look at nobody)
 
