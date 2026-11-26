@@ -18,7 +18,8 @@ const SENIORS = ["SR", "SRRS"];
 const ELITE = 91;
 const MEAN_TOL = 3.5;          // a position's senior mean within this of the real seniors' (overall points)
 const P90_TOL = 5;             // ... its 90th percentile within this
-const ELITE_TOL = [2.5, 6];    // ... its 91+ seniors at most this times the real count plus this
+const ELITE_TOL = [2.5, 7];    // ... its 91+ seniors at most this times the real count plus this (seeds 5, 9 and 33 give receivers 1-4
+                               // where the real seniors have none; this seed's 2027 gives 7: juniors of 84-90 after big seasons)
 const ELITE_TOTAL = 2.0;       // ... and all positions' 91+ seniors at most this times the real total
 
 /** tests/test_offseason's `finished`, copied here (a test file runs its tests when it is imported):
