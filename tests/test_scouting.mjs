@@ -344,12 +344,12 @@ test("about one in seven lower-ranked prospects is hidden from the public list u
   assert(recruiting.prospect_list(st).includes(h));
 });
 
-test("the top of the class gets a public evaluation and a comp to a real starter at his position; the middle gets neither", () => {
+test("the top of the class gets a public evaluation and a comp to a real player at his position; the middle gets neither", () => {
   const rc = base["recruiting"];
   const by_rank = Object.fromEntries(Object.entries(rc["prospects"]).map(([q, p]) => [p["rank"], q]));
   const top = prospects.profile(base, by_rank[1], ME);
   assert(top["evaluation"] && top["public_comp"], J(top["public_comp"]));
-  const pool = prospects.starter_pool();
+  const pool = prospects.player_pool();                  // (anyone on a roster, starter or backup: prospects.comp)
   assert(pool.some((c) => c["name"] === top["public_comp"]["name"] && prospects.display_pos(c["position"]) === top["public_comp"]["position"]));
   assert(top["public_comp"]["position"] === prospects.display_pos(rc["prospects"][by_rank[1]]["ea_position"]), "the comp shows his position as the header does");
   const truth = rc["prospects"][by_rank[1]]["truth"];

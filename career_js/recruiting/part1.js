@@ -220,8 +220,8 @@ recruiting.GENERATIONAL_MAX = 4;                       // at most this many a cl
 recruiting.GENERATIONAL_ASK = 1.5;                     // his NIL ask is this times larger
 recruiting.GEM_RANK = 300;                             // a gem is a three-star or less ranked past this
 recruiting.FIND_LOOKS = recruiting.REPORT_LOOKS;       // looks before your staff names a gem, a bust risk or a generational talent: a complete report
-recruiting.GEM_PERCENTILE = 0.94;                      // a gem's potential read beats, even at its low end, this share of his star tier's true potential
-recruiting.BUST_PERCENTILE = 0.0175;                   // a bust risk's read sits, even at its high end, under this share of his star tier's (one in 57)
+recruiting.GEM_PERCENTILE = 0.95;                      // a gem's potential read beats, even at its low end, this share of his star tier's true potential
+recruiting.BUST_PERCENTILE = 0.0125;                   // a bust risk's read sits, even at its high end, under this share of his star tier's (one in 80)
 recruiting.FLAG_HOLD = 4.0;                            // a flag found stays until the read moves this far back past its cut (a read's slack, WORD_SLACK): no flicker
 recruiting.LOOK_LOG_KEEP = 30;                         // the look log keeps this many of a scout's looks a week (flags, then potential, then the rest)
 // the transfer portal as recruiting (offseason.js runs it): four weeks after signing day *tune*

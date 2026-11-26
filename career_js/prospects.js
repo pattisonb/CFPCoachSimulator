@@ -827,8 +827,8 @@ export function find(state, pid) {
   // Your staff's finding from the read, never the truth: "gem", "bust" or None. Needs a complete
   // report (REPORT_LOOKS looks: no flag at 2 or 2.5); portal prospects get none. The cuts are relative to his star tier (recruiting.flag_cuts):
   // a gem is a three-star or less ranked past GEM_RANK whose potential read, even at its low end,
-  // beats the GEM_PERCENTILE (94th) of true potential at his star level; a bust risk is a four- or
-  // five-star whose read, even at its high end, sits under the BUST_PERCENTILE (1.75th) of his. A flag
+  // beats the GEM_PERCENTILE (95th) of true potential at his star level; a bust risk is a four- or
+  // five-star whose read, even at its high end, sits under the BUST_PERCENTILE (1.25th) of his. A flag
   // holds: `read["find"]`, the finding after his last look (look() keeps it), stays until the read
   // moves FLAG_HOLD points back past its cut, so one look that widens the read does not flicker it.
   const recruiting = modules.recruiting;
