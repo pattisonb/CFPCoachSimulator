@@ -88,8 +88,8 @@
  },
  "coaches": {
   "Ryan Silverfield": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
-  "Ron Roberts": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
-  "Tim Cramsey": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []}
+  "Ron Roberts": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_01", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []},
+  "Tim Cramsey": {"faceShape": "face_shape_07", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_00", "hairFade": false, "flip": []}
  },
  "rolled": {
  }

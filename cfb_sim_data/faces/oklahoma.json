@@ -88,7 +88,7 @@
  },
  "coaches": {
   "Brent Venables": {"faceShape": "face_shape_04", "skinTone": "tan", "hairColor": "brown", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_25", "hairFade": false, "flip": []},
-  "Todd Bates": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "black", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
+  "Todd Bates": {"faceShape": "face_shape_06", "skinTone": "dark", "hairColor": "gray", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_04", "beard": "beard_04", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
   "Ben Arbuckle": {"faceShape": "face_shape_05", "skinTone": "light", "hairColor": "auburn", "eyeColor": "blue", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_00", "hairFade": true, "flip": []}
  },
  "rolled": {

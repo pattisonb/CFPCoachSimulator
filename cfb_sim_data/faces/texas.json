@@ -88,7 +88,7 @@
  },
  "coaches": {
   "Steve Sarkisian": {"faceShape": "face_shape_05", "skinTone": "tan", "hairColor": "darkbrown", "eyeColor": "hazel", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_25", "hairFade": true, "flip": []},
-  "Kyle Flood": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "black", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
+  "Kyle Flood": {"faceShape": "face_shape_06", "skinTone": "light", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_03", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
   "Will Muschamp": {"faceShape": "face_shape_04", "skinTone": "light", "hairColor": "darkbrown", "eyeColor": "dark", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_02", "brows": "brows_00", "hair": "hair_02", "hairFade": false, "flip": []}
  },
  "rolled": {

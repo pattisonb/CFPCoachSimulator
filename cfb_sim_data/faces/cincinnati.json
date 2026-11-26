@@ -89,7 +89,7 @@
  "coaches": {
   "Scott Satterfield": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "brown", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_05", "hairFade": false, "flip": []},
   "Pete Thomas": {"faceShape": "face_shape_03", "skinTone": "light", "hairColor": "black", "eyeColor": "blue", "ears": "ears_03", "chin": null, "nose": "nose_00", "beard": "beard_01", "mouth": "mouth_00", "brows": "brows_00", "hair": null, "hairFade": false, "flip": []},
-  "Nate Woody": {"faceShape": "face_shape_06", "skinTone": "tan", "hairColor": "blond", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []}
+  "Nate Woody": {"faceShape": "face_shape_06", "skinTone": "tan", "hairColor": "gray", "eyeColor": "brown", "ears": "ears_00", "chin": null, "nose": "nose_00", "beard": null, "mouth": "mouth_00", "brows": "brows_00", "hair": "hair_07", "hairFade": false, "flip": []}
  },
  "rolled": {
  }
