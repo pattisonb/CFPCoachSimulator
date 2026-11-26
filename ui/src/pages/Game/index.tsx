@@ -33,7 +33,7 @@ import { api } from "../../api.ts";
 import { useFinds } from "../../finds.ts";
 import { useNotices, type Notice } from "../../notices.ts";
 import { useTab } from "../../tab.ts";
-import { faces, presetCoachFace, type Face as FaceSpec } from "../../faces.ts";
+import { coachFace, faces, presetCoachFace, type Face as FaceSpec } from "../../faces.ts";
 import { NAV_SHORTCUT, useNavMode } from "../../navMode.ts";
 import { teamAccent, teamVars as teamColorVars } from "../../colors.ts";
 import { currentParams, navigate, rememberDynasty, replaceParams } from "../../router.ts";
@@ -236,8 +236,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
       .catch(() => setSavedFace(null));
   }, [createdId]);
   const face = useMemo(
-    () =>
-      savedFace ?? (coach ? (presetCoachFace(coachName(coach)) ?? faces.random(`coach-${coachName(coach)}`)) : null),
+    () => savedFace ?? (coach ? (presetCoachFace(coachName(coach)) ?? coachFace(coachName(coach))) : null),
     // the presets arrive with the teams
     [savedFace, coach, teams],
   );

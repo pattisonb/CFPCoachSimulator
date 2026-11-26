@@ -8,7 +8,7 @@ import FaceEditor from "../../components/FaceEditor/index.tsx";
 import { api } from "../../api.ts";
 import { navigate, rememberDynasty } from "../../router.ts";
 import { cachedTeams, loadTeams } from "../../teams.ts";
-import { presetCoachFace, randomFace, type Face as FaceSpec } from "../../faces.ts";
+import { presetCoachFace, randomCoachFace, type Face as FaceSpec } from "../../faces.ts";
 import type { Theme } from "../../theme.ts";
 import type { CoachOptions, SavedCoach, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -46,7 +46,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
   const [team, setTeam] = useState<TeamCard | null>(() => cachedTeams()?.find((t) => t.slug === teamSlug) ?? null);
   // the picked team's head coach fills the face (his preset, when he has one), the name fields, the age and the hometown (the viewer can
   // change them)
-  const [face, setFace] = useState<FaceSpec>(() => (team && presetCoachFace(team.head_coach)) || randomFace());
+  const [face, setFace] = useState<FaceSpec>(() => (team && presetCoachFace(team.head_coach)) || randomCoachFace());
   const faceTouched = useRef(false);
   const [first, setFirst] = useState(() => splitName(team?.head_coach)[0]);
   const [last, setLast] = useState(() => splitName(team?.head_coach)[1]);
@@ -155,7 +155,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
       </div>
 
       <div className={teamSlug ? "coach__actions coach__actions--stacked" : "coach__actions"}>
-        <Button variant="outline" onClick={() => change(randomFace())}>
+        <Button variant="outline" onClick={() => change(randomCoachFace())}>
           <ArrowsClockwise size={18} weight="bold" aria-hidden="true" />
           {m.randomize}
         </Button>
@@ -191,7 +191,7 @@ export default function CoachEdit({ theme, onToggleTheme, teamSlug }: Props) {
       lede={team ? m.forTeam(team.name) : m.intro}
       side={side}
     >
-      <FaceEditor face={face} onChange={change} />
+      <FaceEditor face={face} onChange={change} coach />
     </EditorPage>
   );
 }

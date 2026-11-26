@@ -12,7 +12,7 @@
  *
  * Everything else (randomFace, composite, parseFace, ...) is exported as well, for doing it by hand.
  */
-import { FaceCache, fieldOf, flipCategories, parseFace, partCategories, randomFace, repairFace, resolveFace, specKey, type FaceJSON, type FaceSpec, type Pixels } from "./face.ts";
+import { FaceCache, fieldOf, flipCategories, hairColorsFor, parseFace, partCategories, randomFace, repairFace, resolveFace, specKey, type FaceJSON, type FaceSpec, type Pixels, type RandomOptions } from "./face.ts";
 import { seedOf } from "./rng.ts";
 import type { Category, Manifest, RGB, WidthPart } from "./types.ts";
 
@@ -20,7 +20,7 @@ export * from "./face.ts";
 export * from "./rng.ts";
 export type * from "./types.ts";
 
-export const VERSION = "0.2.0";
+export const VERSION = "0.3.0";
 /** a rectangle on the 48x48 canvas */
 export interface Box { x: number; y: number; w: number; h: number }
 export interface DrawOptions {
@@ -123,9 +123,12 @@ export function createFaces(data: Manifest, { cacheSize = 512 }: { cacheSize?: n
     /** the box `crop: true` draws */
     cropBox: crop,
 
-    /** a face from a player id (or a 32-bit seed): the same id always gives the same face */
-    random(idOrSeed: string | number): FaceJSON {
-      return resolveFace(data, randomFace(data, typeof idOrSeed === "number" ? idOrSeed >>> 0 : seedOf(idOrSeed)));
+    /**
+     * a face from a player id (or a 32-bit seed): the same id always gives the same face. `group: "coach"` also
+     * draws from the hair colours kept for coaches (gray); players never get those.
+     */
+    random(idOrSeed: string | number, opts: RandomOptions = {}): FaceJSON {
+      return resolveFace(data, randomFace(data, typeof idOrSeed === "number" ? idOrSeed >>> 0 : seedOf(idOrSeed), opts));
     },
     /** a stored face (a JSON string or object) checked against the data; throws naming every bad field */
     parse(json: unknown): FaceJSON {
@@ -147,12 +150,15 @@ export function createFaces(data: Manifest, { cacheSize = 512 }: { cacheSize?: n
     resolve(spec: FaceSpec): FaceJSON {
       return resolveFace(data, spec);
     },
-    /** every value each field can take (to pick from yourself); `catalog()` has the same with names */
-    options(): FaceOptions {
+    /**
+     * every value each field can take (to pick from yourself); `catalog()` has the same with names. A hair
+     * colour kept for a group (gray: coaches) is listed only with that `group`.
+     */
+    options({ group }: RandomOptions = {}): FaceOptions {
       const out: FaceOptions = {
         faceShape: ids("face_shape"),
         skinTone: data.skinTones.map((t) => t.id),
-        hairColor: data.hairColors.map((h) => h.id),
+        hairColor: hairColorsFor(data, group).map((h) => h.id),
         eyeColor: data.eyeColors.map((e) => e.id),
         hairFade: [false, true],
         flip: flipCategories(data),
@@ -166,8 +172,9 @@ export function createFaces(data: Manifest, { cacheSize = 512 }: { cacheSize?: n
     /**
      * Every option, grouped as a customiser shows them: the face shape, skin tone, each category of parts (layer
      * order, bottom first), hair colour and eye colour, each choice with its id and name (colours with their RGB).
+     * A hair colour kept for a group (gray: coaches) is a choice only with that `group`.
      */
-    catalog(): CatalogEntry[] {
+    catalog({ group }: RandomOptions = {}): CatalogEntry[] {
       const parts = (c: Category): CatalogEntry => ({
         field: fieldOf(data, c),
         label: data.categories[c].label ?? c,
@@ -180,7 +187,7 @@ export function createFaces(data: Manifest, { cacheSize = 512 }: { cacheSize?: n
         parts("face_shape"),
         { field: "skinTone", label: "Skin", nullable: false, choices: data.skinTones.map((t) => ({ id: t.id, label: t.label, rgb: t.skin })) },
         ...partCategories(data).filter((c) => c !== "face_shape").map(parts),
-        { field: "hairColor", label: "Hair colour", nullable: false, choices: data.hairColors.map((h) => ({ id: h.id, label: h.label, rgb: h.black })) },
+        { field: "hairColor", label: "Hair colour", nullable: false, choices: hairColorsFor(data, group).map((h) => ({ id: h.id, label: h.label, rgb: h.black })) },
         { field: "eyeColor", label: "Eyes", nullable: false, choices: data.eyeColors.map((e) => ({ id: e.id, label: e.label, rgb: e.iris })) },
       ];
     },
