@@ -200,9 +200,9 @@ export function compact(p, attrs, home = null, rated = null) {
   } else {
     // his ratings as the roster file has them (`rated`: in `attrs` order), else his card numbers by skill
     card = Array.isArray(rated) && rated.length === attrs.length
-      ? Object.fromEntries(attrs.map((k, i) => [k, rated[i]])) : { ...get(p, "ratings_ea") };
-    const seeded = get(get(league._potentials(), p["slug"], {}), "potential_ea") || {};
-    pot = truthy(seeded) ? game_scale.potential_from_ea({ ...p["ratings_ea"], ...seeded }, card, pos) : card;
+      ? Object.fromEntries(attrs.map((k, i) => [k, rated[i]])) : { ...get(p, "filed") };
+    const seeded = get(get(league._potentials(), p["slug"], {}), "potential") || {};
+    pot = truthy(seeded) ? game_scale.potential_from_draw({ ...card, ...seeded }, card, pos) : card;
     if (league.REAL_ROOM_CLASSES.includes(get(p, "class") || "FR")) {   // seeded room runs short of a generated player's at the same stage
       const more = {};
       for (const [k, v] of Object.entries(pot)) more[k] = int(round(Math.min(99, get(card, k, v) + league.REAL_ROOM * (v - get(card, k, v)))));
@@ -235,7 +235,7 @@ export function decision_top(c) {
 
 export function own_decision(c, attrs, value = null) {
   // A quarterback's Decision Making is a rating of its own (the player's rule: none is worked out from others): "dmv",
-  // on the scale the game shows, and "dmg", its room to grow, kept with him like his other ratings and grown on their
+  // and "dmg", its room to grow, kept with him like his other ratings and grown on their
   // own (offseason.develop). `value`: the number he has (the roster file's). A quarterback who has none yet (a signee,
   // a generated player, a save from before) is given one once, from where his Football IQ and Pocket Poise stand that
   // day, and it is its own from then on. Its room is set once the same way, from where those two could reach. Returns
@@ -355,7 +355,7 @@ export function _as_source(p) {
   }
   return { slug: p["slug"], name: p["name"], position: p["source_position"], "class": get(p, "class"),
     height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"), archetype: get(p, "archetype"),
-    dev_trait: get(p, "dev_trait"), abilities: abilities, ratings_ea: modules.rosters.skills_of(p), target_mult: get(p, "target_mult"),
+    dev_trait: get(p, "dev_trait"), abilities: abilities, filed: modules.rosters.skills_of(p), target_mult: get(p, "target_mult"),
     dmv: modules.rosters.decision_of(p) };
 }
 
@@ -367,16 +367,16 @@ export function _filed_player(p, attrs, home, o = null) {
   const filed = modules.rosters.skills_of(p);            // his ratings by skill, as the file's names give them
   const r = modules.rosters.stored(filed, pos);
   const seeded = get(league._potentials(), p["slug"], {});
-  const seeded_ea = get(seeded, "potential_ea") || {};
+  const seeded_pot = get(seeded, "potential") || {};
   const g = new Array(attrs.length).fill(0);
-  if (truthy(seeded_ea)) {
+  if (truthy(seeded_pot)) {
     const room = get(game_scale.ROOM, game_scale.group(pos), 1.0);
     const more = league.REAL_ROOM_CLASSES.includes(cls);          // seeded room runs short of a generated player's at the same stage
     for (let i = 0; i < attrs.length; i++) {
       const k = attrs[i], now = r[i];
-      const ea = seeded_ea[k];
-      if (ea === undefined) continue;                              // (no seeded potential for it: no room)
-      const v = game_scale.whole(ea);
+      const top = seeded_pot[k];
+      if (top === undefined) continue;                             // (no seeded potential for it: no room)
+      const v = game_scale.whole(top);
       let pot = int(round(Math.min(99, now + room * Math.max(0, v - now))));
       if (more) pot = int(round(Math.min(99, now + league.REAL_ROOM * (pot - now))));
       g[i] = int(Math.max(0, pot - now));

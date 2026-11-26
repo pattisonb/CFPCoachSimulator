@@ -48,8 +48,7 @@ export const DATA_FILES = [
   "data/fcs_map.json", "data/game_scale.json", "data/observed_tendencies.json",
   "data/poll_params.json", "data/program_history.json", "data/program_market.json",
   "data/program_profile.json", "data/coach_birth_years.json", "data/draft_targets.json",
-  "data/major_cities.json", "data/base_meta.json",
-  "cfb_sim_data/coaches.json", "cfb_sim_data/league.json",
+  "data/major_cities.json", "data/base_meta.json", "data/old_saves.json",
 ];
 // What a build makes itself from other data: nothing. The rosters and the teams' identities are committed files, and
 // a career's first league is read from the roster file by the game as it runs (career_js/league.js from_base).

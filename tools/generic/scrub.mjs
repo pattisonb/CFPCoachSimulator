@@ -176,9 +176,9 @@ export class Maps {
         for (const p of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) {
           if (truthy(get(p, "slug")) && truthy(get(p, "name")) && !(p["slug"] in players)) players[p["slug"]] = p["name"];
         }
+        for (const c of Object.values(get(t, "coaches") || {})) if (truthy(get(c, "name"))) coaches.add(c["name"]);   // its staff
       }
     }
-    for (const c of _read(path.join(root, "cfb_sim_data", "coaches.json"))) coaches.add(c["name"]);
     for (const c of Object.keys(get(_read(path.join(root, "data", "coach_birth_years.json")), "birth_years", {}))) coaches.add(c);
     const model = _read(path.join(root, "data", "recruiting_model.json"));
     for (const v of Object.values(get(get(model, "coaches", {}), "current", {}))) {
@@ -478,12 +478,7 @@ export function _fields(root, m) {
     _write(engine, doc);
   }
 
-  let file = path.join(root, "cfb_sim_data", "coaches.json");
-  const coaches = _read(file);
-  for (const c of coaches) _coach(c, m, shorts, old_shorts);
-  _write(file, coaches);
-
-  file = path.join(root, "data", "rivalries.json");
+  let file = path.join(root, "data", "rivalries.json");
   const riv = _read(file);
   const named = dict();
   for (const r of riv["rivalries"]) {

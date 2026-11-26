@@ -505,7 +505,7 @@ export interface DepthChart {
   units: { name: string; rows: DepthRow[] }[];
 }
 
-/** One attribute on our scale, with his ceiling */
+/** One card attribute, with his ceiling */
 export interface PlayerAttribute {
   key: string;
   label: string;
@@ -583,9 +583,6 @@ export interface PlayerProfile {
   class: string | null;
   /** the face drawn for him this season (Edit Player Look), else null */
   face?: unknown;
-  /** the broad ratings (Speed, Strength, Awareness…), and which of them his position leans on */
-  ratings?: { key: string; label: string; value: number }[];
-  key_ratings?: string[];
   /** your own roster: how fast he grows, and how good he can become */
   coachability?: string;
   potential_word?: string;

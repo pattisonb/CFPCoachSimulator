@@ -7,7 +7,7 @@
 // step, signing and scouting.
 //
 // The recruiting state lives in `state["recruiting"]` (a Coach Career season only):
-//     year, prospects {pid: prospect; "ratings" and "potential" on our scale (game_scale.js) as lists in `attrs` order},
+//     year, prospects {pid: prospect; "ratings" and "potential" (card numbers) as lists in `attrs` order},
 //     lists {pid: {slug: action points}}, status {pid: {committed, signed, fcs}}, offers {slug: [pid]},
 //     visits {pid: {slug: week}}, contacts {pid: {slug: {hc_week}}}, hours {slug: hours left},
 //     nil {slug: {budget, held {pid: points}}}, revealed {slug: {pid: [topic]}}, board [pid], log [event]
@@ -348,7 +348,7 @@ function _baseline(slug) {
 
 
 function attributes(state, p, field = "potential") {
-  // A prospect's ratings ("ratings") or potential ("potential") by skill, on our scale.
+  // A prospect's ratings ("ratings") or potential ("potential") by skill.
   const attrs = state["recruiting"]["attrs"], values = p[field];
   const out = {};
   for (let i = 0; i < attrs.length && i < values.length; i++) out[attrs[i]] = values[i];
@@ -367,7 +367,8 @@ function fbs_schools(state) {
 recruiting.GROUPS = ["athleticism", "size_strength", "technique", "football_iq", "potential", "coachability"];
 recruiting.WORDS = ["All-American", "Elite", "Strong", "Solid", "Fair", "Weak"];
 // A read's words: a group of his card's attributes reads against his position (each position's floors are card numbers,
-// game_scale's read_words: Solid a Power 4 starter there, Strong a clearly better one, Elite an all-conference level),
+// game_scale's read_words: Solid a starter at a strong program there, Strong a clearly better one, Elite an
+// all-conference level),
 // his potential against an overall (POTENTIAL_FLOORS) and his coachability against its points (COACHABILITY_FLOORS).
 // recruiting.read_floors has them. *tune*
 recruiting.POTENTIAL_FLOORS = [93, 90, 85, 79, 74];
@@ -467,17 +468,13 @@ function start(state, year = 2027) {
   // his overall now and projected
   const attrs = game_scale.keys();
   for (const p of Object.values(prospects)) {
-    const ratings_ea = p["ratings_ea"];
-    delete p["ratings_ea"];
-    const card = game_scale.from_ea(ratings_ea, p["ea_position"]);
-    const potential_ea = p["potential_ea"];
-    delete p["potential_ea"];
-    const pot = game_scale.potential_from_ea(potential_ea, card, p["ea_position"]);
+    const card = game_scale.from_draw(p["ratings"]);
+    const pot = game_scale.potential_from_draw(p["potential"], card, p["ea_position"]);
     p["ratings"] = attrs.map((k) => get(card, k, game_scale.MISSING));
     p["potential"] = attrs.map((k) => get(pot, k, game_scale.MISSING));
     p["ovr"] = game_scale.overall(card, p["ea_position"]);
     p["pot_ovr"] = game_scale.overall(pot, p["ea_position"]);
-    for (const k of ["overall_ea", "overall"]) delete p[k];
+    delete p["overall"];
   }
   recruiting._truths(prospects, attrs);
   const lists = {}, status = {};

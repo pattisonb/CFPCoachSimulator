@@ -500,7 +500,7 @@ export function _group_rating(players, positions, keys, default_ = 0) {
 }
 
 
-/** Turn a 0-100 slider into rating points: 50 = 0, 100 = +scale, 0 = -scale. */
+/** Turn a 0-100 slider into card points: 50 = 0, 100 = +scale, 0 = -scale. */
 export function _slider_points(slider_value, scale = 8.0) {
   return (cfg.sliders.get_multiplier(slider_value) - 1.0) * 2 * scale;
 }

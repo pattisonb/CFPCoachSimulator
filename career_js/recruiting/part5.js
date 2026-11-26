@@ -584,7 +584,7 @@ function portal_rc(state, entrants, year) {
 // ----- scouting: truths, looks, reads and grades -------------------------------------------------------
 
 function _truths(prospects, attrs) {
-  // Each prospect's true grade per group, on the game's own scale: the average of the player-card
+  // Each prospect's true grade per group, card numbers: the average of the player-card
   // attributes behind it (athleticism: Top Speed, Burst, Agility, Leaping; technique: his position's
   // skills), and for potential his projected overall. Coachability comes from his label. Hidden from
   // the player; reads estimate them.
@@ -830,7 +830,7 @@ function look_notability(e) {
 
 
 function read_spread(state, pid, group) {
-  // The read itself: (mean, half-width) in grade points, however many looks it holds, or None before
+  // The read itself: (mean, half-width) in the read's points, however many looks it holds, or None before
   // any look. The half-width shrinks with the precision the looks gained and with the best evaluator's
   // rating, less WORD_SLACK. The flags (prospects.find) and the tests of a read's accuracy use this;
   // what the player sees goes through read_interval.
@@ -845,7 +845,7 @@ function read_spread(state, pid, group) {
 
 
 function read_interval(state, pid, group) {
-  // Your staff's read as the player sees it: a range of grade points while his report is short of
+  // Your staff's read as the player sees it: a range of the read's points while his report is short of
   // complete, and one point (the read's mean, twice) once it is complete (report_complete: 3 looks),
   // the staff's final grade; None before any look.
   const spread = recruiting.read_spread(state, pid, group);

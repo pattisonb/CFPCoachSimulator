@@ -34,7 +34,7 @@ const TABS = ["overview", "ratings", "development", "abilities", "history"] as c
 type Tab = (typeof TABS)[number];
 
 /** 80 and up reads high, under 50 low (the old depth chart's tiers). */
-/** *tune* On the shown scale (the average player is about a 70): a rating this high reads strong, one this low soft. */
+/** *tune* A rating this high reads strong, one this low soft (the average player is about a 70). */
 const tier = (v: number) => (v >= 85 ? "hi" : v < 65 ? "lo" : "");
 
 /** The game's tooltip around something, when there is something to say. */

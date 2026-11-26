@@ -146,7 +146,7 @@ function position_changes(state, slug) {
 
 
 function _skills(p) {
-  // His skills on our scale (game_scale.js), as the league stores them.
+  // His ratings by skill, as the league stores them.
   const keys = game_scale.keys(), values = get(p, "skills") || [];
   const out = {};
   for (let i = 0; i < Math.min(keys.length, values.length); i++) out[keys[i]] = values[i];
@@ -216,7 +216,7 @@ function _rekey_player(state, slug, name, old_pos, new_pos) {
 function change_position(state, slug, player_slug, pos) {
   // Move one of your players to another position now: he plays and shows there from the next
   // game (with_positions, through team_data and every game's edits), last in the new role's
-  // depth order and out of every slot of his old one, his overall recomputed by our formula
+  // depth order and out of every slot of his old one, his overall recomputed by the formula
   // there (position_fit); the career's league roster follows (the row at once in a later season, at the
   // offseason in the first). Moving him back to the position the league file has clears the change.
   if (typeof pos !== "string" || !has(season.ROLE_POSITION, pos)) throw new season.PositionError(400, "no such position");

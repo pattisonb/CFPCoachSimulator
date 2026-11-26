@@ -10,8 +10,36 @@
 // The records a career keeps (its offseason, each player's story and how he was recruited) hold overalls written on the
 // earlier numbers: each is turned into the overall it showed as.
 import { round, int, get, isNumber, truthy } from "../engine_js/pyrt.js";
+import { read_json } from "../engine_js/files.js";
 import { game_scale } from "./game_scale.js";
-import { shown } from "./shown.js";
+
+const FILE = "data/old_saves.json";      // the tables a save from before is read with: nothing else reads them
+
+function _line(knots, x) {
+  // `x` carried along the straight lines through `knots` ([[x, y], ...], x rising), held at the ends.
+  if (x <= knots[0][0]) return knots[0][1];
+  if (x >= knots[knots.length - 1][0]) return knots[knots.length - 1][1];
+  let i = 1;
+  while (x > knots[i][0]) i++;
+  const [x0, y0] = knots[i - 1], [x1, y1] = knots[i];
+  return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
+}
+
+const shown = {
+  // what a save from before showed for its numbers
+  skill(v, grp, key) {
+    const t = read_json(FILE);
+    const [m, sd] = get(get(t["skills"], grp) || {}, key, [50, 10]);
+    const base = m + (v - 50) * sd / (v >= 50 ? t["above"] : t["below"]);
+    return Math.max(1, Math.min(99, _line(t["curve"].map(([x, y]) => [y, x]), base)));
+  },
+  overall(v) {
+    return int(round(Math.max(1, Math.min(99, _line(read_json(FILE)["overall"], Number(v))))));
+  },
+  coach(v) {
+    return _line(read_json(FILE)["coach"], Number(v));
+  },
+};
 
 /** dict(zip(attrs, values)): the pairs until the shorter one runs out. */
 function zipped(attrs, values) {
@@ -153,4 +181,4 @@ export function upgrade(state) {
   return changed;
 }
 
-export const old_saves = { upgrade };
+export const old_saves = { FILE, upgrade, shown };

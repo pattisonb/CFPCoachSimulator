@@ -190,9 +190,9 @@ function _card_growth(was, now, attrs, pos, own = null) {
 }
 
 function develop(p, attrs, factor, rng, starter = false, year = null) {
-  // One offseason's growth on our scale: each skill closes part of its gap to potential at his
+  // One offseason's growth: each rating closes part of its gap to potential at his
   // coachability's rate times `factor` and his year's pace (`starter`: he played a starter's season,
-  // year_pace); his overall follows (our formula). Returns the overall gained.
+  // year_pace); his overall follows. Returns the overall gained.
   // With `year`, a quarterback's Decision Making grows too, on its own: toward its own ceiling at the pace of a skill,
   // by a draw of its own stream (`decision-{year}-{id}`), so no other draw moves.
   let rate = get(recruits.RATE, get(p, "c"), 0.27) * factor * offseason.DEV_RATE * offseason.year_pace(p, starter);
@@ -616,8 +616,8 @@ function _develop_all(state) {
 function _newcomer(r, slug) {
   // A generated player (recruits.recruit, drawn by the model learned from real players) in card numbers, in the form
   // league.compact takes.
-  const card = game_scale.from_ea(r["ratings_ea"], r["ea_position"]);
-  const pot = game_scale.potential_from_ea(r["potential_ea"], card, r["ea_position"]);
+  const card = game_scale.from_draw(r["ratings"]);
+  const pot = game_scale.potential_from_draw(r["potential"], card, r["ea_position"]);
   const potential_card = {};
   for (const [k, v] of Object.entries(pot)) potential_card[k] = Math.max(v, get(card, k, v));
   return { slug: slug, name: r["name"], position: r["ea_position"], class: "FR", height: r["height"],

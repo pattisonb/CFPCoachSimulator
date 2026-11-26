@@ -13,8 +13,7 @@
 //     -> potential per attribute: his room to grow is the attribute's real career gain at his
 //        position, scaled by a player-level potential and per-attribute spread
 //     -> coachability: how fast he closes the gap each offseason, independent of stars
-// Ratings are on EA's scale (ratings_ea, overall_ea) like the source rosters, plus the source
-// curve's scale (`ratings`, `overall`) that build_teams.js reads.
+// His ratings, potential and overall are card numbers, as every rating in the game is.
 import { Random, round, int, sum, get, truthy, floordiv, mod, fmt, cmp } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { modules } from "../engine_js/modules.js";
@@ -99,16 +98,6 @@ export function model() {
   return read_json(recruits.MODEL_FILE);      // parsed once (files.js keeps it)
 }
 
-export function curve(ea) {
-  // EA's scale -> the source scale (cfb_sim_data/league.json's piecewise-linear curve).
-  const pts = recruits.model()["players"]["curve"];
-  for (let i = 0; i + 1 < pts.length; i++) {
-    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
-    if (ea <= x1) return y0 + (ea - x0) * (y1 - y0) / (x1 - x0);
-  }
-  return pts[pts.length - 1][1];
-}
-
 const _CUMULATIVE = new WeakMap();   // a model list -> [its keys, cumulative weights]: built once, not on every draw
 
 // `pairs`: an array of [key, weight] (a model list, or a dict's Object.entries, or pairs built for the draw).
@@ -138,7 +127,7 @@ export function from_quantiles(qs, u) {
   return qs[i] + (u - lo) / (hi - lo) * (qs[i + 1] - qs[i]);
 }
 
-export function overall_ea(position, archetype, ratings) {
+export function overall_of(position, archetype, ratings) {
   const fits = recruits.model()["players"]["overall_fit"];
   const f = get(fits, `${position}|${archetype}`) || fits[position];
   const terms = [];
@@ -147,12 +136,8 @@ export function overall_ea(position, archetype, ratings) {
 }
 
 export function rescore(p) {
-  // Recompute the overall and the source-scale ratings after the EA ratings change.
-  p["overall_ea"] = int(round(Math.max(1, Math.min(99, recruits.overall_ea(p["ea_position"], p["archetype"], p["ratings_ea"])))));
-  p["overall"] = int(round(recruits.curve(p["overall_ea"])));
-  const ratings = {};
-  for (const [k, v] of Object.entries(p["ratings_ea"])) ratings[k] = int(round(recruits.curve(v)));
-  p["ratings"] = ratings;
+  // His overall after his ratings change (the model's own fit on them).
+  p["overall"] = int(round(Math.max(1, Math.min(99, recruits.overall_of(p["ea_position"], p["archetype"], p["ratings"])))));
 }
 
 // `taken`: a Set of lower-case names, added to.
@@ -213,8 +198,7 @@ export function _potential(rng, pos, stars, ratings) {
 }
 
 export function recruit(rng, year, band, taken, scored = true) {
-  // One prospect. `scored` False leaves out the overall and the source-scale ratings (rescore): a career converts
-  // the draw to its own scale at once and never reads them.
+  // One prospect. `scored` False leaves out his overall (rescore): a career works it out itself.
   const gen = recruits.model()["generation"];
   const pl = recruits.model()["players"];
   const composite = round(recruits.from_quantiles(gen["rating_quantiles"][band], rng.random()), 4);
@@ -238,7 +222,7 @@ export function recruit(rng, year, band, taken, scored = true) {
   const zw = Math.max(-lim, Math.min(lim, recruits.HEIGHT_WEIGHT_R * zh + Math.sqrt(1 - pypow(recruits.HEIGHT_WEIGHT_R, 2)) * rng.gauss(0, 1)));
   const height = round(body["height_in"][0] + body["height_in"][1] * zh);
   const weight = Math.max(get(recruits.MIN_WEIGHT, rpos, recruits.MIN_WEIGHT_OTHER), round(body["weight_lb"][0] + body["weight_lb"][1] * zw));
-  const [ratings_ea, archetype] = recruits._attributes(rng, pos, band, composite);
+  const [ratings, archetype] = recruits._attributes(rng, pos, band, composite);
   const name = recruits._name(rng, taken);                 // the draws below follow the dict's order: do not reorder them
   const coachability = recruits.weighted(rng, recruits.COACHABILITY.map(([n, _, s]) => [n, s]));
   const p = {
@@ -253,8 +237,8 @@ export function recruit(rng, year, band, taken, scored = true) {
     "weight": weight,
     "hometown": { "city": town[0], "state": state, "lat": town[2], "lon": town[3] },
     "coachability": coachability,
-    "ratings_ea": ratings_ea,
-    "potential_ea": recruits._potential(rng, pos, int(Number(band)), ratings_ea),
+    "ratings": ratings,
+    "potential": recruits._potential(rng, pos, int(Number(band)), ratings),
   };
   if (scored) recruits.rescore(p);
   return p;
@@ -283,9 +267,9 @@ export function develop(p, rng, coach_factor = 1.0) {
   // One offseason: every attribute closes part of its gap to potential, at the player's
   // coachability rate times his coaches' factor (docs/PLAYER_DEVELOPMENT.md, section 2).
   const rate = recruits.RATE[p["coachability"]] * coach_factor;
-  for (const [k, v] of Object.entries(p["ratings_ea"])) {
-    const gap = get(p["potential_ea"], k, v) - v;
-    if (gap > 0) p["ratings_ea"][k] = int(round(Math.min(99, v + gap * rate * rng.uniform(0.8, 1.2))));
+  for (const [k, v] of Object.entries(p["ratings"])) {
+    const gap = get(p["potential"], k, v) - v;
+    if (gap > 0) p["ratings"][k] = int(round(Math.min(99, v + gap * rate * rng.uniform(0.8, 1.2))));
   }
   recruits.rescore(p);
 }
@@ -299,8 +283,8 @@ export function as_roster_player(p, team, slug, jersey = null) {
   return {
     "slug": slug, "name": p["name"], "position": p["ea_position"], "class": "FR", "class_year": "Freshman",
     "height": `${floordiv(p["height"], 12)}'${mod(p["height"], 12)}"`, "weight_lbs": p["weight"], "jersey": jersey,
-    "dev_trait": "Normal", "archetype": p["archetype"], "overall": p["overall"], "overall_ea": p["overall_ea"],
-    "ratings": { ...p["ratings"] }, "ratings_ea": { ...p["ratings_ea"] }, "potential_ea": { ...p["potential_ea"] },
+    "dev_trait": "Normal", "archetype": p["archetype"], "overall": p["overall"],
+    "ratings": { ...p["ratings"] }, "potential": { ...p["potential"] },
     "coachability": p["coachability"], "stars": p["stars"], "composite": p["composite"], "hometown": { ...p["hometown"] },
     "team": get(team, "short_name") || get(team, "name"), "team_slug": get(team, "slug"),
   };
@@ -338,7 +322,7 @@ export const recruits = {
   ROOT, MODEL_FILE, STAR_BANDS, QUANTILE_AT, COACHABILITY, RATE, CAREER_YEARS, SURVIVOR_TRIM, REALIZED, POTENTIAL_SD,
   ATTRIBUTE_SPREAD, DONORS, SAME_BAND_WEIGHT, NOISE, HEIGHT_WEIGHT_R, SIZE_SD_LIMIT, MIN_WEIGHT, MIN_WEIGHT_OTHER,
   EXPECT_FLOOR, BELOW_FLOOR_SLOPE, STAR_ROOM, SKIP_POSITIONS,
-  model, curve, _CUMULATIVE, weighted, from_quantiles, overall_ea, rescore, _name, _attributes, _potential, recruit,
+  model, _CUMULATIVE, weighted, from_quantiles, overall_of, rescore, _name, _attributes, _potential, recruit,
   generate_class, develop, as_roster_player,
   POTENTIAL_FILE, YEARS_IN, TRAIT_ORDER, TRAIT_ROOM, UNKNOWN_STAR_ROOM, AHEAD_ROOM, LEVEL_RANGE,
   main,

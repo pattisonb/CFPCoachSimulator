@@ -26,7 +26,7 @@ import { prospects } from "../career_js/prospects.js";
 
 const FILE = "data/engine_teams.json";
 const FORMAT = 3;            // the roster file's format: one set of ratings a player, by the names his card prints, and nothing worked out
-const MISSING = 60;          // a rating the file leaves out (on the shown scale)
+const MISSING = 60;          // a rating the file leaves out (a card number)
 
 // ----- the names: a rating in the file is called what the player's card calls it ---------------------------------------
 //

@@ -424,8 +424,8 @@ function _playlink_playbook(state, slug) {
 function playlink_team(state, slug) {
   // One team in the shape of a Pocket Franchise roster link (the reader is pocket-franchise lib/game/roster-link.ts,
   // which keeps the fields it knows and drops the rest): the depth chart as this season has it, starter first, and
-  // every player with his current skills (the 54, after development, on the scale the game shows: the roster file's
-  // and the card's numbers, never the kept ones) and what his card shows. `_position`
+  // every player with his current skills (the 54, after development: the roster file's and the card's numbers) and
+  // what his card shows. `_position`
   // and `_look` (a face from Edit Player Look) are for the page, which draws his face from them. A read only: no sim.
   // An FCS stand-in has a full roster too (the sim plays it), so it can be played against on the field.
   //

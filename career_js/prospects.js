@@ -155,8 +155,8 @@ prospects.SCHOOL_KINDS = ["High School", "High School", "High School", "Central"
 
 let _player_pool = null;
 export function player_pool() {
-  // Everyone on a roster in the league in play (starters and backups alike), with their skills on our
-  // scale and our overall: who a recruit can be compared to.
+  // Everyone on a roster in the league in play (starters and backups alike), with their ratings and their overall:
+  // who a recruit can be compared to.
   if (_player_pool !== null) return _player_pool;
   const season = modules.season;
   const keys = game_scale.keys();
@@ -234,7 +234,7 @@ export function warm() {
 }
 
 export function ceiling(state, p) {
-  // A prospect's projected skills (his potential, our scale): what a comp is measured on.
+  // A prospect's projected ratings (his potential): what a comp is measured on.
   return modules.recruiting.attributes(state, p, "potential");
 }
 
@@ -261,7 +261,7 @@ export function comp(profile_vector, position, pool, key = null) {
 
 export function _shifted(state, p, grades, field = "potential") {
   // His ceiling (`field` "potential") or his skills now ("ratings") as a read sees them: each
-  // group's attributes moved by how far the read is off his true grade (grade points to rating points).
+  // group's attributes moved by how far the read is off his true grade (READ_SHIFT, POTENTIAL_SHIFT).
   const recruiting = modules.recruiting;
   const groups = { athleticism: recruiting._ATHLETIC, size_strength: recruiting._SIZE, football_iq: recruiting._IQ };
   const out = {};

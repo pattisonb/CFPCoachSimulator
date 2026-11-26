@@ -3,9 +3,8 @@
 // play-style archetypes and the traits, renamed from the source data's.
 //
 // Everything here is data: build_teams.js builds the attributes from it, season.js and the
-// web page show them, and later phases of the engine read them. Values are on the house
-// scale (50 = an average Power 4 starter at the position, about 15 a standard deviation
-// above that and 9 below).
+// web page show them, and later phases of the engine read them. Each card attribute is one of a player's ratings, a
+// card number.
 import { round, int, sum, sorted, get, isNumber } from "../engine_js/pyrt.js";
 
 /** d.get(k, default) for one of this file's own tables asked with a key from outside (a position, an ability's name):
@@ -142,7 +141,7 @@ export function card_group(position, role = null) {
 }
 
 export function raw_attributes(src, position, role = null) {
-  // A player's attributes on the source scale: his position's set (POSITION_ATTRIBUTES).
+  // A player's card attributes from his ratings (card numbers): his position's set (POSITION_ATTRIBUTES).
   // Another position's skills are not carried: measured against that position's players
   // they mean little (a back's arm strength), and the depth chart's "rated at every
   // position" already covers a move.

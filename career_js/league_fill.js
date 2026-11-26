@@ -348,15 +348,15 @@ export function fill_roster(team, target, rng, attrs, taken) {
     const tpos = get(league_fill._TEMPLATE_POS, pos, pos);
     const s = Math.max(2, Math.min(5, int(Number(truthy(stars) ? stars : 3))));
     const band = String(s);
-    const [ea, arche] = recruits._attributes(rng, tpos, band, quantiles[band][3]);
-    const from = game_scale.from_ea(ea, pos);
+    const [drawn, arche] = recruits._attributes(rng, tpos, band, quantiles[band][3]);
+    const from = game_scale.from_draw(drawn);
     let card = {};
     for (const k of attrs) card[k] = get(from, k, game_scale.MISSING);
     // (STAR_STEP.get(stars, 0.0): its keys are the whole numbers 1 to 5; text or nothing given is not one of them)
     const star_step = isNumber(stars) ? get(league_fill.STAR_STEP, Number(stars), 0.0) : 0.0;
     const raw = level + league_fill.SLOT_STEP[slot(pos, n)] + get(league_fill.CLASS_STEP, cls, 0.0) + star_step + rng.gauss(0, league_fill.PLAYER_SD);
     const tmpl = fit_overall(card, pos, _clamp_overall(raw), attrs);
-    const pot = game_scale.potential_from_ea(recruits._potential(rng, tpos, s, ea), card, pos);
+    const pot = game_scale.potential_from_draw(recruits._potential(rng, tpos, s, drawn), card, pos);
     const share = get(league_fill.ROOM_BY_CLASS, cls, 1.0);
     const room = {};
     for (const k of attrs) room[k] = int(round(share * Math.max(0, get(pot, k, card[k]) - card[k])));

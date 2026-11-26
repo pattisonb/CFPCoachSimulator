@@ -136,7 +136,7 @@ offseason.SAM_FRONT_LBS = 3;                                  // a base front wi
 offseason.PT_WEIGHT = 1.0; offseason.PRESTIGE_WEIGHT = 0.8; offseason.RATING_WEIGHT = 0.3; offseason.WIN_WEIGHT = 0.6; offseason.HOME_WEIGHT = 0.4; offseason.PICK_NOISE = 0.5;
 
 // ----- development and staff *tune* -----
-offseason.DEV_RATE = 0.75;                                    // coachability's pace on our scale: a class tracks the real players by stars and
+offseason.DEV_RATE = 0.75;                                    // coachability's pace: a class tracks the real players by stars and
                                                               // years, three- and two-stars a little under the survivors
 // real players gain little in their first offseasons and most in their third and fourth (the real rosters
 // by years in college: four-stars +1, +1, +5.5): the pace by seasons already played in the program *tune*

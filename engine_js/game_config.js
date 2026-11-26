@@ -250,12 +250,12 @@ cfg.DISCIPLINE_EFFECT = 0.01;          // penalty chance x (1 - this per point o
 cfg.THROWAWAY_CHANCE = 0.03;
 cfg.SACK_BASE = 0.050;                // per dropback with equal lines
 cfg.SACK_PER_LINE_POINT = 0.00375;     // per point of (pass rush - pass protection)
-cfg.SACK_PER_QB_POINT = 0.001;       // per point of QB decision making above neutral (fewer sacks)
+cfg.SACK_PER_QB_POINT = 0.001;       // per point of QB decision making over the average quarterback (fewer sacks)
 cfg.SACK_GUESSED_BONUS = 0.035;       // defense called a pass defense
 // ----- Pass rush and protection (ratings v2, phase 4) -----
 // Each dropback the rush is a power rush or a speed rush (the rushers' style tilts it). Power
 // Rush meets Pass Pro: Anchor and Speed Rush meets Footwork, each as the side's lean over its
-// own average of the two (the composites still set the level). Rates per house-scale point.
+// own average of the two (the mixes still set the level). Rates per card point.
 cfg.RUSH_POWER_SHARE = 0.5;
 cfg.RUSH_STYLE_TILT = 0.02;            // power share + this per point of the rushers' power over speed
 cfg.RUSH_MATCHUP_EFFECT = 0.0024;      // sack rate per point of (the rushers' lean in this rush - the line's lean against it)
@@ -283,7 +283,7 @@ cfg.RB_TARGET_SHARE = 0.14;           // share of targets that go to running bac
 cfg.TE_TARGET_WEIGHT = 0.68;          // tight ends targeted a bit less than their ratings imply
 cfg.INT_BASE = 0.05;                  // per incompletion (not throwaways); 0.055 gave 2.8 picks per 100 attempts (real 2.24)
 cfg.INT_PER_COV_POINT = 0.001;        // was 0.0013: interception rate per point of the secondary moved +0.067 in the sim, -0.007 real
-cfg.INT_PER_QB_POINT = 0.001;         // per point of decision making above neutral (fewer picks); was 0.0013: interception
+cfg.INT_PER_QB_POINT = 0.001;         // per point of decision making over the average quarterback (fewer picks); interception
 // rate per QB point moved -0.055 in the sim, -0.004 real
 cfg.INT_GUESSED_BONUS = 0.02;
 cfg.INT_MIN = 0.02; cfg.INT_MAX = 0.22;
@@ -292,15 +292,15 @@ cfg.PICK_SIX_CHANCE = 0.09;           // of interceptions
 // Each throw to a receiver or tight end has a depth: short (under 10 yards), intermediate
 // (10-20) or deep (20+). The share of each, before the receiver's speed and Deep Routes tilt it:
 cfg.PASS_DEPTH_SHARE = {"WR": [0.50, 0.32, 0.18], "TE": [0.58, 0.35, 0.07]};
-cfg.PASS_DEEP_SPEED_TILT = 1.0;        // deep share x (receiver speed / neutral) ** this
+cfg.PASS_DEEP_SPEED_TILT = 1.0;        // deep share x (receiver speed read against the average: _rel) ** this
 cfg.PASS_DEEP_ROUTE_TILT = 0.012;      // deep share x (1 + this per point of Deep Routes over his route average)
 cfg.DEPTH_COMPLETION = {"short": 0.08, "mid": -0.05, "deep": -0.24};    // added to the completion chance
 cfg.PASS_YARDS_SHORT = [7.0, 3.0];     // gauss mean, sd of the catch point plus run, before yards after the catch
 cfg.PASS_YARDS_MID = [15.5, 3.5];
 cfg.PASS_YARDS_DEEP = [22, 56];        // uniform
-cfg.PASS_BREAKAWAY_CHANCE = 0.05;      // a short or intermediate catch broken for a long gain (x speed / neutral)
+cfg.PASS_BREAKAWAY_CHANCE = 0.05;      // a short or intermediate catch broken for a long gain (x speed read against the average: _rel)
 // The attributes add how a player differs from his own average at each depth (the composites
-// above already set his level), in completion chance per house-scale point:
+// above already set his level), in completion chance per card point:
 cfg.DEPTH_ACCURACY_EFFECT = 0.005;    // QB accuracy at the throw's depth over his accuracy average
 cfg.ARM_DEEP_EFFECT = 0.0024;          // deep throws: arm strength over his accuracy average
 cfg.ROUTE_DEPTH_EFFECT = 0.004;       // receiver's route skill at the depth over his route average
@@ -328,7 +328,7 @@ cfg.RUSH_PER_CARRIER_POINT = 0.05;   // *tune* yards per point of carrier rating
 // ----- Running by direction (ratings v2, phase 3) -----
 // Each carry goes inside or outside. Blocking, the front and the carrier's style read
 // differently in each; like the pass game, the attributes add how a player differs from his
-// own average (the composites above still set his level), in yards per house-scale point.
+// own average (the mixes above still set his level), in yards per card point.
 cfg.RUN_OUTSIDE_SHARE = 0.40;          // of carries, before the carrier's style tilts it
 cfg.RUN_STYLE_TILT = 0.012;            // outside share + this per point of his speed style over his power style
 cfg.RUN_LINE_STYLE_EFFECT = 0.05;     // yards per point: the line's drive (inside) or reach (outside) over its average of the two
@@ -344,7 +344,7 @@ cfg.SHORT_YARDAGE_STYLE_EFFECT = 0.0048;    // conversion chance per point of po
 cfg.RUSH_GUESSED = -0.9;
 cfg.RUSH_NOT_GUESSED = 0.5;
 cfg.RUSH_BIG_PLAY_CHANCE = 0.045;     // per carry (scaled by carrier speed)
-cfg.RUSH_BIG_PLAY_SPEED_POWER = 0.5;  // *tune* ... as (speed / neutral) ** this; at 1 a fast back's long runs put the top ten rushers
+cfg.RUSH_BIG_PLAY_SPEED_POWER = 0.5;  // *tune* ... as (speed read against the average: _rel) ** this; at 1 a fast back's long runs put the top ten rushers
 // about 10% over real seasons' (tools/realism.mjs)
 cfg.RUSH_BIG_PLAY_YARDS = [15, 45];
 cfg.RUSH_SHORT_YARDAGE_CONVERT = 0.62;    // on 3rd/4th and 1-2, chance the carry reaches the line
@@ -419,7 +419,7 @@ cfg.TARGET_MULT_MAX = 1.3;            // *tune* cap on a receiver's real-usage t
 
 // ----- Who gets the defensive stats (tools/realism.mjs: season leaders against real seasons) -----
 // Tackle weight per player on the field: (dl, lb, olb, s, cb) for runs of 2 yards or less,
-// 3-7 yards, and longer plays, times (skill / neutral) ** TACKLE_SKILL_POWER.
+// 3-7 yards, and longer plays, times (skill read against the average: _rel) ** TACKLE_SKILL_POWER.
 cfg.TACKLE_WEIGHTS_SHORT = [0.22, 0.29, 0.30, 0.11, 0.045];   // *tune* real 2026 (cfbstats, every FBS team): linemen and edge
 cfg.TACKLE_WEIGHTS_MID = [0.085, 0.28, 0.30, 0.19, 0.09];     // rushers 25% of tackles, linebackers 32%, backs 41%; the sim gives 23 / 33 / 43
 cfg.TACKLE_WEIGHTS_LONG = [0.02, 0.16, 0.12, 0.34, 0.30];
@@ -430,10 +430,10 @@ cfg.NO_TACKLE_CHANCE = 0.16;         // a gain of 4+ yards that ends out of boun
 cfg.COVERAGE_TACKLE_WEIGHTS = [0.3, 1.0, 0.4];    // who makes the tackle on a returned kick: by depth at the
 // position (starter, second, the rest); real coverage units are mostly backups
 cfg.FORCED_FUMBLE_SHARE = 0.7;        // share of fumbles credited as forced (real 0.67 forced a team-game on about 1.1 fumbles)
-cfg.SACK_SKILL_POWER = 1.3;           // sack credit among the rushers: (pass rush / neutral) ** power
+cfg.SACK_SKILL_POWER = 1.3;           // sack credit among the rushers: (pass rush read against the average: _rel) ** power
 cfg.DB_SACK_SHARE = 0.08;             // share of sacks credited to a blitzing corner or safety at blitz_rate 50 (scales with it;
 // real 2026 through week 8: 158 of about 1,900); credit only, drawn from stat_rng
-cfg.INT_SKILL_POWER = 2.4;            // *tune* interception credit among the defensive backs: (coverage / neutral) ** power (1.5 spread
+cfg.INT_SKILL_POWER = 2.4;            // *tune* interception credit among the defensive backs: (coverage read against the average: _rel) ** power (1.5 spread
 // them too evenly: 13 players a season with five or more, real 18-22; 2.4 gives about 20, 4.0 gave 36)
 cfg.QB_DESIGNED_RUN_SHARE = 0.06;     // default share of carries that are designed QB runs (observed per team overrides)
 cfg.BACKUP_RB_ROTATION = 0.40;        // chance the sub is the next back down rather than the best one on the bench

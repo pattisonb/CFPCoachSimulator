@@ -1,24 +1,15 @@
-// The game's own ratings: the one scale every player, prospect and number in the game is on.
-//
-// EA's ratings were only the jumping-off point. A one-time fit, run offline and not part of the game, read the real 2026
-// rosters once and froze, in data/game_scale.json:
-//   - each of the 54 skills on our 1-99 scale per position group: 50 is the middle Power 4 starter
-//     at the position, 15 points a standard deviation above him, 9 below (as the player cards),
-//   - the player card attributes' scale (ratings.js, the same shape),
-//   - our overall: a formula per position on those skills, fit once to the 2026 card overall.
-// After that nothing reads EA: a career's league and its recruits store our ratings, develop in
-// them, and the engine reads them back through `to_base` (the frozen inverse) into the formulas it
-// was tuned on. Generated recruits are drawn by a model learned from real players and converted
-// with `from_ea` the moment they are made.
+// The game's numbers: every rating, potential and overall is a card number (1-99, the average player about a 70), the
+// number the player's card shows and the roster file holds. This file holds what is frozen about them, in
+// data/game_scale.json: the 54 ratings' keys, the overall's formula per position (card_overall, on card numbers), the
+// average FBS starter at each engine position (starter_means: what the play engine reads a player against), each
+// card group's average starter in his card attributes (attribute_means) and the scouting reads' words (read_words).
+// Generated recruits are drawn in card numbers by a model learned from real players (from_draw).
 import { round, int, sum, get, isNumber, truthy } from "../engine_js/pyrt.js";
 import { read_json } from "../engine_js/files.js";
 import { prospects } from "../career_js/prospects.js";
-import { recruits } from "../career_js/recruits.js";
-import { shown } from "./shown.js";
 import { ratings as rv2 } from "./ratings.js";
 
 const FILE = "data/game_scale.json";
-const ABOVE = 15.0, BELOW = 9.0;         // scale points per standard deviation above and below the middle starter
 const GROUP_OF = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE", LT: "OL", LG: "OL", C: "OL", RG: "OL", RT: "OL",
   LEDG: "DL", REDG: "DL", DT: "DL", SAM: "LB", MIKE: "LB", WILL: "LB", CB: "CB", FS: "S", SS: "S",
   K: "K", P: "P" };
@@ -33,43 +24,8 @@ export function keys() {
 }
 
 export function group(pos) {
-  // The scale group of an EA position (LT, MIKE, ...) or an engine position (OL, MLB, ...).
+  // The position group of an EA position (LT, MIKE, ...) or an engine position (OL, MLB, ...).
   return get(game_scale.GROUP_OF, pos) || get(_ENGINE_GROUP, pos, pos);
-}
-
-export function to_ours(base, grp, key) {
-  const [m, sd] = game_scale.data()["skills"][grp][key];
-  return int(round(Math.max(1, Math.min(99, 50 + (base - m) / sd * (base >= m ? game_scale.ABOVE : game_scale.BELOW)))));
-}
-
-export function to_base(ours, grp, key) {
-  const [m, sd] = game_scale.data()["skills"][grp][key];
-  return m + (ours - 50) * sd / (ours >= 50 ? game_scale.ABOVE : game_scale.BELOW);
-}
-
-export function ours_from_base(ratings, pos) {
-  const g = group(pos);
-  const out = {};
-  for (const k of keys()) if (ratings[k] !== undefined) out[k] = to_ours(ratings[k], g, k);
-  return out;
-}
-
-const _tenths = new Map();     // "group|skill" -> the answers by rating (a whole 1-99 one is asked for again and again)
-
-export function _base_tenth(ours, grp, key) {
-  if (!Number.isInteger(ours) || ours < 0 || ours > 99) return round(to_base(ours, grp, key), 1);
-  const at = `${grp}|${key}`;
-  let row = _tenths.get(at);
-  if (row === undefined) _tenths.set(at, row = new Array(100));
-  if (row[ours] === undefined) row[ours] = round(to_base(ours, grp, key), 1);
-  return row[ours];
-}
-
-export function base_from_ours(ours, pos) {
-  const g = group(pos);
-  const out = {};
-  for (const [k, v] of Object.entries(ours)) out[k] = _base_tenth(v, g, k);
-  return out;
 }
 
 export function whole(v) {
@@ -77,41 +33,21 @@ export function whole(v) {
   return Math.max(1, Math.min(99, int(round(Number(v)))));
 }
 
-export function from_ea(ratings, pos = null) {
-  // A generated player's draw (recruits.js draws on the card's own scale) as whole card numbers.
+export function from_draw(ratings) {
+  // A generated player's draw (recruits.js draws card numbers) as whole card numbers.
   const out = {};
   for (const k of keys()) if (ratings[k] !== undefined) out[k] = whole(ratings[k]);
   return out;
-}
-
-export function base_from_card(card) {
-  // What the play engine's formulas read for a player's card numbers: each through the source curve they were tuned
-  // on (the engine's input; never stored or shown).
-  const out = {};
-  for (const [k, v] of Object.entries(card)) out[k] = _base_of(v);
-  return out;
-}
-export function card_from_base(base) {
-  // The other way, for a player who comes with only what the engine's formulas read: his card numbers.
-  const out = {};
-  for (const k of keys()) if (isNumber(base[k])) out[k] = shown.from_base(base[k]);
-  return out;
-}
-const _bases = new Array(100);
-function _base_of(v) {
-  if (!Number.isInteger(v) || v < 0 || v > 99) return round(shown.to_base(v), 1);
-  if (_bases[v] === undefined) _bases[v] = round(shown.to_base(v), 1);
-  return _bases[v];
 }
 
 // How far a generated player grows, by position group: his drawn room to potential (card points) times this. Set
 // so a career's starters settle, season after season, where the real 2026 starters were (tools/long_run.mjs). *tune*
 const ROOM = { QB: 1.33, RB: 1.0, WR: 1.11, TE: 1.21, OL: 1.24, DL: 1.35, LB: 1.45, CB: 1.48, S: 1.63, K: 1.25, P: 0.85 };
 
-export function potential_from_ea(potential_ea, card, pos) {
+export function potential_from_draw(potential, card, pos) {
   // A generated player's potential, in card numbers: his room above his ratings (`card`) scaled by ROOM.
   const m = get(game_scale.ROOM, group(pos), 1.0);
-  const pot = from_ea(potential_ea, pos);
+  const pot = from_draw(potential);
   const out = {};
   for (const [k, v] of Object.entries(pot)) {
     out[k] = int(round(Math.min(99, get(card, k, v) + m * Math.max(0, v - get(card, k, v)))));
@@ -172,17 +108,9 @@ export function overall(card, pos, own = null) {
   return int(round(Math.max(1, Math.min(99, v))));
 }
 
-export function card_attributes(ours, pos) {
-  // His player card's attributes (the sim's) from his skills, at EA position `pos`.
-  return prospects.card_attributes(ours, { ea_position: pos, position: pos });
-}
-
-export function decision_card(own) {
-  // A quarterback's own Decision Making (`own`: the number he has, on the scale the game shows) on his card's scale,
-  // as his card keeps its attributes: what his overall reads for it.
-  const [m, hi, lo] = get(card_scale(), "QB|decision_making", [50, 1.5, 0.9]);
-  const v = round(shown.to_base(Math.max(1, Math.min(99, own))), 1);
-  return int(round(Math.max(1, Math.min(99, 50 + (v - m) * (v >= m ? hi : lo)))));
+export function card_attributes(card, pos) {
+  // His player card's attributes from his ratings, at EA position `pos`.
+  return prospects.card_attributes(card, { ea_position: pos, position: pos });
 }
 
 export function skill_weights(pos) {
@@ -228,20 +156,9 @@ export function starter_means() {
   return get(game_scale.data(), "starter_means") || {};
 }
 
-export function engine_means() {
-  // The real 2026 build's FBS starter means of the engine's attributes ("POS:attr" -> mean),
-  // frozen: a career's later seasons go onto the engine scale through them (build_teams.normalize).
-  return get(game_scale.data(), "engine_means");
-}
-
-export function card_scale() {
-  // The player card attributes' scale ("group|attr" -> [middle, slope above, slope below]), frozen.
-  return game_scale.data()["card_scale"];
-}
-
 export const game_scale = {
-  FILE, ABOVE, BELOW, GROUP_OF, ROOM, MISSING, _FIRST, modules,
-  data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, whole, from_ea, potential_from_ea,
-  has_overall, card_formula, card_value, card_attributes, decision_card, overall, skill_weights, position_skills, card_position, base_from_card, card_from_base,
-  overall_version, starter_means, engine_means, card_scale,
+  FILE, GROUP_OF, ROOM, MISSING, _FIRST, modules,
+  data, keys, group, whole, from_draw, potential_from_draw,
+  has_overall, card_formula, card_value, card_attributes, overall, skill_weights, position_skills, card_position,
+  overall_version, starter_means,
 };

@@ -10,7 +10,6 @@ import { modules } from "../engine_js/modules.js";
 import { api as engine } from "../engine_js/api.js";
 import { game_scale } from "../teamdata_js/game_scale.js";
 import { ratings } from "../teamdata_js/ratings.js";
-import { shown } from "../teamdata_js/shown.js";
 import "../teamdata_js/build_teams.js";
 import "../teamdata_js/rosters.js";
 import * as game_job from "../sim_js/game_job.js";
@@ -49,7 +48,7 @@ import { offseason } from "../career_js/offseason.js";
 import { api } from "./api.js";
 
 // the modules that do not register themselves
-const early = { game_scale, ratings, shown, position_fit, game_job };
+const early = { game_scale, ratings, position_fit, game_job };
 for (const [name, ns] of Object.entries(early)) modules[name] = ns;
 // a save from before has its recruits' reads worked out again by recruiting's own (teamdata_js/old_saves.js)
 game_scale.modules.recruiting = recruiting;
