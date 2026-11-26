@@ -122,9 +122,26 @@ function records(obj) {
   for (const v of Object.values(obj)) if (v !== null && typeof v === "object") records(v);
 }
 
+// what a god-mode edit from before changed that was on the earlier numbers (the engine's ratings and the card's
+// attributes): dropped, the edit's other changes (jersey, class, size, trait) kept
+const EDITED_EARLIER = ["speed", "strength", "intelligence", "endurance", "passing", "decision_making", "elusiveness", "vision",
+  "hands", "route_running", "run_blocking", "pass_blocking", "rushing", "tackling", "coverage", "kick_power", "kick_accuracy",
+  "punt_power", "punt_accuracy", "return_rating", "attributes"];
+
+function edits(state) {
+  for (const team of Object.values(get(state, "player_edits") || {})) {
+    for (const [slug, e] of Object.entries(team || {})) {
+      if (e === null || typeof e !== "object" || truthy(get(e, "skills"))) continue;   // (an edit already on card numbers)
+      for (const k of EDITED_EARLIER) delete e[k];
+      if (!Object.keys(e).length) delete team[slug];
+    }
+  }
+}
+
 export function upgrade(state) {
   // A save from before card numbers, on card numbers (in place). Returns whether anything changed.
   let changed = false;
+  edits(state);                                           // (any season's: an edit on card numbers is left as it is)
   const lg = get(state, "league");
   const league_earlier = truthy(lg) && get(lg, "scale") !== "card";
   if (league_earlier) {
