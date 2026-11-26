@@ -268,7 +268,7 @@ cfg.POISE_EFFECT = 0.003;             // ... back by this per point of Pocket Po
 cfg.THROW_ON_MOVE_EFFECT = 0.002;     // *tune* ... and by this per point of Throwing on the Move over the league average (a pressured throw is off platform)
 cfg.SACK_YARDS = [7.5, 2.0];          // gauss mean, sd (loss)
 cfg.SACK_FUMBLE_CHANCE = 0.13;
-cfg.COMPLETION_BASE = 0.652;          // equal QB, receiver and coverage (0.641 before pressure cost completions)
+cfg.COMPLETION_BASE = 0.695;          // equal QB, receiver and coverage (0.641 before pressure cost completions)
 cfg.COMPLETION_PER_QB_POINT = 0.00325;    // per card point of the starting QB over the average (fit so the QB's pull on team
 // completion % and margin matched the real 2026 seasons through week 8)
 cfg.COMPLETION_PER_RECV_POINT = 0.00375;
@@ -279,9 +279,9 @@ cfg.COMPLETION_LONG_3RD = -0.05;      // 3rd/4th and 7+
 cfg.COMPLETION_CHECKDOWN_BONUS = 0.12;
 cfg.REDZONE_COMPLETION = [[10, -0.10], [20, -0.06]];    // (yards to goal or fewer, completion change): a short field squeezes coverage
 cfg.COMPLETION_MIN = 0.25; cfg.COMPLETION_MAX = 0.86;
-cfg.RB_TARGET_SHARE = 0.16;           // share of targets that go to running backs
-cfg.TE_TARGET_WEIGHT = 0.75;          // tight ends targeted a bit less than their ratings imply
-cfg.INT_BASE = 0.045;                 // per incompletion (not throwaways); 0.055 gave 2.8 picks per 100 attempts (real 2.24)
+cfg.RB_TARGET_SHARE = 0.14;           // share of targets that go to running backs
+cfg.TE_TARGET_WEIGHT = 0.68;          // tight ends targeted a bit less than their ratings imply
+cfg.INT_BASE = 0.05;                  // per incompletion (not throwaways); 0.055 gave 2.8 picks per 100 attempts (real 2.24)
 cfg.INT_PER_COV_POINT = 0.001;        // was 0.0013: interception rate per point of the secondary moved +0.067 in the sim, -0.007 real
 cfg.INT_PER_QB_POINT = 0.001;         // per point of decision making above neutral (fewer picks); was 0.0013: interception
 // rate per QB point moved -0.055 in the sim, -0.004 real
@@ -411,7 +411,7 @@ cfg.KICKOFF_BIG_RETURN_CHANCE = 0.06;
 cfg.KICKOFF_RETURN_TD_CHANCE = 0.004;
 
 // ----- Usage shares (calibrated against 2026 box scores) -----
-cfg.TARGET_WEIGHT_POWER = 2.3;        // *tune* receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
+cfg.TARGET_WEIGHT_POWER = 3.3;        // *tune* receiver target weight = rating ** power (steeper = more concentrated; 4.0 put the
 // full-season receiving leaders 17% over 2023-2025, 3.5 15% over, 2.5 8% once pass-heavy
 // teams threw as much as they really do: tools/realism.mjs)
 cfg.TARGET_MULT_MAX = 1.3;            // *tune* cap on a receiver's real-usage target weight (his `target_mult` in the roster file); 2.0 fed the
@@ -423,7 +423,7 @@ cfg.TARGET_MULT_MAX = 1.3;            // *tune* cap on a receiver's real-usage t
 cfg.TACKLE_WEIGHTS_SHORT = [0.22, 0.29, 0.30, 0.11, 0.045];   // *tune* real 2026 (cfbstats, every FBS team): linemen and edge
 cfg.TACKLE_WEIGHTS_MID = [0.085, 0.28, 0.30, 0.19, 0.09];     // rushers 25% of tackles, linebackers 32%, backs 41%; the sim gives 23 / 33 / 43
 cfg.TACKLE_WEIGHTS_LONG = [0.02, 0.16, 0.12, 0.34, 0.30];
-cfg.TACKLE_SKILL_POWER = 0.7;
+cfg.TACKLE_SKILL_POWER = 1.2;
 cfg.TACKLE_ASSIST_CHANCE = 0.33;      // share of tackles made by two players; both get an assist (NCAA scoring),
 // so assisted / solo is about 1.0 (real 2026 box scores 0.94)
 cfg.NO_TACKLE_CHANCE = 0.16;         // a gain of 4+ yards that ends out of bounds: nobody is credited
