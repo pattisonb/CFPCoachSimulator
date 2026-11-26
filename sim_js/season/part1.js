@@ -207,7 +207,7 @@ function _is_p4(slug, team) {
 
 // ----- a player's numbers on the page: his card numbers -------------------------------------------------------------
 
-season.SCALE_GROUP = { MLB: "LB", ROLB: "LB", LOLB: "LB" };    // linebackers share one group (the roles are small)
+season.POSITION_GROUP = { MLB: "LB", ROLB: "LB", LOLB: "LB" };    // linebackers share one group (the roles are small)
 
 season.RETURN_POSITIONS_OUT = ["K", "P", "OL", "DL", "QB"];   // never returners, as the engine's best_returner has it
 
@@ -244,7 +244,7 @@ function page_overall(p, base = null) {
 }
 
 function same_group(a, b) {
-  return get(season.SCALE_GROUP, a, a) === get(season.SCALE_GROUP, b, b);
+  return get(season.POSITION_GROUP, a, a) === get(season.POSITION_GROUP, b, b);
 }
 
 function tier_of(team) {

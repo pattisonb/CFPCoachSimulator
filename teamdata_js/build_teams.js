@@ -278,7 +278,7 @@ export function team_from_source(t) {
     if (get(p, "target_mult") !== null) {          // a career's league: his share of targets, kept with him
       m["target_mult"] = p["target_mult"];
     }
-    // ratings v2: his card's attributes in card numbers (house_attributes puts them against his group's average
+    // ratings v2: his card's attributes in card numbers (set_attributes puts them against his group's average
     // starters), the measurables, the earned traits and the play style
     m["_attr_raw"] = rv2.raw_attributes(p["ratings"], m["position"], m["role"]);
     if (isNumber(get(m["_attr_raw"], "decision_making"))) {       // his own Decision Making (own_decision above)
@@ -497,7 +497,7 @@ export function attributes_of(p) {
   return out;
 }
 
-export function house_attributes(teams) {
+export function set_attributes(teams) {
   for (const t of teams) for (const p of t["players"]) p["attributes"] = attributes_of(p);
 }
 
@@ -653,7 +653,7 @@ export function build(sources, real = true, observed = null, quiet = false, styl
     say(`team level: ${moved.length} teams above the FBS starter average shifted `
       + `${_fmt1(minBy(Object.values(shifts)))} to ${_fmt1(moved.length ? maxBy(moved) : 0)} card points (top scale ${_float_text(build_teams.TEAM_LEVEL_TOP_SCALE)})`);
   }
-  house_attributes(teams);
+  set_attributes(teams);
   for (const t of teams) depth_sort(t);
   ratings_at_every_position(teams);
   const tendency_means = normalize_tendencies(teams);
@@ -685,7 +685,7 @@ export const build_teams = {
   OBSERVED, GAME_SCRIPT_PASS, FOURTH_PER_MARGIN, PASS_RATE_SLOPE, TEMPO_SLOPE, SCRAMBLE_SHARE, apply_observed_tendencies,
   LB_ROLES,
   depth_sort, established, clamp_extremes,
-  P4_CONFERENCES, _attr_group, attributes_of, house_attributes,
+  P4_CONFERENCES, _attr_group, attributes_of, set_attributes,
   normalize, team_level, ENGINE_POSITIONS, CORE_SKILLS, RATED_AS, rated_at, ratings_at_every_position, measured_recruiting,
   engine_roster, build,
 };

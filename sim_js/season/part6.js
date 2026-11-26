@@ -921,8 +921,8 @@ function recruit_stars(p) {
 }
 
 // ----- every rating a player has, for his card's Ratings tab (the player's ask) ----------------------------------------
-// a player's ratings by the groups EA shows them in, each with its name; then the ones
-// that are ours alone. Every player carries all of them, whatever he plays. A view: the sim reads skills as it always has.
+// a player's ratings by the groups his card shows them in, each with its name. Every player carries all of them,
+// whatever he plays.
 season.SKILL_GROUPS = [
   ["General", [["speed", "Speed"], ["acceleration", "Acceleration"], ["strength", "Strength"], ["agility", "Agility"],
     ["awareness", "Awareness"], ["jumping", "Jumping"], ["injury", "Injury"], ["stamina", "Stamina"], ["toughness", "Toughness"],
@@ -957,45 +957,6 @@ season.EVEN_GROUPS = ["General", "Ballcarrier", "Receiving", "Blocking", "Passin
 if (new Set(season.SKILL_GROUPS.filter(([g]) => season.EVEN_GROUPS.includes(g)).map(([, rows]) => rows.length)).size !== 1) {
   throw new Error("AssertionError: the six position groups must be one length");
 }
-// The ratings that are ours, not game_scale's skills (the player's ask): each is read off the skills that go with it,
-// with a little of the player's own in it (a seeded draw of its own, by his slug). Where his card already carries the
-// rating (anyone's Durability, a quarterback's Pocket Poise, a punter's Punt Power), the card's number is the one shown.
-season.OUR_RATINGS = {     // *tune* key: [what it is read from, the card attribute that is the same thing or null]
-  durability: [{ injury: 0.5, toughness: 0.5 }, "durability"],
-  balance: [{ agility: 0.4, strength: 0.3, change_of_direction: 0.3 }, null],
-  elusiveness: [{ juke_move: 0.5, spin_move: 0.5 }, "elusiveness"],
-  yards_after_contact: [{ trucking: 0.4, break_tackle: 0.4, strength: 0.2 }, null],
-  separation: [{ short_route_running: 0.2, medium_route_running: 0.2, deep_route_running: 0.2, agility: 0.2, acceleration: 0.2 }, null],
-  yards_after_catch: [{ juke_move: 0.3, break_tackle: 0.3, speed: 0.2, acceleration: 0.2 }, null],
-  catch_radius: [{ jumping: 0.5, spectacular_catch: 0.5 }, null],
-  body_control: [{ spectacular_catch: 0.4, agility: 0.3, awareness: 0.3 }, null],
-  second_level: [{ run_block_finesse: 0.5, agility: 0.25, speed: 0.25 }, null],
-  blitz_pickup: [{ pass_block: 0.5, awareness: 0.5 }, null],
-  hand_technique: [{ pass_block_finesse: 0.4, run_block_finesse: 0.3, strength: 0.3 }, null],
-  release_speed: [{ throw_accuracy_short: 0.35, throw_under_pressure: 0.30, throw_on_the_run: 0.20, awareness: 0.15 }, null],
-  // Pocket Poise is one rating (the player's call: pocket presence is the same thing): his feel for the rush and his
-  // calm under it, the card's own number for a quarterback
-  pocket_poise: [{ throw_under_pressure: 0.50, awareness: 0.30, break_sack: 0.20 }, "pocket_poise"],
-  touch: [{ throw_accuracy_mid: 0.4, throw_accuracy_deep: 0.3, throw_accuracy_short: 0.3 }, null],   // taking something off it: layering a throw over a defender
-  decision_making: [{ awareness: 0.60, throw_under_pressure: 0.40 }, "decision_making"],
-  ball_skills: [{ catching: 0.5, play_recognition: 0.3, jumping: 0.2 }, "ball_skills"],
-  punt_power: [{ kick_power: 1.0 }, "punt_power"],
-  punt_accuracy: [{ kick_accuracy: 1.0 }, "punt_accuracy"],
-  punt_return: [{ kick_return: 0.6, agility: 0.2, catching: 0.2 }, null],
-};
-season.OUR_SPREAD = 4;                   // *tune* points either way that are the player's own
-
-function our_rating(key, skills, slug, card = null) {
-  // One of OUR_RATINGS, 1-99: his card's own number when the card carries it, else the blend of his skills moved up
-  // to OUR_SPREAD points either way by a draw that is always the same for him. Shown on his card; the sim reads none.
-  const [blend, same] = season.OUR_RATINGS[key];
-  if (truthy(same) && isNumber(get(card || {}, same))) return int(round(card[same]));
-  const base = sum(Object.entries(blend).map(([k, w]) => get(skills, k, 60) * w)) / sum(Object.values(blend));
-  // (a missing slug is written "None", as this key has always had it)
-  const rng_own = new Random(`${key}-${slug === null || slug === undefined ? "None" : slug}`).uniform(-season.OUR_SPREAD, season.OUR_SPREAD);
-  return Math.max(1, Math.min(99, int(round(base + rng_own))));
-}
-
 function all_skills(p) {
   // Every rating he has, by group: [{"group", "rows": [{key, label, value}]}] in SKILL_GROUPS' order ([] for a
   // player with no skills on file).
@@ -1147,5 +1108,5 @@ Object.assign(season, {
   _perf_score, _decay_morale, _update_morale, morale_view, player_edits, preset_faces, all_preset_faces, player_faces,
   set_player_face, _edit_ratings, team_edits, team_data, attribute_ceilings, _attribute_ceilings,
   development_reads, edit_player, derived_stat, season_rows, _rank_group, player_ranks, player_honors, player_game_log, mark_best, game_line, team_game_logs, player_game_logs,
-  recruit_stars, our_rating, all_skills, player_profile,
+  recruit_stars, all_skills, player_profile,
 });

@@ -641,14 +641,14 @@ export function league_values(pos, key) {
   // Today's FBS players at a position (linebackers together): their card values of `key`
   // (an attribute, or 'overall'), all of them and the starters, highest first.
   const season = modules.season;
-  const group = get(season.SCALE_GROUP, pos, pos);
+  const group = get(season.POSITION_GROUP, pos, pos);
   const at = `${group}|${key}`;
   if (!prospects._LEAGUE.has(at)) {
     const allv = [], starters = [];
     for (const t of Object.values(season.load_teams())) {
       if (truthy(get(t, "fictional")) || get(t, "subdivision") === "FCS") continue;
       for (const q of [...t["offense"], ...t["defense"]]) {
-        if (get(season.SCALE_GROUP, q["position"], q["position"]) !== group) continue;
+        if (get(season.POSITION_GROUP, q["position"], q["position"]) !== group) continue;
         const v = key === "overall" ? season.shown_overall(q) : get(get(q, "attributes") || {}, key);
         if (v === null) continue;
         allv.push(v);
@@ -682,7 +682,7 @@ export function group_keys(p, group) {
   // position's skills (a kicker's leg), athleticism a specialist's physical ones he has.
   const season = modules.season;
   const pos = prospects.engine_position(p);
-  const card = get(rv2.POSITION_ATTRIBUTES, get(season.SCALE_GROUP, pos, pos), []);
+  const card = get(rv2.POSITION_ATTRIBUTES, get(season.POSITION_GROUP, pos, pos), []);
   if (group === "technique") return card.filter((k) => rv2.ATTRIBUTES[k][1] !== "Physical" && k !== "return_skill").slice(0, 4);
   const keys = prospects.GAME_GROUPS[group].filter((k) => card.includes(k));
   return keys.length ? keys : card.filter((k) => rv2.ATTRIBUTES[k][1] === "Physical" && k !== "football_iq");

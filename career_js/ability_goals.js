@@ -30,7 +30,7 @@ const TIER_NAMES = { 1: "Bronze", 2: "Silver", 3: "Gold", 4: "Platinum" };
 const UPGRADES_ALONGSIDE = true;       // *tune* an ability he already holds also moves toward its next tier while he works on his goal
 
 // trait -> [kind, metric, needs by tier [Bronze, Silver, Gold, Platinum], per-game threshold or null, the goal in words
-// with {n} its count]. Positions are the engine's groups a trait suits (season.SCALE_GROUP).
+// with {n} its count]. Positions are the engine's groups a trait suits (season.POSITION_GROUP).
 const GOALS = {
   // quarterbacks
   pinpoint: ["game", "completions", [2, 3, 4, 5], 25, "{n} game{s} with 25+ completions"],

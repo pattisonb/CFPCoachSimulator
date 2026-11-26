@@ -123,11 +123,11 @@ export function measures(state, p) {
   // then the physical traits (what Key Ratings shows; the Prospects table's Measure menu offers the same).
   const pr = modules.prospects, season = modules.season;
   const attrs = get(state["recruiting"], "attrs");
-  const ours = {};
-  for (let i = 0; i < Math.min(attrs.length, p["ratings"].length); i++) ours[attrs[i]] = p["ratings"][i];
-  const cards = pr.card_attributes(ours, p);
+  const card = {};
+  for (let i = 0; i < Math.min(attrs.length, p["ratings"].length); i++) card[attrs[i]] = p["ratings"][i];
+  const cards = pr.card_attributes(card, p);
   const pos = pr.engine_position(p);
-  const grp = own(season.SCALE_GROUP, pos, pos);
+  const grp = own(season.POSITION_GROUP, pos, pos);
   const listed = own(clear.KEYS, grp, []).filter((k) => k in cards);
   const keys = ["K", "P"].includes(grp) ? listed.slice(0, 8)
     : [...listed.filter((k) => !clear.PHYSICAL.includes(k)).slice(0, clear.KEY_SKILLS), ...clear.PHYSICAL.filter((k) => k in cards)];
@@ -155,11 +155,11 @@ export function ratings(state, pid) {
   if (!truthy(p) || !truthy(read)) return null;
   const complete = recruiting.report_complete(read);
   const attrs = get(rc, "attrs");
-  const ours = {};
-  for (let i = 0; i < Math.min(attrs.length, p["ratings"].length); i++) ours[attrs[i]] = p["ratings"][i];
-  const cards = pr.card_attributes(ours, p);
+  const card = {};
+  for (let i = 0; i < Math.min(attrs.length, p["ratings"].length); i++) card[attrs[i]] = p["ratings"][i];
+  const cards = pr.card_attributes(card, p);
   const pos = pr.engine_position(p);
-  const grp = own(season.SCALE_GROUP, pos, pos);
+  const grp = own(season.POSITION_GROUP, pos, pos);
   // his position's own ratings first (KEY_SKILLS of them, the physical ones left for the end), then the physical traits
   // every prospect is read on (PHYSICAL: the player's ask, "show those physical traits for all prospects"); a kicker's
   // and a punter's stay their own short list

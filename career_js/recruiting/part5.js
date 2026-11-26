@@ -606,7 +606,7 @@ function read_key(p, group) {
   // group's (QB, RB, ... LB, CB, S, K, P) and the group's, "OL|technique" (card numbers against his position's words).
   if (group === "potential" || group === "coachability") return group;
   const season = modules.season, pos = pr.engine_position(p);
-  return `${get(get(season || {}, "SCALE_GROUP") || {}, pos, pos)}|${group}`;
+  return `${get(get(season || {}, "POSITION_GROUP") || {}, pos, pos)}|${group}`;
 }
 
 
