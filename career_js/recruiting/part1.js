@@ -214,8 +214,8 @@ recruiting.ASK_MULT_MAX = 2.0;
 // tests/test_sim_golden.mjs stays byte-identical.
 recruiting.AI_OVER_ASK = 1.1;                          // an AI school offers up to this times his ask from it
 // generational prospects: a public tag on a few top four- and five-stars, drawn once per class *tune*
-recruiting.GENERATIONAL_FROM = 96;                     // true projected overall at least this
-recruiting.GENERATIONAL_ODDS = { 5: 0.4, 4: 0.1 };     // a qualifying prospect is drawn this often, by stars
+recruiting.GENERATIONAL_FROM = 98;                     // true projected overall at least this (about two a class, some years none)
+recruiting.GENERATIONAL_ODDS = { 5: 0.25, 4: 0.06 };     // a qualifying prospect is drawn this often, by stars
 recruiting.GENERATIONAL_MAX = 4;                       // at most this many a class (some years none)
 recruiting.GENERATIONAL_ASK = 1.5;                     // his NIL ask is this times larger
 recruiting.GEM_RANK = 300;                             // a gem is a three-star or less ranked past this

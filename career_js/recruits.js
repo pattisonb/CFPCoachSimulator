@@ -91,8 +91,10 @@ const EXPECT_FLOOR = 0.80, BELOW_FLOOR_SLOPE = 0.15;
 // Room to grow by stars, tuned so a class's overall by offseason follows the real roster players',
 // a little under them for three- and two-stars, whose real numbers are
 // the survivors: the ones who stalled left; a four-star's ceiling sits between a three-star's and a five-star's (the
-// player's ask: a four-star's was under a three-star's). *tune*
-const STAR_ROOM = { 5: 1.0, 4: 1.1, 3: 1.6, 2: 1.8 };
+// player's ask: a four-star's was under a three-star's), four- and five-stars' ceilings where the real ones' are (a
+// class's median four-star ceiling about an 88, the top five-stars' 97-98), so the 90+ players hold up season after
+// season. *tune*
+const STAR_ROOM = { 5: 1.25, 4: 1.3, 3: 1.6, 2: 1.8 };
 const SKIP_POSITIONS = new Set(["LS"]);       // long snappers are not generated (the engine has none)
 
 export function model() {

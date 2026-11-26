@@ -148,8 +148,9 @@ offseason.YEAR_CURVE = [0.45, 0.7, 1.35, 1.35, 1.0];
 offseason.STARTER_YEAR = 1.0;
 // the best get better slowest: above DEV_TOP (overall) a player's pace is divided by 1 + his points over
 // it / DEV_TOP_SPAN, so the real rosters' top juniors (fast learners with big rooms and big seasons) do not
-// all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.mjs) *tune*
-offseason.DEV_TOP = 81;
+// all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.mjs),
+// and the league keeps about as many 90+ players as the roster file has, season after season *tune*
+offseason.DEV_TOP = 84;
 offseason.DEV_TOP_SPAN = 4;
 // the most of his room an offseason closes: the pace's factors (his year, his program, his staff, his
 // production, his position, his third year) compound to 2-4 for a few players a year, a rate past 1,
