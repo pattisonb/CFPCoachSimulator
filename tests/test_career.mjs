@@ -21,7 +21,7 @@ test("career", () => {
   assert(career.is_career(st) && st["career"]["year"] === 2026);
   // a career with its recruiting class stays small enough to keep in the browser every week
   const size = json_dumps(st["recruiting"], { separators: [",", ":"] }).length;
-  assert(size < 4_250_000, `the recruiting class is ${(size / 1e6).toFixed(1)} MB`);   // School Grades Phase 2's thirteen topics: about 4.03 MB (main was 3.97)
+  assert(size < 4_400_000, `the recruiting class is ${(size / 1e6).toFixed(2)} MB`);   // School Grades Phase 2's thirteen topics: about 4.03 MB (main was 3.97); about 4.26 MB since the stories and generational draws
   assert(career.export_save(st).length < 1_500_000, "a new career's save is over 1.5 MB");
   assert(st["career"]["settings"]["auto_recruit"] === false && st["career"]["saved_week"] === 0);
 

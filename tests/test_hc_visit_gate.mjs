@@ -16,7 +16,7 @@ function fresh() {
   const rc = st["recruiting"];
   rc["hours"][ME] = 500;
   const pid = recruiting.prospect_list(st).find((q) => !rc["prospects"][q]["hidden"] && !(ME in (rc["contacts"][q] || {}))
-    && !recruiting.would_pester(st, ME, q));
+    && !recruiting.would_pester(st, ME, q) && recruiting.blocked(st, ME, q) === null);    // (one who still considers you)
   return [sid, st, pid];
 }
 

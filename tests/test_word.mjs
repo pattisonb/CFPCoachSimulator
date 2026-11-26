@@ -141,7 +141,7 @@ test("under the floor he does not believe your promise: it earns nothing, he nam
 /** A recruit with a real NIL ask whose priority is NIL, offered with nothing held, then pitched NIL on a call: a money promise. */
 function money_promise(st, school = ME, personality = "business") {
   const rc = st["recruiting"];
-  const pid = ranked(st).slice(40, 100).find((q) => recruiting.ask_from(st, school, q) >= 15);
+  const pid = ranked(st).slice(40, 100).find((q) => recruiting.ask_from(st, school, q) >= 15 && recruiting.blocked(st, school, q) === null);   // (one who still considers the school)
   const p = rc["prospects"][pid];
   p["persona"] = { ...persona.of(st, pid), personality, decider_topic: null };
   p["priorities"] = ["nil", ...p["priorities"].filter((t) => t !== "nil")].slice(0, 3);

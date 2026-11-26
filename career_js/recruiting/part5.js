@@ -147,11 +147,14 @@ function _sign(state, final) {
         && recruiting.tier_of(rc["prospects"][pid]) >= 4) {
         // A four- or five-star is never left for an FCS school (dozens a class were, when the few schools they would
         // sign with had filled his position): the school he likes most of those recruiting him, or of his list of
-        // ten, makes room for him. Never one he will not consider.
+        // ten, makes room for him at his position. Never one he will not consider, never a school whose class is full
+        // (its open spots), and never yours: your class is the recruits you signed.
         const wide = new Set([...schools, ...(get(recruiting.tens(state), pid) || [])]);
         const g = recruiting._group_of(rc["prospects"][pid]);
+        const counts = recruiting._commits(state);
         // (one made room for at a position, a school: never a pile of them where one school is everyone's favorite)
-        scores = sorted([...wide].filter((s) => !recruiting.locked_out(state, s, pid, win) && !made_room.has(`${s}|${g}`)
+        scores = sorted([...wide].filter((s) => s !== get(state, "team") && get(counts, s, 0) < recruiting.open_spots(state, s)
+          && !recruiting.locked_out(state, s, pid, win) && !made_room.has(`${s}|${g}`)
           && get(recruiting.needs(state, s), g, 0) >= -1)                    // (and never a school two past its room there already)
           .map((s) => [recruiting.interest(state, s, pid, win), s]), undefined, true).slice(0, 1)
           .map(([v, s]) => [Math.max(recruiting.FCS_LINE, v), s]);          // (the one he likes most, however little)
