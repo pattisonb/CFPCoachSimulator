@@ -7,7 +7,6 @@
 // class_rank), promises, programs. Notes on standing quirks are at the end of this file.
 import { int, sum, cmp, sorted, range, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
-import { shown as _shown } from "../teamdata_js/shown.js";
 
 /** isinstance(v, dict) / isinstance(v, str) / isinstance(v, int) with a bool left out, as the checks here want it. */
 const is_dict = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -122,8 +121,8 @@ export function movers(state) {
 
 // ----- round 2: the reads behind the planned widgets (spec "Round 2") ----------------------------------------
 
-const DRAFT_LIKELY = 90;       // *tune* a draft-eligible underclassman rated this (card overall) or better is likely to declare
-const DRAFT_POSSIBLE = 84;     // *tune* ... and this or better might
+const DRAFT_LIKELY = 93;       // *tune* a draft-eligible underclassman rated this (overall) or better is likely to declare
+const DRAFT_POSSIBLE = 91;     // *tune* ... and this or better might
 const TRANSFER_HIGH = 0.15;    // *tune* a projected portal chance this high reads "High"
 const TRANSFER_SOME = 0.07;    // *tune* ... and this high "Some"; under it "Low"
 const TOP100_GOAL = { 1: 5, 2: 3, 3: 1, 4: 1, 5: 1 };        // *tune* the default top-100 recruits goal by program tier
@@ -176,8 +175,7 @@ export function outlook(state) {
     const ovr = int(get(p, "overall") || 0);
     let draft = null;
     if (contains(offseason.UNDERCLASS_ELIGIBLE, cls)) {
-      // the view's overall is as the page shows it (teamdata_js/shown.js); the cuts are on the game's own scale
-      draft = ovr >= _shown.overall(headquarters.DRAFT_LIKELY) ? "Likely" : ovr >= _shown.overall(headquarters.DRAFT_POSSIBLE) ? "Possible" : null;
+      draft = ovr >= headquarters.DRAFT_LIKELY ? "Likely" : ovr >= headquarters.DRAFT_POSSIBLE ? "Possible" : null;
     }
     const grad = ["SR", "SRRS"].includes(cls);
     let group = get(offseason.GROUP, get(p, "role")) || get(offseason.GROUP, get(p, "position")) || get(p, "position");
@@ -557,7 +555,7 @@ export function set_plan(state, body) {
 
 export const headquarters = {
   HQ_MAX_CARDS, CARD_H, MOVERS_SHOWN, SIZES, _ID, LayoutError, layout, set_layout, _committed_now, commits_by_week, movers,
-  _shown, DRAFT_LIKELY, DRAFT_POSSIBLE, TRANSFER_HIGH, TRANSFER_SOME, TOP100_GOAL, RANK_GOAL, GOAL_IDS, GOAL_TITLES, MAX_TASKS, TASK_TEXT,
+  DRAFT_LIKELY, DRAFT_POSSIBLE, TRANSFER_HIGH, TRANSFER_SOME, TOP100_GOAL, RANK_GOAL, GOAL_IDS, GOAL_TITLES, MAX_TASKS, TASK_TEXT,
   _hq, last_contacts, _word, outlook, REPLACE_ORDER, _replacements, next_year, promises_tracker, what_if, _tier, goals, KINDS, _clock,
   _task_check, tasks, set_plan,
 };

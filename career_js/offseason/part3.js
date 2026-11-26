@@ -236,7 +236,7 @@ offseason.REGRESS_STRUGGLE = 0.5;          // *tune* ... and he loses a step thi
 offseason.REGRESS_RUST = 0.3;              // *tune* an upperclassman buried on the depth chart who is slow to learn goes backward this often
 offseason.REGRESS_YEARS = 2;               // *tune* seasons in the program before rust can set in
 offseason.REGRESS_RATINGS = 4;             // *tune* how many of his ratings slip (never the physical ones)
-offseason.REGRESS_POINTS = [2, 4];         // *tune* the points each of them loses
+offseason.REGRESS_POINTS = [2, 5];         // *tune* the points each of them loses
 offseason.CEILING_NOTE = "Lost some of his ceiling after a hard year as a starter";   // his potential fell (clear.CEIL_STRUGGLE)
 offseason.REGRESS_NOTES = { struggle: "Lost a step after a hard year as a starter", rust: "Went backward buried on the depth chart" };
 
@@ -615,15 +615,15 @@ function _develop_all(state) {
 }
 
 function _newcomer(r, slug) {
-  // A generated player (recruits.recruit, drawn by the model learned from real players) on our
-  // scale, in the form league.compact takes.
-  const ours = game_scale.from_ea(r["ratings_ea"], r["ea_position"]);
-  const pot = game_scale.potential_from_ea(r["potential_ea"], ours, r["ea_position"]);
-  const potential_ours = {};
-  for (const [k, v] of Object.entries(pot)) potential_ours[k] = Math.max(v, get(ours, k, v));
+  // A generated player (recruits.recruit, drawn by the model learned from real players) in card numbers, in the form
+  // league.compact takes.
+  const card = game_scale.from_ea(r["ratings_ea"], r["ea_position"]);
+  const pot = game_scale.potential_from_ea(r["potential_ea"], card, r["ea_position"]);
+  const potential_card = {};
+  for (const [k, v] of Object.entries(pot)) potential_card[k] = Math.max(v, get(card, k, v));
   return { slug: slug, name: r["name"], position: r["ea_position"], class: "FR", height: r["height"],
-    weight_lbs: r["weight"], archetype: r["archetype"], dev_trait: "Normal", ours: ours,
-    potential_ours: potential_ours, coachability: r["coachability"],
+    weight_lbs: r["weight"], archetype: r["archetype"], dev_trait: "Normal", card: card,
+    potential_card: potential_card, coachability: r["coachability"],
     stars: r["stars"], hometown: r["hometown"] };
 }
 

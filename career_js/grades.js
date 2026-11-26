@@ -2,14 +2,12 @@
 // only. Nothing here is read by the sim or by any recruiting decision: a view turns a potential (or a read's two ends)
 // into letters as it is sent.
 //
-// A letter is a school grade on the scale ratings are shown on (teamdata_js/shown.js, where the average player is about a
-// 70): an A is 90 and up, a B the 80s, a C the 70s, a D the 60s, an F anything under 60. A potential comes in on the
-// game's own scale and is put on the shown one here. A plus or a minus is a finer read, a third of a band, and it takes
+// A letter is a school grade on the card's numbers (the average player about a 70): an A is 90 and up, a B the 80s, a
+// C the 70s, a D the 60s, an F anything under 60. A plus or a minus is a finer read, a third of a band, and it takes
 // a sharp eye: your staff's and your own evaluating ability (`eye`) at PLUS_MINUS_EYE or better. Your own players always
 // show it: you coach them every day.
 import { round, int, get, truthy } from "../engine_js/pyrt.js";
 import { modules } from "../engine_js/modules.js";
-import { shown } from "../teamdata_js/shown.js";
 
 const BANDS = [["A", 90], ["B", 80], ["C", 70], ["D", 60], ["F", 0]];   // *tune* a letter and the lowest shown potential that earns it
 const PLUS_FROM = 7, MINUS_UNDER = 3;      // *tune* inside a band's 10 points: this far up is a plus, under this a minus
@@ -31,8 +29,8 @@ const ORDER = [];
 for (const [letter] of [...BANDS].reverse()) ORDER.push(...(NO_FINE.includes(letter) ? [letter] : [letter + "-", letter, letter + "+"]));
 
 export function letter(value, fine = false) {
-  // The letter for a potential (the game's own scale, as stored); with `fine`, its plus or minus.
-  const v = Math.max(0.0, Math.min(99.0, round(shown.overall_exact(Math.max(0.0, Math.min(99.0, Number(value)))))));
+  // The letter for a potential (an overall); with `fine`, its plus or minus.
+  const v = Math.max(0.0, Math.min(99.0, round(Number(value))));
   const [name, floor] = grades.BANDS.find(([, f]) => v >= f);
   if (!fine || grades.NO_FINE.includes(name)) return name;
   const into = v - floor;

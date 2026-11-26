@@ -955,7 +955,7 @@ function recruit_stars(p) {
 }
 
 // ----- every rating a player has, for his card's Ratings tab (the player's ask) ----------------------------------------
-// game_scale's skills (the EA ratings on our scale) by the groups EA shows them in, each with its name; then the ones
+// a player's ratings by the groups EA shows them in, each with its name; then the ones
 // that are ours alone. Every player carries all of them, whatever he plays. A view: the sim reads skills as it always has.
 season.SKILL_GROUPS = [
   ["General", [["speed", "Speed"], ["acceleration", "Acceleration"], ["strength", "Strength"], ["agility", "Agility"],
@@ -1037,16 +1037,6 @@ function all_skills(p) {
   let skills = {};
   for (let i = 0; i < Math.min(names.length, values.length); i++) skills[names[i]] = values[i];
   if (!Object.keys(skills).length) return [];
-  // onto the scale ratings are shown on (teamdata_js/shown.js): a skill is the skill itself there, not where he stands
-  // among his own position, so a receiver's Throw Power reads low; ours are read off those, and his card's are the card's
-  const grp = game_scale.group(get(p, "role") || p["position"]);
-  // (a rating from the roster file shows as the file has it, while his kept skill is still the one the file gave
-  // him: rosters.js shown_skill)
-  const from_file = truthy(get(p, "filed"));
-  skills = Object.fromEntries(Object.entries(skills).map(([k, v]) => {
-    const filed = from_file ? modules.rosters.shown_skill(p, k, v) : null;
-    return [k, filed !== null ? filed : _shown.skill(v, grp, k)];
-  }));
   // Only what he has: his skills, each under the name his card and the roster file give it (rosters.names_for), and a
   // quarterback's Decision Making, a rating of its own. Nothing here is worked out from other ratings (the player's
   // rule: the list once carried twenty that were, Balance and Separation and Touch among them).
@@ -1124,19 +1114,12 @@ function player_profile(state, team, name = null, position = null, slug = null) 
   let recruitment = null;
   if (truthy(get(entry || {}, "rec"))) {
     const r_ = entry["rec"];
-    recruitment = { ...r_, school_name: name_of(get(r_, "school")), others: (get(r_, "others") || []).map((s_) => ({ slug: s_, name: name_of(s_) })),
-      ...(isNumber(get(r_, "overall")) ? { overall: _shown.overall(r_["overall"]) } : {}) };
+    recruitment = { ...r_, school_name: name_of(get(r_, "school")), others: (get(r_, "others") || []).map((s_) => ({ slug: s_, name: name_of(s_) })) };
   }
 
   const told = (e) => {
-    // his overall then, and a gain, as the page shows a rating (the stored event keeps the game's own scale)
-    const o = get(e, "overall"), g = get(e, "gain");
-    const out = { ...e, ...(e["kind"] === "transfer" || e["kind"] === "cut" ? { from_name: name_of(e["from"]), to_name: name_of(e["to"]) } : {}) };   // (a cut: the school that let him go, and the one he walked on at)
-    if (isNumber(o)) {
-      out["overall"] = _shown.overall(o);
-      if (isNumber(g)) out["gain"] = _shown.gain(o - g, o);
-    }
-    return out;
+    // the school names behind it (a cut: the school that let him go, and the one he walked on at)
+    return { ...e, ...(e["kind"] === "transfer" || e["kind"] === "cut" ? { from_name: name_of(e["from"]), to_name: name_of(e["to"]) } : {}) };
   };
   const story = (get(entry || {}, "life") || []).map((e) => told(e));
   const trait_tiers = () => Object.fromEntries((get(p, "traits") || []).filter((x) => is_dict(x)).map((x) => [x["key"], x["tier"]]));
@@ -1185,9 +1168,9 @@ function player_profile(state, team, name = null, position = null, slug = null) 
     morale: season.morale_view(state, team, name, position),
     // rated at every position; at his own position it is the card's overall
     ratings_at: Object.fromEntries(Object.entries(get(p, "ratings_at") || {}).filter(([, v]) => isNumber(v)).map(([k, v]) => [k,
-      _shown.overall(k !== "KR" && season.same_group(get(season.RATING_KEY, k, k), position)
+      k !== "KR" && season.same_group(get(season.RATING_KEY, k, k), position)
         ? season.shown_overall(p, base_p)
-        : season.house_value(k !== "KR" ? get(season.RATING_KEY, k, k) : "KR", k === "KR" ? "return_rating" : "overall", int(v)))])),
+        : _shown.overall(season.house_value(k !== "KR" ? get(season.RATING_KEY, k, k) : "KR", k === "KR" ? "return_rating" : "overall", int(v)))])),
     team: { slug: team, name: t["name"], conference: t["conference"], coach: get(hc, "name"),
       record: `${rec["wins"]}-${rec["losses"]}`, rank: truthy(ss) ? new awards.Pool(state, teams, season._records(state)).rank_of(team) : null },
     games: truthy(line) ? line["games"] : 0, team_games: get(ss, "games", 0), stats,

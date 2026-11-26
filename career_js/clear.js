@@ -45,12 +45,12 @@ const PHYS_RATE = 0.5;                  // *tune* physical ratings close their g
 const SKILL_RATE = 1.08;                // *tune* technique and mental ratings at this share (calibrated: the same average overall gain a year, 4.05 vs 4.07)
 
 // potential that moves both ways each offseason (the player's ask): a year's ceilings can fall too
-const CEIL_STRUGGLE = 5;                // *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
+const CEIL_STRUGGLE = 6;                // *tune* a starter who struggled (his production in a starter's bottom fifth) loses this much room
 const CEIL_SOLID = 2;                   // *tune* a solid year (production CEIL_SOLID_Z over the average starter, short of a breakout) adds this
 const CEIL_SOLID_Z = 0.0;               // *tune* ... from this production score up (about a starter's top fifth; a breakout is 1.0)
 const CEIL_STRUGGLE_Z = -2.0;           // *tune* a struggling year: this production score or under (about a starter's bottom fifth)
 const CEIL_SLOW = 1;                    // *tune* the slow coachability levels lose this much room a year, the fast ones gain it
-const CEIL_DRIFT_SD = 1.5;              // *tune* every player's ceilings drift this much either way a year (one draw a player)
+const CEIL_DRIFT_SD = 1.7;              // *tune* every player's ceilings drift this much either way a year (one draw a player)
 const SLOW_LEVELS = ["Slow to Click", "Set in His Ways"];
 const FAST_LEVELS = ["Coach's Dream", "Film Junkie", "Quick Study"];   // as many players as SLOW_LEVELS (about 30% each), so it nets out
 
@@ -176,10 +176,10 @@ export function ratings(state, pid) {
     const est = Math.max(1, Math.min(99, int(round(truth + err))));
     half = Math.max(2.0, half);                        // never a single number: the read's own width, at least a couple of points
     const lo = Math.max(1, int(round(est - half))), hi = Math.min(99, int(round(est + half)));
-    // as the page shows a rating (teamdata_js/shown.js): a card attribute at his card's group, his potential as an overall
-    const put = key === "potential" ? (v) => shown.overall(v) : (v) => shown.attribute(v, card_grp, key);
+    // as the page shows a rating (teamdata_js/shown.js): a card attribute at his card's group; his potential is an overall
+    const put = key === "potential" ? (v) => v : (v) => shown.attribute(v, card_grp, key);
     const out = { key, label, est: put(est), lo: put(lo), hi: put(hi), confidence: clear.confidence(state, pid, group) };
-    if (key === "potential") out["ours"] = [est, lo, hi];              // the game's own scale: the letter grades are cut from these
+    if (key === "potential") out["ends"] = [est, lo, hi];              // the letter grades are cut from these
     return out;
   }
 
@@ -187,10 +187,10 @@ export function ratings(state, pid) {
   const pos_label = pr.display_pos(p["ea_position"]);
   const pot = row("potential", `Potential at ${pos_label}`, Number(p["pot_ovr"]), "potential");   // his projected overall at his position
   pot["position"] = pos_label;
-  if (truthy(get(pot, "ours"))) {                               // the page shows his potential as letters (grades.js), not these numbers
+  if (truthy(get(pot, "ends"))) {                               // the page shows his potential as letters (grades.js), not these numbers
     const sharp = grades.fine(state, pid);
-    const [est_, lo_, hi_] = pot["ours"];
-    delete pot["ours"];
+    const [est_, lo_, hi_] = pot["ends"];
+    delete pot["ends"];
     const ends = truthy(complete) ? [est_, est_] : [lo_, hi_];     // a complete report settles on one grade
     pot["grade"] = grades.span(ends[0], ends[1], sharp);
     pot["fine"] = sharp;

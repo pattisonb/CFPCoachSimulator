@@ -287,7 +287,7 @@ function _would_start(roster, starters) {
 }
 
 function draft_grades(players) {
-  // Each draft group's (mean, spread) of card overall over the top of this year's draft-eligible
+  // Each draft group's (mean, spread) of overall over the top of this year's draft-eligible
   // `players` there (DRAFT_REF_SHARE of them, at least DRAFT_REF_MIN): the prospects the NFL looks at.
   // "*" is the same over every position.
   const by = {};
@@ -308,13 +308,13 @@ function draft_grades(players) {
 }
 
 function draft_score(pos, overall, rng, grades = null) {
-  // Where he projects: his grade (his card overall against this year's draft-eligible players at
+  // Where he projects: his grade (his overall against this year's draft-eligible players at
   // his position, and DRAFT_ABS_SHARE of it against all of them: draft_grades) times his position's
   // draft value, plus its shift and noise.
   const g = get(offseason.DRAFT_GROUP, pos, pos);
   const h = offseason.house(pos, overall);
   const own = get(grades || {}, g);
-  const [mean, sd] = truthy(own) ? own : [40.0, 12.0];
+  const [mean, sd] = truthy(own) ? own : [74.0, 5.0];
   const all = get(grades || {}, "*");
   const [mean_all, sd_all] = truthy(all) ? all : [mean, sd];
   const share = offseason.DRAFT_ABS_SHARE;
@@ -515,7 +515,7 @@ function position_options(state, pid) {
   if (c === undefined) throw new offseason.RosterError(404, "not on your roster");
   const [origin, r] = truthy(get(c, "moved_attrs")) ? [c["moved_from"], c["moved_attrs"]] : [c["pos"], c["r"]];
   const out = position_fit.options(_zipped(lgd["attrs"], r), get(c, "ht"), get(c, "wt"), origin, c["pos"], offseason.GROUP);
-  return out.map((o) => ({ ...o, "overall": shown.overall(o["overall"]) }));      // as the page shows an overall
+  return out;
 }
 
 function move_row(c, pos, attrs) {
@@ -823,7 +823,7 @@ function _compact_prospect(state, p, attrs) {
   const recruiting = modules.recruiting;
   const src = { "slug": p["id"], "name": p["name"], "position": p["ea_position"], "class": "FR", "height": p["height"],
     "weight_lbs": p["weight"], "archetype": p["archetype"], "dev_trait": "Normal",
-    "ours": recruiting.attributes(state, p, "ratings"), "potential_ours": recruiting.attributes(state, p),
+    "card": recruiting.attributes(state, p, "ratings"), "potential_card": recruiting.attributes(state, p),
     "coachability": p["coachability"], "stars": p["stars"], "hometown": p["hometown"] };
   const out = lg.compact(src, attrs);
   const ab = ability_goals.recruit_ab_field(p);       // some recruits arrive with an ability or two
@@ -922,13 +922,13 @@ function ai_offers(state, slug, left = null) {
     const vals = depth[g];
     const starter_bar = vals.length ? vals[Math.min(vals.length - 1, offseason.STARTERS[g] - 1)] : 0;
     if (p["o"] > starter_bar) {                                      // he would start here: worth a spot, need or not
-      scored.push([10 + (p["o"] - starter_bar) / 2, pid]);
+      scored.push([10 + (p["o"] - starter_bar) / 1.1, pid]);
       continue;
     }
     if (need[g] <= 0 && spots < offseason.OPEN_TAKE_ANY) continue;
     const bar = vals.length ? vals[Math.min(vals.length - 1, offseason.STARTERS[g] + 3)] : 0;      // about as good as his depth there
-    if (p["o"] < bar - 4) continue;
-    scored.push([need[g] * 2 + (p["o"] - bar) / 3, pid]);
+    if (p["o"] < bar - 2) continue;
+    scored.push([need[g] * 2 + (p["o"] - bar) / 1.65, pid]);
   }
   scored.sort((a, b) => cmp(b, a));
   return scored.slice(0, Math.ceil(offseason.PORTAL_OFFER_FACTOR * spots)).map(([, pid]) => pid);

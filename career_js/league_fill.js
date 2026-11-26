@@ -19,13 +19,13 @@ import { game_scale } from "../teamdata_js/game_scale.js";
 import { recruits } from "./recruits.js";
 
 const STRENGTH_GRADE = { "Elite": 95, "Strong": 75, "Average": 50, "Weak": 20 };  // *tune* each word's place among the FBS teams (percentile)
-const SLOT_STEP = { "starter": 0.0, "backup": -7.0, "depth": -12.0 };  // *tune* generated overall by depth slot, against the team's starter level
-const CLASS_STEP = { "FR": -5.0, "FRRS": -4.0, "SO": -2.5, "SORS": -1.5, "JR": 0.0, "JRRS": 0.5, "SR": 1.0, "SRRS": 1.5 };  // *tune* juniors and seniors above freshmen
-const STAR_STEP = { 5: 6.0, 4: 3.0, 3: 0.0, 2: -3.0, 1: -5.0 };  // *tune* given stars' lift
-const PLAYER_SD = 3.0;  // *tune* spread of a generated overall around its slot
-const OVERALL_RANGE = [25, 95];            // a generated player's overall stays in this range
+const SLOT_STEP = { "starter": 0.0, "backup": -4.0, "depth": -7.0 };  // *tune* generated overall by depth slot, against the team's starter level
+const CLASS_STEP = { "FR": -3.0, "FRRS": -2.4, "SO": -1.5, "SORS": -0.9, "JR": 0.0, "JRRS": 0.3, "SR": 0.6, "SRRS": 0.9 };  // *tune* juniors and seniors above freshmen
+const STAR_STEP = { 5: 3.6, 4: 1.8, 3: 0.0, 2: -1.8, 1: -3.0 };  // *tune* given stars' lift
+const PLAYER_SD = 1.8;  // *tune* spread of a generated overall around its slot
+const OVERALL_RANGE = [64, 96];            // a generated player's overall stays in this range
 const UNIT_WEIGHT = { "offense": 0.45, "defense": 0.45, "special_teams": 0.1 };   // league.team_ratings' overall
-const NUDGE_RANGE = [-30.0, 30.0];         // the common shift of the generated players' overalls, searched by bisection
+const NUDGE_RANGE = [-18.0, 18.0];         // the common shift of the generated players' overalls, searched by bisection
 const NUDGE_STEPS = 20;
 const NUDGE_CLOSE = 0.5;                   // team overall points from the target that end the search
 const CLASS_MIX = { "FR": 0.151, "FRRS": 0.122, "SO": 0.086, "SORS": 0.149, "JR": 0.086, "JRRS": 0.153, "SR": 0.069, "SRRS": 0.185 };  // *tune* added players' classes (the built-in FBS rosters' mix)
@@ -189,25 +189,25 @@ export function strength_target(team, conference, strengths) {
   return mine.length ? mean(mine) : median(Object.values(strengths));
 }
 
-export function fit_overall(ours, pos, target, keys) {
-  // `ours` with only `keys` shifted, all by the same amount (each clamped 1 to 99), so that his
+export function fit_overall(card, pos, target, keys) {
+  // `card` with only `keys` shifted, all by the same amount (each clamped 1 to 99), so that his
   // overall is `target` when it can be; otherwise as close as it gets. Ratings are whole numbers and a
-  // common one-point shift moves the overall about 1.5, so the shift is searched in steps of one point
+  // common one-point shift moves the overall more than a point, so the shift is searched in steps of one point
   // on one skill at a time (the heaviest in the overall first): every key moves by the same amount, or
   // by one more. The smallest such shift that reaches the target.
-  keys = Array.from(keys).filter((k) => ours[k] !== undefined);
-  const have = game_scale.overall(ours, pos);
-  if (have === target || !keys.length) return { ...ours };
-  const w = get(get(game_scale.data()["overall"], pos) || {}, "w") || {};
+  keys = Array.from(keys).filter((k) => card[k] !== undefined);
+  const have = game_scale.overall(card, pos);
+  if (have === target || !keys.length) return { ...card };
+  const w = game_scale.skill_weights(pos);
   keys = sorted(keys, (k) => -get(w, k, 0.0));
   const n = keys.length;
 
   const at = (level) => {
     const s = floordiv(level, n), m = mod(level, n);
-    const out = { ...ours };
+    const out = { ...card };
     for (let i = 0; i < n; i++) {
       const k = keys[i];
-      out[k] = int(Math.max(1, Math.min(99, ours[k] + s + (i < m ? 1 : 0))));
+      out[k] = int(Math.max(1, Math.min(99, card[k] + s + (i < m ? 1 : 0))));
     }
     return out;
   };
@@ -345,24 +345,24 @@ export function fill_roster(team, target, rng, attrs, taken) {
     return n < k ? "starter" : n < 2 * k ? "backup" : "depth";
   };
 
-  // -> [template ratings on our scale, archetype, raw overall target, room to potential]
+  // -> [template ratings, archetype, raw overall target, room to potential]
   const generate = (pos, cls, stars, n) => {
-    // (template ratings on our scale, archetype, raw overall target, room to potential): steps 5 and 6's draws.
+    // (template ratings, archetype, raw overall target, room to potential): steps 5 and 6's draws.
     const tpos = get(league_fill._TEMPLATE_POS, pos, pos);
     const s = Math.max(2, Math.min(5, int(Number(truthy(stars) ? stars : 3))));
     const band = String(s);
     const [ea, arche] = recruits._attributes(rng, tpos, band, quantiles[band][3]);
     const from = game_scale.from_ea(ea, pos);
-    let ours = {};
-    for (const k of attrs) ours[k] = get(from, k, 50);
+    let card = {};
+    for (const k of attrs) card[k] = get(from, k, game_scale.MISSING);
     // (STAR_STEP.get(stars, 0.0): its keys are the whole numbers 1 to 5; text or nothing given is not one of them)
     const star_step = isNumber(stars) ? get(league_fill.STAR_STEP, Number(stars), 0.0) : 0.0;
     const raw = level + league_fill.SLOT_STEP[slot(pos, n)] + get(league_fill.CLASS_STEP, cls, 0.0) + star_step + rng.gauss(0, league_fill.PLAYER_SD);
-    const tmpl = fit_overall(ours, pos, _clamp_overall(raw), attrs);
-    const pot = game_scale.potential_from_ea(recruits._potential(rng, tpos, s, ea), ours, pos);
+    const tmpl = fit_overall(card, pos, _clamp_overall(raw), attrs);
+    const pot = game_scale.potential_from_ea(recruits._potential(rng, tpos, s, ea), card, pos);
     const share = get(league_fill.ROOM_BY_CLASS, cls, 1.0);
     const room = {};
-    for (const k of attrs) room[k] = int(round(share * Math.max(0, get(pot, k, ours[k]) - ours[k])));
+    for (const k of attrs) room[k] = int(round(share * Math.max(0, get(pot, k, card[k]) - card[k])));
     return [tmpl, arche, raw, room];
   };
 
@@ -382,19 +382,19 @@ export function fill_roster(team, target, rng, attrs, taken) {
     if (truthy(pid)) taken.add(pid);
     else pid = _unique_id(`${slug}-${_slugify(p["name"])}`, taken);
     if (n_given === attrs.length) {
-      let ours = {};
-      for (const k of attrs) ours[k] = given_r[k];
-      const formula = game_scale.overall(ours, pos);
+      let card = {};
+      for (const k of attrs) card[k] = given_r[k];
+      const formula = game_scale.overall(card, pos);
       const o = given_o === null ? formula : int(Number(given_o));
       if (Math.abs(o - formula) > 1) {
-        ours = fit_overall(ours, pos, o, attrs);
+        card = fit_overall(card, pos, o, attrs);
         lines.push(`${label}: ${p["name"]}'s ratings were moved to match his overall ${o}.`);
       }
-      const q = { ...p, "id": pid, "pos": get(league_file._FILE_POS, pos, pos), "overall": o, "ratings": ours };
+      const q = { ...p, "id": pid, "pos": get(league_file._FILE_POS, pos, pos), "overall": o, "ratings": card };
       if (get(p, "potential") === null) {
         const [, , , room] = generate(pos, cls, get(p, "stars"), place.get(i));
         q["potential"] = {};
-        for (const k of attrs) if (room[k] > 0) q["potential"][k] = Math.min(99, ours[k] + room[k]);
+        for (const k of attrs) if (room[k] > 0) q["potential"][k] = Math.min(99, card[k] + room[k]);
       }
       const c = league_file.player_compact(q, attrs);
       c["c"] = coach(p);
@@ -405,17 +405,17 @@ export function fill_roster(team, target, rng, attrs, taken) {
       continue;
     }
     const [tmpl, arche, raw, room] = generate(pos, cls, get(p, "stars"), place.get(i));
-    let ours;
+    let card;
     if (n_given) {
-      ours = { ...tmpl, ...given_r };
+      card = { ...tmpl, ...given_r };
       const missing = attrs.filter((k) => given_r[k] === undefined);
-      ours = fit_overall(ours, pos, given_o !== null ? int(Number(given_o)) : game_scale.overall(tmpl, pos), missing);
+      card = fit_overall(card, pos, given_o !== null ? int(Number(given_o)) : game_scale.overall(tmpl, pos), missing);
     } else if (given_o !== null) {
-      ours = fit_overall(tmpl, pos, int(Number(given_o)), attrs);
+      card = fit_overall(tmpl, pos, int(Number(given_o)), attrs);
     } else {
-      ours = tmpl;
+      card = tmpl;
     }
-    const c = _compact(p, pid, pos, cls, ours, room, arche, coach(p), attrs, sizes, state);
+    const c = _compact(p, pid, pos, cls, card, room, arche, coach(p), attrs, sizes, state);
     if (given_o !== null) c["o"] = int(Number(given_o));
     out.push(c);
     if (!n_given && given_o === null) gen.push([out.length - 1, tmpl, raw, room, get(p, "potential") || {}]);
@@ -468,8 +468,8 @@ export function fill_roster(team, target, rng, attrs, taken) {
     const shifted = (d) => {
       const res = out.slice();
       for (const [j, tmpl, raw, room, gpot] of gen) {
-        const ours = fit_overall(tmpl, res[j]["pos"], _clamp_overall(raw + d), attrs);
-        res[j] = _with_ratings(res[j], ours, room, gpot, attrs);
+        const card = fit_overall(tmpl, res[j]["pos"], _clamp_overall(raw + d), attrs);
+        res[j] = _with_ratings(res[j], card, room, gpot, attrs);
       }
       return res;
     };
@@ -514,30 +514,30 @@ export function _clamp_overall(x) {
   return int(round(Math.max(league_fill.OVERALL_RANGE[0], Math.min(league_fill.OVERALL_RANGE[1], x))));
 }
 
-export function _with_ratings(c, ours, room, gpot, attrs) {
+export function _with_ratings(c, card, room, gpot, attrs) {
   // The compact player `c` with these ratings, his room carried over (a given potential kept).
   c = { ...c };
-  c["r"] = attrs.map((k) => int(ours[k]));
-  c["g"] = attrs.map((k) => (gpot[k] !== undefined ? Math.max(0, int(Number(gpot[k])) - ours[k])
-    : Math.max(0, Math.min(99, ours[k] + room[k]) - ours[k])));
-  c["o"] = game_scale.overall(ours, c["pos"], get(c, "dmv"));
+  c["r"] = attrs.map((k) => int(card[k]));
+  c["g"] = attrs.map((k) => (gpot[k] !== undefined ? Math.max(0, int(Number(gpot[k])) - card[k])
+    : Math.max(0, Math.min(99, card[k] + room[k]) - card[k])));
+  c["o"] = game_scale.overall(card, c["pos"], get(c, "dmv"));
   return c;
 }
 
-export function _compact(p, pid, pos, cls, ours, room, arche, coachability, attrs, sizes, state) {
+export function _compact(p, pid, pos, cls, card, room, arche, coachability, attrs, sizes, state) {
   // A generated or partly given player in league.compact's form.
   const [ht, wt] = get(sizes, pos, [74, 220]);
   const pot = {};
-  for (const k of attrs) pot[k] = Math.min(99, ours[k] + room[k]);
+  for (const k of attrs) pot[k] = Math.min(99, card[k] + room[k]);
   const src = { "slug": pid, "name": get(p, "name", ""), "position": pos, "class": cls, "height": get(p, "height") || ht,
     "weight_lbs": get(p, "weight") || wt, "jersey": get(p, "jersey"), "archetype": get(p, "archetype") || arche,
     "dev_trait": get(p, "dev") || "Normal", "coachability": coachability, "stars": get(p, "stars"),
-    "ours": ours, "potential_ours": pot, "yrs": get(p, "years"), "abilities": get(p, "abilities"),
+    "card": card, "potential_card": pot, "yrs": get(p, "years"), "abilities": get(p, "abilities"),
     "target_mult": get(p, "target_share") };
   const c = modules.league.compact(src, attrs, _home(p, state));
   const gpot = get(p, "potential") || {};
   if (Object.keys(gpot).length) {
-    c["g"] = attrs.slice(0, c["g"].length).map((k, i) => (gpot[k] !== undefined ? Math.max(0, int(Number(gpot[k])) - ours[k]) : c["g"][i]));
+    c["g"] = attrs.slice(0, c["g"].length).map((k, i) => (gpot[k] !== undefined ? Math.max(0, int(Number(gpot[k])) - card[k]) : c["g"][i]));
   }
   return c;
 }

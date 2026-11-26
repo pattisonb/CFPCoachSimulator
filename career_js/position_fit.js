@@ -1,13 +1,9 @@
 // What a player would be at another position (position_options / change_position, during the
 // season and in the offseason).
 //
-// Why a plain `game_scale.overall(his ratings, new position)` was wrong: our ratings are kept on
-// each position group's own scale (50 is the middle Power 4 starter OF HIS GROUP, game_scale.to_ours),
-// so a safety whose run block is 21 on the source scale carries it as 48, the safeties' middle, and
-// the guards' formula, fit on guard-relative values (50 there is a source 61), read him as an
-// average blocker: a 197-pound free safety projected 67 at guard. `project` puts his ratings on the
-// new group's scale first (through the source scale), then discounts the position skills he has
-// never used and charges the size the new spot asks for.
+// A player's ratings are card numbers, the same at every position: a safety's run block is what it is at guard too.
+// `project` keeps his ratings, discounts the position skills he has never used and charges the size the new spot
+// asks for.
 import { round, int, get, isNumber, truthy, cmp } from "../engine_js/pyrt.js";
 import { mean, pstdev } from "../engine_js/pystat.js";
 import { read_json } from "../engine_js/files.js";
@@ -16,21 +12,21 @@ import { game_scale } from "../teamdata_js/game_scale.js";
 
 const ENGINE_FILE = "data/engine_teams.json";
 
-const SIZE_PENALTY = 5.0;        // *tune* overall points lost per standard deviation light or short beyond the first
-const HEAVY_PENALTY = 3.0;       // *tune* per standard deviation heavy beyond the first (speed positions pay SIZE_PENALTY)
-const SIZE_CAP = 30.0;           // *tune* the most size can cost
+const SIZE_PENALTY = 2.3;        // *tune* overall points lost per standard deviation light or short beyond the first
+const HEAVY_PENALTY = 1.4;       // *tune* per standard deviation heavy beyond the first (speed positions pay SIZE_PENALTY)
+const SIZE_CAP = 14.0;           // *tune* the most size can cost
 const NEAR_DISCOUNT = 0.85;      // *tune* position skills kept on a move within the unit (S -> CB, WR -> TE, DT -> EDGE)
 const FAR_DISCOUNT = 0.6;        // *tune* position skills kept on a move across units (S -> OL), above the position's floor
-const FLOOR = 20;                // *tune* the lowest projection
+const FLOOR = 60;                // *tune* the lowest projection
 const SPEED_POSITIONS = ["WR", "CB", "HB", "FS", "SS"];   // where extra weight costs as much as missing weight
 
 // attributes every position uses the same way: they move with him untouched
 const ATHLETIC = new Set(["speed", "acceleration", "agility", "strength", "jumping", "stamina", "injury", "toughness",
   "change_of_direction", "awareness"]);
-// a raw athlete's position skills at a spot he has never played, on that group's scale  *tune*
-const POSITION_FLOOR = { QB: 31, HB: 38, FB: 38, WR: 36, TE: 36, LT: 34, LG: 34, C: 34, RG: 34, RT: 34,
-  LEDG: 36, REDG: 36, DT: 36, SAM: 38, MIKE: 38, WILL: 38, CB: 36, FS: 38, SS: 38,
-  K: 30, P: 30 };
+// a raw athlete's position skills at a spot he has never played  *tune*
+const POSITION_FLOOR = { QB: 68, HB: 65, FB: 65, WR: 63, TE: 61, LT: 73, LG: 73, C: 73, RG: 73, RT: 73,
+  LEDG: 71, REDG: 71, DT: 71, SAM: 68, MIKE: 67, WILL: 67, CB: 62, FS: 66, SS: 66,
+  K: 75, P: 67 };
 // technique groups: a move inside one keeps every skill
 const SKILL_GROUP = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE", LT: "OL", LG: "OL", C: "OL", RG: "OL",
   RT: "OL", LEDG: "EDGE", REDG: "EDGE", DT: "DT", SAM: "LB", MIKE: "LB", WILL: "LB",
@@ -123,10 +119,9 @@ export function size_penalty(height_in, weight_lbs, pos) {
 }
 
 export function transfer(attrs, from_pos, to_pos) {
-  // His ratings as a player at `to_pos`: every rating put on the new group's scale (the same
-  // source value, read against the new group's middle starter), the position skills kept whole
-  // inside his technique group, within his unit the position's floor plus NEAR_DISCOUNT of what he
-  // has above it, and across units replaced by max(the position's floor, FAR_DISCOUNT x his value).
+  // His ratings as a player at `to_pos`: the position skills kept whole inside his technique group, within his unit
+  // the position's floor plus NEAR_DISCOUNT of what he has above it, and across units replaced by max(the
+  // position's floor, FAR_DISCOUNT x his value).
   from_pos = get(position_fit.ENGINE_TO_EA, from_pos, from_pos);
   to_pos = get(position_fit.ENGINE_TO_EA, to_pos, to_pos);
   const out = {};
@@ -134,10 +129,9 @@ export function transfer(attrs, from_pos, to_pos) {
     for (const [k, v] of Object.entries(attrs)) out[k] = int(v);
     return out;
   }
-  const gf = game_scale.group(from_pos), gt = game_scale.group(to_pos);
   for (const [k, v] of Object.entries(attrs)) {
-    let x = gf === gt ? v : game_scale.to_ours(game_scale.to_base(v, gf, k), gt, k);
-    const fl = get(position_fit.POSITION_FLOOR, to_pos, 35);
+    let x = v;
+    const fl = get(position_fit.POSITION_FLOOR, to_pos, 70);
     if (!position_fit.ATHLETIC.has(k)) {
       if (at(position_fit.SKILL_GROUP, from_pos, "SKILL_GROUP") !== at(position_fit.SKILL_GROUP, to_pos, "SKILL_GROUP")) {
         if (at(position_fit.UNIT, from_pos, "UNIT") === at(position_fit.UNIT, to_pos, "UNIT")) {    // a raw athlete's level there, plus most of what he knows beyond it
@@ -153,7 +147,7 @@ export function transfer(attrs, from_pos, to_pos) {
 }
 
 export function project(attrs, height_in, weight_lbs, from_pos, to_pos) {
-  // His overall at `to_pos`: our formula there on his transferred ratings, less what his size
+  // His overall at `to_pos`: the formula there on his transferred ratings, less what his size
   // costs, FLOOR at least. At his own position it is exactly his overall.
   from_pos = get(position_fit.ENGINE_TO_EA, from_pos, from_pos);
   to_pos = get(position_fit.ENGINE_TO_EA, to_pos, to_pos);
@@ -196,11 +190,11 @@ export function move_row(c, pos, attrs) {
   }
   // a second move the same season starts again from where he began, not from the first move's ratings
   const origin = c["moved_from"];
-  const ours = zipped(attrs, truthy(at(c, "moved_attrs", "c")) ? c["moved_attrs"] : c["r"]);
-  const fresh = position_fit.transfer(ours, origin, pos);
-  c["r"] = attrs.map((k) => get(fresh, k, 50));
+  const card = zipped(attrs, truthy(at(c, "moved_attrs", "c")) ? c["moved_attrs"] : c["r"]);
+  const fresh = position_fit.transfer(card, origin, pos);
+  c["r"] = attrs.map((k) => get(fresh, k, game_scale.MISSING));
   c["pos"] = pos;
-  c["o"] = position_fit.project(ours, get(c, "ht"), get(c, "wt"), origin, pos);
+  c["o"] = position_fit.project(card, get(c, "ht"), get(c, "wt"), origin, pos);
   // a player moved to quarterback is given a Decision Making of his own the day he moves (league.own_decision)
   if (modules.league) modules.league.own_decision(c, attrs);
 }
@@ -210,7 +204,7 @@ export function season_move(p, origin, pos) {
   // overall there and his skills as they transfer (what the card and comps read). Returns [overall, skills].
   const attrs = zipped(game_scale.keys(), get(p, "skills") || []);
   const fresh = position_fit.transfer(attrs, origin, pos);
-  return [position_fit.project(attrs, get(p, "height_in"), get(p, "weight"), origin, pos), game_scale.keys().map((k) => get(fresh, k, 50))];
+  return [position_fit.project(attrs, get(p, "height_in"), get(p, "weight"), origin, pos), game_scale.keys().map((k) => get(fresh, k, game_scale.MISSING))];
 }
 
 export function settle(roster) {

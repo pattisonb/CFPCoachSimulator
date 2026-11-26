@@ -15,6 +15,7 @@ import { read_json } from "../engine_js/files.js";
 import { prospects } from "../career_js/prospects.js";
 import { recruits } from "../career_js/recruits.js";
 import { shown } from "./shown.js";
+import { ratings as rv2 } from "./ratings.js";
 
 const FILE = "data/game_scale.json";
 const ABOVE = 15.0, BELOW = 9.0;         // scale points per standard deviation above and below the middle starter
@@ -71,44 +72,49 @@ export function base_from_ours(ours, pos) {
   return out;
 }
 
-export function from_ea(ratings_ea, pos) {
-  // A generated recruit's EA-scale draw, converted once (the source curve, then our scale).
-  // (a whole rating is asked for again and again: a league's 12,000 players, 54 ratings each, twice: kept by rating)
-  const g = group(pos), out = {};
-  for (const k of keys()) {
-    const v = ratings_ea[k];
-    if (v === undefined) continue;
-    if (!Number.isInteger(v) || v < 0 || v > 99) { out[k] = to_ours(recruits.curve(v), g, k); continue; }
-    const at = `${g}|${k}`;
-    let row = _from_ea.get(at);
-    if (row === undefined) _from_ea.set(at, row = new Array(100));
-    if (row[v] === undefined) row[v] = to_ours(recruits.curve(v), g, k);
-    out[k] = row[v];
-  }
+export function whole(v) {
+  // A card number as the game keeps it: whole, 1-99.
+  return Math.max(1, Math.min(99, int(round(Number(v)))));
+}
+
+export function from_ea(ratings, pos = null) {
+  // A generated player's draw (recruits.js draws on the card's own scale) as whole card numbers.
+  const out = {};
+  for (const k of keys()) if (ratings[k] !== undefined) out[k] = whole(ratings[k]);
   return out;
 }
-const _from_ea = new Map();
 
-export function ea_row(pos, key) {
-  // from_ea for one rating at every whole value: row[v] is our rating for an EA-scale `v` (0-99) at `pos`'s group.
-  const g = group(pos), at = `${g}|${key}`;
-  let row = _from_ea.get(at);
-  if (row === undefined) _from_ea.set(at, row = new Array(100));
-  for (let v = 0; v <= 99; v++) if (row[v] === undefined) row[v] = to_ours(recruits.curve(v), g, key);
-  return row;
+export function base_from_card(card) {
+  // What the play engine's formulas read for a player's card numbers: each through the source curve they were tuned
+  // on (the engine's input; never stored or shown).
+  const out = {};
+  for (const [k, v] of Object.entries(card)) out[k] = _base_of(v);
+  return out;
+}
+export function card_from_base(base) {
+  // The other way, for a player who comes with only what the engine's formulas read: his card numbers.
+  const out = {};
+  for (const k of keys()) if (isNumber(base[k])) out[k] = shown.from_base(base[k]);
+  return out;
+}
+const _bases = new Array(100);
+function _base_of(v) {
+  if (!Number.isInteger(v) || v < 0 || v > 99) return round(shown.to_base(v), 1);
+  if (_bases[v] === undefined) _bases[v] = round(shown.to_base(v), 1);
+  return _bases[v];
 }
 
-// How far a generated player grows, by position group: his drawn room to potential times this. Set
-// so a career's starters settle, season after season, where the real 2026 starters were (tools/long_run.mjs).
+// How far a generated player grows, by position group: his drawn room to potential (card points) times this. Set
+// so a career's starters settle, season after season, where the real 2026 starters were (tools/long_run.mjs). *tune*
 const ROOM = { QB: 1.33, RB: 1.0, WR: 1.11, TE: 1.21, OL: 1.24, DL: 1.35, LB: 1.45, CB: 1.48, S: 1.63, K: 1.25, P: 0.85 };
 
-export function potential_from_ea(potential_ea, ours, pos) {
-  // A generated player's potential on our scale: his room above his ratings scaled by ROOM.
+export function potential_from_ea(potential_ea, card, pos) {
+  // A generated player's potential, in card numbers: his room above his ratings (`card`) scaled by ROOM.
   const m = get(game_scale.ROOM, group(pos), 1.0);
   const pot = from_ea(potential_ea, pos);
   const out = {};
   for (const [k, v] of Object.entries(pot)) {
-    out[k] = int(round(Math.min(99, get(ours, k, v) + m * Math.max(0, v - get(ours, k, v)))));
+    out[k] = int(round(Math.min(99, get(card, k, v) + m * Math.max(0, v - get(card, k, v)))));
   }
   return out;
 }
@@ -120,17 +126,50 @@ export function has_overall() {
   } catch (e) {
     return false;
   }
-  return truthy(get(d, "overall"));
+  return truthy(get(d, "card_overall"));
 }
 
-const OVERALL_FLOOR = 0.02;             // *tune* the least any attribute on a position's card counts toward its overall (fit_card_overall)
+const MISSING = 60;                      // a rating a player has none of, read as this card number (rosters.MISSING)
 
 export function card_formula(pos) {
   // The overall formula at EA position `pos` (or his engine position's group): {"pos": the position it is for,
-  // "const", "w": {card attribute: weight}}. On the player card's attributes, the ones the sim plays with.
+  // "const", "w": {card attribute: weight}}, on his card's numbers (each card attribute is one of his ratings).
   const f = get(game_scale.data(), "card_overall") || {};
   const at = f[pos] !== undefined ? pos : get(game_scale._FIRST, group(pos), "QB");
   return f[at] !== undefined ? { pos: at, ...f[at] } : null;
+}
+
+// card attribute -> the rating it is (ratings.js: each card attribute reads one rating)
+let _skill_of = null;
+function skill_of(attr) {
+  if (_skill_of === null) {
+    _skill_of = {};
+    for (const [a, row] of Object.entries(rv2.ATTRIBUTES)) _skill_of[a] = row[3].sources;
+  }
+  return get(_skill_of, attr) || [attr];
+}
+
+export function card_value(card, attr, own = null) {
+  // One card attribute's number from a player's ratings (`card`: rating -> card number). A quarterback's Decision
+  // Making is his own (`own`); one who has none yet reads where his Football IQ and Pocket Poise stand.
+  if (attr === "decision_making") {
+    if (isNumber(own)) return own;
+    return 0.6 * get(card, "awareness", MISSING) + 0.4 * get(card, "throw_under_pressure", MISSING);
+  }
+  const src = skill_of(attr);
+  if (src.length === 1) return get(card, src[0], MISSING);
+  return sum(src.map((k) => get(card, k, MISSING))) / src.length;
+}
+
+export function overall(card, pos, own = null) {
+  // A player's overall at EA position `pos` (or his engine position's group): a weighted sum of his card's numbers
+  // (card_formula: football IQ and a position's main skills count most). `card`: rating -> card number. `own`: a
+  // quarterback's Decision Making (a rating of its own: his other ratings do not say it).
+  const f = card_formula(pos);
+  if (!f) return 1;
+  let v = f["const"];
+  for (const [a, w] of Object.entries(f["w"])) v += w * card_value(card, a, f["pos"] === "QB" ? own : null);
+  return int(round(Math.max(1, Math.min(99, v))));
 }
 
 export function card_attributes(ours, pos) {
@@ -146,35 +185,18 @@ export function decision_card(own) {
   return int(round(Math.max(1, Math.min(99, 50 + (v - m) * (v >= m ? hi : lo)))));
 }
 
-export function overall(ours, pos, own = null) {
-  // Our overall for a player at EA position `pos` (or his engine position's group): a weighted sum of his card's
-  // attributes, the same ones the sim plays with and the card shows (card_formula). Every attribute on his position's
-  // card counts (OVERALL_FLOOR at the least); some count for much more (football IQ, a position's main skills).
-  // `own`: a quarterback's Decision Making, the number he has (a rating of its own: his skills do not say it).
-  const f = card_formula(pos);
-  if (f) return _card_overall(f["pos"], keys().map((k) => get(ours, k, 50)), own);
-  return legacy_overall(ours, pos) || 1;                                                 // a scale file from before
-}
-
-export function legacy_overall(ours, pos) {
-  // The overall as first fit, on the skills themselves (the scale file's "overall"; fit() writes it once and nothing
-  // refits it). The build's core-skill floor is gated on this one (build_teams.clamp_extremes), so the card's formula and
-  // its constants can be refit and recentered without moving an engine rating. None when the scale has no formula yet.
-  const fs = get(game_scale.data(), "overall") || {};
-  let f = get(fs, pos);
-  if (!truthy(f)) f = get(fs, get(game_scale._FIRST, group(pos), "QB"));
-  if (!truthy(f)) return null;
-  return int(round(Math.max(1, Math.min(99, f["const"] + sum(Object.entries(f["w"]).map(([k, w]) => w * get(ours, k, 50)))))));
+export function skill_weights(pos) {
+  // How much each of his ratings counts in his overall at `pos` (card_formula's weights, by the rating each reads).
+  const out = {};
+  for (const [a, w] of Object.entries(get(card_formula(pos) || {}, "w") || {})) for (const k of skill_of(a)) out[k] = get(out, k, 0) + w;
+  return out;
 }
 
 export function position_skills(pos) {
-  // The skills a position is graded on: the ones the overall as first fit weighs (legacy_overall's formula).
-  const fs = get(game_scale.data(), "overall") || {};
-  let f = get(fs, pos);
-  if (!truthy(f)) f = get(fs, get(game_scale._FIRST, group(pos), "QB"));
-  if (!truthy(f)) f = {};
+  // The ratings a position is graded on: the ones its overall weighs (card_formula).
+  const f = card_formula(pos);
   const out = new Set();
-  for (const [k, w] of Object.entries(get(f, "w") || {})) if (w > 0) out.add(k);
+  for (const [a, w] of Object.entries(get(f || {}, "w") || {})) if (w > 0 && a !== "decision_making") for (const k of skill_of(a)) out.add(k);
   return out;
 }
 
@@ -185,94 +207,17 @@ export function card_position(p) {
   return get(p, "source_position") || get(p, "role") || p["position"];
 }
 
-const _CARD_OVERALL_MAX = 400000;
-const _card_overall_cache = new Map();
-
-// the same players are asked again and again (the base league is 12,000 of them)
-// `skills`: his skills in keys() order.
-export function _card_overall(pos, skills, own = null) {
-  const mine = isNumber(own) && pos === "QB";            // his own Decision Making, in place of what his skills would give
-  const at = mine ? `${pos}|${skills.join(",")}|${own}` : `${pos}|${skills.join(",")}`;
-  const kept = _card_overall_cache.get(at);
-  if (kept !== undefined) return kept;
-  const f = game_scale.data()["card_overall"][pos];
-  const ks = keys();
-  const ours = {};
-  for (let i = 0; i < ks.length && i < skills.length; i++) ours[ks[i]] = skills[i];
-  let card = game_scale.card_attributes(ours, pos);
-  if (mine && card["decision_making"] !== undefined) card = { ...card, decision_making: decision_card(own) };
-  const out = int(round(Math.max(1, Math.min(99, f["const"] + sum(Object.entries(f["w"]).map(([k, w]) => w * get(card, k, 50)))))));
-  if (_card_overall_cache.size >= _CARD_OVERALL_MAX) _card_overall_cache.clear();
-  _card_overall_cache.set(at, out);
-  return out;
-}
-_card_overall.cache_clear = () => _card_overall_cache.clear();
-
 export function overall_version() {
-  // Which overall formula this build stores: 2 on the card's attributes, 1 before. A league and a class are stamped
-  // with it when they are made ("overall_v"), so opening the career does not work every overall out again.
-  return truthy(get(game_scale.data(), "card_overall")) ? 2 : 1;
+  // Which overall this build stores: 3, the card numbers' own formula (2 and 1 were the formulas before). A league and
+  // a class are stamped with it when they are made ("overall_v").
+  return 3;
 }
 
-// Python's dict(zip(attrs, values)): the pairs until the shorter one runs out.
-function _zip_dict(attrs, values) {
-  const out = {};
-  for (let i = 0; i < attrs.length && i < values.length; i++) out[attrs[i]] = values[i];
-  return out;
-}
 
-// The career modules the two upgrades of old saves call. This file cannot import them (they import it), so each is
-// put here by whoever loads it: career_js/league.js sets game_scale.modules.league, app_js/game.js sets
-// game_scale.modules.recruiting. Without one, an old save that needs it is refused before anything is changed.
+// The career modules a save from before needs (teamdata_js/old_saves.js): this file cannot import them (they import
+// it), so each is put here by whoever loads it: career_js/league.js sets game_scale.modules.league, app_js/game.js sets
+// game_scale.modules.recruiting.
 const modules = { league: null, recruiting: null };
-
-function _module(name) {
-  const m = game_scale.modules[name];
-  if (!m) throw new Error(`game_scale: career_js/${name}.js is not loaded (game_scale.modules.${name})`);
-  return m;
-}
-
-function _portal_players(state) {
-  return Object.values(get(get(get(state, "offseason") || {}, "portal") || {}, "players", {})).map((e) => e["player"]);
-}
-
-export function upgrade_overalls(state) {
-  // A career saved before the overall was built on the card's attributes: every stored overall recomputed (the
-  // league's players, the portal's, the recruits' now and at their potential). Returns whether anything changed.
-  // A league or class already stamped with this build's formula is left alone (it was 8,000 recruits recomputed on
-  // every open of every career, most of the time a saved career took to load).
-  const version = overall_version();
-  let changed = false;
-  const lg = get(state, "league");
-  if (truthy(lg) && get(lg, "scale") === "ours" && get(lg, "overall_v", 1) !== version) {
-    const attrs = lg["attrs"];
-    let players = [];
-    for (const t of Object.values(lg["teams"])) for (const c of t["roster"]) players.push(c);
-    players = players.concat(_portal_players(state));
-    const os = players.map((c) => overall(_zip_dict(attrs, c["r"]), c["pos"], get(c, "dmv")));
-    const moved = players.some((c, i) => os[i] !== c["o"]);
-    if (moved) _module("league");        // asked for before anything is written, so a refusal leaves the save as it was
-    players.forEach((c, i) => { c["o"] = os[i]; });
-    lg["overall_v"] = version;
-    if (moved) {                      // a new career is already on this formula: its teams files stand
-      _module("league").forget(state["id"]);
-    }
-    changed = true;
-  }
-  const rc = get(state, "recruiting");
-  if (truthy(rc) && get(rc, "scale") === "ours" && truthy(get(rc, "prospects")) && get(rc, "overall_v", 1) !== version) {
-    const attrs = rc["attrs"];
-    for (const p of Object.values(rc["prospects"])) {
-      if (truthy(get(p, "ratings")) && truthy(get(p, "ea_position"))) {
-        p["ovr"] = overall(_zip_dict(attrs, p["ratings"]), p["ea_position"]);
-        if (truthy(get(p, "potential"))) p["pot_ovr"] = overall(_zip_dict(attrs, p["potential"]), p["ea_position"]);
-      }
-    }
-    rc["overall_v"] = version;
-    changed = true;
-  }
-  return changed;
-}
 
 const _FIRST = { QB: "QB", RB: "HB", WR: "WR", TE: "TE", OL: "LG", DL: "DT", LB: "MIKE", CB: "CB", S: "FS", K: "K", P: "P" };
 
@@ -287,76 +232,9 @@ export function card_scale() {
   return game_scale.data()["card_scale"];
 }
 
-// ----- saves from before: EA numbers converted once ------------------------------------------------
-
-export function _convert(r, g, attrs, pos) {
-  const ea = _zip_dict(attrs, r);
-  const ours = from_ea(ea, pos);
-  const grown = {};
-  for (let i = 0; i < attrs.length && i < r.length && i < g.length; i++) grown[attrs[i]] = r[i] + g[i];
-  const pot = from_ea(grown, pos);
-  const ks = keys();
-  const rr = ks.map((k) => get(ours, k, 50));
-  return [rr, ks.map((k, i) => Math.max(0, get(pot, k, 50) - rr[i])), overall(ours, pos)];
-}
-
-export function upgrade(state) {
-  // A career saved while its league and recruits were kept in EA numbers: converted to ours
-  // (each read of a prospect keeps how far off it was). Returns whether anything changed.
-  let changed = false;
-  const lg = get(state, "league");
-  const rc = get(state, "recruiting");
-  const league_old = truthy(lg) && get(lg, "scale") !== "ours";
-  const class_old = truthy(rc) && get(rc, "scale") !== "ours" && truthy(get(rc, "prospects"));
-  // asked for before anything is written, so a refusal leaves the save as it was
-  const league = league_old ? _module("league") : null;
-  const recruiting = class_old ? _module("recruiting") : null;
-  if (league_old) {
-    const attrs = lg["attrs"];
-    let players = [];
-    for (const t of Object.values(lg["teams"])) for (const c of t["roster"]) players.push(c);
-    players = players.concat(_portal_players(state));
-    for (const c of players) [c["r"], c["g"], c["o"]] = _convert(c["r"], c["g"], attrs, c["pos"]);
-    lg["attrs"] = keys();
-    lg["scale"] = "ours";
-    league.forget(state["id"]);
-    changed = true;
-  }
-  if (class_old) {
-    const attrs = rc["attrs"];
-    const old = new Map();
-    for (const [pid, p] of Object.entries(rc["prospects"])) old.set(pid, { ...p["truth"] });
-    for (const p of Object.values(rc["prospects"])) {
-      const ea_r = p["ratings_ea"], ea_p = p["potential_ea"];
-      delete p["ratings_ea"];
-      delete p["potential_ea"];
-      const n = Math.min(ea_r.length, ea_p.length);
-      const [rr, gg, ovr] = _convert(ea_r, ea_r.slice(0, n).map((a, i) => ea_p[i] - a), attrs, p["ea_position"]);
-      p["ratings"] = rr;
-      p["potential"] = rr.map((a, i) => a + gg[i]);
-      p["ovr"] = ovr;
-      p["pot_ovr"] = overall(_zip_dict(keys(), p["potential"]), p["ea_position"]);
-      for (const k of ["overall_ea", "overall"]) delete p[k];
-    }
-    rc["attrs"] = keys();
-    rc["scale"] = "ours";
-    rc["grades"] = "game";
-    recruiting._truths(rc["prospects"], rc["attrs"]);
-    for (const [pid, read] of Object.entries(rc["reads"])) {
-      const p = get(rc["prospects"], pid);
-      if (p === null) continue;
-      for (const [g, [mean, prec]] of Object.entries(read["g"])) {
-        read["g"][g] = [round(p["truth"][g] + (mean - old.get(pid)[g]), 3), prec];
-      }
-    }
-    changed = true;
-  }
-  return changed;
-}
-
 export const game_scale = {
-  FILE, ABOVE, BELOW, GROUP_OF, ROOM, OVERALL_FLOOR, _FIRST, modules,
-  data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, from_ea, ea_row, potential_from_ea,
-  has_overall, card_formula, card_attributes, decision_card, overall, legacy_overall, position_skills, card_position, _card_overall,
-  overall_version, upgrade_overalls, engine_means, card_scale, _convert, upgrade,
+  FILE, ABOVE, BELOW, GROUP_OF, ROOM, MISSING, _FIRST, modules,
+  data, keys, group, to_ours, to_base, ours_from_base, _base_tenth, base_from_ours, whole, from_ea, potential_from_ea,
+  has_overall, card_formula, card_value, card_attributes, decision_card, overall, skill_weights, position_skills, card_position, base_from_card, card_from_base,
+  overall_version, engine_means, card_scale,
 };

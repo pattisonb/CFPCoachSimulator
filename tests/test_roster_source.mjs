@@ -260,12 +260,9 @@ test("a career's league takes every real player's ratings from the roster file, 
   assert(n > 10000, `${n} players`);
   const as_file = rated["texas"][p["slug"]];
   equal(league.compact(league._as_source(p), attrs, "TX", as_file)["r"], as_file);
-  // ... and they are on the page what the file has (a career shows a stored skill through shown.skill)
-  const grp = game_scale.group(p["source_position"]);
-  let same = 0;
+  // ... and they are the file's own numbers, every one
   const by_skill = rosters.skills_of(p);
-  attrs.forEach((k, i) => { if (shown.skill(as_file[i], grp, k) === by_skill[k]) same += 1; });
-  assert(same >= attrs.length - 12, `${same} of ${attrs.length} read as the file has them`);
+  equal(as_file, attrs.map((k) => by_skill[k]));
 });
 
 test("a career's first league is read straight from the roster file: every player, his team's coaches and its lineup shape", () => {

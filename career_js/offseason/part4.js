@@ -324,7 +324,7 @@ function _finish_cuts(state) {
     const promised = get(c, "promised") === year;
     if (promised) {                                    // the one cut that costs you: his starting job was your word
       const overall = offseason.house(c["pos"], c["o"]);
-      word.apply(state, "broken", promises._group(c["pos"]), c["n"], overall >= 70, promises.personality_of(state, c["id"]));
+      word.apply(state, "broken", promises._group(c["pos"]), c["n"], overall >= word.STAR_OVR, promises.personality_of(state, c["id"]));
     }
     out.push({ id: c["id"], name: c["n"], pos: c["pos"], cls: c["cls"], overall: offseason.house(c["pos"], c["o"]), promised, to: null, to_name: null });
   }
@@ -1089,10 +1089,8 @@ function _new_transfer(off, c, me) {
 
 
 function page(obj) {
-  // A view's players as the page shows a rating (teamdata_js/shown.js): a copy of `obj` in which every player row (a
-  // dict with an `overall` and a position) has its overall on the shown scale, its `gain` as the difference of the
-  // shown overalls before and after, and its `grew` attributes at his card's group. The stored rows keep the game's
-  // own scale (an event written last year reads the same as one written today).
+  // A view's players as the page shows a rating (teamdata_js/shown.js): a copy of `obj` in which every player row's
+  // `grew` attributes are at his card's group.
   if (Array.isArray(obj)) {
     return obj.map((x) => offseason.page(x));
   }
@@ -1115,11 +1113,6 @@ function page(obj) {
   }
   const o = get(obj, "overall");
   if (truthy(pos) && is_num(o)) {
-    out["overall"] = shown.overall(o);
-    const g = get(obj, "gain");
-    if (is_num(g)) {
-      out["gain"] = shown.gain(o - g, o);
-    }
     if (Array.isArray(get(obj, "grew"))) {
       const grp = rv2.card_group(pos, pos);
       out["grew"] = obj["grew"].map((x) => (is_dict(x) && has(x, "key")

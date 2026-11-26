@@ -253,7 +253,7 @@ export function comp(profile_vector, position, pool, key = null) {
   const out = {};
   for (const k of ["name", "slug", "school", "team"]) out[k] = best[k];
   out["position"] = prospects.display_pos(best["position"]);
-  out["overall"] = shown_scale.overall(get(best, "overall"));     // as the page shows an overall
+  out["overall"] = get(best, "overall");
   return out;
 }
 
@@ -685,12 +685,11 @@ export function game_attributes(state, p, field = "ratings") {
   return prospects.card_attributes(modules.recruiting.attributes(state, p, field), p);
 }
 
-export function card_attributes(ours, p) {
-  // A prospect's player card attributes from his skills (our scale), exactly as a player's card
-  // gets them (build_teams): the skills back through the frozen scale, the card's composites, then
-  // the card scale (50 at the middle Power 4 starter at his position).
+export function card_attributes(card, p) {
+  // A prospect's player card attributes from his ratings (card numbers), exactly as a player's card gets them
+  // (build_teams).
   const pos = engine_position(p);
-  return { ..._card(pos, get(p, "ea_position") || pos, Object.entries(ours)) };
+  return { ..._card(pos, get(p, "ea_position") || pos, Object.entries(card)) };
 }
 
 const _CARD_MAX = 60000;
@@ -702,7 +701,7 @@ export function _card(pos, ea_position, skills) {
   const at = `${pos}|${ea_position}|${skills.map((kv) => `${kv[0]}:${kv[1]}`).join(",")}`;
   const kept = _card_cache.get(at);
   if (kept !== undefined) return kept;
-  const raw = rv2.raw_attributes(game_scale.base_from_ours(Object.fromEntries(skills), ea_position), pos, pos);
+  const raw = rv2.raw_attributes(game_scale.base_from_card(Object.fromEntries(skills)), pos, pos);
   let group = rv2.card_group(pos, pos);
   group = group === "FB" ? "RB" : group;
   const scale = game_scale.card_scale();
@@ -1156,15 +1155,14 @@ export function signed_ratings(state, p) {
   // A signee's full ratings, as his roster card will show them: every attribute now and at his
   // potential, with his overall and projected overall.
   const keys = [...game_scale.keys()];
-  const grp = game_scale.group(p["ea_position"]);            // every number as the page shows it (teamdata_js/shown.js)
   const rows = [];
   const n = Math.min(keys.length, p["ratings"].length, p["potential"].length);
   for (let i = 0; i < n; i++) {
     const k = keys[i], v = p["ratings"][i], q = p["potential"][i];
     rows.push({ key: k, label: _in(k, rv2.ATTRIBUTES) ? rv2.ATTRIBUTES[k][0] : title(k.replaceAll("_", " ")),
-      value: shown_scale.skill(v, grp, k), potential: shown_scale.skill(q, grp, k) });
+      value: v, potential: q });
   }
-  return { overall: shown_scale.overall(p["ovr"]), potential_overall: shown_scale.overall(p["pot_ovr"]), attributes: rows };
+  return { overall: p["ovr"], potential_overall: p["pot_ovr"], attributes: rows };
 }
 
 export function standing(state, pid, viewer) {

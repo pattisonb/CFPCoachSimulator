@@ -14,18 +14,18 @@
 // and built (build_teams.build), cached per career and year in data/leagues/ and rebuilt from the state
 // whenever the cache is missing (a save loaded on another machine).
 //
-//     state["league"] = {"year": 2027, "attrs": [the game's 54 skills], "scale": "ours",
+//     state["league"] = {"year": 2027, "attrs": [the game's 54 skills], "scale": "card",
 //                        "teams": {slug: {"roster": [player], "coaches": {...}, "formation": {...}, "style": slug,
 //                                         "meta": {...} (a league file's team), "depth": {role: [player id]} (season one)}},
 //                        "source": {...}, "recruiting_models": {slug: {...}}}     (the last two: a league file's)
 //
-// A player, compact, on our scale only (game_scale.js: 1-99, 50 the middle Power 4 starter at the
-// position; his overall is our formula on these):
+// A player, compact, his ratings the card numbers (1-99, as the roster file and his card have them; his overall is
+// game_scale.overall on them):
 //     {"id": slug, "n": name, "pos": position (LT, MIKE, ...), "cls": FR..SRRS, "ht": inches, "wt": lbs, "j": jersey,
 //      "a": archetype, "dev": trait, "ab": ["name|tier"], "r": [ratings], "g": [room to potential], "c": coachability,
-//      "s": stars, "o": our overall (kept in step with the ratings), "home": state, "yrs": seasons in the program,
+//      "s": stars, "o": his overall (kept in step with the ratings), "home": state, "yrs": seasons in the program,
 //      "tm": target share (real receivers),
-//      "dmv", "dmg": a quarterback's Decision Making and its room, a rating of its own, on the scale the game shows}
+//      "dmv", "dmg": a quarterback's Decision Making and its room, a rating of its own}
 // The real 2026 players are taken from the roster file once, when the career takes its league.
 // The FCS stand-ins (fictional teams) always play the roster file's rosters.
 //
@@ -70,15 +70,15 @@ league.FIRST_YEAR = 2026;
 // the ratings miss) but the best linemen up front. Set so that the real 2026 rosters' starters
 // picked this way sit as far below the best available as the real starters did, group by group
 // (fit on a later season's league, with the experience below).
-league.DEPTH_EYE = { QB: 7.7, RB: 14.5, WR: 14.1, TE: 17.4, OL: 0.0, DL: 18.9, LB: 20.0, DB: 18.0, K: 3.0, P: 3.0 };
-league.DEPTH_EXPERIENCE = 5.0;    // overall points a year in college is worth in a depth chart (real coaches start the veteran:
+league.DEPTH_EYE = { QB: 4.2, RB: 8.0, WR: 7.8, TE: 9.6, OL: 0.0, DL: 10.4, LB: 11.0, DB: 9.9, K: 1.7, P: 1.7 };
+league.DEPTH_EXPERIENCE = 2.75;    // overall points a year in college is worth in a depth chart (real coaches start the veteran:
                                   // with it a later season's starters are 30% freshmen and sophomores, 2026's real ones 28%)
 league._EYE_GROUP = { QB: "QB", HB: "RB", FB: "RB", WR: "WR", TE: "TE", LT: "OL", LG: "OL", C: "OL", RG: "OL", RT: "OL",
   LEDG: "DL", REDG: "DL", DT: "DL", SAM: "LB", MIKE: "LB", WILL: "LB", CB: "DB", FS: "DB", SS: "DB", K: "K", P: "P" };
 league.REAL_ROOM = 1.2;           // real 2026 underclassmen's room to potential, against a generated player's at the same class
 league.REAL_ROOM_CLASSES = ["FR", "FRRS", "SO", "SORS", "JR"];
 league.TARGET_EYE = 0.32;         // log target weight per standard deviation of the coaches' eye (real 2026 target weights: sd 0.32)
-league.TARGET_SPREAD = 0.4;       // log target weight off per 10 overall points above the team's receivers (the ratings' pull on targets is steep)
+league.TARGET_SPREAD = 0.85;      // log target weight off per 10 overall points above the team's receivers (the ratings' pull on targets is steep)
 league.EXPERIENCE = { FR: 0, FRRS: 1, SO: 1, SORS: 2, JR: 2, JRRS: 3, SR: 3, SRRS: 4 };
 
 league.CLASSES = ["FR", "FRRS", "SO", "SORS", "JR", "JRRS", "SR", "SRRS"];
@@ -192,23 +192,23 @@ export function height_in(h) {
 
 
 export function compact(p, attrs, home = null, rated = null) {
-  // A player in the league's form. `p` is a real 2026 source player (his base ratings are
-  // converted to ours once; his seeded potential likewise), or carries our ratings already as
-  // "ours" and "potential_ours" (signees, walk-ons, transfers from lower levels).
+  // A player in the league's form. `p` is a real 2026 source player (his ratings as the roster file has them; his
+  // seeded potential likewise), or carries his card numbers already as "card" and "potential_card" (signees,
+  // walk-ons, transfers from lower levels).
   const pos = p["position"];
-  let ours, pot;
-  if (get(p, "ours") !== null) {
-    ours = p["ours"];
-    pot = truthy(get(p, "potential_ours")) ? p["potential_ours"] : p["ours"];
+  let card, pot;
+  if (get(p, "card") !== null) {
+    card = p["card"];
+    pot = truthy(get(p, "potential_card")) ? p["potential_card"] : p["card"];
   } else {
-    // his ratings as the roster file has them (`rated`: in `attrs` order), else converted from his source ratings
-    ours = Array.isArray(rated) && rated.length === attrs.length
-      ? Object.fromEntries(attrs.map((k, i) => [k, rated[i]])) : game_scale.ours_from_base(p["ratings"], pos);
+    // his ratings as the roster file has them (`rated`: in `attrs` order), else his card numbers by skill
+    card = Array.isArray(rated) && rated.length === attrs.length
+      ? Object.fromEntries(attrs.map((k, i) => [k, rated[i]])) : { ...get(p, "ratings_ea") };
     const seeded = get(get(league._potentials(), p["slug"], {}), "potential_ea") || {};
-    pot = truthy(seeded) ? game_scale.potential_from_ea({ ...p["ratings_ea"], ...seeded }, ours, pos) : ours;
+    pot = truthy(seeded) ? game_scale.potential_from_ea({ ...p["ratings_ea"], ...seeded }, card, pos) : card;
     if (league.REAL_ROOM_CLASSES.includes(get(p, "class") || "FR")) {   // seeded room runs short of a generated player's at the same stage
       const more = {};
-      for (const [k, v] of Object.entries(pot)) more[k] = int(round(Math.min(99, get(ours, k, v) + league.REAL_ROOM * (v - get(ours, k, v)))));
+      for (const [k, v] of Object.entries(pot)) more[k] = int(round(Math.min(99, get(card, k, v) + league.REAL_ROOM * (v - get(card, k, v)))));
       pot = more;
     }
   }
@@ -216,16 +216,15 @@ export function compact(p, attrs, home = null, rated = null) {
   const out = {
     id: p["slug"], n: p["name"], pos: pos, cls: get(p, "class") || "FR", ht: league.height_in(get(p, "height")),
     wt: get(p, "weight_lbs"), j: get(p, "jersey"), a: get(p, "archetype"), dev: get(p, "dev_trait") || "Normal",
-    r: attrs.map((k) => int(get(ours, k, 50))),
-    g: attrs.map((k) => int(Math.max(0, get(pot, k, 50) - get(ours, k, 50)))),
+    r: attrs.map((k) => int(get(card, k, game_scale.MISSING))),
+    g: attrs.map((k) => int(Math.max(0, get(pot, k, game_scale.MISSING) - get(card, k, game_scale.MISSING)))),
     c: get(p, "coachability") || get(seeded, "coachability") || "Steady Grinder",
-    s: get(p, "stars") || get(seeded, "stars"), o: modules.rosters.overall(attrs.map((k) => int(get(ours, k, 50))), pos),
+    s: get(p, "stars") || get(seeded, "stars"), o: modules.rosters.overall(attrs.map((k) => int(get(card, k, game_scale.MISSING))), pos),
     home: get(get(p, "hometown") || {}, "state") || home,
     yrs: get(p, "yrs") !== null ? int(Number(p["yrs"])) : get(league.EXPERIENCE, get(p, "class") || "FR", 0),
   };
   if (truthy(get(p, "abilities"))) out["ab"] = p["abilities"].map((a) => `${pystr(get(a, "name"))}|${pystr(get(a, "tier"))}`);
   if (truthy(get(p, "target_mult"))) out["tm"] = p["target_mult"];
-  if (truthy(get(p, "dm"))) out["dm"] = p["dm"];
   league.own_decision(out, attrs, get(p, "dmv"));
   if (isNumber(get(out, "dmv"))) out["o"] = modules.rosters.overall(out["r"], pos, out["dmv"]);     // his overall reads the one he has
   return out;
@@ -245,15 +244,10 @@ export function own_decision(c, attrs, value = null) {
   // day, and it is its own from then on. Its room is set once the same way, from where those two could reach. Returns
   // whether he was given one now.
   if (c["pos"] !== "QB" || isNumber(get(c, "dmv"))) return false;
-  const mix = (ours) => {
-    const base = game_scale.base_from_ours(ours, "QB");
-    return 0.6 * get(base, "awareness", 50) + 0.4 * get(base, "throw_under_pressure", 50);
-  };
+  const mix = (card) => game_scale.card_value(card, "decision_making");
   const whole = (v) => Math.max(1, Math.min(99, int(round(v))));
-  const now = league.ratings(c, attrs);
-  const had = isNumber(value) ? whole(value)
-    : whole(shown.from_base_exact(mix(now)) + (get(c, "dm") || 0));      // ("dm": how far a save from before kept his from the two)
-  const top = whole(shown.from_base_exact(mix(league.potential(c, attrs))) + (isNumber(value) ? 0 : get(c, "dm") || 0));
+  const had = isNumber(value) ? whole(value) : whole(mix(league.ratings(c, attrs)));
+  const top = whole(mix(league.potential(c, attrs)));
   c["dmv"] = had;
   c["dmg"] = Math.max(0, top - had);
   delete c["dm"];
@@ -278,22 +272,22 @@ export function potential(c, attrs) {
 
 
 export function overall(c, attrs) {
-  // His overall: our formula on his ratings (game_scale.overall).
+  // His overall from his ratings (game_scale.overall).
   return game_scale.overall(league.ratings(c, attrs), c["pos"], get(c, "dmv"));
 }
 
 
 export function expand(c, attrs, team) {
-  // A league player in the source roster format build_teams reads: our ratings back through the
-  // frozen scale into the base values the engine's formulas were tuned on, and our overall.
-  const ours = league.ratings(c, attrs);
+  // A league player in the source roster format build_teams reads: his card numbers, what the engine's formulas read
+  // for them (game_scale.base_from_card), and his overall.
+  const card = league.ratings(c, attrs);
   const h = get(c, "ht") || 72;
-  const ovr = game_scale.overall(ours, c["pos"], get(c, "dmv"));
+  const ovr = game_scale.overall(card, c["pos"], get(c, "dmv"));
   return {
     slug: c["id"], name: c["n"], position: c["pos"], class: c["cls"], class_year: get(league.CLASS_YEAR, c["cls"], "Freshman"),
     team_slug: team["slug"], team: get(team, "short_name"), jersey: get(c, "j"),
     height: `${floordiv(h, 12)}'${mod(h, 12)}"`, weight_lbs: get(c, "wt"), archetype: get(c, "a"), dev_trait: get(c, "dev") || "Normal",
-    ovr: ovr, overall: ovr, ratings: game_scale.base_from_ours(ours, c["pos"]), skills: [...c["r"]],
+    ovr: ovr, overall: ovr, ratings: game_scale.base_from_card(card), skills: [...c["r"]],
     abilities: (get(c, "ab") || []).map((a) => {
       const parts = a.split("|"), one = {};
       if (parts.length > 0) one["name"] = parts[0];
@@ -302,7 +296,6 @@ export function expand(c, attrs, team) {
     }),
     coachability: get(c, "c"), stars: get(c, "s"),
     ...(truthy(get(c, "tm")) ? { target_mult: c["tm"] } : {}),
-    ...(truthy(get(c, "dm")) ? { dm: c["dm"] } : {}),
     ...(isNumber(get(c, "dmv")) ? { dmv: c["dmv"] } : {}),         // his own Decision Making: what the sim plays (build_teams.own_decision)
   };
 }
@@ -383,13 +376,13 @@ export function _filed_player(p, attrs, home, o = null) {
     const room = get(game_scale.ROOM, game_scale.group(pos), 1.0);
     const more = league.REAL_ROOM_CLASSES.includes(cls);          // seeded room runs short of a generated player's at the same stage
     for (let i = 0; i < attrs.length; i++) {
-      const k = attrs[i], ours = r[i];
-      const ea = seeded_ea[k] !== undefined ? seeded_ea[k] : filed[k];
-      if (ea === undefined) { g[i] = Math.max(0, 50 - ours); continue; }
-      const v = Number.isInteger(ea) && ea >= 0 && ea <= 99 ? game_scale.ea_row(pos, k)[ea] : game_scale.from_ea({ [k]: ea }, pos)[k];
-      let pot = int(round(Math.min(99, ours + room * Math.max(0, v - ours))));
-      if (more) pot = int(round(Math.min(99, ours + league.REAL_ROOM * (pot - ours))));
-      g[i] = int(Math.max(0, pot - ours));
+      const k = attrs[i], now = r[i];
+      const ea = seeded_ea[k];
+      if (ea === undefined) continue;                              // (no seeded potential for it: no room)
+      const v = game_scale.whole(ea);
+      let pot = int(round(Math.min(99, now + room * Math.max(0, v - now))));
+      if (more) pot = int(round(Math.min(99, now + league.REAL_ROOM * (pot - now))));
+      g[i] = int(Math.max(0, pot - now));
     }
   }
   const out = {
@@ -457,7 +450,7 @@ export function _compute_base(year) {
     teams[slug] = league._entry_of(filed[slug], slug);
   }
   build_teams.measured_recruiting(Object.entries(teams).map(([s, v]) => ({ slug: s, coaches: v["coaches"] })));
-  const lgd = { year: year, attrs: attrs, scale: "ours", overall_v: game_scale.overall_version(), teams: teams };
+  const lgd = { year: year, attrs: attrs, scale: "card", overall_v: game_scale.overall_version(), teams: teams };
   modules.programs.init(lgd);
   return lgd;
 }
@@ -511,7 +504,7 @@ export function lineup(roster, shape, year = league.FIRST_YEAR + 1, by_overall =
   let by_pos = {};
   for (const p of roster) {            // the coaches' eye: overall plus a little of what the numbers miss, fixed for the year
     p["_depth"] = by_overall ? p["ovr"] : (p["ovr"] + league.DEPTH_EXPERIENCE * get(league.EXPERIENCE, get(p, "class"), 0)
-      + new Random(`depth-${p["slug"]}-${year}`).gauss(0, get(league.DEPTH_EYE, get(league._EYE_GROUP, p["position"], "K"), 3.0)));
+      + new Random(`depth-${p["slug"]}-${year}`).gauss(0, get(league.DEPTH_EYE, get(league._EYE_GROUP, p["position"], "K"), 1.7)));
   }
   for (const p of sorted(roster, (q) => [-q["_depth"], q["name"]])) {
     if (!(p["position"] in by_pos)) by_pos[p["position"]] = [];
@@ -602,7 +595,7 @@ export function source_team(lg, slug, by_overall = false) {
   const on_field = new Set();
   for (const role of ["WR", "TE"]) for (const s of get(starters["offense"], role, [])) on_field.add(s);
   const seen = roster.filter((p) => on_field.has(p["slug"])).map((p) => p["ovr"]);
-  const middle = mean(seen.length ? seen : [50]);
+  const middle = mean(seen.length ? seen : [79]);
   for (const p of roster) {            // what the coaches see in a receiver they also throw him the ball for (real 2026 usage's spread),
     if ((p["position"] === "WR" || p["position"] === "TE") && !("target_mult" in p)) {     // and the ball spread around (TARGET_SPREAD)
       const z = new Random(`depth-${p["slug"]}-${lg["year"]}`).gauss(0, 1);

@@ -109,10 +109,7 @@ export function decision_of(p) {
 
 // ----- the tables: a rating in the file is a whole number 1-99, so each step is worked out once a number ---------------
 
-let _bases = null;                       // the file's number -> the source scale (shown.to_base)
-const _ours = new Map();                 // scale group -> for each rating in game_scale.keys() order: the file's number -> the stored skill
-const _tenths = new Map();               // scale group -> for each rating: the stored skill -> the source scale (game_scale._base_tenth)
-
+let _bases = null;                       // the file's number -> what the engine's formulas read (shown.to_base)
 function _base_of() {
   if (_bases === null) {
     _bases = new Array(100).fill(0);
@@ -121,56 +118,17 @@ function _base_of() {
   return _bases;
 }
 
-function _stored(v, grp, key) {
-  // The stored skill (game_scale: 50 the middle Power 4 starter of group `grp`) for the file's number `v`: the one
-  // the page shows as `v` again (shown.skill), the nearest such when the plain conversion is a point off.
-  const at = game_scale.to_ours(shown.to_base(v), grp, key);
-  for (let d = 0; d <= rosters.NEAR; d++) {
-    for (const o of d ? [at + d, at - d] : [at]) {
-      if (o >= 1 && o <= 99 && shown.skill(o, grp, key) === v) return o;
-    }
-  }
-  return at;
+export function stored(named, source_position = null) {
+  // A player's ratings (by skill: skills_of) as a career's league keeps them: a list in game_scale.keys() order, each
+  // the file's own number.
+  const ks = game_scale.keys(), whole = _whole(named, ks);
+  return ks.map((k) => whole[k]);
 }
 
-function _ours_rows(grp, ks) {
-  let rows = _ours.get(grp);
-  if (rows === undefined) {
-    rows = ks.map((k) => {
-      const row = new Array(100).fill(0);
-      for (let v = 1; v <= 99; v++) row[v] = _stored(v, grp, k);
-      return row;
-    });
-    _ours.set(grp, rows);
-  }
-  return rows;
-}
-
-function _tenth_rows(grp, ks) {
-  let rows = _tenths.get(grp);
-  if (rows === undefined) {
-    rows = ks.map((k) => {
-      const row = new Array(100).fill(0);
-      for (let v = 1; v <= 99; v++) row[v] = game_scale._base_tenth(v, grp, k);
-      return row;
-    });
-    _tenths.set(grp, rows);
-  }
-  return rows;
-}
-
-export function stored(named, source_position) {
-  // A player's ratings (by skill: skills_of) as a career's league keeps them: the stored skills, a list in
-  // game_scale.keys() order, for the position his ratings are for.
-  const ks = game_scale.keys(), rows = _ours_rows(game_scale.group(source_position), ks);
-  const whole = _whole(named, ks);
-  return ks.map((k, i) => rows[i][whole[k]]);
-}
-
-export function labeled(skills, source_position) {
-  // The other way: stored skills (a list in game_scale.keys() order) as the file names them, on the shown scale.
-  const ks = game_scale.keys(), grp = game_scale.group(source_position), out = {};
-  for (let i = 0; i < ks.length; i++) out[ks[i]] = i < skills.length ? shown.skill(skills[i], grp, ks[i]) : rosters.MISSING;
+export function labeled(skills, source_position = null) {
+  // The other way: a league's list (game_scale.keys() order) by skill.
+  const ks = game_scale.keys(), out = {};
+  for (let i = 0; i < ks.length; i++) out[ks[i]] = i < skills.length ? skills[i] : rosters.MISSING;
   return out;
 }
 
@@ -233,21 +191,11 @@ function _card(position, role, whose, base, named, exact) {
   return out;
 }
 
-function _overall(source_position, grp, skills, ks, own = null) {
-  // Our overall at the position his ratings are for: game_scale.overall's own sum on his stored skills, on the card
-  // it reads (prospects._card), without working that card out again from nothing. `own`: a quarterback's Decision
-  // Making, the number he has.
-  const ours = {}, base = {}, rows = _tenth_rows(grp, ks);
-  for (let i = 0; i < ks.length; i++) {
-    ours[ks[i]] = skills[i];
-    base[ks[i]] = rows[i][skills[i]];
-  }
-  const f = game_scale.card_formula(source_position);
-  if (!f) return game_scale.legacy_overall(ours, source_position) || 1;
-  const pos = prospects.engine_position({ ea_position: f["pos"], position: f["pos"] });
-  const card = _card(pos, pos, `stored ${grp}`, base, ours, false);
-  if (isNumber(own) && f["pos"] === "QB" && card["decision_making"] !== undefined) card["decision_making"] = game_scale.decision_card(own);
-  return int(round(Math.max(1, Math.min(99, f["const"] + sum(Object.entries(f["w"]).map(([k, w]) => w * get(card, k, 50)))))));
+function _overall(source_position, skills, ks, own = null) {
+  // His overall at the position his ratings are for (game_scale.overall) from a league's list of them.
+  const card = {};
+  for (let i = 0; i < ks.length; i++) card[ks[i]] = skills[i];
+  return game_scale.overall(card, source_position, own);
 }
 
 export function shown_attribute(p, key, value) {
@@ -275,25 +223,10 @@ export function shown_attribute(p, key, value) {
   return _attribute(kept, scale_group, key, base, filed, true) === value ? filed[src[0]] : null;
 }
 
-export function shown_skill(p, key, value) {
-  // The same for one of his ratings in the list of them all: the file's number while his kept skill is still the one
-  // the file gave him. null otherwise.
-  const filed = get(p, "filed");
-  if (!truthy(filed) || !isNumber(filed[key])) return null;
-  const ks = game_scale.keys(), i = ks.indexOf(key);
-  if (i < 0) return null;
-  return _ours_rows(game_scale.group(p["source_position"]), ks)[i][filed[key]] === value ? filed[key] : null;
-}
-
 export function overall(skills, source_position, own = null) {
-  // Our overall for stored skills (a list in game_scale.keys() order, each a whole number 1-99) at the position they
-  // are for: game_scale.overall's answer, quickly (a league of 12,000 players asks it of every one, twice).
+  // His overall from a league's list of his ratings (game_scale.keys() order) at the position they are for.
   const ks = game_scale.keys();
-  for (let i = 0; i < ks.length; i++) {
-    const v = skills[i];
-    if (!Number.isInteger(v) || v < 1 || v > 99) return game_scale.overall(Object.fromEntries(ks.map((k, j) => [k, get(skills, j, 50)])), source_position, own);
-  }
-  return _overall(source_position, game_scale.group(source_position), skills, ks, own);
+  return _overall(source_position, ks.map((k, i) => (Number.isInteger(skills[i]) && skills[i] >= 1 && skills[i] <= 99 ? skills[i] : rosters.MISSING)), ks, own);
 }
 
 function _means(data) {
@@ -323,11 +256,11 @@ function _mapped(p, named, ks) {
   // Player `p` with ratings `named` through the build's own map (build_teams.map_player), his engine attributes still
   // on the source scale: [the mapped player, his ratings on the source scale, the scale group they are for].
   const grp = game_scale.group(p["source_position"]);
-  const base = {}, skills = new Array(ks.length), bases = _base_of(), rows = _ours_rows(grp, ks);
+  const base = {}, skills = new Array(ks.length), bases = _base_of();
   for (let i = 0; i < ks.length; i++) {
     const v = named[ks[i]];
     base[ks[i]] = bases[v];
-    skills[i] = rows[i][v];
+    skills[i] = v;
   }
   const m = build_teams.map_player({ name: p["name"], slug: p["slug"], position: p["source_position"], ratings: base, ovr: 0,
     "class": get(p, "class"), height: get(p, "height"), weight_lbs: get(p, "weight"), jersey: get(p, "jersey"),
@@ -367,7 +300,7 @@ export function derive_team(t, means) {
       const [m, base, grp] = _mapped(p, named, ks);
       const skills = m["skills"];
       delete m["skills"];
-      m["ovr"] = _overall(p["source_position"], grp, skills, ks, decision_of(p));
+      m["ovr"] = _overall(p["source_position"], skills, ks, decision_of(p));
       m["role"] = get(p, "role");
       m["depth"] = get(p, "depth");
       m["skills"] = skills;
@@ -466,8 +399,6 @@ export function forget() {
   Object.assign(_one, { path: null, data: null });
   _is_roster.clear();
   _attr_cache.clear();
-  _ours.clear();
-  _tenths.clear();
   _names.clear();
   _bases = null;
 }
@@ -488,7 +419,7 @@ export function stored_ratings(path = rosters.FILE) {
   return out;
 }
 
-export const rosters = { FILE, FORMAT, MISSING, NEAR, BLENDS, OWN, names_for, skills_of, file_ratings, decision_of, stored, labeled, overall, shown_attribute, shown_skill, engine_attributes, derive_team, derive,
+export const rosters = { FILE, FORMAT, MISSING, NEAR, BLENDS, OWN, names_for, skills_of, file_ratings, decision_of, stored, labeled, overall, shown_attribute, engine_attributes, derive_team, derive,
   read, shared, loaded, forget, stored_ratings };
 
 modules.rosters = rosters;

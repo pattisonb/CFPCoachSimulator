@@ -13,6 +13,7 @@ import { ValueError } from "../coaches.js";
 import { ratings as ratings_v2 } from "../../teamdata_js/ratings.js";
 import { shown as _shown } from "../../teamdata_js/shown.js";
 import { game_scale } from "../../teamdata_js/game_scale.js";
+import { old_saves } from "../../teamdata_js/old_saves.js";
 import { season } from "../season_ns.js";
 
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
@@ -235,8 +236,8 @@ function position_candidates(state, slug, role) {
     if (pos === "KR" && season.RETURN_POSITIONS_OUT.includes(p["position"]) && !current.includes(p["slug"])) {
       continue;                                  // linemen, quarterbacks and kickers never return (the engine agrees)
     }
-    const rating = _shown.overall(pos === "KR" ? season.house_value("KR", "return_rating", season.return_value(p))
-      : season.same_group(pos, p["position"]) ? season.shown_overall(p) : season.house_value(pos, "overall", season.overall_at(p, pos)));
+    const rating = season.same_group(pos, p["position"]) && pos !== "KR" ? season.shown_overall(p)
+      : _shown.overall(pos === "KR" ? season.house_value("KR", "return_rating", season.return_value(p)) : season.house_value(pos, "overall", season.overall_at(p, pos)));
     const rec = get(ss, `${p["name"]}|${p["position"]}`);
     const st = truthy(rec) ? rec["stats"] : {};
     const group = awards.Pool._group(p["position"], get(p, "role"), st) || p["position"];
@@ -488,12 +489,7 @@ function playlink_team(state, slug) {
     // his 54 skills as the game shows them (the one scale: the roster file's numbers, the card's numbers), in
     // game_scale.keys() order: the file's own number while his skill is still the one the file gave him, as the page
     // shows it (season.all_skills)
-    const ks = game_scale.keys(), grp = game_scale.group(get(p, "role") || p["position"]);
-    const from_file = truthy(get(p, "filed"));
-    const skills = (get(p, "skills") || []).map((v, i) => {
-      const filed = from_file ? modules.rosters.shown_skill(p, ks[i], v) : null;
-      return filed !== null ? filed : _shown.skill(v, grp, ks[i]);
-    });
+    const skills = [...(get(p, "skills") || [])];
     const out = { slug: p["slug"], name: p["name"], pos: get(p, "role") || p["position"], skills };
     const who = `${p["name"]}|${p["position"]}`;
     out["form"] = mood === null ? 0 : round(get(mood["players"], who, 0.0), 3);
@@ -1056,12 +1052,7 @@ function load_season(season_id) {
     }
   }
   season.schedule_ahead(state);             // seasons saved before the postseason was set a week early
-  if (game_scale.upgrade(state)) {          // careers saved while their league and recruits were in EA numbers
-    // (nothing more to do)
-  } else if (truthy(get(state, "recruiting")) && get(state["recruiting"], "grades") !== "game") {
-    modules.recruiting.upgrade_grades(state);   // careers saved when grades were class percentiles
-  }
-  game_scale.upgrade_overalls(state);     // careers saved before the overall was built on the card's attributes
+  old_saves.upgrade(state);                 // careers saved before every number was the card's
   if (truthy(get(state, "recruiting"))) {
     modules.recruiting.upgrade_asks(state);     // careers saved before prospects had NIL asks
     modules.recruiting.upgrade_generational(state);   // careers saved before generational prospects

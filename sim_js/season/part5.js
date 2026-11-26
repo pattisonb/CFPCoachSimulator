@@ -368,7 +368,7 @@ function page_ratings(t, hurt = []) {
     const n = season.role_starters(t, role), value = get(season.PAGE_POS_VALUE, role, 1.0);
     const unit = role === "K" || role === "P" ? "special_teams" : _in(role, league.OFFENSE_ROLES) ? "offense" : "defense";
     fit.slice(0, 2 * n).forEach((p, i) => {
-      units[unit].push([_shown.overall(season.shown_overall(p)), i < n ? value : value * season.PAGE_DEPTH_WEIGHT]);
+      units[unit].push([season.shown_overall(p), i < n ? value : value * season.PAGE_DEPTH_WEIGHT]);
     });
   }
 

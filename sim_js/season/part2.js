@@ -170,9 +170,8 @@ function _roster_player(state, slug, player_slug) {
 
 function position_options(state, slug, player_slug) {
   // What one of a team's players would be at every position (kickers and punters among
-  // themselves): position_fit.project from the league file's player (his skills on the new
-  // group's scale, the ones he has never used discounted, his size against the spot's), where he
-  // is now first, then best first.
+  // themselves): position_fit.project from the league file's player (the skills he has never used discounted, his
+  // size against the spot's), where he is now first, then best first.
   const lg = modules.league;
   const p = season._roster_player(state, slug, player_slug);
   const t = season.load_teams()[slug];
@@ -180,7 +179,7 @@ function position_options(state, slug, player_slug) {
   if (base === undefined) throw new Error("StopIteration");
   const out = position_fit.options(season._skills(base), get(base, "height_in"), get(base, "weight"), get(base, "role") || base["position"],
     get(p, "role") || p["position"], lg.GROUP_OF);
-  return out.map((o) => ({ ...o, overall: _shown.overall(o["overall"]) }));      // as the page shows an overall
+  return out;
 }
 
 

@@ -315,7 +315,7 @@ function engine_rating(p, key, ours) {
 }
 
 function shown_overall(p, base = null) {
-  // The overall on the card: our overall (game_scale.js, built onto every player as "ovr"). A
+  // The overall on the card (game_scale.overall, built onto every player as "ovr"). A
   // god-mode edit moves it by what the edit does to the engine composite (`base` is the unedited
   // player). A player without one (added from real box scores) shows the engine composite.
   if (!isNumber(get(p, "ovr"))) return season.house_value(p["position"], "overall", season.player_overall(p));
@@ -336,9 +336,8 @@ function page_attribute(p, key, value) {
 }
 
 function page_overall(p, base = null) {
-  // His overall as the page shows it: shown_overall on the scale ratings are shown on (teamdata_js/shown.js, where the
-  // average player is about a 70). Every view sends this; the game's own rules read shown_overall.
-  return _shown.overall(season.shown_overall(p, base));
+  // His overall as the page shows it: shown_overall, the number the rules read too.
+  return season.shown_overall(p, base);
 }
 
 function same_group(a, b) {

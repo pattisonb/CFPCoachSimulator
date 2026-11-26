@@ -206,10 +206,9 @@ export function map_player(p, pos = null) {
     "position": pos,
     "source_position": p["position"],
     "overall": p["overall"],
-    // our overall (game_scale.js: the game's own 1-99 scale, 50 the middle Power 4 starter):
-    // the player card's overall. The engine never reads it.
+    // his overall (game_scale.overall on his card numbers): the player card's overall. The engine never reads it.
     "ovr": get(p, "ovr") !== null ? p["ovr"] : (game_scale.has_overall()
-      ? game_scale.overall(game_scale.ours_from_base(r, p["position"]), p["position"], get(p, "dmv")) : null),
+      ? game_scale.overall(game_scale.card_from_base(r), p["position"], get(p, "dmv")) : null),
     // identity for awards and the roster view: FR, FRRS, SO, SORS, JR, JRRS, SR, SRRS
     "class": get(p, "class"),
     "height": get(p, "height"),
@@ -248,13 +247,11 @@ const RETURN_ATTR = "return_rating";
 // stretching by SPREAD_SCALE turns an ordinary raw value into an extreme one when the
 // position's starters bunch: linemen got coverage of 90-99 and a few starting receivers
 // route running of 1. A skill a position does not use is held to OFF_SKILL_RANGE; a core
-// skill (CORE_SKILLS, below) of an established player (CORE_FLOOR_OVR or more by the overall as
-// first fit, game_scale.legacy_overall: never the card's overall, whose formula and constants are
-// refit and recentered, and must not move an engine rating) keeps CORE_FLOOR. Speed, strength,
-// intelligence and endurance are left alone.
+// skill (CORE_SKILLS, below) of an established player (an overall of CORE_FLOOR_OVR or more) keeps CORE_FLOOR.
+// Speed, strength, intelligence and endurance are left alone.
 const PHYSICAL = ["speed", "strength", "intelligence", "endurance"];   // every position uses these
 const OFF_SKILL_RANGE = [25, 85];
-const CORE_FLOOR = 20, CORE_FLOOR_OVR = 9;    // *tune* 9: every player EA rated 60 or more (the rule as first set) is over it
+const CORE_FLOOR = 20, CORE_FLOOR_OVR = 60;   // *tune* an overall of 60 or more (the rule as first set)
 const CLAMP_EXTREMES = !env.BUILD_NO_CLAMP;   // BUILD_NO_CLAMP=1 builds without it (for before/after tests)
 
 // -> a Set of slugs
@@ -288,8 +285,8 @@ export function team_from_source(t) {
     m["starter"] = starters.has(p["slug"]);
     [m["role"], m["depth"]] = roles.has(p["slug"]) ? roles.get(p["slug"]) : [null, null];
     m["_src"] = p;
-    // his skills on our scale (game_scale.js), what comps and the card overall read
-    m["skills"] = truthy(get(p, "skills")) ? p["skills"] : Object.values(game_scale.ours_from_base(p["ratings"], p["position"]));
+    // his ratings as card numbers (game_scale.keys() order), what comps and the card overall read
+    m["skills"] = truthy(get(p, "skills")) ? p["skills"] : game_scale.keys().map((k) => get(game_scale.card_from_base(p["ratings"]), k, game_scale.MISSING));
     if (get(p, "target_mult") !== null) {          // a career's league: his share of targets, kept with him
       m["target_mult"] = p["target_mult"];
     }
@@ -469,13 +466,13 @@ export function depth_sort(t) {
 }
 
 export function established(p) {
-  // Whether the core-skill floor is his (CORE_FLOOR_OVR): read off his skills by the overall as first fit, at the
-  // position they were made for. The card's overall ("ovr") is not asked: the engine never reads it.
+  // Whether the core-skill floor is his (CORE_FLOOR_OVR): his overall from his ratings, at the position they were
+  // made for.
   if (!truthy(get(p, "skills"))) return false;
-  const ours = {};
+  const card = {};
   const keys = game_scale.keys();
-  for (let i = 0; i < Math.min(keys.length, p["skills"].length); i++) ours[keys[i]] = p["skills"][i];
-  return (game_scale.legacy_overall(ours, p["source_position"]) || 0) >= build_teams.CORE_FLOOR_OVR;
+  for (let i = 0; i < Math.min(keys.length, p["skills"].length); i++) card[keys[i]] = p["skills"][i];
+  return game_scale.overall(card, p["source_position"]) >= build_teams.CORE_FLOOR_OVR;
 }
 
 export function clamp_extremes(p) {

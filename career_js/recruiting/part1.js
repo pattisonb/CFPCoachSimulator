@@ -215,7 +215,7 @@ recruiting.ASK_MULT_MAX = 2.0;
 // tests/test_sim_golden.mjs stays byte-identical.
 recruiting.AI_OVER_ASK = 1.1;                          // an AI school offers up to this times his ask from it
 // generational prospects: a public tag on a few top four- and five-stars, drawn once per class *tune*
-recruiting.GENERATIONAL_FROM = 95;                     // true projected overall at least this
+recruiting.GENERATIONAL_FROM = 96;                     // true projected overall at least this
 recruiting.GENERATIONAL_ODDS = { 5: 0.4, 4: 0.1 };     // a qualifying prospect is drawn this often, by stars
 recruiting.GENERATIONAL_MAX = 4;                       // at most this many a class (some years none)
 recruiting.GENERATIONAL_ASK = 1.5;                     // his NIL ask is this times larger
@@ -247,12 +247,12 @@ recruiting.REWARD_WHY = { winning: "winning record", nine_wins: "nine wins", con
   playoff: "made the playoff", host: "hosted a playoff game", title: "national champion", goal: "AD goal met" };
 recruiting.PORTAL_FLOOR = 0.30;                        // the collective's portal fund: no program enters the portal with less
 recruiting.CARRY_CAP = { 1: 0.15, 2: 0.20, 3: 0.25, 4: 0.30, 5: 0.30 };   // the share of next year's budget that may carry over, by program tier
-recruiting.PORTAL_ASK = [25, 0.6];                     // an entrant's ask: this plus this per overall point over 50, times his position
-recruiting.PORTAL_RANK_NOISE = 3.0;                    // the public portal ranking: his overall plus this much noise (points)
+recruiting.PORTAL_ASK = [25, 1.3, 79];                 // an entrant's ask: this plus this per overall point over the third, times his position
+recruiting.PORTAL_RANK_NOISE = 1.6;                    // the public portal ranking: his overall plus this much noise (points)
 recruiting.PORTAL_LOOK = 0.5;                          // a staff's look at a transfer errs this much of a high schooler's: there is film
 recruiting.PORTAL_WALK_ON = 0.5;                       // an entrant unsigned after the last week takes a walk-on spot this often
 recruiting.PORTAL_CHURN = 8;                           // portal spots a Power 4 school (and you) make by releasing the end of the roster
-recruiting.TIER_FROM_OVERALL = [[70, 5], [58, 4], [45, 3], [0, 2]];   // a transfer's standing for the boards' star lifts, from his overall
+recruiting.TIER_FROM_OVERALL = [[87, 5], [83, 4], [77, 3], [0, 2]];   // a transfer's standing for the boards' star lifts, from his overall
 recruiting.ROSTER_LIMIT = 85;                          // EA's roster limit (offseason.ROSTER_LIMIT)
 recruiting.MIN_OPEN = 12;
 recruiting.EARLY_LEAVERS = 6;                          // returning players expected to leave early (draft, transfers, quitting; offseason.js) *tune*
@@ -458,19 +458,19 @@ function start(state, year = 2027) {
     p["nil_ask"] = recruiting.nil_ask(p, year, get(state, "rng_state", 0));
     prospects[p["id"]] = p;
   }
-  // the class is drawn by a model learned from real players and converted to our scale at once:
-  // only our ratings are kept (as lists in one key order), with our overall now and projected
+  // the class is drawn by a model learned from real players, in card numbers: kept as lists in one key order, with
+  // his overall now and projected
   const attrs = game_scale.keys();
   for (const p of Object.values(prospects)) {
     const ratings_ea = p["ratings_ea"];
     delete p["ratings_ea"];
-    const ours = game_scale.from_ea(ratings_ea, p["ea_position"]);
+    const card = game_scale.from_ea(ratings_ea, p["ea_position"]);
     const potential_ea = p["potential_ea"];
     delete p["potential_ea"];
-    const pot = game_scale.potential_from_ea(potential_ea, ours, p["ea_position"]);
-    p["ratings"] = attrs.map((k) => get(ours, k, 50));
-    p["potential"] = attrs.map((k) => get(pot, k, 50));
-    p["ovr"] = game_scale.overall(ours, p["ea_position"]);
+    const pot = game_scale.potential_from_ea(potential_ea, card, p["ea_position"]);
+    p["ratings"] = attrs.map((k) => get(card, k, game_scale.MISSING));
+    p["potential"] = attrs.map((k) => get(pot, k, game_scale.MISSING));
+    p["ovr"] = game_scale.overall(card, p["ea_position"]);
     p["pot_ovr"] = game_scale.overall(pot, p["ea_position"]);
     for (const k of ["overall_ea", "overall"]) delete p[k];
   }
@@ -482,7 +482,7 @@ function start(state, year = 2027) {
     year, prospects, lists,
     status,
     offers: {}, visits: {}, contacts: {}, hours: {}, scout_points: {}, nil: {}, revealed: {}, board: [], log: [],
-    boards: {}, seed: get(state, "rng_state", 0), topics_v: 2, reads: {}, attrs, grades: "game", scale: "ours", overall_v: game_scale.overall_version(),
+    boards: {}, seed: get(state, "rng_state", 0), topics_v: 2, reads: {}, attrs, grades: "game", scale: "card", overall_v: game_scale.overall_version(),
     pending: {}, why: {}, ranks: {}, reports: [], action_points: {}, leader_changes: {},
   };
   state["recruiting"]["generational"] = recruiting.draw_generational(state["recruiting"]);
@@ -494,7 +494,7 @@ function start(state, year = 2027) {
 function nil_ask(p, year, seed) {
   // What he wants in NIL points: his stars and position, with a spread (a transfer: his overall).
   const rng = new Random(`ask-${year}-${seed}-${p["id"]}`);
-  const base = truthy(get(p, "portal")) ? Math.max(0.0, recruiting.PORTAL_ASK[0] + recruiting.PORTAL_ASK[1] * (p["ovr"] - 50))
+  const base = truthy(get(p, "portal")) ? Math.max(0.0, recruiting.PORTAL_ASK[0] + recruiting.PORTAL_ASK[1] * (p["ovr"] - recruiting.PORTAL_ASK[2]))
     : get(recruiting.ASK, p["stars"], 0);
   return int(round(base * get(recruiting.ASK_POS, p["ea_position"], 1.0) * Math.exp(rng.gauss(0, recruiting.ASK_SPREAD))));
 }

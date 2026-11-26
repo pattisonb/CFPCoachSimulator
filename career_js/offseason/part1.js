@@ -89,21 +89,21 @@ offseason.DRAFT_SHIFT = { "QB": 0.161, "RB": -0.159, "WR": -0.41, "TE": -0.876, 
 offseason.DRAFT_NOISE = 0.25;                                 // the scouts' disagreement, in standard deviations of grade *tune*
 offseason.DRAFT_REF_SHARE = 0.08;                             // a grade is against the top this share of a position's draft-eligible players ... *tune*
 offseason.DRAFT_REF_MIN = 12;                                 // ... at least this many of them *tune*
-offseason.DRAFT_MIN_SD = 4.0;                                 // ... and their spread taken as at least this (card overall points) *tune*
+offseason.DRAFT_MIN_SD = 1.5;                                 // ... and their spread taken as at least this (overall points) *tune*
 offseason.DRAFT_ABS_SHARE = 0.33;                             // the share of a grade against every position's prospects, not his own (a 99 is a 99): slow physical growth leaves a year's best QB near 76, and the first pick should still be a top player *tune*
 offseason.DRAFT_RUN = 0.12;                                   // the board steps the n-th player at a position down this much a place ... *tune*
 offseason.DRAFT_RUN_CAP = 6;                                  // ... for at most this many places (needs spread a first round) *tune*
 // projected first-rounders almost always go (the real drafts: a handful of first-round underclassmen stay a year) *tune*
 offseason.DECLARE = [[16, 0.99], [32, 0.97], [64, 0.88], [100, 0.65], [160, 0.35], [257, 0.12], [10 ** 9, 0.004]];   // projected pick -> an underclassman declares
 offseason.UNDERCLASS_ELIGIBLE = new Set(["JR", "JRRS", "SORS"]);       // three years out of high school
-offseason.ELITE_DECLARE = 95;                                 // an eligible underclassman rated this (card overall) or better always declares ... *tune*
+offseason.ELITE_DECLARE = 96;                                 // an eligible underclassman rated this (overall) or better always declares ... *tune*
 offseason.ELITE_MIN_GAMES = 6;                                // ... after a decent season: at least this many games played (half a regular season) *tune*
 offseason.ELITE_STAY = 0.02;                                  // such a player stays this often, whatever you offer at Keep Them Home *tune*
 offseason.AI_KEEP_DRAFT = [[32, 0.03], [100, 0.08], [10 ** 9, 0.2]];   // an AI school talks an early entrant projected at this pick into staying (your odds offering nothing) *tune*
 offseason.PORTAL_BASE = { "FR": 0.05, "FRRS": 0.09, "SO": 0.10, "SORS": 0.12, "JR": 0.10, "JRRS": 0.12, "SR": 0.18 };
 offseason.PORTAL_USAGE = { "starter": 0.12, "rotation": 0.65, "bench": 1.3 };
 offseason.PORTAL_LOSING = 1.25;                               // a losing season pushes players out
-offseason.TRANSFER_UP_FROM = 50; offseason.TRANSFER_UP = 0.40;              // a Group of 5 player this good (card overall) enters this often
+offseason.TRANSFER_UP_FROM = 79; offseason.TRANSFER_UP = 0.40;              // a Group of 5 player this good (overall) enters this often
 offseason.QUIT = 0.012;                                       // quitting or a medical retirement, a year
 offseason.PROMISE_BROKEN = 3.0;                               // a player promised a starting role who did not get it: his portal chance next year
 offseason.KEPT_STAY = 0.7;                                    // a player you kept home: his portal chance the year after
@@ -113,10 +113,10 @@ offseason.NIL_TIER_PAY = { 1: 60, 2: 40, 3: 20, 4: 8, 5: 2 };    // what a start
 offseason.NIL_PULL = 0.25;                                    // a starter's or rotation player's portal chance adds this times his shortfall's share of his market ...
 offseason.NIL_PULL_CAP = 0.30;                                // ... at most this (a kept player was paid: exempt the next year)
 offseason.PROGRAM_PULL = 0.10;                                // ... and this when the program is slipping: a tier lost this year, a new head coach's first year,
-offseason.PROGRAM_FLOOR = 45;                                 // or a losing year under a weak developer (WEAK_COACH); for players rated at least this (ours)
+offseason.PROGRAM_FLOOR = 77;                                 // or a losing year under a weak developer (WEAK_COACH); for players rated at least this (overall)
 offseason.WEAK_COACH = 50;                                    // a head coach's player development under this, after a losing year: players want a better coach
 offseason.RISING_STAY = 0.5;                                  // a program that rose a tier this year: its starters' portal chances, times this
-offseason.RETAIN_ASK = [25, 0.8];                             // what a leaver wants to stay: this plus this per card-overall point over 50, times his position
+offseason.RETAIN_ASK = [25, 1.8, 79];                         // what a leaver wants to stay: this plus this per overall point over the third, times his position
 offseason.RETAIN_PLAYING_TIME = 1.5;                          // ... times this when what he really wants is snaps (NIL can still buy him)
 offseason.RETAIN_DRAFT = 2.5;                                 // ... times this for a draft entrant (and 1.5 more for a top-100 projection)
 offseason.RETAIN_LOWBALL = 0.5;                               // under this share of his ask an offer is worth nothing
@@ -146,11 +146,11 @@ offseason.YEAR_CURVE = [0.45, 0.7, 1.35, 1.35, 1.0];
 // develops at this pace or his year's, whichever is more (a true freshman quarterback who threw for 3,400
 // yards gained one point on 0.45) *tune*
 offseason.STARTER_YEAR = 1.0;
-// the best get better slowest: above DEV_TOP (card overall) a player's pace is divided by 1 + his points over
+// the best get better slowest: above DEV_TOP (overall) a player's pace is divided by 1 + his points over
 // it / DEV_TOP_SPAN, so the real rosters' top juniors (fast learners with big rooms and big seasons) do not
 // all become 85+ seniors: a career's senior classes keep the real 2026 seniors' top end (tests/test_progression_realism.mjs) *tune*
-offseason.DEV_TOP = 55;
-offseason.DEV_TOP_SPAN = 10;
+offseason.DEV_TOP = 81;
+offseason.DEV_TOP_SPAN = 4;
 // the most of his room an offseason closes: the pace's factors (his year, his program, his staff, his
 // production, his position, his third year) compound to 2-4 for a few players a year, a rate past 1,
 // and a real junior rated 49 with a 1,300-point room became a 99 in one offseason (a career's first
@@ -219,7 +219,7 @@ function _attrs(lgd) {
 
 
 function house(pos, ovr) {
-  // A league player's overall as shown: ours already ("o", game_scale.overall of his ratings).
+  // A league player's overall ("o", game_scale.overall of his ratings).
   return int(ovr);
 }
 
@@ -557,7 +557,7 @@ function _retention_entries(state, lgd, pending) {
       [key, ahead] = ["fresh_start", null];
     }
     const ovr = offseason.house(p["pos"], p["o"]);
-    const base = Math.max(10, offseason.RETAIN_ASK[0] + offseason.RETAIN_ASK[1] * (ovr - 50)) * get(recruiting.ASK_POS, p["pos"], 1.0);
+    const base = Math.max(10, offseason.RETAIN_ASK[0] + offseason.RETAIN_ASK[1] * (ovr - offseason.RETAIN_ASK[2])) * get(recruiting.ASK_POS, p["pos"], 1.0);
     let kind, ask;
     if (intent === "draft") {
       kind = "nil";
@@ -772,12 +772,12 @@ function _resolve_retention(state) {
 offseason.PERF_RATE = 0.25;                 // development rate change per standard deviation of production over the average starter's
 offseason.PERF_RANGE = [-1.0, 2.4];         // ... so a player develops 0.75 to 1.6 times as fast
 offseason.BREAKOUT_FROM = 1.0;              // production this far over the average starter raises his ceiling ...
-offseason.BREAKOUT_ROOM = 2.5;              // ... by this many points (our scale) per standard deviation beyond half of one
-offseason.HONOR_ROOM = { "heisman": 8, "national": 6, "all_america_1": 5, "national_finalist": 3, "all_america_2": 3,
+offseason.BREAKOUT_ROOM = 2.9;              // ... by this many rating points per standard deviation beyond half of one
+offseason.HONOR_ROOM = { "heisman": 9, "national": 7, "all_america_1": 6, "national_finalist": 3, "all_america_2": 3,
   "conference_award": 3, "all_conference_1": 2, "all_conference_2": 1 };
 offseason.HONOR_NAMES = { "heisman": "Heisman Trophy", "all_america_1": "All-America First Team", "all_america_2": "All-America Second Team",
   "all_conference_1": "All-Conference First Team", "all_conference_2": "All-Conference Second Team" };
-offseason.ROOM_CAP = 10;                     // the most a year's honors and production add to his ceiling
+offseason.ROOM_CAP = 12;                     // the most a year's honors and production add to his ceiling
 offseason.LEVEL_UP = 0.4;                   // a national award winner or All-American moves up a coachability level this often
 offseason.COACH_UP_BREAKOUT = 0.20;          // a breakout year (production BREAKOUT_FROM over the average starter) moves him up a level this often
 offseason.COACH_UP_DEVELOPER = [[90, 0.12], [80, 0.08]];   // his coaches' player development (coach_factor's blend) at least this: a level up this often a year

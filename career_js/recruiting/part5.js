@@ -576,7 +576,7 @@ function portal_rc(state, entrants, year) {
     lists: each(() => ({})),
     status: each(() => ({ committed: null, signed: null, fcs: false })),
     offers: {}, visits: {}, contacts: {}, hours: {}, scout_points: {}, nil: {}, revealed: {}, board: [], log: [],
-    boards: {}, seed, topics_v: 2, reads: {}, attrs, grades: "game", scale: "ours", overall_v: game_scale.overall_version(),
+    boards: {}, seed, topics_v: 2, reads: {}, attrs, grades: "game", scale: "card", overall_v: game_scale.overall_version(),
     pending: {}, why: {}, ranks: {}, reports: [], action_points: {}, leader_changes: {} };
 }
 

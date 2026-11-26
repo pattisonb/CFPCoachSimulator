@@ -27,7 +27,7 @@ const GROUP_DECAY = 0.5;                                 // *tune* each offseaso
 const FLOOR = 35;                                        // *tune* below this a recruit does not believe a promise
 const PROMISE_MULT = [0.5, 1.5];                         // *tune* a believed promise's points run from this at 0 to this at 100
 const CARES_MORE = 1.5;                                  // *tune* a Guarded recruit, or one whose decider is playing time, reads the word this much harder
-const STAR_OVR = 70;                                     // *tune* a house overall this high makes a transfer a star for STAR_COST
+const STAR_OVR = 87;                                     // *tune* an overall this high makes a transfer a star for STAR_COST
 const LOG_KEEP = 20;                                     // the log keeps this many lines
 
 export function _year(state) {
