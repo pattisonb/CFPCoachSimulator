@@ -5,6 +5,23 @@ stored, sent between parts of the game, compared in a rule, or named in code or 
 Play formulas take card numbers as their input. Old saves are converted once on load (the one place old numbers live).
 The golden digest moves (the player asked for this change to the sim). When this list is empty this file is deleted.
 
+## Progress and decisions (keep this current)
+- Done and committed: phase 1 core (league, recruits, walk-ons, position moves, overall formula on card numbers,
+  development, every overall cutoff, views, teamdata_js/old_saves.js) and phase 3 (coaches in the roster file and
+  every coach rule; one team rating, the page's average, computed as teams are read; team_ratings lines gone).
+- Found along the way: the recruiting model's draws and the roster file's seeded potentials (potential_ea) are already
+  card numbers (EA's scale is the card scale: identical for every whole number), so no conversion. The names `_ea`
+  and `potential_ea` still say otherwise: rename them in phase 5 (data/player_potential.json's key too).
+- Engine decision: the play engine reads each player's card numbers and nothing worked out and stored. Every formula
+  is restated on "card points over the average FBS starter at his position" (each position's averages are card
+  numbers, frozen), constants in card points; tools/realism.mjs --check is the gate. Team files (season one's
+  derive and a career's data/leagues) carry card numbers only.
+- Scouting words, strengths and weaknesses stay relative to his position, with each position's lines in card numbers.
+- Tests that assert old numbers are converted at the end (test_position_fit, test_grades, test_coach_development,
+  test_programs' carousel snapshot, test_league_fill's room by class and team targets). Baseline worktree for
+  comparing a failing test with before the sweep: commit 19b7f35.
+- League files exported before carry the old numbers: convert on import (no stamp) in phase 5.
+
 ## Phase 1: players (skills, room, overall, potential)
 - Overall: one formula per position on the 54 card skills (fit once from today's card overalls: 96% within a point).
   game_scale.overall, _card_overall, card_formula, legacy_overall, OVERALL_FLOOR, position_skills; data/game_scale.json.
