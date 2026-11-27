@@ -3,7 +3,7 @@
 // awards view, the shared pool, the week-by-week advance to a target, box-score files, and saving and loading a
 // season (with the class file beside it). engine_js/PORTING.md ("Big Files in Parts") says how the parts share the namespace.
 import { round, int, sorted, cmp, get, isNumber, truthy, json_dumps, parse_ordered } from "../../engine_js/pyrt.js";
-import { read_text, write_text, exists, list_dir, mtime } from "../../engine_js/files.js";
+import { read_text, write_text, exists, list_dir, mtime, remove } from "../../engine_js/files.js";
 import { modules } from "../../engine_js/modules.js";
 import { formations } from "../../engine_js/api.js";
 import * as game_job from "../game_job.js";
@@ -893,6 +893,32 @@ function _rename_stand_ins_files(season_id) {
   }
 }
 
+function prune_boxes(state) {
+  // A career's box scores from seasons before this one: only the games of a team you coached are kept (every other
+  // game's goes). Every game in the country saves one, some 70 MB a season, and a browser holds all of a career's in
+  // memory while it is open: by its sixth season a tab ran to 2.5 GB (the player). This season's are all kept (a
+  // week's results open any game). Once a season (career.boxes_pruned); a box whose teams cannot be read is kept.
+  const car = get(state, "career");
+  if (!truthy(car)) return 0;
+  const year = season.season_year(state);
+  if (get(car, "boxes_pruned") === year) return 0;
+  const d = season.box_dir(state);
+  let gone = 0;
+  if (exists(d)) {
+    const keep = new Set([state["team"], ...(get(car, "history") || []).map((h) => get(h, "team")), ...(get(car, "schools") || []).map((x) => get(x, "team"))]);
+    for (const name of list_dir(d)) {
+      if (!name.endsWith(".json") || get(state["games"], name.slice(0, -5)) !== null) continue;
+      let text;
+      try { text = read_text(`${d}/${name}`); } catch (e) { continue; }
+      const m = /"home_slug":"([^"]*)","away_slug":"([^"]*)"/.exec(text.slice(-600));    // (the box's last two fields)
+      if (m === null || keep.has(m[1]) || keep.has(m[2])) continue;
+      try { remove(`${d}/${name}`); gone += 1; } catch (e) { /* a file that cannot be removed stays */ }
+    }
+  }
+  car["boxes_pruned"] = year;
+  return gone;
+}
+
 function has_box(state, g) {
   return truthy(get(g, "played")) && (has(get(state, "my_boxes", {}), g["event_id"]) || exists(`${season.box_dir(state)}/${g["event_id"]}.json`));
 }
@@ -1029,6 +1055,7 @@ function load_season(season_id) {
   }
   if (truthy(get(state, "career"))) {
     modules.coach_names.distinct(state);        // careers saved with one coach in two jobs or two coaches under one name
+    season.prune_boxes(state);                  // careers that kept every game's box score from every season (memory)
   }
   return state;
 }
@@ -1038,6 +1065,6 @@ Object.assign(season, {
   position_candidates, depth_order, set_depth_order, move_depth, reset_depth, _depth_card, _players_by_role,
   depth_changed, depth_chart_view, playlink_team, playlink_game, depth_roster_view, _number_labels, formations_view, awards_view,
   _with_player_ids, _heisman_with_final_lines, shared_pool, close_pool, advance_to, my_results, box_dir, save_box,
-  forget_fresh_boxes, load_box, box_names, _rename_stand_ins_files, has_box, save_season, _class_path, _class_key,
+  forget_fresh_boxes, load_box, box_names, _rename_stand_ins_files, prune_boxes, has_box, save_season, _class_path, _class_key,
   _without_class, _with_class, _file_key, _note_current, load_season,
 });

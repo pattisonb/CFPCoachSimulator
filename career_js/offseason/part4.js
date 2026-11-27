@@ -596,7 +596,7 @@ function summary(state) {
   const aw = get(state, "awards") || {};
   const candidates = get(get(get(aw, "national") || {}, "heisman") || {}, "candidates");
   const top = (truthy(candidates) ? candidates : [null])[0] || {};
-  const out = { year: season.season_year(state), wins, losses, ap_rank: rank,
+  const out = { year: season.season_year(state), team: me, wins, losses, ap_rank: rank,
     champion: get(state, "champion"), won_title: get(state, "champion") === me,
     conference_champion: get(get(state, "champions", {}), state["conference"]) === me,
     heisman: truthy(get(top, "name")) ? { name: get(top, "name"), team: get(top, "team") } : null };
@@ -742,6 +742,7 @@ function next_season(state) {
   prospects.reset_caches();
   const old = lg.path(state["id"], year - 1);
   _unlink(old);
+  season.prune_boxes(new_);                 // the season just played: only your games' box scores are kept
   return new_;
 }
 
