@@ -696,8 +696,17 @@
   text-transform: uppercase;
   cursor: pointer;
   transition:
+    opacity 160ms ease-out,
     transform 120ms ease-out,
     box-shadow 120ms ease-out;
+}
+
+/* it hangs over the last cards, so with a pointer it stands faint until the pointer comes to it (the player's note:
+   it should not cover things); a touch screen has no hover, so there it stays whole */
+@media (hover: hover) {
+  .recap__onward:not(:hover, :focus-visible) {
+    opacity: 0.3;
+  }
 }
 
 .recap__onward b {
