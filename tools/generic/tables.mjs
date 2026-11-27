@@ -306,6 +306,19 @@ export const MARKS = {
     "NFL": "Pro", "NCAA": "NCFA", "ESPN": "TV", "Nielsen": "ratings",
     "AP Top 25": "Press Top 25", "AP Poll": "Press Poll", "AP poll": "Press poll", "AP": "Press",
     "Associated Press": "Press",
+    // the awards named for people and companies: the Big Ten's pairs whole (longest first, so a pair beats its half)
+    "Graham-George": "Gresham-Gentry", "Nagurski-Woodson": "Novak-Woodbury", "Chicago Tribune": "Chicago Ledger",
+    "Thompson-Randle El": "Thayer-Randall", "Hayes-Schembechler": "Hale-Schoenberg", "Griese-Brees": "Grier-Breen",
+    "Ameche-Dayne": "Amato-Dane", "Richter-Howard": "Richards-Hollis", "Kwalick-Clark": "Kowalski-Clay",
+    "Rimington-Pace": "Rimmer-Price", "Smith-Brown": "Smythe-Browning", "Butkus-Fitzgerald": "Buckley-Fitzhugh",
+    "Tatum-Woodson": "Tate-Woodbury", "Bakken-Andersen": "Becker-Anders", "Eddleman-Fields": "Eddings-Fielder",
+    "Rodgers-Dwight": "Rogan-Dwyer",
+    "Walter Camp": "Walter Crane", "Sporting News": "Sporting Wire", "Johnny Unitas": "Johnny Upton",
+    "Lott IMPACT": "Lane IMPACT", "Ted Hendricks": "Ted Henley", "Paul Hornung": "Paul Horner",
+    "Shaun Alexander": "Shane Alder", "Eddie Robinson": "Eddie Robbins", "Bobby Dodd Coach": "Bobby Dodge Coach",
+    "George Munger": "George Monroe", "Home Depot": "Hardware Barn", "Jacobs Blocking": "Jacoby Blocking",
+    "Vern Smith": "Verne Smalley", "Pat Tillman": "Pat Tilden", "Morris Trophy": "Morrow Trophy",
+    "Manning Award": "Mannix Award", "Bear Bryant": "Bear Bryson", "Bryant Award": "Bryson Award", "Joe Moore": "Joe Mohr",
 };
 
 // The states. A state keeps its name everywhere; an FCS school that goes by its state alone (Montana, Rhode Island) is

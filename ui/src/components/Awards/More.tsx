@@ -165,7 +165,7 @@ export function Coaches({
  * `ends` the slot whose men bookend the rest (one at the left end, the others at the right). */
 const LINES: { unit: "offense" | "defense" | "special"; slots: string[]; wide?: string; ends?: string[] }[] = [
   { unit: "offense", slots: ["C", "OL", "TE"], wide: "WR", ends: ["G", "T"] },
-  { unit: "offense", slots: ["QB", "RB", "AP"] },
+  { unit: "offense", slots: ["QB", "RB", "APB"] },
   { unit: "defense", slots: ["DT", "DL"], wide: "CB", ends: ["EDGE"] },
   { unit: "defense", slots: ["LB", "DB"], ends: ["S"] },
   { unit: "special", slots: ["K", "P", "RS"] },
