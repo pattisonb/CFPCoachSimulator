@@ -113,4 +113,15 @@ test("check_reasons", () => {
   console.log("coachability growth ok");
 });
 
+test("a lesser honor (All-Conference, a conference award, a finalist) can move him up, its best one counting", () => {
+  equal(JSON.stringify(o.honor_level_up(null)), JSON.stringify([0, null]));
+  equal(JSON.stringify(o.honor_level_up({ honors: [["all_conference_2", "All-Conference Second Team"]] })),
+    JSON.stringify([o.COACH_UP_HONOR["all_conference_2"], "All-Conference Second Team"]));
+  const [c, name] = o.honor_level_up({ honors: [["all_conference_2", "x"], ["conference_award", "Defensive Player of the Year"]] });
+  assert(c === o.COACH_UP_HONOR["conference_award"] && name === "Defensive Player of the Year", () => JSON.stringify([c, name]));
+  assert(o.COACH_UP_HONOR["all_conference_1"] < o.LEVEL_UP && o.COACH_UP_HONOR["all_conference_2"] < o.COACH_UP_HONOR["all_conference_1"],
+    "rarer than a national honor's, and a second team's rarer than a first's");
+  equal(o.coachability_note("Film Junkie", "honor", undefined, "All-Conference First Team"), "Now a Film Junkie: All-Conference First Team");
+});
+
 await run();

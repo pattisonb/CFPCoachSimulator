@@ -136,13 +136,24 @@ function coachability_roll(level, chances, drop, rng) {
   return [level, null];
 }
 
-offseason.COACH_NOTES = { award: "A National Honor", breakout: "A Breakout Year", developer: "{coach}'s Development",
+offseason.COACH_NOTES = { award: "A National Honor", honor: "{honor}", breakout: "A Breakout Year", developer: "{coach}'s Development",
   redshirt: "A Redshirt Year Well Spent", maturity: "Growing Up", benched: "Benched After a Rough Year" };
 
-function coachability_note(level, case_, coach = "His Coaches") {
-  // The Who Improved tag for a move: "Now a Film Junkie: A Breakout Year".
+function coachability_note(level, case_, coach = "His Coaches", honor = "An Honor") {
+  // The Who Improved tag for a move: "Now a Film Junkie: A Breakout Year" ("Now a Film Junkie: All-Conference First Team").
   // "a" only before a level that is a noun ("a Film Junkie"; never "a Slow to Click")
-  return `Now ${_in(level, clear.SLOW_LEVELS) ? "" : "a "}${level}: ${offseason.COACH_NOTES[case_].split("{coach}").join(coach)}`;
+  return `Now ${_in(level, clear.SLOW_LEVELS) ? "" : "a "}${level}: ${offseason.COACH_NOTES[case_].split("{coach}").join(coach).split("{honor}").join(honor)}`;
+}
+
+function honor_level_up(perf) {
+  // A lesser honor's chance to move him up a coachability level this offseason (COACH_UP_HONOR: the best of his honors
+  // that has one), and the honor's name for his note; [0, null] without one.
+  let best = 0.0, name = null;
+  for (const [k, n] of get(perf || {}, "honors", [])) {
+    const c = get(offseason.COACH_UP_HONOR, k, 0.0);
+    if (c > best) [best, name] = [c, get(offseason.HONOR_NAMES, k, n) || n];
+  }
+  return [best, name];
 }
 
 function _coach_title(coaches, pos) {
@@ -506,6 +517,7 @@ function _develop_all(state) {
   const perf = get(state["offseason"], "performance") || {};
   const levels = recruits.COACHABILITY.map(([name, _, __]) => name);
   const crng = offseason._rng(state, "coachability");
+  const hrng = offseason._rng(state, "coachability-honors");     // a lesser honor's level up: one draw a player, after the rest
   const year = get(state["offseason"], "year") || get(lgd, "year") || 0;
   const moves = { up: 0, down: 0 };
   const gains = [], mine = [];
@@ -553,10 +565,17 @@ function _develop_all(state) {
         const benched = depth !== null && sum(depth[g_].map((v) => (v > p["o"] ? 1 : 0))) >= STARTERS[g_] + 2;
         const [chances, drop] = offseason.coachability_chances(get(p, "c"), get(p, "cls"), z, rated, redshirted, benched);
         const [new_, case_] = offseason.coachability_roll(get(p, "c"), chances, drop, crng);
+        const [honor_up, honor] = offseason.honor_level_up(get(perf, p["id"]));
+        const h = hrng.random();                // (drawn for every player, so the stream stays aligned)
         if (truthy(case_)) {
           p["c"] = new_;
           why.push(offseason.coachability_note(new_, case_, offseason._coach_title(t["coaches"], p["pos"])));
           moves[case_ === "benched" ? "down" : "up"] += 1;
+        } else if (h < honor_up && levels.slice(1).includes(get(p, "c"))) {
+          // All-Conference, a conference award or a finalist's nod: now and then it shows in how he takes coaching (the player's ask)
+          p["c"] = levels[levels.indexOf(p["c"]) - 1];
+          why.push(offseason.coachability_note(p["c"], "honor", undefined, honor));
+          moves["up"] += 1;
         }
       }
       const starter = get(get(perf, p["id"]) || {}, "z") !== null;
@@ -989,7 +1008,7 @@ function _apply_staff(state) {
 }
 
 Object.assign(offseason, {
-  _carry_over, program_factor, _dev_side, dev_rating, coach_factor, coachability_chances, coachability_roll, coachability_note,
+  _carry_over, program_factor, _dev_side, dev_rating, coach_factor, coachability_chances, coachability_roll, coachability_note, honor_level_up,
   _coach_title, year_pace, rv2_tier, _card_growth, develop, regress, age_factor, pot_mean, _round, grow_coach, _pot, _league_marks,
   _why, _develop_coaches, _develop_all, _newcomer, _preferred_walk_on, _fill_rosters, _release, _staff_taken, term_of, expiring,
   _staff_changes, _staff_marks, _candidates, _candidate, open_role, hire, _apply_staff,

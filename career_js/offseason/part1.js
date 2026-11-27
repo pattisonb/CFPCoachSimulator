@@ -787,6 +787,8 @@ offseason.COACH_UP_MATURITY = 0.06;          // a junior or senior who played, t
 offseason.COACH_UP_MATURITY_GAP = 2;         // ... the levels he must be below Coach's Dream
 offseason.COACH_UP_REDSHIRT = 0.10;          // a redshirt year under a staff at REDSHIRT_STAFF or better player development moves him up this often
 offseason.REDSHIRT_STAFF = 82;               // ... the staff's player development that makes the year one of learning
+offseason.COACH_UP_HONOR = { "all_conference_1": 0.15, "conference_award": 0.15, "all_america_2": 0.15, "national_finalist": 0.15,
+  "all_conference_2": 0.08 };              // *tune* a lesser honor (All-Conference, a conference award, a finalist) moves him up a level this often a year (the best of his)
 offseason.COACH_DOWN_BENCHED = 0.05;         // a starter who struggled and fell off the depth chart drops a level this often
 offseason.COACH_CASES = ["breakout", "developer", "maturity", "redshirt"];   // the order a player's draws are taken in (fixed: one each, always)
 offseason.PHYSICAL = new Set(["speed", "acceleration", "agility", "change_of_direction", "jumping", "stamina", "injury", "toughness", "strength",
