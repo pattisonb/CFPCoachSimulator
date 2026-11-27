@@ -31,17 +31,33 @@ export const messages = {
   needsTip:
     "Your commits, board or offers at each position (the menu picks which), of the spots your class set out to fill there. Pick a position to list only those recruits.",
   triage: "Triage",
-  triageTip: "Color each position by how pressing its need is.",
-  triageLevel: (level: number, leaving: number, starters: number) =>
-    level === 0
-      ? "Covered: the class needs no one else here."
-      : level === 1
-        ? "Depth: spots to fill, and every starter is back."
-        : level === 3
-          ? starters === 1
-            ? "Urgent: your starter leaves."
-            : `Urgent: all ${starters} starters leave.`
-          : `Pressing: ${leaving} of ${starters} starters ${leaving === 1 ? "leaves" : "leave"}.`,
+  triageTip: "Color each position by how pressing its need is, counting what the Count menu shows.",
+  /** a Triage chip's tip: its color's reason, then the count it was read from */
+  triageTitle: (
+    show: "commits" | "board" | "offers",
+    level: number,
+    leaving: number,
+    starters: number,
+    have: number,
+    of: number,
+  ) => {
+    const count =
+      show === "commits"
+        ? `${have} of ${of} committed.`
+        : show === "board"
+          ? `${have} on your board for ${of} spots.`
+          : `${have} offered for ${of} spots.`;
+    if (level === 0) return have >= of ? `Covered: ${count}` : `Covered: the class needs no one else here. ${count}`;
+    const back = !leaving
+      ? "Every starter is back."
+      : leaving >= starters
+        ? starters === 1
+          ? "Your starter leaves."
+          : `All ${starters} starters leave.`
+        : `${leaving} of ${starters} starters ${leaving === 1 ? "leaves" : "leave"}.`;
+    const word = level === 1 ? "Depth" : level === 2 ? "Pressing" : "Urgent";
+    return `${word}: ${count} ${back}`;
+  },
   needShow: "Count",
   needShows: { commits: "Committed / Need", board: "On Board / Need", offers: "Offered / Need" },
   filledShort: (have: number, of: number) => `${have}/${of}`,

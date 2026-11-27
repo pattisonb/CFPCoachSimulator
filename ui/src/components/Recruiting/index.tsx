@@ -52,6 +52,16 @@ const flipAlert = (r: BoardRow): { key: RecruitAlert; tip: string } | null =>
 /** What a Class Needs chip counts against the spots the class set out to fill. */
 type NeedShow = "commits" | "board" | "offers";
 
+/**
+ * A need chip's Triage color, by what the Count menu shows: covered (0) once the count reaches the spots (or the class
+ * needs no one there); otherwise how pressing the roster makes it (1 depth, 2 a starter leaves, 3 every starter leaves),
+ * one step calmer once the count is half the spots or more.
+ */
+function triageLevel(roster: number, have: number, of: number): number {
+  if (roster === 0 || have >= of) return 0;
+  return have * 2 >= of ? Math.max(1, roster - 1) : roster;
+}
+
 /** The roster groups in order (the keys a need is counted under). */
 // the line, linebackers and safeties as their positions (career_js/recruiting.js SPOTS), in depth-chart order
 const GROUP_ORDER = [
@@ -355,9 +365,10 @@ export default function Recruiting({
             {!needsShut &&
               needs.map((g) => {
                 const lv = triage ? board?.need_levels?.[g] : undefined;
+                const level = lv ? triageLevel(lv.level, before(g), spots(g)) : undefined;
                 const chip = (
                   <Chip key={g} on={pos === g} onClick={() => setPos(pos === g ? "all" : g)}>
-                    {lv?.level === 0 && <Check size={12} weight="bold" aria-hidden="true" />}
+                    {level === 0 && <Check size={12} weight="bold" aria-hidden="true" />}
                     {g}
                     <span className="chip__count">{m.filledShort(before(g), spots(g))}</span>
                   </Chip>
@@ -365,8 +376,8 @@ export default function Recruiting({
                 return lv ? (
                   <span
                     key={g}
-                    className={`recruiting__need recruiting__need--${lv.level}`}
-                    title={m.triageLevel(lv.level, lv.leaving, lv.starters)}
+                    className={`recruiting__need recruiting__need--${level}`}
+                    title={m.triageTitle(needShow, level ?? lv.level, lv.leaving, lv.starters, before(g), spots(g))}
                   >
                     {chip}
                   </span>
