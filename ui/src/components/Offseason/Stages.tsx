@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import NumberField from "../NumberField/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import { ArrowRight, Scissors, UserMinus } from "@phosphor-icons/react";
 import Dropdown from "../Dropdown/index.tsx";
@@ -336,14 +337,7 @@ function LeaverCard({
                 {x.offers.promise ? m.keep.promised : m.keep.promise}
               </button>
               <span className="off-card__nil">
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={nil}
-                  aria-label={m.keep.nilLabel(x.name)}
-                  onChange={(e) => setNil(Math.max(0, Number(e.target.value) || 0))}
-                />
+                <NumberField step={1} value={nil} aria-label={m.keep.nilLabel(x.name)} onChange={setNil} />
                 <Btn
                   disabled={busy || gone || nil > left + x.offers.nil}
                   onClick={() => act("/retain", { pid: x.id, action: "nil", nil })}

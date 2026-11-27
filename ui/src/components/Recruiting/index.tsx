@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import NumberField from "../NumberField/index.tsx";
 import {
   CaretDown,
   CaretRight,
@@ -1042,14 +1043,12 @@ function RecruitPanel({
                     </div>
                   )}
                   <div className="recruit__offer">
-                    <input
-                      type="number"
-                      min={0}
+                    <NumberField
                       step={5}
                       value={nil}
                       aria-label={m.offer}
                       title={r.ask.exact == null && !r.offered ? m.askScout : undefined}
-                      onChange={(e) => setNil(Math.max(0, Number(e.target.value) || 0))}
+                      onChange={setNil}
                     />
                     {r.offered ? (
                       <>

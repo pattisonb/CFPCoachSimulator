@@ -333,17 +333,21 @@
   text-transform: uppercase;
 }
 
+/* a long name (Fiesta Bowl (Quarterfinal)) wraps, and its tag goes under it, never over the date */
 .sched-row__week {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   min-width: 0;
+  padding: 4px 0;
   font-weight: 700;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .sched-row__tag {
   padding: 0 6px;
+  white-space: nowrap;
   border: var(--line) solid currentcolor;
   font-size: var(--t-xs);
   letter-spacing: 1px;
