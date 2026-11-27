@@ -146,8 +146,8 @@ function _run_planned(state) {
 
 function _carry_planned(state) {
   // The week step's last move: the quick actions you sent stay ticked for the new week, so a recruit you work every
-  // week needs no new clicks; one who committed or signed this week is let go, and so is whatever the new week's energy
-  // cannot hold.
+  // week needs no new clicks; one who signed or hard-committed elsewhere this week is let go (a verbal commit, yours or
+  // another school's, keeps his: the player's ask), and so is whatever the new week's energy cannot hold.
   const [rc, me] = [state["recruiting"], get(state, "team")];
   let plans = pop(rc, "carry", null);
   if (!truthy(plans)) plans = {};
@@ -155,7 +155,8 @@ function _carry_planned(state) {
   let left = recruiting.hours_free(state, me);
   for (const [pid, acts] of Object.entries(plans)) {
     const st = get(rc["status"], pid);
-    if (!truthy(st) || truthy(st["signed"]) || truthy(st["committed"]) || recruiting.blocked(state, me, pid) !== null) continue;
+    if (!truthy(st) || truthy(st["signed"]) || recruiting.blocked(state, me, pid) !== null) continue;
+    if (truthy(st["committed"]) && st["committed"] !== me && truthy(get(st, "hard"))) continue;      // (plan's rule: he is not taking calls)
     if ((get(rc, "dropped") || []).includes(pid)) continue;        // you took him off your board: nothing is ticked for him again
     for (const action of acts) {
       if (_in(action, recruiting.PLANNABLE) && recruiting.HOURS[action] <= left && !get(recruiting.planned(state), pid, []).includes(action)) {

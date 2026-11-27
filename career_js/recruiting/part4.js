@@ -573,8 +573,11 @@ function _commit(state, pid, slug, kind = "commit", pair = true, extra = {}) {
   const firmness = slug !== "FCS" ? persona.start_firmness(state, pid, firm) : firm;
   Object.assign(rc["status"][pid], { committed: slug, fcs: false, firmness: firmness, hard: false });
   rc["commits_v"] = get(rc, "commits_v", 0) + 1;
+  const me = get(state, "team");
   for (const [school, n] of Object.entries(rc["nil"])) {           // rivals' NIL packages for him are released
-    if (school !== slug) delete n["held"][pid];
+    // (yours stays on your offer while it stands, so you can keep after a commit elsewhere: the player's ask; his
+    // signing still ends it, sign_class)
+    if (school !== slug && !(school === me && get(rc["offers"], me, []).includes(pid))) delete n["held"][pid];
   }
   const hats = get(rc, "hats");
   if (truthy(hats)) delete hats[pid];
