@@ -7,6 +7,7 @@ import { drive_functions } from "./drive_functions.js";
 import { game, simulate_game } from "./game.js";
 import * as game_job from "../sim_js/game_job.js";
 import * as files from "./files.js";
+import { modules } from "./modules.js";
 
 /** One game. `want_log`: the game's play log rides along as `play_log` (the game job's big moments read it). */
 export function play(home, away, sliders = null, seed = null, venue = "home", momentum = false, want_log = false) {
@@ -88,7 +89,9 @@ function league_teams([path, sig]) {
   const key = `${path}|${sig}`;
   let teams = leagues.get(key);
   if (!teams) {
-    teams = JSON.parse(files.read_text(path))["teams"];
+    // the roster file is worked out as the game reads it (rosters.derive: card ratings onto the engine's numbers, each
+    // player's stat line), the same as season._sim_one's teams; a career's later league is the engine's already
+    teams = modules.rosters.derive(JSON.parse(files.read_text(path)))["teams"];
     if (leagues.size >= 2) leagues.delete(leagues.keys().next().value);
     leagues.set(key, teams);
   }
