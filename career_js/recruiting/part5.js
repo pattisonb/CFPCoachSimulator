@@ -185,6 +185,7 @@ function _sign(state, final) {
         const held = n["held"][pid];
         delete n["held"][pid];
         n["budget"] -= held;
+        setdefault(n, "signed", {})[pid] = held;         // what he signed for, so his card still says it
       }
       recruiting._event(state, "signed", pid, st["committed"]);
     } else if (truthy(final)) {

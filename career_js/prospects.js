@@ -40,6 +40,21 @@ function _cooled_shown(state, viewer, pid) {
 }
 
 
+function _signed_nil(state, viewer, pid) {
+  // What he signed with `viewer` for: kept at signing (nil.signed); a signing from before that was kept reads your
+  // last offer or raise in the log (the player: "all recruits saying your offer 0 NIL after signed with me").
+  const rc = state["recruiting"];
+  const kept = get(get(get(rc["nil"], viewer, {}), "signed", {}), pid, null);
+  if (kept !== null) return kept;
+  if (get(get(rc["status"], pid) || {}, "signed") !== viewer) return 0;
+  const log = rc["log"];
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i];
+    if (e["pid"] === pid && e["school"] === viewer && (e["kind"] === "offer" || e["kind"] === "raise_nil")) return get(e, "nil", 0) || 0;
+  }
+  return 0;
+}
+
 /** str.format with named fields: "{noun}" from `vars`. */
 function format(text, vars) {
   return text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k]));
@@ -1129,7 +1144,8 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
   out.done_this_week = Object.entries(get(contact(), "week") || {}).filter(([, w]) => w === recruiting.contact_week(state)).map(([k]) => k);
   out.planned = viewer === get(state, "team") ? [...get(recruiting.planned(state), pid, [])] : [];   // ticked on his row: sent at the week step
   out.visit_cost = recruiting.action_hours(state, viewer, pid, "official_visit"); out.hc_cost = recruiting.action_hours(state, viewer, pid, "hc_visit");                     // your invite by how far he comes
-  out.nil = get(get(get(rc["nil"], viewer, {}), "held", {}), pid, 0);
+  // your NIL on him: held on your offer, or what he signed for (spent at signing)
+  out.nil = get(get(get(rc["nil"], viewer, {}), "held", {}), pid, null) ?? _signed_nil(state, viewer, pid);
   out.need = recruiting.needs_by_spot(state, viewer)[recruiting.spot_of(rc["prospects"][pid])]["need"];
   out.ask = recruiting.ask_view(state, viewer, pid); out.cooled = _cooled_shown(state, viewer, pid);
   out.money_owed = recruiting.money_owed(state, viewer, pid);
