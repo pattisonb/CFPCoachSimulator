@@ -1,6 +1,6 @@
 // Jersey numbers (career_js/offseason/part2.js JERSEYS, jersey_legal, _jersey, renumber): an offensive lineman wears 50
 // to 79 and a quarterback, back, receiver or tight end never does; a new player draws from his group's own numbers;
-// and once the rosters are settled each offseason every player has a number he may wear that no teammate has.
+// and once the rosters are settled each offseason every player has a number he may wear that no teammate on his side of the ball has.
 // `node tests/test_jerseys.mjs`
 import { start, test, run, assert, equal } from "./harness.mjs";
 import { Random } from "../engine_js/pyrt.js";
@@ -33,7 +33,23 @@ test("a new player draws from his group's own numbers, and takes any he may wear
   assert(offseason.jersey_legal("QB", n) && Number(n) > 19, `a quarterback past his own numbers drew ${n}`);
 });
 
-test("once the rosters are settled, every player has a number he may wear that no teammate has", () => {
+test("an offensive and a defensive player may share a number; a quarterback looks for his own before any other", () => {
+  const rng = new Random(5);
+  const defense = [];
+  for (let n = 0; n <= 49; n++) defense.push({ pos: "CB", j: String(n) });
+  for (let i = 0; i < 30; i++) {
+    const n = offseason._jersey(defense, "QB", rng);
+    assert(Number(n) <= 19, `a quarterback beside a full secondary drew ${n}`);
+  }
+  const offense = [];
+  for (let n = 0; n <= 19; n++) offense.push({ pos: "WR", j: String(n) });
+  const n = offseason._jersey(offense, "QB", rng);
+  assert(Number(n) > 19 && offseason.jersey_legal("QB", n), `with every low number taken on offense he drew ${n}`);
+  equal([offseason.jersey_natural("QB", 7), offseason.jersey_natural("QB", 90), offseason.jersey_natural("WR", 43), offseason.jersey_natural("TE", 9), offseason.jersey_natural("DT", 1)],
+    [true, false, false, true, true]);
+});
+
+test("once the rosters are settled, every player has a number he may wear that no teammate on his side of the ball has, and one that looks right on him", () => {
   const sid = api.call("POST", "/api/season", { team: ME, mode: "full", seed: 17, career: true })["id"];
   const st = api.loaded_state();
   const rng = new Random(1);
@@ -60,13 +76,20 @@ test("once the rosters are settled, every player has a number he may wear that n
   api.call("POST", `/api/season/${sid}/offseason/advance`, {});
   const league = api.loaded_state()["league"]["teams"];
   let bad = [];
+  // a number once per side of the ball (an offensive and a defensive player may share one; a kicker with neither)
+  const SIDE = { QB: "o", RB: "o", WR: "o", TE: "o", OL: "o", DL: "d", LB: "d", CB: "d", S: "d" };
   for (const [slug, t] of Object.entries(league)) {
-    const seen = new Set();
+    const seen = { o: new Set(), d: new Set(), k: new Set() };
     for (const c of t["roster"]) {
-      if (!offseason.jersey_legal(c["pos"], c["j"]) || seen.has(String(c["j"]))) bad.push(`${slug} ${c["n"]} ${c["pos"]} #${c["j"]}`);
-      seen.add(String(c["j"]));
+      const side = SIDE[offseason.GROUP[c["pos"]]] ?? "k", j = String(c["j"]);
+      const clash = side === "k" ? Object.values(seen).some((x) => x.has(j)) : seen[side].has(j) || seen.k.has(j);
+      if (!offseason.jersey_legal(c["pos"], c["j"]) || clash) bad.push(`${slug} ${c["n"]} ${c["pos"]} #${c["j"]}`);
+      seen[side].add(j);
     }
   }
+  // ... and no quarterback in 90 (the player's "weird numbers"): every skill player's number looks right on him
+  const odd = league[ME]["roster"].filter((c) => !offseason.jersey_natural(c["pos"], c["j"]));
+  assert(odd.length === 0, () => `out of place: ${J(odd.map((c) => `${c["pos"]} #${c["j"]}`))}`);
   assert(bad.length === 0, `${bad.length}: ${J(bad.slice(0, 8))}`);
   const mine = league[ME]["roster"];
   if (mine.some((c) => c["id"] === kept["id"]) && offseason.jersey_legal("QB", kept_j)) {

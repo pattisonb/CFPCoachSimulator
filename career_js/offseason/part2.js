@@ -637,8 +637,32 @@ function fill_roles(state, teams = null) {
 // wears 50 to 79, and a quarterback, back, receiver or tight end never does. A defender may wear anything.
 offseason.JERSEYS = { "QB": [[0, 19]], "RB": [[0, 49]], "WR": [[0, 19], [80, 89]], "TE": [[80, 89], [40, 49]], "OL": [[50, 79]],
   "DL": [[90, 99], [50, 59]], "LB": [[30, 59]], "CB": [[0, 49]], "S": [[0, 49]], "K": [[0, 49], [90, 99]], "P": [[0, 49], [90, 99]] };
+// *tune* the numbers an offensive skill player looks right in: one outside them (a quarterback in 90, a receiver in 43:
+// the player's "weird numbers") draws a new one at the year's renumber when a fitting one is free
+offseason.JERSEYS_NATURAL = { "QB": [[0, 19]], "RB": [[0, 49]], "WR": [[0, 19], [80, 89]], "TE": [[0, 19], [40, 49], [80, 89]] };
+// a number is the team's once per side of the ball: an offensive and a defensive player may share one (they are never
+// on the field together, as college football allows), a kicker or punter shares with neither
+const _SIDE = { QB: "o", RB: "o", WR: "o", TE: "o", OL: "o", DL: "d", LB: "d", CB: "d", S: "d", K: "k", P: "k" };
 const _LINE = [50, 79];
 const _ELIGIBLE = new Set(["QB", "RB", "WR", "TE"]);
+
+function _sides_meet(a, b) {
+  // whether two groups' players may not share a number: the same side, or a kicker with anyone
+  const x = get(_SIDE, a, "k"), y = get(_SIDE, b, "k");
+  return x === y || x === "k" || y === "k";
+}
+
+function _in_ranges(ranges, n) {
+  const k = Number(n);
+  return ranges.some(([lo, hi]) => k >= lo && k <= hi);
+}
+
+function jersey_natural(pos, n) {
+  // Whether `n` looks right on a player at `pos` (JERSEYS_NATURAL; any legal number at a position it does not list).
+  const group = get(offseason.GROUP, pos, pos);
+  const nat = get(offseason.JERSEYS_NATURAL, group);
+  return offseason.jersey_legal(pos, n) && (nat === null || _in_ranges(nat, n));
+}
 
 function jersey_legal(pos, n) {
   // Whether a player at `pos` may wear `n` (a whole number from 0 to 99, as text or a number).
@@ -652,13 +676,15 @@ function jersey_legal(pos, n) {
 }
 
 function _jersey(roster, pos, rng) {
-  // A free number for a player at `pos`: one of his group's own (JERSEYS), else any he may wear, else any free one.
+  // A free number for a player at `pos` (free on his side of the ball: _sides_meet): one of his group's own (JERSEYS),
+  // else one that looks right on him (JERSEYS_NATURAL), else any he may wear, else any free one.
   // (str(None) is "None" there and "null" here: neither is a number, and only numbers are looked for)
-  const used = new Set(roster.map((p) => String(get(p, "j"))));
   const group = get(offseason.GROUP, pos, pos);
+  const used = new Set(roster.filter((p) => _sides_meet(group, get(offseason.GROUP, p["pos"], p["pos"]))).map((p) => String(get(p, "j"))));
   const own = [];
   for (const [lo, hi] of get(offseason.JERSEYS, group, [[0, 99]])) for (const n of range(lo, hi + 1)) own.push(String(n));
   let free = own.filter((n) => !used.has(n));
+  if (!free.length) free = range(100).map((n) => String(n)).filter((n) => !used.has(n) && offseason.jersey_natural(pos, n));
   if (!free.length) free = range(100).map((n) => String(n)).filter((n) => !used.has(n) && offseason.jersey_legal(pos, n));
   if (!free.length) free = range(100).map((n) => String(n)).filter((n) => !used.has(n));
   return free.length ? rng.choice(free) : null;
@@ -672,17 +698,29 @@ function renumber(state) {
   let n = 0;
   for (const slug of sorted(Object.keys(state["league"]["teams"]))) {
     const roster = state["league"]["teams"][slug]["roster"];
-    const seen = new Set();
+    const seen = { o: new Set(), d: new Set(), k: new Set() };
+    const taken = (c, j) => {
+      const side = get(_SIDE, get(offseason.GROUP, c["pos"], c["pos"]), "k");
+      return side === "k" ? Object.values(seen).some((x) => x.has(j)) : seen[side].has(j) || seen["k"].has(j);
+    };
     const redo = [];
     for (const c of roster) {
-      const j = get(c, "j");
-      if (!offseason.jersey_legal(c["pos"], j) || seen.has(String(j))) redo.push(c);
-      else seen.add(String(j));
+      const j = String(get(c, "j"));
+      if (!offseason.jersey_legal(c["pos"], get(c, "j")) || taken(c, j)) redo.push(c);
+      else seen[get(_SIDE, get(offseason.GROUP, c["pos"], c["pos"]), "k")].add(j);
     }
     for (const c of redo) c["j"] = null;
     for (const c of redo) {
       c["j"] = offseason._jersey(roster, c["pos"], rng);
       n += 1;
+    }
+    // a skill player in a number that does not look right on him (a quarterback in 90) takes a fitting one when one is free
+    for (const c of roster) {
+      if (get(c, "j") === null || offseason.jersey_natural(c["pos"], get(c, "j"))) continue;
+      const was = c["j"];
+      c["j"] = null;
+      const j = offseason._jersey(roster, c["pos"], rng);
+      if (j !== null && offseason.jersey_natural(c["pos"], j)) { c["j"] = j; n += 1; } else c["j"] = was;
     }
   }
   return n;
@@ -1089,7 +1127,7 @@ Object.assign(offseason, {
   program_shifts, _program_context, portal_odds, _departures, _would_start, draft_grades, draft_score, elite, draft_scores,
   draft_board, ai_keep_chance, _run_draft, _next_class, _redshirt_candidate, _games_played, _redshirt_block, redshirt,
   _apply_redshirts, position_options, move_row, _season_moves, change_position, defense_scheme, has_sam, empty_roles,
-  fill_roles, _jersey, jersey_legal, renumber, life, _recruit_stories, _sign_classes, _compact_prospect, p4_school, open_spots, churn_left, my_spots,
+  fill_roles, _jersey, jersey_legal, jersey_natural, renumber, life, _recruit_stories, _sign_classes, _compact_prospect, p4_school, open_spots, churn_left, my_spots,
   _group_counts, _depth_values, playing_time, _prestige, entrant_interest, ai_offers, resolve_round, _close_portal_rounds,
   _close_portal,
 });
