@@ -172,12 +172,15 @@ export default function Recruiting({
   const [pos, setPos] = useKept(`board.${seasonId}.pos`, "all");
   const [picked, setPicked] = useState<string | null>(null);
   const [toScouting, setToScouting] = useState(0);
+  /** the recruit whose Scout button opened his file: it opens on Scouting; a plain click opens Overview */
+  const [scoutedId, setScoutedId] = useState<string | null>(null);
   // another section asked for him: show every stage (he may not be in the one filtered to) and pick him
   useEffect(() => {
     if (!pick) return;
     setStage("all");
     setQ("");
     setPos("all");
+    setScoutedId(null);
     setPicked(pick);
   }, [pick]);
 
@@ -475,7 +478,10 @@ export default function Recruiting({
                         type="button"
                         className="recruiting__row"
                         aria-pressed={current?.id === r.id}
-                        onClick={() => setPicked(r.id)}
+                        onClick={() => {
+                          setScoutedId(null);
+                          setPicked(r.id);
+                        }}
                       >
                         <span className="recruiting__mug">
                           <span className="face-tile recruiting__face">
@@ -559,7 +565,7 @@ export default function Recruiting({
                         marks
                         onScout={() => {
                           // his file opens on its report, where the look you just sent lands
-                          lastTab = "scouting";
+                          setScoutedId(r.id);
                           setPicked(r.id);
                           setToScouting((n) => n + 1);
                         }}
@@ -595,6 +601,7 @@ export default function Recruiting({
           <RecruitPanel
             key={current.id}
             toScouting={toScouting}
+            openScouting={scoutedId === current.id}
             r={current}
             board={board}
             team={team}
@@ -605,6 +612,7 @@ export default function Recruiting({
             onBoard={(id) => rows.some((x) => x.id === id)}
             onPick={(id) => {
               setStage("all");
+              setScoutedId(null);
               setPicked(id);
             }}
           />
@@ -619,8 +627,6 @@ export default function Recruiting({
 /** His panel's tabs (the old board's pane): what you do on Overview, what you know on the other three. */
 const TABS = ["overview", "scouting", "profile", "history"] as const;
 type Tab = (typeof TABS)[number];
-/** the tab you were last on: the next recruit you pick opens on it (reading reports down the board stays on Scouting) */
-let lastTab: Tab = "overview";
 
 /**
  * A recruit's panel: his head, then four tabs. Overview: your chance, the Recruiting Battle, the Recruit Snapshot and
@@ -638,9 +644,12 @@ function RecruitPanel({
   onBoard,
   onPick,
   toScouting,
+  openScouting,
 }: {
   /** counts the scouts sent from his row: each turns his file to its report */
   toScouting: number;
+  /** his file opens on Scouting (his row's Scout button opened it); otherwise on Overview */
+  openScouting: boolean;
   r: BoardRow;
   board: RecruitingBoard;
   team: string;
@@ -706,15 +715,14 @@ function RecruitPanel({
   }, [r.id, alertKeys]);
   // the call or visit in its window: the one just opened, or the open one Finish brings back
   const [talk, setTalk] = useState<Scene | null>(null);
-  const [tab, setTabState] = useState<Tab>(() => lastTab);
-  // a scout sent from his row: his file turns to its report (it may be open on another tab already)
+  const [tab, setTab] = useState<Tab>(() => (openScouting ? "scouting" : "overview"));
+  // a scout sent from his row while his file is open: it turns to its report (it may be on another tab)
+  const scoutsWere = useRef(toScouting);
   useEffect(() => {
-    if (toScouting) setTabState("scouting");
-  }, [toScouting]);
-  const setTab = (t: Tab) => {
-    lastTab = t;
-    setTabState(t);
-  };
+    if (toScouting === scoutsWere.current) return;
+    scoutsWere.current = toScouting;
+    if (openScouting) setTab("scouting");
+  }, [toScouting, openScouting]);
   // his file (the report, his traits, his background): read again whenever the board loads, since a look, an offer
   // or a call changes it; the last one stays up while the next arrives
   const [detail, setDetail] = useState<ProspectDetail | null>(null);
