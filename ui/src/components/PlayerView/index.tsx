@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { Check, Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
+import { ArrowDown, ArrowUp, Check, Handshake, Medal, PencilSimple, Star } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Blocks from "../Blocks/index.tsx";
 import Face from "../Face/index.tsx";
@@ -196,6 +196,23 @@ export default function PlayerView({ card: p, profile: pr, error, weekLabels, on
       (Number(a.group === "General") * 2 + Number(a.group === ownGroup)),
   );
   const coachability = pr?.coachability ?? p.coachability;
+  // his last move up or down, under it (the player's ask: show the change on the card)
+  const moved = pr?.coachability_change ?? p.coachability_change;
+  const coachValue = moved ? (
+    <span className="player-view__coach">
+      <span>{coachability}</span>
+      <small className={`player-view__coach-move${moved.up ? " is-up" : " is-down"}`} title={moved.why}>
+        {moved.up ? (
+          <ArrowUp size={11} weight="bold" aria-hidden="true" />
+        ) : (
+          <ArrowDown size={11} weight="bold" aria-hidden="true" />
+        )}
+        {m.coachMoved(moved.up, moved.from, moved.year)}: {moved.why}
+      </small>
+    </span>
+  ) : (
+    coachability
+  );
   const potential = pr?.potential_word ?? p.potential_word;
   // his own team's colors, on a card opened from anywhere (another team's player is not drawn in yours)
   const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
@@ -301,7 +318,7 @@ ${m.ceiling(a.potential)}.`
           ))}
           <Panel title={m.other}>
             <PanelRows>
-              {coachability && <PanelRow label={m.coachability} value={coachability} tip={m.coachTip} />}
+              {coachability && <PanelRow label={m.coachability} value={coachValue} tip={m.coachTip} />}
               {potential && (
                 <PanelRow
                   label={m.potential}
@@ -366,7 +383,7 @@ ${m.ceiling(a.potential)}.`
           <Panel title={m.develops}>
             <PanelRows>
               <PanelRow label={m.classYear} value={pr.class_name ?? formatClass(p.class) ?? m.none} />
-              {coachability && <PanelRow label={m.coachability} value={coachability} tip={m.coachTip} />}
+              {coachability && <PanelRow label={m.coachability} value={coachValue} tip={m.coachTip} />}
               {potential && (
                 <PanelRow
                   label={m.potential}

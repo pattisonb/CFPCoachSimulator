@@ -145,6 +145,12 @@ function coachability_note(level, case_, coach = "His Coaches", honor = "An Hono
   return `Now ${_in(level, clear.SLOW_LEVELS) ? "" : "a "}${level}: ${offseason.COACH_NOTES[case_].split("{coach}").join(coach).split("{honor}").join(honor)}`;
 }
 
+function note_coach_move(p, from, year, case_, coach = "His Coaches", honor = "An Honor") {
+  // His last coachability move, kept on him for his card ({from, to, year, why}: "Up from Film Junkie in 2027: All-Conference
+  // First Team"); the next move takes its place.
+  p["cm"] = { from: from, to: p["c"], year: year, why: offseason.COACH_NOTES[case_].split("{coach}").join(coach).split("{honor}").join(honor) };
+}
+
 function honor_level_up(perf) {
   // A lesser honor's chance to move him up a coachability level this offseason (COACH_UP_HONOR: the best of his honors
   // that has one), and the honor's name for his note; [0, null] without one.
@@ -554,8 +560,10 @@ function _develop_all(state) {
       const fell = clear.ceiling_drift(p, attrs, get(perf, p["id"]), year, PHYSICAL);
       if (fell < 0 && clear.struggled(get(perf, p["id"]))) why.push(offseason.CEILING_NOTE);
       if (truthy(level_up) && rng.random() < offseason.LEVEL_UP && levels.slice(1).includes(get(p, "c"))) {
+        const from = p["c"];
         p["c"] = levels[levels.indexOf(p["c"]) - 1];
         why.push(offseason.coachability_note(p["c"], "award"));
+        offseason.note_coach_move(p, from, year, "award");
         moves["up"] += 1;
       } else {                          // the other cases, in their own stream (the award's draw above stays where it was)
         const z = get(get(perf, p["id"]) || {}, "z");
@@ -568,13 +576,17 @@ function _develop_all(state) {
         const [honor_up, honor] = offseason.honor_level_up(get(perf, p["id"]));
         const h = hrng.random();                // (drawn for every player, so the stream stays aligned)
         if (truthy(case_)) {
+          const from = p["c"];
           p["c"] = new_;
           why.push(offseason.coachability_note(new_, case_, offseason._coach_title(t["coaches"], p["pos"])));
+          offseason.note_coach_move(p, from, year, case_, offseason._coach_title(t["coaches"], p["pos"]));
           moves[case_ === "benched" ? "down" : "up"] += 1;
         } else if (h < honor_up && levels.slice(1).includes(get(p, "c"))) {
           // All-Conference, a conference award or a finalist's nod: now and then it shows in how he takes coaching (the player's ask)
+          const from = p["c"];
           p["c"] = levels[levels.indexOf(p["c"]) - 1];
           why.push(offseason.coachability_note(p["c"], "honor", undefined, honor));
+          offseason.note_coach_move(p, from, year, "honor", undefined, honor);
           moves["up"] += 1;
         }
       }
@@ -1008,7 +1020,7 @@ function _apply_staff(state) {
 }
 
 Object.assign(offseason, {
-  _carry_over, program_factor, _dev_side, dev_rating, coach_factor, coachability_chances, coachability_roll, coachability_note, honor_level_up,
+  _carry_over, program_factor, _dev_side, dev_rating, coach_factor, coachability_chances, coachability_roll, coachability_note, note_coach_move, honor_level_up,
   _coach_title, year_pace, rv2_tier, _card_growth, develop, regress, age_factor, pot_mean, _round, grow_coach, _pot, _league_marks,
   _why, _develop_coaches, _develop_all, _newcomer, _preferred_walk_on, _fill_rosters, _release, _staff_taken, term_of, expiring,
   _staff_changes, _staff_marks, _candidates, _candidate, open_role, hire, _apply_staff,

@@ -479,6 +479,8 @@ export interface DepthCard {
   /** your own roster only */
   coachability?: string;
   coach_level?: number;
+  /** his last coachability move, while he is still at the level it left him: "Up from Film Junkie in 2027: All-Conference First Team" */
+  coachability_change?: { from: string; year: number; why: string; up: boolean };
   potential_word?: string;
   redshirt?: { on: boolean; can: boolean; games: number; limit: number; why: string | null };
   /** the face drawn for him this season (Edit Player Look), else null */
@@ -585,6 +587,8 @@ export interface PlayerProfile {
   face?: unknown;
   /** your own roster: how fast he grows, and how good he can become */
   coachability?: string;
+  /** his last coachability move, while he is still at the level it left him: "Up from Film Junkie in 2027: All-Conference First Team" */
+  coachability_change?: { from: string; year: number; why: string; up: boolean };
   potential_word?: string;
   redshirt?: { on: boolean; can: boolean; games: number; limit: number; why: string | null };
   /** where his main numbers rank at his position, in FBS and in his conference */

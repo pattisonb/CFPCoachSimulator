@@ -495,16 +495,19 @@ function development_reads(state, slug) {
   if (truthy(roster)) {
     const attrs = truthy(get(lgd, "attrs")) ? lgd["attrs"] : game_scale.keys();
     pairs = {};
-    for (const c of roster) pairs[c["id"]] = [get(c, "c"), game_scale.overall(lg.potential(c, attrs), c["pos"], lg.decision_top(c))];
+    for (const c of roster) pairs[c["id"]] = [get(c, "c"), game_scale.overall(lg.potential(c, attrs), c["pos"], lg.decision_top(c)), get(c, "cm")];
   } else {
     pairs = lg.base_development();
   }
   const out = {};
   for (const p of [...season.load_teams()[slug]["offense"], ...season.load_teams()[slug]["defense"]]) {
-    const [c, pot] = get(pairs, get(p, "slug"), [null, 0]);
+    const [c, pot, moved] = get(pairs, get(p, "slug"), [null, 0, null]);
     if (levels.includes(c)) {
       out[p["slug"]] = { coachability: c, coach_level: levels.indexOf(c) + 1,
-        ...(truthy(pot) ? { potential_word: modules.grades.letter(pot, sharp) } : {}) };   // a letter grade (grades.js)
+        ...(truthy(pot) ? { potential_word: modules.grades.letter(pot, sharp) } : {}),      // a letter grade (grades.js)
+        // his last coachability move (offseason.note_coach_move), while he is still at the level it left him
+        ...(truthy(moved) && moved["to"] === c ? { coachability_change: { from: moved["from"], year: moved["year"], why: moved["why"],
+          up: levels.indexOf(c) < levels.indexOf(moved["from"]) } } : {}) };
     }
   }
   return out;

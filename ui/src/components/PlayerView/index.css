@@ -598,3 +598,27 @@
   margin-bottom: 4px;
   font-size: var(--t-xs);
 }
+
+/* coachability with its last move under it: up in green, down in red */
+.player-view__coach {
+  display: inline-grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.player-view__coach-move {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-xs);
+  font-weight: 400;
+  text-align: right;
+}
+
+.player-view__coach-move.is-up {
+  color: var(--good);
+}
+
+.player-view__coach-move.is-down {
+  color: var(--warn);
+}

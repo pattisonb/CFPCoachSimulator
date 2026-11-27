@@ -37,6 +37,8 @@ export const messages = {
   noPastRows: "No numbers were kept for that season.",
   form: "Form",
   coachability: "Coachability",
+  /** his last coachability move, under it on his card */
+  coachMoved: (up: boolean, from: string, year: number) => `${up ? "Up" : "Down"} from ${from} in ${year}`,
   potential: "Potential",
   promise: "Promise",
 
