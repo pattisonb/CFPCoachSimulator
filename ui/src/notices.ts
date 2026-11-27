@@ -91,14 +91,24 @@ export function useNotices(
     (list: Omit<Notice, "week" | "read">[], drop: string[] = []) => {
       if (!base || (!list.length && !drop.length)) return;
       setItems((before) => {
+        // a notice taken back keeps whether you read it: one that comes back (the board read again a moment later and
+        // he is in your class after all) comes back as it was, never as new (the player: "notification bells keep
+        // reappearing when I'm clicking around")
+        const goneKey = `${base}.gone`;
+        const gone = read<Record<string, boolean>>(goneKey) ?? {};
+        const taken = before.filter((o) => drop.includes(o.id));
+        if (taken.length) {
+          for (const o of taken) gone[o.id] = o.read;
+          write(goneKey, gone);
+        }
         const old = drop.length ? before.filter((o) => !drop.includes(o.id)) : before;
         const fresh = list
           .filter((n, i) => !old.some((o) => o.id === n.id) && list.findIndex((x) => x.id === n.id) === i)
-          .map((n) => ({ ...n, week: at.current.week, read: false }));
+          .map((n) => ({ ...n, week: at.current.week, read: gone[n.id] ?? false }));
         if (!fresh.length && old.length === before.length) return before;
         const next = [...fresh, ...old].slice(0, KEEP);
         write(base, next);
-        const ids = fresh.map((n) => n.id);
+        const ids = fresh.filter((n) => !n.read).map((n) => n.id); // (one you had read does not drop down again)
         // outside this update: React may run it twice
         queueMicrotask(() => {
           setToasts((t) => [...ids.filter((id) => !t.includes(id)), ...t.filter((id) => !drop.includes(id))]);
