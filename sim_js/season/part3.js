@@ -1021,6 +1021,7 @@ function load_season(season_id) {
   }
   season.schedule_ahead(state);             // seasons saved before the postseason was set a week early
   old_saves.upgrade(state);                 // careers saved before every number was the card's
+  awards.upgrade_slots(state);              // seasons saved before the all-purpose slot was "APB"
   if (truthy(get(state, "recruiting"))) {
     modules.recruiting.upgrade_asks(state);     // careers saved before prospects had NIL asks
     modules.recruiting.upgrade_generational(state);   // careers saved before generational prospects

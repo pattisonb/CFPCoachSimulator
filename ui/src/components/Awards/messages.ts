@@ -148,7 +148,7 @@ export const messages = {
     RB: "RB",
     WR: "WR",
     TE: "TE",
-    AP: "All-Purpose",
+    APB: "All-Purpose",
     T: "T",
     G: "G",
     C: "C",
