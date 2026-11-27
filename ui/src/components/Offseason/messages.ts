@@ -91,6 +91,9 @@ export const messages = {
     overBy: (n: number) => `${n} Over the Limit`,
     howOver: (n: number) => `Cut ${n} more to move on.`,
     howDone: "You are at the limit. You can still cut more.",
+    room: "Room",
+    underBy: (n: number) => `${n} Under the Limit`,
+    howUnder: (n: number) => `You have room for ${n} more. Nobody has to go, but you can still cut.`,
     auto: "Let the Staff Decide",
     autoTip:
       "Your staff marks who it would let go to reach the limit: the lowest-rated players, never a senior or a position that is already thin. Your own marks are kept, and you can change any of them.",

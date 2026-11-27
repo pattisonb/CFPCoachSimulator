@@ -1399,7 +1399,7 @@ function Cuts({ v, teams, busy, live, act }: P) {
     <div className="dev">
       <dl className="dev__stats">
         <Stat label={m.cuts.roster}>{m.cuts.rosterOf(c.left, c.limit)}</Stat>
-        <Stat label={c.over > 0 ? m.cuts.over : m.cuts.atLimit}>
+        <Stat label={c.over > 0 ? m.cuts.over : c.left < c.limit ? m.cuts.room : m.cuts.atLimit}>
           {c.over > 0 ? c.over : c.left < c.limit ? m.cuts.under(c.limit - c.left) : 0}
         </Stat>
         <Stat label={m.cuts.marked}>{c.marked.length}</Stat>
@@ -1411,8 +1411,16 @@ function Cuts({ v, teams, busy, live, act }: P) {
       <div className="off__cta off__cta--portal">
         <div className="off__cta-words">
           {/* (the stage's own title is above: the banner says where you stand) */}
-          <b>{c.over > 0 ? m.cuts.overBy(c.over) : m.cuts.atLimit}</b>
-          <span>{c.over > 0 ? m.cuts.howOver(c.over) : m.cuts.howDone}</span>
+          <b>
+            {c.over > 0 ? m.cuts.overBy(c.over) : c.left < c.limit ? m.cuts.underBy(c.limit - c.left) : m.cuts.atLimit}
+          </b>
+          <span>
+            {c.over > 0
+              ? m.cuts.howOver(c.over)
+              : c.left < c.limit
+                ? m.cuts.howUnder(c.limit - c.left)
+                : m.cuts.howDone}
+          </span>
         </div>
         <Tooltip title={m.cuts.auto} text={m.cuts.autoTip}>
           <button type="button" className="off__next" disabled={busy} onClick={() => act("/cut", { auto: true })}>
