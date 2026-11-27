@@ -109,7 +109,7 @@ async function main() {
     assert(states.includes('TX: "Texas"') && states.includes('MT: "Montana"') && states.includes('RI: "Rhode Island"'), "a state lost its name to a school's swap");
     assert(!fs.readFileSync(path.join(root, "sim_js", "season", "part1.js"), "utf8").includes('"Montana": "MT"'), "an FCS school kept its state's name");
     const aw = fs.readFileSync(path.join(root, "sim_js", "awards.js"), "utf8");
-    assert(aw.includes('Bear\\" Bryant Award') && aw.includes("Richter-Howard Receiver"), "an award named for a person took an FCS school's swap");
+    assert(aw.includes('Bear\\" Bryson Award') && aw.includes("Richards-Hollis Receiver"), "an award named for a person lost its lookalike to an FCS school's swap");
     assert(!/"(Bryant|Howard)"/.test(fs.readFileSync(path.join(root, "sim_js", "season", "part1.js"), "utf8")), "an FCS school that shares a surname kept its name");
     assert(same(kept["colors"], json(path.join(ROOT, "data", "base_meta.json"))["iowa"]["colors"]));
     const players = (t) => [...t["offense"], ...t["defense"]];

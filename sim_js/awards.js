@@ -943,7 +943,7 @@ export function national_awards(pool, state, final = true) {
   return out;
 }
 
-/** After the national championship (week 20): Manning, Bear Bryant, Joe Moore. */
+/** After the national championship (week 20): the Manning Award, the Bear Bryant Award and the Joe Moore Award. */
 export function postseason_awards(pool, state) {
   const rng = _rng(state, "postseason");
   const out = [];
