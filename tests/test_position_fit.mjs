@@ -144,7 +144,13 @@ test("in the offseason: the same projection, a second move starts from where he 
   // once the offseason is over the change is his: no way back to the old ratings
   offseason.change_position(st, c["id"], "SS");
   pf.settle(roster);
-  assert(c["pos"] === "SS" && !("moved_attrs" in c) && c["moved_from"] === "FS");
+  assert(c["pos"] === "SS" && !("moved_attrs" in c) && !("moved_from" in c));
+  // a move next season starts from where he is (a save settled before kept "moved_from" alone: KeyError, the player's
+  // "Couldn't save the change" moving a safety to corner)
+  c["moved_from"] = "FS";
+  const ss = [...c["r"]];
+  pf.move_row(c, "CB", attrs);
+  assert(c["pos"] === "CB" && c["moved_from"] === "SS" && same(c["moved_attrs"], ss));
 });
 
 await run();

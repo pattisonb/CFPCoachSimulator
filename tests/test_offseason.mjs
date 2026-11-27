@@ -261,6 +261,24 @@ test("the next season is the same career a year on: the job you took, your histo
   assert(new Set(players.map((p) => p["name"])).size >= 70 && players.some((p) => p["class"] === "FR"), "a new class is on the roster");
 });
 
+test("a career mid-season with a quarterback in 90 is renumbered at once, in the league and in the season's teams file", () => {
+  const path = league.path(next["id"], 2027);
+  const data = JSON.parse(files.read_text(path));
+  const row = next["league"]["teams"][target]["roster"].find((c) => c["pos"] === "QB");
+  row["j"] = "90";
+  const qb = data["teams"][target]["offense"].find((p) => p["slug"] === row["id"]);
+  qb["jersey"] = "90";
+  files.write_text(path, JSON.stringify(data));
+  delete next["career"]["renumbered"];
+  const before = JSON.stringify({ ...data, teams: null });
+  assert(offseason.renumber_now(next) > 0, "nothing was renumbered");
+  assert(Number(row["j"]) <= 19, `his league number is ${row["j"]}`);
+  const after = JSON.parse(files.read_text(path));
+  equal(String(after["teams"][target]["offense"].find((p) => p["slug"] === row["id"])["jersey"]), String(row["j"]));
+  equal(JSON.stringify({ ...after, teams: null }), before, "only the jerseys moved");
+  equal(offseason.renumber_now(next), 0, "once a season");
+});
+
 test("the new season plays, and a saved career comes back on its own league even when the league's file is gone", () => {
   const name = season.load_teams()[ME]["name"];
   season.advance(next);

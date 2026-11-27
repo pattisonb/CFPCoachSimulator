@@ -184,7 +184,9 @@ export function move_row(c, pos, attrs) {
     c["o"] = game_scale.overall(zipped(attrs, c["r"]), pos, pos === "QB" ? get(c, "dmv") : null);
     return;
   }
-  if (!truthy(get(c, "moved_from"))) {
+  // (a "moved_from" with no snapshot is last year's move, settled: this one starts from where he is now; before settle
+  // let both go, a save from then threw KeyError here: the player's "Couldn't save the change")
+  if (!truthy(get(c, "moved_from")) || !truthy(get(c, "moved_attrs"))) {
     c["moved_from"] = cur;
     c["moved_attrs"] = Array.from(c["r"]);
   }
@@ -209,7 +211,10 @@ export function season_move(p, origin, pos) {
 
 export function settle(roster) {
   // At a season's end the changes are his: the snapshots go.
-  for (const c of roster) delete c["moved_attrs"];
+  for (const c of roster) {
+    delete c["moved_attrs"];
+    delete c["moved_from"];
+  }
 }
 
 export const position_fit = {

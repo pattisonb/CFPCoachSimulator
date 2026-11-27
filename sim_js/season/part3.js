@@ -1056,6 +1056,7 @@ function load_season(season_id) {
   if (truthy(get(state, "career"))) {
     modules.coach_names.distinct(state);        // careers saved with one coach in two jobs or two coaches under one name
     season.prune_boxes(state);                  // careers that kept every game's box score from every season (memory)
+    modules.offseason.renumber_now(state);      // careers saved with a quarterback in 90 (the numbers' rules came later)
   }
   return state;
 }

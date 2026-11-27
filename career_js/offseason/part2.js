@@ -8,6 +8,7 @@
 import { round, int, sum, cmp, sorted, maxBy, get, truthy, range, floordiv } from "../../engine_js/pyrt.js";
 import { mean as st_mean, pstdev as st_pstdev } from "../../engine_js/pystat.js";
 import { modules } from "../../engine_js/modules.js";
+import { read_text, write_text } from "../../engine_js/files.js";
 import { personnel } from "../../engine_js/personnel.js";
 import { league as lg } from "../league.js";
 import { position_fit } from "../position_fit.js";
@@ -690,11 +691,11 @@ function _jersey(roster, pos, rng) {
   return free.length ? rng.choice(free) : null;
 }
 
-function renumber(state) {
+function renumber(state, stream = "renumber") {
   // Every roster's numbers put right once the rosters are settled for the year: a player with no number, one his
   // position may not wear (a lineman moved to the line keeps his old 94 otherwise), or one a teammate listed before
   // him already has, draws a new one. Everyone else keeps his. Returns how many changed. Its own seeded stream.
-  const rng = offseason._rng(state, "renumber");
+  const rng = offseason._rng(state, stream);
   let n = 0;
   for (const slug of sorted(Object.keys(state["league"]["teams"]))) {
     const roster = state["league"]["teams"][slug]["roster"];
@@ -723,6 +724,40 @@ function renumber(state) {
       if (j !== null && offseason.jersey_natural(c["pos"], j)) { c["j"] = j; n += 1; } else c["j"] = was;
     }
   }
+  return n;
+}
+
+function renumber_now(state) {
+  // A career mid-season, saved before the numbers' rules (a quarterback in 90, the player's "fix current rosters"):
+  // the league's rosters renumbered at once, and the season's teams file given the new numbers (its jerseys only:
+  // nothing else in it moves). Once a season (career.renumbered). Returns how many changed.
+  const car = get(state, "career"), lgd = get(state, "league");
+  const lg = modules.league, season = modules.season;
+  const year = get(state, "year") || lg.FIRST_YEAR;
+  // (the first season plays the roster file, real numbers and all; the offseason renumbers on its own)
+  if (!truthy(car) || !truthy(lgd) || year <= lg.FIRST_YEAR || truthy(get(state, "offseason")) || get(car, "renumbered") === year) return 0;
+  const path = lg.path(state["id"], year);
+  let data;
+  try {
+    data = JSON.parse(read_text(path));
+  } catch (e) {
+    return 0;                                // its teams file is not here yet (a career not open in this tab): another time
+  }
+  const n = offseason.renumber(state, "renumber-now");
+  car["renumbered"] = year;
+  if (!n) return 0;
+  const numbers = {};
+  for (const t of Object.values(lgd["teams"])) for (const c of t["roster"]) numbers[c["id"]] = get(c, "j");
+  for (const t of Object.values(get(data, "teams") || {})) {
+    for (const unit of ["offense", "defense"]) for (const p of get(t, unit) || []) {
+      if (has(numbers, get(p, "slug"))) p["jersey"] = numbers[p["slug"]];
+    }
+  }
+  write_text(path, JSON.stringify(data));
+  modules.rosters.forget();                  // the games read the file again, with its new numbers
+  season._teams_cache = {};                  // ... and every view reads its teams again
+  season._TEAMS = {};
+  for (const c of [season._teams_meta, season._preview_cache]) if (c) for (const k of Object.keys(c)) delete c[k];
   return n;
 }
 
@@ -1127,7 +1162,7 @@ Object.assign(offseason, {
   program_shifts, _program_context, portal_odds, _departures, _would_start, draft_grades, draft_score, elite, draft_scores,
   draft_board, ai_keep_chance, _run_draft, _next_class, _redshirt_candidate, _games_played, _redshirt_block, redshirt,
   _apply_redshirts, position_options, move_row, _season_moves, change_position, defense_scheme, has_sam, empty_roles,
-  fill_roles, _jersey, jersey_legal, jersey_natural, renumber, life, _recruit_stories, _sign_classes, _compact_prospect, p4_school, open_spots, churn_left, my_spots,
+  fill_roles, _jersey, jersey_legal, jersey_natural, renumber, renumber_now, life, _recruit_stories, _sign_classes, _compact_prospect, p4_school, open_spots, churn_left, my_spots,
   _group_counts, _depth_values, playing_time, _prestige, entrant_interest, ai_offers, resolve_round, _close_portal_rounds,
   _close_portal,
 });
