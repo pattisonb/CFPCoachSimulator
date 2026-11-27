@@ -264,6 +264,12 @@ test("a lowball offer cools him: no points for it and no visit, until the NIL re
   act(pid, "offer", { nil: 0 });
   assert(recruiting.cooled(st, ME, pid) && recruiting.points_now(st, ME, pid) === before, "a lowball earns nothing");
   refused(() => act(pid, "official_visit"), 409);
+  // his page says he reads the offer at the week's end: it shows nothing of the lowball until then
+  const row = prospects.board_row(st, pid, ME);
+  assert(row.offer_landing && !row.cooled && row.cooled_why === null, J([row.offer_landing, row.cooled, row.cooled_why]));
+  rc["offer_landing"][pid] -= 1;                        // ... and once it has landed, he has read it
+  assert(prospects.board_row(st, pid, ME).cooled_why === "lowball");
+  rc["offer_landing"][pid] += 1;
   rc["nil"][ME]["budget"] += ask;                       // room for the raise is not the point here
   act(pid, "raise_nil", { nil: ask });
   assert(!recruiting.cooled(st, ME, pid) && rc["nil"][ME]["held"][pid] === ask);
