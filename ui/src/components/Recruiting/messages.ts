@@ -140,6 +140,16 @@ export const messages = {
   quickPlanned: (what: string, n: number) => `${what} is planned (${n} Energy held). Click to take it back.`,
   quickDone: (what: string) => `${what}: done this week.`,
   quickOff: "He is not taking calls.",
+  /** his row once he cannot move: the badge in place of his quick actions */
+  sealed: { hard: "Hard Commit", signed: "Signed" },
+  sealedAway: "Elsewhere",
+  sealedTip: {
+    hard: (away: boolean) =>
+      away
+        ? "He is a hard commit to another school: he will not flip."
+        : "He is a hard commit: he is yours, and he will not flip.",
+    signed: (away: boolean) => (away ? "He has signed with another school." : "He has signed with you."),
+  },
   offBoardRow: (name: string) => `Take ${name} off your board.`,
   /** the row's fourth box: a scout sent to him now */
   scoutTip: (n: number) => `Send a scout to him now for ${n} Energy. Each look tells you more about him.`,

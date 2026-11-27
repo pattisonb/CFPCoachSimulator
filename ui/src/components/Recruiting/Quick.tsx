@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Binoculars, Chat, Check, Heart, Lightning, Phone, VideoCamera, X } from "@phosphor-icons/react";
+import { Binoculars, Chat, Check, Heart, Lightning, Lock, PenNib, Phone, VideoCamera, X } from "@phosphor-icons/react";
 import { api } from "../../api.ts";
 import { setFavorite, setOnBoard } from "../../board.ts";
 import ScoutMark from "../ScoutMark/index.tsx";
@@ -32,6 +32,11 @@ interface Props {
   offWhy?: string;
   /** nothing is drawn (the door is shut on you: his row shows that instead) */
   hidden?: boolean;
+  /**
+   * he is past moving (a hard commit cannot flip; a signee is done): his row shows that in place of the boxes, in your
+   * colors when he is yours, plain when he is another school's. His two marks stay.
+   */
+  sealed?: { key: "hard" | "signed"; away: boolean };
   /** each box shows its mark and its energy (his row); marks alone without */
   labels?: boolean;
   /** a fourth box sends a scout to him now (his row on the board) */
@@ -67,6 +72,7 @@ export default function QuickActions({
   off,
   offWhy,
   hidden,
+  sealed,
   labels,
   scout,
   marks,
@@ -222,7 +228,27 @@ export default function QuickActions({
   );
   return (
     <span className={`quick${labels ? " quick--labels" : ""}`} role="group" aria-label={m.quickLabel(r.name)}>
-      {labels ? <span className="quick__dock">{boxes}</span> : boxes}
+      {sealed ? (
+        <span
+          className={`quick__sealed${sealed.away ? " is-away" : ""}`}
+          title={m.sealedTip[sealed.key](sealed.away)}
+          aria-label={m.sealedTip[sealed.key](sealed.away)}
+        >
+          {sealed.key === "signed" ? (
+            <PenNib size={20} weight={sealed.away ? "bold" : "fill"} aria-hidden="true" />
+          ) : (
+            <Lock size={20} weight={sealed.away ? "bold" : "fill"} aria-hidden="true" />
+          )}
+          <span className="quick__sealed-words">
+            <b>{m.sealed[sealed.key]}</b>
+            {sealed.away && <span>{m.sealedAway}</span>}
+          </span>
+        </span>
+      ) : labels ? (
+        <span className="quick__dock">{boxes}</span>
+      ) : (
+        boxes
+      )}
       {marks && (
         <span className="quick__marks">
           <button

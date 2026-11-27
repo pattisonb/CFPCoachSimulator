@@ -110,6 +110,9 @@ function plan(state, pid, action, on) {
     if (truthy(st["signed"]) || (truthy(st["committed"]) && st["committed"] !== me && truthy(get(st, "hard")))) {
       throw new recruiting.RecruitingError(409, "He is not taking calls.");
     }
+    if (st["committed"] === me && truthy(get(st, "hard"))) {     // a hard commit cannot flip: nothing to work on
+      throw new recruiting.RecruitingError(409, "He is a hard commit: he is yours.");
+    }
     const out = recruiting.blocked(state, me, pid);
     if (out !== null) throw new recruiting.RecruitingError(409, out["text"]);
     if (get(get(recruiting._contact(state, me, pid), "week") || {}, action) === recruiting.contact_week(state)) {
@@ -146,8 +149,8 @@ function _run_planned(state) {
 
 function _carry_planned(state) {
   // The week step's last move: the quick actions you sent stay ticked for the new week, so a recruit you work every
-  // week needs no new clicks; one who signed or hard-committed elsewhere this week is let go (a verbal commit, yours or
-  // another school's, keeps his: the player's ask), and so is whatever the new week's energy cannot hold.
+  // week needs no new clicks; one who signed or hard-committed this week is let go (a hard commit cannot flip, yours or
+  // another school's; a verbal commit keeps his: the player's ask), and so is whatever the new week's energy cannot hold.
   const [rc, me] = [state["recruiting"], get(state, "team")];
   let plans = pop(rc, "carry", null);
   if (!truthy(plans)) plans = {};
@@ -156,7 +159,7 @@ function _carry_planned(state) {
   for (const [pid, acts] of Object.entries(plans)) {
     const st = get(rc["status"], pid);
     if (!truthy(st) || truthy(st["signed"]) || recruiting.blocked(state, me, pid) !== null) continue;
-    if (truthy(st["committed"]) && st["committed"] !== me && truthy(get(st, "hard"))) continue;      // (plan's rule: he is not taking calls)
+    if (truthy(st["committed"]) && truthy(get(st, "hard"))) continue;      // (a hard commit cannot flip: plan refuses him too)
     if ((get(rc, "dropped") || []).includes(pid)) continue;        // you took him off your board: nothing is ticked for him again
     for (const action of acts) {
       if (_in(action, recruiting.PLANNABLE) && recruiting.HOURS[action] <= left && !get(recruiting.planned(state), pid, []).includes(action)) {

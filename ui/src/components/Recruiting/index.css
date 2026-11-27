@@ -783,6 +783,48 @@
   border-color: var(--ink);
 }
 
+/* he cannot move: a badge where the dock was, as wide as its four boxes; yours in your colors, double framed like
+   your stamp, another school's plain */
+.quick__sealed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: calc(4 * 46px - 3 * var(--line));
+  height: 46px;
+  padding: 0 8px;
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+  border: var(--line) solid var(--ink);
+  outline: 1px solid var(--team-on, var(--paper-hi));
+  outline-offset: -5px;
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.quick__sealed.is-away {
+  background: var(--paper-hi);
+  color: var(--ink-soft);
+  outline-color: var(--line-soft);
+  box-shadow: none;
+}
+
+.quick__sealed-words {
+  display: grid;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.quick__sealed-words b {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.quick__sealed-words span {
+  font-size: 10px;
+}
+
 /* his two marks: a small stack at the strip's end, his favorite's heart over the cross that takes him off your board */
 .quick__marks {
   display: inline-grid;

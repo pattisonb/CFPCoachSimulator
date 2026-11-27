@@ -85,6 +85,11 @@ const GROUP_ORDER = [
 ];
 const groupOf = (r: BoardRow) => r.group ?? r.display_pos;
 /** A school by its slug, for its colors (none for a stand-in). */
+/** a recruit past moving (a hard commit cannot flip, a signee is done): his row's badge in place of its actions */
+const sealedOf = (r: BoardRow, me: string) => {
+  const st = statusOf(r, me);
+  return st.key === "hard" || st.key === "signed" ? { key: st.key, away: !!st.away } : undefined;
+};
 const schoolOf = (slug: string | null) => (slug ? cachedTeams()?.find((t) => t.slug === slug) : undefined);
 
 /** A warning about one school, on a band of that school's first color in the ink that reads on it. */
@@ -560,6 +565,7 @@ export default function Recruiting({
                         }
                         offWhy={out?.text}
                         hidden={!!out}
+                        sealed={sealedOf(r, team)}
                         labels
                         scout
                         marks
