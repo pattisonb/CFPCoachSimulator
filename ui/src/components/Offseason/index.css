@@ -1142,6 +1142,94 @@
   border-color: var(--warn);
 }
 
+/* How Your Coaches Grew: a coach a row, who he is on the left and a tile for each rating that moved on the right */
+.grew {
+  display: grid;
+  list-style: none;
+}
+
+.grew__row {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+  gap: var(--s2) var(--s3);
+  align-items: center;
+  padding: var(--s2) 0;
+}
+
+.grew__row + .grew__row {
+  border-top: 1px solid var(--line-soft);
+}
+
+.grew__who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.grew__why {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.grew__changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.grew__tile {
+  display: grid;
+  gap: 2px;
+  min-width: 132px;
+  padding: 6px 10px;
+  background: var(--paper-hi);
+  border: var(--line) solid var(--ink);
+  border-left-width: 6px;
+}
+
+.grew__tile.is-up {
+  border-left-color: var(--good);
+}
+
+.grew__tile.is-down {
+  border-left-color: var(--warn);
+}
+
+.grew__rating {
+  font-size: var(--t-xs);
+}
+
+.grew__nums {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--t-lg);
+}
+
+.grew__by {
+  margin-left: auto;
+  font-size: var(--t-sm);
+  font-weight: 700;
+}
+
+.grew__tile.is-up .grew__by {
+  color: var(--good);
+}
+
+.grew__tile.is-down .grew__by {
+  color: var(--warn);
+}
+
+/* a narrow window: the tiles go under the coach */
+@media (width <= 640px) {
+  .grew__row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* the rest of what moved: folded, in two columns when open */
 .growth__rest {
   margin-bottom: 0;
@@ -1444,17 +1532,13 @@
   list-style: none;
 }
 
+/* a name is never cut off: a long one wraps the line instead */
 .cut__chip {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
   min-width: 0;
-  white-space: nowrap;
-}
-
-.cut__chip b {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ----- Portal Recap: a column each for who came, who went and the league's biggest moves ----- */

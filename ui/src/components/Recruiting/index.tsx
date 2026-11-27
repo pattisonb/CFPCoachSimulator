@@ -263,7 +263,9 @@ export default function Recruiting({
   // what each recruit looked like when you last opened his card: a row whose recruit has changed since wears a bell.
   // A recruit new to the board is taken as seen; the one whose card is open is seen as he is now.
   const [seen, setSeen] = useKept<Record<string, Seen>>(`board.${seasonId}.seen`, {});
-  const seenKey = all.map((r) => r.id).join("|") + JSON.stringify(current ? seenOf(current, team) : null);
+  // (the open recruit's id is in the key: two recruits who look alike, both Not Offered and off their lists, read the
+  // same, and opening the second left him unseen, so his bell came back as soon as you clicked away: the player's ask)
+  const seenKey = all.map((r) => r.id).join("|") + JSON.stringify(current ? [current.id, seenOf(current, team)] : null);
   useEffect(() => {
     if (!all.length) return;
     const next: Record<string, Seen> = {};

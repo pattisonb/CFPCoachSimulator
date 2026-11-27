@@ -1371,18 +1371,28 @@ function Cuts({ v, teams, busy, live, act }: P) {
         {!!c.joined?.length && (
           <section aria-label={m.cuts.joined}>
             <h3 className="label dev__kicker">{m.cuts.joined}</h3>
-            <ul className="cut__chips">
-              {c.joined.map((x) => (
-                <li key={x.id} className="cut__chip">
-                  <b>{x.name}</b>
-                  <span className="off__soft">
-                    {x.pos} · {x.overall} {m.cuts.overall}
-                  </span>
-                  <TeamTag team={teams.get(x.from)}>
-                    {m.cuts.cutBy(teams.get(x.from)?.abbreviation ?? x.from_name)}
-                  </TeamTag>
-                </li>
-              ))}
+            {/* the same cards as your own cuts (the player: present this better; the names were cut off) */}
+            <ul className="dev__jumps">
+              {c.joined.map((x) => {
+                const from = teams.get(x.from);
+                return (
+                  <li key={x.id} className="dev-card cut-card" style={MINE}>
+                    <header className="dev-card__top">
+                      <span className="face-tile dev-card__face">
+                        <Face face={playerFace(x.id, x.pos)} scale={2} label="" />
+                      </span>
+                      <b className="dev-card__gain">{x.overall}</b>
+                    </header>
+                    <b className="dev-card__name">{x.name}</b>
+                    <span className="off__soft">
+                      {x.pos} · {formatClass(x.cls)}
+                    </span>
+                    <span className="dev-card__line">
+                      <TeamTag team={from}>{m.cuts.cutBy(from?.abbreviation ?? x.from_name)}</TeamTag>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
@@ -1670,19 +1680,42 @@ function Staff({ v, teams, busy, live, act, season }: P) {
 
       {st && st.developed.length > 0 && (
         <Panel title={m.staff.developed} aside={m.staff.coaches(st.developed.length)} collapsible defaultOpen={false}>
-          <ul className="off__list">
+          {/* each coach: who he is and why he moved, then a tile for each rating that moved (the player: present
+              this better) */}
+          <ul className="grew">
             {st.developed.map((d) => (
-              <li key={d.id} className="off__stack">
-                <span className="off__who">
+              <li key={d.id} className="grew__row">
+                <div className="grew__who">
                   <b>{d.name}</b>
-                  <span className="off__soft">
-                    {role(d.role)}
-                    {d.why.length ? ` · ${d.why.map(titleCase).join(", ")}` : ""}
-                  </span>
-                </span>
-                <span className="off__soft">
-                  {d.changes.map((c) => m.staff.change(c.rating, c.from, c.to)).join(" · ")}
-                </span>
+                  <span className="off__soft">{role(d.role)}</span>
+                  {d.why.length > 0 && (
+                    <span className="grew__why">
+                      {d.why.map((w) => (
+                        <Tag key={w}>{titleCase(w)}</Tag>
+                      ))}
+                    </span>
+                  )}
+                </div>
+                <ul className="grew__changes">
+                  {d.changes.map((c) => {
+                    const by = c.to - c.from;
+                    return (
+                      <li
+                        key={c.rating}
+                        className={`grew__tile${by < 0 ? " is-down" : by > 0 ? " is-up" : ""}`}
+                        title={m.staff.change(c.rating, c.from, c.to)}
+                      >
+                        <span className="label grew__rating">{c.rating}</span>
+                        <span className="grew__nums">
+                          <span className="off__soft">{c.from}</span>
+                          <span aria-hidden="true">→</span>
+                          <b>{c.to}</b>
+                          <span className="grew__by">{by > 0 ? `+${by}` : by < 0 ? `−${-by}` : "0"}</span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               </li>
             ))}
           </ul>
