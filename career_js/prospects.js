@@ -28,6 +28,18 @@ function _in(x, c) {
   return c[x] !== undefined;
 }
 
+function _cooled_shown(state, viewer, pid) {
+  // Whether the page shows him cooled on you. A lowball cools him as you send the offer, but your page says he reads
+  // it at the week step (offer_landing), so it says nothing of the lowball until then (the player: "a recruit read my
+  // offer immediately"); raising it to his ask before the step ends it unseen.
+  const recruiting = modules.recruiting;
+  if (!recruiting.cooled(state, viewer, pid)) return false;
+  const rc = state["recruiting"];
+  const landing = _in(pid, get(rc["offers"], viewer, [])) && get(get(rc, "offer_landing") || {}, pid) === recruiting.contact_week(state);
+  return !(landing && modules.persona.cooled_why(state, viewer, pid) === "lowball");
+}
+
+
 /** str.format with named fields: "{noun}" from `vars`. */
 function format(text, vars) {
   return text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k]));
@@ -955,8 +967,8 @@ export function profile(state, pid, viewer) {
     scout_cost: recruiting.look_cost(state, viewer, pid),       // a Send's energy (as the board row's)
     points_left: recruiting.scout_points_left(state, viewer),     // the week's energy left (a Send it cannot pay is disabled)
     ratings: status["signed"] === viewer ? prospects.signed_ratings(state, p) : null,     // signing day shows what you got
-    ask: recruiting.ask_view(state, viewer, pid), cooled: recruiting.cooled(state, viewer, pid),
-    cooled_why: recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null,
+    ask: recruiting.ask_view(state, viewer, pid), cooled: _cooled_shown(state, viewer, pid),
+    cooled_why: _cooled_shown(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null,
     stage: recruiting.stage(state, viewer, pid), strength: recruiting.strengths(state, viewer, pid, true),
     case: recruiting.case_letters(state, viewer, pid, true),     // your program's letter grade with him on every topic (the page shows these)
     blocked: recruiting.blocked(state, viewer, pid), top_size: recruiting.top_size(state, pid),
@@ -1119,9 +1131,9 @@ export function board_row(state, pid, viewer, history = null, homes = null) {
   out.visit_cost = recruiting.action_hours(state, viewer, pid, "official_visit"); out.hc_cost = recruiting.action_hours(state, viewer, pid, "hc_visit");                     // your invite by how far he comes
   out.nil = get(get(get(rc["nil"], viewer, {}), "held", {}), pid, 0);
   out.need = recruiting.needs_by_spot(state, viewer)[recruiting.spot_of(rc["prospects"][pid])]["need"];
-  out.ask = recruiting.ask_view(state, viewer, pid); out.cooled = recruiting.cooled(state, viewer, pid);
+  out.ask = recruiting.ask_view(state, viewer, pid); out.cooled = _cooled_shown(state, viewer, pid);
   out.money_owed = recruiting.money_owed(state, viewer, pid);
-  out.cooled_why = recruiting.cooled(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null;
+  out.cooled_why = _cooled_shown(state, viewer, pid) ? persona.cooled_why(state, viewer, pid) : null;
   out.stage = recruiting.stage(state, viewer, pid); out.strength = recruiting.strengths(state, viewer, pid, true);
   out.case = recruiting.case_letters(state, viewer, pid, true);     // your program's letter grade with him on every topic
   out.blocked = recruiting.blocked(state, viewer, pid); out.top_size = recruiting.top_size(state, pid);
