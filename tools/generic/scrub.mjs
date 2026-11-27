@@ -379,7 +379,17 @@ export class Maps {
       if (hit === null || hit.includes(quote)) return whole.replace(this._slug_re, (s, slug) => this.slug[slug]);
       return `${quote}${hit}${quote}`;
     });
-    return swapped.replace(this._source_re, (whole) => this.source_phrases[whole]);
+    return swapped.replace(this._source_re, (whole, at, text) => (this._in_a_name(whole, at, text) ? whole : this.source_phrases[whole]));
+  }
+
+  /** An FCS school that goes by one word ("Bryant", "Howard") inside a longer name, joined to a capitalized word by a
+   * space or a hyphen ("Bear Bryant", "Richter-Howard Receiver of the Year"): a person's name, kept. The school
+   * itself, standing alone ("Bryant": "RI", a list of opponents), is swapped. */
+  _in_a_name(whole, at, text) {
+    if (whole.includes(" ") || !(whole in this.fcs_places)) return false;
+    const before = text.slice(Math.max(0, at - 24), at);
+    const after = text.slice(at + whole.length, at + whole.length + 24);
+    return /[A-Z][A-Za-z.'"\\]*[ \-\u2013]$/u.test(before) || /^[ \-\u2013][A-Z]/u.test(after);
   }
 }
 Maps._STATE_VALUE = _STATE_VALUE;

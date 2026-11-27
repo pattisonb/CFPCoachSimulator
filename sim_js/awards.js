@@ -53,10 +53,10 @@ const CONF_LAYOUTS = {
   "SEC": [["Coaches", "AP"], 2, [["QB", 1], ["RB", 2], ["WR", 2], ["TE", 1], ["C", 1], ["OL", 4], ["EDGE", 2], ["DT", 2], ["LB", 3], ["DB", 4], ["K", 1], ["P", 1], ["RS", 1]]],
   "Big Ten": [["Coaches", "Media"], 3, [["QB", 1], ["RB", 2], ["WR", 2], ["TE", 1], ["C", 1], ["G", 2], ["T", 2], ["DL", 4], ["LB", 4], ["DB", 4], ["K", 1], ["P", 1], ["RS", 1]]],
   "Big 12": [["Coaches", "Media"], 2, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["C", 1], ["G", 2], ["T", 2], ["DL", 4], ["LB", 3], ["DB", 4], ["K", 1], ["P", 1], ["RS", 1]]],
-  "ACC": [["ACSMA"], 3, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["AP", 1], ["T", 2], ["G", 2], ["C", 1], ["EDGE", 2], ["DT", 2], ["LB", 3], ["CB", 2], ["S", 2], ["K", 1], ["P", 1], ["RS", 1]]],
+  "ACC": [["ACSMA"], 3, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["APB", 1], ["T", 2], ["G", 2], ["C", 1], ["EDGE", 2], ["DT", 2], ["LB", 3], ["CB", 2], ["S", 2], ["K", 1], ["P", 1], ["RS", 1]]],
   "American Athletic Conference": [["Coaches"], 3, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["T", 2], ["G", 2], ["C", 1], ["DL", 4], ["LB", 4], ["CB", 2], ["S", 2], ["K", 1], ["P", 1], ["RS", 1]]],
   "Mountain West": [["Coaches"], 2, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["OL", 5], ["DL", 4], ["LB", 4], ["DB", 4], ["K", 1], ["P", 1], ["RS", 1]]],
-  "Sun Belt": [["Coaches"], 3, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["OL", 5], ["DL", 4], ["LB", 3], ["DB", 5], ["K", 1], ["P", 1], ["RS", 1], ["AP", 1]]],
+  "Sun Belt": [["Coaches"], 3, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["OL", 5], ["DL", 4], ["LB", 3], ["DB", 5], ["K", 1], ["P", 1], ["RS", 1], ["APB", 1]]],
   "MAC": [["Media"], 3, [["QB", 1], ["RB", 2], ["WR", 4], ["TE", 1], ["OL", 5], ["DL", 4], ["LB", 4], ["DB", 4], ["K", 1], ["P", 1], ["RS", 2]]],
   "Conference USA": [["Coaches"], 2, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["OL", 5], ["EDGE", 2], ["DT", 2], ["LB", 3], ["DB", 4], ["K", 1], ["P", 1], ["RS", 1]]],
   "Pac-12": [["Coaches"], 2, [["QB", 1], ["RB", 2], ["WR", 3], ["TE", 1], ["OL", 5], ["DL", 4], ["LB", 4], ["DB", 4], ["K", 1], ["P", 1], ["RS", 1]]],
@@ -764,7 +764,7 @@ export function _slot_pool(pool, slot, conference) {
   if (slot === "CB") return [pool.by_group("DB", { ...conf, roles: new Set(["CB"]) }), "DB"];
   if (slot === "S") return [pool.by_group("DB", { ...conf, roles: new Set(["FS", "SS"]) }), "DB"];
   if (slot === "DL") return [pool.by_group("EDGE", { ...conf }).concat(pool.by_group("DT", { ...conf })), null];
-  if (slot === "AP") return [pool.by_group("RB", { ...conf }).concat(pool.by_group("WR", { ...conf })).filter((p) => has(p["z"], "RS")), null];
+  if (slot === "APB") return [pool.by_group("RB", { ...conf }).concat(pool.by_group("WR", { ...conf })).filter((p) => has(p["z"], "RS")), null];
   return [[], slot];
 }
 
@@ -798,7 +798,7 @@ export function select_team(pool, slots, team_weight, noise, rng, conference = n
       const [slot, n] = slots[i];
       const [players, g] = _slot_pool(pool, slot, conference);
       let ranked;
-      if (slot === "AP") {
+      if (slot === "APB") {
         ranked = sorted(players, (p) => -(p["z"][p["group"]] * 0.6 + p["z"]["RS"] * 0.6 + rng.gauss(0, noise)));
       } else {
         ranked = sorted(players, (p) => -utility(p, g));
@@ -848,6 +848,26 @@ export function all_america(pool, rng) {
   const key = (r) => [dict_get(slot_order, r["slot"], 99), -r["selectors"], -r["score"]];
   consensus.sort((a, b) => cmp(key(a), key(b)));
   return { selectors: teams, consensus, unanimous: consensus.filter((r) => r["unanimous"]) };
+}
+
+/**
+ * Seasons saved before the all-purpose slot was "APB" keyed it by the poll's name, as the source build or the published
+ * build spells it: every All-America and all-conference pick in that slot is put in "APB", where the field and the
+ * History look for it.
+ */
+export function upgrade_slots(state) {
+  const old = new Set(["AP", "Press"]);      // the source build's key, and the published build's
+  const fix = (picks) => {
+    for (const c of picks || []) if (c && old.has(c["slot"])) c["slot"] = "APB";
+  };
+  const aw = dict_get(state, "awards") || {};
+  const aa = dict_get(dict_get(aw, "national") || {}, "all_america") || {};
+  fix(dict_get(aa, "consensus"));
+  fix(dict_get(aa, "unanimous"));
+  for (const picks of Object.values(dict_get(aa, "selectors") || {})) fix(picks);
+  for (const entry of Object.values(dict_get(aw, "conference") || {})) {
+    for (const picks of Object.values(dict_get(dict_get(entry || {}, "teams") || {}, "selectors") || {})) fix(picks);
+  }
 }
 
 export function all_conference(pool, conference, rng) {
@@ -923,7 +943,7 @@ export function national_awards(pool, state, final = true) {
   return out;
 }
 
-/** After the national championship (week 20): Manning, Bear Bryant, Joe Moore. */
+/** After the national championship (week 20): the Manning Award, the Bear Bryant Award and the Joe Moore Award. */
 export function postseason_awards(pool, state) {
   const rng = _rng(state, "postseason");
   const out = [];
@@ -1015,7 +1035,7 @@ export const awards = {
   SELECTORS, AA_SLOTS, CONF_LAYOUTS, _OPOY, _DPOY, _ST, _COY, CONF_AWARDS, NATIONAL_AWARDS, COACH_AWARDS,
   passer_rating, _z, _ordinal, _podium, _rank_bonus, Pool, _n, headline, stat_line, _candidates, award_race,
   heisman_vote, coach_table, coach_award, broyles_table, ol_units, _slot_pool, select_team, all_america,
-  all_conference, _rng, conference_awards, national_awards, postseason_awards, my_awards, race_view,
+  all_conference, upgrade_slots, _rng, conference_awards, national_awards, postseason_awards, my_awards, race_view,
 };
 
 modules.awards = awards;
