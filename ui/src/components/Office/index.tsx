@@ -29,6 +29,7 @@ import {
 import PlayGame from "../PlayGame/index.tsx";
 import Swatch from "../Swatch/index.tsx";
 import TeamPlate from "../TeamPlate/index.tsx";
+import { teamCardVars } from "../../colors.ts";
 import { api } from "../../api.ts";
 import { dateText, kickoffText, ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
@@ -368,7 +369,7 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
             <span>{title}</span>
             <span className="office__title-sub">{subtitle}</span>
           </h1>
-          <dl className="office__stats">
+          <dl className="office__stats" style={teamCardVars(teams.get(s.team)) as CSSProperties | undefined}>
             <div>
               <dt className="label">{m.rank}</dt>
               <dd>

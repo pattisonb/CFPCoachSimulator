@@ -3,9 +3,9 @@ import { ArrowDown, ArrowRight, ArrowUp, Medal, Trophy } from "@phosphor-icons/r
 import Chip from "../Chip/index.tsx";
 import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
-import { inkOn } from "../../colors.ts";
+import { inkOn, teamCardVars } from "../../colors.ts";
 import { titleCase } from "../../format.ts";
 import type { AwardsView, HeismanCandidate, PollEntry, SeasonSummary, TeamCard } from "../../types.ts";
 import Face from "../Face/index.tsx";
@@ -199,10 +199,9 @@ export default function Recap({ season, teams, onBracket, onBox, onOffseason, on
       <SectionStatus>{view.done ? m.final(view.year) : m.through(weekName)}</SectionStatus>
     ));
   const team = (slug: string, name: string) => (
-    <span className="recap__team">
-      <Swatch team={teams.get(slug)} size={14} />
+    <TeamPlate team={teams.get(slug)} size="sm">
       {name}
-    </span>
+    </TeamPlate>
   );
   /** whose leaders the one Leaders card shows */
   const [whose, setWhose] = useState<"mine" | "all">("mine");
@@ -364,7 +363,7 @@ export default function Recap({ season, teams, onBracket, onBox, onOffseason, on
 
             {/* your season in numbers: a tile each, the number large */}
             {played && (
-              <dl className="recap__nums">
+              <dl className="recap__nums" style={teamCardVars(mineCard) as CSSProperties | undefined}>
                 <div>
                   <dt className="label">{m.rows.conference}</dt>
                   <dd>
@@ -427,9 +426,9 @@ export default function Recap({ season, teams, onBracket, onBox, onOffseason, on
                             label={m.nationalNames[k]}
                             value={
                               <>
-                                <PlayerLink team={p.team} name={p.name} />,{" "}
-                                {(p.team ? teams.get(p.team)?.abbreviation : undefined) ?? p.team_name ?? ""} ·{" "}
-                                {line(p.stats)}
+                                {p.team && teams.get(p.team) ? <TeamPlate team={teams.get(p.team)} size="sm" /> : null}
+                                <PlayerLink team={p.team} name={p.name} />
+                                {p.team && teams.get(p.team) ? "" : `, ${p.team_name ?? ""}`} · {line(p.stats)}
                               </>
                             }
                           />

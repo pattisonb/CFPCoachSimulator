@@ -374,12 +374,6 @@
   color: var(--warn);
 }
 
-.recap__team {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .recap__kicker {
   margin-top: var(--s2);
   color: var(--ink-soft);
@@ -661,7 +655,7 @@
 /* ---- your week in tiles, in your colors (the player: more team branding, and faces): Record and Ranked are your
    first color with your second as a band beneath; each standout is a white card with his face, a band of your
    colors beneath it ---- */
-.recap__nums--week[style] > div {
+.recap__nums[style] > div {
   position: relative;
   overflow: hidden;
   border-bottom: 6px solid var(--c);
