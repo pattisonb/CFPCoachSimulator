@@ -11,11 +11,11 @@ export function _add_stat(player, key, n = 1) {
 
 
 // How tired a player gets, in the fatigue formulas' own units: TIRE_AVG for an average starter, TIRE_PER_POINT less a
-// card point of endurance over him. *tune*
+// card point of endurance over him, and more for a lineman's pounds over the usual at his spot (roster.Player.tire_weight). *tune*
 const TIRE_AVG = 45, TIRE_PER_POINT = 2.5;
 
 export function _tired(player) {
-  return game_functions.TIRE_AVG - game_functions.TIRE_PER_POINT * (player.endurance || 0);
+  return game_functions.TIRE_AVG - game_functions.TIRE_PER_POINT * (player.endurance || 0) + (player.tire_weight || 0);
 }
 
 

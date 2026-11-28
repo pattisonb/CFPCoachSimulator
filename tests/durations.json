@@ -107,6 +107,7 @@
  "test_scouting.mjs": 11,
  "test_scouting_desk.mjs": 12,
  "test_sim_golden.mjs": 15,
+ "test_size.mjs": 5,
  "test_sim_progress.mjs": 54,
  "test_skin.mjs": 130,
  "test_speed.mjs": 6,

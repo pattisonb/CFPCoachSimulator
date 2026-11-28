@@ -41,9 +41,9 @@ const signed2 = (x) => (x < 0 ? "-" : "+") + round(Math.abs(x), 2).toFixed(2);  
 
 test("morale", () => {
   const base = fingerprint();
-  console.log("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 8a45ab9155938354)");
+  console.log("fingerprint with momentum off:", base, "(must match the engine's current fingerprint: 6213124aaba5370f)");
   // the engine's own fingerprint with momentum off: the same five games tests/test_play_log.mjs prints
-  assert(base === "8a45ab9155938354");
+  assert(base === "6213124aaba5370f");
 
   // in-game momentum changes a game and leaves the flag off afterwards
   season._init(String(season.TEAMS_FILE));
