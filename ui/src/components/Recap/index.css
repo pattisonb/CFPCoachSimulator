@@ -977,3 +977,11 @@
   letter-spacing: 1px;
   font-size: var(--t-xs);
 }
+
+/* (the face fills its square, kept pixel-sharp: never larger than the frame) */
+.recap__standout-face > .face {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
