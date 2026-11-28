@@ -80,7 +80,9 @@ test("you place him with the offseason's position change, and moving on leads to
   const to = p["options"][1];
   v = api.call("POST", `/api/season/${sid}/offseason/position`, { pid: p["id"], pos: to["pos"] });
   const now = v["athletes"]["players"].find((x) => x["id"] === p["id"]);
-  equal([now["pos"], now["moved_from"], now["options"][0]["pos"]], [to["pos"], p["pos"], to["pos"]]);
+  equal([now["pos"], now["moved_from"], now["options"].find((o) => o["current"])["pos"]], [to["pos"], p["pos"], to["pos"]]);
+  // the tiles hold still as you place him (the player's ask): the same spots in the same order, the new one marked
+  equal(now["options"].map((o) => o["pos"]), p["options"].map((o) => o["pos"]));
   const row = api.loaded_state()["league"]["teams"][ME]["roster"].find((c) => c["id"] === p["id"]);
   assert(row["pos"] === to["pos"] && row["ath"] === true, "his roster row moved");
   v = api.call("POST", `/api/season/${sid}/offseason/advance`, {});

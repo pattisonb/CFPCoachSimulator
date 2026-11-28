@@ -514,7 +514,9 @@ function position_options(state, pid) {
   const c = lgd["teams"][state["team"]]["roster"].find((x) => x["id"] === pid);
   if (c === undefined) throw new offseason.RosterError(404, "not on your roster");
   const [origin, r] = truthy(get(c, "moved_attrs")) ? [c["moved_from"], c["moved_attrs"]] : [c["pos"], c["r"]];
-  const out = position_fit.options(_zipped(lgd["attrs"], r), get(c, "ht"), get(c, "wt"), origin, c["pos"], offseason.GROUP);
+  // (this year's athlete: his size counts at the spot he was listed at too, as everywhere else)
+  const athlete = offseason.athletes_mine(state).some((x) => x["id"] === pid);
+  const out = position_fit.options(_zipped(lgd["attrs"], r), get(c, "ht"), get(c, "wt"), origin, c["pos"], offseason.GROUP, athlete);
   return out;
 }
 
@@ -866,7 +868,7 @@ function _sign_classes(state, lgd) {
       // another school's staff places him itself, where he projects best (the player's rule: the CPU assigns its
       // athletes too); from then on that is simply his position
       if (slug !== get(state, "team")) {
-        const opts = position_fit.options(_zipped(attrs, c["r"]), get(c, "ht"), get(c, "wt"), c["pos"], c["pos"], offseason.GROUP);
+        const opts = position_fit.options(_zipped(attrs, c["r"]), get(c, "ht"), get(c, "wt"), c["pos"], c["pos"], offseason.GROUP, true);
         const best = opts.reduce((a, b) => (b["overall"] > a["overall"] ? b : a), opts[0]);
         if (best !== undefined && best["pos"] !== c["pos"]) {
           offseason.move_row(c, best["pos"], attrs);

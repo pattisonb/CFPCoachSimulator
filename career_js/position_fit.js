@@ -146,17 +146,22 @@ export function transfer(attrs, from_pos, to_pos) {
   return out;
 }
 
-export function project(attrs, height_in, weight_lbs, from_pos, to_pos) {
+export function project(attrs, height_in, weight_lbs, from_pos, to_pos, sized = false) {
   // His overall at `to_pos`: the formula there on his transferred ratings, less what his size
-  // costs, FLOOR at least. At his own position it is exactly his overall.
+  // costs, FLOOR at least. At his own position it is exactly his overall, unless `sized`: an athlete's listed spot
+  // is only where he was drawn, so his size counts there too (a 175-pound "tight end" read as one: the player's
+  // "tiny tight ends").
   from_pos = get(position_fit.ENGINE_TO_EA, from_pos, from_pos);
   to_pos = get(position_fit.ENGINE_TO_EA, to_pos, to_pos);
+  if (from_pos === to_pos && sized) {
+    return int(round(Math.max(position_fit.FLOOR, game_scale.overall(attrs, to_pos) - position_fit.size_penalty(height_in, weight_lbs, to_pos))));
+  }
   if (from_pos === to_pos) return game_scale.overall(attrs, to_pos);
   const raw = game_scale.overall(position_fit.transfer(attrs, from_pos, to_pos), to_pos);
   return int(round(Math.max(position_fit.FLOOR, raw - position_fit.size_penalty(height_in, weight_lbs, to_pos))));
 }
 
-export function options(attrs, height_in, weight_lbs, origin, cur, groups) {
+export function options(attrs, height_in, weight_lbs, origin, cur, groups, sized = false) {
   // The position_options rows: every position on his side of the kicking line, projected from
   // his ratings at `origin` (where the league file has him, before this season's change; `cur` is
   // where he plays now), where he is now first, then best first.
@@ -164,7 +169,7 @@ export function options(attrs, height_in, weight_lbs, origin, cur, groups) {
   const out = [];
   for (const pos of Object.keys(groups)) {
     if ((pos === "K" || pos === "P") !== special) continue;
-    out.push({ pos, group: groups[pos], overall: position_fit.project(attrs, height_in, weight_lbs, origin, pos), current: pos === cur });
+    out.push({ pos, group: groups[pos], overall: position_fit.project(attrs, height_in, weight_lbs, origin, pos, sized), current: pos === cur });
   }
   out.sort((a, b) => cmp([-(a["current"] ? 1 : 0), -a["overall"]], [-(b["current"] ? 1 : 0), -b["overall"]]));
   return out;

@@ -153,4 +153,11 @@ test("in the offseason: the same projection, a second move starts from where he 
   assert(c["pos"] === "CB" && c["moved_from"] === "SS" && same(c["moved_attrs"], ss));
 });
 
+test("an athlete's listed spot counts his size too: a 175-pound tight end projects well below a real one's build", () => {
+  const card = Object.fromEntries(gs.keys().map((k) => [k, 75]));
+  const plain = pf.project(card, 71, 175, "TE", "TE"), sized = pf.project(card, 71, 175, "TE", "TE", true);
+  assert(plain === gs.overall(card, "TE") && sized <= plain - 8, JSON.stringify([plain, sized]));
+  equal(pf.project(card, 77, 240, "TE", "TE", true), gs.overall(card, "TE"));      // a tight end's build costs nothing
+});
+
 await run();

@@ -210,13 +210,18 @@ function athletes_view(state) {
   for (const c of offseason.athletes_mine(state)) {
     const options = offseason.position_options(state, c["id"]);
     const here = options.find((o) => o["current"]);
-    const rest = options.filter((o) => !o["current"]).slice(0, offseason.ATHLETE_OPTIONS - 1);
     const best = options.reduce((a, b) => (b["overall"] > a["overall"] ? b : a), options[0]);
+    // his best spots in a fixed order, best first, where he is now among them (marked, not moved to the front: the
+    // tiles held still as you placed him, the player's ask); each projects from where he was listed, so it does not move
+    const ranked = sorted(options, (o) => [-o["overall"], o["pos"]]);
+    let top = ranked.slice(0, offseason.ATHLETE_OPTIONS);
+    if (here !== undefined && !top.includes(here)) top = [...top.slice(0, offseason.ATHLETE_OPTIONS - 1), here];
     out.push({ id: c["id"], name: c["n"], pos: c["pos"], cls: c["cls"], ht: get(c, "ht"), wt: get(c, "wt"), stars: get(c, "s"),
       overall: here !== undefined ? here["overall"] : offseason.house(c["pos"], c["o"]), archetype: get(c, "a"), moved_from: get(c, "moved_from") || null,
-      best: best["pos"], options: [here, ...rest].filter((o) => o !== undefined) });
+      best: best["pos"], options: top });
   }
-  out.sort((a, b) => cmp(-a["overall"], -b["overall"]) || cmp(a["name"], b["name"]));
+  // in a fixed order (by name): sorted by overall, the cards jumped around as you moved them (the player's ask)
+  out.sort((a, b) => cmp(a["name"], b["name"]));
   return { players: out };
 }
 
