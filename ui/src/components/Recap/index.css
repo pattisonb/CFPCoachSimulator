@@ -658,6 +658,56 @@
   font-weight: 700;
 }
 
+/* ---- your week in tiles, in your colors (the player: more team branding, and faces): Record and Ranked are your
+   first color with your second as a band beneath; each standout is a white card with his face, a band of your
+   colors beneath it ---- */
+.recap__nums--week[style] > div {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 6px solid var(--c);
+  box-shadow: inset 0 -3px 0 var(--c2);
+}
+
+.recap__nums--week[style] > div:not(.recap__standout) {
+  background: var(--c);
+  color: var(--on);
+  border-color: var(--c);
+  border-bottom-color: var(--c2);
+  box-shadow: none;
+}
+
+.recap__nums--week[style] > div:not(.recap__standout) .label,
+.recap__nums--week[style] > div:not(.recap__standout) .recap__soft {
+  color: var(--on);
+  opacity: 0.8;
+}
+
+.recap__nums--week[style] > div:not(.recap__standout) .recap__delta {
+  padding: 0 4px;
+  background: var(--c2);
+  color: var(--c2-on);
+}
+
+.recap__nums--week > .recap__standout:not(.recap__standout--none) {
+  grid-template-columns: 60px minmax(0, 1fr);
+  column-gap: 10px;
+}
+
+.recap__standout > :not(.recap__standout-face) {
+  grid-column: 2;
+}
+
+.recap__standout > .recap__standout-face {
+  grid-row: 1 / span 3;
+  align-self: center;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-color: var(--c, var(--ink));
+  border-width: 3px;
+  box-shadow: 3px 3px 0 var(--c2, var(--ink-soft));
+}
+
 /* ---- the little cards, like trading cards (the player: team branding, cooler and more fun): each team a slanted
    nameplate in its first color with a stripe of its second across it, like a jersey's, and a pixel shadow in its
    second; a row takes a tint of its team when pointed at; the top three wear medals ---- */

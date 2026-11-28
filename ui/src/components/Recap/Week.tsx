@@ -307,7 +307,7 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
 
       {/* your week in tiles: where you stand now, and your own best lines */}
       {mine && (
-        <dl className="recap__nums recap__nums--week">
+        <dl className="recap__nums recap__nums--week" style={hue(season.team)}>
           <div>
             <dt className="label">{m.rows.record}</dt>
             <dd>{mine.record ?? m.dash}</dd>
@@ -338,6 +338,9 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
           </div>
           {mine.standouts.map((p) => (
             <div key={`${p.name}-${p.position}`} className="recap__standout">
+              <span className="face-tile recap__standout-face">
+                <Face face={lookOf(null, p.slug ?? p.name, p.position)} scale={2} label="" />
+              </span>
               <dt className="label">{m.week.standout(p.position)}</dt>
               <dd>
                 <FitText>

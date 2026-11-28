@@ -21,11 +21,11 @@ interface Props {
  * the second color, or its third or its ink when the second is too close to the first) a pixel
  * shadow in the trim, darker, the letters standing up straight (the player: team branding everywhere, cooler and more fun).
  */
-/** an FCS stand-in goes by its mascot on a plate ("Shrimpers", not "Gulf Coast Shrimpers"): its full name is long */
+/** an FCS stand-in goes by its initials on a plate ("FCSS", not "Gulf Coast Shrimpers"): its full name is long */
 function shortFcs(team: TeamCard | undefined | null, label: ReactNode): ReactNode {
-  if (team?.subdivision !== "FCS" || !team.mascot || typeof label !== "string") return label;
+  if (team?.subdivision !== "FCS" || !team.abbreviation || typeof label !== "string") return label;
   for (const full of [team.name, team.school])
-    if (full && label.includes(full)) return label.replace(full, team.mascot);
+    if (full && label.includes(full)) return label.replace(full, team.abbreviation);
   return label;
 }
 
