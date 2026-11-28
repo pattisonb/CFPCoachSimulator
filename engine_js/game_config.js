@@ -134,6 +134,11 @@ cfg.LATE_GAME_DRAG = 0.10;            // plays take up to this much longer at th
 // starter: teamdata_js/build_teams.js). A formula that weighs a player against the average does it against REF_POINTS:
 // (REF_POINTS + his points) / REF_POINTS is 1 for the average starter. *tune*
 cfg.REF_POINTS = 22;
+// A lineman's weight over the usual for his spot tires him faster, and under it slower (game_functions._tired)
+cfg.TIRE_PER_POUND = 0.25;             // *tune* tiring, in the fatigue formulas' units, per pound over (a card point of Stamina is 2.5)
+cfg.TIRE_WEIGHT_CAP = 60;              // *tune* the most pounds over or under that count
+cfg.TIRE_WEIGHT_USUAL = {"LT": 312, "LG": 315, "C": 305, "RG": 316, "RT": 312, "OL": 312,
+                         "DT": 298, "LEDG": 258, "REDG": 249, "DL": 276};    // FBS starters by role (lb); a lineman without a role by his position
 cfg.FATIGUE_STEP = 0.4;                // a tired player's attributes move in steps of this many card points
 cfg.BLAME_REF = 18.4;                  // a blocker's weight for a sack or a stuffed run he is blamed for: this less his points
 // A return rating as return_skill reads it (0-1): the league's average returner's, and how much a card point over him adds
@@ -258,6 +263,8 @@ cfg.SACK_GUESSED_BONUS = 0.035;       // defense called a pass defense
 // own average of the two (the mixes still set the level). Rates per card point.
 cfg.RUSH_POWER_SHARE = 0.5;
 cfg.RUSH_STYLE_TILT = 0.02;            // power share + this per point of the rushers' power over speed
+cfg.RUSH_WEIGHT_EFFECT = 0.0003;       // *tune* a power rush: sack rate per pound of the rushers over the linemen, against the usual gap
+cfg.RUSH_WEIGHT_GAP = -44;             // the usual gap: the rushers' weight less the linemen's
 cfg.RUSH_MATCHUP_EFFECT = 0.0024;      // sack rate per point of (the rushers' lean in this rush - the line's lean against it)
 cfg.SACK_ESCAPE_EFFECT = 0.0048;        // sack rate x (1 - this per point of Sack Escape over the average quarterback)
 // Pressure that does not become a sack now hurries the throw: completion falls, less for a
@@ -311,6 +318,12 @@ cfg.COVERAGE_TYPE_EFFECT = 0.005;
 cfg.CONTESTED_SHARE = {"short": 0.10, "mid": 0.25, "deep": 0.45};
 cfg.CONTESTED_EFFECT = 0.007;         // per point of (Contested Catches - defender's Ball Skills) / 2 + leaping and height edge
 cfg.CONTESTED_HEIGHT_POINTS = 1;     // an inch of height is worth this many rating points at the catch point
+cfg.CATCH_HEIGHT_EFFECT = 0.003;      // *tune* completion per inch of the target over the coverage, against the usual gap: intermediate and deep throws, and every throw in the red zone
+cfg.CATCH_HEIGHT_GAP = {"WR": 0.2, "TE": 3.6, "RB": -2.2};   // the usual gap by target (inches): his height less the coverage's on him
+cfg.RED_ZONE_YARDS = 20;              // *tune* inside this the height edges count for more
+cfg.RED_ZONE_HEIGHT_MULT = 2;         // *tune* ... this many times over (the always-on edge and the contested one)
+cfg.QB_SIGHT_EFFECT = 0.0025;         // *tune* short and intermediate completion lost per inch the rush stands over the quarterback beyond the usual gap (throws tipped at the line)
+cfg.QB_SIGHT_GAP = 0.9;               // the usual gap (inches): the rushers' height less the quarterback's
 cfg.PASS_YARDS_RB = [5.0, 4.0];       // gauss mean, sd for completions to running backs (receivers and tight ends: by depth above)
 cfg.PASS_SPEED_EFFECT = 0.00875;       // *tune* yards multiplier per point of receiver speed minus DB speed (0.007 ran the top
 // receivers' yards a catch over the real leaders': tools/realism.mjs)
@@ -335,6 +348,12 @@ cfg.RUN_LINE_STYLE_EFFECT = 0.05;     // yards per point: the line's drive (insi
 cfg.RUN_FRONT_STYLE_EFFECT = 0.04;    // yards per point: the front's shedding (inside) or pursuit (outside) over its average
 cfg.RUN_WEIGHT_EFFECT = 0.015;         // inside runs: yards per pound of line weight over the front's, against the usual gap
 cfg.LINE_WEIGHT_GAP = 52;              // the usual gap: FBS starting linemen 312 lb, starting fronts 260
+cfg.GOAL_LINE_YARDS = 3;               // *tune* this close to the goal line an inside run is a goal-line run
+cfg.GOAL_LINE_WEIGHT_MULT = 2;         // *tune* the lines' weight edge counts this many times over on a goal-line run
+cfg.SHORT_YARDAGE_WEIGHT_EFFECT = 0.0007;   // *tune* 3rd/4th and short: conversion chance per pound of the same line weight edge
+cfg.CARRIER_WEIGHT_EFFECT = 0.006;     // *tune* inside runs: yards per pound of the carrier over the usual for his position, less the defense's over its usual
+cfg.CARRIER_WEIGHT = {"RB": 207, "QB": 214, "WR": 192, "TE": 242};   // the usual ball carrier by position (lb)
+cfg.DEFENSE_WEIGHT = 226;              // the usual eleven on defense (lb a man)
 cfg.RUN_CARRIER_STYLE_EFFECT = 0.04;  // yards per point: power style inside, speed style outside, over his own average
 cfg.RUN_VISION_EFFECT = 0.03;         // yards per point of Running Vision over his ball-carrying average
 cfg.FINISH_BLOCK_EFFECT = 0.02;       // *tune* yards per point of the line's Finishing Blocks over the league average, every run

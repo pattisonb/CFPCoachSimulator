@@ -87,6 +87,10 @@ export class Player {
     this.recovery_mult = 1 + cfg.TRAIT_FX["quick_recovery"] * get(this.traits, "quick_recovery", 0);
     this.height_in = truthy(get(data, "height_in")) ? get(data, "height_in") : 74;
     this.weight = truthy(get(data, "weight")) ? get(data, "weight") : 220;
+    // a lineman's pounds over the usual for his spot, as tiring (game_functions._tired); nothing for a weight not given
+    const usual_weight = get(cfg.TIRE_WEIGHT_USUAL, this.role, get(cfg.TIRE_WEIGHT_USUAL, this.position, null));
+    this.tire_weight = usual_weight === null || !truthy(get(data, "weight")) ? 0
+      : Math.max(-cfg.TIRE_WEIGHT_CAP, Math.min(cfg.TIRE_WEIGHT_CAP, this.weight - usual_weight)) * cfg.TIRE_PER_POUND;
 
     // Skill-specific
     this.passing = get(data, "passing");

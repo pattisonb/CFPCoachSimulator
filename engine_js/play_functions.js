@@ -712,10 +712,19 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
     for (const p of ps) acc += p.weight;
     return acc / ps.length;
   };
-  if (!outside && line.length && front_players.length) {
-    const line_w = _static(line, "weight", mean_weight);
-    const front_w = _static(front_players, "weight", mean_weight);
-    yards_style += (line_w - front_w - cfg.LINE_WEIGHT_GAP) * cfg.RUN_WEIGHT_EFFECT;
+  // size: the line's weight against the front's (more at the goal line), and the carrier's against the eleven who
+  // tackle him, each against the usual gap (inside runs; a push for the line reads the lines' weight below)
+  let line_edge = 0.0;
+  if (line.length && front_players.length) {
+    line_edge = _static(line, "weight", mean_weight) - _static(front_players, "weight", mean_weight) - cfg.LINE_WEIGHT_GAP;
+  }
+  if (!outside) {
+    yards_style += line_edge * cfg.RUN_WEIGHT_EFFECT * (100 - yardline <= cfg.GOAL_LINE_YARDS ? cfg.GOAL_LINE_WEIGHT_MULT : 1);
+    if (defense.length) {
+      const carrier_edge = carrier.weight - get(cfg.CARRIER_WEIGHT, carrier.position, carrier.weight)
+        - (_static(defense, "weight", mean_weight) - cfg.DEFENSE_WEIGHT);
+      yards_style += carrier_edge * cfg.CARRIER_WEIGHT_EFFECT;
+    }
   }
   const fx = cfg.TRAIT_FX;
   if (outside) {
@@ -774,7 +783,7 @@ export function get_run_yards(offense, defense, down, first_down, guessed_play, 
 
   // Short yardage: a push for the line often gets there.
   const push = (_attr(carrier, "power_running") + line_lean - front_lean) * cfg.SHORT_YARDAGE_STYLE_EFFECT
-    + _tr(carrier, "bulldozer") * cfg.TRAIT_FX["bulldozer_push"];
+    + _tr(carrier, "bulldozer") * cfg.TRAIT_FX["bulldozer_push"] + line_edge * cfg.SHORT_YARDAGE_WEIGHT_EFFECT;
   if (first_down <= 2 && down >= 3 && yards < first_down && random.random() < cfg.RUSH_SHORT_YARDAGE_CONVERT + push) {
     yards = first_down + random.uniform(0, 1.5);
   }
@@ -947,6 +956,15 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     const power = random.random() < Math.max(0.15, Math.min(0.85, cfg.RUSH_POWER_SHARE + rush_lean * cfg.RUSH_STYLE_TILT));
     const sign = power ? 1 : -1;
     sack_rate += sign * (rush_lean - line_lean) * cfg.RUSH_MATCHUP_EFFECT;
+    if (power) {
+      // a power rush is weight against weight: the rushers' over the linemen's, against the usual gap
+      const mean_weight = (ps) => {
+        let acc = 0;
+        for (const p of ps) acc += p.weight;
+        return acc / ps.length;
+      };
+      sack_rate += (_static(rushers, "weight", mean_weight) - _static(linemen, "weight", mean_weight) - cfg.RUSH_WEIGHT_GAP) * cfg.RUSH_WEIGHT_EFFECT;
+    }
     last_play["rush"] = power ? "power" : "speed";
   }
   sack_rate *= Math.max(0.5, 1 - _attr(qb, "sack_escape") * cfg.SACK_ESCAPE_EFFECT);
@@ -1054,6 +1072,27 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     });
     completion -= (man ? lean : -lean) * cfg.COVERAGE_TYPE_EFFECT;
   }
+  // size: his height over the coverage's, against the usual gap for his position, on every throw past the short ones
+  // and on every throw in the red zone, where it counts for more (no room to run away from a defender)
+  const red_zone = 100 - yardline <= cfg.RED_ZONE_YARDS;
+  const height_gap = get(cfg.CATCH_HEIGHT_GAP, target.position, 0);
+  if (covers.length && (depth !== "short" || red_zone)) {
+    const cover_h = _static(covers, "height", (ps) => {
+      let acc = 0;
+      for (const p of ps) acc += p.height_in;
+      return acc / ps.length;
+    });
+    completion += (target.height_in - cover_h - height_gap) * cfg.CATCH_HEIGHT_EFFECT * (red_zone ? cfg.RED_ZONE_HEIGHT_MULT : 1);
+  }
+  // a short quarterback behind a tall rush has throws tipped at the line (short and intermediate throws)
+  if (depth !== "deep" && rushers.length) {
+    const rush_h = _static(rushers, "height", (ps) => {
+      let acc = 0;
+      for (const p of ps) acc += p.height_in;
+      return acc / ps.length;
+    });
+    completion -= Math.max(0, rush_h - qb.height_in - cfg.QB_SIGHT_GAP) * cfg.QB_SIGHT_EFFECT;
+  }
   if (covers.length && random.random() < cfg.CONTESTED_SHARE[depth]) {
     // a defender on him at the catch point: hands in traffic, leaping and height against his
     const cover_weights = [];
@@ -1061,9 +1100,12 @@ export function get_pass_yards(offense, defense, down, first_down, guessed_play,
     const defender = random.choices(covers, { weights: cover_weights, k: 1 })[0];
     let catch_ = _attr(target, "contested_catch");     // with his highlight catches in it, when his position has them
     catch_ += (_attr(target, "highlight_catch", catch_) - catch_) * cfg.HIGHLIGHT_CATCH_SHARE;
-    const edge = (catch_ - _attr(defender, "ball_skills")) / 2
+    let edge = (catch_ - _attr(defender, "ball_skills")) / 2
       + (_attr(target, "leaping") - _attr(defender, "leaping")) / 2
       + (target.height_in - defender.height_in) * cfg.CONTESTED_HEIGHT_POINTS;
+    if (red_zone) {      // the jump ball in the end zone: his height over the usual gap counts again
+      edge += (target.height_in - defender.height_in - height_gap) * cfg.CONTESTED_HEIGHT_POINTS * (cfg.RED_ZONE_HEIGHT_MULT - 1);
+    }
     completion += edge * cfg.CONTESTED_EFFECT;
     last_play["contested"] = true;
   }
