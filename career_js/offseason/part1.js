@@ -859,6 +859,10 @@ function _performance(state) {
       if (truthy(sid) && z !== null && pool.played_enough(p)) rows.push([sid, z, get(offseason.DRAFT_GROUP, p["position"], p["position"])]);
     }
     const scale = sorted(rows.map((r) => r[1]));
+    // ... and his pace from it centred on the league's middle: read against the starters, the scale's middle sits under
+    // nought, so a player who played developed slower (0.94 on average) than one who sat (1.0), and positions where more
+    // of a roster plays (corners, backs, receivers) fell behind year on year (the player's "receiving low")
+    const middle = scale.length ? scale[Math.floor(scale.length / 2)] : 0;
     const by_pos = {};
     for (const r of rows) setdefault(by_pos, r[2], []).push(r);
     for (const group of Object.values(by_pos)) {
@@ -866,7 +870,7 @@ function _performance(state) {
       ranked.forEach((r, i) => {
         const q = (i + 0.5) / ranked.length;                     // his place among his position's players
         const z = scale.length ? scale[Math.min(scale.length - 1, Math.floor(q * scale.length))] : r[1];
-        out[r[0]] = { "z": round(z, 2), "honors": [] };
+        out[r[0]] = { "z": round(z, 2), "pace": round(z - middle, 2), "honors": [] };
       });
     }
   }
@@ -924,7 +928,8 @@ function growth_terms(perf) {
   let mult = 1.0, room = 0.0, why = [];
   const z = get(perf, "z");
   if (z !== null) {
-    mult = 1 + offseason.PERF_RATE * Math.max(offseason.PERF_RANGE[0], Math.min(offseason.PERF_RANGE[1], z));
+    const pace = get(perf, "pace") ?? z;                // (a save's season read before pace was kept: its z)
+    mult = 1 + offseason.PERF_RATE * Math.max(offseason.PERF_RANGE[0], Math.min(offseason.PERF_RANGE[1], pace));
     if (z >= offseason.BREAKOUT_FROM) {
       room += offseason.BREAKOUT_ROOM * (z - 0.5);
       why.push("Breakout season");
