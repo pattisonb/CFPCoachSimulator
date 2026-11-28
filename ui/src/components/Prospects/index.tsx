@@ -304,14 +304,30 @@ export default function Prospects({
     if (!on && r.offered && !window.confirm(m.pullsOffer(r.name))) return;
     // at once (the player: adding a prospect is an instant action): his row and the note change now, the save and the
     // counts follow behind the page, and a change the game refuses is put back
+    // ... and the counts with it: his position's On Board chip and your board's total (the player: "On Board / Need
+    // not updating very fast when adding prospects"; the game's own numbers replace these when they come back)
     const flip = (to: boolean) =>
-      setData(
-        (d) =>
-          d && {
-            ...d,
-            rows: d.rows.map((x) => (x.id === r.id ? { ...x, on_board: to, offered: to && x.offered } : x)),
-          },
-      );
+      setData((d) => {
+        if (!d) return d;
+        const was = d.rows.find((x) => x.id === r.id)?.on_board ?? !to;
+        const step = was === to ? 0 : to ? 1 : -1;
+        const need = d.needs?.[r.group];
+        return {
+          ...d,
+          rows: d.rows.map((x) => (x.id === r.id ? { ...x, on_board: to, offered: to && x.offered } : x)),
+          needs:
+            need && step
+              ? { ...d.needs, [r.group]: { ...need, board: Math.max(0, (need.board ?? 0) + step) } }
+              : d.needs,
+          summary:
+            d.summary && step
+              ? {
+                  ...d.summary,
+                  footprint: { ...d.summary.footprint, board: Math.max(0, d.summary.footprint.board + step) },
+                }
+              : d.summary,
+        };
+      });
     flip(on);
     setNote(on ? m.boardOn(r.name) : m.boardOff(r.name));
     saving.current += 1;
