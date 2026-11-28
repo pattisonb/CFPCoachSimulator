@@ -261,6 +261,15 @@ test("the next season is the same career a year on: the job you took, your histo
   assert(new Set(players.map((p) => p["name"])).size >= 70 && players.some((p) => p["class"] === "FR"), "a new class is on the roster");
 });
 
+test("last season is the one the career played: the champion reads as the top contender, not the starting data's", () => {
+  const ls = next["career"]["last_seasons"][ME];
+  assert(ls && ls["final_rank"] === 1 && ls["wins"] > ls["losses"], show(ls));
+  recruiting.reset_caches();
+  const wk = recruiting.weekly(next);
+  const all = Object.values(wk["contender"]).sort((a, b) => b - a);
+  assert(wk["contender"][ME] >= all[Math.floor(all.length / 20)], `the champion's contender read ${wk["contender"][ME]} is not near the top`);
+});
+
 test("a career mid-season with a quarterback in 90 is renumbered at once, in the league and in the season's teams file", () => {
   const path = league.path(next["id"], 2027);
   const data = JSON.parse(files.read_text(path));

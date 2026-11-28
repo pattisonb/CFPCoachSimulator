@@ -684,6 +684,14 @@ function next_season(state) {
     records[slug].push(Array.from(offseason._record(state, slug)));
     records[slug] = records[slug].slice(-3);
   }
+  // every school's season as it ended, for next year's recruiting reads of last season (recruiting.last_season)
+  const final_ranks = season.rank_map(state, state["current_week"]) || {};
+  state["career"]["last_seasons"] = {};
+  for (const slug of Object.keys(lgd["teams"])) {
+    const [wins, losses] = offseason._record(state, slug);
+    // (the champion is first however the last poll had him: it may be the committee's from before the bowls)
+    state["career"]["last_seasons"][slug] = { wins, losses, final_rank: get(state, "champion") === slug ? 1 : get(final_ranks, slug) || null };
+  }
   if (!has(state["career"], "history")) state["career"]["history"] = [];
   const history = state["career"]["history"];
   history.push(offseason.summary(state));

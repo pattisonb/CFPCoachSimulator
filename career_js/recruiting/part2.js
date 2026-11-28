@@ -680,12 +680,33 @@ function stage(state, slug, pid) {
 }
 
 
+function last_season(state, slug) {
+  // A school's last season ({wins, losses, final_rank}): in a career's later years the one it played (career
+  // last_seasons, kept as the season hands over; a save from before reads its records, the champion and your own
+  // final rank), else the one the game starts from (its team model). The model's alone left every career year judged
+  // on the season before the game began: a champion read as no contender (the player: "C- despite just winning the
+  // championship").
+  const car = get(state, "career") || {};
+  const kept = get(get(car, "last_seasons") || {}, slug);
+  if (truthy(kept)) return kept;
+  const recs = get(get(car, "league_records") || {}, slug);
+  if (truthy(recs) && recs.length && (get(state, "year") || 0) > modules.league.FIRST_YEAR) {
+    const [wins, losses] = recs[recs.length - 1];
+    const hist = get(car, "history") || [];
+    const h = hist.length ? hist[hist.length - 1] : {};
+    const final_rank = get(h, "champion") === slug ? 1 : get(h, "team") === slug || (!has(h, "team") && slug === get(state, "team")) ? get(h, "ap_rank") : null;
+    return { wins, losses, final_rank };
+  }
+  return get(recruiting._team_model(slug), "last_season");
+}
+
+
 function on_field(state, slug, week, records = null, ranks = null) {
   // Last season blended with this one, this season counting more every week (spec section 3).
   const season = modules.season;
   records = records != null ? records : season._records(state);
   ranks = ranks != null ? ranks : season.rank_map(state, state["current_week"]);
-  const ls = get(recruiting._team_model(slug), "last_season");
+  const ls = recruiting.last_season(state, slug);
   let last;
   if (truthy(ls) && ls["wins"] + ls["losses"]) {
     last = ls["wins"] / (ls["wins"] + ls["losses"]) + recruiting._bump(get(ls, "final_rank"));
@@ -838,7 +859,7 @@ function weekly(state) {
   const lgd = get(state, "league") || {};
   const contender = {}, classes = {};
   for (const slug of recruiting.fbs_schools(state)) {
-    const ls = get(recruiting._team_model(slug), "last_season");
+    const ls = recruiting.last_season(state, slug);
     const last = truthy(ls) && ls["wins"] + ls["losses"] ? programs.contender_of(get(ls, "final_rank"), ls["wins"], ls["losses"], false)
       : programs.CONTENDER_UNRANKED[0] + programs.CONTENDER_UNRANKED[1] * 0.5;
     const rec = get(records, slug) || { wins: 0, losses: 0 };
@@ -1224,7 +1245,7 @@ Object.assign(recruiting, {
   _group_of, commits_by_group, needs, needs_detail, spot_of, spot_of_player, need_levels, spot_matches, _share,
   needs_by_spot, recommended, need_factor, offers_by_group, group_cap, group_full, _returning, _coach_edge, pull,
   place_taste, _taste, _grade_pulls, academic_schools, academic, nil_room, known_ask, strengths, forced_strength,
-  top_group, stage, on_field, _bump, weights, interest, reset_caches, _winning, _base_class, weekly, RecruitingError, _recruiting_rating,
+  top_group, stage, last_season, on_field, _bump, weights, interest, reset_caches, _winning, _base_class, weekly, RecruitingError, _recruiting_rating,
   weekly_hours, scout_blend, looks_needed, look_unit, looks_done, best_evaluator, scout_points, scout_points_left, covered_states, near_home, look_cost, nil_budget,
   _reward_lines, reward, reward_why, portal_pool, pool_record, portal_budget, carry_over, _five, open_spots,
   portal_room, portal_spots, portal_upgrade, _p4, _open_spots, offer_cap, _contact_points, _grade_points, best_pitch,
