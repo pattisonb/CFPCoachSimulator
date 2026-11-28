@@ -43,6 +43,7 @@ import { cachedStandIns, cachedTeams, loadTeams } from "../../teams.ts";
 import type { Theme } from "../../theme.ts";
 import type { RecruitingBoard, SavedCoach, SeasonCoach, SeasonSummary, TeamCard, ScheduleGame } from "../../types.ts";
 import { messages as m } from "./messages.ts";
+import Celebration, { partyOf, type Party } from "../../components/Celebration/index.tsx";
 import "./index.css";
 
 interface Props {
@@ -280,6 +281,34 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
       (a, b) => a.week - b.week,
     );
   }, [season?.schedule, liveResults]);
+  // a postseason win in a sim (a conference title, a bowl, a playoff game, the national title) is celebrated as its
+  // result comes in (the player's ask; a regular-season win is celebrated only at Game Day's final, in its window).
+  // Every game already played when the page first sees the season counts as seen, so opening a save replays nothing;
+  // a Game Day game is the window's to celebrate.
+  const [party, setParty] = useState<Party | null>(null);
+  const partySeen = useRef<{ key: string; weeks: Set<number> } | null>(null);
+  useEffect(() => {
+    if (!season) return;
+    const key = `${season.id}-${season.year}`;
+    const played = stripGames.filter((g) => g.played && g.kind !== "bye");
+    if (!partySeen.current || partySeen.current.key !== key) {
+      partySeen.current = { key, weeks: new Set(played.map((g) => g.week)) };
+      return;
+    }
+    const seen = partySeen.current.weeks;
+    const live = game?.live ? stripGames.find((g) => g.event_id === game.id) : undefined;
+    if (live) seen.add(live.week);
+    const order: Record<string, number> = { win: 0, big: 1, title: 2 };
+    let best: Party | null = null;
+    for (const g of played) {
+      if (seen.has(g.week)) continue;
+      seen.add(g.week);
+      const p = partyOf(g, false);
+      if (p && (!best || order[p.tier] > order[best.tier])) best = p;
+    }
+    if (best) setParty(best);
+  }, [stripGames, season?.id, season?.year, game]);
+
   // the week a sim has got to is held after it ends, until the saved season catches up: for a moment between the two
   // the season still says the old week, which sent the strip back a week and then forward again
   const simAt = useRef({ season: "", week: 0 });
@@ -849,9 +878,14 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
             mine={season.team}
             weekLabels={season.week_labels}
             onFinal={refresh}
+            occasion={(() => {
+              const g = (season.schedule ?? []).find((x) => x.event_id === game?.id);
+              return g ? { kind: g.kind, title: g.title } : null;
+            })()}
             onClose={() => setGame(null)}
           />
         )}
+        {party && <Celebration party={party} team={myTeam} onDone={() => setParty(null)} />}
       </PlayerLinks>
     </div>
   );

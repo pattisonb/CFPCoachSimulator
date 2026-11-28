@@ -1,0 +1,130 @@
+/* A win, celebrated over the page: confetti falling through the window, and a card in your colors that pops in */
+.party {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  animation: party-fade 300ms ease-out;
+}
+
+/* the big ones dim the page behind the card */
+.party--big,
+.party--title {
+  background: rgb(0 0 0 / 35%);
+}
+
+.party__confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.party__piece {
+  position: absolute;
+  top: -24px;
+  width: 8px;
+  height: 14px;
+  opacity: 0;
+  animation-name: party-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.6, 1);
+  animation-fill-mode: forwards;
+}
+
+.party__piece.is-wide {
+  width: 14px;
+  height: 8px;
+}
+
+.party__card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 20px 32px;
+  background: var(--c);
+  color: var(--on);
+  border: var(--line) solid var(--ink);
+  outline: 2px solid var(--on);
+  outline-offset: -8px;
+  box-shadow: 6px 6px 0 var(--shadow);
+  text-align: center;
+  animation: party-pop 520ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.party__headline {
+  font-size: var(--t-xl);
+  letter-spacing: 2px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.party--title .party__headline {
+  font-size: var(--t-2xl);
+}
+
+.party--title .party__card {
+  padding: 32px 48px;
+}
+
+.party--win .party__card {
+  padding: 12px 24px;
+}
+
+.party__line {
+  font-size: var(--t-md);
+}
+
+.party__hint {
+  font-size: var(--t-xs);
+  opacity: 0.8;
+}
+
+@keyframes party-fall {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), 110vh) rotate(var(--spin));
+  }
+}
+
+@keyframes party-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-6deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes party-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* reduced motion: no confetti, and the card simply appears */
+@media (prefers-reduced-motion: reduce) {
+  .party__confetti {
+    display: none;
+  }
+
+  .party,
+  .party__card {
+    animation: none;
+  }
+}

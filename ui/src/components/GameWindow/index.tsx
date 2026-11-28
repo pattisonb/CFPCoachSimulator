@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BoxScore from "../BoxScore/index.tsx";
+import Celebration, { partyOf, type Party } from "../Celebration/index.tsx";
 import GameDay from "../GameDay/index.tsx";
 import Modal from "../Modal/index.tsx";
 import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
@@ -22,6 +23,8 @@ interface Props {
   weekLabels?: Record<string, string>;
   /** a live game has reached its final (or was skipped or closed): its result may now show on the page behind */
   onFinal?: () => void;
+  /** the game's kind and title (a bowl, a playoff game): a Game Day win is celebrated by them */
+  occasion?: { kind: string; title: string | null } | null;
   onClose: () => void;
 }
 
@@ -31,7 +34,19 @@ type Load = { id: string; box: GameBox | null; error?: string };
  * A game in a window: its box score, or, for Game Day, the game played back first and the box score after. Any screen
  * that lists a played game opens it here.
  */
-export default function GameWindow({ seasonId, eventId, live, teams, mine, weekLabels, onFinal, onClose }: Props) {
+export default function GameWindow({
+  seasonId,
+  eventId,
+  live,
+  teams,
+  mine,
+  weekLabels,
+  onFinal,
+  occasion,
+  onClose,
+}: Props) {
+  /** a Game Day win at its final: celebrated over the window */
+  const [party, setParty] = useState<Party | null>(null);
   /** a player picked from the box score: his card opens over the game */
   const [who, setWho] = useState<PlayerRef | null>(null);
   const [load, setLoad] = useState<Load | null>(null);
@@ -58,6 +73,29 @@ export default function GameWindow({ seasonId, eventId, live, teams, mine, weekL
     if (live && ready && !playing) onFinal?.();
   }, [live, ready, playing]);
 
+  // your Game Day result, once it is out: a win is celebrated (once a game)
+  const celebrated = useRef<string | null>(null);
+  const celebrate = () => {
+    if (!box || !eventId || celebrated.current === eventId) return;
+    celebrated.current = eventId;
+    const side = box.home_slug === mine ? "home" : box.away_slug === mine ? "away" : null;
+    if (!side) return;
+    const other = side === "home" ? "away" : "home";
+    setParty(
+      partyOf(
+        {
+          kind: occasion?.kind ?? "regular",
+          title: occasion?.title ?? null,
+          won: box[side].score > box[other].score,
+          points_for: box[side].score,
+          points_against: box[other].score,
+          opponent_name: box[other].name,
+        },
+        true,
+      ),
+    );
+  };
+
   const close = () => {
     if (live) onFinal?.();
     onClose();
@@ -82,8 +120,14 @@ export default function GameWindow({ seasonId, eventId, live, teams, mine, weekL
             box={box}
             teams={teams}
             mine={mine}
-            onFinal={() => onFinal?.()}
-            onBox={() => setBoxed(true)}
+            onFinal={() => {
+              onFinal?.();
+              celebrate();
+            }}
+            onBox={() => {
+              setBoxed(true);
+              celebrate(); // Skip to Final: the result is out, and a win is still a win
+            }}
           />
         ) : (
           <BoxScore
@@ -97,6 +141,7 @@ export default function GameWindow({ seasonId, eventId, live, teams, mine, weekL
       </Modal>
       {/* beside the game's window, not inside it, so closing his card leaves the game open */}
       <PlayerWindow seasonId={seasonId} who={who} weekLabels={weekLabels} onClose={() => setWho(null)} />
+      {party && <Celebration party={party} team={teams.get(mine)} onDone={() => setParty(null)} />}
     </>
   );
 }
