@@ -403,6 +403,7 @@ export default function Recap({ season, teams, onBracket, onBox, onOffseason, on
             {/* one row of cards to the page's foot: the whole recap is one screen (the player's ask) */}
             <div className="recap__cards">
               <Panel
+                className="recap__leaders"
                 title={m.leaders}
                 onTitle={go(whose === "mine" ? "stats-mine" : "stats")}
                 aside={
@@ -426,9 +427,17 @@ export default function Recap({ season, teams, onBracket, onBox, onOffseason, on
                             label={m.nationalNames[k]}
                             value={
                               <>
-                                {p.team && teams.get(p.team) ? <TeamPlate team={teams.get(p.team)} size="sm" /> : null}
-                                <PlayerLink team={p.team} name={p.name} />
-                                {p.team && teams.get(p.team) ? "" : `, ${p.team_name ?? ""}`} · {line(p.stats)}
+                                <span className="recap__leader">
+                                  {p.team && teams.get(p.team) ? (
+                                    <TeamPlate team={teams.get(p.team)} size="sm" />
+                                  ) : (
+                                    <span className="recap__soft">{p.team_name}</span>
+                                  )}
+                                  <b>
+                                    <PlayerLink team={p.team} name={p.name} />
+                                  </b>
+                                  <span className="recap__soft">{line(p.stats)}</span>
+                                </span>
                               </>
                             }
                           />
@@ -449,7 +458,13 @@ export default function Recap({ season, teams, onBracket, onBox, onOffseason, on
                           label={m.leaderNames[k]}
                           value={
                             <>
-                              <PlayerLink team={season.team} name={p.name} /> · {line(p.stats)}
+                              <span className="recap__leader">
+                                <TeamPlate team={mineCard} size="sm" />
+                                <b>
+                                  <PlayerLink team={season.team} name={p.name} />
+                                </b>
+                                <span className="recap__soft">{line(p.stats)}</span>
+                              </span>
                             </>
                           }
                         />

@@ -493,7 +493,7 @@
 
 /* your week in tiles: your record and your ranking, then your own best lines, wider */
 .recap__nums--week {
-  grid-template-columns: repeat(2, minmax(0, 0.7fr)) repeat(3, minmax(0, 1.2fr));
+  grid-template-columns: repeat(2, minmax(0, 0.55fr)) repeat(3, minmax(0, 1.35fr));
 }
 
 .recap__nums--week dd {
@@ -683,8 +683,8 @@
 }
 
 .recap__nums--week > .recap__standout:not(.recap__standout--none) {
-  grid-template-columns: 60px minmax(0, 1fr);
-  column-gap: 10px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  column-gap: 12px;
 }
 
 .recap__standout > :not(.recap__standout-face) {
@@ -694,8 +694,8 @@
 .recap__standout > .recap__standout-face {
   grid-row: 1 / span 3;
   align-self: center;
-  width: 60px;
-  height: 60px;
+  width: 76px;
+  height: 76px;
   overflow: hidden;
   border-color: var(--c, var(--ink));
   border-width: 3px;
@@ -949,4 +949,31 @@
   .recap__hero .recap__boom-stats b {
     font-size: var(--t-xl);
   }
+}
+
+/* the Leaders card (Season So Far): each leader his team's plate, his name and his line; the rows take a tint of
+   your colors when pointed at (the player: brand the leaders) */
+.recap__leader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.recap__leaders .panel__row {
+  align-items: center;
+  padding-inline: 4px;
+  transition: background-color 140ms ease-out;
+}
+
+.recap__leaders .panel__row:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.recap__leaders .panel__row dt {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: var(--t-xs);
 }

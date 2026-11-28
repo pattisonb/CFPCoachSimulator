@@ -339,7 +339,7 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
           {mine.standouts.map((p) => (
             <div key={`${p.name}-${p.position}`} className="recap__standout">
               <span className="face-tile recap__standout-face">
-                <Face face={lookOf(null, p.slug ?? p.name, p.position)} scale={2} label="" />
+                <Face face={lookOf(null, p.slug ?? p.name, p.position)} scale={3} label="" />
               </span>
               <dt className="label">{m.week.standout(p.position)}</dt>
               <dd>
