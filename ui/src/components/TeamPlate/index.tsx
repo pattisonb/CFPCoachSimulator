@@ -21,6 +21,14 @@ interface Props {
  * the second color, or its third or its ink when the second is too close to the first) a pixel
  * shadow in the trim, darker, the letters standing up straight (the player: team branding everywhere, cooler and more fun).
  */
+/** an FCS stand-in goes by its mascot on a plate ("Shrimpers", not "Gulf Coast Shrimpers"): its full name is long */
+function shortFcs(team: TeamCard | undefined | null, label: ReactNode): ReactNode {
+  if (team?.subdivision !== "FCS" || !team.mascot || typeof label !== "string") return label;
+  for (const full of [team.name, team.school])
+    if (full && label.includes(full)) return label.replace(full, team.mascot);
+  return label;
+}
+
 export default function TeamPlate({ team, children, size = "md", lost, title, className }: Props) {
   return (
     <span
@@ -28,7 +36,7 @@ export default function TeamPlate({ team, children, size = "md", lost, title, cl
       style={teamCardVars(team) as CSSProperties | undefined}
       title={title ?? team?.name}
     >
-      <span>{children ?? team?.abbreviation}</span>
+      <span>{shortFcs(team, children) ?? team?.abbreviation}</span>
     </span>
   );
 }
