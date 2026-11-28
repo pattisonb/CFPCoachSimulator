@@ -847,7 +847,6 @@
   background: var(--paper-hi);
   border: 5px solid var(--c2, var(--ink));
   box-shadow: 5px 5px 0 rgb(0 0 0 / 35%);
-  transform: rotate(-4deg);
 }
 
 .recap__hero > .recap__boom-team {

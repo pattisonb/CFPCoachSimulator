@@ -82,3 +82,62 @@
   box-shadow: 5px 5px 0 var(--c2);
   transform: skewX(-12deg) translate(-1px, -1px);
 }
+
+/* ---- mockup variants (scratch: one is kept) ---- */
+:root[data-plate] .team-plate {
+  font-style: normal;
+  transform: none;
+}
+
+:root[data-plate] .team-plate > span {
+  transform: none;
+}
+
+:root[data-plate] .team-plate.is-lost {
+  margin-top: 0;
+  transform: none;
+}
+
+/* A: jersey: solid first color, a thick bar of the second beneath */
+:root[data-plate="a"] .team-plate {
+  margin-right: 0;
+  padding: 0 8px;
+  background: var(--c);
+  border-bottom: 4px solid var(--c2);
+  box-shadow: none;
+}
+
+/* B: piping: solid first color, an inner outline of the second, like a jersey number */
+:root[data-plate="b"] .team-plate {
+  margin-right: 0;
+  padding: 0 8px;
+  background: var(--c);
+  box-shadow:
+    inset 0 0 0 2px var(--c),
+    inset 0 0 0 4px var(--c2);
+}
+
+/* C: shoulder: the first color with a band of the second along its foot and a square of it ahead of the name */
+:root[data-plate="c"] .team-plate {
+  gap: 6px;
+  margin-right: 0;
+  padding: 0 8px 0 0;
+  background: linear-gradient(var(--c) 0 82%, var(--c2) 82%);
+  box-shadow: none;
+}
+
+:root[data-plate="c"] .team-plate::before {
+  align-self: stretch;
+  width: 6px;
+  background: var(--c2);
+  content: "";
+}
+
+:root[data-plate] .plate-fit > .team-plate {
+  max-width: 100%;
+}
+
+:root[data-plate] :where(a, button, li, tr):hover > .team-plate:not(.is-lost),
+:root[data-plate] :where(a, button, li, tr):hover > * > .team-plate:not(.is-lost) {
+  transform: none;
+}
