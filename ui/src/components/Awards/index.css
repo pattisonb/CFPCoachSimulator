@@ -64,6 +64,7 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  padding-bottom: 2px; /* its plate's shadow inside the line that cuts it short */
   overflow: hidden;
   color: var(--ink-soft);
   font-size: var(--t-sm);
@@ -378,6 +379,11 @@
 .aw-card__n {
   color: var(--ink-soft);
   font-weight: 700;
+}
+
+/* a unit's row: its plate takes the swatch's column and the name's */
+.aw-card__rest li > .plate-fit {
+  grid-column: span 2;
 }
 
 .aw-card__rest-name {
@@ -1115,6 +1121,7 @@
 }
 
 .aw-week__soft {
+  padding-bottom: 2px; /* its plate's shadow inside the line that cuts it short */
   overflow: hidden;
   color: var(--ink-soft);
   font-size: var(--t-sm);

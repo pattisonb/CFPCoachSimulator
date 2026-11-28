@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import Chip from "../Chip/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import {
   clockOf,
   driveResult,
@@ -102,12 +102,17 @@ export function Scoreboard({
         return (
           <div key={s} className={`box__side box__side--${s}${lost ? " is-lost" : ""}`}>
             <span className="box__name">
-              <Swatch team={teams.get(slug)} size={22} />
-              <b className="box__full">{side.name}</b>
+              <span className="box__full plate-fit">
+                <TeamPlate team={teams.get(slug)} size="lg">
+                  {side.name}
+                </TeamPlate>
+              </span>
               {/* where the board is too narrow for two names (index.css): the team's letters */}
-              <b className="box__short" title={side.name}>
-                {teams.get(slug)?.abbreviation ?? side.name}
-              </b>
+              <span className="box__short">
+                <TeamPlate team={teams.get(slug)} size="lg" title={side.name}>
+                  {teams.get(slug)?.abbreviation ?? side.name}
+                </TeamPlate>
+              </span>
               {box.overalls?.[s] != null && (
                 <span className="box__ovr" title={m.overallTip}>
                   {m.overall(box.overalls[s]!)}

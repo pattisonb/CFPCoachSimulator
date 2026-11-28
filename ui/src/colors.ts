@@ -43,6 +43,29 @@ export function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** *tune* How far apart (contrast ratio) a team's second (or third) color must stand from its first to trim it. */
+const TRIM_CONTRAST = 1.6;
+
+const isHex = (c?: string): c is string => !!c && /^#[0-9a-f]{6}$/i.test(c);
+
+/**
+ * The color that trims a team's first: its second color when that stands apart from it, else its third, else the ink
+ * that reads on it (a team whose two colors are close still shows a bar). For bars, rules and big letters, not words.
+ */
+export function teamTrim(colors: { primary: string; secondary: string; accent?: string }): string {
+  const ok = (c?: string): c is string => isHex(c) && contrast(colors.primary, c) >= TRIM_CONTRAST;
+  return ok(colors.secondary) ? colors.secondary : ok(colors.accent) ? colors.accent : inkOn(colors.primary);
+}
+
+/** Another team's colors on a card or a row of its own: --c its first, --on the ink on it, --c2 its trim, --c2-on the ink on that. */
+export function teamCardVars(
+  team: { colors: { primary: string; secondary: string; accent?: string } } | null | undefined,
+): Record<string, string> | undefined {
+  if (!team || !isHex(team.colors.primary)) return undefined;
+  const trim = teamTrim(team.colors);
+  return { "--c": team.colors.primary, "--on": inkOn(team.colors.primary), "--c2": trim, "--c2-on": inkOn(trim) };
+}
+
 /** *tune* How much of a team's color the hard shadows under cards and buttons take, in percent. */
 const SHADOW_TINT = 34;
 

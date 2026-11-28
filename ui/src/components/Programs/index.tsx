@@ -5,7 +5,7 @@ import DataTable, { type Column } from "../DataTable/index.tsx";
 import Panel from "../Panel/index.tsx";
 import SchoolGrade, { gradePlace } from "../SchoolGrade/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { api } from "../../api.ts";
 import { titleCase } from "../../format.ts";
@@ -211,7 +211,6 @@ export default function Programs({ season, teams, onTeam }: Props) {
       label: m.cols.program,
       render: (p) => (
         <span className="programs__team">
-          <Swatch team={teams.get(p.team)} size={16} />
           {onTeam ? (
             <button
               type="button"
@@ -219,10 +218,14 @@ export default function Programs({ season, teams, onTeam }: Props) {
               title={m.openResume(p.name)}
               onClick={() => onTeam(p.team)}
             >
-              {p.name}
+              <TeamPlate team={teams.get(p.team)} size="sm" title={m.openResume(p.name)}>
+                {p.name}
+              </TeamPlate>
             </button>
           ) : (
-            p.name
+            <TeamPlate team={teams.get(p.team)} size="sm">
+              {p.name}
+            </TeamPlate>
           )}
         </span>
       ),
@@ -289,9 +292,12 @@ export default function Programs({ season, teams, onTeam }: Props) {
             >
               {/* the hero: who you are and where you are, with what your AD wants of you this year */}
               <div className="programs__hero">
-                <Swatch team={teams.get(you.team)} size={56} />
                 <div className="programs__names">
-                  <h2>{you.name}</h2>
+                  <h2>
+                    <TeamPlate team={teams.get(you.team)} size="lg">
+                      {you.name}
+                    </TeamPlate>
+                  </h2>
                   <span className="programs__where">
                     <span className="programs__soft">{teams.get(you.team)?.conference ?? season.conference}</span>
                     {[you.tags?.setting, you.tags?.climate, you.tags?.region].filter(Boolean).map((t) => (

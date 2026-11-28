@@ -88,15 +88,6 @@
 
 .scores__name {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  font-weight: 400;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.scores__side.is-won .scores__name {
-  font-weight: 700;
 }
 
 .scores__record {

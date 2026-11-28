@@ -4,6 +4,7 @@ import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Matchup, { type MatchupSide } from "../Matchup/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import { dateText, kickoffText, timeText } from "../../format.ts";
 import type { BoxScore, BoxSide, ScheduleGame, SeasonSummary, TeamCard, TeamScheduleView } from "../../types.ts";
@@ -307,9 +308,10 @@ function Row({
         <span className="sched-col--kickoff">{timeText(g.date) || m.tba}</span>
         <span className="sched-row__opp">
           <span className="sched-row__venue">{g.venue === "away" ? m.at : m.vs}</span>
-          <Swatch team={team} size={16} />
           {g.opponent_rank && <span className="sched-row__rank">{m.rank(g.opponent_rank)}</span>}
-          <span className="sched-row__name">{g.opponent_name}</span>
+          <span className="plate-fit">
+            <TeamPlate team={team}>{g.opponent_name}</TeamPlate>
+          </span>
           {g.opponent_record && <span className="sched-row__rec">{g.opponent_record}</span>}
         </span>
         <span>
@@ -477,8 +479,9 @@ function LineScore({ rows, teams }: { rows: [BoxSide, BoxSide]; teams: [TeamCard
         {rows.map((r, i) => (
           <tr key={i} className={r.score > rows[1 - i].score ? "is-won" : undefined}>
             <th scope="row">
-              <Swatch team={teams[i]} size={12} />
-              {teams[i]?.abbreviation ?? r.name}
+              <TeamPlate team={teams[i]} size="sm">
+                {teams[i]?.abbreviation ?? r.name}
+              </TeamPlate>
             </th>
             {r.quarters.map((q, j) => (
               <td key={j}>{q}</td>

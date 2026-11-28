@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import Modal from "../Modal/index.tsx";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import type { TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -92,8 +92,9 @@ export default function TeamResume({ seasonId, team, teams, weekLabels, onBox, o
       render: (g) => (
         <span className="resume__team">
           <span className="resume__soft">{g.venue === "away" ? m.at : m.vs}</span>
-          <Swatch team={teams.get(g.opp)} size={14} />
-          <b>{g.opp_name}</b>
+          <TeamPlate team={teams.get(g.opp)} size="sm">
+            {g.opp_name}
+          </TeamPlate>
           <span className="resume__soft">{g.opp_record}</span>
         </span>
       ),

@@ -4,6 +4,7 @@ import Chip from "../Chip/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import SectionTabs, { SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -179,9 +180,10 @@ export default function Scores({ season, teams, onBox }: Props) {
                   const rank = g[`${s}_rank`];
                   return (
                     <span className={`scores__side${won ? " is-won" : ""}${g.played && !won ? " is-lost" : ""}`}>
-                      <Swatch team={teams.get(g[s])} size={16} />
                       {rank && <span className="scores__rank">{rank}</span>}
-                      <b className="scores__name">{g[`${s}_name`]}</b>
+                      <span className="scores__name plate-fit">
+                        <TeamPlate team={teams.get(g[s])}>{g[`${s}_name`]}</TeamPlate>
+                      </span>
                       <span className="scores__record">{g[`${s}_record`]}</span>
                       <b className="scores__pts">{g.played ? g[`${s}_score`] : ""}</b>
                     </span>

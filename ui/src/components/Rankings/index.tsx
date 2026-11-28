@@ -4,7 +4,7 @@ import DataTable, { type Column } from "../DataTable/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Panel from "../Panel/index.tsx";
 import SectionTabs, { SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import type { PollEntry, SeasonSummary, TeamCard, WeekPolls } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -120,13 +120,16 @@ export default function Rankings({ season, teams, onBracket, onBox, onTeam }: Pr
       label: m.team,
       render: (r) => (
         <span className="rankings__team">
-          <Swatch team={teams.get(r.team)} size={16} />
           {onTeam ? (
             <button type="button" className="rankings__box" title={m.openResume(r.name)} onClick={() => onTeam(r.team)}>
-              {r.name}
+              <TeamPlate team={teams.get(r.team)} size="sm" title={m.openResume(r.name)}>
+                {r.name}
+              </TeamPlate>
             </button>
           ) : (
-            r.name
+            <TeamPlate team={teams.get(r.team)} size="sm">
+              {r.name}
+            </TeamPlate>
           )}
         </span>
       ),

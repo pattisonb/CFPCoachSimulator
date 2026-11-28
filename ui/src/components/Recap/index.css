@@ -137,6 +137,11 @@
   position: relative;
 }
 
+/* another team's banner: its trim (its second color, or what stands apart from its first) as a bar along the foot */
+.recap__hero[style] {
+  border-bottom: 10px solid var(--c2, var(--ink));
+}
+
 /* the team's letters, huge, slanted and faint, off the banner's right edge */
 .recap__hero > .recap__hero-mark {
   position: absolute;
@@ -149,6 +154,12 @@
   opacity: 0.14;
   transform: rotate(-6deg);
   pointer-events: none;
+}
+
+/* ... and its big letters in that trim, stronger */
+.recap__hero[style] > .recap__hero-mark {
+  color: var(--c2, inherit);
+  opacity: 0.45;
 }
 
 .recap__hero-kicker {
@@ -486,11 +497,6 @@
   right: var(--s2);
 }
 
-/* the Boom's banner has no face: it keeps its whole width for his line */
-.recap__hero--boom {
-  padding-right: var(--s4);
-}
-
 /* your week in tiles: your record and your ranking, then your own best lines, wider */
 .recap__nums--week {
   grid-template-columns: repeat(2, minmax(0, 0.7fr)) repeat(3, minmax(0, 1.2fr));
@@ -652,6 +658,74 @@
   font-weight: 700;
 }
 
+/* ---- the little cards, like trading cards (the player: team branding, cooler and more fun): each team a slanted
+   nameplate in its first color with a stripe of its second across it, like a jersey's, and a pixel shadow in its
+   second; a row takes a tint of its team when pointed at; the top three wear medals ---- */
+.recap__list li.is-team {
+  transition: background-color 140ms ease-out;
+}
+
+/* (the place a plate stands in is its plate's width; what follows keeps to one line at the right, and in a narrow
+   card goes under the plate rather than over it) */
+.recap__list li.is-team:not(.recap__boom, .recap__news) {
+  flex-wrap: wrap;
+}
+
+.recap__list li:not(.recap__boom) > .recap__grow:has(> .team-plate) {
+  flex: 0 0 auto;
+}
+
+.recap__list li:not(.recap__boom) > .recap__grow:has(> .team-plate) ~ .recap__soft,
+.recap__list li:not(.recap__boom) > .recap__grow:has(> .team-plate) ~ .recap__rowlink {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.recap__list li.is-team:hover {
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+}
+
+/* the top three places: gold, silver and bronze */
+.recap__place.is-medal-1 {
+  background: var(--gold);
+  color: #111;
+}
+
+.recap__place.is-medal-2 {
+  background: #b8bec4;
+  color: #111;
+}
+
+.recap__place.is-medal-3 {
+  background: #c27c3e;
+  color: #111;
+}
+
+/* how far a team moved: a badge in green going up, red going down */
+.recap__move.is-up,
+.recap__move.is-down {
+  width: auto;
+  min-width: 22px;
+  padding: 0 4px;
+  color: var(--paper-hi);
+  text-align: center;
+}
+
+.recap__move.is-up {
+  background: var(--good);
+}
+
+.recap__move.is-down {
+  background: var(--warn);
+}
+
+/* a headline's school plate, beside what kind of news it is */
+.recap__newshead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* the week's headlines: what kind of news over the sentence */
 .recap__news {
   flex-direction: column;
@@ -739,5 +813,97 @@
 @media (prefers-reduced-motion: reduce) {
   .recap__onward {
     transition: none;
+  }
+}
+
+/* the Boom's banner as a trading card: his face on a tilted tile at the left, his name and school in the middle, his
+   line as big blocks in his school's trim at the right (the player: his face on that card, and better looking) */
+.recap__hero--boom {
+  grid-template-areas:
+    "face kicker stats"
+    "face name stats"
+    "face team stats";
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px var(--s4);
+  padding-right: var(--s4);
+}
+
+.recap__hero--boom > .recap__hero-kicker {
+  grid-area: kicker;
+}
+
+.recap__hero--boom > h2 {
+  grid-area: name;
+}
+
+.recap__hero > .recap__boom-face {
+  display: grid;
+  grid-area: face;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  background: var(--paper-hi);
+  border: 5px solid var(--c2, var(--ink));
+  box-shadow: 5px 5px 0 rgb(0 0 0 / 35%);
+  transform: rotate(-4deg);
+}
+
+.recap__hero > .recap__boom-team {
+  display: flex;
+  grid-area: team;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.recap__boom-stats {
+  display: flex;
+  grid-area: stats;
+  gap: 10px;
+  list-style: none;
+}
+
+.recap__hero .recap__boom-stats > li {
+  display: grid;
+  justify-items: center;
+  min-width: 72px;
+  padding: 6px 12px 8px;
+  background: var(--c2, var(--paper-hi));
+  color: var(--c2-on, var(--ink));
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 35%);
+  transform: skewX(-8deg);
+}
+
+.recap__hero .recap__boom-stats > li > * {
+  transform: skewX(8deg);
+}
+
+.recap__hero .recap__boom-stats b {
+  font-size: var(--t-2xl);
+  line-height: 1;
+}
+
+.recap__hero .recap__boom-stats span {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* a narrower window: his line goes under his name */
+@media (width <= 1280px) {
+  .recap__hero--boom {
+    grid-template-areas:
+      "face kicker"
+      "face name"
+      "face team"
+      "face stats";
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .recap__hero .recap__boom-stats b {
+    font-size: var(--t-xl);
   }
 }

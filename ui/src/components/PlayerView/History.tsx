@@ -12,7 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import Panel, { PanelRow, PanelRows } from "../Panel/index.tsx";
 import { RecruitTimeline, timelineItems } from "../RecruitFile/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { cachedTeams } from "../../teams.ts";
 import { formatClass } from "../../format.ts";
 import { PITCH_NAMES } from "../../standing.ts";
@@ -71,8 +71,9 @@ export function Recruitment({ pr }: { pr: PlayerProfile }) {
           label={m.h.signedWith}
           value={
             <span className="player-view__school">
-              <Swatch team={teamOf(rec.school)} size={12} />
-              {rec.school_name}
+              <TeamPlate team={teamOf(rec.school)} size="sm">
+                {rec.school_name}
+              </TeamPlate>
             </span>
           }
           hint={signed}
@@ -85,8 +86,9 @@ export function Recruitment({ pr }: { pr: PlayerProfile }) {
               <span className="player-view__schools">
                 {rec.others.map((s) => (
                   <span key={s.slug} className="player-view__school">
-                    <Swatch team={teamOf(s.slug)} size={12} />
-                    {s.name}
+                    <TeamPlate team={teamOf(s.slug)} size="sm">
+                      {s.name}
+                    </TeamPlate>
                   </span>
                 ))}
               </span>

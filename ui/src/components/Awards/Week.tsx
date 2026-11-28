@@ -3,7 +3,7 @@ import { Football, ShieldChevron, Sneaker } from "@phosphor-icons/react";
 import FitText from "../FitText/index.tsx";
 import Panel from "../Panel/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { inkOn } from "../../colors.ts";
 import type { TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -96,12 +96,14 @@ export default function Week({ view, teams }: Props) {
                 <ul className="aw-week__also" aria-label={m.week.also}>
                   {national[k].also.map((p) => (
                     <li key={`${p.team}-${p.name}`}>
-                      <Swatch team={teams.get(p.team)} size={12} />
                       <b>
                         <PlayerLink team={p.team} name={p.name} position={p.position} />
                       </b>
                       <span>
-                        {p.position} · {abbr(p.team, p.team_name)}
+                        {p.position} ·{" "}
+                        <TeamPlate team={teams.get(p.team)} size="sm">
+                          {abbr(p.team, p.team_name)}
+                        </TeamPlate>
                       </span>
                       <span className="aw-week__also-line">{p.line}</span>
                     </li>
@@ -135,12 +137,14 @@ export default function Week({ view, teams }: Props) {
                     {p ? (
                       <span className="aw-week__pick">
                         <span className="aw-week__pick-who">
-                          <Swatch team={teams.get(p.team)} size={14} />
                           <b>
                             <PlayerLink team={p.team} name={p.name} position={p.position} />
                           </b>
                           <span className="aw-week__soft">
-                            {p.position} · {abbr(p.team, p.team_name)}
+                            {p.position} ·{" "}
+                            <TeamPlate team={teams.get(p.team)} size="sm">
+                              {abbr(p.team, p.team_name)}
+                            </TeamPlate>
                           </span>
                         </span>
                         <span className="aw-week__soft aw-week__pick-line">{p.line}</span>

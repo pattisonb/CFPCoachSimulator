@@ -122,9 +122,9 @@
   min-width: 0;
 }
 
+/* your program's name as its plate */
 .programs__names h2 {
-  font-size: var(--t-xl);
-  line-height: 1.1;
+  display: flex;
   text-transform: uppercase;
 }
 

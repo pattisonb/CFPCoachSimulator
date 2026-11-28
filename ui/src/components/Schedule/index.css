@@ -373,12 +373,6 @@
   font-weight: 700;
 }
 
-.sched-row__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .sched-row__rec {
   flex: none;
   color: var(--ink-soft);

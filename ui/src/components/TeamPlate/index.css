@@ -1,0 +1,84 @@
+/* A team as a slanted nameplate (TeamPlate): its first color, its trim as a stripe under the letters and as a pixel
+   shadow, the plate leaning, the letters upright. Without a team: ink, with the paper for its words. */
+.team-plate {
+  --c: var(--ink);
+  --on: var(--paper-hi);
+  --c2: var(--ink-soft);
+
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 26px;
+  margin-right: 6px; /* room for its shadow: the words after it never under it */
+  padding: 0 8px 4px;
+  background: linear-gradient(var(--c) 0 76%, var(--c2) 76% 90%, var(--c) 90%);
+  color: var(--on);
+  box-shadow: 3px 3px 0 var(--c2);
+  font-size: var(--t-sm);
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  vertical-align: middle;
+  transform: skewX(-12deg);
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out;
+}
+
+.team-plate > span {
+  transform: skewX(12deg); /* the letters stand up straight on the leaning plate */
+}
+
+.team-plate--sm {
+  min-width: 40px;
+  height: 21px;
+  padding: 0 6px 3px;
+  box-shadow: 2px 2px 0 var(--c2);
+  font-size: var(--t-xs);
+}
+
+.team-plate--lg {
+  min-width: 72px;
+  height: 36px;
+  padding: 0 12px 6px;
+  box-shadow: 4px 4px 0 var(--c2);
+  font-size: var(--t-lg);
+}
+
+/* a loser beside its winner: knocked over, and faded */
+.team-plate.is-lost {
+  margin-top: 6px;
+  opacity: 0.6;
+  transform: skewX(-12deg) rotate(-5deg);
+}
+
+/* A TeamPlate in a flex row that may be narrow (a card, a list, a bracket): the wrapper gives way first (a row that
+   wants it to take the spare width says flex: 1), the plate is never wider than it and its name is cut short with an
+   ellipsis rather than pushing the row wide. */
+.plate-fit {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.plate-fit > .team-plate {
+  max-width: calc(100% - 6px); /* with its shadow's margin, the row's width */
+}
+
+.plate-fit > .team-plate > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* pointed at (a row it stands in, a link): it lifts */
+:where(a, button, li, tr):hover > .team-plate:not(.is-lost),
+:where(a, button, li, tr):hover > * > .team-plate:not(.is-lost) {
+  box-shadow: 5px 5px 0 var(--c2);
+  transform: skewX(-12deg) translate(-1px, -1px);
+}

@@ -174,7 +174,7 @@ dd.recruit-file__inline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px 6px;
+  gap: 4px 6px; /* a wrapped tag clear of the plate's shadow */
   min-width: 0;
 }
 

@@ -168,11 +168,6 @@
   text-align: right;
 }
 
-.compact__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .compact__soft {
   color: var(--ink-soft);
 }

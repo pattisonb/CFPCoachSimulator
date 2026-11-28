@@ -5,6 +5,7 @@ import Face from "../Face/index.tsx";
 import SectionTabs, { SampleNote, SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import Wordmark from "../Wordmark/index.tsx";
 import { AllAmericaTeams, Coaches, Conferences, NationalTable } from "./More.tsx";
 import { SAMPLE } from "./sample.ts";
@@ -87,6 +88,20 @@ function cased<T>(v: T): T {
 }
 const sentence = (t?: string) => (t ? `${t[0].toUpperCase()}${t.slice(1)}.` : "");
 const whoLine = (p: AwardPlayer) => [p.position, formatClass(p.class), p.team_name].filter(Boolean).join(" · ");
+/** A line before a team's name, the name as its plate after it ("QB · Junior · " and the plate). */
+const withPlate = (before: string, team: TeamCard | undefined, name: string) => (
+  <>
+    {before ? `${before} · ` : ""}
+    <TeamPlate team={team} size="sm">
+      {name}
+    </TeamPlate>
+  </>
+);
+/** whoLine with the team as its plate */
+const whoPlate = (p: AwardPlayer, teams: Map<string, TeamCard>) =>
+  p.team_name
+    ? withPlate([p.position, formatClass(p.class)].filter(Boolean).join(" · "), teams.get(p.team), p.team_name)
+    : whoLine(p);
 
 /** One of your team's honors: the award, where you stand in it, and who. */
 interface Honor {
@@ -480,10 +495,7 @@ function Hero({
                 <b>
                   <PlayerLink team={c.team} name={c.name} position={c.position} />
                 </b>
-                <span className="aw-who__team">
-                  <Swatch team={teams.get(c.team)} size={12} />
-                  {c.position} · {c.team_name}
-                </span>
+                <span className="aw-who__team">{withPlate(c.position, teams.get(c.team), c.team_name)}</span>
               </span>
               <span className="aw-hero__pts">{m.pts(c.points)}</span>
             </li>
@@ -534,8 +546,11 @@ function UnitCard({ a, teams, mine }: { a: PlayerAward; teams: Map<string, TeamC
               {list.slice(1, 3).map((u, i) => (
                 <li key={u.team}>
                   <span className="aw-card__n">{i + 2}</span>
-                  <Swatch team={teams.get(u.team)} size={12} />
-                  <span className="aw-card__rest-name">{u.team_name}</span>
+                  <span className="plate-fit">
+                    <TeamPlate team={teams.get(u.team)} size="sm">
+                      {u.team_name}
+                    </TeamPlate>
+                  </span>
                   <span className="aw-card__rest-line">{m.unitShort(u.rush_ypg ?? 0)}</span>
                 </li>
               ))}
@@ -578,10 +593,7 @@ function AwardCard({
               <b className="aw-card__winner">
                 <PlayerLink team={w.team} name={w.name} position={w.position} />
               </b>
-              <span className="aw-who__team">
-                <Swatch team={teams.get(w.team)} size={12} />
-                {whoLine(w)}
-              </span>
+              <span className="aw-who__team">{whoPlate(w, teams)}</span>
               <span className="aw-card__headline">{w.headline}</span>
             </span>
           </div>
@@ -636,10 +648,7 @@ function CoachCard({
           <span className="aw-who">
             <span className="aw-card__tag">{live ? m.leader : m.winner}</span>
             <b className="aw-card__winner">{w.coach}</b>
-            <span className="aw-who__team">
-              <Swatch team={teams.get(w.team)} size={12} />
-              {w.role ?? m.headCoach} · {w.team_name}
-            </span>
+            <span className="aw-who__team">{withPlate(w.role ?? m.headCoach, teams.get(w.team), w.team_name)}</span>
             <span className="aw-card__headline">{m.coachLine(w.wins, w.losses, w.rank)}</span>
           </span>
         </div>
@@ -780,10 +789,7 @@ function Vote({
                     <b>
                       <PlayerLink team={c.team} name={c.name} position={c.position} />
                     </b>
-                    <span className="aw-who__team">
-                      <Swatch team={teams.get(c.team)} size={12} />
-                      {whoLine(c)}
-                    </span>
+                    <span className="aw-who__team">{whoPlate(c, teams)}</span>
                     <span className="aw-vote__line">{c.final_line ?? c.line}</span>
                   </span>
                 </span>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Chip from "../Chip/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { Scoreboard, Scoring } from "../BoxScore/index.tsx";
 import { inkOn } from "../../colors.ts";
 import { isSnap, momentsOf, quarterName, type GameBox, type Moment, type SideKey } from "../../gamelog.ts";
@@ -213,8 +213,9 @@ export default function GameDay({ box, teams, mine, onFinal, onBox }: Props) {
               <ol className="gameday__drives">
                 {drives.map((d) => (
                   <li key={d.drive}>
-                    <Swatch team={teams.get(box[`${d.off}_slug`])} size={14} />
-                    <b>{box[d.off].name}</b>
+                    <TeamPlate team={teams.get(box[`${d.off}_slug`])} size="sm">
+                      {box[d.off].name}
+                    </TeamPlate>
                     <span className="gameday__soft">{d.text}</span>
                   </li>
                 ))}

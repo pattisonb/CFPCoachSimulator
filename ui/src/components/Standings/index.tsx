@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Crown, Medal } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import type { SeasonSummary, StandingRow, StandingsView, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -184,8 +184,11 @@ function Compact({
                 <td className="compact__team">
                   <span className="compact__who">
                     <span className="compact__place">{r.conf_rank}</span>
-                    <Swatch team={teams.get(r.slug)} size={16} />
-                    <span className="compact__name">{r.name}</span>
+                    <span className="plate-fit">
+                      <TeamPlate team={teams.get(r.slug)} size="sm">
+                        {r.name}
+                      </TeamPlate>
+                    </span>
                     <Marks r={r} />
                     <Rank r={r} />
                   </span>
@@ -259,8 +262,9 @@ function Full({
                   <td title={r.tiebreak ? m.tiebreak(r.tiebreak) : undefined}>{r.conf_rank}</td>
                   <td className="full__left">
                     <span className="compact__who">
-                      <Swatch team={teams.get(r.slug)} size={18} />
-                      <b>{r.name}</b>
+                      <TeamPlate team={teams.get(r.slug)} size="sm">
+                        {r.name}
+                      </TeamPlate>
                       <Marks r={r} />
                       <Rank r={r} />
                     </span>

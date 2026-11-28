@@ -336,8 +336,9 @@ button.bracket__game:focus-visible {
   border-top: 1px solid var(--line-soft);
 }
 
-.bracket__field .bracket__team {
-  flex: 0 1 auto;
+/* a slot's team as its plate, taking the line's spare width so the score sits at its end */
+.bracket__grow {
+  flex: 1;
 }
 
 /* how he got in, after his name on the same line */

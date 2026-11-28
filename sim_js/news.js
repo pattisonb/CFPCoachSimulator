@@ -484,6 +484,17 @@ export function week_recap(state, week = null) {
 
   // ---- the lines: every player's game from the box scores, scored; the best in the country, and your own best
   const booms = [], mine_lines = [];
+  // a player's roster slug by his team, name and position, for his face on the recap's Boom banner (a box keeps none)
+  const slugs = new Map();
+  const slug_of = (team, name, position) => {
+    if (!slugs.has(team)) {
+      const m = new Map();
+      const t = get(teams, team) || {};
+      for (const q of [...(get(t, "offense") || []), ...(get(t, "defense") || [])]) m.set(`${q["name"]}|${q["position"]}`, get(q, "slug"));
+      slugs.set(team, m);
+    }
+    return slugs.get(team).get(`${name}|${position}`) ?? null;
+  };
   for (const g of games) {
     const involves_me = g["home"] === me || g["away"] === me;
     if (!(fbs.has(g["home"]) && fbs.has(g["away"])) && !involves_me) continue;
@@ -499,7 +510,7 @@ export function week_recap(state, week = null) {
         if (score <= 0) continue;
         const text = news._game_stat_line(p["position"], st);
         if (!text) continue;
-        const row = { team: slug, team_name: news._name(teams, slug), name: p["name"], position: p["position"], line: text,
+        const row = { team: slug, team_name: news._name(teams, slug), name: p["name"], slug: slug_of(slug, p["name"], p["position"]), position: p["position"], line: text,
           opponent: g[opp], opponent_abbr: abbr(g[opp]), opponent_name: season.team_display(g[opp], teams), won,
           event_id: g["event_id"], mine: slug === me, _score: score };
         if (slug === me) mine_lines.push(row);

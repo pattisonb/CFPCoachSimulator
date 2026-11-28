@@ -32,6 +32,7 @@ import Button from "../Button/index.tsx";
 import Panel, { PanelRow, PanelRows, Panels } from "../Panel/index.tsx";
 import RangeBar from "../RangeBar/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import VisitTip from "../VisitTip/index.tsx";
 import { inkOn } from "../../colors.ts";
@@ -181,8 +182,7 @@ export function OverviewTab({
                 <li key={x.school} className={you ? "is-you" : undefined}>
                   <span className="recruit-file__place">{x.place ?? i + 1}</span>
                   <span className="recruit-file__school">
-                    <Swatch team={teamOf(x.school)} size={16} />
-                    <b>{x.name}</b>
+                    <TeamPlate team={teamOf(x.school)}>{x.name}</TeamPlate>
                     {x.offered && <span className="recruit-file__tag">{m.offered}</span>}
                     {push && (
                       <span
@@ -870,8 +870,7 @@ export function HistoryTab({ r, team }: { r: BoardRow; team: string }) {
                 <li key={x.school} className={you ? "is-you" : undefined}>
                   <span className="recruit-file__place">{x.place ?? i + 1}</span>
                   <span className="recruit-file__school">
-                    <Swatch team={teamOf(x.school)} size={16} />
-                    <b>{x.name}</b>
+                    <TeamPlate team={teamOf(x.school)}>{x.name}</TeamPlate>
                   </span>
                   <span className="recruit-file__move">
                     <Arrow size={14} weight="bold" aria-hidden="true" />

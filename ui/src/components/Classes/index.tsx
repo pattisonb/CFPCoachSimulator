@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import Panel from "../Panel/index.tsx";
 import { Stars } from "../ProspectCard/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import type { ProspectRow, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -78,8 +78,9 @@ export default function Classes({ seasonId, team, teams, active }: Props) {
           aria-pressed={s.school === school}
           onClick={() => setSchool(s.school)}
         >
-          <Swatch team={teams.get(s.school)} size={16} />
-          {s.name}
+          <TeamPlate team={teams.get(s.school)} size="sm">
+            {s.name}
+          </TeamPlate>
         </button>
       ),
       sort: (s) => s.name,

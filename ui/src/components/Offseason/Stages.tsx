@@ -10,12 +10,10 @@ import { GradeRange } from "../Grade/index.tsx";
 import Panel from "../Panel/index.tsx";
 import PlayerWindow, { type PlayerRef } from "../PlayerWindow/index.tsx";
 import Stamp from "../Stamp/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
-import { inkOn } from "../../colors.ts";
 import { playerFace } from "../../faces.ts";
 import { formatClass, titleCase } from "../../format.ts";
-import type { TeamCard } from "../../types.ts";
 import type { StageProps } from "./index.tsx";
 import { messages as m } from "./messages.ts";
 import type { Candidate, ConferencesView, Departure, Grown, JobRow, Leaver, NextSchedule } from "./types.ts";
@@ -51,15 +49,6 @@ const Btn = ({
 );
 const Tag = ({ children, solid }: { children: ReactNode; solid?: boolean }) => (
   <span className={`off__tag${solid ? " is-solid" : ""}`}>{children}</span>
-);
-/** A tag in a school's own color (a player signed there, a coach hired there). */
-const TeamTag = ({ children, team }: { children: ReactNode; team: TeamCard | undefined }) => (
-  <span
-    className="off__tag is-team"
-    style={team ? ({ "--c": team.colors.primary, "--on": inkOn(team.colors.primary) } as CSSProperties) : undefined}
-  >
-    {children}
-  </span>
 );
 const Empty = ({ children }: { children: ReactNode }) => <p className="off__soft">{children}</p>;
 const teamName = (teams: P["teams"], slug: string) => teams.get(slug)?.name ?? slug;
@@ -543,11 +532,13 @@ function Departures(p: P) {
             {d.first_round.slice(0, 32).map((x) => (
               <li key={x.id} className={`pick${x.team === season.team ? " is-mine" : ""}`}>
                 <span className="pick__n">{x.pick}</span>
-                <Swatch team={teams.get(x.team)} size={16} />
                 <span className="pick__who">
                   <b>{x.name}</b>
                   <span className="off__soft">
-                    {x.pos} · {teams.get(x.team)?.abbreviation ?? x.team_name}
+                    {x.pos} ·{" "}
+                    <TeamPlate team={teams.get(x.team)} size="sm">
+                      {teams.get(x.team)?.abbreviation ?? x.team_name}
+                    </TeamPlate>
                   </span>
                 </span>
               </li>
@@ -642,12 +633,12 @@ function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
                     }
                   >
                     {x.signed || x.committed ? (
-                      <TeamTag team={teams.get(x.signed ?? x.committed ?? "")}>
+                      <TeamPlate size="sm" team={teams.get(x.signed ?? x.committed ?? "")}>
                         {(x.signed ? m.portal.signedShort : m.portal.committedShort)(
                           teams.get(x.signed ?? x.committed ?? "")?.abbreviation ??
                             teamName(teams, x.signed ?? x.committed ?? ""),
                         )}
-                      </TeamTag>
+                      </TeamPlate>
                     ) : (
                       <Tag solid={!!x.offered}>{x.offered ? m.portal.offered : m.portal.watching}</Tag>
                     )}
@@ -683,8 +674,9 @@ function Portal({ v, teams, onSection, onRecruit, live, season }: P) {
                           <b>{x.name}</b>
                           <span className="off__soft off__move">
                             {x.pos} · {s.key === "in" ? m.portal.from : m.portal.to}
-                            <Swatch team={teams.get(other)} size={12} />
-                            {teams.get(other)?.abbreviation ?? teamName(teams, other)}
+                            <TeamPlate team={teams.get(other)} size="sm">
+                              {teams.get(other)?.abbreviation ?? teamName(teams, other)}
+                            </TeamPlate>
                             {x.walk_on ? ` · ${m.portal.walkOn}` : ""}
                           </span>
                         </span>
@@ -732,10 +724,9 @@ function PortalRecap({ v, teams }: P) {
   const moves = rec.moves ?? [];
   const short = rec.short ?? [];
   const school = (slug: string | null | undefined, name: string) => (
-    <>
-      <Swatch team={teams.get(slug ?? "")} size={12} />
+    <TeamPlate team={teams.get(slug ?? "")} size="sm">
       {name}
-    </>
+    </TeamPlate>
   );
   const face = (x: { id: string; pos: string }) => (
     <span className="face-tile precap__face">
@@ -786,7 +777,7 @@ function PortalRecap({ v, teams }: P) {
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
                   <span className="precap__move">
-                    {school((x as { from?: string }).from, m.recap.from(x.from_name ?? ""))}
+                    {m.portal.from} {school((x as { from?: string }).from, x.from_name ?? "")}
                   </span>
                   <b className="precap__ovr">{x.overall}</b>
                 </li>
@@ -807,9 +798,13 @@ function PortalRecap({ v, teams }: P) {
                     <b>{x.name}</b> <span className="off__soft">{[x.pos, formatClass(x.cls)].join(" · ")}</span>
                   </span>
                   <span className="precap__move">
-                    {(x as { to?: string | null }).to
-                      ? school((x as { to?: string }).to, m.recap.to(x.to_name))
-                      : m.recap.outOfFbs}
+                    {(x as { to?: string | null }).to ? (
+                      <>
+                        {m.portal.to} {school((x as { to?: string }).to, x.to_name ?? "")}
+                      </>
+                    ) : (
+                      m.recap.outOfFbs
+                    )}
                   </span>
                   <b className="precap__ovr">{x.overall}</b>
                 </li>
@@ -1342,7 +1337,9 @@ function Cuts({ v, teams, busy, live, act }: P) {
                     </span>
                     <span className="dev-card__line">
                       {x.to ? (
-                        <TeamTag team={to}>{m.cuts.landed(to?.abbreviation ?? x.to_name ?? "")}</TeamTag>
+                        <TeamPlate size="sm" team={to}>
+                          {m.cuts.landed(to?.abbreviation ?? x.to_name ?? "")}
+                        </TeamPlate>
                       ) : (
                         <span title={m.cuts.goneTip(x.name)}>
                           <Tag>{m.cuts.gone}</Tag>
@@ -1382,7 +1379,9 @@ function Cuts({ v, teams, busy, live, act }: P) {
                       {x.pos} · {formatClass(x.cls)}
                     </span>
                     <span className="dev-card__line">
-                      <TeamTag team={from}>{m.cuts.cutBy(from?.abbreviation ?? x.from_name)}</TeamTag>
+                      <TeamPlate size="sm" team={from}>
+                        {m.cuts.cutBy(from?.abbreviation ?? x.from_name)}
+                      </TeamPlate>
                     </span>
                   </li>
                 );
@@ -1653,9 +1652,10 @@ function Staff({ v, teams, busy, live, act, season }: P) {
               const taking = job.choice === j.team;
               return (
                 <li key={j.team} className={`shirt${taking ? " is-on" : ""}`}>
-                  <Swatch team={teams.get(j.team)} size={20} />
                   <span className="shirt__who">
-                    <b>{j.name}</b>
+                    <span className="plate-fit">
+                      <TeamPlate team={teams.get(j.team)}>{j.name}</TeamPlate>
+                    </span>
                     <span className="off__soft">
                       {j.conference} · {titleCase(j.goal)}
                     </span>
@@ -1726,9 +1726,10 @@ function Staff({ v, teams, busy, live, act, season }: P) {
           <ul className="off__list">
             {v.coaching_changes.map((c, i) => (
               <li key={i}>
-                <Swatch team={teams.get(c.team)} size={14} />
                 <span className="off__who">
-                  <b>{teamName(teams, c.team)}</b>
+                  <span className="plate-fit">
+                    <TeamPlate team={teams.get(c.team)}>{teamName(teams, c.team)}</TeamPlate>
+                  </span>
                   <span className="off__soft">
                     {c.new
                       ? m.staff.hiredLine(c.new, role(c.role), c.from)
@@ -1828,8 +1829,9 @@ function Conferences({ v, teams, busy, live, act, get, season }: P) {
                     className={t.moved_from ? "is-moved" : undefined}
                     title={t.moved_from ? m.conf.movedFrom(t.moved_from) : undefined}
                   >
-                    <Swatch team={teams.get(t.team)} size={12} />
-                    {t.name}
+                    <TeamPlate team={teams.get(t.team)} size="sm">
+                      {t.name}
+                    </TeamPlate>
                     {t.moved_from && <Tag>{m.conf.moved}</Tag>}
                   </li>
                 ))}
@@ -1918,8 +1920,9 @@ function Schedule({ v, teams, busy, live, act, get, season }: P) {
                 <span className="label next-game__week">{weekName(g.week)}</span>
                 <span className="next-game__opp">
                   <span className="off__soft">{g.neutral ? m.sched.neutral : atHome ? m.sched.vs : m.sched.at}</span>
-                  <Swatch team={teams.get(opp)} size={16} />
-                  <b>{atHome ? g.away_display : g.home_display}</b>
+                  <span className="plate-fit">
+                    <TeamPlate team={teams.get(opp)}>{atHome ? g.away_display : g.home_display}</TeamPlate>
+                  </span>
                 </span>
                 {!g.conference_game && <Tag>{m.sched.nonConference}</Tag>}
                 {canTrade && e?.options && (

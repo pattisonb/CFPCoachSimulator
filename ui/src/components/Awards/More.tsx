@@ -5,7 +5,7 @@ import DataTable, { type Column } from "../DataTable/index.tsx";
 import Dropdown from "../Dropdown/index.tsx";
 import Panel from "../Panel/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import { formatClass } from "../../format.ts";
 import { useKept } from "../../kept.ts";
@@ -46,12 +46,14 @@ export function NationalTable({ awards, teams, mine, live }: Shared & { awards: 
   const player = (p: AwardPlayer | undefined) =>
     p ? (
       <span className="aw-table__who">
-        <Swatch team={teams.get(p.team)} size={14} />
         <b>
           <PlayerLink team={p.team} name={p.name} position={p.position} />
         </b>
         <span className="aw-table__soft">
-          {p.position} · {p.team_name}
+          {p.position} ·{" "}
+          <TeamPlate team={teams.get(p.team)} size="sm">
+            {p.team_name}
+          </TeamPlate>
         </span>
       </span>
     ) : (
@@ -109,10 +111,12 @@ export function Coaches({
       label: m.table.coach,
       render: (c) => (
         <span className="aw-table__who">
-          <Swatch team={teams.get(c.team)} size={14} />
           <b>{c.coach}</b>
           <span className="aw-table__soft">
-            {c.role ?? m.headCoach} · {c.team_name}
+            {c.role ?? m.headCoach} ·{" "}
+            <TeamPlate team={teams.get(c.team)} size="sm">
+              {c.team_name}
+            </TeamPlate>
           </span>
         </span>
       ),
@@ -226,8 +230,9 @@ function HonorField({
                 <PlayerLink team={p.team} name={p.name} position={p.position} />
               </b>
               <span className="aw-man__team">
-                <Swatch team={teams.get(p.team)} size={12} />
-                {teams.get(p.team)?.abbreviation ?? p.team_name}
+                <TeamPlate team={teams.get(p.team)} size="sm">
+                  {teams.get(p.team)?.abbreviation ?? p.team_name}
+                </TeamPlate>
               </span>
               {votes && (
                 <span className={`aw-man__votes${votes.unanimous ? " is-all" : ""}`}>
@@ -319,8 +324,9 @@ function HonorTeam(props: Shared & { picks: (TeamPick | ConsensusPick)[] }) {
                           {p.line}
                         </span>
                         <span className="aw-list__team">
-                          <Swatch team={teams.get(p.team)} size={12} />
-                          {teams.get(p.team)?.abbreviation ?? p.team_name}
+                          <TeamPlate team={teams.get(p.team)} size="sm">
+                            {teams.get(p.team)?.abbreviation ?? p.team_name}
+                          </TeamPlate>
                         </span>
                         {votes && (
                           <span className={`aw-man__votes${votes.unanimous ? " is-all" : ""}`}>

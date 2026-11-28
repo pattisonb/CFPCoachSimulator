@@ -5,7 +5,7 @@ import Button from "../Button/index.tsx";
 import Chip from "../Chip/index.tsx";
 import Face from "../Face/index.tsx";
 import Meter from "../Meter/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import { playerFace } from "../../faces.ts";
 import { formatClass, looksOfTotal, ordinal } from "../../format.ts";
@@ -339,8 +339,11 @@ export default function ProspectCard({ seasonId, pid, row, onClose, onBoard, onF
               {p.schools.slice(0, SCHOOLS).map((s, i) => (
                 <li key={s.school}>
                   <span className="prospect-card__place">{i + 1}</span>
-                  <Swatch team={schoolOf(s.school)} size={16} />
-                  <b title={s.name}>{schoolOf(s.school)?.abbreviation ?? s.name}</b>
+                  <span className="prospect-card__school plate-fit">
+                    <TeamPlate team={schoolOf(s.school)} size="sm" title={s.name}>
+                      {schoolOf(s.school)?.abbreviation ?? s.name}
+                    </TeamPlate>
+                  </span>
                   {s.offered && (
                     <span className="prospect-card__offered" role="img" aria-label={m.offered} title={m.offered}>
                       <EnvelopeSimple size={14} weight="fill" aria-hidden="true" />

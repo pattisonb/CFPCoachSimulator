@@ -220,15 +220,9 @@
 
 .bowl-card__team {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: 8px;
   align-items: center;
-}
-
-.bowl-card__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .bowl-card__you {
@@ -249,10 +243,6 @@
   min-width: 24px;
   font-variant-numeric: tabular-nums;
   text-align: right;
-}
-
-.bowl-card__team.is-won .bowl-card__name {
-  font-weight: 700;
 }
 
 .bowl-card__team.is-lost {

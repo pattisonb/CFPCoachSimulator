@@ -4,8 +4,10 @@ import Panel from "../Panel/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import FitText from "../FitText/index.tsx";
 import Stamp from "../Stamp/index.tsx";
-import Swatch from "../Swatch/index.tsx";
-import { inkOn } from "../../colors.ts";
+import TeamPlate from "../TeamPlate/index.tsx";
+import Face from "../Face/index.tsx";
+import { lookOf } from "../../faces.ts";
+import { teamCardVars } from "../../colors.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 
@@ -37,6 +39,8 @@ interface Boom {
   team: string;
   team_name: string;
   name: string;
+  /** his roster slug, for his face (null when the season's rosters do not have him) */
+  slug?: string | null;
   position: string;
   line: string;
   opponent: string;
@@ -128,17 +132,31 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
   const mine = view.mine;
   const mineCard = teams.get(season.team);
   const abbr = (slug: string, fallback?: string | null) => teams.get(slug)?.abbreviation ?? fallback ?? "";
-  const hue = (slug?: string) => {
-    const t = slug ? teams.get(slug) : undefined;
-    return t ? ({ "--c": t.colors.primary, "--on": inkOn(t.colors.primary) } as CSSProperties) : undefined;
+  // a team's own colors on its banner, its row or its chip: its first, the ink on it, and its trim (Recap/index.css)
+  const hue = (slug?: string | null) => teamCardVars(slug ? teams.get(slug) : undefined) as CSSProperties | undefined;
+  /** a row of the little cards: its team's colors under it (the row takes a tint of them when pointed at), yours marked */
+  const rowOf = (slug: string | null | undefined, mine: boolean, more = "") => {
+    const style = hue(slug);
+    return {
+      className: [more, style && "is-team", mine && "is-mine"].filter(Boolean).join(" ") || undefined,
+      style,
+    };
   };
-  const ranked = (name: string, rank: number | null) => (rank ? m.week.ranked(rank, name) : name);
-  const team = (slug: string, label: ReactNode) => (
-    <span className="recap__team">
-      <Swatch team={teams.get(slug)} size={14} />
+  /** a team as its slanted nameplate (TeamPlate): "is-small" inside a line of text, "is-lost" an upset's loser */
+  const plate = (slug: string, label: ReactNode, more = "") => (
+    <TeamPlate team={teams.get(slug)} size={more.includes("is-small") ? "sm" : "md"} lost={more.includes("is-lost")}>
       {label}
-    </span>
+    </TeamPlate>
   );
+  /** the top three places as medals: gold, silver, bronze */
+  const medal = (n: number) => (n <= 3 ? ` is-top is-medal-${n}` : "");
+  /** the school a headline is about: the longest team name that stands as words in it */
+  const named = [...teams.values()].filter((t) => !t.fictional && t.name).sort((a, b) => b.name.length - a.name.length);
+  const aboutOf = (text: string) =>
+    named.find((t) =>
+      new RegExp(`(^|[^\\p{L}])${t.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^\\p{L}]|$)`, "u").test(text),
+    )?.slug;
+  const ranked = (name: string, rank: number | null) => (rank ? m.week.ranked(rank, name) : name);
   /** a row that opens its game's box score, when there is one to open */
   const box = (id: string, has: boolean, children: ReactNode, className = "") =>
     onBox && has ? (
@@ -163,15 +181,15 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
   const scores = view.scores ?? [];
   const news = view.news ?? [];
   const mover = (r: Mover, up: boolean) => (
-    <li key={r.team} className={r.team === season.team ? "is-mine" : undefined}>
+    <li key={r.team} {...rowOf(r.team, r.team === season.team)}>
       {up ? (
         <ArrowUp size={14} weight="bold" className="recap__up" aria-hidden="true" />
       ) : (
         <ArrowDown size={14} weight="bold" className="recap__down" aria-hidden="true" />
       )}
-      <b className={`recap__move ${up ? "recap__up" : "recap__down"}`}>{r.move != null ? Math.abs(r.move) : ""}</b>
-      <span className="recap__grow">
-        <b title={r.name}>{team(r.team, abbr(r.team, r.name))}</b>
+      <b className={`recap__move ${up ? "is-up" : "is-down"}`}>{r.move != null ? Math.abs(r.move) : ""}</b>
+      <span className="recap__grow" title={r.name}>
+        {plate(r.team, abbr(r.team, r.name))}
       </span>
       <span className="recap__soft">
         {r.rank != null && r.previous != null ? m.week.fromTo(r.previous, r.rank) : (r.record ?? "")}
@@ -258,13 +276,31 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
               <Fire size={16} weight="fill" aria-hidden="true" />
               {m.week.boomOfWeek}
             </span>
+            {/* his face, like a trading card's photo, tilted on a tile framed in his school's trim */}
+            <span className="face-tile recap__boom-face">
+              <Face face={lookOf(null, top.slug ?? top.name, top.position)} scale={4} label="" />
+            </span>
             <h2>
               <FitText>
                 <PlayerLink team={top.team} name={top.name} position={top.position} />
               </FitText>
             </h2>
-            <p>{m.week.who(top.position, top.team_name, abbr(top.opponent, top.opponent_abbr ?? top.opponent_name))}</p>
-            <p className="recap__hero-line">{top.line}</p>
+            <p className="recap__boom-team">
+              <TeamPlate team={teams.get(top.team)} size="sm" />
+              {m.week.who(top.position, top.team_name, abbr(top.opponent, top.opponent_abbr ?? top.opponent_name))}
+            </p>
+            {/* his line as big blocks in his school's trim: 11 Rec, 185 Yds, 6 TD */}
+            <ul className="recap__boom-stats">
+              {top.line.split(", ").map((part) => {
+                const at = part.indexOf(" ");
+                return (
+                  <li key={part}>
+                    <b>{at > 0 ? part.slice(0, at) : part}</b>
+                    <span>{at > 0 ? part.slice(at + 1) : ""}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
       </header>
@@ -325,15 +361,14 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
           {booms.length ? (
             <ol className="recap__list">
               {booms.map((p, i) => (
-                <li key={`${p.team}-${p.name}`} className={`recap__boom${p.mine ? " is-mine" : ""}`}>
-                  <span className={`recap__place${i < 3 ? " is-top" : ""}`}>{i + 1}</span>
+                <li key={`${p.team}-${p.name}`} {...rowOf(p.team, !!p.mine, "recap__boom")}>
+                  <span className={`recap__place${medal(i + 1)}`}>{i + 1}</span>
                   <span className="recap__grow recap__boom-who">
+                    {plate(p.team, abbr(p.team, p.team_name), "is-small")}
                     <b>
                       <PlayerLink team={p.team} name={p.name} position={p.position} />
                     </b>{" "}
-                    <span className="recap__soft">
-                      {p.position} · {abbr(p.team, p.team_name)}
-                    </span>
+                    <span className="recap__soft">{p.position}</span>
                   </span>
                   {box(
                     p.event_id,
@@ -356,21 +391,18 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
           {upsets.length ? (
             <ul className="recap__list">
               {upsets.map((u) => (
-                <li
-                  key={u.event_id}
-                  className={`recap__tall${[u.winner, u.loser].includes(season.team) ? " is-mine" : ""}`}
-                >
+                <li key={u.event_id} {...rowOf(u.winner, [u.winner, u.loser].includes(season.team), "recap__tall")}>
                   {box(
                     u.event_id,
                     u.has_box,
                     <>
                       <span className="recap__grow recap__two">
                         <span className="recap__side is-won">
-                          {team(u.winner, ranked(u.winner_name, u.winner_rank))}
+                          {plate(u.winner, ranked(u.winner_name, u.winner_rank))}
                           <b>{u.winner_score}</b>
                         </span>
                         <span className="recap__side">
-                          {team(u.loser, ranked(u.loser_name, u.loser_rank))}
+                          {plate(u.loser, ranked(u.loser_name, u.loser_rank), "is-lost")}
                           <span>{u.loser_score}</span>
                         </span>
                       </span>
@@ -409,7 +441,7 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
                   <h3 className="label recap__kicker">{m.week.entered}</h3>
                   <p className="recap__inout">
                     {entered.map((r) => (
-                      <span key={r.team}>{team(r.team, `#${r.rank} ${abbr(r.team, r.name)}`)}</span>
+                      <span key={r.team}>{plate(r.team, `#${r.rank} ${abbr(r.team, r.name)}`)}</span>
                     ))}
                   </p>
                 </>
@@ -419,7 +451,7 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
                   <h3 className="label recap__kicker">{m.week.dropped}</h3>
                   <p className="recap__inout">
                     {dropped.map((r) => (
-                      <span key={r.team}>{team(r.team, abbr(r.team, r.name))}</span>
+                      <span key={r.team}>{plate(r.team, abbr(r.team, r.name))}</span>
                     ))}
                   </p>
                 </>
@@ -434,14 +466,9 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
           {scores.length ? (
             <ol className="recap__list">
               {scores.map((s) => (
-                <li
-                  key={`${s.team}-${s.event_id}`}
-                  className={[s.team, s.opponent].includes(season.team) ? "is-mine" : undefined}
-                >
-                  <span className={`recap__place${s.rank <= 3 ? " is-top" : ""}`}>{s.rank}</span>
-                  <span className="recap__grow">
-                    <b>{team(s.team, abbr(s.team, s.name))}</b>
-                  </span>
+                <li key={`${s.team}-${s.event_id}`} {...rowOf(s.team, [s.team, s.opponent].includes(season.team))}>
+                  <span className={`recap__place${medal(s.rank)}`}>{s.rank}</span>
+                  <span className="recap__grow">{plate(s.team, abbr(s.team, s.name))}</span>
                   {box(
                     s.event_id,
                     s.has_box,
@@ -464,8 +491,11 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
           <Panel title={m.week.headlines}>
             <ul className="recap__list">
               {news.map((n) => (
-                <li key={n.text} className="recap__news">
-                  <span className="label recap__newskind">{m.week.kinds[n.kind] ?? n.kind}</span>
+                <li key={n.text} {...rowOf(aboutOf(n.text), false, "recap__news")}>
+                  <span className="recap__newshead">
+                    {aboutOf(n.text) && plate(aboutOf(n.text)!, abbr(aboutOf(n.text)!), "is-small")}
+                    <span className="label recap__newskind">{m.week.kinds[n.kind] ?? n.kind}</span>
+                  </span>
                   <span>{n.text}</span>
                 </li>
               ))}

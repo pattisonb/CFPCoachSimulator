@@ -28,6 +28,7 @@ import {
 } from "@phosphor-icons/react";
 import PlayGame from "../PlayGame/index.tsx";
 import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import { dateText, kickoffText, ordinal } from "../../format.ts";
 import type { Sim } from "../../sim.ts";
@@ -524,12 +525,13 @@ export default function Office({ season: s, recruiting: v, teams, sim, onSection
   );
 }
 
-/** One side of the matchup: swatch and short name ("CCU"; the full name on hover), its rank and record under them. */
+/** One side of the matchup: its plate with the short name ("CCU"; the full name on hover), its rank and record under them. */
 function Side({ team, name, line }: { team: TeamCard | undefined; name: string; line: string }) {
   return (
     <div className="office__side" title={name}>
-      <Swatch team={team} size={36} />
-      <b className="office__side-name">{team?.abbreviation ?? name.split(" ")[0].slice(0, 6).toUpperCase()}</b>
+      <TeamPlate team={team} size="lg" title={name} className="office__side-name">
+        {team?.abbreviation ?? name.split(" ")[0].slice(0, 6).toUpperCase()}
+      </TeamPlate>
       <span className="office__soft office__side-line">{line}</span>
     </div>
   );
@@ -857,8 +859,9 @@ function TeamTag({
   const t = teams.get(slug);
   return (
     <span className={`office__res-team${won ? " is-won" : ""}`} title={name}>
-      <Swatch team={t} size={14} />
-      {t?.abbreviation ?? name}
+      <TeamPlate team={t} size="sm" title={name}>
+        {t?.abbreviation ?? name}
+      </TeamPlate>
     </span>
   );
 }

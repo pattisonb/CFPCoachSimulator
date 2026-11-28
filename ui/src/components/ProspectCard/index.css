@@ -306,12 +306,9 @@
   font-size: var(--t-xs);
 }
 
-.prospect-card__schools b {
+/* the school's plate takes the tile's spare width, the offer's envelope at the end */
+.prospect-card__school {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* the tile that counts the rest */

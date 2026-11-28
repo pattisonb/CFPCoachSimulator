@@ -280,8 +280,6 @@ export const messages = {
     moves: "The Biggest Moves",
     nobodyIn: "Nobody came in from the portal.",
     nobodyOut: "Nobody left through the portal.",
-    from: (school: string) => `From ${school}`,
-    to: (school: string) => `To ${school}`,
     outOfFbs: "Out of FBS",
     walkOn: "Walk-On",
     short: "Still Short",

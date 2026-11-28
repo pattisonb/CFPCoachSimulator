@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { Info, Trophy } from "@phosphor-icons/react";
 import Panel from "../Panel/index.tsx";
 import SectionTabs, { SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import Tooltip from "../Tooltip/index.tsx";
 import Wordmark from "../Wordmark/index.tsx";
 import { api } from "../../api.ts";
@@ -223,8 +223,9 @@ export default function Bracket({ season, teams, onBox }: Props) {
                     <span className={`bracket__seed${s.bye ? " is-bye" : ""}`} title={s.bye ? m.byeTip : undefined}>
                       {s.seed}
                     </span>
-                    <Swatch team={teams.get(s.team)} size={14} />
-                    <b className="bracket__team">{s.name}</b>
+                    <span className="plate-fit">
+                      <TeamPlate team={teams.get(s.team)}>{s.name}</TeamPlate>
+                    </span>
                     <span className="bracket__soft bracket__bid">{m.bid(s.bid)}</span>
                   </li>
                 ))}
@@ -236,8 +237,9 @@ export default function Bracket({ season, teams, onBox }: Props) {
                   {field.first_four_out.map((s) => (
                     <li key={s.team} className={s.team === season.team ? "is-mine" : undefined}>
                       <span className="bracket__seed is-out">{s.rank ?? m.dash}</span>
-                      <Swatch team={teams.get(s.team)} size={14} />
-                      <b className="bracket__team">{s.name}</b>
+                      <span className="plate-fit">
+                        <TeamPlate team={teams.get(s.team)}>{s.name}</TeamPlate>
+                      </span>
                     </li>
                   ))}
                 </ol>
@@ -323,8 +325,11 @@ function Line({ s, teams, me }: { s: Side; teams: Map<string, TeamCard>; me: str
       className={`bracket__line${s.won ? " is-won" : ""}${s.won === false ? " is-lost" : ""}${s.team === me ? " is-mine" : ""}`}
     >
       <span className="bracket__seed">{s.seed ?? ""}</span>
-      <Swatch team={s.team ? teams.get(s.team) : undefined} size={16} />
-      <span className="bracket__team">{bare(s.name)}</span>
+      <span className="bracket__grow plate-fit">
+        <TeamPlate team={s.team ? teams.get(s.team) : undefined} size="sm">
+          {bare(s.name)}
+        </TeamPlate>
+      </span>
       {s.score != null && <b className="bracket__score">{s.score}</b>}
     </div>
   );

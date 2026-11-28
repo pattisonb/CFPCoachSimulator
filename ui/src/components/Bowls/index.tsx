@@ -3,7 +3,7 @@ import { ArrowLeft } from "@phosphor-icons/react";
 import Chip from "../Chip/index.tsx";
 import Matchup, { type MatchupSide } from "../Matchup/index.tsx";
 import SectionTabs, { SampleNote, SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { sampleFor } from "./sample.ts";
 import type { Bowl, SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -244,8 +244,11 @@ function Card({
     const won = played && score! > other!;
     return (
       <span className={`bowl-card__team${played ? (won ? " is-won" : " is-lost") : ""}`}>
-        <Swatch team={slug ? teams.get(slug) : undefined} size={16} />
-        <span className="bowl-card__name">{(which === "away" ? b.away_name : b.home_name) ?? m.tbd}</span>
+        <span className="plate-fit">
+          <TeamPlate team={slug ? teams.get(slug) : undefined}>
+            {(which === "away" ? b.away_name : b.home_name) ?? m.tbd}
+          </TeamPlate>
+        </span>
         {slug === me && <span className="bowl-card__you">{m.you}</span>}
         <span className="bowl-card__rec">{(which === "away" ? b.away_record : b.home_record) ?? ""}</span>
         {played && <b className="bowl-card__score">{score}</b>}

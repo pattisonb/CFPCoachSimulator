@@ -240,13 +240,6 @@
   border-color: var(--ink);
 }
 
-/* a tag in a school's own color */
-.off__tag.is-team {
-  background: var(--c, var(--ink));
-  color: var(--on, var(--paper-hi));
-  border-color: var(--ink);
-}
-
 /* a portal move: from one school's colors to another's */
 .off__move {
   display: inline-flex;
@@ -1623,6 +1616,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 0 0 2px 3px; /* room for its plates' lean and shadow inside the line that cuts it short */
   color: var(--ink-soft);
   font-size: var(--t-xs);
 }

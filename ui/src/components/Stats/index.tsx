@@ -4,7 +4,7 @@ import Dropdown from "../Dropdown/index.tsx";
 import PlayerLink from "../PlayerLink/index.tsx";
 import DataTable, { type Column } from "../DataTable/index.tsx";
 import SectionTabs, { SectionPane, SectionStatus } from "../SectionTabs/index.tsx";
-import Swatch from "../Swatch/index.tsx";
+import TeamPlate from "../TeamPlate/index.tsx";
 import { api } from "../../api.ts";
 import type { SeasonSummary, TeamCard } from "../../types.ts";
 import { messages as m } from "./messages.ts";
@@ -202,10 +202,9 @@ export default function Stats({ season, teams, show }: Props) {
   const any = season.current_week > 0 || !!players?.length;
   const weekName = season.week_labels[String(season.current_week)] ?? m.week(season.current_week);
   const team = (slug: string, name: string) => (
-    <span className="stats__team">
-      <Swatch team={teams.get(slug)} size={14} />
+    <TeamPlate team={teams.get(slug)} size="sm">
       {name}
-    </span>
+    </TeamPlate>
   );
 
   const columns: Column<TeamLine>[] = [
@@ -340,10 +339,12 @@ export default function Stats({ season, teams, show }: Props) {
                       sort: (p) => p.name,
                       render: (p) => (
                         <span className="stats__player">
-                          <Swatch team={teams.get(p.team)} size={14} />
                           <PlayerLink team={p.team} name={p.name} position={p.position} />
                           <span className="stats__soft">
-                            {p.position} · {teams.get(p.team)?.abbreviation ?? p.team_name}
+                            {p.position} ·{" "}
+                            <TeamPlate team={teams.get(p.team)} size="sm">
+                              {teams.get(p.team)?.abbreviation ?? p.team_name}
+                            </TeamPlate>
                           </span>
                         </span>
                       ),

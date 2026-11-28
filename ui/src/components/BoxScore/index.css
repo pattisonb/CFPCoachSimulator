@@ -53,17 +53,6 @@
   text-transform: uppercase;
 }
 
-/* a long name ("Pacific Northwest Sasquatch") takes two lines before it is cut */
-.box__name b {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  line-height: 1.1;
-  text-wrap: balance;
-}
-
 /* the team's letters, in place of its name on a board too narrow for two names */
 .box__name .box__short {
   display: none;
@@ -75,9 +64,8 @@
   }
 
   .box__name .box__short {
-    display: block;
+    display: flex;
     flex: none;
-    white-space: nowrap;
   }
 }
 
@@ -339,7 +327,7 @@
 
   /* each side has the board's width to itself: its name again */
   .box__name .box__full {
-    display: -webkit-box;
+    display: flex;
   }
 
   .box__name .box__short {

@@ -123,15 +123,13 @@
 .office__side {
   display: grid;
   justify-items: center;
-  gap: 2px;
+  gap: 6px; /* clear of its plate's shadow */
   min-width: 0;
   text-align: center;
 }
 
 .office__side-name {
-  font-size: var(--t-lg);
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .office__side-line {

@@ -21,12 +21,6 @@
   font-size: var(--t-xs);
 }
 
-.stats__team {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* a leader: his place, his team's colors, who he is, his line, then the number the list is ranked by */
 
 /* about ten leaders show; the rest of the list scrolls inside its panel */
