@@ -190,7 +190,9 @@ export default function Conversation({ open, onClose, seasonId, r, scene: given,
         <span className="talk-head__meta">
           <Stars n={r.stars} />
           <span>
-            {r.display_pos} · {r.hometown.city}, {r.hometown.state}
+            {[r.display_pos, [r.hometown.city, r.hometown.state].filter(Boolean).join(", ")]
+              .filter(Boolean)
+              .join(" · ")}
           </span>
         </span>
       </div>

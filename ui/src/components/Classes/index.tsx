@@ -123,7 +123,13 @@ export default function Classes({ seasonId, team, teams, active }: Props) {
                 <span className="classes__who">
                   <b>{r.name}</b>
                   <span className="classes__soft">
-                    {r.display_pos} · {m.rank(r.national_rank)} · {r.hometown.city}, {r.hometown.state}
+                    {[
+                      r.display_pos,
+                      m.rank(r.national_rank),
+                      [r.hometown.city, r.hometown.state].filter(Boolean).join(", "),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                 </span>
                 <Stars n={r.stars} size={10} />

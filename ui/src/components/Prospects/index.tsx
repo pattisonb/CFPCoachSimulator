@@ -755,7 +755,9 @@ export default function Prospects({
                             <RecruitFlags generational={r.generational} find={r.find} likes={r.likes} size={12} />
                           </b>
                           <FitText className="prospects__soft">
-                            {r.portal ? transferLine(r) : `${r.hometown.city}, ${r.hometown.state}`}
+                            {r.portal
+                              ? transferLine(r)
+                              : [r.hometown.city, r.hometown.state].filter(Boolean).join(", ")}
                           </FitText>
                         </span>
                       </button>

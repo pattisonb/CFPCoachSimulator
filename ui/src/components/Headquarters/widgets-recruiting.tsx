@@ -610,7 +610,10 @@ function Scouted({ d, ctx }: P) {
         setReport({
           pid: r.pid,
           grades: pr.our_grades ?? null,
-          line: [pr.public?.archetype, pr.public ? `${pr.public.hometown.city}, ${pr.public.hometown.state}` : null]
+          line: [
+            pr.public?.archetype,
+            pr.public ? [pr.public.hometown.city, pr.public.hometown.state].filter(Boolean).join(", ") || null : null,
+          ]
             .filter(Boolean)
             .join(" · "),
         }),
