@@ -60,8 +60,10 @@ offseason.GROUP = { "QB": "QB", "HB": "RB", "FB": "RB", "WR": "WR", "TE": "TE", 
 // a healthy roster's players per group (the real 2026 FBS mean) and the floor walk-ons top up to
 offseason.TARGET = { "QB": 4, "RB": 6, "WR": 11, "TE": 6, "OL": 15, "DL": 15, "LB": 9, "CB": 8, "S": 8, "K": 2, "P": 1 };
 offseason.LOWER_LEVEL = 0.3;          // the share of roster top-ups who come from FCS or junior college (three-stars, a year or two in), not walk-ons
+offseason.SPECIALISTS = ["K", "P"];
+offseason.SPECIALIST_BAND = "3";      // *tune* the star band a walk-on kicker or punter is drawn at (other walk-ons are two-stars)
 offseason.LOWER_LEVEL_P4 = 0.15;     // ... at a Power 4 school (mostly walk-ons there)
-offseason.FLOOR = { "QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 1, "P": 1 };
+offseason.FLOOR = { "QB": 3, "RB": 3, "WR": 6, "TE": 3, "OL": 10, "DL": 9, "LB": 5, "CB": 5, "S": 4, "K": 2, "P": 2 };
 
 // ----- departures *tune* -----
 offseason.NEXT_CLASS = { "FR": "SO", "FRRS": "SORS", "SO": "JR", "SORS": "JRRS", "JR": "SR", "JRRS": "SRRS" };
@@ -844,12 +846,28 @@ function _performance(state) {
   const out = {};
   if (truthy(get(state, "season_stats"))) {
     const pool = new awards.Pool(state, teams, season._records(state, undefined, true));
+    // Each player is read against his own position: his rank among those who played enough there, on the scale every
+    // position's scores make together. The awards' groups mix positions (corners with safeties in DB, scored on tackles
+    // and picks) and count a group's starters (four DBs where a nickel plays five): corners read as a third of them
+    // struggling every year and lost room to grow, and receivers and backs more than the line, so those positions
+    // sank over a career (the player: receiving low seventeen years in). Ranked by position, the league's breakouts,
+    // struggles and pace stay what they were in all; they are no longer piled on a few positions.
+    const rows = [];
     for (const p of pool.players) {
       const sid = ids_get(p["team"], p["name"], p["position"]);
       const z = get(p["zb"], p["group"]);
-      if (truthy(sid) && z !== null && pool.played_enough(p)) {
-        out[sid] = { "z": round(z, 2), "honors": [] };
-      }
+      if (truthy(sid) && z !== null && pool.played_enough(p)) rows.push([sid, z, get(offseason.DRAFT_GROUP, p["position"], p["position"])]);
+    }
+    const scale = sorted(rows.map((r) => r[1]));
+    const by_pos = {};
+    for (const r of rows) setdefault(by_pos, r[2], []).push(r);
+    for (const group of Object.values(by_pos)) {
+      const ranked = sorted(group, (r) => [r[1], r[0]]);
+      ranked.forEach((r, i) => {
+        const q = (i + 0.5) / ranked.length;                     // his place among his position's players
+        const z = scale.length ? scale[Math.min(scale.length - 1, Math.floor(q * scale.length))] : r[1];
+        out[r[0]] = { "z": round(z, 2), "honors": [] };
+      });
     }
   }
 

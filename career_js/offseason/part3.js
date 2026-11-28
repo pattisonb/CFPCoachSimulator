@@ -744,7 +744,10 @@ function _fill_rosters(state, cut = []) {
         added += 1;
         continue;
       }
-      const band = rng.random() < (truthy(p4) ? offseason.LOWER_LEVEL_P4 : offseason.LOWER_LEVEL) ? "3" : "2";
+      const lower = rng.random() < (truthy(p4) ? offseason.LOWER_LEVEL_P4 : offseason.LOWER_LEVEL);
+      // a kicker or punter who walks on is as good as one a school would have signed (the walk-on specialists, two-stars,
+      // were half a league's starters by its fifth year, ten points under the real ones: kicking sank over a career)
+      const band = lower ? "3" : (offseason.SPECIALISTS.includes(g) ? offseason.SPECIALIST_BAND : "2");
       const pool = waiting(band, g);
       while (!pool.length) {
         const r = recruits.recruit(rng, state["offseason"]["year"], band, taken);
@@ -753,7 +756,7 @@ function _fill_rosters(state, cut = []) {
       const r = pool.pop();
       const c = lg.compact(offseason._newcomer(r, `w${state["offseason"]["year"]}-${slug}-${added}`), attrs);
       c["j"] = offseason._jersey(t["roster"], c["pos"], rng);
-      if (band === "3") {                           // from FCS or junior college: a year or two of college behind him
+      if (lower) {                                  // from FCS or junior college: a year or two of college behind him
         const years = rng.choice([1, 2]);
         for (let _ = 0; _ < years; _++) offseason.develop(c, attrs, 0.8, rng);
         c["cls"] = rng.choice(years === 1 ? ["SO", "SORS"] : ["JR", "JRRS"]);
