@@ -547,6 +547,24 @@ function heal_contacts(state) {
       changed = true;
     }
   }
+  // a hard commit the week's draws committed again (a verbal commit to the same school, before that was stopped):
+  // hard again, at his firmness, and the commit lines after his hard one go from his History
+  const log = get(rc, "log") || [];
+  const hard_at = {};
+  log.forEach((e, i) => {
+    if (e["kind"] === "hard") hard_at[e["pid"]] = [i, e["school"]];
+    else if (["decommit", "flip"].includes(e["kind"]) || (e["kind"] === "commit" && hard_at[e["pid"]] && e["school"] !== hard_at[e["pid"]][1])) delete hard_at[e["pid"]];
+  });
+  const drop = new Set();
+  for (const [pid, [i, school]] of Object.entries(hard_at)) {
+    const st = get(get(rc, "status") || {}, pid);
+    if (!truthy(st) || st["committed"] !== school || truthy(get(st, "hard"))) continue;
+    st["hard"] = true;
+    st["firmness"] = Math.max(get(st, "firmness") || 0, recruiting.HARD_AT);
+    for (let j = i + 1; j < log.length; j++) if (log[j]["pid"] === pid && log[j]["kind"] === "commit" && log[j]["school"] === school) drop.add(j);
+    changed = true;
+  }
+  if (drop.size) rc["log"] = log.filter((_, j) => !drop.has(j));
   if (truthy(get(rc, "portal"))) {
     const last = get(rc, "weeks") || recruiting.PORTAL_WEEKS;       // range(1, last + 1)
     const in_weeks = (w) => typeof w === "number" && Number.isInteger(w) && w >= 1 && w <= last;

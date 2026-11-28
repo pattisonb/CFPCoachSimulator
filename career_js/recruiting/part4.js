@@ -960,6 +960,9 @@ function _draws(state, week, rng) {
       }
       continue;
     }
+    // a hard commit is done: he never comes up for a commitment again (he fell through to the uncommitted draws here,
+    // and committing him again made him a verbal commit: the player's hard commit back to Committed in Week 11)
+    if (truthy(st["committed"])) continue;
     scores = scores.filter(([v, s]) => !held_out(s, pid) && room(s, pid) && truthy(recruiting._pair_ok(state, s, pid, offered, room)));
     const lean_is_list = !scores.length && !(week >= recruiting.FCS_NO_OFFER_WEEK);
     // (a blue chip never leans FCS: a school he likes makes room for him on signing day, part 5 BLUE_CHIP_HOME)
