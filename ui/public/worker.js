@@ -463,9 +463,15 @@ const SIM_DATA_BYTES = 24 << 20;     // room for a week's results (some 45 KB a 
 const SIM_MAX_GAMES = 400;
 const SIM_START_MS = 500;            // *tune* how long after a career is first asked for the first helper starts (they start at once)
 const SIM_MIN_JOBS = 4;              // *tune* fewer games than this are played here: sharing them costs more than it saves
-const SIM_STALL_MS = 120000;         // *tune* how long the helpers may go without finishing a game before theirs are played here
+const SIM_STALL_MS = 120000;
+// *tune* how long the helpers stay up with nothing to sim: then they go (each holds a copy of the game and the league,
+// a few hundred MB between them: a tab sat at 1.4 GB with nothing running, the player) and the next sim starts them again
+const SIM_IDLE_MS = 60000;
+// the game's own files a helper needs (rosters.derive reads the card scale to work the roster file out)
+const SIM_HELPER_FILES = ["data/game_scale.json"];         // *tune* how long the helpers may go without finishing a game before theirs are played here
 const S_GEN = 0, S_NEXT = 2, S_ALLOC = 3, S_DONE = 4, S_READY = 8, S_TABLE = 32;
 const sims = { ctrl: null, data: null, workers: [], gen: 0, n: 0, taken: new Set(), asked: false, broken: false, version: "dev", max: null,
+  idle: null, started: false,
   helped: 0, spent: 0 };      // (for a step's `ms`: the games the helpers have played, and the time the games have taken)
 
 function simHelperCount() {
@@ -476,10 +482,29 @@ function simHelperCount() {
   return sims.max === null ? count : Math.min(count, sims.max);
 }
 
+// The helpers let go after SIM_IDLE_MS with nothing to sim (`simIdle` as the worker goes quiet, `simBusy` as it wakes).
+function simStopHelpers() {
+  if (!sims.asked || (api && api.running()) || queue.length) return;
+  if (sims.ctrl) Atomics.store(sims.ctrl, S_GEN, sims.gen + 1);      // (a helper still in a week stops at its next game)
+  sims.gen += 1;
+  for (const h of sims.workers) { try { h.worker.terminate(); } catch (err) { /* already gone */ } }
+  sims.workers = [];
+  sims.ctrl = null;
+  sims.data = null;
+  sims.asked = false;
+}
+function simIdle() {
+  if (sims.asked && sims.idle === null) sims.idle = setTimeout(() => { sims.idle = null; simStopHelpers(); }, SIM_IDLE_MS);
+}
+function simBusy() {
+  if (sims.idle !== null) { clearTimeout(sims.idle); sims.idle = null; }
+}
+
 // Start the helpers, one after another (each loads the game: together they would crowd the page).
 function simStartHelpers() {
   if (sims.asked) return;
   sims.asked = true;
+  sims.started = true;
   const count = simHelperCount();
   if (!count) return;
   try {
@@ -495,7 +520,9 @@ function simStartHelpers() {
     w.onmessage = (e) => { if (e.data.kind === "ready") startOne(k + 1); else if (e.data.kind === "failed") console.warn("sim helper:", e.data.message); };
     w.onerror = (e) => console.warn("sim helper:", e.message);
     w.postMessage({ kind: "init", me: k, ctrl: sims.ctrl.buffer, data: sims.data.buffer, game: `./${GAME}?v=${encodeURIComponent(sims.version)}`,
-      gameText: skin ? skin.gameText : null });      // (under a skin: the script with the skin's names in it)
+      gameText: skin ? skin.gameText : null,       // (under a skin: the script with the skin's names in it)
+      // the files a helper reads besides the league's teams: the card scale the roster file is read against
+      files: Object.fromEntries(SIM_HELPER_FILES.filter((f) => mem.has(f)).map((f) => [f, mem.get(f)])) });
   };
   setTimeout(() => startOne(0), SIM_START_MS);
 }
@@ -657,7 +684,8 @@ async function handle(msg) {
   const ms = { run: 0, parse: 0, save: 0 };
   const t0 = performance.now();
   const saved = async () => { const t = performance.now(); await persist(); ms.save = Math.round(performance.now() - t); };
-  if (!sims.asked && msg.path.includes("/api/season/")) simStartHelpers();     // a career is open: sims are coming
+  // a career is open: sims are coming (and once they have gone for being idle, a sim asked for starts them again)
+  if (!sims.asked && msg.path.includes("/api/season/") && (!sims.started || (msg.method === "POST" && /\/advance(\?|$)/.test(msg.path)))) simStartHelpers();
   try {
     await openCareers(msg);
     const out = api.call_js(msg.method, msg.path, msg.bodyJson == null ? null : msg.bodyJson, msg.bodyBytes == null ? null : msg.bodyBytes);
@@ -730,7 +758,11 @@ async function main() {
         warmed = true;
         try { api.call_js("GET", "/api/teams", null, null); } catch (err) { console.error(err); }
       }
-      else await untilMessage();
+      else {
+        simIdle();
+        await untilMessage();
+        simBusy();
+      }
     }
   } catch (err) {                 // a crash in the pump: the page hears it instead of hanging
     console.error(err);
