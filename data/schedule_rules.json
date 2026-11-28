@@ -43,7 +43,7 @@
     "Big 12": {
       "games": 9, "cycle": 4, "home_split": "alternate",
       "protected": [["baylor", "tcu"], ["arizona", "arizona-state"], ["byu", "utah"], ["kansas", "kansas-state"]],
-      "finales": [["arizona", "arizona-state"], ["kansas", "kansas-state"], ["byu", "utah"], ["baylor", "tcu"]],
+      "finales": [["arizona", "arizona-state"], ["kansas", "kansas-state"], ["byu", "utah"]],
       "non_conference": {"games": 3, "power_min": 0, "fcs_max": 1}
     },
     "Pac-12": {

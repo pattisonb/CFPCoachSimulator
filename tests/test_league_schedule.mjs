@@ -38,8 +38,10 @@ const ONE_TEAM_NO_GAMES = { format: FORMAT, remove: ["kent-state"],
 // gives the digests recorded before (a3e087e6... and cc83c7f7...), so not a game moved.
 // Recorded again when the FCS stand-ins' shifts became card points (9, 3 and -7 then, 3.6, 1.2 and -2.8 now): with the
 // old shifts put back it gives the digests before (a2475fef... and 214d7519...), so again not a game moved.
-const BUILTIN_DIGESTS = { 2027: "52eed37b1a9cd1fe1088852eb1d605e1d2f703de9e82532d413d3c41a7236107",
-  2028: "462b14231b6962bccd834d79a78b944df4f7f6dc98f0860db9ed56855cf195e3" };
+// Recorded again when Baylor-TCU stopped being a Thanksgiving finale (still protected, its week now moves: the
+// player's "TCU week 13 every year"); the games move by design (52eed37b... and 462b1423... before).
+const BUILTIN_DIGESTS = { 2027: "3fc54115d222be2506b050b828b3719dd45b73183ce3f5b891e775f94afa1010",
+  2028: "a2104752fa598417f973f1f7a2b5f84b79f97ba46bc0fa9151a26c46a8a2185e" };
 
 const built_teams = (lgd) => league.build(lgd)["teams"];
 
