@@ -662,14 +662,12 @@
    nameplate in its first color with a stripe of its second across it, like a jersey's, and a pixel shadow in its
    second; a row takes a tint of its team when pointed at; the top three wear medals ---- */
 .recap__list li.is-team {
+  gap: 6px;
   transition: background-color 140ms ease-out;
 }
 
-/* (the place a plate stands in is its plate's width; what follows keeps to one line at the right, and in a narrow
-   card goes under the plate rather than over it) */
-.recap__list li.is-team:not(.recap__boom, .recap__news) {
-  flex-wrap: wrap;
-}
+/* (the place a plate stands in is its plate's width; what follows stands at the right, on two lines in a narrow card
+   rather than going under the plate or being cut short) */
 
 .recap__list li:not(.recap__boom) > .recap__grow:has(> .team-plate) {
   flex: 0 0 auto;
@@ -677,8 +675,10 @@
 
 .recap__list li:not(.recap__boom) > .recap__grow:has(> .team-plate) ~ .recap__soft,
 .recap__list li:not(.recap__boom) > .recap__grow:has(> .team-plate) ~ .recap__rowlink {
+  min-width: 0;
   margin-left: auto;
-  white-space: nowrap;
+  text-align: right;
+  white-space: normal;
 }
 
 .recap__list li.is-team:hover {

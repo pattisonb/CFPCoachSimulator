@@ -144,7 +144,7 @@ export default function Week({ view, weekName, season, teams, onBox }: Props) {
   };
   /** a team as its slanted nameplate (TeamPlate): "is-small" inside a line of text, "is-lost" an upset's loser */
   const plate = (slug: string, label: ReactNode, more = "") => (
-    <TeamPlate team={teams.get(slug)} size={more.includes("is-small") ? "sm" : "md"} lost={more.includes("is-lost")}>
+    <TeamPlate team={teams.get(slug)} size="sm" lost={more.includes("is-lost")}>
       {label}
     </TeamPlate>
   );

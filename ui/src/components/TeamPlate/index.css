@@ -1,5 +1,5 @@
-/* A team as a slanted nameplate (TeamPlate): its first color, its trim as a stripe under the letters and as a pixel
-   shadow, the plate leaning, the letters upright. Without a team: ink, with the paper for its words. */
+/* A team as a slanted nameplate (TeamPlate): its first color, its trim as a band along its foot and, darker, as a
+   pixel shadow, the plate leaning, the letters upright. Without a team: ink, with the paper for its words. */
 .team-plate {
   --c: var(--ink);
   --on: var(--paper-hi);
@@ -10,14 +10,15 @@
   align-items: center;
   justify-content: center;
   min-width: 52px;
-  height: 26px;
-  margin-right: 6px; /* room for its shadow: the words after it never under it */
-  padding: 0 8px 4px;
-  background: linear-gradient(var(--c) 0 76%, var(--c2) 76% 90%, var(--c) 90%);
+  height: 24px;
+  margin: 0 5px 2px 2px; /* room for its lean and its shadow: the words beside it never under it */
+  padding: 0 10px 3px;
+  background: var(--c);
   color: var(--on);
-  box-shadow: 3px 3px 0 var(--c2);
+  box-shadow:
+    inset 0 -3px 0 var(--c2),
+    2px 2px 0 color-mix(in srgb, var(--c2) 70%, #000);
   font-size: var(--t-sm);
-  font-style: italic;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 1px;
@@ -35,25 +36,27 @@
 
 .team-plate--sm {
   min-width: 40px;
-  height: 21px;
-  padding: 0 6px 3px;
-  box-shadow: 2px 2px 0 var(--c2);
+  height: 20px;
+  padding: 0 7px 3px;
+  box-shadow:
+    inset 0 -3px 0 var(--c2),
+    2px 2px 0 color-mix(in srgb, var(--c2) 70%, #000);
   font-size: var(--t-xs);
 }
 
 .team-plate--lg {
   min-width: 72px;
-  height: 36px;
-  padding: 0 12px 6px;
-  box-shadow: 4px 4px 0 var(--c2);
+  height: 34px;
+  padding: 0 14px 5px;
+  box-shadow:
+    inset 0 -5px 0 var(--c2),
+    3px 3px 0 color-mix(in srgb, var(--c2) 70%, #000);
   font-size: var(--t-lg);
 }
 
-/* a loser beside its winner: knocked over, and faded */
+/* a loser beside its winner: faded */
 .team-plate.is-lost {
-  margin-top: 6px;
-  opacity: 0.6;
-  transform: skewX(-12deg) rotate(-5deg);
+  opacity: 0.55;
 }
 
 /* A TeamPlate in a flex row that may be narrow (a card, a list, a bracket): the wrapper gives way first (a row that
@@ -67,7 +70,7 @@
 }
 
 .plate-fit > .team-plate {
-  max-width: calc(100% - 6px); /* with its shadow's margin, the row's width */
+  max-width: calc(100% - 7px); /* with its margins, the row's width */
 }
 
 .plate-fit > .team-plate > span {
@@ -79,65 +82,8 @@
 /* pointed at (a row it stands in, a link): it lifts */
 :where(a, button, li, tr):hover > .team-plate:not(.is-lost),
 :where(a, button, li, tr):hover > * > .team-plate:not(.is-lost) {
-  box-shadow: 5px 5px 0 var(--c2);
-  transform: skewX(-12deg) translate(-1px, -1px);
-}
-
-/* ---- mockup variants (scratch: one is kept) ---- */
-:root[data-plate] .team-plate {
-  font-style: normal;
-  transform: none;
-}
-
-:root[data-plate] .team-plate > span {
-  transform: none;
-}
-
-:root[data-plate] .team-plate.is-lost {
-  margin-top: 0;
-  transform: none;
-}
-
-/* A: jersey: solid first color, a thick bar of the second beneath */
-:root[data-plate="a"] .team-plate {
-  margin-right: 0;
-  padding: 0 8px;
-  background: var(--c);
-  border-bottom: 4px solid var(--c2);
-  box-shadow: none;
-}
-
-/* B: piping: solid first color, an inner outline of the second, like a jersey number */
-:root[data-plate="b"] .team-plate {
-  margin-right: 0;
-  padding: 0 8px;
-  background: var(--c);
   box-shadow:
-    inset 0 0 0 2px var(--c),
-    inset 0 0 0 4px var(--c2);
-}
-
-/* C: shoulder: the first color with a band of the second along its foot and a square of it ahead of the name */
-:root[data-plate="c"] .team-plate {
-  gap: 6px;
-  margin-right: 0;
-  padding: 0 8px 0 0;
-  background: linear-gradient(var(--c) 0 82%, var(--c2) 82%);
-  box-shadow: none;
-}
-
-:root[data-plate="c"] .team-plate::before {
-  align-self: stretch;
-  width: 6px;
-  background: var(--c2);
-  content: "";
-}
-
-:root[data-plate] .plate-fit > .team-plate {
-  max-width: 100%;
-}
-
-:root[data-plate] :where(a, button, li, tr):hover > .team-plate:not(.is-lost),
-:root[data-plate] :where(a, button, li, tr):hover > * > .team-plate:not(.is-lost) {
-  transform: none;
+    inset 0 -3px 0 var(--c2),
+    3px 3px 0 color-mix(in srgb, var(--c2) 70%, #000);
+  transform: skewX(-12deg) translate(-1px, -1px);
 }
