@@ -63,9 +63,10 @@ export function formations(team_data) {
     team.set_front(counts);
     defense.push({ id, counts, lineup: Array.from(team._lineup.defense, who) });
   }
+  // the kicker and punter the game would use (roster.js get_kicker, get_punter): with nobody at the spot, the other
+  // specialist, then anyone (the chart showed an empty slot where the game played someone)
   const specialist = (pos) => {
-    let p = team.offense.find((x) => x.position === pos && x.in_game && !x.injured);
-    if (!p) p = sorted(team.offense, (x) => x.depth).find((x) => x.position === pos && !x.injured);
+    const p = pos === "K" ? team.get_kicker() : team.get_punter();
     return p ? p.slug : null;
   };
   const on_team = new Set([...team.offense, ...team.defense].map((x) => x.slug));

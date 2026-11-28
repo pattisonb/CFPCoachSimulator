@@ -181,9 +181,7 @@ function role_starters(team, role) {
   // How many players start at a role in the team's base formation (three receivers, two
   // tackles, none at a linebacker spot the scheme leaves out). Kickers and returners: one.
   if (["K", "P", "KR", "PR"].includes(role)) return 1;
-  let n = 0;
-  for (const p of [...team["offense"], ...team["defense"]]) if (get(p, "role") === role && truthy(get(p, "in_game"))) n += 1;
-  return n;
+  return get(game_job.role_starters_of(team), role, 0);       // the formation's count, as the team came (game_job)
 }
 
 function position_candidates(state, slug, role) {

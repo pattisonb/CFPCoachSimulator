@@ -92,6 +92,20 @@ export function apply_coach(team, coach) {
 }
 
 // ---- the game job (sim_js/season.js) ----
+// How many start at each role, counted once from the team as it came (its in-game flags), and carried on every copy made
+// from it (`_role_starters`): each step after the first (a position change, then the depth chart) changes those
+// flags, and counting them again gave a role the scheme leaves out a starter (a SAM moved in, the player's "the
+// formation stuff gets messed up") and a role whose starter moved away none.
+export function role_starters_of(team) {
+  const kept = get(team, "_role_starters");
+  if (kept) return kept;
+  const starters = {};
+  for (const p of [...team["offense"], ...team["defense"]]) {
+    if (truthy(get(p, "role")) && truthy(get(p, "in_game"))) starters[p["role"]] = get(starters, p["role"], 0) + 1;
+  }
+  return starters;
+}
+
 export function with_positions(team, moves) {
   // A copy of the team with this season's position changes applied (change_position): each
   // moved player at his new position and depth-chart role, placed in that role's order by his
@@ -102,10 +116,7 @@ export function with_positions(team, moves) {
   const players = [...team["offense"], ...team["defense"]].map((p) => ({ ...p }));
   const by_slug = new Map();
   for (const p of players) by_slug.set(get(p, "slug"), p);
-  const starters = {};
-  for (const p of players) {
-    if (truthy(get(p, "role")) && truthy(get(p, "in_game"))) starters[p["role"]] = get(starters, p["role"], 0) + 1;
-  }
+  const starters = role_starters_of(team);
   const keys = new Set();
   for (const p of players) for (const k of Object.keys(get(p, "stats") || {})) keys.add(k);
   const stat_keys = sorted(keys);
@@ -140,13 +151,13 @@ export function with_positions(team, moves) {
       }
       group.splice(at, 0, p);
     }
-    const n = get(starters, role, Object.prototype.hasOwnProperty.call(ROLE_POSITION, role) ? 1 : 0);
+    const n = get(starters, role, 0);       // a role the team's formation leaves out (a SAM in a 4-2-5) starts nobody
     group.forEach((p, i) => {
       p["depth"] = i + 1;
       p["in_game"] = i < n;
     });
   }
-  const out = { ...team };
+  const out = { ...team, _role_starters: starters };
   out["offense"] = players.filter((p) => OFFENSE_POSITIONS.has(p["position"]));
   out["defense"] = players.filter((p) => !OFFENSE_POSITIONS.has(p["position"]));
   return out;
@@ -211,14 +222,11 @@ export function apply_depth(team, overrides) {
   // role (and its position), in the saved order; every role then starts its usual number of players. KR and PR
   // overrides pick the returner.
   if (!truthy(overrides)) return team;
-  const out = { ...team };
+  const starters = role_starters_of(team);
+  const out = { ...team, _role_starters: starters };
   const players = [...team["offense"], ...team["defense"]].map((p) => ({ ...p }));
   const by_slug = {};
   for (const p of players) by_slug[p["slug"]] = p;
-  const starters = {};
-  for (const p of players) {
-    if (truthy(get(p, "role")) && truthy(get(p, "in_game"))) starters[p["role"]] = get(starters, p["role"], 0) + 1;
-  }
   const moved = new Set();
   for (const [role, order] of Object.entries(overrides)) {
     if (role === "KR" || role === "PR") {
