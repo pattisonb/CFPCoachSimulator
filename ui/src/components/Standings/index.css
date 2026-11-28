@@ -253,3 +253,15 @@
     transition: none;
   }
 }
+
+/* the School theme: each conference's head in your school's color, your own row in its second */
+:root[data-theme="school"] .compact__head {
+  background: var(--team, var(--ink));
+  color: var(--team-on, var(--paper-hi));
+}
+
+:root[data-theme="school"] .compact__table :where(tr.is-mine) td,
+:root[data-theme="school"] .full__table :where(tr.is-mine) td {
+  background: var(--team-2, var(--tile));
+  color: var(--team-2-on, var(--ink));
+}

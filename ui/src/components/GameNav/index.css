@@ -355,41 +355,23 @@
   border-top: var(--line) solid var(--line-soft);
 }
 
-/* a square pixel switch at the row's end: the knob slides right and the track fills when on */
-.game-nav__switch {
-  position: relative;
-  flex: none;
-  width: 32px;
-  height: 18px;
+/* the theme you are on, at the row's end */
+.game-nav__value {
   margin-left: auto;
-  border: var(--line) solid currentcolor;
-  transition:
-    background-color 160ms,
-    opacity 160ms;
+  font-size: var(--t-xs);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
-.is-rail .game-nav__switch {
+.is-rail .game-nav__value {
   opacity: 0;
 }
 
-.game-nav__switch::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 10px;
-  height: 10px;
-  background: currentcolor;
-  transition: transform 160ms;
-}
-
-[aria-checked="true"] > .game-nav__switch {
-  background: var(--ink);
-}
-
-[aria-checked="true"] > .game-nav__switch::after {
-  background: var(--paper);
-  transform: translateX(14px);
+/* (the foot's row of icons: the tip names the theme) */
+.game-nav__foot .game-nav__value {
+  display: none;
 }
 
 /* ---------- minimized: the one tooltip beside the rail ---------- */
@@ -459,4 +441,22 @@
 .game-nav-slot:not(.game-nav-slot--rail) .game-nav__foot .game-nav__text,
 .game-nav-slot:not(.game-nav-slot--rail) .game-nav__foot .game-nav__switch {
   display: none;
+}
+
+/* ---- the School theme: the sidebar in your school's second color (its ink for every word and line), where you are in
+   its first ---- */
+:root[data-theme="school"] .game-nav {
+  --ink: var(--team-2-on, #37352f);
+  --ink-soft: color-mix(in srgb, var(--team-2-on, #37352f) 75%, transparent);
+  --line-soft: color-mix(in srgb, var(--team-2-on, #37352f) 25%, transparent);
+  --nav-hover: color-mix(in srgb, var(--team-2-on, #37352f) 12%, transparent);
+  --paper: var(--team-2, #f7f7f5);
+
+  background: var(--team-2, var(--paper));
+  color: var(--ink);
+  border-right: 6px solid color-mix(in srgb, #000 30%, var(--team, #37352f));
+}
+
+:root[data-theme="school"] .game-nav__item[aria-current="page"] {
+  box-shadow: 4px 4px 0 color-mix(in srgb, #000 35%, var(--team-2, #37352f));
 }

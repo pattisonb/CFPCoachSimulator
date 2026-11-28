@@ -40,7 +40,7 @@ import { currentParams, navigate, rememberDynasty, replaceParams } from "../../r
 import { sectionOf } from "../../sections.ts";
 import { useSim } from "../../sim.ts";
 import { cachedStandIns, cachedTeams, loadTeams } from "../../teams.ts";
-import type { Theme } from "../../theme.ts";
+import { baseTheme, type Theme } from "../../theme.ts";
 import type { RecruitingBoard, SavedCoach, SeasonCoach, SeasonSummary, TeamCard, ScheduleGame } from "../../types.ts";
 import { messages as m } from "./messages.ts";
 import Celebration, { partyOf, type Party } from "../../components/Celebration/index.tsx";
@@ -250,8 +250,8 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
   const myTeam = season ? bySlug.get(season.team) : undefined;
   // your team's colors for the whole game: the primary, or the secondary when the primary would vanish against this
   // theme's page; the text on it black or white, whichever reads
-  const accent = myTeam ? teamAccent(myTeam.colors, theme) : null;
-  const teamVars = teamColorVars(myTeam?.colors, theme) as CSSProperties | undefined;
+  const accent = myTeam ? teamAccent(myTeam.colors, baseTheme(theme)) : null;
+  const teamVars = teamColorVars(myTeam?.colors, baseTheme(theme)) as CSSProperties | undefined;
   // while a sim runs, the week strip and your record follow it: each result lands on its tile as the week is played
   // (a game not on the schedule yet, a bowl or a playoff game, gets a tile of its own). Game Day keeps its score back
   // for the playback.
@@ -619,6 +619,7 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
             navMode === "hidden" && "is-navless",
             section.key === "recruiting" && "is-recruiting",
             section.key === "offseason" && "is-offseason",
+            theme === "school" && myTeam && "has-banner",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -627,6 +628,12 @@ export default function Game({ theme, onToggleTheme, seasonId, sectionKey, onNew
           {/* the sidebar hidden, on a page with no top row: Open sits in the corner of the page's own top bar, which
               starts clear of it, so the page keeps the whole window (the player's ask) */}
           {bare && openNav}
+          {/* the School theme: your school's name across the top of every page, in its colors */}
+          {theme === "school" && myTeam && (
+            <div className="game__banner" aria-hidden="true">
+              <b>{myTeam.name}</b> <span>{myTeam.mascot}</span>
+            </div>
+          )}
           <div className="game__top">
             {!bare && openNav}
             {season && !bare && (

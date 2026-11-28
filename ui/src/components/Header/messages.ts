@@ -6,6 +6,7 @@ export const messages = {
   nav: [{ key: "play", label: "Play", href: "" }], // href: under the app's root (router.ts ROOT)
   toDark: "Switch to Dark Mode",
   toLight: "Switch to Light Mode",
+  toSchool: "Switch to School Colors: Your School's Colors All Through a Career",
 } as const;
 
 export type NavKey = (typeof messages.nav)[number]["key"];

@@ -1,7 +1,7 @@
-import { Moon, Sun } from "@phosphor-icons/react";
+import { Flag, Moon, Sun } from "@phosphor-icons/react";
 import BallLogo from "../BallLogo/index.tsx";
 import { navigate, ROOT } from "../../router.ts";
-import type { Theme } from "../../theme.ts";
+import { nextTheme, type Theme } from "../../theme.ts";
 import { messages as m, type NavKey } from "./messages.ts";
 import "./index.css";
 
@@ -13,7 +13,9 @@ interface Props {
 
 /** The site header: the brand on the left, the nav in the middle, the theme switch on the right. */
 export default function Header({ active, theme, onToggleTheme }: Props) {
-  const dark = theme === "dark";
+  // the switch goes round Light, Dark, School: it shows the one you would switch to
+  const next = nextTheme(theme);
+  const tip = next === "dark" ? m.toDark : next === "school" ? m.toSchool : m.toLight;
   return (
     <header className="header">
       {/* home, inside the app: a plain link reloads the page, and on the published site that starts the whole game
@@ -50,15 +52,15 @@ export default function Header({ active, theme, onToggleTheme }: Props) {
           </a>
         ))}
       </nav>
-      {/* shows the mode you would switch to: the moon in light mode, the sun in dark mode */}
-      <button
-        type="button"
-        className="header__theme"
-        onClick={onToggleTheme}
-        aria-label={dark ? m.toLight : m.toDark}
-        title={dark ? m.toLight : m.toDark}
-      >
-        {dark ? <Sun size={24} weight="bold" /> : <Moon size={24} weight="bold" />}
+      {/* shows the theme you would switch to: the moon for Dark, the flag for School, the sun for Light */}
+      <button type="button" className="header__theme" onClick={onToggleTheme} aria-label={tip} title={tip}>
+        {next === "dark" ? (
+          <Moon size={24} weight="bold" />
+        ) : next === "school" ? (
+          <Flag size={24} weight="bold" />
+        ) : (
+          <Sun size={24} weight="bold" />
+        )}
       </button>
     </header>
   );

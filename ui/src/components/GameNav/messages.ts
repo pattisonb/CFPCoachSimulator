@@ -14,5 +14,8 @@ export const messages = {
   hide: (shortcut: string) => `Hide Sidebar (${shortcut})`,
   expand: "Expand Sidebar",
   keepOpen: "Keep Sidebar Open",
-  darkMode: "Dark Mode",
+  /** the theme switch: it goes round the three, showing the one you are on */
+  theme: "Theme",
+  themes: { light: "Light", dark: "Dark", school: "School" },
+  themeTip: (now: string, next: string) => `Theme: ${now}. Switch to ${next}.`,
 } as const;

@@ -4,8 +4,10 @@ import {
   CaretDoubleLeft,
   CaretDoubleRight,
   CaretDown,
+  Flag,
   GearSix,
   Moon,
+  Sun,
   PushPin,
   SidebarSimple,
   type Icon,
@@ -14,7 +16,7 @@ import BallLogo from "../BallLogo/index.tsx";
 import { hrefFor, navigate } from "../../router.ts";
 import { NAV_SHORTCUT, type NavMode } from "../../navMode.ts";
 import { CAREER_SECTIONS, LEAGUE_SECTIONS, isLeague, type Section } from "../../sections.ts";
-import type { Theme } from "../../theme.ts";
+import { nextTheme, type Theme } from "../../theme.ts";
 import { messages as m } from "./messages.ts";
 import "./index.css";
 
@@ -193,7 +195,8 @@ export default function GameNav({
   const showLeague = leagueOpen || isLeague(active);
   const rail = mode === "rail";
   const hidden = mode === "hidden";
-  const dark = theme === "dark";
+  const ThemeIcon = theme === "dark" ? Moon : theme === "school" ? Flag : Sun;
+  const themeTip = m.themeTip(m.themes[theme], m.themes[nextTheme(theme)]);
 
   // the open section in view, on a window too short to show them all
   useEffect(() => {
@@ -317,19 +320,18 @@ export default function GameNav({
             title={m.soon}
             onClick={(e) => e.preventDefault()}
           />
-          {/* the theme as a switch: on is dark */}
+          {/* the theme: one button that goes round Light, Dark and School, the one you are on beside it */}
           <button
             type="button"
-            role="switch"
-            aria-checked={dark}
             className="game-nav__item"
-            data-tip={rail ? m.darkMode : undefined}
-            title={rail ? undefined : m.darkMode}
+            aria-label={themeTip}
+            data-tip={rail ? themeTip : undefined}
+            title={rail ? undefined : themeTip}
             onClick={onToggleTheme}
           >
-            <Moon size={20} weight={dark ? "fill" : "bold"} aria-hidden="true" />
-            <span className="game-nav__text">{m.darkMode}</span>
-            <span className="game-nav__switch" aria-hidden="true" />
+            <ThemeIcon size={20} weight="fill" aria-hidden="true" />
+            <span className="game-nav__text">{m.theme}</span>
+            <span className="game-nav__value">{m.themes[theme]}</span>
           </button>
           <a
             className="game-nav__item"

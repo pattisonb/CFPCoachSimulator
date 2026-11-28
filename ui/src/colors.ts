@@ -50,6 +50,9 @@ const SHADOW_TINT = 34;
  * A team's colors as the page's own (--team and the rest): on the game for your team, on a card for another's (a
  * player's card wears his team's). Null when the team has none.
  */
+/** *tune* How far apart (contrast ratio) a team's second color must stand from its first to be written on it. */
+const POP_CONTRAST = 2.6;
+
 export function teamVars(
   colors: { primary: string; secondary: string; accent?: string } | null | undefined,
   theme: "light" | "dark",
@@ -66,6 +69,8 @@ export function teamVars(
     "--team-3": third,
     "--team-on": inkOn(accent),
     "--team-2-on": inkOn(second),
+    // a detail on the team color (the School theme's banner, a rule): its second color when that reads on it, else its ink
+    "--team-pop": contrast(accent, second) >= POP_CONTRAST ? second : inkOn(accent),
     // the three colors as one stripe: mostly the first, then the second, a touch of the third
     "--team-stripe": `linear-gradient(90deg, ${accent} 0 64%, ${second} 64% 88%, ${third} 88%)`,
     // the hard pixel shadows lean toward the color

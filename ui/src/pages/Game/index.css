@@ -242,3 +242,84 @@
 .game.is-simming [data-sim-allow] {
   cursor: pointer;
 }
+
+/* ---- the School theme (the player's ask: the extreme branding as a theme of its own, beside Light and Dark): the
+   window in your school's color, pinstriped in its second; its name across the top; the section window a white card
+   framed in the second color. Words on the school's colors are in their ink (--team-on, --team-2-on, --team-pop). ---- */
+:root[data-theme="school"] .game {
+  background: repeating-linear-gradient(
+      90deg,
+      transparent 0 46px,
+      color-mix(in srgb, var(--team-2, transparent) 18%, transparent) 46px 48px
+    ),
+    var(--team, var(--paper));
+}
+
+:root[data-theme="school"] .game__main.has-banner {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+/* (a page with no top row: the banner, then the section) */
+:root[data-theme="school"] .game__main.is-bare.has-banner {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.game__banner {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  min-width: 0;
+  margin: calc(-1 * var(--s3)) calc(-1 * var(--s5)) 0;
+  padding: var(--s2) calc(88px + var(--s5) + var(--s3)) var(--s2) var(--s5);
+  overflow: hidden;
+  background: linear-gradient(90deg, color-mix(in srgb, #000 25%, var(--team)) 0 70%, transparent);
+  color: var(--team-pop);
+  border-bottom: 8px solid var(--team-2);
+  font-size: clamp(32px, 5.4vh, 64px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 6px;
+  text-shadow: 4px 4px 0 color-mix(in srgb, #000 45%, var(--team));
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* the three-color stripe along the window's top edge, and along each panel's, stand against the frame as three
+   lines in a row (the player: "kinda weird looking"): the frame alone carries the colors here */
+:root[data-theme="school"] .game__body::before {
+  display: none;
+}
+
+:root[data-theme="school"] .game__body .panel__head {
+  background-image: none;
+}
+
+/* the section window: a white card, framed heavy in the second color */
+:root[data-theme="school"] .game__body {
+  border: 6px solid var(--team-2, var(--ink));
+  border-top-width: 14px;
+  box-shadow: 10px 10px 0 color-mix(in srgb, #000 40%, var(--team, var(--ink)));
+}
+
+/* the week strip on the school's color: the week you are in filled in its second color, an open date readable */
+:root[data-theme="school"] .season-strip__game.is-bye {
+  background: color-mix(in srgb, var(--paper-hi) 85%, transparent);
+}
+
+:root[data-theme="school"] .season-strip__game.is-next {
+  background: var(--team-2, var(--paper-hi));
+  color: var(--team-2-on, var(--ink));
+  border-color: color-mix(in srgb, #000 30%, var(--team-2, var(--ink)));
+}
+
+:root[data-theme="school"] .season-strip__game.is-next * {
+  color: var(--team-2-on, var(--ink));
+}
+
+:root[data-theme="school"] .season-strip__arrow {
+  color: var(--team-on, var(--ink));
+}
+
+:root[data-theme="school"] .game__main > .coach-badge {
+  box-shadow: 6px 6px 0 var(--team-2, var(--shadow));
+}
